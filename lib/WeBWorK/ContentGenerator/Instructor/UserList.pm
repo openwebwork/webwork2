@@ -199,7 +199,7 @@ sub pre_header_initialize {
 		my $numberOfStudents  = $r->param('number_of_students');
 		warn "number of students not defined " unless defined $numberOfStudents;
 
-		my $uri=$self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::AddUsers',courseID=>$courseName),
+		my $uri=$self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::AddUsers', $r, courseID=>$courseName),
 		                           params=>{
 		                          			number_of_students=>$numberOfStudents,
 		                                   }

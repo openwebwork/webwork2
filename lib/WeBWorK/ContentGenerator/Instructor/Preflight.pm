@@ -65,7 +65,7 @@ sub body {
 		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 
 	
-	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
+	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
 	
 	my ($safeUser, $safeCourse) = (showHTML($studentUser), showHTML($courseName));

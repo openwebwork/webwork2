@@ -39,7 +39,7 @@ BEGIN { $main::VERSION = "2.4.9"; }
 use strict;
 use warnings;
 use Time::HiRes qw/time/;
-
+use WeBWorK::Localize;
 # load WeBWorK::Constants before anything else
 # this sets package variables in several packages
 use WeBWorK::Constants;
@@ -88,7 +88,7 @@ our %SeedCE;
 
 sub dispatch($) {
 	my ($apache) = @_;
-	my $r = new WeBWorK::Request($apache);
+	my $r = WeBWorK::Request->new($apache);
 	
 	my $method = $r->method;
 	my $location = $r->location;
@@ -115,6 +115,9 @@ sub dispatch($) {
 	
 	debug("The first thing we need to do is munge the path a little:\n");
 	
+	######################################################################
+	# Create a URLPath  object
+	######################################################################
 	my ($path) = $uri =~ m/$location(.*)/;
 	$path = "/" if $path eq ""; # no path at all
 	
@@ -136,7 +139,9 @@ sub dispatch($) {
 	debug("Now we need to look at the path a little to figure out where we are\n");
 	
 	debug("-------------------- call to WeBWorK::URLPath::newFromPath\n");
-	my $urlPath = WeBWorK::URLPath->newFromPath($path);
+	my $urlPath = WeBWorK::URLPath->newFromPath($path, $r);
+	                            # pointer to parent request for access to the $ce and language translation ability
+	                            # need to add this pointer whenever a new URLPath is created.
 	debug("-------------------- call to WeBWorK::URLPath::newFromPath\n");
 	
 	unless ($urlPath) {
@@ -201,6 +206,10 @@ sub dispatch($) {
 		$apache_root_url .= ":$apache_port" if $apache_port != 80;
 	}
 	
+	
+	####################################################################
+	# Create Course Environment    $ce
+	####################################################################
 	debug("We need to get a course environment (with or without a courseID!)\n");
 	my $ce = eval { new WeBWorK::CourseEnvironment({
 		%SeedCE,
@@ -216,6 +225,13 @@ sub dispatch($) {
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
 	
+	
+	######################
+	# Localizing language
+	######################
+	my $language= $ce->{language} || "en";
+	$r->language_handle(WeBWorK::Localize->get_handle($language) );
+
 	my @uploads;
 	if (MP2) {
 		my $upload_table = $r->upload;

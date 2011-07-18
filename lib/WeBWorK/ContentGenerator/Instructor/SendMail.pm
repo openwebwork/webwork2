@@ -533,7 +533,7 @@ sub print_form {
 	my $user            = $r->param('user');
 
 	my $root            = $ce->{webworkURLs}->{root};
-	my $sendMailPage    = $urlpath->newFromModule($urlpath->module,courseID=>$courseName);
+	my $sendMailPage    = $urlpath->newFromModule($urlpath->module, $r, courseID=>$courseName);
 	my $sendMailURL     = $self->systemLink($sendMailPage, authen => 0);
 
         return CGI::em("You are not authorized to access the Instructor tools.") unless $authz->hasPermissions($user, "access_instructor_tools");

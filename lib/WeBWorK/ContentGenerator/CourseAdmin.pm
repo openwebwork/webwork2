@@ -432,7 +432,7 @@ sub body {
 		foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
 			next if $courseID eq "admin"; # done already above
 			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
- 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+ 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
 			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID));
 
 		}
@@ -862,7 +862,7 @@ sub do_add_course {
 		print CGI::div({class=>"ResultsWithoutError"},
 			CGI::p("Successfully created the course $add_courseID"),
 		);
-		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
+		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
 			courseID => $add_courseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
 		print CGI::div({style=>"text-align: center"},
@@ -1168,7 +1168,7 @@ sub do_rename_course {
 		print CGI::div({class=>"ResultsWithoutError"},
 			CGI::p("Successfully renamed the course $rename_oldCourseID to $rename_newCourseID"),
 		);
-		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
+		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
 			courseID => $rename_newCourseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
 		print CGI::div({style=>"text-align: center"},
@@ -1941,7 +1941,7 @@ sub do_unarchive_course {
 	    	"$unarchive_courseID to $new_courseID",
 	    ));
 
-		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",
+		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
 			courseID => $new_courseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
 		print CGI::div({style=>"text-align: center"},
@@ -2000,7 +2000,7 @@ sub upgrade_course_form {
 			next if $courseID eq "admin"; # done already above
 			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
 			next unless $courseID =~/\S/;  # skip empty courseIDs (there shouldn't be any
-			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
 			my $tempCE;
 			eval{ $tempCE = new WeBWorK::CourseEnvironment({
 				%WeBWorK::SeedCE,

@@ -29,8 +29,12 @@ use warnings;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
+
+use WeBWorK::Localize;
+
 # This class inherits from Apache::Request under mod_perl and Apache2::Request under mod_perl2
 BEGIN {
+    push @WeBWorK::Request::ISA, "WeBWorK::Localize";
 	if (MP2) {
 		require Apache2::Request;
 		Apache2::Request->import;
@@ -174,6 +178,17 @@ sub urlpath {
 	my $self = shift;
 	$self->{urlpath} = shift if @_;
 	return $self->{urlpath};
+}
+
+sub language_handle {
+	my $self = shift;
+	$self->{language_handle} = shift if @_;
+	return $self->{language_handle};
+}
+
+sub maketext {
+	my $self = shift;
+	$self->{language_handle}->maketext(@_);
 }
 
 =item location()

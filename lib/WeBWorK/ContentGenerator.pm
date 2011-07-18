@@ -53,9 +53,12 @@ use WeBWorK::Debug;
 use WeBWorK::PG;
 use MIME::Base64;
 use WeBWorK::Template qw(template);
-
+use WeBWorK::Localize;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+
+
 
 BEGIN {
 	if (MP2) {
@@ -587,7 +590,7 @@ sub links {
 		my $active = $options{active};
 		my %target = ($options{target} ? (target => $options{target}) : ());
 		
-		my $new_urlpath = $self->r->urlpath->newFromModule($module, %$urlpath_args);
+		my $new_urlpath = $self->r->urlpath->newFromModule($module, $r, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
 		
 		defined $text or $text = $new_urlpath->name;  #too clever
@@ -650,7 +653,7 @@ sub links {
 	
 	print CGI::start_ul();
 	print CGI::start_li(); # Courses
-	print &$makelink("${pfx}Home", text=>"Courses", systemlink_args=>{authen=>0});
+	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
 	
 	if (defined $courseID) {
 		#print CGI::start_ul();
@@ -660,7 +663,7 @@ sub links {
 		if ($authen->was_verified) {
 			print CGI::start_ul();
 			print CGI::start_li(); # Homework Sets
-			print &$makelink("${pfx}ProblemSets", text=>"Homework Sets", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			
 			if (defined $setID) {
 				print CGI::start_ul();
@@ -679,7 +682,7 @@ sub links {
 				if (defined $problemID) {
 					print CGI::start_ul();
 					print CGI::start_li(); # $problemID
-					print &$makelink("${pfx}Problem", text=>"Problem $problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $problemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
 					
 					print CGI::end_li(); # end $problemID
 					print CGI::end_ul();
@@ -723,9 +726,7 @@ sub links {
 				}
 				print CGI::end_li(); # end Homework Set Editor
 				
-				print CGI::li(&$makelink("${pfx}SetMaker", text=>"Library Browser", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-				print CGI::li(&$makelink("${pfx}SetMaker2", text=>"Library Browser 2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-				# print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
@@ -794,7 +795,7 @@ sub links {
 			print CGI::start_ul();
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li(CGI::a({style=>'font-size:larger', href=>$ce->{webworkURLs}{bugReporter}}, "Report bugs"));
+				print CGI::li(CGI::a({style=>'font-size:larger', href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
 	
 	print CGI::end_ul();
@@ -837,16 +838,16 @@ sub loginstatus {
 		my $stopActingURL = $self->systemLink($urlpath, # current path
 			params => { effectiveUser => $userID },
 		);
-		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", courseID => $courseID));
+		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 		
 		if ($eUserID eq $userID) {
-			print "Logged in as $userID. " . CGI::br() . CGI::a({href=>$logoutURL}, "Log Out");
+			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::br() . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 		} else {
-			print "Logged in as $userID. " . CGI::a({href=>$logoutURL}, "Log Out") . CGI::br();
-			print "Acting as $eUserID. " . CGI::a({href=>$stopActingURL}, "Stop Acting");
+			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out")) . CGI::br();
+			print $r->maketext("Acting as [_1]. ", $eUserID) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
 		}
 	} else {
-		print "Not logged in.";
+		print $r->maketext("Not logged in.");
 	}
 	
 	return "";
@@ -1497,9 +1498,9 @@ sub feedbackMacro_email {
 	my $courseID = $urlpath->arg("courseID");
 	
 	# feedback form url
-	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", courseID => $courseID);
+	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",  $r, courseID => $courseID);
 	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
-	my $feedbackName = $ce->{feedback_button_name} || "Email instructor";
+	my $feedbackName = $ce->{feedback_button_name} || $r->maketext("Email instructor");
 	
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackURL) . "\n";
 	$result .= $self->hidden_authen_fields . "\n";
@@ -1522,7 +1523,7 @@ sub feedbackMacro_form {
 	my $courseID = $urlpath->arg("courseID");
 	
 	# feedback form url
-	my $feedbackName = $ce->{feedback_button_name} || "Email instructor";
+	my $feedbackName = $ce->{feedback_button_name} || $r->maketext("Email instructor");
 	
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackFormURL,-target=>"WW_info") . "\n";
 	$result .= $self->hidden_authen_fields . "\n";
@@ -1544,7 +1545,8 @@ sub feedbackMacro_form {
 
 sub feedbackMacro_url {
 	my ($self, $url) = @_;
-	my $feedbackName = $self->r->ce->{feedback_button_name} || "Email instructor";
+	my $r = $self->r;
+	my $feedbackName = $r->ce->{feedback_button_name} || $r->maketext("Email instructor");
 	return CGI::a({-href=>$url}, $feedbackName);
 }
 
@@ -1923,12 +1925,8 @@ sub errorOutput($$$) {
 	}
 	return
 		CGI::h2("WeBWorK Error"),
-		CGI::p(<<EOF),
-WeBWorK has encountered a software error while attempting to process this
-problem. It is likely that there is an error in the problem itself. If you are a
-student, report this error message to your professor to have it corrected. If
-you are a professor, please consult the error output below for more information.
-EOF
+		CGI::p($r->maketext("_REQUEST_ERROR")),
+
 		CGI::h3("Error messages"),
 
 		CGI::p(CGI::code($error)),
@@ -2015,12 +2013,7 @@ sub parseDateTime {
 	my ($self, $string, $display_tz) = @_;
 	my $ce = $self->r->ce;
 	$display_tz ||= $ce->{siteDefaults}{timezone};
-	my $result = eval{ WeBWorK::Utils::parseDateTime($string, $display_tz) }; # trap thrown die and warn messages
-	my $error_msg = $@ if $@;
-	return $result unless $error_msg;
-	$error_msg =~ s|\n|<br/>|g;    # format for display in HTML -- replace \n characters with breaks
-	$self->addbadmessage($error_msg);
-	return 0; #   WeBWorK::Utils::parseDateTime('01/01/1970 at 12:00AM' , 'America/New_York');
+	return WeBWorK::Utils::parseDateTime($string, $display_tz);
 };
 
 =item $string = formatDateTime($dateTime, $display_tz)

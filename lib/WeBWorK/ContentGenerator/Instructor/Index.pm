@@ -281,7 +281,7 @@ sub pre_header_initialize {
 		$self->addbadmessage(CGI::p(join(CGI::br(),@error)));
 
 	} elsif ($module) {
-		my $page = $urlpath->newFromModule($module, %args);
+		my $page = $urlpath->newFromModule($module, $r, %args);
 		my $url = $self->systemLink($page, params => \%params);
 		$self->reply_with_redirect($url);
 	}
