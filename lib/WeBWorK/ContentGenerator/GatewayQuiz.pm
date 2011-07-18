@@ -1307,7 +1307,7 @@ sub body {
 		my $usernote = '';
 		if ( defined( $self->{invalidVersionCreation} ) &&
 		     $self->{invalidVersionCreation} == 1 ) {
-			my $gwpage = $urlpath->newFromModule($urlpath->module,
+			my $gwpage = $urlpath->newFromModule($urlpath->module,$r,
 				courseID=>$urlpath->arg("courseID"),
 				setID=>$urlpath->arg("setID"));
 			my $link = $self->systemLink( $gwpage,
@@ -2188,7 +2188,7 @@ sub body {
 	# finally, put in a show answers option if appropriate
 	# print answer inspection button
 	if ($authz->hasPermissions($user, "view_answers")) {
-		my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", courseID => $ce->{courseName});
+		my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, courseID => $ce->{courseName});
 		my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
 		print "\n", CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
 			$self->hidden_authen_fields,"\n",

@@ -852,6 +852,7 @@ sub make_top_row {
 
 sub make_data_row {
 	my $self = shift;
+	my $r = $self->r;
 	my $sourceFileName = shift;
 	my $pg = shift;
 	my $cnt = shift;
@@ -882,7 +883,7 @@ sub make_data_row {
 	#if($self->{r}->param('browse_which') ne 'browse_npl_library') {
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
@@ -898,7 +899,7 @@ sub make_data_row {
 	$pathArgs{problemID} = "1" if ( ! $isGatewaySet );
 
 	my $try_link = CGI::a({href=>$self->systemLink(
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module",
+		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module", $r, 
 			%pathArgs ),
 			params =>{
 				effectiveUser => scalar($self->r->param('user')),
@@ -983,7 +984,7 @@ sub pre_header_initialize {
 			$self->{error} = 1;
 			$self->addbadmessage('You need to select a "Target Set" before you can edit it.');
 		} else {
-			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
+			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
 			my $url = $self->systemLink($page);
 			$self->reply_with_redirect($url);
 		}

@@ -37,7 +37,7 @@ use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswe
 	ref2string makeTempDirectory path_is_subdir sortByName before after between);
 use WeBWorK::DB::Utils qw(global2user user2global);
 use URI::Escape;
-
+use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 ################################################################################
@@ -193,6 +193,7 @@ sub set_showOldAnswers_default {
 
 sub attemptResults {
 	my $self = shift;
+	my $r = $self->r;
 	my $pg = shift;
 	my $showAttemptAnswers = shift;
 	my $showCorrectAnswers = shift;
@@ -209,7 +210,7 @@ sub attemptResults {
 
 	my $problemResult = $pg->{result}; # the overall result of the problem
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
-	#warn "answer names are ", join(" ", @answerNames);
+	
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 	
 	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
@@ -234,12 +235,12 @@ sub attemptResults {
 	my $header;
 	#$header .= CGI::th("Part");
 	if ($showEvaluatedAnswers) {
-		$header .= $showAttemptAnswers ? CGI::th("Entered")  : "";
+		$header .= $showAttemptAnswers ? CGI::th($r->maketext("Entered"))  : "";
 	}	
-	$header .= $showAttemptPreview ? CGI::th("Answer Preview")  : "";
-	$header .= $showCorrectAnswers ? CGI::th("Correct")  : "";
-	$header .= $showAttemptResults ? CGI::th("Result")   : "";
-	$header .= $showMessages       ? CGI::th("Messages") : "";
+	$header .= $showAttemptPreview ? CGI::th($r->maketext("Answer Preview"))  : "";
+	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct"))  : "";
+	$header .= $showAttemptResults ? CGI::th($r->maketext("Result"))   : "";
+	$header .= $showMessages       ? CGI::th($r->maketext("Messages")) : "";
 	my $fully = '';
 	my @tableRows = ( $header );
 	my $numCorrect = 0;
@@ -258,10 +259,11 @@ sub attemptResults {
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   # unless student answer contains entry
-		my $resultString = $answerScore >= 1 ? CGI::span({class=>"ResultsWithoutError"}, "correct") :
-		                   $answerScore > 0  ? int($answerScore*100)."% correct" :
-                                                       CGI::span({class=>"ResultsWithError"}, "incorrect");
-		$fully = 'completely ' if $answerScore >0 and $answerScore < 1;
+		my $resultString = $answerScore >= 1 ? $r->maketext("correct") :
+		                   $answerScore > 0  ? $r->maketext("[_1]% correct", int($answerScore*100)) :
+                                                       $r->maketext("incorrect");
+		$fully = $r->maketext("completely ") if $answerScore >0 and $answerScore < 1;
+		
 		
 		#warn "answer $name  score $answerScore";
 		push @correct_ids,   $name if $answerScore == 1;
@@ -300,21 +302,21 @@ sub attemptResults {
 	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
 		if (scalar @answerNames == 1) {  #default messages
 				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},"The answer above is correct.");
+					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("The answer above is correct."));
 				 } else {
-					 $summary .= CGI::div({class=>"ResultsWithError"},"The answer above is NOT ${fully}correct.");
+					 $summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
 				 }
 		} else {
 				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},"All of the answers above are correct.");
+					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the answers above are correct."));
 				 } 
 				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
 				 elsif ($numBlanks != scalar( @answerNames)) {
-					$summary .= CGI::div({class=>"ResultsWithError"},"At least one of the answers above is NOT ${fully}correct.");
+					$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
 				 }
 				 if ($numBlanks) {
 					my $s = ($numBlanks>1)?'':'s';
-					$summary .= CGI::div({class=>"ResultsAlert"},"$numBlanks of the questions remain$s unanswered.");
+					$summary .= CGI::div({class=>"ResultsAlert"},$r->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
 				 }
 		}
 	} else {
@@ -601,7 +603,7 @@ sub pre_header_initialize {
         } else {
 		$self->{invalidProblem} = !(defined $problem and ($set->visible || $authz->hasPermissions($userName, "view_hidden_sets")));
 		
-		$self->addbadmessage(CGI::p("This problem will not count towards your grade.")) if $problem and not $problem->value and not $self->{invalidProblem};
+		$self->addbadmessage(CGI::p($r->maketext("This problem will not count towards your grade."))) if $problem and not $problem->value and not $self->{invalidProblem};
 	}
 
 	$self->{userName}          = $userName;
@@ -786,19 +788,19 @@ sub siblings {
 	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2("Problems");
+	print CGI::h2($r->maketext("Problems"));
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, "Problems");
 	print CGI::start_ul();
 
 	foreach my $problemID (@problemIDs) {
-		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID);
 		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
 													params=>{  displayMode => $self->{displayMode}, 
 															   showOldAnswers => $self->{will}->{showOldAnswers}
-															})},  "Problem $problemID")
+															})},  $r->maketext("Problem [_1]",$problemID))
 	   );
 	}
 
@@ -838,25 +840,25 @@ sub nav {
 	my @links;
 
 	if ($prevID) {
-		my $prevPage = $urlpath->newFromModule(__PACKAGE__,
+		my $prevPage = $urlpath->newFromModule(__PACKAGE__, $r, 
 			courseID => $courseID, setID => $setID, problemID => $prevID);
-		push @links, "Previous Problem", $r->location . $prevPage->path, "navPrev";
+		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("navPrev");
 	} else {
-		push @links, "Previous Problem", "", "navPrevGrey";
+		push @links, $r->maketext("Previous Problem"), "", $r->maketext("navPrevGrey");
 	}
 
 	if (defined($setID) && $setID ne 'Undefined_Set') {
-		push @links, "Problem List", $r->location . $urlpath->parent->path, "navProbList";
+		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("navProbList");
 	} else {
-		push @links, "Problem List", "", "navProbListGrey";
+		push @links, $r->maketext("Problem List"), "", $r->maketext("navProbListGrey");
 	}
 
 	if ($nextID) {
-		my $nextPage = $urlpath->newFromModule(__PACKAGE__,
+		my $nextPage = $urlpath->newFromModule(__PACKAGE__, $r, 
 			courseID => $courseID, setID => $setID, problemID => $nextID);
-		push @links, "Next Problem", $r->location . $nextPage->path, "navNext";
+		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("navNext");
 	} else {
-		push @links, "Next Problem", "", "navNextGrey";
+		push @links, $r->maketext("Next Problem"), "", $r->maketext("navNextGrey");
 	}
 
 	my $tail = "";
@@ -869,12 +871,12 @@ sub nav {
 
 sub title {
 	my ($self) = @_;
-
+	my $r = $self->r;
 	# using the url arguments won't break if the set/problem are invalid
 	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
 	my $problemID = $self->r->urlpath->arg("problemID");
 
-	return "$setID: Problem $problemID";
+	return $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
 }
 
 sub body {
@@ -886,18 +888,17 @@ sub body {
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
+
 	if ( $self->{invalidSet} ) { 
 		return CGI::div({class=>"ResultsWithError"},
-				CGI::p("The selected problem set (" .
-				       $urlpath->arg("setID") . ") is not " .
-				       "a valid set for $effectiveUser:"),
-				CGI::p($self->{invalidSet}));
+				CGI::p($r->maketext("The selected problem set ([_1]) is not a valid set for [_2]:", $urlpath->arg("setID"), $effectiveUser)), CGI::p($self->{invalidSet}));
 	}
 	
 	if ($self->{invalidProblem}) {
 		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected problem (" . $urlpath->arg("problemID") . ") is not a valid problem for set " . $self->{set}->set_id . "."));
+			CGI::p($r->maketext("The selected problem([_1]) is not a valid problem for set [_2].", $urlpath->arg("problemID"), $self->{set}->set_id )));
 	}	
+
 
 	# unpack some useful variables
 	my $set             = $self->{set};
@@ -923,7 +924,7 @@ sub body {
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, "Edit this problem"));
@@ -935,7 +936,7 @@ sub body {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 		} else {
-			print $self->errorOutput($pg->{errors}, "You do not have permission to view the details of this error.");
+			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print $editorLink;
 		return "";
@@ -986,9 +987,9 @@ sub body {
 				$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
 				if ($db->putUserProblem($pureProblem)) {
-					$scoreRecordedMessage = "Your score was recorded.";
+					$scoreRecordedMessage = $r->maketext("Your score was recorded.");
 				} else {
-					$scoreRecordedMessage = "Your score was not recorded because there was a failure in storing the problem record to the database.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded because there was a failure in storing the problem record to the database.");
 				}
 				# write to the transaction log, just to make sure
 				writeLog($self->{ce}, "transaction",
@@ -1007,13 +1008,13 @@ sub body {
 				);
 			} else {
 				if (before($set->open_date) or after($set->due_date)) {
-					$scoreRecordedMessage = "Your score was not recorded because this homework set is closed.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded because this homework set is closed.");
 				} else {
-					$scoreRecordedMessage = "Your score was not recorded.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded.");
 				}
 			}
 		} else {
-			$scoreRecordedMessage = "Your score was not recorded because this problem has not been assigned to you.";
+			$scoreRecordedMessage = $r->maketext("Your score was not recorded because this problem has not been assigned to you.");
 		}
 	}
 	
@@ -1057,7 +1058,7 @@ sub body {
 	# custom message for editor
 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 		if ($editMode eq "temporaryFile") {
-			print CGI::p(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ", $problem->source_file));
+			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
 			# taken care of in the initialization phase
 		}
@@ -1078,7 +1079,7 @@ sub body {
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
 	} elsif ($checkAnswers) {
 		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},"ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"), CGI::br();
+		print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
 			# show attempt answers
 			# show correct answers if asked
@@ -1086,7 +1087,7 @@ sub body {
 			# show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},"PREVIEW ONLY -- ANSWERS NOT RECORDED"),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+		print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
 			# show attempt answers
 			# don't show correct answers
 			# don't show attempt results (correctness)
@@ -1143,7 +1144,7 @@ sub body {
 		print CGI::checkbox(
 			-name    => "showCorrectAnswers",
 			-checked => $will{showCorrectAnswers},
-			-label   => "Show correct answers",
+			-label   => $r->maketext("Show correct answers"),
 			-value   => 1,
 		);
 	}
@@ -1152,7 +1153,7 @@ sub body {
 			CGI::checkbox(
 				-name    => "showHints",
 				-checked => $will{showHints},
-				-label   => "Show Hints",
+				-label   => $r->maketext("Show Hints"),
 				-value   =>1,
 			)
 		);
@@ -1161,7 +1162,7 @@ sub body {
 		print CGI::checkbox(
 			-name    => "showSolutions",
 			-checked => $will{showSolutions},
-			-label   => "Show Solutions",
+			-label   => $r->maketext("Show Solutions"),
 			-value   => 1,
 		);
 	}
@@ -1170,20 +1171,20 @@ sub body {
 		print CGI::br();
 	}
 		
-	print CGI::submit(-name=>"previewAnswers", -label=>"Preview Answers");
+	print CGI::submit(-name=>"previewAnswers", -label=>$r->maketext("Preview Answers"));
 	if ($can{checkAnswers}) {
-		print CGI::submit(-name=>"checkAnswers", -label=>"Check Answers");
+		print CGI::submit(-name=>"checkAnswers", -label=>$r->maketext("Check Answers"));
 	}
 	if ($can{getSubmitButton}) {
 		if ($user ne $effectiveUser) {
 			# if acting as a student, make it clear that answer submissions will
 			# apply to the student's records, not the professor's.
-			print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers for $effectiveUser");
+			print CGI::submit(-name=>"submitAnswers", -label=>$r->maketext("Submit answers for [_1]",$effectiveUser));
 		} else {
 			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-			print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"");
+			print CGI::submit(-name=>"submitAnswers", -label=>$r->maketext("Submit answers"), -onclick=>"");
 			# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
-			# WFT???
+			# WTF???
 		}
 	}
 	
@@ -1193,27 +1194,28 @@ sub body {
 	
 	# score summary
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
-	my $attemptsNoun = $attempts != 1 ? "times" : "time";
+	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
 	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
-	my ($attemptsLeft, $attemptsLeftNoun);
-	if ($problem->max_attempts == -1) {
-		# unlimited attempts
-		$attemptsLeft = "unlimited";
-		$attemptsLeftNoun = "attempts";
-	} else {
-		$attemptsLeft = $problem->max_attempts - $attempts;
-		$attemptsLeftNoun = $attemptsLeft == 1 ? "attempt" : "attempts";
-	}
+	#my ($attemptsLeft, $attemptsLeftNoun);
+	my $attemptsLeft = $problem->max_attempts - $attempts;
+#	if ($problem->max_attempts == -1) {
+#		# unlimited attempts
+#		$attemptsLeft = $r->maketext("unlimited");
+#		$attemptsLeftNoun = $r->maketext("attempts");
+#	} else {
+#		$attemptsLeft = $problem->max_attempts - $attempts;
+#		$attemptsLeftNoun = $attemptsLeft == 1 ? $r->maketext("attempt") : $r->maketext("attempts");
+#	}
 	
 	my $setClosed = 0;
 	my $setClosedMessage;
 	if (before($set->open_date) or after($set->due_date)) {
 		$setClosed = 1;
 		if (before($set->open_date)) {
-			$setClosedMessage = "This homework set is not yet open.";
+			$setClosedMessage = $r->maketext("This homework set is not yet open.");
 		} elsif (after($set->due_date)) {
-			$setClosedMessage = "This homework set is closed.";
+			$setClosedMessage = $r->maketext("This homework set is closed.");
 		}
 	}
 	#if (before($set->open_date) or after($set->due_date)) {
@@ -1226,15 +1228,16 @@ sub body {
 	#	}
 	#}
 	unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
-		my $notCountedMessage = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
+		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
 		print CGI::p(join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
-			"You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
-			$submitAnswers ?"You received a score of ".sprintf("%.0f%%", $pg->{result}->{score} * 100)." for this attempt.".CGI::br():'',
+			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
+			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",sprintf("%.0f%%", $pg->{result}->{score} * 100)) . CGI::br():'',
 			$problem->attempted
-				? "Your overall recorded score is $lastScore.  $notCountedMessage" . CGI::br()
+				? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
-			$setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
+#			$setClosed ? $setClosedMessage : $r->maketext("You have [_1] [_2] remaining.",$attemptsLeft,$attemptsLeftNoun) 
+			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
 		));
 	}else {
 		print CGI::p($pg->{state}->{state_summary_msg});
@@ -1291,7 +1294,7 @@ sub body {
 	print  CGI::start_div({class=>"problemFooter"});
 	
 	
-	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers",
+	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, 
 		courseID => $courseName);
 	my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
 		
@@ -1305,7 +1308,7 @@ sub body {
 			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
 			CGI::hidden(-name => 'studentUser',    -value=>$problem->user_id), "\n",
 			CGI::p( {-align=>"left"},
-				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
+				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",
 			CGI::endform();
 	}

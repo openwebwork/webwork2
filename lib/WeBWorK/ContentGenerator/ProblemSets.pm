@@ -29,7 +29,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile sortByName path_is_subdir);
-
+use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
 
@@ -58,17 +58,17 @@ sub info {
 				$course_info_path = $r->param("sourceFilePath");
 				$course_info_path = $ce->{courseDirs}{templates}.'/'.$course_info_path unless $course_info_path =~ m!^/!;
 				die "sourceFilePath is unsafe!" unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates});
-				$self->addmessage(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ", $course_info_path));
+				$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $course_info_path));
 			}
 			
-			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", courseID => $courseID);
+			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",  $r, courseID => $courseID);
 			$editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 		}
 		
 		if ($editorURL) {
-			print CGI::h2("Course Info", CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
+			print CGI::h2($r->maketext("Course Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[edit~]")));
 		} else {
-			print CGI::h2("Course Info");
+			print CGI::h2($r->maketext("Course Info"));
 		}
 		
 		if (-f $course_info_path) { #check that it's a plain  file
@@ -129,7 +129,7 @@ sub body {
 	
 	my $courseName      = $urlpath->arg("courseID");
 	
-	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", courseID => $courseName);
+	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",  $r, courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
 	
 # we have to get sets and versioned sets separately
@@ -206,11 +206,11 @@ sub body {
 
 # now set the headers for the table
 	my $nameHeader = $sort eq "name"
-		? CGI::u("Name")
-		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"name"})}, "Name");
+		? CGI::u($r->maketext("Name"))
+		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"name"})}, $r->maketext("Name"));
 	my $statusHeader = $sort eq "status"
-		? CGI::u("Status")
-		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, "Status");
+		? CGI::u($r->maketext("Status"))
+		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, $r->maketext("Status"));
 # print the start of the form
 
     print CGI::start_form(-method=>"POST",-action=>$actionURL),
@@ -275,12 +275,14 @@ sub body {
 	}
 	
 	print CGI::end_table();
-	my $pl = ($authz->hasPermissions($user, "view_multiple_sets") ? "s" : "");
-	print CGI::p(CGI::submit(-name=>"hardcopy", -label=>"Download Hardcopy for Selected Set$pl"));
+#	my $pl = ($authz->hasPermissions($user, "view_multiple_sets") ? "s" : "");
+	my $pl = $authz->hasPermissions($user, "view_multiple_sets") + 1;
+#	print CGI::p(CGI::submit(-name=>"hardcopy", -label=>$r->maketext("Download Hardcopy for Selected Set[_1]",$pl)));
+	print CGI::p(CGI::submit(-name=>"hardcopy", -label=>$r->maketext("Download Hardcopy for Selected [plural,_1,Set,Sets]",$pl)));
 	print CGI::endform();
 	
 	## feedback form url
-	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", courseID => $courseName);
+	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",  $r, courseID => $courseName);
 	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
 	#
 	##print feedback form
@@ -334,15 +336,15 @@ sub setListRow {
 
 	if ( ! defined( $set->assignment_type() ) || 
 	     $set->assignment_type() !~ /gateway/ ) {
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r, 
 				      courseID => $courseName, setID => $urlname);
 	} elsif( $set->assignment_type() !~ /proctored/ ) {
 
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r, 
 				      courseID => $courseName, setID => $urlname);
 	} else {
 
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r, 
 				      courseID => $courseName, setID => $urlname);
 	}
 
@@ -411,14 +413,14 @@ sub setListRow {
 		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $name"; return()}
 			if ( $problemRecords[0]->num_correct() + 
 			     $problemRecords[0]->num_incorrect() >= 
-			     ($set->attempts_per_version() || 0 ) ) {
-				$status = "completed.";
+			     $set->attempts_per_version() ) {
+				$status = $r->maketext("completed.");
 			} elsif ( time() > $set->due_date() + 
 				  $self->r->ce->{gatewayGracePeriod} ) {
-				$status = "over time: closed.";
+				$status = $r->maketext("over time: closed.");
 			} else {
-				$status = "open: complete by " . 
-					$self->formatDateTime($set->due_date());
+				$status = $r->maketext("open: complete by [_1]",  
+					$self->formatDateTime($set->due_date()));
 			}
 			# we let people go back to old tests
 			$setIsOpen = 1;
@@ -430,7 +432,7 @@ sub setListRow {
 		} else {
 			my $t = time();
 			if ( $t < $set->open_date() ) {
-				$status = "will open on " . $self->formatDateTime($set->open_date);
+				$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date));
 				if ( $preOpenSets ) {
 					# reset the link
 					$interactive = CGI::a({-href=>$interactiveURL},
@@ -440,7 +442,7 @@ sub setListRow {
 					$interactive = "$name test";
 				}
 			} elsif ( $t < $set->due_date() ) {
-				$status = "now open, due " . $self->formatDateTime($set->due_date);
+				$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date);
 				$setIsOpen = 1;
 				$interactive = CGI::a({-href=>$interactiveURL},
 						      "Take $name test");
@@ -458,11 +460,11 @@ sub setListRow {
 
 # old conditional
 	} elsif (time < $set->open_date) {
-		$status = "will open on " . $self->formatDateTime($set->open_date);
+		$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date));
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date) {
-			$status = "now open, due " . $self->formatDateTime($set->due_date);
+			$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date);
 			my $enable_reduced_scoring = $set->enable_reduced_scoring;
 			my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
 			if ($reducedScoringPeriod > 0 and $enable_reduced_scoring ) {
@@ -474,11 +476,11 @@ sub setListRow {
 			}
 		$setIsOpen = 1;
 	} elsif (time < $set->answer_date) {
-		$status = "closed, answers on " . $self->formatDateTime($set->answer_date);
+		$status = $r->maketext("closed, answers on [_1]", $self->formatDateTime($set->answer_date));
 	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
-		$status = "closed, answers recently available";
+		$status = $r->maketext("closed, answers recently available");
 	} else {
-		$status = "closed, answers available";
+		$status = $r->maketext("closed, answers available");
 	}
 
 	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";

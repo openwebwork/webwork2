@@ -32,6 +32,7 @@ use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(sortByName path_is_subdir);
+use WeBWorK::Localize;
 
 sub initialize {
 	my ($self) = @_;
@@ -103,10 +104,10 @@ sub nav {
 	my $urlpath = $r->urlpath;
 
 	my $courseID = $urlpath->arg("courseID");
-	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",  $r, courseID => $courseID);
 	my $problemSetsPage = $urlpath->parent;
 	
-	my @links = ("Homework Sets" , $r->location . $problemSetsPage->path, "navUp");
+	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("navUp"));
 	# CRAP ALERT: this line relies on the hacky options() implementation in ContentGenerator.
 	# we need to find a better way to do this -- long range dependencies like this are dangerous!
 	#my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
@@ -154,7 +155,7 @@ sub siblings {
 
 		debug("Begin printing sets from listUserSets()");
 	foreach my $setID (@setIDs) {
-		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",
+		my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r, 
 			courseID => $courseID, setID => $setID);
 		my $pretty_set_id = $setID;
 		$pretty_set_id =~ s/_/ /g;
@@ -176,8 +177,8 @@ sub siblings {
 	#my @userSetIDs = map {[$eUserID, $_]} @setIDs;
 	#my @sets = $db->getMergedSets(@userSetIDs);
 	#foreach my $set (@sets) {
-	#	my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", courseID => $courseID, setID => $set->set_id);
-	#	print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $set->set_id)) unless !(defined $set && ($set->visible || $authz->hasPermissions($user, "view_hidden_sets"));
+	#	my $setPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet",  $r, courseID => $courseID, setID => $set->set_id);
+	#	print CGI::li(CGI::a({href=>$self->systemLink($setPage)}, $set->set_id)) unless !(defined $set && ($set->published || $authz->hasPermissions($user, "view_unpublished_sets"));
 	#}
 	#debug("Begin printing sets from getMergedSets()");
 	
@@ -261,7 +262,7 @@ sub info {
 	
 	my $editorURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {  
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
 		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
@@ -314,11 +315,11 @@ sub body {
 	#	. $ce->{courseName} . "/"
 	#	. "hardcopy/$setName/?" . $self->url_authen_args;
 	
-	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",
+	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, 
 		courseID => $courseID, setID => $setName);
 	my $hardcopyURL = $self->systemLink($hardcopyPage);
 	
-	print CGI::p(CGI::a({href=>$hardcopyURL}, "Download a hardcopy of this homework set."));
+	print CGI::p(CGI::a({href=>$hardcopyURL}, $r->maketext("Download a hardcopy of this homework set.")));
 
 
 	my $enable_reduced_scoring = $set->enable_reduced_scoring;
@@ -346,11 +347,11 @@ sub body {
 	if (@problemNumbers) {
 		print CGI::start_table();
 		print CGI::Tr({},
-			CGI::th("Name"),
-			CGI::th("Attempts"),
-			CGI::th("Remaining"),
-			CGI::th("Worth"),
-			CGI::th("Status"),
+			CGI::th($r->maketext("Name")),
+			CGI::th($r->maketext("Attempts")),
+			CGI::th($r->maketext("Remaining")),
+			CGI::th($r->maketext("Worth")),
+			CGI::th($r->maketext("Status")),
 		);
 		
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
@@ -361,11 +362,11 @@ sub body {
 		
 		print CGI::end_table();
 	} else {
-		print CGI::p("This homework set contains no problems.");
+		print CGI::p($r->maketext("This homework set contains no problems."));
 	}
 	
 	## feedback form url
-	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",
+	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", $r, 
 	#	courseID => $courseID);
 	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
 	#
@@ -410,7 +411,7 @@ sub problemListRow($$$) {
 	my $problemID = $problem->problem_id;
 	
 	my $interactiveURL = $self->systemLink(
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID
 		),
 		params=>{  displayMode => $self->{displayMode}, 
@@ -418,10 +419,10 @@ sub problemListRow($$$) {
 		}
 	);
 	
-	my $interactive = CGI::a({-href=>$interactiveURL}, "Problem $problemID");
+	my $interactive = CGI::a({-href=>$interactiveURL}, $r->maketext("Problem [_1]",$problemID));
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $remaining = (($problem->max_attempts||-1) < 0) #a blank yields 'infinite' because it evaluates as false with out giving warnings about comparing non-numbers
-		? "unlimited"
+		? $r->maketext("unlimited")
 		: $problem->max_attempts - $attempts;
 	my $rawStatus = $problem->status || 0;
 	my $status;

@@ -26,7 +26,7 @@ use strict;
 use warnings;
 use Carp;
 use WeBWorK::Debug;
-
+use WeBWorK::Localize;
 {
 	no warnings "redefine";
 	
@@ -622,6 +622,7 @@ sub new {
 	my $class = ref $invocant || $invocant;
 	my $self = {
 		type => undef,
+		r    => undef,             # will point to the parent request object (for access to the $ce)
 		args => {},
 		%fields,
 	};
@@ -636,18 +637,20 @@ is invalid, an exception is thrown.
 =cut
 
 sub newFromPath {
-	my ($invocant, $path) = @_;
+	my ($invocant,  $path, $r) = @_;
 	
 	my ($type, %args) = getPathType($path);
 	croak "no type matches path $path" unless $type;
+	croak "URLPath requires a request object parent as second element" unless (ref($r) =~/WeBWorK::Request/);
 	
 	return $invocant->new(
 		type => $type,
+		r    => $r,             # will point to the parent request object (for access to the $ce)
 		args => \%args,
 	);
 }
 
-=item newFromModule($module, %args)
+=item newFromModule($module,  $r, %args)
 
 Creates a new WeBWorK::URLPath by finding a path type which matches the module
 and path arguments given. If no type matches, an exception is thrown.
@@ -655,13 +658,15 @@ and path arguments given. If no type matches, an exception is thrown.
 =cut
 
 sub newFromModule {
-	my ($invocant, $module, %args) = @_;
+	my ($invocant, $module, $r, %args) = @_;
 	
 	my $type = getModuleType($module, keys %args);
+	croak "URLPath requires a request object parent as second element" unless (ref($r) =~/WeBWorK::Request/);
 	croak "no type matches module $module with args", map { " $_=>$args{$_}" } keys %args unless $type;
 	
 	return $invocant->new(
 		type => $type,
+		r    => $r,
 		args => \%args
 	);
 }
@@ -739,6 +744,7 @@ sub name {
 	my %args = $self->args;
 	
 	my $name = $pathTypes{$type}->{name};
+	$name = $self->{r}->maketext($name);   # translate the display name
 	$name = interpolate($name, %args);
 	
 	return $name;
@@ -785,8 +791,8 @@ sub parent {
 	my @currArgs = @{ $pathTypes{$type}->{capture} };
 	my %newArgs = %{ $self->{args} };
 	delete @newArgs{@currArgs} if @currArgs;
-	
-	return $self->new(type => $newType, args => \%newArgs);
+	# use the same request object "parent" for parent URLPath as for the child
+	return $self->new(type => $newType, r => $self->{r}, args => \%newArgs);
 }
 
 =item child($module, %newArgs)
@@ -837,6 +843,8 @@ sub path {
 =back
 
 =cut
+
+
 
 ################################################################################
 

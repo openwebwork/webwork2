@@ -127,7 +127,7 @@ sub body {
 	$self->{pwd} = $self->checkPWD($r->param('pwd') || HOME);
 	return CGI::em("You have specified an illegal working directory!") unless defined $self->{pwd};
 
-	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
+	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
 
 	print CGI::start_form(
@@ -394,6 +394,7 @@ sub Go {
 #
 sub View {
 	my $self = shift; my $pwd = $self->{pwd};
+	my $r = $self->r;
 	my $filename = $self->getFile("view"); return unless $filename;
 	my $name = "$pwd/$filename"; $name =~ s!^\./?!!;
 	my $file = "$self->{courseRoot}/$pwd/$filename";
@@ -423,7 +424,7 @@ sub View {
 	# Include a download link
 	#
 	my $urlpath = $self->r->urlpath;
-	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, courseID => $self->{courseName});
+	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $self->{courseName});
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $filename, pwd => $pwd});
 	print CGI::div({style=>"float:right"},
 		 CGI::a({href=>$fileManagerURL},"Download"));

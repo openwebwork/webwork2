@@ -123,7 +123,7 @@ sub body {
 	my $userID      = $urlpath->arg("userID");
 	
 	my $user        = $r->param('user');
-	my $setsAssignedToUserPage    = $urlpath->newFromModule($urlpath->module,
+	my $setsAssignedToUserPage    = $urlpath->newFromModule($urlpath->module, $r, 
 	                                                        courseID =>  $courseName,
 	                                                        userID=>$userID
 	);

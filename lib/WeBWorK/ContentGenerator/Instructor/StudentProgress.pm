@@ -101,7 +101,7 @@ sub siblings {
 	my $eUserID  = $r->param("effectiveUser");
 	my @setIDs   = sort  $db->listGlobalSets;
 	
-	my $progress     = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress", 
+	my $progress     = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress",  $r, 
 	                                        courseID => $courseID);
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
@@ -111,7 +111,7 @@ sub siblings {
 	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
 	print CGI::start_ul();
 	foreach my $setID (@setIDs) {
-		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress",
+		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::StudentProgress", $r, 
 			courseID => $courseID, setID => $setID,statType => 'set',);
 		my $prettySetID = $setID;
 		$prettySetID =~ s/_/ /g;
@@ -220,7 +220,7 @@ sub index {
 	my @setLinks      = ();
 	my @studentLinks  = (); 
 	foreach my $set (@setList) {
-	    my $setStatisticsPage   = $urlpath->newFromModule($urlpath->module,
+	    my $setStatisticsPage   = $urlpath->newFromModule($urlpath->module, $r, 
 	                                                      courseID => $courseName,
 	                                                      statType => 'set',
 	                                                      setID    => $set
@@ -234,7 +234,7 @@ sub index {
 		my $first_name = $studentRecord->first_name;
 		my $last_name = $studentRecord->last_name;
 		my $user_id = $studentRecord->user_id;
-		my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module,
+		my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module, $r, 
 	                                                      courseID => $courseName,
 	                                                      statType => 'student',
 	                                                      userID   => $user_id
@@ -274,7 +274,7 @@ sub displaySets {
 	my $GlobalSet        = $self->{setRecord};
 	my $root             = $ce->{webworkURLs}->{root};
 	
-	my $setStatsPage     = $urlpath->newFromModule($urlpath->module,courseID=>$courseName,statType=>'sets',setID=>$setName);
+	my $setStatsPage     = $urlpath->newFromModule($urlpath->module, $r, courseID=>$courseName,statType=>'sets',setID=>$setName);
 	my $primary_sort_method_name = $r->param('primary_sort');
 	my $secondary_sort_method_name = $r->param('secondary_sort'); 
 	my $ternary_sort_method_name = $r->param('ternary_sort');  

@@ -137,10 +137,10 @@ sub body {
 	my $courseName  = $urlpath->arg("courseID");
 	my $user        = $r->param('user');
 	
-	my $scoringPage       = $urlpath->newFromModule($urlpath->module, courseID => $courseName);
+	my $scoringPage       = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
 	my $scoringURL        = $self->systemLink($scoringPage, authen=>0);
 	
-	my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", 
+	my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", $r,  
 	                                      courseID => $courseName
 	);
 	

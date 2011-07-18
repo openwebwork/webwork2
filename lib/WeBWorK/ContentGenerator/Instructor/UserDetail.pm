@@ -214,7 +214,7 @@ sub body {
 
 	# create a link to the SetsAssignedToUser page
 # 	my $editSetsPath = $urlpath->newFromModule(
-# 		"WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser",
+# 		"WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser", $r, 
 # 		courseID => $courseID,
 # 		userID => $userID,
 # 	);

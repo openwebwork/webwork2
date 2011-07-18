@@ -28,6 +28,8 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Cookie;
+use WeBWorK::Localize;
+
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -111,15 +113,15 @@ sub body {
 		print CGI::div({class=>"ResultsWithError"}, $self->{keyError});
 	}
 	
-	my $problemSets = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+	my $problemSets = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",  $r, courseID => $courseID);
 	my $loginURL = $r->location . $problemSets->path;
 	
-	print CGI::p("You have been logged out of WeBWorK.");
+	print CGI::p($r->maketext("You have been logged out of WeBWorK."));
 	
 	print CGI::start_form(-method=>"POST", -action=>$loginURL);
 	print CGI::hidden("user", $userID);
 	print CGI::hidden("force_passwd_authen", 1);
-	print CGI::p({align=>"center"}, CGI::submit(-name=>"submit", -label=>"Log In Again"));
+	print CGI::p({align=>"center"}, CGI::submit(-name=>"submit", -label=>$r->maketext("Log In Again")));
 	print CGI::end_form();
 	
 	return "";

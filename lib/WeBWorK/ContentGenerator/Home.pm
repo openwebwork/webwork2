@@ -29,7 +29,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile readDirectory);
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
-
+use WeBWorK::Localize;
 sub info {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -83,21 +83,21 @@ sub body {
 		}
 	}
 	
-	print CGI::p("Welcome to WeBWorK!");
+	print CGI::p($r->maketext("Welcome to WeBWorK!"));
 	
 	if ($haveAdminCourse and !(-f "$coursesDir/admin/hide_directory")) {
-		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => "admin");
+		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => "admin");
 		print CGI::p(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, "Course Administration"));
 	}
 	
-	print CGI::h2("Courses");
+	print CGI::h2($r->maketext("Courses"));
 	
 	print CGI::start_ul();
 	
 	foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
 		next if $courseID eq "admin"; # done already above
 		next if -f "$coursesDir/$courseID/hide_directory";
-		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", courseID => $courseID);
+		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
 		print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID));
 	}
 	

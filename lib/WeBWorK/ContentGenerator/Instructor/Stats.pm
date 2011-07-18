@@ -101,7 +101,7 @@ sub siblings {
 	my $eUserID  = $r->param("effectiveUser");
 	my @setIDs   = sort  $db->listGlobalSets;
 	
-	my $stats     = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats", 
+	my $stats     = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats", $r,  
 	                                        courseID => $courseID);
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
@@ -112,7 +112,7 @@ sub siblings {
 	print CGI::start_ul();
 	
 	foreach my $setID (@setIDs) {
-		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats",
+		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::Stats", $r, 
 			courseID => $courseID, setID => $setID,statType => 'set',);
 		print CGI::li(CGI::a({href=>$self->systemLink($problemPage)}, WeBWorK::ContentGenerator::underscore2nbsp($setID)));
 	}
@@ -186,7 +186,7 @@ sub index {
 	my @setLinks      = ();
 	my @studentLinks  = (); 
 	foreach my $set (@setList) {
-	    my $setStatisticsPage   = $urlpath->newFromModule($urlpath->module,
+	    my $setStatisticsPage   = $urlpath->newFromModule($urlpath->module, $r, 
 	                                                      courseID => $courseName,
 	                                                      statType => 'set',
 	                                                      setID    => $set
@@ -195,7 +195,7 @@ sub index {
 	}
 	
 	foreach my $student (@studentList) {
-	    my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module,
+	    my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module, $r, 
 	                                                      courseID => $courseName,
 	                                                      statType => 'student',
 	                                                      userID   => $student
@@ -268,7 +268,7 @@ sub displaySets {
 	my $setRecord        = $self->{setRecord};
 	my $root             = $ce->{webworkURLs}->{root};
 	
-	my $setStatsPage     = $urlpath->newFromModule($urlpath->module,courseID=>$courseName,statType=>'sets',setID=>$setName);
+	my $setStatsPage     = $urlpath->newFromModule($urlpath->module, $r, courseID=>$courseName,statType=>'sets',setID=>$setName);
 	my $sort_method_name = $r->param('sort');  
 	# DBFIXME duplicate call
 	my @studentList      = $db->listUsers;
@@ -491,7 +491,7 @@ sub displaySets {
     		determine_percentiles([@brackets2], @{$attempts_list_for_problem{$probID}})
 
     	}; 
-    	$problemPage{$probID} = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",
+    	$problemPage{$probID} = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseName, setID => $setName, problemID => $probID);
 
     }

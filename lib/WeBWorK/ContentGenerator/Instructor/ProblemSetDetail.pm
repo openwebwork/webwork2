@@ -1659,16 +1659,16 @@ sub body {
 	
 	my $editUsersAssignedToSetURL = $self->systemLink(
 	      $urlpath->newFromModule(
-                "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet",
+                "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet", $r,
                   courseID => $courseID, setID => $setID));
 	my $editSetsAssignedToUserURL = $self->systemLink(
 	      $urlpath->newFromModule(
-                "WeBWorK::ContentGenerator::Instructor::UserDetail",
+                "WeBWorK::ContentGenerator::Instructor::UserDetail",$r,
                   courseID => $courseID, userID => $editForUser[0])) if $forOneUser;
 
 
-	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseID, setID => $setID);
-	my $fullsetDetailPage  = $urlpath -> newFromModule($urlpath->module, courseID => $courseID, setID => $fullSetID);
+	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, $r, courseID => $courseID, setID => $setID);
+	my $fullsetDetailPage  = $urlpath -> newFromModule($urlpath->module, $r, courseID => $courseID, setID => $fullSetID);
 	my $setDetailURL   = $self->systemLink($fullsetDetailPage, authen=>0);
 
 	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL}, $self->userCountMessage($setUserCount, $userCount));
@@ -1692,7 +1692,7 @@ sub body {
 				$line .= "Assigned to ";
 				my $editSetsAssignedToUserURL = $self->systemLink(
 					$urlpath->newFromModule(
-						"WeBWorK::ContentGenerator::Instructor::UserDetail",
+						"WeBWorK::ContentGenerator::Instructor::UserDetail", $r,
                   				courseID => $courseID, userID => $u->user_id));
             			$line .= CGI::a({href=>$editSetsAssignedToUserURL}, 
                      			$self->setCountMessage($db->countUserSets($u->user_id), 

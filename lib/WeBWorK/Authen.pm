@@ -56,11 +56,29 @@ use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
 use WeBWorK::Debug;
 use WeBWorK::Utils qw/writeCourseLog/;
 
-use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
-use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+
+####################
+## WeBWorK-tr Import localization handle
+## FIXME: we can't import the handle from $WeBWorK::ContentGenerator::LH
+
+use WeBWorK::Localize;
+#$LH = $WeBWorK::LH;
+my $LH = WeBWorK::Localize->get_handle("tr");
+
+## If GENERIC_ERROR_MESSAGE is constant, we can't translate it
+#use vars qw($GENERIC_ERROR_MESSAGE);
+our $GENERIC_ERROR_MESSAGE = "";  # define in new
+
+## WeBWorK-tr end modification 
+#####################
+
+use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
+#use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
+
 
 BEGIN {
 	if (MP2) {
@@ -130,6 +148,8 @@ sub new {
 	my $self = {
 		r => $r,
 	};
+	#initialize
+	$GENERIC_ERROR_MESSAGE = $r->maketext("Invalid user ID or password.");
 	bless $self, $class;
 	return $self;
 }
@@ -298,7 +318,7 @@ sub check_user {
 	
 	if (defined $user_id and $user_id eq "") {
 		$self->{log_error} = "no user id specified";
-		$self->{error} = "You must specify a user ID.";
+		$self->{error} = $r->maketext("You must specify a user ID.");
 		return 0;
 	}
 	
@@ -306,7 +326,7 @@ sub check_user {
 	
 	unless ($User) {
 		$self->{log_error} = "user unknown";
-		$self->{error} = GENERIC_ERROR_MESSAGE;
+		$self->{error} = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
 	
@@ -314,13 +334,13 @@ sub check_user {
 	
 	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
 		$self->{log_error} = "user not allowed course access";
-		$self->{error} = GENERIC_ERROR_MESSAGE;
+		$self->{error} = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
 	
 	unless ($authz->hasPermissions($user_id, "login")) {
 		$self->{log_error} = "user not permitted to login";
-		$self->{error} = GENERIC_ERROR_MESSAGE;
+		$self->{error} = $GENERIC_ERROR_MESSAGE;
 		return 0;
 	}
 	
@@ -393,11 +413,11 @@ sub verify_normal_user {
 			return 1;
 		} elsif ($auth_result == 0) {
 			$self->{log_error} = "authentication failed";
-			$self->{error} = GENERIC_ERROR_MESSAGE;
+			$self->{error} = $GENERIC_ERROR_MESSAGE;
 			return 0;
 		} else { # ($auth_result < 0) => required data was not present
 			if ($keyMatches and not $timestampValid) {
-				$self->{error} = "Your session has timed out due to inactivity. Please log in again.";
+				$self->{error} = $r->maketext("Your session has timed out due to inactivity. Please log in again.");
 			}
 			return 0;
 		}

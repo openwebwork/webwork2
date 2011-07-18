@@ -30,7 +30,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readDirectory list2hash max);
-
+use WeBWorK::Localize;
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;
