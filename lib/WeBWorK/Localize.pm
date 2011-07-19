@@ -42,6 +42,15 @@ problem. It is likely that there is an error in the problem itself. If you are a
 student, report this error message to your professor to have it corrected. If
 you are a professor, please consult the error output below for more information.
 },
+	'_LOGIN_MESSAGE' => q{
+If you check [_1] your 
+login information will be remembered by the browser 
+you are using, allowing you to visit WeBWorK pages 
+without typing your user name and password (until your 
+session expires). This feature is not safe for public 
+workstations, untrusted machines, and machines over 
+which you do not have direct control.
+},
 	);
 
 1;
