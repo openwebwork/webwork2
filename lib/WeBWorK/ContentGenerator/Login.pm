@@ -147,16 +147,8 @@ sub body {
 			 "in to this course.");
 
 	} else {
-		print CGI::p({},"Please enter your username and password for ",CGI::b($course)," below:");
-		print CGI::p(dequote <<"		EOT");
-			If you check ${\( CGI::b("Remember Me") )} &nbsp;your 
-			login information will be remembered by the browser 
-			you are using, allowing you to visit WeBWorK pages 
-			without typing your user name and password (until your 
-			session expires). This feature is not safe for public 
-			workstations, untrusted machines, and machines over 
-			which you do not have direct control.
-		EOT
+		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($course)));
+		print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
 	
 		print CGI::startform({-method=>"POST", -action=>$r->uri});
 
@@ -181,24 +173,24 @@ sub body {
 		print CGI::table({class=>"FormLayout"}, 
 			CGI::Tr([
 				CGI::td([
-		  		"Username:",
+		  		$r->maketext("Username:"), 
 		  		CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
 				]),CGI::br(),
 				CGI::td([
-		  		"Password:",
+		  		$r->maketext("Password:"),
 		  		CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
 				]),CGI::br(),
 				CGI::td([
 		  		"",
 		  		CGI::checkbox(
 				-name=>"send_cookie",
-				-label=>"Remember Me",
+				-label=>$r->maketext("Remember Me"),
 		  		),
 				]),
 	  		])
 		);
 	
-		print CGI::input({-type=>"submit", -value=>"Continue"});
+		print CGI::input({-type=>"submit", -value=>$r->maketext("Login")});
 		print CGI::endform();
 	
 		# figure out if there are any valid practice users

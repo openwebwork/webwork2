@@ -1,6 +1,5 @@
 ## WeBWorK-tr  Turkish language lexicon
-
-package WeBWorK::Localize::tr;
+package WeBWorK::Localize::tr  ; #;;  my highlighter is bothered by tr       
 
 use base qw(WeBWorK::Localize);
 use strict;
@@ -20,27 +19,55 @@ use vars qw(%Lexicon);
 ## UNTRANSLATED
 
 "The selected problem([_1]) is not a valid problem for set [_2]." =>
-	"The selected problem([_1]) is not a valid problem for set [_2].", 
+	"tr: The selected problem([_1]) is not a valid problem for set [_2].", 
+"Login Info" =>				"tr: Login Info",
+"Site Information" =>			"tr: Site Information",
+"Remember Me" =>			"tr: Remember Me",
+"Page generated at [_1] at [_2]" =>	"tr: Page generated at [_1] at [_2]",
+"Help" =>				"tr: Help",
+"Student Progress" =>			"tr: Student Progress",
+"Student Progress for [_1]" =>		"tr: Student Progress for [_1]",
+"View student progress by set" =>	"tr: View student progress by set",
+"View student progress by student" =>	"tr: View student progress by student",
+"Statistics for [_1]" =>		"tr: Statistics for [_1]",
+"View statistics by set" =>		"tr: View statistics by set",
+"View statistics by student" =>		"tr: View statistics by student",
+"Score selected set(s) and save to:" =>	"tr: Score selected set(s) and save to:",
+"Include Index"	=>			"tr: Include Index",
+"Record Scores for Single Sets" =>	"tr: Record Scores for Single Sets",
+"Pad Fields" =>				"tr: Pad Fields",
+
+
+## PLEASE CHECK
+
+"Username:" =>				"Kullanici adi:",
+"Password:" =>				"Sifre:",
+"Login" =>				"Devam et",
+"Main Menu" =>				"Ana Menü",
+
+
+## TRANSLATED
+
+"[_1]: Problem [_2]." =>		"[_1]: Soru [_2].", 
+"Next Problem" =>			"Sonraki Soru",  
+"Previous Problem" =>			"Önceki Soru", 
+"Problem List" =>			"Soru Listesi",
+"now open, due " =>			"açık, bitiş tarihi: ", 
+"Set" =>				"Soru Grubu", 
+"Score" =>				"Not",
+"Problems" =>				"Sorular", 
+
+"You can earn partial credit on this problem." =>
+	"Bu sorudan kısmi puan alabilirsiniz.", 
+
+"You have [negquant,_1,unlimited attempts,attempt,attempts] remaining." =>
+	"[negquant,_1,Sınırsız deneme hakkı,deneme hakkı,deneme hakkı] kaldı.", 
+
+"Please enter your username and password for [_1] below:" =>
+	"Lütfen [_1] dersi için kullanici adi ve sifrenizi giriniz:",
 
 "Download Hardcopy for Selected [plural,_1,Set,Sets]" => 
 	"Seçili Setleri Yazdır: [plural,_1,Set,Sets]",  
-
-
-
-"[_1]: Problem [_2]." =>		"[_1]: Soru [_2].", ## ozcan
-"Next Problem" =>			"Sonraki Soru",  ## ozcan
-"Previous Problem" =>			"Önceki Soru", ## ozcan
-"Problem List" =>			"Soru Listesi", ## ozcan
-"now open, due " =>			"açık, bitiş tarihi: ", ## ozcan
-"Set" =>				"Soru Grubu", ## ozcan
-"Score" =>				"Not", ## ozcan
-"Problems" =>				"Sorular", ## ozcan
-"You can earn partial credit on this problem." =>
-	"Bu sorudan kısmi puan alabilirsiniz.", ## ozcan
-"You have [negquant,_1,unlimited attempts,attempt,attempts] remaining." =>
-	"[negquant,_1,Sınırsız deneme hakkı,deneme hakkı,deneme hakkı] kaldı.", ## ozcan
-
-## TRANSLATED BY SALIH
 
 "over time: closed." =>			"süre bitti: kapalı.",
 "open: complete by [_1]" =>		"açık: [_1] tarihine kadar tamamlayın",
@@ -50,7 +77,7 @@ use vars qw(%Lexicon);
 "closed, answers available" =>		"kapalı, cevaplar açıklandı",
 "Viewing temporary file: " =>		"Geçici dosyayı görüntülüyor: ",
 "Course Info" =>			"Ders bilgileri",
-"~[edit~]" =>				"~[düzenle~]",    ## edited - ozcan
+"~[edit~]" =>				"~[düzenle~]",  
 "Course Administration" =>		"Ders Yönetimi",
 "Feedback" =>				"Geri Bildirim",
 "Grades" =>				"Notlar",
@@ -69,9 +96,6 @@ use vars qw(%Lexicon);
 "Logout" => 				"Çıkış",
 "Password/Email" =>			"Şifre/E-posta",
 "Statistics" =>				"İstatistikler",
-
-## TRANSLATED by OZCAN
-
 
 "Courses" =>		"Dersler",
 "Homework Sets" => 	"Soru Grupları",
@@ -263,6 +287,10 @@ Please retype your current password and try again." =>
 
 "_REQUEST_ERROR" => q{
  WebWork bu problemi işlerken bir yazılım hatası ile karşılaştı. Problemin kendisinde bir hata olması muhtemeldir. Eğer bir öğrenci iseniz bu hatayı ilgili kişilere bildiriniz. Eğer yetkili bir kişiyseniz daha fazla bilgi için alttaki hata raporunu inceleyiniz.
+},
+
+"_LOGIN_MESSAGE" => q{
+Eğer [_1] seçeneğini işaretlerseniz, giriş bilgileriniz kullandığınız tarayıcı tarafından hatırlanacak ve sonraki girişlerinizde kullanıcı adı ve şifre girmeden WebWork sayfalarını kullanabileceksiniz. Bu özellik, ortak kullanıma açık bilgisayarlar, güvenli olmayan bilgisayarlar, ve doğrudan kontrole sahip olmadığınız bilgisayarlarda kullanmak için güvenli değildir.
 },
 );
 1;

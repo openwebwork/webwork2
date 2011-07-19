@@ -55,21 +55,17 @@ use Date::Format;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
 use WeBWorK::Debug;
 use WeBWorK::Utils qw/writeCourseLog/;
+use WeBWorK::Localize;
 
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 
-####################
-## WeBWorK-tr Import localization handle
-## FIXME: we can't import the handle from $WeBWorK::ContentGenerator::LH
-
-use WeBWorK::Localize;
-#$LH = $WeBWorK::LH;
-my $LH = WeBWorK::Localize->get_handle("tr");
-
+#####################
+## WeBWorK-tr modification
 ## If GENERIC_ERROR_MESSAGE is constant, we can't translate it
+
 #use vars qw($GENERIC_ERROR_MESSAGE);
 our $GENERIC_ERROR_MESSAGE = "";  # define in new
 
