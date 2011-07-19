@@ -15,6 +15,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::ProblemSetList;
+use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
