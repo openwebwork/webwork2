@@ -1233,7 +1233,7 @@ sub view_form {
 
 sub view_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r = self->r;
+	my $r = $self->r;
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
 	my $fullSetName     =  $self->{fullSetID};
