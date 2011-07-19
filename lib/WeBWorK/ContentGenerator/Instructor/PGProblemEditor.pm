@@ -15,7 +15,9 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
+use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator::Instructor);
+use base qw(WeBWorK::ContentGenerator::renderViaXMLRPC);
 
 use constant DEFAULT_SEED => 123456;  
 
@@ -34,7 +36,9 @@ use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
 use File::Copy;
-use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
+use WeBWorK::Utils::Tasks qw(fake_user fake_set renderProblems);
+use Data::Dumper;
+use Fcntl;
 
 
 
