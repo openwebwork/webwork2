@@ -36,8 +36,7 @@ use vars qw(%Lexicon);
 "Problems" =>				   "Problemas",
 
 "You can earn partial credit on this problem." => "En este problema puedes obtener cr√©dito parcial.",
-"You have [negquant,_1,unlimited attempts,attempt,attempts] remaining." => "Te quedan [negquant,_1,unlimited attempts,attempt,attempts]."
-
+"You have [negquant,_1,unlimited attempts,attempt,attempts] remaining." => "Te quedan [negquant,_1,unlimited attempts,attempt,attempts].",
 
 "over time: closed." =>			"Tiempo terminado: cerrada.",
 "open: complete by [_1]" =>		"Abierta: completa por [_1]",
@@ -61,17 +60,16 @@ use vars qw(%Lexicon);
 "Problem Editor" =>			 "Editor de problems",
 "Scoring Tools" =>			 "Herramientas para evaluar",
 "Scoring Download" =>			 "Bajar Calificaciones",
-"Email" =>				 "E-mail",
+"Email" =>				     "E-mail",
 "Email instructor" =>			 "E-mail del professor",
 "Logout" => 				 "Salir",
 "Password/Email" =>			 "Contrase√±a/email",
 "Statistics" =>				 "Estad√≠sticas",
-
 "Courses" =>		"Cursos",
 "Homework Sets" => 	"Tareas",
 "Problem [_1]" => 	"Problema [_1]",
-"Library Browser" => 	"Explorador de bibliotecas
-"Report bugs" => 	"Reportar problemas (bugs)
+"Library Browser" => 	"Explorador de bibliotecas",
+"Report bugs" => 	"Reportar problemas (bugs)",
 
 "Logged in as [_1]. " =>  "Autentificado como: [_1]",
 "Log Out" => 		"Salir",
