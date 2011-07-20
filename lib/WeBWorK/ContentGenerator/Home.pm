@@ -74,6 +74,7 @@ sub body {
 	my $coursesURL = $r->ce->{webworkURLs}->{root};
 	
 	my @courseIDs = listCourses($r->ce);
+	#filter underscores here!
 	
 	my $haveAdminCourse = 0;
 	foreach my $courseID (@courseIDs) {
@@ -99,7 +100,7 @@ sub body {
 		next if -f "$coursesDir/$courseID/hide_directory";
 		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
 		print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID));
-	}
+	}###place to use underscore sub
 	
 	print CGI::end_ul();
 	
