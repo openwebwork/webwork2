@@ -287,6 +287,9 @@ $webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath-ww.js";
 # Location of MathJax script, used for the MathJax display mode.
 $webworkURLs{MathJax}       = "$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-AMS_HTML-full";
 
+# Location of Tabber script, used to generate tabbed widgets.
+$webworkURLs{tabber}		= "$webworkURLs{htdocs}/js/tabber.js";
+
 # Location of ASCIIMathML script, used for the asciimath display mode.
 $webworkURLs{asciimath}     = "$webworkURLs{htdocs}/ASCIIMathML/ASCIIMathML.js";
 
@@ -383,8 +386,8 @@ $webworkFiles{hardcopySnippets}{postamble}      = "$webworkDirs{conf}/snippets/h
 
 # The set header is displayed on the problem set page. It is a PG file.
 # This is the default file which is used if a specific files is not selected
-$webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg"; # screenSetHeader.pg"
-#$webworkFiles{screenSnippets}{setHeader}       = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg"; # An alternate default header file
+#$webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg"; # screenSetHeader.pg"
+$webworkFiles{screenSnippets}{setHeader}       = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg"; # An alternate default header file
 
 # A PG template for creation of new problems.
 $webworkFiles{screenSnippets}{blankProblem}    = "$webworkDirs{conf}/snippets/blankProblem2.pg"; # screenSetHeader.pg"
@@ -653,6 +656,19 @@ $authen{ldap_options} = {
 
         searchDN => "cn=search,DC=youredu,DC=edu",
         bindPassword =>  "password",
+
+	# The LDAP module searches for a DN whose RDN matches the username
+	# entered by the user. The net_ldap_rdn setting tells the LDAP
+	# backend what part of your LDAP schema you want to use as the RDN.
+	# The correct value for net_ldap_rdn will depend on your LDAP setup.
+	# 
+	# Uncomment this line if you use Active Directory.
+	#net_ldap_rdn => "sAMAccountName",
+	#
+	# Uncomment this line if your schema uses uid as an RDN.
+	#net_ldap_rdn => "uid",
+	#
+	# By default, net_ldap_rdn is set to "sAMAccountName".
 
 	# If failover = "all", then all LDAP failures will be checked
 	# against the WeBWorK database. If failover = "local", then only
