@@ -342,7 +342,7 @@ sub body {
 	}
 	
 	# DBFIXME use iterator
-	my @problemNumbers = $db->listUserProblems($effectiveUser, $setName);
+	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
 	
 	if (@problemNumbers) {
 		print CGI::start_table();
