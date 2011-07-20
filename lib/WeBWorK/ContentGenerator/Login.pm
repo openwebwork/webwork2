@@ -15,6 +15,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Login;
+use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
@@ -100,7 +101,7 @@ sub info {
 
 	
 	if (defined $result and $result ne "") {
-		return CGI::div({class=>"info-box", id=>"InfoPanel"}, $result);
+		return CGI::div({-class=>"info-wrapper"},CGI::div({class=>"info-box", id=>"InfoPanel"}, $result));
 	} else {
 		return "";
 	}
@@ -141,7 +142,7 @@ sub body {
 	}
 
 	if ( $externalAuth ) {
-	    print CGI::p({}, CGI::b($course), "uses an external", 
+	    print CGI::p({}, CGI::strong($course), "uses an external", 
 			 "authentication system.  You've authenticated",
 			 "through that system, but aren't allowed to log",
 			 "in to this course.");
@@ -150,7 +151,7 @@ sub body {
 		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($course)));
 		print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
 	
-		print CGI::startform({-method=>"POST", -action=>$r->uri});
+		print CGI::startform({-method=>"POST", -action=>$r->uri, -id=>"login_form"});
 
 	
 		# preserve the form data posted to the requested URI
@@ -214,7 +215,7 @@ sub body {
 			print $self->hidden_fields(@fields_to_print);
 		
 			print CGI::p(dequote <<"			EOT");
-				This course supports guest logins. Click ${\( CGI::b("Guest Login") )}
+				This course supports guest logins. Click ${\( CGI::strong("Guest Login") )}
 				&nbsp;to log into this course as a guest.
 			EOT
 			print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"});
