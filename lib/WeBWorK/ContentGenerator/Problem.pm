@@ -15,7 +15,9 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Problem;
-use base qw(WeBWorK::ContentGenerator);
+use base qw(WeBWorK);
+#use base qw(WeBWorK::ContentGenerator);
+use base qw(WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil);  # not needed?
 
 =head1 NAME
  
@@ -264,8 +266,6 @@ sub attemptResults {
                                                        $r->maketext("incorrect");
 		$fully = $r->maketext("completely ") if $answerScore >0 and $answerScore < 1;
 		
-		
-		#warn "answer $name  score $answerScore";
 		push @correct_ids,   $name if $answerScore == 1;
 		push @incorrect_ids, $name if $answerScore < 1;
 		
