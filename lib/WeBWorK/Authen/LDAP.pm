@@ -54,6 +54,11 @@ sub ldap_authen_uid {
         my $searchdn = $ce->{authen}{ldap_options}{searchDN};
 	my $bindAccount = $ce->{authen}{ldap_options}{bindAccount};
         my $bindpassword = $ce->{authen}{ldap_options}{bindPassword};
+	# Be backwards-compatible with releases that hardcode this value.
+	my $rdn = "sAMAccountName";
+	if (defined $ce->{authen}{ldap_options}{net_ldap_rdn}) {
+		$rdn = $ce->{authen}{ldap_options}{net_ldap_rdn};
+	}
 
 
 	
@@ -85,7 +90,7 @@ sub ldap_authen_uid {
 	}
 	
 	# look up user's DN
-	$msg = $ldap->search(base => $base, filter => "sAMAccountName=$uid");
+	$msg = $ldap->search(base => $base, filter => "$rdn=$uid");
 	if ($msg->is_error) {
 		warn "AUTH LDAP: search error ", $msg->code, ": ", $msg->error_text, ".\n",$searchdn,"\n",$base,"\n",$uid,"\n";
 		return 0;
