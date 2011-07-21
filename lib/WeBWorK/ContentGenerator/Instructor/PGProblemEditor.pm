@@ -1751,7 +1751,7 @@ sub save_as_form {  # calls the save_as_handler
  
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r=>self->r;
+	my $r=>$self->r;
 	#$self->addgoodmessage("save_as_handler called");
 	$self->{status_message} = ''; ## DPVC -- remove bogus old messages
 	my $courseName      =  $self->{courseID};
