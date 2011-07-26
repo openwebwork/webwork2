@@ -30,7 +30,10 @@ Apache::AuthenWeBWorK - Authenticate against WeBWorK::Authen framework.
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common);
+#use Apache::Constants qw(:common);
+use Apache2::Const -compile => qw(OK DECLINED HTTP_UNAUTHORIZED);
+use Apache2::Access ();
+use Apache2::RequestUtil ();
 
 use WeBWorK::Debug;
 use WeBWorK::Request;
@@ -54,7 +57,7 @@ sub handler($) {
 	my $r = new WeBWorK::Request($apache);
 	
 	my ($res, $sent_pw) = $r->get_basic_auth_pw;
-	return $res unless $res == OK;
+	return $res unless $res == Apache2::Const::OK;
 	
 	my $webwork_root = $r->dir_config('authen_webwork_root');
 	my $webwork_course = $r->dir_config('authen_webwork_course');
@@ -116,9 +119,11 @@ sub handler($) {
 	
 	if ($authenOK) {
 		debug("this will work!!!");
-		return OK;
+		#return OK;
+		return Apache2::Const::OK;
 	} else {
-		return AUTH_REQUIRED;
+		#return AUTH_REQUIRED;
+		return Apache2::Const::HTTP_UNAUTHORIZED;
 	}
 }
 
@@ -126,7 +131,8 @@ sub fail {
 	my ($r, $msg) = @_;
 		$r->note_basic_auth_failure;
 		$r->log_reason($msg, $r->filename);
-		return AUTH_REQUIRED;
+		#return AUTH_REQUIRED;
+		return Apache2::Const::HTTP_UNAUTHORIZED;
 }
 
 =back
@@ -137,7 +143,10 @@ package Authen::WeBWorK::HTTPBasic;
 
 use strict;
 use warnings;
-use Apache::Constants qw(:common);
+use Apache2::Const -compile => qw(OK DECLINED HTTP_UNAUTHORIZED);
+use Apache2::Access ();
+use Apache2::RequestUtil ();
+#use Apache::Constants qw(:common);
 use WeBWorK::Debug;
 
 sub get_credentials {
@@ -145,11 +154,14 @@ sub get_credentials {
 	my $r = $self->{r};
 	
 	my ($res, $sent_pw) = $r->get_basic_auth_pw;
-	return unless $res == OK;
-	my $user_id = $r->connection->user;
+	#return unless $res == OK;
+	return unless $res == Apache2::Const::OK;
+	my $user_id = $r->user;
+	#my $user_id = $r->connection->user;
 	
-	if (defined $r->connection->user) {
-		$self->{user_id} = $r->connection->user;
+	#if (defined $r->connection->user) {
+	if (defined $r->user) {
+		$self->{user_id} = $r->user;
 		$self->{password} = $sent_pw;
 		$self->{credential_source} = "http_basic";
 		return 1;
