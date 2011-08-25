@@ -385,7 +385,7 @@ sub view_problems_line {
 	my $r = shift; # so we can get parameter values
 	my $self = shift;
 	my $urlpath = $r->urlpath;
-  my $getProblemPath = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems", courseID =>$urlpath->arg("courseID")));
+  my $getProblemPath = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems", $r, courseID =>$urlpath->arg("courseID")));
 	my $result = "<span><button type='button' onclick='viewProblems(\"$internal_name\" ,\"mainform\", \"".$r->uri."\", \"view_problems_spinner\");'>$label</button><img id='view_problems_spinner' style='display:none;' src='/webwork2_files/images/ajax-loader-small.gif'></img></span>";
 	#$result .= CGI::hidden(-name=>"$internal_name");
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
@@ -471,7 +471,7 @@ sub browse_mysets_panel {
 	my $view_problem_line = view_problems_line('view_mysets_set', 'View Problems', $self->r, $self);
 	
 	my $urlpath = $self->r->urlpath;
-  my $getProblemPath = $self->r->uri;#$self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GetTargetSetProblems", courseID =>$urlpath->arg("courseID")));
+  my $getProblemPath = $self->r->uri;#$self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GetTargetSetProblems", $r, courseID =>$urlpath->arg("courseID")));
 	print CGI::div({-class=>"InfoPanel", -align=>"left"},
 	  #CGI::submit(-name=>"update", -style=>"width: 25ex; font-weight:bold;", -value=>"Update Set"),
 	  '<span>',
@@ -985,6 +985,7 @@ sub make_top_row {
 
 sub make_data_row {
 	my $self = shift;
+	my $r = $self->r;
 	my $sourceFileName = shift;
 	my $pg = shift;
 	my $cnt = shift;
@@ -1015,7 +1016,7 @@ sub make_data_row {
 	#if($self->{r}->param('browse_which') ne 'browse_npl_library') {
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
@@ -1031,7 +1032,7 @@ sub make_data_row {
 	$pathArgs{problemID} = "1" if ( ! $isGatewaySet );
 
 	my $try_link = CGI::a({href=>$self->systemLink(
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module",
+		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module", $r,
 			%pathArgs ),
 			params =>{
 				effectiveUser => scalar($self->r->param('user')),
@@ -1086,6 +1087,7 @@ sub make_data_row {
 
 sub make_myset_data_row {
 	my $self = shift;
+	my $r = $self->r;
 	my $sourceFileName = shift;
 	my $pg = shift;
 	my $cnt = shift;
@@ -1116,7 +1118,7 @@ sub make_myset_data_row {
 	#if($self->{r}->param('browse_which') ne 'browse_npl_library') {
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
@@ -1134,7 +1136,7 @@ sub make_myset_data_row {
 	$pathArgs{problemID} = "1" if ( ! $isGatewaySet );
 
 	my $try_link = CGI::a({href=>$self->systemLink(
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module",
+		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module", $r,
 			%pathArgs ),
 			params =>{
 				effectiveUser => scalar($self->r->param('user')),
@@ -1211,7 +1213,7 @@ sub pre_header_initialize {
 			$self->{error} = 1;
 			$self->addbadmessage('You need to select a "Target Set" before you can edit it.');
 		} else {
-			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail', setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
+			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail', $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
 			my $url = $self->systemLink($page);
 			$self->reply_with_redirect($url);
 		}
@@ -1885,13 +1887,13 @@ sub body {
 	        if ($first_shown > 0) {
 		        #$prev_button = CGI::submit(-name=>"prev_page", -style=>"width:15ex", -value=>"Previous page");
 		        my $urlpath = $r->urlpath;
-            my $getProblemPath = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems", courseID =>$urlpath->arg("courseID")));
+            my $getProblemPath = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems", $r, courseID =>$urlpath->arg("courseID")));
 	          $prev_button = "<span><button type='button' onclick='viewProblems(\"prev_page\" ,\"mainform\", \"".$r->uri."\", \"prev_spinner\");'>Previous page</button><img id='prev_spinner' style='display:none;' src='/webwork2_files/images/ajax-loader-small.gif'></img></span>";
 	        }
 	        if ((1+$last_shown)<scalar(@pg_files)) {
 		        #$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex", -value=>"Next page");
 		        my $urlpath = $r->urlpath;
-            my $getProblemPath = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems", courseID =>$urlpath->arg("courseID")));
+            my $getProblemPath = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems", $r, courseID =>$urlpath->arg("courseID")));
 	          $next_button = "<span><button type='button' onclick='viewProblems(\"next_page\" ,\"mainform\", \"".$r->uri."\", \"next_spinner\");'>Next page</button><img id='next_spinner' style='display:none;' src='/webwork2_files/images/ajax-loader-small.gif'></img></span>";
 	        }
 	        if (scalar(@pg_files)>0) {

@@ -83,9 +83,9 @@ sub initialize {
 		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
 	}
 
-	my $visiblityStateText = ($set->visible) ? "visible to students." : "hidden from students.";
+	my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
 	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
-	$self->addmessage(CGI::span("This set is " . CGI::font({class=>$visiblityStateClass}, $visiblityStateText))) if $authz->hasPermissions($userName, "view_hidden_sets");
+	$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::font({class=>$visiblityStateClass}, $visiblityStateText)))) if $authz->hasPermissions($userName, "view_hidden_sets");
 
 
 	$self->{userName}        = $userName;
@@ -150,7 +150,7 @@ sub siblings {
 	}
 
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2("Sets");
+	print CGI::h2($r->maketext("Sets"));
 	print CGI::start_ul();
 
 		debug("Begin printing sets from listUserSets()");
@@ -227,7 +227,7 @@ sub info {
 			$screenSetHeader = $r->param('sourceFilePath');
 			$screenSetHeader = $ce->{courseDirs}{templates}.'/'.$screenSetHeader unless $screenSetHeader =~ m!^/!;
 			die "sourceFilePath is unsafe!" unless path_is_subdir($screenSetHeader, $ce->{courseDirs}->{templates});
-			$self->addmessage(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ",
+			$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file").": ",
 			            $screenSetHeader));
 			$displayMode = $r->param("displayMode") if $r->param("displayMode");
 		}
@@ -270,9 +270,9 @@ sub info {
 	print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 	
 	if ($editorURL) {
-		print CGI::h2({},"Set Info", CGI::a({href=>$editorURL, target=>"WW_Editor"}, "[edit]"));
+		print CGI::h2({},$r->maketext("Set Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[edit~]")));
 	} else {
-		print CGI::h2("Set Info");
+		print CGI::h2($r->maketext("Set Info"));
 	}
 	
 	if ($pg->{flags}->{error_flag}) {
@@ -305,8 +305,7 @@ sub body {
 
 	if ( $self->{invalidSet} ) { 
 		return CGI::div({class=>"ResultsWithError"},
-				CGI::p("The selected problem set ($setName) " .
-				       "is not a valid set for $effectiveUser:"),
+				CGI::p($r->maketext("The selected problem set ([_1]) is not a valid set for [_2]",$setName,$effectiveUser).":"),
 				CGI::p($self->{invalidSet}));
 	}
 	
@@ -319,7 +318,7 @@ sub body {
 		courseID => $courseID, setID => $setName);
 	my $hardcopyURL = $self->systemLink($hardcopyPage);
 	
-	print CGI::p(CGI::a({href=>$hardcopyURL}, $r->maketext("Download a hardcopy of this homework set.")));
+	print CGI::p(CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set")));
 
 
 	my $enable_reduced_scoring = $set->enable_reduced_scoring;
@@ -331,13 +330,9 @@ sub body {
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
 		my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec);
 		if (time < $set->due_date()) {
-			print CGI::div({class=>"ResultsAlert"},"This assignment has a Reduced Credit Period that begins
-			$beginReducedScoringPeriod and ends on the due date, $dueDate.  During this period all additional
-			work done counts $reducedScoringPerCent\% of the original.");
+			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_1",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		} else {
-			print CGI::div({class=>"ResultsAlert"},"This assignment had a Reduced Credit Period that began
-			$beginReducedScoringPeriod and ended on the due date, $dueDate.  During that period all additional
-			work done counted $reducedScoringPerCent\% of the original.");
+			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_2",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		}
 	}
 	
@@ -345,13 +340,18 @@ sub body {
 	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
 	
 	if (@problemNumbers) {
-		print CGI::start_table();
+		# UPDATE - ghe3
+		# This table now contains a summary, a caption, and scope variables for the columns.
+		print CGI::start_table({-summary=>"This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.", -class=>"problem_set_table"});
+		print CGI::caption($r->maketext("Problems"));
 		print CGI::Tr({},
+
 			CGI::th($r->maketext("Name")),
 			CGI::th($r->maketext("Attempts")),
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
 			CGI::th($r->maketext("Status")),
+
 		);
 		
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {

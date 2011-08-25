@@ -285,6 +285,7 @@ __END__
  $translator = $pg->{translator}; # WeBWorK::PG::Translator
  $body       = $pg->{body_text};  # text string
  $header     = $pg->{head_text};  # text string
+ $post_header_text = $pg->{post_header_text};  # text string
  $answerHash = $pg->{answers};    # WeBWorK::PG::AnswerHash
  $result     = $pg->{result};     # hash reference
  $state      = $pg->{state};      # hash reference

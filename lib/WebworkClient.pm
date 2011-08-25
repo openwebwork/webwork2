@@ -137,7 +137,7 @@ sub xmlrpcCall {
 		return 1; # success
 
 	  } else {
-		$self->{output} = 'Error from server: '. join( ",\n ",
+		$self->{output} = 'Error in xmlrpcCall to server: '. join( ",\n ",
 		  $result->faultcode,
 		  $result->faultstring);
 		return 0; #failure
@@ -367,13 +367,37 @@ sub formatRenderedProblem {
 	my $rh_answers        = $rh_result->{answers};
 	my $encodedSource     = $self->{encodedSource}||'foobar';
 	my $warnings          = '';
+	#################################################
+	# regular Perl warning messages generated with warn
+	#################################################
+
 	if ( defined ($rh_result->{WARNINGS}) and $rh_result->{WARNINGS} ){
 		$warnings = "<div style=\"background-color:pink\">
 		             <p >WARNINGS</p><p>".decode_base64($rh_result->{WARNINGS})."</p></div>";
 	}
 	#warn "keys: ", join(" | ", sort keys %{$rh_result });
+	
+	#################################################	
+	# PG debug messages generated with DEBUG_message();
+	#################################################
+	
 	my $debug_messages = $rh_result->{flags}->{DEBUG_messages} ||     [];
     $debug_messages = join("<br/>\n", @{  $debug_messages }    );
+    
+	#################################################    
+	# PG warning messages generated with WARN_message();
+	#################################################
+
+    my $PG_warning_messages =  $rh_result->{flags}->{WARNING_messages} ||     [];
+    $PG_warning_messages = join("<br/>\n", @{  $PG_warning_messages }    );
+    
+	#################################################
+	# internal debug messages generated within PG_core
+	# these are sometimes needed if the PG_core warning message system
+	# isn't properly set up before the bug occurs.
+	# In general don't use these unless necessary.
+	#################################################
+
     my $internal_debug_messages = $rh_result->{internal_debug_messages} || [];
     $internal_debug_messages = join("<br/>\n", @{ $internal_debug_messages  } );
 	# collect answers
@@ -408,15 +432,13 @@ sub formatRenderedProblem {
 	       <p><input type="submit" name="submit" value="submit answers"></p>
 	     </form>
 <HR>
-<h3> Warning section </h3>
+<h3> Perl warning section </h3>
 $warnings
-<h3>
-Debug message section
-</h3>
+<h3> PG Warning section </h3>
+$PG_warning_messages;
+<h3> Debug message section </h3>
 $debug_messages
-<h3>
-internal errors
-</h3>
+<h3> internal errors </h3>
 $internal_debug_messages
 
 </body>
