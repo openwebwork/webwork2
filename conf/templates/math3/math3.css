@@ -279,13 +279,42 @@ clear: both;
 }*/
 /* [ww] instead of a search form, we want the loginstatus there */
 /*#masthead form {*/
-#masthead #loginstatus {
+
+/*Absolute positioning*/
+
+#loginstatus {
+	color: white;
+	position: absolute;
+	top: -75px;
+	left: 1170px;
+	width: 150px;
 	float: right;
+	text-align: center;
 	padding: 0;
 	margin: 1ex .5em .1ex .1em;
 	font-size: smaller;
 }
-#masthead #loginstatus #Nav {
+
+/*Relative Positioning*/
+
+/*#loginstatus {
+	color: white;
+	position: relative;
+	top: -140px;
+	left: 470px;
+	width: 150px;
+	text-align: center;
+	padding: 0;
+	margin: 1ex .5em .1ex .1em;
+	font-size: smaller;
+}*/
+
+
+#loginstatus a{
+	color: white;
+}
+
+#loginstatus #Nav {
 	padding: 1ex;
 }
 
@@ -519,6 +548,8 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 .Enrolled { font-weight: normal; color: black; background-color: inherit; }
 .Drop { font-style: italic; color: gray; background-color: inherit; }
 
+/*Styles for the login form*/
+
 #login_form input {
 	margin-top: 7px;
 }
@@ -535,6 +566,8 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 	margin-left: 75px;
 }
 
+/*Styles for the edit forms, found on the homework sets editor page*/
+
 .edit_form  input,select{
 	margin-top: 5px;
 }
@@ -546,6 +579,12 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 .edit_form label.radio_label{
 	margin-left: 0px;
 }
+
+.edit_form  span#filter_err_msg{
+	display: none;
+}
+
+/*Styles for the classlist editor page*/
 
 .set_table{
 	margin-right: 5px;
@@ -564,6 +603,8 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 .set_table label{
 	margin-left: 0px;
 }
+
+/*General styles, for elements such as table captions input buttons, columns, etc.*/
 
 table caption{
 	font-weight: bold;
@@ -591,11 +632,49 @@ table caption{
 	margin-left: 5px;
 }
 
+a.nav_button{
+	color: black;
+	background-color: #DDDDDD;
+	text-decoration: none;
+	text-align: center;
+	font-size: 15px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px;
+	border-style: outset;
+}
+
+a.nav_button:hover{
+	background-color: #EEEEEE;
+	border-color: #00ADEE;
+}
+
+a.nav_button:active{
+	border-style: inset;
+}
+
+span.gray_button{
+	color: black;
+	background-color: #DDDDDD;
+	text-decoration: none;
+	text-align: center;
+	font-size: 15px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px;
+	border-style: outset;
+	opacity: 0.3;
+}
+
+#none{
+	/*Please do not do anything with elements with id "none"*/
+}
+
+/*Styles for the PGProblemEditor Page*/
+
 #editor{
 	background-color: #FFFFFF;
 }
 
-#editor #problemContents_p{
+#editor #source_and_options{
 	float: left;
 	width: 50%;
 }
@@ -607,21 +686,70 @@ table caption{
 	margin-left: 30%;
 }
 
+#editor #problemContents_id{
+	width: 100%;
+	height: 50%;
+}
+
 #editor .editor_form{
 	margin-left: 40px;
 }
 
-#editor #problem_viewer{
-	float: left;
-	width: 50%;
-}
-
 #editor #form_div{
 	/*float: left;*/
-	clear: both;
-	width: 47%;
+	width: 100%;
 }
 
-#none{
-	/*Please do not do anything with elements with id "none"*/
+/*Styles specifically for the problem viewer*/
+
+#problem_viewer_form{
+	margin-left: 10px;
+	float: left;
+	width: 45%;
+	height: 100%;
+	border-left: solid;
+	border-width: 1px;
+}
+
+#problem_viewer_form>h3{
+	margin-left: 37%;
+}
+
+#problem_viewer_form #viewer_span{
+	margin-left: 10%;
+}
+
+#problem_viewer_form #reload_button{
+	margin-left: 20%;
+	margin-top: 5%;
+}
+
+#problem_viewer_form #problem_viewer{
+	width: 60%;
+	background-color: #E8E8E8;
+	margin-left: 20%;
+	margin-top: 5%;
+	padding: 1px;
+}
+
+#problem_viewer_form #problem_viewer_content{
+	border-style: solid;
+	padding: 5%;
+	border-width: 1px;
+}
+
+#problem_viewer_form #viewer_note{
+	margin-top: 10%;
+	margin-left: 10%;
+	margin-right: 10%;
+}
+
+/*These are styles for the tables of problem sets*/
+
+table.problem_set_table th{
+	padding-right: 30px;
+}
+
+table.problem_set_table td{
+	padding-right: 30px;
 }
