@@ -261,10 +261,10 @@ sub attemptResults {
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   # unless student answer contains entry
-		my $resultString = $answerScore >= 1 ? $r->maketext("correct") :
+		my $resultString = $answerScore >= 1 ? CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct")) :
 		                   $answerScore > 0  ? $r->maketext("[_1]% correct", int($answerScore*100)) :
-                                                       $r->maketext("incorrect");
-		$fully = $r->maketext("completely ") if $answerScore >0 and $answerScore < 1;
+                                                       CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
+		$fully = $r->maketext("completely") if $answerScore >0 and $answerScore < 1;
 		
 		push @correct_ids,   $name if $answerScore == 1;
 		push @incorrect_ids, $name if $answerScore < 1;
@@ -595,9 +595,9 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
 		}
 
-		my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
-		my $visiblityStateText = ($set->visible) ? "visible to students." : "hidden from students.";
-		$self->addmessage(CGI::span("This set is " . CGI::font({class=>$visiblityStateClass}, $visiblityStateText)));
+		my $visiblityStateClass = ($set->visible) ? $r->maketext("visible") : $r->maketext("hidden");
+		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
+		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::font({class=>$visiblityStateClass}, $visiblityStateText))));
 
   # test for additional problem validity if it's not already invalid
         } else {
@@ -752,6 +752,12 @@ sub head {
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 }
 
+sub post_header_text {
+	my ($self) = @_;
+	return "" if ( $self->{invalidSet} );
+    return $self->{pg}->{post_header_text} if $self->{pg}->{post_header_text};
+}
+
 sub options {
 	my ($self) = @_;
 	#warn "doing options in Problem";
@@ -879,39 +885,126 @@ sub title {
 	return $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
 }
 
-sub body {
+
+# now altered to outsource most output operations to the template, main functions now are simply error checking and answer processing - ghe3
+# sub body {
+# 	my $self = shift;
+# 	my $set = $self->{set};
+# 	my $problem = $self->{problem};
+# 	my $pg = $self->{pg};
+# 	print "this is data from the old body function";
+# 	my $valid = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::check_invalid($self);
+# 	unless($valid eq "valid"){
+# 		return $valid;
+# 	}
+# 	
+# 	# my $editorLink = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_editorLink($self);
+# 	# if($editorLink eq "permission_error"){
+# 		# return "";
+# 	# }
+# 	
+# 	##### answer processing #####
+# 	debug("begin answer processing");
+# 	# if answers were submitted:
+#   my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self);
+# 	debug("end answer processing");
+# 	
+# 	##### javaScripts #############
+# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_JS($self);
+# 
+# 	##### output #####
+# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_summary($self);
+# 	
+# 	###########################
+# 	# print style sheet for correct and incorrect answers
+# 	###########################
+# 	
+# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_CSS($self);
+#     
+# 	###########################
+# 	# main form
+# 	###########################
+# 	
+# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_main_form($self,$editorLink);
+# 	
+# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_footer($self);
+# 	print "end of old body function";
+# 	# debugging stuff
+# 	if (0) {
+# 		print
+# 			CGI::hr(),
+# 			CGI::h2("debugging information"),
+# 			CGI::h3("form fields"),
+# 			ref2string($self->{formFields}),
+# 			CGI::h3("user object"),
+# 			ref2string($self->{user}),
+# 			CGI::h3("set object"),
+# 			ref2string($set),
+# 			CGI::h3("problem object"),
+# 			ref2string($problem),
+# 			CGI::h3("PG object"),
+# 			ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+# 	}
+# 	debug("leaving body of Problem.pm");
+# 	return "";
+# }
+
+# output_form_start subroutine
+
+# prints out the beginning of the main form, and the necessary hidden authentication fields
+
+sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
+	print $self->hidden_authen_fields;
+	return "";
+}
+
+
+# output_problem_body subroutine
+
+# prints out the body of the current problem
+
+sub output_problem_body{
+	my $self = shift;
+	my $pg = $self->{pg};
+
+	print "\n";
+	print CGI::p($pg->{body_text});
+	return "";
+	}
+	
+# output_message subroutine
+
+# prints out a message about the problem
+
+sub output_message{
+	my $self = shift;
+	my $pg = $self->{pg};
+	my $r = $self->r;
+
+	print CGI::p(CGI::b($r->maketext("Note").": "). CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
+	return "";
+	}	
+
+# output_editorLink subroutine
+
+# processes and prints out the correct link to the editor of the current problem
+
+sub output_editorLink{
+	
+	my $self = shift;
+
+	my $set             = $self->{set};
+	my $problem         = $self->{problem};
+	my $pg              = $self->{pg};
+	
+	my $r = $self->r;
+	
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
-	my $effectiveUser = $r->param('effectiveUser');
-
-	if ( $self->{invalidSet} ) { 
-		return CGI::div({class=>"ResultsWithError"},
-				CGI::p($r->maketext("The selected problem set ([_1]) is not a valid set for [_2]:", $urlpath->arg("setID"), $effectiveUser)), CGI::p($self->{invalidSet}));
-	}
-	
-	if ($self->{invalidProblem}) {
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p($r->maketext("The selected problem([_1]) is not a valid problem for set [_2].", $urlpath->arg("problemID"), $self->{set}->set_id )));
-	}	
-
-
-	# unpack some useful variables
-	my $set             = $self->{set};
-	my $problem         = $self->{problem};
-	my $editMode        = $self->{editMode};
-	my $submitAnswers   = $self->{submitAnswers};
-	my $checkAnswers    = $self->{checkAnswers};
-	my $previewAnswers  = $self->{previewAnswers};
-	my %want            = %{ $self->{want} };
-	my %can             = %{ $self->{can}  };
-	my %must            = %{ $self->{must} };
-	my %will            = %{ $self->{will} };
-	my $pg              = $self->{pg};
 	
 	my $courseName = $urlpath->arg("courseID");
 	
@@ -927,7 +1020,7 @@ sub body {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, "Edit this problem"));
+		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit this problem")));
 	}
 	
 	##### translation errors? #####
@@ -938,232 +1031,78 @@ sub body {
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
+		print "";
+	}
+	else{
 		print $editorLink;
+	}
 		return "";
 	}
 	
-	##### answer processing #####
-	debug("begin answer processing");
-	# if answers were submitted:
-	my $scoreRecordedMessage;
-	my $pureProblem;
-	if ($submitAnswers) {
-		# get a "pure" (unmerged) UserProblem to modify
-		# this will be undefined if the problem has not been assigned to this user
-		$pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
-		if (defined $pureProblem) {
-			# store answers in DB for sticky answers
-			my %answersToStore;
-			my %answerHash = %{ $pg->{answers} };
-			$answersToStore{$_} = $self->{formFields}->{$_}  #$answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  Don't use it!!
-				foreach (keys %answerHash);
-			
-			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
-			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
-			# however we need to store them.  Fortunately they are still in the input form.
-			my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}};
-			$answersToStore{$_} = $self->{formFields}->{$_} foreach  (@extra_answer_names);
-			
-			# Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
-			my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}, @extra_answer_names);
-			my $answerString = encodeAnswers(%answersToStore,
-				 @answer_order);
-			
-			# store last answer to database
-			$problem->last_answer($answerString);
-			$pureProblem->last_answer($answerString);
-			$db->putUserProblem($pureProblem);
-			
-			# store state in DB if it makes sense
-			if ($will{recordAnswers}) {
-				$problem->status($pg->{state}->{recorded_score});
-				$problem->sub_status($pg->{state}->{sub_recorded_score});
-				$problem->attempted(1);
-				$problem->num_correct($pg->{state}->{num_of_correct_ans});
-				$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-				$pureProblem->status($pg->{state}->{recorded_score});
-				$pureProblem->sub_status($pg->{state}->{sub_recorded_score});
-				$pureProblem->attempted(1);
-				$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
-				$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-				if ($db->putUserProblem($pureProblem)) {
-					$scoreRecordedMessage = $r->maketext("Your score was recorded.");
-				} else {
-					$scoreRecordedMessage = $r->maketext("Your score was not recorded because there was a failure in storing the problem record to the database.");
-				}
-				# write to the transaction log, just to make sure
-				writeLog($self->{ce}, "transaction",
-					$problem->problem_id."\t".
-					$problem->set_id."\t".
-					$problem->user_id."\t".
-					$problem->source_file."\t".
-					$problem->value."\t".
-					$problem->max_attempts."\t".
-					$problem->problem_seed."\t".
-					$pureProblem->status."\t".
-					$pureProblem->attempted."\t".
-					$pureProblem->last_answer."\t".
-					$pureProblem->num_correct."\t".
-					$pureProblem->num_incorrect
-				);
-			} else {
-				if (before($set->open_date) or after($set->due_date)) {
-					$scoreRecordedMessage = $r->maketext("Your score was not recorded because this homework set is closed.");
-				} else {
-					$scoreRecordedMessage = $r->maketext("Your score was not recorded.");
-				}
-			}
-		} else {
-			$scoreRecordedMessage = $r->maketext("Your score was not recorded because this problem has not been assigned to you.");
-		}
-	}
+# output_checkboxes subroutine
 	
-	# logging student answers
+# prints out the checkbox input elements that are available for the current problem
 
-	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
-	if ( defined($answer_log ) and defined($pureProblem)) {
-		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
-		        my $answerString = ""; my $scores = "";
-			my %answerHash = %{ $pg->{answers} };
-			# FIXME  this is the line 552 error.  make sure original student ans is defined.
-			# The fact that it is not defined is probably due to an error in some answer evaluator.
-			# But I think it is useful to suppress this error message in the log.
-			foreach (sortByName(undef, keys %answerHash)) {
-				my $orig_ans = $answerHash{$_}->{original_student_ans};
-				my $student_ans = defined $orig_ans ? $orig_ans : '';
-				$answerString  .= $student_ans."\t";
-				$scores .= $answerHash{$_}->{score} >= 1 ? "1" : "0";
-			}
-			$answerString = '' unless defined($answerString); # insure string is defined.
-			writeCourseLog($self->{ce}, "answer_log",
-			        join("",
-						'|', $problem->user_id,
-						'|', $problem->set_id,
-						'|', $problem->problem_id,
-						'|', $scores, "\t",
-						time(),"\t",
-						$answerString,
-					),
-			);
+sub output_checkboxes{
+	my $self = shift;
+	my $r = $self->r;
+	my %can = %{ $self->{can} };
+	my %will = %{ $self->{will} };
 			
-		}
-	}
-	
-	debug("end answer processing");
-	##### javaScripts #############
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
-
-	##### output #####
-	# custom message for editor
-	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
-		if ($editMode eq "temporaryFile") {
-			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $problem->source_file));
-		} elsif ($editMode eq "savedFile") {
-			# taken care of in the initialization phase
-		}
-	}
-	print CGI::start_div({class=>"problemHeader"});
-	
-	
-
-	# attempt summary
-	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
-	# until after the due date
-	# do I need to check $will{showCorrectAnswers} to make preflight work??
-	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
-		# print this if user submitted answers OR requested correct answers
-		
-		print $self->attemptResults($pg, 1,
-			$will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
-	} elsif ($checkAnswers) {
-		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
-		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
-			# show attempt answers
-			# show correct answers if asked
-			# show attempt results (correctness)
-			# show attempt previews
-	} elsif ($previewAnswers) {
-		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
-			# show attempt answers
-			# don't show correct answers
-			# don't show attempt results (correctness)
-			# show attempt previews
-	}
-	
-	print CGI::end_div();
-	
-	
-	###########################
-	# print style sheet for correct and incorrect answers
-	###########################
-	# always show colors for checkAnswers
-	# show colors for submit answer if 
-	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
-		print CGI::start_style({type=>"text/css"});
-		#FIXME -- this hack is no longer needed?
-		# my $string ="";
-# 		foreach my $ans_name (@{ $self->{correct_ids} }) {
-# 			$string .= '#'. ( $ans_name ). $ce->{pg}{options}{correct_answer}."\n";
-# 		}
-# 		print $string;
-# 		$string ="";
-# 		foreach my $ans_name (@{ $self->{incorrect_ids} }) {
-# 			$string .= '#'. ($ ans_name). $ce->{pg}{options}{incorrect_answer}."\n";
-# 		}
-# 		print $string;
-		# the above method keeps one bad array ID from ruining all of the assignments.
-		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer},"\n"   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer},"\n" if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
-		print	CGI::end_style();
-	}
-	###########################
-	# post_header material
-	###########################
-    print CGI::p($pg->{post_header_text});
-	###########################
-	# main form
-	###########################
-	print "\n";
-	
-	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
-	print $self->hidden_authen_fields;
-	print "\n";
-	print CGI::start_div({class=>"problem"});
-	print CGI::p($pg->{body_text});
-	print CGI::p(CGI::b("Note: "). CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
-	print $editorLink; # this is empty unless it is appropriate to have an editor link.
-	print CGI::end_div();
-	
-	print CGI::start_p();
-	
 	if ($can{showCorrectAnswers}) {
-		print CGI::checkbox(
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showCorrectAnswers_id",
+			-label_text => $r->maketext("Show correct answers"),
+			-input_attr => $will{showCorrectAnswers} ?
+			{
+				-name    => "showCorrectAnswers",
+				-checked => "checked",
+				-value   => 1,
+		}
+			:
+			{
 			-name    => "showCorrectAnswers",
-			-checked => $will{showCorrectAnswers},
-			-label   => $r->maketext("Show correct answers"),
 			-value   => 1,
+			}
 		);
 	}
 	if ($can{showHints}) {
 		print CGI::div({style=>"color:red"},
-			CGI::checkbox(
+			WeBWorK::CGI_labeled_input(
+				-type	 => "checkbox",
+				-id		 => "showHints_id",
+				-label_text => $r->maketext("Show Hints"),
+				-input_attr => $will{showHints} ?
+				{
 				-name    => "showHints",
-				-checked => $will{showHints},
-				-label   => $r->maketext("Show Hints"),
-				-value   =>1,
+					-checked => "checked",
+					-value   => 1,
+				}
+				:
+				{
+					-name    => "showCorrectAnswers",
+					-value   => 1,
+				}
 			)
 		);
 	}
 	if ($can{showSolutions}) {
-		print CGI::checkbox(
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showSolutions_id",
+			-label_text => $r->maketext("Show Solutions"),
+			-input_attr => $will{showSolutions} ?
+			{
 			-name    => "showSolutions",
-			-checked => $will{showSolutions},
-			-label   => $r->maketext("Show Solutions"),
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showCorrectAnswers",
 			-value   => 1,
+			}
 		);
 	}
 	
@@ -1171,42 +1110,63 @@ sub body {
 		print CGI::br();
 	}
 		
-	print CGI::submit(-name=>"previewAnswers", -label=>$r->maketext("Preview Answers"));
+	return "";
+}
+
+# output_submit_buttons
+
+# prints out the submit button input elements that are available for the current problem
+
+sub output_submit_buttons{
+	my $self = shift;
+	my $r = $self->r;
+	my %can = %{ $self->{can} };
+	
+	my $user = $r->param('user');
+	my $effectiveUser = $r->param('effectiveUser');
+
+	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
 	if ($can{checkAnswers}) {
-		print CGI::submit(-name=>"checkAnswers", -label=>$r->maketext("Check Answers"));
+		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
 	}
 	if ($can{getSubmitButton}) {
 		if ($user ne $effectiveUser) {
 			# if acting as a student, make it clear that answer submissions will
 			# apply to the student's records, not the professor's.
-			print CGI::submit(-name=>"submitAnswers", -label=>$r->maketext("Submit answers for [_1]",$effectiveUser));
+			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
 		} else {
 			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-			print CGI::submit(-name=>"submitAnswers", -label=>$r->maketext("Submit answers"), -onclick=>"");
+			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -label=>$r->maketext("Submit answers"), -onclick=>""});
 			# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
 			# WTF???
 		}
 	}
 	
-	print CGI::end_p();
+	return "";
+}
+
+# output_score_summary subroutine
 	
-	print CGI::start_div({class=>"scoreSummary"});
+# prints out a summary of the student's current progress and status on the current problem
+
+sub output_score_summary{
+	my $self = shift;
+	my $r = $self->r;
+	my $problem = $self->{problem};
+	my $set = $self->{set};
+	my $pg = $self->{pg};
+	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
+	my $submitAnswers = $self->{submitAnswers};
 	
 	# score summary
+	warn "num_correct =", $problem->num_correct,"num_incorrect=",$problem->num_incorrect 
+	        unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
 	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
-	#my ($attemptsLeft, $attemptsLeftNoun);
 	my $attemptsLeft = $problem->max_attempts - $attempts;
-#	if ($problem->max_attempts == -1) {
-#		# unlimited attempts
-#		$attemptsLeft = $r->maketext("unlimited");
-#		$attemptsLeftNoun = $r->maketext("attempts");
-#	} else {
-#		$attemptsLeft = $problem->max_attempts - $attempts;
-#		$attemptsLeftNoun = $attemptsLeft == 1 ? $r->maketext("attempt") : $r->maketext("attempts");
-#	}
+
 	
 	my $setClosed = 0;
 	my $setClosedMessage;
@@ -1236,14 +1196,29 @@ sub body {
 			$problem->attempted
 				? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
-#			$setClosed ? $setClosedMessage : $r->maketext("You have [_1] [_2] remaining.",$attemptsLeft,$attemptsLeftNoun) 
 			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
 		));
 	}else {
 		print CGI::p($pg->{state}->{state_summary_msg});
 	}
 
-	print CGI::end_div();
+	return "";
+}
+
+# output_misc subroutine
+
+# prints out other necessary elements
+
+sub output_misc{
+
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $pg = $self->{pg};
+	my %will = %{ $self->{will} };
+	my $user = $r->param('user');
+
 	print CGI::start_div();
 	
 	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{flags}->{DEBUG_messages}} );
@@ -1251,7 +1226,7 @@ sub body {
 	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
 	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
 	
-	print CGI::p({style=>"color:red;"}, "Checking additional error messages") if $pgerrordiv  ;
+	print CGI::p({style=>"color:red;"}, $r->maketext("Checking additional error messages")) if $pgerrordiv  ;
  	print CGI::p("pg debug<br/> $pgdebug"                   ) if $pgdebug ;
 	print CGI::p("pg warning<br/>$pgwarning"                ) if $pgwarning ;	
 	print CGI::p("pg internal errors<br/> $pginternalerrors") if $pginternalerrors;
@@ -1286,13 +1261,138 @@ sub body {
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
+	print CGI::end_div();
+	return "";
+}
 
+# output_summary subroutine
 			
-	# end of main form
-	print CGI::endform();
+# prints out the summary of the questions that the student has answered for the current problem, along with available information about correctness
 	
-	print  CGI::start_div({class=>"problemFooter"});
+sub output_summary{
 	
+	my $self = shift;
+	
+	my $editMode = $self->{editMode};
+	my $problem = $self->{problem};
+	my $pg = $self->{pg};
+	my $submitAnswers = $self->{submitAnswers};
+	my %will = %{ $self->{will} };
+	my $checkAnswers = $self->{checkAnswers};
+	my $previewAnswers = $self->{previewAnswers};
+	
+	my $r = $self->r;
+	
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	
+	# attempt summary
+	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
+	# until after the due date
+	# do I need to check $will{showCorrectAnswers} to make preflight work??
+	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
+		# print this if user submitted answers OR requested correct answers
+		
+		print $self->attemptResults($pg, 1,
+			$will{showCorrectAnswers},
+			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
+	} elsif ($checkAnswers) {
+		# print this if user previewed answers
+		print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
+		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
+			# show attempt answers
+			# show correct answers if asked
+			# show attempt results (correctness)
+			# show attempt previews
+	} elsif ($previewAnswers) {
+		# print this if user previewed answers
+		print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+			# show attempt answers
+			# don't show correct answers
+			# don't show attempt results (correctness)
+			# show attempt previews
+	}
+	
+	return "";
+}
+
+# output_custom_edit_message
+
+# prints out a custom edit message
+
+sub output_custom_edit_message{
+	my $self = shift;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	my $editMode = $self->{editMode};
+	my $problem = $self->{problem};
+	
+	# custom message for editor
+	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
+		if ($editMode eq "temporaryFile") {
+			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $problem->source_file));
+		} elsif ($editMode eq "savedFile") {
+			# taken care of in the initialization phase
+		}
+	}
+	
+	return "";
+}
+
+# output_JS subroutine
+
+# prints out the wz_tooltip.js script for the current site.
+
+sub output_wztooltip_JS{
+	
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+	return "";
+}
+
+# output_CSS subroutine
+
+# prints the CSS scripts to page.  Does some PERL trickery to form the styles for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
+
+sub output_CSS{
+
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $pg = $self->{pg};
+
+	# always show colors for checkAnswers
+	# show colors for submit answer if 
+	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
+		print CGI::start_style({type=>"text/css"});
+		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
+		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
+		print	CGI::end_style();
+	}
+	
+	return "";
+}
+
+# output_past_answer_button
+
+# prints out the "Show Past Answers" button
+
+sub output_past_answer_button{
+	my $self = shift;
+	my $r = $self->r;
+	my $problem = $self->{problem};
+	
+	my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	my $user = $r->param('user');
+	
+	my $courseName = $urlpath->arg("courseID");
 	
 	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, 
 		courseID => $courseName);
@@ -1313,6 +1413,18 @@ sub body {
 			CGI::endform();
 	}
 	
+	return "";
+}
+
+# output_email_instructor subroutine
+
+# prints out the "Email Instructor" button
+
+sub output_email_instructor{
+	my $self = shift;
+	my $problem = $self->{problem};
+	my %will = %{ $self->{will} };
+	my $pg = $self->{pg};
 	
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
@@ -1326,25 +1438,52 @@ sub body {
 		pg_object          => $pg,
 	);
 	
-	print CGI::end_div();
+	return "";
+}
+
+# output_hidden_info subroutine
+
+# outputs the hidden fields required for the form
+
+sub output_hidden_info{
+	my $self = shift;
 	
-	# debugging stuff
-	if (0) {
-		print
-			CGI::hr(),
-			CGI::h2("debugging information"),
-			CGI::h3("form fields"),
-			ref2string($self->{formFields}),
-			CGI::h3("user object"),
-			ref2string($self->{user}),
-			CGI::h3("set object"),
-			ref2string($set),
-			CGI::h3("problem object"),
-			ref2string($problem),
-			CGI::h3("PG object"),
-			ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	if(defined $self->{correct_ids}){
+		my $correctRef = $self->{correct_ids};
+		my @correct = @$correctRef;
+		foreach(@correct){
+			print CGI::hidden(-name=>"correct_ids", -value=>$_."_val");
+		}
 	}
-	debug("leaving body of Problem.pm");
+	if(defined $self->{incorrect_ids}){
+		my $incorrectRef = $self->{incorrect_ids};
+		my @incorrect = @$incorrectRef;
+		foreach(@incorrect){
+			print CGI::hidden(-name=>"incorrect_ids", -value=>$_."_val");
+		}
+	}
+	
+	return "";
+}
+
+# output_JS subroutine
+
+# outputs all of the Javascript needed for this page.
+
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
+	return "";
+	}
+
+# Simply here to indicate to the template that this page has body part methods which can be called
+
+sub can_body_parts{
 	return "";
 }
 

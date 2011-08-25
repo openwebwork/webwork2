@@ -434,7 +434,6 @@ sub body {
 			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
  			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
 			print CGI::li(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $courseID));
-
 		}
 		
 		print CGI::end_ol();

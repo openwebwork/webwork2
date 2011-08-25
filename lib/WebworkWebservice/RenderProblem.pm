@@ -26,7 +26,7 @@ my $debugXmlCode=1;  # turns on the filter for debugging XMLRPC and SOAP code
 local(*DEBUGCODE);
 
 BEGIN { 
-	$main::VERSION = "2.1"; 
+	$main::VERSION = "2.5"; 
 }
 
 
@@ -121,7 +121,19 @@ use constant DISPLAY_MODE_FAILOVER => {
 sub renderProblem {
 
     my $rh = shift;
+###############################################################################
+# set up warning handler
+###############################################################################
+	my $warning_messages="";
 
+	my  $warning_handler = sub {
+			my ($warning) = @_;
+			CORE::warn $warning;
+			chomp $warning;
+			$warning_messages .="$warning\n";			
+		};
+
+    local $SIG{__WARN__} = $warning_handler;
 
 ###########################################
 # Grab the course name, if this request is going to depend on 
@@ -383,7 +395,9 @@ sub renderProblem {
 		header_text 				=> encode_base64( $pg->{head_text} ),
 		answers 					=> $pg->{answers},
 		errors         				=> $pg->{errors},
-		WARNINGS	   				=> encode_base64( $pg->{warnings} ),
+		WARNINGS	   				=> encode_base64( 
+		                                 "WARNINGS\n".$warning_messages."\nMore\n".$pg->{warnings} 
+		                               ),
 		problem_result 				=> $pg->{result},
 		problem_state				=> $pg->{state},
 		flags						=> $pg->{flags},

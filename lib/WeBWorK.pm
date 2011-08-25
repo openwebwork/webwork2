@@ -52,6 +52,7 @@ use WeBWorK::Debug;
 use WeBWorK::Request;
 use WeBWorK::Upload;
 use WeBWorK::URLPath;
+use WeBWorK::CGI;
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 
 use mod_perl;

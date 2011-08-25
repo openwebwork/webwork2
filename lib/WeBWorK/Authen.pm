@@ -56,7 +56,7 @@ use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
 use WeBWorK::Debug;
 use WeBWorK::Utils qw/writeCourseLog/;
 use WeBWorK::Localize;
-
+use URI::Escape;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
@@ -652,7 +652,7 @@ sub fetchCookie {
      			$jar = $@->jar; # table of successfully parsed cookies
   		};
 		if ($jar) {
-			$cookie = $jar->get("WeBWorKCourseAuthen.$courseID");
+			$cookie = uri_unescape( $jar->get("WeBWorKCourseAuthen.$courseID") );
 		};
 	} else {
 		my %cookies = WeBWorK::Cookie->fetch();

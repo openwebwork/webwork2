@@ -576,7 +576,7 @@ sub archiveCourse {
 	my $ce = $options{ce};
 	
 	# make sure the user isn't brain damaged
-	croak "The course environment supplied doesn't appear to describe the course $courseID. Can't proceed"
+	croak "The course environment supplied doesn't appear to match the course $courseID. Can't proceed"
 		unless $ce->{courseName} eq $courseID;
 	
 	# grab some values we'll need

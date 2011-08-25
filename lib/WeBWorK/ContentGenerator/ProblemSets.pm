@@ -15,6 +15,7 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::ProblemSets;
+use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
 
 =head1 NAME
@@ -49,6 +50,7 @@ sub info {
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 		
+		print CGI::start_div({-class=>"info-wrapper"});
 		print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 		
 		# deal with instructor crap
@@ -82,6 +84,7 @@ sub info {
 			}
 		}
 
+		print CGI::end_div();
 		print CGI::end_div();
 		
 		return "";
@@ -217,20 +220,21 @@ sub body {
           $self->hidden_authen_fields;
     
 # and send the start of the table 
-	print CGI::start_table();
+# UPDATE - ghe3
+# This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
+	print CGI::start_table({-summary=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.", -class=>"problem_set_table"});
+	print CGI::caption($r->maketext("Homework Sets"));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
-		    CGI::th("Sel."),
-		    CGI::th($nameHeader),
-		    CGI::th($statusHeader),
+		    CGI::th({-scope=>"col"},$nameHeader),
+		    CGI::th({-scope=>"col"},$statusHeader),
 	        );
 	} else {
 	    print CGI::Tr(
-		    CGI::th("Sel."),
-		    CGI::th($nameHeader),
-		    CGI::th("TestScore"),
-		    CGI::th("TestDate"),
-		    CGI::th($statusHeader),
+		    CGI::th({-scope=>"col"},$nameHeader),
+		    CGI::th({-scope=>"col"},$r->maketext("Test Score")),
+		    CGI::th({-scope=>"col"},$r->maketext("Test Date")),
+		    CGI::th({-scope=>"col"},$statusHeader),
 	        );
 	}
 
@@ -270,15 +274,18 @@ sub body {
 		die "set $set not defined" unless $set;
 		
 		if ($set->visible || $authz->hasPermissions($user, "view_hidden_sets")) {
-			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1, $gwSetsBySetID{$set->{set_id}} );  # 1 = gateway, versioned set
+			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1, $gwSetsBySetID{$set->{set_id}}, "ethet" );  # 1 = gateway, versioned set
 		}
 	}
 	
 	print CGI::end_table();
-#	my $pl = ($authz->hasPermissions($user, "view_multiple_sets") ? "s" : "");
-	my $pl = $authz->hasPermissions($user, "view_multiple_sets") + 1;
-#	print CGI::p(CGI::submit(-name=>"hardcopy", -label=>$r->maketext("Download Hardcopy for Selected Set[_1]",$pl)));
-	print CGI::p(CGI::submit(-name=>"hardcopy", -label=>$r->maketext("Download Hardcopy for Selected [plural,_1,Set,Sets]",$pl)));
+	my $pl = ($authz->hasPermissions($user, "view_multiple_sets") ? "s" : "");
+# 	print CGI::p(CGI::submit(-name=>"hardcopy", -label=>$r->maketext("Download Hardcopy for Selected [plural,_1,Set,Sets]",$pl)));
+
+	# UPDATE - ghe3
+	# Added reset button to form.
+	print CGI::p(WeBWorK::CGI_labeled_input(-type=>"reset", -input_attr=>{-value=>$r->maketext("Clear")}));
+	print CGI::p(WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}));
 	print CGI::endform();
 	
 	## feedback form url
@@ -315,6 +322,9 @@ sub body {
 	
 	return "";
 }
+
+# UPDATE - ghe3
+# this subroutine now combines the $control and $interactive elements, by using the $interactive element as the $control element's label.
 
 sub setListRow {
 	my ($self, $set, $multiSet, $preOpenSets, $existVersions, $db,
@@ -373,13 +383,21 @@ sub setListRow {
 	    ( defined( $set->assignment_type() ) && 
 	      $set->assignment_type() eq 'proctored_gateway' );
 	
+	$name =~ s/_/&nbsp;/g;
+# this is the link to the homework assignment
+	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
+	
 	my $control = "";
 	if ($multiSet) {
 		if ( $gwtype < 2 ) {
-			$control = CGI::checkbox(
+			$control = WeBWorK::CGI_labeled_input(
+				-type=>"checkbox",
+				-id=>$name . ($gwtype ? ",v" . $set->version_id : ''),
+				-label_text=>$interactive,
+				-input_attr=>{
 				-name=>"selected_sets",
-				-value=>$name . ($gwtype ? ",v" . $set->version_id : ''),
-				-label=>"",
+					-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
+					}
 			);
 		} else {
 			$control = '&nbsp;';
@@ -387,20 +405,23 @@ sub setListRow {
 	} else {
 		if ( $gwtype < 2 ) {
 			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
-			$control = CGI::radio_group(
+			$control = WeBWorK::CGI_labeled_input(
+				-type=>"radio",
+				-id=>$n,
+				-label_text=>$interactive,
+				-input_attr=>{
 				-name=>"selected_sets",
-				-values=>[$n],
-				-default=>"-",
-				-labels=>{$n => ""},
+					-value=>$n
+					}
 			);
 		} else {
 			$control = '&nbsp;';
 		}
 	}
 	
-	$name =~ s/_/&nbsp;/g;
+#	$name =~ s/_/&nbsp;/g;
 # this is the link to the homework assignment
-	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
+#	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
 
 # we choose not to display the link to start a new gateway that we've just
 #    set up in the previous line if that's not available, so we work out here
@@ -428,7 +449,7 @@ sub setListRow {
 			# reset the link to give the test number
 			my $vnum = $set->version_id;
 			$interactive = CGI::a({-href=>$interactiveURL},
-					      "$name (test$vnum)");
+					      $r->maketext("[_1] (test [_2])", $name, $vnum));
 		} else {
 			my $t = time();
 			if ( $t < $set->open_date() ) {
@@ -436,24 +457,24 @@ sub setListRow {
 				if ( $preOpenSets ) {
 					# reset the link
 					$interactive = CGI::a({-href=>$interactiveURL},
-							      "Take $name test");
+							      $r->maketext("Take [_1] test", $name));
 				} else {
 					$control = "";
-					$interactive = "$name test";
+					$interactive = $r->maketext("[_1] test", $name);
 				}
 			} elsif ( $t < $set->due_date() ) {
 				$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date);
 				$setIsOpen = 1;
 				$interactive = CGI::a({-href=>$interactiveURL},
-						      "Take $name test");
+						      $r->maketext("Take [_1] test", $name));
 			} else {
-				$status = "closed";
+				$status = $r->maketext("Closed");
 
 				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
 					$interactive = CGI::a({-href=>$interactiveURL},
-							      "Take $name test");
+							      $r->maketext("Take [_1] test", $name));
 				} else {
-					$interactive = "$name test";
+					$interactive = $r->maketext("[_1] test", $name);
 				}
 			}
 		}
@@ -471,7 +492,7 @@ sub setListRow {
 				my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
 				my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec);
 #				$status .= '. <FONT COLOR="#cc6600">Reduced Credit starts ' . $beginReducedScoringPeriod . '</FONT>';
-				$status .= '. <div class="ResultsAlert">Reduced Credit starts ' . $beginReducedScoringPeriod . '</div>';
+				$status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Credit Starts: [_1]", $beginReducedScoringPeriod));
 
 			}
 		$setIsOpen = 1;
@@ -491,7 +512,6 @@ sub setListRow {
 	if ( ! $existVersions ) {
 	    return CGI::Tr(CGI::td([
 			     $control,
-                             $interactive,
 		             $status,
 	    ]));
 	} else {
@@ -530,7 +550,6 @@ sub setListRow {
 		}
 		return CGI::Tr(CGI::td([
 		                     $control,
-		                     $interactive,
 		                     $score,
 		                     $startTime,
 		                     $status,

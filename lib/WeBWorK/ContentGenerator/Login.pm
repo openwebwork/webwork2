@@ -41,6 +41,10 @@ sub if_loggedin {
 }
 
 sub info {
+
+	######### NOTES ON TRANSLATION
+	# -translation of the content found in the info panel.  Since most of this content is in fact read from files, a simple use of maketext would be too limited to translate these types of content efficiently.
+
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
@@ -67,10 +71,10 @@ sub info {
 		if (-f $login_info) {
 			my $text = eval { readFile($login_info) };
 			if ($@) {
-				$result .= CGI::h2("Login Info");
+				$result .= CGI::h2($r->maketext("Login Info"));
 				$result .= CGI::div({class=>"ResultsWithError"}, $@);
 			} elsif ($text =~ /\S/) {
-				$result .= CGI::h2("Login Info");
+				$result .= CGI::h2($r->maketext("Login Info"));
 				$result .= $text;
 			}
 		}
@@ -89,10 +93,10 @@ sub info {
 		if (-f $site_info) {
 			my $text = eval { readFile($site_info) };
 			if ($@) {
-				$result .= CGI::h2("Site Information");
+				$result .= CGI::h2($r->maketext("Site Information"));
 				$result .= CGI::div({class=>"ResultsWithError"}, $@);
 			} elsif ($text =~ /\S/) {
-				$result .= CGI::h2("Site Information");
+				$result .= CGI::h2($r->maketext("Site Information"));
 				$result .= $text;
 			}
 		}
@@ -142,13 +146,10 @@ sub body {
 	}
 
 	if ( $externalAuth ) {
-	    print CGI::p({}, CGI::strong($course), "uses an external", 
-			 "authentication system.  You've authenticated",
-			 "through that system, but aren't allowed to log",
-			 "in to this course.");
+	    print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($r->maketext($course))));
 
 	} else {
-		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($course)));
+		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($r->maketext($course))));
 		print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
 	
 		print CGI::startform({-method=>"POST", -action=>$r->uri, -id=>"login_form"});
@@ -171,27 +172,36 @@ sub body {
 		# @fields_to_print is empty.
 		print $self->hidden_fields(@fields_to_print) if @fields_to_print > 0;
 	
-		print CGI::table({class=>"FormLayout"}, 
-			CGI::Tr([
-				CGI::td([
-		  		$r->maketext("Username:"), 
-		  		CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
-				]),CGI::br(),
-				CGI::td([
-		  		$r->maketext("Password:"),
-		  		CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
-				]),CGI::br(),
-				CGI::td([
-		  		"",
-		  		CGI::checkbox(
-				-name=>"send_cookie",
-				-label=>$r->maketext("Remember Me"),
-		  		),
-				]),
-	  		])
-		);
 	
-		print CGI::input({-type=>"submit", -value=>$r->maketext("Login")});
+		# print CGI::table({class=>"FormLayout"}, 
+			# CGI::Tr([
+				# CGI::td([
+		  		# "Username:",
+		  		# CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
+				# ]),CGI::br(),
+				# CGI::td([
+		  		# "Password:",
+		  		# CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
+				# ]),CGI::br(),
+				# CGI::td([
+		  		# "",
+		  		# CGI::checkbox(
+				# -name=>"send_cookie",
+				# -label=>"Remember Me",
+		  		# ),
+				# ]),
+	  		# ])
+		# );
+		
+		print CGI::br(),CGI::br();
+		print WeBWorK::CGI_labeled_input(-type=>"text", -id=>"uname", -label_text=>$r->maketext("Username").": ", -input_attr=>{-name=>"user", -value=>"$user"}, -label_attr=>{-id=>"uname_label"});
+		print CGI::br();
+		print WeBWorK::CGI_labeled_input(-type=>"password", -id=>"pswd", -label_text=>$r->maketext("Password").": ", -input_attr=>{-name=>"passwd", -value=>"$passwd"}, -label_attr=>{-id=>"pswd_label"});
+		print CGI::br();
+		print WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"rememberme", -label_text=>$r->maketext("Remember Me"), -input_attr=>{-name=>"send_cookie", -value=>"on"});
+		print CGI::br();
+		print WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-value=>$r->maketext("Continue")});
+		print CGI::br();
 		print CGI::endform();
 	
 		# figure out if there are any valid practice users
@@ -214,11 +224,8 @@ sub body {
 			my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
 			print $self->hidden_fields(@fields_to_print);
 		
-			print CGI::p(dequote <<"			EOT");
-				This course supports guest logins. Click ${\( CGI::strong("Guest Login") )}
-				&nbsp;to log into this course as a guest.
-			EOT
-			print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>"Guest Login"});
+			print CGI::p($r->maketext("_GUEST_LOGIN_MESSAGE", CGI::b($r->maketext("Guest Login"))));
+			print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>$r->maketext("Guest Login")});
 	    
 	    		print CGI::endform();
 		}
