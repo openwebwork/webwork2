@@ -20,7 +20,7 @@ body {
 	color: black;
 	margin: .5em .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
 	padding: 0;
-	font-family: Times, serif;
+	font-family: "Times", serif;
 	min-width: 25em;
 }
 
@@ -155,6 +155,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 
 .Message {
 background-color:#ddd;
+clear: both;
 }
 /* --- Fisheye view (id) ---------------------------------------------------- */
 
@@ -167,7 +168,7 @@ background-color:#ddd;
 
 #mini-sitemap,
 #fisheye {
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	font-family: "Trebuchet MS", "Arial", "Helvetica", serif;
 	padding: 0 0 1ex 0;
 }
 #mini-sitemap a,
@@ -234,7 +235,7 @@ background-color:#ddd;
  * element should be placed at the very top of the <body> of our HTML document.
  */
 #masthead {
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	font-family: "Trebuchet MS", "Arial", "Helvetica", serif;
 	font-size: 100%;
 	margin: 0;
 	padding: 0;
@@ -320,7 +321,7 @@ background-color:#ddd;
 	color: #fff;
 	text-align: left; 
 	font-size: 100%;
-	font-family: "Trebuchet MS", "Arial", sans-serif;
+	font-family: "Trebuchet MS", "Arial", serif;
 }
 #breadcrumbs a {
 	font-size: 100%;
@@ -375,7 +376,7 @@ background-color:#ddd;
 	/* border-top: 1px solid #559; */
 	margin: 0 .5em .2ex 10.4em;
 	padding: 0;
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	font-family: "Trebuchet MS", "Arial", "Helvetica", serif;
 }
 #copyright { font-size: 75%; margin: 0;}
 #last-modified {
@@ -402,9 +403,9 @@ background-color:#ddd;
 #InfoPanel {
     font-size:100%;
 	float: right;
-	width: 40%;
+	/*width: 40%;*/
 	overflow: auto;
-	margin-right: -1px;
+	/*margin-right: -1px;*/
 	background-color: #fff;
 }
 #InfoPanel ol {
@@ -439,6 +440,10 @@ span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 span.ResultsWithError { color: #C33; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.correct { color: inherit; background-color: #8F8; } /* green */
+span.incorrect { color: #FF9494; background-color: inherit; } /* red */
+input.correct   { color:inherit; background-color: #8F8; } /* green */
+input.incorrect { color;inherit; background-color: #FF9494; } /* red */
 
 /* styles used by WeBWorK::HTML::ScrollingRecordList */
 div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
@@ -485,7 +490,7 @@ table.attemptResults td.Message {
 .attemptResultsSummary { font-style: italic; }
 .parsehilight { color: inherit; background-color: yellow; }
 
-/* the problem TEXT itself does in this box */
+/* the problem TEXT itself goes in this box */
 /* we used to make this a grey box, but surprise, MSIE is bug-ridden. */
 div.problem {  }
 
@@ -513,3 +518,209 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 .Audit { font-style: normal; color: purple; background-color: inherit; }
 .Enrolled { font-weight: normal; color: black; background-color: inherit; }
 .Drop { font-style: italic; color: gray; background-color: inherit; }
+
+/*Styles for the login form*/
+
+#login_form input {
+	margin-top: 7px;
+}
+
+#login_form label{
+	margin-right: 2px;
+}
+
+#login_form #pswd_label{
+	margin-right: 4px;
+}
+
+#login_form #rememberme{
+	margin-left: 75px;
+}
+
+/*Styles for the edit forms, found on the homework sets editor page*/
+
+.edit_form  input,select{
+	margin-top: 5px;
+}
+
+.edit_form label, .edit_form span{
+	margin-left: 40px;
+}
+
+.edit_form label.radio_label{
+	margin-left: 0px;
+}
+
+.edit_form  span#filter_err_msg{
+	display: none;
+}
+
+/*Styles for the classlist editor page*/
+
+.set_table{
+	margin-right: 5px;
+}
+
+.set_table td{
+	padding-right: 5px;
+}
+
+.set_table th{
+	text-align: center;
+	padding-right: 5px;
+	padding-left: 5px;
+}
+
+.set_table label{
+	margin-left: 0px;
+}
+
+/*General styles, for elements such as table captions input buttons, columns, etc.*/
+
+table caption{
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+.button_input{
+	margin-right: 5px;
+	margin-left: 5px;
+}
+
+.column {
+	float: left;
+	width: 50%;
+	height: 22%;
+	overflow: hidden;
+	margin-top: 10px;
+}
+
+.info-wrapper{
+	float: right;
+	min-height: 100px;
+	width: 40%;
+	overflow: hidden;
+	margin-left: 5px;
+}
+
+a.nav_button{
+	color: black;
+	background-color: #DDDDDD;
+	text-decoration: none;
+	text-align: center;
+	font-size: 15px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px;
+	border-style: outset;
+}
+
+a.nav_button:hover{
+	background-color: #EEEEEE;
+	border-color: #00ADEE;
+}
+
+a.nav_button:active{
+	border-style: inset;
+}
+
+span.gray_button{
+	color: black;
+	background-color: #DDDDDD;
+	text-decoration: none;
+	text-align: center;
+	font-size: 15px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px;
+	border-style: outset;
+	opacity: 0.3;
+}
+
+#none{
+	/*Please do not do anything with elements with id "none"*/
+}
+
+/*Styles for the PGProblemEditor Page*/
+
+#editor{
+	background-color: #FFFFFF;
+}
+
+#editor #source_and_options{
+	float: left;
+	width: 50%;
+}
+
+#editor #problemContents_label{
+	text-align: center;
+	font-weight: bold;
+	text-decoration: underline;
+	margin-left: 30%;
+}
+
+#editor #problemContents_id{
+	width: 100%;
+	height: 50%;
+}
+
+#editor .editor_form{
+	margin-left: 40px;
+}
+
+#editor #form_div{
+	/*float: left;*/
+	width: 100%;
+}
+
+/*Styles specifically for the problem viewer*/
+
+#problem_viewer_form{
+	margin-left: 10px;
+	float: left;
+	width: 45%;
+	height: 100%;
+	border-left: solid;
+	border-width: 1px;
+}
+
+#problem_viewer_form>h3{
+	margin-left: 37%;
+}
+
+#problem_viewer_form #viewer_span{
+	margin-left: 10%;
+}
+
+#problem_viewer_form #reload_button{
+	margin-left: 20%;
+	margin-top: 5%;
+}
+
+#problem_viewer_form #problem_viewer{
+	width: 60%;
+	background-color: #E8E8E8;
+	margin-left: 20%;
+	margin-top: 5%;
+	padding: 1px;
+}
+
+#problem_viewer_form #problem_viewer_content{
+	border-style: solid;
+	padding: 5%;
+	border-width: 1px;
+}
+
+#problem_viewer_form #viewer_note{
+	margin-top: 10%;
+	margin-left: 10%;
+	margin-right: 10%;
+}
+
+/*These are styles for the tables of problem sets*/
+
+table.problem_set_table th{
+	padding-right: 30px;
+}
+
+table.problem_set_table td{
+	padding-right: 30px;
+}

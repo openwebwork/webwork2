@@ -494,12 +494,12 @@ function tabberAutomaticOnLoad(tabberArgs)
   oldOnLoad = window.onload;
   if (typeof window.onload != 'function') {
     window.onload = function() {
-	  if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}
+	  if (typeof(initializeWWquestion) == 'function') {initializeWWquestion();}
       tabberAutomatic(tabberArgs);
     };
   } else {
     window.onload = function() {
-	  if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}
+	  if (typeof(initializeWWquestion) == 'function') {initializeWWquestion();}
       oldOnLoad();
       tabberAutomatic(tabberArgs);
     };
