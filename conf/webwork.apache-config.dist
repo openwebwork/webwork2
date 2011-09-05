@@ -34,6 +34,13 @@
 # Set this variable to the path to your WeBWorK installation.
 my $webwork_dir = "/opt/webwork/webwork2";
 
+# Cache this value for use by other scripts not necessarily in the Apache2 hierarchy
+# Different scripts use different locations :-)
+
+$ENV{WEBWORK_ROOT} = $webwork_dir;
+$WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
+$WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
+
 # This code reads global.conf and extracts the remaining configuration
 # variables. There is no need to modify it.
 eval "use lib '$webwork_dir/lib'"; die $@ if $@;
@@ -49,7 +56,6 @@ eval "use lib '$pg_dir/lib'"; die $@ if $@;
 
 require Apache::WeBWorK; # force compilation of pretty much everything
 
-$WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 
 # At this point, the following configuration variables should be present for use
 # in wiring WeBWorK into Apache:
