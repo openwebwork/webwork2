@@ -29,7 +29,6 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/math3.css"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#if can="output_tabber_JS"-->
 	<!--#output_tabber_JS-->
 <!--#endif-->
