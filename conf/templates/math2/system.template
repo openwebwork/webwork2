@@ -29,7 +29,6 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/math2.css"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#if can="output_tabber_JS"-->
 	<!--#output_tabber_JS-->
 <!--#endif-->
@@ -39,7 +38,7 @@
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
-<body bgcolor="white">
+<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->
