@@ -126,7 +126,7 @@ sub can_showSolutions {
 #   at a version are exhausted as well as if it's after the answer date
 # $addOne allows us to count the current submission
 	my $addOne = defined( $submitAnswers ) ? $submitAnswers : 0;
-	my $maxAttempts = $Set->attempts_per_version();
+	my $maxAttempts = $Set->attempts_per_version()||1;
 	my $attemptsUsed = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 
 # this is complicated by trying to address hiding scores by problem---that
@@ -252,7 +252,7 @@ sub can_checkAnswers {
 # $addOne allows us to count the current submission
 	    my $addOne = (defined( $submitAnswers ) && $submitAnswers) ? 
 		1 : 0;
-	    my $max_attempts = $Set->attempts_per_version();
+	    my $max_attempts = $Set->attempts_per_version()||1;
 	    my $attempts_used = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 
 		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
