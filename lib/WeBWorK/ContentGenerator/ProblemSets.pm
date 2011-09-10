@@ -400,7 +400,7 @@ sub setListRow {
 					}
 			);
 		} else {
-			$control = '&nbsp;';
+			$control = '&nbsp;'.$interactive;
 		}
 	} else {
 		if ( $gwtype < 2 ) {
@@ -415,7 +415,7 @@ sub setListRow {
 					}
 			);
 		} else {
-			$control = '&nbsp;';
+			$control = '&nbsp;'.$interactive;
 		}
 	}
 	
