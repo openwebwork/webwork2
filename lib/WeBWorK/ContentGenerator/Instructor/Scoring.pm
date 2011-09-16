@@ -68,6 +68,7 @@ sub initialize {
 		my %Users;
 		foreach my $User (@Users) {
 			next unless $User;
+			next unless $ce->status_abbrev_has_behavior($User->status, "include_in_scoring");
 			$Users{$User->user_id} = $User;
 		}
 		# DBFIXME use an ORDER BY clause in the database
