@@ -973,8 +973,8 @@ sub output_problem_body{
 	print "\n";
 	print CGI::p($pg->{body_text});
 	return "";
-}
-
+	}
+	
 # output_message subroutine
 
 # prints out a message about the problem
@@ -986,7 +986,7 @@ sub output_message{
 
 	print CGI::p(CGI::b($r->maketext("Note").": "). CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
 	return "";
-}
+	}	
 
 # output_editorLink subroutine
 
@@ -1017,7 +1017,7 @@ sub output_editorLink{
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit this problem")));
@@ -1036,11 +1036,11 @@ sub output_editorLink{
 	else{
 		print $editorLink;
 	}
-	return "";
-}
-
+		return "";
+	}
+	
 # output_checkboxes subroutine
-
+	
 # prints out the checkbox input elements that are available for the current problem
 
 sub output_checkboxes{
@@ -1048,7 +1048,7 @@ sub output_checkboxes{
 	my $r = $self->r;
 	my %can = %{ $self->{can} };
 	my %will = %{ $self->{will} };
-
+			
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
@@ -1059,11 +1059,11 @@ sub output_checkboxes{
 				-name    => "showCorrectAnswers",
 				-checked => "checked",
 				-value   => 1,
-			}
+		}
 			:
 			{
-				-name    => "showCorrectAnswers",
-				-value   => 1,
+			-name    => "showCorrectAnswers",
+			-value   => 1,
 			}
 		);
 	}
@@ -1075,13 +1075,13 @@ sub output_checkboxes{
 				-label_text => $r->maketext("Show Hints"),
 				-input_attr => $will{showHints} ?
 				{
-					-name    => "showHints",
+				-name    => "showHints",
 					-checked => "checked",
 					-value   => 1,
 				}
 				:
 				{
-					-name    => "showHints",
+					-name    => "showCorrectAnswers",
 					-value   => 1,
 				}
 			)
@@ -1094,13 +1094,13 @@ sub output_checkboxes{
 			-label_text => $r->maketext("Show Solutions"),
 			-input_attr => $will{showSolutions} ?
 			{
-				-name    => "showSolutions",
+			-name    => "showSolutions",
 				-checked => "checked",
 				-value   => 1,
 			}
 			:
 			{
-				-name    => "showSolutions",
+				-name    => "showCorrectAnswers",
 			-value   => 1,
 			}
 		);
@@ -1109,7 +1109,7 @@ sub output_checkboxes{
 	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
 		print CGI::br();
 	}
-	
+		
 	return "";
 }
 
@@ -1146,7 +1146,7 @@ sub output_submit_buttons{
 }
 
 # output_score_summary subroutine
-
+	
 # prints out a summary of the student's current progress and status on the current problem
 
 sub output_score_summary{
@@ -1266,9 +1266,9 @@ sub output_misc{
 }
 
 # output_summary subroutine
-
+			
 # prints out the summary of the questions that the student has answered for the current problem, along with available information about correctness
-
+	
 sub output_summary{
 	
 	my $self = shift;
@@ -1340,44 +1340,8 @@ sub output_custom_edit_message{
 	return "";
 }
 
-# output_JS subroutine
 
-# prints out the wz_tooltip.js script for the current site.
 
-sub output_wztooltip_JS{
-	
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
-	return "";
-}
-
-# output_CSS subroutine
-
-# prints the CSS scripts to page.  Does some PERL trickery to form the styles for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
-
-sub output_CSS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $pg = $self->{pg};
-
-	# always show colors for checkAnswers
-	# show colors for submit answer if 
-	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
-		print CGI::start_style({type=>"text/css"});
-		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
-		print	CGI::end_style();
-	}
-	
-	return "";
-}
 
 # output_past_answer_button
 
@@ -1393,7 +1357,7 @@ sub output_past_answer_button{
 	my $user = $r->param('user');
 	
 	my $courseName = $urlpath->arg("courseID");
-
+	
 	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, 
 		courseID => $courseName);
 	my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
@@ -1425,7 +1389,7 @@ sub output_email_instructor{
 	my $problem = $self->{problem};
 	my %will = %{ $self->{will} };
 	my $pg = $self->{pg};
-
+	
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
 		set                => $self->{set}->set_id,
@@ -1447,20 +1411,49 @@ sub output_email_instructor{
 
 sub output_hidden_info{
 	my $self = shift;
+	my $pg = $self->{pg};
 	
-	if(defined $self->{correct_ids}){
-		my $correctRef = $self->{correct_ids};
-		my @correct = @$correctRef;
-		foreach(@correct){
-			print CGI::hidden(-name=>"correct_ids", -value=>$_."_val");
+	# always show colors for checkAnswers
+	# show colors for submit answer if 
+	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
+	
+		if(defined $self->{correct_ids}){
+			my $correctRef = $self->{correct_ids};
+			my @correct = @$correctRef;
+			foreach(@correct){
+				print CGI::hidden(-name=>"correct_ids", -value=>$_."_val");
+			}
+		}
+		if(defined $self->{incorrect_ids}){
+			my $incorrectRef = $self->{incorrect_ids};
+			my @incorrect = @$incorrectRef;
+			foreach(@incorrect){
+				print CGI::hidden(-name=>"incorrect_ids", -value=>$_."_val");
+			}
 		}
 	}
-	if(defined $self->{incorrect_ids}){
-		my $incorrectRef = $self->{incorrect_ids};
-		my @incorrect = @$incorrectRef;
-		foreach(@incorrect){
-			print CGI::hidden(-name=>"incorrect_ids", -value=>$_."_val");
-		}
+	
+	return "";
+}
+
+# output_CSS subroutine
+
+# prints the CSS scripts to page.  Does some PERL trickery to form the styles for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
+
+sub output_CSS{
+
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $pg = $self->{pg};
+
+	# always show colors for checkAnswers
+	# show colors for submit answer if 
+	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
+		print CGI::start_style({type=>"text/css"});
+		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
+		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
+		print	CGI::end_style();
 	}
 	
 	return "";
@@ -1468,18 +1461,32 @@ sub output_hidden_info{
 
 # output_JS subroutine
 
+# prints out the wz_tooltip.js script for the current site.
+
+sub output_wztooltip_JS{
+	
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+	return "";
+}
+
 # outputs all of the Javascript needed for this page.
 
 sub output_JS{
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-
+	
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
 	return "";
-}
+	}
 
 # Simply here to indicate to the template that this page has body part methods which can be called
 
