@@ -522,7 +522,12 @@ sub pre_header_initialize {
 	
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
-
+	
+	# A very hacky and temporary solution to the max_attempts problem
+	# if($problem->max_attempts == ""){
+		# $problem->max_attempts = -1;
+	# }
+	
 	if ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		# professors are allowed to fabricate sets and problems not
 		# assigned to them (or anyone). this allows them to use the
@@ -887,67 +892,42 @@ sub title {
 
 
 # now altered to outsource most output operations to the template, main functions now are simply error checking and answer processing - ghe3
-# sub body {
-# 	my $self = shift;
-# 	my $set = $self->{set};
-# 	my $problem = $self->{problem};
-# 	my $pg = $self->{pg};
-# 	print "this is data from the old body function";
-# 	my $valid = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::check_invalid($self);
-# 	unless($valid eq "valid"){
-# 		return $valid;
-# 	}
-# 	
-# 	# my $editorLink = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_editorLink($self);
-# 	# if($editorLink eq "permission_error"){
-# 		# return "";
-# 	# }
-# 	
-# 	##### answer processing #####
-# 	debug("begin answer processing");
-# 	# if answers were submitted:
-#   my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self);
-# 	debug("end answer processing");
-# 	
-# 	##### javaScripts #############
-# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_JS($self);
-# 
-# 	##### output #####
-# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_summary($self);
-# 	
-# 	###########################
-# 	# print style sheet for correct and incorrect answers
-# 	###########################
-# 	
-# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_CSS($self);
-#     
-# 	###########################
-# 	# main form
-# 	###########################
-# 	
-# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_main_form($self,$editorLink);
-# 	
-# 	# WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::output_footer($self);
-# 	print "end of old body function";
-# 	# debugging stuff
-# 	if (0) {
-# 		print
-# 			CGI::hr(),
-# 			CGI::h2("debugging information"),
-# 			CGI::h3("form fields"),
-# 			ref2string($self->{formFields}),
-# 			CGI::h3("user object"),
-# 			ref2string($self->{user}),
-# 			CGI::h3("set object"),
-# 			ref2string($set),
-# 			CGI::h3("problem object"),
-# 			ref2string($problem),
-# 			CGI::h3("PG object"),
-# 			ref2string($pg, {'WeBWorK::PG::Translator' => 1});
-# 	}
-# 	debug("leaving body of Problem.pm");
-# 	return "";
-# }
+sub body {
+	my $self = shift;
+	my $set = $self->{set};
+	my $problem = $self->{problem};
+	my $pg = $self->{pg};
+	
+	my $valid = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::check_invalid($self);
+	unless($valid eq "valid"){
+		return $valid;
+	}
+	
+	##### answer processing #####
+	debug("begin answer processing");
+	# if answers were submitted:
+	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self);
+	debug("end answer processing");
+	
+	# debugging stuff
+	if (0) {
+		print
+			CGI::hr(),
+			CGI::h2("debugging information"),
+			CGI::h3("form fields"),
+			ref2string($self->{formFields}),
+			CGI::h3("user object"),
+			ref2string($self->{user}),
+			CGI::h3("set object"),
+			ref2string($set),
+			CGI::h3("problem object"),
+			ref2string($problem),
+			CGI::h3("PG object"),
+			ref2string($pg, {'WeBWorK::PG::Translator' => 1});
+	}
+	debug("leaving body of Problem.pm");
+	return "";
+}
 
 # output_form_start subroutine
 
@@ -961,7 +941,6 @@ sub output_form_start{
 	return "";
 }
 
-
 # output_problem_body subroutine
 
 # prints out the body of the current problem
@@ -973,8 +952,8 @@ sub output_problem_body{
 	print "\n";
 	print CGI::p($pg->{body_text});
 	return "";
-	}
-	
+}
+
 # output_message subroutine
 
 # prints out a message about the problem
@@ -986,7 +965,7 @@ sub output_message{
 
 	print CGI::p(CGI::b($r->maketext("Note").": "). CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
 	return "";
-	}	
+}
 
 # output_editorLink subroutine
 
@@ -1036,11 +1015,11 @@ sub output_editorLink{
 	else{
 		print $editorLink;
 	}
-		return "";
-	}
-	
+	return "";
+}
+
 # output_checkboxes subroutine
-	
+
 # prints out the checkbox input elements that are available for the current problem
 
 sub output_checkboxes{
@@ -1048,7 +1027,7 @@ sub output_checkboxes{
 	my $r = $self->r;
 	my %can = %{ $self->{can} };
 	my %will = %{ $self->{will} };
-			
+
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
@@ -1059,33 +1038,33 @@ sub output_checkboxes{
 				-name    => "showCorrectAnswers",
 				-checked => "checked",
 				-value   => 1,
-		}
+			}
 			:
 			{
-			-name    => "showCorrectAnswers",
-			-value   => 1,
+				-name    => "showCorrectAnswers",
+				-value   => 1,
 			}
-		);
+		),"&nbsp;";
 	}
 	if ($can{showHints}) {
-		print CGI::div({style=>"color:red"},
+		print CGI::span({style=>"color:red"},
 			WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
 				-label_text => $r->maketext("Show Hints"),
 				-input_attr => $will{showHints} ?
 				{
-				-name    => "showHints",
+					-name    => "showHints",
 					-checked => "checked",
 					-value   => 1,
 				}
 				:
 				{
-					-name    => "showCorrectAnswers",
+					-name    => "showHints",
 					-value   => 1,
 				}
 			)
-		);
+		),"&nbsp;";
 	}
 	if ($can{showSolutions}) {
 		print WeBWorK::CGI_labeled_input(
@@ -1094,22 +1073,22 @@ sub output_checkboxes{
 			-label_text => $r->maketext("Show Solutions"),
 			-input_attr => $will{showSolutions} ?
 			{
-			-name    => "showSolutions",
+				-name    => "showSolutions",
 				-checked => "checked",
 				-value   => 1,
 			}
 			:
 			{
-				-name    => "showCorrectAnswers",
-			-value   => 1,
+				-name    => "showSolutions",
+				-value   => 1,
 			}
-		);
+		),"&nbsp;";
 	}
 	
 	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
 		print CGI::br();
 	}
-		
+	
 	return "";
 }
 
@@ -1136,7 +1115,7 @@ sub output_submit_buttons{
 			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
 		} else {
 			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -label=>$r->maketext("Submit answers"), -onclick=>""});
+			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -label=>$r->maketext("Submit Answers"), -onclick=>""});
 			# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
 			# WTF???
 		}
@@ -1146,7 +1125,7 @@ sub output_submit_buttons{
 }
 
 # output_score_summary subroutine
-	
+
 # prints out a summary of the student's current progress and status on the current problem
 
 sub output_score_summary{
@@ -1201,7 +1180,7 @@ sub output_score_summary{
 	}else {
 		print CGI::p($pg->{state}->{state_summary_msg});
 	}
-
+	
 	return "";
 }
 
@@ -1261,14 +1240,14 @@ sub output_misc{
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-	print CGI::end_div();
+	
 	return "";
 }
 
 # output_summary subroutine
-			
+
 # prints out the summary of the questions that the student has answered for the current problem, along with available information about correctness
-	
+
 sub output_summary{
 	
 	my $self = shift;
@@ -1357,7 +1336,7 @@ sub output_past_answer_button{
 	my $user = $r->param('user');
 	
 	my $courseName = $urlpath->arg("courseID");
-	
+
 	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, 
 		courseID => $courseName);
 	my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
@@ -1389,7 +1368,7 @@ sub output_email_instructor{
 	my $problem = $self->{problem};
 	my %will = %{ $self->{will} };
 	my $pg = $self->{pg};
-	
+
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
 		set                => $self->{set}->set_id,
@@ -1411,12 +1390,15 @@ sub output_email_instructor{
 
 sub output_hidden_info{
 	my $self = shift;
-	my $pg = $self->{pg};
-	
-	# always show colors for checkAnswers
-	# show colors for submit answer if 
-	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
-	
+	my $previewAnswers = $self->{previewAnswers};
+	my $checkAnswers   = $self->{checkAnswers};
+	my $showPartialCorrectAnswers = $self->{pg}->{flags}->{showPartialCorrectAnswers};
+	if($previewAnswers){  # never color previewed answers 
+		return "";
+	}
+	elsif (   ($checkAnswers  ) 
+	         or $showPartialCorrectAnswers )    { # color answers when partialCorrectAnswers is set
+	                                              # or when checkAnswers is submitted 
 		if(defined $self->{correct_ids}){
 			my $correctRef = $self->{correct_ids};
 			my @correct = @$correctRef;
@@ -1431,32 +1413,8 @@ sub output_hidden_info{
 				print CGI::hidden(-name=>"incorrect_ids", -value=>$_."_val");
 			}
 		}
+		return "";
 	}
-	
-	return "";
-}
-
-# output_CSS subroutine
-
-# prints the CSS scripts to page.  Does some PERL trickery to form the styles for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
-
-sub output_CSS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $pg = $self->{pg};
-
-	# always show colors for checkAnswers
-	# show colors for submit answer if 
-	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
-		print CGI::start_style({type=>"text/css"});
-		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
-		print	CGI::end_style();
-	}
-	
-	return "";
 }
 
 # output_JS subroutine
@@ -1475,18 +1433,30 @@ sub output_wztooltip_JS{
 	return "";
 }
 
-# outputs all of the Javascript needed for this page.
+# outputs all of the Javascript needed for this page. 
+# The main javascript needed here is color.js, which colors input fields based on whether or not 
+# they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification 
+# information for the fields that were correct and the fields that were incorrect.  color.js collects of the correct and incorrect fields into 
+# two arrays using the information gathered from the hidden fields, and then loops through and changes the styles so 
+# that the colors will show up correctly.
 
 sub output_JS{
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	
+
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+	
+	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	
+	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
+	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/java_init.js"}), CGI::end_script();
+	
+	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
 	return "";
-	}
+}
 
 # Simply here to indicate to the template that this page has body part methods which can be called
 

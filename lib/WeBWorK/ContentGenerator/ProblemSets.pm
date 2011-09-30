@@ -219,7 +219,7 @@ sub body {
     print CGI::start_form(-method=>"POST",-action=>$actionURL),
           $self->hidden_authen_fields;
     
-# and send the start of the table 
+# and send the start of the table
 # UPDATE - ghe3
 # This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
 	print CGI::start_table({-summary=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.", -class=>"problem_set_table"});
@@ -284,6 +284,7 @@ sub body {
 
 	# UPDATE - ghe3
 	# Added reset button to form.
+	print CGI::start_div({-class=>"problem_set_options"});
 	print CGI::p(WeBWorK::CGI_labeled_input(-type=>"reset", -input_attr=>{-value=>$r->maketext("Clear")}));
 	print CGI::p(WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}));
 	print CGI::endform();
@@ -319,6 +320,7 @@ sub body {
 		showHints => "",
 		showSolutions => "",
 	);
+	print CGI::end_div();
 	
 	return "";
 }
@@ -388,45 +390,7 @@ sub setListRow {
 	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
 	
 	my $control = "";
-	if ($multiSet) {
-		if ( $gwtype < 2 ) {
-			$control = WeBWorK::CGI_labeled_input(
-				-type=>"checkbox",
-				-id=>$name . ($gwtype ? ",v" . $set->version_id : ''),
-				-label_text=>$interactive,
-				-input_attr=>{
-				-name=>"selected_sets",
-					-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
-					}
-			);
-		} else {
-			$control = '&nbsp;'.$interactive;
-		}
-	} else {
-		if ( $gwtype < 2 ) {
-			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
-			$control = WeBWorK::CGI_labeled_input(
-				-type=>"radio",
-				-id=>$n,
-				-label_text=>$interactive,
-				-input_attr=>{
-				-name=>"selected_sets",
-					-value=>$n
-					}
-			);
-		} else {
-			$control = '&nbsp;'.$interactive;
-		}
-	}
 	
-#	$name =~ s/_/&nbsp;/g;
-# this is the link to the homework assignment
-#	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
-
-# we choose not to display the link to start a new gateway that we've just
-#    set up in the previous line if that's not available, so we work out here
-#    if the set is open.  for gateways this is a bit more complicated than
-#    for homework sets
 	my $setIsOpen = 0;
 	my $status = '';
 	if ( $gwtype ) {
@@ -434,7 +398,7 @@ sub setListRow {
 		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $name"; return()}
 			if ( $problemRecords[0]->num_correct() + 
 			     $problemRecords[0]->num_incorrect() >= 
-			     $set->attempts_per_version() ) {
+			     ( ( !($set->attempts_per_version()) ) ? 0 : $set->attempts_per_version() ) ) {
 				$status = $r->maketext("completed.");
 			} elsif ( time() > $set->due_date() + 
 				  $self->r->ce->{gatewayGracePeriod} ) {
@@ -502,6 +466,37 @@ sub setListRow {
 		$status = $r->maketext("closed, answers recently available");
 	} else {
 		$status = $r->maketext("closed, answers available");
+	}
+	
+	if ($multiSet) {
+		if ( $gwtype < 2 ) {
+			$control = WeBWorK::CGI_labeled_input(
+				-type=>"checkbox",
+				-id=>$name . ($gwtype ? ",v" . $set->version_id : ''),
+				-label_text=>$interactive,
+				-input_attr=>{
+					-name=>"selected_sets",
+					-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
+					}
+			);
+		} else {
+			$control = $interactive;
+		}
+	} else {
+		if ( $gwtype < 2 ) {
+			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
+			$control = WeBWorK::CGI_labeled_input(
+				-type=>"radio",
+				-id=>$n,
+				-label_text=>$interactive,
+				-input_attr=>{
+					-name=>"selected_sets",
+					-value=>$n
+					}
+			);
+		} else {
+			$control = $interactive;
+		}
 	}
 
 	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";

@@ -86,7 +86,7 @@ sub can_showCorrectAnswers {
 	my $addOne = defined( $submitAnswers ) ? $submitAnswers : 0;
 	my $maxAttempts = $Set->attempts_per_version() || 0;
 	my $attemptsUsed = $Problem->num_correct + $Problem->num_incorrect + 
-	    $addOne;
+	    $addOne || 0;
 
 # this is complicated by trying to address hiding scores by problem---that
 #    is, if $set->hide_score_by_problem and $set->hide_score are both set, 
@@ -126,8 +126,8 @@ sub can_showSolutions {
 #   at a version are exhausted as well as if it's after the answer date
 # $addOne allows us to count the current submission
 	my $addOne = defined( $submitAnswers ) ? $submitAnswers : 0;
-	my $maxAttempts = $Set->attempts_per_version()||1;
-	my $attemptsUsed = $Problem->num_correct+$Problem->num_incorrect+$addOne;
+	my $attempts_per_version = $Set->attempts_per_version() || 0;
+	my $attemptsUsed = $Problem->num_correct+$Problem->num_incorrect+$addOne || 0;
 
 # this is complicated by trying to address hiding scores by problem---that
 #    is, if $set->hide_score_by_problem and $set->hide_score are both set, 
@@ -141,7 +141,7 @@ sub can_showSolutions {
 				after($tmplSet->answer_date) ) );
 
 	return ( ( ( after( $Set->answer_date ) || 
-		     ( $attemptsUsed >= $maxAttempts && 
+		     ( $attemptsUsed >= $attempts_per_version && 
 		       $Set->due_date() == $Set->answer_date() ) ) ||
 		   $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") ) &&
@@ -199,9 +199,9 @@ sub can_recordAnswers {
 # $addOne allows us to count the current submission
 	    my $addOne = ( defined( $submitAnswers ) && $submitAnswers ) ? 
 		1 : 0;
-	    my $max_attempts = $Set->attempts_per_version() || 0;
+	    my $attempts_per_version = $Set->attempts_per_version() || 0;
 	    my $attempts_used = $Problem->num_correct+$Problem->num_incorrect+$addOne;
-		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
+		if ($attempts_per_version == -1 or $attempts_used < $attempts_per_version) {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_with_attempts");
 		} else {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_without_attempts");
@@ -252,10 +252,10 @@ sub can_checkAnswers {
 # $addOne allows us to count the current submission
 	    my $addOne = (defined( $submitAnswers ) && $submitAnswers) ? 
 		1 : 0;
-	    my $max_attempts = $Set->attempts_per_version()||1;
+	    my $attempts_per_version = $Set->attempts_per_version()||0;
 	    my $attempts_used = $Problem->num_correct+$Problem->num_incorrect+$addOne;
 
-		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
+		if ($attempts_per_version == -1 or $attempts_used < $attempts_per_version) {
 			return ( $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts") &&
 				 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
 				   $canShowScores ) );

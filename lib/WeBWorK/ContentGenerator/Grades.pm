@@ -360,7 +360,7 @@ sub displayStudentStats {
 	}
 	
 	my $table_header = join("\n",
-		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
+		CGI::start_table({-border=>5,style=>'font-size:smaller',-id=>"grades_table"}),
 		CGI::Tr({},
 			CGI::th({ -align=>'center',},'Set'),
 			CGI::th({ -align=>'center', },'Score'),
