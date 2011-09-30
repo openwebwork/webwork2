@@ -324,6 +324,13 @@ use constant  FIELD_PROPERTIES => {
 	},	
 };
 
+use constant FIELD_PROPERTIES_GWQUIZ => {
+	max_attempts => {
+		type	=> "hidden",
+		override=> "any",
+	}
+};
+
 # Create a table of fields for the given parameters, one row for each db field
 # if only the setID is included, it creates a table of set information
 # if the problemID is included, it creates a table of problem information
@@ -371,8 +378,16 @@ sub FieldTable {
 		);
 	}
 	foreach my $field (@fieldOrder) {
-		my %properties = %{ FIELD_PROPERTIES()->{$field} };
-
+		my %properties; 
+		
+		
+		if($isGWset && defined( FIELD_PROPERTIES_GWQUIZ->{$field} )){
+			%properties = %{ FIELD_PROPERTIES_GWQUIZ->{$field} };
+		}
+		else{
+			%properties = %{ FIELD_PROPERTIES()->{$field} };
+		}
+		
 		# we don't show the ip restriction option if there are 
 		#    no defined locations, nor the relax_restrict_ip option
 		#    if we're not restricting ip access

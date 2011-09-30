@@ -318,7 +318,7 @@ sub body {
 		courseID => $courseID, setID => $setName);
 	my $hardcopyURL = $self->systemLink($hardcopyPage);
 	
-	print CGI::p(CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set")));
+	print CGI::div({-class=>"problem_set_options"}, CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set")));
 
 
 	my $enable_reduced_scoring = $set->enable_reduced_scoring;
@@ -387,6 +387,7 @@ sub body {
 	#	),
 	#	CGI::endform(),"\n";
 	
+	print CGI::start_div({-class=>"problem_set_options"});
 	print $self->feedbackMacro(
 		module => __PACKAGE__,
 		set => $self->{set}->set_id,
@@ -397,6 +398,7 @@ sub body {
 		showHints => "",
 		showSolutions => "",
 	);
+	print CGI::end_div();
 	
 	return "";
 }

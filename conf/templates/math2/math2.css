@@ -405,7 +405,7 @@ clear: both;
 	float: right;
 	width: 40%;
 	overflow: auto;
-	/*margin-right: -1px;*/
+	margin-right: -1px;
 	background-color: #fff;
 }
 #InfoPanel ol {

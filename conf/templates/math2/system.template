@@ -20,7 +20,7 @@
 ################################################################################
 -->
 <!--
-	Now altered to carry out most of the output operations in Problem.pm, as well as call general output subroutines.
+	Now altered to carry out most of the output operations in Problem.pm
 	-ghe3
 -->
 
@@ -38,17 +38,11 @@
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
-<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
+<body bgcolor="white">
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->
-<!--
-		<!--#if can="nav"-->
-			<div id="Nav">
-				<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
-			</div>
-		<!--#endif-->
--->
+
 	</div>
 	<div id="logo">
                 <a href="http://webwork.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="image link to webwork main web site" height="51" width="267" /></a>&nbsp;
@@ -60,6 +54,8 @@
 	<div id="breadcrumbs">
 		<!--#path style="text" text=" &#x2192; "-->
 	</div>
+	
+	
 	<div id="content" >
             <span style="font-size:larger; color:#00F; float:left;  width:60%;   ">
 			<!--#if can="title"-->
@@ -84,103 +80,83 @@
 				<!--#info-->
 		    <!--#endif-->
 		    
-<!--			      ==============BEGIN BODY OF PROBLEM===============      -->
-			
-			<!--#if warnings="1"-->
-			  <div class="Body" style="background-color:#ffcccc">
-			  <p style="font-size:larger">
-			  Warning -- there may be something wrong with this question. Please inform your instructor
-			  including the warning messages below.
-			  </p>
-			<!--#else-->				
-			  <div class="Body" style="background-color:#ffffff">
-			<!--#endif-->
-			
-			<!--#if can="body"-->
-				
-				<!--#body-->
-				
-			<!--#else-->
-			
-			<!--#if can="output_JS"-->
-				<!--#output_JS-->
-			<!--#endif-->
-			
-			<!--#if can="output_wztooltip_JS"-->
-					<!--#output_wztooltip_JS-->
-			<!--#endif-->
-			
-			<!--#if can="output_custom_edit_message"-->
-				<!--#output_custom_edit_message-->
-			<!--#endif-->
-			
-			<!--#if can="output_summary"-->
-				<!--#output_summary-->
-			<!--#endif-->
-			
-			<!--#if can="output_hidden_info"-->
-				<!--#output_hidden_info-->
-			<!--#endif-->
-			
+		    
 			<!--#if can="post_header_text"-->
 				<!--#post_header_text-->
+				<hr style="clear:both"/>
 			<!--#endif-->
-			
-			<!--#if can="output_form_start"-->
-				<!--#output_form_start-->
-				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
-					<div class="problem">
-						<!--#if can="output_problem_body"-->
-							<!--#output_problem_body-->
-						<!--#endif-->
-						<!--#if can="output_message"-->
-							<!--#output_message-->
-						<!--#endif-->
-						<!--#if can="output_editorLink"-->
-							<!--#output_editorLink-->
-						<!--#endif-->
-					</div>
-				<!--#endif-->
-				
-				<!--#if can="output_checkboxes" can="output_submit_buttons"-->
-					<p>
-						<!--#if can="output_checkboxes"-->
-							<!--#output_checkboxes-->
-						<!--#endif-->
-						<!--#if can="output_submit_buttons"-->
-							<!--#output_submit_buttons-->
-						<!--#endif-->
-					</p>
-				<!--#endif-->
-				
-				<!--#if can="output_score_summary"-->
-					<div class="scoreSummary">
-						<!--#output_score_summary-->
-					</div>
-				<!--#endif-->
-				
-				<!--#if can="output_misc"-->
-					<!--#output_misc-->
-				<!--#endif-->
-              
-				</form> <!-- close output_form -->
-				
-			<!--#endif-->   <!-- end output form -->
-			
 
-		    <!--#endif-->
-<!--					============ END BODY OF PROBLEM ===========   -->
-			</div>				   
-		<!--#if can="output_past_answer_button" can="output_email_instructor"-->
-			<div class="problemFooter">
-				<!--#if can="output_past_answer_button"-->
-					<!--#output_past_answer_button-->
-				<!--#endif-->
-				<!--#if can="output_email_instructor"-->
-					<!--#output_email_instructor-->
-				<!--#endif-->
-			</div>
-		<!--#endif-->
+<!--			      ==============BEGIN BODY OF PROBLEM===============      -->
+			
+			<!--#if can="body"-->
+				<!--#if warnings="1"-->
+				  <div class="Body" style="background-color:#ffcccc">
+				  <p style="font-size:larger">
+				  Warning -- there may be something wrong with this question. Please inform your instructor
+				  including the warning messages below.
+				  </p>
+				<!--#else-->
+				  <div class="Body" style="background-color:#ffffff">
+					<!--#if can="output_JS"-->
+						<!--#output_JS-->
+					<!--#endif-->
+					<!--#if can="output_custom_edit_message"-->
+						<!--#output_custom_edit_message-->
+					<!--#endif-->
+					<!--#if can="output_summary"-->
+						<!--#output_summary-->
+					<!--#endif-->
+					<!--#if can="output_hidden_info"-->
+						<!--#output_hidden_info-->
+					<!--#endif-->
+					<!--#if can="output_form_start"-->
+						<!--#output_form_start-->
+						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
+							<div class="problem">
+								<!--#if can="output_problem_body"-->
+									<!--#output_problem_body-->
+								<!--#endif-->
+								<!--#if can="output_message"-->
+									<!--#output_message-->
+								<!--#endif-->
+								<!--#if can="output_editorLink"-->
+									<!--#output_editorLink-->
+								<!--#endif-->
+							</div>
+						<!--#endif-->
+						<!--#if can="output_checkboxes" can="output_submit_buttons"-->
+							<p>
+								<!--#if can="output_checkboxes"-->
+									<!--#output_checkboxes-->
+								<!--#endif-->
+								<!--#if can="output_submit_buttons"-->
+									<!--#output_submit_buttons-->
+								<!--#endif-->
+							</p>
+						<!--#endif-->
+						<!--#if can="output_score_summary"-->
+							<div class="scoreSummary">
+								<!--#output_score_summary-->
+							</div>
+						<!--#endif-->
+						<!--#if can="output_misc"-->
+							<!--#output_misc-->
+						<!--#endif-->
+						</form>
+						<!--#endif-->
+						<!--#body-->
+					</div>
+			<!--#endif-->
+			<!--#if can="output_past_answer_button" can="output_email_instructor"-->
+				<div class="problemFooter">
+					<!--#if can="output_past_answer_button"-->
+						<!--#output_past_answer_button-->
+					<!--#endif-->
+					<!--#if can="output_email_instructor"-->
+						<!--#output_email_instructor-->
+					<!--#endif-->
+				</div>
+			<!--#endif-->
 		
 		<!--#if warnings="1"-->
 		
@@ -195,14 +171,13 @@
 				<!--#message-->
 			</div>
 		<!--#endif-->
-		
+	
 	<hr class="for-broken-browsers"/>
 	<div id="footer">
-		<!-- <p id="last-modified">Page generated at <!--#timestamp--></p>
+		<p id="last-modified">Page generated at <!--#timestamp--></p>
 		<div id="copyright">
 			WeBWorK &#169; 1996-2011 <a href="http://webwork.maa.org/">The WeBWorK Project</a>
-		</div> -->
-		<!--#footer-->
+		</div>
 	</div>
 	<div id="site-navigation">
 		<!--#if can="links"-->

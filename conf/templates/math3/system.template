@@ -83,10 +83,15 @@
 			  <!--  styles could be different for different pages so they are not set here -->
 				<!--#info-->
 		    <!--#endif-->
-			
+		    <hr style="clear:both"/>
+			<!--#if can="post_header_text"-->
+				<!--#post_header_text-->
+			<!--#endif-->
+			<hr style="clear:both"/>
 			<!--#if can="body"-->
+			    
 				<!--#if warnings="1"-->
-				  <div class="Body" style="background-color:#ffcccc">
+				  <div class="Body" style="background-color:#ff0000">
 				  <p style="font-size:larger">
 				  Warning -- there may be something wrong with this question. Please inform your instructor
 				  including the warning messages below.

@@ -139,14 +139,18 @@ in this file, so we'll throw this exception from there.
 =cut
 
 use Exception::Class (
-	'WeBWorK::DB::Ex' => {},
+	'WeBWorK::DB::Ex' => {
+		description => 'unknown database error',
+	},
 	'WeBWorK::DB::Ex::RecordExists' => {
 		isa => 'WeBWorK::DB::Ex',
 		fields => ['type', 'key'],
+		description =>"record exists"
 	},
 	'WeBWorK::DB::Ex::RecordNotFound' => {
 		isa => 'WeBWorK::DB::Ex',
 		fields => ['type', 'key'],
+		description =>"record not found"
 	},
 	'WeBWorK::DB::Ex::DependencyNotFound' => {
 		isa => 'WeBWorK::DB::Ex::RecordNotFound',
