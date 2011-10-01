@@ -404,6 +404,7 @@ clear: both;
     font-size:100%;
 	float: right;
 	width: 100%;
+	max-width:400px;
 	overflow: auto;
 	margin-right: -1px;
 	background-color: #fff;
