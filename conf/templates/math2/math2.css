@@ -403,7 +403,7 @@ clear: both;
 #InfoPanel {
     font-size:100%;
 	float: right;
-	width: 40%;
+	width: 100%;
 	overflow: auto;
 	margin-right: -1px;
 	background-color: #fff;
