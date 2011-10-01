@@ -1414,6 +1414,8 @@ sub output_hidden_info{
 			}
 		}
 		return "";
+	} else {
+		return "";
 	}
 }
 
