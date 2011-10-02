@@ -903,12 +903,27 @@ sub body {
 		return $valid;
 	}
 	
+	
+	
 	##### answer processing #####
 	debug("begin answer processing");
 	# if answers were submitted:
-	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self);
+	#my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self);
 	debug("end answer processing");
-	
+	# output for templates that only use body instead of calling the body parts individually
+	$self ->output_JS;
+	$self ->output_custom_edit_message;
+	$self ->output_summary;
+	$self ->output_hidden_info;
+	$self ->output_form_start();
+	$self ->output_problem_body;
+	$self ->output_message;
+	$self ->output_editorLink;
+	$self ->output_checkboxes;
+	$self ->output_submit_buttons;
+	$self ->output_score_summary;
+	$self ->output_misc;
+	print "</form>";
 	# debugging stuff
 	if (0) {
 		print
