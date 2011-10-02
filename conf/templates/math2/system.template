@@ -88,7 +88,7 @@
 
 <!--			      ==============BEGIN BODY OF PROBLEM===============      -->
 			
-			<!--#if can="body"-->
+			
 				<!--#if warnings="1"-->
 				  <div class="Body" style="background-color:#ffcccc">
 				  <p style="font-size:larger">
@@ -144,9 +144,9 @@
 						<!--#endif-->
 						</form>
 						<!--#endif-->
-						<!--#body-->
+						
 					</div>
-			<!--#endif-->
+			
 			<!--#if can="output_past_answer_button" can="output_email_instructor"-->
 				<div class="problemFooter">
 					<!--#if can="output_past_answer_button"-->
@@ -171,7 +171,8 @@
 				<!--#message-->
 			</div>
 		<!--#endif-->
-	
+<!--			      ==============END BODY OF PROBLEM===============      -->	
+
 	<hr class="for-broken-browsers"/>
 	<div id="footer">
 		<p id="last-modified">Page generated at <!--#timestamp--></p>
