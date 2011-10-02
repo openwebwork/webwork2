@@ -27,7 +27,7 @@
 <!--#head-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/ur.css"/>
 </head>
-<body>
+<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
 <table width="100%" cellpadding="10" cellspacing="0" border="0">
 	<tr valign="top">
 		<td align="left" valign="top" rowspan="2" class="LeftPanel">
@@ -106,6 +106,10 @@
 				<div class="Message">
 					<!--#message-->
 				</div>
+			<!--#endif-->
+			<!--#if can="post_header_text"-->
+				<!--#post_header_text-->
+				<hr style="clear:both"/>
 			<!--#endif-->
 
 			<!--#if can="body"-->

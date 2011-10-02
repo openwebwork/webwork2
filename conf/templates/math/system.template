@@ -83,7 +83,11 @@
 			<!--#nav style="images" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
 		</div>
 		<!--#endif-->
-		
+		<!--#if can="post_header_text"-->
+			<!--#post_header_text-->
+			<hr style="clear:both"/>
+		<!--#endif-->
+
 	    <!--#if can="body"-->
 				<!--#if warnings="1"-->
 				  <div class="Body" style="background-color:#ffcccc">
