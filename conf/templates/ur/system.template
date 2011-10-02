@@ -109,7 +109,6 @@
 			<!--#endif-->
 
 			<!--#if can="body"-->
-			Body goes here
 			<div class="Body">
 				<!--#body-->
 			</div>
