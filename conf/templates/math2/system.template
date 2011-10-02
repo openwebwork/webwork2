@@ -38,7 +38,7 @@
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
-<body bgcolor="white">
+<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->
@@ -103,7 +103,6 @@
 							<!--#output_custom_edit_message-->
 						<!--#endif-->
 						<!--#if can="output_summary"-->
-							<div class="scoreSummary">
 								<!--#output_summary-->
 							</div>
 						<!--#endif-->
