@@ -14,6 +14,7 @@ All of this is done by contacting the webservice.
 
 =cut
 
+use feature ":5.10";
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
 
@@ -25,11 +26,28 @@ use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    =>'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      =>'mod_xmlrpc';
 use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html';
-use constant  COURSE           => 'gage_course';
+use constant  COURSENAME           => 'gage_course';
+
+my $credential_path = ".ww_credentials";
+eval{require $credential_path};
+if ($@ ) {
+print STDERR <<EOF;
+Can't find file .ww_credentials:
+Place a file with that name and containing this information in the current directory
+%credentials = (
+        userID          => "my login name for the webwork course",
+        password        => "my password ",
+        courseID        => "the name of the webwork course",
+)
+---------------------------------------------------------
+EOF
+die;
+}
 
 
+# print "credentials: ", join(" | ", %credentials), "\n";
 
-my @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
+my @COMMANDS = qw( listLibraries    renderProblem   listLib  readFile tex2pdf );
 
 # $pg{displayModes} = [
 # 	"plainText",     # display raw TeX for math expressions
@@ -43,23 +61,48 @@ use constant DISPLAYMODE   => 'images';
 
 # end configuration section
 
+our $courseName = $credentials{courseID};
 
 print STDERR "inputs are ", join (" | ", @ARGV), "\n";
 our $source;
 
 if (@ARGV) {
     my $command = $ARGV[0];
-    
-    warn "executing WebworkXMLRPC.$command";
-    $source = (defined $ARGV[1]) ? `cat $ARGV[1]` : '' ;
-	xmlrpcCall($command);
+    my $result;
+    print  "executing WebworkXMLRPC.$command \n\n-----------------------\n\n";
+    given($command) {
+    	when ('renderProblem') { if ( defined $ARGV[1])  {
+    								if (-r $ARGV[1] ) {
+    									$source = `cat $ARGV[1]`;
+    									xmlrpcCall($command);
+    								} else {
+    									print STDERR  "Can't read source file $ARGV[1]\n";
+    								}
+    							  } else {
+    							      print STDERR "Useage: ./webwork_xmlrpc_client.pl command   <file_name>\n";
+    							  }
+    	}
+    	when ('listLibraries') {$result = xmlrpcCall($command);
+    							if (defined($result) ) {
+    								print STDOUT "The  libraries available in course $courseName are:\n\t ", join("\n\t ", @$result), "\n";
+    							} else {
+    								print STDOUT "No libraries available for course $courseName\n";
+    							}
+    	}
+    	when ('listLib')       {listLib( @ARGV );}
+    	when ('readFile')      {print STDERR "Command $command not yet implemented\n"}
+    	when ('tex2pdf')       {print STDERR "Command $command not yet implemented\n"}
+    }
 
 
 } else {
 
 	print STDERR "Useage: ./webwork_xmlrpc_client.pl command   [file_name]\n";
-	print STDERR "For example: ./webwork_xmlrpc_client.pl renderProblem   input.txt\n";
+	print STDERR "For example: ./webwork_xmlrpc_client.pl renderProblem   <source file: e.g.  input.txt, bad_input.txt \n";
 	print STDERR "For example: ./webwork_xmlrpc_client.pl  listLibraries   \n";
+	print STDERR "For example: ./webwork_xmlrpc_client.pl listLib all \n";
+	print STDERR "For example: ./webwork_xmlrpc_client.pl listLib setsOnly \n";
+	print STDERR "For example: ./webwork_xmlrpc_client.pl listLib listSet <setID: e.g. set0> \n";
 	print STDERR "Commands are: ", join(" ", @COMMANDS), "\n";
 	
 }
@@ -68,22 +111,27 @@ if (@ARGV) {
 
 sub xmlrpcCall {
 	my $command = shift;
-	$command   = 'listLibraries' unless $command;
-
+	my $input   = shift||{};
+	$command   = 'listLibraries' unless defined $command;
+    my $std_input = standard_input();
+    $input = {%$std_input, %$input};  # concatenate and override standard_input 
+    
+    # print "new input is ", pretty_print_rh($input);
+    
 	  my $requestResult = TRANSPORT_METHOD
 	        #->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
 			-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
 		
 	  # my $test = [3,4,5,6];     
-	  my $input = setInputTable();
-	  print "displayMode=",$input->{envir}->{displayMode},"\n";
+
+	  # print "displayMode=",$input->{envir}->{displayMode},"\n";
 	  local( $result);
 	  # use eval to catch errors
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command,$input) };
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
 	
-	  print "result is|", ref($result),"|";
+	  print "result is <|", ref($result),"|>\n";
 	
 	  unless (ref($result) and $result->fault) {
 	  
@@ -91,15 +139,64 @@ sub xmlrpcCall {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
 	  	}
 		print  pretty_print_rh($result->result()),"\n";  #$result->result()
+		return $result->result();
 	  } else {
 		print 'oops ', join ', ',
-		  $result->faultcode,
+		  $result->faultcode, 
 		  $result->faultstring;
+		  return undef;
 	  }
 }
   
 sub source {
-	encode_base64($source);
+	return "" unless $source;
+	return encode_base64($source);
+}
+sub listLib {
+	my @ARGS = @_;
+	#print "args for listLib are ", join(" ", @ARGS), "\n";
+	given($ARGS[1]) { 
+		when ("all") { $input = {		pw          	 =>   'xmluser',
+										password    	 =>   $credentials{password},
+        								user        	 =>   $credentials{userID},
+        								courseID    	 =>   $credentials{courseID},
+        								command     	 =>   'all',
+        						};
+        			   xmlrpcCall("listLib", $input);
+        			}
+        when ('dirOnly') { $input = {		pw          	 =>   'xmluser',
+										password    	 =>   $credentials{password},
+        								user        	 =>   $credentials{userID},
+        								courseID    	 =>   $credentials{courseID},
+        								command     	 =>   'dirOnly',
+        						};
+        			   		xmlrpcCall("listLib", $input);
+        				}
+        when('files') 	{ if ($ARGS[2]  ) { 
+    							my $dirPath = $ARGS[2];     
+								$input = {		pw          	 =>   'xmluser',
+												password    	 =>   $credentials{password},
+												user        	 =>   $credentials{userID},
+												courseID    	 =>   $credentials{courseID},
+												command     	 =>   'files',
+												dirPath          =>   $dirPath,
+											};
+								xmlrpcCall("listLib", $input);
+							} else {
+								print STDERR "Usage:  webwork_xmlrpc_client listLib files  <path to directory >\n"
+							}
+							
+        				}
+
+	
+	
+	
+		default {print "The possible arguments for listLib are:".  
+		                "\n\t all -- print all paths". 
+		                "\n\t dirOnly -- print only directories".
+		                "\n\t files <path_to_directory> -- print .pg files in the given directory \n" 
+		}
+	}
 }
 sub pretty_print_rh { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
@@ -142,24 +239,17 @@ sub pretty_print_rh {
 	return $out." ";
 }
 
-sub setInputTable_for_listLib {
-	$out = {
-		pw          =>   'geometry',
-		set         =>   'set0',
-		library_name =>  'Library',
-		command      =>  'all',
-	};
 
-	$out;
-}
-sub setInputTable {
+sub standard_input {
 	$out = {
-		pw          =>   'geometry',
-		set         =>   'set0',
-		library_name =>  'Library',
-		command      =>  'all',
+		pw            			=>   'xmluser',
+		password      			=>   $credentials{password},
+		userID          		=>   $credentials{userID},
+		set               		=>   'set0',
+		library_name 			=>  'Library',
+		command      			=>  'all',
 		answer_form_submitted   => 1,
-		course                  => COURSE(),
+		courseID                 => $credentials{courseID},,
 		extra_packages_to_load  => [qw( AlgParserWithImplicitExpand Expr
 		                                ExprWithImplicitExpand AnswerEvaluator
 		                                AnswerEvaluatorMaker 
