@@ -1,5 +1,6 @@
+#!/user/bin/perl -w
+
  
-# FIXME need way to find the basic libraries and such.
 
 
 BEGIN {
@@ -25,22 +26,19 @@ BEGIN {
 
 	eval "use lib '$webwork_directory/lib'"; die $@ if $@;
 	eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
- 	my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_directory });
- 	my $webwork_url = $ce->{webwork_url};
- 	my $pg_dir = $ce->{pg_dir};
+ 	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_directory });
+ 	my $webwork_url = $seed_ce->{webwork_url};
+ 	my $pg_dir = $seed_ce->{pg_dir};
  	eval "use lib '$pg_dir/lib'"; die $@ if $@;
     
 	$WebworkWebservice::WW_DIRECTORY = $webwork_directory;
 	$WebworkWebservice::PG_DIRECTORY = $pg_dir;
-	$WebworkWebservice::SeedCE       = $ce;
+	$WebworkWebservice::SeedCE       = $seed_ce;
 	
 ###############################################################################
 
-	$WebworkWebservice::PASSWORD      = 'xmluser';
-	$WebworkWebservice::COURSENAME    = 'daemon2_course'; # default course
-	
-
-
+	$WebworkWebservice::PASSWORD      = 'xmluser';     # default password
+	$WebworkWebservice::COURSENAME    = 'gage_course'; # default course
 }
 
 
@@ -54,9 +52,9 @@ use warnings;
 ###############################################################################
 ###############################################################################
 
-
-
 package WebworkWebservice;
+
+
 
 sub pretty_print_rh { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
@@ -106,18 +104,145 @@ use WebworkWebservice::MathTranslators;
 
 ###############################################################################
 package WebworkXMLRPC;
-use WebworkWebservice;
 use base qw(WebworkWebservice); 
+use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 
 
+
+###########################################################################
+#  authentication
+###########################################################################
+
+sub initiate_session {
+	my ($invocant, @args) = @_;
+	my $class = ref $invocant || $invocant;
+	my $rh_input     = $args[0];
+	my $user_id       = $rh_input->{userID};
+	my $password     = $rh_input->{password};
+	my $courseName   = $rh_input ->{courseID};
+	my $ce = $class->create_course_environment($courseName);
+	my $db = new WeBWorK::DB($ce->{dbLayout});
+	
+	my $language= $ce->{language} || "en";
+	my $language_handle = WeBWorK::Localize->get_handle($language) ;
+
+	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
+    runtime_use $user_authen_module;
+
+	my $self = {
+		courseName	=>  $courseName,
+		user_id		=>  $user_id,
+		password	=>  $password,
+		ce          =>  $ce,
+		db          =>  $db,
+		language_handle => $language_handle,
+	};	
+	$self = bless $self, $class;
+	# need to bless self before it can be used as an argument for the authentication module
+	# The authentication module is expecting a WeBWorK::Request object
+	# But its only actual requirement is that the method maketext() is defined.
+	
+	my $authen = $user_authen_module->new($self);
+	my $authz  =  WeBWorK::Authz->new($self);
+	
+	$self->{authen}             =  $authen;
+	$self->{authz}              = $authz;
+#   we need to trick some of the methods within the webwork framework 
+#   since we are not coming in with a standard apache request
+#   FIXME:  can/should we change this????
+#
+#   We are borrowing tricks from the AuthenWeBWorK.pm module
+#
+# 	
+
+
+	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
+	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
+	my $authenOK;
+	{
+		no warnings 'redefine';
+		local *WeBWorK::Authen::get_credentials   = \&WebworkXMLRPC::get_credentials;
+		local *WeBWorK::Authen::maybe_send_cookie = \&WebworkXMLRPC::noop;
+		local *WeBWorK::Authen::maybe_kill_cookie = \&WebworkXMLRPC::noop;
+		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
+		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
+		$authenOK = $authen->verify;
+	}
+	
+	$self->{authenOK}           = $authenOK;
+	
+	return $self;
+}
+
+
+
+
+
+###########################################################################
+# identify course 
+###########################################################################
+
+sub create_course_environment {
+	my $self = shift;
+	my $courseName = shift;
+	my $ce = WeBWorK::CourseEnvironment->new($WebworkWebservice::WW_DIRECTORY, "", "", $courseName);
+	# error messages
+	# is there a better way to create the course environment?
+	return ($ce);
+}
+
+###########################################################################
+# security check -- check that the user is in fact a professor in the course
+###########################################################################
+sub ce {
+	my $self = shift;
+	$self->{ce};
+}
+sub db {
+	my $self = shift;
+	$self->{db};
+}
+sub authz {
+	my $self = shift;
+	$self->{authz};
+}
+sub maketext {
+	my $self = shift;
+	$self->{language_handle}->maketext(@_);
+}
+
+
+sub get_credentials {
+		my $self = shift;
+		# self is an Authen object it contains an object r which is the WebworkXMLRPC object
+		# confusing isn't it?
+		$self->{user_id} = $self->{r}->{user_id};
+		$self->{session_key} = "";
+		$self->{password} = $self->{r}->{password};
+		$self->{login_type} = "normal";
+		$self->{credential_source} = "params";
+		return 1;
+}
+
+sub noop {
+
+}
+sub check_authorization {
+		
+
+
+}
 
 #  respond to xmlrpc requests
 sub listLib {
-    my $self = shift;
+    my $class = shift;
     my $in = shift;
+    my $self = $class->initiate_session($in);
+    warn "incomiing request to listLib:  class is $class, self is ",ref($self);
+    warn "value of authentication is ",$self->{authenOK};
   	return( WebworkWebservice::LibraryActions::listLib($in) );
 }
-sub listLibraries {
+sub listLibraries {     # returns a list of libraries for the default course
     my $self = shift;
     my $in = shift;
   	return( WebworkWebservice::LibraryActions::listLibraries($in) );
