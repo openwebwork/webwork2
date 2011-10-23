@@ -35,8 +35,8 @@ our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PASSWORD     = $WebworkWebservice::PASSWORD;
 our $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
-#warn "library ce \n ", WebworkWebservice::pretty_print_rh($ce);
-#warn "LibraryActions is ready";
+# warn "library ce \n ", WebworkWebservice::pretty_print_rh($ce);
+# warn "LibraryActions is ready";
 
 ##############################################
 #   Obtain basic information about local libraries
@@ -53,7 +53,7 @@ our $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COUR
  }
  #warn "prob libraries", WebworkWebservice::pretty_print_rh(\%prob_libs);
 
-sub listLibraries {
+sub listLibraries {  # list the problem libraries that are available.
 	my $rh = shift;
 	return [sort keys %prob_libs];
 }
@@ -110,52 +110,54 @@ sub listLib {
 		$out->{error} = "Could not find library:".$rh->{library_name}.":";
 		return($out);
 	}
-    warn "library directory path is $dirPath";
+    warn "library directory path for ",$rh->{library_name}," is $dirPath";
 	my @outListLib;
+	my %libDirectoryList;
 	my $wanted = sub {
-		my $name = $File::Find::name;
-		my @out=();
-		if ($name =~/\S/ ) {
-			$name =~ s|^$dirPath/*||;  # cut the first directory
-			push(@outListLib, "$name") if $name =~/\.pg/;
-
+		unless ($File::Find::dir =~/.svn/ ) {
+			my $name = $File::Find::name;
+			if ($name =~/\S/ ) {
+				$name =~ s|^$dirPath/*||;  # cut the first directory
+				push(@outListLib, "$name") if $name =~/\.pg/;
+	
+			}
+		}
+	};
+	my $wanted_directory = sub {
+		unless ($File::Find::dir =~/.svn/ ) {
+			my $dir = $File::Find::dir;
+			if ($dir =~/\S/ ) {
+				$dir =~ s|^$dirPath/*||;  # cut the first directory
+				$libDirectoryList{$dir}++;	
+			}
 		}
 	};
 	 
 	my $command = $rh->{command};
+	warn "the command being executed is ' $command '";
 	$command = 'all' unless defined($command);
 			$command eq 'all' &&    do {
 										find({wanted=>$wanted,follow_fast=>1 }, $dirPath);
 										@outListLib = sort @outListLib;
 										$out->{ra_out} = \@outListLib;
-										$out->{text} = join("\n", @outListLib);
+										$out->{text} = encode_base64( join("\n", @outListLib) );
 										return($out);
 			};
-			$command eq 'setsOnly' &&   do {
-											if ( opendir(DIR, $dirPath) ) {  
-											    my @fileList=();
-												while (defined(my $file = readdir(DIR))) {
-													push(@fileList,$file) if -d "$dirPath/$file";
-													
-												}
-												@fileList = sort @fileList;
-												$out->{text} = join("\n",@fileList);
-												$out->{ra_out} = \@fileList;
-												closedir(DIR);
-											} else {
-												$out->{error}= "Can't open directory $dirPath";
-											}
-											return($out);
+			$command eq 'dirOnly' &&   do {
+										find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath);
+										@outListLib = sort keys %libDirectoryList;
+										$out->{ra_out} = \@outListLib;
+										$out->{text} = encode_base64( join("\n", @outListLib) );
+										return($out);
 			};
 
-			$command eq 'listSet' && do {@outListLib=();
+			$command eq 'files' && do {  @outListLib=();
 										 my $separator = ($dirPath =~m|/$|) ?'' : '/';
-			 							 my $dirPath2 = $dirPath . $separator . $rh->{set};
-			 							 
+			 							 my $dirPath2 = $dirPath . $separator . $rh->{dirPath};
 			 							 if ( -e $dirPath2) {
 											 find($wanted, $dirPath2);
 											 @outListLib = sort @outListLib;
-											 $out ->{text} = join("\n", @outListLib );
+											 $out ->{text} = encode_base64( join("\n", @outListLib ) );
 											 $out->{ra_out} = \@outListLib;
 										 } else {
 										   $out->{error} = "Can't open directory  $dirPath2";
@@ -165,7 +167,7 @@ sub listLib {
 			};
 			# else
 			$out->{error}="Unrecognized command $command";
-			$out;
+			return( $out );
 }
 
 
