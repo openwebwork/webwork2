@@ -169,8 +169,8 @@ sub initiate_session {
 		$authenOK = $authen->verify;
 	}
 	
-	$self->{authenOK}           = $authenOK;
-	
+	$self->{authenOK}  = $authenOK;
+	$self->{authzOK}   = $authz->hasPermissions($user_id, "access_instructor_tools");
 	return $self;
 }
 
@@ -185,9 +185,11 @@ sub initiate_session {
 sub create_course_environment {
 	my $self = shift;
 	my $courseName = shift;
-	my $ce = WeBWorK::CourseEnvironment->new($WebworkWebservice::WW_DIRECTORY, "", "", $courseName);
+	my $ce = WeBWorK::CourseEnvironment->new( 
+				{webwork_dir		=>		$WebworkWebservice::WW_DIRECTORY, 
+				 courseName         =>      $courseName
+				 });
 	# error messages
-	# is there a better way to create the course environment?
 	return ($ce);
 }
 
@@ -238,8 +240,9 @@ sub listLib {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
-    warn "incomiing request to listLib:  class is $class, self is ",ref($self);
-    warn "value of authentication is ",$self->{authenOK};
+    warn "incomiing request to listLib:  class is ",ref($self);
+    warn "authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK};
+    warn "authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK}; 
   	return( WebworkWebservice::LibraryActions::listLib($in) );
 }
 sub listLibraries {     # returns a list of libraries for the default course
