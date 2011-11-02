@@ -27,7 +27,7 @@ function saveChanges(formID, uploadAddress, spinnerName){
 function updateLibCategories(formID, uploadAddress, inputName, spinnerName){
   var weAreUpdating = "lib_categories";
   document.getElementById(spinnerName).style.display = "inline";
-  var wantedElements =["effectiveUser", "key", "user", "library_is_basic", "library_subjects", "library_chapters", "library_sections"];
+  var wantedElements =["effectiveUser", "key", "user", "library_is_basic", "library_subjects", "library_chapters", "library_sections", "library_textbook", "library_textchapter", "library_textsection", "library_keywords"];
   upload(document.getElementById(formID), uploadAddress, wantedElements, inputName, weAreUpdating, spinnerName);
 }
 
