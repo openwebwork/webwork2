@@ -231,7 +231,8 @@ sub dispatch($) {
 	# Localizing language
 	######################
 	my $language= $ce->{language} || "en";
-	$r->language_handle(WeBWorK::Localize->get_handle($language) );
+	# $r->language_handle( WeBWorK::Localize->get_handle($language) );
+	$r->language_handle( WeBWorK::Localize::getLoc($language) );
 
 	my @uploads;
 	if (MP2) {
