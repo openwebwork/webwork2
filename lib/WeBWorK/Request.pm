@@ -188,7 +188,8 @@ sub language_handle {
 
 sub maketext {
 	my $self = shift;
-	$self->{language_handle}->maketext(@_);
+	# $self->{language_handle}->maketext(@_);
+	&{ $self->{language_handle} }(@_);
 }
 
 =item location()
