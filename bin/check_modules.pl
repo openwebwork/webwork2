@@ -64,6 +64,8 @@ my @modulesList = qw(
 	IO::File
 	Iterator
 	Iterator::Util
+	Locale::Maketext::Lexicon
+	Locale::Maketext::Simple
 	Mail::Sender
 	MIME::Base64
 	Net::IP
@@ -98,10 +100,10 @@ my @modulesList = qw(
 
 my $apache_version = shift @ARGV;
 unless (defined $apache_version and $apache_version =~ /^apache[12]$/) {
-	warn "invalid apache version specified -- assuming apache1\n";
+	warn "invalid apache version specified -- assuming apache2\n";
 	warn "usage: $0 { apache1 | apache2 }\n";
 	sleep 1;
-	$apache_version = "apache1";
+	$apache_version = "apache2";
 }
 
 if ($apache_version eq "apache1") {
