@@ -1,11 +1,11 @@
 package WeBWorK::Localize;
 
-BEGIN{
-	warn "The webwork directory has not been defined" unless defined  $WeBWorK::Constants::WEBWORK_DIRECTORY;
-}
-use Locale::Maketext::Simple(Path => "/opt/webwork/webwork2/lib/WeBWorK/Localize");
+
+use Locale::Maketext::Simple;  
 use base ("Locale::Maketext::Simple");
 
+print STDERR "Localize.pm: Full path for the localization directory set to |$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize|\n";
+Locale::Maketext::Simple->import(Path => "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize");
 # use Locale::Maketext;
 # use base ('Locale::Maketext');
 
