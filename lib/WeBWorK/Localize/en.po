@@ -1,13 +1,15 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
+"Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
-"Language-Team: \n"
+"Language-Team: Webwork language team <gage@math.rochester.edu>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: English\n"
+"X-Poedit-Country: UNITED STATES\n"
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_1"
