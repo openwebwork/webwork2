@@ -5,15 +5,17 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2011-12-08 17:56-0500\n"
+"PO-Revision-Date: 2011-12-10 17:46-0500\n"
 "Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language-Team: WeBWorK language team <gage@math.rochester.edu>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Hebrew\n"
+"X-Poedit-Country: ISRAEL\n"
 
 #
 #. ($name, $vnum)
@@ -117,9 +119,8 @@ msgstr "בעיה [2_[1_]"
 #
 #. ($numBlanks)
 #: ContentGenerator/Problem.pm:319
-#, fuzzy
 msgid "%quant(%1,of the questions remains,of the questions remain) unanswered."
-msgstr "Soruların %1 tanesi yanıtsız bırakıldı."
+msgstr ""
 
 #
 #: ContentGenerator/Problem.pm:1188
@@ -1481,7 +1482,7 @@ msgstr "tr: This is the homework sets editor page where you can view and edit th
 #. (CGI::b($r->maketext("Remember Me")
 #: ContentGenerator/Login.pm:155
 msgid "_LOGIN_MESSAGE"
-msgstr "Eğer %1 seçeneğini işaretlerseniz, giriş bilgileriniz kullandığınız tarayıcı tarafından hatırlanacak ve sonraki girişlerinizde kullanıcı adı ve şifre girmeden WebWork sayfalarını kullanabileceksiniz. Bu özellik, ortak kullanıma açık bilgisayarlar, güvenli olmayan bilgisayarlar, ve doğrudan kontrole sahip olmadığınız bilgisayarlarda kullanmak için güvenli değildir."
+msgstr "If you check %1 your login information will be remembered by the browser you are using, allowing you to visit WeBWorK pages without typing your user name and password (until your session expires). This feature is not safe for public workstations, untrusted machines, and machines over which you do not have direct control."
 
 #
 #. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)

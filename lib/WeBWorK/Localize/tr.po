@@ -5,15 +5,17 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2011-12-08 17:56-0500\n"
+"PO-Revision-Date: 2011-12-10 17:47-0500\n"
 "Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language-Team: Webwork language team <gage@math.rochester.edu>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Turkish\n"
+"X-Poedit-Country: TURKEY\n"
 
 #
 #. ($name, $vnum)
