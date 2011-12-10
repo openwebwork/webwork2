@@ -1,0 +1,2594 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2011-12-07 14:01-0500\n"
+"Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#
+#. ($name, $vnum)
+#: ContentGenerator/ProblemSets.pm:416
+#, fuzzy
+msgid "%1 (test %2)"
+msgstr ""
+
+#
+#. ($numAdded, $numSkipped, join(", ", @$skipped)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1581
+#, fuzzy
+msgid "%1 sets added, %2 sets skipped. Skipped sets: (%3)"
+msgstr ""
+
+#
+#. ($numExported, $numSkipped, (($numSkipped)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1701
+#, fuzzy
+msgid "%1 sets exported, %2 sets skipped. Skipped sets: (%3)"
+msgstr ""
+
+#
+#. ($name)
+#: ContentGenerator/ProblemSets.pm:427
+#: ContentGenerator/ProblemSets.pm:441
+#, fuzzy
+msgid "%1 test"
+msgstr ""
+
+#
+#. (scalar @userIDsToExport, $dir, $fileName)
+#: ContentGenerator/Instructor/UserList.pm:1385
+#, fuzzy
+msgid "%1 users exported to file %2/%3"
+msgstr ""
+
+#
+#. ($numReplaced, $numAdded, $numSkipped, join (", ", @$skipped)
+#: ContentGenerator/Instructor/UserList.pm:1269
+#, fuzzy
+msgid "%1 users replaced, %2 users added, %3 users skipped. Skipped users: (%4)"
+msgstr ""
+
+#
+#. (int($answerScore*100)
+#: ContentGenerator/Problem.pm:265
+#, fuzzy
+msgid "%1% correct"
+msgstr ""
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:171
+#, fuzzy
+msgid "%1's Current Address"
+msgstr ""
+
+#
+#. ($user_name)
+#: ContentGenerator/Options.pm:126
+#, fuzzy
+msgid "%1's Current Password"
+msgstr ""
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:175
+#, fuzzy
+msgid "%1's New Address"
+msgstr ""
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:130
+#, fuzzy
+msgid "%1's New Password"
+msgstr ""
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:101
+#, fuzzy
+msgid "%1's new password cannot be blank."
+msgstr ""
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:84
+#, fuzzy
+msgid "%1's password has been changed."
+msgstr ""
+
+#
+#. ($setID, $problemID)
+#: ContentGenerator/Problem.pm:884
+#, fuzzy
+msgid "%1: Problem %2"
+msgstr ""
+
+#
+#. ($numBlanks)
+#: ContentGenerator/Problem.pm:319
+#, fuzzy
+msgid "%quant(%1,of the questions remains,of the questions remain) unanswered."
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1188
+msgid "(This problem will not count towards your grade.)"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1299
+msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1708
+#: ContentGenerator/Instructor/UserList.pm:1391
+#: ContentGenerator/Instructor/UserList.pm:1463
+msgid "Abandon changes"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1647
+msgid "Abandon export"
+msgstr ""
+
+#
+#. ($eUserID)
+#: ContentGenerator.pm:848
+#, fuzzy
+msgid "Acting as %1. "
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1927
+msgid "Active"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1142
+msgid "Add how many students?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1220
+msgid "Add which new users?"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:311
+msgid "All of the answers above are correct."
+msgstr ""
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1052
+#, fuzzy
+msgid "All selected sets %1 all students"
+msgstr ""
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1046
+#, fuzzy
+msgid "All sets %1 all students"
+msgstr ""
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1049
+#, fuzzy
+msgid "All visible sets %1 all students"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:446
+#: ContentGenerator/Instructor/ProblemSetList.pm:832
+#: ContentGenerator/Instructor/ProblemSetList.pm:870
+msgid "Answer Date"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:242
+msgid "Answer Preview"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:531
+msgid "Any changes made below will be reflected in the set for ALL students."
+msgstr ""
+
+#
+#: ContentGenerator.pm:1481
+msgid "Apply Options"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1545
+msgid "Assign this set to which users?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2064
+#, fuzzy
+msgid "Assigned Sets"
+msgstr ""
+
+#
+#. ($fully)
+#: ContentGenerator/Problem.pm:315
+#, fuzzy
+msgid "At least one of the answers above is NOT %1correct."
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:350
+msgid "Attempts"
+msgstr ""
+
+#
+#. ($eUserID,$@)
+#: ContentGenerator/Options.pm:71
+#, fuzzy
+msgid "Can't get password record for effective user '%1': %2"
+msgstr ""
+
+#
+#. ($userID,$@)
+#: ContentGenerator/Options.pm:68
+#, fuzzy
+msgid "Can't get password record for user '%1': %2"
+msgstr ""
+
+#
+#: ContentGenerator/Options.pm:142
+msgid "Change Email Address"
+msgstr ""
+
+#
+#: ContentGenerator/Options.pm:61
+msgid "Change Password"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1409
+#: ContentGenerator/Instructor/UserList.pm:1481
+#, fuzzy
+msgid "Changes abandoned"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1457
+#, fuzzy
+msgid "Changes saved"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1118
+msgid "Check Answers"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1227
+msgid "Checking additional error messages"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1011
+msgid "Choose visibility of the sets to be affected"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1084
+#: ContentGenerator/Instructor/ProblemSetList.pm:982
+msgid "Choose which sets to be affected"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:597
+#: ContentGenerator/Instructor/UserList.pm:550
+#: ContentGenerator/ProblemSets.pm:288
+msgid "Clear"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:562
+#, fuzzy
+msgid "Click on the login name to edit individual problem set data, (e.g. due dates) for these students."
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:435
+msgid "Closed"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2072
+#: ContentGenerator/Instructor/UserList.pm:290
+#: ContentGenerator/Instructor/UserList.pm:818
+#: ContentGenerator/Instructor/UserList.pm:861
+#: ContentGenerator/Instructor/UserList.pm:904
+msgid "Comment"
+msgstr ""
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:134
+#: ContentGenerator/Options.pm:95
+#, fuzzy
+msgid "Confirm %1's New Password"
+msgstr ""
+
+#
+#: ContentGenerator/Login.pm:206
+msgid "Continue"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:243
+msgid "Correct"
+msgstr ""
+
+#
+#. ($e_user_name,$@)
+#: ContentGenerator/Options.pm:80
+#, fuzzy
+msgid "Couldn't change %1's password: %2"
+msgstr ""
+
+#
+#. ($@)
+#: ContentGenerator/Options.pm:153
+#, fuzzy
+msgid "Couldn't change your email address: %1"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:71
+#: ContentGenerator/ProblemSets.pm:73
+msgid "Course Info"
+msgstr ""
+
+#
+#: ContentGenerator.pm:657
+#: ContentGenerator/Home.pm:94
+msgid "Courses"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1351
+msgid "Create as what type of set?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1263
+#: ContentGenerator/Instructor/UserList.pm:1082
+msgid "Delete how many?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1119
+msgid "Disable"
+msgstr ""
+
+#
+#: ContentGenerator.pm:1442
+msgid "Display Options"
+msgstr ""
+
+#
+#. ($pl)
+#: ContentGenerator/ProblemSets.pm:283
+#, fuzzy
+msgid "Download Hardcopy for Selected %plural(%1,Set,Sets)"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:321
+msgid "Download PDF or TeX Hardcopy for Current Set"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:289
+msgid "Download PDF or TeX Hardcopy for Selected Sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:445
+#: ContentGenerator/Instructor/ProblemSetList.pm:831
+#: ContentGenerator/Instructor/ProblemSetList.pm:869
+msgid "Due Date"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1812
+msgid "Duplicate this set and name it"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1720
+#: ContentGenerator/Instructor/UserList.pm:1785
+#: ContentGenerator/Instructor/UserList.pm:1818
+msgid "Edit"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:603
+msgid "Edit All Set Data"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:439
+msgid "Edit Assigned Users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:438
+msgid "Edit Problems"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:441
+msgid "Edit Set Data"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:961
+msgid "Edit Which Users?"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1011
+msgid "Edit this problem"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:923
+msgid "Edit which sets?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2067
+#: ContentGenerator/Instructor/UserList.pm:285
+#: ContentGenerator/Instructor/UserList.pm:813
+#: ContentGenerator/Instructor/UserList.pm:856
+#: ContentGenerator/Instructor/UserList.pm:899
+msgid "Email Address"
+msgstr ""
+
+#
+#: ContentGenerator.pm:1526
+#: ContentGenerator.pm:1549
+#: ContentGenerator.pm:1572
+msgid "Email instructor"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1120
+msgid "Enable"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:604
+msgid "Enable Reduced Credit"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1113
+msgid "Enable/Disable reduced scoring for selected sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:815
+#: ContentGenerator/Instructor/UserList.pm:858
+#: ContentGenerator/Instructor/UserList.pm:901
+msgid "Enrollment Status"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1321
+msgid "Enter filename below"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1502
+msgid "Enter filenames below"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:240
+msgid "Entered"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1671
+msgid "Export selected sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1317
+msgid "Export to what kind of file?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1604
+msgid "Export which sets?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1292
+msgid "Export which users?"
+msgstr ""
+
+#
+#. ($@)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1435
+#, fuzzy
+msgid "Failed to create new set: %1"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1374
+msgid "Failed to create new set: no set name specified!"
+msgstr ""
+
+#
+#. ($@)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1848
+#, fuzzy
+msgid "Failed to duplicate set: %1"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1832
+msgid "Failed to duplicate set: no set name specified!"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1396
+#: ContentGenerator/Instructor/ProblemSetList.pm:1830
+msgid "Failed to duplicate set: no set selected for duplication!"
+msgstr ""
+
+#
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1834
+#, fuzzy
+msgid "Failed to duplicate set: set %1 already exists!"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1339
+msgid "Filename"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:678
+msgid "Filter by what text?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2065
+#: ContentGenerator/Instructor/UserList.pm:283
+#: ContentGenerator/Instructor/UserList.pm:811
+#: ContentGenerator/Instructor/UserList.pm:854
+#: ContentGenerator/Instructor/UserList.pm:897
+msgid "First Name"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1020
+msgid "Give new password to which users?"
+msgstr ""
+
+#
+#: ContentGenerator/Login.pm:231
+msgid "Guest Login"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:443
+#: ContentGenerator/Instructor/ProblemSetList.pm:829
+#: ContentGenerator/Instructor/ProblemSetList.pm:867
+msgid "Hardcopy Header"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1017
+msgid "Hidden"
+msgstr ""
+
+#
+#: ContentGenerator.pm:667
+#: ContentGenerator/ProblemSet.pm:110
+#: ContentGenerator/ProblemSets.pm:226
+msgid "Homework Sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:558
+msgid "If a password field is left blank, the student's current password will be maintained."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1498
+msgid "Import from where?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1473
+msgid "Import how many sets?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1520
+msgid "Import sets with names"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1165
+msgid "Import users from what file?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1927
+msgid "Inactive"
+msgstr ""
+
+#
+#: Authen.pm:148
+msgid "Invalid user ID or password."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2066
+#: ContentGenerator/Instructor/UserList.pm:284
+#: ContentGenerator/Instructor/UserList.pm:812
+#: ContentGenerator/Instructor/UserList.pm:855
+#: ContentGenerator/Instructor/UserList.pm:898
+msgid "Last Name"
+msgstr ""
+
+#
+#: ContentGenerator.pm:730
+msgid "Library Browser"
+msgstr ""
+
+#
+#: ContentGenerator.pm:731
+#, fuzzy
+msgid "Library Browser 2"
+msgstr ""
+
+#
+#: ContentGenerator/Logout.pm:124
+msgid "Log In Again"
+msgstr ""
+
+#
+#: ContentGenerator.pm:845
+#: ContentGenerator.pm:847
+msgid "Log Out"
+msgstr ""
+
+#
+#. ($userID)
+#: ContentGenerator.pm:845
+#: ContentGenerator.pm:847
+#, fuzzy
+msgid "Logged in as %1. "
+msgstr ""
+
+#
+#: ContentGenerator/Login.pm:74
+#: ContentGenerator/Login.pm:77
+msgid "Login Info"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2062
+#: ContentGenerator/Instructor/UserList.pm:282
+#: ContentGenerator/Instructor/UserList.pm:810
+#: ContentGenerator/Instructor/UserList.pm:853
+#: ContentGenerator/Instructor/UserList.pm:896
+msgid "Login Name"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2063
+#, fuzzy
+msgid "Login Status"
+msgstr ""
+
+#
+#: ContentGenerator.pm:654
+msgid "Main Menu"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:705
+msgid "Match on what? (separate multiple IDs with commas)"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:245
+msgid "Messages"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:349
+#: ContentGenerator/ProblemSets.pm:212
+#: ContentGenerator/ProblemSets.pm:213
+msgid "Name"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1328
+msgid "Name the new set"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1937
+#: ContentGenerator/Instructor/UserList.pm:2077
+msgid "New Password"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1519
+msgid "New passwords saved"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:864
+#: ContentGenerator/Problem.pm:866
+msgid "Next Problem"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2625
+#: ContentGenerator/Instructor/ProblemSetList.pm:2626
+msgid "No"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1043
+#: ContentGenerator/Instructor/ProblemSetList.pm:1145
+msgid "No change made to any set"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1217
+msgid "No sets selected for scoring"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:266
+#, fuzzy
+msgid "No sets selected for scoring."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2722
+msgid "No sets shown.  Choose one of the options above to list the sets in the course."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2110
+#, fuzzy
+msgid ""
+"No students shown.  Choose one of the options above to \n"
+"\t              list the students in the course."
+msgstr ""
+
+#
+#: ContentGenerator.pm:851
+msgid "Not logged in."
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:975
+msgid "Note"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:444
+#: ContentGenerator/Instructor/ProblemSetList.pm:830
+#: ContentGenerator/Instructor/ProblemSetList.pm:868
+msgid "Open Date"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1307
+msgid "PREVIEW ONLY -- ANSWERS NOT RECORDED"
+msgstr ""
+
+#
+#. (timestamp($self)
+#: ContentGenerator.pm:953
+#, fuzzy
+msgid "Page generated at %1"
+msgstr ""
+
+#
+#: ContentGenerator/Login.pm:202
+msgid "Password"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2073
+#: ContentGenerator/Instructor/UserList.pm:291
+#: ContentGenerator/Instructor/UserList.pm:819
+#: ContentGenerator/Instructor/UserList.pm:862
+#: ContentGenerator/Instructor/UserList.pm:905
+msgid "Permission Level"
+msgstr ""
+
+#
+#. (CGI::b($r->maketext($course)
+#: ContentGenerator/Login.pm:154
+#, fuzzy
+msgid "Please enter your username and password for %1 below:"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:396
+msgid "Please select action to be performed."
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1116
+msgid "Preview Answers"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:850
+#: ContentGenerator/Problem.pm:852
+msgid "Previous Problem"
+msgstr ""
+
+#
+#. ($problemID)
+#: ContentGenerator.pm:686
+#: ContentGenerator/Problem.pm:808
+#: ContentGenerator/ProblemSet.pm:424
+#, fuzzy
+msgid "Problem %1"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:856
+#: ContentGenerator/Problem.pm:858
+msgid "Problem List"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:796
+#: ContentGenerator/ProblemSet.pm:346
+msgid "Problems"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2071
+#: ContentGenerator/Instructor/UserList.pm:289
+#: ContentGenerator/Instructor/UserList.pm:817
+#: ContentGenerator/Instructor/UserList.pm:860
+#: ContentGenerator/Instructor/UserList.pm:903
+msgid "Recitation"
+msgstr ""
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1148
+#, fuzzy
+msgid "Reduced Credit %1 for all sets"
+msgstr ""
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1154
+#, fuzzy
+msgid "Reduced Credit %1 for selected sets"
+msgstr ""
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1151
+#, fuzzy
+msgid "Reduced Credit %1 for visable sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2523
+msgid "Reduced Credit Disabled"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2523
+#: ContentGenerator/Instructor/ProblemSetList.pm:448
+msgid "Reduced Credit Enabled"
+msgstr ""
+
+#
+#. ($beginReducedScoringPeriod)
+#: ContentGenerator/ProblemSets.pm:459
+#, fuzzy
+msgid "Reduced Credit Starts: %1"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:351
+msgid "Remaining"
+msgstr ""
+
+#
+#: ContentGenerator/Login.pm:204
+msgid "Remember Me"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1190
+msgid "Replace which users?"
+msgstr ""
+
+#
+#: ContentGenerator.pm:799
+msgid "Report bugs"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:244
+msgid "Result"
+msgstr ""
+
+#
+#. (CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)
+#: ContentGenerator/Instructor/UserList.pm:376
+#, fuzzy
+msgid "Result of last action performed: %1"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:386
+msgid "Results of last action performed"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1732
+#: ContentGenerator/Instructor/UserList.pm:1415
+#: ContentGenerator/Instructor/UserList.pm:1487
+msgid "Save changes"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1186
+msgid "Score which sets?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2070
+#: ContentGenerator/Instructor/UserList.pm:288
+#: ContentGenerator/Instructor/UserList.pm:816
+#: ContentGenerator/Instructor/UserList.pm:859
+#: ContentGenerator/Instructor/UserList.pm:902
+msgid "Section"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:582
+msgid "Select all sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:535
+msgid "Select all users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:534
+#: ContentGenerator/Instructor/UserList.pm:512
+msgid "Select an action to perform"
+msgstr ""
+
+#
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1375
+#, fuzzy
+msgid "Set %1 exists.  No set created"
+msgstr ""
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:440
+msgid "Set Definition Filename"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:442
+#: ContentGenerator/Instructor/ProblemSetList.pm:828
+#: ContentGenerator/Instructor/ProblemSetList.pm:866
+msgid "Set Header"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:273
+#: ContentGenerator/ProblemSet.pm:275
+msgid "Set Info"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2700
+msgid "Set List"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:827
+#: ContentGenerator/Instructor/ProblemSetList.pm:865
+msgid "Set Name"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:153
+msgid "Sets"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1063
+msgid "Show Hints"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1370
+msgid "Show Past Answers"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1082
+msgid "Show Solutions"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:645
+msgid "Show Which Users?"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1044
+msgid "Show correct answers"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:683
+msgid "Show which sets?"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:497
+#: ContentGenerator/Instructor/UserList.pm:475
+msgid "Show/Hide Site Description"
+msgstr ""
+
+#
+#. (scalar @visibleSetIDs, scalar @allSetIDs)
+#: ContentGenerator/Instructor/ProblemSetList.pm:607
+#, fuzzy
+msgid "Showing %1 out of %2 sets."
+msgstr ""
+
+#
+#. (scalar @Users, scalar @allUserIDs)
+#: ContentGenerator/Instructor/UserList.pm:556
+#, fuzzy
+msgid "Showing %1 out of %2 users"
+msgstr ""
+
+#
+#: ContentGenerator/Login.pm:96
+#: ContentGenerator/Login.pm:99
+msgid "Site Information"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:821
+#: ContentGenerator/Instructor/UserList.pm:804
+msgid "Sort by"
+msgstr ""
+
+#
+#. ($names{$primary}, $names{$secondary})
+#: ContentGenerator/Instructor/ProblemSetList.pm:899
+#, fuzzy
+msgid "Sort by %1 and then by %2"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2069
+#: ContentGenerator/Instructor/UserList.pm:287
+#: ContentGenerator/ProblemSet.pm:353
+#: ContentGenerator/ProblemSets.pm:215
+#: ContentGenerator/ProblemSets.pm:216
+msgid "Status"
+msgstr ""
+
+#
+#: ContentGenerator.pm:848
+msgid "Stop Acting"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2068
+#: ContentGenerator/Instructor/UserList.pm:286
+#: ContentGenerator/Instructor/UserList.pm:814
+#: ContentGenerator/Instructor/UserList.pm:857
+#: ContentGenerator/Instructor/UserList.pm:900
+msgid "Student ID"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1127
+msgid "Submit Answers"
+msgstr ""
+
+#
+#. ($effectiveUser)
+#: ContentGenerator/Problem.pm:1124
+#, fuzzy
+msgid "Submit Answers for %1"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1850
+msgid "Success"
+msgstr ""
+
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1437
+msgid "Successfully created new set %1"
+msgstr ""
+
+#
+#. ($name)
+#: ContentGenerator/ProblemSets.pm:424
+#: ContentGenerator/ProblemSets.pm:433
+#: ContentGenerator/ProblemSets.pm:439
+#, fuzzy
+msgid "Take %1 test"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:598
+#: ContentGenerator/Instructor/UserList.pm:551
+msgid "Take Action!"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:236
+msgid "Test Date"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:235
+msgid "Test Score"
+msgstr ""
+
+#
+#: ContentGenerator.pm:954
+msgid "The WeBWorK Project"
+msgstr ""
+
+#
+#. ($fully)
+#: ContentGenerator/Problem.pm:307
+#, fuzzy
+msgid "The answer above is NOT %1correct."
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:305
+msgid "The answer above is correct."
+msgstr ""
+
+#
+#. (CGI::b($r->maketext("[_1]'s Current Password",$user_name)
+#: ContentGenerator/Options.pm:107
+#, fuzzy
+msgid ""
+"The password you entered in the %1 \n"
+"\t\t\t\t\t\tfield does not match your current\n"
+"\t\t\t\t\t\tpassword. Please retype your current password and try\n"
+"\t\t\t\t\t\tagain."
+msgstr ""
+
+#
+#. (CGI::b($r->maketext("[_1]'s New Password",$e_user_name)
+#: ContentGenerator/Options.pm:91
+#, fuzzy
+msgid ""
+"The passwords you entered in the \n"
+"\t\t\t\t\t\t\t\t%1 and %2\n"
+"\t\t\t\t\t\t\t\tfields don't match. Please retype your new password and try\n"
+"\t\t\t\t\t\t\t\tagain."
+msgstr ""
+
+#
+#. ($setName,$effectiveUser)
+#: ContentGenerator/ProblemSet.pm:308
+#, fuzzy
+msgid "The selected problem set (%1) is not a valid set for %2"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:859
+#: ContentGenerator/Instructor/UserList.pm:847
+#: ContentGenerator/Instructor/UserList.pm:890
+msgid "Then by"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:365
+msgid "This homework set contains no problems."
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1175
+msgid "This homework set is closed."
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1173
+msgid "This homework set is not yet open."
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:611
+msgid "This problem will not count towards your grade."
+msgstr ""
+
+#
+#. (CGI::font({class=>$visiblityStateClass}, $visiblityStateText)
+#: ContentGenerator/Problem.pm:605
+#: ContentGenerator/ProblemSet.pm:88
+#, fuzzy
+msgid "This set is %1"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:588
+msgid "Unselect all sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:541
+msgid "Unselect all users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2683
+msgid "Use System Default"
+msgstr ""
+
+#
+#: ContentGenerator/Login.pm:200
+msgid "Username"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2087
+msgid "Users List"
+msgstr ""
+
+#
+#. ($names{$primary}, $names{$secondary}, $names{$ternary})
+#: ContentGenerator/Instructor/UserList.pm:938
+#, fuzzy
+msgid "Users sorted by %1, then by %2, then by %3"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:230
+msgid "Viewing temporary file"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1332
+#: ContentGenerator/ProblemSets.pm:63
+msgid "Viewing temporary file: "
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:833
+#: ContentGenerator/Instructor/ProblemSetList.pm:871
+msgid "Visibility"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1018
+#: ContentGenerator/Instructor/ProblemSetList.pm:447
+msgid "Visible"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1259
+#: ContentGenerator/Instructor/UserList.pm:1078
+msgid "Warning: Deletion destroys all user-related data and is not undoable!"
+msgstr ""
+
+#
+#: ContentGenerator/Home.pm:87
+msgid "Welcome to WeBWorK!"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:665
+msgid "What field should filtered users match on?"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:352
+msgid "Worth"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2625
+#: ContentGenerator/Instructor/ProblemSetList.pm:2626
+msgid "Yes"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:306
+#: ContentGenerator/Instructor/ProblemSetList.pm:418
+#: ContentGenerator/Instructor/UserList.pm:262
+msgid "You are not authorized to access the instructor tools."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:339
+msgid "You are not authorized to modify homework sets."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:344
+msgid "You are not authorized to modify set definition files."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:329
+#: ContentGenerator/Instructor/UserList.pm:335
+#, fuzzy
+msgid "You are not authorized to modify student data"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:389
+#: ContentGenerator/Instructor/UserList.pm:380
+msgid "You are not authorized to perform this action."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1121
+msgid "You cannot delete yourself!"
+msgstr ""
+
+#
+#: ContentGenerator/Options.pm:163
+#: ContentGenerator/Options.pm:180
+msgid "You do not have permission to change email addresses."
+msgstr ""
+
+#
+#: ContentGenerator/Options.pm:117
+#: ContentGenerator/Options.pm:139
+msgid "You do not have permission to change your password."
+msgstr ""
+
+#
+#. ($attemptsLeft,$attemptsLeftNoun)
+#: ContentGenerator/Problem.pm:1196
+#, fuzzy
+msgid "You have %1 %2 remaining."
+msgstr ""
+
+#
+#. ($attemptsLeft)
+#: ContentGenerator/Problem.pm:1197
+#, fuzzy
+msgid "You have %negquant(%1,unlimited attempts,attempt,attempts) remaining."
+msgstr ""
+
+#
+#. ($attempts)
+#: ContentGenerator/Problem.pm:1191
+#, fuzzy
+msgid "You have attempted this problem %quant(%1,time,times)."
+msgstr ""
+
+#
+#: ContentGenerator/Logout.pm:119
+msgid "You have been logged out of WeBWorK."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1933
+msgid "You may not change your own password here!"
+msgstr ""
+
+#
+#: Authen.pm:317
+msgid "You must specify a user ID."
+msgstr ""
+
+#
+#. (sprintf("%.0f%%", $pg->{result}->{score} * 100)
+#: ContentGenerator/Problem.pm:1192
+#, fuzzy
+msgid "You received a score of %1 for this attempt."
+msgstr ""
+
+#
+#: ContentGenerator/Options.pm:157
+msgid "Your email address has been changed."
+msgstr ""
+
+#
+#. ($lastScore,$notCountedMessage)
+#: ContentGenerator/Problem.pm:1194
+#, fuzzy
+msgid "Your overall recorded score is %1.  %2"
+msgstr ""
+
+#
+#: Authen.pm:416
+msgid "Your session has timed out due to inactivity. Please log in again."
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:273
+#: ContentGenerator/ProblemSets.pm:71
+#, fuzzy
+msgid "[edit]"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:476
+msgid "_CLASSLIST_EDITOR_DESCRIPTION"
+msgstr ""
+
+#
+#. (CGI::strong($r->maketext($course)
+#: ContentGenerator/Login.pm:151
+msgid "_EXTERNAL_AUTH_MESSAGE"
+msgstr ""
+
+#
+#. (CGI::b($r->maketext("Guest Login")
+#: ContentGenerator/Login.pm:230
+msgid "_GUEST_LOGIN_MESSAGE"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:498
+msgid "_HMWKSETS_EDITOR_DESCRIPTION"
+msgstr ""
+
+#
+#. (CGI::b($r->maketext("Remember Me")
+#: ContentGenerator/Login.pm:155
+msgid "_LOGIN_MESSAGE"
+msgstr ""
+
+#
+#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#: ContentGenerator/ProblemSet.pm:333
+msgid "_REDUCED_CREDIT_MESSAGE_1"
+msgstr ""
+
+#
+#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#: ContentGenerator/ProblemSet.pm:335
+msgid "_REDUCED_CREDIT_MESSAGE_2"
+msgstr ""
+
+#
+#: ContentGenerator.pm:1951
+msgid "_REQUEST_ERROR"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1358
+msgid "a duplicate of the first selected set"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1357
+msgid "a new empty set"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1479
+msgid "a single set"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1091
+#: ContentGenerator/Instructor/ProblemSetList.pm:1193
+#: ContentGenerator/Instructor/ProblemSetList.pm:1610
+#: ContentGenerator/Instructor/ProblemSetList.pm:689
+#: ContentGenerator/Instructor/ProblemSetList.pm:929
+#: ContentGenerator/Instructor/ProblemSetList.pm:989
+msgid "all sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1551
+#: ContentGenerator/Instructor/UserList.pm:1026
+#: ContentGenerator/Instructor/UserList.pm:1298
+#: ContentGenerator/Instructor/UserList.pm:651
+#: ContentGenerator/Instructor/UserList.pm:967
+msgid "all users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1196
+#: ContentGenerator/Instructor/UserList.pm:1226
+msgid "any users"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1165
+msgid "attempt"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1162
+#: ContentGenerator/Problem.pm:1165
+msgid "attempts"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1726
+msgid "changes abandoned"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1790
+msgid "changes saved"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:468
+msgid "closed, answers available"
+msgstr ""
+
+#
+#. ($self->formatDateTime($set->answer_date)
+#: ContentGenerator/ProblemSets.pm:464
+#, fuzzy
+msgid "closed, answers on %1"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:466
+msgid "closed, answers recently available"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:402
+#, fuzzy
+msgid "completed."
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:267
+msgid "completely"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:264
+msgid "correct"
+msgstr ""
+
+#
+#. ($num)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1310
+#, fuzzy
+msgid "deleted %1 sets"
+msgstr ""
+
+#
+#. ($num)
+#: ContentGenerator/Instructor/UserList.pm:1135
+#, fuzzy
+msgid "deleted %1 users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:947
+msgid "editing all sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:985
+msgid "editing all users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:953
+msgid "editing selected sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:991
+msgid "editing selected users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:950
+msgid "editing visible sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:988
+msgid "editing visible users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:694
+msgid "enter matching set IDs below"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1665
+msgid "export abandoned"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1629
+msgid "exporting all sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1636
+msgid "exporting selected sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1633
+msgid "exporting visible sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1044
+msgid "giving new passwords to all users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1050
+msgid "giving new passwords to selected users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1047
+msgid "giving new passwords to visible users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2522
+#: ContentGenerator/Problem.pm:603
+#, fuzzy
+msgid "hidden"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:604
+#: ContentGenerator/ProblemSet.pm:86
+msgid "hidden from students"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:693
+msgid "hidden sets"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:266
+msgid "incorrect"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1480
+msgid "multiple sets"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:864
+msgid "navNext"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:866
+msgid "navNextGrey"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:850
+msgid "navPrev"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:852
+msgid "navPrevGrey"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:856
+msgid "navProbList"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:858
+msgid "navProbListGrey"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSet.pm:110
+msgid "navUp"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1090
+#: ContentGenerator/Instructor/ProblemSetList.pm:1192
+#: ContentGenerator/Instructor/ProblemSetList.pm:1269
+#: ContentGenerator/Instructor/ProblemSetList.pm:690
+#: ContentGenerator/Instructor/ProblemSetList.pm:988
+msgid "no sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1552
+#: ContentGenerator/Instructor/UserList.pm:1088
+#: ContentGenerator/Instructor/UserList.pm:1199
+#: ContentGenerator/Instructor/UserList.pm:1227
+#: ContentGenerator/Instructor/UserList.pm:652
+msgid "no users"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:430
+#: ContentGenerator/ProblemSets.pm:452
+msgid "now open, due "
+msgstr ""
+
+#
+#. ($self->formatDateTime($set->due_date()
+#: ContentGenerator/ProblemSets.pm:408
+#, fuzzy
+msgid "open: complete by %1"
+msgstr ""
+
+#
+#: ContentGenerator/ProblemSets.pm:405
+msgid "over time: closed."
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1093
+#: ContentGenerator/Instructor/ProblemSetList.pm:1194
+#: ContentGenerator/Instructor/ProblemSetList.pm:1271
+#: ContentGenerator/Instructor/ProblemSetList.pm:1612
+#: ContentGenerator/Instructor/ProblemSetList.pm:691
+#: ContentGenerator/Instructor/ProblemSetList.pm:931
+#: ContentGenerator/Instructor/ProblemSetList.pm:991
+msgid "selected sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1028
+#: ContentGenerator/Instructor/UserList.pm:1090
+#: ContentGenerator/Instructor/UserList.pm:1198
+#: ContentGenerator/Instructor/UserList.pm:1300
+#: ContentGenerator/Instructor/UserList.pm:653
+#: ContentGenerator/Instructor/UserList.pm:969
+msgid "selected users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:762
+msgid "showing all sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:738
+msgid "showing all users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:747
+msgid "showing matching users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:765
+msgid "showing no sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:741
+msgid "showing no users"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:768
+msgid "showing selected sets"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:744
+msgid "showing selected users"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1124
+#, fuzzy
+msgid "submitAnswers"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1154
+msgid "time"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1154
+msgid "times"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:1161
+#: ContentGenerator/ProblemSet.pm:427
+msgid "unlimited"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:654
+msgid "users who match on selected field"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2522
+#: ContentGenerator/Problem.pm:603
+#, fuzzy
+msgid "visible"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1611
+#: ContentGenerator/Instructor/ProblemSetList.pm:692
+#: ContentGenerator/Instructor/ProblemSetList.pm:930
+msgid "visible sets"
+msgstr ""
+
+#
+#: ContentGenerator/Problem.pm:604
+#: ContentGenerator/ProblemSet.pm:86
+msgid "visible to students"
+msgstr ""
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1027
+#: ContentGenerator/Instructor/UserList.pm:1197
+#: ContentGenerator/Instructor/UserList.pm:1299
+#: ContentGenerator/Instructor/UserList.pm:968
+msgid "visible users"
+msgstr ""
+
+#
+#. ($self->formatDateTime($set->open_date)
+#: ContentGenerator/ProblemSets.pm:420
+#: ContentGenerator/ProblemSets.pm:448
+#, fuzzy
+msgid "will open on %1"
+msgstr ""
+
+#
+msgid "Add to which set?"
+msgstr ""
+
+#
+msgid "Course Information for course [_1]"
+msgstr ""
+
+#
+msgid "report bugs in this problem"
+msgstr ""
+
+#
+msgid "Problem [_1]"
+msgstr ""
+
+#
+msgid "Cancel Password"
+msgstr ""
+
+#
+msgid "WeBWorK"
+msgstr ""
+
+#
+msgid "Audit"
+msgstr ""
+
+#
+msgid "Hardcopy Header for set [_1]"
+msgstr ""
+
+#
+msgid "Report bugs in a WeBWorK question/problem using this link. The very first time you do this you will need to register with an email address so that information on the bug fix can be reported back to you."
+msgstr ""
+
+#
+msgid "Pad Fields"
+msgstr ""
+
+#
+msgid "Set Header for set [_1]"
+msgstr ""
+
+#
+msgid "Statistics for [_1]"
+msgstr ""
+
+#
+msgid "Filter"
+msgstr ""
+
+#
+msgid "set [_1]/problem [_2]"
+msgstr ""
+
+#
+msgid "You are not authorized to modify problems."
+msgstr ""
+
+#
+msgid "hardcopy header file"
+msgstr ""
+
+#
+msgid "Write permissions have not been enabled in the templates directory.  No changes can be made."
+msgstr ""
+
+#
+msgid "Save [_1] and View"
+msgstr ""
+
+#
+msgid "Create"
+msgstr ""
+
+#
+msgid "Changes in this file have not yet been permanently saved."
+msgstr ""
+
+#
+msgid "Instructor Tools"
+msgstr ""
+
+#
+msgid "Score"
+msgstr ""
+
+#
+msgid "Show in another window"
+msgstr ""
+
+#
+msgid "Copied auxiliary files from [_1] to  new location at [_2]"
+msgstr ""
+
+#
+msgid "Unpublished"
+msgstr ""
+
+#
+msgid "Login"
+msgstr ""
+
+#
+msgid "Email"
+msgstr ""
+
+#
+msgid "File Manager"
+msgstr ""
+
+#
+msgid "Unable to change the hardcopy header for set [_1]. Unknown error."
+msgstr ""
+
+#
+msgid "Unable to make '[_1]' the set header for [_2]"
+msgstr ""
+
+#
+msgid "Can't determine user of temporary edit file [_1]."
+msgstr ""
+
+#
+msgid "Download a hardcopy of this homework set."
+msgstr ""
+
+#
+msgid "Problem Editor"
+msgstr ""
+
+#
+msgid "The file '[_1]' is protected!"
+msgstr ""
+
+#
+msgid "Top level of author information on the wiki."
+msgstr ""
+
+#
+msgid "Score selected set(s) and save to:"
+msgstr ""
+
+#
+msgid "Save Password"
+msgstr ""
+
+#
+msgid "The file '[_1]' is a blank problem!"
+msgstr ""
+
+#
+msgid "Add as what filetype?"
+msgstr ""
+
+#
+msgid "no action"
+msgstr ""
+
+#
+msgid "Added '[_1]' to [_2] as new set header"
+msgstr ""
+
+#
+msgid "View statistics by set"
+msgstr ""
+
+#
+msgid "Set"
+msgstr ""
+
+#
+msgid "This is a blank problem template file and can not be edited directly. Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
+msgstr ""
+
+#
+msgid "Logout"
+msgstr ""
+
+#
+msgid "You do not have permission to view the details of this error."
+msgstr ""
+
+#
+msgid "Reverting to original file '[_1]'"
+msgstr ""
+
+#
+msgid "Delete"
+msgstr ""
+
+#
+msgid "Wiki summary page for MathObjects"
+msgstr ""
+
+#
+msgid "Your score was recorded."
+msgstr ""
+
+#
+msgid "You must specify an file name in order to save a new file."
+msgstr ""
+
+#
+msgid "To edit this text you must first make a copy of this file using the 'Save as' action below."
+msgstr ""
+
+#
+msgid "unassigned problem file"
+msgstr ""
+
+#
+msgid "View statistics by student"
+msgstr ""
+
+#
+msgid "Publish"
+msgstr ""
+
+#
+msgid "Password/Email"
+msgstr ""
+
+#
+msgid "Cancel Edit"
+msgstr ""
+
+#
+msgid "Math Objects"
+msgstr ""
+
+#
+msgid "Snippets of PG code illustrating specific techniques"
+msgstr ""
+
+#
+msgid "Error copying [_1] to [_2]"
+msgstr ""
+
+#
+msgid "Hmwk Sets Editor"
+msgstr ""
+
+#
+msgid "This set is [_1] students."
+msgstr ""
+
+#
+msgid "header file"
+msgstr ""
+
+#
+msgid "Include Index"
+msgstr ""
+
+#
+msgid "Display Mode"
+msgstr ""
+
+#
+msgid "You can earn partial credit on this problem."
+msgstr ""
+
+#
+msgid "Write permissions have not been enabled in '[_1]'.  Changes must be saved to a different directory for viewing."
+msgstr ""
+
+#
+msgid "blank problem"
+msgstr ""
+
+#
+msgid "Save Edit"
+msgstr ""
+
+#
+msgid "Enrolled"
+msgstr ""
+
+#
+msgid "Write permissions have not been enabled for '[_1]'.  Changes must be saved to another file for viewing."
+msgstr ""
+
+#
+msgid "Note: this problem viewer is for viewing purposes only. As of right now, testing functionality is not possible."
+msgstr ""
+
+#
+msgid "Save Export"
+msgstr ""
+
+#
+msgid "webwork"
+msgstr ""
+
+#
+msgid "Problem Viewer"
+msgstr ""
+
+#
+msgid "submit button clicked"
+msgstr ""
+
+#
+msgid "Student Progress for [_1]"
+msgstr ""
+
+#
+msgid "A new file has been created at '[_1]' with the contents below. No changes have been made to set [_2]."
+msgstr ""
+
+#
+msgid "Your score was not recorded because this problem has not been assigned to you."
+msgstr ""
+
+#
+msgid "Sort"
+msgstr ""
+
+#
+msgid "Add problem"
+msgstr ""
+
+#
+msgid "Author Info"
+msgstr ""
+
+#
+msgid "Replace [_1]"
+msgstr ""
+
+#
+msgid "Help"
+msgstr ""
+
+#
+msgid "Add Users"
+msgstr ""
+
+#
+msgid "Problem Source Code"
+msgstr ""
+
+#
+msgid "Test snippets of PG code in interactive lab.  Good way to learn PG language."
+msgstr ""
+
+#
+msgid "Page generated at [_1] at [_2]"
+msgstr ""
+
+#
+msgid "Import"
+msgstr ""
+
+#
+msgid "View Using Seed Number"
+msgstr ""
+
+#
+msgid "Grades"
+msgstr ""
+
+#
+msgid "Published"
+msgstr ""
+
+#
+msgid "Your score was not recorded because this homework set is closed."
+msgstr ""
+
+#
+msgid "The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser."
+msgstr ""
+
+#
+msgid "The file '[_1]' is a directory!"
+msgstr ""
+
+#
+msgid "Save As"
+msgstr ""
+
+#
+msgid "Documentation from source code for PG modules and macro files. Often the most up-to-date information."
+msgstr ""
+
+#
+msgid "Problem Techniques"
+msgstr ""
+
+#
+msgid "Course Configuration"
+msgstr ""
+
+#
+msgid "Feedback"
+msgstr ""
+
+#
+msgid "Export"
+msgstr ""
+
+#
+msgid "PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques."
+msgstr ""
+
+#
+msgid "Record Scores for Single Sets"
+msgstr ""
+
+#
+msgid "Append to end of set [_1]"
+msgstr ""
+
+#
+msgid "Unrecognized saveMode: |[_1]|. Unknown error."
+msgstr ""
+
+#
+msgid "Your score was not recorded because there was a failure in storing the problem record to the database."
+msgstr ""
+
+#
+msgid "The hardcopy header for set [_1] has been renamed to '[_2]'."
+msgstr ""
+
+#
+msgid "Save as"
+msgstr ""
+
+#
+msgid "Select action below"
+msgstr ""
+
+#
+msgid "The file '[_1]' cannot be found."
+msgstr ""
+
+#
+msgid "Unable to write to '[_1]': [_2]"
+msgstr ""
+
+#
+msgid "Save"
+msgstr ""
+
+#
+msgid "File '[_1]' exists. File not saved. No changes have been made. You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"
+msgstr ""
+
+#
+msgid "The set header for set [_1] has been renamed to '[_2]'."
+msgstr ""
+
+#
+msgid "Error: This path is already in the temporary edit directory -- no new temporary file is created. path = [_1]"
+msgstr ""
+
+#
+msgid "Please use radio buttons to choose the method for saving this file. Can't recognize saveMode: |[_1]|."
+msgstr ""
+
+#
+msgid "Saved to file '[_1]'"
+msgstr ""
+
+#
+msgid "Please specify a file to save to."
+msgstr ""
+
+#
+msgid "The selected problem ([_1]) is not a valid problem for set [_2]."
+msgstr ""
+
+#
+msgid "Editing [_1] in file '[_2]'"
+msgstr ""
+
+#
+msgid "Deleting temp file at [_1]"
+msgstr ""
+
+#
+msgid "hidden from"
+msgstr ""
+
+#
+msgid "View student progress by set"
+msgstr ""
+
+#
+msgid "View"
+msgstr ""
+
+#
+msgid "Resources"
+msgstr ""
+
+#
+msgid "Scoring Download"
+msgstr ""
+
+#
+msgid "Duplicate"
+msgstr ""
+
+#
+msgid "This path |[_1]| is not the path to a temporary edit file."
+msgstr ""
+
+#
+msgid "visible to"
+msgstr ""
+
+#
+msgid "Unable to change the source file path for set [_1], problem [_2]. Unknown error."
+msgstr ""
+
+#
+msgid "Course Administration"
+msgstr ""
+
+#
+msgid "Added [_1] to [_2] as problem [_3]"
+msgstr ""
+
+#
+msgid "Options Information"
+msgstr ""
+
+#
+msgid "Proctor"
+msgstr ""
+
+#
+msgid "Student Progress"
+msgstr ""
+
+#
+msgid "Revert"
+msgstr ""
+
+#
+msgid "Statistics"
+msgstr ""
+
+#
+msgid "Save as new independent problem"
+msgstr ""
+
+#
+msgid "Scoring Tools"
+msgstr ""
+
+#
+msgid "The source file for 'set [_1] / problem [_2]' has been changed from [_3] to '[_4]'."
+msgstr ""
+
+#
+msgid "Cancel Export"
+msgstr ""
+
+#
+msgid "View student progress by student"
+msgstr ""
+
+#
+msgid "Revert to [_1]"
+msgstr ""
+
+#
+msgid "Classlist Editor"
+msgstr ""
+
+#
+msgid "Add"
+msgstr ""
+
+#
+msgid "the original path to the file is [_1]"
+msgstr ""
+
+#
+msgid "The path to the original file should be absolute"
+msgstr ""
+
+#
+msgid "To edit this text you must use the 'Save AS' action below to save it to another file."
+msgstr ""
+
+#
+msgid "Error: The original file [_1] cannot be read."
+msgstr ""
+
+#
+msgid "Unable to change the set header for set [_1]. Unknown error."
+msgstr ""
+
+#
+msgid "options information"
+msgstr ""
+
+#
+msgid "The selected problem([_1]) is not a valid problem for set [_2]."
+msgstr ""
+
+#
+msgid "Unknown file type"
+msgstr ""
+
+#
+msgid "course information"
+msgstr ""
+
+#
+msgid "Change User Options"
+msgstr ""
+
+#
+msgid "Drop"
+msgstr ""
+
+#
+msgid "Solutions"
+msgstr ""
+
+#
+msgid "Show:"
+msgstr ""
+
+#
+msgid "WeBWorK Assignment [_1] is due : [_2]."
+msgstr ""
+
+#
+msgid "Hardcopy Generator"
+msgstr ""
+
+#
+msgid "This set is visible to students."
+msgstr ""
+
+#
+msgid "View equations as"
+msgstr ""
+
+#
+msgid "From:"
+msgstr ""
+
+#
+msgid "Generate Hardcopy"
+msgstr ""
+
+#
+msgid "You may choose to show any of the following data. Correct answers and solutions are only available after the answer date of the homework set."
+msgstr ""
+
+#
+msgid "E-mail Instructor"
+msgstr ""
+
+#
+msgid "Send E-mail:"
+msgstr ""
+
+#
+msgid "Cancel Email"
+msgstr ""
+
+#
+msgid "E-mail:"
+msgstr ""
+
+#
+msgid "Correct answers"
+msgstr ""
+
+#
+msgid "Use this form to report to your professor a problem with the WeBWorK system or an error in a problem you are attempting. Along with your message, additional information about the state of the system will be included."
+msgstr ""
+
+#
+msgid "Student answers"
+msgstr ""
+
+#
+msgid "Hints"
+msgstr ""
+
+#
+msgid "Hardcopy Format:"
+msgstr ""
+
