@@ -1,3 +1,6 @@
+
+
+
 package WeBWorK::Localize;
 
 
@@ -97,5 +100,7 @@ original.
 "_EXTERNAL_AUTH_MESSAGE" => q{[_1] uses an external authentication system.  You've authenticated through that system, but aren't allowed to log in to this course.},
 
 	);
+package WeBWorK::Localize::I18N;
+use base(WeBWorK::Localize);
 
 1;
