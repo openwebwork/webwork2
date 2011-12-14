@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2011-12-12 08:04-0500\n"
+"PO-Revision-Date: 2011-12-14 08:52-0500\n"
 "Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
 "Language-Team: Webwork Turkish language team <Ben Walter <benwalt@gmail.com>>\n"
 "Language: \n"
@@ -553,12 +553,12 @@ msgstr "Set çoğaltılamadı: set %1 zaten mevcut!"
 #
 #: ContentGenerator/Instructor/UserList.pm:1339
 msgid "Filename"
-msgstr "tr: Filename"
+msgstr "Dosya adı"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:678
 msgid "Filter by what text?"
-msgstr "tr: Filter by what text?"
+msgstr "Hangi metin ile filtrelenecek?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2065
@@ -567,29 +567,29 @@ msgstr "tr: Filter by what text?"
 #: ContentGenerator/Instructor/UserList.pm:854
 #: ContentGenerator/Instructor/UserList.pm:897
 msgid "First Name"
-msgstr "tr: First Name"
+msgstr "İsim"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1020
 msgid "Give new password to which users?"
-msgstr "tr: Give new password to which users?"
+msgstr "Hangi kullanıcılara yeni şifre verilecek?"
 
 #
 #: ContentGenerator/Login.pm:231
 msgid "Guest Login"
-msgstr "tr: Guest Login"
+msgstr "Misafir Kullanıcı Girişi"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:443
 #: ContentGenerator/Instructor/ProblemSetList.pm:829
 #: ContentGenerator/Instructor/ProblemSetList.pm:867
 msgid "Hardcopy Header"
-msgstr "tr: Hardcopy Header"
+msgstr "Çıktı Dosyası Başlığı"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1017
 msgid "Hidden"
-msgstr "tr: Hidden"
+msgstr "Gizli"
 
 #
 #: ContentGenerator.pm:667
@@ -601,32 +601,32 @@ msgstr "Soru Grupları"
 #
 #: ContentGenerator/Instructor/UserList.pm:558
 msgid "If a password field is left blank, the student's current password will be maintained."
-msgstr "tr: If a password field is left blank, the student's current password will be maintained."
+msgstr "Şifre alanı boş bırakılırsa kullanıcının mevcut şifresi kullanılır."
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1498
 msgid "Import from where?"
-msgstr "tr: Import from where?"
+msgstr "Nereden aktarılacak?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1473
 msgid "Import how many sets?"
-msgstr "tr: Import how many sets?"
+msgstr "Kaç set aktarılacak?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1520
 msgid "Import sets with names"
-msgstr "tr: Import sets with names"
+msgstr "Setleri isimleriyle beraber aktar"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1165
 msgid "Import users from what file?"
-msgstr "tr: Import users from what file?"
+msgstr "Kullanıcılar hangi dosyadan aktarılacak?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1927
 msgid "Inactive"
-msgstr "tr: Inactive"
+msgstr "Aktif Değil"
 
 #
 #: Authen.pm:148
@@ -640,7 +640,7 @@ msgstr "Yanlış kullanıcı adı ya da şifre."
 #: ContentGenerator/Instructor/UserList.pm:855
 #: ContentGenerator/Instructor/UserList.pm:898
 msgid "Last Name"
-msgstr "tr: Last Name"
+msgstr "Soyadı"
 
 #
 #: ContentGenerator.pm:730
@@ -675,7 +675,7 @@ msgstr "%1 olarak giriş yaptınız."
 #: ContentGenerator/Login.pm:74
 #: ContentGenerator/Login.pm:77
 msgid "Login Info"
-msgstr "tr: Login Info"
+msgstr "Giriş Bilgileri"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2062
@@ -684,7 +684,7 @@ msgstr "tr: Login Info"
 #: ContentGenerator/Instructor/UserList.pm:853
 #: ContentGenerator/Instructor/UserList.pm:896
 msgid "Login Name"
-msgstr "tr: Login Name"
+msgstr "Kullanıcı adı"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2063
@@ -700,7 +700,7 @@ msgstr "Ana Menü"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:705
 msgid "Match on what? (separate multiple IDs with commas)"
-msgstr "tr: Match on what? (separate multiple IDs with commas)"
+msgstr "Hangi özellikler eşleştirilecek? (birden fazla kullanıcı adını virgülle ayırın)"
 
 #
 #: ContentGenerator/Problem.pm:245
@@ -717,18 +717,18 @@ msgstr "Grup Adı"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1328
 msgid "Name the new set"
-msgstr "tr: Name the new set"
+msgstr "Yeni seti adlandırın"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1937
 #: ContentGenerator/Instructor/UserList.pm:2077
 msgid "New Password"
-msgstr "tr: New Password"
+msgstr "Yeni Şifre"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1519
 msgid "New passwords saved"
-msgstr "tr: New passwords saved"
+msgstr "Yeni şifreler kaydedildi"
 
 #
 #: ContentGenerator/Problem.pm:864
@@ -740,18 +740,18 @@ msgstr "Sonraki Soru"
 #: ContentGenerator/Instructor/ProblemSetList.pm:2625
 #: ContentGenerator/Instructor/ProblemSetList.pm:2626
 msgid "No"
-msgstr "tr: No"
+msgstr "Hayır"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1043
 #: ContentGenerator/Instructor/ProblemSetList.pm:1145
 msgid "No change made to any set"
-msgstr "tr: No change made to any set"
+msgstr "Herhangi bir sete değişiklik yapılmadı"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1217
 msgid "No sets selected for scoring"
-msgstr "tr: No sets selected for scoring"
+msgstr "Notlamak için bir set seçili değil"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:266
@@ -761,7 +761,7 @@ msgstr "Notlama için bir set seçili değil."
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:2722
 msgid "No sets shown.  Choose one of the options above to list the sets in the course."
-msgstr "tr: No sets shown.  Choose one of the options above to list the sets in the course."
+msgstr "Hiç set gösterilmiyor. Dersteki setleri görmek için yukarıdaki seçeneklerden birini işaretleyin."
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2110
@@ -778,14 +778,14 @@ msgstr "Giriş yapmadınız."
 #
 #: ContentGenerator/Problem.pm:975
 msgid "Note"
-msgstr "tr: Note"
+msgstr "Not"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:444
 #: ContentGenerator/Instructor/ProblemSetList.pm:830
 #: ContentGenerator/Instructor/ProblemSetList.pm:868
 msgid "Open Date"
-msgstr "tr: Open Date"
+msgstr "Açılış tarihi"
 
 #
 #: ContentGenerator/Problem.pm:1307
@@ -810,7 +810,7 @@ msgstr "Sifre"
 #: ContentGenerator/Instructor/UserList.pm:862
 #: ContentGenerator/Instructor/UserList.pm:905
 msgid "Permission Level"
-msgstr "tr: Permission Level"
+msgstr "Yetki seviyesi"
 
 #
 #. (CGI::b($r->maketext($course)
@@ -822,7 +822,7 @@ msgstr "Lütfen %1 dersi için kullanici adi ve sifrenizi giriniz:"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:396
 msgid "Please select action to be performed."
-msgstr "tr: Please select action to be performed."
+msgstr "Lütfen gerçekleştirilecek işlemi seçin."
 
 #
 #: ContentGenerator/Problem.pm:1116
@@ -885,13 +885,13 @@ msgstr "Görünür setler için notlar %1 azaltıldı"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:2523
 msgid "Reduced Credit Disabled"
-msgstr "tr: Reduced Credit Disabled"
+msgstr "Azaltılmış not etkin değil"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:2523
 #: ContentGenerator/Instructor/ProblemSetList.pm:448
 msgid "Reduced Credit Enabled"
-msgstr "tr: Reduced Credit Enabled"
+msgstr "Azaltılmış not etkin"
 
 #
 #. ($beginReducedScoringPeriod)
@@ -907,12 +907,12 @@ msgstr "Kalan hak"
 #
 #: ContentGenerator/Login.pm:204
 msgid "Remember Me"
-msgstr "tr: Remember Me"
+msgstr "Beni hatırla"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1190
 msgid "Replace which users?"
-msgstr "tr: Replace which users?"
+msgstr "Hangi kullanıcılar değiştirilecek?"
 
 #
 #: ContentGenerator.pm:799
@@ -933,19 +933,19 @@ msgstr "En son gerçekleştilen işlemin sonucu: %1"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:386
 msgid "Results of last action performed"
-msgstr "tr: Results of last action performed"
+msgstr "En son gerçekleştirilen işlemin sonuçları"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1732
 #: ContentGenerator/Instructor/UserList.pm:1415
 #: ContentGenerator/Instructor/UserList.pm:1487
 msgid "Save changes"
-msgstr "tr: Save changes"
+msgstr "Değişiklikleri kaydet"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1186
 msgid "Score which sets?"
-msgstr "tr: Score which sets?"
+msgstr "Hangi setler notlanacak?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2070
@@ -954,23 +954,23 @@ msgstr "tr: Score which sets?"
 #: ContentGenerator/Instructor/UserList.pm:859
 #: ContentGenerator/Instructor/UserList.pm:902
 msgid "Section"
-msgstr "tr: Section"
+msgstr "Bölüm"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:582
 msgid "Select all sets"
-msgstr "tr: Select all sets"
+msgstr "Bütün setleri seç"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:535
 msgid "Select all users"
-msgstr "tr: Select all users"
+msgstr "Bütün kullanıcıları seç"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:534
 #: ContentGenerator/Instructor/UserList.pm:512
 msgid "Select an action to perform"
-msgstr "tr: Select an action to perform"
+msgstr "Yapılacak işlemi seç"
 
 #
 #. ($newSetID)
@@ -980,36 +980,36 @@ msgstr "Set %1 mevcut. Yeni set oluşturulmadı"
 
 #: ContentGenerator/Instructor/ProblemSetList.pm:440
 msgid "Set Definition Filename"
-msgstr "Set Definition Filename"
+msgstr "Set Tanım Dosyası Adı"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:442
 #: ContentGenerator/Instructor/ProblemSetList.pm:828
 #: ContentGenerator/Instructor/ProblemSetList.pm:866
 msgid "Set Header"
-msgstr "tr: Set Header"
+msgstr "Set Başlığı"
 
 #
 #: ContentGenerator/ProblemSet.pm:273
 #: ContentGenerator/ProblemSet.pm:275
 msgid "Set Info"
-msgstr "tr: Set Info"
+msgstr "Set Bilgileri"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:2700
 msgid "Set List"
-msgstr "tr: Set List"
+msgstr "Set Listesi"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:827
 #: ContentGenerator/Instructor/ProblemSetList.pm:865
 msgid "Set Name"
-msgstr "tr: Set Name"
+msgstr "Set Adı"
 
 #
 #: ContentGenerator/ProblemSet.pm:153
 msgid "Sets"
-msgstr "tr: Sets"
+msgstr "Setler"
 
 #
 #: ContentGenerator/Problem.pm:1063
@@ -1029,7 +1029,7 @@ msgstr "Çözümleri göster"
 #
 #: ContentGenerator/Instructor/UserList.pm:645
 msgid "Show Which Users?"
-msgstr "tr: Show Which Users?"
+msgstr "Hangi kullanıcılar gösterilecek?"
 
 #
 #: ContentGenerator/Problem.pm:1044
@@ -1039,13 +1039,13 @@ msgstr "Doğru yanıtları göster"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:683
 msgid "Show which sets?"
-msgstr "tr: Show which sets?"
+msgstr "Hangi setler gösterilecek?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:497
 #: ContentGenerator/Instructor/UserList.pm:475
 msgid "Show/Hide Site Description"
-msgstr "tr: Show/Hide Site Description"
+msgstr "Web Alanı Açıklamasını Göster/Gizle"
 
 #
 #. (scalar @visibleSetIDs, scalar @allSetIDs)
@@ -1063,13 +1063,13 @@ msgstr "%2 kullanıcının %1 tanesi gösteriliyor."
 #: ContentGenerator/Login.pm:96
 #: ContentGenerator/Login.pm:99
 msgid "Site Information"
-msgstr "tr: Site Information"
+msgstr "Web Alanı Bilgileri"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:821
 #: ContentGenerator/Instructor/UserList.pm:804
 msgid "Sort by"
-msgstr "tr: Sort by"
+msgstr "Kriterlere Göre Sırala"
 
 #
 #. ($names{$primary}, $names{$secondary})
@@ -1098,7 +1098,7 @@ msgstr "Rol Yapmayı bırak"
 #: ContentGenerator/Instructor/UserList.pm:857
 #: ContentGenerator/Instructor/UserList.pm:900
 msgid "Student ID"
-msgstr "tr: Student ID"
+msgstr "Kullanıcı Adı"
 
 #
 #: ContentGenerator/Problem.pm:1127
@@ -1115,7 +1115,7 @@ msgstr "%1 için Yanıtları Gönder"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1850
 msgid "Success"
-msgstr "tr: Success"
+msgstr "Başarılı"
 
 #. ($newSetID)
 #: ContentGenerator/Instructor/ProblemSetList.pm:1437
@@ -1134,22 +1134,22 @@ msgstr "%1 testini çöz"
 #: ContentGenerator/Instructor/ProblemSetList.pm:598
 #: ContentGenerator/Instructor/UserList.pm:551
 msgid "Take Action!"
-msgstr "tr: Take Action!"
+msgstr "İşlemi Gerçekleştir!"
 
 #
 #: ContentGenerator/ProblemSets.pm:236
 msgid "Test Date"
-msgstr "tr: Test Date"
+msgstr "Sınav Tarihi"
 
 #
 #: ContentGenerator/ProblemSets.pm:235
 msgid "Test Score"
-msgstr "tr: Test Score"
+msgstr "Sınav Notu"
 
 #
 #: ContentGenerator.pm:954
 msgid "The WeBWorK Project"
-msgstr "tr: The WeBWorK Project"
+msgstr "WeBWorK Projesi"
 
 #
 #. ($fully)
@@ -1196,7 +1196,7 @@ msgstr "Seçtiğiniz soru seti (%1) set %2 için geçerli değil"
 #: ContentGenerator/Instructor/UserList.pm:847
 #: ContentGenerator/Instructor/UserList.pm:890
 msgid "Then by"
-msgstr "tr: Then by"
+msgstr "sonra"
 
 #
 #: ContentGenerator/ProblemSet.pm:365
@@ -1228,17 +1228,17 @@ msgstr "Bu set %1"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:588
 msgid "Unselect all sets"
-msgstr "tr: Unselect all sets"
+msgstr "Bütün setlerdeki seçimi kaldır"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:541
 msgid "Unselect all users"
-msgstr "tr: Unselect all users"
+msgstr "Bütün kullanıcılardaki seçimi kaldir"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:2683
 msgid "Use System Default"
-msgstr "tr: Use System Default"
+msgstr "Varsayılan Ayarları Kullan"
 
 #
 #: ContentGenerator/Login.pm:200
@@ -1248,7 +1248,7 @@ msgstr "Kullanici adi"
 #
 #: ContentGenerator/Instructor/UserList.pm:2087
 msgid "Users List"
-msgstr "tr: Users List"
+msgstr "Kullanıcı Listesi"
 
 #
 #. ($names{$primary}, $names{$secondary}, $names{$ternary})
@@ -1259,7 +1259,7 @@ msgstr "Kullanıcılar sırasıyla %1, %2 ve %3 kriterlerine göre sıları"
 #
 #: ContentGenerator/ProblemSet.pm:230
 msgid "Viewing temporary file"
-msgstr "tr: Viewing temporary file"
+msgstr "Geçici dosya gösteriliyor"
 
 #
 #: ContentGenerator/Problem.pm:1332
@@ -1271,13 +1271,13 @@ msgstr "Geçici dosya görüntüleniyor: "
 #: ContentGenerator/Instructor/ProblemSetList.pm:833
 #: ContentGenerator/Instructor/ProblemSetList.pm:871
 msgid "Visibility"
-msgstr "tr: Visibility"
+msgstr "Görünürlük"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1018
 #: ContentGenerator/Instructor/ProblemSetList.pm:447
 msgid "Visible"
-msgstr "tr: Visible"
+msgstr "Görünür"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1259
