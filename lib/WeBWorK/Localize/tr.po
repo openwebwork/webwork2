@@ -7,13 +7,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2011-12-14 08:52-0500\n"
+"PO-Revision-Date: 2011-12-20 11:29-0500\n"
 "Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
 "Language-Team: Webwork Turkish language team <Ben Walter <benwalt@gmail.com>>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
 "X-Poedit-Language: Turkish\n"
 "X-Poedit-Country: TURKEY\n"
 
@@ -54,7 +54,6 @@ msgstr "%1 kullanıcı %2/%3 dosyasına aktarıldı."
 msgid "%1 users replaced, %2 users added, %3 users skipped. Skipped users: (%4)"
 msgstr "%1 kullanıcı değiştirildi, %2 kullanıcı eklendi, %3 kullanıcı atlandı. Atlanan kullanıcılar: (%4)"
 
-#
 #. (int($answerScore*100)
 #: ContentGenerator/Problem.pm:265
 #, fuzzy
@@ -862,7 +861,7 @@ msgstr "Sorular"
 #: ContentGenerator/Instructor/UserList.pm:860
 #: ContentGenerator/Instructor/UserList.pm:903
 msgid "Recitation"
-msgstr "tr: Recitation"
+msgstr "Problem cozum dersi"
 
 #
 #. ($verb)
@@ -1283,7 +1282,7 @@ msgstr "Görünür"
 #: ContentGenerator/Instructor/ProblemSetList.pm:1259
 #: ContentGenerator/Instructor/UserList.pm:1078
 msgid "Warning: Deletion destroys all user-related data and is not undoable!"
-msgstr "tr: Warning: Deletion destroys all user-related data and is not undoable!"
+msgstr "Dikkat: Silme işlemi kullanıcının bütün bilgilerini yok eder ve bu işlem geri döndürelemez!"
 
 #
 #: ContentGenerator/Home.pm:87
@@ -1293,7 +1292,7 @@ msgstr "WeBWorK sitemize hoşgeldiniz!"
 #
 #: ContentGenerator/Instructor/UserList.pm:665
 msgid "What field should filtered users match on?"
-msgstr "tr: What field should filtered users match on?"
+msgstr "Seçili kullanıcılar hangi kriterlerde eşleşmeli?"
 
 #
 #: ContentGenerator/ProblemSet.pm:352
@@ -1304,24 +1303,24 @@ msgstr "Değeri"
 #: ContentGenerator/Instructor/ProblemSetList.pm:2625
 #: ContentGenerator/Instructor/ProblemSetList.pm:2626
 msgid "Yes"
-msgstr "tr: Yes"
+msgstr "Evet"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:306
 #: ContentGenerator/Instructor/ProblemSetList.pm:418
 #: ContentGenerator/Instructor/UserList.pm:262
 msgid "You are not authorized to access the instructor tools."
-msgstr "tr: You are not authorized to access the instructor tools."
+msgstr "Eğitmen araçlarına erişim yetkiniz yok."
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:339
 msgid "You are not authorized to modify homework sets."
-msgstr "tr: You are not authorized to modify homework sets."
+msgstr "Ödev setlerini değiştirme yetkiniz yok."
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:344
 msgid "You are not authorized to modify set definition files."
-msgstr "tr: You are not authorized to modify set definition files."
+msgstr "Set tanım dosyalarını değiştirme yetkiniz yok."
 
 #
 #: ContentGenerator/Instructor/UserList.pm:329
@@ -1333,12 +1332,12 @@ msgstr "Öğrenci bilgilerini değiştirme yetkisine sahip değilsiniz."
 #: ContentGenerator/Instructor/ProblemSetList.pm:389
 #: ContentGenerator/Instructor/UserList.pm:380
 msgid "You are not authorized to perform this action."
-msgstr "tr: You are not authorized to perform this action."
+msgstr "Bu işlemi gerçekleştirme yetkiniz yok."
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1121
 msgid "You cannot delete yourself!"
-msgstr "tr: You cannot delete yourself!"
+msgstr "Kendinizi silemezsiniz!"
 
 #
 #: ContentGenerator/Options.pm:163
@@ -1381,7 +1380,7 @@ msgstr "WeBWorK sisteminden çıkış yaptınız."
 #
 #: ContentGenerator/Instructor/UserList.pm:1933
 msgid "You may not change your own password here!"
-msgstr "tr: You may not change your own password here!"
+msgstr "Şifrenizi buradan değiştiremezsiniz!"
 
 #
 #: Authen.pm:317
@@ -1422,24 +1421,24 @@ msgstr "~[düzenle~]"
 #
 #: ContentGenerator/Instructor/UserList.pm:476
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
-msgstr "tr: This is the classlist editor page, where you can view and edit the records of all the students currently enrolled in this course.  The top of the page contains forms which allow you to filter which students to view, sort your students in a chosen order, edit student records, give new passwords to students, import/export student records from/to external files, or add/delete students.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table containing the student usernames and their information."
+msgstr "Bu sayfa sınıf listesi editörü. Burada derse kayıtlı öğrencilerin bilgilerini görebilir ve değiştirebilirsiniz. Sayfanın yukarısında hangi öğrencileri görmek istediğinizi belirleyebileceğiniz filtre formları var. Bunları kullanarak öğrencileri belirlediğiniz kriterlere göre sıralayabilir, öğrenci bilgilerini değiştirebilir,öğrencilere yeni şifre verebilir, dışarıdan öğrenci bilgileri alabilir yahut derse yeni öğrenciler ekleyip çıkarabilirsiniz. Hangi işlemi yapmak istiyorsanız seçin ve gerekli bilgileri girin daha sonra \"İşlemi Gerçekleştir!\" tuşuna basın. Sayfanın altında öğrencilerin bilgilerini gösteren bir tablo var."
 
 #
 #. (CGI::strong($r->maketext($course)
 #: ContentGenerator/Login.pm:151
 msgid "_EXTERNAL_AUTH_MESSAGE"
-msgstr "%1 uses an external authentication system.  You've authenticated through that system, but aren't allowed to log in to this course."
+msgstr "%1 harici bir kimlik doğrulama sistemi kullanıyor.  Bu sistemle kimliğinizi doğruladınız fakat bu derse giriş yapma izniniz yok."
 
 #
 #. (CGI::b($r->maketext("Guest Login")
 #: ContentGenerator/Login.pm:230
 msgid "_GUEST_LOGIN_MESSAGE"
-msgstr "tr: This course supports guest logins. Click %1 to log into this course as a guest."
+msgstr "Bu derse misafir olarak girebilirsiniz. Misafir olarak girmek için %1 linkine basın. "
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:498
 msgid "_HMWKSETS_EDITOR_DESCRIPTION"
-msgstr "tr: This is the homework sets editor page where you can view and edit the homework sets that exist in this course and the problems that they contain. The top of the page contains forms which allow you to filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, publish homework sets, import/export sets from/to an external file, score sets, or create/delete sets.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table displaying the sets and several pieces of relevant information."
+msgstr "Bu sayfa ödev setleri editörü. Burada bu derse ait ödev setlerini görebilir ve üzerlerinde değişiklikler yapabilirsiniz. Yukarıdaki formları kullanarak setleri istediğiniz kriterlere göre görüntüleyebilir, setleri düzenleyebilir, yeni setler yayımlayabilir, dışarıdan ödev setleri aktarabilir, ödevleri notlayabilir yahut var olan setleri silebilirsiniz.  Hangi işlemi yapmak istiyorsanız seçin ve gerekli bilgileri girin daha sonra \"İşlemi Gerçekleştir!\" tuşuna basın. Sayfanın aşağısında mevcut setler hakkında bir takım bilgiler var."
 
 #
 #. (CGI::b($r->maketext("Remember Me")
@@ -1451,13 +1450,13 @@ msgstr " Eğer %1 seçeneğini işaretlerseniz, giriş bilgileriniz kullandığ�
 #. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
 #: ContentGenerator/ProblemSet.pm:333
 msgid "_REDUCED_CREDIT_MESSAGE_1"
-msgstr "tr: This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3% of the original."
+msgstr "Bu ödev seti için Azaltılmış Not süresi var. Bu süre %1 tarihinde başlıyor ve %2 tarihinde son buluyor. Bu süre içinde cevaplanan bütün sorular asıl değerlerinin yüzde %3 değerinde olacak."
 
 #
 #. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
 #: ContentGenerator/ProblemSet.pm:335
 msgid "_REDUCED_CREDIT_MESSAGE_2"
-msgstr "tr: This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3% of the original."
+msgstr "Bu ödev seti için Azaltılmış Not süresi vardı. Bu süre %1 tarihinde başladı ve %2 tarihinde bitti. Bu süre içinde cevaplanan bütün sorular asıl değerlerinin yüzde %3 değerinde notlandı."
 
 #
 #: ContentGenerator.pm:1951
@@ -1467,17 +1466,17 @@ msgstr " WebWork bu problemi işlerken bir yazılım hatası ile karşılaştı.
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1358
 msgid "a duplicate of the first selected set"
-msgstr "tr: a duplicate of the first selected set"
+msgstr "İlk seçilen setin bir kopyası"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1357
 msgid "a new empty set"
-msgstr "tr: a new empty set"
+msgstr "Boş bir yeni set"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1479
 msgid "a single set"
-msgstr "tr: a single set"
+msgstr "tek bir set"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1091
@@ -1487,7 +1486,7 @@ msgstr "tr: a single set"
 #: ContentGenerator/Instructor/ProblemSetList.pm:929
 #: ContentGenerator/Instructor/ProblemSetList.pm:989
 msgid "all sets"
-msgstr "tr: all sets"
+msgstr "bütün setler"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1551
@@ -1496,13 +1495,13 @@ msgstr "tr: all sets"
 #: ContentGenerator/Instructor/UserList.pm:651
 #: ContentGenerator/Instructor/UserList.pm:967
 msgid "all users"
-msgstr "tr: all users"
+msgstr "bütün kullanıcılar"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1196
 #: ContentGenerator/Instructor/UserList.pm:1226
 msgid "any users"
-msgstr "tr: any users"
+msgstr "her kullanıcı"
 
 #
 #: ContentGenerator/Problem.pm:1165
@@ -1518,12 +1517,12 @@ msgstr "deneme hakkı"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1726
 msgid "changes abandoned"
-msgstr "tr: changes abandoned"
+msgstr "değişiklikler kaydedilmedi"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1790
 msgid "changes saved"
-msgstr "tr: changes saved"
+msgstr "değişiklikler kaydedildi"
 
 #
 #: ContentGenerator/ProblemSets.pm:468
@@ -1550,7 +1549,7 @@ msgstr "tamamlandı."
 #
 #: ContentGenerator/Problem.pm:267
 msgid "completely"
-msgstr "tr: completely"
+msgstr "tamamen"
 
 #
 #: ContentGenerator/Problem.pm:264
@@ -1572,72 +1571,72 @@ msgstr "%1 kullanıcı silindi."
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:947
 msgid "editing all sets"
-msgstr "tr: editing all sets"
+msgstr "bütün setler düzenleniyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:985
 msgid "editing all users"
-msgstr "tr: editing all users"
+msgstr "bütün kullancılar düzenleniyor"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:953
 msgid "editing selected sets"
-msgstr "tr: editing selected sets"
+msgstr "seçili setler düzenleniyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:991
 msgid "editing selected users"
-msgstr "tr: editing selected users"
+msgstr "seçili kullanıcılar düzenleniyor"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:950
 msgid "editing visible sets"
-msgstr "tr: editing visible sets"
+msgstr "görünür setler düzenleniyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:988
 msgid "editing visible users"
-msgstr "tr: editing visible users"
+msgstr "görünür kullanıcılar düzenleniyor"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:694
 msgid "enter matching set IDs below"
-msgstr "tr: enter matching set IDs below"
+msgstr "eşleşen ödev setlerini aşağıya girin"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1665
 msgid "export abandoned"
-msgstr "tr: export abandoned"
+msgstr "dışarı aktarım yapılmadı"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1629
 msgid "exporting all sets"
-msgstr "tr: exporting all sets"
+msgstr "bürün setler dışarı aktarılıyor"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1636
 msgid "exporting selected sets"
-msgstr "tr: exporting selected sets"
+msgstr "seçili setler dışarı aktarılıyor"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1633
 msgid "exporting visible sets"
-msgstr "tr: exporting visible sets"
+msgstr "görünür setler dışarı aktarılıyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1044
 msgid "giving new passwords to all users"
-msgstr "tr: giving new passwords to all users"
+msgstr "bütün kullanıcılara yeni şifre veriliyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1050
 msgid "giving new passwords to selected users"
-msgstr "tr: giving new passwords to selected users"
+msgstr "seçili kullanıcılara yeni şifre veriliyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1047
 msgid "giving new passwords to visible users"
-msgstr "tr: giving new passwords to visible users"
+msgstr "görünür kullanıcılara yeni şifre veriliyor"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:2522
@@ -1649,12 +1648,12 @@ msgstr "gizli"
 #: ContentGenerator/Problem.pm:604
 #: ContentGenerator/ProblemSet.pm:86
 msgid "hidden from students"
-msgstr "tr: hidden from students"
+msgstr "öğrenciler tarafından görülemez"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:693
 msgid "hidden sets"
-msgstr "tr: hidden sets"
+msgstr "gizli setler"
 
 #
 #: ContentGenerator/Problem.pm:266
@@ -1664,42 +1663,42 @@ msgstr "yanlış"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1480
 msgid "multiple sets"
-msgstr "tr: multiple sets"
+msgstr "birden fazla set"
 
 #
 #: ContentGenerator/Problem.pm:864
 msgid "navNext"
-msgstr "tr:&nbspNext"
+msgstr "&nbspSonraki"
 
 #
 #: ContentGenerator/Problem.pm:866
 msgid "navNextGrey"
-msgstr "tr:&nbspNext"
+msgstr "&nbspSonraki"
 
 #
 #: ContentGenerator/Problem.pm:850
 msgid "navPrev"
-msgstr "tr:&nbspPrev"
+msgstr "&nbspÖnceki"
 
 #
 #: ContentGenerator/Problem.pm:852
 msgid "navPrevGrey"
-msgstr "tr:&nbspPrev"
+msgstr "&nbspÖnceki"
 
 #
 #: ContentGenerator/Problem.pm:856
 msgid "navProbList"
-msgstr "tr:&nbspUp"
+msgstr "&nbspSorular"
 
 #
 #: ContentGenerator/Problem.pm:858
 msgid "navProbListGrey"
-msgstr "tr:&nbspUp"
+msgstr "&nbspSorular"
 
 #
 #: ContentGenerator/ProblemSet.pm:110
 msgid "navUp"
-msgstr "tr:&nbspUp"
+msgstr "tr:&nbspYukarı"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1090
@@ -1708,7 +1707,7 @@ msgstr "tr:&nbspUp"
 #: ContentGenerator/Instructor/ProblemSetList.pm:690
 #: ContentGenerator/Instructor/ProblemSetList.pm:988
 msgid "no sets"
-msgstr "tr: no sets"
+msgstr "Set yok"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1552
@@ -1717,7 +1716,7 @@ msgstr "tr: no sets"
 #: ContentGenerator/Instructor/UserList.pm:1227
 #: ContentGenerator/Instructor/UserList.pm:652
 msgid "no users"
-msgstr "tr: no users"
+msgstr "kullanıcı yok"
 
 #
 #: ContentGenerator/ProblemSets.pm:430
@@ -1746,7 +1745,7 @@ msgstr "süre bitti: kapalı."
 #: ContentGenerator/Instructor/ProblemSetList.pm:931
 #: ContentGenerator/Instructor/ProblemSetList.pm:991
 msgid "selected sets"
-msgstr "tr: selected sets"
+msgstr "seçili setler"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1028
@@ -1756,42 +1755,42 @@ msgstr "tr: selected sets"
 #: ContentGenerator/Instructor/UserList.pm:653
 #: ContentGenerator/Instructor/UserList.pm:969
 msgid "selected users"
-msgstr "tr: selected users"
+msgstr "seçili kullanıcılar"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:762
 msgid "showing all sets"
-msgstr "tr: showing all sets"
+msgstr "bütün setler gösteriliyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:738
 msgid "showing all users"
-msgstr "tr: showing all users"
+msgstr "bütün kullanıcılar gösteriliyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:747
 msgid "showing matching users"
-msgstr "tr: showing matching users"
+msgstr "eşleşen kullanıcılar gösteriliyor"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:765
 msgid "showing no sets"
-msgstr "tr: showing no sets"
+msgstr "hiçbir set gösterilmiyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:741
 msgid "showing no users"
-msgstr "tr: showing no users"
+msgstr "hiçbir kullanıcı gösterilmiyor"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:768
 msgid "showing selected sets"
-msgstr "tr: showing selected sets"
+msgstr "seçili setler gösteriliyor"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:744
 msgid "showing selected users"
-msgstr "tr: showing selected users"
+msgstr "seçili kullanıcılar gösteriliyor"
 
 #
 #: ContentGenerator/Problem.pm:1124
@@ -1818,7 +1817,7 @@ msgstr "sınırsız"
 #
 #: ContentGenerator/Instructor/UserList.pm:654
 msgid "users who match on selected field"
-msgstr "tr: users who match on selected field"
+msgstr "seçili alanla eşleşen kullanıcılar"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:2522
@@ -1831,13 +1830,13 @@ msgstr "Görünür"
 #: ContentGenerator/Instructor/ProblemSetList.pm:692
 #: ContentGenerator/Instructor/ProblemSetList.pm:930
 msgid "visible sets"
-msgstr "tr: visible sets"
+msgstr "görünür setler"
 
 #
 #: ContentGenerator/Problem.pm:604
 #: ContentGenerator/ProblemSet.pm:86
 msgid "visible to students"
-msgstr "tr: visible to students"
+msgstr "öğrencilere görüntüleyebilir"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1027
@@ -1845,7 +1844,7 @@ msgstr "tr: visible to students"
 #: ContentGenerator/Instructor/UserList.pm:1299
 #: ContentGenerator/Instructor/UserList.pm:968
 msgid "visible users"
-msgstr "tr: visible users"
+msgstr "kullanıcılar görüntüleyebilir"
 
 #
 #. ($self->formatDateTime($set->open_date)
@@ -1857,15 +1856,15 @@ msgstr "%1 tarihinde açılacak"
 
 #
 msgid "Add to which set?"
-msgstr "tr: Add to which set?"
+msgstr "Hangi sete eklenecek?"
 
 #
 msgid "Course Information for course [_1]"
-msgstr "tr: Course Information for course %1"
+msgstr "%1 dersinin bilgileri"
 
 #
 msgid "report bugs in this problem"
-msgstr "tr: report bugs in this problem"
+msgstr "Soruda hata olduğunu bildir"
 
 #
 msgid "Problem [_1]"
@@ -1873,7 +1872,7 @@ msgstr "Soru %1"
 
 #
 msgid "Cancel Password"
-msgstr "tr: Cancel Password"
+msgstr "Şifreyi iptal et"
 
 #
 msgid "WeBWorK"
@@ -1881,15 +1880,15 @@ msgstr "WeBWorK"
 
 #
 msgid "Audit"
-msgstr "tr: Enrolled"
+msgstr "Denetle"
 
 #
 msgid "Hardcopy Header for set [_1]"
-msgstr "tr: Hardcopy Header for set %1"
+msgstr "Set %1 için yazdırılabilir dosya başlığı"
 
 #
 msgid "Report bugs in a WeBWorK question/problem using this link. The very first time you do this you will need to register with an email address so that information on the bug fix can be reported back to you."
-msgstr "tr: Report bugs in a WeBWorK question/problem using this link. The very first time you do this you will need to register with an email address so that information on the bug fix can be reported back to you."
+msgstr "WebWork veya soruyla ilgili hata bildirmek için bu linki kullanın. Bunu ilk kez yaparken e-posta adresinizle kayıt olmanız gerekmektedir."
 
 #
 msgid "Pad Fields"
@@ -1897,43 +1896,43 @@ msgstr "tr: Pad Fields"
 
 #
 msgid "Set Header for set [_1]"
-msgstr "tr: Set Header for set %1"
+msgstr "Set %1 başlığı"
 
 #
 msgid "Statistics for [_1]"
-msgstr "tr: Statistics for %1"
+msgstr "Set %1 istatistikleri"
 
 #
 msgid "Filter"
-msgstr "tr: Filter"
+msgstr "Filtre"
 
 #
 msgid "set [_1]/problem [_2]"
-msgstr "tr: set %1/problem %2"
+msgstr " set %1/soru %2"
 
 #
 msgid "You are not authorized to modify problems."
-msgstr "tr: You are not authorized to modify problems."
+msgstr "Sorularda değişklik yapma yetkiniz yok."
 
 #
 msgid "hardcopy header file"
-msgstr "tr: hardcopy header file"
+msgstr "Yazdırılabilir ödev başlığı dosyası"
 
 #
 msgid "Write permissions have not been enabled in the templates directory.  No changes can be made."
-msgstr "tr: Write permissions have not been enabled in the templates directory.  No changes can be made."
+msgstr "Şablon klasörü yazmaya kapalı. Değişiklik yapılamaz."
 
 #
 msgid "Save [_1] and View"
-msgstr "tr: Save %1 and View"
+msgstr "%1 Kaydet ve Görüntüle"
 
 #
 msgid "Create"
-msgstr "tr: Create"
+msgstr "Oluştur"
 
 #
 msgid "Changes in this file have not yet been permanently saved."
-msgstr "tr: Changes in this file have not yet been permanently saved."
+msgstr "Dosyadaki değişiklikler henüz kalıcı olarak kaydedilmedi."
 
 #
 msgid "Instructor Tools"
@@ -1945,11 +1944,11 @@ msgstr "Not"
 
 #
 msgid "Show in another window"
-msgstr "tr: Show in another window"
+msgstr "Yani pencerede göster"
 
 #
 msgid "Copied auxiliary files from [_1] to  new location at [_2]"
-msgstr "tr: Copied auxiliary files from %1 to  new location at %2"
+msgstr "Ek dosyalar %1 dizininden %2 dizinine kopyalandı"
 
 #
 msgid "Unpublished"
@@ -1969,19 +1968,19 @@ msgstr "Dosya Yöneticisi"
 
 #
 msgid "Unable to change the hardcopy header for set [_1]. Unknown error."
-msgstr "tr: Unable to change the hardcopy header for set %1. Unknown error."
+msgstr "%1 seti için yazdırılabilir dosya başlığı değiştirilemedi. Bilinmeyen hata."
 
 #
 msgid "Unable to make '[_1]' the set header for [_2]"
-msgstr "tr: Unable to make '%1' the set header for %2"
+msgstr "'%1' set %2 için dosya başlığı yapılamadı"
 
 #
 msgid "Can't determine user of temporary edit file [_1]."
-msgstr "tr: Can't determine user of temporary edit file %1."
+msgstr "Geçici dosya %1 için kullanıcı belirlenemedi."
 
 #
 msgid "Download a hardcopy of this homework set."
-msgstr "Bu soru grubunu basılı halde indirin."
+msgstr "Bu set için yazdırılabilir dosya indirin."
 
 #
 msgid "Problem Editor"
@@ -1989,47 +1988,47 @@ msgstr "Soru Düzenleyici"
 
 #
 msgid "The file '[_1]' is protected!"
-msgstr "tr: The file '%1' is protected!"
+msgstr "'%1' dosyası korumalı!"
 
 #
 msgid "Top level of author information on the wiki."
-msgstr "tr: Top level of author information on the wiki."
+msgstr "Wikide yazar bilgilerinin en üst seviyesi."
 
 #
 msgid "Score selected set(s) and save to:"
-msgstr "tr: Score selected set(s) and save to:"
+msgstr "Seçili setleri notla ve dosyaya kaydet:"
 
 #
 msgid "Save Password"
-msgstr "tr: Save Password"
+msgstr "Şifreyi kaydet"
 
 #
 msgid "The file '[_1]' is a blank problem!"
-msgstr "tr: The file '%1' is a blank problem!"
+msgstr "'%1' dosyası boş bir soru!"
 
 #
 msgid "Add as what filetype?"
-msgstr "tr: Add as what filetype?"
+msgstr "Hangi dosya tipi olarak eklenecek?"
 
 #
 msgid "no action"
-msgstr "tr: no action"
+msgstr "İşlem yapma"
 
 #
 msgid "Added '[_1]' to [_2] as new set header"
-msgstr "tr: Added '%1' to %2 as new set header"
+msgstr "'%1' dosyası %2 dosyasına yeni set başlığı olarak eklendi"
 
 #
 msgid "View statistics by set"
-msgstr "tr: View statistics by set"
+msgstr "Setlere göre istatistikleri göster"
 
 #
 msgid "Set"
-msgstr "Soru Grubu"
+msgstr "Set"
 
 #
 msgid "This is a blank problem template file and can not be edited directly. Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
-msgstr "tr: This is a blank problem template file and can not be edited directly. Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
+msgstr "Bu boş bir soru şablonu ve üzerinde değişiklik yapılamaz. Aşağıdaki farklı kaydet işlemini kullarak dosyanın yerel bir kopyasını oluşturdaktan sonra üzerinde değişiklik yapabilirsiniz."
 
 #
 msgid "Logout"
@@ -2041,15 +2040,15 @@ msgstr "Bu hatanın detaylarını görmeye yetkiniz yok."
 
 #
 msgid "Reverting to original file '[_1]'"
-msgstr "tr: Reverting to original file '%1'"
+msgstr "Asıl dosyaya geri dönülüyor ('%1')"
 
 #
 msgid "Delete"
-msgstr "tr: Delete"
+msgstr "Sil"
 
 #
 msgid "Wiki summary page for MathObjects"
-msgstr "tr: Wiki summary page for MathObjects"
+msgstr "MathObjects için özet wiki sayfası"
 
 #
 msgid "Your score was recorded."
@@ -2057,7 +2056,7 @@ msgstr "Notunuz kaydedildi."
 
 #
 msgid "You must specify an file name in order to save a new file."
-msgstr "tr: You must specify an file name in order to save a new file."
+msgstr "Yeni dosya kaydetmek için dosya adı belirtmelisiniz."
 
 #
 msgid "To edit this text you must first make a copy of this file using the 'Save as' action below."
@@ -2478,4 +2477,86 @@ msgstr "Kullanıcı bilgilerini güncelle"
 #
 msgid "Drop"
 msgstr "tr: Drop"
+
+#
+#, fuzzy
+msgid "Solutions"
+msgstr "Çözümleri göster"
+
+#
+msgid "Show:"
+msgstr ""
+
+#
+msgid "WeBWorK Assignment [_1] is due : [_2]."
+msgstr ""
+
+#
+#, fuzzy
+msgid "Hardcopy Generator"
+msgstr "Çıktı Dosyası Başlığı"
+
+#
+#, fuzzy
+msgid "This set is visible to students."
+msgstr "Bu soru grubu öğrenciler tarafından %1."
+
+#
+msgid "View equations as"
+msgstr ""
+
+#
+msgid "From:"
+msgstr ""
+
+#
+msgid "Generate Hardcopy"
+msgstr ""
+
+#
+msgid "You may choose to show any of the following data. Correct answers and solutions are only available after the answer date of the homework set."
+msgstr ""
+
+#
+#, fuzzy
+msgid "E-mail Instructor"
+msgstr "Eğitmene E-posta"
+
+#
+msgid "Send E-mail:"
+msgstr ""
+
+#
+#, fuzzy
+msgid "Cancel Email"
+msgstr "tr: Cancel Edit"
+
+#
+#, fuzzy
+msgid "E-mail:"
+msgstr "E-posta"
+
+#
+#, fuzzy
+msgid "Correct answers"
+msgstr "Doğru yanıtları göster"
+
+#
+msgid "Use this form to report to your professor a problem with the WeBWorK system or an error in a problem you are attempting. Along with your message, additional information about the state of the system will be included."
+msgstr ""
+
+#
+#, fuzzy
+msgid "Student answers"
+msgstr "Yanıtları Gönder"
+
+#
+#, fuzzy
+msgid "Hints"
+msgstr "İpuçlarını göster"
+
+#
+#, fuzzy
+msgid "Hardcopy Format:"
+msgstr "Çıktı Dosyası Başlığı"
 
