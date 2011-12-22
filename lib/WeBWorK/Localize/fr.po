@@ -1,13 +1,15 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Michael Gage <gage@math.rochester.edu>, 2011.
+# Sébastien Labbé <slabqc at gmail.com>, Université du Québec à Montréal, 2011.
+# Stéphanie Lanthier <lanthier.stephanie@gmail.com>, Université du Québec à Montréal, 2011.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2011-12-10 17:44-0500\n"
+"PO-Revision-Date: 2011-12-22 12:16-0500\n"
 "Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
 "Language-Team: WeBWorK language team <gage@math.rochester.edu>\n"
 "Language: \n"
@@ -29,14 +31,14 @@ msgstr "tr: %1 (test %2)"
 #: ContentGenerator/Instructor/ProblemSetList.pm:1581
 #, fuzzy
 msgid "%1 sets added, %2 sets skipped. Skipped sets: (%3)"
-msgstr "tr: %1 sets exported, %2 sets skipped. Skipped sets: (%3)"
+msgstr "%1 devoirs ajoutés, %2 devoirs ignorés. Devoirs ignorés : (%3)"
 
 #
 #. ($numExported, $numSkipped, (($numSkipped)
 #: ContentGenerator/Instructor/ProblemSetList.pm:1701
 #, fuzzy
 msgid "%1 sets exported, %2 sets skipped. Skipped sets: (%3)"
-msgstr "tr: %1 sets exported, %2 sets skipped. Skipped sets: (%3)"
+msgstr "%1 devoirs exportés, %2 devoirs ignorés. Devoirs ignorés : (%3)"
 
 #
 #. ($name)
@@ -51,14 +53,14 @@ msgstr "tr: %1 test"
 #: ContentGenerator/Instructor/UserList.pm:1385
 #, fuzzy
 msgid "%1 users exported to file %2/%3"
-msgstr "tr: %1 users exported to file %2/%3"
+msgstr "%1 usagers ont été exportés dans le fichier %2/%3"
 
 #
 #. ($numReplaced, $numAdded, $numSkipped, join (", ", @$skipped)
 #: ContentGenerator/Instructor/UserList.pm:1269
 #, fuzzy
 msgid "%1 users replaced, %2 users added, %3 users skipped. Skipped users: (%4)"
-msgstr "tr: %1 users replaced, %2 users added, %3 users skipped.  Skipped users: (%4)"
+msgstr "%1 usagers remplacés, %2 usagers ajoutés, %3 usagers ignorés. Usagés ignorés : (%4)"
 
 #
 #. (int($answerScore*100)
@@ -131,41 +133,41 @@ msgstr "(Ce problème ne sera pas noté.)"
 #
 #: ContentGenerator/Problem.pm:1299
 msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
-msgstr "Les réponses ont été vérifiées -- MAIS LES RÉPONSES N'ONT PAS ÉTÉ ENREGISTRÉES"
+msgstr "LES RÉPONSES ONT ÉTÉ VÉRIFIÉES -- MAIS ELLES N'ONT PAS ÉTÉ ENREGISTRÉES"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1708
 #: ContentGenerator/Instructor/UserList.pm:1391
 #: ContentGenerator/Instructor/UserList.pm:1463
 msgid "Abandon changes"
-msgstr "tr: Abandon changes"
+msgstr "Abandonner les changements"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1647
 msgid "Abandon export"
-msgstr "tr: Abandon export"
+msgstr "Annuler l'exportation"
 
 #
 #. ($eUserID)
 #: ContentGenerator.pm:848
 #, fuzzy
 msgid "Acting as %1. "
-msgstr "Prendre le rôle de %1."
+msgstr "Dans le rôle de %1."
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1927
 msgid "Active"
-msgstr "tr: Active"
+msgstr "Actif"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1142
 msgid "Add how many students?"
-msgstr "tr: Add how many students?"
+msgstr "Ajouter combien d'étudiants?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1220
 msgid "Add which new users?"
-msgstr "tr: Add which new users?"
+msgstr "Ajouter quels nouveaux usagers?"
 
 #
 #: ContentGenerator/Problem.pm:311
@@ -177,28 +179,28 @@ msgstr "Les réponses ci-dessus sont toutes correctes."
 #: ContentGenerator/Instructor/ProblemSetList.pm:1052
 #, fuzzy
 msgid "All selected sets %1 all students"
-msgstr "tr: All selected sets %1 all students"
+msgstr "Tous les devoirs sélectionnés %1 à tous les étudiants"
 
 #
 #. ($verb)
 #: ContentGenerator/Instructor/ProblemSetList.pm:1046
 #, fuzzy
 msgid "All sets %1 all students"
-msgstr "tr: All sets %1 all students"
+msgstr "Tous les devoirs %1 à tous les étudiants"
 
 #
 #. ($verb)
 #: ContentGenerator/Instructor/ProblemSetList.pm:1049
 #, fuzzy
 msgid "All visible sets %1 all students"
-msgstr "tr: All visible sets %1 all students"
+msgstr "Tous les devoirs visibles %1 à tous les étudiants"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:446
 #: ContentGenerator/Instructor/ProblemSetList.pm:832
 #: ContentGenerator/Instructor/ProblemSetList.pm:870
 msgid "Answer Date"
-msgstr "tr: Answer Date"
+msgstr "Date de disponibilité des réponses"
 
 #
 #: ContentGenerator/Problem.pm:242
@@ -208,30 +210,29 @@ msgstr "Aperçu des réponses"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:531
 msgid "Any changes made below will be reflected in the set for ALL students."
-msgstr "tr: Any changes made below will be reflected in the set for ALL students."
+msgstr "Les changements effectués ci-bas affecteront les devoirs de TOUS les étudiants"
 
 #
 #: ContentGenerator.pm:1481
 msgid "Apply Options"
-msgstr "tr: Apply Options"
+msgstr "Appliquer les options"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1545
 msgid "Assign this set to which users?"
-msgstr "tr: Assign this set to which users?"
+msgstr "Assigner ce devoir à quels usagers?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2064
 #, fuzzy
 msgid "Assigned Sets"
-msgstr "tr: Edit Assigned Users"
+msgstr "Devoirs assignés"
 
 #
 #. ($fully)
 #: ContentGenerator/Problem.pm:315
-#, fuzzy
 msgid "At least one of the answers above is NOT %1correct."
-msgstr "Au moins une des réponses ci-dessus N'EST PAS %1correcte."
+msgstr "Au moins une des réponses ci-dessus N'EST PAS %1 correcte."
 
 #
 #: ContentGenerator/ProblemSet.pm:350
@@ -243,14 +244,14 @@ msgstr "Essais"
 #: ContentGenerator/Options.pm:71
 #, fuzzy
 msgid "Can't get password record for effective user '%1': %2"
-msgstr "Can't get password record for effective user '%1': %2"
+msgstr "Impossible d'accéder au mot de passe pour l'usager actuel '%1': %2"
 
 #
 #. ($userID,$@)
 #: ContentGenerator/Options.pm:68
 #, fuzzy
 msgid "Can't get password record for user '%1': %2"
-msgstr "Can't get password record for user '%1': %2"
+msgstr "Impossible d'accéder au mot de passe pour l'usager '%1': %2"
 
 #
 #: ContentGenerator/Options.pm:142
@@ -267,13 +268,13 @@ msgstr "Changer le mot de passe"
 #: ContentGenerator/Instructor/UserList.pm:1481
 #, fuzzy
 msgid "Changes abandoned"
-msgstr "tr: changes abandoned"
+msgstr "Les modifications ont été annulées"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1457
 #, fuzzy
 msgid "Changes saved"
-msgstr "tr: changes saved"
+msgstr "Les modifications ont été sauvegardées"
 
 #
 #: ContentGenerator/Problem.pm:1118
@@ -301,18 +302,18 @@ msgstr "tr: Choose which sets to be affected"
 #: ContentGenerator/Instructor/UserList.pm:550
 #: ContentGenerator/ProblemSets.pm:288
 msgid "Clear"
-msgstr "tr: Clear"
+msgstr "Effacer"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:562
 #, fuzzy
 msgid "Click on the login name to edit individual problem set data, (e.g. due dates) for these students."
-msgstr "tr: Click on the login name to edit individual problem set data, (e.g. due dates) for these students."
+msgstr "Cliquer sur le nom d'usager pour éditer les devoirs individuellement (par ex. la date de remise) pour ces étudiants"
 
 #
 #: ContentGenerator/ProblemSets.pm:435
 msgid "Closed"
-msgstr "tr: Closed"
+msgstr "Fermé"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2072
@@ -321,7 +322,7 @@ msgstr "tr: Closed"
 #: ContentGenerator/Instructor/UserList.pm:861
 #: ContentGenerator/Instructor/UserList.pm:904
 msgid "Comment"
-msgstr "tr: Comment"
+msgstr "Commenter"
 
 #
 #. ($e_user_name)
@@ -334,7 +335,7 @@ msgstr "Confirmer le nouveau mot de passe %1"
 #
 #: ContentGenerator/Login.pm:206
 msgid "Continue"
-msgstr "tr: Continue"
+msgstr "Continuer"
 
 #
 #: ContentGenerator/Problem.pm:243
@@ -344,9 +345,8 @@ msgstr "Correct"
 #
 #. ($e_user_name,$@)
 #: ContentGenerator/Options.pm:80
-#, fuzzy
 msgid "Couldn't change %1's password: %2"
-msgstr "Il n'a pas été possible de modifier le mot de passei : %2 de l'usager : %1"
+msgstr "Il n'a pas été possible de modifier le mot de passe : %2 de l'usager : %1"
 
 #
 #. ($@)
@@ -376,17 +376,17 @@ msgstr "tr: Create as what type of set?"
 #: ContentGenerator/Instructor/ProblemSetList.pm:1263
 #: ContentGenerator/Instructor/UserList.pm:1082
 msgid "Delete how many?"
-msgstr "tr: Delete how many?"
+msgstr "En supprimer combien?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1119
 msgid "Disable"
-msgstr "tr: Disable"
+msgstr "Désactiver"
 
 #
 #: ContentGenerator.pm:1442
 msgid "Display Options"
-msgstr "tr: Display Options"
+msgstr "Options d'affichage"
 
 #
 #. ($pl)
@@ -398,66 +398,66 @@ msgstr "Télécharger une copie de : [plural,_1,Set,Sets]"
 #
 #: ContentGenerator/ProblemSet.pm:321
 msgid "Download PDF or TeX Hardcopy for Current Set"
-msgstr "tr: Download PDF or TeX Hardcopy for Current Set"
+msgstr "Télécharger une copie PDF ou TeX pour le devoir en cours"
 
 #
 #: ContentGenerator/ProblemSets.pm:289
 msgid "Download PDF or TeX Hardcopy for Selected Sets"
-msgstr "tr: Download PDF or TeX Hardcopy for Selected Sets"
+msgstr "Télécharger une copie PDF ou TeX pour les devoir sélectionnés"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:445
 #: ContentGenerator/Instructor/ProblemSetList.pm:831
 #: ContentGenerator/Instructor/ProblemSetList.pm:869
 msgid "Due Date"
-msgstr "tr: Due Date"
+msgstr "Date de remise"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1812
 msgid "Duplicate this set and name it"
-msgstr "tr: Duplicate this set and name it"
+msgstr "Copier ce devoir et le renommer"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1720
 #: ContentGenerator/Instructor/UserList.pm:1785
 #: ContentGenerator/Instructor/UserList.pm:1818
 msgid "Edit"
-msgstr "tr: Edit"
+msgstr "Editer"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:603
 msgid "Edit All Set Data"
-msgstr "tr: Edit All Set Data"
+msgstr "Editer les données de tous les devoirs"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:439
 msgid "Edit Assigned Users"
-msgstr "tr: Edit Assigned Users"
+msgstr "Éditer les usagers assignés"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:438
 msgid "Edit Problems"
-msgstr "tr: Edit Problems"
+msgstr "Éditer les problèmes"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:441
 msgid "Edit Set Data"
-msgstr "tr: Edit Set Data"
+msgstr "Éditer les données des devoirs"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:961
 msgid "Edit Which Users?"
-msgstr "tr: Edit Which Users?"
+msgstr "Éditer quels usagers?"
 
 #
 #: ContentGenerator/Problem.pm:1011
 msgid "Edit this problem"
-msgstr "tr: Edit this problem"
+msgstr "Éditer ce problème"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:923
 msgid "Edit which sets?"
-msgstr "tr: Edit which sets?"
+msgstr "Éditer quels devoirs?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2067
@@ -466,7 +466,7 @@ msgstr "tr: Edit which sets?"
 #: ContentGenerator/Instructor/UserList.pm:856
 #: ContentGenerator/Instructor/UserList.pm:899
 msgid "Email Address"
-msgstr "tr: Email Address"
+msgstr "Adresse courriel"
 
 #
 #: ContentGenerator.pm:1526
@@ -478,7 +478,7 @@ msgstr "Envoyer un courriel à l'enseignant"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1120
 msgid "Enable"
-msgstr "tr: Enable"
+msgstr "Activer"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:604
@@ -495,17 +495,17 @@ msgstr "tr: Enable/Disable reduced scoring for selected sets"
 #: ContentGenerator/Instructor/UserList.pm:858
 #: ContentGenerator/Instructor/UserList.pm:901
 msgid "Enrollment Status"
-msgstr "tr: Enrollment Status"
+msgstr "Statut d'étudiant"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1321
 msgid "Enter filename below"
-msgstr "tr: Enter filename below"
+msgstr "Entrer le nom du fichier ci-bas"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1502
 msgid "Enter filenames below"
-msgstr "tr: Enter filenames below"
+msgstr "Entrer les noms de fichiers ci-bas"
 
 #
 #: ContentGenerator/Problem.pm:240
@@ -515,69 +515,69 @@ msgstr "Saisi"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1671
 msgid "Export selected sets"
-msgstr "tr: Export selected sets"
+msgstr "Exporter les devoirs sélectionnés"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1317
 msgid "Export to what kind of file?"
-msgstr "tr: Export to what kind of file?"
+msgstr "Exporter sous quel sorte de fichier?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1604
 msgid "Export which sets?"
-msgstr "tr: Export which sets?"
+msgstr "Exporter quels devoirs?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1292
 msgid "Export which users?"
-msgstr "tr: Export which users?"
+msgstr "Exporter quels usagers?"
 
 #
 #. ($@)
 #: ContentGenerator/Instructor/ProblemSetList.pm:1435
 #, fuzzy
 msgid "Failed to create new set: %1"
-msgstr "tr: Failed to duplicate set: %1"
+msgstr "Impossible de créer le nouveau devoir : %1"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1374
 msgid "Failed to create new set: no set name specified!"
-msgstr "tr: Failed to create new set: no set name specified!"
+msgstr "Impossible de créer le nouveau devoir : aucun nom n'a été spécifié!"
 
 #
 #. ($@)
 #: ContentGenerator/Instructor/ProblemSetList.pm:1848
 #, fuzzy
 msgid "Failed to duplicate set: %1"
-msgstr "tr: Failed to duplicate set: %1"
+msgstr "Impossible de dupliquer le devoir : %1"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1832
 msgid "Failed to duplicate set: no set name specified!"
-msgstr "tr: Failed to duplicate set: no set name specified!"
+msgstr "Impossible de dupliquer le devoir : aucun nom n'a été spécifié!"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1396
 #: ContentGenerator/Instructor/ProblemSetList.pm:1830
 msgid "Failed to duplicate set: no set selected for duplication!"
-msgstr "tr: Failed to duplicate set: no set selected for duplication!"
+msgstr "Impossible de dupliquer le devoir : aucun devoir n'a été sélectionné pour la duplication!"
 
 #
 #. ($newSetID)
 #: ContentGenerator/Instructor/ProblemSetList.pm:1834
 #, fuzzy
 msgid "Failed to duplicate set: set %1 already exists!"
-msgstr "tr: Failed to duplicate set: set %1 already exists!"
+msgstr "Impossible de dupliquer le devoir : le devoir %1 existe déjà!"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1339
 msgid "Filename"
-msgstr "tr: Filename"
+msgstr "Nom de fichier"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:678
 msgid "Filter by what text?"
-msgstr "tr: Filter by what text?"
+msgstr "Filtrer avec quelle chaîne de caractères?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2065
@@ -586,29 +586,29 @@ msgstr "tr: Filter by what text?"
 #: ContentGenerator/Instructor/UserList.pm:854
 #: ContentGenerator/Instructor/UserList.pm:897
 msgid "First Name"
-msgstr "tr: First Name"
+msgstr "Prénom"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1020
 msgid "Give new password to which users?"
-msgstr "tr: Give new password to which users?"
+msgstr "Donner un nouveau mot de passe à quels usagers?"
 
 #
 #: ContentGenerator/Login.pm:231
 msgid "Guest Login"
-msgstr "tr: Guest Login"
+msgstr "Invité"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:443
 #: ContentGenerator/Instructor/ProblemSetList.pm:829
 #: ContentGenerator/Instructor/ProblemSetList.pm:867
 msgid "Hardcopy Header"
-msgstr "tr: Hardcopy Header"
+msgstr "Entête d'impression"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1017
 msgid "Hidden"
-msgstr "tr: Hidden"
+msgstr "Caché"
 
 #
 #: ContentGenerator.pm:667
@@ -620,32 +620,32 @@ msgstr "Devoirs"
 #
 #: ContentGenerator/Instructor/UserList.pm:558
 msgid "If a password field is left blank, the student's current password will be maintained."
-msgstr "tr: If a password field is left blank, the student's current password will be maintained."
+msgstr "Si le champ d'un mot de passe est vide, le mot de passe actuel sera conservé."
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1498
 msgid "Import from where?"
-msgstr "tr: Import from where?"
+msgstr "Importer d'où?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1473
 msgid "Import how many sets?"
-msgstr "tr: Import how many sets?"
+msgstr "Importer combien de devoirs?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1520
 msgid "Import sets with names"
-msgstr "tr: Import sets with names"
+msgstr "Importer les devoirs avec le nom"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1165
 msgid "Import users from what file?"
-msgstr "tr: Import users from what file?"
+msgstr "Importer les usagers à partir de quel fichier?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1927
 msgid "Inactive"
-msgstr "tr: Inactive"
+msgstr "Inactif"
 
 #
 #: Authen.pm:148
@@ -659,7 +659,7 @@ msgstr "Code d'usager ou mot de passe invalides"
 #: ContentGenerator/Instructor/UserList.pm:855
 #: ContentGenerator/Instructor/UserList.pm:898
 msgid "Last Name"
-msgstr "tr: Last Name"
+msgstr "Nom de famille"
 
 #
 #: ContentGenerator.pm:730
@@ -695,7 +695,7 @@ msgstr "Connecté sous le nom %1"
 #: ContentGenerator/Login.pm:77
 #, fuzzy
 msgid "Login Info"
-msgstr "tr: Login Name"
+msgstr "tr: Login Info"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2062
@@ -704,7 +704,7 @@ msgstr "tr: Login Name"
 #: ContentGenerator/Instructor/UserList.pm:853
 #: ContentGenerator/Instructor/UserList.pm:896
 msgid "Login Name"
-msgstr "tr: Login Name"
+msgstr "Nom d'usager"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2063
@@ -715,7 +715,7 @@ msgstr "Statut"
 #
 #: ContentGenerator.pm:654
 msgid "Main Menu"
-msgstr "Ana Menü"
+msgstr "Menu principal"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:705
@@ -737,18 +737,18 @@ msgstr "Nom"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1328
 msgid "Name the new set"
-msgstr "tr: Name the new set"
+msgstr "Nommer le nouveau devoir"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1937
 #: ContentGenerator/Instructor/UserList.pm:2077
 msgid "New Password"
-msgstr "tr: New Password"
+msgstr "Nouveau mot de passe"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1519
 msgid "New passwords saved"
-msgstr "tr: New passwords saved"
+msgstr "Nouveaux mots de passe sauvegardés"
 
 #
 #: ContentGenerator/Problem.pm:864
@@ -760,29 +760,29 @@ msgstr "Problème suivant"
 #: ContentGenerator/Instructor/ProblemSetList.pm:2625
 #: ContentGenerator/Instructor/ProblemSetList.pm:2626
 msgid "No"
-msgstr "tr: No"
+msgstr "Non"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1043
 #: ContentGenerator/Instructor/ProblemSetList.pm:1145
 msgid "No change made to any set"
-msgstr "tr: No change made to any set"
+msgstr "Aucun changement effectué à aucun devoir"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1217
 msgid "No sets selected for scoring"
-msgstr "tr: No sets selected for scoring"
+msgstr "Aucun devoir sélectionné pour la notation"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:266
 #, fuzzy
 msgid "No sets selected for scoring."
-msgstr "tr: No sets selected for scoring"
+msgstr "Aucun devoir sélectionné pour la notation."
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:2722
 msgid "No sets shown.  Choose one of the options above to list the sets in the course."
-msgstr "tr: No sets shown.  Choose one of the options above to list the sets in the course."
+msgstr "Aucun devoir affiché. Choisir l'une des options ci-dessus pour afficher les devoirs de ce cours."
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2110
@@ -790,7 +790,7 @@ msgstr "tr: No sets shown.  Choose one of the options above to list the sets in 
 msgid ""
 "No students shown.  Choose one of the options above to \n"
 "\t              list the students in the course."
-msgstr "tr: No students shown.  Choose one of the options above to list the students in the course."
+msgstr "Aucun étudiant affiché. Choisir l'une des options ci-dessus pour afficher les étudiants de ce cours."
 
 #
 #: ContentGenerator.pm:851
@@ -800,32 +800,32 @@ msgstr "Non connecté."
 #
 #: ContentGenerator/Problem.pm:975
 msgid "Note"
-msgstr "tr: Note"
+msgstr "Note"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:444
 #: ContentGenerator/Instructor/ProblemSetList.pm:830
 #: ContentGenerator/Instructor/ProblemSetList.pm:868
 msgid "Open Date"
-msgstr "tr: Open Date"
+msgstr "Date d'ouverture"
 
 #
 #: ContentGenerator/Problem.pm:1307
 msgid "PREVIEW ONLY -- ANSWERS NOT RECORDED"
-msgstr "Afficher seulement  --  NE PAS ENREGISTRER LES RÉPONSES"
+msgstr "Visualiser seulement  --  SANS ENREGISTRER LES RÉPONSES"
 
 #
 #. (timestamp($self)
 #: ContentGenerator.pm:953
 #, fuzzy
 msgid "Page generated at %1"
-msgstr "tr: Page generated at %1"
+msgstr "Page generée à %1"
 
 #
 #: ContentGenerator/Login.pm:202
 #, fuzzy
 msgid "Password"
-msgstr "tr: New Password"
+msgstr "Nouveau mot de passe"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2073
@@ -834,7 +834,7 @@ msgstr "tr: New Password"
 #: ContentGenerator/Instructor/UserList.pm:862
 #: ContentGenerator/Instructor/UserList.pm:905
 msgid "Permission Level"
-msgstr "tr: Permission Level"
+msgstr "Niveau de permission"
 
 #
 #. (CGI::b($r->maketext($course)
@@ -1040,7 +1040,7 @@ msgstr "tr: Set Name"
 #
 #: ContentGenerator/ProblemSet.pm:153
 msgid "Sets"
-msgstr "tr: Sets"
+msgstr "Devoirs"
 
 #
 #: ContentGenerator/Problem.pm:1063
@@ -1219,7 +1219,7 @@ msgid ""
 "\t\t\t\t\t\t\t\t%1 and %2\n"
 "\t\t\t\t\t\t\t\tfields don't match. Please retype your new password and try\n"
 "\t\t\t\t\t\t\t\tagain."
-msgstr "Les mots de passe saisis dans les champs %1 et %2 sont différents. Veuiller essayer à nouveau"
+msgstr "Les mots de passe saisis dans les champs %1 et %2 sont différents. Veuillez essayer à nouveau"
 
 #
 #. ($setName,$effectiveUser)
@@ -1344,7 +1344,7 @@ msgstr "Pondération"
 #: ContentGenerator/Instructor/ProblemSetList.pm:2625
 #: ContentGenerator/Instructor/ProblemSetList.pm:2626
 msgid "Yes"
-msgstr "tr: Yes"
+msgstr "Oui"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:306
@@ -1385,7 +1385,7 @@ msgstr "tr: You cannot delete yourself!"
 #: ContentGenerator/Options.pm:163
 #: ContentGenerator/Options.pm:180
 msgid "You do not have permission to change email addresses."
-msgstr "Vos droits ne vous permettent pas de modifier votre courriel."
+msgstr "Vos droits ne vous permettent pas de modifier des adresses de courriel."
 
 #
 #: ContentGenerator/Options.pm:117
@@ -1486,7 +1486,7 @@ msgstr "tr: This is the homework sets editor page where you can view and edit th
 #. (CGI::b($r->maketext("Remember Me")
 #: ContentGenerator/Login.pm:155
 msgid "_LOGIN_MESSAGE"
-msgstr "If you check %1 your login information will be remembered by the browser you are using, allowing you to visit WeBWorK pages without typing your user name and password (until your session expires). This feature is not safe for public workstations, untrusted machines, and machines over which you do not have direct control."
+msgstr "Si l'option %1 est cochée, le navigateur que vous utilisez retiendra le login et votre mot de passe que vous avez entré lors de visites ultérieures. Évitez d'utiliser cette fonctionnalité sur les ordinateurs publics, les ordinateurs qui ne sont pas sûrs ou qui n'ont pas de contrôle direct. Utilisez cette fonctionalité que pour les ordinateurs de confiance."
 
 #
 #. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
@@ -1503,7 +1503,7 @@ msgstr "tr: This assignment had a Reduced Credit Period that began %1 and ended 
 #
 #: ContentGenerator.pm:1951
 msgid "_REQUEST_ERROR"
-msgstr "WebWork bu problemi işlerken bir yazılım hatası ile karşılaştı. Problemin kendisinde bir hata olması muhtemeldir. Eğer bir öğrenci iseniz bu hatayı ilgili kişilere bildiriniz. Eğer yetkili bir kişiyseniz daha fazla bilgi için alttaki hata raporunu inceleyiniz."
+msgstr "WebWork a rencontré une erreur logicielle lors de la manipulation de ce problème. Le problème lui-même est susceptible d'être la cause de l'erreur. Si vous êtes un étudiant, mentionner l'erreur aux responsables du cours. Si vous avez les droits, alors vous pouvez voir le rapport d'erreur suivant."
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1358
@@ -1569,7 +1569,7 @@ msgstr "tr: changes saved"
 #
 #: ContentGenerator/ProblemSets.pm:468
 msgid "closed, answers available"
-msgstr "échu, réponses disponbles"
+msgstr "échu, réponses disponibles"
 
 #
 #. ($self->formatDateTime($set->answer_date)
@@ -1993,11 +1993,11 @@ msgstr "Résultat"
 
 #
 msgid "Show in another window"
-msgstr "tr: Show in another window"
+msgstr "Afficher dans une autre fenêtre"
 
 #
 msgid "Copied auxiliary files from [_1] to  new location at [_2]"
-msgstr "tr: Copied auxiliary files from %1 to  new location at %2"
+msgstr "Les fichiers auxiliares de %1 ont été copiés dans %2"
 
 #
 msgid "Unpublished"
@@ -2018,15 +2018,15 @@ msgstr "Gestionnaire de fichiers"
 
 #
 msgid "Unable to change the hardcopy header for set [_1]. Unknown error."
-msgstr "tr: Unable to change the hardcopy header for set %1. Unknown error."
+msgstr "Impossible de modifier l'entête d'impression du devoir %1. Erreur inconnue."
 
 #
 msgid "Unable to make '[_1]' the set header for [_2]"
-msgstr "tr: Unable to make '%1' the set header for %2"
+msgstr "Impossible de faire de '%1' l'entête du devoir %2"
 
 #
 msgid "Can't determine user of temporary edit file [_1]."
-msgstr "tr: Can't determine user of temporary edit file %1."
+msgstr "Impossible de déterminer l'utilisateur du fichier temporaire : %1."
 
 #
 msgid "Download a hardcopy of this homework set."
@@ -2038,7 +2038,7 @@ msgstr "Éditeur de problèmes"
 
 #
 msgid "The file '[_1]' is protected!"
-msgstr "tr: The file '%1' is protected!"
+msgstr "Le fichier '%1' est protégé."
 
 #
 msgid "Top level of author information on the wiki."
@@ -2050,19 +2050,19 @@ msgstr "Sauvegarder les résultats sélectionnés sous"
 
 #
 msgid "Save Password"
-msgstr "tr: Save Password"
+msgstr "Enregistrer le mot de passe"
 
 #
 msgid "The file '[_1]' is a blank problem!"
-msgstr "tr: The file '%1' is a blank problem!"
+msgstr "Le fichier '%1' est un problème vierge!"
 
 #
 msgid "Add as what filetype?"
-msgstr "tr: Add as what filetype?"
+msgstr "Spécifier le type du fichier"
 
 #
 msgid "no action"
-msgstr "tr: no action"
+msgstr "aucune action"
 
 #
 msgid "Added '[_1]' to [_2] as new set header"
@@ -2070,7 +2070,7 @@ msgstr "tr: Added '%1' to %2 as new set header"
 
 #
 msgid "View statistics by set"
-msgstr "tr: View statistics by set"
+msgstr "Statistiques par devoir"
 
 #
 msgid "Set"
@@ -2078,7 +2078,7 @@ msgstr "Devoirs"
 
 #
 msgid "This is a blank problem template file and can not be edited directly. Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
-msgstr "tr: This is a blank problem template file and can not be edited directly. Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
+msgstr "Ceci est un fichier modèle d'un problème vierge et on ne peut le modifier directement. Utiliser la fonction \"Enregistrer sous\" pour créer une copie locale du fichier et l'ajouter au devoir courant."
 
 #
 msgid "Logout"
@@ -2090,15 +2090,15 @@ msgstr "Les droits qui vous sont assignés ne permettent pas de voir les détail
 
 #
 msgid "Reverting to original file '[_1]'"
-msgstr "tr: Reverting to original file '%1'"
+msgstr "Revenir au fichier original '%1'"
 
 #
 msgid "Delete"
-msgstr "tr: Delete"
+msgstr "Supprimer"
 
 #
 msgid "Wiki summary page for MathObjects"
-msgstr "tr: Wiki summary page for MathObjects"
+msgstr "Sommaire Wiki de MathObjects"
 
 #
 msgid "Your score was recorded."
@@ -2106,23 +2106,23 @@ msgstr "Votre résultat a été enregistré"
 
 #
 msgid "You must specify an file name in order to save a new file."
-msgstr "tr: You must specify an file name in order to save a new file."
+msgstr "Spécifier un nom au fichier pour l'enregistrer."
 
 #
 msgid "To edit this text you must first make a copy of this file using the 'Save as' action below."
-msgstr "tr: To edit this text you must first make a copy of this file using the 'Save as' action below."
+msgstr "Pour modifier ce texte, d'abord faire une copie du fichier à l'aide de la fonction \"Enregistrer sous\"."
 
 #
 msgid "unassigned problem file"
-msgstr "tr: unassigned problem file"
+msgstr "Fichier de problèmes non assigné."
 
 #
 msgid "View statistics by student"
-msgstr "tr: View statistics by student"
+msgstr "Statistiques par étudiant"
 
 #
 msgid "Publish"
-msgstr "tr: Publish"
+msgstr "Publier"
 
 #
 msgid "Password/Email"
@@ -2130,19 +2130,19 @@ msgstr "Mot de passe/courriel"
 
 #
 msgid "Cancel Edit"
-msgstr "tr: Cancel Edit"
+msgstr "Annuler la modification"
 
 #
 msgid "Math Objects"
-msgstr "tr: Math Objects"
+msgstr "Math Objects"
 
 #
 msgid "Snippets of PG code illustrating specific techniques"
-msgstr "tr: Snippets of PG code illustrating specific techniques"
+msgstr "Bouts de code PG illustrant des techniques spécifiques"
 
 #
 msgid "Error copying [_1] to [_2]"
-msgstr "tr: Error copying %1 to %2"
+msgstr "Erreur lors de la copie de %1 vers %2"
 
 #
 msgid "Hmwk Sets Editor"
@@ -2154,7 +2154,7 @@ msgstr "Ce devoir est %1 pour les étudiants."
 
 #
 msgid "header file"
-msgstr "tr: header file"
+msgstr "Fichier d'entête"
 
 #
 msgid "Include Index"
@@ -2162,7 +2162,7 @@ msgstr "Inclure l'index"
 
 #
 msgid "Display Mode"
-msgstr "tr: Display Mode"
+msgstr "Mode d'affichage"
 
 #
 msgid "You can earn partial credit on this problem."
@@ -2170,23 +2170,23 @@ msgstr "Vous pouvez obtenir une partie des points pour ce problème."
 
 #
 msgid "Write permissions have not been enabled in '[_1]'.  Changes must be saved to a different directory for viewing."
-msgstr "tr: Write permissions have not been enabled in '%1'.  Changes must be saved to a different directory for viewing."
+msgstr "Il n'est pas permis d'écrire dans le dossier '%1'.  Les modifications doivent d'abord être enregistrées dans un autre dossier."
 
 #
 msgid "blank problem"
-msgstr "tr: blank problem"
+msgstr "Problème vierge"
 
 #
 msgid "Save Edit"
-msgstr "tr: Save Edit"
+msgstr "Enregistrer la modification"
 
 #
 msgid "Enrolled"
-msgstr "tr: Enrolled"
+msgstr "Inscrit"
 
 #
 msgid "Write permissions have not been enabled for '[_1]'.  Changes must be saved to another file for viewing."
-msgstr "tr: Write permissions have not been enabled for '%1'.  Changes must be saved to another file for viewing."
+msgstr "Il n'est pas permis d'écrire dans '%1'.  Les modifications doivent d'abord être enregistrées dans un autre fichier."
 
 #
 msgid "Note: this problem viewer is for viewing purposes only. As of right now, testing functionality is not possible."
@@ -2194,7 +2194,7 @@ msgstr "tr: Note: this problem viewer is for viewing purposes only. As of right 
 
 #
 msgid "Save Export"
-msgstr "tr: Save Export"
+msgstr "Enregistrer l'exportation"
 
 #
 msgid "webwork"
@@ -2215,7 +2215,7 @@ msgstr "Progrès des étudiants"
 
 #
 msgid "A new file has been created at '[_1]' with the contents below. No changes have been made to set [_2]."
-msgstr "tr: A new file has been created at '%1' with the contents below. No changes have been made to set %2."
+msgstr "Un nouveau fichier nommé '%1' a été créé avec le contenu ci-dessous. Aucune modification n'a été appliquée au devoir %2."
 
 #
 msgid "Your score was not recorded because this problem has not been assigned to you."
@@ -2223,19 +2223,19 @@ msgstr "Votre résultat n'a pas été enregistré car ce problème ne vous a pas
 
 #
 msgid "Sort"
-msgstr "tr: Sort"
+msgstr "Trier"
 
 #
 msgid "Add problem"
-msgstr "tr: Add problem"
+msgstr "Ajouter un problème"
 
 #
 msgid "Author Info"
-msgstr "tr: Author Info"
+msgstr "À propos de l'auteur"
 
 #
 msgid "Replace [_1]"
-msgstr "tr: Replace %1"
+msgstr "Remplacer %1"
 
 #
 msgid "Help"
@@ -2247,11 +2247,11 @@ msgstr "Ajouter des usagers"
 
 #
 msgid "Problem Source Code"
-msgstr "tr: Problem Source Code"
+msgstr "Code source du problème"
 
 #
 msgid "Test snippets of PG code in interactive lab.  Good way to learn PG language."
-msgstr "tr: Test snippets of PG code in interactive lab.  Good way to learn PG language."
+msgstr "Tester des bouts de code PG dans un labo interactif.  Une bonne façon d'apprendre le langage PG."
 
 #
 #, fuzzy
@@ -2260,7 +2260,7 @@ msgstr "tr: Page generated at %1"
 
 #
 msgid "Import"
-msgstr "tr: Import"
+msgstr "Importer"
 
 #
 msgid "View Using Seed Number"
@@ -2280,23 +2280,23 @@ msgstr "Votre résultat n'a pas été enregistré car la date de remise est pass
 
 #
 msgid "The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser."
-msgstr "tr: The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser."
+msgstr "La boîte de saisie contient actuellement le code source du problème original. Les modifications perdues peuvent être retrouvées en utilisant le bouton précédent de son fureteur web."
 
 #
 msgid "The file '[_1]' is a directory!"
-msgstr "tr: The file '%1' is a directory!"
+msgstr "Le fichier '%1' est en fait un dossier!"
 
 #
 msgid "Save As"
-msgstr "tr: Save As [TMPL]/"
+msgstr "Enregistrer sous [TMPL]/"
 
 #
 msgid "Documentation from source code for PG modules and macro files. Often the most up-to-date information."
-msgstr "tr: Documentation from source code for PG modules and macro files. Often the most up-to-date information."
+msgstr "Documentation des modules PG et des fichiers de macro à partir du code source. Il s'agit souvent de l'information la plus à jour."
 
 #
 msgid "Problem Techniques"
-msgstr "tr: Problem Techniques"
+msgstr "Techniques de problèmes"
 
 #
 msgid "Course Configuration"
@@ -2308,11 +2308,11 @@ msgstr "Commentaires"
 
 #
 msgid "Export"
-msgstr "tr: Export"
+msgstr "Exporter"
 
 #
 msgid "PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques."
-msgstr "tr: PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques."
+msgstr "Syntaxe PG utilisée pour formater les questions WeBWorK. Ce labo interactif peut vous aider à apprendre les techniques."
 
 #
 msgid "Record Scores for Single Sets"
@@ -2320,11 +2320,11 @@ msgstr "Ajouter les résultats de chaque devoir"
 
 #
 msgid "Append to end of set [_1]"
-msgstr "tr: Append to end of set %1"
+msgstr "Ajouter à la fin du devoir %1"
 
 #
 msgid "Unrecognized saveMode: |[_1]|. Unknown error."
-msgstr "tr: Unrecognized saveMode: |%1|. Unknown error."
+msgstr "Méthode d'enregistrement inconnue |%1|. Erreur inconnue."
 
 #
 msgid "Your score was not recorded because there was a failure in storing the problem record to the database."
@@ -2332,63 +2332,63 @@ msgstr "Votre résultat n'a pas été enregistré à cause d'une défaillance da
 
 #
 msgid "The hardcopy header for set [_1] has been renamed to '[_2]'."
-msgstr "tr: The hardcopy header for set %1 has been renamed to '%2'."
+msgstr "L'entête d'impression du devoir %1 a été renommée '%2'."
 
 #
 msgid "Save as"
-msgstr "tr: Save as"
+msgstr "Enregistrer sous"
 
 #
 msgid "Select action below"
-msgstr "tr: Select action below"
+msgstr "Sélectionner une action"
 
 #
 msgid "The file '[_1]' cannot be found."
-msgstr "tr: The file '%1' cannot be found."
+msgstr "Impossible de trouver le fichier '%1'"
 
 #
 msgid "Unable to write to '[_1]': [_2]"
-msgstr "tr: Unable to write to '%1': %2"
+msgstr "Impossible d'écrire dans  '%1': %2"
 
 #
 msgid "Save"
-msgstr "tr: Save"
+msgstr "Enregistrer"
 
 #
 msgid "File '[_1]' exists. File not saved. No changes have been made. You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"
-msgstr "tr: File '%1' exists. File not saved. No changes have been made. You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"
+msgstr "Le fichier '%1' existe déjà. Le fichier ne sera pas enregistré. Aucun changement n'a été effectué. Il est possible de modifier manuellement le chemin de ce fichier par le biais de l'éditeur de devoirs."
 
 #
 msgid "The set header for set [_1] has been renamed to '[_2]'."
-msgstr "tr: The set header for set %1 has been renamed to '%2'."
+msgstr "L'entête de devoir pour le devoir %1 a été renommée par '%2'."
 
 #
 msgid "Error: This path is already in the temporary edit directory -- no new temporary file is created. path = [_1]"
-msgstr "tr: Error: This path is already in the temporary edit directory -- no new temporary file is created. path = %1"
+msgstr "Erreur : ce fichier existe déjà dans le dossier temporaire -- aucun nouveau fichier na été créé. Chemin = %1"
 
 #
 msgid "Please use radio buttons to choose the method for saving this file. Can't recognize saveMode: |[_1]|."
-msgstr "tr: Please use radio buttons to choose the method for saving this file. Can't recognize saveMode: |%1|."
+msgstr "Veuillez sélectionner la méthode d'enregistrement à l'aide des boutons radio. Impossible d'identifier le mode d'enregistrement : |%1|."
 
 #
 msgid "Saved to file '[_1]'"
-msgstr "tr: Saved to file '%1'"
+msgstr "Fichier  '%1' enregistré"
 
 #
 msgid "Please specify a file to save to."
-msgstr "tr: Please specify a file to save to."
+msgstr "Spécifier où le fichier doit être enregistré."
 
 #
 msgid "The selected problem ([_1]) is not a valid problem for set [_2]."
-msgstr "Le problème choisi (%1), n'est pas valide pour l'ensemble %2."
+msgstr "Le problème choisi (%1) n'est pas valide pour l'ensemble %2."
 
 #
 msgid "Editing [_1] in file '[_2]'"
-msgstr "tr: Editing %1 in file '%2'"
+msgstr "Modification de %1 du fichier '%2'"
 
 #
 msgid "Deleting temp file at [_1]"
-msgstr "tr: Deleting temp file at %1"
+msgstr "Destruction du fichier temporaire %1"
 
 #
 msgid "hidden from"
@@ -2401,11 +2401,11 @@ msgstr "Progrès des étudiants"
 
 #
 msgid "View"
-msgstr "tr: View"
+msgstr "Voir"
 
 #
 msgid "Resources"
-msgstr "tr: Resources"
+msgstr "Ressources"
 
 #
 msgid "Scoring Download"
@@ -2413,11 +2413,11 @@ msgstr "Télécharger les résultats"
 
 #
 msgid "Duplicate"
-msgstr "tr: Duplicate"
+msgstr "Dupliquer"
 
 #
 msgid "This path |[_1]| is not the path to a temporary edit file."
-msgstr "tr: This path |%1| is not the path to a temporary edit file."
+msgstr "Ce chemin |%1| ne décrit pas un fichier temporaire modifiable"
 
 #
 msgid "visible to"
@@ -2425,7 +2425,7 @@ msgstr "visible"
 
 #
 msgid "Unable to change the source file path for set [_1], problem [_2]. Unknown error."
-msgstr "tr: Unable to change the source file path for set %1, problem %2. Unknown error."
+msgstr "Impossible de modifier le chemin du fichier source du devoir %1, problème %2. Erreur inconnue."
 
 #
 msgid "Course Administration"
@@ -2433,11 +2433,11 @@ msgstr "Administration du cours"
 
 #
 msgid "Added [_1] to [_2] as problem [_3]"
-msgstr "tr: Added %1 to %2 as problem %3"
+msgstr "Le problème %1 a été ajouté à %2 en tant que problème %3"
 
 #
 msgid "Options Information"
-msgstr "tr: Options Information"
+msgstr "Information sur les options"
 
 #
 msgid "Proctor"
@@ -2457,7 +2457,7 @@ msgstr "Statistiques"
 
 #
 msgid "Save as new independent problem"
-msgstr "tr: Save as new independent problem"
+msgstr "Enregistrer en tant que nouveau problème indépendant"
 
 #
 msgid "Scoring Tools"
@@ -2465,51 +2465,51 @@ msgstr "Exporter les résultats"
 
 #
 msgid "The source file for 'set [_1] / problem [_2]' has been changed from [_3] to '[_4]'."
-msgstr "tr: The source file for 'set %1 / problem %2' has been changed from %3 to '%4'."
+msgstr "Le fichier source du 'devoir %1 / problème %2' a été changé de %3 à '%4'."
 
 #
 msgid "Cancel Export"
-msgstr "tr: Cancel Export"
+msgstr "Annuler l'exportation"
 
 #
 msgid "View student progress by student"
-msgstr "tr: View student progress by student"
+msgstr "Voir le progrès individuel d'un étudiant"
 
 #
 msgid "Revert to [_1]"
-msgstr "tr: Revert to %1"
+msgstr "Retourner à %1"
 
 #
 msgid "Classlist Editor"
-msgstr "Liste d'étudiants"
+msgstr "Liste d'usagers"
 
 #
 msgid "Add"
-msgstr "tr: Add"
+msgstr "Ajouter"
 
 #
 msgid "the original path to the file is [_1]"
-msgstr "tr: the original path to the file is %1"
+msgstr "Le chemin original de ce fichier est %1"
 
 #
 msgid "The path to the original file should be absolute"
-msgstr "tr: The path to the original file should be absolute"
+msgstr "Le chemin du fichier original devrait être décrit de manière absolue"
 
 #
 msgid "To edit this text you must use the 'Save AS' action below to save it to another file."
-msgstr "tr: To edit this text you must use the 'Save AS' action below to save it to another file."
+msgstr "Pour modifier ce texte, utiliser l'action \"Enregistrer sous\" offerte plus bas pour l'enregistrer dans un autre fichier."
 
 #
 msgid "Error: The original file [_1] cannot be read."
-msgstr "tr: Error: The original file %1 cannot be read."
+msgstr "Erreur : Le fichier original %1 ne peut être lu."
 
 #
 msgid "Unable to change the set header for set [_1]. Unknown error."
-msgstr "tr: Unable to change the set header for set %1. Unknown error."
+msgstr "Impossible de modifier l'entête du devoir %1. Erreur inconnue."
 
 #
 msgid "options information"
-msgstr "tr: options information"
+msgstr "Information sur les options"
 
 #
 msgid "The selected problem([_1]) is not a valid problem for set [_2]."
@@ -2517,11 +2517,11 @@ msgstr "Le problème choisi(%1) n'est pas valide pour le devoir %2."
 
 #
 msgid "Unknown file type"
-msgstr "tr: Unknown file type"
+msgstr "Format de fichier inconnu"
 
 #
 msgid "course information"
-msgstr "tr: course information"
+msgstr "Information sur le cours"
 
 #
 msgid "Change User Options"
