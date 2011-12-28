@@ -222,13 +222,14 @@ $(document)
 					$("#problems_container").removeClass("ui-corner-all");
 
 					listLibRequest.xml_command = "listLib";
-					listLibRequest.command = "buildtree";
+					listLibRequest.command = "dirOnly";
+					listLibRequest.maxdepth = 0;
 					listLibRequest.library_name = "Library";// is this still
 															// necessary?
 					updateMessage("Loading libraries... may take some time");
 					$.post(webserviceURL, listLibRequest,
 							function(data) {
-								// console.log(data);
+								console.log(data);
 								try {
 									var response = $.parseJSON(data);
 									console.log("result: "

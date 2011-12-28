@@ -170,7 +170,7 @@ sub listLib {
 			if ($dir =~/\S/ ) {
 				$dir =~ s|^$dirPath2/*||;  # cut the first directory
 	
-				$libDirectoryList{$dir}++;
+				$libDirectoryList{$dir} = {};
 			}
 		}
 	};
@@ -191,10 +191,11 @@ sub listLib {
 									if ( -e $dirPath2) {
 										find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath2);
 										#@outListLib = grep {/\S/} sort keys %libDirectoryList; #omit blanks
-										foreach my $key (grep {/\S/} sort keys %libDirectoryList) {
-											push @outListLib, "$key: ".($libDirectoryList{$key}-1); # number of subnodes
-										}
-										$out->{ra_out} = \@outListLib;
+										#foreach my $key (grep {/\S/} sort keys %libDirectoryList) {
+										#	push @outListLib, "$key"; # number of subnodes
+										#}
+										delete $libDirectoryList{""};
+										$out->{ra_out} = \%libDirectoryList;
 										$out->{text} = encode_base64("Loaded libraries");
 										return($out);
 									} else {

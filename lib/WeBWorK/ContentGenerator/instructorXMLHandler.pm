@@ -190,6 +190,7 @@ sub pre_header_initialize {
 		     fileName        =>   $r->param("file_name") ||undef,
 		     new_set_name	 =>	  $r->param("new_set_name") ||undef,
 		     command     	 =>   $r->param("command") ||undef,
+		     maxdepth		 =>	  $r->param("maxdepth") || 0,
 		     source			 =>   '',
 	};
 	if ($UNIT_TESTS_ON) {
