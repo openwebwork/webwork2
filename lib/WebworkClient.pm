@@ -87,6 +87,15 @@ use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      => 'mod_xmlrpc';
 
+our $UNIT_TESTS_ON             = 1;
+
+# error formatting
+sub format_hash_ref {
+	my $hash = shift;
+	warn "Use a hash reference" unless ref($hash) =~/HASH/;
+	return join(" ", map {$_="--" unless defined($_);$_ } %$hash),"\n";
+}
+
 sub new {
 	my $self = {
 		output   		=> '',
@@ -112,15 +121,96 @@ our $result;
 #    this code is identical between renderProblem.pl and renderViaXMLRPC.pm
 ##################################################
 
-sub xmlrpcCall {
-	my $self        = shift;
-	my $command = shift;
-	$command   = 'listLibraries' unless $command;
+#sub xmlrpcCall {
+#	my $self        = shift;
+#	my $command = shift;
+#	$command   = 'listLibraries' unless $command;
+#
+#	  my $requestResult = TRANSPORT_METHOD
+#			-> proxy(($self->url).'/'.REQUEST_URI);
+#		
+#	  my $input = $self->setInputTable();
+#	  local( $result);
+#	  # use eval to catch errors
+#	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command,$input) };
+#	  if ($@) {
+#	  	print STDERR "There were a lot of errors for $command\n" ;
+#	  	print STDERR "Errors: \n $@\n End Errors\n" ;
+#	  	return 0 #failure
+#	  }
+#	
+#	  unless (ref($result) and $result->fault) {
+#	  	my $rh_result = $result->result();
+#	    #print STDERR pretty_print_rh($rh_result);
+#		$self->{output} = $rh_result; #$self->formatRenderedProblem($rh_result);
+#		return 1; # success
+#
+#	  } else {
+#		$self->{output} = 'Error in xmlrpcCall to server: '. join( ",\n ",
+#		  $result->faultcode,
+#		  $result->faultstring);
+#		return 0; #failure
+#	  }
+#}
 
+sub xmlrpcCall {
+	my $self = shift;
+	my $command = shift;
+	my $input   = shift||{};
+
+	$command   = 'listLibraries' unless defined $command;
+    
+	  my $requestResult = TRANSPORT_METHOD
+	        #->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
+			#-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
+			-> proxy(($self->url).'/'.REQUEST_URI);
+			
+			
+    if ($UNIT_TESTS_ON) {
+    	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall issued with command $command\n";
+    	print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %$input);
+    	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall $command returned $requestResult\n";
+    }
+ 		
+	
+	  local( $result);
+	  # use eval to catch errors
+	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command,$input) };
+	  print STDERR "There were a lot of errors\n" if $@;
+	  print "Errors: \n $@\n End Errors\n" if $@;
+	  	
+	  unless (ref($result) and $result->fault) {
+	  
+	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
+	  		$result->result()->{text} = decode_base64($result->result()->{text});
+	  	}
+		#print  pretty_print($result->result()),"\n";  #$result->result()
+		return $result->result();
+	  } else {
+		print STDERR 'oops ', join ', ',
+		  "command:",
+		  $command,
+		  "\nfaultcode:",
+		  $result->faultcode, 
+		  "\nfaultstring:",
+		  $result->faultstring;
+		  return undef;
+	  }
+}
+
+sub jsXmlrpcCall {
+	my $self = shift;
+	my $command = shift;
+	my $input = shift;
+	$command   = 'listLibraries' unless $command;
+	if ($UNIT_TESTS_ON) {
+    	print STDERR  "WebworkClient.pm ".__LINE__." jsXmlrpcCall issued with command $command\n";
+    }
+
+	print "the command was $command";
 	  my $requestResult = TRANSPORT_METHOD
 			-> proxy(($self->url).'/'.REQUEST_URI);
 		
-	  my $input = $self->setInputTable();
 	  local( $result);
 	  # use eval to catch errors
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command,$input) };
@@ -129,15 +219,16 @@ sub xmlrpcCall {
 	  	print STDERR "Errors: \n $@\n End Errors\n" ;
 	  	return 0 #failure
 	  }
-	
+	print "hmm $result";
 	  unless (ref($result) and $result->fault) {
 	  	my $rh_result = $result->result();
-	    #print STDERR pretty_print_rh($rh_result);
+	  	print "\n success \n";
+	    print pretty_print($rh_result->{'ra_out'});
 		$self->{output} = $rh_result; #$self->formatRenderedProblem($rh_result);
 		return 1; # success
 
 	  } else {
-		$self->{output} = 'Error in xmlrpcCall to server: '. join( ",\n ",
+		$self->{output} = 'Error from server: '. join( ",\n ",
 		  $result->faultcode,
 		  $result->faultstring);
 		return 0; #failure
@@ -277,7 +368,7 @@ sub environment {
 		externalGif2EpsPath=>'not defined',
 		externalPng2EpsPath=>'not defined',
 		externalTTHPath=>'/usr/local/bin/tth',
-		fileName=>'set0/prob1a.pg',
+		fileName=>'WebworkClient.pm:: define fileName in environment',
 		formattedAnswerDate=>'6/19/00',
 		formattedDueDate=>'6/19/00',
 		formattedOpenDate=>'6/19/00',
@@ -303,7 +394,7 @@ sub environment {
 		openDate=> '3014438528',
 		permissionLevel =>10,
 		PRINT_FILE_NAMES_FOR => [ 'gage'],
-		probFileName => 'set0/prob1a.pg',
+		probFileName => 'WebworkClient.pm:: define probFileName in environment',
 		problemSeed  => 1234,
 		problemValue =>1,
 		probNum => 13,
@@ -360,10 +451,25 @@ sub formatAnswerRow {
 	$row;
 }
 	
+sub formatRenderedLibraries {
+	my $self 			  = shift;
+	#my @rh_result         = @{$self->{output}};  # wrap problem in formats
+	my %rh_result         = %{$self->{output}};
+	my $result = "";
+	foreach my $key (sort  keys %rh_result) {
+		$result .= "$key";
+		$result .= $rh_result{$key};
+	}
+    return $result;
+}
+
 sub formatRenderedProblem {
 	my $self 			  = shift;
-	my $rh_result         = $self->{output};  # wrap problem in formats
-	my $problemText       = decode_base64($rh_result->{text});
+	my $rh_result         = $self->{output}|| {};  # wrap problem in formats
+	my $problemText       = "No output from rendered Problem";
+	if (ref($rh_result) and $rh_result->{text} ) {
+		$problemText       = decode_base64( $rh_result->{text});
+	}
 	my $rh_answers        = $rh_result->{answers};
 	my $encodedSource     = $self->{encodedSource}||'foobar';
 	my $warnings          = '';

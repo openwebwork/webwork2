@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.36 2008/04/29 19:27:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -46,6 +46,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  course_admin                        /admin/ -> logout, options, instructor_tools
  html2xml                            /html2xml/
+ instructorXMLHandler     			     /instructorXMLHandler/
  set_list                            /$courseID/
  
  equation_display                    /$courseID/equation/
@@ -77,6 +78,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_set_maker                /$courseID/instructor/setmaker/
  instructor_set_maker2               /$courseID/instructor/setmaker2/
+ instructor_set_maker3               /$courseID/instructor/setmaker3/
  instructor_get_target_set_problems  /$courseID/instructor/GetTargetSetProblems/
  instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
@@ -114,7 +116,7 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [ qw/course_admin  html2xml set_list / ],
+		kids    => [ qw/course_admin  html2xml instructorXMLHandler set_list / ],
 		match   => qr|^/|,
 		capture => [ qw// ],
 		produce => '/',
@@ -140,7 +142,15 @@ our %pathTypes = (
 		produce => 'html2xml/',
 		display => 'WeBWorK::ContentGenerator::renderViaXMLRPC',
 	},
-
+	instructorXMLHandler => {
+		name => 'instructorXMLHandler',
+		parent => 'root',
+		kids => [ qw// ],
+		match   => qr|^instructorXMLHandler/|,
+		capture => [ qw// ],
+		produce => 'instructorXMLHandler/',
+		display => 'WeBWorK::ContentGenerator::instructorXMLHandler',
+	},
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
@@ -271,7 +281,7 @@ our %pathTypes = (
 		parent  => 'set_list',
 		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_set_maker instructor_set_maker2 instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
+			instructor_problem_editor instructor_set_maker instructor_set_maker2 instructor_set_maker3 instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_preflight instructor_statistics
@@ -390,6 +400,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
+	},
+	instructor_set_maker3 => {
+		name    => 'Library Browser 3',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^setmaker3/|,
+		capture => [ qw// ],
+		produce => 'setmaker3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker3',
 	},
 	instructor_set_maker2 => {
 		name    => 'Library Browser 2',
