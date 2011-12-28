@@ -7,7 +7,6 @@ BEGIN {
     $main::VERSION = "2.4.9";
     use Cwd;
 	use WeBWorK::PG::Local;
-	use WeBWorK::Request;
 
 	use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
@@ -39,7 +38,7 @@ BEGIN {
 	
 ###############################################################################
 
-	$WebworkWebservice::PASSWORD      = 'xmluser';     # default password
+	$WebworkWebservice::SITE_PASSWORD      = 'xmluser';     # default password
 	$WebworkWebservice::COURSENAME    = 'the-course-should-be-determined-at-run-time';       # default course
 	
 	
@@ -49,8 +48,9 @@ BEGIN {
 
 use strict;
 use warnings;
+use WeBWorK::Localize;
 
-our  $UNIT_TESTS_ON    = 1;
+our  $UNIT_TESTS_ON    = 0;
 
 # error formatting
 
@@ -128,7 +128,7 @@ sub format_hash_ref {
 }
 
 ###########################################################################
-#  authentication
+#  authentication and authorization
 ###########################################################################
 
 sub initiate_session {
@@ -137,13 +137,17 @@ sub initiate_session {
 	######### trace commands ######
  	    my @caller = caller(1);  # caller data
  	    my $calling_function = $caller[3];
- 	    print STDERR  "WebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
+# 	    print STDERR  "\n\nWebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
     ###############################
 	
 	my $rh_input     = $args[0];
-	my $user_id      = $rh_input->{userID};
-	my $session_key	 = $rh_input->{session_key};
+	# print STDERR "input from the form is ", format_hash_ref($rh_input), "\n";
+	
+	# obtain input from the hidden fields on the HTML page
+	my $user_id      = $rh_input ->{userID};
+	my $session_key	 = $rh_input ->{session_key};
 	my $courseName   = $rh_input ->{courseID};
+	my $password     = $rh_input ->{password};
 	my $ce           = $class->create_course_environment($courseName);
 	my $db           = new WeBWorK::DB($ce->{dbLayout});
 	
@@ -152,10 +156,12 @@ sub initiate_session {
 
 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
     runtime_use $user_authen_module;
-
+    
+#   This structure needs to mimic the structure expected by Authen
 	my $self = {
 		courseName	=>  $courseName,
 		user_id		=>  $user_id,
+		password    =>  $password,
 		session_key =>  $session_key,
 		ce          =>  $ce,
 		db          =>  $db,
@@ -169,12 +175,15 @@ sub initiate_session {
 	my $authen = $user_authen_module->new($self);
 	my $authz  =  WeBWorK::Authz->new($self);
 	
-	$self->{authen}             =  $authen;
+	$self->{authen}             = $authen;
 	$self->{authz}              = $authz;
 	
+	 
 	if ($UNIT_TESTS_ON) {
- 	   print STDERR  "WebworkWebservice.pm ".__LINE__."\n initiate data:\n  ", 
- 	   format_hash_ref($self);
+ 	   print STDERR  "WebworkWebservice.pm ".__LINE__."\n initiate data:\n  "; 
+ 	   print STDERR  "class type is ", $class, "\n";
+ 	   print STDERR  "Self has type ", ref($self), "\n";
+ 	   print STDERR   "self has data \n", format_hash_ref($self), "\n";
 	}
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
@@ -199,10 +208,20 @@ sub initiate_session {
 	
 	$self->{authenOK}  = $authenOK;
 	$self->{authzOK}   = $authz->hasPermissions($user_id, "access_instructor_tools");
+	
+# Update the credentials -- in particular the session_key may have changed.
+ 	$self->{session_key} = $authen->{session_key};
+
  	if ($UNIT_TESTS_ON) {
  		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK},"\n";
      	print STDERR  "WebworkWebservice.pm ".__LINE__."authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK},"\n"; 
+ 		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication contains ", format_hash_ref($authen),"\n";
+ 		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
  	} 
+ # Is there a way to transmit a number as well as a message?
+ # Could be useful for nandling errors.
+ 	die "Could not authenticate user $user_id with key $session_key " unless $self->{authenOK};
+ 	die "User $user_id does not have professor privileges in this course $courseName " unless $self->{authzOK};
  	return $self;
 }
 
@@ -221,7 +240,7 @@ sub create_course_environment {
 				{webwork_dir		=>		$WebworkWebservice::WW_DIRECTORY, 
 				 courseName         =>      $courseName
 				 });
-	warn "Unable to find environment for course: |$courseName|" unless ref($ce);
+	#warn "Unable to find environment for course: |$courseName|" unless ref($ce);
 	return ($ce);
 }
 
@@ -235,6 +254,11 @@ sub ce {
 sub db {
 	my $self = shift;
 	$self->{db};
+}
+sub params {    # imitate get behavior of the request object params method
+	my $self =shift;
+	my $param = shift;
+	$self->{$param};
 }
 sub authz {
 	my $self = shift;
@@ -251,10 +275,10 @@ sub get_credentials {
 		my $self = shift;
 		# self is an Authen object it contains an object r which is the WebworkXMLRPC object
 		# confusing isn't it?
-		$self->{user_id} = $self->{r}->{user_id};
+		$self->{user_id}     = $self->{r}->{user_id};
 		$self->{session_key} = $self->{r}->{session_key};
-		$self->{password} = "the-pass-word-can-be-provided-via-a-pop-u--call-back";
-		$self->{login_type} = "normal";
+		$self->{password}    = $self->{r}->{password}; #"the-pass-word-can-be-provided-via-a-pop-up--call-back";
+		$self->{login_type}  = "normal";
 		$self->{credential_source} = "params";
 		return 1;
 }
@@ -267,79 +291,92 @@ sub check_authorization {
 
 
 }
-
+sub do {   # process and return result
+           # make sure that credentials are returned
+           # for every call
+           # $result -> xmlrpcCall(command, in);
+           # $result->{output}->{foo} is defined for foo = courseID userID and session_key
+	my $self = shift;
+	my $result = shift;
+    $result->{session_key}  = $self->{session_key};
+    $result->{userID}       = $self->{user_id};
+    $result->{courseID}     = $self->{courseName};
+	return($result);
+}
 #  respond to xmlrpc requests
+#  Add routines for handling errors if the authentication fails or if the authorization is not appropriate.
+
 sub listLib {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
     #warn "\n incoming request to listLib:  class is ",ref($self) if $UNIT_TESTS_ON ;
-  	return( WebworkWebservice::LibraryActions::listLib($self, $in) );
+  	return $self->do( WebworkWebservice::LibraryActions::listLib($self, $in) );
 }
 sub listLibraries {     # returns a list of libraries for the default course
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
     #warn "incoming request to listLibraries:  class is ",ref($self) if $UNIT_TESTS_ON ;
-  	return( WebworkWebservice::LibraryActions::listLibraries($self, $in) );
+  	return $self->do( WebworkWebservice::LibraryActions::listLibraries($self, $in) );
 }
 sub listSets {
   my $class = shift;
   my $in = shift;
   my $self = $class->initiate_session($in);
-  	return(WebworkWebservice::SetActions::listLocalSets($self));
+  	return $self->do(WebworkWebservice::SetActions::listLocalSets($self));
 }
 sub listSetProblems {
 	my $class = shift;
   	my $in = shift;
   	my $self = $class->initiate_session($in);
-  	return(WebworkWebservice::SetActions::listLocalSetProblems($self, $in));
+  	return $self->do(WebworkWebservice::SetActions::listLocalSetProblems($self, $in));
 }
 
 sub createNewSet{
 	my $class = shift;
   	my $in = shift;
   	my $self = $class->initiate_session($in);
-  	return(WebworkWebservice::SetActions::createNewSet($self, $in));
+  	return $self->do(WebworkWebservice::SetActions::createNewSet($self, $in));
 }
 
 sub reorderProblems{
 	my $class = shift;
   	my $in = shift;
   	my $self = $class->initiate_session($in);
-   	return(WebworkWebservice::SetActions::reorderProblems($self, $in));
+   	return $self->do(WebworkWebservice::SetActions::reorderProblems($self, $in));
 }
 
 sub addProblem {
 	my $class = shift;
   	my $in = shift;
   	my $self = $class->initiate_session($in);
-  	return(WebworkWebservice::SetActions::addProblem($self, $in));
+  	return $self->do(WebworkWebservice::SetActions::addProblem($self, $in));
 }
 
 sub deleteProblem{
 	my $class = shift;
   	my $in = shift;
   	my $self = $class->initiate_session($in);
-  	return(WebworkWebservice::SetActions::deleteProblem($self, $in));
+  	return $self->do(WebworkWebservice::SetActions::deleteProblem($self, $in));
 }
 sub renderProblem {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
- 	return( WebworkWebservice::RenderProblem::renderProblem($self,$in) );
+    return $self->do( WebworkWebservice::RenderProblem::renderProblem($self,$in) ); 
 }
 sub readFile {
     my $class = shift;
     my $in   = shift;
     my $self = $class->initiate_session($in);
-  	return( WebworkWebservice::LibraryActions::readFile($self,$in) );
+  	return $self->do( WebworkWebservice::LibraryActions::readFile($self,$in) );
 }
 sub tex2pdf {
     my $class = shift;
     my $in    = shift;
     my $self  = $class->initiate_session($in);
-  	return( WebworkWebservice::MathTranslators::tex2pdf($self,$in) );
+  	return $self->do( WebworkWebservice::MathTranslators::tex2pdf($self,$in) );
 }
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --

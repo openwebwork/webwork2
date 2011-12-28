@@ -11,7 +11,9 @@
 #use lib '/home/gage/webwork/webwork-modperl/lib';
 
 package WebworkWebservice::LibraryActions;
+
 use WebworkWebservice;
+use WeBWorK::Utils::ListingDB;
 use base qw(WebworkWebservice); 
 
 use strict;
@@ -138,14 +140,23 @@ sub listLib {
 	my $rh = shift;
 	my $out = {};
 	my $dirPath = $self->{ce}->{courseDirs}{templates}."/".$rh->{library_name};
+	my $maxdepth= $rh->{maxdepth};
+	my $dirPath2 = $dirPath . ( ($rh->{dirPath}) ?  '/'.$rh->{dirPath}  : '' ) ;
+    my @tare = $dirPath2=~m|/|g; 
+    my $tare = @tare;     # counts number of "/" in dirPath prefix
 	my @outListLib;
 	my %libDirectoryList;
-	
-	my $wanted = sub {
+	my $depthfinder = sub {   # counts depth below the current directory
+		my $path = shift;
+		my @count = $path=~m|/|g;
+		my $depth = @count;
+		return $depth - $tare;
+	};
+	my $wanted = sub {  # find .pg files
 		unless ($File::Find::dir =~/.svn/ ) {
 			my $name = $File::Find::name;
 			if ($name =~/\S/ ) {
-				$name =~ s|^$dirPath/*||;  # cut the first directory
+				$name =~ s|^$dirPath2/*||;  # cut the first directory
 				push(@outListLib, "$name") if $name =~/\.pg/;
 	
 			}
@@ -153,10 +164,11 @@ sub listLib {
 	};
 	
 	my $wanted_directory = sub {
+	    $File::Find::prune =1 if &$depthfinder($File::Find::dir) > $maxdepth;
 		unless ($File::Find::dir =~/.svn/ ) {
 			my $dir = $File::Find::dir;
 			if ($dir =~/\S/ ) {
-				$dir =~ s|^$dirPath/*||;  # cut the first directory
+				$dir =~ s|^$dirPath2/*||;  # cut the first directory
 	
 				$libDirectoryList{$dir}++;
 			}
@@ -164,50 +176,118 @@ sub listLib {
 	};
 	 
 	my $command = $rh->{command};
-	warn "the command being executed is ' $command '";
+	#warn "the command being executed is ' $command '";
 	$command = 'all' unless defined($command);
-			$command eq 'all' &&    do {
-										$out->{command}="all -- list all pg files in $dirPath";
-										find({wanted=>$wanted,follow_fast=>1 }, $dirPath);
-										@outListLib = sort @outListLib;
-										$out->{ra_out} = \@outListLib;
-										$out->{text} = encode_base64( join("\n", @outListLib) );
-										return($out);
-			};
-			$command eq 'dirOnly' &&   do {
-										find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath);
-										build_tree(my $tree, $dirPath);
-										@outListLib = sort keys %libDirectoryList;
+	
+		$command eq 'all' &&    do {
+									$out->{command}="all -- list all pg files in $dirPath";
+									find({wanted=>$wanted,follow_fast=>1 }, $dirPath);
+									@outListLib = sort @outListLib;
+									$out->{ra_out} = \@outListLib;
+									$out->{text} = encode_base64( join("\n", @outListLib) );
+									return($out);
+		};
+		$command eq 'dirOnly' &&   do {
+									if ( -e $dirPath2) {
+										find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath2);
+										#@outListLib = grep {/\S/} sort keys %libDirectoryList; #omit blanks
+										foreach my $key (grep {/\S/} sort keys %libDirectoryList) {
+											push @outListLib, "$key: ".($libDirectoryList{$key}-1); # number of subnodes
+										}
 										$out->{ra_out} = \@outListLib;
 										$out->{text} = encode_base64("Loaded libraries");
 										return($out);
-			};
-			$command eq 'buildtree' &&   do {
-										#find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath);
-										build_tree(my $tree, $dirPath);
-										#@outListLib = sort keys %libDirectoryList;
-										$out->{ra_out} = $tree;
-										$out->{text} = encode_base64("Loaded libraries");
-										return($out);
-			};
+									} else {
+									   $out->{error} = "Can't open directory  $dirPath2";
+									}
+		};
+#			 use File::Find::Rule;
+  			# find all the subdirectories of a given directory
+#   			my @subdirs = File::Find::Rule->directory->in( $dirPath );
+# 			$command eq 'dirOnly' && do {
+# 				my @subdirs = File::Find::Rule->directory->in( ($dirPath) );
+# 				$out->{ra_out} = \@subdirs;
+# 				$out->{text} = encode_base64("Loaded libraries".$dirPath);
+# 				return($out);			
+# 			};
+		$command eq 'buildtree' &&   do {
+									#find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath);
+									build_tree(my $tree, $dirPath);
+									#@outListLib = sort keys %libDirectoryList;
+									$out->{ra_out} = $tree;
+									$out->{text} = encode_base64("Loaded libraries");
+									return($out);
+		};
+		
+		$command eq 'files' && do {  @outListLib=();
+									 #my $separator = ($dirPath =~m|/$|) ?'' : '/';
+									 #my $dirPath2 = $dirPath . $separator . $rh->{dirPath};
+									 if ( -e $dirPath2) {
+										 find($wanted, $dirPath2);
+										 @outListLib = sort @outListLib;
+										 $out ->{text} = encode_base64( join("\n", @outListLib ) );
+										 $out->{ra_out} = \@outListLib;
+									 } else {
+									   $out->{error} = "Can't open directory  $dirPath2";
+									 }
+									 return($out);
+		
+		};
+		# else
+	$out->{error}="Unrecognized command $command";
+	return( $out );
+}
 
-			$command eq 'files' && do {  @outListLib=();
-										 my $separator = ($dirPath =~m|/$|) ?'' : '/';
-			 							 my $dirPath2 = $dirPath . $separator . $rh->{dirPath};
-			 							 if ( -e $dirPath2) {
-											 find($wanted, $dirPath2);
-											 @outListLib = sort @outListLib;
-											 $out ->{text} = encode_base64( join("\n", @outListLib ) );
-											 $out->{ra_out} = \@outListLib;
-										 } else {
-										   $out->{error} = "Can't open directory  $dirPath2";
-										 }
-										 return($out);
+sub searchLib {    #API for searching the NPL database
+	my $self = shift;
+	my $rh = shift;
+	my $out = {};
+	my $ce = $self->{ce};
+	my $subcommand = $rh->{subcommand};
+		'getDBTextbooks' eq $subcommand && do {
+			$self->{library_subjects} = $rh->{library_subjects};
+			$self->{library_chapters} = $rh->{library_chapters};
+			$self->{library_sections} = $rh->{library_sections};
+			$self->{library_textchapter} = $rh->{library_textchapter};
+			my @textbooks = WeBWorK::Utils::ListingDB::getDBTextbooks($self);
+			$out->{ra_out} = \@textbooks;
+			return($out);		
+		};
+		'getAllDBsubjects' eq $subcommand && do {
+			my @subjects = WeBWorK::Utils::ListingDB::getAllsubjects($self);
+			$out->{ra_out} = \@subjects;
+			return($out);		
+		};
+		'getAllDBchapters' eq $subcommand && do {
+			$self->{library_subjects} = $rh->{library_subjects};
+			my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($self);
+			$out->{ra_out} = \@chaps;
+			return($out);		
+		};
+		'getDBListings' eq $subcommand && do {
+			$self->{library_subjects} = $rh->{library_subjects};
+			$self->{library_chapters} = $rh->{library_chapters};
+			$self->{library_sections} = $rh->{library_sections};
+			$self->{library_keywords} = $rh->{library_keywords};
+			$self->{library_textbook} = $rh->{library_textbook};
+			$self->{library_textchapter} = $rh->{library_textchapter};
+			$self->{library_textsection} = $rh->{library_textsection};
+			my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
+			$out->{ra_out} = \@listings;
+			return($out);
+		};
+		'getSectionListings' eq $subcommand && do {
+			$self->{library_subjects} = $rh->{library_subjects};
+			$self->{library_chapters} = $rh->{library_chapters};
+			$self->{library_sections} = $rh->{library_sections};
 
-			};
-			# else
-			$out->{error}="Unrecognized command $command";
-			return( $out );
+			my @section_listings = WeBWorK::Utils::ListingDB::getDBListings($self);
+			$out->{ra_out} = \@section_listings;
+			return($out);
+		};
+	# else
+	$out->{error}="Unrecognized command $subcommand";
+	return( $out );
 }
 
 
