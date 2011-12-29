@@ -159,6 +159,7 @@ sub body {
 	
 	  	print '<div class="break"></div>';
 		print '<b>Libraries:</b><div id="library_list_box"><button class="button" id="load_problems" type="button">Load Problems</button></div>';
+		print '<div id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button></div>';
 		###########################################
 			      # Library repository controls
     	###########################################

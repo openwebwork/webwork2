@@ -255,7 +255,7 @@ sub db {
 	my $self = shift;
 	$self->{db};
 }
-sub params {    # imitate get behavior of the request object params method
+sub param {    # imitate get behavior of the request object params method
 	my $self =shift;
 	my $param = shift;
 	$self->{$param};
@@ -305,6 +305,14 @@ sub do {   # process and return result
 }
 #  respond to xmlrpc requests
 #  Add routines for handling errors if the authentication fails or if the authorization is not appropriate.
+
+sub searchLib {
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    #warn "\n incoming request to listLib:  class is ",ref($self) if $UNIT_TESTS_ON ;
+  	return $self->do( WebworkWebservice::LibraryActions::searchLib($self, $in) );
+}
 
 sub listLib {
     my $class = shift;

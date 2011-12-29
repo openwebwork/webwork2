@@ -256,17 +256,19 @@ sub searchLib {    #API for searching the NPL database
 			return($out);		
 		};
 		'getAllDBsubjects' eq $subcommand && do {
-			my @subjects = WeBWorK::Utils::ListingDB::getAllsubjects($self);
+			my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
 			$out->{ra_out} = \@subjects;
+			$out->{text} = encode_base64("Subjects loaded.");
 			return($out);		
 		};
 		'getAllDBchapters' eq $subcommand && do {
 			$self->{library_subjects} = $rh->{library_subjects};
-			my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($self);
+			my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
 			$out->{ra_out} = \@chaps;
 			return($out);		
 		};
 		'getDBListings' eq $subcommand && do {
+			my $templateDir = $self->{ce}->{courseDirs}->{templates};
 			$self->{library_subjects} = $rh->{library_subjects};
 			$self->{library_chapters} = $rh->{library_chapters};
 			$self->{library_sections} = $rh->{library_sections};
@@ -275,7 +277,9 @@ sub searchLib {    #API for searching the NPL database
 			$self->{library_textchapter} = $rh->{library_textchapter};
 			$self->{library_textsection} = $rh->{library_textsection};
 			my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
-			$out->{ra_out} = \@listings;
+			my @output = map {$templateDir."/Library/".$_->{path}."/".$_->{filename}} @listings;
+			#change the hard coding!!!....just saying
+			$out->{ra_out} = \@output;
 			return($out);
 		};
 		'getSectionListings' eq $subcommand && do {
@@ -283,7 +287,7 @@ sub searchLib {    #API for searching the NPL database
 			$self->{library_chapters} = $rh->{library_chapters};
 			$self->{library_sections} = $rh->{library_sections};
 
-			my @section_listings = WeBWorK::Utils::ListingDB::getDBListings($self);
+			my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self);
 			$out->{ra_out} = \@section_listings;
 			return($out);
 		};

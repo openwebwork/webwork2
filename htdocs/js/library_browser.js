@@ -225,21 +225,27 @@ $(document)
 				});
 
 function CardCatolog() {
-	this.listBox = document.getElementById("library_list_box");
+	this.searchBox = new Search();
 	this.displayBox = document.getElementById("library_list");
+	this.listBox = document.getElementById("library_list_box");
 	
 	this.library = new Library("Library");
 	this.working_library = this.library;
 	
 	// set up unobtrusive controlls:
-	this.library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.library)});
 		
+	this.searchButton = document.getElementById("run_search");
+	
 	this.nextButton = document.getElementById("nextList");
 	this.prevButton = document.getElementById("prevList");
 	this.probsPerPage = document.getElementById("prob_per_page");
 	this.topProbIndex = 0;
 	
 	var workAroundTheClosure = this;
+	
+	this.library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.library)});
+	
+	this.searchButton.addEventListener('click', function() {workAroundTheClosure.searchBox.go();}, false);
 	
 	document.getElementById("load_problems").addEventListener('click', function(){
 		if(workAroundTheClosure.working_library.problems > 0){
@@ -359,6 +365,144 @@ CardCatolog.prototype.onLibSelect = function(currentLibrary) {
 	}
 };
 
+function Search(){
+	this.subjectBox = document.getElementById("subjectBox");
+	this.chaptersBox = document.getElementById("chaptersBox");
+	this.sectionsBox = document.getElementById("sectionsBox");
+	this.textbooksBox = document.getElementById("textbooksBox");
+	this.textChaptersBox = document.getElementById("textChaptersBox");
+	this.textSectionsBox = document.getElementById("textSectionsBox");
+	this.keywordsBox = document.getElementById("keywordsBox");
+	var workAroundTheClosure = this;
+	subjectBox.addEventListener("change", function() {
+		//update inputs
+		workAroundTheClosure.updateInputs();
+		//update lists
+		workAroundTheClosure.updateChaptersBox();
+		workAroundTheClosure.updateSectionsBox();
+	}, false);
+	chaptersBox.addEventListener("change", function() {
+		//update inputs
+		workAroundTheClosure.updateInputs();
+		//update lists
+		workAroundTheClosure.updateSectionsBox();
+	}, false);
+	sectionsBox.addEventListener("change", function() {
+		//update inputs
+		workAroundTheClosure.updateInputs();
+	}, false);
+	/*textbooksBox.addEventListener("change", function() {
+		//update inputs
+		workAroundTheClosure.updateInputs();
+		//update lists
+		workAroundTheClosure.updateAll();
+	}, false);*/
+	this.updateSubjectBox();
+	this.updateChaptersBox();
+	this.updateSectionsBox();
+	
+}
+
+Search.prototype.go = function() {
+	this.updateInputs();
+	listLibRequest.xml_command = "searchLib";
+	listLibRequest.subcommand = "getDBListings";
+	$.post(webserviceURL, listLibRequest,function(data) {
+		console.log(data);
+		try {
+			var response = $.parseJSON(data);
+			console.log("result: " + response.server_response);
+			updateMessage(response.server_response);
+			var results = response.result_data.split(",");
+			var newSearchName = "search" + generateUniqueID();
+			$tabs.tabs("add", "#"+newSearchName, "Search (" + results.length + ")");
+			var thisContainer = document.getElementById(newSearchName);
+			var displayList = document.createElement("ul");
+			thisContainer.appendChild(displayList);
+			for(var i = 0; i < results.length; i++){
+				var searchProblem = new Problem(results[i]);
+				searchProblem.render(displayList);
+			}
+			//callback();
+		} catch (err) {
+			console.log(err);
+				var myWindow = window.open('', '', 'width=500,height=800');
+				myWindow.document.write(data);
+				myWindow.focus();
+		}
+	});
+}
+
+Search.prototype.updateInputs = function(){
+	listLibRequest.library_subjects = this.subjectBox.options[this.subjectBox.selectedIndex].value;
+	listLibRequest.library_chapters = this.chaptersBox.options[this.chaptersBox.selectedIndex].value;
+	listLibRequest.library_sections = this.sectionsBox.options[this.sectionsBox.selectedIndex].value;
+//	listLibRequest.library_textbook = this.textbooksBox.options[this.textbooksBox.selectedIndex].value;
+//	listLibRequest.library_textchapter = this.textChaptersBox.options[this.textChaptersBox.selectedIndex].value;
+//	listLibRequest.library_textsection = this.textSectionsBox.options[this.textSectionsBox.selectedIndex].value;
+//	listLibRequest.library_keywords = this.keywordsBox.value;
+}
+
+
+
+Search.prototype.updateSubjectBox = function(){
+	listLibRequest.xml_command = "searchLib";
+	listLibRequest.subcommand = "getAllDBsubjects";
+	this.update(this.subjectBox, "All Subjects");	
+}
+
+Search.prototype.updateChaptersBox = function(){
+	listLibRequest.xml_command = "searchLib";
+	listLibRequest.subcommand = "getAllDBchapters";
+	this.update(this.chaptersBox, "All Chapters");	
+}
+
+Search.prototype.updateSectionsBox = function(){
+	listLibRequest.xml_command = "searchLib";
+	listLibRequest.subcommand = "getSectionListings";
+	this.update(this.sectionsBox, "All Sections");	
+}
+
+Search.prototype.updateTextbookBox = function(){
+	listLibRequest.xml_command = "searchLib";
+	listLibRequest.subcommand = "getDBTextbooks";
+	this.update(this.textbooksBox, "All Textbooks");	
+}
+
+Search.prototype.update = function(box, blankName){
+	$.post(webserviceURL, listLibRequest,function(data) {
+		console.log(data);
+		try {
+			var response = $.parseJSON(data);
+			console.log("result: " + response.server_response);
+			updateMessage(response.server_response);
+			
+			box.options.length = 0;
+			var options = response.result_data.split(",");
+			for (var i = 0; i < options.length; i++) {
+				if (!name.match(/\./)) {
+					var option = document.createElement("option")
+					option.value = options[i];
+					option.innerHTML = options[i];
+					box.add(option, null);
+				}
+			}
+			if (box.childNodes.length > 0) {
+				var emptyOption = document.createElement("option");
+				emptyOption.innerHTML = blankName;
+				emptyOption.value = "";
+				box.add(emptyOption, box.firstChild);
+			}
+			//callback();
+		} catch (err) {
+			console.log(err);
+				var myWindow = window.open('', '', 'width=500,height=800');
+				myWindow.document.write(data);
+				myWindow.focus();
+		}
+	});
+}
+
 /*
  * needed functions: Both: getProblems
  * 
@@ -405,22 +549,21 @@ Library.prototype.loadChildren = function(callback){
 	$.post(webserviceURL, listLibRequest,
 			function(data) {
 				//console.log(data);
-				try {
+				//try {
 					var response = $.parseJSON(data);
-					console.log("result: "
-							+ response.server_response);
+					console.log("result: " + response.server_response);
 					updateMessage(response.server_response);
 					for(var key in response.result_data){
 						workAroundLibrary.children[key] = new Library(key, workAroundLibrary);
 					}
 					callback();
-				} catch (err) {
+				/*} catch (err) {
 					console.log(err);
 					var myWindow = window.open('', '',
 							'width=500,height=800');
 					myWindow.document.write(data);
 					myWindow.focus();
-				}
+				}*/
 			});
 }
 
@@ -441,7 +584,7 @@ Library.prototype.loadProblems = function(callback){
 	$.post(webserviceURL, listLibRequest,
 			function(data) {
 				console.log(data);
-				//try {
+				try {
 					var response = $.parseJSON(data);
 					console.log("result: " + response.server_response);
 					updateMessage(response.server_response);
@@ -456,13 +599,13 @@ Library.prototype.loadProblems = function(callback){
 					console.log("Problems:");
 					console.log(workAroundLibrary.problems);
 					callback();
-				/*} catch (err) {
+				} catch (err) {
 					console.log(err);
 					var myWindow = window.open('', '',
 							'width=500,height=800');
 					myWindow.document.write(data);
 					myWindow.focus();
-				}*/
+				}
 			});
 }
 
@@ -500,8 +643,7 @@ Set.prototype.renderSet = function() {
 			this.renderProblem(this.problemArray[i]);
 		}
 	} else {
-		$tabs.tabs("add", "#" + this.name, this.name + " ("
-				+ this.problemArray.length + ")");
+		$tabs.tabs("add", "#" + this.name, this.name + " (" + this.problemArray.length + ")");
 		var thisContainer = document.getElementById(this.name);
 		thisContainer.setAttribute("data-uid", this.id);
 		this.displayBox = document.createElement("ul");

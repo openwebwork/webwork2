@@ -190,7 +190,15 @@ sub pre_header_initialize {
 		     fileName        =>   $r->param("file_name") ||undef,
 		     new_set_name	 =>	  $r->param("new_set_name") ||undef,
 		     command     	 =>   $r->param("command") ||undef,
+		     subcommand		 =>   $r->param("subcommand") ||undef,
 		     maxdepth		 =>	  $r->param("maxdepth") || 0,
+		     library_subjects	=> 	$r->param("library_subjects") ||undef,
+		     library_chapters	=> 	$r->param("library_chapters") ||undef,
+		     library_sections	=> 	$r->param("library_sections") ||undef,
+		     library_textbook	=> 	$r->param("library_textbook") ||undef,
+		     library_keywords	=> 	$r->param("library_keywords") ||undef,
+		     library_textchapter	=> 	$r->param("library_textchapter") ||undef,
+		     library_textsection	=> 	$r->param("library_textsection") ||undef,
 		     source			 =>   '',
 	};
 	if ($UNIT_TESTS_ON) {
