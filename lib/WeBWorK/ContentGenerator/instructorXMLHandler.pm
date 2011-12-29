@@ -389,21 +389,21 @@ sub pretty_print_json {
 	} elsif (! defined($rh )) {
 		#$out .= " type = UNDEFINED; ";
 	}
-	return $out." " unless defined($rh);
+	return $out."" unless defined($rh);
 	
 	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
 	    $indent++;
  		foreach my $key (sort keys %{$rh})  {
- 			$out .= "  ".'"'.$key.'" : '. pretty_print_json( $rh->{$key}, $indent ) . ",";
+ 			$out .= "  ".'"'.$key.'" : '. pretty_print_json( $rh->{$key}) . ",";
  		}
  		$indent--;
  		#get rid of the last comma
  		chop $out;
- 		$out = "{\n $out \n"."} \n";
+ 		$out = "{\n$out\n"."}\n";
 
  	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
  		foreach my $elem ( @{$rh} )  {
- 		 	$out .= pretty_print_json($elem, $indent).",";
+ 		 	$out .= pretty_print_json($elem).",";
  		
  		}
  		#get rid of the last comma
@@ -429,7 +429,7 @@ sub content {
 	if($self->{output}->{problem_out}){
 		print $self->{output}->{problem_out}->{text};
 	} else {
-		print '{"server_response" : "'.$self->{output}->{text}.'",';
+		print '{"server_response":"'.$self->{output}->{text}.'",';
 		if($self->{output}->{ra_out}){
 			print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
 		} else {

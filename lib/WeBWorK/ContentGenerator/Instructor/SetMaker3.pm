@@ -158,7 +158,7 @@ sub body {
 				#'<p>In the target set you can drag problems to reorder them.<br/>The problem will be placed in front of the one you drop it on,<br/>or at the end of the list if you drop it on an empty space in the table.</p>',
 	
 	  	print '<div class="break"></div>';
-		print '<b>Libraries:</b><div id="library_list_box"></div>';
+		print '<b>Libraries:</b><div id="library_list_box"><button class="button" id="load_problems" type="button">Load Problems</button></div>';
 		###########################################
 			      # Library repository controls
     	###########################################
@@ -189,7 +189,7 @@ sub body {
 	          
 	        	print '</ul>';
 #<button type="button" onclick="increaseLibAcross();">+</button><span id="libAcross">4</span><button type="button" onclick="decreaseLibAcross();">-</button><span> problems across</span>
-            	print '<p><select id="prob_per_page"><option value=10>10</option><option value=20>20</option><option value=30>30</option><option value=40>40</option><option value=50>50</option></select><button type="button" id="prevList">Previous</button><button type="button" id="nextList">Next</button></p>';#might be a better way to do the perpage
+            	print '<p><select id="prob_per_page"><option value=10>10</option><option value=20>20</option><option value=30>30</option><option value=40>40</option><option value=50>50</option></select><button type="button" disabled=true id="prevList">Previous</button><button disabled=true type="button" id="nextList">Next</button></p>';#might be a better way to do the perpage
 	      	print '</div>';
 	      print '</div>';
 	        ########## Finish things off

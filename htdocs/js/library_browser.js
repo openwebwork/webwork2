@@ -221,201 +221,141 @@ $(document)
 
 					$("#problems_container").removeClass("ui-corner-all");
 
-					listLibRequest.xml_command = "listLib";
-					listLibRequest.command = "dirOnly";
-					listLibRequest.maxdepth = 0;
-					listLibRequest.library_name = "Library";// is this still
-															// necessary?
-					updateMessage("Loading libraries... may take some time");
-					$.post(webserviceURL, listLibRequest,
-							function(data) {
-								console.log(data);
-								try {
-									var response = $.parseJSON(data);
-									console.log("result: "
-											+ response.server_response);
-									updateMessage(response.server_response);
-									cardCatalog = new CardCatolog(
-											response.result_data);
-								} catch (err) {
-									var myWindow = window.open('', '',
-											'width=500,height=800');
-									myWindow.document.write(data);
-									myWindow.focus();
-								}
-							});
+					cardCatalog = new CardCatolog();
 				});
 
-function CardCatolog(json) {
-	this.tree = json;
-	this.displayBox = document.getElementById("library_list_box");
-	// skip the first object
-	this.treeRoot;
-	var key;
-	for (key in this.tree) {
-		if (this.tree.hasOwnProperty(key)) {
-			this.treeRoot = this.tree[key];
-			break;
-		}
-	}
-	this.library = new Library();
-	this.library.nextButton = document.getElementById("nextList");
-	this.library.prevButton = document.getElementById("prevList");
+function CardCatolog() {
+	this.listBox = document.getElementById("library_list_box");
+	this.displayBox = document.getElementById("library_list");
+	
+	this.library = new Library("Library");
+	this.working_library = this.library;
+	
 	// set up unobtrusive controlls:
-
-	this.buildSelectBox(this.treeRoot, key);
+	this.library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.library)});
+		
+	this.nextButton = document.getElementById("nextList");
+	this.prevButton = document.getElementById("prevList");
+	this.probsPerPage = document.getElementById("prob_per_page");
+	this.topProbIndex = 0;
+	
 	var workAroundTheClosure = this;
-	console.log(this.library);
-	this.library.nextButton
-			.addEventListener(
-					'click',
-					function() {
-						console.log("Next Button was clicked");
-						if (!workAroundTheClosure.library.nextList()) {
-							// then load new problems? yes because we shouldn't
-							// even be able to click on it if we can't
-							workAroundTheClosure.library.topProbIndex += parseInt(workAroundTheClosure.library.probsPerPage.options[workAroundTheClosure.library.probsPerPage.selectedIndex].value);
-							workAroundTheClosure.updateLibrary();
-						}
-					}, false);
+	
+	document.getElementById("load_problems").addEventListener('click', function(){
+		if(workAroundTheClosure.working_library.problems > 0){
+			console.log("loaded");
+			console.log(workAroundTheClosure.working_library.problems);
+			workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
+		} 
+		else {
+			workAroundTheClosure.working_library.loadProblems(function() {
+				console.log("callback!");
+				workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
+				});
+			}
+	}, false);
+	
+	this.nextButton.addEventListener('click', function() {
+		console.log("Next Button was clicked");
+		// then load new problems? yes because we shouldn't
+		// even be able to click on it if we can't
+		workAroundTheClosure.topProbIndex += parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value);
+		workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
+	}, false);
 	document.getElementById("prevList").addEventListener('click', function() {
-		workAroundTheClosure.library.prevList();
+		workAroundTheClosure.topProbIndex -= parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value);
+		if (workAroundTheClosure.topProbIndex < 0)
+			workAroundTheClosure.topProbIndex = 0;
+		workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
 	}, false);
-	// preload some problems:
-	this.updateLibrary();
 }
 
-CardCatolog.prototype.updateLibrary = function() {
-	// this.library.probsPerPage
-	var options = this.library.probsPerPage.options;
-	var problemList = this.getProblems(this.library.topProbIndex,
-			parseInt(options[this.library.probsPerPage.selectedIndex].value));
-
-	console.log("top index : " + this.library.topProbIndex);
-	console.log("total count: " + problemList.count);
-	console.log("adding " + problemList.problems.length + " problems");
-	if (!(this.library.topProbIndex > 0)) {
-		this.library.problems.count = problemList.count;
+CardCatolog.prototype.updateMoveButtons = function() {
+	if (this.topProbIndex + parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value) < this.working_library.problems.length) {
+		this.nextButton.removeAttribute("disabled");
+	} else {
+		this.nextButton.setAttribute("disabled", true);
 	}
-	for ( var i = 0; i < problemList.problems.length; i++) {
-		var newProblem = new Problem(problemList.problems[i]);
-		this.library.problems.list[newProblem.id] = newProblem;
+	if (this.topProbIndex > 0) {
+		this.prevButton.removeAttribute("disabled");
+	} else {
+		this.prevButton.setAttribute("disabled", true);
 	}
-	this.library.updateMoveButtons();// have to update the display as well...
-	this.library.updateView();
 }
 
-CardCatolog.prototype.buildSelectBox = function(currentObject, key) {
-	var newLib = document.createElement("select");
-	newLib.id = "libList" + (this.displayBox.childNodes.length + 1);
-	newLib.setAttribute("data-propName", key);
+CardCatolog.prototype.buildSelectBox = function(currentLibrary) {
+	var newLibList = document.createElement("select");
+	newLibList.id = "libList" + (this.displayBox.childNodes.length + 1);
+	newLibList.setAttribute("data-propName", currentLibrary.path);
 	var workAroundTheClosure = this;
-	newLib.addEventListener("change", function() {
-		workAroundTheClosure.onLibSelect();
+	newLibList.addEventListener("change", function() {
+		workAroundTheClosure.onLibSelect(currentLibrary);
 	}, false);
 
-	for ( var name in currentObject) {
+	for ( var name in currentLibrary.children) {
 		if (!name.match(/\./)) {
 			var option = document.createElement("option")
 			option.value = name;
 			option.innerHTML = name;
-			newLib.add(option, null);
+			newLibList.add(option, null);
 		}
 	}
-	if (newLib.childNodes.length > 0) {
+	if (newLibList.childNodes.length > 0) {
 		var emptyOption = document.createElement("option");
-		newLib.add(emptyOption, newLib.firstChild);
-		this.displayBox.appendChild(newLib);
+		newLibList.add(emptyOption, newLibList.firstChild);
+		this.listBox.appendChild(newLibList);
 	}
 }
+
 // start:index to start at, limit:number of problems to list
-CardCatolog.prototype.getProblems = function(start, limit) {
-	var chosenLibs = this.displayBox.childNodes;
-	var currentObject = this.treeRoot
-	var path;
-	for ( var key in this.tree) {
-		if (this.tree.hasOwnProperty(key)) {
-			path = key;
-			break;
-		}
+CardCatolog.prototype.renderProblems = function(start, limit) {
+	while (this.displayBox.hasChildNodes()) {
+		this.displayBox.removeChild(this.displayBox.lastChild);
 	}
-
-	for ( var i = 0; i < chosenLibs.length; i++) {
-		if (currentObject
-				.hasOwnProperty(chosenLibs[i].options[chosenLibs[i].selectedIndex].value)) {
-			path += "/"
-					+ chosenLibs[i].options[chosenLibs[i].selectedIndex].value
-			currentObject = currentObject[chosenLibs[i].options[chosenLibs[i].selectedIndex].value];
-		}
+	for(var i = start; i < start+limit && i < this.working_library.problems.length; i++){
+		this.working_library.problems[i].render(this.displayBox);
 	}
-	var probList = this.buildProblemList(currentObject, path, start, limit);
-	return probList;
+	this.updateMoveButtons();
 };
-// better way to do this?
-CardCatolog.prototype.buildProblemList = function(currentObject, path, start,
-		limit) {
-	var count = 0;
-	var problems = new Array();
-	for ( var key in currentObject) {
-		if (key.match(/\.pg/)) {
-			if (start > count) {
-				// start--;
-			} else {
-				if (problems.length < limit) {
-					problems.push(path + "/" + key);
-				}
-			}
-			count++;
-		}
-	}
 
-	for ( var key in currentObject) {
-		if (typeof currentObject[key] == "object" && !key.match(/\./)) {
-			var nextRound = this.buildProblemList(currentObject[key], path
-					+ "/" + key, start - count, limit);
-			for ( var i = 0; i < nextRound.problems.length; i++) {
-				if (problems.length < limit) {
-					problems.push(nextRound.problems[i]);
-				}
-			}
-			count += nextRound.count;
-		}
-	}
 
-	return {
-		"count" : count,
-		"problems" : problems
-	};
-}
-
-// I wanted this to live in Library..but js doesn't like it, needs to be cleaned
-CardCatolog.prototype.onLibSelect = function() {// need to push the event to
-												// Library?
-	this.library.topProbIndex = 0;
-	this.library.problems.list = new Object();
-	this.updateLibrary();
+CardCatolog.prototype.onLibSelect = function(currentLibrary) {
+	this.topProbIndex = 0;
+	//this.library.problems.list = new Object();
+	//this.updateLibrary();
 	var changedLib = event.target;// should be the select
-	var displayBox = event.target.parentNode;
-	var libChoices = displayBox.childNodes;
-	var currentObject = this.treeRoot;
+	var listBox = event.target.parentNode;
+	var libChoices = listBox.childNodes;
+	//var currentObject = this.treeRoot;
 
 	var count = 0;
 	var key;
 	for ( var i = 0; i < libChoices.length; i++) {
 		if (libChoices[i].tagName == "SELECT") {
 			count = i;
-			key = libChoices[i].options[libChoices[i].selectedIndex].value
-			if (currentObject.hasOwnProperty(key))
-				currentObject = currentObject[key];
 			if (libChoices[i] == changedLib)
 				break;
 		}
 	}
-	while (displayBox.childNodes.length > count + 1) {
-		displayBox.removeChild(displayBox.lastChild);
+	while (listBox.childNodes.length > count + 1) {
+		listBox.removeChild(listBox.lastChild);
 	}
-	if (changedLib.options[changedLib.selectedIndex].value) {
-		this.buildSelectBox(currentObject, key);
+	
+	if (currentLibrary.children.hasOwnProperty(changedLib.options[changedLib.selectedIndex].value)) {
+		var child = currentLibrary.children[changedLib.options[changedLib.selectedIndex].value];
+		this.working_library = child;
+		//right now this reloads if there are no subdirectories, can be fixed by a count on serverside.
+		if(Object.size(child.children) > 0){
+			console.log("didn't have to build");
+			this.buildSelectBox(child);
+		} else {
+			var workAroundTheClosure = this;
+			child.loadChildren(function() {
+				workAroundTheClosure.buildSelectBox(child);
+			});
+		}
+	} else {
+		this.working_library = currentLibrary;
 	}
 };
 
@@ -436,96 +376,97 @@ CardCatolog.prototype.onLibSelect = function() {// need to push the event to
  * The library object
  ******************************************************************************/
 // object
-function Library() {
-	// the div containing the library
-	// want to restrict to one box per page so id is perfect for now
-	this.displayBox = document.getElementById("library_list");
-	// $("#"+this.displayBox.id).sortable();//draggable
-	this.problems = {
-		"count" : 0,
-		"list" : new Array()
-	}; // array of currently loaded problems
-	this.probsPerPage = document.getElementById("prob_per_page");
-	this.topProbIndex = 0;
-	this.nextButton;
-	this.prevButton;
-}
-
-Library.prototype.updateMoveButtons = function() {
-	if (this.topProbIndex
-			+ parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value) < this.problems.count) {
-		this.nextButton.removeAttribute("disabled");
+function Library(name, parent) {
+	this.name = name;
+	this.parent = false;
+	
+	if(parent){
+		this.parent = parent;
+		this.path = parent.path + "/" + name;
 	} else {
-		this.nextButton.setAttribute("disabled", true);
+		this.path = name;
 	}
-	if (this.topProbIndex > 0) {
-		this.prevButton.removeAttribute("disabled");
-	} else {
-		this.prevButton.setAttribute("disabled", true);
-	}
+	this.children = new Object();
+	
+	this.problems = new Array();
 }
 
-// controller
-Library.prototype.markInSet = function(probID) {
 
+
+Library.prototype.loadChildren = function(callback){
+	listLibRequest.xml_command = "listLib";
+	listLibRequest.command = "dirOnly";
+	listLibRequest.maxdepth = 0;
+	listLibRequest.library_name = this.path;
+	
+	updateMessage("Loading libraries... may take some time");
+	
+	var workAroundLibrary = this;
+	$.post(webserviceURL, listLibRequest,
+			function(data) {
+				//console.log(data);
+				try {
+					var response = $.parseJSON(data);
+					console.log("result: "
+							+ response.server_response);
+					updateMessage(response.server_response);
+					for(var key in response.result_data){
+						workAroundLibrary.children[key] = new Library(key, workAroundLibrary);
+					}
+					callback();
+				} catch (err) {
+					console.log(err);
+					var myWindow = window.open('', '',
+							'width=500,height=800');
+					myWindow.document.write(data);
+					myWindow.focus();
+				}
+			});
 }
 
-Library.prototype.updateView = function() {
-	console.log("total problems loaded: " + Object.size(this.problems.list));
-	console.log("out of : " + this.problems.count);
-	console
-			.log(this.topProbIndex < this.topProbIndex
-					+ parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value));
-	console.log(this.topProbIndex < Object.size(this.problems.list));
-	while (this.displayBox.hasChildNodes()) {
-		this.displayBox.removeChild(this.displayBox.lastChild);
-	}
-	var i = this.topProbIndex;
-	console.log("Object size: " + Object.size(this.problems.list));
-	for ( var key in this.problems.list) {
-		if (i < this.topProbIndex
-				+ parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value)
-				&& i < Object.size(this.problems.list)) {
-			// console.log(this.problems.list[i].path);
-			this.renderProblem(this.problems.list[key]);
-		} else {
-			break;
-		}
-		i++;
-	}
+/*
+Right now this is going to store all the files under each library.
+This is reduntant!  The benifits of this should be discussed at a later date
+and a fix (or not) should be decided on.
+*/
+Library.prototype.loadProblems = function(callback){
+	listLibRequest.xml_command = "listLib";
+	listLibRequest.command = "files";
+	listLibRequest.maxdepth = 0;
+	listLibRequest.library_name = this.path;
+	
+	updateMessage("Loading problems");
+	
+	var workAroundLibrary = this;
+	$.post(webserviceURL, listLibRequest,
+			function(data) {
+				console.log(data);
+				//try {
+					var response = $.parseJSON(data);
+					console.log("result: " + response.server_response);
+					updateMessage(response.server_response);
+					//for(var key in response.result_data){
+					//	workAroundLibrary.children[key] = new Library(key, workAroundLibrary);
+					//}
+					var problemList = response.result_data.split(",");
+					workAroundLibrary.problems = new Array();
+					for(var i = 0; i < problemList.length; i++){
+						workAroundLibrary.problems.push(new Problem(problemList[i]));
+					}					
+					console.log("Problems:");
+					console.log(workAroundLibrary.problems);
+					callback();
+				/*} catch (err) {
+					console.log(err);
+					var myWindow = window.open('', '',
+							'width=500,height=800');
+					myWindow.document.write(data);
+					myWindow.focus();
+				}*/
+			});
 }
 
-Library.prototype.markRemovedFromSet = function(probID) {
 
-}
-
-Library.prototype.nextList = function() {
-	if (this.topProbIndex
-			+ this.topProbIndex
-			+ parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value) < Object
-			.size(this.problems.list)) {
-		console.log("we've got those problems already");
-		this.topProbIndex += this.topProbIndex
-				+ parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value);
-		this.updateView();
-		this.updateMoveButtons();
-		return true;
-	} else {
-		return false;
-	}
-}
-
-Library.prototype.prevList = function() {
-	this.topProbIndex -= parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value);
-	if (this.topProbIndex < 0)
-		this.topProbIndex = 0;
-	this.updateMoveButtons();
-	this.updateView();
-}
-
-Library.prototype.renderProblem = function(problem) {
-	problem.render(this.displayBox);
-}
 
 /*******************************************************************************
  * The set object
@@ -927,6 +868,7 @@ Problem.prototype.render = function(displayBox) {
 			problem.data = data;
 		});
 	} else {
+		console.log("didn't have to go to the server");
 		//if we've gotten it just load up the stored data
 		//newItem.innerHTML = data;
 		container.innerHTML = problem.data;

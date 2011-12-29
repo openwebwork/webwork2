@@ -156,7 +156,7 @@ sub listLib {
 		unless ($File::Find::dir =~/.svn/ ) {
 			my $name = $File::Find::name;
 			if ($name =~/\S/ ) {
-				$name =~ s|^$dirPath2/*||;  # cut the first directory
+				#$name =~ s|^$dirPath2/*||;  # cut the first directory
 				push(@outListLib, "$name") if $name =~/\.pg/;
 	
 			}
@@ -226,7 +226,8 @@ sub listLib {
 									 if ( -e $dirPath2) {
 										 find($wanted, $dirPath2);
 										 @outListLib = sort @outListLib;
-										 $out ->{text} = encode_base64( join("\n", @outListLib ) );
+										 #$out ->{text} = encode_base64( join("", @outListLib ) );
+										 $out ->{text} = encode_base64( "Problems loaded" );
 										 $out->{ra_out} = \@outListLib;
 									 } else {
 									   $out->{error} = "Can't open directory  $dirPath2";
