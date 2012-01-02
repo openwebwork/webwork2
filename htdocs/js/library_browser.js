@@ -65,12 +65,12 @@ function redo() {
 }
 
 function highlightSets(event) {
-	console.log(this.getAttribute("data-path"));
+	//console.log(this.getAttribute("data-path"));
 	var problemID = this.getAttribute("data-path");
 	$(".contains_problem").removeClass("contains_problem");
 	for ( var key in setList.sets) {
 		if (setList.sets[key].problems.hasOwnProperty(problemID)) {
-			console.log("found one " + setList.sets[key].name
+			//console.log("found one " + setList.sets[key].name
 					+ setList.sets[key].id);
 			$(
 					document.getElementById(setList.sets[key].name
@@ -754,6 +754,7 @@ Set.prototype.renderSet = function() {
 		this.displayBox.id = this.name + "_list";
 		var workAroundSet = this;
 		$(this.displayBox).sortable({
+			axis: 'y',
 			start : function(event, ui) {
 				workAroundSet.previousOrder = $(this).sortable('toArray');
 			},
@@ -927,8 +928,9 @@ Set.prototype.reorderProblems = function(setOrder) {
 		probList.push(document.getElementById(setOrder[i]).getAttribute(
 				"data-path"));
 	}
-	var probListString = probList.join(",");
 
+	var probListString = probList.join(",");
+	console.log("problem string: "+probListString);
 	listLibRequest.probList = probListString;
 	listLibRequest.xml_command = "reorderProblems";
 	listLibRequest.set = this.name;
