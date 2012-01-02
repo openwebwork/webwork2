@@ -189,6 +189,7 @@ sub pre_header_initialize {
 		     set             =>   $r->param("set") ||undef,
 		     fileName        =>   $r->param("file_name") ||undef,
 		     new_set_name	 =>	  $r->param("new_set_name") ||undef,
+		     probList		 =>	  $r->param("probList") ||undef,
 		     command     	 =>   $r->param("command") ||undef,
 		     subcommand		 =>   $r->param("subcommand") ||undef,
 		     maxdepth		 =>	  $r->param("maxdepth") || 0,

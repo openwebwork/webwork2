@@ -70,8 +70,7 @@ function highlightSets(event) {
 	$(".contains_problem").removeClass("contains_problem");
 	for ( var key in setList.sets) {
 		if (setList.sets[key].problems.hasOwnProperty(problemID)) {
-			//console.log("found one " + setList.sets[key].name
-					+ setList.sets[key].id);
+			//console.log("found one " + setList.sets[key].name + setList.sets[key].id);
 			$(
 					document.getElementById(setList.sets[key].name
 							+ setList.sets[key].id)).addClass(
@@ -930,7 +929,6 @@ Set.prototype.reorderProblems = function(setOrder) {
 	}
 
 	var probListString = probList.join(",");
-	console.log("problem string: "+probListString);
 	listLibRequest.probList = probListString;
 	listLibRequest.xml_command = "reorderProblems";
 	listLibRequest.set = this.name;
