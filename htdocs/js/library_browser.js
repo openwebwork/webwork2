@@ -28,6 +28,8 @@ var setList;
 var webserviceURL = "../../../instructorXMLHandler";
 var tabs;
 
+var problemPlaceholder = false;
+
 /**
  * Utilities
  */
@@ -98,9 +100,7 @@ function showErrorResponse(data){
 /**
  * unobtrusively start up our javascript
  */
-$(document)
-		.ready(
-				function() {
+$(document).ready(function() {
 					// do stuff when DOM is ready
 
 					// get usernames and keys from hidden variables:
@@ -171,6 +171,7 @@ $(document)
 					$("#new_problem_set").droppable({
 						tolerance : 'pointer',
 						drop : function(event, ui) {
+							problemPlaceholder = ui.draggable.attr("data-path")
 							$("#dialog").dialog('open');
 						}
 					});
@@ -220,16 +221,37 @@ $(document)
 									});
 
 					$("#problems_container").removeClass("ui-corner-all");
-
-					cardCatalog = new CardCatolog();
+					
+					listLibRequest.xml_command = "listLibraries";
+	
+					updateMessage("Loading libraries... may take some time");
+		
+					$.post(webserviceURL, listLibRequest,
+							function(data) {
+								console.log(data);
+								try {
+									var response = $.parseJSON(data);
+									console.log("result: " + response.server_response);
+									updateMessage(response.server_response);
+									cardCatalog = new CardCatolog(response.result_data);
+								} catch (err) {
+									console.log(err);
+									var myWindow = window.open('', '',
+											'width=500,height=800');
+									myWindow.document.write(data);
+									myWindow.focus();
+								}
+							});
+					
+					
 				});
 
-function CardCatolog() {
+function CardCatolog(libName) {
 	this.searchBox = new Search();
 	this.displayBox = document.getElementById("library_list");
 	this.listBox = document.getElementById("library_list_box");
 	
-	this.library = new Library("Library");
+	this.library = new Library(libName);
 	this.working_library = this.library;
 	
 	// set up unobtrusive controlls:
@@ -315,6 +337,7 @@ CardCatolog.prototype.buildSelectBox = function(currentLibrary) {
 
 // start:index to start at, limit:number of problems to list
 CardCatolog.prototype.renderProblems = function(start, limit) {
+	$('a[href="#library_tab"] span').text("Library ("+start+" - "+ (start+limit) +" of " + this.working_library.problems.length + ") ");
 	while (this.displayBox.hasChildNodes()) {
 		this.displayBox.removeChild(this.displayBox.lastChild);
 	}
@@ -630,7 +653,7 @@ Library.prototype.loadChildren = function(callback){
 	$.post(webserviceURL, listLibRequest,
 			function(data) {
 				//console.log(data);
-				//try {
+				try {
 					var response = $.parseJSON(data);
 					console.log("result: " + response.server_response);
 					updateMessage(response.server_response);
@@ -638,13 +661,13 @@ Library.prototype.loadChildren = function(callback){
 						workAroundLibrary.children[key] = new Library(key, workAroundLibrary);
 					}
 					callback();
-				/*} catch (err) {
+				} catch (err) {
 					console.log(err);
 					var myWindow = window.open('', '',
 							'width=500,height=800');
 					myWindow.document.write(data);
 					myWindow.focus();
-				}*/
+				}
 			});
 }
 
@@ -933,12 +956,13 @@ Set.createSet = function(refreshList, callback) {//change callback to work with 
 			showErrorResponse(data);
 		}
 		if(refreshList){
-			setList.refresh();// this is odd but no other obvious way (can't just
-							// pass it in due to closure)
+			refreshList.refresh(problemPlaceholder);
+			problemPlaceholder = false;
 		}
 		if(callback){
 			callback();
 		}
+		
 	});
 }
 
