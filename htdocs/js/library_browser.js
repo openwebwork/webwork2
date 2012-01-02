@@ -680,10 +680,10 @@ Library.prototype.loadProblems = function(callback){
 	listLibRequest.xml_command = "listLib";
 	listLibRequest.command = "files";
 	listLibRequest.maxdepth = 0;
-	listLibRequest.library_name = this.path;
+	listLibRequest.library_name = this.path+"/";
 	
 	updateMessage("Loading problems");
-	
+	console.log(listLibRequest.library_name);
 	var workAroundLibrary = this;
 	$.post(webserviceURL, listLibRequest,
 			function(data) {
@@ -700,8 +700,8 @@ Library.prototype.loadProblems = function(callback){
 					for(var i = 0; i < problemList.length; i++){
 						workAroundLibrary.problems.push(new Problem(problemList[i]));
 					}					
-					console.log("Problems:");
-					console.log(workAroundLibrary.problems);
+					//console.log("Problems:");
+					//console.log(workAroundLibrary.problems);
 					callback();
 				} catch (err) {
 					console.log(err);
