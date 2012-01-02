@@ -893,55 +893,59 @@ Set.prototype.removeProblem = function(probPath) {
 Set.prototype.reorderProblems = function(setOrder) {
 	var workAroundOrder = this.previousOrder;
 	var workAroundSet = this;
-	if (undoing) {
-		redo_stack.push(function() {
-			// resort the list
-
-			console.log(workAroundOrder);
-			for ( var i = 0; i < workAroundOrder.length; i++) {
-				var tempProblem = document.getElementById(workAroundOrder[i]);
-				workAroundSet.displayBox.removeChild(tempProblem);
-				workAroundSet.displayBox.appendChild(tempProblem);
-			}
-			$(workAroundSet.displayBox).sortable("refresh");
-			workAroundSet.reorderProblems(workAroundOrder);
-		});
-		undoing = false;
-	} else {
-		undo_stack.push(function() {
-			// resort the list
-			for ( var i = 0; i < workAroundOrder.length; i++) {
-				var tempProblem = document.getElementById(workAroundOrder[i]);
-				workAroundSet.displayBox.removeChild(tempProblem);
-				workAroundSet.displayBox.appendChild(tempProblem);
-			}
-			$(workAroundSet.displayBox).sortable("refresh");
-			// $(workAroundSet.displayBox).sortable( "refreshPositions" )
-			workAroundSet.reorderProblems(workAroundOrder);
-		});
-	}
-	// load problems:
-	// var problems = this.displayBox.childNodes;
-	var probList = new Array();
-	for ( var i = 0; i < setOrder.length; i++) {
-		probList.push(document.getElementById(setOrder[i]).getAttribute(
-				"data-path"));
-	}
-
-	var probListString = probList.join(",");
-	listLibRequest.probList = probListString;
-	listLibRequest.xml_command = "reorderProblems";
-	listLibRequest.set = this.name;
-	$.post(webserviceURL, listLibRequest, function(data) {
-		try {
-			var response = $.parseJSON(data);
-			console.log("result: " + response.server_response);
-			updateMessage(response.server_response);
-		} catch (err) {
-			showErrorResponse(data);
+	if(document.getElementById(workAroundSet.displayBox.id)){
+		if (undoing) {
+			redo_stack.push(function() {
+				// resort the list
+				if(document.getElementById(workAroundSet.displayBox.id)){
+					for ( var i = 0; i < workAroundOrder.length; i++) {
+						var tempProblem = document.getElementById(workAroundOrder[i]);
+						workAroundSet.displayBox.removeChild(tempProblem);
+						workAroundSet.displayBox.appendChild(tempProblem);
+					}
+					$(workAroundSet.displayBox).sortable("refresh");
+				}
+				workAroundSet.reorderProblems(workAroundOrder);
+			});
+			undoing = false;
+		} else {
+			undo_stack.push(function() {
+				// resort the list
+				if(document.getElementById(workAroundSet.displayBox.id)){
+					for ( var i = 0; i < workAroundOrder.length; i++) {
+						var tempProblem = document.getElementById(workAroundOrder[i]);
+						workAroundSet.displayBox.removeChild(tempProblem);
+						workAroundSet.displayBox.appendChild(tempProblem);
+					}
+					$(workAroundSet.displayBox).sortable("refresh");
+				}
+				// $(workAroundSet.displayBox).sortable( "refreshPositions" )
+				workAroundSet.reorderProblems(workAroundOrder);
+			});
 		}
-	});
-	this.previousOrder = $(workAroundSet.displayBox).sortable('toArray');
+		// load problems:
+		// var problems = this.displayBox.childNodes;
+		var probList = new Array();
+		for ( var i = 0; i < setOrder.length; i++) {
+			probList.push(document.getElementById(setOrder[i]).getAttribute(
+					"data-path"));
+		}
+	
+		var probListString = probList.join(",");
+		listLibRequest.probList = probListString;
+		listLibRequest.xml_command = "reorderProblems";
+		listLibRequest.set = this.name;
+		$.post(webserviceURL, listLibRequest, function(data) {
+			try {
+				var response = $.parseJSON(data);
+				console.log("result: " + response.server_response);
+				updateMessage(response.server_response);
+			} catch (err) {
+				showErrorResponse(data);
+			}
+		});
+		this.previousOrder = $(workAroundSet.displayBox).sortable('toArray');
+	}
 }
 
 Set.createSet = function(refreshList, callback) {//change callback to work with strings..
