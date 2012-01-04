@@ -232,7 +232,7 @@ $(document).ready(function() {
 									var response = $.parseJSON(data);
 									console.log("result: " + response.server_response);
 									updateMessage(response.server_response);
-									cardCatalog = new CardCatolog(response.result_data);
+									cardCatalog = new CardCatolog(response.result_data.split(","));
 								} catch (err) {
 									console.log(err);
 									var myWindow = window.open('', '',
@@ -245,13 +245,18 @@ $(document).ready(function() {
 					
 				});
 
-function CardCatolog(libName) {
+function CardCatolog(libNames) {
 	this.searchBox = new Search();
 	this.displayBox = document.getElementById("library_list");
 	this.listBox = document.getElementById("library_list_box");
 	
-	this.library = new Library(libName);
-	this.working_library = this.library;
+	//this.library = new Library(libName);
+	//this.working_library = this.library;
+	var topLibraries = new Array();
+	for(var i = 0; i < libNames.length; i++){
+		topLibraries.push(new Library(libNames[i]));
+	}
+	
 	
 	// set up unobtrusive controlls:
 		
@@ -264,7 +269,8 @@ function CardCatolog(libName) {
 	
 	var workAroundTheClosure = this;
 	
-	this.library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.library)});
+	this.buildLibraryBox(topLibraries);
+	//this.library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.library)});
 	
 	this.searchButton.addEventListener('click', function() {workAroundTheClosure.searchBox.go();}, false);
 	
@@ -308,6 +314,39 @@ CardCatolog.prototype.updateMoveButtons = function() {
 	} else {
 		this.prevButton.setAttribute("disabled", true);
 	}
+}
+
+CardCatolog.prototype.buildLibraryBox = function(topLibraries){
+	var newLibList = document.createElement("select");
+	newLibList.id = "topLibList" + (this.displayBox.childNodes.length + 1);
+	//newLibList.setAttribute("data-propName", currentLibrary.path);
+	var workAroundTheClosure = this;
+	
+	for (var i = 0; i < topLibraries.length; i++) {
+		var option = document.createElement("option")
+		option.value = topLibraries[i].name;
+		option.innerHTML = topLibraries[i].name;
+		newLibList.add(option, null);
+	}
+	
+	newLibList.addEventListener("change", function(event) {
+		var changedLib = event.target;// should be the select we just created
+		var listBox = event.target.parentNode;
+
+		var count = 0;
+		//get rid of all other select boxes
+		while (listBox.childNodes.length > count + 1) {
+			listBox.removeChild(listBox.lastChild);
+		}
+		//interesting, this should let topLibraries always exist without it being global
+		workAroundTheClosure.working_library = topLibraries[changedLib.selectedIndex];
+		workAroundTheClosure.working_library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.working_library)});
+	}, false);
+	
+	this.listBox.appendChild(newLibList);
+	this.working_library = topLibraries[0];
+	this.working_library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.working_library)});
+	
 }
 
 CardCatolog.prototype.buildSelectBox = function(currentLibrary) {
