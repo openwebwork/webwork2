@@ -333,7 +333,7 @@ CardCatolog.prototype.buildLibraryBox = function(topLibraries){
 		var changedLib = event.target;// should be the select we just created
 		var listBox = event.target.parentNode;
 
-		var count = 0;
+		var count = 1;
 		//get rid of all other select boxes
 		while (listBox.childNodes.length > count + 1) {
 			listBox.removeChild(listBox.lastChild);
@@ -436,7 +436,7 @@ function Search(){
 	this.textSectionsBox = document.getElementById("textSectionsBox");
 	this.keywordsBox = document.getElementById("keywordsBox");
 	
-	this.searchName = "search" + generateUniqueID();
+	
 	
 	var workAroundTheClosure = this;
 	subjectBox.addEventListener("change", function() {
@@ -468,7 +468,13 @@ function Search(){
 	
 }
 
-Search.prototype.createPageControls = function(){
+function SearchResult(){
+	this.searchName = "search" + generateUniqueID();
+	this.displayBox;
+	this.problems;
+}
+
+SearchResult.prototype.createPageControls = function(){
 	
 	this.nextButton = document.createElement("button");
 	//<button type="button" disabled=true id="nextList">Next</button>
@@ -526,19 +532,23 @@ Search.prototype.go = function() {
 			updateMessage(response.server_response);
 			var results = response.result_data.split(",");
 			
-			$tabs.tabs("add", "#"+workAroundTheClosure.searchName, "Search (" + results.length + ")");
-			var thisContainer = document.getElementById(workAroundTheClosure.searchName);
+			var newSearchResult = new SearchResult();
 			
+			$tabs.tabs("add", "#"+newSearchResult.searchName, "Search (" + results.length + ")");
+			var thisContainer = document.getElementById(newSearchResult.searchName);
 			var displayList = document.createElement("ul");
 			thisContainer.appendChild(displayList);
-			workAroundTheClosure.createPageControls();
 			
-			workAroundTheClosure.displayBox = displayList;
-			workAroundTheClosure.problems = new Array();
+			
+			
+			newSearchResult.createPageControls();
+			
+			newSearchResult.displayBox = displayList;
+			newSearchResult.problems = new Array();
 			for(var i = 0; i < results.length; i++){
-				workAroundTheClosure.problems.push(new Problem(results[i]));
+				newSearchResult.problems.push(new Problem(results[i]));
 			}
-			workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, workAroundTheClosure.probsPerPage);
+			newSearchResult.renderProblems(newSearchResult.topProbIndex, newSearchResult.probsPerPage);
 			//callback();
 		/*} catch (err) {
 			console.log(err);
@@ -549,7 +559,7 @@ Search.prototype.go = function() {
 	});
 };
 
-Search.prototype.renderProblems = function(start, limit) {
+SearchResult.prototype.renderProblems = function(start, limit) {
 	//$('#'+this.searchName+' a').text("Other text");
 	$('a[href="#'+this.searchName+'"] span').text("Search ("+start+" - "+ (start+limit) +" of " + this.problems.length + ") ");
 	console.log($('#'+this.searchName+' a'));
@@ -562,7 +572,7 @@ Search.prototype.renderProblems = function(start, limit) {
 	this.updateMoveButtons();
 };
 
-Search.prototype.updateMoveButtons = function() {
+SearchResult.prototype.updateMoveButtons = function() {
 	if ((this.topProbIndex + this.probsPerPage) < this.problems.length) {
 		this.nextButton.removeAttribute("disabled");
 	} else {
@@ -824,49 +834,34 @@ Set.prototype.loadProblems = function(shouldRender) {
 	this.problems = new Object();
 	this.problemArray = new Array();
 	var workAroundTheClosure = this;
-	$
-			.post(
-					webserviceURL,
-					listLibRequest,
-					function(data) {
-						try {
-							var response = $.parseJSON(data);
-							console.log("result: " + response.server_response);
+	$.post(webserviceURL, listLibRequest,
+		function(data) {
+			try {
+				var response = $.parseJSON(data);
+				console.log("result: " + response.server_response);
 
-							var problems = response.result_data.split(",");
-							for ( var i = 0; i < problems.length; i++) {
-								if (problems[i] != "") {
-									var newProblem = new Problem(problems[i]);
-									workAroundTheClosure.problems[newProblem.path] = newProblem;
-									workAroundTheClosure.problemArray
-											.push(newProblem);
-								}
-							}
-							document.getElementById(workAroundTheClosure.name
-									+ workAroundTheClosure.id).innerHTML = workAroundTheClosure.name
-									+ " ("
-									+ workAroundTheClosure.problemArray.length
-									+ ")"
-							if (shouldRender) {
-								workAroundTheClosure.renderSet();// may want
-																	// to take
-																	// this out
-																	// later? so
-																	// that we
-																	// can load
-																	// problems
-																	// without
-																	// adding
-																	// the tab
-																	// idk
-							}
-						} catch (err) {
-							var myWindow = window.open('', '',
-									'width=500,height=800');
-							myWindow.document.write(data);
-							myWindow.focus();
-						}
-					});
+				var problems = response.result_data.split(",");
+				for ( var i = 0; i < problems.length; i++) {
+					if (problems[i] != "") {
+						var newProblem = new Problem(problems[i]);
+						workAroundTheClosure.problems[newProblem.path] = newProblem;
+						workAroundTheClosure.problemArray.push(newProblem);
+					}
+				}
+				document.getElementById(workAroundTheClosure.name + workAroundTheClosure.id).innerHTML = workAroundTheClosure.name + " (" + workAroundTheClosure.problemArray.length + ")";
+				if (shouldRender) {
+					console.log(workAroundTheClosure.name);
+					
+					$('a[href="#'+workAroundTheClosure.name+'"] span').text(workAroundTheClosure.name+" ("+ workAroundTheClosure.problemArray.length + ") ");
+					workAroundTheClosure.renderSet();
+				}
+			} catch (err) {
+				var myWindow = window.open('', '',
+						'width=500,height=800');
+				myWindow.document.write(data);
+				myWindow.focus();
+			}
+		});
 }
 
 Set.prototype.addProblem = function(probPath) {
@@ -890,9 +885,7 @@ Set.prototype.addProblem = function(probPath) {
 					workAroundSet.removeProblem(probPath);
 				});
 			}
-			workAroundSet.loadProblems($.contains(document
-					.getElementById("problems_container"), document
-					.getElementById(workAroundSet.name)));
+			workAroundSet.loadProblems($.contains(document.getElementById("problems_container"), document.getElementById(workAroundSet.name)));
 		} catch (err) {
 			showErrorResponse(data);
 		}
