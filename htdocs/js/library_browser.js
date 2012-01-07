@@ -100,150 +100,142 @@ function showErrorResponse(data){
  * unobtrusively start up our javascript
  */
 $(document).ready(function() {
-					// do stuff when DOM is ready
+	// do stuff when DOM is ready
 
-					// get usernames and keys from hidden variables:
-					var myUser = document.getElementById("hidden_user").value;
-					var mySessionKey = document.getElementById("hidden_key").value;
-					var myCourseID = document.getElementById("hidden_courseID").value;
-					// check to make sure that our credentials are available.
-					if (myUser && mySessionKey && myCourseID) {
-						listLibRequest.user = myUser;
-						listLibRequest.session_key = mySessionKey;
-						listLibRequest.courseID = myCourseID;
-					} else {
-						updateMessage("missing hidden credentials: user "
-								+ myUser + " session_key " + mySessionKey
-								+ " courseID" + myCourseID);
-					}
+	// get usernames and keys from hidden variables:
+	var myUser = document.getElementById("hidden_user").value;
+	var mySessionKey = document.getElementById("hidden_key").value;
+	var myCourseID = document.getElementById("hidden_courseID").value;
+	// check to make sure that our credentials are available.
+	if (myUser && mySessionKey && myCourseID) {
+		listLibRequest.user = myUser;
+		listLibRequest.session_key = mySessionKey;
+		listLibRequest.courseID = myCourseID;
+	} else {
+		updateMessage("missing hidden credentials: user "
+				+ myUser + " session_key " + mySessionKey
+				+ " courseID" + myCourseID);
+	}
 
-					// get our sets
-					setList = new SetList();
+	// get our sets
+	setList = new SetList();
 
-					// attach function for deleting selected problems
-					document
-							.getElementById("delete_problem")
-							.addEventListener(
-									"click",
-									function(event) {
-										var currentTabId = $("#problems_container div.ui-tabs-panel:not(.ui-tabs-hide)")[0].id;
-										console.log(currentTabId);
-										// only care if it's a set
-										if (currentTabId != "library_tab") {
+	// attach function for deleting selected problems
+	document.getElementById("delete_problem").addEventListener("click", function(event) {
+		var currentTabId = $("#problems_container div.ui-tabs-panel:not(.ui-tabs-hide)")[0].id;
+		console.log(currentTabId);
+		// only care if it's a set
+		if (currentTabId != "library_tab") {
 
-											var problems = $(".ww_selected");
-											var set = setList.sets[document
-													.getElementById(
-															currentTabId)
-													.getAttribute("data-uid")];
-											console.log(problems);
-											problems.each(function(index) {
-												set.removeProblem($(this).attr(
-														"data-path"));
-											});
-										}
-									}, false);
+			var problems = $(".ww_selected");
+			var set = setList.sets[document
+					.getElementById(
+							currentTabId)
+					.getAttribute("data-uid")];
+			console.log(problems);
+			problems.each(function(index) {
+				set.removeProblem($(this).attr(
+						"data-path"));
+			});
+		}
+	}, false);
 
-					// attach undo and redo
-					document.getElementById("undo_button").addEventListener(
-							"click", undo, false);
-					document.getElementById("redo_button").addEventListener(
-							"click", redo, false);
+	// attach undo and redo
+	document.getElementById("undo_button").addEventListener("click", undo, false);
+	document.getElementById("redo_button").addEventListener("click", redo, false);
 
-					$("#dialog").dialog({
-						autoOpen : false,
-						modal : true
-					});
-					// create set button listner
-					document.getElementById("create_set").addEventListener(
-							"click", function() {
-								Set.createSet(setList, false);
-								$("#dialog").dialog('close');
-							});
+	$("#dialog").dialog({
+		autoOpen : false,
+		modal : true
+	});
+	// create set button listner
+	document.getElementById("create_set").addEventListener("click", function() {
+		Set.createSet(setList, false);
+		$("#dialog").dialog('close');
+	});
 
-					document.getElementById("new_problem_set")
-							.addEventListener("click", function() {
-								setList.createSet();
-							}, false);
+	document.getElementById("new_problem_set").addEventListener("click", function() {
+		setList.createSet();
+	}, false);
 
-					// this stil doesn't work
-					$("#new_problem_set").droppable({
-						tolerance : 'pointer',
-						drop : function(event, ui) {
-							problemPlaceholder = ui.draggable.attr("data-path")
-							$("#dialog").dialog('open');
+	// this stil doesn't work
+	$("#new_problem_set").droppable({
+		tolerance : 'pointer',
+		drop : function(event, ui) {
+			problemPlaceholder = ui.draggable.attr("data-path")
+			$("#dialog").dialog('open');
+		}
+	});
+
+	// some window set up:
+	$tabs = $("#problems_container")
+			.tabs(
+					{
+						closable : true,
+						add : function(event, ui) {
+							document
+									.getElementById(
+											"library_link")
+									.removeChild(
+											document
+													.getElementById("library_link").lastChild);
+							console.log("adding a tab");
+							$tabs.tabs('select', '#'
+									+ ui.panel.id);
+							$(".ww_selected").removeClass(
+									"ww_selected");// probably reduntant but I want to make sure nothing stays selected
+						},
+						create : function(event, ui) {
+							document
+									.getElementById(
+											"library_link")
+									.removeChild(
+											document
+													.getElementById("library_link").lastChild);
+							$(".ww_selected").removeClass(
+									"ww_selected");
+						},
+						select : function(event, ui) {
+							$(".ww_selected").removeClass(
+									"ww_selected");
+						},
+						remove : function(event, ui) {
+							document
+									.getElementById(
+											"library_link")
+									.removeChild(
+											document
+													.getElementById("library_link").lastChild);
+							$(".ww_selected").removeClass(
+									"ww_selected");
 						}
 					});
 
-					// some window set up:
-					$tabs = $("#problems_container")
-							.tabs(
-									{
-										closable : true,
-										add : function(event, ui) {
-											document
-													.getElementById(
-															"library_link")
-													.removeChild(
-															document
-																	.getElementById("library_link").lastChild);
-											console.log("adding a tab");
-											$tabs.tabs('select', '#'
-													+ ui.panel.id);
-											$(".ww_selected").removeClass(
-													"ww_selected");// probably reduntant but I want to make sure nothing stays selected
-										},
-										create : function(event, ui) {
-											document
-													.getElementById(
-															"library_link")
-													.removeChild(
-															document
-																	.getElementById("library_link").lastChild);
-											$(".ww_selected").removeClass(
-													"ww_selected");
-										},
-										select : function(event, ui) {
-											$(".ww_selected").removeClass(
-													"ww_selected");
-										},
-										remove : function(event, ui) {
-											document
-													.getElementById(
-															"library_link")
-													.removeChild(
-															document
-																	.getElementById("library_link").lastChild);
-											$(".ww_selected").removeClass(
-													"ww_selected");
-										}
-									});
-
-					$("#problems_container").removeClass("ui-corner-all");
-					
-					listLibRequest.xml_command = "listLibraries";
+	$("#problems_container").removeClass("ui-corner-all");
 	
-					updateMessage("Loading libraries... may take some time");
-		
-					$.post(webserviceURL, listLibRequest,
-							function(data) {
-								console.log(data);
-								try {
-									var response = $.parseJSON(data);
-									console.log("result: " + response.server_response);
-									updateMessage(response.server_response);
-									cardCatalog = new CardCatolog(response.result_data.split(","));
-								} catch (err) {
-									console.log(err);
-									var myWindow = window.open('', '',
-											'width=500,height=800');
-									myWindow.document.write(data);
-									myWindow.focus();
-								}
-							});
-					
-					
-				});
+	listLibRequest.xml_command = "listLibraries";
+
+	updateMessage("Loading libraries... may take some time");
+
+	$.post(webserviceURL, listLibRequest,
+			function(data) {
+				console.log(data);
+				try {
+					var response = $.parseJSON(data);
+					console.log("result: " + response.server_response);
+					updateMessage(response.server_response);
+					cardCatalog = new CardCatolog(response.result_data.split(","));
+				} catch (err) {
+					console.log(err);
+					var myWindow = window.open('', '',
+							'width=500,height=800');
+					myWindow.document.write(data);
+					myWindow.focus();
+				}
+			});
+	
+	
+});
 
 function CardCatolog(libNames) {
 	this.searchBox = new Search();
@@ -354,8 +346,8 @@ CardCatolog.prototype.buildSelectBox = function(currentLibrary) {
 	newLibList.id = "libList" + (this.displayBox.childNodes.length + 1);
 	newLibList.setAttribute("data-propName", currentLibrary.path);
 	var workAroundTheClosure = this;
-	newLibList.addEventListener("change", function() {
-		workAroundTheClosure.onLibSelect(currentLibrary);
+	newLibList.addEventListener("change", function(event) {
+		workAroundTheClosure.onLibSelect(event, currentLibrary);
 	}, false);
 
 	for ( var name in currentLibrary.children) {
@@ -386,7 +378,7 @@ CardCatolog.prototype.renderProblems = function(start, limit) {
 };
 
 
-CardCatolog.prototype.onLibSelect = function(currentLibrary) {
+CardCatolog.prototype.onLibSelect = function(event, currentLibrary) {
 	this.topProbIndex = 0;
 	//this.library.problems.list = new Object();
 	//this.updateLibrary();
@@ -850,8 +842,6 @@ Set.prototype.loadProblems = function(shouldRender) {
 				}
 				document.getElementById(workAroundTheClosure.name + workAroundTheClosure.id).innerHTML = workAroundTheClosure.name + " (" + workAroundTheClosure.problemArray.length + ")";
 				if (shouldRender) {
-					console.log(workAroundTheClosure.name);
-					
 					$('a[href="#'+workAroundTheClosure.name+'"] span').text(workAroundTheClosure.name+" ("+ workAroundTheClosure.problemArray.length + ") ");
 					workAroundTheClosure.renderSet();
 				}
@@ -1083,6 +1073,9 @@ SetList.prototype.renderList = function(setName) {
 	$(addingSet).droppable(
 			{
 				tolerance : 'pointer',
+				
+				hoverClass: 'drophover',
+				
 				drop : function(event, ui) {
 					var recievingSet = workAroundSetList[this
 							.getAttribute("data-uid")];
