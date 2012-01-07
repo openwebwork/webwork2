@@ -86,6 +86,9 @@ body {
 	background:#00ADEE;
 }
 
+#app_box .drophover{
+	background:#FF0000;
+}
 #app_box .ww_selected{
 	background: gray;
 }
