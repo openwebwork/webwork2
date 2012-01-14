@@ -58,7 +58,7 @@ sub initialize {
  		my $setName = $r->urlpath->arg("setID") || 0;
  		$self->{setName}     = $setName;
  		my $setRecord  = $db->getGlobalSet($setName); # checked
-		die "global set $setName  not found." unless $setRecord;
+		die $r->maketext("global set [_1]  not found.", $setName) unless $setRecord;
 		$self->{set_due_date} = $setRecord->due_date;
 		$self->{setRecord}   = $setRecord;
  	}
@@ -76,13 +76,13 @@ sub title {
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $type                = $self->{type};
-	my $string              = "Statistics for ".$self->{ce}->{courseName}." ";
+	my $string              = $r->maketext("Statistics for").$self->{ce}->{courseName}." ";
 	
 	if ($type eq 'student') {
-		$string             .= "student ".$self->{studentName};
+		$string             .= $r->maketext("student")." ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
-		$string             .= "set   ".$self->{setName};
-		$string             .= ".&nbsp;&nbsp;&nbsp; Due ". $self->formatDateTime($self->{set_due_date});
+		$string             .= $r->maketext("set")."   ".$self->{setName};
+		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ".$self->formatDateTime($self->{set_due_date});
 	}
 	return $string;
 }
@@ -136,27 +136,27 @@ sub body {
 	my $type       = $self->{type};
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access instructor tools"))
+	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to access instructor tools")))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	if ($type eq 'student') {
 		my $studentName = $self->{studentName};
 		my $studentRecord = $db->getUser($studentName) # checked
-			or die "record for user $studentName not found";
+			or die $r->maketext("record for user [_1] not found", $studentName);
 		my $fullName = $studentRecord->full_name;
         my $courseHomePage = $urlpath->new(type  => 'set_list',
         	args => {courseID=>$courseName});
 		my $email = $studentRecord->email_address;
 		
 		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			"Section: ", $studentRecord->section, CGI::br(),
-			"Recitation: ", $studentRecord->recitation, CGI::br();
+			$r->maketext("Section:")." ", $studentRecord->section, CGI::br(),
+			$r->maketext("Recitation:")." ", $studentRecord->recitation, CGI::br();
 		
 		if ($authz->hasPermissions($user, "become_student")) {
 			my $act_as_student_url = $self->systemLink($courseHomePage,
 				params => {effectiveUser=>$studentName});
 			
-			print 'Act as: ', CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
+			print $r->maketext('Act as:')." ", CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
 		}
 		
 		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
@@ -165,7 +165,7 @@ sub body {
 	} elsif ($type eq '') {
 		$self->index;
 	} else {
-		warn "Don't recognize statistics display type: |$type|";
+		warn $r->maketext("Don't recognize statistics display type: |[_1]|", $type);
 	}
 	
 	return '';
@@ -208,11 +208,11 @@ sub index {
 		CGI::start_table({-border=>2, -cellpadding=>20}),
 		CGI::Tr({},
 			CGI::td({-valign=>'top'}, 
-				CGI::h3({-align=>'center'},'View statistics by set'),
+				CGI::h3({-align=>'center'},$r->maketext('View statistics by set')),
 				CGI::ul(  CGI::li( [@setLinks] ) ), 
 			),
 			CGI::td({-valign=>'top'}, 
-				CGI::h3({-align=>'center'},'View statistics by student'),
+				CGI::h3({-align=>'center'},$r->maketext('View statistics by student')),
 				CGI::ul(CGI::li( [ @studentLinks ] ) ),
 			),
 		),
@@ -502,22 +502,22 @@ sub displaySets {
 
 print  
 
-	   CGI::p('The percentage of active students with correct answers for each problem'),
+	   CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
 		CGI::start_table({-border=>1}),
 		CGI::Tr(CGI::td(
-			['Problem #', 
+			[$r->maketext('Problem').' #', 
 			   map {CGI::a({ href=>$self->systemLink($problemPage{$_}) },$_)} @problemIDs
 			]
 		)),
 		CGI::Tr(CGI::td(
-			[ '% correct',map {($number_of_students_attempting_problem{$_})
+			[ '% '.$r->maketext('correct'),map {($number_of_students_attempting_problem{$_})
 			                      ? sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_of_students_attempting_problem{$_})
 			                      : '-'}			                   
 			                       @problemIDs 
 			]
 		)),
 		CGI::Tr(CGI::td(
-			[ 'avg attempts',map {($number_of_students_attempting_problem{$_})
+			[ $r->maketext('avg attempts'),map {($number_of_students_attempting_problem{$_})
 			                      ? sprintf("%0.1f",$number_of_attempts_for_problem{$_}/$number_of_students_attempting_problem{$_})
 			                      : '-'}			                   
 			                       @problemIDs 
@@ -530,20 +530,20 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p(CGI::i('The percentage of students receiving at least these scores.<br/>
-	    	       The median score is in the 50% column. ')),
+	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores.<br/>
+	    	       The median score is in the 50% column. '))),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
-					CGI::td( ['% students',
+					CGI::td( ['% '.$r->maketext('students'),
 					          (map {  "&nbsp;".$_   } @brackets1) ,
-					          'top score ', 
+					          $r->maketext('top score').' ', 
 					         
 					         ]
 					)
 				),
 				CGI::Tr(
 					CGI::td( [
-						'Score',
+						$r->maketext('Score'),
 						(prevent_repeats map { sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets1),
 						sprintf("%0.0f",100),
 						]
@@ -551,7 +551,7 @@ print
 				),
 				CGI::Tr(
 					CGI::td( [
-						'Success Index',
+						$r->maketext('Success Index'),
 						(prevent_repeats  map { sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets1),
 						sprintf("%0.0f",100),
 						]
@@ -568,10 +568,10 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p(CGI::i('Percentile cutoffs for number of attempts. <br/> The 50% column shows the median number of attempts')),
+	    	CGI::p(CGI::i($r->maketext('Percentile cutoffs for number of attempts. <br/> The 50% column shows the median number of attempts'))),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
-					CGI::td( ['% students',
+					CGI::td( ['% '.$r->maketext('students'),
 					          (map {  "&nbsp;".($_)  } @brackets2) ,
 					        
 					         ]
