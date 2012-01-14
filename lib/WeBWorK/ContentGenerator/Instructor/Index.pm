@@ -100,7 +100,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_users" and do {
 		if ($nusers >= 1) {
-			$module = "${ipfx}::UserList";
+			$module = "${ipfx}::UserList2";
 			$params{visible_users} = \@selectedUserIDs;
 			$params{editMode} = 1;
 		} else {
