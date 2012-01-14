@@ -716,7 +716,7 @@ span.gray_button{
 	width: 100%;
 }
 
-Styles specifically for the problem viewer
+/*Styles specifically for the problem viewer*/
 
 #problem_viewer_form{
 	margin-left: 10px;
@@ -758,7 +758,7 @@ Styles specifically for the problem viewer
 	margin-top: 10%;
 	margin-left: 10%;
 	margin-right: 10%;
-}*/
+}
 
 #editor{
 	width: 750px;
@@ -810,7 +810,7 @@ div.problem_sets_options {
 table.problem_set_table{
 	margin-top: 30px;
 	width: 640px;
-	text-align: center;
+	text-align: left;
 }
 
 /*BUG FIXES*/
