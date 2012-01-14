@@ -738,6 +738,7 @@ sub links {
 				
 				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
