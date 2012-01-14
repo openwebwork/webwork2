@@ -29,20 +29,22 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/math2.css"/>
-<!--#if can="output_tabber_JS"-->
-	<!--#output_tabber_JS-->
+<!--#if can="output_tabber_CSS"-->
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
-<!--#if can="output_coloring_JS"-->
-	<!--#output_coloring_JS-->
+<!--#if can="output_JS"-->
+	<!--#output_JS-->
 <!--#endif-->
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
-<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
+<body bgcolor="white">
+<!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
+	<!--#output_wztooltip_JS-->
+<!--#endif-->
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->
-
 	</div>
 	<div id="logo">
                 <a href="http://webwork.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="image link to webwork main web site" height="51" width="267" /></a>&nbsp;
@@ -85,7 +87,7 @@
 
 <!--			      ==============BEGIN BODY OF PROBLEM===============      -->
 			<!--#if warnings="1"-->
-				  <div class="Body" style="background-color:#ffcccc">
+				  <div class="Body" style="background-color:#ff0000">
 				  <p style="font-size:larger">
 				  Warning -- there may be something wrong with this question. Please inform your instructor
 				  including the warning messages below.
@@ -95,9 +97,6 @@
 				 <!--#if can="output_problem_body"--> 
 			        <!-- ==== in this case print body parts --ELSE-- print entire body -->		
 					  <div class="Body" style="background-color:#ffffff">
-						<!--#if can="output_JS"-->
-							<!--#output_JS-->
-						<!--#endif-->
 		
 						<!--#if can="output_custom_edit_message"-->
 							<!--#output_custom_edit_message-->
