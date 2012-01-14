@@ -296,7 +296,9 @@ our %pathTypes = (
 		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2 
 		    instructor_add_users
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_problem_editor2 instructor_set_maker instructor_set_maker2 instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
+			instructor_problem_editor instructor_problem_editor2 
+			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
+			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_preflight instructor_statistics
@@ -442,6 +444,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'setmaker2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker2',
+	},
+		instructor_set_maker3 => {
+		name    => 'Library Browser 3',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^setmaker3/|,
+		capture => [ qw// ],
+		produce => 'setmaker3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker3',
 	},
 	instructor_get_target_set_problems => {
 		name    => 'Get Target Set Problems',

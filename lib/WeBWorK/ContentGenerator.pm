@@ -1615,7 +1615,9 @@ sub hidden_fields {
 # 		$html .= CGI::hidden($param, @values);  #MEG
 # 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
 		my $value  = $r->param($param);
-		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
+#		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
+		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
+
 	}
 	return $html;
 }
