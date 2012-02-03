@@ -278,10 +278,10 @@ sub _get_db_info {
 	$my_cnf->unlink_on_destroy(1);
 	chmod 0600, $my_cnf or die "failed to chmod 0600 $my_cnf: $!"; # File::Temp objects stringify with ->filename
 	print $my_cnf "[client]\n";
-	print $my_cnf "user=$username\n" if defined $username and length($username) > 0;
-	print $my_cnf "password=$password\n" if defined $password and length($password) > 0;
-	print $my_cnf "host=$dsn{host}\n" if defined $dsn{host} and length($dsn{host}) > 0;
-	print $my_cnf "port=$dsn{port}\n" if defined $dsn{port} and length($dsn{port}) > 0;
+	print $my_cnf "user=\"$username\"\n" if defined $username and length($username) > 0;
+	print $my_cnf "password=\"$password\"\n" if defined $password and length($password) > 0;
+	print $my_cnf "host=\"$dsn{host}\"\n" if defined $dsn{host} and length($dsn{host}) > 0;
+	print $my_cnf "port=\"$dsn{port}\"\n" if defined $dsn{port} and length($dsn{port}) > 0;
 	
 	return ($my_cnf, $dsn{database});
 }
