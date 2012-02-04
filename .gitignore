@@ -1,0 +1,7 @@
+*.conf
+*.apache2-config
+*.log
+tmp/**
+DATA/**
+logs/**
+
