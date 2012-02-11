@@ -722,6 +722,16 @@ sub pre_header_initialize {
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 		},
 	);
+	# sometimes, for example if the file can't be read, $pg->{pgcore} won't be defined
+	# because the PG file is never run
+	#
+	if (defined ($pg->{pgcore}) ) {
+		$self->addmessage(join(CGI::br(),@{$pg->{flags}->{DEBUG_messages}} ) ) if @{$pg->{flags}->{DEBUG_messages}};
+		$self->{pgdebug}          = $pg->{pgcore}->{flags}->{DEBUG_messages};
+		$self->{pgwarning}        = $pg->{pgcore}->{flags}->{WARNING_messages};
+		$self->{pginternalerrors} = $pg->{pgcore}->get_internal_debug_messages ;
+		$self->{pgerrors} = @{$self->{pgdebug}} || @{$self->{pgwarning}} || @{$self->{pginternalerrors}};
+	}
 
 	debug("end pg processing");
 	
@@ -739,16 +749,38 @@ sub pre_header_initialize {
 	$self->{will} = \%will;
 	$self->{pg} = $pg;
 }
-
-sub if_errors($$) {
-	my ($self, $arg) = @_;
+sub warnings {
+	my $self = shift;
+	$self->SUPER::warnings();
+	my $r  = $self->r;
+	my $pg = $self->{pg};
 	
-	if ($self->{isOpen}) {
-		return $self->{pg}->{flags}->{error_flag} ? $arg : !$arg;
-	} else {
-		return !$arg;
+ 	my @pgdebug          = @{ $self->{pgdebug}           };
+ 	my @pgwarning        = @{ $self->{pgwarning}         };
+ 	my @pginternalerrors = @{ $self->{pginternalerrors}  };
+# 	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
+    # print warning messages
+    if ( $self->{pgerrors} ) {
+		print CGI::start_div();
+		print CGI::h3({style=>"color:red;"}, $r->maketext("Additional Error Messages"));
+		print CGI::p(CGI::h3("PG debug messages"),   CGI::br(), @pgdebug   )  if @pgdebug   ;
+		print CGI::p(CGI::h3("PG warning messages"), CGI::br(), @pgwarning )  if @pgwarning ;	
+		print CGI::p(CGI::h3("PG internal errors"),  CGI::br(), @pginternalerrors ) if @pginternalerrors;
+		print CGI::end_div();
 	}
+	"";
 }
+
+### #FIXME  not clear this is ever used
+# sub if_errors($$) {
+# 	my ($self, $arg) = @_;
+# 	
+# 	if ($self->{isOpen}) {
+# 		return $self->{pg}->{flags}->{error_flag} ? $arg : !$arg;
+# 	} else {
+# 		return !$arg;
+# 	}
+# }
 
 sub head {
 	my ($self) = @_;
@@ -1213,18 +1245,6 @@ sub output_misc{
 	my %will = %{ $self->{will} };
 	my $user = $r->param('user');
 
-	print CGI::start_div();
-	
-	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{flags}->{DEBUG_messages}} );
-	my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{flags}->{WARNING_messages}} );
-	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
-	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
-	
-	print CGI::p({style=>"color:red;"}, $r->maketext("Checking additional error messages")) if $pgerrordiv  ;
- 	print CGI::p("pg debug<br/> $pgdebug"                   ) if $pgdebug ;
-	print CGI::p("pg warning<br/>$pgwarning"                ) if $pgwarning ;	
-	print CGI::p("pg internal errors<br/> $pginternalerrors") if $pginternalerrors;
-	print CGI::end_div()                                      if $pgerrordiv ;
 	
 	# save state for viewOptions
 	print  CGI::hidden(
@@ -1261,7 +1281,8 @@ sub output_misc{
 
 # output_summary subroutine
 
-# prints out the summary of the questions that the student has answered for the current problem, along with available information about correctness
+# prints out the feedback on the questions that the student has answered for 	
+# the current problem, along with available information about correctness
 
 sub output_summary{
 	
@@ -1284,7 +1305,7 @@ sub output_summary{
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
 	# do I need to check $will{showCorrectAnswers} to make preflight work??
-	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
+	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 		# print this if user submitted answers OR requested correct answers
 		
 		print $self->attemptResults($pg, 1,
