@@ -87,7 +87,7 @@ use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      => 'mod_xmlrpc';
 
-our $UNIT_TESTS_ON             = 0;
+our $UNIT_TESTS_ON             = 1;
 
 # error formatting
 sub format_hash_ref {
@@ -142,7 +142,7 @@ sub xmlrpcCall {
 			#-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
 			-> proxy(($self->url).'/'.REQUEST_URI);
 		};
-		print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
+		print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n";
 			
 			
     if ($UNIT_TESTS_ON) {
@@ -155,7 +155,7 @@ sub xmlrpcCall {
 	
 	  local( $result);
 	  # use eval to catch errors
-	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
+	  print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $input) };
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
@@ -450,9 +450,10 @@ sub formatRenderedLibraries {
 sub formatRenderedProblem {
 	my $self 			  = shift;
 	my $rh_result         = $self->{output}|| {};  # wrap problem in formats
+	#print STDERR "WebworkClient::formatRenderedProblem ", format_hash_ref($rh_result) ,"\n";
 	my $problemText       = "No output from rendered Problem";
 	if (ref($rh_result) and $rh_result->{text} ) {
-		$problemText       =  $rh_result->{text};
+		$problemText       = decode_base64( $rh_result->{text});
 	} else {
 		$problemText       = "Unable to decode problem text",format_hash_ref($rh_result);
 	}
@@ -505,7 +506,7 @@ sub formatRenderedProblem {
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
-	my $session_key      =  $rh_result->{session_key};
+	my $session_key      =  $self->{session_key};
 	my $problemTemplate = <<ENDPROBLEMTEMPLATE;
 
 
