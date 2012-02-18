@@ -36,17 +36,44 @@ our	$XML_COURSE       =  'gage_course';
 
 our $UNIT_TESTS_ON             = 0;
 
-my $credential_path = ".ww_credentials";
-eval{require $credential_path};
-if ($@ ) {
-print STDERR <<EOF;
-Can't find file $credential_path:
-Place a file with that name and containing this information in the current directory
+####################################################
+# get credentials
+####################################################
+
+my $credential_path;
+my @path_list = ('.ww_credentials', '/Users/gage/.ww_credentials', '/Users/gage/ww_session_credentials');
+foreach my $path (@path_list) {
+	if (-r "$path" ) {
+		$credential_path = $path;
+		last;
+	}
+}
+unless ( $credential_path ) {
+	die <<EOF;
+Can't find path for credentials. Looked in @path_list.
+Place a credential file containing the following information at one of the locations above.
 %credentials = (
         userID          => "my login name for the webwork course",
         password        => "my password ",
         courseID        => "the name of the webwork course",
-)
+);
+1;
+---------------------------------------------------------
+EOF
+}
+
+eval{require $credential_path};
+if ($@  or not defined %credentials) {
+
+print STDERR <<EOF;
+
+The credentials file should contain this:
+%credentials = (
+        userID          => "my login name for the webwork course",
+        password        => "my password ",
+        courseID        => "the name of the webwork course",
+);
+1;
 ---------------------------------------------------------
 EOF
 die;
