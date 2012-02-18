@@ -530,8 +530,7 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores.<br/>
-	    	       The median score is in the 50% column. '))),
+	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores. The median score is in the 50% column. '))),
 			CGI::start_table({-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% '.$r->maketext('students'),
