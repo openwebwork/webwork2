@@ -1236,8 +1236,10 @@ handled.
 sub if_warnings {
 	my ($self, $arg) = @_;
 	my $r = $self->r;
-	
-	if (MP2 ? $r->notes->get("warnings") : $r->notes("warnings")) {
+
+	if ( (MP2 ? $r->notes->get("warnings") : $r->notes("warnings")) 
+	     or ($self->{pgerrors}) )  
+	{
 		return $arg;
 	} else {
 		!$arg;

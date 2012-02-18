@@ -80,7 +80,7 @@ use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap at
 
 use constant BLANKPROBLEM => 'blankProblem.pg';
 
-use constant  FIELD_PROPERTIES => {
+use constant FIELD_PROPERTIES => {
 	# Set information
 	set_header => {
 		name      => "Set Header",
@@ -373,8 +373,8 @@ sub FieldTable {
 	if ($forUsers) {
 		$output .= CGI::Tr({},
 		    CGI::th({colspan=>"2"}, "&nbsp;"),
-			CGI::th({colspan=>"1"}, "User Values"),
-			CGI::th({}, "Class values"),
+			CGI::th({colspan=>"1"}, $r->maketext("User Values")),
+			CGI::th({}, $r->maketext("Class values")),
 		);
 	}
 	foreach my $field (@fieldOrder) {
@@ -421,7 +421,7 @@ sub FieldTable {
 	if (defined $problemID) {
 		#my $problemRecord = $r->{db}->getUserProblem($userID, $setID, $problemID);
 		my $problemRecord = $userRecord; # we get this from the caller, hopefully
-		$output .= CGI::Tr({}, CGI::td({}, ["","Attempts", ($problemRecord->num_correct || 0) + ($problemRecord->num_incorrect || 0)])) if $forOneUser;
+		$output .= CGI::Tr({}, CGI::td({}, ["",$r->maketext("Attempts"), ($problemRecord->num_correct || 0) + ($problemRecord->num_incorrect || 0)])) if $forOneUser;
 	}		
 	$output .= CGI::end_table();
 	
@@ -452,8 +452,8 @@ sub FieldHTML {
 	#	#$mergedRecord = $db->getMergedSet($userID, $setID); # never user --sam
 	#}
 	
-	return "No data exists for set $setID and problem $problemID" unless $globalRecord;
-	return "No user specific data exists for user $userID" if $forOneUser and $globalRecord and not $userRecord;
+	return $r->maketext("No data exists for set [_1] and problem [_2]", $setID, $problemID) unless $globalRecord;
+	return $r->maketext("No user specific data exists for user [_1]", $userID) if $forOneUser and $globalRecord and not $userRecord;
 	
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	my %labels = %{ $properties{labels} };
@@ -551,6 +551,10 @@ sub FieldHTML {
 		} elsif ( ! $value ) {
 			$value = ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field);
 		}
+		
+		foreach my $l (keys %labels){
+			$labels{$l} = $r->maketext($labels{$l});
+		}
 			
 		$inputType = CGI::popup_menu({
 				name => "$recordType.$recordID.$field",
@@ -571,7 +575,7 @@ sub FieldHTML {
 				value => $field,
 				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),
 		}) : "",
-		$properties{name},
+		$r->maketext($properties{name}),
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);
@@ -582,6 +586,7 @@ sub FieldHTML {
 sub extraSetFields {
 	my ($self,$userID,$setID,$globalRecord,$userRecord,$forUsers) = @_;
 	my $db = $self->r->{db};
+	my $r = $self->r;
 
 	my ($gwFields, $ipFields, $ipDefaults, $numLocations, $ipOverride,
 	    $procFields) = ( '', '', '', 0, '', '' );
@@ -612,7 +617,7 @@ sub extraSetFields {
 		    	}
 		}
 		$gwhdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
-					     CGI::em("Gateway parameters")))
+					     CGI::em($r->maketext("Gateway parameters"))))
 		    if ( $nF );
 		$gwFields = "$gwhdr$gwFields\n" .
 			"<!-- end gwoutput table -->\n";
@@ -624,11 +629,7 @@ sub extraSetFields {
 		my $nfm1 = $nF - 1;
 		$procFields = CGI::Tr({},CGI::td({},''),
 			CGI::td({colspan=>$nfm1},
-				CGI::em("Proctored tests require proctor " .
-					"authorization to start and to " .
-					"grade.  Provide a password to have " .
-					"a single password for all students " .
-					"to start a proctored test.")));
+				CGI::em($r->maketext("Proctored tests require proctor authorization to start and to grade.  Provide a password to have a single password for all students to start a proctored test."))));
 		# we use a routine other than FieldHTML because of getting
 		#    the default value here
 		my @fieldData = 
@@ -678,7 +679,7 @@ sub extraSetFields {
 					checked => $ipOverride }) : '';
 			$ipFields .= CGI::Tr({-valign=>'top'},
 					     CGI::td({}, [ $override, 
-						   'Restrict Locations', 
+						   $r->maketext('Restrict Locations'), 
 						   $ipSelector, 
 						   $forUsers ? 
 						   " $ipDefaults" : '', ]
@@ -708,7 +709,7 @@ sub proctoredFieldHTML {
 	}
 
 	return( ( '',
-		  'Password (Leave blank for regular proctoring)',
+		  $r->maketext('Password (Leave blank for regular proctoring)'),
 		  CGI::input({ name=>"set.$setID.restricted_login_proctor_password",
 			       value=>$value,
 			       size=>10,
@@ -727,6 +728,8 @@ sub problem_number_popup {
 
 # handles rearrangement necessary after changes to problem ordering
 sub handle_problem_numbers {
+	my $self = shift;
+	my $r = $self->r;
 	my $newProblemNumbersref = shift;
 	my %newProblemNumbers = %$newProblemNumbersref;
 	my $maxNum = shift;
@@ -754,7 +757,7 @@ sub handle_problem_numbers {
 		push @sortme, [$j, $val];
 		# replace new problem numbers in hash with the (global) problems themselves
 		$newProblemNumbers{$j} = $db->getGlobalProblem($setID, $j);
-		die "global $j for set $setID not found." unless $newProblemNumbers{$j};
+		die $r->maketext("global [_1] for set [_2] not found.", $j, $setID) unless $newProblemNumbers{$j};
 	}
 
 	# we don't have to do anything if we're not getting rid of holes
@@ -813,7 +816,7 @@ sub handle_problem_numbers {
 					$db->putUserProblem($problist[$sortme[$j][0]]); 
 				} 
 			} else {
-				warn "UserProblem missing for user=$user set=$setID problem=$sortme[$j][0]. This may indicate database corruption.\n";
+				warn $r->maketext("UserProblem missing for user=[_1] set=[_2] problem=[_3]. This may indicate database corruption.", $user, $setID, $sortme[$j][0])."\n";
 				# when a problem doesn't exist in the target slot, a new problem gets added there, but the original problem
 				# never gets overwritten (because there wan't a problem it would have to get exchanged with)
 				# i think this can get pretty complex. consider 1=>2, 2=>3, 3=>4, 4=>1 where problem 1 doesn't exist for some user:
@@ -864,7 +867,7 @@ sub initialize {
 	}
 
 	my $setRecord = $db->getGlobalSet($setID); # checked
-	die "global set $setID  not found." unless $setRecord;
+	die $r->maketext("global set [_1] not found.", $setID) unless $setRecord;
 
 	$self->{set}  = $setRecord;
 	my @editForUser = $r->param('editForUser');
@@ -918,12 +921,12 @@ sub initialize {
         # make sure dates are numeric by using ||0
         
 		if ($answer_date < $due_date || $answer_date < $open_date) {		
-			$self->addbadmessage("Answers cannot be made available until on or after the due date!");
+			$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the due date!"));
 			$error = $r->param('submit_changes');
 		}
 		
 		if ($due_date < $open_date) {
-			$self->addbadmessage("Answers cannot be due until on or after the open date!");
+			$self->addbadmessage($r->maketext("Answers cannot be due until on or after the open date!"));
 			$error = $r->param('submit_changes');
 		}
 		
@@ -932,21 +935,21 @@ sub initialize {
 		my $seconds_per_year = 31_556_926;
 		my $cutoff = $curr_time + $seconds_per_year*10;
 		if ($open_date > $cutoff) {
-			$self->addbadmessage("Error: open date cannot be more than 10 years from now in set $setID");
+			$self->addbadmessage($r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
 		if ($due_date > $cutoff) {
-			$self->addbadmessage("Error: due date cannot be more than 10 years from now in set $setID");
+			$self->addbadmessage($r->maketext("Error: due date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
 		if ($answer_date > $cutoff) {
-			$self->addbadmessage("Error: answer date cannot be more than 10 years from now in set $setID");
+			$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
 
 	}
 	if ($error) {
-		$self->addbadmessage("No changes were saved!");
+		$self->addbadmessage($r->maketext("No changes were saved!"));
 	}
 	
 	if (defined $r->param('submit_changes') && !$error) {
@@ -1194,7 +1197,7 @@ sub initialize {
 						my $dbPass;
 						eval { $dbPass = $db->getPassword($procID) };
 						if ( $@ ) {
-							$self->addbadmessage("Error getting old set-proctor password from the database: $@.  No update to the password was done.");
+							$self->addbadmessage($r->maketext("Error getting old set-proctor password from the database: [_1].  No update to the password was done.", $@));
 						} else {
 							$dbPass->password(cryptPassword($pass));
 							$db->putPassword($dbPass);
@@ -1218,9 +1221,7 @@ sub initialize {
 					# put these into the database
 					eval { $db->addUser($procUser) };
 					if ( $@ ) { 
-						$self->addbadmessage("Error " .
-							"adding set-level " .
-							"proctor: $@");
+						$self->addbadmessage($r->maketext("Error adding set-level proctor: [_1]", $@));
 					} else {
 						$db->addPermissionLevel($procPerm);
 						$db->addPassword($procPass);
@@ -1254,7 +1255,7 @@ sub initialize {
 		my @problemRecords = $db->getGlobalProblems(map { [$setID, $_] } @problemIDs);
 		foreach my $problemRecord (@problemRecords) {
 			my $problemID = $problemRecord->problem_id;
-			die "Global problem $problemID for set $setID not found." unless $problemRecord;
+			die $r->maketext("Global problem [_1] for set [_2] not found.", $problemID, $setID) unless $problemRecord;
 			
 			if ($forUsers) {
 				# Since we're editing for specific users, we don't allow the GlobalProblem record to be altered on that same page
@@ -1291,7 +1292,7 @@ sub initialize {
 							if ($field eq 'source_file') {
 								# add message
 								if ( $param =~ /\.\./ || $param =~ /^\// ) {
-									$self->addbadmessage( "Source file paths cannot include .. or start with /: your source file path was modified." );
+									$self->addbadmessage( $r->maketext("Source file paths cannot include .. or start with /: your source file path was modified.") );
 								}
 								$param =~ s|\.\.||g;    # prevent access to files above template
 								$param =~ s|^/||;       # prevent access to files above template
@@ -1317,7 +1318,7 @@ sub initialize {
 						if ($field eq 'source_file') {
 							# add message
 							if ( $param =~ /\.\./ || $param =~ /^\// ) {
-								$self->addbadmessage( "Source file paths cannot include .. or start with /: your source file path was modified." );
+								$self->addbadmessage( $r->maketext("Source file paths cannot include .. or start with /: your source file path was modified."));
 							}
 							$param =~ s|\.\.||g;    # prevent access to files above template
 							$param =~ s|^/||;       # prevent access to files above template
@@ -1351,7 +1352,7 @@ sub initialize {
 					if ($field eq 'source_file') {
 						# add message
 						if ( $param =~ /\.\./ || $param =~ /^\// ) {
-							$self->addbadmessage( "Source file paths cannot include .. or start with /: your source file path was modified." );
+							$self->addbadmessage( $r->maketext("Source file paths cannot include .. or start with /: your source file path was modified.") );
 						}
 						$param =~ s|\.\.||g;    # prevent access to files above template
 						$param =~ s|^/||;       # prevent access to files above template
@@ -1463,7 +1464,7 @@ sub initialize {
 						my $new_file_path         =  "set$setID/".BLANKPROBLEM();
 						my $fullPath              =  WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},'/'.$new_file_path);
 						local(*TEMPFILE);
-						open(TEMPFILE, ">$fullPath") or warn "Can't write to file $fullPath";
+						open(TEMPFILE, ">$fullPath") or warn $r->maketext("Can't write to file [_1]", $fullPath);
 						print TEMPFILE $problemContents;
 						close(TEMPFILE);
 						
@@ -1476,10 +1477,10 @@ sub initialize {
 								   problemID      => $targetProblemNumber, #added to end of set
 						);
 						$self->assignProblemToAllSetUsers($problemRecord);
-						$self->addgoodmessage("Added $new_file_path to ". $setID. " as problem $targetProblemNumber") ;
+						$self->addgoodmessage($r->maketext("Added [_1] to [_2] as problem [_3]", $new_file_path, $setID, $targetProblemNumber)) ;
 				}
 			} else {
-				$self->addbadmessage("Could not add $newBlankProblems problems to this set.  The number must be between 1 and $MAX_NEW_PROBLEMS");
+				$self->addbadmessage($r->maketext("Could not add [_1] problems to this set.  The number must be between 1 and [_2]", $newBlankProblems, $MAX_NEW_PROBLEMS));
 			}
 		}
 		
@@ -1554,8 +1555,8 @@ sub checkFile ($) {
 	my $r = $self->r;
 	my $ce = $r->ce;
 
-	return "No source filePath specified" unless $filePath;
-	return "Problem source is drawn from a grouping set" if $filePath =~ /^group/;
+	return $r->maketext("No source filePath specified") unless $filePath;
+	return $r->maketext("Problem source is drawn from a grouping set") if $filePath =~ /^group/;
 	
 	if ( $filePath eq "defaultHeader" ) {
 		if ($headerType eq 'set_header') {
@@ -1563,20 +1564,19 @@ sub checkFile ($) {
 		} elsif  ($headerType eq 'hardcopy_header') {
 			$filePath = $ce->{webworkFiles}{hardcopySnippets}{setHeader};
 		}	else	{
-			return "Invalid headerType $headerType"	
+			return $r->maketext("Invalid headerType [_1]", $headerType);	
 		}	
 	} else {
 	#	$filePath = $ce->{courseDirs}->{templates} . '/' . $filePath unless $filePath =~ m|^/|; # bug: 1725 allows access to all files e.g. /etc/passwd
 		$filePath = $ce->{courseDirs}->{templates} . '/' . $filePath ; # only filePaths in template directory can be accessed 
 	}
     
-	my $text = "This source file ";
 	my $fileError;
 	return "" if -e $filePath && -f $filePath && -r $filePath;
-	return $text . "is not readable!" if -e $filePath && -f $filePath;
-	return $text . "is a directory!" if -d $filePath;
-	return $text . "does not exist!" unless -e $filePath;
-	return $text . "is not a plain file!";
+	return $r->maketext("This source file is not readable!") if -e $filePath && -f $filePath;
+	return $r->maketext("This source file is a directory!") if -d $filePath;
+	return $r->maketext("This source file does not exist!") unless -e $filePath;
+	return $r->maketext("This source file is not a plain file!");
 }
 
 # don't show view options -- we provide display mode controls for headers/problems separately
@@ -1608,20 +1608,19 @@ sub body {
 	    $setID =~ s/,v(\d+)$//;
 	}
 
-	my $setRecord   = $db->getGlobalSet($setID) or die "No record for global set $setID.";
+	my $setRecord   = $db->getGlobalSet($setID) or die $r->maketext("No record for global set [_1].", $setID);
 
-	my $userRecord = $db->getUser($userID) or die "No record for user $userID.";
+	my $userRecord = $db->getUser($userID) or die $r->maketext("No record for user [_1].", $userID);
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+	return CGI::div({class=>"ResultsWithError"}, $r->maketext("You are not authorized to access the Instructor tools."))
 		unless $authz->hasPermissions($userRecord->user_id, "access_instructor_tools");
 	
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problems.")
+	return CGI::div({class=>"ResultsWithError"}, $r->maketext("You are not authorized to modify problems."))
 		unless $authz->hasPermissions($userRecord->user_id, "modify_problem_sets");
 
 	my @editForUser = $r->param('editForUser');
 
-	return CGI::div({class=>"ResultsWithError"}, "Versions of a set can only be " .
-			"edited for one user at a time.") if ( $editingSetVersion && @editForUser != 1 );
+	return CGI::div({class=>"ResultsWithError"}, $r->maketext("Versions of a set can only be edited for one user at a time.")) if ( $editingSetVersion && @editForUser != 1 );
 
 	# Check that every user that we're editing for has a valid UserSet
 	my @assignedUsers;
@@ -1639,10 +1638,10 @@ sub body {
 		$r->param("editForUser", \@editForUser);
 		
 		if (scalar @editForUser && scalar @unassignedUsers) {
-			print CGI::div({class=>"ResultsWithError"}, "The following users are NOT assigned to this set and will be ignored: " . CGI::b(join(", ", @unassignedUsers)));
+			print CGI::div({class=>"ResultsWithError"}, $r->maketext("The following users are NOT assigned to this set and will be ignored: [_1]", CGI::b(join(", ", @unassignedUsers))) );
 		} elsif (scalar @editForUser == 0) {
-			print CGI::div({class=>"ResultsWithError"}, "None of the selected users are assigned to this set: " . CGI::b(join(", ", @unassignedUsers)));
-			print CGI::div({class=>"ResultsWithError"}, "Global set data will be shown instead of user specific data");
+			print CGI::div({class=>"ResultsWithError"}, $r->maketext("None of the selected users are assigned to this set: [_1]", CGI::b(join(", ", @unassignedUsers))));
+			print CGI::div({class=>"ResultsWithError"}, $r->maketext("Global set data will be shown instead of user specific data"));
 		}		
 	}
 
@@ -1653,7 +1652,7 @@ sub body {
 	# and check that if we're editing a set version for a user, that
 	#    it exists as well
 	if ( $editingSetVersion && ! $db->existsSetVersion( $editForUser[0], $setID, $editingSetVersion ) ) {
-		return CGI::div({class=>"ResultsWithError"}, "The set-version ($setID, version $editingSetVersion) is not assigned to user $editForUser[0].");
+		return CGI::div({class=>"ResultsWithError"}, $r->maketext("The set-version ([_1], version [_2]) is not assigned to user [_3].", $setID, $editingSetVersion, $editForUser[0]));
 	}
 
 	# If you're editing for users, initially their records will be different but
@@ -1689,8 +1688,8 @@ sub body {
 	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL}, $self->userCountMessage($setUserCount, $userCount));
 	my $setCountMessage = CGI::a({href=>$editSetsAssignedToUserURL}, $self->setCountMessage($userSetCount, $setCount)) if $forOneUser;
 
-	$userCountMessage = "The set $setID is assigned to " . $userCountMessage . ".";
-	$setCountMessage  = "The user $editForUser[0] has been assigned " . $setCountMessage . "." if $forOneUser;
+	$userCountMessage = $r->maketext("The set [_1] is assigned to [_2].", $setID, $userCountMessage);
+	$setCountMessage  = $r->maketext("The user [_1] has been assigned [_2].", $editForUser[0], $setCountMessage) if $forOneUser;
 
 	if ($forUsers) {
 	    ##############################################
@@ -1704,7 +1703,7 @@ sub body {
 				CGI::a({-href=>"mailto:$email_address"},"email "). $u->user_id .
 				"). ";
 			if ( ! $editingSetVersion ) {
-				$line .= "Assigned to ";
+				$line .= $r->maketext("Assigned to ");
 				my $editSetsAssignedToUserURL = $self->systemLink(
 					$urlpath->newFromModule(
 						"WeBWorK::ContentGenerator::Instructor::UserDetail", $r,
@@ -1716,8 +1715,7 @@ sub body {
 				my $editSetLink = $self->systemLink( $setDetailPage,
 					params=>{effectiveUser=>$u->user_id,
 						 editForUser  =>$u->user_id} );
-				$line .= "Edit set " . CGI::a({href=>$editSetLink},$setID) .
-					" for this user.";
+				$line .= $r->maketext("Edit set [_1] for this user.", CGI::a({href=>$editSetLink},$setID));
 			}
 			unshift @userLinks,$line;
 		}
@@ -1725,16 +1723,14 @@ sub body {
 	
 		# handy messages when editing gateway sets
 		my $gwmsg = ( $isGatewaySet && ! $editingSetVersion ) ?
-			CGI::br() . CGI::em("To edit a specific student version of this set, " .
-			    "edit (all of) her/his assigned sets.") : "";
-		my $vermsg = ( $editingSetVersion ) ? ", test $editingSetVersion" : "";
+			CGI::br() . CGI::em($r->maketext("To edit a specific student version of this set, edit (all of) her/his assigned sets.")) : "";
+		my $vermsg = ( $editingSetVersion ) ? ", $editingSetVersion" : "";
 
 		print CGI::table({border=>2,cellpadding=>10}, 
 		    CGI::Tr({},
 				CGI::td([
-					 "Editing problem set ".CGI::strong($setID . $vermsg)." data for these individual students:".CGI::br(). 
-					                CGI::strong(join CGI::br(), @userLinks),
-					CGI::a({href=>$self->systemLink($setDetailPage) },"Edit set ".CGI::strong($setID)." data for ALL students assigned to this set.") . $gwmsg,
+					 $r->maketext("Editing problem set [_1] data for these individual students: [_2]", CGI::strong($setID . $vermsg), CGI::br().CGI::strong(join CGI::br(), @userLinks)),
+					CGI::a({href=>$self->systemLink($setDetailPage) },$r->maketext("Edit set [_1] data for ALL students assigned to this set.", CGI::strong($setID))) . $gwmsg,
 				
 				])
 			)
@@ -1743,8 +1739,8 @@ sub body {
 		print CGI::table({border=>2,cellpadding=>10}, 
 		    CGI::Tr({},
 				CGI::td([
-					"This set ".CGI::strong($setID)." is assigned to ".$self->userCountMessage($setUserCount, $userCount).'.' ,
-					'Edit '.CGI::a({href=>$editUsersAssignedToSetURL},'individual versions '). "of set $setID.",
+					$r->maketext("This set [_1] is assigned to [_2].", CGI::strong($setID), $self->userCountMessage($setUserCount, $userCount)) ,
+					$r->maketext("Edit [_1] of set [_2].", CGI::a({href=>$editUsersAssignedToSetURL},$r->maketext('individual versions')), $setID),
 				
 				])
 			)
@@ -1762,15 +1758,15 @@ sub body {
 	}
 
 	my $forceRenumber = $r->param('force_renumber') || 0;
-	handle_problem_numbers(\%newProblemNumbers, $maxProblemNumber, $db, $setID, $forceRenumber) unless defined $r->param('undo_changes');
+	handle_problem_numbers($self,\%newProblemNumbers, $maxProblemNumber, $db, $setID, $forceRenumber) unless defined $r->param('undo_changes');
 
 	my %properties = %{ FIELD_PROPERTIES() };
 
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 	my @active_modes = grep { exists $display_modes{$_} } @{$r->ce->{pg}->{displayModes}};
-	push @active_modes, 'None';
-	my $default_header_mode = $r->param('header.displaymode') || 'None';
-	my $default_problem_mode = $r->param('problem.displaymode') || 'None';
+	push @active_modes, $r->maketext('None');
+	my $default_header_mode = $r->param('header.displaymode') || $r->maketext('None');
+	my $default_problem_mode = $r->param('problem.displaymode') || $r->maketext('None');
 
 	#####################################################################
 	# Browse available header/problem files
@@ -1790,17 +1786,16 @@ sub body {
  
 	# Display a useful warning message
 	if ($forUsers) {
-		print CGI::p(CGI::b("Any changes made below will be reflected in the set for ONLY the student" . 
-					($forOneUser ? "" : "s") . " listed above."));
+		print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ONLY the student(s) listed above.")));
 	} else {
-		print CGI::p(CGI::b("Any changes made below will be reflected in the set for ALL students."));
+		print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students.")));
 	}
 
 	print CGI::start_form({method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
-	print CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"});
-	print CGI::input({type=>"submit", name=>"undo_changes", value => "Reset Form"});
+	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")});
+	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
 
 	# spacing
 	print CGI::p();
@@ -1811,7 +1806,7 @@ sub body {
 
 	print CGI::start_table({border=>1, cellpadding=>4});
 	print CGI::Tr({}, CGI::th({}, [
-		"General Information",
+		$r->maketext("General Information"),
 	]));
 	
 	# this is kind of a hack -- we need to get a user record here, so we can
@@ -1846,11 +1841,11 @@ sub body {
 
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
-			"Headers",
+			$r->maketext("Headers"),
 #			"Data",
 			"Display&nbsp;Mode:&nbsp;" . 
 			CGI::popup_menu(-name => "header.displaymode", -values => \@active_modes, -default => $default_header_mode) . '&nbsp;'. 
-			CGI::input({type => "submit", name => "refresh", value => "Refresh Display"}),
+			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
 
 		my %header_html;
@@ -1903,17 +1898,16 @@ sub body {
 			if ( $headerType eq 'set_header' && 
 		     	     $guaranteed_set->assignment_type =~ /gateway/ ) {
 				print CGI::Tr({}, CGI::td({}, 
-					      [ "Set Header", 
-					     	"Set headers are not used in " .
-						"display of gateway tests."]));
+					      [ $r->maketext("Set Header"), 
+					     	$r->maketext("Set headers are not used in display of gateway tests.")]));
 				next;
 			}
 
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
 					CGI::Tr({}, CGI::td({}, $properties{$headerType}->{name})) . 
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, "Edit it"))) .
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, "View it"))) .
+					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, $r->maketext("Edit it")))) .
+					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, $r->maketext("View it")))) .
 				CGI::end_table(),
 
 				comboBox({
@@ -1922,7 +1916,7 @@ sub body {
 					default => $r->param("set.$setID.$headerType") || $setRecord->{$headerType}  || "defaultHeader",
 					multiple => 0,
 					values => ["defaultHeader", @headerFileList],
-					labels => { "defaultHeader" => "Use Default Header File" },
+					labels => { "defaultHeader" => $r->maketext("Use Default Header File") },
 				}) .
 				($error{$headerType} ? 
 					CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error{$headerType}) 
@@ -1933,7 +1927,7 @@ sub body {
 		
 		print CGI::end_table();
 	} else {
-		print CGI::p(CGI::b("Screen and Hardcopy set header information can not be overridden for individual students."));
+		print CGI::p(CGI::b($r->maketext("Screen and Hardcopy set header information can not be overridden for individual students.")));
 	}
 
 	# spacing
@@ -1972,11 +1966,11 @@ sub body {
 
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
-			"Problems",
-			"Data",
+			$r->maketext("Problems"),
+			$r->maketext("Data"),
 			"Display&nbsp;Mode:&nbsp;" . 
 			CGI::popup_menu(-name => "problem.displaymode", -values => \@active_modes, -default => $default_problem_mode) . '&nbsp;'. 
-			CGI::input({type => "submit", name => "refresh", value => "Refresh Display"}),
+			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
 		
 		my %shownYet;
@@ -2038,7 +2032,7 @@ sub body {
             $problemFile =~ s|\.\.||g;
 			# warn of repeat problems
 			if (defined $shownYet{$problemFile}) {
-				$repeatFile = "This problem uses the same source file as number " . $shownYet{$problemFile} . ".";
+				$repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $shownYet{$problemFile});
 			} else {
 				$shownYet{$problemFile} = $problemID;
 				$repeatFile = "";
@@ -2072,12 +2066,12 @@ sub body {
 				CGI::start_table({border => 0, cellpadding => 1}) .
 					CGI::Tr({}, CGI::td({}, problem_number_popup($problemID, $maxProblemNumber))) .
 					CGI::Tr({}, CGI::td({}, 
-							    $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, "Edit it") : "" )) .
+							    $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, $r->maketext("Edit it")) : "" )) .
 					CGI::Tr({}, CGI::td({}, 
-							    $showLinks ? CGI::a({href => $viewProblemLink, target=>"WW_View"}, "Try it" . ($forOneUser ? " (as $editForUser[0])" : "")) : "" )) .
-					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => "Delete it?"})))) .
+							    $showLinks ? CGI::a({href => $viewProblemLink, target=>"WW_View"}, $r->maketext("Try it") . ($forOneUser ? " (as $editForUser[0])" : "")) : "" )) .
+					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
 #					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
-					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => "Mark Correct?"})))) .
+					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
 				CGI::end_table(),
 				$self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $isGatewaySet),
 # A comprehensive list of problems is just TOO big to be handled well
@@ -2110,19 +2104,14 @@ sub body {
 # print final lines
 		print CGI::end_table();
 		print CGI::checkbox({
-				  label=> "Force problems to be numbered consecutively from one (always done when reordering problems)",
+				  label=> $r->maketext("Force problems to be numbered consecutively from one (always done when reordering problems)"),
 				  name=>"force_renumber", value=>"1"});
-		print CGI::p(<<EOF);
-Any time problem numbers are intentionally changed, the problems will
-always be renumbered consecutively, starting from one.  When deleting
-problems, gaps will be left in the numbering unless the box above is
-checked.
-EOF
-        print CGI::p("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.") if ($setRecord->open_date>time());
-		print CGI::p("When changing problem numbers, we will move the problem to be ". CGI::em("before"). " the chosen number.");
+		print CGI::p($r->maketext("Any time problem numbers are intentionally changed, the problems will always be renumbered consecutively, starting from one.  When deleting problems, gaps will be left in the numbering unless the box above is checked."));
+        print CGI::p($r->maketext("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.")) if ($setRecord->open_date>time());
+		print CGI::p($r->maketext("When changing problem numbers, we will move the problem to be [_1] the chosen number.",CGI::em($r->maketext("before"))));
 
 	} else {
-		print CGI::p(CGI::b("This set doesn't contain any problems yet."));
+		print CGI::p(CGI::b($r->maketext("This set doesn't contain any problems yet.")));
 	}
 	# always allow one to add a new problem, unless we're editing a set version
 	if ( ! $editingSetVersion ) {
@@ -2132,13 +2121,13 @@ EOF
 					name=>"add_n_problems",
 					size=>2,
 					value=>1 },
-					"blank problem template(s) to end of homework set"
+					$r->maketext("blank problem template(s) to end of homework set")
 			);
 	}
 	print CGI::br(),CGI::br(),
 		CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"}),
 		CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}),
-			"(Any unsaved changes will be lost.)";
+			$r->maketext("(Any unsaved changes will be lost.)");
 
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
     #my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });

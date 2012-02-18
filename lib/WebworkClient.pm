@@ -87,7 +87,7 @@ use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      => 'mod_xmlrpc';
 
-our $UNIT_TESTS_ON             = 1;
+our $UNIT_TESTS_ON             = 0;
 
 # error formatting
 sub format_hash_ref {
@@ -97,6 +97,8 @@ sub format_hash_ref {
 }
 
 sub new {
+    my $invocant = shift;
+    my $class = ref $invocant || $invocant;
 	my $self = {
 		output   		=> '',
 		encodedSource 	=> '',
@@ -108,9 +110,10 @@ sub new {
 				 					 AnSwEr0002 => '',
 				 					 AnSwEr0003 => '',
 		},
+		@_,               # options and overloads
 	};
 
-	bless $self;
+	bless $self, $class;
 }
 
 
@@ -121,37 +124,7 @@ our $result;
 #    this code is identical between renderProblem.pl and renderViaXMLRPC.pm
 ##################################################
 
-#sub xmlrpcCall {
-#	my $self        = shift;
-#	my $command = shift;
-#	$command   = 'listLibraries' unless $command;
-#
-#	  my $requestResult = TRANSPORT_METHOD
-#			-> proxy(($self->url).'/'.REQUEST_URI);
-#		
-#	  my $input = $self->setInputTable();
-#	  local( $result);
-#	  # use eval to catch errors
-#	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command,$input) };
-#	  if ($@) {
-#	  	print STDERR "There were a lot of errors for $command\n" ;
-#	  	print STDERR "Errors: \n $@\n End Errors\n" ;
-#	  	return 0 #failure
-#	  }
-#	
-#	  unless (ref($result) and $result->fault) {
-#	  	my $rh_result = $result->result();
-#	    #print STDERR pretty_print_rh($rh_result);
-#		$self->{output} = $rh_result; #$self->formatRenderedProblem($rh_result);
-#		return 1; # success
-#
-#	  } else {
-#		$self->{output} = 'Error in xmlrpcCall to server: '. join( ",\n ",
-#		  $result->faultcode,
-#		  $result->faultstring);
-#		return 0; #failure
-#	  }
-#}
+
 
 sub xmlrpcCall {
 	my $self = shift;
@@ -159,23 +132,31 @@ sub xmlrpcCall {
 	my $input   = shift||{};
 
 	$command   = 'listLibraries' unless defined $command;
-    
-	  my $requestResult = TRANSPORT_METHOD
+	  my $input2 = $self->setInputTable();
+	  $input = {%$input2, %$input};
+	
+	  my $requestResult; 
+	  eval {
+	  	$requestResult= TRANSPORT_METHOD
 	        #->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
 			#-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
 			-> proxy(($self->url).'/'.REQUEST_URI);
+		};
+		print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
 			
 			
     if ($UNIT_TESTS_ON) {
+        print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->{url},"\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall issued with command $command\n";
-    	print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %$input);
-    	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall $command returned $requestResult\n";
+    	print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %$input),"\n";
+    	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
     }
  		
 	
 	  local( $result);
 	  # use eval to catch errors
-	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command,$input) };
+	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
+	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $input) };
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
 	  	
@@ -185,15 +166,18 @@ sub xmlrpcCall {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
 	  	}
 		#print  pretty_print($result->result()),"\n";  #$result->result()
+		$self->{output}= $result->result();
 		return $result->result();
 	  } else {
-		print STDERR 'oops ', join ', ',
-		  "command:",
-		  $command,
-		  "\nfaultcode:",
-		  $result->faultcode, 
-		  "\nfaultstring:",
-		  $result->faultstring;
+		print STDERR 'Error message for ', 
+		  join( ', ',
+			  "command:",
+			  $command,
+			  "\nfaultcode:",
+			  $result->faultcode, 
+			  "\nfaultstring:",
+			  $result->faultstring, "\nEnd error message\n"
+		  );
 		  return undef;
 	  }
 }
@@ -468,10 +452,12 @@ sub formatRenderedProblem {
 	my $rh_result         = $self->{output}|| {};  # wrap problem in formats
 	my $problemText       = "No output from rendered Problem";
 	if (ref($rh_result) and $rh_result->{text} ) {
-		$problemText       = decode_base64( $rh_result->{text});
+		$problemText       =  $rh_result->{text};
+	} else {
+		$problemText       = "Unable to decode problem text",format_hash_ref($rh_result);
 	}
 	my $rh_answers        = $rh_result->{answers};
-	my $encodedSource     = $self->{encodedSource}||'foobar';
+	my $encodedSource     = $self->{encodedSource}||'encodedSourceIsMissing';
 	my $warnings          = '';
 	#################################################
 	# regular Perl warning messages generated with warn
@@ -517,6 +503,9 @@ sub formatRenderedProblem {
 
 	my $XML_URL      = $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
+	my $courseID         =  $self->{courseID};
+	my $userID           =  $self->{userID};
+	my $session_key      =  $rh_result->{session_key};
 	my $problemTemplate = <<ENDPROBLEMTEMPLATE;
 
 
@@ -535,6 +524,10 @@ sub formatRenderedProblem {
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
 	       <input type="hidden" name="problemSeed" value="1234"> 
 	       <input type="hidden" name="pathToProblemFile" value="foobar">
+	       <input type="hidden" name=courseName value="$courseID">
+	       <input type="hidden" name=courseID value="$courseID">
+	       <input type="hidden" name="userID" value="$userID">
+	       <input type="hidden" name="session_key" value="$session_key">
 	       <p><input type="submit" name="submit" value="submit answers"></p>
 	     </form>
 <HR>
