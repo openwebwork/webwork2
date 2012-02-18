@@ -185,7 +185,11 @@ our $rh_result;
 {
 	local($/);
 	$source   = <>; #slurp standard input
+<<<<<<< HEAD
 	#print $source;  # return input to BBedit
+=======
+	print $source;  # return input to BBedit
+>>>>>>> turn_off_warnings_on_webservice
 
 }
 ############################################
@@ -220,6 +224,7 @@ if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
 	$output = $xmlrpc_client->formatRenderedProblem;
 	###HACK fixme
     print pretty_print_rh($result) if $UNIT_TESTS_ON;
+
 } else {
     print "\n\n ERRORS in renderProblem \n\n";
 	$output = $xmlrpc_client->{output};  # error report
@@ -235,6 +240,46 @@ system(DISPLAY_COMMAND().TEMPOUTPUTFILE());
 ##################################################
 # end input/output section
 ##################################################
+sub pretty_print_rh { 
+    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+	my $rh = shift;
+	my $indent = shift || 0;
+	my $out = "";
+	my $type = ref($rh);
+
+	if (defined($type) and $type) {
+		$out .= " type = $type; ";
+	} elsif (! defined($rh )) {
+		$out .= " type = UNDEFINED; ";
+	}
+	return $out." " unless defined($rh);
+	
+	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
+	    $out .= "{\n";
+	    $indent++;
+ 		foreach my $key (sort keys %{$rh})  {
+ 			$out .= "  "x$indent."$key => " . pretty_print_rh( $rh->{$key}, $indent ) . "\n";
+ 		}
+ 		$indent--;
+ 		$out .= "\n"."  "x$indent."}\n";
+
+ 	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
+ 	    $out .= " ( ";
+ 		foreach my $elem ( @{$rh} )  {
+ 		 	$out .= pretty_print_rh($elem, $indent);
+ 		
+ 		}
+ 		$out .=  " ) \n";
+	} elsif ( ref($rh) =~ /SCALAR/ ) {
+		$out .= "scalar reference ". ${$rh};
+	} elsif ( ref($rh) =~/Base64/ ) {
+		$out .= "base64 reference " .$$rh;
+	} else {
+		$out .=  $rh;
+	}
+	
+	return $out." ";
+}
 
 sub pretty_print_rh { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
@@ -277,5 +322,8 @@ sub pretty_print_rh {
 	return $out." ";
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> turn_off_warnings_on_webservice
 1;
