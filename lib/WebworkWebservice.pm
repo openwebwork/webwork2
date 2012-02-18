@@ -1,6 +1,5 @@
 #!/user/bin/perl -w
 
- 
 
 
 BEGIN {
@@ -137,7 +136,7 @@ sub initiate_session {
 	######### trace commands ######
  	    my @caller = caller(1);  # caller data
  	    my $calling_function = $caller[3];
-# 	    print STDERR  "\n\nWebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
+ 	    #print STDERR  "\n\nWebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
     ###############################
 	
 	my $rh_input     = $args[0];
@@ -157,6 +156,13 @@ sub initiate_session {
 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
     runtime_use $user_authen_module;
     
+if ($UNIT_TESTS_ON) {
+	print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
+	print STDERR  "WebworkWebservice.pl ".__LINE__." courseID  is " , $rh_input->{courseID},"\n";
+	print STDERR  "WebworkWebservice.pl ".__LINE__." userID  is " , $rh_input->{userID},"\n";
+	print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
+}    
+
 #   This structure needs to mimic the structure expected by Authen
 	my $self = {
 		courseName	=>  $courseName,
@@ -180,10 +186,10 @@ sub initiate_session {
 	
 	 
 	if ($UNIT_TESTS_ON) {
- 	   print STDERR  "WebworkWebservice.pm ".__LINE__."\n initiate data:\n  "; 
+ 	   print STDERR  "WebworkWebservice.pm ".__LINE__." initiate data:\n  "; 
  	   print STDERR  "class type is ", $class, "\n";
  	   print STDERR  "Self has type ", ref($self), "\n";
- 	   print STDERR   "self has data \n", format_hash_ref($self), "\n";
+ 	   print STDERR   "self has data: \n", format_hash_ref($self), "\n";
 	}
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
@@ -322,7 +328,7 @@ sub listLib {
   	return $self->do( WebworkWebservice::LibraryActions::listLib($self, $in) );
 }
 sub listLibraries {     # returns a list of libraries for the default course
-    my $class = shift;
+	my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
     #warn "incoming request to listLibraries:  class is ",ref($self) if $UNIT_TESTS_ON ;

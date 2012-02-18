@@ -1,5 +1,6 @@
 .svn
 .DS_Store
+.*
 htdocs/tmp/*
 tmp/*
 logs/*
