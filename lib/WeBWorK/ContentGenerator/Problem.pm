@@ -726,9 +726,10 @@ sub pre_header_initialize {
 	# because the PG file is never run
 	#
 	if (defined ($pg->{pgcore}) ) {
-		$self->addmessage(join(CGI::br(),@{$pg->{flags}->{DEBUG_messages}} ) ) if @{$pg->{flags}->{DEBUG_messages}};
-		$self->{pgdebug}          = $pg->{pgcore}->{flags}->{DEBUG_messages};
-		$self->{pgwarning}        = $pg->{pgcore}->{flags}->{WARNING_messages};
+		my @debug_msgs = @{ $pg->{pgcore}->get_debug_messages};
+		$self->addmessage(join(CGI::br(),@debug_msgs) ) if @debug_msgs;
+		$self->{pgdebug}          = $pg->{pgcore}->get_debug_messages;
+		$self->{pgwarning}        = $pg->{pgcore}->get_warning_messages;
 		$self->{pginternalerrors} = $pg->{pgcore}->get_internal_debug_messages ;
 		$self->{pgerrors} = @{$self->{pgdebug}} || @{$self->{pgwarning}} || @{$self->{pginternalerrors}};
 	}
