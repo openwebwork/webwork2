@@ -40,7 +40,7 @@ my $credential_path = ".ww_credentials";
 eval{require $credential_path};
 if ($@ ) {
 print STDERR <<EOF;
-Can't find file .ww_credentials:
+Can't find file $credential_path:
 Place a file with that name and containing this information in the current directory
 %credentials = (
         userID          => "my login name for the webwork course",
