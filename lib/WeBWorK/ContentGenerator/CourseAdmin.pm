@@ -40,6 +40,9 @@ use WeBWorK::Utils::CourseIntegrityCheck;
 #use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 # needed for location management
 use Net::IP;
+use File::Path 'remove_tree';
+use File::stat;
+use Time::localtime;
 
 use constant IMPORT_EXPORT_WARNING => "The ability to import and export
 databases is still under development. It seems to work but it is <b>VERY</b>
@@ -159,6 +162,9 @@ sub pre_header_initialize {
 				} else {
 					$method_to_call = "do_delete_course";
 				}
+			}	
+			elsif (defined ($r->param("delete_course_refresh"))) {
+				$method_to_call = "delete_course_form";
 			} else {
 				# form only
 				$method_to_call = "delete_course_form";
@@ -230,6 +236,9 @@ sub pre_header_initialize {
 				} else {
 					$method_to_call = "archive_course_confirm"; # upgrade and recheck tables & directories.
 				}
+			}	
+			elsif (defined ($r->param("archive_course_refresh"))) {
+				$method_to_call = "archive_course_form";
 			} else {
 				# form only
 				$method_to_call = "archive_course_form";
@@ -292,6 +301,31 @@ sub pre_header_initialize {
 				$method_to_call = "manage_location_form";
 			}
 		}
+		elsif ($subDisplay eq "hide_inactive_course") {
+#			warn "subDisplay is $subDisplay";
+			if (defined ($r->param("hide_course"))) {
+				@errors = $self->hide_course_validate;
+				if (@errors) {
+					$method_to_call = "hide_inactive_course_form";
+				} else {
+				$method_to_call = "do_hide_inactive_course";
+			  }
+			}  
+			elsif (defined ($r->param("unhide_course"))) {
+				@errors = $self->unhide_course_validate;
+				if (@errors) {
+					$method_to_call = "hide_inactive_course_form";
+				} else {
+				$method_to_call = "do_unhide_inactive_course";
+			  }
+			} 
+			elsif (defined ($r->param("hide_course_refresh"))) {
+				$method_to_call = "hide_inactive_course_form";
+			}
+			else{
+				$method_to_call = "hide_inactive_course_form";
+			}
+		}		
 		elsif ($subDisplay eq "registration") {
 			if (defined ($r->param("register_site"))) {
 				$method_to_call =  "do_registration";
@@ -394,6 +428,8 @@ sub body {
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"upgrade_course"})}, "Upgrade courses"),
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"manage_locations"})}, "Manage Locations"),
+		 "|",
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"hide_inactive_course"})}, "Hide Inactive courses"),
 		CGI::hr(),
 		$methodMessage,
 		
@@ -890,11 +926,12 @@ sub rename_course_form {
 	
 	my %courseLabels; # records... heh.
 	foreach my $courseID (@courseIDs) {
-		my $tempCE = new WeBWorK::CourseEnvironment({
-			%WeBWorK::SeedCE,
-			courseName => $courseID,
-		});
-		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+#		my $tempCE = new WeBWorK::CourseEnvironment({
+#			%WeBWorK::SeedCE,
+#			courseName => $courseID,
+#		});
+#		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+		$courseLabels{$courseID} = "$courseID";
 	}
 	
 	print CGI::h2("Rename Course");
@@ -1167,6 +1204,12 @@ sub do_rename_course {
 		print CGI::div({class=>"ResultsWithoutError"},
 			CGI::p("Successfully renamed the course $rename_oldCourseID to $rename_newCourseID"),
 		);
+		 writeLog($ce, "hosted_courses", join("\t",
+	    	"\tRenamed",
+	    	"",
+	    	"",
+	    	"$rename_oldCourseID to $rename_newCourseID",
+	    ));		
 		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
 			courseID => $rename_newCourseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
@@ -1178,6 +1221,9 @@ sub do_rename_course {
 
 ################################################################################
 
+my %coursesData;	
+sub byLoginActivity {$coursesData{$a}{'epoch_modify_time'} <=> $coursesData{$b}{'epoch_modify_time'}}
+
 sub delete_course_form {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -1188,26 +1234,81 @@ sub delete_course_form {
 	
 	my $delete_courseID     = $r->param("delete_courseID")     || "";
 	
+	my $coursesDir = $ce->{webworkDirs}->{courses};
 	my @courseIDs = listCourses($ce);
-	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
+#	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
+	my $delete_listing_format   = $r->param("delete_listing_format"); 
+	unless (defined $delete_listing_format) {$delete_listing_format = 'alphabetically';}  #use the default
 	
-	my %courseLabels; # records... heh.
+#	my %courseLabels; # records... heh.
+#	foreach my $courseID (@courseIDs) {
+#		my $tempCE = new WeBWorK::CourseEnvironment({
+#			%WeBWorK::SeedCE,
+#			courseName => $courseID,
+#		});
+#		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+#	}
+	# Get and store last modify time for login.log for all courses. Also get visibility status.
+	my %courseLabels;
+	my @noLoginLogIDs = ();
+	my @loginLogIDs = ();
+
+	my ($loginLogFile, $epoch_modify_time, $courseDir);
 	foreach my $courseID (@courseIDs) {
-		my $tempCE = new WeBWorK::CourseEnvironment({
-			%WeBWorK::SeedCE,
-			courseName => $courseID,
-		});
-		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+		$loginLogFile = "$coursesDir/$courseID/logs/login.log";
+		if (-e $loginLogFile) {                 #this should always exist except for the model course
+			$epoch_modify_time = stat($loginLogFile)->mtime;
+			$coursesData{$courseID}{'epoch_modify_time'} = $epoch_modify_time;
+			$coursesData{$courseID}{'local_modify_time'} = ctime($epoch_modify_time);
+			push(@loginLogIDs,$courseID);
+		} else {
+			$coursesData{$courseID}{'local_modify_time'} = 'no login.log';  #this should never be the case except for the model course
+			push(@noLoginLogIDs,$courseID);
+		}
+		if (-f "$coursesDir/$courseID/hide_directory") {
+			$coursesData{$courseID}{'status'} = 'hidden';
+		} else {	
+			$coursesData{$courseID}{'status'} = 'visible';	
+		}
+		$courseLabels{$courseID} = "$courseID  ($coursesData{$courseID}{'status'} :: $coursesData{$courseID}{'local_modify_time'}) ";
 	}
-	
+	if ($delete_listing_format eq 'last_login') {
+		@noLoginLogIDs = sort {lc($a) cmp lc ($b) } @noLoginLogIDs; #this should be an empty arrey except for the model course
+		@loginLogIDs = sort byLoginActivity @loginLogIDs;  # oldest first
+		@courseIDs = (@noLoginLogIDs,@loginLogIDs);
+	} else { # in this case we sort alphabetically
+		@courseIDs = sort {lc($a) cmp lc ($b) } @courseIDs;
+	}
+		
 	print CGI::h2("Delete Course");
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
+	my %list_labels = (
+								alphabetically => 'alphabetically', 
+								last_login => 'by last login date',
+								);
+	print CGI::p(
+		'Courses are listed either alphabetically or in order by the time of most recent login activity, oldest first.
+		To change the listing order check the mode you want and click "Refresh Listing".  The listing format is: Course_Name 
+		(status :: date/time of most recent login) where status is "hidden" or "visible".');
+
+	print CGI::table(
+			CGI::Tr({},
+			CGI::p("Select a listing format:"),
+			CGI::radio_group(-name=>'delete_listing_format',
+											-values=>['alphabetically', 'last_login'],
+											-default=>'alphabetically',
+											-labels=>\%list_labels,
+											),
+			),
+		);	
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course_refresh", -value=>"Refresh Listing"), 
+	  CGI::submit(-name=>"delete_course", -value=>"Delete Course"));	
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
+
 	print CGI::p("Select a course to delete.");
-	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Name:"),
@@ -1216,7 +1317,7 @@ sub delete_course_form {
 					-name => "delete_courseID",
 					-values => \@courseIDs,
 					-default => $delete_courseID,
-					-size => 10,
+					-size => 15,
 					-multiple => 0,
 					-labels => \%courseLabels,
 				),
@@ -1224,7 +1325,8 @@ sub delete_course_form {
 		),
 	);
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course", -value=>"Delete Course"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course_refresh", -value=>"Refresh Listing"), 
+	  CGI::submit(-name=>"delete_course", -value=>"Delete Course"));	
 	
 	print CGI::end_form();
 }
@@ -1370,33 +1472,88 @@ sub archive_course_form {
 	
 	my $archive_courseID     = $r->param("archive_courseID")     || "";
 	
+	my $coursesDir = $ce->{webworkDirs}->{courses};
 	my @courseIDs = listCourses($ce);
-	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive 
+#	@courseIDs    = sort {lc($a) cmp lc ($b) } @courseIDs; #make sort case insensitive
+	my $archive_listing_format   = $r->param("archive_listing_format"); 
+	unless (defined $archive_listing_format) {$archive_listing_format = 'alphabetically';}  #use the default
 	
-	my %courseLabels; # records... heh.
+#	my %courseLabels; # records... heh.
+#	foreach my $courseID (@courseIDs) {
+#		my $tempCE = new WeBWorK::CourseEnvironment({
+#			%WeBWorK::SeedCE,
+#			courseName => $courseID,
+#		});
+#		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+#	}
+	# Get and store last modify time for login.log for all courses. Also get visibility status.
+	my %courseLabels;
+	my @noLoginLogIDs = ();
+	my @loginLogIDs = ();
+
+	my ($loginLogFile, $epoch_modify_time, $courseDir);
 	foreach my $courseID (@courseIDs) {
-		my $tempCE = new WeBWorK::CourseEnvironment({
-			%WeBWorK::SeedCE,
-			courseName => $courseID,
-		});
-		$courseLabels{$courseID} = "$courseID (" . $tempCE->{dbLayoutName} . ")";
+		$loginLogFile = "$coursesDir/$courseID/logs/login.log";
+		if (-e $loginLogFile) {                 #this should always exist except for the model course
+			$epoch_modify_time = stat($loginLogFile)->mtime;
+			$coursesData{$courseID}{'epoch_modify_time'} = $epoch_modify_time;
+			$coursesData{$courseID}{'local_modify_time'} = ctime($epoch_modify_time);
+			push(@loginLogIDs,$courseID);
+		} else {
+			$coursesData{$courseID}{'local_modify_time'} = 'no login.log';  #this should never be the case except for the model course
+			push(@noLoginLogIDs,$courseID);
+		}
+		if (-f "$coursesDir/$courseID/hide_directory") {
+			$coursesData{$courseID}{'status'} = 'hidden';
+		} else {	
+			$coursesData{$courseID}{'status'} = 'visible';	
+		}
+		$courseLabels{$courseID} = "$courseID  ($coursesData{$courseID}{'status'} :: $coursesData{$courseID}{'local_modify_time'}) ";
+	}
+	if ($archive_listing_format eq 'last_login') {
+		@noLoginLogIDs = sort {lc($a) cmp lc ($b) } @noLoginLogIDs; #this should be an empty arrey except for the model course
+		@loginLogIDs = sort byLoginActivity @loginLogIDs;  # oldest first
+		@courseIDs = (@noLoginLogIDs,@loginLogIDs);
+	} else { # in this case we sort alphabetically
+		@courseIDs = sort {lc($a) cmp lc ($b) } @courseIDs;
 	}
 	
 	print CGI::h2("archive Course");
 	
 	print CGI::p(
-		"Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK
+		'Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK
 		courses directory. Before archiving, the course database is dumped into
-		a subdirectory of the course's DATA directory. Currently the archive
+		a subdirectory of the course\'s DATA directory. Currently the archive
 		facility is only available for mysql databases. It depends on the
-		mysqldump application."
+		mysqldump application.'
 	);
-	
+		print CGI::p(
+		'Courses are listed either alphabetically or in order by the time of most recent login activity, oldest first.
+		To change the listing order check the mode you want and click "Refresh Listing".  The listing format is: Course_Name 
+		(status :: date/time of most recent login) where status is "hidden" or "visible".');
+
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
+	my %list_labels = (
+								alphabetically => 'alphabetically', 
+								last_login => 'by last login date', 
+								);
+											
+	print CGI::table(
+			CGI::Tr({},
+			CGI::p("Select a listing format:"),
+			CGI::radio_group(-name=>'archive_listing_format',
+											-values=>['alphabetically', 'last_login'],
+											-default=>'alphabetically',
+											-labels=>\%list_labels,
+											),
+			),
+		);	
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course_refresh", -value=>"Refresh Listing"), 
+	  CGI::submit(-name=>"archive_course", -value=>"Archive Courses"));	
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p("Select a course to archive.");
+	print CGI::p("Select course(s) to archive.");
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
@@ -1406,7 +1563,7 @@ sub archive_course_form {
 					-name => "archive_courseIDs",
 					-values => \@courseIDs,
 					-default => $archive_courseID,
-					-size => 10,
+					-size => 15,
 					-multiple => 1,
 					-labels => \%courseLabels,
 				),
@@ -1426,7 +1583,8 @@ sub archive_course_form {
 		)
 	);
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course", -value=>"archive Course"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course_refresh", -value=>"Refresh Listing"), 
+	CGI::submit(-name=>"archive_course", -value=>"Archive Courses"));
 	
 	print CGI::end_form();
 }
@@ -1673,6 +1831,15 @@ sub do_archive_course {
 		courseName => $archive_courseID,
 	});
 	
+	# Remove course specific temp files before archiving
+	my $courseTempDir = $ce2->{courseDirs}{html_temp};
+	remove_tree("$courseTempDir");
+	# Remove the original default tmp directory if it exists 
+	my $orgDefaultCourseTempDir = "$ce2->{courseDirs}{html}/tmp";	
+	if (-d "$orgDefaultCourseTempDir") {
+		remove_tree("$orgDefaultCourseTempDir");
+	}
+
 	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
 	# below this line, we would grab values from getopt and put them in this hash
 	# but for now the hash can remain empty
@@ -2741,6 +2908,273 @@ sub edit_location_handler {
 	}
 }
 
+sub hide_inactive_course_form {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $coursesDir = $ce->{webworkDirs}->{courses};
+	my @courseIDs = listCourses($ce);
+	my $hide_listing_format   = $r->param("hide_listing_format");
+	unless (defined $hide_listing_format) {$hide_listing_format = 'last_login';}  #use the default
+#	warn "hide_listing_format is $hide_listing_format";
+	
+	# Get and store last modify time for login.log for all courses. Also get visibility status.
+	my %courseLabels;
+	my @noLoginLogIDs = ();
+	my @loginLogIDs = ();
+	my @hideCourseIDs = ();
+	my ($loginLogFile, $epoch_modify_time, $courseDir);
+	foreach my $courseID (@courseIDs) {
+		$loginLogFile = "$coursesDir/$courseID/logs/login.log";
+		if (-e $loginLogFile) {                 #this should always exist except for the model course
+			$epoch_modify_time = stat($loginLogFile)->mtime;
+			$coursesData{$courseID}{'epoch_modify_time'} = $epoch_modify_time;
+			$coursesData{$courseID}{'local_modify_time'} = ctime($epoch_modify_time);
+			push(@loginLogIDs,$courseID);
+		} else {
+			$coursesData{$courseID}{'local_modify_time'} = 'no login.log';  #this should never be the case except for the model course
+			push(@noLoginLogIDs,$courseID);
+		}
+		if (-f "$coursesDir/$courseID/hide_directory") {
+			$coursesData{$courseID}{'status'} = 'hidden';
+		} else {	
+			$coursesData{$courseID}{'status'} = 'visible';	
+		}
+		$courseLabels{$courseID} = "$courseID  ($coursesData{$courseID}{'status'} :: $coursesData{$courseID}{'local_modify_time'}) ";
+	}
+	if ($hide_listing_format eq 'last_login') {
+		@noLoginLogIDs = sort {lc($a) cmp lc ($b) } @noLoginLogIDs; #this should be an empty arrey except for the model course
+		@loginLogIDs = sort byLoginActivity @loginLogIDs;  # oldest first
+		@hideCourseIDs = (@noLoginLogIDs,@loginLogIDs);
+	} else { # in this case we sort alphabetically
+		@hideCourseIDs = sort {lc($a) cmp lc ($b) } @courseIDs;
+	}
+	
+	print CGI::h2("Hide Inactive courses");
+	
+		print CGI::p(  
+		 'Select the course(s) you want to hide (or unhide) and then click "Hide Courses" (or "Unhide Courses"). Hiding 
+		 a course that is already hidden does no harm (the action is skipped). Likewise unhiding a course that is 
+		 already visible does no harm (the action is skipped).  Hidden courses are still active but are not listed in 
+		 the list of WeBWorK courses on the opening page.  To access the course, an instructor or student must know the 
+		 full URL address for the course.'
+	);
+	
+	print CGI::p(
+		'Courses are listed either alphabetically or in order by the time of most recent login activity, oldest first.
+		To change the listing order check the mode you want and click "Refresh Listing".  The listing format is: 
+		Course_Name (status :: date/time of most recent login) where status is "hidden" or "visible".');
+		
+	
+	print CGI::start_form(-method=>"POST", -action=>$r->uri);
+
+	my %list_labels = (
+								alphabetically => 'alphabetically', 
+								last_login => 'by last login date', 
+								);
+											
+	print CGI::table(
+			CGI::Tr({},
+			CGI::p("Select a listing format:"),
+			CGI::radio_group(-name=>'hide_listing_format',
+											-values=>['alphabetically', 'last_login'],
+											-default=>'last_login',
+											-labels=>\%list_labels,
+											),
+			),
+		);							
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"hide_course_refresh", -value=>"Refresh Listing"), CGI::submit(-name=>"hide_course", -value=>"Hide Courses"),
+	CGI::submit(-name=>"unhide_course", -value=>"Unhide Courses"));
+	print $self->hidden_authen_fields;
+	print $self->hidden_fields("subDisplay");
+	
+	print CGI::p("Select course(s) to hide or unhide.");
+	
+	print CGI::table({class=>"FormLayout"},
+		CGI::Tr({},
+			CGI::td(
+				CGI::scrolling_list(
+					-name => "hide_courseIDs",
+					-values => \@hideCourseIDs,
+					-size => 15,
+					-multiple => 1,
+					-labels => \%courseLabels,
+				),
+			),
+			
+		),
+	);
+	
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"hide_course_refresh", -value=>"Refresh Listing"), CGI::submit(-name=>"hide_course", -value=>"Hide Courses"),
+	CGI::submit(-name=>"unhide_course", -value=>"Unhide Courses"));
+	
+	print CGI::end_form();
+}
+
+sub hide_course_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my @hide_courseIDs     = $r->param("hide_courseIDs");
+	@hide_courseIDs        = () unless @hide_courseIDs;
+	
+	my @errors;
+	
+	unless (@hide_courseIDs) {
+		push @errors, "You must specify a course name.";
+	} 
+	return @errors;
+}
+
+
+sub do_hide_inactive_course {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+    
+  my $coursesDir = $ce->{webworkDirs}->{courses};
+  
+	my $hide_courseID;
+	my @hide_courseIDs     = $r->param("hide_courseIDs");
+	@hide_courseIDs        = () unless @hide_courseIDs;
+
+  my $hideDirFileContent = 'Place a file named "hide_directory" in a course or other directory
+and it will not show up in the courses list on the WeBWorK home page.
+It will still appear in the Course Administration listing.';
+	my @succeeded_courses = ();
+	my $succeeded_count = 0;
+	my @failed_courses = ();
+	my $already_hidden_count = 0;
+	
+  foreach $hide_courseID (@hide_courseIDs) {
+  	my $hideDirFile = "$coursesDir/$hide_courseID/hide_directory";
+  	if (-f $hideDirFile) {
+  		$already_hidden_count++;
+  		next;
+  	} else {
+  		local *HIDEFILE;
+  		if (open (HIDEFILE, ">", $hideDirFile)) {  
+  			print HIDEFILE "$hideDirFileContent";
+  			close HIDEFILE;
+  			push @succeeded_courses,$hide_courseID;
+  			$succeeded_count++;
+  		} else {	
+  			push @failed_courses,$hide_courseID;
+  		}	
+  	}
+  }
+
+	if (@failed_courses) {
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("Errors occured while hiding the courses listed below when attempting to create the file hide_directory in the course's directory. 
+Check the ownership and permissions of the course's directory, e.g $coursesDir/$failed_courses[0]/"),
+			CGI::p("@failed_courses"),
+		);
+	} 
+	my $succeeded_message = '';
+	
+	if ($succeeded_count < 1 and $already_hidden_count > 0) {
+		$succeeded_message = "Except for possible errors listed above, all selected courses are already hidden.";
+	}	
+	
+	if ($succeeded_count) {
+		if ($succeeded_count < 6) {
+			$succeeded_message = "The following courses were successfully hidden: @succeeded_courses";
+		} else {
+			$succeeded_message = "$succeeded_count courses were successfully hidden.";
+		}
+	}
+	if ($succeeded_count or $already_hidden_count) {
+			print CGI::div({class=>"ResultsWithoutError"},
+			CGI::p("$succeeded_message"),
+		);
+	}
+}
+
+sub unhide_course_validate {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	#my $db = $r->db;
+	#my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+	
+	my @unhide_courseIDs     = $r->param("hide_courseIDs");
+	@unhide_courseIDs        = () unless @unhide_courseIDs;
+	
+	my @errors;
+	
+	unless (@unhide_courseIDs) {
+		push @errors, "You must specify a course name.";
+	} 
+	return @errors;
+}
+
+
+sub do_unhide_inactive_course {
+	my ($self) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+    
+  my $coursesDir = $ce->{webworkDirs}->{courses};
+  
+	my $unhide_courseID;
+	my @unhide_courseIDs     = $r->param("hide_courseIDs");
+	@unhide_courseIDs        = () unless @unhide_courseIDs;
+	
+	my @succeeded_courses = ();
+	my $succeeded_count = 0;
+	my @failed_courses = ();
+	my $already_visible_count = 0;
+
+  foreach $unhide_courseID (@unhide_courseIDs) {
+  	my $hideDirFile = "$coursesDir/$unhide_courseID/hide_directory";
+  	unless (-f $hideDirFile) {
+  		$already_visible_count++;
+  		next;
+  	} 
+  	remove_tree("$hideDirFile", {error => \my $err});
+  	if (@$err) {
+  		push @failed_courses,$unhide_courseID;
+    } else {
+  	push @succeeded_courses,$unhide_courseID;
+		$succeeded_count++;
+  	}
+  }
+  my $succeeded_message = '';
+  
+  if ($succeeded_count < 1 and $already_visible_count > 0) {
+		$succeeded_message = "Except for possible errors listed above, all selected courses are already unhidden.";
+	}	
+	
+	if ($succeeded_count) {
+		if ($succeeded_count < 6) {
+			$succeeded_message = "The following courses were successfully unhidden: @succeeded_courses";
+		} else {
+			$succeeded_message = "$succeeded_count courses were successfully unhidden.";
+		}
+	}
+	if ($succeeded_count or $already_visible_count) {
+		print CGI::div({class=>"ResultsWithoutError"},
+		CGI::p("$succeeded_message"),
+		);
+	}	
+	if (@failed_courses) {
+		print CGI::div({class=>"ResultsWithError"},
+			CGI::p("Errors occured while unhiding the courses listed below when attempting delete the file hide_directory in the course's directory. 
+Check the ownership and permissions of the course's directory, e.g $coursesDir/$failed_courses[0]/"),
+			CGI::p("@failed_courses"),
+		);
+	} 	
+}
+
+
+
 ################################################################################
 #   registration forms added by Mike Gage 5-5-2008
 ################################################################################
@@ -2777,9 +3211,6 @@ sub display_registration_form {
 	</table>
 	</center>
 	!;
-	
-
-
 }
 
 sub registration_form {
