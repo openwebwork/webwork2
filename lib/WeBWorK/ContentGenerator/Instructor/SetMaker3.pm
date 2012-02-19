@@ -158,8 +158,10 @@ sub body {
 				#'<p>In the target set you can drag problems to reorder them.<br/>The problem will be placed in front of the one you drop it on,<br/>or at the end of the list if you drop it on an empty space in the table.</p>',
 	
 	  	print '<div class="break"></div>';
-		print '<b>Libraries:</b><div id="library_list_box"><button class="button" id="load_problems" type="button">Load Problems</button></div>';
-		print '<div id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button></div>';
+	  	print '<table>';
+		print '<tr><td><b>Library directories:</b></td><td><span id="library_list_box"></span><button class="button" id="load_problems" type="button">Load Problems</button></td>';
+		print '<tr><td><b>Library search:</b></td><td><span id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button><span></td>';
+		print '</table>';
 		###########################################
 			      # Library repository controls
     	###########################################
