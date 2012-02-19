@@ -935,6 +935,7 @@ $pg{directories}{macrosPath} = [
    "$courseDirs{templates}/Library/macros/TCNJ",
    "$courseDirs{templates}/Library/macros/NAU",
    "$courseDirs{templates}/Library/macros/Dartmouth",
+   "$courseDirs{templates}/Library/macros/WHFreeman",
 ];
 
 # The applet search path. If a full URL is given, it is used unmodified. If an
