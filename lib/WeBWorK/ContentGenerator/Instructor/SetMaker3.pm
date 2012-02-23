@@ -98,7 +98,7 @@ sub head {
   print '<script src="/webwork2_files/js/jquery-ui-1.8.16.custom.min.js"></script>';
   print '<script src="/webwork2_files/js/ui.tabs.closable.min.js"></script>';
   
-  #print '<script src="/webwork2_files/js/dnd.js"></script>';
+  print '<script src="/webwork2_files/js/dnd.js"></script>';
   #print '<script src="/webwork2_files/js/problem_grid.js"></script>';
   #print '<script src="/webwork2_files/js/form_builder.js"></script>';
   print '<script src="/webwork2_files/js/library_browser.js"></script>';
@@ -175,11 +175,12 @@ sub body {
 	      			'<button type="button" id="create_set">Create Set</button>',
 	      		'</div>';
 	      print '<div id="problem_sets_container">';
-	    	print '<h1>Target Sets</h1>';
+	    	print '<b>Target Sets</b>';
 			print '<ul id="my_sets_list">';
 				print '<li id="new_problem_set">New Problem Set</li>';
 		    print '</ul>';
 		  print '</div>';
+		  print '<div id="size_slider"><p>||</p></div>';
 		  print '<div id="problems_container">';
 		    #List of tabs
 		  	print '<ul>',

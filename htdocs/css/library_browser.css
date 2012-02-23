@@ -87,7 +87,7 @@ body {
 }
 
 #app_box .drophover{
-	background:#FF0000;
+	background:#00FF00;
 }
 #app_box .ww_selected{
 	background: gray;
@@ -137,6 +137,6 @@ body {
   
 }
 
-#app_box #problem_sets_container:hover{
-	width:250px;
-}
+//#app_box #problem_sets_container:hover{
+//	width:250px;
+//}
