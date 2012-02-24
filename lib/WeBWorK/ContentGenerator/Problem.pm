@@ -1177,8 +1177,10 @@ sub output_score_summary{
 	my $set = $self->{set};
 	my $pg = $self->{pg};
 	my $scoreRecordedMessage = "";
-	unless(defined $self->{scoreRecordedMessage}){
+	if  (defined $self->{scoreRecordedMessage}) {
 		$scoreRecordedMessage = $self->{scoreRecordedMessage};
+	} else {
+		$scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
 	}
 	my $submitAnswers = $self->{submitAnswers};
 	
