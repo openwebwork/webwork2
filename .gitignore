@@ -1,8 +1,0 @@
-.svn
-.DS_Store
-.*
-htdocs/tmp/*
-tmp/*
-logs/*
-conf/*.conf
-conf/*.apache2-config

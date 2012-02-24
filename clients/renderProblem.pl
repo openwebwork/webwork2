@@ -59,15 +59,15 @@ use MIME::Base64 qw( encode_base64 decode_base64);
  use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; 
  
  # Command line for displaying the temporary file in a browser.
- #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
-  use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
+ # use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
+   use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
 
  ############################################################
  
  my $use_site;
  #$use_site = 'test_webwork';    # select a rendering site 
- $use_site = 'local';           # select a rendering site 
- #$use_site = 'rochester_test';  # select a rendering site 
+ #$use_site = 'local';           # select a rendering site 
+ $use_site = 'rochester_test';  # select a rendering site 
  
  
  ############################################################
@@ -142,24 +142,44 @@ our $UNIT_TESTS_ON             = 0;
 # get credentials
 ####################################################
 
-my $credential_path = ".ww_credentials";
-eval{require $credential_path};
-if ($@ ) {
-print STDERR <<EOF;
-Can't find file $credential_path:
-Place a file with that name and containing this information in the current directory
+
+my $credential_path;
+my @path_list = ('.ww_credentials', '/Users/gage/.ww_credentials', '/Users/gage/ww_session_credentials');
+foreach my $path (@path_list) {
+	if (-r "$path" ) {
+		$credential_path = $path;
+		last;
+	}
+}
+unless ( $credential_path ) {
+	die <<EOF;
+Can't find path for credentials. Looked in @path_list.
+Place a credential file containing the following information at one of the locations above.
 %credentials = (
         userID          => "my login name for the webwork course",
         password        => "my password ",
         courseID        => "the name of the webwork course",
-)
+);
+1;
 ---------------------------------------------------------
+EOF
+}
+
+eval{require $credential_path};
+if ($@  or not defined %credentials) {
+
+print STDERR <<EOF;
+
+The credentials file should contain this:
+%credentials = (
+        userID          => "my login name for the webwork course",
+        password        => "my password ",
+        courseID        => "the name of the webwork course",
+);
+1;
 EOF
 die;
 }
-
-#print STDERR  "credentials: ", join(" | ", %credentials), "\n";
-
 
 
 use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
@@ -185,12 +205,7 @@ our $rh_result;
 {
 	local($/);
 	$source   = <>; #slurp standard input
-<<<<<<< HEAD
 	#print $source;  # return input to BBedit
-=======
-	print $source;  # return input to BBedit
->>>>>>> turn_off_warnings_on_webservice
-
 }
 ############################################
 # Build client
@@ -240,46 +255,6 @@ system(DISPLAY_COMMAND().TEMPOUTPUTFILE());
 ##################################################
 # end input/output section
 ##################################################
-sub pretty_print_rh { 
-    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-	my $rh = shift;
-	my $indent = shift || 0;
-	my $out = "";
-	my $type = ref($rh);
-
-	if (defined($type) and $type) {
-		$out .= " type = $type; ";
-	} elsif (! defined($rh )) {
-		$out .= " type = UNDEFINED; ";
-	}
-	return $out." " unless defined($rh);
-	
-	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
-	    $out .= "{\n";
-	    $indent++;
- 		foreach my $key (sort keys %{$rh})  {
- 			$out .= "  "x$indent."$key => " . pretty_print_rh( $rh->{$key}, $indent ) . "\n";
- 		}
- 		$indent--;
- 		$out .= "\n"."  "x$indent."}\n";
-
- 	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
- 	    $out .= " ( ";
- 		foreach my $elem ( @{$rh} )  {
- 		 	$out .= pretty_print_rh($elem, $indent);
- 		
- 		}
- 		$out .=  " ) \n";
-	} elsif ( ref($rh) =~ /SCALAR/ ) {
-		$out .= "scalar reference ". ${$rh};
-	} elsif ( ref($rh) =~/Base64/ ) {
-		$out .= "base64 reference " .$$rh;
-	} else {
-		$out .=  $rh;
-	}
-	
-	return $out." ";
-}
 
 sub pretty_print_rh { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
@@ -322,8 +297,5 @@ sub pretty_print_rh {
 	return $out." ";
 }
 
-<<<<<<< HEAD
 
-=======
->>>>>>> turn_off_warnings_on_webservice
 1;
