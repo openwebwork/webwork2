@@ -20,7 +20,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::ProblemSetList - Entry point for Set-specific
+WeBWorK::ContentGenerator::Instructor::ProblemSetList2 - Entry point for Set-specific
 data editing/viewing
 
 =cut
@@ -372,7 +372,7 @@ sub initialize {
 	$self->{actionID} = $actionID;
 	if ($actionID) {
 		unless (grep { $_ eq $actionID } @{ VIEW_FORMS() }, @{ EDIT_FORMS() }, @{ EXPORT_FORMS() }) {
-			die "Action $actionID not found";
+			die $r->maketext("Action [_1] not found", $actionID);
 		}
 		# Check permissions
 		if (not FORM_PERMS()->{$actionID} or $authz->hasPermissions($user, FORM_PERMS()->{$actionID})) {
@@ -659,24 +659,8 @@ sub getTableParams {
 sub filter_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	#return CGI::table({}, CGI::Tr({-valign=>"top"},
-	#	CGI::td({}, 
+
 	return join("", 
-			# "Show ",
-			# CGI::popup_menu(
-				# -name => "action.filter.scope",
-				# -values => [qw(all none selected match_ids visible unvisible)],
-				# -default => $actionParams{"action.filter.scope"}->[0] || "match_ids",
-				# -labels => {
-					# all => "all sets",
-					# none => "no sets",
-					# selected => "sets checked below",
-					# visible => "sets visible to students",
-					# unvisible => "sets hidden from students", 
-					# match_ids => "sets with matching set IDs:",
-				# },
-				# -onchange => $onChange,
-			# ),
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
 				-id=>"filter_select",
@@ -709,40 +693,8 @@ sub filter_form {
 					-width => "50",
 					-onchange => $onChange,
 				}
-			), CGI::span({-id=>"filter_err_msg", -class=>"ResultsWithError"}, "Please enter in a value to match in the filter field."),
+			), CGI::span({-id=>"filter_err_msg", -class=>"ResultsWithError"}, $r->maketext("Please enter in a value to match in the filter field.")),
 			),
-			# CGI::textfield(
-				# -name => "action.filter.set_ids",
-				# -value => $actionParams{"action.filter.set_ids"}->[0] || "",,
-				# -width => "50",
-				# -onchange => $onChange,
-			# ),
-			# " (separate multiple IDs with commas)",
-#			"Open dates: ",
-#			CGI::popup_menu(
-#				-name => "action.filter.open_date",
-#				-values => [ keys %{ $self->{open_dates} } ],
-#				-default => $actionParams{"action.filter.open_date"}->[0] || "",
-#				-labels => { $self->menuLabels($self->{open_dates}) },
-#				-onchange => $onChange,
-#			),
-#			" Due dates: ",
-#			CGI::popup_menu(
-#				-name => "action.filter.due_date",
-#				-values => [ keys %{ $self->{due_dates} } ],
-#				-default => $actionParams{"action.filter.due_date"}->[0] || "",
-#				-labels => { $self->menuLabels($self->{due_dates}) },
-#				-onchange => $onChange,
-#			),
-#			" Answer dates: ",
-#			CGI::popup_menu(
-#				-name => "action.filter.answer_date",
-#				-values => [ keys %{ $self->{answer_dates} } ],
-#				-default => $actionParams{"action.filter.answer_date"}->[0] || "",
-#				-labels => { $self->menuLabels($self->{answer_dates}) },
-#				-onchange => $onChange,
-#			),
-			
 	);
 }
 
@@ -799,22 +751,6 @@ sub sort_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 	return join ("",
-		# "Primary sort: ",
-		# CGI::popup_menu(
-			# -name => "action.sort.primary",
-			# -values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
-			# -default => $actionParams{"action.sort.primary"}->[0] || "due_date",
-			# -labels => {
-				# set_id		=> "Set Name",
-				# set_header 	=> "Set Header",
-				# hardcopy_header	=> "Hardcopy Header",
-				# open_date	=> "Open Date",
-				# due_date	=> "Due Date",
-				# answer_date	=> "Answer Date",
-				# visible	=> "Visibility",
-			# },
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_1",
@@ -836,23 +772,6 @@ sub sort_form {
 			}
 		),
 		CGI::br(),
-		# " Secondary sort: ",
-		# CGI::popup_menu(
-			# -name => "action.sort.secondary",
-			# -values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
-			# -default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
-			# -labels => {
-				# set_id		=> "Set Name",
-				# set_header 	=> "Set Header",
-				# hardcopy_header	=> "Hardcopy Header",
-				# open_date	=> "Open Date",
-				# due_date	=> "Due Date",
-				# answer_date	=> "Answer Date",
-				# visible	=> "Visibility",
-			# },
-			# -onchange => $onChange,
-		# ),
-		# ".",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_2",
@@ -887,13 +806,13 @@ sub sort_handler {
 	$self->{secondarySortField} = $secondary;
 
 	my %names = (
-		set_id		=> "Set Name",
-		set_header	=> "Set Header",
-		hardcopy_header	=> "Hardcopy Header",
-		open_date	=> "Open Date",
-		due_date	=> "Due Date",
-		answer_date	=> "Answer Date",
-		visible	=> "Visibility",
+		set_id		=> $r->maketext("Set Name"),
+		set_header	=> $r->maketext("Set Header"),
+		hardcopy_header	=> $r->maketext("Hardcopy Header"),
+		open_date	=> $r->maketext("Open Date"),
+		due_date	=> $r->maketext("Due Date"),
+		answer_date	=> $r->maketext("Answer Date"),
+		visible	=> $r->maketext("Visibility"),
 	);
 	
 	return $r->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary});
@@ -905,18 +824,6 @@ sub edit_form {
 	my $r = $self->r;
 
 	return join("",
-		# "Edit ",
-		# CGI::popup_menu(
-			# -name => "action.edit.scope",
-			# -values => [qw(all visible selected)],
-			# -default => $actionParams{"action.edit.scope"}->[0] || "selected",
-			# -labels => {
-				# all => "all sets",
-				# visible => "visible sets",
-				# selected => "selected sets",
-			# },
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"edit_select",
@@ -963,19 +870,6 @@ sub publish_form {
 	my $r = $self->r;
 
 	return join ("",
-		# "Make ",
-		# CGI::popup_menu(
-			# -name => "action.publish.scope",
-			# -values => [ qw(none all selected) ],
-			# -default => $actionParams{"action.publish.scope"}->[0] || "selected",
-			# -labels => {
-				# none => "",
-				# all => "all sets",
-# #				visible => "visible sets",
-				# selected => "selected sets",
-			# },
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"publish_filter_select",
@@ -994,17 +888,6 @@ sub publish_form {
 			}
 		),
 		CGI::br(),
-		# CGI::popup_menu(
-			# -name => "action.publish.value",
-			# -values => [ 0, 1 ],
-			# -default => $actionParams{"action.publish.value"}->[0] || "1",
-			# -labels => {
-				# 0 => "hidden",
-				# 1 => "visible",
-			# },
-			# -onchange => $onChange,
-		# ),
-		# " for students.",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"publish_visibility_select",
@@ -1034,7 +917,7 @@ sub publish_handler {
 	my $scope = $actionParams->{"action.publish.scope"}->[0];
 	my $value = $actionParams->{"action.publish.value"}->[0];
 
-	my $verb = $value ? "made visible for" : "hidden from";
+	my $verb = $value ? $r->maketext("made visible for") : $r->maketext("hidden from");
 	
 	my @setIDs;
 	
@@ -1065,19 +948,6 @@ sub enable_reduced_scoring_form {
 	my $r = $self->r;
 
 	return join ("",
-		# "Make ",
-		# CGI::popup_menu(
-			# -name => "action.enable_reduced_scoring.scope",
-			# -values => [ qw(none all selected) ],
-			# -default => $actionParams{"action.enable_reduced_scoring.scope"}->[0] || "selected",
-			# -labels => {
-				# none => "",
-				# all => "all sets",
-# #				visible => "visible sets",
-				# selected => "selected sets",
-			# },
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"reduced_scoring_filter_select",
@@ -1096,17 +966,6 @@ sub enable_reduced_scoring_form {
 			}
 		),
 		CGI::br(),
-		# CGI::popup_menu(
-			# -name => "action.enable_reduced_scoring.value",
-			# -values => [ 0, 1 ],
-			# -default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "1",
-			# -labels => {
-				# 0 => "disable",
-				# 1 => "enable",
-			# },
-			# -onchange => $onChange,
-		# ),
-		# " reduced sccoring.",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"reduced_scoring_enable_disable_select",
@@ -1136,7 +995,7 @@ sub enable_reduced_scoring_handler {
 	my $scope = $actionParams->{"action.enable_reduced_scoring.scope"}->[0];
 	my $value = $actionParams->{"action.enable_reduced_scoring.value"}->[0];
 
-	my $verb = $value ? "enabled" : "disabled";
+	my $verb = $value ? $r->maketext("enabled") : $r->maketext("disabled");
 	
 	my @setIDs;
 	
@@ -1168,18 +1027,6 @@ sub score_form {
 	my $r = $self->r;
 
 	return join ("",
-		# "Score ",
-		# CGI::popup_menu(
-			# -name => "action.score.scope",
-			# -values => [qw(none all selected)],
-			# -default => $actionParams{"action.score.scope"}->[0] || "none",
-			# -labels => {
-				# none => "no sets.",
-				# all => "all sets.",
-				# selected => "selected sets.",
-			# },
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"score_select",
@@ -1241,21 +1088,6 @@ sub delete_form {
 	my $r = $self->r;
 
 	return join("",
-		# CGI::div({class=>"ResultsWithError"}, 
-			# "Delete ",
-			# CGI::popup_menu(
-				# -name => "action.delete.scope",
-				# -values => [qw(none selected)],
-				# -default => "none", #  don't make it easy to delete # $actionParams{"action.delete.scope"}->[0] || "none",
-				# -labels => {
-					# none => "no sets.",
-					# #visible => "visible sets.",
-					# selected => "selected sets.",
-				# },
-				# -onchange => $onChange,
-			# ),
-			# CGI::em(" Deletion destroys all set-related data and is not undoable!"),
-		# )
 		CGI::span({-class=>"ResultsWithError"}, CGI::em($r->maketext("Warning: Deletion destroys all user-related data and is not undoable!"))),CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1315,13 +1147,6 @@ sub create_form {
 	my $r      = $self->r;
 	
 	return join("",
-		# "Create a new set named: ", 
-		# CGI::textfield(
-			# -name => "action.create.name",
-			# -value => $actionParams{"action.create.name"}->[0] || "",
-			# -width => "50",
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"create_text",
@@ -1334,17 +1159,6 @@ sub create_form {
 			}
 		),
 		CGI::br(),
-		# " as ",
-		# CGI::popup_menu(
-			# -name => "action.create.type",
-			# -values => [qw(empty copy)],
-			# -default => $actionParams{"action.create.type"}->[0] || "empty",
-			# -labels => {
-				# empty => "a new empty set.",
-				# copy => "a duplicate of the first selected set.",
-			# },
-			# -onchange => $onChange,
-		# );
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"create_select",
@@ -1456,17 +1270,6 @@ sub import_form {
 			);
 	
 	return join(" ",
-		# "Import ",
-		# CGI::popup_menu(
-			# -name => "action.import.number",
-			# -values => [ 1, 8 ],
-			# -default => $actionParams{"action.import.number"}->[0] || "1",
-			# -labels => {
-				# 1 => "a single set",
-				# 8 => "multiple sets",
-			# },
-			# -onchange => "$onChange;$importScript",
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_amt_select",
@@ -1483,15 +1286,6 @@ sub import_form {
 			}
 		),
 		CGI::br(),
-		# " from ", # set definition file(s) ",
-		# CGI::popup_menu(
-			# -name => "action.import.source",
-			# -values => [ "", $self->getDefList() ],
-			# -labels => { "" => "the following file(s)" },
-			# -default => $actionParams{"action.import.source"}->[0] || "",
-			# -size => $actionParams{"action.import.number"}->[0] || "1",
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_source_select",
@@ -1507,13 +1301,6 @@ sub import_form {
 			-label_attr=>{-id=>"import_source_select_label"}
 		),
 		CGI::br(),
-		# " with set name(s): ",
-		# CGI::textfield(
-			# -name => "action.import.name",
-			# -value => $actionParams{"action.import.name"}->[0] || "",
-			# -width => "50",
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"import_text",
@@ -1528,17 +1315,6 @@ sub import_form {
 		CGI::br(),
 		($authz->hasPermissions($user, "assign_problem_sets")) 
 			?
-			# "assigning this set to " .
-			# CGI::popup_menu(
-				# -name => "action.import.assign",
-				# -value => [qw(all none)],
-				# -default => $actionParams{"action.import.assign"}->[0] || "none",
-				# -labels => {
-					# all => "all current users.",
-					# none => "no users.",
-				# },
-				# -onchange => $onChange,
-			# )
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
 				-id=>"import_users_select",
@@ -1586,18 +1362,6 @@ sub export_form {
 	my $r = $self->r;
 
 	return join("",
-		# "Export ",
-		# CGI::popup_menu(
-			# -name => "action.export.scope",
-			# -values => [qw(all visible selected)],
-			# -default => $actionParams{"action.export.scope"}->[0] || "visible",
-			# -labels => {
-				# all => "all sets",
-				# visible => "visible sets",
-				# selected => "selected sets",
-			# },
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"export_select",
@@ -1758,20 +1522,20 @@ sub saveEdit_handler {
 		my $curr_time = time;
 		my $seconds_per_year = 31_556_926;
 		my $cutoff = $curr_time + $seconds_per_year*10;
-		return CGI::div({class=>'ResultsWithError'}, "Error: open date cannot be more than 10 years from now in set $setID")
+		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->open_date > $cutoff;
-		return CGI::div({class=>'ResultsWithError'}, "Error: due date cannot be more than 10 years from now in set $setID")
+		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: due date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->due_date > $cutoff;
-		return CGI::div({class=>'ResultsWithError'}, "Error: answer date cannot be more than 10 years from now in set $setID")
+		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->answer_date > $cutoff;
 		
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		if ($Set->open_date > $Set->due_date)  {
-			return CGI::div({class=>'ResultsWithError'}, "Error: Due date must come after open date in set $setID");
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Due date must come after open date in set [_1]", $setID));
 		}
 		if ($Set->due_date > $Set->answer_date) {
-			return CGI::div({class=>'ResultsWithError'}, "Error: Answer date must come after due date in set $setID");
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Answer date must come after due date in set [_1]", $setID));
 		}
 		
 		$db->putGlobalSet($Set);
@@ -1799,13 +1563,6 @@ sub duplicate_form {
 	return "" unless @visible_sets == 1;
 	
 	return join ("", 
-		# "Duplicate this set and name it: ", 
-		# CGI::textfield(
-			# -name => "action.duplicate.name",
-			# -value => $actionParams{"action.duplicate.name"}->[0] || "",
-			# -width => "50",
-			# -onchange => $onChange,
-		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"duplicate_text",
@@ -1863,22 +1620,26 @@ sub bySetID         { $a->set_id         cmp $b->set_id         }
 #FIXME  eventually we may be able to remove these checks, if we can trust 
 # that the dates are always defined
 # dates which are the empty string '' or undefined  are treated as 0
-sub byOpenDate      { my $result = eval{( $a->open_date || 0 )      <=> ( $b->open_date || 0 ) };
+sub byOpenDate      {
+					  my $result = eval{( $a->open_date || 0 )      <=> ( $b->open_date || 0 ) };
                       return $result unless $@;
                       warn "Open date not correctly defined.";
                       return 0;
 }
-sub byDueDate       { my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
+sub byDueDate       { 
+					  my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
                       return $result unless $@;
                       warn "Due date not correctly defined.";
                       return 0;
 }
-sub byAnswerDate    { my $result = eval{( $a->answer_date || 0)    <=> ( $b->answer_date || 0 )  };    
+sub byAnswerDate    { 
+					  my $result = eval{( $a->answer_date || 0)    <=> ( $b->answer_date || 0 )  };    
                       return $result unless $@;
                       warn "Answer date not correctly defined.";
                       return 0;
 }
-sub byVisible     { my $result = eval{$a->visible      cmp $b->visible   };      
+sub byVisible     {   
+					  my $result = eval{$a->visible      cmp $b->visible   };      
                       return $result unless $@;
                       warn "Visibility status not correctly defined.";
                       return 0;
@@ -1918,7 +1679,7 @@ sub importSetsFromDef {
 
 	# FIXME: do we really want everything to fail on one bad file name?
 	foreach my $fileName (@setDefFiles) {
-		die "won't be able to read from file $dir/$fileName: does it exist? is it readable?"
+		die $r->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
 			unless -r "$dir/$fileName";
 	}
 
@@ -1984,7 +1745,7 @@ sub importSetsFromDef {
 
 		#create the set
 		eval {$db->addGlobalSet($newSetRecord)};
-		die "addGlobalSet $setName in ProblemSetList:  $@" if $@;
+		die $r->maketext("addGlobalSet [_1] in ProblemSetList:  [_2]", $setName, $@) if $@;
 
 		#do we need to add locations to the set_locations table?
 		if ( $restrictIP ne 'No' && $restrictLoc ) {
@@ -1994,18 +1755,13 @@ sub importSetsFromDef {
 					$newSetLocation->set_id( $setName );
 					$newSetLocation->location_id( $restrictLoc );
 					eval {$db->addGlobalSetLocation($newSetLocation)};
-					warn("error adding set location $restrictLoc " .
-					     "for set $setName: $@") if $@;
+					warn($r->maketext("error adding set location [_1] for set [_2]: [_3]", $restrictLoc, $setName, $@)) if $@;
 				} else {
 					# this should never happen.
-					warn("input set location $restrictLoc" .
-					     " already exists for set " . 
-					     "$setName.\n");
+					warn($r->maketext("input set location [_1] already exists for set [_2].", $restrictLoc, $setName)."\n");
 				}
 			} else { 
-				warn("restriction location $restrictLoc " .
-				     "does not exist.  IP restrictions have " .
-				     "been ignored.\n");
+				warn($r->maketext("restriction location [_1] does not exist.  IP restrictions have been ignored.", $restrictLoc)."\n");
 				$newSetRecord->restrict_ip('No');
 				$newSetRecord->relax_restrict_ip('No');
 				eval { $db->putGlobalSet($newSetRecord) };
@@ -2048,6 +1804,8 @@ sub readSetDef {
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
 
 	my $setName = '';
+	
+	my $r = $self->r;
 
 	if ($fileName =~ m|^set([.\w-]+)\.def$|) {
 		$setName = $1;
@@ -2140,7 +1898,7 @@ sub readSetDef {
 			} elsif ($item eq 'problemList') {
 				last;
 			} else {
-				warn "readSetDef error, can't read the line: ||$line||";
+				warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
 			}
 		}
 
@@ -2150,7 +1908,7 @@ sub readSetDef {
 		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
 	
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn "The open date: $openDate, due date: $dueDate, and answer date: $answerDate must be defined and in chronological order.";
+			warn $r->maketext("The open date: [_1], due date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
 		}
 
 		# Check header file names
@@ -2167,26 +1925,21 @@ sub readSetDef {
 		# check that the values for hideWork and hideScore are valid
 		if ( $hideScore ne 'N' && $hideScore ne 'Y' && 
 		     $hideScore ne 'BeforeAnswerDate' ) {
-			warn("The value $hideScore for the hideScore option " .
-			     "is not valid; it will be replaced with 'N'.\n");
+			warn($r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.", $hideScore)."\n");
 			$hideScore = 'N';
 		}
 		if ( $hideWork ne 'N' && $hideWork ne 'Y' && 
 		     $hideWork ne 'BeforeAnswerDate' ) {
-			warn("The value $hideWork for the hideWork option " .
-			     "is not valid; it will be replaced with 'N'.\n");
+			warn($r->maketext("The value [_1] for the hideWork option is not valid; it will be replaced with 'N'.", $hideWork)."\n");
 			$hideWork = 'N';
 		}
 		if ( $timeCap ne '0' && $timeCap ne '1' ) {
-			warn("The value $timeCap for the capTimeLimit option " .
-			     "is not valid; it will be replaced with '0'.\n");
+			warn($r->maketext("The value [_1] for the capTimeLimit option is not valid; it will be replaced with '0'.", $timeCap)."\n");
 			$timeCap = '0';
 		}
 		if ( $restrictIP ne 'No' && $restrictIP ne 'DenyFrom' &&
 		     $restrictIP ne 'RestrictTo' ) {
-			warn("The value $restrictIP for the restrictIP " .
-			     "option is not valid; it will be replaced " . 
-			     "with 'No'.\n");
+			warn($r->maketext("The value [_1] for the restrictIP option is not valid; it will be replaced with 'No'.", $restrictIP)."\n");
 			$restrictIP = 'No';
 			$restrictLoc = '';
 			$relaxRestrictIP = 'No';
@@ -2194,9 +1947,7 @@ sub readSetDef {
 		if ( $relaxRestrictIP ne 'No' && 
 		     $relaxRestrictIP ne 'AfterAnswerDate' &&
 		     $relaxRestrictIP ne 'AfterVersionAnswerDate' ) {
-			warn("The value $relaxRestrictIP for the " .
-			     "relaxRestrictIP option is not valid; it will " . 
-			     "be replaced with 'No'.\n");
+			warn($r->maketext("The value [_1] for the relaxRestrictIP option is not valid; it will be replaced with 'No'.", $relaxRestrictIP)."\n");
 			$relaxRestrictIP = 'No';
 		}
 		# to verify that restrictLoc is valid requires a database
@@ -2266,7 +2017,7 @@ sub readSetDef {
 		 $relaxRestrictIP,
 		);
 	} else {
-		warn "Can't open file $filePath\n";
+		warn $r->maketext("Can't open file [_1]", $filePath)."\n";
 	}
 }
 
@@ -2287,14 +2038,14 @@ SET:	foreach my $set (keys %filenames) {
 		# files can be exported to sub directories but not parent directories
 		if ($fileName =~ /\.\./) {
 			push @skipped, $set;
-			$reason{$set} = "Illegal filename contains '..'";
+			$reason{$set} = $r->maketext("Illegal filename contains '..'");
 			next SET;
 		}
 
 		my $setRecord = $db->getGlobalSet($set);
 		unless (defined $setRecord) {
 			push @skipped, $set;
-			$reason{$set} = "No record found.";
+			$reason{$set} = $r->maketext("No record found.");
 			next SET;
 		}
 		my $filePath = $ce->{courseDirs}->{templates} . '/' . $fileName;
@@ -2302,7 +2053,7 @@ SET:	foreach my $set (keys %filenames) {
 		# back up existing file
 		if(-e $filePath) {
 			rename($filePath, "$filePath.bak") or 
-				$reason{$set} = "Existing file $filePath could not be backed up and was lost.";
+				$reason{$set} = $r->maketext("Existing file [_1] could not be backed up and was lost.", $filePath);
 		}
 		
 		my $openDate     = $self->formatDateTime($setRecord->open_date);
@@ -2318,7 +2069,7 @@ SET:	foreach my $set (keys %filenames) {
 			my $problemRecord = $db->getGlobalProblem($set, $prob); # checked
 			unless (defined $problemRecord) {
 				push @skipped, $set;
-				$reason{$set} = "No record found for problem $prob.";
+				$reason{$set} = $r->maketext("No record found for problem [_1].", $prob);
 				next SET;
 			}
 			my $source_file   = $problemRecord->source_file();
@@ -2388,7 +2139,7 @@ EOF
 		$filePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $filePath);
 		eval {
 			local *SETDEF;
-			open SETDEF, ">$filePath" or die "Failed to open $filePath";
+			open SETDEF, ">$filePath" or die $r->maketext("Failed to open [_1]", $filePath);
 			print SETDEF $fileContents;
 			close SETDEF;
 		};
@@ -2428,12 +2179,6 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "filelist") {
-		# return CGI::popup_menu({
-			# name => $fieldName,
-			# value => [ sort keys %$headerFiles ],
-			# labels => $headerFiles,
-			# default => $value || 0,
-		# });
 		return WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>$fieldName."_id",
@@ -2461,13 +2206,6 @@ sub fieldEditHTML {
 		if (!$matched and exists $synonyms->{"*"}) {
 			$value = $synonyms->{"*"};
 		}
-		
-		# return CGI::popup_menu({
-			# name => $fieldName, 
-			# values => [keys %$items],
-			# default => $value,
-			# labels => $items,
-		# });
 		
 		return WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -2529,7 +2267,7 @@ sub recordEditHTML {
 	
         my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));
-	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
+	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list2', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
         my $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
 	
@@ -2692,9 +2430,9 @@ sub printTableHTML {
 
 	# print the table
 	if ($editMode or $exportMode) {
-		print CGI::start_table({-class=>"set_table", -summary=>"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
+		print CGI::start_table({-class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	} else {
-		print CGI::start_table({-border=>1, -class=>"set_table", -summary=>"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
+		print CGI::start_table({-border=>1, -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") }); #"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	}
 	
 	print CGI::caption($r->maketext("Set List"));
