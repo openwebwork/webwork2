@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2011-12-20 11:29-0500\n"
+"PO-Revision-Date: 2011-12-29 12:35-0500\n"
 "Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
 "Language-Team: Webwork Turkish language team <Ben Walter <benwalt@gmail.com>>\n"
 "MIME-Version: 1.0\n"
@@ -54,65 +54,57 @@ msgstr "%1 kullanıcı %2/%3 dosyasına aktarıldı."
 msgid "%1 users replaced, %2 users added, %3 users skipped. Skipped users: (%4)"
 msgstr "%1 kullanıcı değiştirildi, %2 kullanıcı eklendi, %3 kullanıcı atlandı. Atlanan kullanıcılar: (%4)"
 
+#
 #. (int($answerScore*100)
 #: ContentGenerator/Problem.pm:265
-#, fuzzy
 msgid "%1% correct"
 msgstr "%1% doğru"
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:171
-#, fuzzy
 msgid "%1's Current Address"
 msgstr "%1 için Mevcut Adres"
 
 #
 #. ($user_name)
 #: ContentGenerator/Options.pm:126
-#, fuzzy
 msgid "%1's Current Password"
 msgstr "%1 için Mevcut Şifre"
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:175
-#, fuzzy
 msgid "%1's New Address"
 msgstr "%1 için Yeni Adres"
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:130
-#, fuzzy
 msgid "%1's New Password"
 msgstr "%1 için Yeni Şifre"
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:101
-#, fuzzy
 msgid "%1's new password cannot be blank."
 msgstr "%1 için yeni şifre boş bırakılamaz."
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:84
-#, fuzzy
 msgid "%1's password has been changed."
 msgstr "%1 adlı kullanıcının şifresi değiştirildi."
 
 #
 #. ($setID, $problemID)
 #: ContentGenerator/Problem.pm:884
-#, fuzzy
 msgid "%1: Problem %2"
 msgstr "%1: Soru %2."
 
 #
 #. ($numBlanks)
 #: ContentGenerator/Problem.pm:319
-#, fuzzy
 msgid "%quant(%1,of the questions remains,of the questions remain) unanswered."
 msgstr "Soruların %1 tanesi yanıtsız bırakıldı."
 
@@ -141,7 +133,6 @@ msgstr "Dışa aktarımı iptal et"
 #
 #. ($eUserID)
 #: ContentGenerator.pm:848
-#, fuzzy
 msgid "Acting as %1. "
 msgstr "%1 gibi davranılıyor."
 
@@ -218,7 +209,6 @@ msgstr "Ödev verilmiş setler"
 #
 #. ($fully)
 #: ContentGenerator/Problem.pm:315
-#, fuzzy
 msgid "At least one of the answers above is NOT %1correct."
 msgstr "Yanıtların en az bir tanesi %1doğru değil."
 
@@ -311,7 +301,6 @@ msgstr "Yorum"
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:134
 #: ContentGenerator/Options.pm:95
-#, fuzzy
 msgid "Confirm %1's New Password"
 msgstr "%1 için Şifre Onayı"
 
@@ -328,14 +317,12 @@ msgstr "Doğru yanıt"
 #
 #. ($e_user_name,$@)
 #: ContentGenerator/Options.pm:80
-#, fuzzy
 msgid "Couldn't change %1's password: %2"
 msgstr "%1 adlı kullanıcının şifresi değiştirilemedi: %2"
 
 #
 #. ($@)
 #: ContentGenerator/Options.pm:153
-#, fuzzy
 msgid "Couldn't change your email address: %1"
 msgstr "E-posta adresiniz değiştirilemedi: %1"
 
@@ -666,7 +653,6 @@ msgstr "Çıkış Yap"
 #. ($userID)
 #: ContentGenerator.pm:845
 #: ContentGenerator.pm:847
-#, fuzzy
 msgid "Logged in as %1. "
 msgstr "%1 olarak giriş yaptınız."
 
@@ -687,7 +673,6 @@ msgstr "Kullanıcı adı"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2063
-#, fuzzy
 msgid "Login Status"
 msgstr "Durumu"
 
@@ -814,7 +799,6 @@ msgstr "Yetki seviyesi"
 #
 #. (CGI::b($r->maketext($course)
 #: ContentGenerator/Login.pm:154
-#, fuzzy
 msgid "Please enter your username and password for %1 below:"
 msgstr "Lütfen %1 dersi için kullanici adi ve sifrenizi giriniz:"
 
@@ -1107,7 +1091,6 @@ msgstr "Yanıtları Gönder"
 #
 #. ($effectiveUser)
 #: ContentGenerator/Problem.pm:1124
-#, fuzzy
 msgid "Submit Answers for %1"
 msgstr "%1 için Yanıtları Gönder"
 
@@ -1153,7 +1136,6 @@ msgstr "WeBWorK Projesi"
 #
 #. ($fully)
 #: ContentGenerator/Problem.pm:307
-#, fuzzy
 msgid "The answer above is NOT %1correct."
 msgstr "Yukarıdaki yanıt %1doğru değil."
 
@@ -1165,7 +1147,6 @@ msgstr "Yukarıdaki yanıt doğru."
 #
 #. (CGI::b($r->maketext("[_1]'s Current Password",$user_name)
 #: ContentGenerator/Options.pm:107
-#, fuzzy
 msgid ""
 "The password you entered in the %1 \n"
 "\t\t\t\t\t\tfield does not match your current\n"
@@ -1176,7 +1157,6 @@ msgstr "%1 alanına girdiğiniz şifre ile mevcut şifreniz uyuşmamaktadır. L�
 #
 #. (CGI::b($r->maketext("[_1]'s New Password",$e_user_name)
 #: ContentGenerator/Options.pm:91
-#, fuzzy
 msgid ""
 "The passwords you entered in the \n"
 "\t\t\t\t\t\t\t\t%1 and %2\n"
@@ -1354,21 +1334,18 @@ msgstr "Şifre değiştirmek için yetkiniz yok."
 #
 #. ($attemptsLeft,$attemptsLeftNoun)
 #: ContentGenerator/Problem.pm:1196
-#, fuzzy
 msgid "You have %1 %2 remaining."
 msgstr "%1 %2 kaldı."
 
 #
 #. ($attemptsLeft)
 #: ContentGenerator/Problem.pm:1197
-#, fuzzy
 msgid "You have %negquant(%1,unlimited attempts,attempt,attempts) remaining."
 msgstr "[negquant,_1,Sınırsız deneme hakkı,deneme hakkı,deneme hakkı] kaldı."
 
 #
 #. ($attempts)
 #: ContentGenerator/Problem.pm:1191
-#, fuzzy
 msgid "You have attempted this problem %quant(%1,time,times)."
 msgstr "Bu soru için [quant,_1,deneme hakkı,deneme hakkı] kullandınız."
 
@@ -1390,7 +1367,6 @@ msgstr "Bir kullanıcı adı girmelisiniz."
 #
 #. (sprintf("%.0f%%", $pg->{result}->{score} * 100)
 #: ContentGenerator/Problem.pm:1192
-#, fuzzy
 msgid "You received a score of %1 for this attempt."
 msgstr "Bu soru için %1 puan aldınız."
 
@@ -1402,7 +1378,6 @@ msgstr "E-posta adresiniz değiştirildi."
 #
 #. ($lastScore,$notCountedMessage)
 #: ContentGenerator/Problem.pm:1194
-#, fuzzy
 msgid "Your overall recorded score is %1.  %2"
 msgstr "Ortalama puanınız: %1.  %2"
 
@@ -1414,7 +1389,6 @@ msgstr "Oturumunuz zaman aşımına uğradı. Lütfen tekrar giriş yapınız."
 #
 #: ContentGenerator/ProblemSet.pm:273
 #: ContentGenerator/ProblemSets.pm:71
-#, fuzzy
 msgid "[edit]"
 msgstr "~[düzenle~]"
 
@@ -1532,7 +1506,6 @@ msgstr "kapalı, cevaplar açıklandı"
 #
 #. ($self->formatDateTime($set->answer_date)
 #: ContentGenerator/ProblemSets.pm:464
-#, fuzzy
 msgid "closed, answers on %1"
 msgstr "kapalı, cevaplar %1 tarihinde"
 
@@ -1698,7 +1671,7 @@ msgstr "&nbspSorular"
 #
 #: ContentGenerator/ProblemSet.pm:110
 msgid "navUp"
-msgstr "tr:&nbspYukarı"
+msgstr "&nbspYukarı"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1090
@@ -1727,7 +1700,6 @@ msgstr "açık, bitiş tarihi: "
 #
 #. ($self->formatDateTime($set->due_date()
 #: ContentGenerator/ProblemSets.pm:408
-#, fuzzy
 msgid "open: complete by %1"
 msgstr "açık: %1 tarihine kadar tamamlayın"
 
@@ -1794,7 +1766,6 @@ msgstr "seçili kullanıcılar gösteriliyor"
 
 #
 #: ContentGenerator/Problem.pm:1124
-#, fuzzy
 msgid "submitAnswers"
 msgstr "Yanıtları Gönder"
 
@@ -1850,7 +1821,6 @@ msgstr "kullanıcılar görüntüleyebilir"
 #. ($self->formatDateTime($set->open_date)
 #: ContentGenerator/ProblemSets.pm:420
 #: ContentGenerator/ProblemSets.pm:448
-#, fuzzy
 msgid "will open on %1"
 msgstr "%1 tarihinde açılacak"
 
@@ -2060,19 +2030,19 @@ msgstr "Yeni dosya kaydetmek için dosya adı belirtmelisiniz."
 
 #
 msgid "To edit this text you must first make a copy of this file using the 'Save as' action below."
-msgstr "tr: To edit this text you must first make a copy of this file using the 'Save as' action below."
+msgstr "Bu dosyada değişiklik yapmak için önce 'Farklı Kaydet' seçeneğini kullanarak kaydetmeniz lazım."
 
 #
 msgid "unassigned problem file"
-msgstr "tr: unassigned problem file"
+msgstr "Ödev verilmemiş soru dosyası"
 
 #
 msgid "View statistics by student"
-msgstr "tr: View statistics by student"
+msgstr "İstatistikleri öğrencilere göre göster"
 
 #
 msgid "Publish"
-msgstr "tr: Publish"
+msgstr "Yayımla"
 
 #
 msgid "Password/Email"
@@ -2080,19 +2050,19 @@ msgstr "Şifre/E-posta"
 
 #
 msgid "Cancel Edit"
-msgstr "tr: Cancel Edit"
+msgstr "Düzenlemeyi iptal et"
 
 #
 msgid "Math Objects"
-msgstr "tr: Math Objects"
+msgstr "Matematik Nesneleri"
 
 #
 msgid "Snippets of PG code illustrating specific techniques"
-msgstr "tr: Snippets of PG code illustrating specific techniques"
+msgstr "Özel teknikleri gösteren PG yazılımı"
 
 #
 msgid "Error copying [_1] to [_2]"
-msgstr "tr: Error copying %1 to %2"
+msgstr "Dosya %1, %2ye kopyalanarken hata oluştu"
 
 #
 msgid "Hmwk Sets Editor"
@@ -2104,15 +2074,15 @@ msgstr "Bu soru grubu öğrenciler tarafından %1."
 
 #
 msgid "header file"
-msgstr "tr: header file"
+msgstr "Başlık dosyası"
 
 #
 msgid "Include Index"
-msgstr "tr: Include Index"
+msgstr "Indeksi dahil et"
 
 #
 msgid "Display Mode"
-msgstr "tr: Display Mode"
+msgstr "Görünüm Modu"
 
 #
 msgid "You can earn partial credit on this problem."
@@ -2120,31 +2090,31 @@ msgstr "Bu sorudan kısmi puan alabilirsiniz."
 
 #
 msgid "Write permissions have not been enabled in '[_1]'.  Changes must be saved to a different directory for viewing."
-msgstr "tr: Write permissions have not been enabled in '%1'.  Changes must be saved to a different directory for viewing."
+msgstr "'%1' için yazma izinleri kapalı. Değişiklikler önce başka bir dizine kaydedilmeli."
 
 #
 msgid "blank problem"
-msgstr "tr: blank problem"
+msgstr "boş soru"
 
 #
 msgid "Save Edit"
-msgstr "tr: Save Edit"
+msgstr "Düzenlemeyi kaydet"
 
 #
 msgid "Enrolled"
-msgstr "tr: Enrolled"
+msgstr "Kayıtlı"
 
 #
 msgid "Write permissions have not been enabled for '[_1]'.  Changes must be saved to another file for viewing."
-msgstr "tr: Write permissions have not been enabled for '%1'.  Changes must be saved to another file for viewing."
+msgstr "'%1' için yazma izinleri kapalı. Değişiklikler önce başka bir dosyaya kaydedilmeli."
 
 #
 msgid "Note: this problem viewer is for viewing purposes only. As of right now, testing functionality is not possible."
-msgstr "tr: Note: this problem viewer is for viewing purposes only. As of right now, testing functionality is not possible."
+msgstr "Not: Bu soru görüntüleyici şu an sadece soruları görüntüleyebilir, soru çözme fonksiyonu şu an mevcut değil."
 
 #
 msgid "Save Export"
-msgstr "tr: Save Export"
+msgstr "Dışa aktarımı kaydet"
 
 #
 msgid "webwork"
@@ -2152,7 +2122,7 @@ msgstr "webwork"
 
 #
 msgid "Problem Viewer"
-msgstr "tr: Problem Viewer"
+msgstr "Soru Görüntüleyici"
 
 #
 msgid "submit button clicked"
@@ -2160,11 +2130,11 @@ msgstr "gönder düğmesine basıldı"
 
 #
 msgid "Student Progress for [_1]"
-msgstr "tr: Student Progress for %1"
+msgstr "%1 için öğrencilerin durumu"
 
 #
 msgid "A new file has been created at '[_1]' with the contents below. No changes have been made to set [_2]."
-msgstr "tr: A new file has been created at '%1' with the contents below. No changes have been made to set %2."
+msgstr "Aşağıdaki içerikle '%1' dosyası yaratıldı. Set %2de değişiklik yapılmadı."
 
 #
 msgid "Your score was not recorded because this problem has not been assigned to you."
@@ -2172,23 +2142,23 @@ msgstr "Notunuz kaydedilmedi çünkü bu soru size yöneltilmedi."
 
 #
 msgid "Sort"
-msgstr "tr: Sort"
+msgstr "Sırala"
 
 #
 msgid "Add problem"
-msgstr "tr: Add problem"
+msgstr "Soru ekle"
 
 #
 msgid "Author Info"
-msgstr "tr: Author Info"
+msgstr "Yazar Bilgileri"
 
 #
 msgid "Replace [_1]"
-msgstr "tr: Replace %1"
+msgstr "%1in yerine koy"
 
 #
 msgid "Help"
-msgstr "tr: Help"
+msgstr "Yardım"
 
 #
 msgid "Add Users"
@@ -2196,23 +2166,23 @@ msgstr "Kullanıcı Ekle"
 
 #
 msgid "Problem Source Code"
-msgstr "tr: Problem Source Code"
+msgstr "Soru Kaynak Kodu"
 
 #
 msgid "Test snippets of PG code in interactive lab.  Good way to learn PG language."
-msgstr "tr: Test snippets of PG code in interactive lab.  Good way to learn PG language."
+msgstr "Interaktif labaratuarda PG test yazılımları. PG yazılım dilini öğrenmek içi iyi bir kaynak."
 
 #
 msgid "Page generated at [_1] at [_2]"
-msgstr "tr: Page generated at %1 at %2"
+msgstr "Sayfa %1 at %2"
 
 #
 msgid "Import"
-msgstr "tr: Import"
+msgstr "İçeri Aktar"
 
 #
 msgid "View Using Seed Number"
-msgstr "tr: View Using Seed Number"
+msgstr "Tohum numarasını kullanarak göster"
 
 #
 msgid "Grades"
@@ -2228,23 +2198,23 @@ msgstr "Notunuz kaydedilemedi çünkü bu soru grubu kapalı."
 
 #
 msgid "The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser."
-msgstr "tr: The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser."
+msgstr "Şu anda sorunun orijinal hali gösteriliyor. Kaydedilmemiş değişiklikleri kurtarmak için internet tarayıcınızın \"Geri\" tuşunu kullanın."
 
 #
 msgid "The file '[_1]' is a directory!"
-msgstr "tr: The file '%1' is a directory!"
+msgstr "'%1' dosyası bir dizin!"
 
 #
 msgid "Save As"
-msgstr "tr: Save As [TMPL]/"
+msgstr "Farklı Kaydet: [TMPL]/"
 
 #
 msgid "Documentation from source code for PG modules and macro files. Often the most up-to-date information."
-msgstr "tr: Documentation from source code for PG modules and macro files. Often the most up-to-date information."
+msgstr "PG modülleri ve makro dosyaları hakkında bilgi dosyası. Genellikle en son bilgileri içerir."
 
 #
 msgid "Problem Techniques"
-msgstr "tr: Problem Techniques"
+msgstr "Soru Teknikleri"
 
 #
 msgid "Course Configuration"
@@ -2256,23 +2226,23 @@ msgstr "Geri Bildirim"
 
 #
 msgid "Export"
-msgstr "tr: Export"
+msgstr "Dışa aktar"
 
 #
 msgid "PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques."
-msgstr "tr: PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques."
+msgstr "WebWork sorularında kullanılan PG kodu sözdizimi. Bu interaktif labaratuar, teknikleri öğrenmek için kullanılabilir."
 
 #
 msgid "Record Scores for Single Sets"
-msgstr "tr: Record Scores for Single Sets"
+msgstr "Tek set için notları kaydet"
 
 #
 msgid "Append to end of set [_1]"
-msgstr "tr: Append to end of set %1"
+msgstr "Set %1in sonuna ekle"
 
 #
 msgid "Unrecognized saveMode: |[_1]|. Unknown error."
-msgstr "tr: Unrecognized saveMode: |%1|. Unknown error."
+msgstr "Tanımlanmamış kaydetme modu: |%1|. Bilinmeyen hata."
 
 #
 msgid "Your score was not recorded because there was a failure in storing the problem record to the database."
@@ -2280,51 +2250,51 @@ msgstr "Notunuz kaydedilemedi, çünkü notun veritabanına kaydı sırasında b
 
 #
 msgid "The hardcopy header for set [_1] has been renamed to '[_2]'."
-msgstr "tr: The hardcopy header for set %1 has been renamed to '%2'."
+msgstr "Set %1 için yazdırılabilir dosya başlığı '%2' olarak değiştirildi."
 
 #
 msgid "Save as"
-msgstr "tr: Save as"
+msgstr "Farklı kaydet"
 
 #
 msgid "Select action below"
-msgstr "tr: Select action below"
+msgstr "Aşağıdan işlem seç"
 
 #
 msgid "The file '[_1]' cannot be found."
-msgstr "tr: The file '%1' cannot be found."
+msgstr "'%1' dosyası bulunamadı."
 
 #
 msgid "Unable to write to '[_1]': [_2]"
-msgstr "tr: Unable to write to '%1': %2"
+msgstr "'%1' dosyasına yazılamadı: %2"
 
 #
 msgid "Save"
-msgstr "tr: Save"
+msgstr "Kaydet"
 
 #
 msgid "File '[_1]' exists. File not saved. No changes have been made. You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"
-msgstr "tr: File '%1' exists. File not saved. No changes have been made. You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"
+msgstr "'%1' dosyası mevcut. Dosya kaydedilmedi. Hiçbir değişiklik yapılmadı. Bu sorunun dosya konumunu \"Set Düzenleyicisi\" sayfasından değiştirebilirsiniz."
 
 #
 msgid "The set header for set [_1] has been renamed to '[_2]'."
-msgstr "tr: The set header for set %1 has been renamed to '%2'."
+msgstr "Set %1 başlığı '%2' olarak değiştirildi."
 
 #
 msgid "Error: This path is already in the temporary edit directory -- no new temporary file is created. path = [_1]"
-msgstr "tr: Error: This path is already in the temporary edit directory -- no new temporary file is created. path = %1"
+msgstr "Hata: Bu yol belirteci geçici düzenleme klasöründe mevcut -- yeni bir geçici dosya oluşturuldu. yol = %1"
 
 #
 msgid "Please use radio buttons to choose the method for saving this file. Can't recognize saveMode: |[_1]|."
-msgstr "tr: Please use radio buttons to choose the method for saving this file. Can't recognize saveMode: |%1|."
+msgstr "Bu dosya için kaydetme modunu seçin. Kaydetme modu tanınmadı: |%1|."
 
 #
 msgid "Saved to file '[_1]'"
-msgstr "tr: Saved to file '%1'"
+msgstr "'%1' dosyasına kaydedildi"
 
 #
 msgid "Please specify a file to save to."
-msgstr "tr: Please specify a file to save to."
+msgstr "Lütfen kaydedilecek dosyayın belirtin."
 
 #
 msgid "The selected problem ([_1]) is not a valid problem for set [_2]."
@@ -2332,11 +2302,11 @@ msgstr "Seçilen problem (%1), %2 soru drubu için geçerli bir soru değil."
 
 #
 msgid "Editing [_1] in file '[_2]'"
-msgstr "tr: Editing %1 in file '%2'"
+msgstr "'%2' dosyası içinde %1 düzenleniyor"
 
 #
 msgid "Deleting temp file at [_1]"
-msgstr "tr: Deleting temp file at %1"
+msgstr "%1 klasörindeki geçici dosya siliniyor"
 
 #
 msgid "hidden from"
@@ -2344,15 +2314,15 @@ msgstr "görüntülenmiyor"
 
 #
 msgid "View student progress by set"
-msgstr "tr: View student progress by set"
+msgstr "Setlere göre öğrenci gelişimini göster"
 
 #
 msgid "View"
-msgstr "tr: View"
+msgstr "Göster"
 
 #
 msgid "Resources"
-msgstr "tr: Resources"
+msgstr "Kaynaklar"
 
 #
 msgid "Scoring Download"
@@ -2360,11 +2330,11 @@ msgstr "Notları İndir"
 
 #
 msgid "Duplicate"
-msgstr "tr: Duplicate"
+msgstr "Çoğalt"
 
 #
 msgid "This path |[_1]| is not the path to a temporary edit file."
-msgstr "tr: This path |%1| is not the path to a temporary edit file."
+msgstr "Bu yol belirteci |%1| geçici düzenleme dosyası yolu değil."
 
 #
 msgid "visible to"
@@ -2372,7 +2342,7 @@ msgstr "görüntüleniyor"
 
 #
 msgid "Unable to change the source file path for set [_1], problem [_2]. Unknown error."
-msgstr "tr: Unable to change the source file path for set %1, problem %2. Unknown error."
+msgstr "Set %1, soru %2 için kaynak kodu yolu değiştirilemiyor. Bilinmeyen hata."
 
 #
 msgid "Course Administration"
@@ -2380,23 +2350,23 @@ msgstr "Ders Yönetimi"
 
 #
 msgid "Added [_1] to [_2] as problem [_3]"
-msgstr "tr: Added %1 to %2 as problem %3"
+msgstr "%1 sorusu %2 setine soru %3 olarak eklendi"
 
 #
 msgid "Options Information"
-msgstr "tr: Options Information"
+msgstr "Seçenek Bilgileri"
 
 #
 msgid "Proctor"
-msgstr "tr: Proctor"
+msgstr "Gözetmen"
 
 #
 msgid "Student Progress"
-msgstr "tr: Student Progress"
+msgstr "Öğrenci Gelişimi"
 
 #
 msgid "Revert"
-msgstr "tr: Revert"
+msgstr "Ters çevir"
 
 #
 msgid "Statistics"
@@ -2404,7 +2374,7 @@ msgstr "İstatistikler"
 
 #
 msgid "Save as new independent problem"
-msgstr "tr: Save as new independent problem"
+msgstr "Yeni bir soru olarak kaydet"
 
 #
 msgid "Scoring Tools"
@@ -2412,11 +2382,11 @@ msgstr "Notlama Araçları"
 
 #
 msgid "The source file for 'set [_1] / problem [_2]' has been changed from [_3] to '[_4]'."
-msgstr "tr: The source file for 'set %1 / problem %2' has been changed from %3 to '%4'."
+msgstr "'set %1 / soru %2' için kaynak kodu %3'ten '%4'e değiştirildi."
 
 #
 msgid "Cancel Export"
-msgstr "tr: Cancel Export"
+msgstr "Dışa aktarımı iptal et"
 
 #
 msgid "View student progress by student"
@@ -2424,7 +2394,7 @@ msgstr "tr: View student progress by student"
 
 #
 msgid "Revert to [_1]"
-msgstr "tr: Revert to %1"
+msgstr "%1'e geri dön"
 
 #
 msgid "Classlist Editor"
@@ -2432,43 +2402,43 @@ msgstr "Sınıf Listesi Düzenleyici"
 
 #
 msgid "Add"
-msgstr "tr: Add"
+msgstr "Ekle"
 
 #
 msgid "the original path to the file is [_1]"
-msgstr "tr: the original path to the file is %1"
+msgstr "Dosyanın özgün yol belirteci: %1"
 
 #
 msgid "The path to the original file should be absolute"
-msgstr "tr: The path to the original file should be absolute"
+msgstr "Sorunun özgün yolu kesin olmalı"
 
 #
 msgid "To edit this text you must use the 'Save AS' action below to save it to another file."
-msgstr "tr: To edit this text you must use the 'Save AS' action below to save it to another file."
+msgstr "Bu metni düzenlemek için aşağıdaki 'Farklı Kaydet' işlemini kullanarak başka bir dosya olarak kaydetmeniz gerekiyor."
 
 #
 msgid "Error: The original file [_1] cannot be read."
-msgstr "tr: Error: The original file %1 cannot be read."
+msgstr "Hata: %1 dosyası okunamıyor."
 
 #
 msgid "Unable to change the set header for set [_1]. Unknown error."
-msgstr "tr: Unable to change the set header for set %1. Unknown error."
+msgstr "Set %1'in başlığı değiştirilemedi. Bilinmeyen hata."
 
 #
 msgid "options information"
-msgstr "tr: options information"
+msgstr "Seçenek bilgileri"
 
 #
 msgid "The selected problem([_1]) is not a valid problem for set [_2]."
-msgstr "tr: The selected problem(%1) is not a valid problem for set %2."
+msgstr "Seçili soru (%1) set %2 için geçerli değil."
 
 #
 msgid "Unknown file type"
-msgstr "tr: Unknown file type"
+msgstr "Bilinmeyen dosya tipi"
 
 #
 msgid "course information"
-msgstr "tr: course information"
+msgstr "Ders Bilgileri"
 
 #
 msgid "Change User Options"
@@ -2476,87 +2446,77 @@ msgstr "Kullanıcı bilgilerini güncelle"
 
 #
 msgid "Drop"
-msgstr "tr: Drop"
+msgstr "Bırak"
 
 #
-#, fuzzy
 msgid "Solutions"
 msgstr "Çözümleri göster"
 
 #
 msgid "Show:"
-msgstr ""
+msgstr "Göster"
 
 #
 msgid "WeBWorK Assignment [_1] is due : [_2]."
-msgstr ""
+msgstr "WebWork Ödevi [_1] teslim tarihi: [_2]"
 
 #
-#, fuzzy
 msgid "Hardcopy Generator"
 msgstr "Çıktı Dosyası Başlığı"
 
 #
-#, fuzzy
 msgid "This set is visible to students."
 msgstr "Bu soru grubu öğrenciler tarafından %1."
 
 #
 msgid "View equations as"
-msgstr ""
+msgstr "Eşitlikler ne şekilde gösterilecek"
 
 #
 msgid "From:"
-msgstr ""
+msgstr "Gönderen:"
 
 #
 msgid "Generate Hardcopy"
-msgstr ""
+msgstr "Yazdırılabilir dosya oluştur"
 
 #
 msgid "You may choose to show any of the following data. Correct answers and solutions are only available after the answer date of the homework set."
-msgstr ""
+msgstr "Aşağıdaki bilgilerden herhangi bir tanesini görüntülemeyi seçebilirsiniz. Doğru cevaplar ve çözümler ödev setinin cevaplarının açıklanma tarihinden itibaren görülebilir."
 
 #
-#, fuzzy
 msgid "E-mail Instructor"
 msgstr "Eğitmene E-posta"
 
 #
 msgid "Send E-mail:"
-msgstr ""
+msgstr "E-posta yolla:"
 
 #
-#, fuzzy
 msgid "Cancel Email"
-msgstr "tr: Cancel Edit"
+msgstr "Düzenlemeyi iptal et"
 
 #
-#, fuzzy
 msgid "E-mail:"
 msgstr "E-posta"
 
 #
-#, fuzzy
 msgid "Correct answers"
 msgstr "Doğru yanıtları göster"
 
 #
 msgid "Use this form to report to your professor a problem with the WeBWorK system or an error in a problem you are attempting. Along with your message, additional information about the state of the system will be included."
-msgstr ""
+msgstr "Bu formu eğitmeninize WebWork sistemiyle ya da şu anda yapmakta olduğunuz soruda bir hata olduğunu bildirmek için kullanabilirsiniz. "
 
 #
-#, fuzzy
 msgid "Student answers"
 msgstr "Yanıtları Gönder"
 
 #
-#, fuzzy
 msgid "Hints"
 msgstr "İpuçlarını göster"
 
 #
-#, fuzzy
 msgid "Hardcopy Format:"
 msgstr "Çıktı Dosyası Başlığı"
 
