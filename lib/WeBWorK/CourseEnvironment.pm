@@ -149,7 +149,12 @@ sub new {
 	$safe->mask($maskBackup);
 	
 	# determine location of globalEnvironmentFile
-	my $globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf";
+	my $globalEnvironmentFile;
+	if (-r "$seedVars{webwork_dir}/conf/global.conf") {
+		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf";
+	} elsif (-r "$seedVars{webwork_dir}/conf/global.conf.dist") { # default version
+		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf.dist";
+	}		
 	
 	# read and evaluate the global environment file
 	my $globalFileContents = readFile($globalEnvironmentFile);
@@ -157,7 +162,7 @@ sub new {
 	
 	# if that evaluation failed, we can't really go on...
 	# we need a global environment!
-	$@ and die "Could not evaluate global environment file $globalEnvironmentFile: $@";
+	$@ and croak "Could not evaluate global environment file $globalEnvironmentFile: $@";
 	
 	# determine location of courseEnvironmentFile and simple configuration file
 	# pull it out of $safe's symbol table ad hoc

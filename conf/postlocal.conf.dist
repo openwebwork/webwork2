@@ -1,0 +1,274 @@
+#!perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+# This file is used to set up the default WeBWorK course environment for all
+# requests. Values may be overwritten by the course.conf for a specific course.
+# All package variables set in this file are added to the course environment.
+# If you wish to set a variable here but omit it from the course environment,
+# use the "my" keyword. The $webwork_dir variable is set in the WeBWorK Apache
+# configuration file (webwork.apache-config) and is available for use here. In
+# addition, the $courseName variable holds the name of the current course.
+
+################################################################################
+# postlocal.conf  -- this file
+################################################################################
+
+# prelocal.conf and postlocal.conf contain the local modifications commonly made
+# when installing WeBWorK on a new site. The configurations in global.conf.dist
+# and in database.conf can usually remain untouched.
+#
+# postlocal.conf is the appropriate place to override permission settings, 
+# paths to macros and other customizations that are specific to your 
+# WeBWorK site
+
+
+################################################################################
+# Mail settings
+################################################################################
+
+################################################################################
+# These configurations must be defined in order for the mailing capabilities
+# of webwork to work
+################################################################################
+
+# Mail sent by the PG system and the mail merge and feedback modules will be
+# sent via this SMTP server.
+$mail{smtpServer}            ="mail.yourschool.edu";
+
+# When connecting to the above server, WeBWorK will send this address in the
+# MAIL FROM command. This has nothing to do with the "From" address on the mail
+# message. It can really be anything, but some mail servers require it contain
+# a valid mail domain, or at least be well-formed.
+$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
+
+
+################################################################################
+# Additional mail settings in global.conf can be overridden here
+################################################################################
+$mail{feedbackRecipients}    = [
+	#'prof1@yourserver.yourdomain.edu',
+	#'prof2@yourserver.yourdomain.edu',
+];
+
+
+
+
+
+################################################################################
+# Theme
+################################################################################
+
+$defaultTheme = "math3";
+$defaultThemeTemplate = "system";
+
+################################################################################
+# Language
+################################################################################
+
+$language = "en";   # tr = turkish en=english
+
+################################################################################
+# Directory overrides
+################################################################################ 
+# Location of web-accessible temporary files, such as equation images. Standard:
+#$webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
+#$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
+
+# Alternate locations -- this allows you to place temporary files
+# in a location that is not backed up.
+#For example.
+#$webworkDirs{htdocs_temp}   = "/opt/htdocs/wwtmp";
+#$webworkURLs{htdocs_temp}   = "$server_root_url/wwtmp";
+
+################################################################################
+# Default screen header files
+################################################################################
+
+# The setHeader preceeds each set in hardcopy output. It is a PG file.
+# This is the default file which is used if a specific files is not selected
+
+$webworkFiles{hardcopySnippets}{setHeader}     = "$webworkDirs{conf}/snippets/ASimpleCombinedHeaderFile.pg";
+
+#$webworkFiles{hardcopySnippets}{setHeader}     = "$courseDirs{templates}/ASimpleHardCopyHeaderFile.pg"; # An alternate default hardcopy only header file
+#$webworkFiles{hardcopySnippets}{setHeader}     = "$courseDirs{templates}/ASimpleCombinedHeaderFile.pg";
+
+# The set header is displayed on the problem set page. It is a PG file.
+# One of these default files which is used if a specific files is not selected
+
+$webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/ASimpleCombinedHeaderFile.pg"; 
+
+# $webworkFiles{screenSnippets}{setHeader}         = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg"; # An alternate default screen HTML only header file
+# $webworkFiles{screenSnippets}{setHeader}         = "$courseDirs{templates}/ASimpleCombinedHeaderFile.pg";
+
+
+################################################################################
+# National Problem Library
+################################################################################
+
+
+# For configuration instructions, see:
+# http://webwork.maa.org/wiki/National_Problem_Library
+# The directory containing the natinal problem library files. Set to "" if no problem
+# library is installed.
+$problemLibrary{root}        ="/opt/webwork/libraries/NationalProblemLibrary";
+
+# Additional library buttons can be added to the Library Browser (SetMaker.pm)
+# by adding the libraries you want to the following line.  For each key=>value
+# in the list, if a directory (or link to a directory) with name 'key' appears
+# in the templates directory, then a button with name 'value' will be placed at
+# the top of the problem browser.  (No button will appear if there is no
+# directory or link with the given name in the templates directory.)  For
+# example,
+# 
+#     $courseFiles{problibs} = {rochester => "Rochester", asu => "ASU"};
+# 
+# would add two buttons, one for the Rochester library and one for the ASU
+# library, provided templates/rochester and templates/asu exists either as 
+# subdirectories or links to other directories. The "NPL Directory" button
+# activated below gives access to all the directories in the National 
+# Problem Library.
+# 
+$courseFiles{problibs}    = {
+	Library          => "NPL Directory",
+# 	rochesterLibrary => "Rochester",
+# 	unionLibrary     =>"Union",
+# 	asuLibrary       => "Arizona State",
+# 	dcdsLibrary      => "Detroit CDS",
+# 	dartmouthLibrary => "Dartmouth",
+# 	indianaLibrary   => "Indiana",
+# 	osuLibrary       => "Ohio State",	
+#   capaLibrary      => "CAPA",
+};
+
+
+################################################################################
+# Site defaults 
+################################################################################
+
+# Set the default timezone of courses on this server. To get a list of valid
+# timezones, run:
+# 
+#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::all_names'
+# 
+# To get a list of valid timezone "links" (deprecated names), run:
+# 
+#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
+# 
+# If left blank, the system timezone will be used. This is usually what you
+# want. You might want to set this if your server is NOT in the same timezone as
+# your school. If just a few courses are in a different timezone, set this in
+# course.conf for the affected courses instead.
+# 
+$siteDefaults{timezone} = "America/New_York";
+
+
+################################################################################
+# Permission levels (see global.conf for list of items to give permissions on )
+################################################################################
+# User roles in order of increasing permissions. Each level has all of the privileges of
+# the lower levels.
+# 	guest 
+# 	student 
+# 	login_proctor
+# 	grade_proctor
+# 	ta 
+# 	professor 
+# 	admin
+
+# To modify permission levels use this syntax:
+#  $permissionLevels{login} = "guest";
+
+
+################################################################################
+# PG subsystem options
+################################################################################
+
+# List of enabled display modes. Comment out any modes you don't wish to make
+# available for use.
+$pg{displayModes} = [
+#	"plainText",     # display raw TeX for math expressions
+#	"formattedText", # format math expressions using TtH
+	"images",        # display math expressions as images generated by dvipng
+	"jsMath",        # render TeX math expressions on the client side using jsMath
+	"MathJax",       # render TeX math expressions on the client side using MathJax --- we strongly recommend people install and use MathJax
+#	"asciimath",     # render TeX math expressions on the client side using ASCIIMathML
+	"LaTeXMathML",   # render TeX math expressions on the client side using LaTeXMathML
+];
+
+################################################################################
+#  The macro file search path. (Check with entries in global.conf before overriding)
+################################################################################
+# Each directory in this list is seached
+#  (in this order) by loadMacros() when it looks for a .pl file.
+#
+# $pg{directories}{macrosPath} = [
+#    ".",                     # search the problem file's directory
+#    $courseDirs{macros},
+#    $pg{directories}{macros},
+#    "$courseDirs{templates}/Library/macros/Union",
+#    "$courseDirs{templates}/Library/macros/Michigan",
+#    "$courseDirs{templates}/Library/macros/CollegeOfIdaho",
+#    "$courseDirs{templates}/Library/macros/FortLewis",
+#    "$courseDirs{templates}/Library/macros/TCNJ",
+#    "$courseDirs{templates}/Library/macros/NAU",
+#    "$courseDirs{templates}/Library/macros/Dartmouth",
+#    "$courseDirs{templates}/Library/macros/WHFreeman",
+# ];
+
+################################################################################
+# The applet search path. (Check with entries in global.conf before overriding)
+################################################################################
+
+# If a full URL is given, it is used unmodified. If an
+# absolute path is given, the URL of the local server is prepended to it.
+# 
+# For example, if an item is "/math/applets",
+# and the local server is  "https://math.yourschool.edu",
+# then the URL "https://math.yourschool.edu/math/applets" will be used.
+# 
+
+# $pg{directories}{appletPath} = [    # paths to search for applets (requires full url)
+# 	"$webworkURLs{htdocs}/applets",
+# 	"$webworkURLs{htdocs}/applets/geogebra_stable",
+# 	"$courseURLs{html}/applets",  
+# 	"$webworkURLs{htdocs}/applets/Xgraph",
+# 	"$webworkURLs{htdocs}/applets/PointGraph",
+# 	"$webworkURLs{htdocs}/applets/Xgraph",
+# 	"$webworkURLs{htdocs}/applets/liveJar",
+# 	"$webworkURLs{htdocs}/applets/Image_and_Cursor_All",
+# 	
+# ];
+
+################################################################################
+# Problem creation defaults
+################################################################################
+
+# The default weight (also called value) of a problem to use when using the 
+# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# or when this value is left blank in an imported set definition file.
+
+$problemDefaults{value} = 1;  
+
+# The default max_attempts for a problem to use when using the 
+# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# or when this value is left blank in an imported set definition file.  Note that 
+# setting this to -1 gives students unlimited attempts.
+
+$problemDefaults{max_attempts} = -1;   
+
+
+1; #final line of the file to reassure perl that it was read properly.
