@@ -133,7 +133,6 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 $database_dsn ="dbi:mysql:webwork";
 $database_username ="webworkWrite";
 #$database_password ="passwordRW";
-$database_password ="dajchovo";
 
 ################################################################################
 # Directory for temporary files
@@ -146,8 +145,8 @@ Default:
 # Alternate locations -- this allows you to place temporary files
 # in a location that is not backed up.
 #For example.
-#$webworkDirs{htdocs_temp}   = "/opt/local/apache2/htdocs/wwtmp";
-#$webworkURLs{htdocs_temp}   = "$server_root_url/wwtmp";
+#$webworkDirs{htdocs_temp}   = "/opt/htdocs/wwtmp";
+#$webworkURLs{htdocs_temp}   = "/wwtmp";
 
 ################################################################################ 
 
