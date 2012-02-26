@@ -1,0 +1,16 @@
+Use the prelocal.conf and postlocal.conf files to make modifications.  
+
+The prelocal.conf file is read before the global.conf.dist file is processed. Non-local variables in this file
+are then available for use in global.conf.dist.
+
+The postlocal.conf file is read after the global.conf.dist file is processed and will overright configurations in global.conf.dist
+
+In order to make sure that the global.conf.dist is read you should remove
+(or make unreadable) the global.conf file.  Other wise the global.conf file
+will be read instead of global.conf.dist.  
+
+This system should greatly simplify the process of updating webwork2 since it is less likely
+that one will need to modify the config files when upgrading.  Default configurations or permissions for 
+new features will be defined in global.conf.dist and will allow automatic upgrades.  
+Overrides for these new features can be added later to postlocal.conf
+
