@@ -726,12 +726,14 @@ sub pre_header_initialize {
 	# because the PG file is never run
 	#
 	if (defined ($pg->{pgcore}) ) {
-		my @debug_msgs = @{ $pg->{pgcore}->get_debug_messages};
-		$self->addmessage(join(CGI::br(),@debug_msgs) ) if @debug_msgs;
+		my $debug_msg = CGI::br().join( CGI::br(), @{ $pg->{pgcore}->get_debug_messages});
+		$self->addmessage($debug_msg ) if $debug_msg;
 		$self->{pgdebug}          = $pg->{pgcore}->get_debug_messages;
 		$self->{pgwarning}        = $pg->{pgcore}->get_warning_messages;
 		$self->{pginternalerrors} = $pg->{pgcore}->get_internal_debug_messages ;
-		$self->{pgerrors} = @{$self->{pgdebug}} || @{$self->{pgwarning}} || @{$self->{pginternalerrors}};
+		$self->{pgerrors} = @{$self->{pgdebug}} || @{$self->{pgwarning}} || @{$self->{pginternalerrors}}||0;
+	} else {
+		$self->{pgerrors}=undef;  # unable to obtain errors
 	}
 
 	debug("end pg processing");
@@ -752,23 +754,30 @@ sub pre_header_initialize {
 }
 sub warnings {
 	my $self = shift;
-	$self->SUPER::warnings();
-	my $r  = $self->r;
-	my $pg = $self->{pg};
-	
- 	my @pgdebug          = @{ $self->{pgdebug}           };
- 	my @pgwarning        = @{ $self->{pgwarning}         };
- 	my @pginternalerrors = @{ $self->{pginternalerrors}  };
-# 	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
+	# print "entering warnings() subroutine internal messages = ", $self->{pgerrors},CGI::br();
+ 	my $r  = $self->r;
+# 	my $pg = $self->{pg};
+# 	warn "type of pg is ",ref($pg);
+#  	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
     # print warning messages
-    if ( $self->{pgerrors} ) {
-		print CGI::start_div();
-		print CGI::h3({style=>"color:red;"}, $r->maketext("Additional Error Messages"));
-		print CGI::p(CGI::h3("PG debug messages"),   CGI::br(), @pgdebug   )  if @pgdebug   ;
-		print CGI::p(CGI::h3("PG warning messages"), CGI::br(), @pgwarning )  if @pgwarning ;	
-		print CGI::p(CGI::h3("PG internal errors"),  CGI::br(), @pginternalerrors ) if @pginternalerrors;
+    if (not defined $self->{pgerrors} ) {
+    	print CGI::start_div();
+		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question failed to render"));
+		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
-	}
+    } elsif ( $self->{pgerrors} > 0 ) {
+        my @pgdebug          = @{ $self->{pgdebug}           };
+ 		my @pgwarning        = @{ $self->{pgwarning}         };
+ 		my @pginternalerrors = @{ $self->{pginternalerrors}  };
+		print CGI::start_div();
+		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
+		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),   CGI::br(), join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
+		print CGI::p(CGI::h3($r->maketext("PG warning messages" ) ), CGI::br(), join(CGI::br(), @pgwarning)  )  if @pgwarning ;	
+		print CGI::p(CGI::h3($r->maketext("PG internal errors" ) ),  CGI::br(), join(CGI::br(), @pginternalerrors )) if @pginternalerrors;
+		print CGI::end_div();
+	} 
+	# print "proceeding to SUPER::warnings";
+	$self->SUPER::warnings();
 	"";
 }
 
@@ -924,7 +933,7 @@ sub body {
 	my $set = $self->{set};
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
-	
+	print CGI::p("Entering Problem::body subroutine.  This indicates an older style system.template file -- consider upgrading. ");
 	my $valid = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::check_invalid($self);
 	unless($valid eq "valid"){
 		return $valid;
@@ -1048,10 +1057,13 @@ sub output_editorLink{
 
 	if ($pg->{flags}->{error_flag}) {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
+		    print "Call errorOutput</br>";
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
+			print $editorLink;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
+		
 		print "";
 	}
 	else{
