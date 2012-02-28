@@ -395,6 +395,9 @@ tabberObj.prototype.tabShow = function(tabberIndex)
 
   /* Get the div that holds this tab */
   div = this.tabs[tabberIndex].div;
+  
+  var radio = div.getElementsByTagName("input")[0];
+  radio.checked = true;
 
   /* Remove classTabHide from the div */
   div.className = div.className.replace(this.REclassTabHide, '');
@@ -476,6 +479,15 @@ function tabberAutomatic(tabberArgs)
   return this;
 }
 
+/* Makes all hidden radio buttons selected -- not in the original tabber.js   */
+
+function radioSelect(){
+	var title = this.getAttribute("title");
+	var id = title.toLowerCase() + "_id";
+	var radio = document.getElementById(id);
+	radio.setAttribute("checked", "checked");
+}
+
 
 /*==================================================*/
 
@@ -494,12 +506,10 @@ function tabberAutomaticOnLoad(tabberArgs)
   oldOnLoad = window.onload;
   if (typeof window.onload != 'function') {
     window.onload = function() {
-	  if (typeof(initializeWWquestion) == 'function') {initializeWWquestion();}
       tabberAutomatic(tabberArgs);
     };
   } else {
     window.onload = function() {
-	  if (typeof(initializeWWquestion) == 'function') {initializeWWquestion();}
       oldOnLoad();
       tabberAutomatic(tabberArgs);
     };
@@ -522,4 +532,13 @@ if (typeof tabberOptions == 'undefined') {
     tabberAutomaticOnLoad(tabberOptions);
   }
 
+}
+
+/* Makes all hidden radio buttons selected -- not in the original tabber.js   */
+
+function radioSelect(){
+	var title = this.getAttribute("title");
+	var id = title.toLowerCase() + "_id";
+	var radio = document.getElementById(id);
+	radio.setAttribute("checked", "checked");
 }

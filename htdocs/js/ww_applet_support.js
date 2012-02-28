@@ -712,3 +712,13 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 function iamhere() {
 	alert( "javaScript loaded.  functions still work");
 }
+
+//Initialize the WWquestion.
+
+function initWW(){
+	if (typeof(initializeWWquestion) == 'function') {
+		initializeWWquestion();
+	}
+}
+
+addOnLoadEvent(initWW);

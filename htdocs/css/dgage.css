@@ -15,13 +15,19 @@
 
 /* --- Standard elements ---------------------------------------------------- */
 
+body, html{
+	
+}
+
 body {
 	background: #EFEFEF;
 	color: black;
-	margin: 0 .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
+	margin: 0 0 0 0; /* MSIE ignores bottom margin; Gecko doesn't */
 	padding: 0;
+	padding-top:33px;
 	font-family: Times, serif;
 	min-width: 25em;
+	width:100%
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -64,18 +70,52 @@ div#logo {
 }
 
 div#site-navigation {
-	position:absolute;
-	width:180px;
+	/*position:fixed;
+	top:-87px;
+	left:0px;
+	background:#EFEFEF;
+	box-shadow: 1px 1px 4px #000000;
+	width:100%;
+	height:110px;
+	-webkit-transition: all 0.2s ease-in-out;
+	-moz-transition: all 0.2s ease-in-out;
+	-o-transition: all 0.2s ease-in-out;
+	-ms-transition: all 0.2s ease-in-out;
+	transition: all 0.2s ease-in-out;
+	overflow:hidden;*/
 }
 
-div#site-navigation ul, div#site-nagivation li{
-  padding-left:10px;
+div#navigation-link{
+	height:10px;
+	width:100%;
+	text-align:center;
+}
+div#site-navigation:hover{
+	top:0px;
+	width:100%;
+	height:140px;
+}
+
+div#site-navigation ul, div#site-nagivation li, div#site-navigation ul li ul li, div#site-navigation ul li ul li ul li{
   list-style:none;
+  display:inline;
+  padding:0px;
+  margin:0px;
 }
 
-div#fisheye {
+div#site-navigation a{
+	text-decoration:none;
+	padding-left:10px;
+}
+
+div#site-navigation a:hover{
+	text-decoration:underline;
+}
+
+div#site-navigation a:active{
 	
 }
+
 /*
 div.info-box {
 	width:100%;
@@ -193,15 +233,13 @@ hr.for-broken-browsers {
 
 
 div#big-wrapper {
-  margin:0px 1% 0px 190px;
+  float:left;
 	background:white;
 	padding-left:10px;
 	padding-right:10px;
-	min-width:788px;
+	width:99%;
+	min-width:600px;
 	min-height:100%;
-	-moz-box-shadow: 1px 0px 4px gray, -1px 0px 4px gray; /* FF3.5+ */
-  -webkit-box-shadow: 1px 1px 4px 2px gray; /* Saf3.0+, Chrome */
-  box-shadow: 1px 1px 4px 2px gray; /* Opera 10.5, IE 9 */
 	
 }
 

@@ -25,7 +25,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	font-family: "Trebuchet MS", "Arial", "Helvetica", serif;
 	/* FIXME "You have no background-color with your color" */
 	color: #225;
 	background: transparent;
@@ -381,7 +381,7 @@ clear: both;
 #copyright { font-size: 75%; margin: 0;}
 #last-modified {
 	clear: both;
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	font-family: "Trebuchet MS", "Arial", "Helvetica", serif;
 	font-size: 75%;
 	background-color: inherit;
 	color: #444;
@@ -403,8 +403,7 @@ clear: both;
 #InfoPanel {
     font-size:100%;
 	float: right;
-	width: 100%;
-	max-width:400px;
+	max-width: 400px;
 	overflow: auto;
 	margin-right: -1px;
 	background-color: #fff;
@@ -520,7 +519,7 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 .Enrolled { font-weight: normal; color: black; background-color: inherit; }
 .Drop { font-style: italic; color: gray; background-color: inherit; }
 
-/*Styles for the login form*/
+/*Styles for the login form -- mainly small alignment changes for all of the input elements on the login page*/
 
 #login_form input {
 	margin-top: 7px;
@@ -540,6 +539,7 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 
 /*Styles for the edit forms, found on the homework sets editor page*/
 
+/*Following are mostly alignment fixes for the input elements and their lables on this page.*/
 .edit_form  input,select{
 	margin-top: 5px;
 }
@@ -558,6 +558,7 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 
 /*Styles for the classlist editor page*/
 
+/*The styles here correctly align the table elements in the set table*/
 .set_table{
 	margin-right: 5px;
 }
@@ -578,16 +579,24 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 
 /*General styles, for elements such as table captions input buttons, columns, etc.*/
 
+/*General styles for table captions*/
 table caption{
 	font-weight: bold;
 	text-decoration: underline;
 }
 
+/*Styling the content that is found in the login page.*/
+.p_content{
+	width: 640px;
+}
+
+/*General styles for all input buttons*/
 .button_input{
 	margin-right: 5px;
 	margin-left: 5px;
 }
 
+/*General styles for all column divs, for pages which use column layouts*/
 .column {
 	float: left;
 	width: 50%;
@@ -596,14 +605,18 @@ table caption{
 	margin-top: 10px;
 }
 
+/*General styles for the wrapper div element which goes around the InfoBoxes*/
 .info-wrapper{
 	float: right;
 	min-height: 100px;
-	width: 40%;
+	width: 39%;
 	overflow: hidden;
 	margin-left: 5px;
+	position: absolute;
+	left: 810px;
 }
 
+/*The following styles create the links which look like buttons, which replaced the image elements which were previously used for the navigation buttons*/
 a.nav_button{
 	color: black;
 	background-color: #DDDDDD;
@@ -636,11 +649,12 @@ span.gray_button{
 	opacity: 0.3;
 }
 
+/*an ID for elements that should have no style, if it is necessary to specifically specify such an element.*/
 #none{
 	/*Please do not do anything with elements with id "none"*/
 }
 
-/*Styles for the PGProblemEditor Page*/
+/*Styles for the PGProblemEditor Page
 
 #editor{
 	background-color: #FFFFFF;
