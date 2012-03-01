@@ -403,11 +403,12 @@ clear: both;
 #InfoPanel {
     font-size:100%;
 	float: right;
-	max-width: 400px;
+	max-width: 40%;
 	overflow: auto;
 	margin-right: -1px;
 	background-color: #fff;
 }
+
 #InfoPanel ol {
 	font-size:100%;
 }
@@ -732,10 +733,16 @@ span.gray_button{
 
 /*These are styles for the tables of problem sets*/
 
+
+/*This is the styling specifically for the tables of problems displayed for each problem set page*/
+table.problem_set_table{
+	margin-top: 30px;
+	#width:30%;
+	text-align: left;
+}
 table.problem_set_table th{
 	padding-right: 30px;
 }
-
 table.problem_set_table td{
 	padding-right: 30px;
 }

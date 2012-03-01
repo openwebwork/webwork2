@@ -433,7 +433,7 @@ clear: both;
 #InfoPanel {
     font-size:100%;
 	float: right;
-	max-width: 400px;
+	max-width: 40%;
 	overflow: auto;
 	/*margin-right: -1px;*/
 	background-color: #fff;
@@ -809,7 +809,7 @@ div.problem_sets_options {
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 table.problem_set_table{
 	margin-top: 30px;
-	width: 640px;
+	#width: 640px;
 	text-align: left;
 }
 
