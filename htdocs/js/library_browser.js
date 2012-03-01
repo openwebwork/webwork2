@@ -166,6 +166,14 @@ $(document).ready(function() {
 			$("#dialog").dialog('open');
 		}
 	});
+//   setup  slider for side bar
+	$("#problem_sets_container").resizable({
+		cursor: 'move',
+		//animate: true,
+		//ghost: true,
+		delay: 0,
+	});
+
 
 	// some window set up:
 	$tabs = $("#problems_container")
@@ -210,7 +218,7 @@ $(document).ready(function() {
 									"ww_selected");
 						}
 					});
-
+ 
 	$("#problems_container").removeClass("ui-corner-all");
 	
 	listLibRequest.xml_command = "listLibraries";
