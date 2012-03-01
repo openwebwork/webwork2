@@ -180,7 +180,7 @@ sub body {
 				print '<li id="new_problem_set">New Problem Set</li>';
 		    print '</ul>';
 		  print '</div>';
-		  print '<div id="size_slider"><p>||</p></div>';
+		  #print '<div id="size_slider"><p>||</p></div>';
 		  print '<div id="problems_container">';
 		    #List of tabs
 		  	print '<ul>',
