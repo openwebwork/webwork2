@@ -1,6 +1,5 @@
 #!/user/bin/perl -w
 
- 
 
 
 BEGIN {
@@ -27,6 +26,7 @@ BEGIN {
 	eval "use lib '$webwork_directory/lib'"; die $@ if $@;
 	eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
  	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_directory });
+ 	die "Can't create seed course environment for webwork in $webwork_directory" unless ref($seed_ce);
  	my $webwork_url = $seed_ce->{webwork_url};
  	my $pg_dir = $seed_ce->{pg_dir};
  	eval "use lib '$pg_dir/lib'"; die $@ if $@;
@@ -37,18 +37,23 @@ BEGIN {
 	
 ###############################################################################
 
-	$WebworkWebservice::PASSWORD      = 'xmluser';     # default password
-	$WebworkWebservice::COURSENAME    = 'gage_course'; # default course
+	$WebworkWebservice::SITE_PASSWORD      = 'xmluser';     # default password
+	$WebworkWebservice::COURSENAME    = 'the-course-should-be-determined-at-run-time';       # default course
+	
+	
+
 }
 
 
 use strict;
 use warnings;
+use WeBWorK::Localize;
+
+our  $UNIT_TESTS_ON    = 0;
+
+# error formatting
 
 
-	
-
-	
 ###############################################################################
 ###############################################################################
 
@@ -101,38 +106,69 @@ sub pretty_print_rh {
 use WebworkWebservice::RenderProblem;
 use WebworkWebservice::LibraryActions;
 use WebworkWebservice::MathTranslators;
+use WebworkWebservice::SetActions;
 
 ###############################################################################
 package WebworkXMLRPC;
 use base qw(WebworkWebservice); 
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 
-
+sub format_hash_ref {
+	my $hash = shift;
+	my $out_str="";
+	my $count =4;
+	foreach my $key ( sort keys %$hash) {
+		my $value = defined($hash->{$key})? $hash->{$key}:"--";
+		$out_str.= " $key=>$value ";
+		$count--;
+		unless($count) { $out_str.="\n  ";$count =4;}
+	}
+	$out_str;
+}
 
 ###########################################################################
-#  authentication
+#  authentication and authorization
 ###########################################################################
 
 sub initiate_session {
 	my ($invocant, @args) = @_;
 	my $class = ref $invocant || $invocant;
+	######### trace commands ######
+ 	    my @caller = caller(1);  # caller data
+ 	    my $calling_function = $caller[3];
+ 	    #print STDERR  "\n\nWebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
+    ###############################
+	
 	my $rh_input     = $args[0];
-	my $user_id       = $rh_input->{userID};
-	my $password     = $rh_input->{password};
+	# print STDERR "input from the form is ", format_hash_ref($rh_input), "\n";
+	
+	# obtain input from the hidden fields on the HTML page
+	my $user_id      = $rh_input ->{userID};
+	my $session_key	 = $rh_input ->{session_key};
 	my $courseName   = $rh_input ->{courseID};
-	my $ce = $class->create_course_environment($courseName);
-	my $db = new WeBWorK::DB($ce->{dbLayout});
+	my $password     = $rh_input ->{password};
+	my $ce           = $class->create_course_environment($courseName);
+	my $db           = new WeBWorK::DB($ce->{dbLayout});
 	
 	my $language= $ce->{language} || "en";
-	my $language_handle = WeBWorK::Localize->get_handle($language) ;
+	my $language_handle = WeBWorK::Localize::getLoc($language) ;
 
 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
     runtime_use $user_authen_module;
+    
+if ($UNIT_TESTS_ON) {
+	print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
+	print STDERR  "WebworkWebservice.pl ".__LINE__." courseID  is " , $rh_input->{courseID},"\n";
+	print STDERR  "WebworkWebservice.pl ".__LINE__." userID  is " , $rh_input->{userID},"\n";
+	print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
+}    
 
+#   This structure needs to mimic the structure expected by Authen
 	my $self = {
 		courseName	=>  $courseName,
 		user_id		=>  $user_id,
-		password	=>  $password,
+		password    =>  $password,
+		session_key =>  $session_key,
 		ce          =>  $ce,
 		db          =>  $db,
 		language_handle => $language_handle,
@@ -145,8 +181,16 @@ sub initiate_session {
 	my $authen = $user_authen_module->new($self);
 	my $authz  =  WeBWorK::Authz->new($self);
 	
-	$self->{authen}             =  $authen;
+	$self->{authen}             = $authen;
 	$self->{authz}              = $authz;
+	
+	 
+	if ($UNIT_TESTS_ON) {
+ 	   print STDERR  "WebworkWebservice.pm ".__LINE__." initiate data:\n  "; 
+ 	   print STDERR  "class type is ", $class, "\n";
+ 	   print STDERR  "Self has type ", ref($self), "\n";
+ 	   print STDERR   "self has data: \n", format_hash_ref($self), "\n";
+	}
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
 #   FIXME:  can/should we change this????
@@ -154,7 +198,6 @@ sub initiate_session {
 #   We are borrowing tricks from the AuthenWeBWorK.pm module
 #
 # 	
-
 
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
@@ -171,7 +214,21 @@ sub initiate_session {
 	
 	$self->{authenOK}  = $authenOK;
 	$self->{authzOK}   = $authz->hasPermissions($user_id, "access_instructor_tools");
-	return $self;
+	
+# Update the credentials -- in particular the session_key may have changed.
+ 	$self->{session_key} = $authen->{session_key};
+
+ 	if ($UNIT_TESTS_ON) {
+ 		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK},"\n";
+     	print STDERR  "WebworkWebservice.pm ".__LINE__."authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK},"\n"; 
+ 		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication contains ", format_hash_ref($authen),"\n";
+ 		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
+ 	} 
+ # Is there a way to transmit a number as well as a message?
+ # Could be useful for nandling errors.
+ 	die "Could not authenticate user $user_id with key $session_key " unless $self->{authenOK};
+ 	die "User $user_id does not have professor privileges in this course $courseName " unless $self->{authzOK};
+ 	return $self;
 }
 
 
@@ -189,7 +246,7 @@ sub create_course_environment {
 				{webwork_dir		=>		$WebworkWebservice::WW_DIRECTORY, 
 				 courseName         =>      $courseName
 				 });
-	# error messages
+	#warn "Unable to find environment for course: |$courseName|" unless ref($ce);
 	return ($ce);
 }
 
@@ -204,13 +261,19 @@ sub db {
 	my $self = shift;
 	$self->{db};
 }
+sub param {    # imitate get behavior of the request object params method
+	my $self =shift;
+	my $param = shift;
+	$self->{$param};
+}
 sub authz {
 	my $self = shift;
 	$self->{authz};
 }
 sub maketext {
 	my $self = shift;
-	$self->{language_handle}->maketext(@_);
+	#$self->{language_handle}->maketext(@_);
+	&{ $self->{language_handle} }(@_);
 }
 
 
@@ -218,10 +281,10 @@ sub get_credentials {
 		my $self = shift;
 		# self is an Authen object it contains an object r which is the WebworkXMLRPC object
 		# confusing isn't it?
-		$self->{user_id} = $self->{r}->{user_id};
-		$self->{session_key} = "";
-		$self->{password} = $self->{r}->{password};
-		$self->{login_type} = "normal";
+		$self->{user_id}     = $self->{r}->{user_id};
+		$self->{session_key} = $self->{r}->{session_key};
+		$self->{password}    = $self->{r}->{password}; #"the-pass-word-can-be-provided-via-a-pop-up--call-back";
+		$self->{login_type}  = "normal";
 		$self->{credential_source} = "params";
 		return 1;
 }
@@ -234,36 +297,100 @@ sub check_authorization {
 
 
 }
-
+sub do {   # process and return result
+           # make sure that credentials are returned
+           # for every call
+           # $result -> xmlrpcCall(command, in);
+           # $result->{output}->{foo} is defined for foo = courseID userID and session_key
+	my $self = shift;
+	my $result = shift;
+    $result->{session_key}  = $self->{session_key};
+    $result->{userID}       = $self->{user_id};
+    $result->{courseID}     = $self->{courseName};
+	return($result);
+}
 #  respond to xmlrpc requests
+#  Add routines for handling errors if the authentication fails or if the authorization is not appropriate.
+
+sub searchLib {
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    #warn "\n incoming request to listLib:  class is ",ref($self) if $UNIT_TESTS_ON ;
+  	return $self->do( WebworkWebservice::LibraryActions::searchLib($self, $in) );
+}
+
 sub listLib {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
-    warn "incomiing request to listLib:  class is ",ref($self);
-    warn "authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK};
-    warn "authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK}; 
-  	return( WebworkWebservice::LibraryActions::listLib($in) );
+    #warn "\n incoming request to listLib:  class is ",ref($self) if $UNIT_TESTS_ON ;
+  	return $self->do( WebworkWebservice::LibraryActions::listLib($self, $in) );
 }
 sub listLibraries {     # returns a list of libraries for the default course
-    my $self = shift;
+	my $class = shift;
     my $in = shift;
-  	return( WebworkWebservice::LibraryActions::listLibraries($in) );
+    my $self = $class->initiate_session($in);
+    #warn "incoming request to listLibraries:  class is ",ref($self) if $UNIT_TESTS_ON ;
+  	return $self->do( WebworkWebservice::LibraryActions::listLibraries($self, $in) );
+}
+sub listSets {
+  my $class = shift;
+  my $in = shift;
+  my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::listLocalSets($self));
+}
+sub listSetProblems {
+	my $class = shift;
+  	my $in = shift;
+  	my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::listLocalSetProblems($self, $in));
+}
+
+sub createNewSet{
+	my $class = shift;
+  	my $in = shift;
+  	my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::createNewSet($self, $in));
+}
+
+sub reorderProblems{
+	my $class = shift;
+  	my $in = shift;
+  	my $self = $class->initiate_session($in);
+   	return $self->do(WebworkWebservice::SetActions::reorderProblems($self, $in));
+}
+
+sub addProblem {
+	my $class = shift;
+  	my $in = shift;
+  	my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::addProblem($self, $in));
+}
+
+sub deleteProblem{
+	my $class = shift;
+  	my $in = shift;
+  	my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::deleteProblem($self, $in));
 }
 sub renderProblem {
-    my $self = shift;
+    my $class = shift;
     my $in = shift;
-  	return( WebworkWebservice::RenderProblem::renderProblem($in) );
+    my $self = $class->initiate_session($in);
+    return $self->do( WebworkWebservice::RenderProblem::renderProblem($self,$in) ); 
 }
 sub readFile {
-    my $self = shift;
+    my $class = shift;
     my $in   = shift;
-  	return( WebworkWebservice::LibraryActions::readFile($in) );
+    my $self = $class->initiate_session($in);
+  	return $self->do( WebworkWebservice::LibraryActions::readFile($self,$in) );
 }
 sub tex2pdf {
-    my $self = shift;
-    my $in   = shift;
-  	return( WebworkWebservice::MathTranslators::tex2pdf($in) );
+    my $class = shift;
+    my $in    = shift;
+    my $self  = $class->initiate_session($in);
+  	return $self->do( WebworkWebservice::MathTranslators::tex2pdf($self,$in) );
 }
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
@@ -344,33 +471,6 @@ sub readFile {
 # }
 
 
-# sub tth {
-# 	shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-# 	my $in = shift;
-# 	my $tthpath = "/usr/local/bin/tth";
-#     my $out;
-#     $inputString    = "<<END_OF_TTH_INPUT_STRING;\n\n\n" . $in . "\nEND_OF_TTH_INPUT_STRING\necho \"\" >/dev/null"; 
-#     #it's not clear why another command is needed.
-# 
-#     if (-x $tthpath ) {
-#     	my $tthcmd      = "$tthpath -L -f5 -r 2>/dev/null " . $inputString;
-#     	if (open(TTH, "$tthcmd   |")) {  
-#     	    local($/);
-# 			$/ = undef;
-# 			$out = <TTH>;
-# 			$/ = "\n";
-# 			close(TTH);
-# 	    }else {
-# 	        $out = "<BR>there has been an error in executing $tthcmd<BR>";
-# 	    }
-# 	} else {
-# 		$out = "<BR> Can't execute the program tth at |$tthpath|<BR>";
-#     }
-# 
-#     #return "<!-- \r\n" . $in . "\r\n-->\r\n\r\n" . $out . "\r\n\r\n";
-#     return $out;
-# 
-# }
 
 package Filter;
 

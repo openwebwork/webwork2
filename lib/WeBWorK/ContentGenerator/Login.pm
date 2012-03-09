@@ -145,12 +145,15 @@ sub body {
 		);
 	}
 
+	print CGI::start_div({-class=>"p_content"});
+	
 	if ( $externalAuth ) {
 	    print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($r->maketext($course))));
-
+		print CGI::end_div();
 	} else {
 		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($r->maketext($course))));
 		print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
+		print CGI::end_div();
 	
 		print CGI::startform({-method=>"POST", -action=>$r->uri, -id=>"login_form"});
 

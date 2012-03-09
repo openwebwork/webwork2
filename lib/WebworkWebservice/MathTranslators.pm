@@ -56,7 +56,7 @@ my $tmp_directory_permission 	= 	$Global::tmp_directory_permission;
 my $numericalGroupID			=	$Global::numericalGroupID;  # group ID for webadmin
 
 sub tex2pdf {
-
+	my $self    =   shift;
 	my $rh 		= 	shift;
 	local($|)	=	1;
 	my $out 	= 	{};

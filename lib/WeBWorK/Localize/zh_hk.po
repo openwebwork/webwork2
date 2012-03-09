@@ -7,13 +7,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2011-12-10 17:50-0500\n"
+"PO-Revision-Date: 2012-03-08 17:01-0500\n"
 "Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
 "Language-Team: Webwork Language Team <gage@math.rochester.edu>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
 "X-Poedit-Language: Chinese\n"
 "X-Poedit-Country: CHINA\n"
 
@@ -72,42 +72,42 @@ msgstr "[_1]% 正确"
 #: ContentGenerator/Options.pm:171
 #, fuzzy
 msgid "%1's Current Address"
-msgstr "[_1] i莽in Mevcut Adres"
+msgstr "[_1] 的当前地址"
 
 #
 #. ($user_name)
 #: ContentGenerator/Options.pm:126
 #, fuzzy
 msgid "%1's Current Password"
-msgstr "[_1] i莽in Mevcut 艦ifre"
+msgstr "[_1] 的当前密码"
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:175
 #, fuzzy
 msgid "%1's New Address"
-msgstr "[_1] i莽in Yeni Adres"
+msgstr "[_1] 的新地址"
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:130
 #, fuzzy
 msgid "%1's New Password"
-msgstr "[_1] i莽in Yeni 艦ifre"
+msgstr "[_1] 的新密码"
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:101
 #, fuzzy
 msgid "%1's new password cannot be blank."
-msgstr "[_1] i莽in yeni 艧ifre bo艧 b谋rak谋lamaz."
+msgstr "[_1] 的新密码不能是空白."
 
 #
 #. ($e_user_name)
 #: ContentGenerator/Options.pm:84
 #, fuzzy
 msgid "%1's password has been changed."
-msgstr "[_1] adl谋 kullan谋c谋n谋n 艧ifresi de臒i艧tirildi."
+msgstr "[_1] 的密码已更改."
 
 #
 #. ($setID, $problemID)
@@ -126,24 +126,24 @@ msgstr "Sorular谋n [_1] tanesi yan谋ts谋z b谋rak谋ld谋."
 #
 #: ContentGenerator/Problem.pm:1188
 msgid "(This problem will not count towards your grade.)"
-msgstr "(Bu soru notunuzu etkilemeyecektir.)"
+msgstr "(这道题将不会计算成绩.)"
 
 #
 #: ContentGenerator/Problem.pm:1299
 msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
-msgstr "YANITLAR SADECE KONTROL ED陌L陌YOR -- YANITLAR KAYDED陌LMED陌"
+msgstr "答案仅为检查 -- 答案没有被记录"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1708
 #: ContentGenerator/Instructor/UserList.pm:1391
 #: ContentGenerator/Instructor/UserList.pm:1463
 msgid "Abandon changes"
-msgstr "tr: Abandon changes"
+msgstr "放弃更改"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1647
 msgid "Abandon export"
-msgstr "tr: Abandon export"
+msgstr "放弃输出"
 
 #
 #. ($eUserID)
@@ -155,22 +155,22 @@ msgstr "[_1] gibi davran谋l谋yor."
 #
 #: ContentGenerator/Instructor/UserList.pm:1927
 msgid "Active"
-msgstr "tr: Active"
+msgstr "活跃的"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1142
 msgid "Add how many students?"
-msgstr "tr: Add how many students?"
+msgstr "增加多少学生?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1220
 msgid "Add which new users?"
-msgstr "tr: Add which new users?"
+msgstr "增加哪种新用户?"
 
 #
 #: ContentGenerator/Problem.pm:311
 msgid "All of the answers above are correct."
-msgstr "Yan谋tlar谋n t眉m眉 do臒ru"
+msgstr "上面的所有答案都是正确的."
 
 #
 #. ($verb)
@@ -198,7 +198,7 @@ msgstr "tr: All visible sets [_1] all students"
 #: ContentGenerator/Instructor/ProblemSetList.pm:832
 #: ContentGenerator/Instructor/ProblemSetList.pm:870
 msgid "Answer Date"
-msgstr "tr: Answer Date"
+msgstr "答案日期"
 
 #
 #: ContentGenerator/Problem.pm:242
@@ -213,12 +213,12 @@ msgstr "tr: Any changes made below will be reflected in the set for ALL students
 #
 #: ContentGenerator.pm:1481
 msgid "Apply Options"
-msgstr "Appliquer"
+msgstr "使用选项"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1545
 msgid "Assign this set to which users?"
-msgstr "tr: Assign this set to which users?"
+msgstr "这次作业留给哪些用户?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2064
@@ -235,6 +235,7 @@ msgstr "Yan谋tlar谋n en az bir tanesi [_1]do臒ru de臒il."
 
 #
 #: ContentGenerator/ProblemSet.pm:350
+#, fuzzy
 msgid "Attempts"
 msgstr "Deneme say谋s谋"
 
@@ -254,13 +255,14 @@ msgstr "Can't get password record for user '[_1]': [_2]"
 
 #
 #: ContentGenerator/Options.pm:142
+#, fuzzy
 msgid "Change Email Address"
-msgstr "E-posta Adresi De臒i艧tir"
+msgstr "更改Email地址"
 
 #
 #: ContentGenerator/Options.pm:61
 msgid "Change Password"
-msgstr "艦ifre De臒i艧tir"
+msgstr "更改密码"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1409
@@ -273,26 +275,29 @@ msgstr "tr: changes abandoned"
 #: ContentGenerator/Instructor/UserList.pm:1457
 #, fuzzy
 msgid "Changes saved"
-msgstr "tr: changes saved"
+msgstr "更改已保存"
 
 #
 #: ContentGenerator/Problem.pm:1118
 msgid "Check Answers"
-msgstr "Yan谋tlar谋 kontrol et"
+msgstr "检查答案"
 
 #
 #: ContentGenerator/Problem.pm:1227
+#, fuzzy
 msgid "Checking additional error messages"
 msgstr "tr: Checking additional error messages"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1011
+#, fuzzy
 msgid "Choose visibility of the sets to be affected"
 msgstr "tr: Choose visibility of the sets to be affected"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1084
 #: ContentGenerator/Instructor/ProblemSetList.pm:982
+#, fuzzy
 msgid "Choose which sets to be affected"
 msgstr "tr: Choose which sets to be affected"
 
@@ -312,7 +317,7 @@ msgstr "tr: Click on the login name to edit individual problem set data, (e.g. d
 #
 #: ContentGenerator/ProblemSets.pm:435
 msgid "Closed"
-msgstr "tr: Closed"
+msgstr "已关闭"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2072
@@ -321,7 +326,7 @@ msgstr "tr: Closed"
 #: ContentGenerator/Instructor/UserList.pm:861
 #: ContentGenerator/Instructor/UserList.pm:904
 msgid "Comment"
-msgstr "tr: Comment"
+msgstr "评论"
 
 #
 #. ($e_user_name)
@@ -329,12 +334,12 @@ msgstr "tr: Comment"
 #: ContentGenerator/Options.pm:95
 #, fuzzy
 msgid "Confirm %1's New Password"
-msgstr "[_1] i莽in 艦ifre Onay谋"
+msgstr "确认[_1]的新密码 "
 
 #
 #: ContentGenerator/Login.pm:206
 msgid "Continue"
-msgstr "tr: Continue"
+msgstr "继续"
 
 #
 #: ContentGenerator/Problem.pm:243
@@ -346,14 +351,14 @@ msgstr "正确"
 #: ContentGenerator/Options.pm:80
 #, fuzzy
 msgid "Couldn't change %1's password: %2"
-msgstr "[_1] adl谋 kullan谋c谋n谋n 艧ifresi de臒i艧tirilemedi: [_2]"
+msgstr "不能改变[_1]的密码: [_2]"
 
 #
 #. ($@)
 #: ContentGenerator/Options.pm:153
 #, fuzzy
 msgid "Couldn't change your email address: %1"
-msgstr "E-posta adresiniz de臒i艧tirilemedi: [_1]"
+msgstr "不能改变您的email地址: [_1]"
 
 #
 #: ContentGenerator/ProblemSets.pm:71
@@ -365,10 +370,11 @@ msgstr "课程信息"
 #: ContentGenerator.pm:657
 #: ContentGenerator/Home.pm:94
 msgid "Courses"
-msgstr "Dersler"
+msgstr "课程"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1351
+#, fuzzy
 msgid "Create as what type of set?"
 msgstr "tr: Create as what type of set?"
 
@@ -376,17 +382,18 @@ msgstr "tr: Create as what type of set?"
 #: ContentGenerator/Instructor/ProblemSetList.pm:1263
 #: ContentGenerator/Instructor/UserList.pm:1082
 msgid "Delete how many?"
-msgstr "tr: Delete how many?"
+msgstr "删除多少?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1119
+#, fuzzy
 msgid "Disable"
 msgstr "tr: Disable"
 
 #
 #: ContentGenerator.pm:1442
 msgid "Display Options"
-msgstr "Options d'affichage"
+msgstr "显示选项"
 
 #
 #. ($pl)
@@ -398,19 +405,19 @@ msgstr "Télécharger une copie de : [plural,_1,Set,Sets]"
 #
 #: ContentGenerator/ProblemSet.pm:321
 msgid "Download PDF or TeX Hardcopy for Current Set"
-msgstr "tr: Download PDF or TeX Hardcopy for Current Set"
+msgstr "下载当前作业的PDF或者TeX文件"
 
 #
 #: ContentGenerator/ProblemSets.pm:289
 msgid "Download PDF or TeX Hardcopy for Selected Sets"
-msgstr "tr: Download PDF or TeX Hardcopy for Selected Sets"
+msgstr "下载已选定的作业的PDF或者TeX文件"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:445
 #: ContentGenerator/Instructor/ProblemSetList.pm:831
 #: ContentGenerator/Instructor/ProblemSetList.pm:869
 msgid "Due Date"
-msgstr "tr: Due Date"
+msgstr "截止日期"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1812
@@ -422,12 +429,12 @@ msgstr "tr: Duplicate this set and name it"
 #: ContentGenerator/Instructor/UserList.pm:1785
 #: ContentGenerator/Instructor/UserList.pm:1818
 msgid "Edit"
-msgstr "tr: Edit"
+msgstr "编辑"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:603
 msgid "Edit All Set Data"
-msgstr "tr: Edit All Set Data"
+msgstr "编辑所有作业数据"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:439
@@ -437,7 +444,7 @@ msgstr "tr: Edit Assigned Users"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:438
 msgid "Edit Problems"
-msgstr "tr: Edit Problems"
+msgstr "编辑题目"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:441
@@ -447,12 +454,12 @@ msgstr "tr: Edit Set Data"
 #
 #: ContentGenerator/Instructor/UserList.pm:961
 msgid "Edit Which Users?"
-msgstr "tr: Edit Which Users?"
+msgstr "编辑哪些用户?"
 
 #
 #: ContentGenerator/Problem.pm:1011
 msgid "Edit this problem"
-msgstr "tr: Edit this problem"
+msgstr "编辑这道题"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:923
@@ -466,7 +473,7 @@ msgstr "tr: Edit which sets?"
 #: ContentGenerator/Instructor/UserList.pm:856
 #: ContentGenerator/Instructor/UserList.pm:899
 msgid "Email Address"
-msgstr "tr: Email Address"
+msgstr "Email地址"
 
 #
 #: ContentGenerator.pm:1526
@@ -495,17 +502,17 @@ msgstr "tr: Enable/Disable reduced scoring for selected sets"
 #: ContentGenerator/Instructor/UserList.pm:858
 #: ContentGenerator/Instructor/UserList.pm:901
 msgid "Enrollment Status"
-msgstr "tr: Enrollment Status"
+msgstr "注册状态"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1321
 msgid "Enter filename below"
-msgstr "tr: Enter filename below"
+msgstr "输入文件名"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1502
 msgid "Enter filenames below"
-msgstr "tr: Enter filenames below"
+msgstr "输入文件名"
 
 #
 #: ContentGenerator/Problem.pm:240
@@ -515,12 +522,12 @@ msgstr "Yan谋t"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1671
 msgid "Export selected sets"
-msgstr "tr: Export selected sets"
+msgstr "输出已选定的集合"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1317
 msgid "Export to what kind of file?"
-msgstr "tr: Export to what kind of file?"
+msgstr "输出哪种文件"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1604
@@ -572,7 +579,7 @@ msgstr "tr: Failed to duplicate set: set [_1] already exists!"
 #
 #: ContentGenerator/Instructor/UserList.pm:1339
 msgid "Filename"
-msgstr "tr: Filename"
+msgstr "文件名"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:678
@@ -586,7 +593,7 @@ msgstr "tr: Filter by what text?"
 #: ContentGenerator/Instructor/UserList.pm:854
 #: ContentGenerator/Instructor/UserList.pm:897
 msgid "First Name"
-msgstr "tr: First Name"
+msgstr "名"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1020
@@ -596,7 +603,7 @@ msgstr "tr: Give new password to which users?"
 #
 #: ContentGenerator/Login.pm:231
 msgid "Guest Login"
-msgstr "tr: Guest Login"
+msgstr "游客登录"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:443
@@ -608,7 +615,7 @@ msgstr "tr: Hardcopy Header"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1017
 msgid "Hidden"
-msgstr "tr: Hidden"
+msgstr "隐藏的"
 
 #
 #: ContentGenerator.pm:667
@@ -650,7 +657,7 @@ msgstr "tr: Inactive"
 #
 #: Authen.pm:148
 msgid "Invalid user ID or password."
-msgstr "Yanl谋艧 kullan谋c谋 ad谋 ya da 艧ifre."
+msgstr "无效的用户名或者密码."
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2066
@@ -659,7 +666,7 @@ msgstr "Yanl谋艧 kullan谋c谋 ad谋 ya da 艧ifre."
 #: ContentGenerator/Instructor/UserList.pm:855
 #: ContentGenerator/Instructor/UserList.pm:898
 msgid "Last Name"
-msgstr "tr: Last Name"
+msgstr "姓"
 
 #
 #: ContentGenerator.pm:730
@@ -675,13 +682,13 @@ msgstr "K眉t眉phane Taray谋c谋"
 #
 #: ContentGenerator/Logout.pm:124
 msgid "Log In Again"
-msgstr "Tekrar giri艧 yap"
+msgstr "再次登录"
 
 #
 #: ContentGenerator.pm:845
 #: ContentGenerator.pm:847
 msgid "Log Out"
-msgstr "脟谋k谋艧 Yap"
+msgstr "登出"
 
 #
 #. ($userID)
@@ -696,7 +703,7 @@ msgstr "[_1] olarak giri艧 yapt谋n谋z."
 #: ContentGenerator/Login.pm:77
 #, fuzzy
 msgid "Login Info"
-msgstr "tr: Login Name"
+msgstr "登录信息"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2062
@@ -705,13 +712,13 @@ msgstr "tr: Login Name"
 #: ContentGenerator/Instructor/UserList.pm:853
 #: ContentGenerator/Instructor/UserList.pm:896
 msgid "Login Name"
-msgstr "tr: Login Name"
+msgstr "登录名"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2063
 #, fuzzy
 msgid "Login Status"
-msgstr "Durumu"
+msgstr "登录状态"
 
 #
 #: ContentGenerator.pm:654
@@ -744,12 +751,12 @@ msgstr "tr: Name the new set"
 #: ContentGenerator/Instructor/UserList.pm:1937
 #: ContentGenerator/Instructor/UserList.pm:2077
 msgid "New Password"
-msgstr "tr: New Password"
+msgstr "新密码"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1519
 msgid "New passwords saved"
-msgstr "tr: New passwords saved"
+msgstr "新密码已保存"
 
 #
 #: ContentGenerator/Problem.pm:864
@@ -840,7 +847,6 @@ msgstr "tr: Permission Level"
 #
 #. (CGI::b($r->maketext($course)
 #: ContentGenerator/Login.pm:154
-#, fuzzy
 msgid "Please enter your username and password for %1 below:"
 msgstr "请在下面[_1]处输入你的用户名和密码 :"
 
@@ -952,7 +958,7 @@ msgstr "Hataları bildir"
 #
 #: ContentGenerator/Problem.pm:244
 msgid "Result"
-msgstr "Sonu莽"
+msgstr "结果"
 
 #
 #. (CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)
@@ -971,7 +977,7 @@ msgstr "tr: Results of last action performed"
 #: ContentGenerator/Instructor/UserList.pm:1415
 #: ContentGenerator/Instructor/UserList.pm:1487
 msgid "Save changes"
-msgstr "tr: Save changes"
+msgstr "保存改变"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1186
@@ -995,7 +1001,7 @@ msgstr "tr: Select all sets"
 #
 #: ContentGenerator/Instructor/UserList.pm:535
 msgid "Select all users"
-msgstr "tr: Select all users"
+msgstr "选择所有用户"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:534
@@ -1134,7 +1140,7 @@ msgstr "Rol Yapmay谋 b谋rak"
 #: ContentGenerator/Instructor/UserList.pm:857
 #: ContentGenerator/Instructor/UserList.pm:900
 msgid "Student ID"
-msgstr "tr: Student ID"
+msgstr "学生ID"
 
 #
 #: ContentGenerator/Problem.pm:1127
@@ -1198,7 +1204,7 @@ msgstr "Yukar谋daki yan谋t [_1]do臒ru de臒il."
 #
 #: ContentGenerator/Problem.pm:305
 msgid "The answer above is correct."
-msgstr "Yukar谋daki yan谋t do臒ru."
+msgstr "上面的答案是正确的."
 
 #
 #. (CGI::b($r->maketext("[_1]'s Current Password",$user_name)
@@ -1254,7 +1260,7 @@ msgstr "Bu soru grubu hen眉z a莽谋k de臒il."
 #
 #: ContentGenerator/Problem.pm:611
 msgid "This problem will not count towards your grade."
-msgstr "Bu soru, notunuzu etkilemeyecektir."
+msgstr "这道题目不算成绩"
 
 #
 #. (CGI::font({class=>$visiblityStateClass}, $visiblityStateText)
@@ -1288,7 +1294,7 @@ msgstr "tr: Filename"
 #
 #: ContentGenerator/Instructor/UserList.pm:2087
 msgid "Users List"
-msgstr "tr: Users List"
+msgstr "用户列表"
 
 #
 #. ($names{$primary}, $names{$secondary}, $names{$ternary})
@@ -1329,7 +1335,7 @@ msgstr "tr: Warning: Deletion destroys all user-related data and is not undoable
 #
 #: ContentGenerator/Home.pm:87
 msgid "Welcome to WeBWorK!"
-msgstr "WeBWorK sitemize ho艧geldiniz!"
+msgstr "欢迎来到WebWorK!"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:665
@@ -1380,19 +1386,19 @@ msgstr "tr: You are not authorized to perform this action."
 #
 #: ContentGenerator/Instructor/UserList.pm:1121
 msgid "You cannot delete yourself!"
-msgstr "tr: You cannot delete yourself!"
+msgstr "你不能删除自己!"
 
 #
 #: ContentGenerator/Options.pm:163
 #: ContentGenerator/Options.pm:180
 msgid "You do not have permission to change email addresses."
-msgstr "Adres de臒i艧tirmek i莽in yetkiniz yok."
+msgstr "你没有权限改变电子邮件地址."
 
 #
 #: ContentGenerator/Options.pm:117
 #: ContentGenerator/Options.pm:139
 msgid "You do not have permission to change your password."
-msgstr "艦ifre de臒i艧tirmek i莽in yetkiniz yok."
+msgstr "你没有权限改变你的密码."
 
 #
 #. ($attemptsLeft,$attemptsLeftNoun)
@@ -1418,7 +1424,7 @@ msgstr "Bu soru i莽in [quant,_1,deneme hakk谋,deneme hakk谋] kulland谋n谋z.
 #
 #: ContentGenerator/Logout.pm:119
 msgid "You have been logged out of WeBWorK."
-msgstr "WeBWorK sisteminden 莽谋k谋艧 yapt谋n谋z."
+msgstr "你已经登出WeBWorK."
 
 #
 #: ContentGenerator/Instructor/UserList.pm:1933
@@ -1440,7 +1446,7 @@ msgstr "Bu soru i莽in [_1] puan ald谋n谋z."
 #
 #: ContentGenerator/Options.pm:157
 msgid "Your email address has been changed."
-msgstr "E-posta adresiniz de臒i艧tirildi."
+msgstr "你的电子邮件地址已经改变."
 
 #
 #. ($lastScore,$notCountedMessage)
@@ -1622,7 +1628,7 @@ msgstr "tr: editing all sets"
 #
 #: ContentGenerator/Instructor/UserList.pm:985
 msgid "editing all users"
-msgstr "tr: editing all users"
+msgstr "编辑所有用户"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:953
@@ -1899,9 +1905,8 @@ msgstr "tr: visible users"
 #. ($self->formatDateTime($set->open_date)
 #: ContentGenerator/ProblemSets.pm:420
 #: ContentGenerator/ProblemSets.pm:448
-#, fuzzy
 msgid "will open on %1"
-msgstr "将在[_1]时开放 "
+msgstr "将在%1时开放 "
 
 #
 msgid "Add to which set?"
@@ -1948,9 +1953,8 @@ msgid "Set Header for set [_1]"
 msgstr "tr: Set Header for set [_1]"
 
 #
-#, fuzzy
 msgid "Statistics for [_1]"
-msgstr "统计数据"
+msgstr " [_1]的统计数据"
 
 #
 msgid "Filter"
@@ -1994,7 +1998,7 @@ msgstr "成绩"
 
 #
 msgid "Show in another window"
-msgstr "tr: Show in another window"
+msgstr "在新的窗口里显示"
 
 #
 msgid "Copied auxiliary files from [_1] to  new location at [_2]"
@@ -2005,9 +2009,8 @@ msgid "Unpublished"
 msgstr "Yay谋nlanmad谋"
 
 #
-#, fuzzy
 msgid "Login"
-msgstr "tr: Login Name"
+msgstr "登入"
 
 #
 msgid "Email"
@@ -2051,7 +2054,7 @@ msgstr "Sauvegarder les résultats sélectionnés sous"
 
 #
 msgid "Save Password"
-msgstr "tr: Save Password"
+msgstr "保存密码"
 
 #
 msgid "The file '[_1]' is a blank problem!"
@@ -2163,7 +2166,7 @@ msgstr "Inclure l'index"
 
 #
 msgid "Display Mode"
-msgstr "tr: Display Mode"
+msgstr "显示模式"
 
 #
 msgid "You can earn partial credit on this problem."
@@ -2175,7 +2178,7 @@ msgstr "tr: Write permissions have not been enabled in '[_1]'.  Changes must be 
 
 #
 msgid "blank problem"
-msgstr "tr: blank problem"
+msgstr "空白问题"
 
 #
 msgid "Save Edit"
@@ -2240,7 +2243,7 @@ msgstr "tr: Replace [_1]"
 
 #
 msgid "Help"
-msgstr "Aide"
+msgstr "帮助"
 
 #
 msgid "Add Users"
@@ -2289,7 +2292,7 @@ msgstr "tr: The file '[_1]' is a directory!"
 
 #
 msgid "Save As"
-msgstr "tr: Save As [TMPL]/"
+msgstr "另存为"
 
 #
 msgid "Documentation from source code for PG modules and macro files. Often the most up-to-date information."
@@ -2337,7 +2340,7 @@ msgstr "tr: The hardcopy header for set [_1] has been renamed to '[_2]'."
 
 #
 msgid "Save as"
-msgstr "tr: Save as"
+msgstr "另存为"
 
 #
 msgid "Select action below"
@@ -2353,7 +2356,7 @@ msgstr "tr: Unable to write to '[_1]': [_2]"
 
 #
 msgid "Save"
-msgstr "tr: Save"
+msgstr "保存"
 
 #
 msgid "File '[_1]' exists. File not saved. No changes have been made. You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"
@@ -2486,7 +2489,7 @@ msgstr "课程名单编辑"
 
 #
 msgid "Add"
-msgstr "tr: Add"
+msgstr "添加"
 
 #
 msgid "the original path to the file is [_1]"
@@ -2510,7 +2513,7 @@ msgstr "tr: Unable to change the set header for set [_1]. Unknown error."
 
 #
 msgid "options information"
-msgstr "tr: options information"
+msgstr "选项信息"
 
 #
 msgid "The selected problem([_1]) is not a valid problem for set [_2]."
@@ -2522,7 +2525,7 @@ msgstr "tr: Unknown file type"
 
 #
 msgid "course information"
-msgstr "tr: course information"
+msgstr "课程信息"
 
 #
 msgid "Change User Options"
@@ -2532,6 +2535,83 @@ msgstr "Kullan谋c谋 bilgilerini g眉ncelle"
 msgid "Drop"
 msgstr "tr: Drop"
 
-msgid " (modified)"
-msgstr " (已经修改过)"
+#
+msgid "Solutions"
+msgstr "答案"
 
+#
+msgid "Show:"
+msgstr ""
+
+#
+msgid "WeBWorK Assignment [_1] is due : [_2]."
+msgstr ""
+
+#
+#, fuzzy
+msgid "Hardcopy Generator"
+msgstr "tr: Hardcopy Header"
+
+#
+#, fuzzy
+msgid "This set is visible to students."
+msgstr "Bu soru grubu 枚臒renciler taraf谋ndan [_1]."
+
+#
+msgid "View equations as"
+msgstr ""
+
+#
+msgid "From:"
+msgstr ""
+
+#
+msgid "Generate Hardcopy"
+msgstr ""
+
+#
+msgid "You may choose to show any of the following data. Correct answers and solutions are only available after the answer date of the homework set."
+msgstr ""
+
+#
+#, fuzzy
+msgid "E-mail Instructor"
+msgstr "发电子邮件给授课人"
+
+#
+msgid "Send E-mail:"
+msgstr ""
+
+#
+msgid "Cancel Email"
+msgstr "取消电子邮件"
+
+#
+#, fuzzy
+msgid "E-mail:"
+msgstr "电子邮件"
+
+#
+msgid "Correct answers"
+msgstr "正确答案"
+
+#
+msgid "Use this form to report to your professor a problem with the WeBWorK system or an error in a problem you are attempting. Along with your message, additional information about the state of the system will be included."
+msgstr ""
+
+#
+#, fuzzy
+msgid "Student answers"
+msgstr "提交答案"
+
+#
+msgid "Hints"
+msgstr "提示"
+
+#
+#, fuzzy
+msgid "Hardcopy Format:"
+msgstr "tr: Hardcopy Header"
+
+#~ msgid " (modified)"
+#~ msgstr " (已经修改过)"
