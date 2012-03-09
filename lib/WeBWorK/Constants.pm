@@ -134,7 +134,7 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		  type => 'text'},
 		{ var => 'defaultTheme',
 		  doc => 'Theme (refresh page after saving changes to reveal new theme.)',
-		  doc2 => 'There are currently five themes (or skins) to choose from: ur, math, math2, and dgage.  The theme
+		  doc2 => 'There are currently five themes (or skins) to choose from: ur, math, math2, math3 union.  The theme
 specifies a unified look and feel for the WeBWorK course web pages.',
 		  values => [qw(math math2 math3 ur dgage  union)],
 		  type => 'popuplist'},
