@@ -67,7 +67,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
  my $use_site;
  #$use_site = 'test_webwork';    # select a rendering site 
  #$use_site = 'local';           # select a rendering site 
- $use_site = 'rochester_test';  # select a rendering site 
+ $use_site = 'hosted2';  # select a rendering site 
  
  
  ############################################################
@@ -116,7 +116,7 @@ if ($use_site eq 'local') {
 	$FORM_ACTION_URL  =  'http://localhost:80/webwork2/html2xml';
 	$XML_PASSWORD     =  'xmlwebwork';
 	$XML_COURSE       =  'daemon_course';
-} elsif ($use_site eq 'rochester_test') {  
+} elsif ($use_site eq 'hosted2') {  
 	
 	$XML_URL      =  'https://hosted2.webwork.rochester.edu';
 	$FORM_ACTION_URL  =  'https://hosted2.webwork.rochester.edu/webwork2/html2xml';
