@@ -202,7 +202,7 @@ if ($UNIT_TESTS_ON) {
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
 	my $authenOK;
-	{
+	eval {
 		no warnings 'redefine';
 		local *WeBWorK::Authen::get_credentials   = \&WebworkXMLRPC::get_credentials;
 		local *WeBWorK::Authen::maybe_send_cookie = \&WebworkXMLRPC::noop;
@@ -210,7 +210,15 @@ if ($UNIT_TESTS_ON) {
 		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
 		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
 		$authenOK = $authen->verify;
-	}
+	} or do {
+		if (Exception::Class->caught('WeBWorK::DB::Ex::TableMissing')) {
+			# was asked to authenticate into a non-existent course
+			die SOAP::Fault
+				->faultcode('404')
+				->faultstring('Course not found.')
+		}
+		die "Unknown exception when trying to verify authentication.";
+	};
 	
 	$self->{authenOK}  = $authenOK;
 	$self->{authzOK}   = $authz->hasPermissions($user_id, "access_instructor_tools");
