@@ -107,6 +107,7 @@ use WebworkWebservice::RenderProblem;
 use WebworkWebservice::LibraryActions;
 use WebworkWebservice::MathTranslators;
 use WebworkWebservice::SetActions;
+use WebworkWebservice::CourseActions;
 
 ###############################################################################
 package WebworkXMLRPC;
@@ -399,6 +400,64 @@ sub tex2pdf {
     my $in    = shift;
     my $self  = $class->initiate_session($in);
   	return $self->do( WebworkWebservice::MathTranslators::tex2pdf($self,$in) );
+}
+
+# Expecting a hash $in composed of the usual auth credentials
+# plus the params specific to this function
+#{
+#	'userID' => 'admin',	# these are the usual 
+#	'password' => 'admin',	# auth credentials
+#	'courseID' => 'admin',	# used to initiate a
+#	'session_key' => 'key',	# session.
+#	"name": "KEJI554", 
+#	"section": 264, 
+#}
+# Note that we log into the admin course to create courses.
+# The course title will be a concatenation of the name and section number.
+sub createCourse {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::create($self, $in));
+}
+
+# Expecting a hash $in composed of
+#{
+#	'userID' => 'admin',		# these are the usual 
+#	'password' => 'admin',		# auth credentials
+#	'courseID' => 'Math',		# used to initiate a
+#	'session_key' => 'key',		# session.
+#	"firstname": "John", 
+#	"lastname": "Smith", 
+#	"id": "The Doctor",			# required
+#	"email": "doctor@tardis",
+#	"studentid": 87492466, 
+#	"userpassword": "password",	# defaults to studentid if empty 
+#								# if studentid also empty, then no password
+#	"permission": "professor",	# valid values from %userRoles in global.conf
+#								# defaults to student if empty
+#}
+# This user will be added to courseID
+sub addUser {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::addUser($self, $in));
+}
+
+# Expecting a hash $in composed of
+#{
+#	'userID' => 'admin',		# these are the usual 
+#	'password' => 'admin',		# auth credentials
+#	'courseID' => 'Math',		# used to initiate a
+#	'session_key' => 'key',		# session.
+#	"id": "BFYM942", 
+#}
+sub dropUser {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::dropUser($self, $in));
 }
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
