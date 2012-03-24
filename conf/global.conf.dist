@@ -732,6 +732,7 @@ $authen{ldap_options} = {
 	download_hardcopy_view_errors =>"professor",
 	download_hardcopy_format_pdf => "guest",
 	download_hardcopy_format_tex => "ta",
+	download_hardcopy_format_tikz => "professor", # under_construction
 );
 
 # This is the default permission level given to new students and students with
