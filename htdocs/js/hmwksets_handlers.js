@@ -13,6 +13,8 @@ function hmwksets_add_filter_elements() {
 }
 
 addOnLoadEvent(function() {
-	document.getElementById("filter_select").onchange = hmwksets_add_filter_elements;
-	hmwksets_add_filter_elements();
+	if(document.getElementById("filter_select") != null){
+		document.getElementById("filter_select").onchange = hmwksets_add_filter_elements;
+	}
 });
+
