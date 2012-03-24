@@ -499,7 +499,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist", -class=>"edit_form"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist", -class=>"edit_form", -id=>"edit_form_id"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -2162,7 +2162,7 @@ EOF
 ################################################################################
 
 sub fieldEditHTML {
-	my ($self, $fieldName, $value, $properties) = @_;
+	my ($self, $fieldName, $value, $properties, $dateTimeScripts) = @_;
 	my $size = $properties->{size};
 	my $type = $properties->{type};
 	my $access = $properties->{access};
@@ -2175,7 +2175,116 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "number" or $type eq "text") {
-		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
+		my $id = $fieldName."_id";
+		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>"", size=>$size});
+		my $content = "";
+		my $bareName = "";
+		my $timezone = substr($value, -3);
+		
+		if(index($fieldName, ".open_date") != -1){
+			my @temp = split(/.open_date/, $fieldName);
+			$bareName = $temp[0];
+			$bareName =~ s/\./\\\\\./g;
+			$content = <<"CONTENT";
+\$('#$bareName\\\\.open_date_id').datetimepicker({
+	ampm: true,
+	timeFormat: 'hh:mmtt',
+	timeSuffix: ' $timezone',
+	separator: ' at ',
+    onClose: function(dateText, inst) {
+        var dueDateTextBox = \$('#$bareName\\\\.due_date_id');
+        if (dueDateTextBox.val() != '') {
+            var testopenDate = new Date(dateText);
+            var testdueDate = new Date(dueDateTextBox.val());
+            if (testopenDate > testdueDate)
+                dueDateTextBox.val(dateText);
+        }
+        else {
+            dueDateTextBox.val(dateText);
+        }
+    },
+    onSelect: function (selectedDateTime){
+        var open = \$(this).datetimepicker('getDate');
+		var open_obj = new Date(open.getTime());
+        \$('#$bareName\\\\.due_date_id').datetimepicker('option', 'minDate', open_obj);
+    }
+});
+CONTENT
+		}
+		elsif(index($fieldName, ".due_date") != -1){
+			my @temp = split(/.due_date/, $fieldName);
+			$bareName = $temp[0];
+			$bareName =~ s/\./\\\\\./g;
+			$content = <<"CONTENT";
+\$('#$bareName\\\\.due_date_id').datetimepicker({
+	ampm: true,
+	timeFormat: 'hh:mmtt',
+	timeSuffix: ' $timezone',
+	separator: ' at ',
+    onClose: function(dateText, inst) {
+		var openDateTextBox = \$('#$bareName\\\\.open_date_id');
+        var answersDateTextBox = \$('#$bareName\\\\.answer_date_id');
+
+        if (openDateTextBox.val() != '') {
+            var testopenDate = new Date(openDateTextBox.val());
+			var testdueDate = new Date(dateText);
+            if (testopenDate > testdueDate)
+                openDateTextBox.val(dateText);
+        }
+        else {
+            openDateTextBox.val(dateText);
+        }
+
+		if (answersDateTextBox.val() != '') {
+			var testdueDate = new Date(dateText);
+			var testanswersDate = new Date(answersDateTextBox.val());
+			if(testdueDate > testanswersDate)
+				answersDateTextBox.val(dateText);
+		}
+		else {
+			answersDateTextBox.val(dateText);
+		}
+    },
+    onSelect: function (selectedDateTime){
+        var due = \$(this).datetimepicker('getDate');
+        \$('#$bareName\\\\.open_date_id').datetimepicker('option', 'maxDate', new Date(due.getTime()));
+		\$('#$bareName\\\\.answer_date_id').datetimepicker('option', 'minDate', new Date(due.getTime()));
+    }
+});
+CONTENT
+		}
+		elsif(index($fieldName, ".answer_date") != -1){
+			my @temp = split(/.answer_date/, $fieldName);
+			$bareName = $temp[0];
+			$bareName =~ s/\./\\\\\./g;
+			$content = <<"CONTENT";
+\$('#$bareName\\\\.answer_date_id').datetimepicker({
+	ampm: true,
+	timeFormat: 'hh:mmtt',
+	timeSuffix: ' $timezone',
+	separator: ' at ',
+    onClose: function(dateText, inst) {
+        var dueDateTextBox = \$('#$bareName\\\\.due_date_id');
+        if (dueDateTextBox.val() != '') {
+            var testdueDate = new Date(dueDateTextBox.val());
+            var testanswersDate = new Date(dateText);
+            if (testdueDate > testanswersDate)
+                dueDateTextBox.val(dateText);
+        }
+        else {
+            dueDateTextBox.val(dateText);
+        }
+    },
+    onSelect: function (selectedDateTime){
+        var answers = \$(this).datetimepicker('getDate');
+        \$('#$bareName\\\\.due_date_id').datetimepicker('option', 'maxDate', new Date(answers.getTime()));
+    }
+});
+CONTENT
+		}
+		
+		push @$dateTimeScripts, $content;
+		return $out;
 	}
 	
 	if ($type eq "filelist") {
@@ -2351,6 +2460,10 @@ sub recordEditHTML {
 	# make a hash out of this so we can test membership easily
 	my %nonkeyfields; @nonkeyfields{$Set->NONKEYFIELDS} = ();
 	
+	my @chooseDateTimeScripts = ();
+	
+	push @chooseDateTimeScripts, "addOnLoadEvent(function() {";
+
 	# Set Fields
 	foreach my $field (@fieldsToShow) {
 		next unless exists $nonkeyfields{$field};
@@ -2362,13 +2475,18 @@ sub recordEditHTML {
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
-		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
-
+	
+	push @chooseDateTimeScripts, "});";
+	
 	#@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
+	
+	my $out = CGI::Tr({}, CGI::td({}, \@tableCells));
+	my $scripts = CGI::start_script({-type=>"text/javascript"}).(join("", @chooseDateTimeScripts)).CGI::end_script();
 
-	return CGI::Tr({}, CGI::td({}, \@tableCells));
+	return $out.$scripts;
 }
 
 sub printTableHTML {
@@ -2430,9 +2548,9 @@ sub printTableHTML {
 
 	# print the table
 	if ($editMode or $exportMode) {
-		print CGI::start_table({-class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
+		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	} else {
-		print CGI::start_table({-border=>1, -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") }); #"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
+		print CGI::start_table({-id=>"set_table_id", -border=>1, -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") }); #"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	}
 	
 	print CGI::caption($r->maketext("Set List"));
@@ -2471,6 +2589,9 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script();
@@ -2481,6 +2602,11 @@ sub output_JS{
 
 # Just tells template to output the stylesheet for Tabber
 sub output_tabber_CSS{
+	return "";
+}
+
+#Tells template to output stylesheet for Jquery-UI
+sub output_jquery_ui_CSS{
 	return "";
 }
 
