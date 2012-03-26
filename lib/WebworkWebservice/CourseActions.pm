@@ -12,6 +12,10 @@ use base qw(WebworkWebservice);
 use WeBWorK::Utils qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
+
+use Time::HiRes qw/gettimeofday/; # for log timestamp
+use Date::Format; # for log timestamp
+
 use Data::Dumper; # TODO remove
 
 
@@ -23,6 +27,13 @@ sub create {
 			courseName => $newcourse
 		});
 	my $out = {};
+
+	# make sure course actions are enabled
+	if (!$ce->{webservices}{enableCourseActions}) {
+		$out->{status} = "failure";
+		$out->{message} = "Course actions disabled by configuration.";
+		return $out
+	}
 	debug("XMLRPC course creation: " . Dumper($params));
 	
 	# declare params
@@ -68,6 +79,7 @@ sub create {
 			users => \@users,
 			%optional_arguments,
 		);
+		addLog($ce, "New course created: " . $newcourse);
 		$out->{status} = "success";
 	} or do {
 		$out->{status} = "failure";
@@ -81,7 +93,16 @@ sub addUser {
 	my ($self, $params) = @_;
 	my $out = {};
 	my $db = $self->{db};
+	my $ce = $self->{ce};
 	debug("XMLRPC Add User: " . Dumper($params));
+
+	# make sure course actions are enabled
+	if (!$ce->{webservices}{enableCourseActions}) {
+		$out->{status} = "failure";
+		$out->{message} = "Course actions disabled by configuration.";
+		return $out
+	}
+
 	# Two scenarios
 	# 1. New user
 	# 2. Dropped user deciding to re-enrol
@@ -92,7 +113,8 @@ sub addUser {
 		my $enrolled = $self->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
 		$olduser->status($enrolled);
 		$db->putUser($olduser);
-		# TODO add log entry
+		addLog($ce, "User ". $olduser->user_id() . " re-enrolled in " . 
+			$ce->{courseName});
 		# TODO assign sets
 		$out->{status} = 'success';
 	}
@@ -152,7 +174,8 @@ sub addUser {
 			$out->{status} = 'failure';
 			$out->{message} = "Add permission for $id failed!\n";
 		}
-		# TODO add log entry
+		addLog($ce, "User ". $new_student->user_id() . " newly added in " . 
+			$ce->{courseName});
 		# TODO assign sets
 	}
 
@@ -162,8 +185,17 @@ sub addUser {
 sub dropUser {
 	my ($self, $params) = @_;
 	my $db = $self->{db};
+	my $ce = $self->{ce};
 	my $out = {};
 	debug("XMLRPC Drop User: " . Dumper($params));
+
+	# make sure course actions are enabled
+	if (!$ce->{webservices}{enableCourseActions}) {
+		$out->{status} = "failure";
+		$out->{message} = "Course actions disabled by configuration.";
+		return $out
+	}
+
 	# Mark user as dropped
 	my $drop = $self->{ce}->{statuses}->{Drop}->{abbrevs}->[0];
 	my $person = $db->getUser($params->{'id'});
@@ -171,7 +203,8 @@ sub dropUser {
 	{
 		$person->status($drop);
 		$db->putUser($person);
-		# TODO add log entry
+		addLog($ce, "User ". $person->user_id() . " dropped from " . 
+			$ce->{courseName});
 		$out->{status} = 'success';
 	}
 	else
@@ -181,6 +214,30 @@ sub dropUser {
 	}
 
 	return $out;
+}
+
+sub addLog {
+	my ($ce, $msg) = @_;
+	if (!$ce->{webservices}{enableCourseActionsLog}) {
+		return;
+	}
+	my ($sec, $msec) = gettimeofday;
+	my $date = time2str("%a %b %d %H:%M:%S.$msec %Y", $sec);
+
+	$msg = "[$date] $msg\n";
+
+	my $logfile = $ce->{webservices}{courseActionsLogfile};
+	if (open my $f, ">>", $logfile)
+	{
+		print $f $msg;
+		close $f;
+	}
+	else
+	{
+		debug("Error, unable to open student updates log file '$logfile' in".
+			"append mode: $!");
+	}
+	return;
 }
 
 1;

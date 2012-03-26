@@ -1049,6 +1049,18 @@ $pgRoot         = $pg{directories}{root};
 	pgproblemeditor1   => 1,
 	pgproblemeditor2   => 0,
 );
+
+################################################################################
+# Webservices
+################################################################################
+$webservices = {
+	enableCourseActions => 0, # enable createCourse, addUser, dropUser
+	enableCourseActionsLog => 0,# enable logging of course actions
+								# will log when courses are created and 
+								# when students are added or dropped
+	courseActionsLogfile => "$webworkDirs{logs}/courseactions.log",
+};
+
 ################################################################################
 # Site wide overrides are entered into the file postlocal.conf
 ################################################################################
