@@ -54,18 +54,18 @@ sub create {
 	
 	# configure users, only admin users
 	# TODO admin user password
-	my $admin = 'admin';
+	my $adminName = $ce->{webservices}{courseActionsAdminUser};
+	my $adminPass = $ce->{webservices}{courseActionsAdminPassword};
 	my %record = ();
 	$record{status} = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
-	$record{student_id} = $admin;
-	$record{password} = cryptPassword($admin);
+	$record{password} = cryptPassword($adminPass);
 	$record{permission} = $ce->{userRoles}{admin};
-	$record{user_id} = $admin;
+	$record{user_id} = $adminName;
 	$record{last_name} = 'Administrator';
 
 	my $User = $userClass->new(%record);
-	my $PermissionLevel = $permissionClass->new(user_id => $admin, permission => $record{permission});
-	my $Password = $passwordClass->new(user_id => $admin, password => $record{password});
+	my $PermissionLevel = $permissionClass->new(user_id => $adminName, permission => $record{permission});
+	my $Password = $passwordClass->new(user_id => $adminName, password => $record{password});
 
 	push @users, [ $User, $Password, $PermissionLevel ];
 	
