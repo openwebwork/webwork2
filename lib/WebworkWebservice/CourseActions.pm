@@ -9,15 +9,14 @@ package WebworkWebservice::CourseActions;
 use WebworkWebservice;
 
 use base qw(WebworkWebservice); 
+use WeBWorK::DB;
+use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Utils qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
 
 use Time::HiRes qw/gettimeofday/; # for log timestamp
 use Date::Format; # for log timestamp
-
-use Data::Dumper; # TODO remove
-
 
 sub create {
 	my ($self, $params) = @_;
@@ -34,7 +33,7 @@ sub create {
 		$out->{message} = "Course actions disabled by configuration.";
 		return $out
 	}
-	debug("XMLRPC course creation: " . Dumper($params));
+	debug("Webservices course creation request.");
 	
 	# declare params
 	my @professors = ();
@@ -53,7 +52,6 @@ sub create {
 	runtime_use($permissionClass);
 	
 	# configure users, only admin users
-	# TODO admin user password
 	my $adminName = $ce->{webservices}{courseActionsAdminUser};
 	my $adminPass = $ce->{webservices}{courseActionsAdminPassword};
 	my %record = ();
@@ -94,7 +92,7 @@ sub addUser {
 	my $out = {};
 	my $db = $self->{db};
 	my $ce = $self->{ce};
-	debug("XMLRPC Add User: " . Dumper($params));
+	debug("Webservices add user request.");
 
 	# make sure course actions are enabled
 	if (!$ce->{webservices}{enableCourseActions}) {
@@ -108,20 +106,21 @@ sub addUser {
 	# 2. Dropped user deciding to re-enrol
 
 	my $olduser = $db->getUser($params->{id});
+	my $id = $params->{'id'};
+	my $permission; # stores user's permission level
 	if ($olduser) { 
 		# a dropped user decided to re-enrol
 		my $enrolled = $self->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
 		$olduser->status($enrolled);
 		$db->putUser($olduser);
-		addLog($ce, "User ". $olduser->user_id() . " re-enrolled in " . 
+		addLog($ce, "User ". $id . " re-enrolled in " . 
 			$ce->{courseName});
-		# TODO assign sets
 		$out->{status} = 'success';
+		$permission = $db->getPermissionLevel($id);
 	}
 	else {
 		# a new user showed up
 		my $ce = $self->{ce};
-		my $id = $params->{'id'};
 		
 		# student record
 		my $enrolled = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
@@ -145,8 +144,7 @@ sub addUser {
 		$password->password($cryptedpassword);
 		
 		# permission record
-		my $permission = $params->{'permission'};
-		debug($params->{'permission'});
+		$permission = $params->{'permission'};
 		if (defined($ce->{userRoles}{$permission})) {
 			$permission = $db->newPermissionLevel(
 				user_id => $id, 
@@ -174,9 +172,20 @@ sub addUser {
 			$out->{status} = 'failure';
 			$out->{message} = "Add permission for $id failed!\n";
 		}
-		addLog($ce, "User ". $new_student->user_id() . " newly added in " . 
+
+		addLog($ce, "User ". $id . " newly added in " . 
 			$ce->{courseName});
-		# TODO assign sets
+	}
+
+	# only students are assigned homework
+	if ($ce->{webservices}{courseActionsAssignHomework} &&
+		$permission->{permission} == $ce->{userRoles}{student}) {
+		debug("Assigning homework.");
+		my $ret = assignVisibleSets($db, $id);
+		if ($ret) {
+			$out->{status} = 'failure';
+			$out->{message} = "User created but unable to assign sets. $ret";
+		}
 	}
 
 	return $out;
@@ -187,7 +196,7 @@ sub dropUser {
 	my $db = $self->{db};
 	my $ce = $self->{ce};
 	my $out = {};
-	debug("XMLRPC Drop User: " . Dumper($params));
+	debug("Webservices drop user request.");
 
 	# make sure course actions are enabled
 	if (!$ce->{webservices}{enableCourseActions}) {
@@ -199,16 +208,14 @@ sub dropUser {
 	# Mark user as dropped
 	my $drop = $self->{ce}->{statuses}->{Drop}->{abbrevs}->[0];
 	my $person = $db->getUser($params->{'id'});
-	if ($person)
-	{
+	if ($person) {
 		$person->status($drop);
 		$db->putUser($person);
 		addLog($ce, "User ". $person->user_id() . " dropped from " . 
 			$ce->{courseName});
 		$out->{status} = 'success';
 	}
-	else
-	{
+	else {
 		$out->{status} = 'failure';
 		$out->{message} = 'Could not find user';
 	}
@@ -227,17 +234,62 @@ sub addLog {
 	$msg = "[$date] $msg\n";
 
 	my $logfile = $ce->{webservices}{courseActionsLogfile};
-	if (open my $f, ">>", $logfile)
-	{
+	if (open my $f, ">>", $logfile) {
 		print $f $msg;
 		close $f;
 	}
-	else
-	{
+	else {
 		debug("Error, unable to open student updates log file '$logfile' in".
 			"append mode: $!");
 	}
 	return;
+}
+
+sub assignVisibleSets {
+	my ($db, $userID) = @_;
+	my @globalSetIDs = $db->listGlobalSets;
+	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+
+	my $i = -1;
+	foreach my $GlobalSet (@GlobalSets) {
+		$i++;
+		if (not defined $GlobalSet) {
+			debug("Record not found for global set $globalSetIDs[$i]");
+			next;
+		} 
+		if (!$GlobalSet->visible) {
+			next;
+		}
+
+		# assign set to user
+		my $setID = $GlobalSet->set_id;
+		my $UserSet = $db->newUserSet;
+		$UserSet->user_id($userID);
+		$UserSet->set_id($setID);
+		my @results;
+		my $set_assigned = 0;
+		eval { $db->addUserSet($UserSet) }; 
+		if ( $@ && !($@ =~ m/user set exists/)) {
+			return "Failed to assign set to user $userID";
+		}
+
+		# assign problem
+		my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
+		foreach my $GlobalProblem (@GlobalProblems) {
+			my $seed = int( rand( 2423) ) + 36;
+			my $UserProblem = $db->newUserProblem;
+			$UserProblem->user_id($userID);
+			$UserProblem->set_id($GlobalProblem->set_id);
+			$UserProblem->problem_id($GlobalProblem->problem_id);
+			initializeUserProblem($UserProblem, $seed);
+			eval { $db->addUserProblem($UserProblem) };
+			if ($@ && !($@ =~ m/user problem exists/)) {
+				return "Failed to assign problems to user $userID";
+			}
+		}
+	}
+
+	return 0;
 }
 
 1;

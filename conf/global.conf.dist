@@ -1064,6 +1064,9 @@ $webservices = {
 	# that will be added with admin access
 	courseActionsAdminUser => "admin", 
 	courseActionsAdminPassword => "qwePEOWpeioUEzSPfALj", # REMEMBER TO CHANGE
+	# enable this to assign all visible homework sets to new students
+	# added by webservices
+	courseActionsAssignHomework => 0, 
 };
 
 ################################################################################
