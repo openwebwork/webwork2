@@ -279,4 +279,29 @@ $problemDefaults{max_attempts} = -1;
 # 	pgproblemeditor2   => 1,
 # );
 
+################################################################################
+# Directory for temporary files
+################################################################################ 
+# Location of web-accessible temporary files, such as equation images. 
+# Default which is set in global.conf.dist:
+#$webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
+#$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
+
+# Alternate locations -- this allows you to place temporary files in a location 
+# that is not backed up and is the recommended set up for most installations.
+# See http://webwork.maa.org/wiki/Store_WeBWorK%27s_temporary_files_in_a_separate_directory_or_partition
+# for more information.   Note that the wwtmp directory (or partition) should be 
+# created under Apache's main server document root which is usually /var/www. If this 
+# is in a different location on your system, edit the lines below accordingly.
+# To implement, uncomment the following 6 lines:
+#$webworkDirs{htdocs_temp}  =  '/var/www/wwtmp';
+#$webworkURLs{htdocs_temp}   = '/wwtmp';
+#$webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
+#$webworkURLs{equationCache} = "$webworkURLs{htdocs_temp}/equations";
+#$courseDirs{html_temp}  =  "/var/www/wwtmp/$courseName";
+#$courseURLs{html_temp}   = "/wwtmp/$courseName";
+
+################################################################################ 
+
+
 1; #final line of the file to reassure perl that it was read properly.

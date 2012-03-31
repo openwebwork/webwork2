@@ -213,12 +213,11 @@ $webworkURLs{root}          = "$webwork_url";
 $webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdocs";
 $webworkURLs{htdocs}        = "$webwork_htdocs_url";
 
+
 # Location of web-accessible temporary files, such as equation images.
 # These two should be set in prelocal.conf -- not here since this can be overwritten by new versions.
-$webworkDirs{htdocs_temp}   = (defined $webworkDirs{htdocs_temp} ) ? $webworkDirs{htdocs_temp} :"$webworkDirs{htdocs}/tmp";
-$webworkURLs{htdocs_temp}   = (defined $webworkURLs{htdocs_temp} ) ? $webworkURLs{htdocs_temp} :"$webworkURLs{htdocs}/tmp";
-
-#$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
+$webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
+$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
 
 # Location of cached equation images.
 $webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
@@ -276,8 +275,8 @@ $courseDirs{html_images} = "$courseDirs{html}/images";
 
 # Location of web-accessible, course-specific temporary files, like static and
 # dynamically-generated PG graphics.
-$courseDirs{html_temp}   = "$courseDirs{html}/tmp";
-$courseURLs{html_temp}   = "$courseURLs{html}/tmp";
+$courseDirs{html_temp}   =  "$courseDirs{html}/tmp";
+$courseURLs{html_temp}   =  "$courseURLs{html}/tmp";
 
 # Location of course-specific logs, like the transaction log.
 $courseDirs{logs}        = "$courseDirs{root}/logs";
