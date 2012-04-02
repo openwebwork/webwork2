@@ -1059,11 +1059,6 @@ $webservices = {
 								# will log when courses are created and 
 								# when students are added or dropped
 	courseActionsLogfile => "$webworkDirs{logs}/courseactions.log",
-	# courses created using webservices don't have a classlist available
-	# but we must have at least one user in the course, this is the user
-	# that will be added with admin access
-	courseActionsAdminUser => "admin", 
-	courseActionsAdminPassword => "qwePEOWpeioUEzSPfALj", # REMEMBER TO CHANGE
 	# enable this to assign all visible homework sets to new students
 	# added by webservices
 	courseActionsAssignHomework => 0, 

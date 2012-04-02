@@ -21,10 +21,13 @@ use Date::Format; # for log timestamp
 sub create {
 	my ($self, $params) = @_;
 	my $newcourse = $params->{'name'};
+	# note this ce is different from $self->{ce}!
 	my $ce = WeBWorK::CourseEnvironment->new({
 			webwork_dir => $self->{ce}->{webwork_dir},
 			courseName => $newcourse
 		});
+	my $db = $self->{db};
+	my $authz = $self->{authz};
 	my $out = {};
 
 	debug("Webservices course creation request.");
@@ -63,27 +66,17 @@ sub create {
 	my $passwordClass = $ce->{dbLayouts}->{$dbLayout}->{password}->{record};
 	my $permissionClass = $ce->{dbLayouts}->{$dbLayout}->{permission}->{record};
 
-	runtime_use($userClass);
-	runtime_use($passwordClass);
-	runtime_use($permissionClass);
-	
-	# configure users, only admin users
-	my $adminName = $ce->{webservices}{courseActionsAdminUser};
-	my $adminPass = $ce->{webservices}{courseActionsAdminPassword};
-	my %record = ();
-	$record{status} = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
-	$record{password} = cryptPassword($adminPass);
-	$record{permission} = $ce->{userRoles}{admin};
-	$record{user_id} = $adminName;
-	$record{last_name} = 'Administrator';
+	# copy instructors from admin course
+	# modified from do_add_course in WeBWorK::ContentGenerator::CourseAdmin
+	foreach my $userID ($db->listUsers) {
+		my $User            = $db->getUser($userID);
+		my $Password        = $db->getPassword($userID);
+		my $PermissionLevel = $db->getPermissionLevel($userID);
+		push @users, [ $User, $Password, $PermissionLevel ] 
+			if $authz->hasPermissions($userID,"create_and_delete_courses");  
+	}
 
-	my $User = $userClass->new(%record);
-	my $PermissionLevel = $permissionClass->new(user_id => $adminName, permission => $record{permission});
-	my $Password = $passwordClass->new(user_id => $adminName, password => $record{password});
-
-	push @users, [ $User, $Password, $PermissionLevel ];
-	
-	# call
+	# all data prepped, try to actually add the course
 	eval {
 		addCourse(
 			courseID => $newcourse,
