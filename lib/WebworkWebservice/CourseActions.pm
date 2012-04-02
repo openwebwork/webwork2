@@ -27,13 +27,29 @@ sub create {
 		});
 	my $out = {};
 
+	debug("Webservices course creation request.");
 	# make sure course actions are enabled
 	if (!$ce->{webservices}{enableCourseActions}) {
+		debug("Course actions disabled by configuration.");
 		$out->{status} = "failure";
 		$out->{message} = "Course actions disabled by configuration.";
 		return $out
 	}
-	debug("Webservices course creation request.");
+	# only users from the admin course with appropriate permissions allowed
+	if (!($self->{ce}->{courseName} eq 'admin')) {
+		debug("Course creation attempt when not logged into admin course.");
+		$out->{status} = "failure";
+		$out->{message} = "Course creation allowed only for admin course users.";
+		return $out
+	}
+	# prof check is actually done when initiating session, this is just in case
+	if (!$self->{authz}->hasPermissions($params->{'userID'}, 
+			'create_and_delete_courses')) {
+		debug("Course creation attempt with insufficient permission level.");
+		$out->{status} = "failure";
+		$out->{message} = "Insufficient permission level.";
+		return $out
+	}
 	
 	# declare params
 	my @professors = ();
