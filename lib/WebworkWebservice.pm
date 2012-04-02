@@ -409,11 +409,9 @@ sub tex2pdf {
 #	'password' => 'admin',	# auth credentials
 #	'courseID' => 'admin',	# used to initiate a
 #	'session_key' => 'key',	# session.
-#	"name": "KEJI554", 
-#	"section": 264, 
+#	"name": "TEST100-100",  # This will be the new course's id
 #}
 # Note that we log into the admin course to create courses.
-# The course title will be a concatenation of the name and section number.
 sub createCourse {
 	my $class = shift;
 	my $in = shift;

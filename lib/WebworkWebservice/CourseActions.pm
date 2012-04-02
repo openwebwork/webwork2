@@ -20,7 +20,7 @@ use Date::Format; # for log timestamp
 
 sub create {
 	my ($self, $params) = @_;
-	my $newcourse = $params->{'name'} . '-' . $params->{'section'};
+	my $newcourse = $params->{'name'};
 	my $ce = WeBWorK::CourseEnvironment->new({
 			webwork_dir => $self->{ce}->{webwork_dir},
 			courseName => $newcourse
