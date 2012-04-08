@@ -761,20 +761,37 @@ Styles specifically for the problem viewer
 }*/
 
 #editor{
-	width: 750px;
+	width: 585px;
 }
 
 #editor .pg_editor_input_span{
 	margin-bottom: 10px;
+	display: none;
 }
 
 #editor .pg_editor_input_div{
+	margin-top: 20px;
 	margin-left: 50px;
 }
 
 #editor #submit_input_div{
 	margin-top: 10px;
 	clear: both;
+}
+
+#pg_editor_header {
+    left: 790px;
+    position: absolute;
+    top: 130px;
+}
+
+#pg_editor_frame_id{
+	height: 474px;
+    left: 785px;
+    position: absolute;
+    top: 182px;
+    width: 500px;
+	overflow: scroll;
 }
 
 /*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
