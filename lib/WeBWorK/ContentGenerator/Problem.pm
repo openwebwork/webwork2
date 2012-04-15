@@ -939,7 +939,9 @@ sub body {
 	my $set = $self->{set};
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
-	print CGI::p("Entering Problem::body subroutine.  This indicates an old style system.template file -- consider upgrading. ");
+	print CGI::p("Entering Problem::body subroutine.  
+	         This indicates an old style system.template file -- consider upgrading. ",
+	         caller(1), );
 	my $valid = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::check_invalid($self);
 	unless($valid eq "valid"){
 		return $valid;
@@ -1107,8 +1109,7 @@ sub output_checkboxes{
 		),"&nbsp;";
 	}
 	if ($can{showHints}) {
-		print CGI::div({style=>"color:red"},
-			WeBWorK::CGI_labeled_input(
+		print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
 				-label_text => $r->maketext("Show Hints"),
@@ -1123,7 +1124,6 @@ sub output_checkboxes{
 					-name    => "showHints",
 					-value   => 1,
 				}
-			)
 		),"&nbsp;";
 	}
 	if ($can{showSolutions}) {
