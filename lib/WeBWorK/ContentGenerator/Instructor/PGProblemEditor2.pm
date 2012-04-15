@@ -14,7 +14,7 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::ContentGenerator::Instructor::PGProblemEditor;
+package WeBWorK::ContentGenerator::Instructor::PGProblemEditor2;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator::Instructor);
 use base qw(WeBWorK::ContentGenerator::renderViaXMLRPC);
@@ -23,7 +23,7 @@ use constant DEFAULT_SEED => 123456;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::PGProblemEditor - Edit a pg file
+WeBWorK::ContentGenerator::Instructor::PGProblemEditor2 - Edit a pg file
 
 =cut
 
