@@ -517,7 +517,7 @@ sub formatRenderedProblem {
 <title>$XML_URL WeBWorK Editor using host $XML_URL</title>
 </head>
 <body>
-$test
+
 <h2> WeBWorK Editor using host $XML_URL</h2>
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
