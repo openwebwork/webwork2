@@ -1039,7 +1039,7 @@ sub output_editorLink{
 	my $pg = $self->{pg};
 	
 	my $r = $self->r;
-	
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
@@ -1050,17 +1050,23 @@ sub output_editorLink{
 	# format as "[edit]" like we're doing with course info file, etc.
 	# add edit link for set as well.
 	my $editorLink = "";
+	my $editorLink2 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
-	if ($authz->hasPermissions($user, "modify_problem_sets")) {
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor1}) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit this problem")));
 	}
-	
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor2}) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
+		$editorLink2 = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit this problem with new editor")));
+	}
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
@@ -1068,6 +1074,7 @@ sub output_editorLink{
 		    print "Call errorOutput</br>";
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 			print $editorLink;
+			print $editorLink2;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
@@ -1076,6 +1083,7 @@ sub output_editorLink{
 	}
 	else{
 		print $editorLink;
+		print $editorLink2;
 	}
 	return "";
 }

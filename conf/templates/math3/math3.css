@@ -716,7 +716,7 @@ span.gray_button{
 	width: 100%;
 }
 
-Styles specifically for the problem viewer
+/*Styles specifically for the problem viewer*/
 
 #problem_viewer_form{
 	margin-left: 10px;
@@ -790,7 +790,7 @@ Styles specifically for the problem viewer
     left: 785px;
     position: absolute;
     top: 182px;
-    width: 500px;
+    width: 50%;
 	overflow: scroll;
 }
 
@@ -829,7 +829,12 @@ table.problem_set_table{
 	#width: 640px;
 	text-align: left;
 }
-
+table.problem_set_table th{
+	padding-right: 30px;
+}
+table.problem_set_table td{
+	padding-right: 30px;
+}
 /*BUG FIXES*/
 
 table#grades_table pre{
