@@ -197,6 +197,9 @@ $pg{displayModes} = [
 	"LaTeXMathML",   # render TeX math expressions on the client side using LaTeXMathML
 ];
 
++# Default display mode. Should be an uncommented item listed above.
++$pg{options}{displayMode}        = "images";
+ 
 ################################################################################
 #  The macro file search path. (Check with entries in global.conf before overriding)
 ################################################################################
