@@ -131,7 +131,7 @@ sub body {
 	             <button class="button" type="button" id="undo_button">Undo</button>
 	             <button class="button" type="button" id="redo_button">Redo</button>
 	             <button class="button" type="button" id="delete_problem">Remove Selected</button>
-	             <a class="button" href="http://bugs.webwork.maa.org/">BUGS!</a>
+	             <a class="button" href="http://github.com/whytheplatypus/webwork2/issues">BUGS!</a>
 	       </span>';
   print '</div>';
   
