@@ -52,6 +52,7 @@ select#myset_sets{
    
  #size_slider{
  	float:left;
+ 	text-align:center;
  	width:10px;
  	height:100%;
  	background:green;
@@ -195,6 +196,7 @@ select#myset_sets{
 div#size_slider{
   float:left;
   width:1%;
+  text-valign:center;
   text-align:center;
   height:90%;
   -webkit-user-select:none;

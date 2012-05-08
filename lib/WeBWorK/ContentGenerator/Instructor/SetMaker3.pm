@@ -98,7 +98,7 @@ sub head {
   print '<script src="/webwork2_files/js/jquery-ui-1.8.16.custom.min.js"></script>';
   print '<script src="/webwork2_files/js/ui.tabs.closable.min.js"></script>';
   
-  #print '<script src="/webwork2_files/js/dnd.js"></script>';
+  print '<script src="/webwork2_files/js/dnd.js"></script>';
   #print '<script src="/webwork2_files/js/problem_grid.js"></script>';
   #print '<script src="/webwork2_files/js/form_builder.js"></script>';
   print '<script src="/webwork2_files/js/library_browser.js"></script>';
@@ -158,8 +158,10 @@ sub body {
 				#'<p>In the target set you can drag problems to reorder them.<br/>The problem will be placed in front of the one you drop it on,<br/>or at the end of the list if you drop it on an empty space in the table.</p>',
 	
 	  	print '<div class="break"></div>';
-		print '<b>Libraries:</b><div id="library_list_box"><button class="button" id="load_problems" type="button">Load Problems</button></div>';
-		print '<div id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button></div>';
+	  	print '<table>';
+		print '<tr><td><b>Library directories:</b></td><td><span id="library_list_box"></span><button class="button" id="load_problems" type="button">Load Problems</button></td>';
+		print '<tr><td><b>Library search:</b></td><td><span id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button><span></td>';
+		print '</table>';
 		###########################################
 			      # Library repository controls
     	###########################################
@@ -173,11 +175,12 @@ sub body {
 	      			'<button type="button" id="create_set">Create Set</button>',
 	      		'</div>';
 	      print '<div id="problem_sets_container">';
-	    	print '<h1>Target Sets</h1>';
+	    	print '<b>Target Sets</b>';
 			print '<ul id="my_sets_list">';
 				print '<li id="new_problem_set">New Problem Set</li>';
 		    print '</ul>';
 		  print '</div>';
+		  #print '<div id="size_slider"><p>||</p></div>';
 		  print '<div id="problems_container">';
 		    #List of tabs
 		  	print '<ul>',

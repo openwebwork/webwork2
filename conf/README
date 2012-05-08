@@ -1,0 +1,34 @@
+Use the prelocal.conf and postlocal.conf files to make modifications.  
+
+The prelocal.conf file is read before the global.conf.dist file is processed. Non-local variables in this file
+are then available for use in global.conf.dist.
+
+The postlocal.conf file is read after the global.conf.dist file is processed and will overright configurations in global.conf.dist
+
+This new  configuration system should greatly simplify the process of 
+updating webwork2 since it is less likely
+that one will need to modify the config files when upgrading.  Default configurations or permissions for 
+new features will be defined in global.conf.dist and will allow automatic upgrades.  
+
+Overrides for these new features can be added later to postlocal.conf
+
+FIRST TIME RECONFIGURATION
+
+COPY prelocal.conf.dist to prelocal.conf.
+COPY postlocal.conf.dist to postlocal.conf.
+
+MODIFY prelocal.conf using the data from your global.conf file.  
+In particular you will need to fill in the server name, the 
+password for the database and any modifications you have made as to the 
+location of the temporary files directory. Notice that the location of the temporary files directory
+is used to define several other related subdirectories, so this modification needs to be made
+in prelocal.conf BEFORE the standard global.conf.dist file is read.
+
+RENAME global.conf to global.save in order to make sure that the global.conf.dist is read.
+Otherwise the global.conf file will be read instead of global.conf.dist and the behavior will be
+as with the old system.
+
+INSPECT and possibly modify postlocal.conf to add any further local modifications that you had
+made to your global.conf file.
+
+

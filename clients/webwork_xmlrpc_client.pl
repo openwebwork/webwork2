@@ -36,24 +36,51 @@ our	$XML_COURSE       =  'gage_course';
 
 our $UNIT_TESTS_ON             = 0;
 
-my $credential_path = ".ww_credentials";
-eval{require $credential_path};
-if ($@ ) {
-print STDERR <<EOF;
-Can't find file .ww_credentials:
-Place a file with that name and containing this information in the current directory
+####################################################
+# get credentials
+####################################################
+
+my $credential_path;
+my @path_list = ('.ww_credentials', '/Users/gage/.ww_credentials', '/Users/gage/ww_session_credentials');
+foreach my $path (@path_list) {
+	if (-r "$path" ) {
+		$credential_path = $path;
+		last;
+	}
+}
+unless ( $credential_path ) {
+	die <<EOF;
+Can't find path for credentials. Looked in @path_list.
+Place a credential file containing the following information at one of the locations above.
 %credentials = (
         userID          => "my login name for the webwork course",
         password        => "my password ",
         courseID        => "the name of the webwork course",
-)
+);
+1;
+---------------------------------------------------------
+EOF
+}
+
+eval{require $credential_path};
+if ($@  or not defined %credentials) {
+
+print STDERR <<EOF;
+
+The credentials file should contain this:
+%credentials = (
+        userID          => "my login name for the webwork course",
+        password        => "my password ",
+        courseID        => "the name of the webwork course",
+);
+1;
 ---------------------------------------------------------
 EOF
 die;
 }
 
 
-# print "credentials: ", join(" | ", %credentials), "\n";
+#print "credentials: ", join(" | ", %credentials), "\n";
 
 my @COMMANDS = qw( listLibraries    renderProblem   listLib  readFile tex2pdf );
 
@@ -62,7 +89,7 @@ use constant DISPLAYMODE   => 'images';
 
 # end configuration section
 
-our $courseName = $credentials{courseID};
+our $courseID = $credentials{courseID};
 
 print STDERR "inputs are ", join (" | ", @ARGV), "\n";
 our $source;
@@ -80,8 +107,6 @@ our $xmlrpc_client = new WebworkClient (
 	userID                 =>  $credentials{userID},
 	session_key            =>  $credentials{session_key},
 );
-# initialize client with source
-# $xmlrpc_client->encodeSource($source);
 
 # prepare additional input values
 
@@ -97,8 +122,17 @@ if (@ARGV) {
 				if (-r $ARGV[1] ) {
 					 $source = `cat $ARGV[1]`;
 					 $xmlrpc_client->encodeSource($source);
-					 my $input = { password    	 =>   $credentials{password},};
+					 my $input = { 
+							userID      	=> $credentials{userID}||'',
+							session_key	 	=> $credentials{session_key}||'',
+							courseID   		=> $credentials{courseID}||'',
+							courseName   	=> $credentials{courseID}||'',
+							password     	=> $credentials{password}||'',	
+							site_password   => $credentials{site_password}||'',
+					 };
+					 #print STDERR "input is ", %$input,"\n";
 					 $result = $xmlrpc_client->xmlrpcCall($command, $input);
+					 print "\n\n Result of renderProblem \n\n";
 					 print pretty_print_rh($result);
 				} else {
 					print STDERR  "Can't read source file $ARGV[1]\n";
@@ -107,24 +141,34 @@ if (@ARGV) {
 				  print STDERR "Useage: ./webwork_xmlrpc_client.pl command   <file_name>\n";
 			  }
     	} when ('listLibraries') {
-			my $input = { password    	 =>   $credentials{password},};
-			$result = $xmlrpc_client->xmlrpcCall($command, $input);
+			 my $input = { 
+					userID      	=> $credentials{userID}||'',
+					session_key	 	=> $credentials{session_key}||'',
+					courseID   	=> $credentials{courseID}||'',
+					password     	=> $credentials{password}||'',	
+					site_password   => $credentials{site_password}||'',
+			 };
+			# print STDERR "ww_xmlrpc_client: input for listLibraries command is ", %$input,"\n";
+			eval {
+				$result = $xmlrpc_client->xmlrpcCall($command, $input);
+			};
 			if (defined($result) ) {
 				my @lib_array = @ { $result->{ra_out} };
-				print STDOUT "The  libraries available in course $courseName are:\n\t ", join("\n\t ", @lib_array ), "\n";
+				print STDOUT "ww_xmlrpc_client: The  libraries available in course $courseID are:\n\t ", join("\n\t ", @lib_array ), "\n";
 			} else {
-				print STDOUT "No libraries available for course $courseName\n";
+				print STDOUT "ww_xmlrpc_client: No libraries available for course $courseID\n";
 			}
     	} when ('listLib')       {
 			 $result = listLib( @ARGV );
 			 my $command = $ARGV[1];
-			 
+			 print "listLib returned\n";
 			 print pretty_print_rh($result);
+			 print "\n";
     							 	
     	} when ('listSets')      {
 	 		$input = {		site_password    =>   'xmluser',
 							password    	 =>   $credentials{password},
-        					user        	 =>   $credentials{userID},
+        					userID        	 =>   $credentials{userID},
         					courseID    	 =>   $credentials{courseID},
         			 };
 	  		my $result   =   $xmlrpc_client->xmlrpcCall($command, $input);
@@ -133,6 +177,8 @@ if (@ARGV) {
 	  		print STDERR "Command $command not yet implemented\n"
     	} when ('tex2pdf') {
     		print STDERR "Command $command not yet implemented\n"
+    	} default {
+    		print STDERR "Command '$command' not recognized. Commands ",@COMMANDS;    	
     	}
     }
 
@@ -151,53 +197,7 @@ if (@ARGV) {
 
 
 
-# sub xmlrpcCall {
-# 	my $command = shift;
-# 	my $input   = shift||{};
-# 	$command   = 'listLibraries' unless defined $command;
-#     my $std_input = standard_input();
-#    
-#     $input = {%$std_input, %$input};  # concatenate and override standard_input 
-#     
-# 	my $requestResult = TRANSPORT_METHOD
-# 		#->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
-# 		-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
-# 		
-# 	if ($UNIT_TESTS_ON) {
-# 		print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall issued with command $command\n";
-# 		print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %$input);
-# 		print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall $command returned $requestResult\n";
-# 	}
-# 	local( $result);
-# 	# use eval to catch errors
-# 	eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command,$input) };
-# 	print STDERR "There were a lot of errors\n" if $@;
-# 	print "Errors: \n $@\n End Errors\n" if $@;
-# 	
-# 	
-# 	unless (ref($result) and $result->fault) {
-# 	
-# 		if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
-# 			$result->result()->{text} = decode_base64($result->result()->{text});
-# 		}
-# 		print  pretty_print_rh($result->result()),"\n"if $UNIT_TESTS_ON;
-# 		$self->{output} = $result->result();
-# 		$self->{session_key}=$self->{output}->{session_key}; # update session key
-# 		return $result->result();
-# 
-# 	} else {
-# 		print STDERR 'oops ', join ', ',
-# 		  "command:",
-# 		  $command,
-# 		  "\nfaultcode:",
-# 		  $result->faultcode, 
-# 		  "\nfaultstring:",
-# 		  $result->faultstring;
-# 		return undef;
-# 
-# 	}
-# }
-  
+
 sub source {
 	return "" unless $source;
 	return encode_base64($source);
@@ -208,9 +208,9 @@ sub listLib {
 	my $result;
 	given($ARGS[1]) { 
 		when ("all") { 
-			$input = {		site_password    =>   'xmluser',
+			$input = {					site_password    =>   'xmluser',
 										password    	 =>   $credentials{password},
-        								user        	 =>   $credentials{userID},
+        								userID        	 =>   $credentials{userID},
         								courseID    	 =>   $credentials{courseID},
         								command     	 =>   'all',
         						};
@@ -220,9 +220,9 @@ sub listLib {
             my %options = @ARGS[2..$#ARGS];
             my $path = $options{-path} || '';
             my $maxdepth = defined($options{-depth}) ? $options{-depth}: 10000;
-        	$input = {	site_password    =>   'xmluser',
+        	$input = {					site_password    =>   'xmluser',
 										password    	 =>   $credentials{password},
-        								user        	 =>   $credentials{userID},
+        								userID        	 =>   $credentials{userID},
         								courseID    	 =>   $credentials{courseID},
         								command     	 =>   'dirOnly',
         								dirPath          =>   $path,
@@ -236,7 +236,7 @@ sub listLib {
             	my $path    = $options{-path} || ''; 
 				$input = {		site_password    =>   'xmluser',
 								password    	 =>   $credentials{password},
-								user        	 =>   $credentials{userID},
+								userID        	 =>   $credentials{userID},
 								courseID    	 =>   $credentials{courseID},
 								command     	 =>   'files',
 								dirPath          =>   $path,

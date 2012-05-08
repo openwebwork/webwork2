@@ -1,5 +1,7 @@
 .svn
 .DS_Store
+.*
+*.save
 htdocs/tmp/*
 tmp/*
 logs/*

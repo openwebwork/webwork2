@@ -237,8 +237,8 @@ div#big-wrapper {
 	background:white;
 	padding-left:10px;
 	padding-right:10px;
-	width:100%;
-	min-width:788px;
+	width:99%;
+	min-width:600px;
 	min-height:100%;
 	
 }
