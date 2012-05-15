@@ -123,6 +123,7 @@ select#myset_sets{
 div#size_slider{
   float:left;
   width:1%;
+  text-valign:center;
   text-align:center;
   height:90%;
   -webkit-user-select:none;

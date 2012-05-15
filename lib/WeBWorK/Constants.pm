@@ -134,7 +134,7 @@ $WeBWorK::ContentGenerator::Instructor::Config::ConfigValues = [
 		  type => 'text'},
 		{ var => 'defaultTheme',
 		  doc => 'Theme (refresh page after saving changes to reveal new theme.)',
-		  doc2 => 'There are currently five themes (or skins) to choose from: ur, math, math2, and dgage.  The theme
+		  doc2 => 'There are currently five themes (or skins) to choose from: ur, math, math2, math3 union.  The theme
 specifies a unified look and feel for the WeBWorK course web pages.',
 		  values => [qw(math math2 math3 ur dgage  union)],
 		  type => 'popuplist'},
@@ -239,13 +239,7 @@ You must use at least one display mode.  If you select only one, then the option
 		  if student input is sin(pi/2). If this is set to false, e.g. to save space in the response area, the student can 
 		  still see their evaluated answer by hovering the mouse pointer over the typeset version of their answer.',
 		  type => 'boolean'},		  
-
-		{ var => 'pg{options}{showEvaluatedAnswers}',
-		  doc => 'Display the evaluated student answer',
-		  doc2 => 'Set to true to display the "Entered" column which automatically shows the evaluated student answer, e.g. 1 
-		  if student input is sin(pi/2). If this is set to false, e.g. to save space in the response area, the student can 
-		  still see their evaluated answer by hovering the mouse pointer over the typeset version of their answer.',
-		  type => 'boolean'},		  
+ 
 
 		{ var => 'pg{ansEvalDefaults}{useBaseTenLog}',
 		  doc => 'Use log base 10 instead of base <i>e</i>',

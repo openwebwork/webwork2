@@ -23,7 +23,7 @@
 
 	var  ww_applet_list                  = new Object;  // holds  java script version (jsApplet) ww_applet objects
 	
-	var TIMEOUT                          = 100;         // time delay between successive checks for applet readiness
+	var TIMEOUT                          = 800;         // time delay between successive checks for applet readiness
 
     
 //////////////////////////////////////////////////////////
@@ -601,6 +601,8 @@ ww_applet.prototype.debug_add = function(str) {
 ww_applet.prototype.safe_applet_initialize = function(i) {    
     //alert("begin safe_applet_initialize");
     var appletName = this.appletName;
+    var failed_attempts_allowed = 3;
+    
     i--;
     
     /////////////////////////////////////////////////    
@@ -625,8 +627,8 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			debugText="";
 		}
 		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
-		// warn about loading after two failed attempts or if there is only one attempt left
-        if (i<=1 || i< (ww_applet_list[appletName].maxInitializationAttempts-2)) { alert("Oops, applet is not ready. " +(i-1) +" tries left")};
+		// warn about loading after failed_attempts_allowed failed attempts or if there is only one attempt left
+        if (i<=1 || i< (ww_applet_list[appletName].maxInitializationAttempts-failed_attempts_allowed)) { alert("Oops, applet is not ready. " +(i-1) +" tries left")};
         return "";
 	} else if (applet_loaded==0 && !(i> 0) ) {
 		// it's possible that the isActive() response of the applet is not working properly
@@ -712,3 +714,13 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 function iamhere() {
 	alert( "javaScript loaded.  functions still work");
 }
+
+//Initialize the WWquestion.
+
+function initWW(){
+	if (typeof(initializeWWquestion) == 'function') {
+		initializeWWquestion();
+	}
+}
+
+addOnLoadEvent(initWW);

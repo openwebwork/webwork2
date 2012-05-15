@@ -62,6 +62,7 @@ our $HC_DEFAULT_FORMAT = "pdf"; # problems if this is not an allowed format for 
 our %HC_FORMATS = (
 	tex => { name => "TeX Source", subr => "generate_hardcopy_tex" },
 	pdf => { name => "Adobe PDF",  subr => "generate_hardcopy_pdf" },
+	tikz =>{ name => "TIKZ PDF file", subr => "generate_hardcopy_tigz"},
 );
 
 # custom fields used in $self hash

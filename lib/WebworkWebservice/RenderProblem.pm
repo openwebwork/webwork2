@@ -59,6 +59,11 @@ our $PROTOCOL     = $WebworkWebservice::PROTOCOL;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PORT         = $WebworkWebservice::HOST_PORT;
 our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT"; 
+
+
+
+
+our $UNIT_TESTS_ON =0;
 # 
 # #our $ce           = $WebworkWebservice::SeedCE;
 # # create a local course environment for some course
@@ -119,8 +124,63 @@ use constant DISPLAY_MODE_FAILOVER => {
 
 
 sub renderProblem {
-
+	my $self = shift;
     my $rh = shift;
+
+###########################################
+# Grab the course name, if this request is going to depend on 
+# some course other than the default course
+###########################################
+	my $courseName;
+	my $ce;
+	my $db;
+	my $user;
+	my $beginTime = new Benchmark;
+# 	if (defined($self->{courseName}) and $self->{courseName} ) {
+# 		$courseName = $self->{courseName};
+# 	} elsif (defined($rh->{course}) and $rh->{course}=~/\S/ ) {
+# 		$courseName = $rh->{course};
+# 	} else {
+# 		$courseName = $COURSENAME;
+# 		# use the default $ce
+# 	}
+    if (defined($self->{courseName}) and $self->{courseName} ) {
+ 		$courseName = $self->{courseName};
+ 	} 
+ 	
+    # It's better not to get the course in too many places. :-)
+    # High level information about the course should come from $self
+    # Lower level information should come from $rh (i.e. passed by $in at WebworkWebservice)
+    
+	#FIXME  put in check to make sure the course exists.
+	eval {
+		$ce           = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $courseName});
+		$ce->{apache_root_url}= $HOSTURL;
+	# Create database object for this course
+		$db = WeBWorK::DB->new($ce->{dbLayout});
+	};
+	# $ce->{pg}->{options}->{catchWarnings}=1;  #FIXME warnings aren't automatically caught 
+	# when using xmlrpc -- turn this on in the daemon2_course.
+	#^FIXME  need better way of determining whether the course actually exists.
+	
+	# The UNIT_TEST_ON snippets are the closest thing we have to a real unit test.
+	#
+	warn "Unable to create course $courseName. Error: $@" if $@;
+	# my $user = $rh->{user};
+	# 	$user    = 'practice1' unless defined $user and $user =~/\S/;
+
+	my $user = $self->{user_id};
+	
+###########################################
+# Authenticate this request -- done by initiate  in WebworkWebservice 
+###########################################
+
+
+
+###########################################
+# Determine the authorization level (permissions)  -- done by initiate  in WebworkWebservice 
+###########################################
+
 ###############################################################################
 # set up warning handler
 ###############################################################################
@@ -135,50 +195,10 @@ sub renderProblem {
 
     local $SIG{__WARN__} = $warning_handler;
 
-###########################################
-# Grab the course name, if this request is going to depend on 
-# some course other than the default course
-###########################################
-	my $courseName;
-	my $ce;
-	my $db;
-	my $user;
-	my $beginTime = new Benchmark;
-	if (defined($rh->{course}) and $rh->{course}=~/\S/ ) {
-		$courseName = $rh->{course};
-	} else {
-		$courseName = $COURSENAME;
-		# use the default $ce
-	}
-	#FIXME  put in check to make sure the course exists.
-	eval {
-		$ce           = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $courseName});
-		$ce->{apache_root_url}= $HOSTURL;
-	# Create database object for this course
-		$db = WeBWorK::DB->new($ce->{dbLayout});
-	};
-	# $ce->{pg}->{options}->{catchWarnings}=1;  #FIXME warnings aren't automatically caught 
-	# when using xmlrpc -- turn this on in the daemon2_course.
-	#^FIXME  need better way of determining whether the course actually exists.
-	warn "Unable to create course $courseName. Error: $@" if $@;
-	my $user = $rh->{user};
-	$user    = 'practice1' unless defined $user and $user =~/\S/;
-	
-###########################################
-# Authenticate this request
-###########################################
-
 
 
 ###########################################
-# Determine the authorization level (permissions)
-###########################################
-
-
-
-
-###########################################
-# Determine the method for accessing data
+# Determine the method for accessing data   ???? what was this
 ###########################################
 	my $problem_source_access    =   $rh->{problem_source_access};
 	# One of
@@ -207,6 +227,18 @@ sub renderProblem {
 		$effectiveUserName = 'foobar';
 	}
 	##################################################
+	if ($UNIT_TESTS_ON) {
+		print STDERR "RenderProblem.pm:  user = $user\n";
+		print STDERR "RenderProblem.pm:  courseName = $courseName\n";
+		print STDERR "RenderProblem.pm:  effectiveUserName = $effectiveUserName\n";
+	}
+	
+	#################################################################
+	# The effectiveUser is the student the this problem version was written for
+	# The user might also be the effective user but it could be 
+	# an instructor checking out how well the problem is working.
+	#################################################################
+	
 	my $effectiveUser = $db->getUser($effectiveUserName); # checked
 	my $effectiveUserPermissionLevel;
 	my $effectiveUserPassword;
@@ -226,10 +258,11 @@ sub renderProblem {
 		$effectiveUser->recitation($rh->{envir}->{recitation} ||'');
 		$effectiveUser->comment('');
 		$effectiveUser->status('C');
-		$effectiveUser->password($rh->{envir}->{studentID}|| 'foobar');
+		#$effectiveUser->password($rh->{envir}->{studentID}|| 'foobar'); dunno what's going on here
 		$effectiveUserPermissionLevel->permission(0);
 	}		
    #FIXME  these will fail if the keys are not defined within the environment.
+
 ###########################################
 # Insure that set and problem are defined
 # Define the set and problem information from
@@ -309,7 +342,10 @@ sub renderProblem {
   	    $problemRecord->source_file($rh->{sourceFilePath});
   	}
 	$problemRecord->source_file('foobar') unless defined($problemRecord->source_file);
-
+	if ($UNIT_TESTS_ON){
+			print STDERR "RenderProblem.pm: source file is ", $problemRecord->source_file,"\n";
+			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
+	}
     #warn "problem Record is $problemRecord";
 	# now we're sure we have valid UserSet and UserProblem objects
 	# yay!
@@ -411,8 +447,8 @@ sub renderProblem {
 	if ($debugXmlCode) {
 		my $logDirectory =$ce->{courseDirs}->{logs};
 		my $xmlDebugLog  = "$logDirectory/xml_debug.txt";
-		warn "Opening debug log $xmlDebugLog\n" ;
-		open (DEBUGCODE, ">>$xmlDebugLog") || die "Can't open $xmlDebugLog";
+		#warn "RenderProblem.pm: Opening debug log $xmlDebugLog\n" ;
+		open (DEBUGCODE, ">>$xmlDebugLog") || die "Can't open debug log $xmlDebugLog";
 		print DEBUGCODE "\n\nStart xml encoding\n";
 	}
 	
