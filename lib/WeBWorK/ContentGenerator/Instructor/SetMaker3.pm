@@ -94,22 +94,25 @@ sub options {
 }
 
 sub head {
-  print '<script src="/webwork2_files/js/jquery-1.7.min.js"></script>';
-  print '<script src="/webwork2_files/js/jquery-ui-1.8.16.custom.min.js"></script>';
-  print '<script src="/webwork2_files/js/ui.tabs.closable.min.js"></script>';
+	my ($self) = @_;
+	my $ce = $self->r->ce;
+    my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+  print qq!<script src="$webwork_htdocs_url/js/jquery-1.7.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/jquery-ui-1.8.16.custom.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/ui.tabs.closable.min.js"></script>!;
   
-  print '<script src="/webwork2_files/js/dnd.js"></script>';
-  #print '<script src="/webwork2_files/js/problem_grid.js"></script>';
-  #print '<script src="/webwork2_files/js/form_builder.js"></script>';
-  print '<script src="/webwork2_files/js/library_browser.js"></script>';
-  print '<script src="/webwork2_files/js/modernizr-2.0.6.js"></script>';
+  print qq!<script src="$webwork_htdocs_url/js/dnd.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/problem_grid.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/form_builder.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/library_browser.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
   #my ($self) = @_;
   #my $r = $self->r;
   #start a timer to save people's stuff idk if people want this
   #print "<script> setInterval('saveChanges(\"mainform\", \"".$r->uri."\")', 680000); </script>";
   #print '<link rel="stylesheet" type="text/css" href="/webwork2_files/css/setmaker3.css" />';
-  print '<link href="/webwork2_files/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>';
-  print '<link rel="stylesheet" type="text/css" href="/webwork2_files/css/library_browser.css" />';
+  print  qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print  qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/library_browser.css" />!;
   #print '<script>window.addEventListener("load", setup, false);</script>';
   return "";
 }
