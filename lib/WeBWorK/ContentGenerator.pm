@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -560,9 +560,12 @@ sub links {
 	my $eUserID   = $r->param("effectiveUser");
 	my $setID     = $urlpath->arg("setID");
 	my $problemID = $urlpath->arg("problemID");
-	
+	my $achievementID = $urlpath->arg("achievementID");
+
 	my $prettySetID = $setID;
+	my $prettyAchievementID = $achievementID;
 	$prettySetID =~ s/_/ /g if defined $prettySetID;
+	$prettyAchievementID =~ s/_/ /g if defined $prettyAchievementID;
 	
 	# it's possible that the setID and the problemID are invalid, since they're just taken from the URL path info
 	if ($authen->was_verified) {
@@ -699,6 +702,10 @@ sub links {
 			
 			print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			
+			if ($ce->{achievementsEnabled}) {
+			    print CGI::li(&$makelink("${pfx}Achievements", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)); 
+			}
+
 			if ($authz->hasPermissions($userID, "access_instructor_tools")) {
 				$pfx .= "Instructor::";
 				
@@ -706,18 +713,10 @@ sub links {
 				print &$makelink("${pfx}Index", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				print CGI::start_ul();
 				
-				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor1};
-				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor2};;
+				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				
 				print CGI::start_li(); # Homework Set Editor
-				print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
-					if $ce->{showeditors}->{homeworkseteditor1};
-				print "<br/>";
-				print &$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
-					if $ce->{showeditors}->{homeworkseteditor2};;
-				
+				print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
 					print CGI::start_ul();
@@ -726,14 +725,7 @@ sub links {
 					
 					if (defined $problemID) {
 						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"))
-							if $ce->{showeditors}->{pgproblemeditor1};
-						print CGI::end_ul();
-					}
-					if (defined $problemID) {
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
-							if $ce->{showeditors}->{pgproblemeditor2};;
+						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"));
 						print CGI::end_ul();
 					}
 					
@@ -742,12 +734,8 @@ sub links {
 				}
 				print CGI::end_li(); # end Homework Set Editor
 				
-				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser1};
-				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser2};
-				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser3};
+				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
@@ -788,6 +776,18 @@ sub links {
 					print CGI::li(&$makelink("${pfx}Scoring", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
 				
+				#Show achievement editor for instructors
+				if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, "edit_achievements")) {
+				    print CGI::li(&$makelink("${pfx}AchievementList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				    if (defined $achievementID ) {
+					print CGI::start_ul();
+					print CGI::start_li(); # $achievementID
+					print &$makelink("${pfx}AchievementEditor", text=>"$prettyAchievementID", urlpath_args=>{%args,achievementID=>$achievementID}, systemlink_args=>\%systemlink_args);
+					print CGI::end_ul();
+				    }
+				    
+				}
+
 				if ($authz->hasPermissions($userID, "send_mail")) {
 					print CGI::li(&$makelink("${pfx}SendMail", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
@@ -1067,7 +1067,7 @@ The implementation in this package checks for a note in the request named
 sub warnings {
 	my ($self) = @_;
 	my $r = $self->r;
-	print CGI::p("Entering ContentGenerator::warnings");
+	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 	print $self->warningOutput($warnings) if $warnings;
@@ -1245,10 +1245,8 @@ handled.
 sub if_warnings {
 	my ($self, $arg) = @_;
 	my $r = $self->r;
-
-	if ( (MP2 ? $r->notes->get("warnings") : $r->notes("warnings")) 
-	     or ($self->{pgerrors}) )  
-	{
+	
+	if (MP2 ? $r->notes->get("warnings") : $r->notes("warnings")) {
 		return $arg;
 	} else {
 		!$arg;
@@ -1626,9 +1624,7 @@ sub hidden_fields {
 # 		$html .= CGI::hidden($param, @values);  #MEG
 # 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
 		my $value  = $r->param($param);
-#		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
-		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
-
+		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 	}
 	return $html;
 }
@@ -1949,7 +1945,7 @@ problem rendering.
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
 	my $r = $self->{r};
-	print "Entering ContentGenerator::errorOutput subroutine</br>";
+	
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = $r->method;
 	my $uri = $r->uri;
@@ -2007,7 +2003,7 @@ and content generation.
 sub warningOutput($$) {
 	my ($self, $warnings) = @_;
 	my $r = $self->{r};
-	print "Entering ContentGenerator::warningOutput subroutine</br>";
+	
 	my @warnings = split m/\n+/, $warnings;
 	foreach my $warning (@warnings) {
 		#$warning = escapeHTML($warning);  # this would prevent using tables in output from answer evaluators

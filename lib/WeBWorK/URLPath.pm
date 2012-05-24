@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.36 2008/04/29 19:27:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -46,7 +46,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  course_admin                        /admin/ -> logout, options, instructor_tools
  html2xml                            /html2xml/
- instructorXMLHandler     			     /instructorXMLHandler/
  set_list                            /$courseID/
  
  equation_display                    /$courseID/equation/
@@ -68,18 +67,9 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_user_detail              /$courseID/instructor/users/$userID/
  instructor_sets_assigned_to_user    /$courseID/instructor/users/$userID/sets/
  
- instructor_user_list2                /$courseID/instructor/users2/
- instructor_user_detail2              /$courseID/instructor/users2/$userID/ #not created yet
- instructor_sets_assigned_to_user2    /$courseID/instructor/users2/$userID/sets/ #not created yet
-
- 
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
  instructor_users_assigned_to_set    /$courseID/instructor/sets/$setID/users/
- 
- instructor_set_list2                 /$courseID/instructor/sets2/
- instructor_set_detail2               /$courseID/instructor/sets2/$setID/ #not created yet
- instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
  
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
@@ -87,7 +77,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_set_maker                /$courseID/instructor/setmaker/
  instructor_set_maker2               /$courseID/instructor/setmaker2/
- instructor_set_maker3               /$courseID/instructor/setmaker3/
  instructor_get_target_set_problems  /$courseID/instructor/GetTargetSetProblems/
  instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
@@ -97,11 +86,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
  instructor_problem_editor_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor/$setID/$problemID/
-                                     
- instructor_problem_editor2           /$courseID/instructor/pgProblemEditor2/
- instructor_problem_editor2_withset   /$courseID/instructor/pgProblemEditor2/$setID/
- instructor_problem_editor2_withset_withproblem
-                                     /$courseID/instructor/pgProblemEditor2/$setID/$problemID/
  
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
@@ -120,6 +104,11 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
 
+ achievements                        /$courseID/achievements
+ instructor_achievement_list         /$courseID//instructor/achievement_list
+ instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
+ instructor_achievement_user_editor  /$courseID/instructor/achievement_list/$achievementID/users
+
 =cut
 
 ################################################################################
@@ -130,7 +119,7 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [ qw/course_admin  html2xml instructorXMLHandler set_list / ],
+		kids    => [ qw/course_admin  html2xml set_list / ],
 		match   => qr|^/|,
 		capture => [ qw// ],
 		produce => '/',
@@ -156,19 +145,11 @@ our %pathTypes = (
 		produce => 'html2xml/',
 		display => 'WeBWorK::ContentGenerator::renderViaXMLRPC',
 	},
-	instructorXMLHandler => {
-		name => 'instructorXMLHandler',
-		parent => 'root',
-		kids => [ qw// ],
-		match   => qr|^instructorXMLHandler/|,
-		capture => [ qw// ],
-		produce => 'instructorXMLHandler/',
-		display => 'WeBWorK::ContentGenerator::instructorXMLHandler',
-	},
+
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy
+		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy achievements
 			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -233,6 +214,15 @@ our %pathTypes = (
 		produce => 'grades/',
 		display => 'WeBWorK::ContentGenerator::Grades',
 	},
+        achievements  => {
+	        name    => 'Achievements',
+                parent  => 'set_list',
+                kids    => [ qw// ],
+                match   => qr|^achievements/|,
+                capture => [ qw// ],
+                produce => 'achievements/',
+                display => 'WeBWorK::ContentGenerator::Achievements',
+        },
 	hardcopy => {
 		name    => 'Hardcopy Generator',
 		parent  => 'set_list',
@@ -293,12 +283,9 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2 
-		    instructor_add_users
+		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users instructor_achievement_list
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_problem_editor2 
-			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
-			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
+			instructor_problem_editor instructor_set_maker instructor_set_maker2 instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_preflight instructor_statistics
@@ -320,15 +307,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList',
-	},
-	instructor_user_list2 => {
-		name    => 'Classlist Editor2',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_user_detail/ ],
-		match   => qr|^users2/|,
-		capture => [ qw// ],
-		produce => 'users2/',
-		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
@@ -359,15 +337,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'sets/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList',
-	},
-	instructor_set_list2 => {
-		name    => 'Hmwk Sets Editor2',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_detail/ ],
-		match   => qr|^sets2/|,
-		capture => [ qw// ],
-		produce => 'sets2/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList2',
 	},
 	instructor_set_detail => {
 		name    => 'Set Detail for set $setID',
@@ -445,15 +414,6 @@ our %pathTypes = (
 		produce => 'setmaker2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker2',
 	},
-		instructor_set_maker3 => {
-		name    => 'Library Browser 3',
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^setmaker3/|,
-		capture => [ qw// ],
-		produce => 'setmaker3/',
-		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker3',
-	},
 	instructor_get_target_set_problems => {
 		name    => 'Get Target Set Problems',
 		parent  => 'instructor_tools',
@@ -490,28 +450,10 @@ our %pathTypes = (
 		produce => 'pgProblemEditor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
-	instructor_problem_editor2 => {
-		name    => 'Problem Editor2',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_problem_editor2_withset/ ],
-		match   => qr|^pgProblemEditor2/|,
-		capture => [ qw// ],
-		produce => 'pgProblemEditor2/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
-	},
 	instructor_problem_editor_withset => {
 		name    => '$setID',
 		parent  => 'instructor_problem_editor',
 		kids    => [ qw/instructor_problem_editor_withset_withproblem/ ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => '$setID/',
-		display => undef,
-	},
-	instructor_problem_editor2_withset => {
-		name    => '$setID',
-		parent  => 'instructor_problem_editor2',
-		kids    => [ qw/instructor_problem_editor2_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
@@ -525,15 +467,6 @@ our %pathTypes = (
 		capture => [ qw/problemID/ ],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
-	},
-	instructor_problem_editor2_withset_withproblem => {
-		name    => '$problemID',
-		parent  => 'instructor_problem_editor2_withset',
-		kids    => [ qw// ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/problemID/ ],
-		produce => '$problemID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
 	},
 	instructor_scoring => {
 		name    => 'Scoring Tools',
@@ -610,7 +543,40 @@ our %pathTypes = (
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
-	
+ 	
+	################################################################################
+
+        instructor_achievement_list => {
+                name    =>  'Achievement Editor',
+                parent  =>  'instructor_tools', 
+                kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
+                match   =>  qr|^achievement_list/|,
+                capture =>  [ qw// ],
+                produce =>  'achievement_list/',
+                display =>  'WeBWorK::ContentGenerator::Instructor::AchievementList',
+        },
+
+        instructor_achievement_editor => {
+	        name    => 'Achievement Evaluator Editor',
+                parent  => 'instructor_achievement_list', 
+                kids => [ qw// ],
+                match => qr|^([^/]+)/editor/|,
+		capture => [ qw/achievementID/ ],
+                produce => '$achievementID/editor/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementEditor',
+	},
+
+        instructor_achievement_user_editor => {
+	        name    => 'Achievement User Editor',
+                parent  => 'instructor_achievement_list', 
+                kids => [ qw// ],
+		match   => qr|^([^/]+)/users/|,
+		capture => [ qw/achievementID/ ],
+		produce => '$achievementID/users/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementUserEditor',
+	},
+
+
 	################################################################################
 	
 	instructor_progress => {
