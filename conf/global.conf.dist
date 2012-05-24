@@ -24,6 +24,8 @@
 # addition, the $courseName variable holds the name of the current course.
 
 ################################################################################
+# Seed variables
+################################################################################
 
 include("conf/prelocal.conf");
 include("VERSION");
@@ -31,6 +33,7 @@ include("VERSION");
 # prelocal.conf  should contain basic information about 
 # certain directories on your server
 ################################################################################
+
 # Root directory of PG.
 $pg_dir              = "/opt/webwork/pg";
 
@@ -43,6 +46,47 @@ $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 $webwork_courses_url = "/webwork2_course_files";
 $webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the course directory
 
+################################################################################
+# Paths to external programs 
+################################################################################
+
+# system utilities
+$externalPrograms{mv}    = "/bin/mv";
+$externalPrograms{cp}    = "/bin/cp";
+$externalPrograms{rm}    = "/bin/rm";
+$externalPrograms{mkdir} = "/bin/mkdir";
+$externalPrograms{tar}   = "/bin/tar";
+$externalPrograms{gzip}  = "/bin/gzip";
+
+# equation rendering/hardcopy utiltiies
+$externalPrograms{latex}    = "/usr/bin/latex";
+$externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape";
+$externalPrograms{dvipng}   = "/usr/bin/dvipng";
+$externalPrograms{tth}      = "/usr/bin/tth";
+
+####################################################
+# NetPBM - basic image manipulation utilities
+# Most sites only need to configure $netpbm_prefix.
+####################################################
+my $netpbm_prefix = "/usr/bin";
+$externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
+$externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
+$externalPrograms{pnmtops}  = "$netpbm_prefix/pnmtops";
+$externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
+$externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
+
+# url checker
+$externalPrograms{checkurl} = "/usr/bin/lwp-request -d -mHEAD "; # or "/usr/local/bin/w3c -head "
+
+# image conversions utiltiies
+# the source file is given on stdin, and the output expected on stdout.
+$externalPrograms{gif2eps} = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{png2eps} = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{gif2png} = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
+
+# mysql clients
+$externalPrograms{mysql}     = "/usr/bin/mysql";
+$externalPrograms{mysqldump} = "/usr/bin/mysqldump";
 
 ################################################################################
 # Mail settings
@@ -159,6 +203,12 @@ $defaultTheme = "math2";
 $defaultThemeTemplate = "system";
 
 ################################################################################
+# Achievements
+################################################################################
+$achevementsEnabled = 0;
+$achievementPointsPerProblem = 5;
+
+################################################################################
 # Language
 ################################################################################
 
@@ -213,9 +263,7 @@ $webworkURLs{root}          = "$webwork_url";
 $webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdocs";
 $webworkURLs{htdocs}        = "$webwork_htdocs_url";
 
-
 # Location of web-accessible temporary files, such as equation images.
-# These two should be set in prelocal.conf -- not here since this can be overwritten by new versions.
 $webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
 $webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
 
@@ -286,6 +334,10 @@ $courseDirs{scoring}     = "$courseDirs{root}/scoring";
 
 # Location of PG templates and set definition files.
 $courseDirs{templates}   = "$courseDirs{root}/templates";
+
+# Location of course achievement files.
+$courseDirs{achievements}   = "$courseDirs{templates}/achievements";
+$courseURLs{achievements}   = "$courseURLs{html}/achievements";
 
 # Location of course-specific macro files.
 $courseDirs{macros}      = "$courseDirs{templates}/macros";
@@ -451,18 +503,20 @@ $default_status = "Enrolled";
 # GRANT SELECT ON webwork.* TO webworkRead@localhost IDENTIFIED BY 'passwordRO';
 # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
 
-################################################################################
-# set these variables in prelocal.conf
-#
-# $database_dsn = "dbi:mysql:webwork";
-# $database_username = "webworkWrite";
-# #$database_password = ""; #set this in prelocal.conf
-################################################################################
+$database_dsn = "dbi:mysql:webwork";
+$database_username = "webworkWrite";
+$database_password = "";
+$database_debug = 0;
 
-# $database_debug = 0;
+# Variables for sql_moodle database layout.
+$moodle_dsn = "dbi:mysql:moodle";
+$moodle_username = $database_username;
+$moodle_password = $database_password;
+$moodle_table_prefix = "mdl_";
+$moodle17 = 0;
 
-# Database schemas are defined in the file conf/database.conf and stored in the
-# hash %dbLayouts. The standard schema is called "sql_single";
+# Several database are defined in the file conf/database.conf and stored in the
+# hash %dbLayouts.
 include "conf/database.conf";
 
 # Select the default database layout. This can be overridden in the course.conf
@@ -498,6 +552,8 @@ $problemLibrary_db = {
 # Logs
 ################################################################################
 
+# FIXME: take logs out of %webworkFiles/%courseFiles and give them their own
+# top-level hash.
 
 # Logs data about how long it takes to process problems. (Do not confuse this
 # with the /other/ timing log which can be set by WeBWorK::Timing and is used
@@ -525,7 +581,7 @@ $courseFiles{logs}{login_log}       = "$courseDirs{logs}/login.log";
 $courseFiles{logs}{activity_log} = '';
 
 ################################################################################
-# Site defaults (Usually overridden in postlocal.conf)
+# Site defaults (FIXME: what other things could be "site defaults"?)
 ################################################################################
 
 # Set the default timezone of courses on this server. To get a list of valid
@@ -565,7 +621,7 @@ $siteDefaults{default_templates_course} ="modelCourse";
 # current database layout is found.
 # 
 $authen{user_module} = {
-	# sql_moodle => "WeBWorK::Authen::Moodle",
+	sql_moodle => "WeBWorK::Authen::Moodle",
 	# sql_ldap   => "WeBWorK::Authen::LDAP",
 	#"*" => "WeBWorK::Authen",
 	"*" => "WeBWorK::Authen::Basic_TheLastOption",
@@ -577,12 +633,15 @@ $authen{user_module} = {
 # 
 $authen{proctor_module} = "WeBWorK::Authen::Proctor";
 
-################################################################################
 # Options for particular authentication modules
-################################################################################
 
-# If you are using ldap this next snippet should be copied and entered into postlocal.conf.
-# Make modifications there so that it works with your local LDAP protocol
+# $authen{moodle_options} = {
+# 	dsn => $moodle_dsn,
+# 	username => $moodle_username,
+# 	password => $moodle_password,
+# 	table_prefix => $moodle_table_prefix,
+# 	moodle17 => $moodle17,
+# };
 
 $authen{ldap_options} = {
 	# hosts to attempt to connect to, in order. For example:
@@ -633,7 +692,7 @@ $authen{ldap_options} = {
 };
 
 ################################################################################
-# Authorization system (Make local overrides in postlocal.conf )
+# Authorization system
 ################################################################################
 
 # this section lets you define which groups of users can perform which actions.
@@ -650,7 +709,6 @@ $authen{ldap_options} = {
 	grade_proctor => 3,
 	ta => 5,
 	professor => 10,
-	admin     => 20,
 );
 
 # this hash maps operations to the roles that are allowed to perform those
@@ -692,6 +750,8 @@ $authen{ldap_options} = {
 	modify_problem_template_files  => "professor",
 	manage_course_files            => "professor",
 	
+        edit_achievements              => "professor",
+
 	create_and_delete_courses      => "professor",
 	fix_course_databases           => "professor",
 	
@@ -1031,8 +1091,7 @@ $webworkRoot    = $webworkDirs{root};
 $webworkURLRoot = $webworkURLs{root};
 $pgRoot         = $pg{directories}{root};
 
-################################################################################
-# Temporary hack for displaying the different versions of the editors
+
 ################################################################################
 # LTI Basic parameters
 ################################################################################
@@ -1147,6 +1206,11 @@ $webservices = {
 	# added by webservices
 	courseActionsAssignHomework => 0, 
 };
+
+
+################################################################################
+# Temporary hack for displaying the different versions of the editors
+################################################################################
 
 ################################################################################
 # Site wide overrides are entered into the file postlocal.conf
