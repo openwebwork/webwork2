@@ -156,13 +156,20 @@ sub checkForAchievements {
 	    }
 
 	    #build the cheevo message. New level messages are slightly different
+	    my $imgSrc;
+	    if ($achievement->{icon}) {
+		$imgSrc = $ce->{server_root_url}.$ce->{courseURLs}->{achievements}."/".$achievement->{icon};
+	    } else {           
+		$imgSrc = $ce->{server_root_url}.$ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
+	    }
+
 	    $cheevoMessage .=  CGI::start_div({class=>'cheevopopupouter'});
-	    $cheevoMessage .=  CGI::img({src=>"$ce->{courseURLs}->{achievements}/$achievement->{icon}", alt=>'Achievement Icon'});
+	    $cheevoMessage .=  CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
 	    $cheevoMessage .= CGI::start_div({class=>'cheevopopuptext'});  
 	    if ($achievement->category eq 'level') {
 		
 		$cheevoMessage = $cheevoMessage . CGI::h1("Level Up: $achievement->{name}");
-		$cheevoMessage = $cheevoMessage . CGI::div("Congratulations, you earned a new level!.");
+		$cheevoMessage = $cheevoMessage . CGI::div("Congratulations, you earned a new level!");
 		$cheevoMessage = $cheevoMessage . CGI::end_div();
 
 	    } else {
@@ -184,10 +191,10 @@ sub checkForAchievements {
 		if ($achievement->category eq 'level') {
 		    $facebookmessage = sprintf("I leveled up and am now a %s",$achievement->{name});
 		} else {
-		    $facebookmessage = sprintf("I earned the Mathchievement %s: %s",$achievement->{name},$achievement->{description});
+		    $facebookmessage = sprintf("%s: %s",$achievement->{name},$achievement->{description});
 		}
 	
-		$cheevoMessage .= "FB.ui({ method: 'feed', display: 'popup', picture: '$ce->{courseURLs}->{achievements}/$achievement->{icon}', message: '$facebookmessage'});\n";
+		$cheevoMessage .= "FB.ui({ method: 'feed', display: 'popup', picture: '$imgSrc', description: '$facebookmessage'});\n";
 		$cheevoMessage .= CGI::end_script();
 
 	    }
