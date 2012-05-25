@@ -285,7 +285,6 @@ clear: both;
 
 #loginstatus {
 	color: white;
-	/* position: absolute; */
 	top: -75px;
 	left: 1170px;
 	width: 200px;
@@ -294,7 +293,7 @@ clear: both;
 	padding: 0;
 	margin: 1ex .5em .1ex .1em;
 	font-size: smaller;
-}
+} 
 
 /*Relative Positioning -- a alternate style for the loginstatus which uses relative positioning.  Tested, but was decided that it didn't work great. Feel free to uncomment if you want to try it out.*/
 
@@ -433,7 +432,8 @@ clear: both;
 #InfoPanel {
     font-size:100%;
 	float: right;
-	max-width: 400px;
+	max-width: 40%;
+	min-width: 0;
 	overflow: auto;
 	/*margin-right: -1px;*/
 	background-color: #fff;
@@ -758,23 +758,40 @@ span.gray_button{
 	margin-top: 10%;
 	margin-left: 10%;
 	margin-right: 10%;
-}
+}*/
 
 #editor{
-	width: 750px;
+	width: 585px;
 }
 
 #editor .pg_editor_input_span{
 	margin-bottom: 10px;
+	display: none;
 }
 
 #editor .pg_editor_input_div{
+	margin-top: 20px;
 	margin-left: 50px;
 }
 
 #editor #submit_input_div{
 	margin-top: 10px;
 	clear: both;
+}
+
+#pg_editor_header {
+    left: 790px;
+    position: absolute;
+    top: 130px;
+}
+
+#pg_editor_frame_id{
+	height: 474px;
+    left: 785px;
+    position: absolute;
+    top: 182px;
+    width: 50%;
+	overflow: scroll;
 }
 
 /*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
@@ -809,10 +826,15 @@ div.problem_sets_options {
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 table.problem_set_table{
 	margin-top: 30px;
-	width: 640px;
+	#width: 640px;
 	text-align: left;
 }
-
+table.problem_set_table th{
+	padding-right: 30px;
+}
+table.problem_set_table td{
+	padding-right: 30px;
+}
 /*BUG FIXES*/
 
 table#grades_table pre{

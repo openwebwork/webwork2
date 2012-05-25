@@ -213,12 +213,11 @@ $webworkURLs{root}          = "$webwork_url";
 $webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdocs";
 $webworkURLs{htdocs}        = "$webwork_htdocs_url";
 
+
 # Location of web-accessible temporary files, such as equation images.
 # These two should be set in prelocal.conf -- not here since this can be overwritten by new versions.
-$webworkDirs{htdocs_temp}   = (defined $webworkDirs{htdocs_temp} ) ? $webworkDirs{htdocs_temp} :"$webworkDirs{htdocs}/tmp";
-$webworkURLs{htdocs_temp}   = (defined $webworkURLs{htdocs_temp} ) ? $webworkURLs{htdocs_temp} :"$webworkURLs{htdocs}/tmp";
-
-#$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
+$webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
+$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
 
 # Location of cached equation images.
 $webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
@@ -276,8 +275,8 @@ $courseDirs{html_images} = "$courseDirs{html}/images";
 
 # Location of web-accessible, course-specific temporary files, like static and
 # dynamically-generated PG graphics.
-$courseDirs{html_temp}   = "$courseDirs{html}/tmp";
-$courseURLs{html_temp}   = "$courseURLs{html}/tmp";
+$courseDirs{html_temp}   =  "$courseDirs{html}/tmp";
+$courseURLs{html_temp}   =  "$courseURLs{html}/tmp";
 
 # Location of course-specific logs, like the transaction log.
 $courseDirs{logs}        = "$courseDirs{root}/logs";
@@ -732,6 +731,7 @@ $authen{ldap_options} = {
 	download_hardcopy_view_errors =>"professor",
 	download_hardcopy_format_pdf => "guest",
 	download_hardcopy_format_tex => "ta",
+	download_hardcopy_format_tikz => "professor", # under_construction
 );
 
 # This is the default permission level given to new students and students with
@@ -1049,6 +1049,21 @@ $pgRoot         = $pg{directories}{root};
 	pgproblemeditor1   => 1,
 	pgproblemeditor2   => 0,
 );
+
+################################################################################
+# Webservices
+################################################################################
+$webservices = {
+	enableCourseActions => 0, # enable createCourse, addUser, dropUser
+	enableCourseActionsLog => 0,# enable logging of course actions
+								# will log when courses are created and 
+								# when students are added or dropped
+	courseActionsLogfile => "$webworkDirs{logs}/courseactions.log",
+	# enable this to assign all visible homework sets to new students
+	# added by webservices
+	courseActionsAssignHomework => 0, 
+};
+
 ################################################################################
 # Site wide overrides are entered into the file postlocal.conf
 ################################################################################

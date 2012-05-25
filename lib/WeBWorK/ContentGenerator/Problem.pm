@@ -771,9 +771,9 @@ sub warnings {
  		my @pginternalerrors = @{ $self->{pginternalerrors}  };
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
-		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),   CGI::br(), join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
-		print CGI::p(CGI::h3($r->maketext("PG warning messages" ) ), CGI::br(), join(CGI::br(), @pgwarning)  )  if @pgwarning ;	
-		print CGI::p(CGI::h3($r->maketext("PG internal errors" ) ),  CGI::br(), join(CGI::br(), @pginternalerrors )) if @pginternalerrors;
+		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
+		print CGI::p(CGI::h3($r->maketext("PG warning messages" ) ),join(CGI::br(), @pgwarning)  )  if @pgwarning ;	
+		print CGI::p(CGI::h3($r->maketext("PG internal errors" ) ), join(CGI::br(), @pginternalerrors )) if @pginternalerrors;
 		print CGI::end_div();
 	} 
 	# print "proceeding to SUPER::warnings";
@@ -797,6 +797,12 @@ sub head {
 
 	return "" if ( $self->{invalidSet} );
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
+}
+
+sub post_header_text {
+	my ($self) = @_;
+	return "" if ( $self->{invalidSet} );
+    return $self->{pg}->{post_header_text} if $self->{pg}->{post_header_text};
 }
 
 sub options {
@@ -933,7 +939,9 @@ sub body {
 	my $set = $self->{set};
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
-	print CGI::p("Entering Problem::body subroutine.  This indicates an older style system.template file -- consider upgrading. ");
+	print CGI::p("Entering Problem::body subroutine.  
+	         This indicates an old style system.template file -- consider upgrading. ",
+	         caller(1), );
 	my $valid = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::check_invalid($self);
 	unless($valid eq "valid"){
 		return $valid;
@@ -1031,7 +1039,7 @@ sub output_editorLink{
 	my $pg = $self->{pg};
 	
 	my $r = $self->r;
-	
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
@@ -1042,17 +1050,23 @@ sub output_editorLink{
 	# format as "[edit]" like we're doing with course info file, etc.
 	# add edit link for set as well.
 	my $editorLink = "";
+	my $editorLink2 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
-	if ($authz->hasPermissions($user, "modify_problem_sets")) {
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor1}) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit this problem")));
 	}
-	
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor2}) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
+		$editorLink2 = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit this problem with new editor")));
+	}
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
@@ -1060,6 +1074,7 @@ sub output_editorLink{
 		    print "Call errorOutput</br>";
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 			print $editorLink;
+			print $editorLink2;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
@@ -1068,6 +1083,7 @@ sub output_editorLink{
 	}
 	else{
 		print $editorLink;
+		print $editorLink2;
 	}
 	return "";
 }
@@ -1098,11 +1114,10 @@ sub output_checkboxes{
 				-name    => "showCorrectAnswers",
 				-value   => 1,
 			}
-		);
+		),"&nbsp;";
 	}
 	if ($can{showHints}) {
-		print CGI::div({style=>"color:red"},
-			WeBWorK::CGI_labeled_input(
+		print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
 				-label_text => $r->maketext("Show Hints"),
@@ -1114,11 +1129,10 @@ sub output_checkboxes{
 				}
 				:
 				{
-					-name    => "showCorrectAnswers",
+					-name    => "showHints",
 					-value   => 1,
 				}
-			)
-		);
+		),"&nbsp;";
 	}
 	if ($can{showSolutions}) {
 		print WeBWorK::CGI_labeled_input(
@@ -1133,10 +1147,10 @@ sub output_checkboxes{
 			}
 			:
 			{
-				-name    => "showCorrectAnswers",
+				-name    => "showSolutions",
 				-value   => 1,
 			}
-		);
+		),"&nbsp;";
 	}
 	
 	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
@@ -1166,7 +1180,7 @@ sub output_submit_buttons{
 		if ($user ne $effectiveUser) {
 			# if acting as a student, make it clear that answer submissions will
 			# apply to the student's records, not the professor's.
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
+			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
 		} else {
 			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
 			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>""});
@@ -1188,12 +1202,7 @@ sub output_score_summary{
 	my $problem = $self->{problem};
 	my $set = $self->{set};
 	my $pg = $self->{pg};
-	my $scoreRecordedMessage = "";
-	if  (defined $self->{scoreRecordedMessage}) {
-		$scoreRecordedMessage = $self->{scoreRecordedMessage};
-	} else {
-		$scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
-	}
+	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
 	my $submitAnswers = $self->{submitAnswers};
 	
 	# score summary
@@ -1201,16 +1210,8 @@ sub output_score_summary{
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
 	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
-	#my ($attemptsLeft, $attemptsLeftNoun);
 	my $attemptsLeft = $problem->max_attempts - $attempts;
-#	if ($problem->max_attempts == -1) {
-#		# unlimited attempts
-#		$attemptsLeft = $r->maketext("unlimited");
-#		$attemptsLeftNoun = $r->maketext("attempts");
-#	} else {
-#		$attemptsLeft = $problem->max_attempts - $attempts;
-#		$attemptsLeftNoun = $attemptsLeft == 1 ? $r->maketext("attempt") : $r->maketext("attempts");
-#	}
+
 	
 	my $setClosed = 0;
 	my $setClosedMessage;
@@ -1240,7 +1241,6 @@ sub output_score_summary{
 			$problem->attempted
 				? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
-#			$setClosed ? $setClosedMessage : $r->maketext("You have [_1] [_2] remaining.",$attemptsLeft,$attemptsLeftNoun) 
 			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
 		));
 	}else {
@@ -1264,6 +1264,18 @@ sub output_misc{
 	my %will = %{ $self->{will} };
 	my $user = $r->param('user');
 
+# 	print CGI::start_div();
+# 	
+# 	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{DEBUG_messages}} );
+# 	my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{WARNING_messages}} );
+# 	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
+# 	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
+# 	
+# 	print CGI::p({style=>"color:red;"}, $r->maketext("Checking additional error messages")) if $pgerrordiv  ;
+#  	print CGI::p($r->maketext("pg debug"),CGI::br(), $pgdebug                 )   if $pgdebug ;
+# 	print CGI::p($r->maketext("pg warning"),CGI::br(),$pgwarning                ) if $pgwarning ;	
+# 	print CGI::p($r->maketext("pg internal errors"),CGI::br(), $pginternalerrors) if $pginternalerrors;
+# 	print CGI::end_div()                                                          if $pgerrordiv ;
 	
 	# save state for viewOptions
 	print  CGI::hidden(
@@ -1300,8 +1312,7 @@ sub output_misc{
 
 # output_summary subroutine
 
-# prints out the feedback on the questions that the student has answered for 	
-# the current problem, along with available information about correctness
+# prints out the summary of the questions that the student has answered for the current problem, along with available information about correctness
 
 sub output_summary{
 	
@@ -1365,7 +1376,7 @@ sub output_custom_edit_message{
 	# custom message for editor
 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 		if ($editMode eq "temporaryFile") {
-			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file"), $problem->source_file));
+			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
 			# taken care of in the initialization phase
 		}
@@ -1443,11 +1454,14 @@ sub output_email_instructor{
 sub output_hidden_info{
 	my $self = shift;
 	my $previewAnswers = $self->{previewAnswers};
-	
-	if($previewAnswers){
+	my $checkAnswers   = $self->{checkAnswers};
+	my $showPartialCorrectAnswers = $self->{pg}->{flags}->{showPartialCorrectAnswers};
+	if($previewAnswers){  # never color previewed answers 
 		return "";
 	}
-	else{
+	elsif (   ($checkAnswers  ) 
+	         or $showPartialCorrectAnswers )    { # color answers when partialCorrectAnswers is set
+	                                              # or when checkAnswers is submitted 
 		if(defined $self->{correct_ids}){
 			my $correctRef = $self->{correct_ids};
 			my @correct = @$correctRef;
@@ -1463,38 +1477,12 @@ sub output_hidden_info{
 			}
 		}
 		return "";
+	} else {
+		return "";
 	}
 }
 
 # output_JS subroutine
-
-# outputs all of the Javascript needed for this page. The main javascript needed here is color.js, which colors input fields based on whether or not they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification information for the fields that were correct and the fields that were incorrect.  color.js collects of the correct and incorrect fields into two arrays using the information gathered from the hidden fields, and then loops through and changes the styles so that the colors will show up correctly.
-
-sub output_JS{
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	
-	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/removeDuplicates.js"}), CGI::end_script();
-	
-	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
-	
-	return "";
-}
-
-# Simply here to indicate to the template that this page has body part methods which can be called
-
-sub can_body_parts{
-	return "";
-}
-
-# output_wztooltip_JS subroutine
 
 # prints out the wz_tooltip.js script for the current site.
 
@@ -1510,18 +1498,34 @@ sub output_wztooltip_JS{
 	return "";
 }
 
-# output_removDupli_JS
+# outputs all of the Javascript needed for this page. 
+# The main javascript needed here is color.js, which colors input fields based on whether or not 
+# they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification 
+# information for the fields that were correct and the fields that were incorrect.  color.js collects of the correct and incorrect fields into 
+# two arrays using the information gathered from the hidden fields, and then loops through and changes the styles so 
+# that the colors will show up correctly.
 
-# outputs the removeDuplicates JS function
-
-sub output_removDupli_JS{
+sub output_JS{
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/removeDuplicates.js"}), CGI::end_script();
+	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	
+	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
+	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/java_init.js"}), CGI::end_script();
+	
+	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
+	return "";
+}
+
+# Simply here to indicate to the template that this page has body part methods which can be called
+
+sub can_body_parts{
 	return "";
 }
 

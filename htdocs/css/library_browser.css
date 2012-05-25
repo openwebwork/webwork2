@@ -116,9 +116,10 @@ body {
 }
 
 #app_box #problems_container{
-	width: 100%; 
+	width: outo; 
 	height:100%;
 	border: solid 1px black;
+
 	overflow: scroll;
 	-webkit-box-flex: 1;
   	-moz-box-flex: 1;
@@ -127,6 +128,7 @@ body {
 
 #app_box #problem_sets_container{
 	width:150px;
+	float: left
 	border: solid 1px black;
 	height:100%;
 	overflow: scroll;

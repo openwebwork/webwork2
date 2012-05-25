@@ -57,7 +57,7 @@ use WeBWorK::Localize;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
-
+our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
 
 BEGIN {
@@ -1067,7 +1067,7 @@ The implementation in this package checks for a note in the request named
 sub warnings {
 	my ($self) = @_;
 	my $r = $self->r;
-	print CGI::p("Entering ContentGenerator::warnings");
+	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 	print $self->warningOutput($warnings) if $warnings;
@@ -1949,7 +1949,7 @@ problem rendering.
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
 	my $r = $self->{r};
-	print "Entering ContentGenerator::errorOutput subroutine</br>";
+	print "Entering ContentGenerator::errorOutput subroutine</br>" if $TRACE_WARNINGS;
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = $r->method;
 	my $uri = $r->uri;
@@ -2007,7 +2007,7 @@ and content generation.
 sub warningOutput($$) {
 	my ($self, $warnings) = @_;
 	my $r = $self->{r};
-	print "Entering ContentGenerator::warningOutput subroutine</br>";
+	print "Entering ContentGenerator::warningOutput subroutine</br>" if $TRACE_WARNINGS;
 	my @warnings = split m/\n+/, $warnings;
 	foreach my $warning (@warnings) {
 		#$warning = escapeHTML($warning);  # this would prevent using tables in output from answer evaluators

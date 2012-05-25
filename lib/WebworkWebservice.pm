@@ -107,6 +107,7 @@ use WebworkWebservice::RenderProblem;
 use WebworkWebservice::LibraryActions;
 use WebworkWebservice::MathTranslators;
 use WebworkWebservice::SetActions;
+use WebworkWebservice::CourseActions;
 
 ###############################################################################
 package WebworkXMLRPC;
@@ -202,7 +203,7 @@ if ($UNIT_TESTS_ON) {
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
 	my $authenOK;
-	{
+	eval {
 		no warnings 'redefine';
 		local *WeBWorK::Authen::get_credentials   = \&WebworkXMLRPC::get_credentials;
 		local *WeBWorK::Authen::maybe_send_cookie = \&WebworkXMLRPC::noop;
@@ -210,7 +211,15 @@ if ($UNIT_TESTS_ON) {
 		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
 		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
 		$authenOK = $authen->verify;
-	}
+	} or do {
+		if (Exception::Class->caught('WeBWorK::DB::Ex::TableMissing')) {
+			# was asked to authenticate into a non-existent course
+			die SOAP::Fault
+				->faultcode('404')
+				->faultstring('Course not found.')
+		}
+		die "Unknown exception when trying to verify authentication.";
+	};
 	
 	$self->{authenOK}  = $authenOK;
 	$self->{authzOK}   = $authz->hasPermissions($user_id, "access_instructor_tools");
@@ -391,6 +400,62 @@ sub tex2pdf {
     my $in    = shift;
     my $self  = $class->initiate_session($in);
   	return $self->do( WebworkWebservice::MathTranslators::tex2pdf($self,$in) );
+}
+
+# Expecting a hash $in composed of the usual auth credentials
+# plus the params specific to this function
+#{
+#	'userID' => 'admin',	# these are the usual 
+#	'password' => 'admin',	# auth credentials
+#	'courseID' => 'admin',	# used to initiate a
+#	'session_key' => 'key',	# session.
+#	"name": "TEST100-100",  # This will be the new course's id
+#}
+# Note that we log into the admin course to create courses.
+sub createCourse {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::create($self, $in));
+}
+
+# Expecting a hash $in composed of
+#{
+#	'userID' => 'admin',		# these are the usual 
+#	'password' => 'admin',		# auth credentials
+#	'courseID' => 'Math',		# used to initiate a
+#	'session_key' => 'key',		# session.
+#	"firstname": "John", 
+#	"lastname": "Smith", 
+#	"id": "The Doctor",			# required
+#	"email": "doctor@tardis",
+#	"studentid": 87492466, 
+#	"userpassword": "password",	# defaults to studentid if empty 
+#								# if studentid also empty, then no password
+#	"permission": "professor",	# valid values from %userRoles in global.conf
+#								# defaults to student if empty
+#}
+# This user will be added to courseID
+sub addUser {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::addUser($self, $in));
+}
+
+# Expecting a hash $in composed of
+#{
+#	'userID' => 'admin',		# these are the usual 
+#	'password' => 'admin',		# auth credentials
+#	'courseID' => 'Math',		# used to initiate a
+#	'session_key' => 'key',		# session.
+#	"id": "BFYM942", 
+#}
+sub dropUser {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::dropUser($self, $in));
 }
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
