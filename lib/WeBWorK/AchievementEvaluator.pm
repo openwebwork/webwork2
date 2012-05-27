@@ -28,8 +28,7 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(before after readFile sortAchievements);
 
 use Safe;
-#FreezeThaw is not part of the standard webwork installation.  It could be replaced by a more standard hash->string module (if there is one).  
-use FreezeThaw qw(freeze thaw);
+use Storable qw(freeze thaw);
 
 sub checkForAchievements {
 
@@ -75,7 +74,7 @@ sub checkForAchievements {
 
     #Thaw globalData hash
     if ($globalUserAchievement->frozen_hash) {       
-	%$globalData = thaw($globalUserAchievement->frozen_hash);
+	$globalData = thaw($globalUserAchievement->frozen_hash);
     }
 
     #Update a couple of "standard" variables in globalData hash.
@@ -134,7 +133,7 @@ sub checkForAchievements {
 	
 	#thaw localData hash
 	if ($userAchievement->frozen_hash) {
-	    %$localData = thaw($userAchievement->frozen_hash);
+	    $localData = thaw($userAchievement->frozen_hash);
 	}
 
 	#recover counter information (for progress bar achievements)
@@ -213,13 +212,13 @@ sub checkForAchievements {
 	
 	#update counter, freeze localData and store
 	$userAchievement->counter($counter);
-	$userAchievement->frozen_hash(freeze(%$localData));	
+	$userAchievement->frozen_hash(freeze($localData));	
 	$db->putUserAchievement($userAchievement);
 	
     }
     
     #freeze globalData and store
-    $globalUserAchievement->frozen_hash(freeze(%$globalData));
+    $globalUserAchievement->frozen_hash(freeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return $cheevoMessage;
