@@ -968,11 +968,12 @@ Print links to siblings of the current object.
 sub footer(){
 	my $self = shift;
 	my $r = $self->r;
-	
+	my $ce = $r->ce;
+	my $version = $ce->{WW_VERSION}||"unknown -- set version in global.conf.dist";
+	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
 	print CGI::p({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
-	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; 1996-2011", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project")));
-	
-	return "";
+	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; $copyright_years", "| version: $version |", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
+	return ""
 }
 
  
@@ -998,10 +999,6 @@ can be done in the template itself.
 # }
 sub timestamp {
 	my ($self, $args) = @_;
-# 	my $r = $self->r;
-# 	my $ce = $r->ce;
-# 	my $tz = $ce->{siteDefaults}{timezone};
-# 	warn "testing", $r, $ce, $tz;
     # need to use the formatDateTime in this file (some subclasses access Util's version.
 	return( $self->formatDateTime( time() ) );
 }
