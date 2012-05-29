@@ -159,7 +159,7 @@ sub body {
 	
 	  	print '<div class="break"></div>';
 	  	print '<table>';
-		print '<tr><td><b>Library directories:</b></td><td><span id="library_list_box"></span><button class="button" id="load_problems" type="button">Load Problems</button></td>';
+		print '<tr><td><b>Library directories:</b></td><td><span id="CardCatalog"><!--Gonna put the lists of libraries and sublibraries here--></span><button class="button" id="load_problems" type="button">Load Problems</button></td>';
 		print '<tr><td><b>Library search:</b></td><td><span id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button><span></td>';
 		print '</table>';
 		###########################################
@@ -186,15 +186,15 @@ sub body {
 		  	print '<ul>',
         			'<li id="library_link"><a href="#library_tab"><span>Library</span></a></li>',
     			  '</ul>';
-    	    print '<div id="library_tab">';
-		    	print '<h1>Problems</h1>';
+    	    print '<div id="library_tab">',
+		            '<h1>Problems</h1>',
 	        	########## Now print problems
-	        	print '<ul id="library_list">';
+	        	    '<ul class="list">',
 	          
-	        	print '</ul>';
+	        	    '</ul>',
 #<button type="button" onclick="increaseLibAcross();">+</button><span id="libAcross">4</span><button type="button" onclick="decreaseLibAcross();">-</button><span> problems across</span>
-            	print '<p><select id="prob_per_page"><option value=10>10</option><option value=20>20</option><option value=30>30</option><option value=40>40</option><option value=50>50</option></select><button type="button" disabled=true id="prevList">Previous</button><button disabled=true type="button" id="nextList">Next</button></p>';#might be a better way to do the perpage
-	      	print '</div>';
+            	    '<p><select class="prob_per_page"><option value=10>10</option><option value=20>20</option><option value=30>30</option><option value=40>40</option><option value=50>50</option></select><button type="button" disabled=true class="prevList">Previous</button><button disabled=true type="button" class="nextList">Next</button></p>',#might be a better way to do the perpage
+	      	    '</div>';
 	      print '</div>';
 	        ########## Finish things off
 	   	print '</div>';
@@ -202,6 +202,33 @@ sub body {
   print '</div>';
   print $self->hidden_authen_fields;
   print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID });
+
+
+  print '<script type="text/template", id="problem-template">',
+        '    <div class="handel"></div>',
+        '    <div><%= data %></div>',
+        '</script>';
+
+  print '<script type="text/template", id="setList-template">',
+            '<li id="library_link"><a href="#library_tab"><span>Library</span></a></li>',
+
+          '</script>';
+
+  print '<script type="text/template", id="setName-template">',
+              '<%= name %>',
+         '</script>';
+
+  print '<script type="text/template", id="setList-template">',
+           '<h1>Problems</h1>',
+           '<ul class=list">',
+           '</ul>',
+        '</script>';
+
+  print '<script type="text/template", id="LibraryList-template">',
+             '<select class="list"></select>',
+             '<span class="children></children>'
+          '</script>';
+
 	return "";	
 }
 
