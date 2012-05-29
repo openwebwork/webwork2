@@ -1089,6 +1089,23 @@ $pgRoot         = $pg{directories}{root};
 # LTI Basic parameters
 ################################################################################
 
+################################################################################
+# LTI Basic Authentication Parameters to be put into a site's course.conf file
+################################################################################
+
+#The following paramters should be put into site's course.conf file.
+
+#$LTIBasicToThisSiteURL = "URL to site", e.g.,
+#$LTIBasicToThisSiteURL = "https://localserver/webwork2/DemoCourse";
+#$LTIBasicConsumerSecret = "Consumer Secret - shared with the Course Management Site, e.g.";
+#$LTIBasicConsumerSecret = "webworkLTIB";
+
+
+################################################################################
+# LTI Basic Authentication Parameters for global.conf
+################################################################################
+
+# The following parameters should be in global.conf:
 
 ################################################################################
 # Reasonable Number of Problems for Late Adds to do per day to catch up
@@ -1172,6 +1189,17 @@ $session_management_via = "session_cookie";
 ################################################################################
 # Local routine to analyze the context_id forwarded to LTIBasic
 ################################################################################
+
+#The section number/identifier should be passed a "custom" parameter
+#by the Course Management System, usually by adding a parameter
+#of the form
+#  section=1234
+#in the parameters section of the Course Management Systems
+#LTI configuration for a site.  (LTI should automatically
+#convert this to  "custom_section=1234".
+#However, if no custom_section paramter is passed to WeBWorK,
+#then a site can optionally attempt to parse the context_id
+#to determine a section name.
 
 # An example from Indiana University, Bloomington
 #
