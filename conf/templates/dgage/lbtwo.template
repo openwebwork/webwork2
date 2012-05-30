@@ -36,7 +36,7 @@
 
 <div style="clear:both;"></div>
 	<div id="breadcrumbs">
-		<!--#path style="text" text=" &#x2192; "-->
+		<!--#path "-->
 	</div>
 	<div id="content" >
 

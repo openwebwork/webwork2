@@ -1314,9 +1314,17 @@ sub pathMacro {
 		my $name = shift @path;
 		my $url = shift @path;
 		if ($url and not $args{textonly}) {
-			push @result, CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name)));
+		    if($args{style} eq "bootstrap"){
+		        push @result, CGI::li(CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name))));
+		    } else {
+			    push @result, CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name)));
+		    }
 		} else {
-			push @result, $r->maketext($name);
+		    if($args{style} eq "bootstrap"){
+                push @result, CGI::li({-class=>"active"}, $r->maketext($name));
+            } else {
+			    push @result, $r->maketext($name);
+			}
 		}
 	}
 	

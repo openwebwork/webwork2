@@ -1,26 +1,3 @@
-/**
- * file variables
- */
-var USER = "user-needs-to-be-defined-in-hidden-variable-id=hidden_user";
-var COURSE = "course-needs-to-be-defined-in-hidden-variable-id=hidden_courseID";
-var SESSIONKEY = "session-key-needs-to-be-defined-in-hidden-variable-id=hidden_key"
-var PASSWORD = "who-cares-what-the-password-is";
-// request object, I'm naming them assuming there may be different versions
-var globalRequestObject = {
-    "xml_command":"listLib",
-    "pw":"",
-    "password":PASSWORD,
-    "session_key":SESSIONKEY,
-    "user":"user-needs-to-be-defined",
-    "library_name":"Library",
-    "courseID":COURSE,
-    "set":"set0",
-    "new_set_name":"new set",
-    "command":"buildtree",
-};
-var webserviceURL = "../../instructorXMLHandler";
-
-//abstract the post request thing, to take an object of options that extends what is now listLibRequest
 
 /**
  * Global stuff
@@ -30,17 +7,6 @@ var undoing = false;
 var undo_stack = new Array();
 var redo_stack = new Array();
 
-
-
-//SMOKE or jquery UI alert
-function updateMessage(message) {
-    var messageBox = document.getElementById("messages");
-    messageBox.innerHTML = message;
-    $(messageBox).effect("pulsate", {
-        times:3
-    }, 500);
-}
-
 //might be able to move this to LibraryBrowser later with event listeners
 function showErrorResponse(data) {
     var myWindow = window.open('', '', 'width=500,height=800');
@@ -49,42 +15,20 @@ function showErrorResponse(data) {
 }
 
 $(function () {
-    // get usernames and keys from hidden variables:
+    // get usernames and keys from hidden variables and set up webwork object:
     var myUser = document.getElementById("hidden_user").value;
     var mySessionKey = document.getElementById("hidden_key").value;
     var myCourseID = document.getElementById("hidden_courseID").value;
     // check to make sure that our credentials are available.
     if (myUser && mySessionKey && myCourseID) {
-        globalRequestObject.user = myUser;
-        globalRequestObject.session_key = mySessionKey;
-        globalRequestObject.courseID = myCourseID;
+        webwork.requestObject.user = myUser;
+        webwork.requestObject.session_key = mySessionKey;
+        webwork.requestObject.courseID = myCourseID;
     } else {
-        updateMessage("missing hidden credentials: user "
+        webwork.alert("missing hidden credentials: user "
             + myUser + " session_key " + mySessionKey
-            + " courseID" + myCourseID);
+            + " courseID" + myCourseID, "alert-error");
     }
-
-    /*
-     // attach function for deleting selected problems
-     document.getElementById("delete_problem").addEventListener("click", function(event) {
-     var currentTabId = $("#problems_container div.ui-tabs-panel:not(.ui-tabs-hide)")[0].id;
-     console.log(currentTabId);
-     // only care if it's a set
-     if (currentTabId != "library_tab") {
-
-     var problems = $(".ww_selected");
-     var set = setList.sets[document
-     .getElementById(
-     currentTabId)
-     .getAttribute("data-uid")];
-     console.log(problems);
-     problems.each(function(index) {
-     set.removeProblem($(this).attr(
-     "data-path"));
-     });
-     }
-     }, false);//REMOVE
-     */
 
 
     /*******************************************************************************
@@ -92,40 +36,7 @@ $(function () {
      ******************************************************************************/
 // object
 
-    var Problem = Backbone.Model.extend({
-        defaults:function () {
-            return{
-                path:"",
-                data:false,
-                place: 0
-            };
-        },
 
-        initialize:function () {
-
-        },
-        //this is a server render, different from a view render
-        render:function () {
-            var problem = this;
-            var requestObject = {
-                    set: this.get('path'),
-                    problemSource: this.get('path'),
-                    xml_command: "renderProblem"
-                };
-            _.defaults(requestObject, globalRequestObject);
-
-
-            if (!problem.get('data')) {
-                //if we haven't gotten this problem yet, ask for it
-                $.post(webserviceURL, requestObject, function (data) {
-                    problem.set('data', data);
-                });
-            }
-        },
-        clear: function() {
-            this.destroy();
-        }
-    });
 
     var ProblemView = Backbone.View.extend({
         tagName:"li",
@@ -162,7 +73,7 @@ $(function () {
             this.$el.draggable({
                 helper:'clone',
                 revert:true,
-                handle:'.handle',
+                handle:'.problem',
                 appendTo:'body',
                 cursorAt:{
                     top:0,
@@ -176,154 +87,13 @@ $(function () {
         },
 
         clear: function(){
+            console.log("clear");
+            this.model.collection.removeProblem(this.model);
             this.model.clear();
         }
     });
 
-    var ProblemList = Backbone.Collection.extend({
-        model:Problem,
 
-        initialize: function(){
-            this.defaultRequestObject = {
-
-            };
-            _.defaults(this.defaultRequestObject, globalRequestObject);
-        },
-
-        comparator: function(problem) {
-            return problem.get("place");
-        },
-
-        //maybe move to problem list as fetch (with a set name argument)
-        fetch:function () {
-            var self = this;
-
-            //command needs to be set in the higher model since there are several versions of problem lists
-
-            var requestObject = {};
-            _.defaults(requestObject, this.defaultRequestObject);
-
-            $.post(webserviceURL, requestObject,
-                function (data) {
-                    //try {//this is the wrong way to be error checking
-                    var response = $.parseJSON(data);
-
-                    var problems = response.result_data.split(",");
-
-                    var newProblems = new Array();
-                    for (var i = 0; i < problems.length; i++) {
-                        if (problems[i] != "") {
-                            newProblems.push({path:problems[i], place:i});
-                        }
-                    }
-                    self.reset(newProblems);
-                    //document.getElementById(workAroundTheClosure.name + workAroundTheClosure.id).innerHTML = workAroundTheClosure.name + " (" + workAroundTheClosure.problemArray.length + ")";
-                    /*} catch (err) {
-                     showErrorResponse(data);
-                     }*/
-                }
-            );
-        },
-
-        //move to problemlist
-        addProblem :function (problem) {
-            this.add(problem);
-            var self = this;
-
-            var requestObject = {
-                xml_command: "addProblem",
-                problemPath: problem.get('path')
-            };
-            _.defaults(requestObject, this.defaultRequestObject);
-
-            $.post(webserviceURL, requestObject, function (data) {
-                //try {
-                    var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    updateMessage(response.server_response);
-                    // still have to test for success..everywhere
-                    if (undoing) {// might be a better way to do this later
-                        redo_stack.push(function () {
-                            self.removeProblem(problem);
-                        });
-                        undoing = false;
-                    } else {
-                        undo_stack.push(function () {
-                            self.removeProblem(problem);
-                        });
-                    }
-                    //hopfully I can get rid of this
-                    //self.loadProblems($.contains(document.getElementById("problems_container"), document.getElementById(self.name)));
-                /*} catch (err) {
-                    showErrorResponse(data);
-                }*/
-            });
-        },
-
-
-        removeProblem:function (problem) {
-
-            var self = this;
-
-            var requestObject = {
-                xml_command: "deleteProblem",
-                problemPath: problem.get("path") //notice the difference from create
-            };
-            _.defaults(requestObject, this.defaultRequestObject);
-
-            $.post(webserviceURL, requestObject, function (data) {
-                //try {
-                    var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    updateMessage(response.server_response);
-                    // still have to test for success....
-                    if (undoing) {
-                        redo_stack.push(function () {
-                            self.addProblem(problem);
-                        });
-                        undoing = false;
-                    } else {
-                        undo_stack.push(function () {
-                            self.addProblem(problem);
-                        });
-                    }
-                    /*workAroundSet.loadProblems($.contains(document
-                     .getElementById("problems_container"), document
-                     .getElementById(self.name)));*/
-                /*} catch (err) {
-                    showErrorResponse(data);
-                }*/
-            });
-            problem.destroy();
-        },
-
-        reorder: function(){
-            var self = this;
-            self.sort();
-
-            var probList = self.pluck("path");
-            var probListString = probList.join(",");
-            console.log(probListString);
-            var requestObject = {
-                probList: probListString,
-                xml_command: "reorderProblems"
-            };
-
-            _.defaults(requestObject, this.defaultRequestObject);
-            console.log(requestObject.set);
-
-            $.post(webserviceURL, requestObject, function (data) {
-                //try {
-                    var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    updateMessage(response.server_response);
-                /*} catch (err) {
-                    showErrorResponse(data);
-                }*/
-            });
-        }
-
-    });
 
 
 
@@ -484,79 +254,7 @@ $(function () {
      * The library object
      ******************************************************************************/
 
-    var Library = Backbone.Model.extend({
-        defaults:function () {
-            return{
-                name:"",
-                path: ""
-            }
-        },
 
-        initialize:function () {
-            var self = this;
-            this.set({problems:new ProblemList, children:new LibraryList});
-
-            this.get('children').url = self.get('path')
-            this.get('children').defaultRequestObject.library_name = this.get("path");
-
-            _.extend(this.get('problems').defaultRequestObject, {
-                xml_command: "listLib",
-                command: "files",
-                maxdepth: 0,
-                library_name: self.get('path') + "/"
-            });
-
-        }
-    });
-
-    var LibraryList = Backbone.Collection.extend({
-        model:Library,
-
-        initialize: function(){
-            this.url = "";
-            this.defaultRequestObject = {
-                xml_command: "listLib",
-                command: "dirOnly",
-                maxdepth: 0
-            };
-            _.defaults(this.defaultRequestObject, globalRequestObject);
-        },
-
-        fetch: function(){
-
-
-                var self = this;
-
-                updateMessage("Loading libraries... may take some time");
-
-                var requestObject = {};
-
-                _.defaults(requestObject, this.defaultRequestObject);
-
-                $.post(webserviceURL, requestObject,
-                    function (data) {
-                        //console.log(data);
-                        //try {
-                        var response = $.parseJSON(data);
-                        console.log(response);
-                        console.log("result: " + response.server_response);
-                        updateMessage(response.server_response);
-                        var newLibs = new Array();
-
-                        //should be either an object of a comma separated list
-                        var libraries = _.isObject(response.result_data)? _.keys(response.result_data):response.result_data.split(",")
-
-                        libraries.forEach(function(lib) {
-                            newLibs.push({name:lib, path: self.url +"/"+lib})
-                        });
-                        self.reset(newLibs);
-                        //callback();
-                        /*} catch (err) {
-                         showErrorResponse(data);
-                         }*/
-                    });
-        }
-    });
 
     var LibraryView = Backbone.View.extend({
         template:_.template($('#Library-template').html()),
@@ -685,89 +383,7 @@ $(function () {
 
 
 
-    var Set = Backbone.Model.extend({
-        defaults:{
-            name:"defaultSet"
-        },
 
-        initialize:function () {
-            this.set('problems', new ProblemList);
-            //this.get('problems').url = this.get('name');
-            _.extend(this.get('problems').defaultRequestObject, {
-                set: this.get('name'),
-                xml_command: "listSetProblems"
-            });
-
-
-            //this.get('problems').on('add', this.addProblem, this);
-            //this.get('problems').on('remove', this.removeProblem, this);
-            this.get('problems').fetch();
-        }
-
-
-        //For reroder
-        //http://localtodos.com/javascripts/todos.js (look at sortables in particular)
-        /*
-
-         reorderProblems = function(setOrder) {
-         var workAroundOrder = this.previousOrder;
-         var workAroundSet = this;
-         if(document.getElementById(workAroundSet.displayBox.id)){
-         if (undoing) {
-         redo_stack.push(function() {
-         // resort the list
-         if(document.getElementById(workAroundSet.displayBox.id)){
-         for ( var i = 0; i < workAroundOrder.length; i++) {
-         var tempProblem = document.getElementById(workAroundOrder[i]);
-         workAroundSet.displayBox.removeChild(tempProblem);
-         workAroundSet.displayBox.appendChild(tempProblem);
-         }
-         $(workAroundSet.displayBox).sortable("refresh");
-         }
-         workAroundSet.reorderProblems(workAroundOrder);
-         });
-         undoing = false;
-         } else {
-         undo_stack.push(function() {
-         // resort the list
-         if(document.getElementById(workAroundSet.displayBox.id)){
-         for ( var i = 0; i < workAroundOrder.length; i++) {
-         var tempProblem = document.getElementById(workAroundOrder[i]);
-         workAroundSet.displayBox.removeChild(tempProblem);
-         workAroundSet.displayBox.appendChild(tempProblem);
-         }
-         $(workAroundSet.displayBox).sortable("refresh");
-         }
-         // $(workAroundSet.displayBox).sortable( "refreshPositions" )
-         workAroundSet.reorderProblems(workAroundOrder);
-         });
-         }
-         // load problems:
-         // var problems = this.displayBox.childNodes;
-         var probList = new Array();
-         for ( var i = 0; i < setOrder.length; i++) {
-         probList.push(document.getElementById(setOrder[i]).getAttribute(
-         "data-path"));
-         }
-
-         var probListString = probList.join(",");
-         listLibRequest.probList = probListString;
-         listLibRequest.xml_command = "reorderProblems";
-         listLibRequest.set = this.name;
-         $.post(webserviceURL, listLibRequest, function(data) {
-         try {
-         var response = $.parseJSON(data);
-         console.log("result: " + response.server_response);
-         updateMessage(response.server_response);
-         } catch (err) {
-         showErrorResponse(data);
-         }
-         });
-         this.previousOrder = $(workAroundSet.displayBox).sortable('toArray');
-         }
-         */
-
-    });
 
 //full set view, renders all problems etc
     var SetView = Backbone.View.extend({
@@ -785,44 +401,6 @@ $(function () {
         },
 
         render:function () {
-            /*
-             * sudo code for display stuff: create a tab next to library_box make it's
-             * id setID load in the problems from the set add the nessisary listeners
-             * etc to the problems switch to that tab
-             */
-            /*
-             var self = this;
-             if (document.getElementById(self.get('name'))
-             && $.contains(document.getElementById("problems_container"),
-             document.getElementById(self.get('name')))) {
-             // might as well reload the problems
-             while (this.displayBox.hasChildNodes()) {
-             this.displayBox.removeChild(this.displayBox.lastChild);
-             }
-             for ( var i = 0; i < this.problemArray.length; i++) {
-             this.renderProblem(this.problemArray[i]);
-             }
-             } else {
-             $('#problems_container').tabs("add", "#" + this.name, this.name + " (" + this.problemArray.length + ")");
-             var thisContainer = document.getElementById(this.name);
-             thisContainer.setAttribute("data-uid", this.id);
-             this.displayBox = document.createElement("ul");
-             this.displayBox.id = this.name + "_list";
-             var workAroundSet = this;
-             $(this.displayBox).sortable({
-             axis: 'y',
-             start : function(event, ui) {
-             workAroundSet.previousOrder = $(this).sortable('toArray');
-             },
-             update : function(event, ui) {
-             workAroundSet.reorderProblems($(this).sortable('toArray'));
-             }
-             });// sortable code
-             thisContainer.appendChild(this.displayBox);
-             for ( var i = 0; i < this.problemArray.length; i++) {
-             this.renderProblem(this.problemArray[i]);
-             }
-             }*/
 
             //Template and fix up, that was just ugly
             var self = this;
@@ -836,9 +414,10 @@ $(function () {
             //this.$el.id = this.model.get('name');
             //might have to refresh
             this.$('.list').sortable({
-                //handle: '.handle',
+                //handle: $('.handle'),
                 axis:'y',
                 start:function (event, ui) {
+                    console.log("handle test");
                     //self.previousOrder = $(this).sortable('toArray');
                 },
                 update:function (event, ui) {
@@ -914,7 +493,7 @@ $(function () {
                 hoverClass:'drophover',
 
                 drop:function (event, ui) {
-                    var newProblem = new Problem({path:ui.draggable.attr("data-path")});
+                    var newProblem = new webwork.Problem({path:ui.draggable.attr("data-path")});
                     self.model.get("problems").addProblem(newProblem);
                 }
             });
@@ -941,66 +520,13 @@ $(function () {
      * set
      */
 
-    var SetList = Backbone.Collection.extend({
-        model:Set,
 
-        initialize: function(){
-            this.defaultRequestObject = {};
-
-            _.defaults(this.defaultRequestObject, globalRequestObject);
-        },
-        //think it's fetch I want to replace:
-        fetch:function () {
-            var self = this;
-
-            var requestObject = {
-                xml_command: "listSets"
-            };
-            _.defaults(requestObject, this.defaultRequestObject);
-            console.log("starting set list");
-            $.post(webserviceURL, requestObject, function (data) {
-                //try {
-                    var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    var setNames = response.result_data.split(",");
-                    setNames.sort();
-                    console.log("found these sets: " + setNames);
-                    var newSets = new Array();
-                    for (var i = 0; i < setNames.length; i++) {
-                        //workAroundSetList.renderList(workAroundSetList.setNames[i]);
-                        newSets.push({name:setNames[i]})
-                    }
-                    self.reset(newSets);
-                /*} catch (err) {
-                    showErrorResponse(data);
-                }*/
-            });
-        },
-
-        //different from add I hope
-        create:function (model) {
-            this.add(model);
-            var requestObject = {
-                xml_command: "createNewSet",
-                new_set_name: model.name ? model.name : model.get("name")
-            };
-            _.defaults(requestObject, this.defaultRequestObject);
-            $.post(webserviceURL, requestObject, function (data) {
-                //try {
-                    var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    updateMessage(response.server_response);
-                /*} catch (err) {
-                    showErrorResponse(data);
-                }*/
-            });
-        }
-    });
 
 
     var SetListView = Backbone.View.extend({
         tagName:"ul",
         template:_.template($('#setList-template').html()),
+        className:"nav nav-list",
 
         initialize:function () {
             var self = this;
@@ -1102,8 +628,8 @@ $(function () {
 
 
             //set up our models
-            this.homeworkSets = new SetList;
-            this.cardCatalog = new LibraryList;
+            this.homeworkSets = new webwork.SetList;
+            this.cardCatalog = new webwork.LibraryList;
             this.cardCatalog.defaultRequestObject.xml_command = "listLibraries"
 
             this.homeworkSets.fetch();

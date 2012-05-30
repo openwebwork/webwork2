@@ -94,14 +94,22 @@ sub options {
 }
 
 sub head {
-  print '<script src="/webwork2_files/js/jquery-1.7.min.js"></script>';
+  print '<link rel="stylesheet" href="/webwork2_files/js/lib/vendor/FontAwesome/css/font-awesome.css">';
+
   print '<script src="/webwork2_files/js/jquery-ui-1.8.16.custom.min.js"></script>';
   print '<script src="/webwork2_files/js/ui.tabs.closable.min.js"></script>';
 
-  print '<script src="/webwork2_files/js/LibraryBrowser/json2.js"></script>';
-  print '<script src="/webwork2_files/js/LibraryBrowser/underscore.js"></script>';
-  print '<script src="/webwork2_files/js/LibraryBrowser/backbone.js"></script>';
-  print '<script src="/webwork2_files/js/LibraryBrowser/library_browser.js"></script>';
+  print '<script src="/webwork2_files/js/lib/vendor/json2.js"></script>';
+  print '<script src="/webwork2_files/js/lib/vendor/underscore.js"></script>';
+  print '<script src="/webwork2_files/js/lib/vendor/backbone.js"></script>';
+
+
+  print '<script src="/webwork2_files/js/lib/webwork/WeBWorK.js"></script>';
+  print '<script src="/webwork2_files/js/lib/webwork/teacher/teacher.js"></script>';
+  print '<script src="/webwork2_files/js/lib/webwork/teacher/Problem.js"></script>';
+  print '<script src="/webwork2_files/js/lib/webwork/teacher/Set.js"></script>';
+  print '<script src="/webwork2_files/js/lib/webwork/teacher/Library.js"></script>';
+  print '<script src="/webwork2_files/js/apps/LibraryBrowser/library_browser.js"></script>';
   #print '<script src="/webwork2_files/js/problem_grid.js"></script>';
   #print '<script src="/webwork2_files/js/form_builder.js"></script>';
 
@@ -128,18 +136,35 @@ sub body {
   #print '<div id="loading"></div>';
   
   #big wrapper div that will hopefully fix theme issues
-  print '<div id="app_box">';
+  print '<div id="app_box" class="container-fluid">';
     ##########  toolbar
-      print '<div class="toolbar">';
-        print '<span id="messages"></span>'; #maybe jquery alerts can go here
-      	print '<span class="actions">
-    	             <button class="button" type="button" id="undo_button">Undo</button>
-    	             <button class="button" type="button" id="redo_button">Redo</button>
-    	             <button class="button" type="button" id="delete_problem">Remove Selected</button>
-    	             <a class="button" href="http://github.com/whytheplatypus/webwork2/issues">BUGS!</a>
-    	       </span>';
-      print '</div>';
-    
+     ##print '<div class="toolbar">';
+     ##
+
+     ## print '</div>';
+
+    print '<div class="navbar">',
+      '<div class="navbar-inner">',
+        '<div class="container">',
+            '<ul class="nav">',
+                '<li>
+                    <span id="CardCatalog">
+                        <!--Gonna put the lists of libraries and sub-libraries here-->
+                    </span>
+                    <button class="btn btn-small" id="load_problems">Load Problems</button>
+                </li>',
+            '</ul>',
+            '<ul class="nav pull-right">',
+                '<li><button class="btn btn-small" id="undo_button">Undo</button></li>',
+                '<li><button class="btn btn-small" id="redo_button">Redo</button></li>',
+                '<li><a class="pull-right" href="http://github.com/whytheplatypus/webwork2/issues">BUGS!</a></li>',
+            '</ul>',
+
+        '</div>',
+      '</div>',
+    '</div>';
+
+
 	##########	Top part
 	#print '<button onclick="fullWindowMode();">Full Screen</button>';
 	#print '<button id="gridifyButton" onclick="gridify();">Gridify!!</button>';
@@ -158,12 +183,11 @@ sub body {
 	#				'<p><div class="ResultsWithError" style="width:16px;height:16px;border:solid 1px;"></div><span>Errors</span></p>',
 	#'</div>';
 				#'<p>In the target set you can drag problems to reorder them.<br/>The problem will be placed in front of the one you drop it on,<br/>or at the end of the list if you drop it on an empty space in the table.</p>',
-	
-	  	print '<div class="break"></div>';
-	  	print '<table>';
-		print '<tr><td><b>Library directories:</b></td><td><span id="CardCatalog"><!--Gonna put the lists of libraries and sub-libraries here--></span><button class="button" id="load_problems" type="button">Load Problems</button></td>';
-		print '<tr><td><b>Library search:</b></td><td><span id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button><span></td>';
-		print '</table>';
+
+	  	#print '<table>';
+		#print '<tr><td><b>Library directories:</b></td><td></td>';
+		#print '<tr><td><b>Library search:</b></td><td><span id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button><span></td>';
+		#print '</table>';
 		###########################################
 			      # Library repository controls
     	###########################################
@@ -171,17 +195,14 @@ sub body {
              #    '<span style="margin-left:10px;" class="js_action_span" onclick="selectNone();">none</span>';
 	  		    ###########################################
 
-	    print '<div id="problem_container">';
-	      print '<div id="dialog">',
-	      			'<input type="text" id="dialog_text" placeholder="default set"></input>',
-	      			'<button type="button" id="create_set">Create Set</button>',
-	      		'</div>';
-	      print '<div id="homework_sets_container">';
+	    print '<div id="problem_container" class="row-fluid">';
+
+	      print '<div id="homework_sets_container" class="span2">';
 	    	print '<b>Homework Sets</b>';
 			print '<!--homework sets go here-->'; #could be a problem with multiple appends (can I use a replace instead?)
 		  print '</div>';
 		  #print '<div id="size_slider"><p>||</p></div>';
-		  print '<div id="problems_container">';
+		  print '<div id="problems_container" class="span10">';
 		    #List of tabs
 		  	print '<ul>',
         			#'<li id="library_link"><a href="#library_tab"><span>Library</span></a></li>',
@@ -191,16 +212,19 @@ sub body {
 	      print '</div>';
 	        ########## Finish things off
 	   	print '</div>';
-	print '<div style="clear:both;"></div>';
+	   	print '<div>',
+            '<input type="text" id="dialog_text" placeholder="default set"></input>',
+        	'<button class="btn btn-small" id="create_set">Create Set</button>',
+        '</div>';
   print '</div>';
   print $self->hidden_authen_fields;
   print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID });
 
 
   print '<script type="text/template", id="problem-template">',
-        '    <div class="handle">drag handle</div>',
+        '    <div class="handle" style="display:<%= remove_display %>;"><i class="icon-resize-vertical icon-large"></i></div>',
             '<button type="button" class="remove" style="display:<%= remove_display %>;">X</button>', #replace with twitter bootstrap icons? yeah font awesome :)
-        '    <div><%= data %></div>',
+        '    <div class="problem"><%= data %></div>',
         '</script>';
 
   print '<script type="text/template", id="setList-template">',
@@ -232,7 +256,7 @@ sub body {
 
        	    '</ul>',
             #<button type="button" onclick="increaseLibAcross();">+</button><span id="libAcross">4</span><button type="button" onclick="decreaseLibAcross();">-</button><span> problems across</span>
-            '<button type="button" class="next_group" style="display:<%= enough_problems %>;">Load the next <%= group_size %> problems.</button>',
+            '<span class="next_group" style="display:<%= enough_problems %>;">Load the next <%= group_size %> problems.</span>',
        '</script>';
 
 	return "";	
