@@ -97,11 +97,14 @@ sub head {
   print '<script src="/webwork2_files/js/jquery-1.7.min.js"></script>';
   print '<script src="/webwork2_files/js/jquery-ui-1.8.16.custom.min.js"></script>';
   print '<script src="/webwork2_files/js/ui.tabs.closable.min.js"></script>';
-  
-  print '<script src="/webwork2_files/js/dnd.js"></script>';
+
+  print '<script src="/webwork2_files/js/LibraryBrowser/json2.js"></script>';
+  print '<script src="/webwork2_files/js/LibraryBrowser/underscore.js"></script>';
+  print '<script src="/webwork2_files/js/LibraryBrowser/backbone.js"></script>';
+  print '<script src="/webwork2_files/js/LibraryBrowser/library_browser.js"></script>';
   #print '<script src="/webwork2_files/js/problem_grid.js"></script>';
   #print '<script src="/webwork2_files/js/form_builder.js"></script>';
-  print '<script src="/webwork2_files/js/library_browser.js"></script>';
+
   print '<script src="/webwork2_files/js/modernizr-2.0.6.js"></script>';
   #my ($self) = @_;
   #my $r = $self->r;
@@ -124,19 +127,18 @@ sub body {
   ##########  Loading Screen
   #print '<div id="loading"></div>';
   
-  ##########  toolbar
-  print '<div id="toolbar">';
-    print '<span id="messages"></span>';
-  	print '<span class="actions">
-	             <button class="button" type="button" id="undo_button">Undo</button>
-	             <button class="button" type="button" id="redo_button">Redo</button>
-	             <button class="button" type="button" id="delete_problem">Remove Selected</button>
-	             <a class="button" href="http://github.com/whytheplatypus/webwork2/issues">BUGS!</a>
-	       </span>';
-  print '</div>';
-  
   #big wrapper div that will hopefully fix theme issues
   print '<div id="app_box">';
+    ##########  toolbar
+      print '<div class="toolbar">';
+        print '<span id="messages"></span>'; #maybe jquery alerts can go here
+      	print '<span class="actions">
+    	             <button class="button" type="button" id="undo_button">Undo</button>
+    	             <button class="button" type="button" id="redo_button">Redo</button>
+    	             <button class="button" type="button" id="delete_problem">Remove Selected</button>
+    	             <a class="button" href="http://github.com/whytheplatypus/webwork2/issues">BUGS!</a>
+    	       </span>';
+      print '</div>';
     
 	##########	Top part
 	#print '<button onclick="fullWindowMode();">Full Screen</button>';
@@ -159,7 +161,7 @@ sub body {
 	
 	  	print '<div class="break"></div>';
 	  	print '<table>';
-		print '<tr><td><b>Library directories:</b></td><td><span id="CardCatalog"><!--Gonna put the lists of libraries and sublibraries here--></span><button class="button" id="load_problems" type="button">Load Problems</button></td>';
+		print '<tr><td><b>Library directories:</b></td><td><span id="CardCatalog"><!--Gonna put the lists of libraries and sub-libraries here--></span><button class="button" id="load_problems" type="button">Load Problems</button></td>';
 		print '<tr><td><b>Library search:</b></td><td><span id="library_search_box"><select id="subjectBox"></select><select id="chaptersBox"></select><select id="sectionsBox"></select><select  style="display:none;"  id="textbooksBox"></select><select style="display:none;" id="textChaptersBox"></select><select style="display:none;" id="textSectionsBox"></select><input type="text" id="keywordsBox"  style="display:none;"  placeholder="keywords"></input><button class="button" id="run_search" type="button">Search</button><span></td>';
 		print '</table>';
 		###########################################
@@ -171,30 +173,21 @@ sub body {
 
 	    print '<div id="problem_container">';
 	      print '<div id="dialog">',
-	      			'<input type="text" id="dialog_text"></input>',
+	      			'<input type="text" id="dialog_text" placeholder="default set"></input>',
 	      			'<button type="button" id="create_set">Create Set</button>',
 	      		'</div>';
-	      print '<div id="problem_sets_container">';
-	    	print '<b>Target Sets</b>';
-			print '<ul id="my_sets_list">';
-				print '<li id="new_problem_set">New Problem Set</li>';
-		    print '</ul>';
+	      print '<div id="homework_sets_container">';
+	    	print '<b>Homework Sets</b>';
+			print '<!--homework sets go here-->'; #could be a problem with multiple appends (can I use a replace instead?)
 		  print '</div>';
 		  #print '<div id="size_slider"><p>||</p></div>';
 		  print '<div id="problems_container">';
 		    #List of tabs
 		  	print '<ul>',
-        			'<li id="library_link"><a href="#library_tab"><span>Library</span></a></li>',
+        			#'<li id="library_link"><a href="#library_tab"><span>Library</span></a></li>',
     			  '</ul>';
-    	    print '<div id="library_tab">',
-		            '<h1>Problems</h1>',
-	        	########## Now print problems
-	        	    '<ul class="list">',
-	          
-	        	    '</ul>',
-#<button type="button" onclick="increaseLibAcross();">+</button><span id="libAcross">4</span><button type="button" onclick="decreaseLibAcross();">-</button><span> problems across</span>
-            	    '<p><select class="prob_per_page"><option value=10>10</option><option value=20>20</option><option value=30>30</option><option value=40>40</option><option value=50>50</option></select><button type="button" disabled=true class="prevList">Previous</button><button disabled=true type="button" class="nextList">Next</button></p>',#might be a better way to do the perpage
-	      	    '</div>';
+    	    #print '<div id="library_tab">',
+		     #       '</div>';
 	      print '</div>';
 	        ########## Finish things off
 	   	print '</div>';
@@ -205,29 +198,42 @@ sub body {
 
 
   print '<script type="text/template", id="problem-template">',
-        '    <div class="handel"></div>',
+        '    <div class="handle">drag handle</div>',
+            '<button type="button" class="remove" style="display:<%= remove_display %>;">X</button>', #replace with twitter bootstrap icons? yeah font awesome :)
         '    <div><%= data %></div>',
         '</script>';
 
   print '<script type="text/template", id="setList-template">',
-            '<li id="library_link"><a href="#library_tab"><span>Library</span></a></li>',
+            #'<li class="new_problem_set">New Problem Set</li>',
 
           '</script>';
 
   print '<script type="text/template", id="setName-template">',
-              '<%= name %>',
+              '<a data-problem_count=<%= problem_count %>><%= name %><span class="problem_count" style="float:right"><%= problem_count %></style></a>',#could do this with an :after css tag instead..it would be better
          '</script>';
 
-  print '<script type="text/template", id="setList-template">',
+  print '<script type="text/template", id="set-template">',
            '<h1>Problems</h1>',
-           '<ul class=list">',
+           '<ul class="list">',
            '</ul>',
         '</script>';
 
   print '<script type="text/template", id="LibraryList-template">',
-             '<select class="list"></select>',
-             '<span class="children></children>'
+             '<select class="list">',
+             '<option value=null>Pick a Library</option>',
+             '</select>',
+             '<span class="children"></span>',
           '</script>';
+
+  print '<script type="text/template", id="Library-template">',
+            '<h1>Problems</h1>',
+       	    ########## Now print problems
+       	    '<ul class="list">',
+
+       	    '</ul>',
+            #<button type="button" onclick="increaseLibAcross();">+</button><span id="libAcross">4</span><button type="button" onclick="decreaseLibAcross();">-</button><span> problems across</span>
+            '<button type="button" class="next_group" style="display:<%= enough_problems %>;">Load the next <%= group_size %> problems.</button>',
+       '</script>';
 
 	return "";	
 }

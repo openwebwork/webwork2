@@ -6,1320 +6,1160 @@ var COURSE = "course-needs-to-be-defined-in-hidden-variable-id=hidden_courseID";
 var SESSIONKEY = "session-key-needs-to-be-defined-in-hidden-variable-id=hidden_key"
 var PASSWORD = "who-cares-what-the-password-is";
 // request object, I'm naming them assuming there may be different versions
-var listLibRequest = {
-	"xml_command" : "listLib",
-	"pw" : "",
-	"password" : PASSWORD,
-	"session_key" : SESSIONKEY,
-	"user" : "user-needs-to-be-defined",
-	"library_name" : "Library",
-	"courseID" : COURSE,
-	"set" : "set0",
-	"new_set_name" : "new set",
-	"command" : "buildtree",
-}
-
-var undoing = false;
-var undo_stack = new Array();
-var redo_stack = new Array();
-
-var cardCatalog;
-var setList;
-var webserviceURL = "../../../instructorXMLHandler";
-var tabs;
-
-var problemPlaceholder = false;
-
-/**
- * Utilities
- */
-var uniqueCounter = 0;
-function generateUniqueID() {
-	uniqueCounter++;
-	return uniqueCounter.toString(16);
-}
-
-Object.size = function(obj) {
-	var size = 0, key;
-	for (key in obj) {
-		if (obj.hasOwnProperty(key))
-			size++;
-	}
-	return size;
+var globalRequestObject = {
+    "xml_command":"listLib",
+    "pw":"",
+    "password":PASSWORD,
+    "session_key":SESSIONKEY,
+    "user":"user-needs-to-be-defined",
+    "library_name":"Library",
+    "courseID":COURSE,
+    "set":"set0",
+    "new_set_name":"new set",
+    "command":"buildtree",
 };
+var webserviceURL = "../../instructorXMLHandler";
+
+//abstract the post request thing, to take an object of options that extends what is now listLibRequest
 
 /**
  * Global stuff
  */
 // undo and redo functions
-function undo() {
-	// pop the stack and call the function, that's it
-	var undoFunc = undo_stack.pop();
-	undoing = true;
-	undoFunc();
-}
-
-function redo() {
-	var redoFunc = redo_stack.pop();
-	redoFunc();
-}
+var undoing = false;
+var undo_stack = new Array();
+var redo_stack = new Array();
 
 
-//MOVE
-function highlightSets(event) {
-	//console.log(this.getAttribute("data-path"));
-	var problemID = this.getAttribute("data-path");
-	$(".contains_problem").removeClass("contains_problem");
-	for ( var key in setList.sets) {
-		if (setList.sets[key].problems.hasOwnProperty(problemID)) {
-			//console.log("found one " + setList.sets[key].name + setList.sets[key].id);
-			$(
-					document.getElementById(setList.sets[key].name
-							+ setList.sets[key].id)).addClass(
-					"contains_problem");
-		}
-	}
-}
-function unHighlightSets(event) {
-	$(".contains_problem").removeClass("contains_problem");
-}
 
-//SMOKE
+//SMOKE or jquery UI alert
 function updateMessage(message) {
-	var messageBox = document.getElementById("messages");
-	messageBox.innerHTML = message;
-	$(messageBox).effect("pulsate", {
-		times : 3
-	}, 500);
+    var messageBox = document.getElementById("messages");
+    messageBox.innerHTML = message;
+    $(messageBox).effect("pulsate", {
+        times:3
+    }, 500);
 }
 
-function showErrorResponse(data){
-	var myWindow = window.open('', '', 'width=500,height=800');
-	myWindow.document.write(data);
-	myWindow.focus();
+//might be able to move this to LibraryBrowser later with event listeners
+function showErrorResponse(data) {
+    var myWindow = window.open('', '', 'width=500,height=800');
+    myWindow.document.write(data);
+    myWindow.focus();
 }
 
-/**
- * unobtrusively start up our javascript
- */
-$(document).ready(function() {
-
-	// get usernames and keys from hidden variables:
-	var myUser = document.getElementById("hidden_user").value;
-	var mySessionKey = document.getElementById("hidden_key").value;
-	var myCourseID = document.getElementById("hidden_courseID").value;
-	// check to make sure that our credentials are available.
-	if (myUser && mySessionKey && myCourseID) {
-		listLibRequest.user = myUser;
-		listLibRequest.session_key = mySessionKey;
-		listLibRequest.courseID = myCourseID;
-	} else {
-		updateMessage("missing hidden credentials: user "
-				+ myUser + " session_key " + mySessionKey
-				+ " courseID" + myCourseID);
-	}
-
-	// get our sets
-	setList = new SetList();//REMOVE
-
-	// attach function for deleting selected problems
-	document.getElementById("delete_problem").addEventListener("click", function(event) {
-		var currentTabId = $("#problems_container div.ui-tabs-panel:not(.ui-tabs-hide)")[0].id;
-		console.log(currentTabId);
-		// only care if it's a set
-		if (currentTabId != "library_tab") {
-
-			var problems = $(".ww_selected");
-			var set = setList.sets[document
-					.getElementById(
-							currentTabId)
-					.getAttribute("data-uid")];
-			console.log(problems);
-			problems.each(function(index) {
-				set.removeProblem($(this).attr(
-						"data-path"));
-			});
-		}
-	}, false);//REMOVE
-
-	// attach undo and redo
-	document.getElementById("undo_button").addEventListener("click", undo, false);
-	document.getElementById("redo_button").addEventListener("click", redo, false);
-
-	$("#dialog").dialog({
-		autoOpen : false,
-		modal : true
-	});//MOVE
-	// create set button listner
-	document.getElementById("create_set").addEventListener("click", function() {
-		Set.createSet(setList, false);
-		$("#dialog").dialog('close');
-	});//MOVE
-
-	document.getElementById("new_problem_set").addEventListener("click", function() {
-		setList.createSet();
-	}, false);//MOVE
-
-	// this stil doesn't work
-	$("#new_problem_set").droppable({
-		tolerance : 'pointer',
-		drop : function(event, ui) {
-			problemPlaceholder = ui.draggable.attr("data-path")
-			$("#dialog").dialog('open');
-		}
-	});//MOVE
-//   setup  slider for side bar
-	$("#problem_sets_container").resizable({
-		cursor: 'move',
-		//animate: true,
-		//ghost: true,
-		delay: 0,
-	});//MOVE
-
-
-	// some window set up:
-    $tabs = $("#problems_container")
-        .tabs(
-        {
-            closable:true,
-            add:function (event, ui) {
-                document
-                    .getElementById(
-                    "library_link")
-                    .removeChild(
-                    document
-                        .getElementById("library_link").lastChild);
-                console.log("adding a tab");
-                $tabs.tabs('select', '#'
-                    + ui.panel.id);
-                $(".ww_selected").removeClass(
-                    "ww_selected");// probably reduntant but I want to make sure nothing stays selected
-            },
-            create:function (event, ui) {
-                document
-                    .getElementById(
-                    "library_link")
-                    .removeChild(
-                    document
-                        .getElementById("library_link").lastChild);
-                $(".ww_selected").removeClass(
-                    "ww_selected");
-            },
-            select:function (event, ui) {
-                $(".ww_selected").removeClass(
-                    "ww_selected");
-            },
-            remove:function (event, ui) {
-                document
-                    .getElementById(
-                    "library_link")
-                    .removeChild(
-                    document
-                        .getElementById("library_link").lastChild);
-                $(".ww_selected").removeClass(
-                    "ww_selected");
-            }
-        });//MOVE
-
-
-});
-
-var CardCatalog = Library.extend({
-
-    loadChildren:function (callback) {
-
-        var self = this;
-        listLibRequest.xml_command = "listLibraries";//MOVE
-
-        updateMessage("Loading libraries... may take some time");//MOVE
-
-        $.post(webserviceURL, listLibRequest,
-            function(data) {
-                console.log(data);
-                try {
-                    var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    updateMessage(response.server_response);
-                    var libraries = response.result_data.split(",");
-                    libraries.forEach(function(lib){
-                        self.get('children').add({name:lib});
-                    });
-                } catch (err) {
-                    showErrorResponse(data);
-                }
-            });
+$(function () {
+    // get usernames and keys from hidden variables:
+    var myUser = document.getElementById("hidden_user").value;
+    var mySessionKey = document.getElementById("hidden_key").value;
+    var myCourseID = document.getElementById("hidden_courseID").value;
+    // check to make sure that our credentials are available.
+    if (myUser && mySessionKey && myCourseID) {
+        globalRequestObject.user = myUser;
+        globalRequestObject.session_key = mySessionKey;
+        globalRequestObject.courseID = myCourseID;
+    } else {
+        updateMessage("missing hidden credentials: user "
+            + myUser + " session_key " + mySessionKey
+            + " courseID" + myCourseID);
     }
-});
 
     /*
-	this.searchButton = document.getElementById("run_search");
+     // attach function for deleting selected problems
+     document.getElementById("delete_problem").addEventListener("click", function(event) {
+     var currentTabId = $("#problems_container div.ui-tabs-panel:not(.ui-tabs-hide)")[0].id;
+     console.log(currentTabId);
+     // only care if it's a set
+     if (currentTabId != "library_tab") {
 
-	this.nextButton = document.getElementById("nextList");
-	this.prevButton = document.getElementById("prevList");
-	this.probsPerPage = document.getElementById("prob_per_page");
-	this.topProbIndex = 0;
-
-	var workAroundTheClosure = this;
-
-	this.buildLibraryBox(topLibraries);
-	//this.library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.library)});
-
-	this.searchButton.addEventListener('click', function() {workAroundTheClosure.searchBox.go();}, false);
-
-	document.getElementById("load_problems").addEventListener('click', function(){
-		if(workAroundTheClosure.working_library.problems > 0){
-			console.log("loaded");
-			console.log(workAroundTheClosure.working_library.problems);
-			workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
-		}
-		else {
-			workAroundTheClosure.working_library.loadProblems(function() {
-				console.log("callback!");
-				workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
-				});
-			}
-	}, false);
-
-	this.nextButton.addEventListener('click', function() {
-		console.log("Next Button was clicked");
-		// then load new problems? yes because we shouldn't
-		// even be able to click on it if we can't
-		workAroundTheClosure.topProbIndex += parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value);
-		workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
-	}, false);
-	document.getElementById("prevList").addEventListener('click', function() {
-		workAroundTheClosure.topProbIndex -= parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value);
-		if (workAroundTheClosure.topProbIndex < 0)
-			workAroundTheClosure.topProbIndex = 0;
-		workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
-	}, false);
-	*/
-
-/*
-CardCatolog.prototype.updateMoveButtons = function() {
-	if (this.topProbIndex + parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value) < this.working_library.problems.length) {
-		this.nextButton.removeAttribute("disabled");
-	} else {
-		this.nextButton.setAttribute("disabled", true);
-	}
-	if (this.topProbIndex > 0) {
-		this.prevButton.removeAttribute("disabled");
-	} else {
-		this.prevButton.setAttribute("disabled", true);
-	}
-}
-*/
-/*
-CardCatolog.prototype.buildSelectBox = function(currentLibrary) {
-	var newLibList = document.createElement("select");
-	newLibList.id = "libList" + (this.displayBox.childNodes.length + 1);
-	newLibList.setAttribute("data-propName", currentLibrary.path);
-	var workAroundTheClosure = this;
-	newLibList.addEventListener("change", function(event) {
-		workAroundTheClosure.onLibSelect(event, currentLibrary);
-	}, false);
-
-	for ( var name in currentLibrary.children) {
-		if (!name.match(/\./)) {
-			var option = document.createElement("option")
-			option.value = name;
-			option.innerHTML = name;
-			newLibList.add(option, null);
-		}
-	}
-	if (newLibList.childNodes.length > 0) {
-		var emptyOption = document.createElement("option");
-		newLibList.add(emptyOption, newLibList.firstChild);
-		this.listBox.appendChild(newLibList);
-	}
-}
-
-// start:index to start at, limit:number of problems to list
-CardCatolog.prototype.renderProblems = function(start, limit) {
-	$('a[href="#library_tab"] span').text("Library ("+start+" - "+ (start+limit) +" of " + this.working_library.problems.length + ") ");
-	while (this.displayBox.hasChildNodes()) {
-		this.displayBox.removeChild(this.displayBox.lastChild);
-	}
-	for(var i = start; i < start+limit && i < this.working_library.problems.length; i++){
-		this.working_library.problems[i].render(this.displayBox);
-	}
-	this.updateMoveButtons();
-};
-
-
-CardCatolog.prototype.onLibSelect = function(event, currentLibrary) {
-	this.topProbIndex = 0;
-	//this.library.problems.list = new Object();
-	//this.updateLibrary();
-	var changedLib = event.target;// should be the select
-	var listBox = event.target.parentNode;
-	var libChoices = listBox.childNodes;
-	//var currentObject = this.treeRoot;
-
-	var count = 0;
-	var key;
-	for ( var i = 0; i < libChoices.length; i++) {
-		if (libChoices[i].tagName == "SELECT") {
-			count = i;
-			if (libChoices[i] == changedLib)
-				break;
-		}
-	}
-	while (listBox.childNodes.length > count + 1) {
-		listBox.removeChild(listBox.lastChild);
-	}
-
-	if (currentLibrary.children.hasOwnProperty(changedLib.options[changedLib.selectedIndex].value)) {
-		var child = currentLibrary.children[changedLib.options[changedLib.selectedIndex].value];
-		this.working_library = child;
-		//right now this reloads if there are no subdirectories, can be fixed by a count on serverside.
-		if(Object.size(child.children) > 0){
-			console.log("didn't have to build");
-			this.buildSelectBox(child);
-		} else {
-			var workAroundTheClosure = this;
-			child.loadChildren(function() {
-				workAroundTheClosure.buildSelectBox(child);
-			});
-		}
-	} else {
-		this.working_library = currentLibrary;
-	}
-};
-*/
-function Search(){
-	this.problems = new Array();
-	this.subjectBox = document.getElementById("subjectBox");
-	this.chaptersBox = document.getElementById("chaptersBox");
-	this.sectionsBox = document.getElementById("sectionsBox");
-	this.textbooksBox = document.getElementById("textbooksBox");
-	this.textChaptersBox = document.getElementById("textChaptersBox");
-	this.textSectionsBox = document.getElementById("textSectionsBox");
-	this.keywordsBox = document.getElementById("keywordsBox");
-
-
-
-	var workAroundTheClosure = this;
-	subjectBox.addEventListener("change", function() {
-		//update inputs
-		workAroundTheClosure.updateInputs();
-		//update lists
-		workAroundTheClosure.updateChaptersBox();
-		workAroundTheClosure.updateSectionsBox();
-	}, false);
-	chaptersBox.addEventListener("change", function() {
-		//update inputs
-		workAroundTheClosure.updateInputs();
-		//update lists
-		workAroundTheClosure.updateSectionsBox();
-	}, false);
-	sectionsBox.addEventListener("change", function() {
-		//update inputs
-		workAroundTheClosure.updateInputs();
-	}, false);
-	/*textbooksBox.addEventListener("change", function() {
-		//update inputs
-		workAroundTheClosure.updateInputs();
-		//update lists
-		workAroundTheClosure.updateAll();
-	}, false);*/
-	this.updateSubjectBox();
-	this.updateChaptersBox();
-	this.updateSectionsBox();
-
-}
-
-function SearchResult(){
-	this.searchName = "search" + generateUniqueID();
-	this.displayBox;
-	this.problems;
-}
-
-SearchResult.prototype.createPageControls = function(){
-
-	this.nextButton = document.createElement("button");
-	//<button type="button" disabled=true id="nextList">Next</button>
-	this.nextButton.id = this.searchName + "nextList";
-	this.nextButton.type = "button";
-	this.nextButton.innerHTML = "Next";
-	this.nextButton.setAttribute("disabled", true);
-
-	this.prevButton = document.createElement("button");
-	//<button type="button" disabled=true id="prevList">Previous</button>
-	this.prevButton.id = this.searchName + "prevList";
-	this.prevButton.type = "button";
-	this.prevButton.innerHTML = "Previous";
-	this.prevButton.setAttribute("disabled", true);
-
-	var thisContainer = document.getElementById(this.searchName);
-	thisContainer.appendChild(this.prevButton);
-	thisContainer.appendChild(this.nextButton);
-
-
-	//hard coded for now
-	this.probsPerPage = 10;//document.getElementById("prob_per_page");
-	this.topProbIndex = 0;
-
-	//attach event listeners:
-	var workAroundTheClosure = this;
-	this.nextButton.addEventListener('click', function() {
-		console.log("Next Button was clicked");
-		// then load new problems? yes because we shouldn't
-		// even be able to click on it if we can't
-		workAroundTheClosure.topProbIndex += workAroundTheClosure.probsPerPage;
-		workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, workAroundTheClosure.probsPerPage);
-	}, false);
-	this.prevButton.addEventListener('click', function() {
-		workAroundTheClosure.topProbIndex -= workAroundTheClosure.probsPerPage;
-		if (workAroundTheClosure.topProbIndex < 0)
-			workAroundTheClosure.topProbIndex = 0;
-		workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, workAroundTheClosure.probsPerPage);
-	}, false);
-
-
-}
-
-
-Search.prototype.go = function() {
-	this.updateInputs();
-	listLibRequest.xml_command = "searchLib";
-	listLibRequest.subcommand = "getDBListings";
-	var workAroundTheClosure = this;
-	$.post(webserviceURL, listLibRequest,function(data) {
-		console.log(data);
-		//try {
-			var response = $.parseJSON(data);
-			console.log("result: " + response.server_response);
-			updateMessage(response.server_response);
-			var results = response.result_data.split(",");
-
-			var newSearchResult = new SearchResult();
-
-			$tabs.tabs("add", "#"+newSearchResult.searchName, "Search (" + results.length + ")");
-			var thisContainer = document.getElementById(newSearchResult.searchName);
-			var displayList = document.createElement("ul");
-			thisContainer.appendChild(displayList);
-
-
-
-			newSearchResult.createPageControls();
-
-			newSearchResult.displayBox = displayList;
-			newSearchResult.problems = new Array();
-			for(var i = 0; i < results.length; i++){
-				newSearchResult.problems.push(new Problem(results[i]));
-			}
-			newSearchResult.renderProblems(newSearchResult.topProbIndex, newSearchResult.probsPerPage);
-			//callback();
-		/*} catch (err) {
-			console.log(err);
-				var myWindow = window.open('', '', 'width=500,height=800');
-				myWindow.document.write(data);
-				myWindow.focus();
-		}*/
-	});
-};
-
-SearchResult.prototype.renderProblems = function(start, limit) {
-	//$('#'+this.searchName+' a').text("Other text");
-	$('a[href="#'+this.searchName+'"] span').text("Search ("+start+" - "+ (start+limit) +" of " + this.problems.length + ") ");
-	console.log($('#'+this.searchName+' a'));
-	while (this.displayBox.hasChildNodes()) {
-		this.displayBox.removeChild(this.displayBox.lastChild);
-	}
-	for(var i = start; i < start+limit && i < this.problems.length; i++){
-		this.problems[i].render(this.displayBox);
-	}
-	this.updateMoveButtons();
-};
-
-SearchResult.prototype.updateMoveButtons = function() {
-	if ((this.topProbIndex + this.probsPerPage) < this.problems.length) {
-		this.nextButton.removeAttribute("disabled");
-	} else {
-		this.nextButton.setAttribute("disabled", true);
-	}
-	if (this.topProbIndex > 0) {
-		this.prevButton.removeAttribute("disabled");
-	} else {
-		this.prevButton.setAttribute("disabled", true);
-	}
-};
-
-Search.prototype.updateInputs = function(){
-	listLibRequest.library_subjects = this.subjectBox.options[this.subjectBox.selectedIndex].value;
-	listLibRequest.library_chapters = this.chaptersBox.options[this.chaptersBox.selectedIndex].value;
-	listLibRequest.library_sections = this.sectionsBox.options[this.sectionsBox.selectedIndex].value;
-//	listLibRequest.library_textbook = this.textbooksBox.options[this.textbooksBox.selectedIndex].value;
-//	listLibRequest.library_textchapter = this.textChaptersBox.options[this.textChaptersBox.selectedIndex].value;
-//	listLibRequest.library_textsection = this.textSectionsBox.options[this.textSectionsBox.selectedIndex].value;
-//	listLibRequest.library_keywords = this.keywordsBox.value;
-};
-
-
-
-Search.prototype.updateSubjectBox = function(){
-	listLibRequest.xml_command = "searchLib";
-	listLibRequest.subcommand = "getAllDBsubjects";
-	this.update(this.subjectBox, "All Subjects");
-};
-
-Search.prototype.updateChaptersBox = function(){
-	listLibRequest.xml_command = "searchLib";
-	listLibRequest.subcommand = "getAllDBchapters";
-	this.update(this.chaptersBox, "All Chapters");
-};
-
-Search.prototype.updateSectionsBox = function(){
-	listLibRequest.xml_command = "searchLib";
-	listLibRequest.subcommand = "getSectionListings";
-	this.update(this.sectionsBox, "All Sections");
-};
-
-Search.prototype.updateTextbookBox = function(){
-	listLibRequest.xml_command = "searchLib";
-	listLibRequest.subcommand = "getDBTextbooks";
-	this.update(this.textbooksBox, "All Textbooks");
-};
-
-Search.prototype.update = function(box, blankName){
-	$.post(webserviceURL, listLibRequest,function(data) {
-		console.log(data);
-		try {
-			var response = $.parseJSON(data);
-			console.log("result: " + response.server_response);
-			updateMessage(response.server_response);
-
-			box.options.length = 0;
-			var options = response.result_data.split(",");
-			for (var i = 0; i < options.length; i++) {
-				if (!name.match(/\./)) {
-					var option = document.createElement("option")
-					option.value = options[i];
-					option.innerHTML = options[i];
-					box.add(option, null);
-				}
-			}
-			if (box.childNodes.length > 0) {
-				var emptyOption = document.createElement("option");
-				emptyOption.innerHTML = blankName;
-				emptyOption.value = "";
-				box.add(emptyOption, box.firstChild);
-			}
-			//callback();
-		} catch (err) {
-			console.log(err);
-				var myWindow = window.open('', '', 'width=500,height=800');
-				myWindow.document.write(data);
-				myWindow.focus();
-		}
-	});
-};
-
-/*
- * needed functions: Both: getProblems
- * 
- * Library: markInSet markRemovedFromSet
- * 
- * Set: addProblem removeProblem reorderProblem view
- * 
- * Problem: (not sure about this yet) view source view problem
- * 
- * we're kind of following an mvc, check out pure for templating should make
- * life easy
- */
-
-/*******************************************************************************
- * The library object
- ******************************************************************************/
-
-var Library = Backbone.Model.extend({
-    defaults:function () {
-        return{
-            name:"",
-            parent:false,
-            problems:new ProblemList,
-            children:new LibraryList
-        }
-    },
-
-    initalize:function () {
-        if (this.get("parent")) {
-            this.set("path", this.get('parent').get('path') + "/" + this.get('name'));
-        } else {
-            this.set("path", this.get("name"));
-        }
-    },
-
-    loadChildren:function (callback) {
-
-        var self = this;
-
-        listLibRequest.xml_command = "listLib";
-        listLibRequest.command = "dirOnly";
-        listLibRequest.maxdepth = 0;
-        listLibRequest.library_name = self.get('path');
-
-        updateMessage("Loading libraries... may take some time");
-
-
-        $.post(webserviceURL, listLibRequest,
-            function (data) {
-                //console.log(data);
-                try {
-                    var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    updateMessage(response.server_response);
-                    for (var key in response.result_data) {
-                        self.children.add({name:key, parent:self});
-                    }
-                    callback();
-                } catch (err) {
-                    showErrorResponse(data);
-                }
-            });
-    },
-    /*
-     Right now this is going to store all the files under each library.
-     This is reduntant!  The benifits of this should be discussed at a later date
-     and a fix (or not) should be decided on.
+     var problems = $(".ww_selected");
+     var set = setList.sets[document
+     .getElementById(
+     currentTabId)
+     .getAttribute("data-uid")];
+     console.log(problems);
+     problems.each(function(index) {
+     set.removeProblem($(this).attr(
+     "data-path"));
+     });
+     }
+     }, false);//REMOVE
      */
-    loadProblems:function (callback) {
-
-        var self = this;
-        listLibRequest.xml_command = "listLib";
-        listLibRequest.command = "files";
-        listLibRequest.maxdepth = 0;
-        listLibRequest.library_name = self.get('path') + "/";
-
-        updateMessage("Loading problems");
-        console.log(listLibRequest.library_name);
-
-        $.post(webserviceURL, listLibRequest,
-            function (data) {
-                console.log(data);
-                try {
-                    var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    updateMessage(response.server_response);
-                    //for(var key in response.result_data){
-                    //	workAroundLibrary.children[key] = new Library(key, workAroundLibrary);
-                    //}
-                    var problemList = response.result_data.split(",");
-                    self.problems.reset();
-                    for (var i = 0; i < problemList.length; i++) {
-                        self.problems.add({name:problemList[i]});
-                    }
-                    //console.log("Problems:");
-                    //console.log(workAroundLibrary.problems);
-                    callback();
-                } catch (err) {
-                    showErrorResponse(data);
-                }
-            });
-    }
-});
-
-var LibraryList = Backbone.Collection.extend({
-    model: Library
-});
-
-var LibraryView = Backbone.View.extend({
-    el:$('#library_tab')
-});
-
-var LibraryListView = Backbone.View.extend({
-    tagName: 'span',
-    template:_.template($('#LibraryList-template').html()),
-    initialize: function(){
-
-    },
-
-    render: function(){
-        var self = this;
-        this.$el.html(this.template(this.model.toJSON));
-        this.model.get('children').each(function(lib){
-            var option = document.createElement("option")
-            option.value = lib.get('cid');
-            option.innerHTML = lib.get('name');
-            self.$('.list').add(option, null);//what's the null?
-        });
-
-        return this;
-    },
-
-    lib_selected: function(event){
-        var selectedLib = this.model.get('children').getByCid(event.target.value);
-        var view = new LibraryListView({model: selectedLib});
-        this.$(".children").html(view.render().el);
-    }
-
-});
 
 
-
-/*******************************************************************************
- * The set object
- ******************************************************************************/
+    /*******************************************************************************
+     * The problem object
+     ******************************************************************************/
 // object
-/*
-function Set(setName) {// id might not exist..use date if nessisary
-	this.id = generateUniqueID();
-	this.name = setName;
-	this.problems = new Object(); // a hash of problems {id: problemInfo}
-	this.problemArray = new Array();// redunant but I don't have any better
-									// ideas atm for keeping order
-	this.displayBox;
-	this.previousOrder;
-}
-*/
-var ProblemList = Backbone.Collection.extend({
-    model:Problem
-/*
-    comparator: function(todo) {
-        return todo.get('order');
-    }
-*/
-});
 
-var Set = Backbone.Model.extend({
-    defaults:{
-        name: "defaultSet",
-        problems: new ProblemList
-    },
+    var Problem = Backbone.Model.extend({
+        defaults:function () {
+            return{
+                path:"",
+                data:false,
+                place: 0
+            };
+        },
 
-    initialize:function(){
-        this.get('problems').on('add', this.addProblem, this);
-        this.get('problems').on('remove', this.removeProblem, this);
-    },
+        initialize:function () {
 
-    addProblem: function(problem) {
-        var self = this;
+        },
+        //this is a server render, different from a view render
+        render:function () {
+            var problem = this;
+            var requestObject = {
+                    set: this.get('path'),
+                    problemSource: this.get('path'),
+                    xml_command: "renderProblem"
+                };
+            _.defaults(requestObject, globalRequestObject);
 
-        listLibRequest.set = this.get('name');// switch to data attribute
-        listLibRequest.problemPath = problem.get('path');
-        listLibRequest.xml_command = "addProblem";
 
-        $.post(webserviceURL, listLibRequest, function (data) {
-            try {
-                var response = $.parseJSON(data);
-                console.log("result: " + response.server_response);
-                updateMessage(response.server_response);
-                // still have to test for success..everywhere
-                if (undoing) {// might be a better way to do this later
-                    redo_stack.push(function () {
-                        self.removeProblem(probPath);
-                    });
-                    undoing = false;
-                } else {
-                    undo_stack.push(function () {
-                        self.removeProblem(probPath);
-                    });
-                }
-                //hopfully I can get rid of this
-                //self.loadProblems($.contains(document.getElementById("problems_container"), document.getElementById(self.name)));
-            } catch (err) {
-                showErrorResponse(data);
+            if (!problem.get('data')) {
+                //if we haven't gotten this problem yet, ask for it
+                $.post(webserviceURL, requestObject, function (data) {
+                    problem.set('data', data);
+                });
             }
-        });
-    },
+        },
+        clear: function() {
+            this.destroy();
+        }
+    });
 
-    removeProblem: function(problem) {
-        var self = this;
+    var ProblemView = Backbone.View.extend({
+        tagName:"li",
+        className: "problem",
+        template: _.template($('#problem-template').html()),
 
-        listLibRequest.set = self.get('name');// switch to data attribute
-        listLibRequest.problemPath = problem.get('path');
-        listLibRequest.xml_command = "deleteProblem";
+        events:{
+            "click .remove": 'clear'
+        },
 
-        $.post(webserviceURL, listLibRequest, function (data) {
-            try {
-                var response = $.parseJSON(data);
-                console.log("result: " + response.server_response);
-                updateMessage(response.server_response);
-                // still have to test for success....
-                if (undoing) {
-                    redo_stack.push(function () {
-                        self.addProblem(probPath);
-                    });
-                    undoing = false;
-                } else {
-                    undo_stack.push(function () {
-                        self.addProblem(probPath);
-                    });
-                }
-                /*workAroundSet.loadProblems($.contains(document
-                 .getElementById("problems_container"), document
-                 .getElementById(self.name)));*/
-            } catch (err) {
-                showErrorResponse(data);
+        initialize:function () {
+            this.model.on('change:data', this.render, this);
+            if(!this.options.remove_display){
+                this.options.remove_display = "block";
             }
-        });
-    },
+            this.model.on('destroy', this.remove, this);
+        },
 
-    loadProblems: function() {
-        var self = this;
+        render:function () {
+            var problem = this.model;
+            var self = this;
 
-        listLibRequest.xml_command = "listSetProblems";
-        listLibRequest.set = self.get('name');
-        $.post(webserviceURL, listLibRequest,
-            function (data) {
-                try {//this is the wrong way to be error checking
+            if(problem.get('data')){
+                var jsonInfo = this.model.toJSON();
+                _.extend(jsonInfo, self.options);
+                this.$el.html(this.template(jsonInfo));
+            } else {
+                this.$el.html('<img src="/webwork2_files/images/ajax-loader.gif" alt="loading"/>');
+                problem.render();
+            }
+
+            this.el.setAttribute('data-path', problem.get('path'));
+            this.el.id = this.model.cid;
+            this.$el.draggable({
+                helper:'clone',
+                revert:true,
+                handle:'.handle',
+                appendTo:'body',
+                cursorAt:{
+                    top:0,
+                    left:0
+                },
+                opacity:0.35
+            });
+
+
+            return this;
+        },
+
+        clear: function(){
+            this.model.clear();
+        }
+    });
+
+    var ProblemList = Backbone.Collection.extend({
+        model:Problem,
+
+        initialize: function(){
+            this.defaultRequestObject = {
+
+            };
+            _.defaults(this.defaultRequestObject, globalRequestObject);
+        },
+
+        comparator: function(problem) {
+            return problem.get("place");
+        },
+
+        //maybe move to problem list as fetch (with a set name argument)
+        fetch:function () {
+            var self = this;
+
+            //command needs to be set in the higher model since there are several versions of problem lists
+
+            var requestObject = {};
+            _.defaults(requestObject, this.defaultRequestObject);
+
+            $.post(webserviceURL, requestObject,
+                function (data) {
+                    //try {//this is the wrong way to be error checking
                     var response = $.parseJSON(data);
-                    console.log("result: " + response.server_response);
-                    self.problems.reset();
+
                     var problems = response.result_data.split(",");
+
+                    var newProblems = new Array();
                     for (var i = 0; i < problems.length; i++) {
                         if (problems[i] != "") {
-                            self.problems.add({path: problems[i]});
+                            newProblems.push({path:problems[i], place:i});
                         }
                     }
+                    self.reset(newProblems);
                     //document.getElementById(workAroundTheClosure.name + workAroundTheClosure.id).innerHTML = workAroundTheClosure.name + " (" + workAroundTheClosure.problemArray.length + ")";
-                } catch (err) {
-                    showErrorResponse(data);
+                    /*} catch (err) {
+                     showErrorResponse(data);
+                     }*/
                 }
-            }
-        );
-    }
+            );
+        },
 
-    //For reroder
-    //http://localtodos.com/javascripts/todos.js (look at sortables in particular)
+        //move to problemlist
+        addProblem :function (problem) {
+            this.add(problem);
+            var self = this;
+
+            var requestObject = {
+                xml_command: "addProblem",
+                problemPath: problem.get('path')
+            };
+            _.defaults(requestObject, this.defaultRequestObject);
+
+            $.post(webserviceURL, requestObject, function (data) {
+                //try {
+                    var response = $.parseJSON(data);
+                    console.log("result: " + response.server_response);
+                    updateMessage(response.server_response);
+                    // still have to test for success..everywhere
+                    if (undoing) {// might be a better way to do this later
+                        redo_stack.push(function () {
+                            self.removeProblem(problem);
+                        });
+                        undoing = false;
+                    } else {
+                        undo_stack.push(function () {
+                            self.removeProblem(problem);
+                        });
+                    }
+                    //hopfully I can get rid of this
+                    //self.loadProblems($.contains(document.getElementById("problems_container"), document.getElementById(self.name)));
+                /*} catch (err) {
+                    showErrorResponse(data);
+                }*/
+            });
+        },
+
+
+        removeProblem:function (problem) {
+
+            var self = this;
+
+            var requestObject = {
+                xml_command: "deleteProblem",
+                problemPath: problem.get("path") //notice the difference from create
+            };
+            _.defaults(requestObject, this.defaultRequestObject);
+
+            $.post(webserviceURL, requestObject, function (data) {
+                //try {
+                    var response = $.parseJSON(data);
+                    console.log("result: " + response.server_response);
+                    updateMessage(response.server_response);
+                    // still have to test for success....
+                    if (undoing) {
+                        redo_stack.push(function () {
+                            self.addProblem(problem);
+                        });
+                        undoing = false;
+                    } else {
+                        undo_stack.push(function () {
+                            self.addProblem(problem);
+                        });
+                    }
+                    /*workAroundSet.loadProblems($.contains(document
+                     .getElementById("problems_container"), document
+                     .getElementById(self.name)));*/
+                /*} catch (err) {
+                    showErrorResponse(data);
+                }*/
+            });
+            problem.destroy();
+        },
+
+        reorder: function(){
+            var self = this;
+            self.sort();
+
+            var probList = self.pluck("path");
+            var probListString = probList.join(",");
+            console.log(probListString);
+            var requestObject = {
+                probList: probListString,
+                xml_command: "reorderProblems"
+            };
+
+            _.defaults(requestObject, this.defaultRequestObject);
+            console.log(requestObject.set);
+
+            $.post(webserviceURL, requestObject, function (data) {
+                //try {
+                    var response = $.parseJSON(data);
+                    console.log("result: " + response.server_response);
+                    updateMessage(response.server_response);
+                /*} catch (err) {
+                    showErrorResponse(data);
+                }*/
+            });
+        }
+
+    });
+
+
+
     /*
+     this.searchButton = document.getElementById("run_search");
 
-     reorderProblems = function(setOrder) {
-     var workAroundOrder = this.previousOrder;
-     var workAroundSet = this;
-     if(document.getElementById(workAroundSet.displayBox.id)){
-     if (undoing) {
-     redo_stack.push(function() {
-     // resort the list
-     if(document.getElementById(workAroundSet.displayBox.id)){
-     for ( var i = 0; i < workAroundOrder.length; i++) {
-     var tempProblem = document.getElementById(workAroundOrder[i]);
-     workAroundSet.displayBox.removeChild(tempProblem);
-     workAroundSet.displayBox.appendChild(tempProblem);
+     this.nextButton = document.getElementById("nextList");
+     this.prevButton = document.getElementById("prevList");
+     this.probsPerPage = document.getElementById("prob_per_page");
+     this.topProbIndex = 0;
+
+     var workAroundTheClosure = this;
+
+     this.buildLibraryBox(topLibraries);
+     //this.library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.library)});
+
+     this.searchButton.addEventListener('click', function() {workAroundTheClosure.searchBox.go();}, false);
+
+     document.getElementById("load_problems").addEventListener('click', function(){
+     if(workAroundTheClosure.working_library.problems > 0){
+     console.log("loaded");
+     console.log(workAroundTheClosure.working_library.problems);
+     workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
      }
-     $(workAroundSet.displayBox).sortable("refresh");
-     }
-     workAroundSet.reorderProblems(workAroundOrder);
+     else {
+     workAroundTheClosure.working_library.loadProblems(function() {
+     console.log("callback!");
+     workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
      });
-     undoing = false;
+     }
+     }, false);
+
+     this.nextButton.addEventListener('click', function() {
+     console.log("Next Button was clicked");
+     // then load new problems? yes because we shouldn't
+     // even be able to click on it if we can't
+     workAroundTheClosure.topProbIndex += parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value);
+     workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
+     }, false);
+     document.getElementById("prevList").addEventListener('click', function() {
+     workAroundTheClosure.topProbIndex -= parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value);
+     if (workAroundTheClosure.topProbIndex < 0)
+     workAroundTheClosure.topProbIndex = 0;
+     workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
+     }, false);
+     */
+
+    /*
+     CardCatolog.prototype.updateMoveButtons = function() {
+     if (this.topProbIndex + parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value) < this.working_library.problems.length) {
+     this.nextButton.removeAttribute("disabled");
      } else {
-     undo_stack.push(function() {
-     // resort the list
-     if(document.getElementById(workAroundSet.displayBox.id)){
-     for ( var i = 0; i < workAroundOrder.length; i++) {
-     var tempProblem = document.getElementById(workAroundOrder[i]);
-     workAroundSet.displayBox.removeChild(tempProblem);
-     workAroundSet.displayBox.appendChild(tempProblem);
+     this.nextButton.setAttribute("disabled", true);
      }
-     $(workAroundSet.displayBox).sortable("refresh");
+     if (this.topProbIndex > 0) {
+     this.prevButton.removeAttribute("disabled");
+     } else {
+     this.prevButton.setAttribute("disabled", true);
      }
-     // $(workAroundSet.displayBox).sortable( "refreshPositions" )
-     workAroundSet.reorderProblems(workAroundOrder);
-     });
      }
-     // load problems:
-     // var problems = this.displayBox.childNodes;
-     var probList = new Array();
-     for ( var i = 0; i < setOrder.length; i++) {
-     probList.push(document.getElementById(setOrder[i]).getAttribute(
-     "data-path"));
+     */
+    /*
+     CardCatolog.prototype.buildSelectBox = function(currentLibrary) {
+     var newLibList = document.createElement("select");
+     newLibList.id = "libList" + (this.displayBox.childNodes.length + 1);
+     newLibList.setAttribute("data-propName", currentLibrary.path);
+     var workAroundTheClosure = this;
+     newLibList.addEventListener("change", function(event) {
+     workAroundTheClosure.onLibSelect(event, currentLibrary);
+     }, false);
+
+     for ( var name in currentLibrary.children) {
+     if (!name.match(/\./)) {
+     var option = document.createElement("option")
+     option.value = name;
+     option.innerHTML = name;
+     newLibList.add(option, null);
+     }
+     }
+     if (newLibList.childNodes.length > 0) {
+     var emptyOption = document.createElement("option");
+     newLibList.add(emptyOption, newLibList.firstChild);
+     this.listBox.appendChild(newLibList);
+     }
      }
 
-     var probListString = probList.join(",");
-     listLibRequest.probList = probListString;
-     listLibRequest.xml_command = "reorderProblems";
-     listLibRequest.set = this.name;
-     $.post(webserviceURL, listLibRequest, function(data) {
-     try {
-     var response = $.parseJSON(data);
-     console.log("result: " + response.server_response);
-     updateMessage(response.server_response);
-     } catch (err) {
-     showErrorResponse(data);
+     // start:index to start at, limit:number of problems to list
+     CardCatolog.prototype.renderProblems = function(start, limit) {
+     $('a[href="#library_tab"] span').text("Library ("+start+" - "+ (start+limit) +" of " + this.working_library.problems.length + ") ");
+     while (this.displayBox.hasChildNodes()) {
+     this.displayBox.removeChild(this.displayBox.lastChild);
      }
+     for(var i = start; i < start+limit && i < this.working_library.problems.length; i++){
+     this.working_library.problems[i].render(this.displayBox);
+     }
+     this.updateMoveButtons();
+     };
+
+
+     CardCatolog.prototype.onLibSelect = function(event, currentLibrary) {
+     this.topProbIndex = 0;
+     //this.library.problems.list = new Object();
+     //this.updateLibrary();
+     var changedLib = event.target;// should be the select
+     var listBox = event.target.parentNode;
+     var libChoices = listBox.childNodes;
+     //var currentObject = this.treeRoot;
+
+     var count = 0;
+     var key;
+     for ( var i = 0; i < libChoices.length; i++) {
+     if (libChoices[i].tagName == "SELECT") {
+     count = i;
+     if (libChoices[i] == changedLib)
+     break;
+     }
+     }
+     while (listBox.childNodes.length > count + 1) {
+     listBox.removeChild(listBox.lastChild);
+     }
+
+     if (currentLibrary.children.hasOwnProperty(changedLib.options[changedLib.selectedIndex].value)) {
+     var child = currentLibrary.children[changedLib.options[changedLib.selectedIndex].value];
+     this.working_library = child;
+     //right now this reloads if there are no subdirectories, can be fixed by a count on serverside.
+     if(Object.size(child.children) > 0){
+     console.log("didn't have to build");
+     this.buildSelectBox(child);
+     } else {
+     var workAroundTheClosure = this;
+     child.loadChildren(function() {
+     workAroundTheClosure.buildSelectBox(child);
      });
-     this.previousOrder = $(workAroundSet.displayBox).sortable('toArray');
+     }
+     } else {
+     this.working_library = currentLibrary;
+     }
+     };
+     */
+
+    //search was here
+
+
+    /*
+     * needed functions: Both: getProblems
+     *
+     * Library: markInSet markRemovedFromSet
+     *
+     * Set: addProblem removeProblem reorderProblem view
+     *
+     * Problem: (not sure about this yet) view source view problem
+     *
+     * we're kind of following an mvc, check out pure for templating should make
+     * life easy
+     */
+
+    /*******************************************************************************
+     * The library object
+     ******************************************************************************/
+
+    var Library = Backbone.Model.extend({
+        defaults:function () {
+            return{
+                name:"",
+                path: ""
+            }
+        },
+
+        initialize:function () {
+            var self = this;
+            this.set({problems:new ProblemList, children:new LibraryList});
+
+            this.get('children').url = self.get('path')
+            this.get('children').defaultRequestObject.library_name = this.get("path");
+
+            _.extend(this.get('problems').defaultRequestObject, {
+                xml_command: "listLib",
+                command: "files",
+                maxdepth: 0,
+                library_name: self.get('path') + "/"
+            });
+
+        }
+    });
+
+    var LibraryList = Backbone.Collection.extend({
+        model:Library,
+
+        initialize: function(){
+            this.url = "";
+            this.defaultRequestObject = {
+                xml_command: "listLib",
+                command: "dirOnly",
+                maxdepth: 0
+            };
+            _.defaults(this.defaultRequestObject, globalRequestObject);
+        },
+
+        fetch: function(){
+
+
+                var self = this;
+
+                updateMessage("Loading libraries... may take some time");
+
+                var requestObject = {};
+
+                _.defaults(requestObject, this.defaultRequestObject);
+
+                $.post(webserviceURL, requestObject,
+                    function (data) {
+                        //console.log(data);
+                        //try {
+                        var response = $.parseJSON(data);
+                        console.log(response);
+                        console.log("result: " + response.server_response);
+                        updateMessage(response.server_response);
+                        var newLibs = new Array();
+
+                        //should be either an object of a comma separated list
+                        var libraries = _.isObject(response.result_data)? _.keys(response.result_data):response.result_data.split(",")
+
+                        libraries.forEach(function(lib) {
+                            newLibs.push({name:lib, path: self.url +"/"+lib})
+                        });
+                        self.reset(newLibs);
+                        //callback();
+                        /*} catch (err) {
+                         showErrorResponse(data);
+                         }*/
+                    });
+        }
+    });
+
+    var LibraryView = Backbone.View.extend({
+        template:_.template($('#Library-template').html()),
+
+        events:{
+            "click .next_group": "loadNextGroup"
+        },
+
+        initialize: function(){
+            this.group_size = 25;
+            this.model.get('problems').on('reset', this.render, this);
+        },
+
+        render: function(){
+
+            var self = this;
+
+            if ($('#problems_container #' + this.model.get('name')).length == 0) {
+                $('#problems_container').tabs('add', "#"+this.model.get('name'), this.model.get('name') + " (" + this.model.get('problems').length + ")"); //could move to an after?
+                this.setElement(document.getElementById(this.model.get('name')));
+            } else {
+                //select
+                $('#problems_container').tabs('select', this.model.get('name'));
+                $("[href=#"+this.model.get('name')+"]").html(this.model.get('name') + " (" + this.model.get('problems').length + ")");
+            }
+
+            this.$el.addClass("library_tab");
+
+            this.startIndex = 0;
+
+            var jsonInfo = this.model.toJSON();
+            jsonInfo['group_size'] = this.group_size;
+
+            jsonInfo['enough_problems'] = (this.model.get('problems').length > this.startIndex)? "block" : "none";
+
+            this.$el.html(this.template(jsonInfo));
+
+            this.loadNextGroup();
+
+            return this;
+        },
+
+        loadNextGroup: function(){
+            console.log("load more");
+            console.log(this.startIndex);
+            console.log(this.group_size);
+
+            var problems = this.model.get('problems');
+            console.log(problems.length);
+            for(var i = 0; i < this.group_size && this.startIndex < problems.length; i++, this.startIndex++){
+                console.log("adding a problem");
+                var problem = problems.at(this.startIndex);
+                var view = new ProblemView({model: problem, remove_display: "none"});
+                this.$(".list").append(view.render().el);
+            }
+
+            if(!(this.model.get('problems').length > this.startIndex)){
+                this.$(".next_group").css('display', "none");
+            }
+        }
+
+    });
+
+    var LibraryListView = Backbone.View.extend({
+        tagName:'span',
+        template:_.template($('#LibraryList-template').html()),
+
+        events: {
+            'change .list': 'lib_selected'
+        },
+
+        initialize:function () {
+            this.model.on("reset", this.render, this);
+            this.model.on("add", this.render, this);
+        },
+
+        render:function () {
+
+            var self = this;
+
+            if(self.model.length > 0){
+                //should show number of problems in the bar
+
+                this.$el.html(this.template(this.model.toJSON));
+
+                this.model.each(function (lib) {
+                    var option = document.createElement("option")
+                    option.value = lib.cid;
+                    option.innerHTML = lib.get('name');
+                    self.$('.list').append(option);//what's the null?
+                });
+            }
+            return this;
+        },
+
+        lib_selected:function (event) {
+            var self = this;
+            var selectedLib = this.model.getByCid(event.target.value);
+            console.log(selectedLib);
+            if(selectedLib){
+                selectedLib.get('children').fetch();
+                var view = new LibraryListView({model:selectedLib.get('children')});
+                this.$(".children").html(view.render().el);
+                libToLoad = selectedLib;
+            }
+        }
+
+    });
+
+
+    /*******************************************************************************
+     * The set object
+     ******************************************************************************/
+// object
+    /*
+     function Set(setName) {// id might not exist..use date if nessisary
+     this.id = generateUniqueID();
+     this.name = setName;
+     this.problems = new Object(); // a hash of problems {id: problemInfo}
+     this.problemArray = new Array();// redunant but I don't have any better
+     // ideas atm for keeping order
+     this.displayBox;
+     this.previousOrder;
      }
      */
 
-});
+
+
+    var Set = Backbone.Model.extend({
+        defaults:{
+            name:"defaultSet"
+        },
+
+        initialize:function () {
+            this.set('problems', new ProblemList);
+            //this.get('problems').url = this.get('name');
+            _.extend(this.get('problems').defaultRequestObject, {
+                set: this.get('name'),
+                xml_command: "listSetProblems"
+            });
+
+
+            //this.get('problems').on('add', this.addProblem, this);
+            //this.get('problems').on('remove', this.removeProblem, this);
+            this.get('problems').fetch();
+        }
+
+
+        //For reroder
+        //http://localtodos.com/javascripts/todos.js (look at sortables in particular)
+        /*
+
+         reorderProblems = function(setOrder) {
+         var workAroundOrder = this.previousOrder;
+         var workAroundSet = this;
+         if(document.getElementById(workAroundSet.displayBox.id)){
+         if (undoing) {
+         redo_stack.push(function() {
+         // resort the list
+         if(document.getElementById(workAroundSet.displayBox.id)){
+         for ( var i = 0; i < workAroundOrder.length; i++) {
+         var tempProblem = document.getElementById(workAroundOrder[i]);
+         workAroundSet.displayBox.removeChild(tempProblem);
+         workAroundSet.displayBox.appendChild(tempProblem);
+         }
+         $(workAroundSet.displayBox).sortable("refresh");
+         }
+         workAroundSet.reorderProblems(workAroundOrder);
+         });
+         undoing = false;
+         } else {
+         undo_stack.push(function() {
+         // resort the list
+         if(document.getElementById(workAroundSet.displayBox.id)){
+         for ( var i = 0; i < workAroundOrder.length; i++) {
+         var tempProblem = document.getElementById(workAroundOrder[i]);
+         workAroundSet.displayBox.removeChild(tempProblem);
+         workAroundSet.displayBox.appendChild(tempProblem);
+         }
+         $(workAroundSet.displayBox).sortable("refresh");
+         }
+         // $(workAroundSet.displayBox).sortable( "refreshPositions" )
+         workAroundSet.reorderProblems(workAroundOrder);
+         });
+         }
+         // load problems:
+         // var problems = this.displayBox.childNodes;
+         var probList = new Array();
+         for ( var i = 0; i < setOrder.length; i++) {
+         probList.push(document.getElementById(setOrder[i]).getAttribute(
+         "data-path"));
+         }
+
+         var probListString = probList.join(",");
+         listLibRequest.probList = probListString;
+         listLibRequest.xml_command = "reorderProblems";
+         listLibRequest.set = this.name;
+         $.post(webserviceURL, listLibRequest, function(data) {
+         try {
+         var response = $.parseJSON(data);
+         console.log("result: " + response.server_response);
+         updateMessage(response.server_response);
+         } catch (err) {
+         showErrorResponse(data);
+         }
+         });
+         this.previousOrder = $(workAroundSet.displayBox).sortable('toArray');
+         }
+         */
+
+    });
 
 //full set view, renders all problems etc
-var SetView = Backbone.View.extend({
-    tagName: "div",
-    template: _.template($('#setList-template').html()),
-    events:{
-    },
+    var SetView = Backbone.View.extend({
+        template:_.template($('#set-template').html()),
+        events:{
+        },
 
-    initialize: function(){
+        initialize:function () {
+            var self = this;
+            this.model.get('problems').on('add', function(model){self.addOne(model)}, this);
+            this.model.get('problems').on('reset', function(){self.addAll();}, this);
+            this.model.get('problems').on('all', function(){
+                $("[href=#"+self.model.get('name')+"]").html(self.model.get('name') + " (" + self.model.get('problems').length + ")");
+            }, this);
+        },
 
-    },
+        render:function () {
+            /*
+             * sudo code for display stuff: create a tab next to library_box make it's
+             * id setID load in the problems from the set add the nessisary listeners
+             * etc to the problems switch to that tab
+             */
+            /*
+             var self = this;
+             if (document.getElementById(self.get('name'))
+             && $.contains(document.getElementById("problems_container"),
+             document.getElementById(self.get('name')))) {
+             // might as well reload the problems
+             while (this.displayBox.hasChildNodes()) {
+             this.displayBox.removeChild(this.displayBox.lastChild);
+             }
+             for ( var i = 0; i < this.problemArray.length; i++) {
+             this.renderProblem(this.problemArray[i]);
+             }
+             } else {
+             $('#problems_container').tabs("add", "#" + this.name, this.name + " (" + this.problemArray.length + ")");
+             var thisContainer = document.getElementById(this.name);
+             thisContainer.setAttribute("data-uid", this.id);
+             this.displayBox = document.createElement("ul");
+             this.displayBox.id = this.name + "_list";
+             var workAroundSet = this;
+             $(this.displayBox).sortable({
+             axis: 'y',
+             start : function(event, ui) {
+             workAroundSet.previousOrder = $(this).sortable('toArray');
+             },
+             update : function(event, ui) {
+             workAroundSet.reorderProblems($(this).sortable('toArray'));
+             }
+             });// sortable code
+             thisContainer.appendChild(this.displayBox);
+             for ( var i = 0; i < this.problemArray.length; i++) {
+             this.renderProblem(this.problemArray[i]);
+             }
+             }*/
 
-    render:function(){
-        /*
-         * sudo code for display stuff: create a tab next to library_box make it's
-         * id setID load in the problems from the set add the nessisary listeners
-         * etc to the problems switch to that tab
-         *//*
-        var self = this;
-        if (document.getElementById(self.get('name'))
-            && $.contains(document.getElementById("problems_container"),
-            document.getElementById(self.get('name')))) {
-            // might as well reload the problems
-            while (this.displayBox.hasChildNodes()) {
-                this.displayBox.removeChild(this.displayBox.lastChild);
+            //Template and fix up, that was just ugly
+            var self = this;
+            if ($('#problems_container #' + this.model.get('name')).length == 0) {
+                $('#problems_container').tabs('add', "#"+this.model.get('name'), this.model.get('name') + " (" + this.model.get('problems').length + ")"); //could move to an after?
+                this.setElement(document.getElementById(this.model.get('name')));
             }
-            for ( var i = 0; i < this.problemArray.length; i++) {
-                this.renderProblem(this.problemArray[i]);
-            }
-        } else {
-            $tabs.tabs("add", "#" + this.name, this.name + " (" + this.problemArray.length + ")");
-            var thisContainer = document.getElementById(this.name);
-            thisContainer.setAttribute("data-uid", this.id);
-            this.displayBox = document.createElement("ul");
-            this.displayBox.id = this.name + "_list";
-            var workAroundSet = this;
-            $(this.displayBox).sortable({
-                axis: 'y',
-                start : function(event, ui) {
-                    workAroundSet.previousOrder = $(this).sortable('toArray');
+
+            this.$el.html(self.template(self.model.toJSON()));
+
+            //this.$el.id = this.model.get('name');
+            //might have to refresh
+            this.$('.list').sortable({
+                //handle: '.handle',
+                axis:'y',
+                start:function (event, ui) {
+                    //self.previousOrder = $(this).sortable('toArray');
                 },
-                update : function(event, ui) {
-                    workAroundSet.reorderProblems($(this).sortable('toArray'));
-                }
-            });// sortable code
-            thisContainer.appendChild(this.displayBox);
-            for ( var i = 0; i < this.problemArray.length; i++) {
-                this.renderProblem(this.problemArray[i]);
-            }
-        }*/
+                update:function (event, ui) {
+                    //self.reorderProblems($(this).sortable('toArray'));
+                    var newOrder = self.$('.list').sortable('toArray');
+                    console.log(newOrder);
+                    for(var i = 0; i < newOrder.length; i++){
+                        var problem = self.model.get('problems').getByCid(newOrder[i]);
+                        if(problem){
+                            problem.set('place', i);
+                        }
+                    }
 
-        //Template and fix up, that was just ugly
-        var self = this;
-        this.$el.id = this.model.get('name');
-
-        this.$el.sortable({
-            axis: 'y',
-            start : function(event, ui) {
-                //self.previousOrder = $(this).sortable('toArray');
-            },
-            update : function(event, ui) {
-                //self.reorderProblems($(this).sortable('toArray'));
-            }
-        });
-
-        this.$el.html(this.template(this.model.toJSON()));
-
-        this.model.get('problems').each(function(problem){
-           var view = new ProblemView({model: problem});
-           self.$(".list").append(view.render().el);
-        });
-
-        return this;
-    }
-});
-/*
-Set.prototype.renderProblem = function(problem) {
-	var newSetItem = problem.render(this.displayBox);
-	newSetItem.addEventListener("click", function(event) {
-		if (!event.altKey) {
-			$(".ww_selected").removeClass("ww_selected");
-		}
-		$(this).addClass("ww_selected");
-	}, false);
-	$(this.displayBox).sortable("refresh");
-}
-*/
-
-
-var SetNameView = Backbone.Collection.extend({
-    tagName: "li",
-    template: _.template($('#setName-template').html()),
-
-    events:{
-        'click' : 'view'
-    },
-
-    initalize: function(){
-        this.bigView = false;
-    },
-
-    render: function(){
-        var self = this;
-
-        self.$el.html(self.template(self.model.toJSON()));
-
-        self.$el.droppable({
-                tolerance : 'pointer',
-
-                hoverClass: 'drophover',
-
-                drop : function(event, ui) {
-                    self.model.addProblem(ui.draggable.attr("data-path"));
+                    self.model.get('problems').reorder();
                 }
             });
 
-        return this;
-    },
+            this.addAll();
+            return this;
+        },
 
-    view: function() {
-        console.log("clicked " + this.model.get('name'));
-        if ($('#problems_container #'+this.model.get('name'))) {
-            $('#problems_container').tabs('select', this.model.get('name'));
-        } else {
-            $('#problems_container').tabs('add', this.model.get('name'), this.model.get('name') + " (" + this.model.get('problems').length + ")"); //could move to an after?
-            var view = new SetView({model:this.model});
-            $('#problems_container').append(view.render().el);
+        addOne: function(problem){
+            var view = new ProblemView({model:problem});
+            var rendered_problem = view.render().el;
+            console.log(rendered_problem);
+            console.log(this.$(".list"));
+            this.$(".list").append(rendered_problem);
+            this.$('.list').sortable('refresh');
+
+        },
+
+        addAll: function(){
+            var self = this;
+            this.model.get('problems').each(function(model){self.addOne(model)});
         }
-        //render the full tab thing, or switch to it
-    }
-});
+    });
+    /*
+     Set.prototype.renderProblem = function(problem) {
+     var newSetItem = problem.render(this.displayBox);
+     newSetItem.addEventListener("click", function(event) {
+     if (!event.altKey) {
+     $(".ww_selected").removeClass("ww_selected");
+     }
+     $(this).addClass("ww_selected");
+     }, false);
+     $(this.displayBox).sortable("refresh");
+     }
+     */
 
-/*******************************************************************************
- * SetList object needed variables: sets, displaybox, needed functions: create
- * set
- */
 
-var SetList = Backbone.Collection.extend({
-    model: Set,
+    var SetNameView = Backbone.View.extend({
+        tagName:"li",
+        template:_.template($('#setName-template').html()),
 
-    //think it's fetch I want to replace:
-    fetch: function(){
-        var self = this;
+        events:{
+            'click':'view'
+        },
 
-        listLibRequest.xml_command = "listSets";
+        initialize:function () {
+            this.bigView = false;
+            var self = this;
+            this.model.get('problems').on('all', function(){self.render()}, this);
+            this.model.on('highlight', function(){self.$el.addClass("contains_problem")});
+        },
 
-        console.log("starting set list");
-        $.post(webserviceURL, listLibRequest, function(data) {
-            try {
-                var response = $.parseJSON(data);
-                console.log("result: " + response.server_response);
-                var setNames = response.result_data.split(",");
-                setNames.sort();
-                console.log("found these sets: " + setNames);
-                for ( var i = 0; i < setNames.length; i++) {
-                    //workAroundSetList.renderList(workAroundSetList.setNames[i]);
-                    self.add({name: setNames[i]});
+        render:function () {
+            var self = this;
+
+            self.$el.html(self.template({name: self.model.get('name'), problem_count: self.model.get('problems').length}));
+            self.$el.droppable({
+                tolerance:'pointer',
+
+                hoverClass:'drophover',
+
+                drop:function (event, ui) {
+                    var newProblem = new Problem({path:ui.draggable.attr("data-path")});
+                    self.model.get("problems").addProblem(newProblem);
                 }
-            } catch (err) {
-                showErrorResponse(data);
+            });
+
+            return this;
+        },
+
+        view:function () {
+            console.log("clicked " + this.model.get('name'));
+            if ($('#problems_container #' + this.model.get('name')).length > 0) {
+                $('#problems_container').tabs('select', this.model.get('name'));
+            } else {
+                console.log("rendering the set");
+                var view = new SetView({model:this.model});
+                //$('#problems_container').append(view.render().el);
+                view.render();
             }
-        });
-    },
+            //render the full tab thing, or switch to it
+        }
+    });
 
-    //different from add I hope
-    create: function(model){
-        this.add(model);
-        listLibRequest.xml_command = "createNewSet";
-        listLibRequest.new_set_name = model.name?model.name:model.get("name");
-        $.post(webserviceURL, listLibRequest, function(data) {
-            try {
-                var response = $.parseJSON(data);
-                console.log("result: " + response.server_response);
-                updateMessage(response.server_response);
-            } catch (err) {
-                showErrorResponse(data);
-            }
-        });
-    }
-});
+    /*******************************************************************************
+     * SetList object needed variables: sets, displaybox, needed functions: create
+     * set
+     */
 
-/*
-function SetList() {
-	this.setNames = new Array();
-	this.sets = new Object();
-	this.displayBox = document.getElementById("my_sets_list");
-	listLibRequest.xml_command = "listSets";
-	var workAroundSetList = this;
-	console.log("starting set list");
-	$.post(webserviceURL, listLibRequest, function(data) {
-		try {
-			var response = $.parseJSON(data);
-			console.log("result: " + response.server_response);
-			workAroundSetList.setNames = response.result_data.split(",");
-			workAroundSetList.setNames.sort();
-			console.log("found these sets: " + workAroundSetList.setNames);
-			for ( var i = 0; i < workAroundSetList.setNames.length; i++) {
-				workAroundSetList.renderList(workAroundSetList.setNames[i]);
-			}
-		} catch (err) {
-			showErrorResponse(data);
-		}
-	});
-}
+    var SetList = Backbone.Collection.extend({
+        model:Set,
 
-SetList.prototype.refresh = function(problemPath) {
-	listLibRequest.xml_command = "listSets";
-	var workAroundSetList = this;
-	$.post(webserviceURL, listLibRequest, function(data) {
-		try {
-			var response = $.parseJSON(data);
-			console.log("result: " + response.server_response);
-			var newSetList = response.result_data.split(",");
-			var newSets = new Array();
-			for ( var i = 0; i < newSetList.length; i++) {
-				if ($.inArray(newSetList[i], workAroundSetList.setNames) < 0) {
-					console.log("rendering set " + newSetList[i] + "");
-					newSets.push(newSetList[i]);
-				}
-			}
-			var recievingSet;
-			for ( var j = 0; j < newSets.length; j++) {
-				workAroundSetList.setNames.push(newSets[j]);
-				var recievingSet = workAroundSetList.renderList(newSets[j]);
-			}
-			if (recievingSet && problemPath) {
-				recievingSet.addProblem(problemPath);
-			}
-		} catch (err) {
-			showErrorResponse(data);
-		}
-	});
-	// how do we check if we already have the set?
-}
-*/
+        initialize: function(){
+            this.defaultRequestObject = {};
 
-var SetListView = Backbone.View.extend({
-    tagName: "ul",
-    template: _.template($('#setList-template').html()),
+            _.defaults(this.defaultRequestObject, globalRequestObject);
+        },
+        //think it's fetch I want to replace:
+        fetch:function () {
+            var self = this;
 
-    initialize: function(){
-        this.model.bind('add', this.addOne, this);
-        this.model.bind('reset', this.addAll, this);
-        this.model.bind('all', this.render, this);
-    },
+            var requestObject = {
+                xml_command: "listSets"
+            };
+            _.defaults(requestObject, this.defaultRequestObject);
+            console.log("starting set list");
+            $.post(webserviceURL, requestObject, function (data) {
+                //try {
+                    var response = $.parseJSON(data);
+                    console.log("result: " + response.server_response);
+                    var setNames = response.result_data.split(",");
+                    setNames.sort();
+                    console.log("found these sets: " + setNames);
+                    var newSets = new Array();
+                    for (var i = 0; i < setNames.length; i++) {
+                        //workAroundSetList.renderList(workAroundSetList.setNames[i]);
+                        newSets.push({name:setNames[i]})
+                    }
+                    self.reset(newSets);
+                /*} catch (err) {
+                    showErrorResponse(data);
+                }*/
+            });
+        },
 
-    render: function(){
-        var self = this;
-
-        self.$el.html(self.template());
-
-        return this;
-    },
-
-    addOne: function(newSet){
-        var view = new SetNameView({model: newSet});
-        self.$el.append(view.render().el);
-    },
-
-    addAll: function() {
-        this.model.each(this.addOne);
-    }
-/*
-    startCreate: function(){
-        this.$("#dialog").dialog('open');
-    }
-*/
-});
-
-/*
-SetList.prototype.renderList = function(setName) {
-
-	var addingSet = document.createElement("li");
-
-	var newSet = new Set(setName);
-	newSet.loadProblems(false);
-	addingSet.innerHTML = setName;
-	addingSet.setAttribute("data-uid", newSet.id);
-	addingSet.id = newSet.name + newSet.id;
-	this.sets[newSet.id] = newSet;
-
-	var workAroundSetList = this.sets;
-	addingSet.addEventListener("click", function(event) {
-		var clickedSet = workAroundSetList[this.getAttribute("data-uid")];
-		clickedSet.loadProblems(true);
-		$("#problems_container").tabs("select", clickedSet.name);
-	}, false);
-
-	$(addingSet).insertBefore("#new_problem_set");
-	// this.displayBox.appendChild(addingSet);
-	$(addingSet).droppable(
-			{
-				tolerance : 'pointer',
-
-				hoverClass: 'drophover',
-
-				drop : function(event, ui) {
-					var recievingSet = workAroundSetList[this
-							.getAttribute("data-uid")];
-					recievingSet.addProblem(ui.draggable.attr("data-path"));
-				}
-			});
-	return newSet;
-
-};
-*/
-
-
-/*******************************************************************************
- * The problem object
- ******************************************************************************/
-// object
-
-var Problem = Backbone.Model.extend({
-    defaults:function(){
-        return{
-           path: "",
-           data: false,
-        };
-    },
-
-    initialize: function(){
-
-    },
-    //this is a server render, different from a view render
-    render: function(callback) {
-        var problem = this;
-
-        listLibRequest.set = problem.path;
-        listLibRequest.problemSource = problem.path;
-        listLibRequest.xml_command = "renderProblem";
-
-
-        if (!problem.data) {
-            //if we haven't gotten this problem yet, ask for it
-            $.post(webserviceURL, listLibRequest, function(data) {
-                problem.data = data;
-                callback(data);
+        //different from add I hope
+        create:function (model) {
+            this.add(model);
+            var requestObject = {
+                xml_command: "createNewSet",
+                new_set_name: model.name ? model.name : model.get("name")
+            };
+            _.defaults(requestObject, this.defaultRequestObject);
+            $.post(webserviceURL, requestObject, function (data) {
+                //try {
+                    var response = $.parseJSON(data);
+                    console.log("result: " + response.server_response);
+                    updateMessage(response.server_response);
+                /*} catch (err) {
+                    showErrorResponse(data);
+                }*/
             });
         }
-    }
-});
+    });
 
-var ProblemView = Backbone.View.extend({
-    tagName:"li",
-    template: _.template($('#probem-template').html()),
 
-    initialize: function(){
-        this.model.on('change:data', this.render, this);
-    },
+    var SetListView = Backbone.View.extend({
+        tagName:"ul",
+        template:_.template($('#setList-template').html()),
 
-    render: function(){
-        var problem = this.model;
-        var self = this;
+        initialize:function () {
+            var self = this;
+            this.model.bind('add', function(model){self.addOne(model);}, this);
+            this.model.bind('reset', function(){self.addAll()}, this);
+            //this.model.bind('all', this.render, this);
+            this.render();
+        },
 
-        this.$el.html('<img src="/webwork2_files/images/ajax-loader.gif" alt="loading"/>');
+        render:function () {
+            var self = this;
 
-        this.el.setAttribute('data-path', problem.get('path'));
+            self.$el.html(self.template());
 
-        this.$el.draggable({
-            helper : 'clone',
-            revert : true,
-            handle : 'div.handle',
-            appendTo : 'body',
-            cursorAt : {
-                top : 0,
-                left : 0
-            },
-            opacity : 0.35
-        });
+            /*this.$(".new_problem_set").droppable({
+                tolerance:'pointer',
 
-        this.el.addEventListener("mouseover", highlightSets, false);
-        //newItem.addEventListener("mouseout", unHighlightSets, false);
-        //nice async loading call :)
-        problem.render(function(){self.$el.html(self.template(problem.toJSON()))});
+                hoverClass:'drophover',
 
-        return this;
-    }
+                drop:function (event, ui) {
+                    //Create a new set
+                }
+            });*/
+
+            //this.addAll();
+            return this;
+        },
+
+        addOne:function (added_set) {
+            var view = new SetNameView({model: added_set});
+            this.$el.append(view.render().el);
+        },
+
+        addAll:function () {
+            var self = this;
+            this.model.each(function(model){self.addOne(model)});
+        }
+        /*
+         startCreate: function(){
+         this.$("#dialog").dialog('open');
+         }
+         */
+    });
+
+
+    /*This is global in order not to confuse the poor select boxes..
+      They can never tell who went last :)
+     */
+    var libToLoad = false;
+    $("#load_problems").on("click", function(event){
+        console.log(libToLoad);
+        if(libToLoad){
+            libToLoad.get('problems').fetch();
+            var view = new LibraryView({model: libToLoad});
+            view.render();
+        }
+    });
+
+    //The APP!! yay!!
+    var LibraryBrowser = Backbone.View.extend({
+        el:$('#app_box'),
+
+        events:{
+            "click #undo_button":"undo",
+            "click #redo_button":"redo",
+            "hover .problem": "highlightSets",
+            "click #create_set": "createHomeworkSet"
+        },
+
+        initialize:function () {
+            //Set up the tabbed set lists and libraries:
+            $("#problems_container").tabs(
+                {
+                    closable:true,
+                    add:function (event, ui) {
+                        //document.getElementById("library_link").removeChild(document.getElementById("library_link").lastChild);
+                        console.log("adding a tab");
+                        $('#problems_container').tabs('select', '#' + ui.panel.id);
+                        $(".ww_selected").removeClass("ww_selected");// probably reduntant but I want to make sure nothing stays selected
+                    },
+                    create:function (event, ui) {
+                        //document.getElementById("library_link").removeChild(document.getElementById("library_link").lastChild);
+                        $(".ww_selected").removeClass("ww_selected");
+                    },
+                    select:function (event, ui) {
+                        $(".ww_selected").removeClass("ww_selected");
+                    },
+                    remove:function (event, ui) {
+                        //document.getElementById("library_link").removeChild(document.getElementById("library_link").lastChild);
+                        $(".ww_selected").removeClass("ww_selected");
+                    }
+                });
+            $("#problem_sets_container").resizable({
+                cursor:'move',
+                //animate: true,
+                //ghost: true,
+                delay:0
+            });
+
+
+            //set up our models
+            this.homeworkSets = new SetList;
+            this.cardCatalog = new LibraryList;
+            this.cardCatalog.defaultRequestObject.xml_command = "listLibraries"
+
+            this.homeworkSets.fetch();
+            this.cardCatalog.fetch();
+
+            this.render();
+        },
+
+        createHomeworkSet: function(){
+            if(this.$("#dialog_text").val()){
+                this.homeworkSets.create({name: this.$("#dialog_text").val()});
+            }
+            this.$("#dialog_text").val('');
+        },
+
+        highlightSets: function(event) {
+            switch(event.type){
+                case "mouseenter":
+                    //console.log(this.getAttribute("data-path"));
+                    var problemPath = event.currentTarget.getAttribute("data-path");
+
+                    this.homeworkSets.each(function(set){
+                        if(set.get('problems').find(function(problem){return problem.get('path') == problemPath})){
+                            set.trigger('highlight');
+                        }
+                    });
+                    break;
+                default:
+                    $(".contains_problem").removeClass("contains_problem");
+                    break;
+            }
+
+        },
+
+        render: function(){
+            var homeworkSetsView = new SetListView({model: this.homeworkSets});
+            this.$("#homework_sets_container").append(homeworkSetsView.render().el);
+
+            var cardCatalogView = new LibraryListView({model: this.cardCatalog});
+            this.$("#CardCatalog").append(cardCatalogView.render().el);
+        },
+
+        undo:function () {
+            // pop the stack and call the function, that's it
+            var undoFunc = undo_stack.pop();
+            undoing = true;
+            undoFunc();
+        },
+
+        redo:function () {
+            var redoFunc = redo_stack.pop();
+            redoFunc();
+        }
+    });
+
+
+    var App = new LibraryBrowser;
+
 });
