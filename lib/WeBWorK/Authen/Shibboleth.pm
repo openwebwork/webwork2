@@ -21,6 +21,8 @@ use base qw/WeBWorK::Authen/;
 WeBWorK::Authen::Shibboleth - Authentication plug in for Shibboleth. 
 This is basd on Cosign.pm
 
+For documentation, please refer to http://webwork.maa.org/wiki/External_(Shibboleth)_Authentication
+
 to use: include in global.conf or course.conf
   $authen{user_module} = "WeBWorK::Authen::Shibboleth";
 and add /webwork2/courseName as a Shibboleth Protected
