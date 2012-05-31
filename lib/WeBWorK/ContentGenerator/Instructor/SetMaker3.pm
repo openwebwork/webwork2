@@ -248,10 +248,10 @@ sub body {
         '</script>';
 
   print '<script type="text/template", id="LibraryList-template">',
-             '<select class="list">',
+             '<select  class="<%= name %> list">',
              '<option value=null>Pick a Library</option>',
              '</select>',
-             '<span class="children"></span>',
+             '<span class="<%= name %> children"></span>',
           '</script>';
 
   print '<script type="text/template", id="Library-template">',

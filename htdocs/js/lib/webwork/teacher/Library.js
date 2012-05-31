@@ -28,6 +28,7 @@ webwork.LibraryList = Backbone.Collection.extend({
     model:webwork.Library,
 
     initialize: function(){
+        var self = this;
         this.url = "";
         this.defaultRequestObject = {
             xml_command: "listLib",
@@ -35,6 +36,8 @@ webwork.LibraryList = Backbone.Collection.extend({
             maxdepth: 0
         };
         _.defaults(this.defaultRequestObject, webwork.requestObject);
+        this.syncing = false;
+        this.on('syncing', function(value){self.syncing = value});
     },
 
     fetch: function(){
@@ -42,12 +45,11 @@ webwork.LibraryList = Backbone.Collection.extend({
 
         var self = this;
 
-        webwork.alert("Loading libraries... may take some time");
-
+        self.trigger("alert", "Loading libraries... may take some time");
         var requestObject = {};
 
         _.defaults(requestObject, this.defaultRequestObject);
-
+        self.trigger('syncing', true);
         $.post(webwork.webserviceURL, requestObject,
             function (data) {
                 //console.log(data);
@@ -56,7 +58,6 @@ webwork.LibraryList = Backbone.Collection.extend({
                 console.log(response);
                 console.log("result: " + response.server_response);
                 //need better server responses eventually
-                webwork.alert(response.server_response);
 
                 var newLibs = new Array();
 
@@ -67,10 +68,9 @@ webwork.LibraryList = Backbone.Collection.extend({
                     newLibs.push({name:lib, path: self.url +"/"+lib})
                 });
                 self.reset(newLibs);
-                //callback();
-                /*} catch (err) {
-                 showErrorResponse(data);
-                 }*/
-            });//should add error checking
+
+                self.trigger("alert", response.server_response);//self.trigger('alert', {message: "string", type: "error, success, warning"});
+                self.trigger('syncing', false);
+            });
     }
 });

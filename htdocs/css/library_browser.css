@@ -45,3 +45,10 @@ ul.list li{
 .conatains_problem{
     backbround: aliceblue;
 }
+
+.syncing:after{
+    content: url("/webwork2_files/images/ajax-loader-small.gif");
+}
+.syncing.white:after{
+    content: url("/webwork2_files/images/ajax-loader-white-small.gif");
+}

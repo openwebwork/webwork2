@@ -1,6 +1,6 @@
 //Problem admin functions
 webwork.ProblemList.prototype.addProblem = function (problem) {
-    this.add(problem);
+    //this.add(problem);
     var self = this;
 
     var requestObject = {
@@ -12,8 +12,6 @@ webwork.ProblemList.prototype.addProblem = function (problem) {
     $.post(webwork.webserviceURL, requestObject, function (data) {
         //try {
         var response = $.parseJSON(data);
-        console.log("result: " + response.server_response);
-        webwork.alert(response.server_response);
         // still have to test for success..everywhere
         if (undoing) {// might be a better way to do this later
             redo_stack.push(function () {
@@ -25,11 +23,8 @@ webwork.ProblemList.prototype.addProblem = function (problem) {
                 self.removeProblem(problem);
             });
         }
-        //hopfully I can get rid of this
-        //self.loadProblems($.contains(document.getElementById("problems_container"), document.getElementById(self.name)));
-        /*} catch (err) {
-         showErrorResponse(data);
-         }*/
+        self.trigger('alert', response.server_response);
+        self.trigger('sync');
     });
 };
 
@@ -47,8 +42,6 @@ webwork.ProblemList.prototype.removeProblem = function (problem) {
     $.post(webwork.webserviceURL, requestObject, function (data) {
         //try {
         var response = $.parseJSON(data);
-        console.log("result: " + response.server_response);
-        webwork.alert(response.server_response);
         // still have to test for success....
         if (undoing) {
             redo_stack.push(function () {
@@ -60,14 +53,10 @@ webwork.ProblemList.prototype.removeProblem = function (problem) {
                 self.addProblem(problem);
             });
         }
-        /*workAroundSet.loadProblems($.contains(document
-         .getElementById("problems_container"), document
-         .getElementById(self.name)));*/
-        /*} catch (err) {
-         showErrorResponse(data);
-         }*/
+        self.trigger('alert', response.server_response);
+        self.trigger('sync');
     });
-    problem.destroy();
+    //problem.destroy();
 };
 
 webwork.ProblemList.prototype.reorder = function(){
@@ -89,9 +78,7 @@ webwork.ProblemList.prototype.reorder = function(){
         //try {
         var response = $.parseJSON(data);
         console.log("result: " + response.server_response);
-        webwork.alert(response.server_response);
-        /*} catch (err) {
-         showErrorResponse(data);
-         }*/
+        self.trigger('alert', response.server_response);
+        self.trigger('sync');
     });
 };
