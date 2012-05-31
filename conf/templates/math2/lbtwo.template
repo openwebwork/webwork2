@@ -38,6 +38,11 @@
     .breadcrumb{
         margin:0px;
     }
+    #messages{
+        position:absolute;
+        width:50%;
+        margin:25%;
+    }
 </style>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap-responsive.css"/>
 <script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/jquery-1.7.2.min.js"></script>
@@ -48,7 +53,7 @@
 
 
 <body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
-
+    <div id="messages"></div>
     <div class="navbar">
         <div class="navbar-inner">
           <div class="container">
@@ -82,8 +87,6 @@
 	<ul class="breadcrumb">
 		<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
 	</ul>
-
-	<div id="messages"></div>
 		
 	    <!--#if can="body"-->
 				<!--#if warnings="1"-->
