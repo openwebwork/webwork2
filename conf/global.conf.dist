@@ -1212,6 +1212,25 @@ $webservices = {
 # Temporary hack for displaying the different versions of the editors
 ################################################################################
 
+# These configurations can be overridden
+# in course.conf file to tune the behavior for individual courses
+# The items below can be placed in postlocal.conf override the settings in this file
+# One can also use $showeditors{classlisteditor1}=0; to override a setting.
+%showeditors = (
+	classlisteditor1   => 1,
+	classlisteditor2   => 0,
+	
+	homeworkseteditor1 => 1,
+	homeworkseteditor2 => 0,
+	
+	librarybrowser1    => 1,
+	librarybrowser2    => 0,
+	librarybrowser3    => 0,
+	
+	pgproblemeditor1   => 1,
+	pgproblemeditor2   => 0,
+);
+
 ################################################################################
 # Site wide overrides are entered into the file postlocal.conf
 ################################################################################
