@@ -100,7 +100,7 @@ sub head {
   print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
 
   print qq!<script src="$webwork_htdocs_url/js/jquery-ui-1.8.16.custom.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/ui.tabs.closable.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
 
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/json2.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>!;
@@ -122,8 +122,10 @@ sub head {
   #start a timer to save people's stuff idk if people want this
   #print "<script> setInterval('saveChanges(\"mainform\", \"".$r->uri."\")', 680000); </script>";
   #print qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/setmaker3.css" />!;
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+
   print qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/library_browser.css" />!;
+
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   #print qq!<script>window.addEventListener("load", setup, false);</script>!;
   return "";
 }
