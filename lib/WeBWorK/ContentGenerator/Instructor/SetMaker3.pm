@@ -160,7 +160,7 @@ sub body {
             '<ul class="nav pull-right">',
                 '<li><button class="btn btn-small" id="undo_button">Undo</button></li>',
                 '<li><button class="btn btn-small" id="redo_button">Redo</button></li>',
-                '<li><a class="pull-right" href="http://github.com/whytheplatypus/webwork2/issues">BUGS!</a></li>',
+                '<li><a class="pull-right" href="http://github.com/whytheplatypus/webwork2/issues" target="_blank">BUGS!</a></li>',
             '</ul>',
 
         '</div>',
