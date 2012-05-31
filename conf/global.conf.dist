@@ -1152,3 +1152,5 @@ $webservices = {
 # Site wide overrides are entered into the file postlocal.conf
 ################################################################################
 
+
+include("conf/postlocal.conf");
