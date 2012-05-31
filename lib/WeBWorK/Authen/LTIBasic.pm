@@ -84,6 +84,7 @@ sub new {
 	my $self = {
 		r => $r,
 	};
+	#initialize
 	bless $self, $class;
 	return $self;
 }
@@ -182,7 +183,8 @@ sub get_credentials {
 	if (defined $r->param("user_id")) 
 		{
 		map {$self -> {$_ -> [0]} = $r -> param($_ -> [1]);} 
-						(['user_id', 'lis_person_sourcedid'],
+						(
+						#['user_id', 'lis_person_sourcedid'],
 						['role', 'roles'],
 						['last_name' , 'lis_person_name_family'],
 						['first_name', 'lis_person_name_given'],
@@ -194,6 +196,22 @@ sub get_credentials {
 						['semester', 'custom_semester'],
 						['section', 'custom_section'],
 						);
+
+		# The following lines were substituted for the commented out line above
+		# because some LMS's misspell the lis_person_sourced_id parameter name
+		if (defined($r -> param("lis_person_sourced_id"))) {
+			$self -> {user_id} = $r -> param("lis_person_sourced_id"); 
+		} elsif (defined($r -> param("lis_person_sourcedid"))) {
+			$self -> {user_id} = $r -> param("lis_person_sourcedid"); 
+		} elsif (defined($r -> param("lis_person_source_id"))) {
+			$self -> {user_id} = $r -> param("lis_person_source_id"); 
+		} elsif (defined($r -> param("lis_person_sourceid"))) {
+			$self -> {user_id} = $r -> param("lis_person_sourceid"); 
+		} else {
+			undef($self ->{user_id});
+		}
+		
+
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
 		if (!defined($self->{user_id})) {
 			$self->{user_id} = $self -> {email};
@@ -219,7 +237,7 @@ sub check_user {
 	
 	my $user_id = $self->{user_id};
 	
-	if (defined $user_id and $user_id eq "") {
+	if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
 		$self->{log_error} = "no user id specified";
 		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE);
 		return 0;
@@ -228,7 +246,10 @@ sub check_user {
 	my $User = $db->getUser($user_id);
 	
 	if (!$User) {
-		if ( defined($r -> param("lis_person_sourcedid"))) {
+		if ( defined($r -> param("lis_person_sourcedid"))
+			or defined($r -> param("lis_person_sourced_id"))
+			or defined($r -> param("lis_person_source_id"))
+			or defined($r -> param("lis_person_sourceid")) ) {
 			return 1;  #This may be a new user coming in from a LMS via LTI.
 		} else {
 		$self->{log_error} .= "LOGIN FAILED $user_id - user unknonw";
