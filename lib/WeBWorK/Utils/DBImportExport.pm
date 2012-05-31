@@ -317,7 +317,10 @@ sub dbExport {
 					next unless $Record;
 					$writer->startTag("problem_user");
 					foreach my $field ($Record->FIELDS) {
-						$writer->dataElement($field, $Record->$field);
+                        # filter out the characters xml don't like
+                        my $t = $Record->$field;
+                        $t =~ s/([\x00-\x08\x0B-\x0C\x0E-\x1F])//g;
+						$writer->dataElement($field, $t);
 					}
 					$writer->endTag; # problem_user
 				}
