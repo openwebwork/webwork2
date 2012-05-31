@@ -24,42 +24,69 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/dgage.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap.css"/>
+<style>
+    body{
+
+    }
+    input{
+        height:auto;
+    }
+    .navbar {
+        margin-bottom: 0px;
+    }
+    .breadcrumb{
+        margin:0px;
+    }
+    #messages{
+        position:absolute;
+        width:50%;
+        margin:25%;
+    }
+</style>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap-responsive.css"/>
+<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/jquery-1.7.2.min.js"></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
+
+
 <body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
-
-
-<hr class="for-broken-browsers"/>
-<div id="big-wrapper">
-
-<div style="clear:both;"></div>
-	<div id="breadcrumbs">
-		<!--#path style="text" text=" &#x2192; "-->
-	</div>
-	<div id="content" >
-
-			<!--#if can="title"-->
-				<span style="font-size:larger; color:#00F; float:left;  width:60%;   "><!--#title--></span>
-			<!--#endif-->
-			<!--#if can="message"-->
-				<span class="Message" style=" float:right; width:40%; right:0;">
-					<!--#message-->
-				</span>
-			<!--#endif-->
-
-		    <hr style="clear:both"/>
-       		<!--#if can="info"-->
-			  <!--  styles could be different for different pages so they are not set here -->
-				<!--#info-->
-		    <!--#endif-->
-			
-		<!--#if can="nav"-->
-		<div class="Nav">
-			<!--#nav style="images" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
-		</div>
-		<!--#endif-->
+    <div id="messages"></div>
+    <div class="navbar">
+        <div class="navbar-inner">
+          <div class="container">
+            <!--#if can="title"-->
+            <a class="brand" href="#"><!--#title--></a>
+            <!--#endif-->
+            <div class="nav-collapse">
+              <ul class="nav pull-right">
+                <li class="dropdown" id="webwork_navigation">
+                  <a href="#webwork_navigation" class="dropdown-toggle" data-toggle="dropdown">Main Menu <b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+                    <!--#if can="links"-->
+                        <!--#links-->
+                    <!--#endif-->
+                     <!--#if can="siblings"-->
+                        <!--#siblings-->
+                     <!--#endif-->
+                     <!--#if can="options"-->
+                        <ul>
+                     	    <h2>Display Options</h2>
+                     		<!--#options-->
+                     	</ul>
+                     <!--#endif-->
+                  </ul>
+                </li>
+              </ul>
+            </div><!-- /.nav-collapse -->
+          </div>
+        </div><!-- /navbar-inner -->
+    </div>
+	<ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
+	</ul>
 		
 	    <!--#if can="body"-->
 				<!--#if warnings="1"-->
@@ -77,11 +104,9 @@
 			<!--#endif-->
 		
 		<!--#if warnings="1"-->
-		
-		<hr/>
-		<div class="Warnings">
-			<!--#warnings-->
-		</div>
+		    <div class="Warnings">
+			    <!--#warnings-->
+		    </div>
 		<!--#endif-->
 		
 		<!--#if can="message"-->
@@ -89,44 +114,14 @@
 				<!--#message-->
 			</div>
 		<!--#endif-->
-		
-	
-	<hr class="for-broken-browsers"/>
-	<div id="footer">
-		<div id="site-navigation">
 
-		<!--#if can="links"-->
-			    <!--#links-->
-			    <!--#endif-->
-		      <!--#if can="siblings"-->
-			      <!--#siblings-->
-		      <!--#endif-->
-		      <!--#if can="options"-->
-		      <ul>
-		        <li>
-			        <h2>Display Options</h2>
-			        <!--#options-->
-			      </li>
-		      </ul>
-		      <!--#endif-->
-		      <div id="masthead">
-			  <!--<div id="logo">
-                <a href="http://webwork.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" /></a>&nbsp;
-                <a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo.png" alt="MAA" height="51" width="449" /></a>
-			  </div>-->
-	<div id="loginstatus">
-		<!--#loginstatus-->
-	</div>
-	</div>
-		      <div id="navigation-link">Navigation</div>
-	</div>
-		<p id="last-modified">Page generated at <!--#timestamp--></p>
-		<div id="copyright">
-			WeBWorK &#169; 2000-2007 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a>
-		</div>
-	</div>
-
-</div><!--content-->
-</div> <!-- big-wrapper -->
+	<footer class="footer">
+        <p class="pull-right"><!--#loginstatus--></p>
+        <p id="last-modified">Page generated at <!--#timestamp--></p>
+        <p>styled using twitter bootstrap</p>
+        <div id="copyright">
+            WeBWorK &#169; 2000-2007 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a>
+        </div>
+    </footer>
 </body>
 </html>
