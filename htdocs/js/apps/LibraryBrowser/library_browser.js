@@ -1,40 +1,22 @@
-
-/**
- * Global stuff
- */
-// undo and redo functions
-var undoing = false;
-var undo_stack = new Array();
-var redo_stack = new Array();
-
-//might be able to move this to LibraryBrowser later with event listeners
-function showErrorResponse(data) {
-    var myWindow = window.open('', '', 'width=500,height=800');
-    myWindow.document.write(data);
-    myWindow.focus();
-}
-
 $(function () {
-    // get usernames and keys from hidden variables and set up webwork object:
-    var myUser = document.getElementById("hidden_user").value;
-    var mySessionKey = document.getElementById("hidden_key").value;
-    var myCourseID = document.getElementById("hidden_courseID").value;
-    // check to make sure that our credentials are available.
-    if (myUser && mySessionKey && myCourseID) {
-        webwork.requestObject.user = myUser;
-        webwork.requestObject.session_key = mySessionKey;
-        webwork.requestObject.courseID = myCourseID;
-    } else {
-        webwork.alert("missing hidden credentials: user "
-            + myUser + " session_key " + mySessionKey
-            + " courseID" + myCourseID, "alert-error");
-    }
+
+
+    var alert_template = _.template('<div class="alert <%= classes %> fade in"><a class="close" data-dismiss="alert" href="#">×</a><%= message %></div>');
+    //set up alerts to close
+    $().alert();
+
+    var alert = function(message, classes){
+        console.log('alert');
+        console.log(message);
+        //developers have to add a messages div (span, whatever) to the app to see messages
+        $('#messages').html(alert_template({message: message, classes: classes}));
+        setTimeout(function(){$(".alert").alert('close')}, 5000);
+    };
 
 
     /*******************************************************************************
-     * The problem object
+     * The problem View
      ******************************************************************************/
-// object
 
 
 
@@ -88,170 +70,15 @@ $(function () {
 
         clear: function(){
             console.log("clear");
-            this.model.collection.removeProblem(this.model);
+            this.model.collection.remove(this.model);
             this.model.clear();
         }
     });
 
-
-
-
-
-    /*
-     this.searchButton = document.getElementById("run_search");
-
-     this.nextButton = document.getElementById("nextList");
-     this.prevButton = document.getElementById("prevList");
-     this.probsPerPage = document.getElementById("prob_per_page");
-     this.topProbIndex = 0;
-
-     var workAroundTheClosure = this;
-
-     this.buildLibraryBox(topLibraries);
-     //this.library.loadChildren(function(){workAroundTheClosure.buildSelectBox(workAroundTheClosure.library)});
-
-     this.searchButton.addEventListener('click', function() {workAroundTheClosure.searchBox.go();}, false);
-
-     document.getElementById("load_problems").addEventListener('click', function(){
-     if(workAroundTheClosure.working_library.problems > 0){
-     console.log("loaded");
-     console.log(workAroundTheClosure.working_library.problems);
-     workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
-     }
-     else {
-     workAroundTheClosure.working_library.loadProblems(function() {
-     console.log("callback!");
-     workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
-     });
-     }
-     }, false);
-
-     this.nextButton.addEventListener('click', function() {
-     console.log("Next Button was clicked");
-     // then load new problems? yes because we shouldn't
-     // even be able to click on it if we can't
-     workAroundTheClosure.topProbIndex += parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value);
-     workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
-     }, false);
-     document.getElementById("prevList").addEventListener('click', function() {
-     workAroundTheClosure.topProbIndex -= parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value);
-     if (workAroundTheClosure.topProbIndex < 0)
-     workAroundTheClosure.topProbIndex = 0;
-     workAroundTheClosure.renderProblems(workAroundTheClosure.topProbIndex, parseInt(workAroundTheClosure.probsPerPage.options[workAroundTheClosure.probsPerPage.selectedIndex].value));
-     }, false);
-     */
-
-    /*
-     CardCatolog.prototype.updateMoveButtons = function() {
-     if (this.topProbIndex + parseInt(this.probsPerPage.options[this.probsPerPage.selectedIndex].value) < this.working_library.problems.length) {
-     this.nextButton.removeAttribute("disabled");
-     } else {
-     this.nextButton.setAttribute("disabled", true);
-     }
-     if (this.topProbIndex > 0) {
-     this.prevButton.removeAttribute("disabled");
-     } else {
-     this.prevButton.setAttribute("disabled", true);
-     }
-     }
-     */
-    /*
-     CardCatolog.prototype.buildSelectBox = function(currentLibrary) {
-     var newLibList = document.createElement("select");
-     newLibList.id = "libList" + (this.displayBox.childNodes.length + 1);
-     newLibList.setAttribute("data-propName", currentLibrary.path);
-     var workAroundTheClosure = this;
-     newLibList.addEventListener("change", function(event) {
-     workAroundTheClosure.onLibSelect(event, currentLibrary);
-     }, false);
-
-     for ( var name in currentLibrary.children) {
-     if (!name.match(/\./)) {
-     var option = document.createElement("option")
-     option.value = name;
-     option.innerHTML = name;
-     newLibList.add(option, null);
-     }
-     }
-     if (newLibList.childNodes.length > 0) {
-     var emptyOption = document.createElement("option");
-     newLibList.add(emptyOption, newLibList.firstChild);
-     this.listBox.appendChild(newLibList);
-     }
-     }
-
-     // start:index to start at, limit:number of problems to list
-     CardCatolog.prototype.renderProblems = function(start, limit) {
-     $('a[href="#library_tab"] span').text("Library ("+start+" - "+ (start+limit) +" of " + this.working_library.problems.length + ") ");
-     while (this.displayBox.hasChildNodes()) {
-     this.displayBox.removeChild(this.displayBox.lastChild);
-     }
-     for(var i = start; i < start+limit && i < this.working_library.problems.length; i++){
-     this.working_library.problems[i].render(this.displayBox);
-     }
-     this.updateMoveButtons();
-     };
-
-
-     CardCatolog.prototype.onLibSelect = function(event, currentLibrary) {
-     this.topProbIndex = 0;
-     //this.library.problems.list = new Object();
-     //this.updateLibrary();
-     var changedLib = event.target;// should be the select
-     var listBox = event.target.parentNode;
-     var libChoices = listBox.childNodes;
-     //var currentObject = this.treeRoot;
-
-     var count = 0;
-     var key;
-     for ( var i = 0; i < libChoices.length; i++) {
-     if (libChoices[i].tagName == "SELECT") {
-     count = i;
-     if (libChoices[i] == changedLib)
-     break;
-     }
-     }
-     while (listBox.childNodes.length > count + 1) {
-     listBox.removeChild(listBox.lastChild);
-     }
-
-     if (currentLibrary.children.hasOwnProperty(changedLib.options[changedLib.selectedIndex].value)) {
-     var child = currentLibrary.children[changedLib.options[changedLib.selectedIndex].value];
-     this.working_library = child;
-     //right now this reloads if there are no subdirectories, can be fixed by a count on serverside.
-     if(Object.size(child.children) > 0){
-     console.log("didn't have to build");
-     this.buildSelectBox(child);
-     } else {
-     var workAroundTheClosure = this;
-     child.loadChildren(function() {
-     workAroundTheClosure.buildSelectBox(child);
-     });
-     }
-     } else {
-     this.working_library = currentLibrary;
-     }
-     };
-     */
-
     //search was here
 
-
-    /*
-     * needed functions: Both: getProblems
-     *
-     * Library: markInSet markRemovedFromSet
-     *
-     * Set: addProblem removeProblem reorderProblem view
-     *
-     * Problem: (not sure about this yet) view source view problem
-     *
-     * we're kind of following an mvc, check out pure for templating should make
-     * life easy
-     */
-
     /*******************************************************************************
-     * The library object
+     * The library View
      ******************************************************************************/
 
 
@@ -264,8 +91,21 @@ $(function () {
         },
 
         initialize: function(){
+            var self = this;
             this.group_size = 25;
             this.model.get('problems').on('reset', this.render, this);
+            this.model.get('problems').on('syncing', function(value){
+                if(value){
+                    $("[href=#"+self.model.get('name')+"]").addClass("syncing");
+                } else {
+                    $("[href=#"+self.model.get('name')+"]").removeClass("syncing");
+                }
+            }, this);
+            this.model.get('problems').on('alert', function(message){alert(message);});
+
+            if(!(this.model.get('problems').length > 0)){
+                this.model.get('problems').fetch();
+            }
         },
 
         render: function(){
@@ -281,8 +121,11 @@ $(function () {
                 $("[href=#"+this.model.get('name')+"]").html(this.model.get('name') + " (" + this.model.get('problems').length + ")");
             }
 
-            this.$el.addClass("library_tab");
+            if(self.model.get('problems').syncing){
+                $("[href=#"+self.model.get('name')+"]").addClass("syncing");
+            }
 
+            this.$el.addClass("library_tab");
             this.startIndex = 0;
 
             var jsonInfo = this.model.toJSON();
@@ -323,41 +166,70 @@ $(function () {
         template:_.template($('#LibraryList-template').html()),
 
         events: {
-            'change .list': 'lib_selected'
+            //'change .list': 'lib_selected'
         },
 
         initialize:function () {
+            var self = this;
             this.model.on("reset", this.render, this);
-            this.model.on("add", this.render, this);
+            this.model.on("add", this.addOne, this);
+            this.model.on('alert', function(message){alert(message);}, this);
+            this.model.on('syncing', function(value){
+                if(value){
+                    self.$el.addClass("syncing white");
+                } else {
+                    self.$el.removeClass("syncing white");
+                }
+            }, this);
+            //not the strongest solution but it will do
+            if(!(this.model.length > 0)){
+                this.model.fetch();
+            }
+            console.log("init "+this.options.name);
         },
 
         render:function () {
 
             var self = this;
-
-            if(self.model.length > 0){
-                //should show number of problems in the bar
-
-                this.$el.html(this.template(this.model.toJSON));
-
-                this.model.each(function (lib) {
-                    var option = document.createElement("option")
-                    option.value = lib.cid;
-                    option.innerHTML = lib.get('name');
-                    self.$('.list').append(option);//what's the null?
-                });
+            console.log("trying to call render on "+this.options.name);
+            if(self.model.syncing){
+                self.$el.addClass("syncing white");
             }
+            this.$el.html(this.template({name: this.options.name}));
+            self.$("."+this.options.name+".list").on('change', function(event){self.lib_selected(event)});
+            this.addAll();
             return this;
+        },
+
+        addOne: function(lib){
+            var self = this;
+            var option = document.createElement("option")
+            option.value = lib.cid;
+            option.innerHTML = lib.get('name');
+            this.$('.'+this.options.name + '.list').append(option);//what's the null?
+        },
+
+        addAll: function(){
+            var self = this;
+            if(this.model.length > 0){
+                //should show number of problems in the bar
+                this.model.each(function(lib){self.addOne(lib)});
+            } else {
+                this.$('.'+this.options.name+".list").css("display", "none");
+            }
         },
 
         lib_selected:function (event) {
             var self = this;
+            self.$el.removeClass("syncing white");
             var selectedLib = this.model.getByCid(event.target.value);
-            console.log(selectedLib);
+            console.log(selectedLib)
             if(selectedLib){
-                selectedLib.get('children').fetch();
-                var view = new LibraryListView({model:selectedLib.get('children')});
-                this.$(".children").html(view.render().el);
+                var view = new LibraryListView({model:selectedLib.get('children'), name: selectedLib.cid});
+                this.$('.'+this.options.name+".children").html(view.render().el);
+                console.log(view.render().el);
+                console.log(this.$('.'+this.options.name+" .children"));
+                console.log("trying to render "+selectedLib.cid);
                 libToLoad = selectedLib;
             }
         }
@@ -398,6 +270,16 @@ $(function () {
             this.model.get('problems').on('all', function(){
                 $("[href=#"+self.model.get('name')+"]").html(self.model.get('name') + " (" + self.model.get('problems').length + ")");
             }, this);
+            this.model.get('problems').on('alert', function(message){alert(message);});
+
+            this.model.get('problems').on('syncing', function(value){
+                if(value){
+                    $("[href=#"+self.model.get('name')+"]").addClass("syncing");
+                } else {
+                    $("[href=#"+self.model.get('name')+"]").removeClass("syncing");
+                }
+            }, this);
+
         },
 
         render:function () {
@@ -410,6 +292,10 @@ $(function () {
             }
 
             this.$el.html(self.template(self.model.toJSON()));
+
+            if(self.model.get('problems').syncing){
+                $("[href=#"+self.model.get('name')+"]").addClass("syncing");
+            }
 
             //this.$el.id = this.model.get('name');
             //might have to refresh
@@ -480,6 +366,7 @@ $(function () {
             this.bigView = false;
             var self = this;
             this.model.get('problems').on('all', function(){self.render()}, this);
+            this.model.get('problems').on('alert', function(message){alert(message);});
             this.model.on('highlight', function(){self.$el.addClass("contains_problem")});
         },
 
@@ -493,8 +380,8 @@ $(function () {
                 hoverClass:'drophover',
 
                 drop:function (event, ui) {
-                    var newProblem = new webwork.Problem({path:ui.draggable.attr("data-path")});
-                    self.model.get("problems").addProblem(newProblem);
+                    //var newProblem = new webwork.Problem({path:ui.draggable.attr("data-path")});
+                    self.model.get("problems").add({path:ui.draggable.attr("data-path")});
                 }
             });
 
@@ -533,7 +420,10 @@ $(function () {
             this.model.bind('add', function(model){self.addOne(model);}, this);
             this.model.bind('reset', function(){self.addAll()}, this);
             //this.model.bind('all', this.render, this);
-            this.render();
+
+            if(!(this.model.length > 0)){
+                this.model.fetch();
+            }
         },
 
         render:function () {
@@ -579,9 +469,9 @@ $(function () {
     $("#load_problems").on("click", function(event){
         console.log(libToLoad);
         if(libToLoad){
-            libToLoad.get('problems').fetch();
             var view = new LibraryView({model: libToLoad});
             view.render();
+
         }
     });
 
@@ -597,6 +487,29 @@ $(function () {
         },
 
         initialize:function () {
+            var self = this;
+
+            //Some default ajax stuff we can keep it or not
+            $(document).ajaxError(function(e, jqxhr, settings, exception) {
+                alert(exception, "alert-error");
+            });
+
+            // get usernames and keys from hidden variables and set up webwork object:
+            var myUser = document.getElementById("hidden_user").value;
+            var mySessionKey = document.getElementById("hidden_key").value;
+            var myCourseID = document.getElementById("hidden_courseID").value;
+            // check to make sure that our credentials are available.
+            if (myUser && mySessionKey && myCourseID) {
+                webwork.requestObject.user = myUser;
+                webwork.requestObject.session_key = mySessionKey;
+                webwork.requestObject.courseID = myCourseID;
+            } else {
+                alert("missing hidden credentials: user "
+                    + myUser + " session_key " + mySessionKey
+                    + " courseID" + myCourseID, "alert-error");
+            }
+
+
             //Set up the tabbed set lists and libraries:
             $("#problems_container").tabs(
                 {
@@ -632,9 +545,6 @@ $(function () {
             this.cardCatalog = new webwork.LibraryList;
             this.cardCatalog.defaultRequestObject.xml_command = "listLibraries"
 
-            this.homeworkSets.fetch();
-            this.cardCatalog.fetch();
-
             this.render();
         },
 
@@ -668,7 +578,7 @@ $(function () {
             var homeworkSetsView = new SetListView({model: this.homeworkSets});
             this.$("#homework_sets_container").append(homeworkSetsView.render().el);
 
-            var cardCatalogView = new LibraryListView({model: this.cardCatalog});
+            var cardCatalogView = new LibraryListView({model: this.cardCatalog, name: "root"});
             this.$("#CardCatalog").append(cardCatalogView.render().el);
         },
 
