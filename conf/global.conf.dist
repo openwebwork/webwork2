@@ -1035,6 +1035,113 @@ $pg{ansEvalDefaults} = {
 
 
 ################################################################################
+# Authorization system (Make local overrides in postlocal.conf )
+################################################################################
+
+# this section lets you define which groups of users can perform which actions.
+
+# this hash maps a numeric permission level to the name of a role. the number
+# assigned to a role is significant -- roles with higher numbers are considered
+# "more privileged", and are included when that role is listed for a privilege
+# below.
+# 
+%userRoles = (
+	guest => -5,
+	student => 0,
+	login_proctor => 2,
+	grade_proctor => 3,
+	ta => 5,
+	professor => 10,
+	admin     => 20,
+);
+
+# this hash maps operations to the roles that are allowed to perform those
+# operations. the role listed and any role with a higher permission level (in
+# the %userRoles hash) will be allowed to perform the operation. If the role
+# is undefined, no users will be allowed to perform the operation.
+# 
+%permissionLevels = (
+	login                          => "guest",
+	report_bugs                    => "ta",
+	submit_feedback                => "student",
+	change_password                => "student",
+	change_email_address           => "student",
+	
+	proctor_quiz_login             => "login_proctor",
+	proctor_quiz_grade             => "grade_proctor",
+	view_proctored_tests           => "student",
+	view_hidden_work               => "ta",
+	
+	view_multiple_sets             => "ta",
+	view_unopened_sets             => "ta",
+	view_hidden_sets               => "ta",
+	view_answers                   => "ta",
+	view_ip_restricted_sets        => "ta",
+	
+	become_student                 => "professor",
+	access_instructor_tools        => "ta",
+	score_sets                     => "professor",
+	send_mail                      => "professor",
+	receive_feedback               => "ta",
+	
+	create_and_delete_problem_sets => "professor",
+	assign_problem_sets            => "professor",
+	modify_problem_sets            => "professor",
+	modify_student_data            => "professor",
+	modify_classlist_files         => "professor",
+	modify_set_def_files           => "professor",
+	modify_scoring_files           => "professor",
+	modify_problem_template_files  => "professor",
+	manage_course_files            => "professor",
+	
+	create_and_delete_courses      => "professor",
+	fix_course_databases           => "professor",
+	
+	##### Behavior of the interactive problem processor #####
+	
+	show_correct_answers_before_answer_date         => "ta",
+	show_solutions_before_answer_date               => "ta",
+	avoid_recording_answers                         => "ta",
+	# Below this level, old answers are never initially shown
+	can_show_old_answers_by_default                 => "student",
+	# at this level, we look at showOldAnswers for default value
+	# even after the due date
+	can_always_use_show_old_answers_default         => "professor",
+	check_answers_before_open_date                  => "ta",
+	check_answers_after_open_date_with_attempts     => "ta",
+	check_answers_after_open_date_without_attempts  => "guest",
+	check_answers_after_due_date                    => "guest",
+	check_answers_after_answer_date                 => "guest",
+	create_new_set_version_when_acting_as_student   => undef,
+	print_path_to_problem                           => "professor", # see "Special" PG environment variables
+	record_set_version_answers_when_acting_as_student => undef,
+	record_answers_when_acting_as_student           => undef,
+	# "record_answers_when_acting_as_student" takes precedence
+	# over the following for professors acting as students:
+	record_answers_before_open_date                 => undef,
+	record_answers_after_open_date_with_attempts    => "student",
+	record_answers_after_open_date_without_attempts => undef,
+	record_answers_after_due_date                   => undef,
+	record_answers_after_answer_date                => undef,
+	dont_log_past_answers                           => "professor",
+	# does the user get to see a dump of the problem?
+	view_problem_debugging_info                     => "ta",
+	
+	##### Behavior of the Hardcopy Processor #####
+	
+	download_hardcopy_multiuser  => "ta",
+	download_hardcopy_multiset   => "ta",
+	download_hardcopy_view_errors =>"professor",
+	download_hardcopy_format_pdf => "guest",
+	download_hardcopy_format_tex => "ta",
+);
+
+# This is the default permission level given to new students and students with
+# invalid or missing permission levels.
+$default_permission_level = $userRoles{student};
+
+
+################################################################################
 # Compatibility
 ################################################################################
 
