@@ -10,9 +10,7 @@ webwork.SetList.prototype.create = function (model) {
         //try {
         var response = $.parseJSON(data);
         console.log("result: " + response.server_response);
-        webwork.alert(response.server_response);
-        /*} catch (err) {
-         showErrorResponse(data);
-         }*/
+        self.trigger('alert', response.server_response);
+        self.trigger('sync');
     });
 };

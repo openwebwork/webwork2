@@ -41,7 +41,8 @@
     #messages{
         position:absolute;
         width:50%;
-        margin:25%;
+        margin-left:25%;
+        margin-right:25%;
     }
 </style>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap-responsive.css"/>

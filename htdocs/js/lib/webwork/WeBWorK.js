@@ -6,6 +6,16 @@
     requires backbone.js, underscore.js, and their dependencies
 */
 
+
+/**
+ * Global stuff
+ * should do something better with this
+ */
+// undo and redo functions
+var undoing = false;
+var undo_stack = new Array();
+var redo_stack = new Array();
+
 var webwork = webwork || { REVISION: '0' };
 
 
@@ -27,13 +37,6 @@ webwork.requestObject = {
     "command":""
 };
 webwork.webserviceURL = "";
-webwork.alert_template = _.template('<div class="alert <%= classes %> fade in"><a class="close" data-dismiss="alert" href="#">×</a><%= message %></div>');
-webwork.alert = function(message, classes){
-    console.log('alert');
-    //developers have to add a messages div (span, whatever) to the app to see messages
-    $('#messages').html(webwork.alert_template({message: message, classes: classes}));
-    setTimeout(function(){$(".alert").alert('close')}, 2000);
-};
 
 webwork.Problem = Backbone.Model.extend({
     defaults:function () {
@@ -74,10 +77,18 @@ webwork.ProblemList = Backbone.Collection.extend({
     model:webwork.Problem,
 
     initialize: function(){
+        var self = this;
         this.defaultRequestObject = {
 
         };
         _.defaults(this.defaultRequestObject, webwork.requestObject);
+
+        if(this.addProblem && this.removeProblem){
+            this.on('add', this.addProblem, this);
+            this.on('remove', this.removeProblem, this);
+        }
+        this.syncing = false;
+        this.on('syncing', function(value){self.syncing = value});
     },
 
     comparator: function(problem) {
@@ -92,10 +103,10 @@ webwork.ProblemList = Backbone.Collection.extend({
 
         var requestObject = {};
         _.defaults(requestObject, this.defaultRequestObject);
-
+        self.trigger('syncing', true);
         $.post(webwork.webserviceURL, requestObject,
             function (data) {
-                //try {//this is the wrong way to be error checking
+
                 var response = $.parseJSON(data);
 
                 var problems = response.result_data.split(",");
@@ -107,10 +118,8 @@ webwork.ProblemList = Backbone.Collection.extend({
                     }
                 }
                 self.reset(newProblems);
-                //document.getElementById(workAroundTheClosure.name + workAroundTheClosure.id).innerHTML = workAroundTheClosure.name + " (" + workAroundTheClosure.problemArray.length + ")";
-                /*} catch (err) {
-                 showErrorResponse(data);
-                 }*/
+                //self.trigger('sync');
+                self.trigger('syncing', false);
             }
         );
     }
@@ -129,9 +138,6 @@ webwork.Set = Backbone.Model.extend({
             xml_command: "listSetProblems"
         });
 
-
-        //this.get('problems').on('add', this.addProblem, this);
-        //this.get('problems').on('remove', this.removeProblem, this);
         this.get('problems').fetch();
     }
 
@@ -141,11 +147,14 @@ webwork.SetList = Backbone.Collection.extend({
     model:webwork.Set,
 
     initialize: function(){
+        var self = this;
         this.defaultRequestObject = {};
 
         _.defaults(this.defaultRequestObject, webwork.requestObject);
+        this.syncing = false;
+        this.on('syncing', function(value){self.syncing = value});
     },
-    //think it's fetch I want to replace:
+
     fetch:function () {
         var self = this;
 
@@ -153,30 +162,21 @@ webwork.SetList = Backbone.Collection.extend({
             xml_command: "listSets"
         };
         _.defaults(requestObject, this.defaultRequestObject);
-        console.log("starting set list");
+        self.trigger('syncing', true);
         $.post(webwork.webserviceURL, requestObject, function (data) {
-            //try {
             var response = $.parseJSON(data);
-            console.log("result: " + response.server_response);
+
             var setNames = response.result_data.split(",");
             setNames.sort();
-            console.log("found these sets: " + setNames);
+
             var newSets = new Array();
             for (var i = 0; i < setNames.length; i++) {
                 //workAroundSetList.renderList(workAroundSetList.setNames[i]);
                 newSets.push({name:setNames[i]})
             }
             self.reset(newSets);
-            /*} catch (err) {
-             showErrorResponse(data);
-             }*/
+            self.trigger('syncing', false);
         });
     }
 });
 
-//set up alerts to close
-$().alert();
-//Some default ajax stuff we can keep it or not
-$(document).ajaxError(function(e, jqxhr, settings, exception) {
-    webwork.alert(exception, "alert-error");
-});
