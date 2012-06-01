@@ -23,9 +23,6 @@
 # configuration file (webwork.apache-config) and is available for use here. In
 # addition, the $courseName variable holds the name of the current course.
 
-################################################################################
-# Seed variables
-################################################################################
 
 include("conf/prelocal.conf");
 include("VERSION");
@@ -46,47 +43,6 @@ $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 $webwork_courses_url = "/webwork2_course_files";
 $webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the course directory
 
-################################################################################
-# Paths to external programs 
-################################################################################
-
-# system utilities
-$externalPrograms{mv}    = "/bin/mv";
-$externalPrograms{cp}    = "/bin/cp";
-$externalPrograms{rm}    = "/bin/rm";
-$externalPrograms{mkdir} = "/bin/mkdir";
-$externalPrograms{tar}   = "/bin/tar";
-$externalPrograms{gzip}  = "/bin/gzip";
-
-# equation rendering/hardcopy utiltiies
-$externalPrograms{latex}    = "/usr/bin/latex";
-$externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape";
-$externalPrograms{dvipng}   = "/usr/bin/dvipng";
-$externalPrograms{tth}      = "/usr/bin/tth";
-
-####################################################
-# NetPBM - basic image manipulation utilities
-# Most sites only need to configure $netpbm_prefix.
-####################################################
-my $netpbm_prefix = "/usr/bin";
-$externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
-$externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
-$externalPrograms{pnmtops}  = "$netpbm_prefix/pnmtops";
-$externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
-$externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
-
-# url checker
-$externalPrograms{checkurl} = "/usr/bin/lwp-request -d -mHEAD "; # or "/usr/local/bin/w3c -head "
-
-# image conversions utiltiies
-# the source file is given on stdin, and the output expected on stdout.
-$externalPrograms{gif2eps} = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
-$externalPrograms{png2eps} = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
-$externalPrograms{gif2png} = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
-
-# mysql clients
-$externalPrograms{mysql}     = "/usr/bin/mysql";
-$externalPrograms{mysqldump} = "/usr/bin/mysqldump";
 
 ################################################################################
 # Mail settings
@@ -168,7 +124,7 @@ $mail{editor_window_columns} = 100;
 # Customizing the action of the "Email your instructor" button
 ###################################################
 
-# Customizing the behavior fo this button is best done by copying the lines below, entering them
+# Customizing the behavior for this button is best done by copying the lines below, entering them
 # in the postlocal.conf file and making the desired modifications. 
 # Then you will not need to update these modifications
 # when you download a new version of WeBWorK.
@@ -264,6 +220,7 @@ $webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdoc
 $webworkURLs{htdocs}        = "$webwork_htdocs_url";
 
 # Location of web-accessible temporary files, such as equation images.
+# These two should be set in prelocal.conf -- not here since this can be overwritten by new versions.
 $webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
 $webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
 
@@ -503,20 +460,21 @@ $default_status = "Enrolled";
 # GRANT SELECT ON webwork.* TO webworkRead@localhost IDENTIFIED BY 'passwordRO';
 # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
 
-$database_dsn = "dbi:mysql:webwork";
-$database_username = "webworkWrite";
-$database_password = "";
-$database_debug = 0;
 
-# Variables for sql_moodle database layout.
-$moodle_dsn = "dbi:mysql:moodle";
-$moodle_username = $database_username;
-$moodle_password = $database_password;
-$moodle_table_prefix = "mdl_";
-$moodle17 = 0;
+################################################################################
+# set these variables in prelocal.conf
+#
+# $database_dsn = "dbi:mysql:webwork";
+# $database_username = "webworkWrite";
+# $database_password = ""; #set this in prelocal.conf
+# $database_debug = 0;
+################################################################################
 
-# Several database are defined in the file conf/database.conf and stored in the
-# hash %dbLayouts.
+
+
+# Database schemas are defined in the file conf/database.conf and stored in the
+# hash %dbLayouts. The standard schema is called "sql_single";
+
 include "conf/database.conf";
 
 # Select the default database layout. This can be overridden in the course.conf
@@ -552,8 +510,6 @@ $problemLibrary_db = {
 # Logs
 ################################################################################
 
-# FIXME: take logs out of %webworkFiles/%courseFiles and give them their own
-# top-level hash.
 
 # Logs data about how long it takes to process problems. (Do not confuse this
 # with the /other/ timing log which can be set by WeBWorK::Timing and is used
@@ -581,7 +537,7 @@ $courseFiles{logs}{login_log}       = "$courseDirs{logs}/login.log";
 $courseFiles{logs}{activity_log} = '';
 
 ################################################################################
-# Site defaults (FIXME: what other things could be "site defaults"?)
+# Site defaults (Usually overridden in postlocal.conf)
 ################################################################################
 
 # Set the default timezone of courses on this server. To get a list of valid
@@ -621,7 +577,7 @@ $siteDefaults{default_templates_course} ="modelCourse";
 # current database layout is found.
 # 
 $authen{user_module} = {
-	sql_moodle => "WeBWorK::Authen::Moodle",
+	# sql_moodle => "WeBWorK::Authen::Moodle",
 	# sql_ldap   => "WeBWorK::Authen::LDAP",
 	#"*" => "WeBWorK::Authen",
 	"*" => "WeBWorK::Authen::Basic_TheLastOption",
@@ -633,15 +589,11 @@ $authen{user_module} = {
 # 
 $authen{proctor_module} = "WeBWorK::Authen::Proctor";
 
-# Options for particular authentication modules
 
-# $authen{moodle_options} = {
-# 	dsn => $moodle_dsn,
-# 	username => $moodle_username,
-# 	password => $moodle_password,
-# 	table_prefix => $moodle_table_prefix,
-# 	moodle17 => $moodle17,
-# };
+
+
+# If you are using ldap this next snippet should be copied and entered into postlocal.conf.
+# Make modifications there so that it works with your local LDAP protocol
 
 $authen{ldap_options} = {
 	# hosts to attempt to connect to, in order. For example:
@@ -692,7 +644,7 @@ $authen{ldap_options} = {
 };
 
 ################################################################################
-# Authorization system
+# Authorization system (Make local overrides in postlocal.conf )
 ################################################################################
 
 # this section lets you define which groups of users can perform which actions.
@@ -709,6 +661,7 @@ $authen{ldap_options} = {
 	grade_proctor => 3,
 	ta => 5,
 	professor => 10,
+	admin     => 20,
 );
 
 # this hash maps operations to the roles that are allowed to perform those
@@ -1083,6 +1036,113 @@ $pg{ansEvalDefaults} = {
 };
 
 ################################################################################
+# Authorization system (Make local overrides in postlocal.conf )
+################################################################################
+
+# this section lets you define which groups of users can perform which actions.
+
+# this hash maps a numeric permission level to the name of a role. the number
+# assigned to a role is significant -- roles with higher numbers are considered
+# "more privileged", and are included when that role is listed for a privilege
+# below.
+# 
+%userRoles = (
+	guest => -5,
+	student => 0,
+	login_proctor => 2,
+	grade_proctor => 3,
+	ta => 5,
+	professor => 10,
+	admin     => 20,
+);
+
+# this hash maps operations to the roles that are allowed to perform those
+# operations. the role listed and any role with a higher permission level (in
+# the %userRoles hash) will be allowed to perform the operation. If the role
+# is undefined, no users will be allowed to perform the operation.
+# 
+%permissionLevels = (
+	login                          => "guest",
+	report_bugs                    => "ta",
+	submit_feedback                => "student",
+	change_password                => "student",
+	change_email_address           => "student",
+	
+	proctor_quiz_login             => "login_proctor",
+	proctor_quiz_grade             => "grade_proctor",
+	view_proctored_tests           => "student",
+	view_hidden_work               => "ta",
+	
+	view_multiple_sets             => "ta",
+	view_unopened_sets             => "ta",
+	view_hidden_sets               => "ta",
+	view_answers                   => "ta",
+	view_ip_restricted_sets        => "ta",
+	
+	become_student                 => "professor",
+	access_instructor_tools        => "ta",
+	score_sets                     => "professor",
+	send_mail                      => "professor",
+	receive_feedback               => "ta",
+	
+	create_and_delete_problem_sets => "professor",
+	assign_problem_sets            => "professor",
+	modify_problem_sets            => "professor",
+	modify_student_data            => "professor",
+	modify_classlist_files         => "professor",
+	modify_set_def_files           => "professor",
+	modify_scoring_files           => "professor",
+	modify_problem_template_files  => "professor",
+	manage_course_files            => "professor",
+	
+	create_and_delete_courses      => "professor",
+	fix_course_databases           => "professor",
+	
+	##### Behavior of the interactive problem processor #####
+	
+	show_correct_answers_before_answer_date         => "ta",
+	show_solutions_before_answer_date               => "ta",
+	avoid_recording_answers                         => "ta",
+	# Below this level, old answers are never initially shown
+	can_show_old_answers_by_default                 => "student",
+	# at this level, we look at showOldAnswers for default value
+	# even after the due date
+	can_always_use_show_old_answers_default         => "professor",
+	check_answers_before_open_date                  => "ta",
+	check_answers_after_open_date_with_attempts     => "ta",
+	check_answers_after_open_date_without_attempts  => "guest",
+	check_answers_after_due_date                    => "guest",
+	check_answers_after_answer_date                 => "guest",
+	create_new_set_version_when_acting_as_student   => undef,
+	print_path_to_problem                           => "professor", # see "Special" PG environment variables
+	record_set_version_answers_when_acting_as_student => undef,
+	record_answers_when_acting_as_student           => undef,
+	# "record_answers_when_acting_as_student" takes precedence
+	# over the following for professors acting as students:
+	record_answers_before_open_date                 => undef,
+	record_answers_after_open_date_with_attempts    => "student",
+	record_answers_after_open_date_without_attempts => undef,
+	record_answers_after_due_date                   => undef,
+	record_answers_after_answer_date                => undef,
+	dont_log_past_answers                           => "professor",
+	# does the user get to see a dump of the problem?
+	view_problem_debugging_info                     => "ta",
+	
+	##### Behavior of the Hardcopy Processor #####
+	
+	download_hardcopy_multiuser  => "ta",
+	download_hardcopy_multiset   => "ta",
+	download_hardcopy_view_errors =>"professor",
+	download_hardcopy_format_pdf => "guest",
+	download_hardcopy_format_tex => "ta",
+);
+
+# This is the default permission level given to new students and students with
+# invalid or missing permission levels.
+$default_permission_level = $userRoles{student};
+
+
+################################################################################
 # Compatibility
 ################################################################################
 
@@ -1237,3 +1297,4 @@ $webservices = {
 
 
 include("conf/postlocal.conf");
+1; #final line of the file to reassure perl that it was read properly.
