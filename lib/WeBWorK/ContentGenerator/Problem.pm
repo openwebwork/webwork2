@@ -262,9 +262,9 @@ sub attemptResults {
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   # unless student answer contains entry
-		my $resultString = $answerScore >= 1 ? CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct")) :
+		my $resultString = $answerScore >= 1 ? CGI::span({class=>"ResultsWithoutError"}, $r->maketext("Correct")) :
 		                   $answerScore > 0  ? $r->maketext("[_1]% correct", int($answerScore*100)) :
-                                                       CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
+                                                       CGI::span({class=>"ResultsWithError"}, $r->maketext("Incorrect"));
 		$fully = $r->maketext("completely") if $answerScore >0 and $answerScore < 1;
 		
 		push @correct_ids,   $name if $answerScore == 1;
@@ -601,7 +601,7 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
 		}
 
-		my $visiblityStateClass = ($set->visible) ? $r->maketext("visible") : $r->maketext("hidden");
+		my $visiblityStateClass = ($set->visible) ? $r->maketext("Visible") : $r->maketext("Hidden");
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
 		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::font({class=>$visiblityStateClass}, $visiblityStateText))));
 
@@ -723,6 +723,19 @@ sub pre_header_initialize {
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
 		},
 	);
+	# sometimes, for example if the file can't be read, $pg->{pgcore} won't be defined
+	# because the PG file is never run
+	#
+	if (defined ($pg->{pgcore}) ) {
+		my $debug_msg = CGI::br().join( CGI::br(), @{ $pg->{pgcore}->get_debug_messages});
+		$self->addmessage($debug_msg ) if $debug_msg;
+		$self->{pgdebug}          = $pg->{pgcore}->get_debug_messages;
+		$self->{pgwarning}        = $pg->{pgcore}->get_warning_messages;
+		$self->{pginternalerrors} = $pg->{pgcore}->get_internal_debug_messages ;
+		$self->{pgerrors} = @{$self->{pgdebug}} || @{$self->{pgwarning}} || @{$self->{pginternalerrors}}||0;
+	} else {
+		$self->{pgerrors}=undef;  # unable to obtain errors
+	}
 
 	debug("end pg processing");
 	
@@ -769,15 +782,16 @@ sub warnings {
 	"";
 }
 
-sub if_errors($$) {
-	my ($self, $arg) = @_;
-	
-	if ($self->{isOpen}) {
-		return $self->{pg}->{flags}->{error_flag} ? $arg : !$arg;
-	} else {
-		return !$arg;
-	}
-}
+### #FIXME  not clear this is ever used
+# sub if_errors($$) {
+# 	my ($self, $arg) = @_;
+# 	
+# 	if ($self->{isOpen}) {
+# 		return $self->{pg}->{flags}->{error_flag} ? $arg : !$arg;
+# 	} else {
+# 		return !$arg;
+# 	}
+# }
 
 sub head {
 	my ($self) = @_;
@@ -792,12 +806,6 @@ sub head {
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
-}
-
-sub post_header_text {
-	my ($self) = @_;
-	return "" if ( $self->{invalidSet} );
-    return $self->{pg}->{post_header_text} if $self->{pg}->{post_header_text};
 }
 
 sub post_header_text {
@@ -1072,6 +1080,7 @@ sub output_editorLink{
 
 	if ($pg->{flags}->{error_flag}) {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
+		    print "Call errorOutput</br>";
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 			print $editorLink;
 			print $editorLink2;
@@ -1209,8 +1218,6 @@ sub output_score_summary{
 	my $submitAnswers = $self->{submitAnswers};
 
 	# score summary
-	warn "num_correct =", $problem->num_correct,"num_incorrect=",$problem->num_incorrect 
-	        unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
@@ -1236,7 +1243,6 @@ sub output_score_summary{
 	#		$setClosedMessage .= " Additional attempts will not be recorded.";
 	#	}
 	#}
-
 	unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
 		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
 		print CGI::p(join("",
@@ -1342,7 +1348,8 @@ sub output_summary{
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
 	# do I need to check $will{showCorrectAnswers} to make preflight work??
-	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
+
+	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 		# print this if user submitted answers OR requested correct answers	    
 	    my $results = $self->attemptResults($pg, 1,
 			$will{showCorrectAnswers},
@@ -1399,9 +1406,6 @@ sub output_custom_edit_message{
 	
 	return "";
 }
-
-
-
 
 # output_past_answer_button
 
