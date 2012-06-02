@@ -9,11 +9,13 @@ select{
 #problems_container{
     overflow:auto;
     height:100%;
+    -webkit-overflow-scrolling: touch;
 }
 
 #homework_sets_container{
     overflow:auto;
     height:100%;
+    -webkit-overflow-scrolling: touch;
 }
 
 #homework_sets_container ul li{

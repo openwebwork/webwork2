@@ -100,6 +100,7 @@ sub head {
   print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
 
   print qq!<script src="$webwork_htdocs_url/js/jquery-ui-1.8.16.custom.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
 
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/json2.js"></script>!;
