@@ -1,35 +1,34 @@
-
-(function(){
-  "use strict";
+(function () {
+    "use strict";
 
     /**
-    * Creates an instance of keys, an extra row of buttons for the iOS virtual keyboard in webapps.
-    *
-    * @constructor
-    * @this {keys}
-    * @param {Array} syms An array of characters that you want the new keyboard to containt (this can be added to later).
-    * @param {Object} options An object containing options for the new keys, this is optional
-    */
-    var Keys = function(syms, opt){
+     * Creates an instance of keys, an extra row of buttons for the iOS virtual keyboard in webapps.
+     *
+     * @constructor
+     * @this {keys}
+     * @param {Array} syms An array of characters that you want the new keyboard to containt (this can be added to later).
+     * @param {Object} options An object containing options for the new keys, this is optional
+     */
+    var Keys = function (syms, opt) {
         this.symbols = syms;
-        this.options = opt;
+        this.options = opt ? opt : {};
         //we haven't rendered anything yet
         this.board = false;
         this.input = false; //the currently focused input
     };
 
-    Keys.prototype.hasClass = function(cls) {
-        return this.board.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));
+    Keys.prototype.hasClass = function (cls) {
+        return this.board.className.match(new RegExp('(\\s|^)' + cls + '(\\s|$)'));
     }
 
-    Keys.prototype.addClass = function(cls) {
-        if (!this.hasClass(cls)) this.board.className += " "+cls;
+    Keys.prototype.addClass = function (cls) {
+        if (!this.hasClass(cls)) this.board.className += " " + cls;
     }
 
-    Keys.prototype.removeClass = function(cls) {
+    Keys.prototype.removeClass = function (cls) {
         if (this.hasClass(cls)) {
-            var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
-            this.board.className=this.board.className.replace(reg,' ');
+            var reg = new RegExp('(\\s|^)' + cls + '(\\s|$)');
+            this.board.className = this.board.className.replace(reg, ' ');
         }
     }
 
@@ -39,8 +38,8 @@
      * @this {keys}
      * @return {keys} just in case.
      */
-    Keys.prototype.setOrientation = function(){
-        if(window.orientation == 0 || 180){
+    Keys.prototype.setOrientation = function () {
+        if (window.orientation == 0 || 180) {
             this.removeClass("landscape");
             this.addClass("portrait");
         } else {
@@ -57,62 +56,131 @@
      * @self {keys}
      * @return {keys} just in case.
      */
-    Keys.prototype.build = function(){
+    Keys.prototype.build = function () {
         var self = this;
         //make sure we're on iOS (just iPad for now)
         if (this.options.debug || (navigator.userAgent.indexOf('iPhone') != -1) || (navigator.userAgent.indexOf('iPod') != -1) || (navigator.userAgent.indexOf('iPad') != -1)) {
-            if(!self.board){
+            if (!self.board) {
                 self.board = document.createElement('div');
                 self.board.id = "keyboard";
             }
-            if(!document.getElementById(self.board.id)){
+            if (!document.getElementById(self.board.id)) {
                 document.body.appendChild(self.board);
             }
 
-            self.symbols.forEach(function(key){
+            self.symbols.forEach(function (key) {
                 var button = document.createElement('a');
                 button.value = key;
                 button.innerHTML = key;
                 button.className = "key";
                 button.hidefocus = "true";
 
-                button.addEventListener('touchstart', function(event){
-                    event.preventDefault();
-                }, false);
-                
+                /*button.addEventListener('touchstart', function(event){
+                 event.preventDefault();
+                 }, false);*/
+
                 /*button.addEventListener('mouseup', function(event){
-                    event.preventDefault();
-                }, false);*/
+                 event.preventDefault();
+                 }, false);*/
                 
-                
-                button.addEventListener('touchend', function(event){
+                 var insertAtCaret = function(el,text) {
+    var txtarea = el;
+    var scrollPos = txtarea.scrollTop;
+    var strPos = 0;
+strPos = txtarea.selectionStart;
+
+    var front = (txtarea.value).substring(0,strPos);  
+    var back = (txtarea.value).substring(strPos,txtarea.value.length); 
+    txtarea.value=front+text+back;
+    strPos = strPos + text.length;
+                    txtarea.selectionStart = strPos;
+        txtarea.selectionEnd = strPos;
+        txtarea.focus();
+    txtarea.scrollTop = scrollPos;
+}
+
+                button.hitButton = function (event) {
 
                     //event.preventDefault();
                     //self.input.focus();
                     //have to check for normal input vs just content editable at some point
-                    self.input.value += button.value;
 
+                    if (self.input.replaceRange) {
+                        var cursor_temp = self.input.getCursor();
+                        self.input.replaceRange(button.value, cursor_temp);
+                        /*var cursor_temp = self.input.getCursor();
+                        self.input.setValue(self.input.getValue() + button.value);
+                        cursor_temp.ch += 1;
+                        self.input.setCursor(cursor_temp);*/
+                    } else {
+                        insertAtCaret(self.input, button.value);
+                    }
+                    event.preventDefault();
+                    button.removeEventListener('touchend', button.hitButton, false);
+
+                };
+
+                button.addEventListener('touchstart',function(){
+                    //event.preventDefault();
+                    button.addEventListener('touchend', button.hitButton, false);
                 }, false);
+                button.addEventListener('touchmove', function(){
+                    //event.preventDefault();
+                    button.removeEventListener('touchend', button.hitButton, false);
+                }, false);
+
+                if (self.options.debug) {
+                    button.addEventListener('mousedown', function (event) {
+                        event.preventDefault();
+                    }, false);
+                    button.addEventListener('mouseup', function (event) {
+                        event.preventDefault();
+                    }, false);
+                    button.addEventListener('click', button.hitButton, false);
+                }
+
                 self.board.appendChild(button);
             });
 
+
             //get orientation
             self.setOrientation();
-            document.body.addEventListener('orientationchange', function(event){
+            document.body.addEventListener('orientationchange', function (event) {
                 self.setOrientation();
             }, false);
 
             var inputs = document.getElementsByTagName('input');
-            for(var i = 0; i < inputs.length; i++){
-               inputs[i].addEventListener('focus', function(){
+            for (var i = 0; i < inputs.length; i++) {
+                inputs[i].addEventListener('focus', function () {
                     self.input = this;
                     self.show();
-               }, false);
-               inputs[i].addEventListener('blur', function(){self.hide()}, false);
+                }, false);
+                inputs[i].addEventListener('blur', function () {
+                    self.hide()
+                }, false);
             }
-            window.addEventListener('scroll', function(){
-                if(self.input){
-                    self.board.style.top = window.pageYOffset+"px";
+            if (this.options.codemirrors) {
+                for (var i = 0; i < this.options.codemirrors.length; i++) {
+                    var currentMirror = this.options.codemirrors[i];
+                    currentMirror.setOption('onFocus', function () {
+                        self.input = currentMirror;
+                        self.show();
+                    });
+                    currentMirror.setOption('onBlur', function () {
+                        self.hide();
+                    });
+                }
+            }
+
+            window.addEventListener('scroll', function () {
+                if (self.input) {
+                    self.board.style.top = window.pageYOffset + "px";
+                }
+            }, false);
+            window.addEventListener('resize', function () {
+                if (self.input) {
+                    self.board.style.top = window.pageYOffset + "px";
+                    self.board.style.width = window.innerWidth + "px";
                 }
             }, false);
         }
@@ -120,17 +188,18 @@
         return this;
     };
 
-    Keys.prototype.hide = function(){
+    Keys.prototype.hide = function () {
         this.removeClass('visible');
         this.input = false;
         this.board.style.top = "-60px";
     }
 
-    Keys.prototype.show = function(){
+    Keys.prototype.show = function () {
         var self = this;
         this.addClass('visible');
-        self.board.style.top = (window.pageYOffset)+"px";
+        self.board.style.top = (window.pageYOffset) + "px";
+        self.board.style.width = window.innerWidth + "px";
     }
-    
+
     window.Keys = Keys;
 })();
