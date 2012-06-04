@@ -741,6 +741,35 @@ sub pre_header_initialize {
 	$self->{pg} = $pg;
 }
 
+sub warnings {
+	my $self = shift;
+	# print "entering warnings() subroutine internal messages = ", $self->{pgerrors},CGI::br();
+ 	my $r  = $self->r;
+# 	my $pg = $self->{pg};
+# 	warn "type of pg is ",ref($pg);
+#  	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
+    # print warning messages
+    if (not defined $self->{pgerrors} ) {
+    	print CGI::start_div();
+		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question failed to render"));
+		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
+		print CGI::end_div();
+    } elsif ( $self->{pgerrors} > 0 ) {
+        my @pgdebug          = @{ $self->{pgdebug}           };
+ 		my @pgwarning        = @{ $self->{pgwarning}         };
+ 		my @pginternalerrors = @{ $self->{pginternalerrors}  };
+		print CGI::start_div();
+		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
+		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
+		print CGI::p(CGI::h3($r->maketext("PG warning messages" ) ),join(CGI::br(), @pgwarning)  )  if @pgwarning ;	
+		print CGI::p(CGI::h3($r->maketext("PG internal errors" ) ), join(CGI::br(), @pginternalerrors )) if @pginternalerrors;
+		print CGI::end_div();
+	} 
+	# print "proceeding to SUPER::warnings";
+	$self->SUPER::warnings();
+	"";
+}
+
 sub if_errors($$) {
 	my ($self, $arg) = @_;
 	
@@ -906,7 +935,11 @@ sub body {
 	my $set = $self->{set};
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
-	
+
+	print CGI::p("Entering Problem::body subroutine.  
+	         This indicates an old style system.template file -- consider upgrading. ",
+	         caller(1), );
+
 	my $valid = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::check_invalid($self);
 	unless($valid eq "valid"){
 		return $valid;
@@ -1004,7 +1037,7 @@ sub output_editorLink{
 	my $pg              = $self->{pg};
 	
 	my $r = $self->r;
-	
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
@@ -1015,22 +1048,31 @@ sub output_editorLink{
 	# format as "[edit]" like we're doing with course info file, etc.
 	# add edit link for set as well.
 	my $editorLink = "";
+	my $editorLink2 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
-	if ($authz->hasPermissions($user, "modify_problem_sets")) {
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor1}) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit this problem")));
 	}
-	
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor2}) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
+		$editorLink2 = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit this problem with new editor")));
+	}
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
+
+			print $editorLink;
+			print $editorLink2;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
@@ -1038,6 +1080,7 @@ sub output_editorLink{
 	}
 	else{
 		print $editorLink;
+		print $editorLink2;
 	}
 	return "";
 }
@@ -1071,8 +1114,8 @@ sub output_checkboxes{
 		),"&nbsp;";
 	}
 	if ($can{showHints}) {
-		print CGI::span({style=>"color:red"},
-			WeBWorK::CGI_labeled_input(
+
+		print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
 				-label_text => $r->maketext("Show Hints"),
@@ -1087,7 +1130,6 @@ sub output_checkboxes{
 					-name    => "showHints",
 					-value   => 1,
 				}
-			)
 		),"&nbsp;";
 	}
 	if ($can{showSolutions}) {
@@ -1224,18 +1266,18 @@ sub output_misc{
 	my %will = %{ $self->{will} };
 	my $user = $r->param('user');
 
-	print CGI::start_div();
-	
-	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{flags}->{DEBUG_messages}} );
-	my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{flags}->{WARNING_messages}} );
-	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
-	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
-	
-	print CGI::p({style=>"color:red;"}, $r->maketext("Checking additional error messages")) if $pgerrordiv  ;
- 	print CGI::p("pg debug<br/> $pgdebug"                   ) if $pgdebug ;
-	print CGI::p("pg warning<br/>$pgwarning"                ) if $pgwarning ;	
-	print CGI::p("pg internal errors<br/> $pginternalerrors") if $pginternalerrors;
-	print CGI::end_div()                                      if $pgerrordiv ;
+# 	print CGI::start_div();
+# 	
+# 	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{DEBUG_messages}} );
+# 	my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{WARNING_messages}} );
+# 	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
+# 	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
+# 	
+# 	print CGI::p({style=>"color:red;"}, $r->maketext("Checking additional error messages")) if $pgerrordiv  ;
+#  	print CGI::p($r->maketext("pg debug"),CGI::br(), $pgdebug                 )   if $pgdebug ;
+# 	print CGI::p($r->maketext("pg warning"),CGI::br(),$pgwarning                ) if $pgwarning ;	
+# 	print CGI::p($r->maketext("pg internal errors"),CGI::br(), $pginternalerrors) if $pginternalerrors;
+# 	print CGI::end_div()                                                          if $pgerrordiv ;
 	
 	# save state for viewOptions
 	print  CGI::hidden(
@@ -1297,7 +1339,9 @@ sub output_summary{
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
 	# do I need to check $will{showCorrectAnswers} to make preflight work??
-	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
+
+	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
+
 		# print this if user submitted answers OR requested correct answers	    
 	    my $results = $self->attemptResults($pg, 1,
 			$will{showCorrectAnswers},

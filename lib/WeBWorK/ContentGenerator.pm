@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2012 The WeBWorK Project, http://github.com/openwebwork
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -57,7 +57,7 @@ use WeBWorK::Localize;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
-
+our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
 
 BEGIN {
@@ -968,11 +968,12 @@ Print links to siblings of the current object.
 sub footer(){
 	my $self = shift;
 	my $r = $self->r;
-	
+	my $ce = $r->ce;
+	my $version = $ce->{WW_VERSION}||"unknown -- set version in global.conf.dist";
+	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
 	print CGI::p({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
-	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; 1996-2011", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project")));
-	
-	return "";
+	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; $copyright_years", "| version: $version |", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
+	return ""
 }
 
  
@@ -998,10 +999,6 @@ can be done in the template itself.
 # }
 sub timestamp {
 	my ($self, $args) = @_;
-# 	my $r = $self->r;
-# 	my $ce = $r->ce;
-# 	my $tz = $ce->{siteDefaults}{timezone};
-# 	warn "testing", $r, $ce, $tz;
     # need to use the formatDateTime in this file (some subclasses access Util's version.
 	return( $self->formatDateTime( time() ) );
 }
@@ -1067,7 +1064,9 @@ The implementation in this package checks for a note in the request named
 sub warnings {
 	my ($self) = @_;
 	my $r = $self->r;
-	
+
+	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
+
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 	print $self->warningOutput($warnings) if $warnings;
@@ -1312,9 +1311,17 @@ sub pathMacro {
 		my $name = shift @path;
 		my $url = shift @path;
 		if ($url and not $args{textonly}) {
-			push @result, CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name)));
+		    if($args{style} eq "bootstrap"){
+		        push @result, CGI::li(CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name))));
+		    } else {
+			    push @result, CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name)));
+		    }
 		} else {
-			push @result, $r->maketext($name);
+		    if($args{style} eq "bootstrap"){
+                push @result, CGI::li({-class=>"active"}, $r->maketext($name));
+            } else {
+			    push @result, $r->maketext($name);
+			}
 		}
 	}
 	
@@ -1945,7 +1952,8 @@ problem rendering.
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
 	my $r = $self->{r};
-	
+
+	print "Entering ContentGenerator::errorOutput subroutine</br>" if $TRACE_WARNINGS;
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = $r->method;
 	my $uri = $r->uri;
@@ -2003,7 +2011,7 @@ and content generation.
 sub warningOutput($$) {
 	my ($self, $warnings) = @_;
 	my $r = $self->{r};
-	
+	print "Entering ContentGenerator::warningOutput subroutine</br>" if $TRACE_WARNINGS;
 	my @warnings = split m/\n+/, $warnings;
 	foreach my $warning (@warnings) {
 		#$warning = escapeHTML($warning);  # this would prevent using tables in output from answer evaluators

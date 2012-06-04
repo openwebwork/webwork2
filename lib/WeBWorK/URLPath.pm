@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2007 The WeBWorK Project, http://github.com/openwebwork
 # $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.36 2008/04/29 19:27:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -283,7 +283,8 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_set_list instructor_add_users instructor_achievement_list
+		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2 
+		    instructor_add_users instructor_achievement_list
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_set_maker instructor_set_maker2 instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
@@ -543,7 +544,8 @@ our %pathTypes = (
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
- 	
+
+
 	################################################################################
 
         instructor_achievement_list => {

@@ -133,11 +133,11 @@ sub new {
 			local @INC = ();
 			my $result = do $fullPath;
 			if ($!) {
-				warn "Failed to read include file $fullPath (has it been created from the corresponding .dist file?): $!";
+				die "Failed to read include file $fullPath (has it been created from the corresponding .dist file?): $!";
 			} elsif ($@) {
-				warn "Failed to compile include file $fullPath: $@";
+				die "Failed to compile include file $fullPath: $@";
 			} elsif (not $result) {
-				warn "Include file $fullPath did not return a true value.";
+				die "Include file $fullPath did not return a true value.";
 			}
 		}
 	} ];

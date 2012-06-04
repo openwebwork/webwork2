@@ -161,7 +161,7 @@ sub reorderProblems {
 	  	die "global $problem not found." unless $problem;
 	  	#print "problem to be reordered: ".$problem."\n";
 	  	$db->putGlobalProblem($problem);
-	  
+
 	  	#need to deal with users?
 	  	foreach $user (@setUsers) {
   			#my $prob1 = $db->getUserProblem($user, $setID, $index);
