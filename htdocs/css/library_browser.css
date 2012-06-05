@@ -20,6 +20,7 @@ select{
 
 #homework_sets_container ul li{
     cursor: pointer;
+    white-space:nowrap;
 }
 
 #homework_sets_container ul li:hover{

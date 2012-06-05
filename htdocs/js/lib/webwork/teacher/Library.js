@@ -1,4 +1,7 @@
-
+/**
+ *
+ * @type {*}
+ */
 webwork.Library = Backbone.Model.extend({
     defaults:function () {
         return{
@@ -24,6 +27,10 @@ webwork.Library = Backbone.Model.extend({
     }
 });
 
+/**
+ *
+ * @type {*}
+ */
 webwork.LibraryList = Backbone.Collection.extend({
     model:webwork.Library,
 

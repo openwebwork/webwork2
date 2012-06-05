@@ -1,34 +1,58 @@
+
+// #Library Browser 3
+//
+// This is the current iteration of the library browser for webwork.
+// It's built out of models contained in the `webwork.*` framework that
+// you can find in the `js/lib/webwork` folder.
+//
+// The idea was to use this as a proof of concept of how to write single page
+// webapps for webwork out of a general client side framework quickly, easily
+// and in a way that's maintainable.
+//
+// The javascript framework is currently written with extensibility in mind.
+// So base models in the webwork.js file are added too and additional models are
+// provided for different situations.  For instance since library browser is used
+// by teachers we include the files in the `teacher` subdirectory and add in features
+// like adding and remove problems from a sets ProblemList and browsing a Library.
+
+//Start things off by wrapping everything in jquery so it will load after the dom is ready.
 $(function () {
 
+    //Since many of the views we'll define will all want to post alerts and messages to the same place
+    //we define a global template and alert function for them.
 
     var alert_template = _.template('<div class="alert <%= classes %> fade in"><a class="close" data-dismiss="alert" href="#">×</a><%= message %></div>');
+
     //set up alerts to close
     $().alert();
 
     var alert = function(message, classes){
-        console.log('alert');
-        console.log(message);
-        //developers have to add a messages div (span, whatever) to the app to see messages
         $('#messages').html(alert_template({message: message, classes: classes}));
         setTimeout(function(){$(".alert").alert('close')}, 5000);
     };
 
 
-    /*******************************************************************************
-     * The problem View
-     ******************************************************************************/
 
+    //##The problem View
 
-
+    //A view defined for the browser app for the webwork Problem model.
+    //There's no reason this same view couldn't be used in other pages almost as is.
     var ProblemView = Backbone.View.extend({
+        //We want the problem to render in a `li` since it will be included in a list
         tagName:"li",
+        //Add the 'problem' class to every problem
         className: "problem",
+        //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
 
+        //Register events that a problem's view should listen for,
+        //in this case it removes the problem if the button with class 'remove' is clicked.
         events:{
             "click .remove": 'clear'
         },
 
+        //In most model views initialize is used to set up listeners
+        //on the views model.
         initialize:function () {
             this.model.on('change:data', this.render, this);
             if(!this.options.remove_display){
@@ -69,20 +93,14 @@ $(function () {
         },
 
         clear: function(){
-            console.log("clear");
             this.model.collection.remove(this.model);
             this.model.clear();
         }
     });
 
-    //search was here
-
-    /*******************************************************************************
-     * The library View
-     ******************************************************************************/
 
 
-
+    //##The library View
     var LibraryView = Backbone.View.extend({
         template:_.template($('#Library-template').html()),
 
@@ -139,7 +157,8 @@ $(function () {
 
             return this;
         },
-
+        //Define a new function loadNextGroup so that we can just load a few problems at once,
+        //otherwise things get unwieldy :P
         loadNextGroup: function(){
             console.log("load more");
             console.log(this.startIndex);
@@ -185,13 +204,11 @@ $(function () {
             if(!(this.model.length > 0)){
                 this.model.fetch();
             }
-            console.log("init "+this.options.name);
         },
 
         render:function () {
 
             var self = this;
-            console.log("trying to call render on "+this.options.name);
             if(self.model.syncing){
                 self.$el.addClass("syncing white");
             }
@@ -223,13 +240,9 @@ $(function () {
             var self = this;
             self.$el.removeClass("syncing white");
             var selectedLib = this.model.getByCid(event.target.value);
-            console.log(selectedLib)
             if(selectedLib){
                 var view = new LibraryListView({model:selectedLib.get('children'), name: selectedLib.cid});
                 this.$('.'+this.options.name+".children").html(view.render().el);
-                console.log(view.render().el);
-                console.log(this.$('.'+this.options.name+" .children"));
-                console.log("trying to render "+selectedLib.cid);
                 libToLoad = selectedLib;
             }
         }
@@ -237,27 +250,7 @@ $(function () {
     });
 
 
-    /*******************************************************************************
-     * The set object
-     ******************************************************************************/
-// object
-    /*
-     function Set(setName) {// id might not exist..use date if nessisary
-     this.id = generateUniqueID();
-     this.name = setName;
-     this.problems = new Object(); // a hash of problems {id: problemInfo}
-     this.problemArray = new Array();// redunant but I don't have any better
-     // ideas atm for keeping order
-     this.displayBox;
-     this.previousOrder;
-     }
-     */
-
-
-
-
-
-//full set view, renders all problems etc
+    //##The main Set view
     var SetView = Backbone.View.extend({
         template:_.template($('#set-template').html()),
         events:{
@@ -284,7 +277,6 @@ $(function () {
 
         render:function () {
 
-            //Template and fix up, that was just ugly
             var self = this;
             if ($('#problems_container #' + this.model.get('name')).length == 0) {
                 $('#problems_container').tabs('add', "#"+this.model.get('name'), this.model.get('name') + " (" + this.model.get('problems').length + ")"); //could move to an after?
@@ -297,19 +289,14 @@ $(function () {
                 $("[href=#"+self.model.get('name')+"]").addClass("syncing");
             }
 
-            //this.$el.id = this.model.get('name');
-            //might have to refresh
             this.$('.list').sortable({
-                //handle: $('.handle'),
                 axis:'y',
                 start:function (event, ui) {
-                    console.log("handle test");
                     //self.previousOrder = $(this).sortable('toArray');
                 },
                 update:function (event, ui) {
                     //self.reorderProblems($(this).sortable('toArray'));
                     var newOrder = self.$('.list').sortable('toArray');
-                    console.log(newOrder);
                     for(var i = 0; i < newOrder.length; i++){
                         var problem = self.model.get('problems').getByCid(newOrder[i]);
                         if(problem){
@@ -328,8 +315,6 @@ $(function () {
         addOne: function(problem){
             var view = new ProblemView({model:problem});
             var rendered_problem = view.render().el;
-            console.log(rendered_problem);
-            console.log(this.$(".list"));
             this.$(".list").append(rendered_problem);
             this.$('.list').sortable('refresh');
 
@@ -340,20 +325,8 @@ $(function () {
             this.model.get('problems').each(function(model){self.addOne(model)});
         }
     });
-    /*
-     Set.prototype.renderProblem = function(problem) {
-     var newSetItem = problem.render(this.displayBox);
-     newSetItem.addEventListener("click", function(event) {
-     if (!event.altKey) {
-     $(".ww_selected").removeClass("ww_selected");
-     }
-     $(this).addClass("ww_selected");
-     }, false);
-     $(this.displayBox).sortable("refresh");
-     }
-     */
 
-
+    //##The Set view for the setlists
     var SetNameView = Backbone.View.extend({
         tagName:"li",
         template:_.template($('#setName-template').html()),
@@ -402,14 +375,7 @@ $(function () {
         }
     });
 
-    /*******************************************************************************
-     * SetList object needed variables: sets, displaybox, needed functions: create
-     * set
-     */
-
-
-
-
+    //##The SetList view
     var SetListView = Backbone.View.extend({
         tagName:"ul",
         template:_.template($('#setList-template').html()),
@@ -431,17 +397,6 @@ $(function () {
 
             self.$el.html(self.template());
 
-            /*this.$(".new_problem_set").droppable({
-                tolerance:'pointer',
-
-                hoverClass:'drophover',
-
-                drop:function (event, ui) {
-                    //Create a new set
-                }
-            });*/
-
-            //this.addAll();
             return this;
         },
 
@@ -462,12 +417,10 @@ $(function () {
     });
 
 
-    /*This is global in order not to confuse the poor select boxes..
-      They can never tell who went last :)
-     */
+    //This is global in order not to confuse the poor select boxes..
+    //They can never tell who went last :)
     var libToLoad = false;
     $("#load_problems").on("click", function(event){
-        console.log(libToLoad);
         if(libToLoad){
             var view = new LibraryView({model: libToLoad});
             view.render();
@@ -531,12 +484,6 @@ $(function () {
                         //document.getElementById("library_link").removeChild(document.getElementById("library_link").lastChild);
                         $(".ww_selected").removeClass("ww_selected");
                     }
-                });
-            $("#problem_sets_container").resizable({
-                cursor:'move',
-                //animate: true,
-                //ghost: true,
-                delay:0
             });
 
 
@@ -595,7 +542,7 @@ $(function () {
         }
     });
 
-
+    //instantiate an instance of our app.
     var App = new LibraryBrowser;
 
 });

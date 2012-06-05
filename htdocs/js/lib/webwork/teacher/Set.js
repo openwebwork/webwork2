@@ -1,4 +1,8 @@
-//different from add I hope
+
+/**
+ *
+ * @param model
+ */
 webwork.SetList.prototype.create = function (model) {
     this.add(model);
     var requestObject = {
