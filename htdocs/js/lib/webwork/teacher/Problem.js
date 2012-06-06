@@ -1,4 +1,9 @@
 //Problem admin functions
+
+/**
+ *
+ * @param problem
+ */
 webwork.ProblemList.prototype.addProblem = function (problem) {
     //this.add(problem);
     var self = this;
@@ -28,7 +33,10 @@ webwork.ProblemList.prototype.addProblem = function (problem) {
     });
 };
 
-
+/**
+ *
+ * @param problem
+ */
 webwork.ProblemList.prototype.removeProblem = function (problem) {
 
     var self = this;
@@ -59,6 +67,9 @@ webwork.ProblemList.prototype.removeProblem = function (problem) {
     //problem.destroy();
 };
 
+/**
+ *
+ */
 webwork.ProblemList.prototype.reorder = function(){
     var self = this;
     self.sort();

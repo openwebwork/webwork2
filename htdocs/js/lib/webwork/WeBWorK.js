@@ -6,6 +6,12 @@
     requires backbone.js, underscore.js, and their dependencies
 */
 
+/**
+ The WeBWorK javascript framework
+
+ @module WeBWorK
+ @main webwork
+ **/
 
 /**
  * Global stuff
@@ -16,14 +22,63 @@ var undoing = false;
 var undo_stack = new Array();
 var redo_stack = new Array();
 
+/**
+ *
+ * @class webwork
+ * @type Object
+ * @static
+ */
 var webwork = webwork || { REVISION: '0' };
 
+/**
+ The current logged in user
 
+ @property USER
+ @type String
+ @default "user-needs-to-be-defined-in-hidden-variable-id=hidden_user"
+ **/
 webwork.USER = "user-needs-to-be-defined-in-hidden-variable-id=hidden_user";
+/**
+ The current course
+
+ @property COURSE
+ @type String
+ @default "course-needs-to-be-defined-in-hidden-variable-id=hidden_courseID"
+ **/
 webwork.COURSE = "course-needs-to-be-defined-in-hidden-variable-id=hidden_courseID";
+/**
+ The session key regestered with the webwork server
+
+ @property SESSIONKEY
+ @type String
+ @default "session-key-needs-to-be-defined-in-hidden-variable-id=hidden_key"
+ **/
 webwork.SESSIONKEY = "session-key-needs-to-be-defined-in-hidden-variable-id=hidden_key"
+/**
+ The password, I don't think this is actually used at the moment
+
+ @property PASSWORD
+ @type String
+ @default "who-cares-what-the-password-is"
+ **/
 webwork.PASSWORD = "who-cares-what-the-password-is";
 // request object, I'm naming them assuming there may be different versions
+/**
+ * @property requestObject
+ * @type {Object}
+ * @default {
+ "xml_command":"",
+ "pw":"",
+ "password":webwork.PASSWORD,
+ "session_key":webwork.SESSIONKEY,
+ "user":"user-needs-to-be-defined",
+ "library_name":"Library",
+ "courseID":webwork.COURSE,
+ "set":"set0",
+ "new_set_name":"new set",
+ "command":""
+ }
+ */
 webwork.requestObject = {
     "xml_command":"",
     "pw":"",
@@ -36,8 +91,20 @@ webwork.requestObject = {
     "new_set_name":"new set",
     "command":""
 };
+
+/**
+ * The url for requests to be sent, a local version is usually used instead.
+ *
+ * @property webserviceURL
+ * @type {String}
+ * @default ""
+ */
 webwork.webserviceURL = "";
 
+/**
+ *
+ * @type {*}
+ */
 webwork.Problem = Backbone.Model.extend({
     defaults:function () {
         return{
@@ -73,6 +140,10 @@ webwork.Problem = Backbone.Model.extend({
     }
 });
 
+/**
+ *
+ * @type {*}
+ */
 webwork.ProblemList = Backbone.Collection.extend({
     model:webwork.Problem,
 
@@ -125,6 +196,10 @@ webwork.ProblemList = Backbone.Collection.extend({
     }
 });
 
+/**
+ *
+ * @type {*}
+ */
 webwork.Set = Backbone.Model.extend({
     defaults:{
         name:"defaultSet"
@@ -143,6 +218,10 @@ webwork.Set = Backbone.Model.extend({
 
 });
 
+/**
+ *
+ * @type {*}
+ */
 webwork.SetList = Backbone.Collection.extend({
     model:webwork.Set,
 
