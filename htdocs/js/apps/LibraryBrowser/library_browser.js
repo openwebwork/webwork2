@@ -56,7 +56,7 @@ $(function () {
         initialize:function () {
             this.model.on('change:data', this.render, this);
             if(!this.options.remove_display){
-                this.options.remove_display = "block";
+                this.options.remove_display = false;
             }
             this.model.on('destroy', this.remove, this);
         },
@@ -169,7 +169,7 @@ $(function () {
             for(var i = 0; i < this.group_size && this.startIndex < problems.length; i++, this.startIndex++){
                 console.log("adding a problem");
                 var problem = problems.at(this.startIndex);
-                var view = new ProblemView({model: problem, remove_display: "none"});
+                var view = new ProblemView({model: problem, remove_display: true});
                 this.$(".list").append(view.render().el);
             }
 
@@ -313,7 +313,7 @@ $(function () {
         },
 
         addOne: function(problem){
-            var view = new ProblemView({model:problem});
+            var view = new ProblemView({model:problem, remove_display: false});
             var rendered_problem = view.render().el;
             this.$(".list").append(rendered_problem);
             this.$('.list').sortable('refresh');

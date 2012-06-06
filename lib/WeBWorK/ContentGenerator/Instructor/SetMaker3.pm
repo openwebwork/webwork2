@@ -228,8 +228,8 @@ sub body {
 
 
   print '<script type="text/template", id="problem-template">',
-        '    <div class="handle" style="display:<%= remove_display %>;"><i class="icon-resize-vertical icon-large"></i></div>',
-            '<button type="button" class="remove" style="display:<%= remove_display %>;">X</button>', #replace with twitter bootstrap icons? yeah font awesome :)
+        '<%if(!remove_display){ %><div class="handle"><i class="icon-resize-vertical icon-large"></i></div>',
+            '<button type="button" class="remove">X</button><%}%>', #replace with twitter bootstrap icons? yeah font awesome :)
         '    <div class="problem"><%= data %></div>',
         '</script>';
 

@@ -55,3 +55,7 @@ ul.list li{
 .syncing.white:after{
     content: url("/webwork2_files/images/ajax-loader-white-small.gif");
 }
+
+.drophover{
+    background: greenyellow;
+}
