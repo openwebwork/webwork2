@@ -69,6 +69,17 @@ $(function () {
                 var jsonInfo = this.model.toJSON();
                 _.extend(jsonInfo, self.options);
                 this.$el.html(this.template(jsonInfo));
+                this.$el.draggable({
+                    helper:'clone',
+                    revert:true,
+                    handle:'.problem',
+                    appendTo:'body',
+                    cursorAt:{
+                        top:0,
+                        left:0
+                    },
+                    opacity:0.35
+                });
             } else {
                 this.$el.html('<img src="/webwork2_files/images/ajax-loader.gif" alt="loading"/>');
                 problem.render();
@@ -76,17 +87,7 @@ $(function () {
 
             this.el.setAttribute('data-path', problem.get('path'));
             this.el.id = this.model.cid;
-            this.$el.draggable({
-                helper:'clone',
-                revert:true,
-                handle:'.problem',
-                appendTo:'body',
-                cursorAt:{
-                    top:0,
-                    left:0
-                },
-                opacity:0.35
-            });
+
 
 
             return this;
