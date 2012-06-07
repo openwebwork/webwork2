@@ -230,7 +230,7 @@ sub body {
   print '<script type="text/template", id="problem-template">',
         '<%if(!remove_display){ %><div class="handle"><i class="icon-resize-vertical icon-large"></i></div>',
             '<button type="button" class="remove">X</button><%}%>', #replace with twitter bootstrap icons? yeah font awesome :)
-        '    <div class="problem"><%= data %></div>',
+        '    <div class="problem" data-path="<%= path %>" ><%= data %></div>',
         '</script>';
 
   print '<script type="text/template", id="setList-template">',

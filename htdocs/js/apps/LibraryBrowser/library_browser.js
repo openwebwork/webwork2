@@ -41,7 +41,7 @@ $(function () {
         //We want the problem to render in a `li` since it will be included in a list
         tagName:"li",
         //Add the 'problem' class to every problem
-        className: "problem",
+        //className: "problem",
         //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
 
@@ -85,7 +85,6 @@ $(function () {
                 problem.render();
             }
 
-            this.el.setAttribute('data-path', problem.get('path'));
             this.el.id = this.model.cid;
 
 
@@ -459,7 +458,7 @@ $(function () {
             var self = this;
             this.model.get('problems').on('all', function(){self.render()}, this);
             this.model.get('problems').on('alert', function(message){alert(message);});
-            this.model.on('highlight', function(){self.$el.addClass("contains_problem")});
+            this.model.on('highlight', function(){console.log("highlight "+self.model.get('name')); self.$el.addClass("contains_problem")});
         },
 
         render:function () {
@@ -624,9 +623,7 @@ $(function () {
         highlightSets: function(event) {
             switch(event.type){
                 case "mouseenter":
-                    //console.log(this.getAttribute("data-path"));
                     var problemPath = event.currentTarget.getAttribute("data-path");
-
                     this.homeworkSets.each(function(set){
                         if(set.get('problems').find(function(problem){return problem.get('path') == problemPath})){
                             set.trigger('highlight');
