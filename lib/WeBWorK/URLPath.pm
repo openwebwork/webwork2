@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2007 The WeBWorK Project, http://github.com/openwebwork
 # $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.36 2008/04/29 19:27:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -120,6 +120,11 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
 
+ achievements                        /$courseID/achievements
+ instructor_achievement_list         /$courseID//instructor/achievement_list
+ instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
+ instructor_achievement_user_editor  /$courseID/instructor/achievement_list/$achievementID/users
+
 =cut
 
 ################################################################################
@@ -168,7 +173,7 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy
+		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy achievements
 			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -233,6 +238,15 @@ our %pathTypes = (
 		produce => 'grades/',
 		display => 'WeBWorK::ContentGenerator::Grades',
 	},
+        achievements  => {
+	        name    => 'Achievements',
+                parent  => 'set_list',
+                kids    => [ qw// ],
+                match   => qr|^achievements/|,
+                capture => [ qw// ],
+                produce => 'achievements/',
+                display => 'WeBWorK::ContentGenerator::Achievements',
+        },
 	hardcopy => {
 		name    => 'Hardcopy Generator',
 		parent  => 'set_list',
@@ -294,7 +308,7 @@ our %pathTypes = (
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
 		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2 
-		    instructor_add_users
+		    instructor_add_users instructor_achievement_list
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 
 			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
@@ -610,7 +624,40 @@ our %pathTypes = (
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
-	
+
+	################################################################################
+
+        instructor_achievement_list => {
+                name    =>  'Achievement Editor',
+                parent  =>  'instructor_tools', 
+                kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
+                match   =>  qr|^achievement_list/|,
+                capture =>  [ qw// ],
+                produce =>  'achievement_list/',
+                display =>  'WeBWorK::ContentGenerator::Instructor::AchievementList',
+        },
+
+        instructor_achievement_editor => {
+	        name    => 'Achievement Evaluator Editor',
+                parent  => 'instructor_achievement_list', 
+                kids => [ qw// ],
+                match => qr|^([^/]+)/editor/|,
+		capture => [ qw/achievementID/ ],
+                produce => '$achievementID/editor/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementEditor',
+	},
+
+        instructor_achievement_user_editor => {
+	        name    => 'Achievement User Editor',
+                parent  => 'instructor_achievement_list', 
+                kids => [ qw// ],
+		match   => qr|^([^/]+)/users/|,
+		capture => [ qw/achievementID/ ],
+		produce => '$achievementID/users/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementUserEditor',
+	},
+
+
 	################################################################################
 	
 	instructor_progress => {

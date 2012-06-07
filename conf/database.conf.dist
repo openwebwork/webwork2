@@ -279,6 +279,34 @@ $dbLayouts{sql_single} = {
 			tableOverride => "${courseName}_setting"
 		},
 	},
+   	achievement => {
+		record => "WeBWorK::DB::Record::Achievement",
+		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		params => { %sqlParams,
+			tableOverride => "${courseName}_achievement"
+		},
+	},
+	achievement_user => {
+		record => "WeBWorK::DB::Record::UserAchievement",
+		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		params => { %sqlParams,
+			tableOverride => "${courseName}_achievement_user"
+	 	},
+        },
+	global_user_achievement => {
+		record => "WeBWorK::DB::Record::GlobalUserAchievement",
+		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		params => { %sqlParams,
+			tableOverride => "${courseName}_global_user_achievement"
+		},
+	},
+
 };
 
 

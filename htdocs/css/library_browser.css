@@ -1,144 +1,61 @@
-body {
-	
+
+
+select{
+    height:auto;
+    width:auto;
+    margin:0px;
 }
 
-#toolbar{
-	position:fixed;
-	top:0px;
-	left:0px;
-	background: black;
-	height:33px;
-	width:100%;
-	z-index: 100;
-} 
-
-#toolbar .button {
-   /*border-top: 1px solid #3d3d3d;*/
-   border: none;
-   cursor: pointer;
-   background: #3d3d3d;
-   background: -webkit-gradient(linear, left top, left bottom, from(#3d3d3d), to(#3d3d3d));
-   background: -webkit-linear-gradient(top, #3d3d3d, #3d3d3d);
-   background: -moz-linear-gradient(top, #3d3d3d, #3d3d3d);
-   background: -ms-linear-gradient(top, #3d3d3d, #3d3d3d);
-   background: -o-linear-gradient(top, #3d3d3d, #3d3d3d);
-   padding: 6px 12px;
-   -webkit-border-radius: 0px;
-   -moz-border-radius: 0px;
-   border-radius: 0px;
-   -webkit-box-shadow: rgba(0,0,0,1) 0 1px 0;
-   -moz-box-shadow: rgba(0,0,0,1) 0 1px 0;
-   box-shadow: rgba(0,0,0,1) 0 1px 0;
-   text-shadow: rgba(0,0,0,.4) 0 1px 0;
-   color: white;
-   font-size: 13px;
-   font-family: 'Lucida Grande', Helvetica, Arial, Sans-Serif;
-   text-decoration: none;
-   vertical-align: middle;
-   }
-#toolbar .button:hover {
-   border-top-color: #545454;
-   background: #545454;
-   color: #ffffff;
-   }
-#toolbar .button:active {
-   border-top-color: #1b435e;
-   background: #1b435e;
-   }
-
-#toolbar .actions{
-	float:right;
+#problems_container{
+    overflow:auto;
+    height:100%;
+    -webkit-overflow-scrolling: touch;
 }
 
-#toolbar #messages{
-	color: white;
-	display: block;
-	float: left;
-	margin: 6px;
+#homework_sets_container{
+    overflow:auto;
+    height:100%;
+    -webkit-overflow-scrolling: touch;
 }
 
-#app_box ul {
-	list-style: none;
-	padding:0px;
+#homework_sets_container ul li{
+    cursor: pointer;
+    white-space:nowrap;
 }
 
-#app_box ul li{
-	margin-left: 0px;
-	margin-bottom: : 4px;
-	border: solid;
-	border-width: 1px;
+#homework_sets_container ul li:hover{
+    text-decoration: underline;
 }
 
-#app_box ul li:hover{
-	background: silver;
+ul.list{
+    list-style:none;
+}
+
+ul.list li{
+    border-bottom: solid lightgray;
+    margin-bottom: 5px;
+}
+
+.next_group{
+    cursor: pointer;
+    color: slategrey;
 }
 
 .handle{
-	background:#AA6600;
-	cursor: pointer;
-	height:20px;
-	width:20px;
+    float:right;
 }
 
-#app_box #tabs li .ui-icon-close { float: left; margin: 0.4em 0.2em 0 0; cursor: pointer; }
-
-#app_box .contains_problem{
-	background:#00ADEE;
+.contains_problem{
+    background: aliceblue;
 }
 
-#app_box .drophover{
-	background:#00FF00;
+.syncing:after{
+    content: url("/webwork2_files/images/ajax-loader-small.gif");
 }
-#app_box .ww_selected{
-	background: gray;
-}
-
-#app_box .ui-selecting {
-	background: silver;
-}
-#app_box .ui-selected {
-	background: gray;
+.syncing.white:after{
+    content: url("/webwork2_files/images/ajax-loader-white-small.gif");
 }
 
-#app_box #problem_container{
-	width:100%;
-	height:100%;
-	display: box;
-	/* flexbox setup */
-  	display: -webkit-box;
-  	-webkit-box-orient: horizontal;
-
-  	display: -moz-box;
-  	-moz-box-orient: horizontal;
-
-  	display: box;
-  	box-orient: horizontal;
+.drophover{
+    background: greenyellow;
 }
-
-#app_box #problems_container{
-	width: outo; 
-	height:100%;
-	border: solid 1px black;
-
-	overflow: scroll;
-	-webkit-box-flex: 1;
-  	-moz-box-flex: 1;
-  	box-flex: 1;
-}
-
-#app_box #problem_sets_container{
-	width:150px;
-	float: left
-	border: solid 1px black;
-	height:100%;
-	overflow: scroll;
-	-moz-transition: width 0.7s ease-out;
-  	-o-transition: width 0.7s ease-out;
-  	-webkit-transition: width 0.7s ease-out;
-  	transition: width 0.7s ease-out;
-  
-}
-
-//#app_box #problem_sets_container:hover{
-//	width:250px;
-//}

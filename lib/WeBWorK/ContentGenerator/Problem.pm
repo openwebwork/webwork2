@@ -41,6 +41,7 @@ use WeBWorK::DB::Utils qw(global2user user2global);
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
+use WeBWorK::AchievementEvaluator;
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -794,9 +795,20 @@ sub warnings {
 
 sub head {
 	my ($self) = @_;
-
+	my $ce = $self->r->ce;
+	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
+	print qq{
+		<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/keys/keys.css">
+		<script src="$webwork_htdocs_url/js/lib/vendor/keys/keys.js"></script>
+	};
+	#If we are using achievements then print the achievement css file
+	if ($ce->{achievementsEnabled}) {
+	    print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$ce->{webworkURLs}->{htdocs}/css/achievements.css\"/>";	
+	}
+
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
+
 }
 
 sub post_header_text {
@@ -1033,10 +1045,10 @@ sub output_message{
 sub output_editorLink{
 	
 	my $self = shift;
-	
-	my $set = $self->{set};
-	my $problem = $self->{problem};
-	my $pg = $self->{pg};
+
+	my $set             = $self->{set};
+	my $problem         = $self->{problem};
+	my $pg              = $self->{pg};
 	
 	my $r = $self->r;
 	my $ce = $r->ce;
@@ -1078,7 +1090,6 @@ sub output_editorLink{
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
-		
 		print "";
 	}
 	else{
@@ -1132,6 +1143,8 @@ sub output_checkboxes{
 					-name    => "showHints",
 					-value   => 1,
 				}
+
+
 		),"&nbsp;";
 	}
 	if ($can{showSolutions}) {
@@ -1199,19 +1212,20 @@ sub output_submit_buttons{
 sub output_score_summary{
 	my $self = shift;
 	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
 	my $problem = $self->{problem};
 	my $set = $self->{set};
 	my $pg = $self->{pg};
 	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
 	my $submitAnswers = $self->{submitAnswers};
-	
+
 	# score summary
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
 	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
 	my $attemptsLeft = $problem->max_attempts - $attempts;
-
 	
 	my $setClosed = 0;
 	my $setClosedMessage;
@@ -1306,13 +1320,35 @@ sub output_misc{
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-	
+	#HACK FIXME
+	print q{
+		<script language="javascript"> 
+			var new_keyboard = new Keys([
+			{value: 'sqrt()',
+			 display: '$ \\\\sqrt{} $',
+			 behavior: 
+			 	function(input){
+            		input.selectionStart -= 1;
+            		input.selectionEnd -= 1;
+            		//this.focus();
+        		}
+			 
+			},
+			'^','=',			
+			'(',')','+','-','*','/',
+			'1','2','3','4','5','6','7','8','9','0',
+			'{','}','_'],
+			{debug:false}  ); 
+			new_keyboard.build();
+		</script>
+	};
 	return "";
 }
 
 # output_summary subroutine
 
-# prints out the summary of the questions that the student has answered for the current problem, along with available information about correctness
+# prints out the summary of the questions that the student has answered 
+# for the current problem, along with available information about correctness
 
 sub output_summary{
 	
@@ -1327,7 +1363,9 @@ sub output_summary{
 	my $previewAnswers = $self->{previewAnswers};
 	
 	my $r = $self->r;
-	
+	my $ce = $r->ce;
+	my $db = $r->db;
+
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	
@@ -1335,12 +1373,21 @@ sub output_summary{
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
 	# do I need to check $will{showCorrectAnswers} to make preflight work??
+
 	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
-		# print this if user submitted answers OR requested correct answers
-		
-		print $self->attemptResults($pg, 1,
+		# print this if user submitted answers OR requested correct answers	    
+	    my $results = $self->attemptResults($pg, 1,
 			$will{showCorrectAnswers},
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
+
+           #If achievements enabled check to see if there are new ones.and print them
+	    if ($ce->{achievementsEnabled}) {
+		my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
+		print $achievementMessage;
+	    }
+
+	    print $results;
+
 	} elsif ($checkAnswers) {
 		# print this if user previewed answers
 		print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
