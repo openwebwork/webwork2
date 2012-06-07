@@ -41,7 +41,7 @@ $(function () {
         //We want the problem to render in a `li` since it will be included in a list
         tagName:"li",
         //Add the 'problem' class to every problem
-        className: "problem",
+        //className: "problem",
         //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
 
@@ -85,7 +85,6 @@ $(function () {
                 problem.render();
             }
 
-            this.el.setAttribute('data-path', problem.get('path'));
             this.el.id = this.model.cid;
 
 
@@ -251,6 +250,124 @@ $(function () {
     });
 
 
+    //##The browse View
+    var BrowseView = Backbone.View.extend({
+        template:_.template($('#Library-template').html()),
+
+        events:{
+            "click .next_group": "loadNextGroup"
+        },
+
+        initialize: function(){
+            var self = this;
+            this.group_size = 25;
+            this.model.get('problems').on('reset', this.render, this);
+            this.model.get('problems').on('syncing', function(value){
+                if(value){
+                    $("[href=#"+self.model.get('name')+"]").addClass("syncing");
+                } else {
+                    $("[href=#"+self.model.get('name')+"]").removeClass("syncing");
+                }
+            }, this);
+            this.model.get('problems').on('alert', function(message){alert(message);});
+
+            if(!(this.model.get('problems').length > 0)){
+                this.model.get('problems').fetch();
+            }
+        },
+
+        render: function(){
+
+            var self = this;
+
+            if ($('#problems_container #' + this.model.get('name')).length == 0) {
+                $('#problems_container').tabs('add', "#"+this.model.get('name'), this.model.get('name') + " (" + this.model.get('problems').length + ")"); //could move to an after?
+                this.setElement(document.getElementById(this.model.get('name')));
+            } else {
+                //select
+                $('#problems_container').tabs('select', this.model.get('name'));
+                $("[href=#"+this.model.get('name')+"]").html(this.model.get('name') + " (" + this.model.get('problems').length + ")");
+            }
+
+            if(self.model.get('problems').syncing){
+                $("[href=#"+self.model.get('name')+"]").addClass("syncing");
+            }
+
+            this.$el.addClass("library_tab");
+            this.startIndex = 0;
+
+            var jsonInfo = this.model.toJSON();
+            jsonInfo['group_size'] = this.group_size;
+
+            jsonInfo['enough_problems'] = (this.model.get('problems').length > this.startIndex)? "block" : "none";
+
+            this.$el.html(this.template(jsonInfo));
+
+            this.loadNextGroup();
+
+            return this;
+        },
+        //Define a new function loadNextGroup so that we can just load a few problems at once,
+        //otherwise things get unwieldy :P
+        loadNextGroup: function(){
+
+            var problems = this.model.get('problems');
+            console.log(problems.length);
+            for(var i = 0; i < this.group_size && this.startIndex < problems.length; i++, this.startIndex++){
+                console.log("adding a problem");
+                var problem = problems.at(this.startIndex);
+                var view = new ProblemView({model: problem, remove_display: true});
+                this.$(".list").append(view.render().el);
+            }
+
+            if(!(this.model.get('problems').length > this.startIndex)){
+                this.$(".next_group").css('display', "none");
+            }
+        }
+
+    });
+
+    var BrowseListView = Backbone.View.extend({
+        tagName:'span',
+        template:_.template($('#LibraryList-template').html()),
+
+        events: {
+            //'change .list': 'lib_selected'
+        },
+
+        initialize:function () {
+            var self = this;
+            this.model.on("change:library_subjects", this.render, this);
+            this.model.on("change:library_chapters", this.render, this);
+            this.model.on("change:library_section", this.render, this);
+        },
+
+        render:function () {
+
+            var self = this;
+            if(self.model.syncing){
+                self.$el.addClass("syncing white");
+            }
+            this.$el.html(this.template({name: this.options.name}));
+            self.$("."+this.options.name+".list").on('change', function(event){self.lib_selected(event)});
+            this.addAll();
+            return this;
+        },
+
+        section_selected:function (event) {
+            var self = this;
+            self.$el.removeClass("syncing white");
+            var selectedLib = this.model.getByCid(event.target.value);
+            if(selectedLib){
+                var view = new LibraryListView({model:selectedLib.get('children'), name: selectedLib.cid});
+                this.$('.'+this.options.name+".children").html(view.render().el);
+                libToLoad = selectedLib;
+            }
+        }
+
+    });
+
+
     //##The main Set view
     var SetView = Backbone.View.extend({
         template:_.template($('#set-template').html()),
@@ -341,7 +458,7 @@ $(function () {
             var self = this;
             this.model.get('problems').on('all', function(){self.render()}, this);
             this.model.get('problems').on('alert', function(message){alert(message);});
-            this.model.on('highlight', function(){self.$el.addClass("contains_problem")});
+            this.model.on('highlight', function(){console.log("highlight "+self.model.get('name')); self.$el.addClass("contains_problem")});
         },
 
         render:function () {
@@ -506,9 +623,7 @@ $(function () {
         highlightSets: function(event) {
             switch(event.type){
                 case "mouseenter":
-                    //console.log(this.getAttribute("data-path"));
                     var problemPath = event.currentTarget.getAttribute("data-path");
-
                     this.homeworkSets.each(function(set){
                         if(set.get('problems').find(function(problem){return problem.get('path') == problemPath})){
                             set.trigger('highlight');
