@@ -23,14 +23,14 @@
 # configuration file (webwork.apache-config) and is available for use here. In
 # addition, the $courseName variable holds the name of the current course.
 
-################################################################################
 
 include("conf/prelocal.conf");
-
+include("VERSION");
 ################################################################################
 # prelocal.conf  should contain basic information about 
 # certain directories on your server
 ################################################################################
+
 # Root directory of PG.
 $pg_dir              = "/opt/webwork/pg";
 
@@ -124,7 +124,7 @@ $mail{editor_window_columns} = 100;
 # Customizing the action of the "Email your instructor" button
 ###################################################
 
-# This is best done by copying the lines below, entering them
+# Customizing the behavior for this button is best done by copying the lines below, entering them
 # in the postlocal.conf file and making the desired modifications. 
 # Then you will not need to update these modifications
 # when you download a new version of WeBWorK.
@@ -157,6 +157,12 @@ $courseURLs{feedbackFormURL} = "";
 
 $defaultTheme = "math2";
 $defaultThemeTemplate = "system";
+
+################################################################################
+# Achievements
+################################################################################
+$achevementsEnabled = 0;
+$achievementPointsPerProblem = 5;
 
 ################################################################################
 # Language
@@ -212,7 +218,6 @@ $webworkURLs{root}          = "$webwork_url";
 # help files.
 $webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdocs";
 $webworkURLs{htdocs}        = "$webwork_htdocs_url";
-
 
 # Location of web-accessible temporary files, such as equation images.
 # These two should be set in prelocal.conf -- not here since this can be overwritten by new versions.
@@ -275,8 +280,8 @@ $courseDirs{html_images} = "$courseDirs{html}/images";
 
 # Location of web-accessible, course-specific temporary files, like static and
 # dynamically-generated PG graphics.
-$courseDirs{html_temp}   =  "$courseDirs{html}/tmp";
-$courseURLs{html_temp}   =  "$courseURLs{html}/tmp";
+$courseDirs{html_temp}   = "$courseDirs{html}/tmp";
+$courseURLs{html_temp}   = "$courseURLs{html}/tmp";
 
 # Location of course-specific logs, like the transaction log.
 $courseDirs{logs}        = "$courseDirs{root}/logs";
@@ -286,6 +291,10 @@ $courseDirs{scoring}     = "$courseDirs{root}/scoring";
 
 # Location of PG templates and set definition files.
 $courseDirs{templates}   = "$courseDirs{root}/templates";
+
+# Location of course achievement files.
+$courseDirs{achievements}   = "$courseDirs{templates}/achievements";
+$courseURLs{achievements}   = "$courseURLs{html}/achievements";
 
 # Location of course-specific macro files.
 $courseDirs{macros}      = "$courseDirs{templates}/macros";
@@ -451,18 +460,21 @@ $default_status = "Enrolled";
 # GRANT SELECT ON webwork.* TO webworkRead@localhost IDENTIFIED BY 'passwordRO';
 # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
 
+
 ################################################################################
 # set these variables in prelocal.conf
 #
 # $database_dsn = "dbi:mysql:webwork";
 # $database_username = "webworkWrite";
-# #$database_password = ""; #set this in prelocal.conf
+# $database_password = ""; #set this in prelocal.conf
+# $database_debug = 0;
 ################################################################################
 
-# $database_debug = 0;
+
 
 # Database schemas are defined in the file conf/database.conf and stored in the
 # hash %dbLayouts. The standard schema is called "sql_single";
+
 include "conf/database.conf";
 
 # Select the default database layout. This can be overridden in the course.conf
@@ -567,7 +579,8 @@ $siteDefaults{default_templates_course} ="modelCourse";
 $authen{user_module} = {
 	# sql_moodle => "WeBWorK::Authen::Moodle",
 	# sql_ldap   => "WeBWorK::Authen::LDAP",
-	"*" => "WeBWorK::Authen",
+	#"*" => "WeBWorK::Authen",
+	"*" => "WeBWorK::Authen::Basic_TheLastOption",
 };
 
 # Select the authentication module to use for proctor logins.
@@ -576,9 +589,8 @@ $authen{user_module} = {
 # 
 $authen{proctor_module} = "WeBWorK::Authen::Proctor";
 
-################################################################################
-# Options for particular authentication modules
-################################################################################
+
+
 
 # If you are using ldap this next snippet should be copied and entered into postlocal.conf.
 # Make modifications there so that it works with your local LDAP protocol
@@ -690,7 +702,7 @@ $authen{ldap_options} = {
 	modify_scoring_files           => "professor",
 	modify_problem_template_files  => "professor",
 	manage_course_files            => "professor",
-	
+	edit_achievements			   => "professor",
 	create_and_delete_courses      => "professor",
 	fix_course_databases           => "professor",
 	
@@ -731,6 +743,7 @@ $authen{ldap_options} = {
 	download_hardcopy_view_errors =>"professor",
 	download_hardcopy_format_pdf => "guest",
 	download_hardcopy_format_tex => "ta",
+	download_hardcopy_format_tikz => "professor", # under_construction
 );
 
 # This is the default permission level given to new students and students with
@@ -1020,6 +1033,8 @@ $pg{ansEvalDefaults} = {
 	reducedScoringValue			  => 1,	# A number in [0,1]. Students will be informed of the value as a percentage
 };
 
+
+
 ################################################################################
 # Compatibility
 ################################################################################
@@ -1029,24 +1044,106 @@ $webworkRoot    = $webworkDirs{root};
 $webworkURLRoot = $webworkURLs{root};
 $pgRoot         = $pg{directories}{root};
 
+
 ################################################################################
-# Temporary hack for displaying the different versions of the editors
+# LTI Basic parameters
 ################################################################################
-# These behaviors can be overridden in postlocal.conf
-# These configurations can be placed in CourseConfig to tune the behavior for individual courses
-%showeditors = (
-	classlisteditor1   => 1,
-	classlisteditor2   => 0,
-	
-	homeworkseteditor1 => 1,
-	homeworkseteditor2 => 0,
-	
-	librarybrowser1    => 1,
-	librarybrowser2    => 0,
-	librarybrowser3    => 1,
-	
-	pgproblemeditor1   => 1,
-	pgproblemeditor2   => 0,
+
+################################################################################
+# LTI Basic Authentication Parameters to be put into a site's course.conf file
+################################################################################
+
+#The following paramters should be put into site's course.conf file.
+
+#$LTIBasicToThisSiteURL = "URL to site", e.g.,
+#$LTIBasicToThisSiteURL = "https://localserver/webwork2/DemoCourse";
+#$LTIBasicConsumerSecret = "Consumer Secret - shared with the Course Management Site, e.g.";
+#$LTIBasicConsumerSecret = "webworkLTIB";
+
+
+################################################################################
+# LTI Basic Authentication Parameters for global.conf
+################################################################################
+
+# The following parameters should be in global.conf:
+
+################################################################################
+# Reasonable Number of Problems for Late Adds to do per day to catch up
+################################################################################
+
+# Uncomment the following line to adjust due dates for late adds
+# who authenticate via LTIBasic
+$adjustDueDatesForLateAdds = "1";
+
+$reasonableProblemsPerDayMakeup = 15;
+
+################################################################################
+# Authentication system
+################################################################################
+
+# To use a sequence of Authentication modules, e.g.,
+# LTIBasic with a fallback to Password Authentication,
+# then uncomment the section below.
+# One can add additional module hashes if one
+# has additional login authentication options, e.g.,
+# an institutions Central Authentication Service.
+
+#$authen{user_module} = [ 
+#	{
+#		# sql_moodle => "WeBWorK::Authen::Moodle",
+#		# sql_ldap   => "WeBWorK::Authen::LDAP",
+#		"*" => "WeBWorK::Authen::LTIBasic", 
+#	},
+#	{
+#		# sql_moodle => "WeBWorK::Authen::Moodle",
+#		# sql_ldap   => "WeBWorK::Authen::LDAP",
+#		"*" => "WeBWorK::Authen::Basic_TheLastOption",
+#	}
+#];
+
+#The purpose of the LTI nonces is to prevent man-in-the-middle attacks.
+#The NonceLifeTime (in seconds) must be short enought to prevent
+#at least casual man-in-the-middle attacks but
+#long enough to accommodate normal server and networking delays
+#(and perhaps non-synchronization of server time clocks).
+#
+
+$NonceLifeTime=10; # in seconds
+
+
+################################################################################
+# Session Management
+################################################################################
+
+## For session management using session_cookies, uncomment the first of the 
+## following lines.  For session management using keys stored
+## in the  key  database and, possibly, enduring cookies,
+## uncomment the second line.
+
+$session_management_via = "session_cookie";
+#$session_management_via = "key";
+
+################################################################################
+# Authorization system   LTI:  LMS Roles Mapped to WeBWorK Roles
+################################################################################
+
+## Each institution will need to customize these correspondences
+## to take into account the roles that are used in its
+## Learning Management System.
+
+%LMSrolesToWeBWorKroles = (
+	"AI/TA" => "ta",
+	"assistant" => "empowered_AI",
+	"instructor" => "professor",
+	"librarian" => "guest",
+	"librarian+" => "empoweredAI",
+	"observer" => "guest",
+    "student" => "student",
+	"visitor" => "guest",
+	"Instructor" => "professor",
+    "Student" => "student",
+    "Learner" => "student",
+	"Teaching Assistant" => "ta",
 );
 
 ################################################################################
@@ -1063,10 +1160,34 @@ $webservices = {
 	courseActionsAssignHomework => 0, 
 };
 
+
+################################################################################
+# Temporary hack for displaying the different versions of the editors
+################################################################################
+
+# These configurations can be overridden
+# in course.conf file to tune the behavior for individual courses
+# The items below can be placed in postlocal.conf override the settings in this file
+# One can also use $showeditors{classlisteditor1}=0; to override a setting.
+%showeditors = (
+	classlisteditor1   => 1,
+	classlisteditor2   => 0,
+	
+	homeworkseteditor1 => 1,
+	homeworkseteditor2 => 0,
+	
+	librarybrowser1    => 1,
+	librarybrowser2    => 0,
+	librarybrowser3    => 0,
+	
+	pgproblemeditor1   => 1,
+	pgproblemeditor2   => 0,
+);
+
 ################################################################################
 # Site wide overrides are entered into the file postlocal.conf
 ################################################################################
 
-include("conf/postlocal.conf");
 
+include("conf/postlocal.conf");
 1; #final line of the file to reassure perl that it was read properly.

@@ -596,7 +596,7 @@ sub body {
 	# FIXME 
 	# Should the seed be set from some particular user instance??
 	my $rows            = 20;
-	my $columns         = 80;
+	my $columns         = 70;
 	my $mode_list       = $ce->{pg}->{displayModes};
 	my $displayMode     = $self->{displayMode};
 	my $problemSeed     = $self->{problemSeed};	
@@ -623,7 +623,7 @@ sub body {
 		}
 		function updateTarget() {
 		  var inWindow = document.getElementById("newWindow").checked;
-		  document.getElementById("editor").target = (inWindow? "WW_View": "");
+		  document.getElementById("editor").target = (inWindow? "WW_View": "pg_editor_frame");
 		}
 		function setRadio(i,nw) {
 		  document.getElementById('action'+i).checked = true;
@@ -734,7 +734,8 @@ EOF
 				# ) if $line_contents;
 				if($line_contents){
 					my @titleArr = split(" ", ucfirst(WeBWorK::underscore_to_whitespace($actionForm)));
-					my $title = $titleArr[0];
+					pop @titleArr;
+					my $title = join(" ", @titleArr);
 					push @divArr, join("",
 					CGI::h3($title),
 					CGI::div({-class=>"pg_editor_input_span"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionForm."_id", -label_text=>ucfirst(WeBWorK::underscore_to_whitespace($actionForm)), -input_attr=>$radio_params),CGI::br()),
@@ -760,6 +761,11 @@ EOF
 	print  CGI::end_form();
 
 	print CGI::script("updateTarget()");
+	
+	print CGI::h3({-id=>"pg_editor_header"}, "Problem Viewer");
+	print CGI::start_iframe({-id=>"pg_editor_frame_id", -name=>"pg_editor_frame"});
+	print CGI::end_iframe();
+	
 	return "";
 
 
@@ -925,7 +931,7 @@ sub getFilePaths {
 		$setName =~ s/,v\d+$//;
 	}
 
-	die 'Internal error to PGProblemEditor2 -- file type is not defined'  unless defined $file_type;
+	die 'Internal error to PGProblemEditor -- file type is not defined'  unless defined $file_type;
 	#$self->addgoodmessage("file type is $file_type");  #FIXME remove
 	##########################################################
 	# Determine path to the input file to be edited. 
@@ -1301,7 +1307,7 @@ sub view_handler {
 	my $displayMode     = ($actionParams->{'action.view.displayMode'}) ? 
 	                                $actionParams->{'action.view.displayMode'}->[0]  
 	                                : $self->r->ce->{pg}->{options}->{displayMode};
-	                                
+						
 	my $editFilePath        = $self->{editFilePath};
 	my $tempFilePath        = $self->{tempFilePath};
 	########################################################                               
@@ -1665,7 +1671,7 @@ sub save_handler {
 			}
 		);
 	} elsif ($file_type eq 'source_path_for_problem_file') {  # redirect to ProblemSets.pm
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",$r,
+		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
 		courseID => $courseName, setID => $setName, problemID => $problemNumber
 		);
 		my $viewURL = $self->systemLink($problemPage, 
@@ -1952,17 +1958,17 @@ sub save_as_handler {
 	my $new_file_type;
 
 	if ($saveMode eq 'new_independent_problem' ) {
-		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",$r,
+		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
 			courseID => $courseName, setID => 'Undefined_Set', problemID => 'Undefined_Set'
 		);
 		$new_file_type = 'source_path_for_problem_file';
 	} elsif ($saveMode eq 'rename') {
-		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",$r,
+		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
 			courseID => $courseName, setID => $setName, problemID => $problemNumber
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
-	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",$r,
+	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
 			courseID => $courseName, setID => $setName, problemID => $problemNumber
 		);
 		$new_file_type = $file_type;
@@ -2021,8 +2027,10 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/pg_editor_handlers.js"}), CGI::end_script();
 	
 	return "";
 }

@@ -72,11 +72,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_user_detail2              /$courseID/instructor/users2/$userID/ #not created yet
  instructor_sets_assigned_to_user2    /$courseID/instructor/users2/$userID/sets/ #not created yet
 
- instructor_user_list3                /$courseID/instructor/users3/
- instructor_user_detail3              /$courseID/instructor/users3/$userID/ #not created yet
- instructor_sets_assigned_to_user3    /$courseID/instructor/users3/$userID/sets/ #not created yet
-
-
  
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
@@ -124,6 +119,11 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
+
+ achievements                        /$courseID/achievements
+ instructor_achievement_list         /$courseID//instructor/achievement_list
+ instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
+ instructor_achievement_user_editor  /$courseID/instructor/achievement_list/$achievementID/users
 
 =cut
 
@@ -238,6 +238,15 @@ our %pathTypes = (
 		produce => 'grades/',
 		display => 'WeBWorK::ContentGenerator::Grades',
 	},
+        achievements  => {
+	        name    => 'Achievements',
+                parent  => 'set_list',
+                kids    => [ qw// ],
+                match   => qr|^achievements/|,
+                capture => [ qw// ],
+                produce => 'achievements/',
+                display => 'WeBWorK::ContentGenerator::Achievements',
+        },
 	hardcopy => {
 		name    => 'Hardcopy Generator',
 		parent  => 'set_list',
@@ -298,7 +307,7 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2 
+		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2 
 		    instructor_add_users
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 
@@ -334,15 +343,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'users2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
-	},
-	instructor_user_list3 => {
-		name    => 'Classlist Editor3',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_user_detail/ ],
-		match   => qr|^users3/|,
-		capture => [ qw// ],
-		produce => 'users3/',
-		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
 	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
@@ -624,7 +624,40 @@ our %pathTypes = (
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
-	
+
+	################################################################################
+
+        instructor_achievement_list => {
+                name    =>  'Achievement Editor',
+                parent  =>  'instructor_tools', 
+                kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
+                match   =>  qr|^achievement_list/|,
+                capture =>  [ qw// ],
+                produce =>  'achievement_list/',
+                display =>  'WeBWorK::ContentGenerator::Instructor::AchievementList',
+        },
+
+        instructor_achievement_editor => {
+	        name    => 'Achievement Evaluator Editor',
+                parent  => 'instructor_achievement_list', 
+                kids => [ qw// ],
+                match => qr|^([^/]+)/editor/|,
+		capture => [ qw/achievementID/ ],
+                produce => '$achievementID/editor/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementEditor',
+	},
+
+        instructor_achievement_user_editor => {
+	        name    => 'Achievement User Editor',
+                parent  => 'instructor_achievement_list', 
+                kids => [ qw// ],
+		match   => qr|^([^/]+)/users/|,
+		capture => [ qw/achievementID/ ],
+		produce => '$achievementID/users/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementUserEditor',
+	},
+
+
 	################################################################################
 	
 	instructor_progress => {

@@ -46,6 +46,12 @@ sub where_user_id_eq {
 	return {user_id=>$user_id};
 }
 
+# can be used for achievement_user
+sub where_achievement_id_eq {
+    my ($self, $flags, $achievement_id) = @_;
+    return {achievement_id=>$achievement_id};
+}
+
 # can be used for user,password,permission,key,set_user,problem_user
 sub where_user_id_like {
 	my ($self, $flags, $user_id) = @_;

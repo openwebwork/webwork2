@@ -67,7 +67,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
  my $use_site;
  #$use_site = 'test_webwork';    # select a rendering site 
  #$use_site = 'local';           # select a rendering site 
- $use_site = 'rochester_test';  # select a rendering site 
+ $use_site = 'hosted2';  # select a rendering site 
  
  
  ############################################################
@@ -116,7 +116,7 @@ if ($use_site eq 'local') {
 	$FORM_ACTION_URL  =  'http://localhost:80/webwork2/html2xml';
 	$XML_PASSWORD     =  'xmlwebwork';
 	$XML_COURSE       =  'daemon_course';
-} elsif ($use_site eq 'rochester_test') {  
+} elsif ($use_site eq 'hosted2') {  
 	
 	$XML_URL      =  'https://hosted2.webwork.rochester.edu';
 	$FORM_ACTION_URL  =  'https://hosted2.webwork.rochester.edu/webwork2/html2xml';
@@ -200,6 +200,10 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 
 our $source;
 our $rh_result;
+
+# set fileName path to path for current file (this is a best guess -- may not always be correct)
+my $fileName = $ARGV[0]; # should this be ARGV[0]?
+
 # filter mode  main code
 
 {
@@ -229,7 +233,13 @@ our $xmlrpc_client = new WebworkClient (
 		courseName   	=> $credentials{courseID}||'',
 		password     	=> $credentials{password}||'',	
 		site_password   => $credentials{site_password}||'',
+		envir           => $xmlrpc_client->environment(),
+		                 
  };
+
+
+$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
+$input->{envir}->{fileName} = $fileName;
 
 #xmlrpcCall('renderProblem');
 our $output;
@@ -252,6 +262,36 @@ close(FH);
 
 system(DISPLAY_COMMAND().TEMPOUTPUTFILE());
 
+##################################################
+# end input/output section
+
+
+################################################################################
+# Storage utilities section
+################################################################################
+# 
+# sub write_session_credentials {
+# 	my $credentials = shift;
+# 	my %credentials = %$credentials;
+# 	my $string = "\$session_credentials = {session_key => $credentials{session_key},
+# 	                                       userID      => $credentials{userID},
+# 	                                       courseID    => $credentials{courseID},
+# 	              };\n";
+# 	local(*FH);
+# 	open(FH, '>'.CREDENTIALFILE) or die "Can't open file ".CREDENTIALFILE()." for writing";
+# 	print FH $string;
+# 	close(FH);
+# }
+# 
+# sub read_session_credentials {
+# 	local(*FH);
+# 	open(FH, '<'.CREDENTIALFILE) or die "Can't open file ".CREDENTIALFILE()." for writing";
+# 	local ($|);
+# 	my $string = <FH>;   # slurp the contents
+# 	my $session_credentials = eval( $string);
+# 	close(FH);
+# 	return $session_credentials;
+# }
 ##################################################
 # end input/output section
 ##################################################
