@@ -1,3 +1,67 @@
+
+/**
+ *
+ * @constructor
+ */
+webwork.Browse = Backbone.Model.extend({
+
+    defaults:{
+        name:"",
+        library_subject:null,
+        library_chapter:null,
+        library_section:null
+    },
+
+    initialize: function(){
+        this.set('problems', new webwork.ProblemList);
+        this.set('library_subjects', new Array());
+        this.set('library_chapters', new Array());
+        this.set('library_section', new Array());
+    },
+
+    go: function () {
+        this.updateInputs();
+        this.set(name, this.get('library_subject') + " " + this.get('library_chapter') + " " + this.get('library_section'));
+        var requestObject = {
+            xml_command: "searchLib",
+            subcommand: "getDBListings",
+            library_subjects: this.get('library_subject'),
+            library_chapters: this.get('library_chapter'),
+            library_sections: this.get('library_section')
+        };
+        _.defaults(requestObject, this.defaultRequestObject);
+        var self = this;
+        $.post(webserviceURL, requestObject, function (data) {
+            var response = $.parseJSON(data);
+            var results = response.result_data.split(",");
+
+            newSearchResult.problems = new Array();
+            for (var i = 0; i < results.length; i++) {
+                newSearchResult.problems.push(new Problem(results[i]));
+            }
+            self.get('problems').reset(newSearchResult);
+        });
+    },
+
+    updateSubcategory: function (section, subcommand) {
+        var self = this;
+        var requestObject = {
+            xml_command: "searchLib",
+            subcommand: subcommand,
+            library_subjects: this.get('library_subject'),
+            library_chapters: this.get('library_chapter'),
+            library_sections: this.get('library_section')
+        };
+        _.defaults(requestObject, this.defaultRequestObject);
+        $.post(webserviceURL, requestObject, function (data) {
+            var response = $.parseJSON(data);
+            self.set(subcommand, response.result_data.split(","));
+        });
+    }
+});
+
+
+/*
 function Search() {
     this.problems = new Array();
     this.subjectBox = document.getElementById("subjectBox");
@@ -27,17 +91,13 @@ function Search() {
         //update inputs
         workAroundTheClosure.updateInputs();
     }, false);
-    /*textbooksBox.addEventListener("change", function() {
-     //update inputs
-     workAroundTheClosure.updateInputs();
-     //update lists
-     workAroundTheClosure.updateAll();
-     }, false);*/
+
     this.updateSubjectBox();
     this.updateChaptersBox();
     this.updateSectionsBox();
 
 }
+*/
 
 function SearchResult() {
     this.searchName = "search" + generateUniqueID();
@@ -89,7 +149,7 @@ SearchResult.prototype.createPageControls = function () {
 
 }
 
-
+/*
 Search.prototype.go = function () {
     this.updateInputs();
     listLibRequest.xml_command = "searchLib";
@@ -119,15 +179,10 @@ Search.prototype.go = function () {
             newSearchResult.problems.push(new Problem(results[i]));
         }
         newSearchResult.renderProblems(newSearchResult.topProbIndex, newSearchResult.probsPerPage);
-        //callback();
-        /*} catch (err) {
-         console.log(err);
-         var myWindow = window.open('', '', 'width=500,height=800');
-         myWindow.document.write(data);
-         myWindow.focus();
-         }*/
+
     });
 };
+*/
 
 SearchResult.prototype.renderProblems = function (start, limit) {
     //$('#'+this.searchName+' a').text("Other text");
@@ -155,6 +210,7 @@ SearchResult.prototype.updateMoveButtons = function () {
     }
 };
 
+/*
 Search.prototype.updateInputs = function () {
     listLibRequest.library_subjects = this.subjectBox.options[this.subjectBox.selectedIndex].value;
     listLibRequest.library_chapters = this.chaptersBox.options[this.chaptersBox.selectedIndex].value;
@@ -164,8 +220,9 @@ Search.prototype.updateInputs = function () {
 //	listLibRequest.library_textsection = this.textSectionsBox.options[this.textSectionsBox.selectedIndex].value;
 //	listLibRequest.library_keywords = this.keywordsBox.value;
 };
+*/
 
-
+/*
 Search.prototype.updateSubjectBox = function () {
     listLibRequest.xml_command = "searchLib";
     listLibRequest.subcommand = "getAllDBsubjects";
@@ -223,3 +280,4 @@ Search.prototype.update = function (box, blankName) {
         }
     });
 };
+    */
