@@ -72,6 +72,9 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_user_detail2              /$courseID/instructor/users2/$userID/ #not created yet
  instructor_sets_assigned_to_user2    /$courseID/instructor/users2/$userID/sets/ #not created yet
 
+ instructor_user_list3                /$courseID/instructor/users3/
+ instructor_user_detail3              /$courseID/instructor/users3/$userID/ #not created yet
+ instructor_sets_assigned_to_user3    /$courseID/instructor/users3/$userID/sets/ #not created yet
  
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
@@ -307,7 +310,7 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2 
+		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2
 		    instructor_add_users
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 
@@ -344,6 +347,15 @@ our %pathTypes = (
 		produce => 'users2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
+	instructor_user_list3 => {
+    		name    => 'Classlist Editor3',
+    		parent  => 'instructor_tools',
+    		kids    => [ qw/instructor_user_detail/ ],
+    		match   => qr|^users3/|,
+    		capture => [ qw// ],
+    		produce => 'users3/',
+    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
+    	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',

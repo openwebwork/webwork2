@@ -201,6 +201,19 @@ sub pre_header_initialize {
 		     library_textchapter	=> 	$r->param("library_textchapter") ||undef,
 		     library_textsection	=> 	$r->param("library_textsection") ||undef,
 		     source			 =>   '',
+
+		     #course stuff
+		     firstname       => $r->param('firstname') || undef,
+             lastname       => $r->param('lastname') || undef,
+             id             =>  $r->param('id') || undef,
+             email          => $r->param('email') || undef,
+             permission     => $r->param('permission') || undef,	# valid values from %userRoles in global.conf
+             status         => $r->param('status') || undef,#'Enrolled, audit, proctor, drop
+             section        => $r->param('section') || undef,
+             recitation     => $r->param('recitation') || undef,
+             comment        => $r->param('comment') || undef,
+             new_password   => $r->param('new_password') || undef,
+             userpassword   => $r->param('userpassword') || undef,	# defaults to studentid if empty
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",

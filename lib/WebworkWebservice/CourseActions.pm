@@ -232,6 +232,78 @@ sub dropUser {
 	return $out;
 }
 
+
+sub editUser {
+	my ($self, $params) = @_;
+    my $db = $self->{db};
+    my $ce = $self->{ce};
+    my $out = {};
+    debug("Webservices edit user request.");
+
+    # make sure course actions are enabled
+    if (!$ce->{webservices}{enableCourseActions}) {
+    	$out->{status} = "failure";
+    	$out->{message} = "Course actions disabled by configuration.";
+    	return $out
+    }
+
+	my $User = $db->getUser($params->{'id'}); # checked
+    die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
+    my $PermissionLevel = $db->getPermissionLevel($params->{'id'}); # checked
+    die "permissions for [_1] not defined". $params->{'id'} unless defined $PermissionLevel;
+    foreach my $field ($User->NONKEYFIELDS()) {
+    	my $param = "${field}";
+    	if (defined $params->{$param}->[0]) {
+    		$User->$field($params->{$param}->[0]);
+    	}
+    }
+
+    foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
+    	my $param = "${field}";
+    	if (defined $params->{$param}->[0]) {
+   	    	$PermissionLevel->$field($params->{$param}->[0]);
+    	}
+    }
+
+    $db->putUser($User);
+    $db->putPermissionLevel($PermissionLevel);
+
+
+	$self->{editMode} = 0;
+    $out->{message} = "Changes saved";
+	return $out;
+}
+
+sub changeUserPassword {
+
+	my ($self, $params) = @_;
+    my $db = $self->{db};
+    my $ce = $self->{ce};
+    my $out = {};
+
+    # make sure course actions are enabled
+        if (!$ce->{webservices}{enableCourseActions}) {
+        	$out->{status} = "failure";
+        	$out->{message} = "Course actions disabled by configuration.";
+        	return $out
+        }
+
+    my $User = $db->getUser($params->{'id'}); # checked
+	die ("record for visible user [_1] not found". $params->{'id'}) unless $User;
+	my $param = "new_password";
+	if ((defined $params->{$param}->[0]) and ($params->{$param}->[0])) {
+		my $newP = $params->{$param}->[0];
+		my $Password = eval {$db->getPassword($User->user_id)}; # checked
+		my 	$cryptPassword = cryptPassword($newP);
+		$Password->password(cryptPassword($newP));
+		eval { $db->putPassword($Password) };
+	}
+
+	$self->{passwordMode} = 0;
+    $out->{message} = "New passwords saved";
+	return $out;
+}
+
 sub addLog {
 	my ($ce, $msg) = @_;
 	if (!$ce->{webservices}{enableCourseActionsLog}) {
