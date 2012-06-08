@@ -1,4 +1,4 @@
-table.set_table { border-collapse: collapse; border: 1px solid #CCB; width: 800px; }
-table.set_table td, table.testgrid th { padding: 5px; border: 1px solid #E0E0E0; }
-table.set_table th { background: #E5E5E5; text-align: left; font-size: 90%; }
-table.set_table td {font-size: 90%;}
+#users_table { border-collapse: collapse; border: 1px solid #CCB; width: 800px; }
+#users_table td, table.testgrid th { padding: 5px; border: 1px solid #E0E0E0; }
+#users_table th { background: #E5E5E5; text-align: left; font-size: 90%; }
+#users_table td {font-size: 90%;}

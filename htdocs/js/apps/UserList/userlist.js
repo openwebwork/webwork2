@@ -36,7 +36,10 @@ $(function(){
                 { label: "Email Address", name: "email_address", datatype: "string", editable: true },
                 { label: "Student ID", name: "student_id", datatype: "string", editable: true },
                 { label: "Status", name: "status", datatype: "string", editable: true,
-                    values : {"en":"Enrolled", "noten":"Not Enrolled"}
+                    values : {
+                        "en":"Enrolled",
+                        "noten":"Not Enrolled"
+                    }
                 },
                 { label: "Section", name: "section", datatype: "integer", editable: true },
                 { label: "Recitation", name: "recitation", datatype: "integer", editable: true },
@@ -72,10 +75,14 @@ $(function(){
             }
 
             this.model.on('reset', function(){self.addAll()}, this);
+            this.model.on('all', this.render, this);
             this.model.fetch();
         },
 
         render: function(){
+            if(this.el.getRow(0)){
+                this.el.remove(0);
+            }
             this.el.refreshGrid();
         },
 
