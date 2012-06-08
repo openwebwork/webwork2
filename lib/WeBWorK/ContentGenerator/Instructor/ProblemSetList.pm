@@ -499,7 +499,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist", -class=>"edit_form", -id=>"edit_form_id"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist", -class=>"edit_form"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -551,24 +551,19 @@ sub body {
 		# Check permissions
 		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
 		my $actionForm = "${actionID}_form";
-		#my $onChange = "document.problemsetlist.action[$i].checked=true";
-		my $onChange = "";
+		my $onChange = "document.problemsetlist.action[$i].checked=true";
 		my %actionParams = $self->getActionParams($actionID);
 		
 		# print CGI::Tr({-valign=>"top"},
 			# CGI::td({}, CGI::input({-type=>"radio", -name=>"action", -value=>$actionID})),
 			# CGI::td({}, $self->$actionForm($onChange, %actionParams))
 		# );
-		
-		my $extraspace = (ucfirst(WeBWorK::split_cap($actionID)) eq "Filter") ? "" : CGI::br();
-		
 		push @divArr, join("",
 			CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
-			CGI::span({-class=>"radio_span"}, WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
+			WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"}),
 			CGI::br(),
 			$self->$actionForm($onChange, %actionParams),
 			CGI::br(),
-			$extraspace,
 		);
 		$i++;
 	}
@@ -659,8 +654,24 @@ sub getTableParams {
 sub filter_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-
+	#return CGI::table({}, CGI::Tr({-valign=>"top"},
+	#	CGI::td({}, 
 	return join("", 
+			# "Show ",
+			# CGI::popup_menu(
+				# -name => "action.filter.scope",
+				# -values => [qw(all none selected match_ids visible unvisible)],
+				# -default => $actionParams{"action.filter.scope"}->[0] || "match_ids",
+				# -labels => {
+					# all => "all sets",
+					# none => "no sets",
+					# selected => "sets checked below",
+					# visible => "sets visible to students",
+					# unvisible => "sets hidden from students", 
+					# match_ids => "sets with matching set IDs:",
+				# },
+				# -onchange => $onChange,
+			# ),
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
 				-id=>"filter_select",
@@ -695,6 +706,38 @@ sub filter_form {
 				}
 			), CGI::span({-id=>"filter_err_msg", -class=>"ResultsWithError"}, $r->maketext("Please enter in a value to match in the filter field.")),
 			),
+			# CGI::textfield(
+				# -name => "action.filter.set_ids",
+				# -value => $actionParams{"action.filter.set_ids"}->[0] || "",,
+				# -width => "50",
+				# -onchange => $onChange,
+			# ),
+			# " (separate multiple IDs with commas)",
+#			"Open dates: ",
+#			CGI::popup_menu(
+#				-name => "action.filter.open_date",
+#				-values => [ keys %{ $self->{open_dates} } ],
+#				-default => $actionParams{"action.filter.open_date"}->[0] || "",
+#				-labels => { $self->menuLabels($self->{open_dates}) },
+#				-onchange => $onChange,
+#			),
+#			" Due dates: ",
+#			CGI::popup_menu(
+#				-name => "action.filter.due_date",
+#				-values => [ keys %{ $self->{due_dates} } ],
+#				-default => $actionParams{"action.filter.due_date"}->[0] || "",
+#				-labels => { $self->menuLabels($self->{due_dates}) },
+#				-onchange => $onChange,
+#			),
+#			" Answer dates: ",
+#			CGI::popup_menu(
+#				-name => "action.filter.answer_date",
+#				-values => [ keys %{ $self->{answer_dates} } ],
+#				-default => $actionParams{"action.filter.answer_date"}->[0] || "",
+#				-labels => { $self->menuLabels($self->{answer_dates}) },
+#				-onchange => $onChange,
+#			),
+			
 	);
 }
 
@@ -751,6 +794,22 @@ sub sort_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 	return join ("",
+		# "Primary sort: ",
+		# CGI::popup_menu(
+			# -name => "action.sort.primary",
+			# -values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
+			# -default => $actionParams{"action.sort.primary"}->[0] || "due_date",
+			# -labels => {
+				# set_id		=> "Set Name",
+				# set_header 	=> "Set Header",
+				# hardcopy_header	=> "Hardcopy Header",
+				# open_date	=> "Open Date",
+				# due_date	=> "Due Date",
+				# answer_date	=> "Answer Date",
+				# visible	=> "Visibility",
+			# },
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_1",
@@ -772,6 +831,23 @@ sub sort_form {
 			}
 		),
 		CGI::br(),
+		# " Secondary sort: ",
+		# CGI::popup_menu(
+			# -name => "action.sort.secondary",
+			# -values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
+			# -default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
+			# -labels => {
+				# set_id		=> "Set Name",
+				# set_header 	=> "Set Header",
+				# hardcopy_header	=> "Hardcopy Header",
+				# open_date	=> "Open Date",
+				# due_date	=> "Due Date",
+				# answer_date	=> "Answer Date",
+				# visible	=> "Visibility",
+			# },
+			# -onchange => $onChange,
+		# ),
+		# ".",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_2",
@@ -824,6 +900,18 @@ sub edit_form {
 	my $r = $self->r;
 
 	return join("",
+		# "Edit ",
+		# CGI::popup_menu(
+			# -name => "action.edit.scope",
+			# -values => [qw(all visible selected)],
+			# -default => $actionParams{"action.edit.scope"}->[0] || "selected",
+			# -labels => {
+				# all => "all sets",
+				# visible => "visible sets",
+				# selected => "selected sets",
+			# },
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"edit_select",
@@ -870,6 +958,19 @@ sub publish_form {
 	my $r = $self->r;
 
 	return join ("",
+		# "Make ",
+		# CGI::popup_menu(
+			# -name => "action.publish.scope",
+			# -values => [ qw(none all selected) ],
+			# -default => $actionParams{"action.publish.scope"}->[0] || "selected",
+			# -labels => {
+				# none => "",
+				# all => "all sets",
+# #				visible => "visible sets",
+				# selected => "selected sets",
+			# },
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"publish_filter_select",
@@ -888,6 +989,17 @@ sub publish_form {
 			}
 		),
 		CGI::br(),
+		# CGI::popup_menu(
+			# -name => "action.publish.value",
+			# -values => [ 0, 1 ],
+			# -default => $actionParams{"action.publish.value"}->[0] || "1",
+			# -labels => {
+				# 0 => "hidden",
+				# 1 => "visible",
+			# },
+			# -onchange => $onChange,
+		# ),
+		# " for students.",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"publish_visibility_select",
@@ -948,6 +1060,19 @@ sub enable_reduced_scoring_form {
 	my $r = $self->r;
 
 	return join ("",
+		# "Make ",
+		# CGI::popup_menu(
+			# -name => "action.enable_reduced_scoring.scope",
+			# -values => [ qw(none all selected) ],
+			# -default => $actionParams{"action.enable_reduced_scoring.scope"}->[0] || "selected",
+			# -labels => {
+				# none => "",
+				# all => "all sets",
+# #				visible => "visible sets",
+				# selected => "selected sets",
+			# },
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"reduced_scoring_filter_select",
@@ -966,6 +1091,17 @@ sub enable_reduced_scoring_form {
 			}
 		),
 		CGI::br(),
+		# CGI::popup_menu(
+			# -name => "action.enable_reduced_scoring.value",
+			# -values => [ 0, 1 ],
+			# -default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "1",
+			# -labels => {
+				# 0 => "disable",
+				# 1 => "enable",
+			# },
+			# -onchange => $onChange,
+		# ),
+		# " reduced sccoring.",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"reduced_scoring_enable_disable_select",
@@ -1027,6 +1163,18 @@ sub score_form {
 	my $r = $self->r;
 
 	return join ("",
+		# "Score ",
+		# CGI::popup_menu(
+			# -name => "action.score.scope",
+			# -values => [qw(none all selected)],
+			# -default => $actionParams{"action.score.scope"}->[0] || "none",
+			# -labels => {
+				# none => "no sets.",
+				# all => "all sets.",
+				# selected => "selected sets.",
+			# },
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"score_select",
@@ -1088,6 +1236,21 @@ sub delete_form {
 	my $r = $self->r;
 
 	return join("",
+		# CGI::div({class=>"ResultsWithError"}, 
+			# "Delete ",
+			# CGI::popup_menu(
+				# -name => "action.delete.scope",
+				# -values => [qw(none selected)],
+				# -default => "none", #  don't make it easy to delete # $actionParams{"action.delete.scope"}->[0] || "none",
+				# -labels => {
+					# none => "no sets.",
+					# #visible => "visible sets.",
+					# selected => "selected sets.",
+				# },
+				# -onchange => $onChange,
+			# ),
+			# CGI::em(" Deletion destroys all set-related data and is not undoable!"),
+		# )
 		CGI::span({-class=>"ResultsWithError"}, CGI::em($r->maketext("Warning: Deletion destroys all user-related data and is not undoable!"))),CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1147,6 +1310,13 @@ sub create_form {
 	my $r      = $self->r;
 	
 	return join("",
+		# "Create a new set named: ", 
+		# CGI::textfield(
+			# -name => "action.create.name",
+			# -value => $actionParams{"action.create.name"}->[0] || "",
+			# -width => "50",
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"create_text",
@@ -1159,6 +1329,17 @@ sub create_form {
 			}
 		),
 		CGI::br(),
+		# " as ",
+		# CGI::popup_menu(
+			# -name => "action.create.type",
+			# -values => [qw(empty copy)],
+			# -default => $actionParams{"action.create.type"}->[0] || "empty",
+			# -labels => {
+				# empty => "a new empty set.",
+				# copy => "a duplicate of the first selected set.",
+			# },
+			# -onchange => $onChange,
+		# );
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"create_select",
@@ -1270,6 +1451,17 @@ sub import_form {
 			);
 	
 	return join(" ",
+		# "Import ",
+		# CGI::popup_menu(
+			# -name => "action.import.number",
+			# -values => [ 1, 8 ],
+			# -default => $actionParams{"action.import.number"}->[0] || "1",
+			# -labels => {
+				# 1 => "a single set",
+				# 8 => "multiple sets",
+			# },
+			# -onchange => "$onChange;$importScript",
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_amt_select",
@@ -1286,6 +1478,15 @@ sub import_form {
 			}
 		),
 		CGI::br(),
+		# " from ", # set definition file(s) ",
+		# CGI::popup_menu(
+			# -name => "action.import.source",
+			# -values => [ "", $self->getDefList() ],
+			# -labels => { "" => "the following file(s)" },
+			# -default => $actionParams{"action.import.source"}->[0] || "",
+			# -size => $actionParams{"action.import.number"}->[0] || "1",
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_source_select",
@@ -1301,6 +1502,13 @@ sub import_form {
 			-label_attr=>{-id=>"import_source_select_label"}
 		),
 		CGI::br(),
+		# " with set name(s): ",
+		# CGI::textfield(
+			# -name => "action.import.name",
+			# -value => $actionParams{"action.import.name"}->[0] || "",
+			# -width => "50",
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"import_text",
@@ -1315,6 +1523,17 @@ sub import_form {
 		CGI::br(),
 		($authz->hasPermissions($user, "assign_problem_sets")) 
 			?
+			# "assigning this set to " .
+			# CGI::popup_menu(
+				# -name => "action.import.assign",
+				# -value => [qw(all none)],
+				# -default => $actionParams{"action.import.assign"}->[0] || "none",
+				# -labels => {
+					# all => "all current users.",
+					# none => "no users.",
+				# },
+				# -onchange => $onChange,
+			# )
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
 				-id=>"import_users_select",
@@ -1362,6 +1581,18 @@ sub export_form {
 	my $r = $self->r;
 
 	return join("",
+		# "Export ",
+		# CGI::popup_menu(
+			# -name => "action.export.scope",
+			# -values => [qw(all visible selected)],
+			# -default => $actionParams{"action.export.scope"}->[0] || "visible",
+			# -labels => {
+				# all => "all sets",
+				# visible => "visible sets",
+				# selected => "selected sets",
+			# },
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"export_select",
@@ -1563,6 +1794,13 @@ sub duplicate_form {
 	return "" unless @visible_sets == 1;
 	
 	return join ("", 
+		# "Duplicate this set and name it: ", 
+		# CGI::textfield(
+			# -name => "action.duplicate.name",
+			# -value => $actionParams{"action.duplicate.name"}->[0] || "",
+			# -width => "50",
+			# -onchange => $onChange,
+		# ),
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"duplicate_text",
@@ -1620,26 +1858,22 @@ sub bySetID         { $a->set_id         cmp $b->set_id         }
 #FIXME  eventually we may be able to remove these checks, if we can trust 
 # that the dates are always defined
 # dates which are the empty string '' or undefined  are treated as 0
-sub byOpenDate      {
-					  my $result = eval{( $a->open_date || 0 )      <=> ( $b->open_date || 0 ) };
+sub byOpenDate      { my $result = eval{( $a->open_date || 0 )      <=> ( $b->open_date || 0 ) };
                       return $result unless $@;
                       warn "Open date not correctly defined.";
                       return 0;
 }
-sub byDueDate       { 
-					  my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
+sub byDueDate       { my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
                       return $result unless $@;
                       warn "Due date not correctly defined.";
                       return 0;
 }
-sub byAnswerDate    { 
-					  my $result = eval{( $a->answer_date || 0)    <=> ( $b->answer_date || 0 )  };    
+sub byAnswerDate    { my $result = eval{( $a->answer_date || 0)    <=> ( $b->answer_date || 0 )  };    
                       return $result unless $@;
                       warn "Answer date not correctly defined.";
                       return 0;
 }
-sub byVisible     {   
-					  my $result = eval{$a->visible      cmp $b->visible   };      
+sub byVisible     { my $result = eval{$a->visible      cmp $b->visible   };      
                       return $result unless $@;
                       warn "Visibility status not correctly defined.";
                       return 0;
@@ -2162,7 +2396,7 @@ EOF
 ################################################################################
 
 sub fieldEditHTML {
-	my ($self, $fieldName, $value, $properties, $dateTimeScripts) = @_;
+	my ($self, $fieldName, $value, $properties) = @_;
 	my $size = $properties->{size};
 	my $type = $properties->{type};
 	my $access = $properties->{access};
@@ -2175,119 +2409,16 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "number" or $type eq "text") {
-		my $id = $fieldName."_id";
-		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>"", size=>$size});
-		my $content = "";
-		my $bareName = "";
-		my $timezone = substr($value, -3);
-		
-		if(index($fieldName, ".open_date") != -1){
-			my @temp = split(/.open_date/, $fieldName);
-			$bareName = $temp[0];
-			$bareName =~ s/\./\\\\\./g;
-			$content = <<"CONTENT";
-\$('#$bareName\\\\.open_date_id').datetimepicker({
-	ampm: true,
-	timeFormat: 'hh:mmtt',
-	timeSuffix: ' $timezone',
-	separator: ' at ',
-    onClose: function(dateText, inst) {
-        var dueDateTextBox = \$('#$bareName\\\\.due_date_id');
-        if (dueDateTextBox.val() != '') {
-            var testopenDate = new Date(dateText);
-            var testdueDate = new Date(dueDateTextBox.val());
-            if (testopenDate > testdueDate)
-                dueDateTextBox.val(dateText);
-        }
-        else {
-            dueDateTextBox.val(dateText);
-        }
-    },
-    onSelect: function (selectedDateTime){
-        var open = \$(this).datetimepicker('getDate');
-		var open_obj = new Date(open.getTime());
-        \$('#$bareName\\\\.due_date_id').datetimepicker('option', 'minDate', open_obj);
-    }
-});
-CONTENT
-		}
-		elsif(index($fieldName, ".due_date") != -1){
-			my @temp = split(/.due_date/, $fieldName);
-			$bareName = $temp[0];
-			$bareName =~ s/\./\\\\\./g;
-			$content = <<"CONTENT";
-\$('#$bareName\\\\.due_date_id').datetimepicker({
-	ampm: true,
-	timeFormat: 'hh:mmtt',
-	timeSuffix: ' $timezone',
-	separator: ' at ',
-    onClose: function(dateText, inst) {
-		var openDateTextBox = \$('#$bareName\\\\.open_date_id');
-        var answersDateTextBox = \$('#$bareName\\\\.answer_date_id');
-
-        if (openDateTextBox.val() != '') {
-            var testopenDate = new Date(openDateTextBox.val());
-			var testdueDate = new Date(dateText);
-            if (testopenDate > testdueDate)
-                openDateTextBox.val(dateText);
-        }
-        else {
-            openDateTextBox.val(dateText);
-        }
-
-		if (answersDateTextBox.val() != '') {
-			var testdueDate = new Date(dateText);
-			var testanswersDate = new Date(answersDateTextBox.val());
-			if(testdueDate > testanswersDate)
-				answersDateTextBox.val(dateText);
-		}
-		else {
-			answersDateTextBox.val(dateText);
-		}
-    },
-    onSelect: function (selectedDateTime){
-        var due = \$(this).datetimepicker('getDate');
-        \$('#$bareName\\\\.open_date_id').datetimepicker('option', 'maxDate', new Date(due.getTime()));
-		\$('#$bareName\\\\.answer_date_id').datetimepicker('option', 'minDate', new Date(due.getTime()));
-    }
-});
-CONTENT
-		}
-		elsif(index($fieldName, ".answer_date") != -1){
-			my @temp = split(/.answer_date/, $fieldName);
-			$bareName = $temp[0];
-			$bareName =~ s/\./\\\\\./g;
-			$content = <<"CONTENT";
-\$('#$bareName\\\\.answer_date_id').datetimepicker({
-	ampm: true,
-	timeFormat: 'hh:mmtt',
-	timeSuffix: ' $timezone',
-	separator: ' at ',
-    onClose: function(dateText, inst) {
-        var dueDateTextBox = \$('#$bareName\\\\.due_date_id');
-        if (dueDateTextBox.val() != '') {
-            var testdueDate = new Date(dueDateTextBox.val());
-            var testanswersDate = new Date(dateText);
-            if (testdueDate > testanswersDate)
-                dueDateTextBox.val(dateText);
-        }
-        else {
-            dueDateTextBox.val(dateText);
-        }
-    },
-    onSelect: function (selectedDateTime){
-        var answers = \$(this).datetimepicker('getDate');
-        \$('#$bareName\\\\.due_date_id').datetimepicker('option', 'maxDate', new Date(answers.getTime()));
-    }
-});
-CONTENT
-		}
-		
-		push @$dateTimeScripts, $content;
-		return $out;
+		return CGI::input({type=>"text", name=>$fieldName, value=>$value, size=>$size});
 	}
 	
 	if ($type eq "filelist") {
+		# return CGI::popup_menu({
+			# name => $fieldName,
+			# value => [ sort keys %$headerFiles ],
+			# labels => $headerFiles,
+			# default => $value || 0,
+		# });
 		return WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>$fieldName."_id",
@@ -2315,6 +2446,13 @@ CONTENT
 		if (!$matched and exists $synonyms->{"*"}) {
 			$value = $synonyms->{"*"};
 		}
+		
+		# return CGI::popup_menu({
+			# name => $fieldName, 
+			# values => [keys %$items],
+			# default => $value,
+			# labels => $items,
+		# });
 		
 		return WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -2460,10 +2598,6 @@ sub recordEditHTML {
 	# make a hash out of this so we can test membership easily
 	my %nonkeyfields; @nonkeyfields{$Set->NONKEYFIELDS} = ();
 	
-	my @chooseDateTimeScripts = ();
-	
-	push @chooseDateTimeScripts, "addOnLoadEvent(function() {";
-
 	# Set Fields
 	foreach my $field (@fieldsToShow) {
 		next unless exists $nonkeyfields{$field};
@@ -2475,18 +2609,13 @@ sub recordEditHTML {
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
-		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
+		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
-	
-	push @chooseDateTimeScripts, "});";
-	
-	#@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
-	
-	my $out = CGI::Tr({}, CGI::td({}, \@tableCells));
-	my $scripts = CGI::start_script({-type=>"text/javascript"}).(join("", @chooseDateTimeScripts)).CGI::end_script();
 
-	return $out.$scripts;
+	#@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
+
+	return CGI::Tr({}, CGI::td({}, \@tableCells));
 }
 
 sub printTableHTML {
@@ -2589,24 +2718,11 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
+#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
-	return "";
-}
-
-# Just tells template to output the stylesheet for Tabber
-sub output_tabber_CSS{
-	return "";
-}
-
-#Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
 	return "";
 }
 
