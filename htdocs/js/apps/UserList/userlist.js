@@ -43,9 +43,9 @@ $(function(){
                 { label: "Comment", name: "comment", datatype: "string", editable: true },
                 { label: "Permission Level", name: "permission", datatype: "integer", editable: true,
                     values : {
-                        5:"guest",0:"Student",2:"login proctor",
-                        3:"grade proctor",5:"T.A.", 10: "Professor",
-                        20:"Admininistrator"
+                        "-5":"guest","0":"Student","2":"login proctor",
+                        "3":"grade proctor","5":"T.A.", "10": "Professor",
+                        "20":"Admininistrator"
                     }
                 },
                 { name: "Take Action", datatype: "string", editable: true,
@@ -60,6 +60,9 @@ $(function(){
                 var cid = self.el.getRowId(rowIndex);
                 var property = self.el.getColumnName(columnIndex);
                 var editedModel = self.model.getByCid(cid);
+                if(property == 'permission'){
+                    newValue = {name: "", value: newValue};
+                }
                 editedModel.set(property, newValue);
                 editedModel.update();
                 console.log(rowIndex);
@@ -78,7 +81,7 @@ $(function(){
 
         addOne: function(user){
             var userInfo = user.toJSON();
-            userInfo.permission = userInfo.permission.value;
+            userInfo.permission = ""+userInfo.permission.value;
             this.el.append(user.cid, userInfo);
         },
 
