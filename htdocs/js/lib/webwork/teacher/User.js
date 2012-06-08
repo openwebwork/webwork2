@@ -1,37 +1,40 @@
 
 webwork.User = Backbone.Model.extend({
     defaults:{
-        firstname: "",
-        lastname: "",
-        id: "",
-        email: "",
-        permission: "student",
+        first_name: "",
+        last_name: "",
+        student_id: "",
+        user_id: "",
+        email_address: "",
+        permission: 0, //student
         status: "C", //enrolled
         section: "",
         recitation: "",
         comment: "",
         userpassword: ""
-
-
     },
 
     initialize: function(){
-    },
-
-    fetch: function(){
-
+        console.log("?");
     },
 
     update: function(){
+        var self = this;
         var requestObject = {
             "xml_command": 'editUser'
         };
         _.extend(requestObject, this.attributes);
-        _.defaults(requestObject, webwork.defaultRequestObject);
+        _.defaults(requestObject, webwork.requestObject);
+
+        requestObject.permission = requestObject.permission.value;
+        console.log(requestObject.permission);
 
         $.post(webwork.webserviceURL, requestObject, function(data){
             console.log(data);
-            console.log("success?");
+            var response = $.parseJSON(data);
+            var user = response.result_data;
+            self.set(user);
+            console.log("success");
         });
     },
 
@@ -41,7 +44,9 @@ webwork.User = Backbone.Model.extend({
             'new_password': new_password
         };
         _.extend(requestObject, this.attributes);
-        _.defaults(requestObject, webwork.defaultRequestObject);
+        _.defaults(requestObject, webwork.requestObject);
+
+        requestObject.permission = requestObject.permission.value;
 
         $.post(webwork.webserviceURL, requestObject, function(data){
             console.log(data);
@@ -54,15 +59,27 @@ webwork.UserList = Backbone.Collection.extend({
     model: webwork.User,
 
     initialize: function(){
-        this.model.on('add', function(user){}, this);
-        this.model.on('remove', function(user){}, this);
+        this.on('add', function(user){}, this);
+        this.on('remove', function(user){}, this);
     },
 
     fetch: function(){
+        var self = this;
+        var requestObject = {
+            "xml_command": 'listUsers'
+        };
+        _.defaults(requestObject, webwork.requestObject);
 
+        $.post(webwork.webserviceURL, requestObject, function(data){
+            var response = $.parseJSON(data);
+            var users = response.result_data;
+
+            var newUsers = new Array();
+            self.reset(users);
+        });
     },
     email: function(students){
 
     }
 
-})
+});

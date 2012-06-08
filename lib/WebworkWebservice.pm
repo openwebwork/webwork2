@@ -419,6 +419,14 @@ sub createCourse {
 	return $self->do(WebworkWebservice::CourseActions::create($self, $in));
 }
 
+sub listUsers{
+    my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::listUsers($self, $in));
+
+}
+
 # Expecting a hash $in composed of
 #{
 #	'userID' => 'admin',		# these are the usual 

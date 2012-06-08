@@ -180,7 +180,7 @@ webwork.ProblemList = Backbone.Collection.extend({
 
                 var response = $.parseJSON(data);
 
-                var problems = response.result_data.split(",");
+                var problems = response.result_data;
 
                 var newProblems = new Array();
                 for (var i = 0; i < problems.length; i++) {
@@ -245,7 +245,7 @@ webwork.SetList = Backbone.Collection.extend({
         $.post(webwork.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
 
-            var setNames = response.result_data.split(",");
+            var setNames = response.result_data;
             setNames.sort();
 
             var newSets = new Array();

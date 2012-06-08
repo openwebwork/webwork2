@@ -203,11 +203,12 @@ sub pre_header_initialize {
 		     source			 =>   '',
 
 		     #course stuff
-		     firstname       => $r->param('firstname') || undef,
-             lastname       => $r->param('lastname') || undef,
-             id             =>  $r->param('id') || undef,
-             email          => $r->param('email') || undef,
-             permission     => $r->param('permission') || undef,	# valid values from %userRoles in global.conf
+		     first_name       => $r->param('first_name') || undef,
+             last_name       => $r->param('last_name') || undef,
+             student_id     => $r->param('student_id') || undef,
+             id             =>  $r->param('user_id') || undef,
+             email_address  => $r->param('email_address') || undef,
+             permission     => $r->param('permission') || 0,	# valid values from %userRoles in global.conf
              status         => $r->param('status') || undef,#'Enrolled, audit, proctor, drop
              section        => $r->param('section') || undef,
              recitation     => $r->param('recitation') || undef,
@@ -430,13 +431,17 @@ sub pretty_print_json {
  		}
  		#get rid of the last comma
  		chop $out;
- 		$out =  '"'.$out.'"';
+ 		$out = "[\n$out\n"."]\n";
+ 		#$out =  '"'.$out.'"';
 	} elsif ( ref($rh) =~ /SCALAR/ ) {
 		$out .= "scalar reference ". ${$rh};
 	} elsif ( ref($rh) =~/Base64/ ) {
 		$out .= "base64 reference " .$$rh;
+
+    } elsif ($rh  =~ /^[+-]?\d+$/){
+        $out .=  $rh;
 	} else {
-		$out .=  $rh;
+		$out .=  '"'.$rh.'"';
 	}
 	
 	return $out."";

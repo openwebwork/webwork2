@@ -86,7 +86,7 @@ $(function () {
             }
 
             this.el.id = this.model.cid;
-
+            this.el.setAttribute('data-path', this.model.get('path'));
 
 
             return this;

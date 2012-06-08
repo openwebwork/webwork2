@@ -1898,6 +1898,13 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/classlist_handlers.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.7.2.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/json2.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/underscore.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/teacher.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/User.js"}), CGI::end_script();
 	return "";
 }
 

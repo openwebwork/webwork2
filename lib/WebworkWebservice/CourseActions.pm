@@ -14,6 +14,7 @@ use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Utils qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
+use MIME::Base64 qw( encode_base64 decode_base64);
 
 use Time::HiRes qw/gettimeofday/; # for log timestamp
 use Date::Format; # for log timestamp
@@ -96,6 +97,47 @@ sub create {
 	return $out;
 }
 
+sub listUsers {
+    my ($self, $params) = @_;
+    my $out = {};
+    my $db = $self->{db};
+    my $ce = $self->{ce};
+
+    # make sure course actions are enabled
+    #if (!$ce->{webservices}{enableCourseActions}) {
+    #	$out->{status} = "failure";
+    #	$out->{message} = "Course actions disabled by configuration.";
+    #	return $out
+    #}
+
+    my @tempArray = $db->listUsers;
+    my @userInfo = $db->getUsers(@tempArray);
+
+    #%permissionsHash = reverse %permissionsHash;
+    #for(@userInfo){
+    #    @userInfo[i]->{'permission'} = $db->getPermissionLevel(@userInfo[i]->{'user_id'});
+    #}
+    my %permissionsHash = reverse %{$ce->{userRoles}};
+    foreach my $u (@userInfo)
+    {
+        my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
+        $u->{'permission'}{'value'} = $PermissionLevel->{'permission'};
+        $u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+    }
+
+    #my %permissionsHash = $ce->{userRoles};
+    #
+    #push(@userInfo, %permissionsHash);
+
+    #foreach $user (@userInfo){
+    #    $user->{permission}
+    #}
+
+    $out->{ra_out} = \@userInfo;
+    $out->{text} = encode_base64("Users for course: ".$self->{courseName});
+    return $out;
+}
+
 sub addUser {
 	my ($self, $params) = @_;
 	my $out = {};
@@ -104,11 +146,11 @@ sub addUser {
 	debug("Webservices add user request.");
 
 	# make sure course actions are enabled
-	if (!$ce->{webservices}{enableCourseActions}) {
-		$out->{status} = "failure";
-		$out->{message} = "Course actions disabled by configuration.";
-		return $out
-	}
+	#if (!$ce->{webservices}{enableCourseActions}) {
+	#	$out->{status} = "failure";
+	#	$out->{message} = "Course actions disabled by configuration.";
+	#	return $out
+	#}
 
 	# Two scenarios
 	# 1. New user
@@ -241,11 +283,11 @@ sub editUser {
     debug("Webservices edit user request.");
 
     # make sure course actions are enabled
-    if (!$ce->{webservices}{enableCourseActions}) {
-    	$out->{status} = "failure";
-    	$out->{message} = "Course actions disabled by configuration.";
-    	return $out
-    }
+    #if (!$ce->{webservices}{enableCourseActions}) {
+    #	$out->{status} = "failure";
+    #	$out->{message} = "Course actions disabled by configuration.";
+    #	return $out
+    #}
 
 	my $User = $db->getUser($params->{'id'}); # checked
     die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
@@ -253,24 +295,29 @@ sub editUser {
     die "permissions for [_1] not defined". $params->{'id'} unless defined $PermissionLevel;
     foreach my $field ($User->NONKEYFIELDS()) {
     	my $param = "${field}";
-    	if (defined $params->{$param}->[0]) {
-    		$User->$field($params->{$param}->[0]);
+    	if (defined $params->{$param}) {
+    		$User->$field($params->{$param});
     	}
     }
-
     foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
     	my $param = "${field}";
-    	if (defined $params->{$param}->[0]) {
-   	    	$PermissionLevel->$field($params->{$param}->[0]);
+    	if (defined $params->{$param}) {
+   	    	$PermissionLevel->$field($params->{$param});
     	}
     }
 
     $db->putUser($User);
     $db->putPermissionLevel($PermissionLevel);
+    $User = $db->getUser($params->{'id'}); # checked
 
+    my %permissionsHash = reverse %{$ce->{userRoles}};
+    $PermissionLevel = $db->getPermissionLevel($User->{'user_id'});
+    $User->{'permission'}{'value'} = $PermissionLevel->{'permission'};
+    $User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
 
-	$self->{editMode} = 0;
-    $out->{message} = "Changes saved";
+    $out->{ra_out} = $User;
+    $out->{text} = encode_base64("Changes saved");
+
 	return $out;
 }
 
