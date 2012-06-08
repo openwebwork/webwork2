@@ -496,7 +496,7 @@ sub body {
 
 
 
-	$SELF->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
+	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
 		passwordMode => $passwordMode,
 		selectedUserIDs => \@selectedUserIDs,
@@ -509,6 +509,9 @@ sub body {
 	########## print end of form
 	
  	print CGI::end_form();
+
+ 	print $self->hidden_authen_fields;
+    print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseName });
 
 	return "";
 }
@@ -1792,67 +1795,9 @@ sub printTableHTML {
 # section take action from the dropdown menu above the table. 
 
         
-	# print the table
-	if ($editMode or $passwordMode) {
-		print CGI::start_table({-nowrap=>0, -id=>"cltable", -class=>"set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });
-	} else {
-		print CGI::start_table({-border=>1, -nowrap=>1,-id=>"cltable", -class=>"set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });
-	}
-	
-	print CGI::caption($r->maketext("Users List"));
-	
-	print CGI::Tr({}, CGI::th({}, \@tableHeadings));
-	
 
-	for (my $i = 0; $i < @Users; $i++) {
-		my $User = $Users[$i];
-		my $PermissionLevel = $PermissionLevels[$i];
-		my $row=($i<9)?"0".($i+1):"".($i+1);
+	print '<div id="users_table"></div>';
 
-		print "<tr id='R$row'><td>false</td><td>", $User->user_id, "</td>";
-
-
-		# Login Status
-
-		## skip this for the time being
-
-		print "<td></td>";
-		
-		#        
-		## Sets assigned
-
-                my $db = $r->db;
-
-		my $sets = $db->countUserSets($User->user_id);
-		my $totalSets = $self->{totalSets};
-		
-		print "<td>",$sets,"/",$totalSets,"</td>"; 
-
-                print "<td>",$User->first_name,"</td>";
-                print "<td>",$User->last_name,"</td>";
-                print "<td>",$User->email_address,"</td>";
-                print "<td>",$User->student_id,"</td>";
-                print "<td>",($User->status eq 'C')?"en":"noten","</td>";
-                print "<td>",$User->section,"</td>";
-                print "<td>",$User->recitation,"</td>";
-                print "<td>",$User->comment,"</td>";
-
-                print "<td>role",$PermissionLevel->permission,"</td>";
-
-		print "<td>Action</td>";
-
-
-		print "</tr>\n";
-### commented out because this doesn't work with EditableGrid
-#	
-#		print $self->recordEditHTML($User, $PermissionLevel,
-#			editMode => $editMode,
-#			passwordMode => $passwordMode,
-#			userSelected => exists $selectedUserIDs{$User->user_id}
-#		);
-	}
-	
-	print CGI::end_table();
     #########################################
 	# if there are no users shown print message
 	# 
@@ -1874,12 +1819,22 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print "<link rel='stylesheet' href='$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
-        print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
+    print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/classlist_handlers.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/userlist.js"}), CGI::end_script();
+
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.7.2.min.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/json2.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/underscore.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/teacher.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/User.js"}), CGI::end_script();
+
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/UserList/userlist.js"}), CGI::end_script();
+
 
 	return "";
 }
