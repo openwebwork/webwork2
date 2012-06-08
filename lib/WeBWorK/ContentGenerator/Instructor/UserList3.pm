@@ -473,99 +473,30 @@ sub body {
 		$PermissionLevels[$i] = $PermissionLevel;
 	}
 	
-	########## print site identifying information
-	
+### The main part of the Student Manager page
 
-	print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
-	print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_CLASSLIST_EDITOR_DESCRIPTION")));
-	
-	########## print beginning of form
-	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"userlist", class=>"edit_form"});
-	print $self->hidden_authen_fields();
-	
-	########## print state data
-	
-	print "\n<!-- state data here -->\n";
-	
-	if (@visibleUserIDs) {
-		print CGI::hidden(-name=>"visible_users", -value=>\@visibleUserIDs);
-	} else {
-		print CGI::hidden(-name=>"no_visible_users", -value=>"1");
-	}
-	
-	if (@prevVisibleUserIDs) {
-		print CGI::hidden(-name=>"prev_visible_users", -value=>\@prevVisibleUserIDs);
-	} else {
-		print CGI::hidden(-name=>"no_prev_visible_users", -value=>"1");
-	}
-	
-	print CGI::hidden(-name=>"editMode", -value=>$editMode);
-	
-	print CGI::hidden(-name=>"passwordMode", -value=>$passwordMode);
-	
-	print CGI::hidden(-name=>"primarySortField", -value=>$primarySortField);
-	print CGI::hidden(-name=>"secondarySortField", -value=>$secondarySortField);
-	print CGI::hidden(-name=>"ternarySortField", -value=>$ternarySortField);
-	
-	print "\n<!-- state data here -->\n";
-	
-	########## print action forms
-	
-	# print CGI::start_table({});
-	print CGI::p($r->maketext("Select an action to perform").":");
-	
-	my @formsToShow;
-	if ($editMode) {
-		@formsToShow = @{ EDIT_FORMS() };
-	}elsif ($passwordMode) {
-		@formsToShow = @{ PASSWORD_FORMS() };	
-	} else {
-		@formsToShow = @{ VIEW_FORMS() };
-	}
-	
-	my $i = 0;
-	foreach my $actionID (@formsToShow) {
-		# Check permissions
-		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
-		my $actionForm = "${actionID}_form";
-		my $onChange = "document.userlist.action[$i].checked=true";
-		my %actionParams = $self->getActionParams($actionID);
-		
-		print CGI::div({-class=>"column"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"}),CGI::br(),$self->$actionForm($onChange, %actionParams),CGI::br());
-		
-		$i++;
-	}
-	my $selectAll =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_all", -input_attr=>{-name=>'check_all', -class=>"button_input", -value=>$r->maketext('Select all users'),
-	       onClick => "for (i in document.userlist.elements)  { 
-	                       if (document.userlist.elements[i].name =='selected_users') { 
-	                           document.userlist.elements[i].checked = true
-	                       }
-	                    }" });
-   	my $selectNone =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_none", -input_attr=>{-name=>'check_none', -class=>"button_input", -value=>$r->maketext('Unselect all users'),
-	       onClick => "for (i in document.userlist.elements)  { 
-	                       if (document.userlist.elements[i].name =='selected_users') { 
-	                          document.userlist.elements[i].checked = false
-	                       }
-	                    }" });
-	unless ($editMode or $passwordMode) {
-		print $selectAll." ". $selectNone;
-	}
-	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
-	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
-	# print CGI::end_table();
-	
-	########## print table
-	
-	print CGI::p({},$r->maketext("Showing [_1] out of [_2] users", scalar @Users, scalar @allUserIDs));
-	
-	print CGI::p($r->maketext("If a password field is left blank, the student's current password will be maintained.")) if $passwordMode;
-	if ($editMode) {
-	   
+### An initial help box, to be closed upon request
+#
+#
 
-		print CGI::p($r->maketext('Click on the login name to edit individual problem set data, (e.g. due dates) for these students.'));
-	}
-	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
+	print CGI::div({class=>"helpBox"}, CGI::p($r->maketext("The Student Management page allows you to edit student information as well as perform actions (delete, email, act as user) on individuals or a group of students. To edit a student information, click on the information to change and retype or select the correct informaiton.  To perform an action on an individual student, select the action from the last column. To pefrom an action on a group of students, select those students using the checkboxes on the first column, then select the action from the button above (or below) the table.")));
+
+### create the list of actions: 
+
+	my %labels = ('menu0'=>$r->maketext("Take Action on Selected Students"),
+		   'menu1'=>$r->maketext("Email Selected Students"),
+		   'menu2'=>$r->maketext("Change the Password of Selected Student"),
+		   'menu3'=>$r->maketext("Delete Selected Students"));
+	my %attributes = ('menu0'=>{'class'=>'some class'});
+		  
+	print CGI::div({class=>"popupActions"}, 
+		    CGI::popup_menu('actionPopup',['menu0','menu1','menu2','menu3'],'menu0',
+				   \%labels,\%attributes),
+	    "<label for='filter'>Filter :</label><input type='text' id='filter'/>");
+
+
+
+	$SELF->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
 		passwordMode => $passwordMode,
 		selectedUserIDs => \@selectedUserIDs,
@@ -1832,24 +1763,6 @@ sub printTableHTML {
 			no_visible_users => "1"
 			);
 		}
-###
-#  the following code contains links to other places in WW
-###	
-#		@tableHeadings = (
-			#"Select",
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'user_id', %current_state})}, $r->maketext('Login Name')),
-#			$r->maketext("Login Status"), 
-#			$r->maketext("Assigned Sets"),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'first_name', %current_state})}, $r->maketext('First Name')),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'last_name', %current_state})}, $r->maketext('Last Name')),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'email_address', %current_state})}, $r->maketext('Email Address')),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'student_id', %current_state})}, $r->maketext('Student ID')),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'status', %current_state})}, $r->maketext('Status')),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'section', %current_state})}, $r->maketext('Section')),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'recitation', %current_state})}, $r->maketext('Recitation')),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'comment', %current_state})}, $r->maketext('Comment')),
-#			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'permission', %current_state})}, $r->maketext('Permission Level')),
-#		)	
 
 ###
 #  This is the table headings using just text.
@@ -1919,14 +1832,14 @@ sub printTableHTML {
                 print "<td>",$User->last_name,"</td>";
                 print "<td>",$User->email_address,"</td>";
                 print "<td>",$User->student_id,"</td>";
-                print "<td>",($User->status=='C')?"en":"noten","</td>";
+                print "<td>",($User->status eq 'C')?"en":"noten","</td>";
                 print "<td>",$User->section,"</td>";
                 print "<td>",$User->recitation,"</td>";
                 print "<td>",$User->comment,"</td>";
 
                 print "<td>role",$PermissionLevel->permission,"</td>";
 
-		print "<td>Action</td>
+		print "<td>Action</td>";
 
 
 		print "</tr>\n";
