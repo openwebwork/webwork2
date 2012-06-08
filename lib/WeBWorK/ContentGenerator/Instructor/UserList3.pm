@@ -181,6 +181,13 @@ use constant  FIELD_PROPERTIES => {
 #		access => "readwrite",
 	}
 };
+
+
+# template method
+sub templateName {
+	return "lbtwo";
+}
+
 sub pre_header_initialize {
 	my $self          = shift;
 	my $r             = $self->r;
@@ -1806,6 +1813,16 @@ sub printTableHTML {
 	print CGI::p(
 	              CGI::i($r->maketext("No students shown.  Choose one of the options above to list the students in the course."))
 	) unless @Users;
+}
+
+sub head{
+    my $self = shift;
+    	my $r = $self->r;
+    	my $ce = $r->ce;
+
+    my $site_url = $ce->{webworkURLs}->{htdocs};
+    	print "<link rel='stylesheet' href='$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
+        print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
 }
 
 # output_JS subroutine

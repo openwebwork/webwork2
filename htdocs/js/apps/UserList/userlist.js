@@ -24,7 +24,9 @@ $(function(){
     var UserListView = Backbone.View.extend({
         initialize: function(){
 
-            this.setElement(new EditableGrid("UserListTable"));
+            this.setElement(new EditableGrid("UserListTable", {
+                enableSort: true
+            }));
             // we build and load the metadata in Javascript
             this.el.load({ metadata: [
                 { name: "Select", datatype: "boolean", editable: true},
@@ -74,16 +76,22 @@ $(function(){
                 console.log(newValue);
             }
 
-            this.model.on('reset', function(){self.addAll()}, this);
+            this.model.on('reset', function(){
+                while(self.el.getRowCount() > 1){
+                    self.el.remove(1);
+                }
+                self.addAll();
+            }, this);
             this.model.on('all', this.render, this);
             this.model.fetch();
+
+
+            document.getElementById("filter").addEventListener("keyup", function(){self.el.filter(document.getElementById("filter").value)}, false);
         },
 
         render: function(){
-            if(this.el.getRow(0)){
-                this.el.remove(0);
-            }
             this.el.refreshGrid();
+
         },
 
         addOne: function(user){
