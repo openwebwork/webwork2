@@ -796,9 +796,12 @@ sub warnings {
 sub head {
 	my ($self) = @_;
 	my $ce = $self->r->ce;
-
+	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-
+	print qq{
+		<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/keys/keys.css">
+		<script src="$webwork_htdocs_url/js/lib/vendor/keys/keys.js"></script>
+	};
 	#If we are using achievements then print the achievement css file
 	if ($ce->{achievementsEnabled}) {
 	    print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$ce->{webworkURLs}->{htdocs}/css/achievements.css\"/>";	
@@ -1317,13 +1320,35 @@ sub output_misc{
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-	
+	#HACK FIXME
+	print q{
+		<script language="javascript"> 
+			var new_keyboard = new Keys([
+			{value: 'sqrt()',
+			 display: '$ \\\\sqrt{} $',
+			 behavior: 
+			 	function(input){
+            		input.selectionStart -= 1;
+            		input.selectionEnd -= 1;
+            		//this.focus();
+        		}
+			 
+			},
+			'^','=',			
+			'(',')','+','-','*','/',
+			'1','2','3','4','5','6','7','8','9','0',
+			'{','}','_'],
+			{debug:false}  ); 
+			new_keyboard.build();
+		</script>
+	};
 	return "";
 }
 
 # output_summary subroutine
 
-# prints out the summary of the questions that the student has answered for the current problem, along with available information about correctness
+# prints out the summary of the questions that the student has answered 
+# for the current problem, along with available information about correctness
 
 sub output_summary{
 	

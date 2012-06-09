@@ -6,7 +6,7 @@
      *
      * @constructor
      * @this {keys}
-     * @param {Array} syms An array of characters that you want the new keyboard to containt (this can be added to later).
+     * @param {Array} syms An array of characters that you want the new keyboard to contain (this can be added to later).
      * @param {Object} options An object containing options for the new keys, this is optional
      */
     var Keys = function (syms, opt) {
@@ -66,44 +66,42 @@
             }
             if (!document.getElementById(self.board.id)) {
                 document.body.appendChild(self.board);
+                self.board.addEventListener('selectstart', function(event){event.preventDefault(); return false;}, false);
+                self.board.addEventListener('select', function(event){event.preventDefault(); return false;}, false);
             }
 
             self.symbols.forEach(function (key) {
                 var button = document.createElement('a');
-                button.value = key;
-                button.innerHTML = key;
+
+                if(!key.value && !key.display){
+                    button.value = key;
+                    button.innerHTML = key;
+                } else {
+                    button.value = key.value;
+                    button.innerHTML = key.display;
+                }
+
                 button.className = "key";
-                button.hidefocus = "true";
-
-                /*button.addEventListener('touchstart', function(event){
-                 event.preventDefault();
-                 }, false);*/
-
-                /*button.addEventListener('mouseup', function(event){
-                 event.preventDefault();
-                 }, false);*/
                 
-                 var insertAtCaret = function(el,text) {
-    var txtarea = el;
-    var scrollPos = txtarea.scrollTop;
-    var strPos = 0;
-strPos = txtarea.selectionStart;
-
-    var front = (txtarea.value).substring(0,strPos);  
-    var back = (txtarea.value).substring(strPos,txtarea.value.length); 
-    txtarea.value=front+text+back;
-    strPos = strPos + text.length;
+                var insertAtCaret = function(el,text) {
+                    var txtarea = el;
+                    var scrollPos = txtarea.scrollTop;
+                    var strPos = 0;
+                    strPos = txtarea.selectionStart;
+                
+                    var front = (txtarea.value).substring(0,strPos);  
+                    var back = (txtarea.value).substring(strPos,txtarea.value.length); 
+                    txtarea.value=front+text+back;
+                    strPos = strPos + text.length;
                     txtarea.selectionStart = strPos;
-        txtarea.selectionEnd = strPos;
-        txtarea.focus();
-    txtarea.scrollTop = scrollPos;
-}
+                    txtarea.selectionEnd = strPos;
+                    txtarea.focus();
+                    txtarea.scrollTop = scrollPos;
+                }
 
                 button.hitButton = function (event) {
-
-                    //event.preventDefault();
-                    //self.input.focus();
-                    //have to check for normal input vs just content editable at some point
+                    button.removeEventListener('touchend', button.hitButton, false);
+                    event.preventDefault();
 
                     if (self.input.replaceRange) {
                         var cursor_temp = self.input.getCursor();
@@ -115,28 +113,29 @@ strPos = txtarea.selectionStart;
                     } else {
                         insertAtCaret(self.input, button.value);
                     }
-                    event.preventDefault();
-                    button.removeEventListener('touchend', button.hitButton, false);
+
+                    if(key.behavior){
+                        key.behavior(self.input)
+                    };
 
                 };
-
-                button.addEventListener('touchstart',function(){
-                    //event.preventDefault();
+                var onTouchStart = function(){
                     button.addEventListener('touchend', button.hitButton, false);
-                }, false);
+                };
+                
+                button.addEventListener('touchstart', onTouchStart, false);
                 button.addEventListener('touchmove', function(){
-                    //event.preventDefault();
                     button.removeEventListener('touchend', button.hitButton, false);
                 }, false);
-
-                if (self.options.debug) {
-                    button.addEventListener('mousedown', function (event) {
-                        event.preventDefault();
-                    }, false);
-                    button.addEventListener('mouseup', function (event) {
-                        event.preventDefault();
-                    }, false);
-                    button.addEventListener('click', button.hitButton, false);
+                
+                button.addEventListener('mousedown', function (event) {
+                  event.preventDefault();
+                }, false);
+                button.addEventListener('mouseup', function (event) {
+                  event.preventDefault();
+                }, false);
+                if (self.options.debug && !((navigator.userAgent.indexOf('iPhone') != -1) || (navigator.userAgent.indexOf('iPod') != -1) || (navigator.userAgent.indexOf('iPad') != -1))) {
+                  button.addEventListener('click', button.hitButton, false);
                 }
 
                 self.board.appendChild(button);
@@ -175,11 +174,13 @@ strPos = txtarea.selectionStart;
             window.addEventListener('scroll', function () {
                 if (self.input) {
                     self.board.style.top = window.pageYOffset + "px";
+                    self.board.style.left = window.pageXOffset + "px";
                 }
             }, false);
             window.addEventListener('resize', function () {
                 if (self.input) {
                     self.board.style.top = window.pageYOffset + "px";
+                    self.board.style.left = window.pageXOffset + "px";
                     self.board.style.width = window.innerWidth + "px";
                 }
             }, false);
@@ -192,13 +193,20 @@ strPos = txtarea.selectionStart;
         this.removeClass('visible');
         this.input = false;
         this.board.style.top = "-60px";
+        if(this.options.onHide){
+            this.options.onHide();
+        }
     }
 
     Keys.prototype.show = function () {
         var self = this;
         this.addClass('visible');
         self.board.style.top = (window.pageYOffset) + "px";
+        self.board.style.left = window.pageXOffset + "px";
         self.board.style.width = window.innerWidth + "px";
+        if(self.options.onShow){
+            self.options.onShow();
+        }
     }
 
     window.Keys = Keys;
