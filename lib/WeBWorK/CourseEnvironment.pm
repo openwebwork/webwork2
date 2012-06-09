@@ -150,11 +150,9 @@ sub new {
 	
 	# determine location of globalEnvironmentFile
 	my $globalEnvironmentFile;
-	if (-r "$seedVars{webwork_dir}/conf/global.conf") {
-		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf";
-	} elsif (-r "$seedVars{webwork_dir}/conf/global.conf.dist") { # default version
-		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf.dist";
-	}		
+	if (-r "$seedVars{webwork_dir}/conf/defaults.config") {
+		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/defaults.config";
+	}
 	
 	# read and evaluate the global environment file
 	my $globalFileContents = readFile($globalEnvironmentFile);
