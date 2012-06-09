@@ -23,31 +23,39 @@
 # configuration file (webwork.apache-config) and is available for use here. In
 # addition, the $courseName variable holds the name of the current course.
 
+# This file is used to set up the basic paths and URLs specific to your
+# installation of WeBWorK, with the exception of the $webwork_dir variable which
+# is set in the WeBWorK Apache configuration file (webwork.apache2-config).
+# Any customization of global WeBWorK settings should be done in localOverrides.conf. 
+
 ################################################################################
-# prelocal.conf  -- this file
+# site.conf  -- this file
 ################################################################################
 
-# prelocal.conf and postlocal.conf contain the local modifications commonly made
-# when installing WeBWorK on a new site. The configurations in global.conf.dist
-# and in database.conf can usually remain untouched.
+# site.conf includes all of the information specific to your server required
+# to run WeBWorK.
 
 ################################################################################
 # Seed variables
 ################################################################################
 
-# Set these variables to correspond to your configuration and preferences. You
-# will need to restart the webserver to reset the variables in this section.
+# Set these variables to correspond to your configuration.  It is not
+# recommended to change any of the settings in this file once your
+# web server has been initially configured.
 
 # URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
 # that using "" may not work so we suggest sticking with "/webwork2".
 $webwork_url         = "/webwork2";
-$server_root_url   = "";   # e.g.  http://webwork.yourschool.edu or localhost
-$server_userID     = "wwadmin";      
-$server_groupID    = "wwdata";
+$server_root_url   = "";   # e.g.  http://webwork.yourschool.edu or http://localhost
 
+# The following two variables must match the user ID and group ID respectively
+# under which apache is running.
 # In the apache configuration file (often called httpd.conf) you will find
 # User wwadmin   --- this is the $server_userID -- of course it may be wwhttpd or some other name
 # Group wwdata   --- this is the $server_groupID -- this will have different names also
+
+$server_userID     = "wwadmin";
+$server_groupID    = "wwdata";
 
 
 ################################################################################
@@ -121,6 +129,7 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 
 # Standard permissions command used to initialize the webwork database
 # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
+# where webworkWrite and passwordRW must match the corresponding variables in the next section.
 
 ################################################################################
 # these variables are used by database.conf. we define them here so that editing
@@ -128,12 +137,77 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 
 # You must initialize the database and set the password for webworkWrite.
 # Uncomment the $database_password line and replace 'passwordRW' by the actual password used in the GRANT command above
-# The other parameters are set as defaults in global.conf but you can modify them
-# here if for example you want to use a mysql database on a remote machine.
 ################################################################################
+
+# The database dsn is the path to the WeBWorK database which you have created.
+# Unless you have given the database a different name or the database resides on another
+# server you do not need to change this first value.
+# The format is dbi:mysql:[databasename] for databases on the local machine
+# For a remote database the format is dbi:mysql:[databasename]:[hostname]:[port]
 $database_dsn ="dbi:mysql:webwork";
+
+# The following two variables must match the GRANT statement run on the mysql server as described above.
 $database_username ="webworkWrite";
-#$database_password ="passwordRW";  
+$database_password ="passwordRW";  
+
+#################################################################################
+# These variables describe the locations of various components of WeBWorK on your
+# server.  You may use the defaults unless you have things in different places.
+#################################################################################
+
+# Root directory of PG.
+$pg_dir              = "/opt/webwork/pg";
+
+# URL and path to htdocs directory.
+# Uncomment the second line below when using lighttpd to serve static images
+$webwork_htdocs_url  = "/webwork2_files";
+$webwork_htdocs_dir  = "$webwork_dir/htdocs";
+
+# URL and path to courses directory.
+$webwork_courses_url = "/webwork2_course_files";
+$webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the course directory
+
+
+################################################################################
+# Mail settings
+################################################################################
+
+# The following directives need to be configured in order for your webwork
+# server to be able to send mail.
+
+# Mail sent by the PG system and the mail merge and feedback modules will be
+# sent via this SMTP server.  localhost may work if your server is capable
+# of sending email, otherwise type the name of your School's outgoing email
+# server.
+$mail{smtpServer}            = '';
+
+# When connecting to the above server, WeBWorK will send this address in the
+# MAIL FROM command. This has nothing to do with the "From" address on the mail
+# message. It can really be anything, but some mail servers require it contain
+# a valid mail domain, or at least be well-formed.
+$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
+
+# Seconds to wait before timing out when connecting to the SMTP server.
+$mail{smtpTimeout}           = 30;
+
+################################################################################
+#Time Zone
+################################################################################
+
+# Set the default timezone of courses on this server. To get a list of valid
+# timezones, run:
+# 
+#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::all_names'
+# 
+# To get a list of valid timezone "links" (deprecated names), run:
+# 
+#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
+# 
+# If left blank, the system timezone will be used. This is usually what you
+# want. You might want to set this if your server is NOT in the same timezone as
+# your school. If just a few courses are in a different timezone, set this in
+# course.conf for the affected courses instead.
+# 
+$siteDefaults{timezone} = "America/New_York";
 
 1; #final line of the file to reassure perl that it was read properly.
-

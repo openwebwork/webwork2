@@ -15,23 +15,21 @@
 # Artistic License for more details.
 ################################################################################
 
-# This file is used to set up the default WeBWorK course environment for all
-# requests. Values may be overwritten by the course.conf for a specific course.
-# All package variables set in this file are added to the course environment.
-# If you wish to set a variable here but omit it from the course environment,
-# use the "my" keyword. The $webwork_dir variable is set in the WeBWorK Apache
-# configuration file (webwork.apache-config) and is available for use here. In
-# addition, the $courseName variable holds the name of the current course.
+# This file should be used to override any of the default settings in defaults.config.
+# The most commonly changed settings are provided as examples below, but any directive
+# in defaults.config can be copied to this file with the value changed.
+# If you wish to make changes to an individual course, copy the entry into the
+# course.conf file in the respective course directory.
 
 ################################################################################
-# postlocal.conf  -- this file
+# localOverrides.conf  -- this file
 ################################################################################
 
-# prelocal.conf and postlocal.conf contain the local modifications commonly made
-# when installing WeBWorK on a new site. The configurations in global.conf.dist
+# localOverrides.conf contains the local modifications commonly made
+# when installing WeBWorK on a new site. The configurations in defaults.config
 # and in database.conf can usually remain untouched.
 #
-# postlocal.conf is the appropriate place to override permission settings, 
+# localOverride.conf is the appropriate place to override permission settings, 
 # paths to macros and other customizations that are specific to your 
 # WeBWorK site
 
@@ -59,6 +57,13 @@ $mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
 ################################################################################
 # Additional mail settings in global.conf can be overridden here
 ################################################################################
+
+# This setting is only used if you need to send email from within a PG problem
+# (e.g. surveys, essay questions).  It is not necessary for using the email
+# tools in WeBWorK.  You can set email addresses here for users who need to 
+# receive email from problems in all courses, or in course.conf for professors
+# who will receive email from problems in a single course. 
+
 $mail{feedbackRecipients}    = [
 	#'prof1@yourserver.yourdomain.edu',
 	#'prof2@yourserver.yourdomain.edu',
@@ -129,17 +134,17 @@ $problemLibrary{root}        ="/opt/webwork/libraries/NationalProblemLibrary";
 # subdirectories or links to other directories. The "NPL Directory" button
 # activated below gives access to all the directories in the National 
 # Problem Library.
-# 
+ 
 $courseFiles{problibs}    = {
 	Library          => "NPL Directory",
 # 	rochesterLibrary => "Rochester",
-# 	unionLibrary     =>"Union",
+# 	unionLibrary     => "Union",
 # 	asuLibrary       => "Arizona State",
 # 	dcdsLibrary      => "Detroit CDS",
 # 	dartmouthLibrary => "Dartmouth",
 # 	indianaLibrary   => "Indiana",
 # 	osuLibrary       => "Ohio State",	
-#   capaLibrary      => "CAPA",
+#       capaLibrary      => "CAPA",
 };
 
 
@@ -165,8 +170,13 @@ $siteDefaults{timezone} = "America/New_York";
 
 
 ################################################################################
-# Permission levels (see global.conf for list of items to give permissions on )
+# Permission levels
 ################################################################################
+
+# The default roles are defined in defaults.config.  To change the list of available
+# roles, copy the %userRoles hash from defaults.config into this file with the
+# appropriate changes.
+
 # User roles in order of increasing permissions. Each level has all of the privileges of
 # the lower levels.
 # 	guest 
@@ -177,9 +187,13 @@ $siteDefaults{timezone} = "America/New_York";
 # 	professor 
 # 	admin
 
-# To modify permission levels use this syntax:
+# The complete list of permissions is available in defaults.config.  If you want
+# to change the lowest role which has that permission, use the following syntax:
+
 #  $permissionLevels{login} = "guest";
 
+# The above code would give the permission to login to any user with permission
+# level guest or higher.
 
 ################################################################################
 # PG subsystem options
@@ -201,27 +215,24 @@ $pg{displayModes} = [
 $pg{options}{displayMode}        = "images";
  
 ################################################################################
-#  The macro file search path. (Check with entries in global.conf before overriding)
+#  Adding to the macro file search path. (Check with entries in global.conf before overriding)
 ################################################################################
-# Each directory in this list is seached
-#  (in this order) by loadMacros() when it looks for a .pl file.
+# The list of directories searched by loadMacros() when it looks for a .pl file
+# is defined in defaults.config.
+# To add a directory to this list, use the following syntax:
 #
-# $pg{directories}{macrosPath} = [
-#    ".",                     # search the problem file's directory
-#    $courseDirs{macros},
-#    $pg{directories}{macros},
-#    "$courseDirs{templates}/Library/macros/Union",
-#    "$courseDirs{templates}/Library/macros/Michigan",
-#    "$courseDirs{templates}/Library/macros/CollegeOfIdaho",
-#    "$courseDirs{templates}/Library/macros/FortLewis",
-#    "$courseDirs{templates}/Library/macros/TCNJ",
-#    "$courseDirs{templates}/Library/macros/NAU",
-#    "$courseDirs{templates}/Library/macros/Dartmouth",
-#    "$courseDirs{templates}/Library/macros/WHFreeman",
-# ];
+#  $pg{directories}{macrosPath} = [@{$pg{directories}{macrosPath}},"/path/to/new/location"];
+#
+# If your new directory is a subdirectory of the National Problem Library, you may use the prefix of
+# $courseDirs{templates}/Library/ (such as "$courseDirs{templates}/Library/mymacrosdir")
+# Note: This will look for macro files in your new location only after checking all of the locations
+# already defined in defaults.config.
+# You may reverse the order of the two arguments above AT YOUR OWN RISK, as this will check your
+# new location even before the local directory of the problem, so your new location will take
+# precedence over all other locations.
 
 ################################################################################
-# The applet search path. (Check with entries in global.conf before overriding)
+# Adding to the applet search path.
 ################################################################################
 
 # If a full URL is given, it is used unmodified. If an
@@ -231,18 +242,10 @@ $pg{options}{displayMode}        = "images";
 # and the local server is  "https://math.yourschool.edu",
 # then the URL "https://math.yourschool.edu/math/applets" will be used.
 # 
+# If your new applets location is a subdirectory of the webwork htdocs directory, you may
+# use notation such as "$webworkURLs{htdocs}/newsubdir"
 
-# $pg{directories}{appletPath} = [    # paths to search for applets (requires full url)
-# 	"$webworkURLs{htdocs}/applets",
-# 	"$webworkURLs{htdocs}/applets/geogebra_stable",
-# 	"$courseURLs{html}/applets",  
-# 	"$webworkURLs{htdocs}/applets/Xgraph",
-# 	"$webworkURLs{htdocs}/applets/PointGraph",
-# 	"$webworkURLs{htdocs}/applets/Xgraph",
-# 	"$webworkURLs{htdocs}/applets/liveJar",
-# 	"$webworkURLs{htdocs}/applets/Image_and_Cursor_All",
-# 	
-# ];
+# $pg{directories}{appletPath} = [ @{$pg{directories}{appletPath}} , "new/url" ];
 
 ################################################################################
 # Problem creation defaults
@@ -283,28 +286,6 @@ $problemDefaults{max_attempts} = -1;
 # );
 
 ################################################################################
-# Authorization system   LTI:  LMS Roles Mapped to WeBWorK Roles
-################################################################################
-
-## Each institution will need to customize these correspondences
-## to take into account the roles that are used in its
-## Learning Management System.
-
-# %LMSrolesToWeBWorKroles = (
-# 	"AI/TA" => "ta",
-# 	"assistant" => "empowered_AI",
-# 	"instructor" => "professor",
-# 	"librarian" => "guest",
-# 	"librarian+" => "empoweredAI",
-# 	"observer" => "guest",
-#     "student" => "student",
-# 	"visitor" => "guest",
-# 	"Instructor" => "professor",
-#     "Student" => "student",
-#     "Learner" => "student",
-# 	"Teaching Assistant" => "ta",
-# );
-################################################################################
 # Directory for temporary files
 ################################################################################ 
 # Location of web-accessible temporary files, such as equation images. 
@@ -328,5 +309,26 @@ $problemDefaults{max_attempts} = -1;
 
 ################################################################################ 
 
+################################################################################
+# Authentication Methods
+################################################################################
+
+# Extra modules have been created to allow WeBWorK to use certain external
+# methods of authentication.
+
+# IMS LTI Authentication
+# Uncomment the following line to enable authentication via IMS LTI.
+# You will have to copy the file authen_LTI.conf.dist to authen_LTI.conf,
+# and then edit that file to fill in the settings for your installation.
+
+#include("conf/authen_LTI.conf");
+
+
+# LDAP Authentication
+# Uncomment the following line to enable authentication via an LDAP server.
+# You will have to copt the file authen_ldap.conf.dist to authen_ldap.conf,
+# and then edit that file to fill in the settings for your installation.
+
+#include("conf/authen_ldap.conf");
 
 1; #final line of the file to reassure perl that it was read properly.

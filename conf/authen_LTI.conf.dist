@@ -1,0 +1,87 @@
+#!perl
+
+#############################################################################
+# authen_LTI.conf
+# Configuration for using LTI authentication.
+#############################################################################
+
+# This first section enables LTI authentication.  To enable failover to another
+# Authentication method, uncomment the remaining lines, and fill in the
+# appropriate authentication module.
+
+$authen{user_module} = [ 
+	{
+		"*" => "WeBWorK::Authen::LTIBasic", 
+	},
+#	{
+#		"*" => "WeBWorK::Authen::Basic_TheLastOption",
+#	}
+];
+
+
+################################################################################
+# LTI Basic parameters
+################################################################################
+
+################################################################################
+# LTI Basic Authentication Parameters to be put into a site's course.conf file
+################################################################################
+
+#The following paramters should be put into site's course.conf file.
+
+#$LTIBasicToThisSiteURL = "URL to site", e.g.,
+#$LTIBasicToThisSiteURL = "https://localserver/webwork2/DemoCourse";
+#$LTIBasicConsumerSecret = "Consumer Secret - shared with the Course Management Site, e.g.";
+#$LTIBasicConsumerSecret = "webworkLTIB";
+
+
+################################################################################
+# LTI Basic Authentication Parameters for global.conf
+################################################################################
+
+# The following parameters should be in global.conf:
+
+################################################################################
+# Reasonable Number of Problems for Late Adds to do per day to catch up
+################################################################################
+
+# Uncomment the following line to adjust due dates for late adds
+# who authenticate via LTIBasic
+$adjustDueDatesForLateAdds = "1";
+
+$reasonableProblemsPerDayMakeup = 15;
+
+#The purpose of the LTI nonces is to prevent man-in-the-middle attacks.
+#The NonceLifeTime (in seconds) must be short enought to prevent
+#at least casual man-in-the-middle attacks but
+#long enough to accommodate normal server and networking delays
+#(and perhaps non-synchronization of server time clocks).
+#
+
+$NonceLifeTime=10; # in seconds
+
+################################################################################
+# Authorization system   LTI:  LMS Roles Mapped to WeBWorK Roles
+################################################################################
+
+## Each institution will need to customize these correspondences
+## to take into account the roles that are used in its
+## Learning Management System.
+
+%LMSrolesToWeBWorKroles = (
+	"AI/TA" => "ta",
+	"assistant" => "empowered_AI",
+	"instructor" => "professor",
+	"librarian" => "guest",
+	"librarian+" => "empoweredAI",
+	"observer" => "guest",
+    "student" => "student",
+	"visitor" => "guest",
+	"Instructor" => "professor",
+    "Student" => "student",
+    "Learner" => "student",
+	"Teaching Assistant" => "ta",
+);
+
+
+1; #final line of the file to reassure perl that it was read properly.

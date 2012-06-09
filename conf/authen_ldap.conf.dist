@@ -1,0 +1,63 @@
+#!perl
+
+########################################################################################
+# authen_ldap.conf
+# This file should be configured to match your server's ldap configuration.
+# In order to activate this, add the following line to overrides.conf:
+# include("conf/authen_ldap.conf")
+########################################################################################
+
+# Set LDAP as the authentication module to use.
+$authen{user_module} = {
+	"*" => "WeBWorK::Authen::LDAP",
+};
+
+$authen{ldap_options} = {
+	# hosts to attempt to connect to, in order. For example:
+	#   auth.myschool.edu             -- uses LDAP scheme and port 389
+	#   ldap://auth.myschool.edu:666  -- non-standard port
+	#   ldaps://auth.myschool.edu     -- uses LDAPS scheme and port 636
+	#   ldaps://auth.myschool.edu:389 -- SSL on non-SSL port
+	#   Edit the host(s) below:
+	net_ldap_hosts => [
+		"ldaps://auth1.myschool.edu",
+		"ldaps://auth2.myschool.edu",
+	],
+	# connection options
+	net_ldap_options => {
+		timeout => 30,
+		version => 3,
+	},
+	# base to use when searching for user's DN
+	# Edit the data below:
+	net_ldap_base => "ou=people,dc=myschool,dc=edu",
+	
+        # Use a Bind account if set to 1
+        bindAccount => 0,
+
+        searchDN => "cn=search,DC=youredu,DC=edu",
+        bindPassword =>  "password",
+
+	# The LDAP module searches for a DN whose RDN matches the username
+	# entered by the user. The net_ldap_rdn setting tells the LDAP
+	# backend what part of your LDAP schema you want to use as the RDN.
+	# The correct value for net_ldap_rdn will depend on your LDAP setup.
+	# 
+	# Uncomment this line if you use Active Directory.
+	#net_ldap_rdn => "sAMAccountName",
+	#
+	# Uncomment this line if your schema uses uid as an RDN.
+	#net_ldap_rdn => "uid",
+	#
+	# By default, net_ldap_rdn is set to "sAMAccountName".
+
+	# If failover = "all", then all LDAP failures will be checked
+	# against the local WeBWorK password database. If failover = "local", then only
+	# users who don't exist in LDAP will be checked against the WeBWorK
+	# database. If failover = 0, then no attempts will be checked
+	# against the WeBWorK database. failover = 1 is equivalent to
+	# failover = "all".
+	failover => "all",
+};
+
+1; #final line of the file to reassure perl that it was read properly.
