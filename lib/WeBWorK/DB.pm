@@ -534,6 +534,7 @@ sub deleteUser {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
 	$self->deleteUserSet($userID, undef);
 	$self->deletePassword($userID);
+	$self->deleteGlobalUserAchievement($userID);
 	$self->deletePermissionLevel($userID);
 	$self->deleteKey($userID);
 	return $self->{user}->delete($userID);
@@ -777,12 +778,15 @@ sub addKey {
 	if ($Key->user_id =~ /([^,]+)(?:,([^,]*))?(,g)?/) {
 		my ($userID, $proctorID) = ($1, $2);
 		croak "addKey: user $userID not found"
-			unless $self->{user}->exists($userID);
+#			unless $self->{user}->exists($userID);
+			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
 		croak "addKey: proctor $proctorID not found"
-			unless $self->{user}->exists($proctorID);
+#			unless $self->{user}->exists($proctorID);
+			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
 	} else {
 		croak "addKey: user ", $Key->user_id, " not found"
-			unless $self->{user}->exists($Key->user_id);
+#			unless $self->{user}->exists($Key->user_id);
+			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
 	}
 	
 	eval {
@@ -1120,6 +1124,235 @@ sub deleteGlobalSet {
 	return $self->{set}->delete($setID);
 }
 
+####################################################################
+## achievement functions
+###############################################################
+
+BEGIN {
+	*Achievement = gen_schema_accessor("achievement");
+	*newAchievement = gen_new("achievement");
+	*countAchievementsWhere = gen_count_where("achievement");
+	*existsAchievementWhere = gen_exists_where("achievement");
+	*listAchievementsWhere = gen_list_where("achievement");
+	*getAchievementsWhere = gen_get_records_where("achievement");
+}
+
+sub countAchievements { return scalar shift->listAchievements(@_) }
+
+sub listAchievements {
+	my ($self) = shift->checkArgs(\@_);
+	if (wantarray) {
+		return map { @$_ } $self->{achievement}->get_fields_where(["achievement_id"]);
+	} else {
+		return $self->{achievement}->count_where;
+	}
+}
+
+sub existsAchievement {
+	my ($self, $achievementID) = shift->checkArgs(\@_, qw/achievement_id/);
+	return $self->{achievement}->exists($achievementID);
+}
+
+sub getAchievement {
+	my ($self, $achievementID) = shift->checkArgs(\@_, qw/achievement_id/);
+	return ( $self->getAchievements($achievementID) )[0];
+}
+
+sub getAchievements {
+	my ($self, @achievementIDs) = shift->checkArgs(\@_, qw/achievement_id*/);
+	return $self->{achievement}->gets(map { [$_] } @achievementIDs);
+}
+
+sub addAchievement {
+	my ($self, $Achievement) = shift->checkArgs(\@_, qw/REC:achievement/);
+	
+	eval {
+
+		return $self->{achievement}->add($Achievement);
+	};
+	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
+		croak "addAchievement: achievement exists (perhaps you meant to use putAchievement?)";
+	} elsif ($@) {
+		die $@;
+	}
+}
+
+sub putAchievement {
+	my ($self, $Achievement) = shift->checkArgs(\@_, qw/REC:achievement/);
+	my $rows = $self->{achievement}->put($Achievement); # DBI returns 0E0 for 0.
+	if ($rows == 0) {
+		croak "putAchievement: achievement not found (perhaps you meant to use addAchievement?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteAchievement {
+	# achievementID can be undefined if being called from this package
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ($self, $achievementID) = shift->checkArgs(\@_, "achievement_id$U");
+	$self->deleteUserAchievement(undef, $achievementID);
+	return $self->{achievement}->delete($achievementID);
+}
+
+####################################################################
+## global_user_achievement functions
+###############################################################
+
+BEGIN {
+	*GlobalUserAchievement = gen_schema_accessor("global_user_achievement");
+	*newGlobalUserAchievement = gen_new("global_user_achievement");
+	*countGlobalUserAchievementsWhere = gen_count_where("global_user_achievement");
+	*existsGlobalUserAchievementWhere = gen_exists_where("global_user_achievement");
+	*listGlobalUserAchievementsWhere = gen_list_where("global_user_achievement");
+	*getGlobalUserAchievementsWhere = gen_get_records_where("global_user_achievement");
+}
+
+sub countGlobalUserAchievements { return scalar shift->listGlobalUserAchievements(@_) }
+
+sub listGlobalUserAchievements {
+	my ($self) = shift->checkArgs(\@_);
+	if (wantarray) {
+		return map { @$_ } $self->{global_user_achievement}->get_fields_where(["user_id"]);
+	} else {
+		return $self->{global_user_achievement}->count_where;
+	}
+}
+
+sub existsGlobalUserAchievement {
+	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
+	return $self->{global_user_achievement}->exists($userID);
+}
+
+sub getGlobalUserAchievement {
+	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
+	return ( $self->getGlobalUserAchievements($userID) )[0];
+}
+
+sub getGlobalUserAchievements {
+	my ($self, @userIDs) = shift->checkArgs(\@_, qw/user_id*/);
+	return $self->{global_user_achievement}->gets(map { [$_] } @userIDs);
+}
+
+sub addGlobalUserAchievement {
+	my ($self, $globalUserAchievement) = shift->checkArgs(\@_, qw/REC:global_user_achievement/);
+	
+	eval {
+
+	    return $self->{global_user_achievement}->add($globalUserAchievement);
+	};
+	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
+		croak "addGlobalUserAchievement: user achievement exists (perhaps you meant to use putGlobalUserAchievement?)";
+	} elsif ($@) {
+		die $@;
+	}
+}
+
+sub putGlobalUserAchievement {
+	my ($self, $globalUserAchievement) = shift->checkArgs(\@_, qw/REC:global_user_achievement/);
+	my $rows = $self->{global_user_achievement}->put($globalUserAchievement); # DBI returns 0E0 for 0.
+	if ($rows == 0) {
+		croak "putGlobalUserAchievement: user achievement not found (perhaps you meant to use addGlobalUserAchievement?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteGlobalUserAchievement {
+	# userAchievementID can be undefined if being called from this package
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ($self, $userID) = shift->checkArgs(\@_, "user_id$U");
+	return $self->{global_user_achievement}->delete($userID);
+}
+
+
+################################################################################
+# achievement_user functions
+################################################################################
+
+BEGIN {
+	*UserAchievement = gen_schema_accessor("achievement_user");
+	*newUserAchievement = gen_new("achievement_user");
+	*countUserAchievementsWhere = gen_count_where("achievement_user");
+	*existsUserAchievementWhere = gen_exists_where("achievement_user");
+	*listUserAchievementsWhere = gen_list_where("achievement_user");
+	*getUserAchievementsWhere = gen_get_records_where("achievement_user");
+}
+
+sub countAchievementUsers { return scalar shift->listAchievementUsers(@_) }
+
+sub listAchievementUsers {
+	my ($self, $achievementID) = shift->checkArgs(\@_, qw/achievement_id/);
+	my $where = [achievement_id_eq => $achievementID];
+	if (wantarray) {
+		return map { @$_ } $self->{achievement_user}->get_fields_where(["user_id"], $where);
+	} else {
+		return $self->{achievement_user}->count_where($where);
+	}
+}
+
+sub countUserAchievements { return scalar shift->listUserAchievements(@_) }
+
+sub listUserAchievements {
+	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
+	my $where = [user_id_eq => $userID];
+	if (wantarray) {
+		return map { @$_ } $self->{achievement_user}->get_fields_where(["achievement_id"], $where);
+	} else {
+		return $self->{achievement_user}->count_where($where);
+	}
+}
+
+sub existsUserAchievement {
+	my ($self, $userID, $achievementID) = shift->checkArgs(\@_, qw/user_id achievement_id/);
+	return $self->{achievement_user}->exists($userID, $achievementID);
+}
+
+sub getUserAchievement {
+	my ($self, $userID, $achievementID) = shift->checkArgs(\@_, qw/user_id achievement_id/);
+	return ( $self->getUserAchievements([$userID, $achievementID]) )[0];
+}
+
+sub getUserAchievements {
+	my ($self, @userAchievementIDs) = shift->checkArgsRefList(\@_, qw/user_id achievement_id/);
+	return $self->{achievement_user}->gets(@userAchievementIDs);
+}
+
+sub addUserAchievement {
+	my ($self, $UserAchievement) = shift->checkArgs(\@_, qw/REC:achievement_user/);
+	
+	croak "addUserAchievement: user ", $UserAchievement->user_id, " not found"
+		unless $self->{user}->exists($UserAchievement->user_id);
+	croak "addUserAchievement: achievement ", $UserAchievement->achievement_id, " not found"
+		unless $self->{achievement}->exists($UserAchievement->achievement_id);
+	
+	eval {
+		return $self->{achievement_user}->add($UserAchievement);
+	};
+	if (my $ex = caught WeBWorK::DB::Ex::RecordExists) {
+		croak "addUserAchievement: user achievement exists (perhaps you meant to use putUserAchievement?)";
+	} elsif ($@) {
+		die $@;
+	}
+}
+
+sub putUserAchievement {
+	my ($self, $UserAchievement) = shift->checkArgs(\@_, qw/REC:achievement_user/);
+	my $rows = $self->{achievement_user}->put($UserAchievement); # DBI returns 0E0 for 0.
+	if ($rows == 0) {
+		croak "putUserAchievement: user achievement not found (perhaps you meant to use addUserAchievement?)";
+	} else {
+		return $rows;
+	}
+}
+
+sub deleteUserAchievement {
+	# userID and achievementID can be undefined if being called from this package
+	my $U = caller eq __PACKAGE__ ? "!" : "";
+	my ($self, $userID, $achievementID) = shift->checkArgs(\@_, "user_id$U", "achievement_id$U");
+	return $self->{achievement_user}->delete($userID, $achievementID);
+}
+
 ################################################################################
 # set_user functions
 ################################################################################
@@ -1181,7 +1414,6 @@ sub addUserSet {
 		unless $self->{user}->exists($UserSet->user_id);
 	croak "addUserSet: set ", $UserSet->set_id, " not found"
 		unless $self->{set}->exists($UserSet->set_id);
-	
 	eval {
 		return $self->{set_user}->add($UserSet);
 	};

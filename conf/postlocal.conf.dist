@@ -197,6 +197,9 @@ $pg{displayModes} = [
 	"LaTeXMathML",   # render TeX math expressions on the client side using LaTeXMathML
 ];
 
+# Default display mode. Should be an uncommented item listed above.
+$pg{options}{displayMode}        = "images";
+ 
 ################################################################################
 #  The macro file search path. (Check with entries in global.conf before overriding)
 ################################################################################
@@ -261,7 +264,7 @@ $problemDefaults{max_attempts} = -1;
 ################################################################################
 # Temporary hack for displaying the different versions of the editors
 ################################################################################
-# These configurations can be placed in CourseConfig to tune the behavior for individual courses
+# These configurations can be placed in course.conf file to tune the behavior for individual courses
 # The items below can be used to override the settings in global.conf.dist
 # One can also use $showeditors{classlisteditor1}=0; to override
 # %showeditors = (
@@ -279,6 +282,28 @@ $problemDefaults{max_attempts} = -1;
 # 	pgproblemeditor2   => 1,
 # );
 
+################################################################################
+# Authorization system   LTI:  LMS Roles Mapped to WeBWorK Roles
+################################################################################
+
+## Each institution will need to customize these correspondences
+## to take into account the roles that are used in its
+## Learning Management System.
+
+# %LMSrolesToWeBWorKroles = (
+# 	"AI/TA" => "ta",
+# 	"assistant" => "empowered_AI",
+# 	"instructor" => "professor",
+# 	"librarian" => "guest",
+# 	"librarian+" => "empoweredAI",
+# 	"observer" => "guest",
+#     "student" => "student",
+# 	"visitor" => "guest",
+# 	"Instructor" => "professor",
+#     "Student" => "student",
+#     "Learner" => "student",
+# 	"Teaching Assistant" => "ta",
+# );
 ################################################################################
 # Directory for temporary files
 ################################################################################ 
