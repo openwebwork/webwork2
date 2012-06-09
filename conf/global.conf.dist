@@ -32,7 +32,7 @@ include("VERSION");
 ################################################################################
 
 # Root directory of PG.
-$pg_dir              = "/opt/webwork/pg";
+#$pg_dir              = "/opt/webwork/pg";
 
 # URL and path to htdocs directory.
 # Uncomment the second line below when using litetpd
@@ -40,8 +40,8 @@ $webwork_htdocs_url  = "/webwork2_files";
 $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 
 # URL and path to courses directory.
-$webwork_courses_url = "/webwork2_course_files";
-$webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the course directory
+#$webwork_courses_url = "/webwork2_course_files";
+#$webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the course directory
 
 
 ################################################################################
@@ -193,7 +193,7 @@ $webworkDirs{conf}          = "$webworkDirs{root}/conf";
 $webworkDirs{templates}     = "$webworkDirs{conf}/templates";
 
 # Location of course directories.
-$webworkDirs{courses}       = "$webwork_courses_dir" || "$webworkDirs{root}/courses";
+#$webworkDirs{courses}       = "$webwork_courses_dir" || "$webworkDirs{root}/courses";
 
 # Contains log files.
 $webworkDirs{logs}          = "$webworkDirs{root}/logs";

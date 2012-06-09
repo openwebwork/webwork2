@@ -281,7 +281,7 @@ sub editUser {
     my $ce = $self->{ce};
     my $out = {};
     debug("Webservices edit user request.");
-
+    $out->{text} = encode_base64("");
     # make sure course actions are enabled
     #if (!$ce->{webservices}{enableCourseActions}) {
     #	$out->{status} = "failure";
@@ -299,11 +299,15 @@ sub editUser {
     		$User->$field($params->{$param});
     	}
     }
-    foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
-    	my $param = "${field}";
-    	if (defined $params->{$param}) {
-   	    	$PermissionLevel->$field($params->{$param});
-    	}
+    if($params->{'id'} eq $params->{'user'}){
+        $out->{text} .= encode_base64("You cannot change your own permissions.");
+    } else {
+        foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
+    	    my $param = "${field}";
+    	    if (defined $params->{$param}) {
+   	    	    $PermissionLevel->$field($params->{$param});
+    	    }
+        }
     }
 
     $db->putUser($User);
@@ -316,7 +320,7 @@ sub editUser {
     $User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
 
     $out->{ra_out} = $User;
-    $out->{text} = encode_base64("Changes saved");
+    $out->{text} .= encode_base64("Changes saved");
 
 	return $out;
 }

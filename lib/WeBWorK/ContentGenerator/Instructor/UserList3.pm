@@ -486,7 +486,7 @@ sub body {
 #
 #
 
-	print CGI::div({class=>"helpBox"}, CGI::p($r->maketext("The Student Management page allows you to edit student information as well as perform actions (delete, email, act as user) on individuals or a group of students. To edit a student information, click on the information to change and retype or select the correct informaiton.  To perform an action on an individual student, select the action from the last column. To pefrom an action on a group of students, select those students using the checkboxes on the first column, then select the action from the button above (or below) the table.")));
+	print CGI::div({class=>"helpBox"}, CGI::p($r->maketext("The Student Management page allows you to edit student information as well as perform actions (delete, email, act as user) on individuals or a group of students. To edit a student information, click on the information to change and retype or select the correct informaiton.  To perform an action on an individual student, select the action from the last column. To pefrom an action on a group of students, select those students using the checkboxes on the first column, then select the action from the button above (or below) the table.")), '<h2>The Actions do not work yet!</h2><p>please check them out and see if you like the lists, but keep in mind they will not preform any actual actions</p>');
 
 ### create the list of actions: 
 
