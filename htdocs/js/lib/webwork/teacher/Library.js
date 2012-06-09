@@ -69,7 +69,7 @@ webwork.LibraryList = Backbone.Collection.extend({
                 var newLibs = new Array();
 
                 //should be either an object of a comma separated list
-                var libraries = _.isObject(response.result_data)? _.keys(response.result_data):response.result_data.split(",")
+                var libraries = _.isArray(response.result_data)?response.result_data:_.isObject(response.result_data)?_.keys(response.result_data):response.result_data.split(",")
 
                 libraries.forEach(function(lib) {
                     newLibs.push({name:lib, path: self.url +"/"+lib})

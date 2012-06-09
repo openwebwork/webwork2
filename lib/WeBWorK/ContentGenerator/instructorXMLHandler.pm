@@ -201,6 +201,20 @@ sub pre_header_initialize {
 		     library_textchapter	=> 	$r->param("library_textchapter") ||undef,
 		     library_textsection	=> 	$r->param("library_textsection") ||undef,
 		     source			 =>   '',
+
+		     #course stuff
+		     first_name       => $r->param('first_name') || undef,
+             last_name       => $r->param('last_name') || undef,
+             student_id     => $r->param('student_id') || undef,
+             id             =>  $r->param('user_id') || undef,
+             email_address  => $r->param('email_address') || undef,
+             permission     => $r->param('permission') || 0,	# valid values from %userRoles in global.conf
+             status         => $r->param('status') || undef,#'Enrolled, audit, proctor, drop
+             section        => $r->param('section') || undef,
+             recitation     => $r->param('recitation') || undef,
+             comment        => $r->param('comment') || undef,
+             new_password   => $r->param('new_password') || undef,
+             userpassword   => $r->param('userpassword') || undef,	# defaults to studentid if empty
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -417,13 +431,17 @@ sub pretty_print_json {
  		}
  		#get rid of the last comma
  		chop $out;
- 		$out =  '"'.$out.'"';
+ 		$out = "[\n$out\n"."]\n";
+ 		#$out =  '"'.$out.'"';
 	} elsif ( ref($rh) =~ /SCALAR/ ) {
 		$out .= "scalar reference ". ${$rh};
 	} elsif ( ref($rh) =~/Base64/ ) {
 		$out .= "base64 reference " .$$rh;
+
+    } elsif ($rh  =~ /^[+-]?\d+$/){
+        $out .=  $rh;
 	} else {
-		$out .=  $rh;
+		$out .=  '"'.$rh.'"';
 	}
 	
 	return $out."";

@@ -419,6 +419,14 @@ sub createCourse {
 	return $self->do(WebworkWebservice::CourseActions::create($self, $in));
 }
 
+sub listUsers{
+    my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::listUsers($self, $in));
+
+}
+
 # Expecting a hash $in composed of
 #{
 #	'userID' => 'admin',		# these are the usual 
@@ -430,7 +438,7 @@ sub createCourse {
 #	"id": "The Doctor",			# required
 #	"email": "doctor@tardis",
 #	"studentid": 87492466, 
-#	"userpassword": "password",	# defaults to studentid if empty 
+#	"userpassword": "password",	# defaults to studentid if empty
 #								# if studentid also empty, then no password
 #	"permission": "professor",	# valid values from %userRoles in global.conf
 #								# defaults to student if empty
@@ -456,6 +464,48 @@ sub dropUser {
 	my $in = shift;
 	my $self = $class->initiate_session($in);
 	return $self->do(WebworkWebservice::CourseActions::dropUser($self, $in));
+}
+
+# Expecting a hash $in composed of
+#{
+#	'userID' => 'admin',		# these are the usual
+#	'password' => 'admin',		# auth credentials
+#	'courseID' => 'Math',		# used to initiate a
+#	'session_key' => 'key',		# session.
+#	"studentid": 87492466,
+#	"firstname": "John",
+#	"lastname": "Smith",
+#	"id": "The Doctor",			# required
+#	"email": "doctor@tardis",
+#
+#	"permission": "professor",	# valid values from %userRoles in global.conf
+#								# defaults to student if empty
+#   status: 'Enrolled, audit, proctor, drop
+#   section
+#   recitation
+#   comment
+#}
+sub editUser {
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    return $self->do(WebworkWebservice::CourseActions::editUser($self, $in));
+}
+
+# Expecting a hash $in composed of
+#{
+#	'userID' => 'admin',		# these are the usual
+#	'password' => 'admin',		# auth credentials
+#	'courseID' => 'Math',		# used to initiate a
+#	'session_key' => 'key',		# session.
+#	"studentid": 87492466,
+#	"new_password": "password"
+#}
+sub changeUserPassword{
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    return $self->do(WebworkWebservice::CourseActions::changeUserPassword($self, $in));
 }
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
