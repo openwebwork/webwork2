@@ -35,27 +35,7 @@
 
 
 ################################################################################
-# Mail settings
-################################################################################
-
-################################################################################
-# These configurations must be defined in order for the mailing capabilities
-# of webwork to work
-################################################################################
-
-# Mail sent by the PG system and the mail merge and feedback modules will be
-# sent via this SMTP server.
-$mail{smtpServer}            ="mail.yourschool.edu";
-
-# When connecting to the above server, WeBWorK will send this address in the
-# MAIL FROM command. This has nothing to do with the "From" address on the mail
-# message. It can really be anything, but some mail servers require it contain
-# a valid mail domain, or at least be well-formed.
-$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
-
-
-################################################################################
-# Additional mail settings in global.conf can be overridden here
+# Additional mail settings in defaults.conf can be overridden here
 ################################################################################
 
 # This setting is only used if you need to send email from within a PG problem
@@ -146,27 +126,6 @@ $courseFiles{problibs}    = {
 # 	osuLibrary       => "Ohio State",	
 #       capaLibrary      => "CAPA",
 };
-
-
-################################################################################
-# Site defaults 
-################################################################################
-
-# Set the default timezone of courses on this server. To get a list of valid
-# timezones, run:
-# 
-#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::all_names'
-# 
-# To get a list of valid timezone "links" (deprecated names), run:
-# 
-#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
-# 
-# If left blank, the system timezone will be used. This is usually what you
-# want. You might want to set this if your server is NOT in the same timezone as
-# your school. If just a few courses are in a different timezone, set this in
-# course.conf for the affected courses instead.
-# 
-$siteDefaults{timezone} = "America/New_York";
 
 
 ################################################################################
