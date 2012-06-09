@@ -1,5 +1,4 @@
 
-
                                         WeBWorK                                    
                          Online Homework Delivery System                        
                                    Version 2.5.0
@@ -25,7 +24,7 @@ If you already have a repo:
 __warning these commands will just merge it with you're currently checkedout branch!__
 
 ```
-git remote add webwork2-dev git://github.com/<your user name>/webwork2-dev.git
+git remote add webwork2-dev git@github.com:<your user name>/webwork2-dev.git
 git fetch webwork2-dev
 git merge webwork2-dev/master
 
