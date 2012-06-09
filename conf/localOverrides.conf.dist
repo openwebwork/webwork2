@@ -129,27 +129,6 @@ $courseFiles{problibs}    = {
 
 
 ################################################################################
-# Site defaults 
-################################################################################
-
-# Set the default timezone of courses on this server. To get a list of valid
-# timezones, run:
-# 
-#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::all_names'
-# 
-# To get a list of valid timezone "links" (deprecated names), run:
-# 
-#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
-# 
-# If left blank, the system timezone will be used. This is usually what you
-# want. You might want to set this if your server is NOT in the same timezone as
-# your school. If just a few courses are in a different timezone, set this in
-# course.conf for the affected courses instead.
-# 
-$siteDefaults{timezone} = "America/New_York";
-
-
-################################################################################
 # Permission levels
 ################################################################################
 
