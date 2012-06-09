@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://github.com/openwebwork
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.36 2008/04/29 19:27:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -72,6 +72,9 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_user_detail2              /$courseID/instructor/users2/$userID/ #not created yet
  instructor_sets_assigned_to_user2    /$courseID/instructor/users2/$userID/sets/ #not created yet
 
+ instructor_user_list3                /$courseID/instructor/users3/
+ instructor_user_detail3              /$courseID/instructor/users3/$userID/ #not created yet
+ instructor_sets_assigned_to_user3    /$courseID/instructor/users3/$userID/sets/ #not created yet
  
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
@@ -173,7 +176,7 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy achievements
+		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy
 			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -307,8 +310,8 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2 
-		    instructor_add_users instructor_achievement_list
+		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2
+		    instructor_add_users
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 
 			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
@@ -344,6 +347,15 @@ our %pathTypes = (
 		produce => 'users2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
+	instructor_user_list3 => {
+    		name    => 'Classlist Editor3',
+    		parent  => 'instructor_tools',
+    		kids    => [ qw/instructor_user_detail/ ],
+    		match   => qr|^users3/|,
+    		capture => [ qw// ],
+    		produce => 'users3/',
+    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
+    	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',
