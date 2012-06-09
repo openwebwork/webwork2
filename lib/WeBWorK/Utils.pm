@@ -78,6 +78,7 @@ our @EXPORT_OK = qw(
 	ref2string
 	removeTempDirectory
 	runtime_use
+        sortAchievements
 	sortByName
 	surePathToFile
 	textDateTime
@@ -270,7 +271,7 @@ sub surePathToFile($$) {
 	}
 	# use the permissions/group on the start directory itself as a template
 	my ($perms, $groupID) = (stat $start_directory)[2,5];
-	#warn "&urePathToTmpFile: perms=$perms groupID=$groupID\n";
+	# warn "&urePathToTmpFile: perms=$perms groupID=$groupID\n";
 	
 	# if the path starts with $start_directory (which is permitted but optional) remove this initial segment
 	$path =~ s|^$start_directory|| if $path =~ m|^$start_directory|;
@@ -1029,6 +1030,35 @@ sub sortByName($@) {
 	} (keys %itemsByIndex);
 
 	return map{$itemsByIndex{$_}} @sKeys;
+}
+
+
+################################################################################
+# Sort Achievements by category and id
+################################################################################
+
+sub sortAchievements {
+	my @Achievements = @_;
+	
+	# First sort by achievement id
+
+	@Achievements = sort {uc($a->{achievement_id}) cmp uc($b->{achievement_id})}  @Achievements;
+
+	# Next sort by categoyr, but secret comes first and level last
+
+	@Achievements = sort {
+	    if ($a->{category} eq $b->{category}) {
+		return 0; 
+	    } elsif ($a->{category} eq "secret" or $b->{category} eq "level") {
+		return -1;
+	    } elsif ($a->{category} eq "level" or $b->{category} eq "secret") {
+		return 1;
+	    } else {
+		return $a->{category} cmp $b->{category};
+	    } } @Achievements;
+
+	return @Achievements;
+       
 }
 
 ################################################################################

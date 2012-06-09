@@ -145,15 +145,14 @@ sub body {
 		);
 	}
 
-	print CGI::start_div({-class=>"p_content"});
-	
 	if ( $externalAuth ) {
 	    print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($r->maketext($course))));
-		print CGI::end_div();
+
 	} else {
 		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($r->maketext($course))));
-		print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
-		print CGI::end_div();
+		if ($ce -> {session_management_via} ne "session_cookie") {
+			print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
+		}
 	
 		print CGI::startform({-method=>"POST", -action=>$r->uri, -id=>"login_form"});
 
@@ -201,7 +200,9 @@ sub body {
 		print CGI::br();
 		print WeBWorK::CGI_labeled_input(-type=>"password", -id=>"pswd", -label_text=>$r->maketext("Password").": ", -input_attr=>{-name=>"passwd", -value=>"$passwd"}, -label_attr=>{-id=>"pswd_label"});
 		print CGI::br();
-		print WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"rememberme", -label_text=>$r->maketext("Remember Me"), -input_attr=>{-name=>"send_cookie", -value=>"on"});
+		if ($ce -> {session_management_via} ne "session_cookie") {
+			print WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"rememberme", -label_text=>$r->maketext("Remember Me"), -input_attr=>{-name=>"send_cookie", -value=>"on"});
+		}
 		print CGI::br();
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-value=>$r->maketext("Continue")});
 		print CGI::br();

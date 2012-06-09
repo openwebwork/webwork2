@@ -93,6 +93,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
 	margin-bottom: 1ex; 
 	margin-top: 0;
+	width: 90%;
 	overflow: hidden;
 }
 .info-box h2,
@@ -279,11 +280,33 @@ clear: both;
 }*/
 /* [ww] instead of a search form, we want the loginstatus there */
 /*#masthead form {*/
+
+/*Loginstatus -- the element fixed on the top right corner of the page, which tells the user whether they are logged in or not, and provides them with a log out link if they are logged in.*/
+
 #masthead #loginstatus {
 	float: right;
 	padding: 0;
 	margin: 1ex .5em .1ex .1em;
 	font-size: smaller;
+} 
+
+/*Relative Positioning -- a alternate style for the loginstatus which uses relative positioning.  Tested, but was decided that it didn't work great. Feel free to uncomment if you want to try it out.*/
+
+/*#loginstatus {
+	color: white;
+	position: relative;
+	top: -140px;
+	left: 470px;
+	width: 150px;
+	text-align: center;
+	padding: 0;
+	margin: 1ex .5em .1ex .1em;
+	font-size: smaller;
+}*/
+
+
+#loginstatus a{
+	color: white;
 }
 #masthead #loginstatus #Nav {
 	padding: 1ex;
@@ -404,11 +427,11 @@ clear: both;
     font-size:100%;
 	float: right;
 	max-width: 40%;
+	min-width: 0;
 	overflow: auto;
-	margin-right: -1px;
+	/*margin-right: -1px;*/
 	background-color: #fff;
 }
-
 #InfoPanel ol {
 	font-size:100%;
 }
@@ -429,9 +452,9 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.WarningMessage { background-color: #ffcccc; padding: 3px 3px 3px 3px; }
+div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-div.ResultsWithError { color: #C33; background-color: inherit; } /* red */
+div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
@@ -439,7 +462,7 @@ label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error r
 label.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-span.ResultsWithError { color: #C33; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+span.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
 span.incorrect { color: #FF9494; background-color: inherit; } /* red */
@@ -683,7 +706,7 @@ span.gray_button{
 }
 
 #editor #form_div{
-	/*float: left;*/
+	float: left;
 	width: 100%;
 }
 
@@ -729,10 +752,70 @@ span.gray_button{
 	margin-top: 10%;
 	margin-left: 10%;
 	margin-right: 10%;
+}*/
+
+#editor{
+	width: 585px;
 }
 
-/*These are styles for the tables of problem sets*/
+#editor .pg_editor_input_span{
+	margin-bottom: 10px;
+	display: none;
+}
 
+#editor .pg_editor_input_div{
+	margin-top: 20px;
+	margin-left: 50px;
+}
+
+#editor #submit_input_div{
+	margin-top: 10px;
+	clear: both;
+}
+
+#pg_editor_header {
+    left: 790px;
+    position: absolute;
+    top: 130px;
+}
+
+#pg_editor_frame_id{
+	height: 474px;
+    left: 785px;
+    position: absolute;
+    top: 182px;
+    width: 50%;
+	overflow: scroll;
+}
+
+/*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
+
+.radio_span{
+	visibility: hidden;
+}
+
+table.problem_sets_table {
+	width: 640px;
+	float: left;
+	margin-bottom: 3%;
+}
+
+table.problem_sets_table caption {
+}
+
+table.problem_sets_table th{
+	width: 320px;
+	padding-bottom: 10px;
+}
+
+table.problem_sets_table td{
+	width: 320px;
+}
+
+div.problem_sets_options {
+	clear: both;
+	margin: 1% 1% 1% 1%;
+}
 
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 table.problem_set_table{
