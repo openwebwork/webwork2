@@ -431,10 +431,10 @@ clear: both;
  * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-	float: right;
+	float: right; /*was right*/
 	max-width: 40%;
 	min-width: 0;
-	overflow: auto;
+	overflow: hidden; /*was auto*/
 	/*margin-right: -1px;*/
 	background-color: #fff;
 }
@@ -804,6 +804,7 @@ table.problem_sets_table {
 	width: 640px;
 	float: left;
 	margin-bottom: 3%;
+	overflow:hidden/*was not here*/;
 }
 
 table.problem_sets_table caption {
