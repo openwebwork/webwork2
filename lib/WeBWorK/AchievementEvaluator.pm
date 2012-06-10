@@ -47,6 +47,13 @@ sub checkForAchievements {
     @achievements = sortAchievements(@achievements);
     my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
 
+    # If no global data then initialize
+    if (not $globalUserAchievement) {
+	$globalUserAchievement = $db->newGlobalUserAchievement();
+	$globalUserAchievement->user_id($user_id);
+	$db->addGlobalUserAchievement($globalUserAchievement);
+    }
+
     #update the problem with stuff from the pg. 
     # this is kind of a hack.  The achievement checking happens *before* the system has
     # updated $problem with the new results from $pg.  So we cheat and update the 
