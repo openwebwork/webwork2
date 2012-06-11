@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.46 2007/08/13 22:59:55 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.47 2012/06/08 22:59:55 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,10 +34,11 @@ use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # This content generator is NOT logged in.
+# BUT one must return a 1 so that error messages can be displayed.
 sub if_loggedin {
 	my ($self, $arg) = @_;
-	
-	return !$arg;
+#	return !$arg;
+	return 1;
 }
 
 sub info {
@@ -111,6 +112,11 @@ sub info {
 	}
 }
 
+sub links {
+	my @return = (" ");
+	return( @return);
+}
+
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -121,7 +127,16 @@ sub body {
 	# get the authen object to make sure that we should print
 	#    a login form or not
 	my $auth = $r->authen;
-	my $externalAuth = (defined($auth->{external_auth}) && $auth->{external_auth} ) ? 1 : 0;
+
+	# The following line may not work when a sequence of authentication modules
+    # are used, because the preferred module might be external, e.g., LTIBasic,
+    # but a non-external one, e.g., Basic_TheLastChance or 
+    # even just WeBWorK::Authen, might handle the ongoing session management.
+    # So this should be set in the course environment when a sequence of
+	# authentication modules is used..
+	#my $externalAuth = (defined($auth->{external_auth}) && $auth->{external_auth} ) ? 1 : 0;
+	my $externalAuth = ((defined($ce->{external_auth}) && $ce->{external_auth})
+ 		or (defined($auth->{external_auth}) && $auth->{external_auth}) ) ? 1 : 0;
 	
 	# get some stuff together
 	my $user = $r->param("user") || "";
@@ -145,15 +160,26 @@ sub body {
 		);
 	}
 
-	print CGI::start_div({-class=>"p_content"});
-	
 	if ( $externalAuth ) {
-	    print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($r->maketext($course))));
-		print CGI::end_div();
+		if ($authen_error) {
+			if ($r -> authen() eq "WeBWorK::Authen::LTIBasic") {
+				print CGI::div({class=>"ResultsWithError"},
+				CGI::p({}, CGI::b($course), "uses an external", 
+				"authentication system.  Please go there to try again."));
+			} else {
+				print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($r->maketext($course))));
+			}
+		} else {
+	    	print CGI::p({}, "Your session has expired due to inactivity.  ",
+			CGI::b($course), "uses an external", 
+			"authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  ",
+			"Please return to system you used and enter WeBWorK anew.");
+		} 
 	} else {
 		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($r->maketext($course))));
-		print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
-		print CGI::end_div();
+		if ($ce -> {session_management_via} ne "session_cookie") {
+			print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
+		}
 	
 		print CGI::startform({-method=>"POST", -action=>$r->uri, -id=>"login_form"});
 
@@ -201,7 +227,9 @@ sub body {
 		print CGI::br();
 		print WeBWorK::CGI_labeled_input(-type=>"password", -id=>"pswd", -label_text=>$r->maketext("Password").": ", -input_attr=>{-name=>"passwd", -value=>"$passwd"}, -label_attr=>{-id=>"pswd_label"});
 		print CGI::br();
-		print WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"rememberme", -label_text=>$r->maketext("Remember Me"), -input_attr=>{-name=>"send_cookie", -value=>"on"});
+		if ($ce -> {session_management_via} ne "session_cookie") {
+			print WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"rememberme", -label_text=>$r->maketext("Remember Me"), -input_attr=>{-name=>"send_cookie", -value=>"on"});
+		}
 		print CGI::br();
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-value=>$r->maketext("Continue")});
 		print CGI::br();

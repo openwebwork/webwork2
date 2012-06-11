@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.62 2007/03/06 22:03:15 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.63 2012/06/06 22:03:15 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -54,9 +54,10 @@ use WeBWorK::Cookie;
 use Date::Format;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
 use WeBWorK::Debug;
-use WeBWorK::Utils qw/writeCourseLog/;
+use WeBWorK::Utils qw/writeCourseLog runtime_use/;
 use WeBWorK::Localize;
 use URI::Escape;
+use Carp;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
@@ -108,21 +109,58 @@ sub class {
 	my ($ce, $type) = @_;
 	
 	if (exists $ce->{authen}{$type}) {
-		if (ref $ce->{authen}{$type} eq "HASH") {
+		if (ref $ce->{authen}{$type} eq "ARRAY") {
+			my $authen_type = shift @{$ce ->{authen}{$type}};
+			#debug("ref of authen_type = |" . ref($authen_type) . "|");
+			if (ref ($authen_type) eq "HASH") {
+				if (exists $authen_type->{$ce->{dbLayoutName}}) {
+					return $authen_type->{$ce->{dbLayoutName}};
+				} elsif (exists $authen_type->{"*"}) {
+					return $authen_type->{"*"};
+				} else {
+					die "authentication type '$type' in the course environment has no entry for db layout '", $ce->{dbLayoutName}, "' and no default entry (*)";
+				}
+			} else {
+					return $authen_type;
+			}
+		} elsif (ref $ce->{authen}{$type} eq "HASH") {
 			if (exists $ce->{authen}{$type}{$ce->{dbLayoutName}}) {
 				return $ce->{authen}{$type}{$ce->{dbLayoutName}};
 			} elsif (exists $ce->{authen}{$type}{"*"}) {
 				return $ce->{authen}{$type}{"*"};
 			} else {
-				die "authentication type '$type' in %authen hash in course environemnt has no entry for db layout '", $ce->{dbLayoutName}, "' and no default entry (*)";
+				die "authentication type '$type' in the course environment has no entry for db layout '", $ce->{dbLayoutName}, "' and no default entry (*)";
 			}
 		} else {
 			return $ce->{authen}{$type};
 		}
 	} else {
-		die "authentication type '$type' not found in course environment \%authen hash";
+		die "authentication type '$type' not found in course environment";
 	}
 }
+
+sub call_next_authen_method {
+	my $self = shift;
+	my $r = $self -> {r};
+	my $ce = $r -> {ce};
+
+	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
+	#debug("user_authen_module = |$user_authen_module|");	
+	if (!defined($user_authen_module or $user_authen_module eq "")) {
+		$self->{error} = $r->maketext("No authentication method found for your request.  "
+			. "If this recurs, please speak with your instructor.");
+		$self->{log_error} .= "None of the specified authentication modules could handle the request.";
+		return(0);
+	} else {
+		runtime_use $user_authen_module;
+		my $authen = $user_authen_module->new($r);
+		#debug("Using user_authen_module $user_authen_module: $authen\n");
+		$r->authen($authen);
+
+		return $authen -> verify;
+	}
+}
+
 
 =back
 
@@ -160,11 +198,20 @@ sub new {
 
 =cut
 
+sub  request_has_data_for_this_verification_module {
+	#debug("Authen::request_has_data_for_this_verification_module will return a 1");
+	return(1);
+}
+
 sub verify {
 	debug("BEGIN VERIFY");
 	my $self = shift;
 	my $r = $self->{r};
-	
+
+	if (! ($self-> request_has_data_for_this_verification_module)) {
+		return ( $self -> call_next_authen_method());
+	}
+
 	my $result = $self->do_verify;
 	my $error = $self->{error};
 	my $log_error = $self->{log_error};
@@ -182,6 +229,10 @@ sub verify {
 	} else {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
+		}
+		if (!defined($error) or !$error) {
+			$error = $r->maketext("Your authentication failed.  Please try again."
+				. "  Please speak with your instructor if you need help.")
 		}
 		$self->maybe_kill_cookie;
 		if ($error) {
@@ -214,8 +265,11 @@ Future calls to was_verified() will return false, until verify() is called again
 
 sub forget_verification {
 	my ($self) = @_;
+	my $r = $self -> {r};
+	my $ce = $r -> {ce};
 	
 	$self->{was_verified} = 0;
+	
 }
 
 =back
@@ -281,6 +335,56 @@ sub get_credentials {
 		return 0;
 	}
 	
+	my ($cookieUser, $cookieKey, $cookieTimeStamp) = $self->fetchCookie;
+
+	if (defined $cookieUser and defined $r->param("user") ) {
+		if ($cookieUser ne $r->param("user")) {
+			croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
+		}
+		if (defined $cookieKey and defined $r->param("key")) {
+			$self -> {user_id} = $cookieUser;
+			$self -> {password} = $r->param("passwd");
+			$self -> {login_type} = "normal";
+			$self -> {credential_source} = "params_and_cookie";
+			$self -> {session_key} = $cookieKey;
+			$self -> {cookie_timestamp} = $cookieTimeStamp;
+			if ($cookieKey ne $r->param("key")) {
+				warn ("cookieKey = $cookieKey and param key = " . $r -> param("key") . " are different, perhaps"
+					 ." because you opened several windows for the same site and then backed up from a newer one to an older one."
+					 ."  Avoid doing so.");
+			$self -> {credential_source} = "conflicting_params_and_cookie";
+			}
+			debug("params and cookie user '", $self->{user_id}, "' credential_source = '", $self->{credential_source},
+				"' params and cookie session key = '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+			return 1;
+		} elsif (defined $r -> param("key")) {
+			$self->{user_id} = $r->param("user");
+			$self->{session_key} = $r->param("key");
+			$self->{password} = $r->param("passwd");
+			$self->{login_type} = "normal";
+			$self->{credential_source} = "params";
+			debug("params user '", $self->{user_id}, "' password '", $self->{password}, "' key '", $self->{session_key}, "'");
+			return 1;
+		} elsif (defined $cookieKey) {
+			$self->{user_id} = $cookieUser;
+			$self->{session_key} = $cookieKey;
+			$self->{cookie_timestamp} = $cookieTimeStamp;
+			$self->{login_type} = "normal";
+			$self->{credential_source} = "cookie";
+			debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+			return 1;
+		} else {
+			$self -> {user_id} = $cookieUser;
+			$self -> {session_key} = $cookieKey; # will be undefined
+			$self -> {password} = $r->param("passwd");
+			$self -> {cookie_timestamp} = $cookieTimeStamp;
+			$self -> {login_type} = "normal";
+			$self -> {credential_source} = "params_and_cookie";
+			debug("params and cookie user '", $self->{user_id}, "' params and cookie session key = '",
+				 $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+			return 1;
+		}	
+	}
 	# at least the user ID is available in request parameters
 	if (defined $r->param("user")) {
 		$self->{user_id} = $r->param("user");
@@ -292,13 +396,13 @@ sub get_credentials {
 		return 1;
 	}
 	
-	my ($cookieUser, $cookieKey) = $self->fetchCookie;
 	if (defined $cookieUser) {
 		$self->{user_id} = $cookieUser;
 		$self->{session_key} = $cookieKey;
+		$self->{cookie_timestamp} = $cookieTimeStamp;
 		$self->{login_type} = "normal";
 		$self->{credential_source} = "cookie";
-		debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
+		debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
 		return 1;
 	}
 }
@@ -314,7 +418,7 @@ sub check_user {
 	
 	if (defined $user_id and $user_id eq "") {
 		$self->{log_error} = "no user id specified";
-		$self->{error} = $r->maketext("You must specify a user ID.");
+		$self->{error} .= $r->maketext("You must specify a user ID.");
 		return 0;
 	}
 	
@@ -398,7 +502,7 @@ sub verify_normal_user {
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
 	
-	if ($keyMatches and $timestampValid) {
+	if ($sessionExists and $keyMatches and $timestampValid) {
 		return 1;
 	} else {
 		my $auth_result = $self->authenticate;
@@ -413,7 +517,7 @@ sub verify_normal_user {
 			return 0;
 		} else { # ($auth_result < 0) => required data was not present
 			if ($keyMatches and not $timestampValid) {
-				$self->{error} = $r->maketext("Your session has timed out due to inactivity. Please log in again.");
+				$self->{error} .= $r->maketext("Your session has timed out due to inactivity. Please log in again.");
 			}
 			return 0;
 		}
@@ -440,8 +544,9 @@ sub authenticate {
 sub maybe_send_cookie {
 	my $self = shift;
 	my $r = $self->{r};
+	my $ce = $r -> {ce};
 	
-	my ($cookie_user, $cookie_key) = $self->fetchCookie;
+	my ($cookie_user, $cookie_key, $cookie_timestamp) = $self->fetchCookie;
 	
 	# we send a cookie if any of these conditions are met:
 	
@@ -458,10 +563,16 @@ sub maybe_send_cookie {
 	# (c) the user asked to have a cookie sent and is not a guest user.
 	my $user_requests_cookie = ($self->{login_type} ne "guest"
 		and $r->param("send_cookie"));
+
+	# (d) session management is done via cookies.
+	my $session_management_via_cookies = 
+		$ce -> {session_management_via} eq "session_cookie";
 	
-	debug("used_cookie='", $used_cookie, "' unused_valid_cookie='", $unused_valid_cookie, "' user_requests_cookie='", $user_requests_cookie, "'");
+	debug("used_cookie='", $used_cookie, "' unused_valid_cookie='", $unused_valid_cookie, "' user_requests_cookie='", $user_requests_cookie, 
+			"' session_management_via_cookies ='", $session_management_via_cookies, "'");
 	
-	if ($used_cookie or $unused_valid_cookie or $user_requests_cookie) {
+	if ($used_cookie or $unused_valid_cookie or $user_requests_cookie or $session_management_via_cookies) {
+		#debug("Authen::maybe_send_cookie is sending a cookie");
 		$self->sendCookie($self->{user_id}, $self->{session_key});
 	} else {
 		$self->killCookie;
@@ -600,6 +711,10 @@ sub create_session {
 	# DBFIXME this should be a REPLACE
 	eval { $db->deleteKey($userID) };
 	$db->addKey($Key);
+
+	#if ($ce -> {session_management_via} eq "session_cookie"),
+	#    then the subroutine maybe_send_cookie should send a cookie.
+
 	return $newKey;
 }
 
@@ -609,20 +724,42 @@ sub check_session {
 	my ($self, $userID, $possibleKey, $updateTimestamp) = @_;
 	my $ce = $self->{r}->ce;
 	my $db = $self->{r}->db;
-	
+
 	my $Key = $db->getKey($userID); # checked
 	return 0 unless defined $Key;
-	
 	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
-	my $timestampValid = (time <= $Key->timestamp()+$ce->{sessionKeyTimeout});
 	
-	if ($keyMatches and $timestampValid and $updateTimestamp) {
-		$Key->timestamp(time);
-		$db->putKey($Key);
+	my $timestampValid=0;
+	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
+		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
+	} else {
+		$timestampValid = (time <= $Key->timestamp()+$ce->{sessionKeyTimeout});
+		if ($keyMatches and $timestampValid and $updateTimestamp) {
+			$Key->timestamp(time);
+			$db->putKey($Key);
+		}
 	}
-	
 	return (1, $keyMatches, $timestampValid);
 }
+
+sub killSession {
+	my $self = shift;
+
+	my $r = $self -> {r};
+	my $ce = $r -> {ce};
+	my $db = $r -> {db};
+
+	$self -> forget_verification;
+	if ($ce -> {session_management_via} eq "session_cookie")  {
+		$self -> killCookie();
+	}
+
+	my $userID = $r -> {user_id};
+	if (defined($userID)) {
+		 $db -> deleteKey($userID);
+	}
+}
+
 
 ################################################################################
 # Cookie management
@@ -652,7 +789,7 @@ sub fetchCookie {
      			$jar = $@->jar; # table of successfully parsed cookies
   		};
 		if ($jar) {
-			$cookie = uri_unescape( $jar->get("WeBWorKCourseAuthen.$courseID") );
+			$cookie = uri_unescape($jar->get("WeBWorKCourseAuthen.$courseID"));
 		};
 	} else {
 		my %cookies = WeBWorK::Cookie->fetch();
@@ -668,10 +805,10 @@ sub fetchCookie {
         #debug("cookie has this value: '", $cookie->value, "'");
         #my ($userID, $key) = split "\t", $cookie->value;
         debug("cookie has this value: '", $cookie, "'");
-        my ($userID, $key) = split "\t", $cookie;
+        my ($userID, $key, $timestamp) = split "\t", $cookie;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
 			debug("looks good, returning userID='$userID' key='$key'");
-			return $userID, $key;
+ 			return $userID, $key, $timestamp;
 		} else {
 			debug("malformed cookie. returning nothing.");
 			return;
@@ -689,18 +826,26 @@ sub sendCookie {
 	
 	my $courseID = $r->urlpath->arg("courseID");
 	
-	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
+ 	my $timestamp = time();
+	
 	my $cookie = WeBWorK::Cookie->new($r,
 		-name    => "WeBWorKCourseAuthen.$courseID",
-		-value   => "$userID\t$key",
-		-expires => $expires,
-		-domain  => $r->hostname,
+ 		-value   => "$userID\t$key\t$timestamp",
 		-path    => $ce->{webworkURLRoot},
 		-secure  => 0,
 	);
+
+	if ($ce->{session_management_via} ne "session_cookie") {
+		my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
+		$cookie -> expires($expires);
+	}
+ 	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
+ 		$cookie -> domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
+	}
 	
-	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
-	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
+ 	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
+ 	if ($@) {croak $@; }
 }
 
 sub killCookie {
@@ -715,13 +860,17 @@ sub killCookie {
 		-name => "WeBWorKCourseAuthen.$courseID",
 		-value => "\t",
 		-expires => $expires,
-		-domain => $r->hostname,
 		-path => $ce->{webworkURLRoot},
 		-secure => 0,
 	);
+ 	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
+ 		$cookie -> domain($r->hostname);  # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
+	}
 	
-	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
-	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+	#debug( "killCookie is about to set an expired cookie");
+	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
+ 	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
+ 	if ($@) {croak $@; }
 }
 
 ################################################################################
@@ -754,3 +903,4 @@ sub write_log_entry {
 }
 
 1;
+

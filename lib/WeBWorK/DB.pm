@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.111 2010/05/19 01:44:05 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.112 2012/06/08 22:40:00 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -777,12 +777,15 @@ sub addKey {
 	if ($Key->user_id =~ /([^,]+)(?:,([^,]*))?(,g)?/) {
 		my ($userID, $proctorID) = ($1, $2);
 		croak "addKey: user $userID not found"
-			unless $self->{user}->exists($userID);
+#			unless $self->{user}->exists($userID);
+			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
 		croak "addKey: proctor $proctorID not found"
-			unless $self->{user}->exists($proctorID);
+#			unless $self->{user}->exists($proctorID);
+			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
 	} else {
 		croak "addKey: user ", $Key->user_id, " not found"
-			unless $self->{user}->exists($Key->user_id);
+#			unless $self->{user}->exists($Key->user_id);
+			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
 	}
 	
 	eval {
@@ -1181,7 +1184,6 @@ sub addUserSet {
 		unless $self->{user}->exists($UserSet->user_id);
 	croak "addUserSet: set ", $UserSet->set_id, " not found"
 		unless $self->{set}->exists($UserSet->set_id);
-	
 	eval {
 		return $self->{set_user}->add($UserSet);
 	};
