@@ -723,7 +723,12 @@ sub links {
 
 				
 				print CGI::start_li(); # Homework Set Editor
-				print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+				print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
+					if $ce->{showeditors}->{homeworkseteditor1};
+				print "<br/>";
+				print &$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
+					if $ce->{showeditors}->{homeworkseteditor2};;
+				
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
 					print CGI::start_ul();
@@ -732,7 +737,14 @@ sub links {
 					
 					if (defined $problemID) {
 						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"));
+						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"))
+							if $ce->{showeditors}->{pgproblemeditor1};
+						print CGI::end_ul();
+					}
+					if (defined $problemID) {
+						print CGI::start_ul();
+						print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
+							if $ce->{showeditors}->{pgproblemeditor2};;
 						print CGI::end_ul();
 					}
 					
@@ -741,8 +753,12 @@ sub links {
 				}
 				print CGI::end_li(); # end Homework Set Editor
 				
-				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{librarybrowser1};
+				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{librarybrowser2};
+				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{librarybrowser3};
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
@@ -1251,8 +1267,10 @@ handled.
 sub if_warnings {
 	my ($self, $arg) = @_;
 	my $r = $self->r;
-	
-	if (MP2 ? $r->notes->get("warnings") : $r->notes("warnings")) {
+
+	if ( (MP2 ? $r->notes->get("warnings") : $r->notes("warnings")) 
+	     or ($self->{pgerrors}) )  
+	{
 		return $arg;
 	} else {
 		!$arg;
@@ -1638,7 +1656,9 @@ sub hidden_fields {
 # 		$html .= CGI::hidden($param, @values);  #MEG
 # 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
 		my $value  = $r->param($param);
-		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
+#		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
+		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
+
 	}
 	return $html;
 }
@@ -1959,7 +1979,6 @@ problem rendering.
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
 	my $r = $self->{r};
-
 	print "Entering ContentGenerator::errorOutput subroutine</br>" if $TRACE_WARNINGS;
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = $r->method;
