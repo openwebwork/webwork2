@@ -353,6 +353,10 @@ sub header {
 # 		$r->header_out("Content-Disposition" => "attachment; filename=\"${courseID}_database.xml\"");
 # 		$r->send_http_header;
 # 	} else {
+		print q!<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script> 
+			  <link href="http://aimath.org/knowlstyle.css" rel="stylesheet" type="text/css" /> 
+			  <script type="text/javascript" src="http://aimath.org/knowl.js"></script>
+		!;  # grab javaScript for knowls.
 		$self->SUPER::header;
 #	}
 }
@@ -3185,8 +3189,8 @@ sub display_registration_form {
 	my $self = shift;
 	my $ce   = $self->r->ce;
 	my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
-	#my $registration_subDisplay = ( $self->{method_to_call} eq "registration_form") ?  1: 0;
-	return 0  if $registeredQ or $self->r->param("register_site");     #otherwise return registration form
+	my $registration_subDisplay = ( $self->r->param('subDisplay') eq "registration") ?  1: 0;
+	return 0  if $registeredQ or $self->r->param("register_site") or $registration_subDisplay;     #otherwise return registration form
 	return  q! 
 	<center>
 	<table class="messagebox" style="background-color:#FFFFCC;width:60%">
@@ -3247,11 +3251,14 @@ sub registration_form {
 # 	the email to gage@math.rochester.edu
 # 	!
 	print  "\n",
-		CGI::p({style=>"text-align: left; width:60%"},
-			"Please click on ",
-			CGI::a({ href=>"http://forms.maa.org/r/WebworkSoftware/add.aspx" }, " this link "), 
-			"and  fill out the form.",
-		),"\n",
+		CGI::iframe({src => "http://forms.maa.org/r/WebworkSoftware/add.aspx", 
+		   style=>"width:100%;height:700px"}, "Your browser cannot use iframes"),
+# 		CGI::p({style=>"text-align: left; width:60%"},
+# 			"Please click on ",
+# 			CGI::a({ href=>"http://forms.maa.org/r/WebworkSoftware/add.aspx" }, " this link "), 
+# 			"and  fill out the form.",
+# 		),
+		"\n",
 		 CGI::p({style=>"text-align: left; width:60%"},
 	 		"The form will be sent to the MAA and your site will be listed along with all of the others on the  ",
 	  		CGI::a({href=>"http://webwork.maa.org/wiki/WeBWorK_Sites"}, "site map"),
