@@ -353,10 +353,6 @@ sub header {
 # 		$r->header_out("Content-Disposition" => "attachment; filename=\"${courseID}_database.xml\"");
 # 		$r->send_http_header;
 # 	} else {
-		print q!<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script> 
-			  <link href="http://aimath.org/knowlstyle.css" rel="stylesheet" type="text/css" /> 
-			  <script type="text/javascript" src="http://aimath.org/knowl.js"></script>
-		!;  # grab javaScript for knowls.
 		$self->SUPER::header;
 #	}
 }
@@ -3189,8 +3185,9 @@ sub display_registration_form {
 	my $self = shift;
 	my $ce   = $self->r->ce;
 	my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
-	my $registration_subDisplay = ( $self->r->param('subDisplay') eq "registration") ?  1: 0;
-	return 0  if $registeredQ or $self->r->param("register_site") or $registration_subDisplay;     #otherwise return registration form
+	my $registration_subDisplay = ( defined($self->r->param('subDisplay') ) and $self->r->param('subDisplay') eq "registration") ?  1: 0;
+	my $register_site = ($self->r->param("register_site"))?1:0;
+	return 0  if $registeredQ or $register_site or $registration_subDisplay;     #otherwise return registration form
 	return  q! 
 	<center>
 	<table class="messagebox" style="background-color:#FFFFCC;width:60%">
@@ -3252,7 +3249,7 @@ sub registration_form {
 # 	!
 	print  "\n",
 		CGI::iframe({src => "http://forms.maa.org/r/WebworkSoftware/add.aspx", 
-		   style=>"width:100%;height:700px"}, "Your browser cannot use iframes"),
+		   style=>"width:100%;height:700px", id=>"maa_content"}, "Your browser cannot use iframes"),
 # 		CGI::p({style=>"text-align: left; width:60%"},
 # 			"Please click on ",
 # 			CGI::a({ href=>"http://forms.maa.org/r/WebworkSoftware/add.aspx" }, " this link "), 
@@ -3273,11 +3270,19 @@ sub registration_form {
 	);
 	
 	print "</center>";
-	print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
+	print CGI::start_form(-method=>"POST", id=>"return_to_main_page", -action=>$self->r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"register_site", -label=>"Site has been registered"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-id => "register_site", -name=>"register_site", -label=>"Site has been registered"));
 	print CGI::end_form();
+	print q!<script type="text/javascript">
+# 			$("#maa_content").load( alert("loaded") );
+#  	     	$("#return_to_main_page").append(
+#  	     		"<center><p>hey site is registered cool</p></center>"
+#  	     	);
+#  	     	
+#  	        </script>
+#  	        !;
 }
 
 
