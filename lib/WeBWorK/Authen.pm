@@ -57,6 +57,7 @@ use WeBWorK::Debug;
 use WeBWorK::Utils qw/writeCourseLog runtime_use/;
 use WeBWorK::Localize;
 use URI::Escape;
+use Carp;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
