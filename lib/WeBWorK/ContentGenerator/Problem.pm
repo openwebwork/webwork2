@@ -732,6 +732,15 @@ sub pre_header_initialize {
 	                    &&= $pg->{flags}->{showHintLimit}<=$pg->{state}->{num_of_incorrect_ans};
 	$can{showSolutions} &&= $pg->{flags}->{solutionExists};
 	
+	##### record errors #########
+	my @debug_messages     = join(CGI::br(), @{$pg->{pgcore}->get_debug_messages } );
+	my @warning_messages   = join(CGI::br(), @{$pg->{pgcore}->get_warning_messages} );
+	my @internal_errors    = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
+	$self->{pgerrors}      = @debug_messages||@warning_messages||@internal_errors;  # is 1 if any of these are non-empty
+	$self->{pgdebug}       = \@debug_messages;
+	$self->{pgwarning}     = \@warning_messages;
+	$self->{pginternalerrors} = \@internal_errors;
+
 	##### store fields #####
 	
 	$self->{want} = \%want;
@@ -767,7 +776,8 @@ sub warnings {
 	} 
 	# print "proceeding to SUPER::warnings";
 	$self->SUPER::warnings();
-	"";
+	#$self->{pgerrors};
+	"";  #FIXME -- let's see if this is the appropriate output.
 }
 
 sub if_errors($$) {
