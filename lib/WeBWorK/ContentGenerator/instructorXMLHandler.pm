@@ -96,13 +96,13 @@ unless ($webwork_dir) {
 	"\$WeBWorK::Constants::WEBWORK_DIRECTORY by webwork.apache-config or webwork.apache2-config\n";
 }
 
-# read the webwork2/conf/global.conf file to determine other parameters
+# read the webwork2/conf/defaults.config file to determine other parameters
 #
 my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
 my $server_root_url = $seed_ce->{server_root_url};
 unless ($server_root_url) {
 	die "unable to determine apache server url using course environment |$seed_ce|.".
-	    "check that the variable \$server_root_url has been properly set in conf/global.conf\n";
+	    "check that the variable \$server_root_url has been properly set in conf/site.conf\n";
 }
 
 ############################
@@ -208,7 +208,7 @@ sub pre_header_initialize {
              student_id     => $r->param('student_id') || undef,
              id             =>  $r->param('user_id') || undef,
              email_address  => $r->param('email_address') || undef,
-             permission     => $r->param('permission') || 0,	# valid values from %userRoles in global.conf
+             permission     => $r->param('permission') || 0,	# valid values from %userRoles in defaults.config
              status         => $r->param('status') || undef,#'Enrolled, audit, proctor, drop
              section        => $r->param('section') || undef,
              recitation     => $r->param('recitation') || undef,

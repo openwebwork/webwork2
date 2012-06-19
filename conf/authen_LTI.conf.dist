@@ -3,6 +3,7 @@
 #############################################################################
 # authen_LTI.conf
 # Configuration for using LTI authentication.
+# To enable this file, uncomment the appropriate lines in localOverrides.conf
 #############################################################################
 
 # This first section enables LTI authentication.  To enable failover to another
@@ -36,10 +37,8 @@ $authen{user_module} = [
 
 
 ################################################################################
-# LTI Basic Authentication Parameters for global.conf
+# LTI Basic Authentication Parameters
 ################################################################################
-
-# The following parameters should be in global.conf:
 
 ################################################################################
 # Reasonable Number of Problems for Late Adds to do per day to catch up

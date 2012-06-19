@@ -487,7 +487,7 @@ sub content {
 	#$ce->{webworkURLs}->{stylesheet} = ($ce->{webworkURLs}->{htdocs})."/css/$theme.css";   # reset the style sheet
 	# the line above is clever -- but I think it is better to link directly to the style sheet from the system.template
 	# then the link between template and css is made in .template file instead of hard coded as above
-	# this means that the {stylesheet} option in global.conf is never used
+	# this means that the {stylesheet} option in defaults.config is never used
 	my $template = $self->can("templateName") ? $self->templateName : $ce->{defaultThemeTemplate};
 	my $templateFile = "$themesDir/$theme/$template.template";
 	
@@ -992,7 +992,7 @@ sub footer(){
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	my $version = $ce->{WW_VERSION}||"unknown -- set version in global.conf.dist";
+	my $version = $ce->{WW_VERSION}||"unknown -- set version in defaults.config";
 	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
 	print CGI::p({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
 	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; $copyright_years", "| version: $version |", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));

@@ -71,7 +71,7 @@ use constant DELETED => (1 << 3);
 use constant MOVED => (1 << 4);
 
 ##	for additional problib buttons
-my %problib;	## filled in in global.conf
+my %problib;	## This is configured in defaults.config
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
 	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1,

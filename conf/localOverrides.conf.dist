@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
+# $CVSHeader: webwork2/conf/localOverrides.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -174,7 +174,7 @@ $pg{displayModes} = [
 $pg{options}{displayMode}        = "images";
  
 ################################################################################
-#  Adding to the macro file search path. (Check with entries in global.conf before overriding)
+#  Adding to the macro file search path. (Check with entries in defaults.config before overriding)
 ################################################################################
 # The list of directories searched by loadMacros() when it looks for a .pl file
 # is defined in defaults.config.
@@ -227,7 +227,7 @@ $problemDefaults{max_attempts} = -1;
 # Temporary hack for displaying the different versions of the editors
 ################################################################################
 # These configurations can be placed in course.conf file to tune the behavior for individual courses
-# The items below can be used to override the settings in global.conf.dist
+# The items below can be used to override the settings in defaults.config
 # One can also use $showeditors{classlisteditor1}=0; to override
 # %showeditors = (
 # 	classlisteditor1   => 1,
@@ -249,7 +249,7 @@ $problemDefaults{max_attempts} = -1;
 # Directory for temporary files
 ################################################################################ 
 # Location of web-accessible temporary files, such as equation images. 
-# Default which is set in global.conf.dist:
+# Default which is set in defaults.config:
 #$webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
 #$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
 
