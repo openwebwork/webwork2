@@ -191,6 +191,17 @@ $mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
 $mail{smtpTimeout}           = 30;
 
 ################################################################################
+# Problem library options
+################################################################################
+
+# For configuration instructions, see:
+# http://webwork.maa.org/wiki/National_Problem_Library
+# The directory containing the national problem library files - typically
+# /opt/webwork/libraries/NationalProblemLibrary
+# Set to "" if no problem library is installed.
+$problemLibrary{root}        = "";
+
+################################################################################
 #Time Zone
 ################################################################################
 
