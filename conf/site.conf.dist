@@ -221,4 +221,14 @@ $problemLibrary{root}        = "";
 # 
 $siteDefaults{timezone} = "America/New_York";
 
+# Locale for time format localization
+# Set the following variable to localize the format of things like days
+# of the week and month names (i.e. translate them)
+# This variable must match one of the locales available on your system
+# To show the current locale in use on the system, type 'locale' at the
+# command prompt.  For a list of installed locales, type 'locale -a' and
+# enter one of the listed values here.
+# If you do not fill this in, the system will default to "en_US"
+$siteDefaults{locale}="";
+
 1; #final line of the file to reassure perl that it was read properly.

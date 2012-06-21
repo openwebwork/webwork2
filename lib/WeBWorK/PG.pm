@@ -26,7 +26,7 @@ API.
 use strict;
 use warnings;
 use WeBWorK::PG::ImageGenerator;
-use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
+use WeBWorK::Utils qw(runtime_use formatDateTime formatDateTimeCustom makeTempDirectory);
 use WeBWorK::Utils::RestrictedClosureClass;
 
 use constant DISPLAY_MODES => {
@@ -98,11 +98,56 @@ sub defineProblemEnvir {
 	
 	$envir{openDate}            = $set->open_date;
 	$envir{formattedOpenDate}   = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone});
+	$envir{OpenDateDayOfWeek}   = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%A", $ce->{siteDefaults}{locale});
+	$envir{OpenDateDayOfWeekAbbrev} = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%a", $ce->{siteDefaults}{locale});
+	$envir{OpenDateDay}         = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%d", $ce->{siteDefaults}{locale});
+	$envir{OpenDateMonthNumber} = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%m", $ce->{siteDefaults}{locale});
+	$envir{OpenDateMonthWord}   = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%B", $ce->{siteDefaults}{locale});
+	$envir{OpenDateMonthAbbrev} = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%b", $ce->{siteDefaults}{locale});
+	$envir{OpenDateYear2Digit}  = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%y", $ce->{siteDefaults}{locale});
+	$envir{OpenDateYear4Digit}  = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%Y", $ce->{siteDefaults}{locale});
+	$envir{OpenDateHour12}      = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%I", $ce->{siteDefaults}{locale});
+	$envir{OpenDateHour24}      = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%H", $ce->{siteDefaults}{locale});
+	$envir{OpenDateMinute}      = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%M", $ce->{siteDefaults}{locale});
+	$envir{OpenDateAMPM}        = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%P", $ce->{siteDefaults}{locale});
+	$envir{OpenDateTimeZone}    = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%Z", $ce->{siteDefaults}{locale});
+	$envir{OpenDateTime12}      = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%I:%M%P", $ce->{siteDefaults}{locale});
+	$envir{OpenDateTime24}      = formatDateTimeCustom($envir{openDate}, $ce->{siteDefaults}{timezone}, "%R", $ce->{siteDefaults}{locale});
 	$envir{dueDate}             = $set->due_date;
 	$envir{formattedDueDate}    = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone});
 	$envir{formatedDueDate}     = $envir{formattedDueDate}; # typo in many header files
+	$envir{DueDateDayOfWeek}    = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%A", $ce->{siteDefaults}{locale});
+	$envir{DueDateDayOfWeekAbbrev} = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%a", $ce->{siteDefaults}{locale});
+	$envir{DueDateDay}          = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%d", $ce->{siteDefaults}{locale});
+	$envir{DueDateMonthNumber}  = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%m", $ce->{siteDefaults}{locale});
+	$envir{DueDateMonthWord}    = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%B", $ce->{siteDefaults}{locale});
+	$envir{DueDateMonthAbbrev}  = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%b", $ce->{siteDefaults}{locale});
+	$envir{DueDateYear2Digit}   = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%y", $ce->{siteDefaults}{locale});
+	$envir{DueDateYear4Digit}   = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%Y", $ce->{siteDefaults}{locale});
+	$envir{DueDateHour12}       = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%I", $ce->{siteDefaults}{locale});
+	$envir{DueDateHour24}       = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%H", $ce->{siteDefaults}{locale});
+	$envir{DueDateMinute}       = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%M", $ce->{siteDefaults}{locale});
+	$envir{DueDateAMPM}         = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%P", $ce->{siteDefaults}{locale});
+	$envir{DueDateTimeZone}     = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%Z", $ce->{siteDefaults}{locale});
+	$envir{DueDateTime12}       = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%I:%M%P", $ce->{siteDefaults}{locale});
+	$envir{DueDateTime24}       = formatDateTimeCustom($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%R", $ce->{siteDefaults}{locale});
 	$envir{answerDate}          = $set->answer_date;
 	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate}, $ce->{siteDefaults}{timezone});
+	$envir{AnsDateDayOfWeek}    = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%A", $ce->{siteDefaults}{locale});
+	$envir{AnsDateDayOfWeekAbbrev} = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%a", $ce->{siteDefaults}{locale});
+	$envir{AnsDateDay}          = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%d", $ce->{siteDefaults}{locale});
+	$envir{AnsDateMonthNumber}  = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%m", $ce->{siteDefaults}{locale});
+	$envir{AnsDateMonthWord}    = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%B", $ce->{siteDefaults}{locale});
+	$envir{AnsDateMonthAbbrev}  = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%b", $ce->{siteDefaults}{locale});
+	$envir{AnsDateYear2Digit}   = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%y", $ce->{siteDefaults}{locale});
+	$envir{AnsDateYear4Digit}   = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%Y", $ce->{siteDefaults}{locale});
+	$envir{AnsDateHour12}       = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%I", $ce->{siteDefaults}{locale});
+	$envir{AnsDateHour24}       = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%H", $ce->{siteDefaults}{locale});
+	$envir{AnsDateMinute}       = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%M", $ce->{siteDefaults}{locale});
+	$envir{AnsDateAMPM}         = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%P", $ce->{siteDefaults}{locale});
+	$envir{AnsDateTimeZone}     = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%Z", $ce->{siteDefaults}{locale});
+	$envir{AnsDateTime12}       = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%I:%M%P", $ce->{siteDefaults}{locale});
+	$envir{AnsDateTime24}       = formatDateTimeCustom($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%R", $ce->{siteDefaults}{locale});
 	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0);
 	$envir{problemValue}        = $problem->value;
 	$envir{sessionKey}          = $key;
