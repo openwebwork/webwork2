@@ -21,7 +21,7 @@ database.conf - define standard database layouts
 
 =head1 SYNOPSIS
 
-In global.conf:
+In defaults.config:
 
  include "conf/database.conf";
  *dbLayout = $dbLayouts{layoutName};
@@ -34,7 +34,7 @@ used by WeBWorK. For more information on the format of a database layout,
 consult the documentation for the WeBWorK::DB module.
 
 A database layout is selected from the list of possible layouts by adding a
-line like the one below to the F<global.conf> or F<course.conf> file.
+line like the one below to the F<localOverrides.conf> or F<course.conf> file.
 
  $dbLayoutName = "layoutName";
  *dbLayout = $dbLayouts{$dbLayoutName};

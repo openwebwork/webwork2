@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
+# $CVSHeader: webwork2/conf/site.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -189,6 +189,17 @@ $mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
 
 # Seconds to wait before timing out when connecting to the SMTP server.
 $mail{smtpTimeout}           = 30;
+
+################################################################################
+# Problem library options
+################################################################################
+
+# For configuration instructions, see:
+# http://webwork.maa.org/wiki/National_Problem_Library
+# The directory containing the national problem library files - typically
+# /opt/webwork/libraries/NationalProblemLibrary
+# Set to "" if no problem library is installed.
+$problemLibrary{root}        = "";
 
 ################################################################################
 #Time Zone

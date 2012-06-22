@@ -440,7 +440,7 @@ sub listUsers{
 #	"studentid": 87492466, 
 #	"userpassword": "password",	# defaults to studentid if empty
 #								# if studentid also empty, then no password
-#	"permission": "professor",	# valid values from %userRoles in global.conf
+#	"permission": "professor",	# valid values from %userRoles in defaults.config
 #								# defaults to student if empty
 #}
 # This user will be added to courseID
@@ -478,7 +478,7 @@ sub dropUser {
 #	"id": "The Doctor",			# required
 #	"email": "doctor@tardis",
 #
-#	"permission": "professor",	# valid values from %userRoles in global.conf
+#	"permission": "professor",	# valid values from %userRoles in defaults.config
 #								# defaults to student if empty
 #   status: 'Enrolled, audit, proctor, drop
 #   section

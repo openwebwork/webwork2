@@ -71,7 +71,7 @@ use constant DELETED => (1 << 3);
 use constant MOVED => (1 << 4);
 
 ##	for additional problib buttons
-my %problib;	## filled in in global.conf
+my %problib;	## this is configured in defaults.config
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
 	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1,
@@ -544,7 +544,7 @@ sub browse_library_panel {
 			my $msg =	 <<"HERE";
 You are missing the directory <code>templates/Library</code>, which is needed
 for the Problem Library to function.	It should be a link pointing to
-<code>$libraryRoot</code>, which you set in <code>conf/global.conf</code>.
+<code>$libraryRoot</code>, which you set in <code>conf/site.conf</code>.
 I tried to make the link for you, but that failed.	Check the permissions
 in your <code>templates</code> directory.
 HERE

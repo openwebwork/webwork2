@@ -219,7 +219,7 @@ sub new_helper {
 	# IO.pl, PG.pl, and dangerousMacros.pl are loaded using
 	# unrestricted_load This is hard wired into the
 	# Translator::pre_load_macro_files subroutine. I'd like to change this
-	# at some point to have the same sort of interface to global.conf that
+	# at some point to have the same sort of interface to defaults.config that
 	# the module loading does -- have a list of macros to load
 	# unrestrictedly.
 	# 	
