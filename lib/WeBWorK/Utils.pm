@@ -63,7 +63,6 @@ our @EXPORT_OK = qw(
 	encodeAnswers
 	fisher_yates_shuffle
 	formatDateTime
-	formatDateTimeCustom
 	has_aux_files
 	intDateTime
 	list2hash
@@ -592,31 +591,37 @@ the datetime is converted from the server's timezone to the timezone specified.
 
 =cut
 
-sub formatDateTime($;$) {
-	my ($dateTime, $display_tz) = @_;
-	warn "Utils::formatDateTime is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTime
-	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz;
-	$dateTime = $dateTime ||0;  # do our best to provide default values
-	$display_tz ||= "local";    # do our best to provide default vaules
-	
-	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
-	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
-	return $dt->strftime(DATE_FORMAT);
-}
+#sub formatDateTime($;$) {
+#	my ($dateTime, $display_tz) = @_;
+#	warn "Utils::formatDateTime is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTime
+#	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz;
+#	$dateTime = $dateTime ||0;  # do our best to provide default values
+#	$display_tz ||= "local";    # do our best to provide default vaules
+#	
+#	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
+#	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
+#	return $dt->strftime(DATE_FORMAT);
+#}
 
-=item $string = formatDateTimeCustom($dateTime, $display_tz, $format_string)
+=item $string = formatDateTime($dateTime, $display_tz, $format_string, $locale)
 
 Formats the UNIX datetime $dateTime in the custom format provided by $format_string.
+If $format_string is not provided, the standard WeBWorK datetime format is used.
+$dateTime is assumed to be in the server's time zone. If $display_tz is given,
+the datetime is converted from the server's timezone to the timezone specified.
 The available patterns for $format_string can be found in the documentation for
 the perl DateTime package under the heading of strftime Patterns.
 $dateTime is assumed to be in the server's time zone. If $display_tz is given,
 the datetime is converted from the server's timezone to the timezone specified.
+If $locale is provided, the string returned will be in the format of that locale,
+which is useful for automatically translating things like days of the week and
+month names.  If $locale is not provided, perl defaults to en_US.
 
 =cut
 
-sub formatDateTimeCustom($;$;$;$) {
+sub formatDateTime($;$;$;$) {
 	my ($dateTime, $display_tz, $format_string, $locale) = @_;
-	warn "Utils::formatDateTimeCustom is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTimeCustom
+	warn "Utils::formatDateTime is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTime
 	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz;
 	$dateTime = $dateTime ||0;  # do our best to provide default values
 	$display_tz ||= "local";    # do our best to provide default vaules
