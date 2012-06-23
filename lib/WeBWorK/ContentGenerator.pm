@@ -2103,10 +2103,11 @@ $siteDefaults{timezone} is used.
 =cut
 
 sub formatDateTime {
-	my ($self, $dateTime, $display_tz) = @_;
+	my ($self, $dateTime, $display_tz,$formatString,$locale) = @_;
 	my $ce = $self->r->ce;
 	$display_tz ||= $ce->{siteDefaults}{timezone};
-	return WeBWorK::Utils::formatDateTime($dateTime, $display_tz);
+	$locale ||= $ce->{siteDefaults}{locale};
+	return WeBWorK::Utils::formatDateTime($dateTime, $display_tz,$formatString,$locale);
 }
 
 =item read_scoring_file($fileName)

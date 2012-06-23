@@ -268,6 +268,16 @@ $problemDefaults{max_attempts} = -1;
 #$courseURLs{html_temp}   = "/wwtmp/$courseName";
 
 ################################################################################ 
+# Student Date Format
+################################################################################
+
+# Uncomment the following line to customize the format of the dates displayed to
+# students.  As it is written, the line below will display open, due and answer
+# dates in the following format: Wed Jun 27 at 10:30am
+# For all available options, consult the documentation for perl DateTime under
+# "strftime patterns".
+# $studentDateDisplayFormat="%a %b %d at %l:%M%P";
+
 
 ################################################################################
 # Authentication Methods
