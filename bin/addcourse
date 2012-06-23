@@ -36,7 +36,7 @@ be granted professor privileges.
 =item B<--db-layout>=I<LAYOUT>
 
 The specified database layout will be used in place of the default specified in
-F<global.conf>.
+F<defaults.config>.
 
 =item B<--users>=I<FILE>
 
@@ -98,7 +98,7 @@ eval "use lib '$webwork_dir/lib'"; die $@ if $@;
 eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
 
 #################################################################
-# The folloinwg code reads global.conf and extracts the remaining configuration
+# The folloinwg code reads defaults.config and extracts the remaining configuration
 # variables. There is no need to modify it.
 #################################################################
 
@@ -106,10 +106,10 @@ eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
 eval "use lib '$webwork_dir/lib'"; die $@ if $@;
 eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
 
-# grab course environment (by reading webwork2/conf/global.conf)
+# grab course environment (by reading webwork2/conf/defaults.config)
 my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
 
-#  set important configuration variables (from global.conf)
+#  set important configuration variables (from defaults.config)
 
 my $webwork_url = $ce->{webwork_url};                    # e.g.  /webwork2
 my $pg_dir = $ce->{pg_dir};                              # e.g.  /opt/webwork/pg         
@@ -119,7 +119,7 @@ my $pg_dir = $ce->{pg_dir};                              # e.g.  /opt/webwork/pg
 #################################################################
 print "addcourse:  WeBWorK server is starting\n";
 print "addcourse:  WeBWorK root directory set to $webwork_dir in webwork2/conf/webwork.apache2-config\n";
-print "addcourse:  The following locations and urls are set in webwork2/conf/global.conf\n";
+print "addcourse:  The following locations and urls are set in webwork2/conf/site.conf\n";
 print "addcourse:  PG root directory set to $pg_dir\n";
 print "addcourse:  WeBWorK server userID is ", $ce->{server_userID}, "\n";
 print "addcourse:  WeBWorK server groupID is ", $ce->{server_groupID}, "\n";
@@ -192,7 +192,7 @@ $ce = WeBWorK::CourseEnvironment->new({
 
 if ($dbLayout) {
 	die "Database layout $dbLayout does not exist in the course environment.",
-			" (It must be defined in global.conf.)\n"
+			" (It must be defined in defaults.config.)\n"
 		unless exists $ce->{dbLayouts}->{$dbLayout};
 } else {
 	# use default value

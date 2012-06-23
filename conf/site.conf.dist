@@ -2,7 +2,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
+# $CVSHeader: webwork2/conf/site.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -191,6 +191,17 @@ $mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
 $mail{smtpTimeout}           = 30;
 
 ################################################################################
+# Problem library options
+################################################################################
+
+# For configuration instructions, see:
+# http://webwork.maa.org/wiki/National_Problem_Library
+# The directory containing the national problem library files - typically
+# /opt/webwork/libraries/NationalProblemLibrary
+# Set to "" if no problem library is installed.
+$problemLibrary{root}        = "";
+
+################################################################################
 #Time Zone
 ################################################################################
 
@@ -209,5 +220,15 @@ $mail{smtpTimeout}           = 30;
 # course.conf for the affected courses instead.
 # 
 $siteDefaults{timezone} = "America/New_York";
+
+# Locale for time format localization
+# Set the following variable to localize the format of things like days
+# of the week and month names (i.e. translate them)
+# This variable must match one of the locales available on your system
+# To show the current locale in use on the system, type 'locale' at the
+# command prompt.  For a list of installed locales, type 'locale -a' and
+# enter one of the listed values here.
+# If you do not fill this in, the system will default to "en_US"
+$siteDefaults{locale}="";
 
 1; #final line of the file to reassure perl that it was read properly.

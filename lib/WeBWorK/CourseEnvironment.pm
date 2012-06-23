@@ -18,7 +18,7 @@ package WeBWorK::CourseEnvironment;
 
 =head1 NAME
 
-WeBWorK::CourseEnvironment - Read configuration information from global.conf
+WeBWorK::CourseEnvironment - Read configuration information from defaults.config
 and course.conf files.
 
 =head1 SYNOPSIS
@@ -41,7 +41,7 @@ and course.conf files.
 
 =head1 DESCRIPTION
 
-The WeBWorK::CourseEnvironment module reads the system-wide F<global.conf> and
+The WeBWorK::CourseEnvironment module reads the system-wide F<defaults.config> and
 course-specific F<course.conf> files used by WeBWorK to calculate and store
 settings needed throughout the system. The F<.conf> files are perl source files
 that can contain any code allowed under the default safe compartment opset.
@@ -68,7 +68,7 @@ HASHREF is a reference to a hash containing scalar variables with which to seed
 the course environment. It must contain at least a value for the key
 C<webworkRoot>.
 
-The C<new> method finds the file F<conf/global.conf> relative to the given
+The C<new> method finds the file F<conf/defaults.config> relative to the given
 C<webwork_dir> directory. After reading this file, it uses the
 C<$courseFiles{environment}> variable, if present, to locate the course
 environment file. If found, the file is read and added to the environment.

@@ -1119,15 +1119,15 @@ sub writeCourseConf {
 EOF
 	
 	print $fh <<'EOF';
-# Database Layout (global value typically defined in global.conf)
+# Database Layout (global value typically defined in defaults.config)
 # 
 # Several database are defined in the file conf/database.conf and stored in the
 # hash %dbLayouts.
 # 
 # The database layout is always set here, since one should be able to change the
-# default value in global.conf without disrupting existing courses.
+# default value in localOverrides.conf without disrupting existing courses.
 # 
-# global.conf values:
+# defaults.config values:
 EOF
 	
 	print $fh "# \t", '$dbLayoutName = \'', protectQString($ce->{dbLayoutName}), '\';', "\n";
@@ -1150,7 +1150,7 @@ EOF
 # from the PG system (i.e. questionaires, essay questions) will fail if this is
 # not set.
 # 
-# global.conf values:
+# defaults.config values:
 EOF
 	
 	if (defined $ce->{mail}->{allowedRecipients}) {
@@ -1184,7 +1184,7 @@ EOF
 # 
 # It's often useful to set this in the course.conf to change the behavior of
 # feedback for a specific course.
-# global.conf values:
+# defaults.config values:
 EOF
 	
 	if (defined $ce->{mail}->{feedbackRecipients}) {
@@ -1208,7 +1208,7 @@ EOF
 # 
 # For users in this list, PG will display the source file name when rendering a problem.
 # 
-# global.conf values:
+# defaults.config values:
 EOF
 	
 	if (defined $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}) {

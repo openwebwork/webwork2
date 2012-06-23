@@ -48,7 +48,7 @@ the contents of the %permissionLevels hash in the course environment.
 
 %permissionLevels maps text strings describing activities to numeric permission
 levels. The definitive list of activities is contained in the default version of
-%permissionLevels, in the file F<conf/global.conf.dist>.
+%permissionLevels, in the file F<conf/defaults.config>.
 
 A user is able to engage in an activity if their permission level is greater
 than or equal to the level associated with the activity. If the level associated

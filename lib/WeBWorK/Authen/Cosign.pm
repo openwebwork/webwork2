@@ -21,7 +21,7 @@ use base qw/WeBWorK::Authen/;
 
 WeBWorK::Authen::Cosign - Authentication plug in for cosign
 
-to use: include in global.conf or course.conf
+to use: include in localOverrides.conf or course.conf
   $authen{user_module} = "WeBWorK::Authen::Cosign";
 and add /webwork2 or /webwork2/courseName as a CosignProtected
 Location
