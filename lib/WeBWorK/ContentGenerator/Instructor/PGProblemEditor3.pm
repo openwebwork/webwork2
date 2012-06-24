@@ -753,7 +753,7 @@ EOF
 			
 ###################################################TABBER STYLE END##############################################################################
 			
-			my $checkbox = WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"newWindow", -label_text=>"Open in new window", -input_attr=>{-checked=>"checked", -onchange=>"updateTarget()"});
+			my $checkbox = WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"newWindow", -label_text=>"Open in new window", -input_attr=>{ -onchange=>"updateTarget()"});
 			$checkbox =~ s/\n//; # remove unwanted linebreak
 			print CGI::div({-class=>"pd_editor_input_div", -id=>"submit_input_div"}, $checkbox, CGI::br(), WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submit_button_id", -input_attr=>{-name=>'submit', -value=>"Take Action!"}));
 	
