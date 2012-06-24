@@ -1062,6 +1062,7 @@ sub output_editorLink{
 	# add edit link for set as well.
 	my $editorLink = "";
 	my $editorLink2 = "";
+	my $editorLink3 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
@@ -1070,13 +1071,19 @@ sub output_editorLink{
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit this problem")));
+		$editorLink = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor1'}, $r->maketext("Edit1")));
 	}
 	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor2}) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink2 = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit this problem with new editor")));
+		$editorLink2 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit2")));
+	}
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor3}) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3", $r, 
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
+		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
 	}
 	##### translation errors? #####
 
@@ -1084,16 +1091,14 @@ sub output_editorLink{
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink;
-			print $editorLink2;
+			print $editorLink, " ", $editorLink2, " ", $editorLink3;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink;
-		print $editorLink2;
+		print $editorLink, " ", $editorLink2, " ", $editorLink3;
 	}
 	return "";
 }

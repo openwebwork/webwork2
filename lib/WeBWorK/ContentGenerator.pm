@@ -737,7 +737,7 @@ sub links {
 					
 					if (defined $problemID) {
 						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"))
+						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
 						print CGI::end_ul();
 					}
@@ -745,6 +745,12 @@ sub links {
 						print CGI::start_ul();
 						print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
+						print CGI::end_ul();
+					}
+					if (defined $problemID) {
+						print CGI::start_ul();
+						print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+							if $ce->{showeditors}->{pgproblemeditor3};;
 						print CGI::end_ul();
 					}
 					
