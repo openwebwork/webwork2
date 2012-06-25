@@ -733,13 +733,18 @@ sub pre_header_initialize {
 	$can{showSolutions} &&= $pg->{flags}->{solutionExists};
 	
 	##### record errors #########
-	my @debug_messages     = @{$pg->{pgcore}->get_debug_messages};
-	my @warning_messages   = @{$pg->{pgcore}->get_warning_messages};
-	my @internal_errors    = @{$pg->{pgcore}->get_internal_debug_messages};
-	$self->{pgerrors}      = @debug_messages||@warning_messages||@internal_errors;  # is 1 if any of these are non-empty
-	$self->{pgdebug}       =    \@debug_messages;
-	$self->{pgwarning}     =    \@warning_messages;
-	$self->{pginternalerrors} = \@internal_errors ;
+	if (ref ($pg->{pgcore}) )  {
+		my @debug_messages     = @{$pg->{pgcore}->get_debug_messages};
+		my @warning_messages   = @{$pg->{pgcore}->get_warning_messages};
+		my @internal_errors    = @{$pg->{pgcore}->get_internal_debug_messages};
+		$self->{pgerrors}      = @debug_messages||@warning_messages||@internal_errors;  # is 1 if any of these are non-empty
+		$self->{pgdebug}       =    \@debug_messages;
+		$self->{pgwarning}     =    \@warning_messages;
+		$self->{pginternalerrors} = \@internal_errors ;
+	} else {
+		warn "Processing of this PG problem was not completed.  Probably because of a syntax error.
+		      The translator died prematurely and no PG warning messages were transmitted.";
+	}
 
 	##### store fields #####
 	
