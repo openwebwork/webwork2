@@ -498,7 +498,7 @@ sub grade_set {
 		    my  $attempted    = $problemRecord->attempted;
 			my $num_correct   = $problemRecord->num_correct || 0;
 			my $num_incorrect = $problemRecord->num_incorrect   || 0;
-			$num_of_attempts  += $num_correct + $num_incorrect;
+			$num_of_attempts  = $num_correct + $num_incorrect;
 
 #######################################################
 			# This is a fail safe mechanism that makes sure that
