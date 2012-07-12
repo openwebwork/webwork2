@@ -781,7 +781,7 @@ sub warnings {
 	} 
 	# print "proceeding to SUPER::warnings";
 	$self->SUPER::warnings();
-	print $self->{pgerrors};
+	#  print $self->{pgerrors};
 	"";  #FIXME -- let's see if this is the appropriate output.
 }
 
