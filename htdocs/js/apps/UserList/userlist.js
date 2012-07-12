@@ -1,5 +1,7 @@
 
+// this variable was defined inside the following, but I think it needs global scope.
 
+var userList;
 
 
 $(function(){
@@ -108,7 +110,7 @@ $(function(){
 
     });
 
-    var userList = new webwork.UserList;
+    userList = new webwork.UserList;
 
     var App = new UserListView({model: userList});
 
@@ -145,3 +147,12 @@ window.onload = function()
 
 
 } */
+
+
+// The following is for test purposes only
+
+function addStud()
+{
+    var u = new webwork.User({"first_name":"Homer","last_name":"Simpson","user_id":"hsimp"});
+    userList.add(u);
+}

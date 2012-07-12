@@ -74,6 +74,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::File::Classlist;
+use WeBWorK::Debug;
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
 use constant HIDE_USERS_THRESHHOLD => 200;
@@ -486,6 +487,7 @@ sub body {
 #
 #
 
+
 	print CGI::div({class=>"helpBox"}, CGI::p($r->maketext("The Student Management page allows you to edit student information as well as perform actions (delete, email, act as user) on individuals or a group of students. To edit a student information, click on the information to change and retype or select the correct informaiton.  To perform an action on an individual student, select the action from the last column. To pefrom an action on a group of students, select those students using the checkboxes on the first column, then select the action from the button above (or below) the table.")), '<h2>The Actions do not work yet!</h2><p>please check them out and see if you like the lists, but keep in mind they will not preform any actual actions</p>');
 
 ### create the list of actions: 
@@ -501,7 +503,7 @@ sub body {
 				   \%labels,\%attributes),
 	    "<label for='filter'>Filter :</label><input type='text' id='filter'/>");
 
-
+	print CGI::div(CGI::button(-value=>"Add User",-onClick=>"addStud()"));
 
 	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
@@ -520,6 +522,8 @@ sub body {
  	print $self->hidden_authen_fields;
     print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseName });
 
+    
+    
 	return "";
 }
 
@@ -1801,7 +1805,7 @@ sub printTableHTML {
 # to that user.  If you need to take an action on more than one student, select those students, then 
 # section take action from the dropdown menu above the table. 
 
-        
+	debug(" in UserList3.pm");
 
 	print '<div id="users_table"></div>';
 
@@ -1836,22 +1840,22 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print "<link rel='stylesheet' href='$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
-    print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
+	print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
 	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/classlist_handlers.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.js"}), CGI::end_script();
 
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.7.2.min.js"}), CGI::end_script();
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/json2.js"}), CGI::end_script();
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/underscore.js"}), CGI::end_script();
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone.js"}), CGI::end_script();
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK.js"}), CGI::end_script();
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/teacher.js"}), CGI::end_script();
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/User.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.7.2.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/json2.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/underscore.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/teacher.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/User.js"}), CGI::end_script();
 
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/UserList/userlist.js"}), CGI::end_script();
-
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/UserList/userlist.js"}), CGI::end_script();
+    
 
 	return "";
 }
