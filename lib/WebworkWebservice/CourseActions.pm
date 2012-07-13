@@ -141,9 +141,12 @@ sub listUsers {
 sub addUser {
 	my ($self, $params) = @_;
 	my $out = {};
+	$out->{text} = encode_base64("");
 	my $db = $self->{db};
 	my $ce = $self->{ce};
 	debug("Webservices add user request.");
+	debug("Last Name:" . $params->{'last_name'});
+	debug("First Name:" . $params->{'first_name'});
 
 	# make sure course actions are enabled
 	#if (!$ce->{webservices}{enableCourseActions}) {
@@ -177,16 +180,16 @@ sub addUser {
 		my $enrolled = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 		my $new_student = $db->{user}->{record}->new();
 		$new_student->user_id($id);
-		$new_student->first_name($params->{'firstname'});
-		$new_student->last_name($params->{'lastname'});
+		$new_student->first_name($params->{'first_name'});
+		$new_student->last_name($params->{'last_name'});
 		$new_student->status($enrolled);
-		$new_student->student_id($params->{'studentid'});
-		$new_student->email_address($params->{'email'});
+		$new_student->student_id($params->{'student_id'});
+		$new_student->email_address($params->{'email_address'});
 		
 		# password record
 		my $cryptedpassword = "";
-		if ($params->{'userpassword'}) {
-			$cryptedpassword = cryptPassword($params->{'userpassword'});
+		if ($params->{'password'}) {
+			$cryptedpassword = cryptPassword($params->{'password'});
 		}
 		elsif ($new_student->student_id()) {
 			$cryptedpassword = cryptPassword($new_student->student_id());
