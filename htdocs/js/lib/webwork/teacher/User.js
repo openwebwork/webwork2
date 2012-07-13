@@ -15,7 +15,7 @@ webwork.User = Backbone.Model.extend({
     },
 
     initialize: function(){
-        console.log("?");
+        //console.log("in initialize");
     },
 
     update: function(){
@@ -59,7 +59,20 @@ webwork.UserList = Backbone.Collection.extend({
     model: webwork.User,
 
     initialize: function(){
-        this.on('add', function(user){}, this);
+        this.on('add', function(user){
+            var self = this;
+            var requestObject = {"xml_command": 'addUser'};
+            _.extend(requestObject, this.attributes);
+            _.extend(requestObject, user.attributes);
+            _.defaults(requestObject, webwork.requestObject);
+
+            $.post(webwork.webserviceURL, requestObject, function(data){
+                var response = $.parseJSON(data);
+                console.log(response);
+                App.model.trigger('reset');
+            });
+            
+            }, this);
         this.on('remove', function(user){}, this);
     },
 
@@ -80,6 +93,5 @@ webwork.UserList = Backbone.Collection.extend({
     },
     email: function(students){
 
-    }
-
+    }    
 });

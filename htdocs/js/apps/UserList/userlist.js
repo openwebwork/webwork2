@@ -1,5 +1,8 @@
 
+// this variable was defined inside the following, but I think it needs global scope.
 
+var userList;
+var App;
 
 
 $(function(){
@@ -62,6 +65,7 @@ $(function(){
             this.el.renderGrid('users_table', 'testgrid');
             var self = this;
             this.el.modelChanged = function(rowIndex, columnIndex, oldValue, newValue) {
+		if (oldValue != newValue ){
                 var cid = self.el.getRowId(rowIndex);
                 var property = self.el.getColumnName(columnIndex);
                 var editedModel = self.model.getByCid(cid);
@@ -74,6 +78,7 @@ $(function(){
                 console.log(columnIndex);
                 console.log(oldValue);
                 console.log(newValue);
+		}
             }
 
             this.model.on('reset', function(){
@@ -108,9 +113,9 @@ $(function(){
 
     });
 
-    var userList = new webwork.UserList;
+    userList = new webwork.UserList;
 
-    var App = new UserListView({model: userList});
+    App = new UserListView({model: userList});
 
     // then we attach to the HTML table and render it
     //editableGrid.attachToHTMLTable('cltable');
@@ -145,3 +150,13 @@ window.onload = function()
 
 
 } */
+
+
+// The following is for test purposes only
+
+function addStud()
+{
+    
+    var u = new webwork.User({"first_name":"Homer","last_name":"Simpson","user_id":"hsimp"});
+    userList.add(u);
+}
