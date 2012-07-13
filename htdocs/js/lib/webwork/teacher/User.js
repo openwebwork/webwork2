@@ -69,11 +69,16 @@ webwork.UserList = Backbone.Collection.extend({
             $.post(webwork.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
                 console.log(response);
-                App.model.trigger('reset');
             });
             
             }, this);
         this.on('remove', function(user){}, this);
+        
+        // This is used to temporarily add a single (hard coded) student. 
+        this.on('addstudent',function(user){
+            var u = new webwork.User({"first_name":"Homer","last_name":"Simpson","user_id":"hsimp"});
+            this.add(u);
+        })
     },
 
     fetch: function(){
@@ -93,5 +98,6 @@ webwork.UserList = Backbone.Collection.extend({
     },
     email: function(students){
 
-    }    
+    }
+    
 });
