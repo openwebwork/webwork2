@@ -1,8 +1,9 @@
+/*  userlist.js:
+   This is the base javascript code for the UserList3.pm (Classlist Editor3).  This sets up the View and the classlist object.
+  
+  You must include the User.js code before this in order to user the UserList class. 
+*/
 
-// this variable was defined inside the following, but I think it needs global scope.
-
-var userList;
-var App;
 
 
 $(function(){
@@ -89,9 +90,11 @@ $(function(){
             }, this);
             this.model.on('all', this.render, this);
             this.model.fetch();
+	    this.model.on('add',this.addOne,this); 
 
 
             document.getElementById("filter").addEventListener("keyup", function(){self.el.filter(document.getElementById("filter").value)}, false);
+	    $("input#testButton").click(function() {self.model.trigger("addstudent")});
         },
 
         render: function(){
@@ -113,9 +116,9 @@ $(function(){
 
     });
 
-    userList = new webwork.UserList;
+    var userList = new webwork.UserList;
 
-    App = new UserListView({model: userList});
+    var App = new UserListView({model: userList});
 
     // then we attach to the HTML table and render it
     //editableGrid.attachToHTMLTable('cltable');
@@ -157,6 +160,6 @@ window.onload = function()
 function addStud()
 {
     
-    var u = new webwork.User({"first_name":"Homer","last_name":"Simpson","user_id":"hsimp"});
-    userList.add(u);
+ //   var u = new webwork.User({"first_name":"Homer","last_name":"Simpson","user_id":"hsimp"});
+  //  userList.add(u);
 }

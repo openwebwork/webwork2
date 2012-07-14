@@ -503,7 +503,7 @@ sub body {
 				   \%labels,\%attributes),
 	    "<label for='filter'>Filter :</label><input type='text' id='filter'/>");
 
-	print CGI::div(CGI::button(-value=>"Add User",-onClick=>"addStud()"));
+	print CGI::div(CGI::button(-value=>"Add User",-id=>"testButton"));
 
 	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
