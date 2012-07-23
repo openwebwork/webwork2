@@ -470,6 +470,22 @@ sub dropUser {
 
 # Expecting a hash $in composed of
 #{
+#	'userID' => 'admin',		# these are the usual 
+#	'password' => 'admin',		# auth credentials
+#	'courseID' => 'Math',		# used to initiate a
+#	'session_key' => 'key',		# session.
+#	"id": "BFYM942", 
+#}
+sub deleteUser {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::deleteUser($self, $in));
+}
+
+
+# Expecting a hash $in composed of
+#{
 #	'userID' => 'admin',		# these are the usual
 #	'password' => 'admin',		# auth credentials
 #	'courseID' => 'Math',		# used to initiate a
