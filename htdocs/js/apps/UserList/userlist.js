@@ -293,6 +293,7 @@ $(function(){
 	    "click button#add_more_button": "addStudent"
 	},
 	openDialog: function () { this.$el.dialog("open");},
+	closeDialog: function () {this.$el.dialog("close");},
 	template: _.template($("#add_student_man_dialog_content").html()),
 	render: function(){
 	    var self = this;
@@ -305,7 +306,8 @@ $(function(){
 	    _(this.users.models).each(function(user){
 		App.users.add(user);
 		console.log("Adding the following student: " + JSON.stringify(user))
-			   });
+	    });
+	    this.closeDialog();
 	    
 	},
 	appendRow: function(user){
