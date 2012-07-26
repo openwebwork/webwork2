@@ -4,9 +4,6 @@
   You must include the User.js code before this in order to user the UserList class. 
 */
 
-var userList;
-var App;
-
 $(function(){
 
     // get usernames and keys from hidden variables and set up webwork object:
@@ -24,68 +21,27 @@ $(function(){
             + " courseID" + myCourseID, "alert-error");
     }
 
-    var UserListView = Backbone.View.extend({
+    var UserListView = webwork.ui.WebPage.extend({
+	tagName: "div",
         initialize: function(){
-	    _.bindAll(this, 'render');
-	    
+	    webwork.ui.WebPage.prototype.initialize.apply(this);
+	    _.bindAll(this, 'render','addOne','addAll','addStudentsFromFile','addStudentsManually','deleteUsers');
+	    var self = this;
 	    this.users = new webwork.UserList();  // This is a Backbone.Collection of users
 	    
 	    this.grid = new EditableGrid("UserListTable", { enableSort: true});
 
-            this.grid.load({ metadata: [
-                { name: "Select", datatype: "boolean", editable: true},
-		{ name: "Take Action", datatype: "string", editable: true,
-                    values: {"action0":"Take Action","action1":"Change Password",
-                        "action2":"Delete User","action3":"Act as User",
-                        "action4":"Student Progess","action5":"Email Student"}
-                },
-                { label: "Login Name", name: "user_id", datatype: "string", editable: false },
-                { name: "Login Status", datatype: "string", editable: false },
-                { name: "Assigned Sets", datatype: "integer", editable: false },
-                { label: "First Name", name: "first_name", datatype: "string", editable: true },
-                { label: "Last Name", name:"last_name", datatype: "string", editable: true },
-                { label: "Email Address", name: "email_address", datatype: "string", editable: true },
-                { label: "Student ID", name: "student_id", datatype: "string", editable: true },
-                { label: "Status", name: "status", datatype: "string", editable: true,
-                    values : {
-                        "en":"Enrolled",
-                        "noten":"Not Enrolled"
-                    }
-                },
-                { label: "Section", name: "section", datatype: "integer", editable: true },
-                { label: "Recitation", name: "recitation", datatype: "integer", editable: true },
-                { label: "Comment", name: "comment", datatype: "string", editable: true },
-                { label: "Permission Level", name: "permission", datatype: "integer", editable: true,
-                    values : {
-                        "-5":"guest","0":"Student","2":"login proctor",
-                        "3":"grade proctor","5":"T.A.", "10": "Professor",
-                        "20":"Admininistrator"
-		    }
-		}
-		
-		// The following gives a blank row which we remove in this.render() below.  Not sure why we need a blank row
-		// but won't work without it.    
-		
-            ], data: [{id:0, values:{}}]});
-	    //] });
-	    
+            this.grid.load({ metadata: webwork.userTableHeaders, data: [{id:0, values:{}}]});
 	    
 	    this.render();
 	    
 	    this.grid.renderGrid('users_table', 'usersTableClass', 'userTable');
-	    
-	    
 	    this.users.fetch();
-	    
 	    this.grid.refreshGrid();
-	    
-	    var self = this;
 	    
 	    this.grid.modelChanged = function(rowIndex, columnIndex, oldValue, newValue) {
 		
-		
 		// keep track of the selected rows. 
-		
 		if (columnIndex == 0)
 		{
 		    if (newValue) self.selectedRows.push(rowIndex);
@@ -98,7 +54,6 @@ $(function(){
 		    break;
 		    case "action2":  // deleteUser
 		    self.deleteUsers([rowIndex]);
-		    
 		    break;
 		    case "action3":  // Act as User
 		    break;
@@ -114,14 +69,13 @@ $(function(){
 		// check to make sure that the updated information needs to be sent to the server
 		
 		else if (oldValue != newValue  ){
-		    var cid = self.el.getRowId(rowIndex);
-		    var property = self.el.getColumnName(columnIndex);
-		    var editedModel = self.model.getByCid(cid);
+		    var cid = self.grid.getRowId(rowIndex);
+		    var property = self.grid.getColumnName(columnIndex);
+		    var editedModel = self.users.getByCid(cid);
 		    if(property == 'permission'){
-			newValue = {name: "", value: newValue};
+			newValue = {name: "", value: newValue};  // Do we need to make sure to set the name correctly too? 
 		    }
 		    editedModel.set(property, newValue);
-		    this.updateUser();
                 }
 		
 	    };
@@ -150,7 +104,6 @@ $(function(){
 	    
 	    // Open the Add Student Wizard
 	    $("input#addStudentButton").click(function() {$("div#addStudDialog").dialog("open");});
-	    //$("input#testButton").click(function () {self.model.trigger("addstudent")});
 	    
 	    // Make sure the take Action menu item is reset
 	    $("select#mainActionMenu").val("takeAction");
@@ -180,21 +133,19 @@ $(function(){
 	       targ.val("takeAction");
 	    },
 	toggleAllCheckBoxes: function () {$("input:checkbox[id!='selectAllCB']").attr("checked",$("#selectAllCB").is(":checked"));},
-	addStudentsFromFile :  function () { var addStudFileDialog = new AddStudentFileView(); addStudFileDialog.openDialog(); },
-	addStudentsManually : function () {  var addStudManDialog = new AddStudentManView(); addStudManDialog.openDialog(); },
+	addStudentsFromFile :  function () { var addStudFileDialog = new AddStudentFileView({parent: this}); addStudFileDialog.openDialog(); },
+	addStudentsManually : function () {  var addStudManDialog = new AddStudentManView({parent: this}); addStudManDialog.openDialog(); },
         render: function(){
-	    
-	    this.$el.html(_.template($("#mainClasslist").html()));
-	    
-	    
-            //
-	    
-	    // This is hack to remove the top blank line in the grid.  See above in el.load()
-	    
-	    
+	    this.$el.html();
+	    this.$el.append(this.announceView.render().el);
+	    this.$el.append(this.helpView.render().el);
 
+	    this.$el.append(_.template($("#userListTable").html()));
+	    
+	    this.helpView.setHTML($("#studentManagementHelp").html());
+	    
+	    return this;
         },
-
         addOne: function(user){
             var userInfo = user.toJSON();
 	    userInfo.permission = ""+userInfo.permission.value;  // return only the String version of the Permission
@@ -226,6 +177,11 @@ $(function(){
 		    self.grid.remove(row);
 			   
 		});
+		
+		// announce that students are deleted
+		
+		self.announceView.setHTML("<p>Deleted " + rows.length + " students</p>");
+		
 	    }
     }	,
 	
@@ -281,6 +237,7 @@ $(function(){
 	    _.bindAll(this, 'render','importStudents','addStudent','appendRow'); // every function that uses 'this' as the current object should be in here
 	    this.users = new TempUserList();
 	    this.users.bind('add', this.appendRow);
+	    this.parent = this.options.parent;
 	    this.render();
 	    
 	    for(var i = 0; i<1; i++) {this.users.add(new webwork.User())}  // add a single blank line. 
@@ -308,6 +265,7 @@ $(function(){
 		console.log("Adding the following student: " + JSON.stringify(user))
 	    });
 	    this.closeDialog();
+	    this.parent.announceView.setHTML("<p>Successfully added " + this.users.models.length + " students</p>");
 	    
 	},
 	appendRow: function(user){
@@ -326,6 +284,7 @@ $(function(){
 	initialize: function(){
 	    _.bindAll(this, 'render','importStudents','addStudent','appendRow'); // every function that uses 'this' as the current object should be in here
 	    this.users = new TempUserList();
+	    this.parent = this.options.parent;
 	    this.render();
 	    
 	    //for(var i = 0; i<1; i++) {this.users.add(new webwork.User())}  // add a single blank line. 
@@ -344,6 +303,7 @@ $(function(){
 	    var self = this;
 //	    console.log(this.template({}));
 	    this.$el.html($("#add_student_file_dialog_content").html());
+	    return this; 
 	},
 	readFile: function(evt){
 	    console.log("in loadFile");
@@ -377,7 +337,7 @@ $(function(){
 		
 		
 	},
-	importStudents: function () {
+	importStudents: function () {  // PLS:  Still need to check if student import is sucessful, like making sure that user_id is valid (not repeating, ...)
 	    // First check to make sure that the headers are not repeated.
 	    var headers = [];
 	    _($("select[class='colHeader']")).each(function(obj,j){if ($(obj).val() != "") headers.push({header: $(obj).val(), position: j});});
@@ -392,7 +352,7 @@ $(function(){
 	    for (var i=0;i<sortedHeads.length-1;i++){if(sortedHeads[i]==sortedHeads[i+1]) {validHeaders=false; break;}};
 	    if (!validHeaders) {alert("Each Column must have a unique Header.");  return false;}
 	    
-	    // This is an array of the column numbers that the headers are in.  I think this can be done in a more efficient way. 
+	    // This is an array of the column numbers that the headers are in.  
 	    
 	    var headCols = _.map(headers, function (value,j) { return _.find(_.map($("select.colHeader"),function (val,i) {if (val.value==value) return i;}), function (num) { return typeof num === 'number' && num % 1 == 0; })});
 	    
@@ -405,13 +365,17 @@ $(function(){
 			for(var i = 0; i < webwork.userProps.length; i++)
 			{
 			    // set the appropriate user property given the element in the table. 
-			   if(obj.header==webwork.userProps[i].longName) {user.set(webwork.userProps[i].shortName,$.trim($("tr#row"+row+" td.column" + obj.position).html()))}
+			   if(obj.header==webwork.userProps[i].longName) {
+			    var props = '{"' +  webwork.userProps[i].shortName + '":"' +$.trim($("tr#row"+row+" td.column" + obj.position).html()) + '"}';
+			    user.set($.parseJSON(props),{silent:true});  // send silent: true so this doesn't fire an "change" event resulting in a server hit
 			}
-		    });
+		    }});
 		//this.users.add(u);
 		
 		App.users.add(user);
 	    });
+	    
+	    this.parent.announceView.setHTML("<p>Successfully added " + rows.length + " students</p>");
 
 	this.closeDialog();    
     }
@@ -422,24 +386,14 @@ $(function(){
 	},
 	addStudent: function (){ this.users.add(new webwork.User());}
     });
-	
-
-
-    App = new UserListView({el: $("div#mainDiv")});
-    // then we attach to the HTML table and render it
-    //editableGrid.attachToHTMLTable('cltable');
-
-
-    //userList.fetch();
-    /*var users = new Array();
-    for(var i = 0; i < editableGrid.getRowCount(); i++){
-        var atts = editableGrid.getRowValues(i);
-        delete atts['Take Action'];
-        console.log(atts);
-        users.push(atts);
-    }
-    userList.reset(users, {silent: true});*/
     
+//    var userListView = new UserListView();
+
+    var App = new UserListView({el: $("div#mainDiv")});
+    
+
+
+
 	
 });
 

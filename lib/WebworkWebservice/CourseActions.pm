@@ -123,6 +123,8 @@ sub listUsers {
         my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
         $u->{'permission'}{'value'} = $PermissionLevel->{'permission'};
         $u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+	my $studid= $u->{'student_id'};
+	$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
     }
 
     #my %permissionsHash = $ce->{userRoles};

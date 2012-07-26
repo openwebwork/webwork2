@@ -19,3 +19,8 @@ label {font-weight: bold; display: inline; margin-right: 20px;}
 #man_student_table input {width: 10ex;}
 
 div.dialog {display: none;}
+
+
+div.closeable {position: relative;}
+div.info {position: abosolute; width: 80%; left: 10px; top: 10px;}
+button.close-div {position: absolute; right: 2px; top: 2px;}
