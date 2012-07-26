@@ -31,11 +31,11 @@ use warnings;
 
 # If true, WeBWorK::Debug will print debugging output.
 #
-$WeBWorK::Debug::Enabled = 0;
+$WeBWorK::Debug::Enabled = 1;
 
 # If non-empty, debugging output will be sent to the file named rather than STDERR.
 #
-$WeBWorK::Debug::Logfile = "";
+$WeBWorK::Debug::Logfile = $WeBWorK::Constants::WEBWORK_DIRECTORY . "/logs/debug.log";
 
 # If defined, prevent subroutines matching the following regular expression from
 # logging.

@@ -5,3 +5,17 @@
 #users_table td, table.testgrid th { padding: 5px; border: 1px solid #E0E0E0; }
 #users_table th { background: #E5E5E5; text-align: left; font-size: 90%; }
 #users_table td {font-size: 90%;}
+
+label {font-weight: bold; display: inline; margin-right: 20px;}
+#mainActionMenu {width: 200px;}
+#testButton {margin-left: 25px; margin-right: 25px;}
+#selectalldiv {display: inline; margin-left: 25px; margin-right: 25px;}
+#filterdiv {display: inline;}
+
+#man_student_table {border: 1px solid black; border-collapse: collapse; width: 95%; }
+#man_student_table th{ border: 1px solid black; background: lightgray; }
+            
+#man_student_table td { border: 1px solid black; height: 2.5ex;}
+#man_student_table input {width: 10ex;}
+
+div.dialog {display: none;}

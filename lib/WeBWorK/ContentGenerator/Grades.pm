@@ -505,7 +505,7 @@ sub grade_set {
 			# the problem is marked as attempted if the status has
 			# been set or if the problem has been attempted
 			# DBFIXME this should happen in the database layer, not here!
-			if (!$attempted && ($status || $num_of_attempts)) {
+			if (!$attempted && ($status || $num_correct || $num_incorrect )) {
 				$attempted = 1;
 				$problemRecord->attempted('1');
 				# DBFIXME: this is another case where it 
