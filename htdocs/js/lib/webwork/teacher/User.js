@@ -6,7 +6,7 @@ webwork.User = Backbone.Model.extend({
         student_id: "",
         user_id: "",
         email_address: "",
-        permission: 0, //student
+        permission: {name: "student", value: 0}, //student
         status: "C", //enrolled
         section: "",
         recitation: "",
@@ -62,21 +62,38 @@ webwork.UserList = Backbone.Collection.extend({
         this.on('add', function(user){
             var self = this;
             var requestObject = {"xml_command": 'addUser'};
-            _.extend(requestObject, this.attributes);
             _.extend(requestObject, user.attributes);
             _.defaults(requestObject, webwork.requestObject);
-
+            
             $.post(webwork.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-                console.log(response);
             });
             
             }, this);
-        this.on('remove', function(user){}, this);
+        this.on('remove', function(user){
+            var request = {"xml_command": "deleteUser", "user_id" : user.user_id };
+	    _.defaults(request,webwork.requestObject);
+            _.extend(request, user.attributes);
+            console.log(request);
+	    $.post(webwork.webserviceURL,request,function (data) {
+                
+                console.log(data);
+                var response = $.parseJSON(data);
+                // see if the deletion was successful. 
+    
+               return (response.result_data.delete == "success")
+            });
+
+            
+        }, this);
         
         // This is used to temporarily add a single (hard coded) student. 
         this.on('addstudent',function(user){
-            var u = new webwork.User({"first_name":"Homer","last_name":"Simpson","user_id":"hsimp"});
+            var u = new webwork.User({user_id:"hsimp",first_name:"Homer", last_name:"Simpson",email_address:"homer@msn.com",
+                                     section:"1",student_id:"1234",comment:"This is a comment",recitation:"7"});
+            
+            console.log("in addstudent")
+            console.log(u);
             this.add(u);
         })
     },
@@ -91,8 +108,6 @@ webwork.UserList = Backbone.Collection.extend({
         $.post(webwork.webserviceURL, requestObject, function(data){
             var response = $.parseJSON(data);
             var users = response.result_data;
-
-            var newUsers = new Array();
             self.reset(users);
         });
     },
@@ -101,3 +116,15 @@ webwork.UserList = Backbone.Collection.extend({
     }
     
 });
+
+webwork.userProps = [{shortName: "user_id", longName: "Login Name"},
+                     {shortName: "first_name", longName: "First Name"},
+                     {shortName: "last_name", longName: "Last Name"},
+                     {shortName: "email_address", longName: "Email"},
+                     {shortName: "student_id", longName: "Student ID"},
+                     {shortName: "status", longName: "Status"},
+                     {shortName: "section", longName: "Section"},
+                     {shortName: "recitation", longName: "Recitation"},
+                     {shortName: "comment", longName: "Comment"},
+                     {shortName: "permission", longName: "Permission Level"},
+                     {shortName: "userpassword", longName: "Password"}];
