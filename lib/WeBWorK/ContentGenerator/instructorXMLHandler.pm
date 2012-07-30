@@ -26,6 +26,7 @@ use warnings;
 package WeBWorK::ContentGenerator::instructorXMLHandler;
 use base qw(WeBWorK::ContentGenerator);
 use MIME::Base64 qw( encode_base64 decode_base64);
+use JSON; # imports encode_json, decode_json, to_json and from_json.
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
@@ -413,38 +414,39 @@ sub pretty_print_json {
 		#$out .= " type = UNDEFINED; ";
 	}
 	return $out."" unless defined($rh);
-	
-	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
-	    $indent++;
- 		foreach my $key (sort keys %{$rh})  {
- 			$out .= "  ".'"'.$key.'" : '. pretty_print_json( $rh->{$key}) . ",";
- 		}
- 		$indent--;
- 		#get rid of the last comma
- 		chop $out;
- 		$out = "{\n$out\n"."}\n";
+		 
+	 if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
+            $indent++;
+	  		foreach my $key (sort keys %{$rh})  {
+	  			$out .= "  ".'"'.$key.'" : '. pretty_print_json( $rh->{$key}) . ",";
+	  		}
+	  		$indent--;
+	  		#get rid of the last comma
+	  		chop $out;
+	  		$out = "{\n$out\n"."}\n";
+	 
+	  	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
+	  		foreach my $elem ( @{$rh} )  {
+	  		 	$out .= pretty_print_json($elem).",";
+	  		
+	  		}
+	  		#get rid of the last comma
+	  		chop $out;
+	  		$out = "[\n$out\n"."]\n";
+	  		#$out =  '"'.$out.'"';
+	 } elsif ( ref($rh) =~ /SCALAR/ ) {
+	 	$out .= "scalar reference ". ${$rh};
+	 } elsif ( ref($rh) =~/Base64/ ) {
+	 	$out .= "base64 reference " .$$rh;
+	 
+	     } elsif ($rh  =~ /^[+-]?\d+$/){
+	         $out .=  $rh;
+	 } else {
+	 	$out .=  '"'.$rh.'"';
+	 }
+	 
+	 return $out."";
 
- 	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
- 		foreach my $elem ( @{$rh} )  {
- 		 	$out .= pretty_print_json($elem).",";
- 		
- 		}
- 		#get rid of the last comma
- 		chop $out;
- 		$out = "[\n$out\n"."]\n";
- 		#$out =  '"'.$out.'"';
-	} elsif ( ref($rh) =~ /SCALAR/ ) {
-		$out .= "scalar reference ". ${$rh};
-	} elsif ( ref($rh) =~/Base64/ ) {
-		$out .= "base64 reference " .$$rh;
-
-    } elsif ($rh  =~ /^[+-]?\d+$/){
-        $out .=  $rh;
-	} else {
-		$out .=  '"'.$rh.'"';
-	}
-	
-	return $out."";
 }
 
 sub content {
@@ -452,18 +454,22 @@ sub content {
    # Return content of rendered problem to the browser that requested it
    ###########################
 	my $self = shift;
-	#for handling errors...i'm to lazy to make it work right now
-	if($self->{output}->{problem_out}){
-		print $self->{output}->{problem_out}->{text};
-	} else {
-		print '{"server_response":"'.$self->{output}->{text}.'",';
-		if($self->{output}->{ra_out}){
-			print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
-		} else {
-			print '"result_data":""}';
-		}
-	}
-	#print "".pretty_print_json($self->{output}->{ra_out});
+ 	#for handling errors...i'm to lazy to make it work right now
+ 	if($self->{output}->{problem_out}){
+            print $self->{output}->{problem_out}->{text};
+ 	} else {
+            my $out = {server_response => $self->{output}->{text}};
+            #print '{"server_response":"'.$self->{output}->{text}.'",';
+            if($self->{output}->{ra_out}){
+                $out->{result_data} = $self->{output}->{ra_out}; 
+                #print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
+            } else {
+                $out->{result_data} = "";
+            }
+            print JSON->new->utf8->space_after->encode($out);
+
+ 	}
+        #print "".pretty_print_json($self->{output}->{ra_out});
 }
 
 
