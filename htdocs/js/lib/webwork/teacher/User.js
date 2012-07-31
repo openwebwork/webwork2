@@ -15,10 +15,12 @@ webwork.User = Backbone.Model.extend({
     },
 
     initialize: function(){
-        //console.log("in initialize");
+        this.on('change',this.update);
     },
 
     update: function(){
+        
+        console.log("in webwork.User update");
         var self = this;
         var requestObject = {
             "xml_command": 'editUser'
@@ -26,6 +28,7 @@ webwork.User = Backbone.Model.extend({
         _.extend(requestObject, this.attributes);
         _.defaults(requestObject, webwork.requestObject);
 
+        
         requestObject.permission = requestObject.permission.value;
         console.log(requestObject.permission);
 
@@ -34,11 +37,20 @@ webwork.User = Backbone.Model.extend({
             var response = $.parseJSON(data);
             var user = response.result_data;
             self.set(user);
-            console.log("success");
+            
+            // if this is successful, then report back by triggering a updateSuccess event
+            // Somehow it would be nice to deliver whether a general update of user information was made
+            // or a password change.  
+            
+            if (self.attributes.new_password == undefined)
+            { self.trigger("success","general");} else
+            {self.trigger("success", "Password Changed for user " + self.attributes.user_id);}
         });
     },
+    
+    /*  The following is not need because it is changed in the edit User above */
 
-    setPassword:function(new_password){
+/*    setPassword:function(new_password){
         var requestObject = {
             "xml_command": 'changeUserPassword',
             'new_password': new_password
@@ -52,13 +64,14 @@ webwork.User = Backbone.Model.extend({
             console.log(data);
             console.log("success?");
         });
-    }
+    } */
 });
 
 webwork.UserList = Backbone.Collection.extend({
     model: webwork.User,
 
     initialize: function(){
+        var self = this;
         this.on('add', function(user){
             var self = this;
             var requestObject = {"xml_command": 'addUser'};
@@ -67,6 +80,7 @@ webwork.UserList = Backbone.Collection.extend({
             
             $.post(webwork.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
+                self.trigger("success","User " + user.attributes.user_id + " added.");
             });
             
             }, this);
@@ -81,22 +95,14 @@ webwork.UserList = Backbone.Collection.extend({
                 var response = $.parseJSON(data);
                 // see if the deletion was successful. 
     
+               self.trigger("success","User " + user.attributes.user_id + " deleted.");
                return (response.result_data.delete == "success")
             });
 
             
         }, this);
         
-        // This is used to temporarily add a single (hard coded) student. 
-        this.on('addstudent',function(user){
-            var u = new webwork.User({user_id:"hsimp",first_name:"Homer", last_name:"Simpson",email_address:"homer@msn.com",
-                                     section:"1",student_id:"1234",comment:"This is a comment",recitation:"7"});
-            
-            console.log("in addstudent")
-            console.log(u);
-            this.add(u);
-        })
-    },
+       },
 
     fetch: function(){
         var self = this;
@@ -107,8 +113,10 @@ webwork.UserList = Backbone.Collection.extend({
 
         $.post(webwork.webserviceURL, requestObject, function(data){
             var response = $.parseJSON(data);
+            console.log(response);
             var users = response.result_data;
             self.reset(users);
+            self.trigger("fetchSuccess");
         });
     },
     email: function(students){
@@ -128,3 +136,36 @@ webwork.userProps = [{shortName: "user_id", longName: "Login Name"},
                      {shortName: "comment", longName: "Comment"},
                      {shortName: "permission", longName: "Permission Level"},
                      {shortName: "userpassword", longName: "Password"}];
+
+webwork.userTableHeaders = [
+                { name: "Select", datatype: "boolean", editable: true},
+		{ name: "Action", datatype: "string", editable: true,
+                    values: {"action1":"Change Password",
+                        "action2":"Delete User","action3":"Act as User",
+                        "action4":"Student Progess","action5":"Email Student"}
+                },
+                { label: "Login Name", name: "user_id", datatype: "string", editable: false },
+                { name: "Login Status", datatype: "string", editable: false },
+                { name: "Assigned Sets", datatype: "integer", editable: false },
+                { label: "First Name", name: "first_name", datatype: "string", editable: true },
+                { label: "Last Name", name:"last_name", datatype: "string", editable: true },
+                { label: "Email", name: "email_address", datatype: "string", editable: true },
+                { label: "Student ID", name: "student_id", datatype: "string", editable: true },
+                { label: "Status", name: "status", datatype: "string", editable: true,
+                    values : {
+                        "en":"Enrolled",
+                        "noten":"Not Enrolled"
+                    }
+                },
+                { label: "Section", name: "section", datatype: "integer", editable: true },
+                { label: "Recitation", name: "recitation", datatype: "integer", editable: true },
+                { label: "Comment", name: "comment", datatype: "string", editable: true },
+                { label: "Permission", name: "permission", datatype: "integer", editable: true,
+                    values : {
+                        "-5":"guest","0":"Student","2":"login proctor",
+                        "3":"grade proctor","5":"T.A.", "10": "Professor",
+                        "20":"Admininistrator"
+		    }
+		}
+		
+            ];
