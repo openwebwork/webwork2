@@ -4,9 +4,6 @@
   You must include the User.js code before this in order to user the UserList class. 
 */
 
-var userList;
-var App;
-
 $(function(){
 
     // get usernames and keys from hidden variables and set up webwork object:
@@ -24,68 +21,29 @@ $(function(){
             + " courseID" + myCourseID, "alert-error");
     }
 
-    var UserListView = Backbone.View.extend({
+    var UserListView = webwork.ui.WebPage.extend({
+	tagName: "div",
         initialize: function(){
-	    _.bindAll(this, 'render');
-	    
+	    webwork.ui.WebPage.prototype.initialize.apply(this);
+	    _.bindAll(this, 'render','addOne','addAll','addStudentsFromFile','addStudentsManually','deleteUsers','changePassword');
+	    var self = this;
 	    this.users = new webwork.UserList();  // This is a Backbone.Collection of users
 	    
 	    this.grid = new EditableGrid("UserListTable", { enableSort: true});
 
-            this.grid.load({ metadata: [
-                { name: "Select", datatype: "boolean", editable: true},
-		{ name: "Take Action", datatype: "string", editable: true,
-                    values: {"action0":"Take Action","action1":"Change Password",
-                        "action2":"Delete User","action3":"Act as User",
-                        "action4":"Student Progess","action5":"Email Student"}
-                },
-                { label: "Login Name", name: "user_id", datatype: "string", editable: false },
-                { name: "Login Status", datatype: "string", editable: false },
-                { name: "Assigned Sets", datatype: "integer", editable: false },
-                { label: "First Name", name: "first_name", datatype: "string", editable: true },
-                { label: "Last Name", name:"last_name", datatype: "string", editable: true },
-                { label: "Email Address", name: "email_address", datatype: "string", editable: true },
-                { label: "Student ID", name: "student_id", datatype: "string", editable: true },
-                { label: "Status", name: "status", datatype: "string", editable: true,
-                    values : {
-                        "en":"Enrolled",
-                        "noten":"Not Enrolled"
-                    }
-                },
-                { label: "Section", name: "section", datatype: "integer", editable: true },
-                { label: "Recitation", name: "recitation", datatype: "integer", editable: true },
-                { label: "Comment", name: "comment", datatype: "string", editable: true },
-                { label: "Permission Level", name: "permission", datatype: "integer", editable: true,
-                    values : {
-                        "-5":"guest","0":"Student","2":"login proctor",
-                        "3":"grade proctor","5":"T.A.", "10": "Professor",
-                        "20":"Admininistrator"
-		    }
-		}
-		
-		// The following gives a blank row which we remove in this.render() below.  Not sure why we need a blank row
-		// but won't work without it.    
-		
-            ], data: [{id:0, values:{}}]});
-	    //] });
-	    
+            this.grid.load({ metadata: webwork.userTableHeaders, data: [{id:0, values:{}}]});
 	    
 	    this.render();
 	    
 	    this.grid.renderGrid('users_table', 'usersTableClass', 'userTable');
-	    
-	    
 	    this.users.fetch();
-	    
 	    this.grid.refreshGrid();
 	    
-	    var self = this;
+	    
 	    
 	    this.grid.modelChanged = function(rowIndex, columnIndex, oldValue, newValue) {
 		
-		
 		// keep track of the selected rows. 
-		
 		if (columnIndex == 0)
 		{
 		    if (newValue) self.selectedRows.push(rowIndex);
@@ -95,39 +53,47 @@ $(function(){
 		    
 		   switch (newValue){
 		    case "action1":  // Change Password
+			self.changePassword([rowIndex]);
 		    break;
 		    case "action2":  // deleteUser
 		    self.deleteUsers([rowIndex]);
-		    
 		    break;
 		    case "action3":  // Act as User
+			var username = self.grid.getValueAt(rowIndex,2); //
+			
+			// send a relative path, but is this the best way?
+			var url = "../../?user=" + webwork.requestObject.user + "&effectiveUser=" + username + "&key=" +
+				    webwork.requestObject.session_key; 
+			location.href = url;
 		    break;
 		    case "action4":  // Student Progress
 		    break;
 		    case "action5":  // Email Student
 		    break;
 		
-		    
 		   }
+		   
+  		    // make sure that the cog icon is visible again.  
+		    $("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");
+
 		}
 		
 		// check to make sure that the updated information needs to be sent to the server
 		
 		else if (oldValue != newValue  ){
-		    var cid = self.el.getRowId(rowIndex);
-		    var property = self.el.getColumnName(columnIndex);
-		    var editedModel = self.model.getByCid(cid);
+		    var cid = self.grid.getRowId(rowIndex);
+		    var property = self.grid.getColumnName(columnIndex);
+		    var editedModel = self.users.getByCid(cid);
 		    if(property == 'permission'){
-			newValue = {name: "", value: newValue};
+			newValue = {name: "", value: newValue};  // Do we need to make sure to set the name correctly too? 
 		    }
 		    editedModel.set(property, newValue);
-		    this.updateUser();
                 }
 		
 	    };
 	    
 	    // Resets the grid by deleting all rows and readding.  
-	    
+	                                                     
             this.users.on('reset', function(){
                 while(self.grid.getRowCount() > 1){
                     self.grid.remove(1);
@@ -139,6 +105,10 @@ $(function(){
             
 	    this.users.on('add',this.addOne,this);
 	    
+	    this.users.on('success', function (msg) {this.announce.setText(msg);},this);
+	      // set the action column to have a cog initially. 
+	    this.users.on('fetchSuccess', function () {$("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");},this);
+	    
 	    // Setup the Add Student Wizard Dialog
 	    $("div#addStudDialog").dialog({autoOpen: false, modal: true, title: "Add Student Wizard", width: 300,
 					  buttons: {"From a File":  function () { $("div#addStudDialog").dialog("close"); self.addStudentsFromFile()},
@@ -149,53 +119,60 @@ $(function(){
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
 	    
 	    // Open the Add Student Wizard
-	    $("input#addStudentButton").click(function() {$("div#addStudDialog").dialog("open");});
-	    //$("input#testButton").click(function () {self.model.trigger("addstudent")});
+	    $("input.addStudentButton").click(function() {$("div#addStudDialog").dialog("open");});
+	    
+	    
 	    
 	    // Make sure the take Action menu item is reset
 	    $("select#mainActionMenu").val("takeAction");
+	    $("button#help-link").click(function () {
+		self.helpPane.open();
+	    });
 	    
         },
         events: {
-	    'change select#mainActionMenu' : 'takeBulkAction',
+	    'change select.actionMenu' : 'takeBulkAction',
 	    'change input#selectAllCB' : 'toggleAllCheckBoxes',
 	    'keyup input#filter' : 'filterUsers',
 	    
 	},
 	filterUsers: function (evt) {this.grid.filter($("#filter").val()) },
 	takeBulkAction: function (evt) { switch (evt.target.value){
-	        //console.log($(this));
+	        
 		case "menuEmail":
 		    break;
 		case "menuChangePassword":
+		    this.changePassword(this.selectedRows);
 		    break;
 		case "menuDelete":
 		    this.deleteUsers(this.selectedRows);
-		    this.selectedRows = []; 
 		    break;
 	       }
 	       // reset the action menu
-	       var targ = $(evt.target);
-	       console.log(targ);
-	       targ.val("takeAction");
+	       $(evt.target).val("takeAction");
 	    },
 	toggleAllCheckBoxes: function () {$("input:checkbox[id!='selectAllCB']").attr("checked",$("#selectAllCB").is(":checked"));},
-	addStudentsFromFile :  function () { var addStudFileDialog = new AddStudentFileView(); addStudFileDialog.openDialog(); },
-	addStudentsManually : function () {  var addStudManDialog = new AddStudentManView(); addStudManDialog.openDialog(); },
+	addStudentsFromFile :  function () { var addStudFileDialog = new AddStudentFileView({parent: this}); addStudFileDialog.openDialog(); },
+	addStudentsManually : function () {  var addStudManDialog = new AddStudentManView({parent: this}); addStudManDialog.openDialog(); },
         render: function(){
+	    var self = this; 
+	    this.$el.html();
+	    this.announce = new webwork.ui.Closeable({id: "announce-bar"});
+	    this.$el.append(this.announce.el)
+	    this.announce.$el.addClass("alert-success");
+	    $("button.close",this.announce.el).click(function () {self.announce.close();}); // for some reason the event inside this.announce is not working  this is a hack.
+            //this.announce.delegateEvents();
+   	    this.helpPane = new webwork.ui.Closeable({display: "block",text: $("#studentManagementHelp").html(),id: "helpPane"});
+	    this.$el.append(this.helpPane.el)
+	    $("button.close",this.helpPane.el).click(function () {self.helpPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
+            
 	    
-	    this.$el.html(_.template($("#mainClasslist").html()));
+	    this.$el.append(_.template($("#userListTable").html()));
 	    
-	    
-            //
-	    
-	    // This is hack to remove the top blank line in the grid.  See above in el.load()
-	    
-	    
-
+	    this.$el.append(this.passwordPane = new webwork.ui.ChangePasswordView({model: new TempUserList()}));
+	    return this;
         },
-
-        addOne: function(user){
+	addOne: function(user){
             var userInfo = user.toJSON();
 	    userInfo.permission = ""+userInfo.permission.value;  // return only the String version of the Permission
 	    this.grid.append(user.cid, userInfo);
@@ -226,9 +203,19 @@ $(function(){
 		    self.grid.remove(row);
 			   
 		});
+		
 	    }
     }	,
-	
+	changePassword: function(rows){
+	    var tempUsers = new TempUserList();
+	    var self = this; 
+	    _.each(rows, function (row){
+		tempUsers.add(self.users.where({user_id: self.grid.getDisplayValueAt(row,2)})[0]);
+	    })
+	    this.passwordPane.model=tempUsers;
+	    this.passwordPane.render();
+	    this.passwordPane.$el.dialog("open");
+	    },
 	selectedRows: []
 
 
@@ -245,30 +232,30 @@ $(function(){
 	tagName: "tr",
 	className: "userRow",
 	initialize: function(){
-	    _.bindAll(this, 'render','unrender','updateProp','deleteUser'); // every function that uses 'this' as the current object should be in here
+	    _.bindAll(this, 'render','unrender','updateProp','removeUser'); // every function that uses 'this' as the current object should be in here
 	    this.model.bind('remove', this.unrender);
 	    //this.model.bind('error',function (model,error) { console.log(model);console.log(error);});
 	    this.render();
 	},
 	events: {
 	    'change input': 'updateProp',
-	    'click button.deleteUser': 'deleteUser'
+	    'click button.removeUser': 'removeUser'
 	},
 	render: function(){
 	    var self = this;
-	    self.$el.append("<td><button class='deleteUser'>Delete</button></td>");
+	    self.$el.append("<td><button class='removeUser'>Delete</button></td>");
 	    _.each(webwork.userProps, function (prop){self.$el.append("<td><input type='text' size='10' class='input-for-" + prop.shortName + "'></input></td>"); });
 	    return this; // for chainable calls, like .render().el
 	},
        updateProp: function(evt){
 	    var changedAttr = evt.target.className.split("for-")[1];
-	    this.model.set(changedAttr,evt.target.value);
+	    this.model.set(changedAttr,evt.target.value,{silent: true});
 	    console.log("new value: " + evt.target.value);
 	},
 	unrender: function(){
 	    this.$el.remove();
 	},
-	deleteUser: function() {console.log("in deleteUser"); this.model.destroy();}
+	removeUser: function() {console.log("in removeUser"); this.model.destroy();}
     });
 	
     // This is the View for the dialog for addings students manually    
@@ -281,6 +268,7 @@ $(function(){
 	    _.bindAll(this, 'render','importStudents','addStudent','appendRow'); // every function that uses 'this' as the current object should be in here
 	    this.users = new TempUserList();
 	    this.users.bind('add', this.appendRow);
+	    this.parent = this.options.parent;
 	    this.render();
 	    
 	    for(var i = 0; i<1; i++) {this.users.add(new webwork.User())}  // add a single blank line. 
@@ -308,7 +296,6 @@ $(function(){
 		console.log("Adding the following student: " + JSON.stringify(user))
 	    });
 	    this.closeDialog();
-	    
 	},
 	appendRow: function(user){
 	    var tableRow = new UserRowView({model: user});
@@ -326,6 +313,7 @@ $(function(){
 	initialize: function(){
 	    _.bindAll(this, 'render','importStudents','addStudent','appendRow'); // every function that uses 'this' as the current object should be in here
 	    this.users = new TempUserList();
+	    this.parent = this.options.parent;
 	    this.render();
 	    
 	    //for(var i = 0; i<1; i++) {this.users.add(new webwork.User())}  // add a single blank line. 
@@ -344,6 +332,7 @@ $(function(){
 	    var self = this;
 //	    console.log(this.template({}));
 	    this.$el.html($("#add_student_file_dialog_content").html());
+	    return this; 
 	},
 	readFile: function(evt){
 	    console.log("in loadFile");
@@ -377,7 +366,7 @@ $(function(){
 		
 		
 	},
-	importStudents: function () {
+	importStudents: function () {  // PLS:  Still need to check if student import is sucessful, like making sure that user_id is valid (not repeating, ...)
 	    // First check to make sure that the headers are not repeated.
 	    var headers = [];
 	    _($("select[class='colHeader']")).each(function(obj,j){if ($(obj).val() != "") headers.push({header: $(obj).val(), position: j});});
@@ -392,7 +381,7 @@ $(function(){
 	    for (var i=0;i<sortedHeads.length-1;i++){if(sortedHeads[i]==sortedHeads[i+1]) {validHeaders=false; break;}};
 	    if (!validHeaders) {alert("Each Column must have a unique Header.");  return false;}
 	    
-	    // This is an array of the column numbers that the headers are in.  I think this can be done in a more efficient way. 
+	    // This is an array of the column numbers that the headers are in.  
 	    
 	    var headCols = _.map(headers, function (value,j) { return _.find(_.map($("select.colHeader"),function (val,i) {if (val.value==value) return i;}), function (num) { return typeof num === 'number' && num % 1 == 0; })});
 	    
@@ -405,13 +394,17 @@ $(function(){
 			for(var i = 0; i < webwork.userProps.length; i++)
 			{
 			    // set the appropriate user property given the element in the table. 
-			   if(obj.header==webwork.userProps[i].longName) {user.set(webwork.userProps[i].shortName,$.trim($("tr#row"+row+" td.column" + obj.position).html()))}
+			   if(obj.header==webwork.userProps[i].longName) {
+			    var props = '{"' +  webwork.userProps[i].shortName + '":"' +$.trim($("tr#row"+row+" td.column" + obj.position).html()) + '"}';
+			    user.set($.parseJSON(props),{silent:true});  // send silent: true so this doesn't fire an "change" event resulting in a server hit
 			}
-		    });
+		    }});
 		//this.users.add(u);
 		
 		App.users.add(user);
 	    });
+	    
+	    this.parent.announce.setText("<p>Successfully added " + rows.length + " students</p>");
 
 	this.closeDialog();    
     }
@@ -422,24 +415,14 @@ $(function(){
 	},
 	addStudent: function (){ this.users.add(new webwork.User());}
     });
-	
-
-
-    App = new UserListView({el: $("div#mainDiv")});
-    // then we attach to the HTML table and render it
-    //editableGrid.attachToHTMLTable('cltable');
-
-
-    //userList.fetch();
-    /*var users = new Array();
-    for(var i = 0; i < editableGrid.getRowCount(); i++){
-        var atts = editableGrid.getRowValues(i);
-        delete atts['Take Action'];
-        console.log(atts);
-        users.push(atts);
-    }
-    userList.reset(users, {silent: true});*/
     
+//    var userListView = new UserListView();
+
+    var App = new UserListView({el: $("div#mainDiv")});
+    
+
+
+
 	
 });
 

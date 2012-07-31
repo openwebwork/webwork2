@@ -1,40 +1,56 @@
 <div id="mainDiv"></div>
 
-
-<script type="text/template" id="mainClasslist">
-
-
-<div class="helpBox">
-    <p>The Student Management page allows you to edit student information as well as perform actions
+<script type="text/template" id="studentManagementHelp">
+   <p>The Student Management page allows you to edit student information as well as perform actions
 (delete, email, act as user) on individuals or a group of students. To edit a student's information, click on the appropriate property
 to change and retype or select the correct information.  To perform an action on an individual student, select the action
-from the <em>Take Action</em> column. To pefrom an action on a group of students, select those students using the checkboxes on the first
+from the <em>Action</em> column. To perform an action on a group of students, select those students using the checkboxes on the first
 column, then select the action from the button above (or below) the table.  Toggling the checkbox called <em>Select All</em> will select/deselect
 all rows in the table.   </p>
-</div>
     
-<div>
-    <h2>Not all Actions are available currently</h2>
-    
-    
-    <p>Currently only the Delete and Add Users are available.</p></div>
+</script>
 
 
-<div id="aboveTable">
+<script type="text/template" id="userListTable">
+    
+    <div id="help-container"></div>
+
+    <h4 style="color: red">All actions except student progress and email student should be working.</h4>
+    
+
+<div id="aboveTable" class="row">
+<div class="span2"
     <span id="selectalldiv"><label for="selectAll">Select All:</label><input type='checkbox' id='selectAllCB' /></span>
+    </div>
+    <div class="span3">
     <select name="actionPopup"  class="actionMenu" id="mainActionMenu">
-<option selected="selected" value="takeAction">Take Action on Selected Students</option>
+<option selected="selected" value="takeAction">Take Action on Selected</option>
 <option value="menuEmail">Email Selected Students</option>
 <option value="menuChangePassword">Change the Password of Selected Student</option>
 <option value="menuDelete">Delete Selected Students</option>
-</select> 
-    <div id="filterdiv"><label for='filter'>Filter :</label><input type='text' id='filter'/></div>
-<input type="button"  value="Add Students" id="addStudentButton" />
+</select>
+</div>
 
-
+    <div id="filterdiv" class="span3"><label for='filter'>Filter :</label><input type='text' class='filter'/></div>
+    
+<div class="span3"><input type="button"  value="Add Students" class="addStudentButton" /></div>
 
 </div>
 <div id="users_table"></div>
+<div id="belowTable" class="row">
+<div class="span2">
+    </div>
+    <div class="span3">
+    <select name="actionPopup"  class="actionMenu" id="mainActionMenuBottom">
+<option selected="selected" value="takeAction">Take Action on Selected</option>
+<option value="menuEmail">Email Selected Students</option>
+<option value="menuChangePassword">Change the Password of Selected Student</option>
+<option value="menuDelete">Delete Selected Students</option>
+</select>
+</div>
+
+</div>
+
 
 
 <div id="addStudDialog" class="dialog">
@@ -86,3 +102,14 @@ all rows in the table.   </p>
     <td>Section</td><td>Recitation</td>
     <td>Comment</td><td>Permission Level</td><td>Password</td></tr></tbody></table>
 </script>
+<script type="text/template" id="passwordDialogText">
+    Change the password of the users below:
+    <table id="userPassTable">
+    <thead>
+    <tr><th>First Name</th><th>Last Name </th><th> Login Name </th> <th> New Password </th> </tr>
+    <tbody> 
+</tbody>
+</table>
+    
+</script>
+
