@@ -253,11 +253,12 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-ui-for-classlist3/js/jquery-ui-1.8.21.custom.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK-ui.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/teacher.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/User.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/util.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/UserList/userlist.js"}), CGI::end_script();
-
+	
 	return "";
 }
 
