@@ -24,79 +24,11 @@
 # addition, the $courseName variable holds the name of the current course.
 
 ################################################################################
-# Seed variables
-################################################################################
 
-# Set these variables to correspond to your configuration and preferences. You
-# will need to restart the webserver to reset the variables in this section.
-
-# URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
-# that using "" may not work so we suggest sticking with "/webwork2".
-$webwork_url         = "/webwork2";
-
-
-$server_root_url   = "";  # e.g.  http://webwork.yourschool.edu
-$server_userID     = "";  # e.g.  www-data    
-$server_groupID    = "";  # e.g.  wwdata
-
-
-# In the apache configuration file (often called httpd.conf) you will find
-# User wwadmin   --- this is the $server_userID -- of course it may be wwhttpd or some other name
-# Group wwdata   --- this is the $server_groupID -- this will have different names also
-
-# Root directory of PG.
-$pg_dir              = "/opt/webwork/pg";
-
-# URL and path to htdocs directory.
-# Uncomment the second line below when using litetpd
-$webwork_htdocs_url  = "/webwork2_files";
-$webwork_htdocs_dir  = "$webwork_dir/htdocs";
-
-# URL and path to courses directory.
-$webwork_courses_url = "/webwork2_course_files";
-$webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the course directory
+include("conf/prelocal.conf");
 
 ################################################################################
-# Paths to external programs 
-################################################################################
 
-# system utilities
-$externalPrograms{mv}    = "/bin/mv";
-$externalPrograms{cp}    = "/bin/cp";
-$externalPrograms{rm}    = "/bin/rm";
-$externalPrograms{mkdir} = "/bin/mkdir";
-$externalPrograms{tar}   = "/bin/tar";
-$externalPrograms{gzip}  = "/bin/gzip";
-
-# equation rendering/hardcopy utiltiies
-$externalPrograms{latex}    = "/usr/bin/latex";
-$externalPrograms{pdflatex} = "/usr/bin/pdflatex --shell-escape";
-$externalPrograms{dvipng}   = "/usr/bin/dvipng";
-$externalPrograms{tth}      = "/usr/bin/tth";
-
-####################################################
-# NetPBM - basic image manipulation utilities
-# Most sites only need to configure $netpbm_prefix.
-####################################################
-my $netpbm_prefix = "/usr/bin";
-$externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
-$externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
-$externalPrograms{pnmtops}  = "$netpbm_prefix/pnmtops";
-$externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
-$externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
-
-# url checker
-$externalPrograms{checkurl} = "/usr/bin/lwp-request -d -mHEAD "; # or "/usr/local/bin/w3c -head "
-
-# image conversions utiltiies
-# the source file is given on stdin, and the output expected on stdout.
-$externalPrograms{gif2eps} = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
-$externalPrograms{png2eps} = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
-$externalPrograms{gif2png} = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
-
-# mysql clients
-$externalPrograms{mysql}     = "/usr/bin/mysql";
-$externalPrograms{mysqldump} = "/usr/bin/mysqldump";
 
 ################################################################################
 # Mail settings
@@ -177,6 +109,11 @@ $mail{editor_window_columns} = 100;
 ###################################################
 # Customizing the action of the "Email your instructor" button
 ###################################################
+
+# This is best done by copying the lines below, entering them
+# in the postlocal.conf file and making the desired modifications. 
+# Then you will not need to update these modifications
+# when you download a new version of WeBWorK.
 
 # Use this to customize the text of the feedback button.
 $feedback_button_name = "Email instructor";
@@ -263,8 +200,11 @@ $webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdoc
 $webworkURLs{htdocs}        = "$webwork_htdocs_url";
 
 # Location of web-accessible temporary files, such as equation images.
-$webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
-$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
+# These two should be set in prelocal.conf -- not here since this can be overwritten by new versions.
+$webworkDirs{htdocs_temp}   = (defined $webworkDirs{htdocs_temp} ) ? $webworkDirs{htdocs_temp} :"$webworkDirs{htdocs}/tmp";
+$webworkURLs{htdocs_temp}   = (defined $webworkURLs{htdocs_temp} ) ? $webworkURLs{htdocs_temp} :"$webworkURLs{htdocs}/tmp";
+
+#$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
 
 # Location of cached equation images.
 $webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
@@ -491,27 +431,25 @@ $default_status = "Enrolled";
 # Database options
 ################################################################################
 
-# these variables are used by database.conf. we define them here so that editing
+# these variables are used by database.conf. we define them in prelocal.conf ( or site.conf ) so that editing
 # database.conf isn't necessary.
 
 # required permissions
 # GRANT SELECT ON webwork.* TO webworkRead@localhost IDENTIFIED BY 'passwordRO';
 # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
 
-$database_dsn = "dbi:mysql:webwork";
-$database_username = "webworkWrite";
-$database_password = "";
-$database_debug = 0;
+################################################################################
+# set these variables in prelocal.conf
+#
+# $database_dsn = "dbi:mysql:webwork";
+# $database_username = "webworkWrite";
+# #$database_password = ""; #set this in prelocal.conf
+################################################################################
 
-# Variables for sql_moodle database layout.
-$moodle_dsn = "dbi:mysql:moodle";
-$moodle_username = $database_username;
-$moodle_password = $database_password;
-$moodle_table_prefix = "mdl_";
-$moodle17 = 0;
+# $database_debug = 0;
 
-# Several database are defined in the file conf/database.conf and stored in the
-# hash %dbLayouts.
+# Database schemas are defined in the file conf/database.conf and stored in the
+# hash %dbLayouts. The standard schema is called "sql_single";
 include "conf/database.conf";
 
 # Select the default database layout. This can be overridden in the course.conf
@@ -547,8 +485,6 @@ $problemLibrary_db = {
 # Logs
 ################################################################################
 
-# FIXME: take logs out of %webworkFiles/%courseFiles and give them their own
-# top-level hash.
 
 # Logs data about how long it takes to process problems. (Do not confuse this
 # with the /other/ timing log which can be set by WeBWorK::Timing and is used
@@ -576,7 +512,7 @@ $courseFiles{logs}{login_log}       = "$courseDirs{logs}/login.log";
 $courseFiles{logs}{activity_log} = '';
 
 ################################################################################
-# Site defaults (FIXME: what other things could be "site defaults"?)
+# Site defaults (Usually overridden in postlocal.conf)
 ################################################################################
 
 # Set the default timezone of courses on this server. To get a list of valid
@@ -600,94 +536,9 @@ $siteDefaults{timezone} = "America/New_York";
 # to the new course being created.
 $siteDefaults{default_templates_course} ="modelCourse";
 
-################################################################################
-# Authentication system
-################################################################################
-
-# FIXME This mechanism is a little awkward and probably should be merged with
-# the dblayout selection system somehow.
-
-# Select the authentication module to use for normal logins.
-# 
-# If this value is a string, the given authentication module will be used
-# regardless of the database layout. If it is a hash, the database layout name
-# will be looked up in the hash and the resulting value will be used as the
-# authentication module. The special hash key "*" is used if no entry for the
-# current database layout is found.
-# 
-$authen{user_module} = {
-	sql_moodle => "WeBWorK::Authen::Moodle",
-	# sql_ldap   => "WeBWorK::Authen::LDAP",
-	#"*" => "WeBWorK::Authen",
-	"*" => "WeBWorK::Authen::Basic_TheLastOption",
-};
-
-# Select the authentication module to use for proctor logins.
-# 
-# A string or a hash is accepted, as above.
-# 
-$authen{proctor_module} = "WeBWorK::Authen::Proctor";
-
-# Options for particular authentication modules
-
-# $authen{moodle_options} = {
-# 	dsn => $moodle_dsn,
-# 	username => $moodle_username,
-# 	password => $moodle_password,
-# 	table_prefix => $moodle_table_prefix,
-# 	moodle17 => $moodle17,
-# };
-
-$authen{ldap_options} = {
-	# hosts to attempt to connect to, in order. For example:
-	#   auth.myschool.edu             -- uses LDAP scheme and port 389
-	#   ldap://auth.myschool.edu:666  -- non-standard port
-	#   ldaps://auth.myschool.edu     -- uses LDAPS scheme and port 636
-	#   ldaps://auth.myschool.edu:389 -- SSL on non-SSL port
-	#   Edit the host(s) below:
-	net_ldap_hosts => [
-		"ldaps://auth1.myschool.edu",
-		"ldaps://auth2.myschool.edu",
-	],
-	# connection options
-	net_ldap_options => {
-		timeout => 30,
-		version => 3,
-	},
-	# base to use when searching for user's DN
-	# Edit the data below:
-	net_ldap_base => "ou=people,dc=myschool,dc=edu",
-	
-        # Use a Bind account if set to 1
-        bindAccount => 0,
-
-        searchDN => "cn=search,DC=youredu,DC=edu",
-        bindPassword =>  "password",
-
-	# The LDAP module searches for a DN whose RDN matches the username
-	# entered by the user. The net_ldap_rdn setting tells the LDAP
-	# backend what part of your LDAP schema you want to use as the RDN.
-	# The correct value for net_ldap_rdn will depend on your LDAP setup.
-	# 
-	# Uncomment this line if you use Active Directory.
-	#net_ldap_rdn => "sAMAccountName",
-	#
-	# Uncomment this line if your schema uses uid as an RDN.
-	#net_ldap_rdn => "uid",
-	#
-	# By default, net_ldap_rdn is set to "sAMAccountName".
-
-	# If failover = "all", then all LDAP failures will be checked
-	# against the WeBWorK database. If failover = "local", then only
-	# users who don't exist in LDAP will be checked against the WeBWorK
-	# database. If failover = 0, then no attempts will be checked
-	# against the WeBWorK database. failover = 1 is equivalent to
-	# failover = "all".
-	failover => "all",
-};
 
 ################################################################################
-# Authorization system
+# Permission system (Make local overrides in postlocal.conf )
 ################################################################################
 
 # this section lets you define which groups of users can perform which actions.
@@ -704,6 +555,7 @@ $authen{ldap_options} = {
 	grade_proctor => 3,
 	ta => 5,
 	professor => 10,
+	admin     => 20,
 );
 
 # this hash maps operations to the roles that are allowed to perform those
@@ -1083,8 +935,6 @@ $webworkRoot    = $webworkDirs{root};
 $webworkURLRoot = $webworkURLs{root};
 $pgRoot         = $pg{directories}{root};
 
-
-################################################################################
 ################################################################################
 # LTI Basic parameters
 ################################################################################
@@ -1150,6 +1000,26 @@ $reasonableProblemsPerDayMakeup = 15;
 # Authentication system
 ################################################################################
 
+# FIXME This mechanism is a little awkward and probably should be merged with
+# the dblayout selection system somehow.
+
+# Select the authentication module to use for normal logins.
+# 
+# If this value is a string, the given authentication module will be used
+# regardless of the database layout. If it is a hash, the database layout name
+# will be looked up in the hash and the resulting value will be used as the
+# authentication module. The special hash key "*" is used if no entry for the
+# current database layout is found.
+# 
+
+#############OLD VERSION ##############################
+# $authen{user_module} = {
+# 	# sql_moodle => "WeBWorK::Authen::Moodle",
+# 	# sql_ldap   => "WeBWorK::Authen::LDAP",
+# 	"*" => "WeBWorK::Authen",
+# };
+
+#############NEW VERSION ##############################
 # To use a sequence of Authentication modules, e.g.,
 # LTIBasic with a fallback to Password Authentication,
 # then uncomment the section below.
@@ -1157,18 +1027,20 @@ $reasonableProblemsPerDayMakeup = 15;
 # has additional login authentication options, e.g.,
 # an institutions Central Authentication Service.
 
-#$authen{user_module} = [ 
-#	{
-#		# sql_moodle => "WeBWorK::Authen::Moodle",
-#		# sql_ldap   => "WeBWorK::Authen::LDAP",
-#		"*" => "WeBWorK::Authen::LTIBasic", 
-#	},
-#	{
-#		# sql_moodle => "WeBWorK::Authen::Moodle",
-#		# sql_ldap   => "WeBWorK::Authen::LDAP",
-#		"*" => "WeBWorK::Authen::Basic_TheLastOption",
-#	}
-#];
+$authen{user_module} = [ 
+# 	{
+# 		# sql_ldap   => "WeBWorK::Authen::LDAP",
+# 		"*" => "WeBWorK::Authen::LTIBasic", 
+# 	},
+	{
+		sql_ldap   => "WeBWorK::Authen::LDAP",
+		"*" => "WeBWorK::Authen",
+	},
+	{
+		# sql_ldap   => "WeBWorK::Authen::LDAP",
+		"*" => "WeBWorK::Authen::Basic_TheLastOption",
+	}
+];
 
 
 #If the preferred module is an external authentication
@@ -1193,7 +1065,7 @@ $reasonableProblemsPerDayMakeup = 15;
 # display a "Login Again" button that will take
 # the user to a pasword login screen.
 
-$external_auth=1;
+$external_auth=0;
 
 #The purpose of the LTI nonces is to prevent man-in-the-middle attacks.
 #The NonceLifeTime (in seconds) must be short enought to prevent
@@ -1203,6 +1075,68 @@ $external_auth=1;
 #
 
 $NonceLifeTime=10; # in seconds
+
+# Select the authentication module to use for proctor logins.
+# 
+# A string or a hash is accepted, as above.
+# 
+$authen{proctor_module} = "WeBWorK::Authen::Proctor";
+
+################################################################################
+# Options for particular authentication modules
+################################################################################
+
+# If you are using ldap this next snippet should be copied and entered into postlocal.conf.
+# Make modifications there so that it works with your local LDAP protocol
+
+$authen{ldap_options} = {
+	# hosts to attempt to connect to, in order. For example:
+	#   auth.myschool.edu             -- uses LDAP scheme and port 389
+	#   ldap://auth.myschool.edu:666  -- non-standard port
+	#   ldaps://auth.myschool.edu     -- uses LDAPS scheme and port 636
+	#   ldaps://auth.myschool.edu:389 -- SSL on non-SSL port
+	#   Edit the host(s) below:
+	net_ldap_hosts => [
+		"ldaps://auth1.myschool.edu",
+		"ldaps://auth2.myschool.edu",
+	],
+	# connection options
+	net_ldap_options => {
+		timeout => 30,
+		version => 3,
+	},
+	# base to use when searching for user's DN
+	# Edit the data below:
+	net_ldap_base => "ou=people,dc=myschool,dc=edu",
+	
+        # Use a Bind account if set to 1
+        bindAccount => 0,
+
+        searchDN => "cn=search,DC=youredu,DC=edu",
+        bindPassword =>  "password",
+
+	# The LDAP module searches for a DN whose RDN matches the username
+	# entered by the user. The net_ldap_rdn setting tells the LDAP
+	# backend what part of your LDAP schema you want to use as the RDN.
+	# The correct value for net_ldap_rdn will depend on your LDAP setup.
+	# 
+	# Uncomment this line if you use Active Directory.
+	#net_ldap_rdn => "sAMAccountName",
+	#
+	# Uncomment this line if your schema uses uid as an RDN.
+	#net_ldap_rdn => "uid",
+	#
+	# By default, net_ldap_rdn is set to "sAMAccountName".
+
+	# If failover = "all", then all LDAP failures will be checked
+	# against the WeBWorK database. If failover = "local", then only
+	# users who don't exist in LDAP will be checked against the WeBWorK
+	# database. If failover = 0, then no attempts will be checked
+	# against the WeBWorK database. failover = 1 is equivalent to
+	# failover = "all".
+	failover => "all",
+};
+
 
 ################################################################################
 # Session Management
@@ -1270,5 +1204,11 @@ $session_management_via = "session_cookie";
 #$analyze_context_id = sub {my $self = shift; $self -> {section} = "0000";};
 
 ################################################################################
+
+################################################################################
+# Site wide overrides are entered into the file postlocal.conf
 ################################################################################
 
+include("conf/postlocal.conf");
+
+1; #final line of the file to reassure perl that it was read properly.

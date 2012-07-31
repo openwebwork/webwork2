@@ -264,20 +264,20 @@ $problemDefaults{max_attempts} = -1;
 # These configurations can be placed in CourseConfig to tune the behavior for individual courses
 # The items below can be used to override the settings in global.conf.dist
 # One can also use $showeditors{classlisteditor1}=0; to override
-# %showeditors = (
-# 	classlisteditor1   => 1,
+ %showeditors = (
+ 	classlisteditor1   => 1,
 # 	classlisteditor2   => 1,
 # 	
-# 	homeworkseteditor1 => 1,
+ 	homeworkseteditor1 => 1,
 # 	homeworkseteditor2 => 1,
 # 	
-# 	librarybrowser1    => 1,
+ 	librarybrowser1    => 1,
 # 	librarybrowser2    => 1,
 # 	librarybrowser3    => 1,
 # 	
-# 	pgproblemeditor1   => 1,
-# 	pgproblemeditor2   => 1,
-# );
+ 	pgproblemeditor1   => 1,
+#	pgproblemeditor2   => 1,
+ );
 
 ################################################################################
 # Directory for temporary files
