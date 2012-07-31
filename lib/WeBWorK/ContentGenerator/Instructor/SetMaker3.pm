@@ -156,11 +156,11 @@ sub body {
             '<ul class="nav">',
                 '<li>
                     <div>
-                    <p id="CardCatalog">
+                    <span id="CardCatalog">
                         <!--Gonna put the lists of libraries and sub-libraries here-->
-                        <button class="btn btn-small" id="load_problems">Load Problems</button>
-                    </p>
-                    
+                        
+                    </span>
+                     <button class="btn btn-small" id="load_problems">Load Problems</button>                   
                     
                     <p id="Browser">
                         <!--Subject, textbook, and so on browser-->
