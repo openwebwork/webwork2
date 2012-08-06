@@ -262,17 +262,23 @@ sub attemptResults {
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   # unless student answer contains entry
-		my $resultString = $answerScore >= 1 ? CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct")) :
-		                   $answerScore > 0  ? $r->maketext("[_1]% correct", int($answerScore*100)) :
-                                                       CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
-		$fully = $r->maketext("completely") if $answerScore >0 and $answerScore < 1;
-		
-		push @correct_ids,   $name if $answerScore == 1;
-		push @incorrect_ids, $name if $answerScore < 1;
+
+		my $resultString;
+		if ($answerScore >= 1) {
+		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
+		    push @correct_ids,   $name if $answerScore == 1;
+		} elsif ($answerResult->{type} eq 'essay') {
+		    $resultString =  $r->maketext("Ungraded"); 
+		    $self->{essayFlag} = 1;
+		} elsif (not $answerScore) {
+		    push @incorrect_ids, $name if $answerScore < 1;
+		    $resultString = CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
+		} else {
+		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
+		    push @incorrect_ids, $name if $answerScore < 1;
+		}
 		
 		# need to capture auxiliary answers as well and identify their ids.
-		
-		
 		my $row;
 		#$row .= CGI::td($name);
 		if ($showEvaluatedAnswers) {
@@ -304,6 +310,8 @@ sub attemptResults {
 		if (scalar @answerNames == 1) {  #default messages
 				if ($numCorrect == scalar @answerNames) {
 					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("The answer above is correct."));
+				} elsif ($self->{essayFlag}) {
+				    $summary .= CGI::div($r->maketext("The answer will be graded later.", $fully));
 				 } else {
 					 $summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
 				 }
@@ -335,6 +343,7 @@ sub attemptResults {
 
 # Note: previewAnswer is lifted into GatewayQuiz.pm
 
+
 sub previewAnswer {
 	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
 	my $ce            = $self->r->ce;
@@ -354,6 +363,8 @@ sub previewAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
+	} elsif ($answerResult->{type} eq 'essay') {
+	    return $tex;
 	} elsif ($displayMode eq "formattedText") {
 		
 		# read the TTH preamble, or use the cached copy passed in from the caller
@@ -1342,17 +1353,17 @@ sub output_summary{
 
 	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 
-		# print this if user submitted answers OR requested correct answers	    
+	    # print this if user submitted answers OR requested correct answers	    
 	    my $results = $self->attemptResults($pg, 1,
-			$will{showCorrectAnswers},
+						$will{showCorrectAnswers},
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
-
-           #If achievements enabled check to see if there are new ones.and print them
-	    if ($ce->{achievementsEnabled}) {
+	    
+	    #If achievements enabled check to see if there are new ones.and print them
+	    if ($ce->{achievementsEnabled} && $will{recordAnswers}) {
 		my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
 		print $achievementMessage;
 	    }
-
+	    
 	    print $results;
 
 	} elsif ($checkAnswers) {

@@ -1078,6 +1078,15 @@ sub listProblemPastAnswers {
 	}
 }
 
+
+sub latestProblemPastAnswer {
+        my ($self, $courseID, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/course_id user_id set_id problem_id/);
+	my @answerIDs = $self->listProblemPastAnswers($courseID,$userID,$setID,$problemID);
+	#array should already be returned from lowest id to greatest.  Latest answer is greatest
+	return $answerIDs[$#answerIDs];
+}
+
+
 sub existsPastAnswer {
 	my ($self, $answerID) = shift->checkArgs(\@_, qw/answer_id/);
 	return $self->{past_answer}->exists($answerID);
@@ -1085,8 +1094,7 @@ sub existsPastAnswer {
 
 sub getPastAnswer {
 	my ($self, $answerID) = shift->checkArgs(\@_, qw/answer_id/);
-#	return ( $self->getPastAnswers([$answerID]) )[0];
-	return $self->{past_answer}->get($answerID);
+	return ( $self->getPastAnswers([$answerID]) )[0];
 }
 
 sub getPastAnswers {

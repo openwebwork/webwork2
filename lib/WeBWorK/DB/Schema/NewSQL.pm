@@ -52,6 +52,7 @@ sub where_achievement_id_eq {
     return {achievement_id=>$achievement_id};
 }
 
+#can be used for past answers
 sub where_answer_id_eq {
     my ($self, $flags, $answer_id) = @_;
     return {answer_id=>$answer_id};

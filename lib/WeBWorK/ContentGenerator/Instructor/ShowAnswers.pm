@@ -95,6 +95,10 @@ sub body {
 	print CGI::h3("Past Answers for $studentUser, set $setName, problem $problemNumber" );
 	print "No entries for $studentUser set $setName, problem $problemNumber" unless @pastAnswerIDs;
 
+	# changed this to use the db for the past answers.  
+        # The code is better but the actual html out put is considerably less pretty
+	# Todo: prettify
+
 	foreach my $answerID (@pastAnswerIDs) {
 	    my $pastAnswer = $db->getPastAnswer($answerID);
 	    my $answers = $pastAnswer->answer_string;
