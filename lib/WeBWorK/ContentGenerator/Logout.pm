@@ -40,25 +40,27 @@ sub pre_header_initialize {
 	
 	# get rid of stored authentication info (this is kind of a hack. i have a better way
 	# in mind but it requires pretty much rewriting Authen/Login/Logout. :-( FIXME)
-	$authen->forget_verification;
-	
-	my $cookie = WeBWorK::Cookie->new($r,
-		-name => "WeBWorKAuthentication",
-		-value => "",
-		-expires => "-1D",
-		-domain => $r->hostname,
-		-path => $ce->{webworkURLRoot},
-		-secure => 0,
-	);
-	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
-
-	my $userID = $r->param("user");
+#	$authen->forget_verification;
+#	
+#	my $cookie = WeBWorK::Cookie->new($r,
+#		-name => "WeBWorKAuthentication",
+#		-value => "",
+#		-expires => "-1D",
+#		-domain => $r->hostname,
+#		-path => $ce->{webworkURLRoot},
+#		-secure => 0,
+#	);
+#	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
+#
+	my $userID = $r->param("user_id");
 	my $keyError = '';
-	eval { $db->deleteKey($userID) };
-	if ($@) {
-		$keyError .= "Something went wrong while logging out of " .
-			"WeBWorK: $@";
-	}
+#	eval { $db->deleteKey($userID) };
+#	if ($@) {
+#		$keyError .= "Something went wrong while logging out of " .
+#			"WeBWorK: $@";
+#	}
+
+	$authen -> killSession;
 
 	# also check to see if there is a proctor key associated with this 
 	#    login.  if there is a proctor user, then we must have a 
@@ -87,17 +89,38 @@ sub pre_header_initialize {
 	}
 }
 
-## This content generator is NOT logged in.
-#sub if_loggedin {
-#	my ($self, $arg) = @_;
-#	
+## This content generator is NOT logged in,
+## but must return a 1 to get messages.
+sub if_loggedin {
+	my ($self, $arg) = @_;
 #	return !$arg;
-#}
-#
+	return 1;
+}
+
 ## suppress links
-#sub links {
-#	return "";
-#}
+sub links {
+	return "";
+}
+
+sub path {
+	my ($self, $args) = @_;
+	my $r = $self->r;
+	my $urlpath = $r->urlpath;
+	my $ce = $r->{ce};
+	my $authen = $r -> {authen};
+
+	if ((defined($ce -> {external_auth}) and $ce -> {external_auth})
+		or (defined($authen -> {external_auth}) and $authen -> {external_auth}) ) {
+		my $courseID = $urlpath -> arg("courseID");	
+		if (defined($courseID)) {
+			print $courseID;
+		}
+		else {
+		$self -> SUPER::path($args);
+		}
+	}
+	return "";
+}
 
 sub body {
 	my ($self) = @_;
@@ -105,6 +128,17 @@ sub body {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
+	my $auth = $r->authen;
+
+	# The following line may not work when a sequence of authentication modules
+    # are used, because the preferred module might be external, e.g., LTIBasic,
+    # but a non-external one, e.g., Basic_TheLastChance or 
+    # even just WeBWorK::Authen, might handle the ongoing session management.
+    # So this should be set in the course environment when a sequence of
+	# authentication modules is used..
+	#my $externalAuth = (defined($auth->{external_auth}) && $auth->{external_auth} ) ? 1 : 0;
+	my $externalAuth = ((defined($ce->{external_auth}) && $ce->{external_auth})
+ 		or (defined($auth->{external_auth}) && $auth->{external_auth}) ) ? 1 : 0;
 	
 	my $courseID = $urlpath->arg("courseID");
 	my $userID = $r->param("user");
@@ -113,17 +147,22 @@ sub body {
 		print CGI::div({class=>"ResultsWithError"}, $self->{keyError});
 	}
 	
-	my $problemSets = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",  $r, courseID => $courseID);
+	my $problemSets = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
 	my $loginURL = $r->location . $problemSets->path;
 	
 	print CGI::p($r->maketext("You have been logged out of WeBWorK."));
-	
-	print CGI::start_form(-method=>"POST", -action=>$loginURL);
-	print CGI::hidden("user", $userID);
-	print CGI::hidden("force_passwd_authen", 1);
-	print CGI::p({align=>"center"}, CGI::submit(-name=>"submit", -label=>$r->maketext("Log In Again")));
-	print CGI::end_form();
-	
+
+	if ( $externalAuth ) {
+	   	print 
+		CGI::p({}, CGI::b($courseID), "uses an external", 
+		"authentication system.  Please go there to login again.");
+	} else {
+		print CGI::start_form(-method=>"POST", -action=>$loginURL);
+		print CGI::hidden("user", $userID);
+		print CGI::hidden("force_passwd_authen", 1);
+		print CGI::p({align=>"center"}, CGI::submit(-name=>"submit", -label=>$r->maketext("Log In Again")));
+		print CGI::end_form();
+	}
 	return "";
 }
 
