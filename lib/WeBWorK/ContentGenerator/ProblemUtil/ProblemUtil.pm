@@ -64,6 +64,8 @@ sub process_and_log_answer{
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
 	my $set = $self->{set};
+	my $urlpath = $r->urlpath;
+	my $courseID = $urlpath->arg("courseID");
 	
 	my $scoreRecordedMessage = "";
 	my $pureProblem;
@@ -155,16 +157,31 @@ sub process_and_log_answer{
 				$scores .= $answerHash{$_}->{score} >= 1 ? "1" : "0";
 			}
 			$answerString = '' unless defined($answerString); # insure string is defined.
+			
+			my $timestamp = time();
 			writeCourseLog($self->{ce}, "answer_log",
 			        join("",
 						'|', $problem->user_id,
 						'|', $problem->set_id,
 						'|', $problem->problem_id,
 						'|', $scores, "\t",
-						time(),"\t",
+						$timestamp,"\t",
 						$answerString,
 					),
 			);
+
+			#add to PastAnswer db
+			my $pastAnswer = $db->newPastAnswer();
+			$pastAnswer->course_id($courseID);
+			$pastAnswer->user_id($problem->user_id);
+			$pastAnswer->set_id($problem->set_id);
+			$pastAnswer->problem_id($problem->problem_id);
+			$pastAnswer->timestamp($timestamp);
+			$pastAnswer->scores($scores);
+			$pastAnswer->answer_string($answerString);
+
+			$db->addPastAnswer($pastAnswer);
+
 			
 		}
 	}
