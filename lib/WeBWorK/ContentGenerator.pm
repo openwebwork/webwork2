@@ -56,6 +56,7 @@ use WeBWorK::Template qw(template);
 use WeBWorK::Localize;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+use Scalar::Util qw(weaken);
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -93,6 +94,7 @@ sub new {
 		authz => $r->authz(), # with unconverted CGs
 		noContent => undef, # FIXME this should get clobbered at some point
 	};
+ 	weaken $self -> {r};
 	bless $self, $class;
 	return $self;
 }
