@@ -14,6 +14,7 @@ use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Utils qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
+use JSON;
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 use Time::HiRes qw/gettimeofday/; # for log timestamp
@@ -123,6 +124,8 @@ sub listUsers {
         my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
         $u->{'permission'}{'value'} = $PermissionLevel->{'permission'};
         $u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+	my $studid= $u->{'student_id'};
+	$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
     }
 
     #my %permissionsHash = $ce->{userRoles};
@@ -325,13 +328,12 @@ sub deleteUser {
 			my $result;
 			$result->{delete} = "success";
 			$out->{text} .=encode_base64("User " . $user . " successfully deleted");
-			$out->{ra_out} = $
-			result;
+			$out->{ra_out} .= "delete: success";
 		}
 		else 
 		{
 			$out->{text}=encode_base64("User " . $user . " could not be deleted");
-			$out->{ra_out} .= encode_base64("delete : failed");
+			$out->{ra_out} .= "delete : failed";
 		}
 
 	}
@@ -384,6 +386,14 @@ sub editUser {
     $PermissionLevel = $db->getPermissionLevel($User->{'user_id'});
     $User->{'permission'}{'value'} = $PermissionLevel->{'permission'};
     $User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+    
+    
+    # If the new_password param is set and not equal to the empty string, change the password.
+    
+    if((defined $params->{new_password}) and ($params->{new_password} ne "" ) ) {
+	return changeUserPassword($self,$params);
+    }
+    
 
     $out->{ra_out} = $User;
     $out->{text} .= encode_base64("Changes saved");
@@ -391,33 +401,63 @@ sub editUser {
 	return $out;
 }
 
+#  id :  is the user_id of the user to be changed.
+#  new_password : the 
+
+
 sub changeUserPassword {
 
 	my ($self, $params) = @_;
-    my $db = $self->{db};
-    my $ce = $self->{ce};
-    my $out = {};
+	my $out = {};
+	my $db = $self->{db};
+	my $ce = $self->{ce};
+	$out->{text} = encode_base64("");
+	
+	my $userid = $params->{'id'};
+	
+	# check to see if you have sufficient privileges. 
+	# Note: this is not implemented.  It seems like we should verify that the user has appropriate privileges to change
+	# a password or that the user sending the request is the same as the person whose password is being changed.  
+	#  my $PermissionLevel = $db->getPermissionLevel($params->{'user'}); # checked
+    
+	
+	debug("Webservices change user password request.");
+        debug("Attempting to change the password of user: " . $userid );
+	debug("The new password:" . $params->{new_password});
+	
+	
+	my $User = $db->getUser($userid); # checked
+	die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
+
 
     # make sure course actions are enabled
-        if (!$ce->{webservices}{enableCourseActions}) {
-        	$out->{status} = "failure";
-        	$out->{message} = "Course actions disabled by configuration.";
-        	return $out
-        }
+   #     if (!$ce->{webservices}{enableCourseActions}) {
+    #    	$out->{text} = "failure";
+     #   	$out->{ra_out} = "Course actions disabled by configuration.";
+     #   	return $out
+     #   }
 
-    my $User = $db->getUser($params->{'id'}); # checked
-	die ("record for visible user [_1] not found". $params->{'id'}) unless $User;
+    #my $User = $db->getUser($params->{'id'}); # checked
+    if(!(defined $User)){
+	$out->{text}=encode_base64("No record found for user: ". $params->{'id'});
+	return $out;
+    }
+    
+    # In the next few lines I (pls) changed $params->{$param}->[0] to $params->{$param} to fix a bug.  Not sure why ->[0] was there. 
 	my $param = "new_password";
-	if ((defined $params->{$param}->[0]) and ($params->{$param}->[0])) {
-		my $newP = $params->{$param}->[0];
+	if ((defined $params->{$param}) and ($params->{$param})) {
+		my $newP = $params->{$param};
 		my $Password = eval {$db->getPassword($User->user_id)}; # checked
-		my 	$cryptPassword = cryptPassword($newP);
+		my $cryptPassword = cryptPassword($newP);
 		$Password->password(cryptPassword($newP));
 		eval { $db->putPassword($Password) };
 	}
 
 	$self->{passwordMode} = 0;
-    $out->{message} = "New passwords saved";
+	$out->{text} = encode_base64("New passwords saved");
+	$out->{ra_out}= "password_change: success";
+	debug($out->{text});
+	debug($out->{ra_out});
 	return $out;
 }
 
@@ -488,6 +528,18 @@ sub assignVisibleSets {
 	}
 
 	return 0;
+}
+
+sub actAsUser {
+	my ($self, $params) = @_;
+	my $db = $self->{db};
+	my $ce = $self->{ce};
+	my $effectiveUserName;
+	if (defined($ce->{effectiveUser}) and $ce->{effectiveUser}=~/\S/ ) {
+		$effectiveUserName = $ce->{effectiveUser};
+	}
+	
+	debug("The course env params:" . $effectiveUserName);
 }
 
 1;
