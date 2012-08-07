@@ -64,8 +64,9 @@ $defaultThemeTemplate = "system";
 # Language
 ################################################################################
 
-$language = "en";   # tr = turkish en=english
-
+$language = "en";   
+# Check the directory .../webwork2/lib/WeBWorK/Localize to what languages are
+# currently supported (e.g. en, es,. fr, heb, tr, zk_hk).
 
 ################################################################################
 # Default screen header files
@@ -297,7 +298,7 @@ $problemDefaults{max_attempts} = -1;
 
 # LDAP Authentication
 # Uncomment the following line to enable authentication via an LDAP server.
-# You will have to copt the file authen_ldap.conf.dist to authen_ldap.conf,
+# You will have to copy the file authen_ldap.conf.dist to authen_ldap.conf,
 # and then edit that file to fill in the settings for your installation.
 
 #include("conf/authen_ldap.conf");

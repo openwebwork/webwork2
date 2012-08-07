@@ -342,7 +342,7 @@ sub updateCourseDirectories {
         unless ( -e $path) {   # if by some unlucky chance the tmpDirectory hasn't been created, create it.
 			my $parentDirectory =  $path;
 			$parentDirectory =~s|/$||;  # remove a trailing /
-			$parentDirectory =~s|/\w*$||; # remove last node
+			$parentDirectory =~s|/[^/]*$||; # remove last node
 			my ($perms, $groupID) = (stat $parentDirectory)[2,5];
 			WeBWorK::PG::IO::createDirectory($path, $perms, $groupID)
 					or warn "Failed to create directory at $path";
