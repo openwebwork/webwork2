@@ -282,7 +282,7 @@ sub body {
 	    }
 	    
 	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
-	    my $score = 100*$userProblem->status;
+	    my $score = int(100*$userProblem->status);
 	    
 	    my $prettyName = $userRecord->last_name
 		. ", "
@@ -290,29 +290,45 @@ sub body {
 
 	    #create form for scoring
 
+	    my %dropDown;
+	    #construct the drop down.  Right now it does all numbers from 
+	    # 1 to 100, but this could be changed by config
+	    for (my $i=100; $i>=0; $i--) {
+		    $dropDown{$i}=$i;
+	    }
+
 	    print CGI::Tr({-valign=>"top"}, 
 			  CGI::td({},[
-					$userRecord->section,
-					CGI::div({class=>$statusClass, style=>  
-						  $userProblem->flags =~ /needs_grading/ 
-						  ? "font-style:italic" :
-						 "font-style:normal"}, $prettyName), " ", 
-
+				      $userRecord->section,
+				      CGI::div({class=>$statusClass, style=>  
+						    $userProblem->flags =~ /needs_grading/ 
+						    ? "font-style:italic" :
+						    "font-style:normal"}, $prettyName), " ", 
+				      
 				      $userAnswerString, " ",
 				      CGI::checkbox({
 					  type=>"checkbox",
 					  name=>"$userID.mark_correct",
 					  value=>"1",
 					  label=>"",
+		
 						    }), " ",
-				      CGI::input({type=>"text",
-						  name=>"$userID.score",
-						  value=>"$score",
-						  size=>4,})
-				      
-				  
-				  ])
+				      CGI::popup_menu(-name=>"$userID.score",
+						      -values => [sort {$b <=> $a} keys %dropDown],
+						      -default => $score,
+				                      -labels => \%dropDown)
+				      ])
 		);
+
+#  Text field for gradex
+#				      CGI::input({type=>"text",
+#						  name=>"$userID.score",
+#						  value=>"$score",
+#						  size=>4,})
+#				      
+#				  
+#				  ])
+#		);
 
 	    print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
 	}
