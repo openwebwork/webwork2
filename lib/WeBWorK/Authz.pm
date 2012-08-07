@@ -64,6 +64,7 @@ use Carp qw/croak/;
 use WeBWorK::Utils qw(before after between);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
+use Scalar::Util qw(weaken);
 
 ################################################################################
 
@@ -84,6 +85,7 @@ sub new {
 	my $self = {
 		r => $r,
 	};
+	weaken $self -> {r};
 	
 	$r -> {permission_retrieval_error} = 0;
 	bless $self, $class;
@@ -463,7 +465,8 @@ sub checkSet {
 			"generator $node_name was called.  Try re-entering " .
 			"the set from the problem sets listing page.";
 	} elsif ( (! defined($set->assignment_type) ||
-		   $set->assignment_type eq 'homework') &&
+#		   $set->assignment_type eq 'homework') &&
+		   $set->assignment_type eq 'default') &&
 		  $node_name =~ /gateway/ ) {
 		return "Requested set '$setName' is a homework assignment " . 
 			"but the gateway/quiz content " .
@@ -506,7 +509,8 @@ sub invalidIPAddress {
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
 
-	return 0 if ($set->restrict_ip eq '' || $set->restrict_ip eq 'No' ||
+	return 0 if (!defined($set->restrict_ip) ||
+			$set->restrict_ip eq '' || $set->restrict_ip eq 'No' ||
 		     $self->hasPermissions($userName,'view_ip_restricted_sets'));
 
 	my $clientIP = new Net::IP($r->connection->remote_ip);
