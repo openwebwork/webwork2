@@ -92,14 +92,13 @@ sub initialize {
 	    foreach my $userID (@users) {
 		my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
 		
-		#update grades and set flags if necc
+		#update grades and set flags
+		$userProblem->{flags} =~ s/needs_grading/graded/;
 		if  ($r->param("$userID.mark_correct")) {
 		    $userProblem->status(1);
-		    $userProblem->{flags} =~ s/needs_grading/graded/;
 		} else {
 		    my $newscore = $r->param("$userID.score")/100;
 		    if ($newscore != $userProblem->status) {
-			$userProblem->{flags} =~ s/needs_grading/graded/;
 			$userProblem->status($newscore);
 		    }
 		}
