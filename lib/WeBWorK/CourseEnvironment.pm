@@ -106,7 +106,7 @@ sub new {
 	if (ref $rest[0] eq "HASH") {
 		%seedVars = %{$rest[0]};
 	} else {
-		debug __PACKAGE__, ": deprecated four-argument form of new() used.\n";
+		debug __PACKAGE__, ": deprecated four-argument form of new() used.", caller(1),"\n", caller(2),"\n";
 		$seedVars{webwork_dir}    = $rest[0];
 		$seedVars{webwork_url}    = $rest[1];
 		$seedVars{pg_dir}         = $rest[2];
