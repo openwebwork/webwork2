@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.62 2007/03/06 22:03:15 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.63 2012/06/06 22:03:15 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -233,10 +233,12 @@ sub verify {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
 		if (!defined($error) or !$error) {
+
 			if (defined($r->param("user")) or defined($r->param("user_id"))) {
 				$error = $r->maketext("Your authentication failed.  Please try again."
 					. "  Please speak with your instructor if you need help.")
 			}
+
 		}
 		$self->maybe_kill_cookie;
 		if (defined($error) and $error) {
