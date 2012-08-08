@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.62 2007/03/06 22:03:15 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.63 2012/06/06 22:03:15 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -58,6 +58,7 @@ use WeBWorK::Utils qw/writeCourseLog runtime_use/;
 use WeBWorK::Localize;
 use URI::Escape;
 use Carp;
+use Scalar::Util qw(weaken);
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
@@ -182,6 +183,7 @@ sub new {
 	my $self = {
 		r => $r,
 	};
+	weaken $self -> {r};
 	#initialize
 	$GENERIC_ERROR_MESSAGE = $r->maketext("Invalid user ID or password.");
 	bless $self, $class;
@@ -199,7 +201,8 @@ sub new {
 =cut
 
 sub  request_has_data_for_this_verification_module {
-		return(1);
+	#debug("Authen::request_has_data_for_this_verification_module will return a 1");
+	return(1);
 }
 
 sub verify {
@@ -210,6 +213,7 @@ sub verify {
 	if (! ($self-> request_has_data_for_this_verification_module)) {
 		return ( $self -> call_next_authen_method());
 	}
+
 	my $result = $self->do_verify;
 	my $error = $self->{error};
 	my $log_error = $self->{log_error};
@@ -228,8 +232,16 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
+		if (!defined($error) or !$error) {
+
+			if (defined($r->param("user")) or defined($r->param("user_id"))) {
+				$error = $r->maketext("Your authentication failed.  Please try again."
+					. "  Please speak with your instructor if you need help.")
+			}
+
+		}
 		$self->maybe_kill_cookie;
-		if ($error) {
+		if (defined($error) and $error) {
 			MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
 		}
 	}
@@ -259,8 +271,11 @@ Future calls to was_verified() will return false, until verify() is called again
 
 sub forget_verification {
 	my ($self) = @_;
+	my $r = $self -> {r};
+	my $ce = $r -> {ce};
 	
 	$self->{was_verified} = 0;
+	
 }
 
 =back
@@ -333,17 +348,20 @@ sub get_credentials {
 			croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
 		}
 		if (defined $cookieKey and defined $r->param("key")) {
-			if ($cookieKey ne $r->param("key")) {
-				croak ("cookieKey = $cookieKey and param key = " . $r -> param("key") . "are different.");
-			}
 			$self -> {user_id} = $cookieUser;
-			$self -> {session_key} = $cookieKey;
 			$self -> {password} = $r->param("passwd");
-			$self -> {cookie_timestamp} = $cookieTimeStamp;
 			$self -> {login_type} = "normal";
 			$self -> {credential_source} = "params_and_cookie";
-			debug("params and cookie user '", $self->{user_id}, "' params and cookie session key = '",
-				 $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+			$self -> {session_key} = $cookieKey;
+			$self -> {cookie_timestamp} = $cookieTimeStamp;
+			if ($cookieKey ne $r->param("key")) {
+				warn ("cookieKey = $cookieKey and param key = " . $r -> param("key") . " are different, perhaps"
+					 ." because you opened several windows for the same site and then backed up from a newer one to an older one."
+					 ."  Avoid doing so.");
+			$self -> {credential_source} = "conflicting_params_and_cookie";
+			}
+			debug("params and cookie user '", $self->{user_id}, "' credential_source = '", $self->{credential_source},
+				"' params and cookie session key = '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
 			return 1;
 		} elsif (defined $r -> param("key")) {
 			$self->{user_id} = $r->param("user");
@@ -406,7 +424,7 @@ sub check_user {
 	
 	if (defined $user_id and $user_id eq "") {
 		$self->{log_error} = "no user id specified";
-		$self->{error} = $r->maketext("You must specify a user ID.");
+		$self->{error} .= $r->maketext("You must specify a user ID.");
 		return 0;
 	}
 	
@@ -505,7 +523,7 @@ sub verify_normal_user {
 			return 0;
 		} else { # ($auth_result < 0) => required data was not present
 			if ($keyMatches and not $timestampValid) {
-				$self->{error} = $r->maketext("Your session has timed out due to inactivity. Please log in again.");
+				$self->{error} .= $r->maketext("Your session has timed out due to inactivity. Please log in again.");
 			}
 			return 0;
 		}
@@ -560,6 +578,7 @@ sub maybe_send_cookie {
 			"' session_management_via_cookies ='", $session_management_via_cookies, "'");
 	
 	if ($used_cookie or $unused_valid_cookie or $user_requests_cookie or $session_management_via_cookies) {
+		#debug("Authen::maybe_send_cookie is sending a cookie");
 		$self->sendCookie($self->{user_id}, $self->{session_key});
 	} else {
 		$self->killCookie;
@@ -729,6 +748,25 @@ sub check_session {
 	return (1, $keyMatches, $timestampValid);
 }
 
+sub killSession {
+	my $self = shift;
+
+	my $r = $self -> {r};
+	my $ce = $r -> {ce};
+	my $db = $r -> {db};
+
+	$self -> forget_verification;
+	if ($ce -> {session_management_via} eq "session_cookie")  {
+		$self -> killCookie();
+	}
+
+	my $userID = $r -> {user_id};
+	if (defined($userID)) {
+		 $db -> deleteKey($userID);
+	}
+}
+
+
 ################################################################################
 # Cookie management
 ################################################################################
@@ -811,7 +849,7 @@ sub sendCookie {
  		$cookie -> domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
 	}
 	
-	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
+	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
  	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
  	if ($@) {croak $@; }
 }
@@ -831,15 +869,12 @@ sub killCookie {
 		-path => $ce->{webworkURLRoot},
 		-secure => 0,
 	);
-	if ($ce->{session_management_via} ne "session_cookie") {
-		my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
-		$cookie -> expires($expires);
-	}
  	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
  		$cookie -> domain($r->hostname);  # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
 	}
 	
-	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
+	#debug( "killCookie is about to set an expired cookie");
+	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
  	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
  	if ($@) {croak $@; }
 }

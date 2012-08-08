@@ -64,8 +64,9 @@ $defaultThemeTemplate = "system";
 # Language
 ################################################################################
 
-$language = "en";   # tr = turkish en=english
-
+$language = "en";   
+# Check the directory .../webwork2/lib/WeBWorK/Localize to what languages are
+# currently supported (e.g. en, es,. fr, heb, tr, zk_hk).
 
 ################################################################################
 # Default screen header files
@@ -297,9 +298,24 @@ $problemDefaults{max_attempts} = -1;
 
 # LDAP Authentication
 # Uncomment the following line to enable authentication via an LDAP server.
-# You will have to copt the file authen_ldap.conf.dist to authen_ldap.conf,
+# You will have to copy the file authen_ldap.conf.dist to authen_ldap.conf,
 # and then edit that file to fill in the settings for your installation.
 
 #include("conf/authen_ldap.conf");
+
+################################################################################
+# Session Management
+################################################################################
+
+## For session management using session_cookies, uncomment the following line,
+## which will override the setting  $session_management_via = "key"
+## in defaults.config.
+## 
+## For a discussion of session_management_via session_cookies or the
+## Key database, see the   Session Managment section
+## of defaults.config.dist
+
+#$session_management_via = "session_cookie";
+
 
 1; #final line of the file to reassure perl that it was read properly.

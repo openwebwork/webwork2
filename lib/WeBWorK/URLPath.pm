@@ -27,6 +27,7 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use WeBWorK::Localize;
+use Scalar::Util qw(weaken);
 {
 	no warnings "redefine";
 	
@@ -798,6 +799,7 @@ sub new {
 		args => {},
 		%fields,
 	};
+ 	weaken $self -> {r};
 	return bless $self, $class;
 }
 

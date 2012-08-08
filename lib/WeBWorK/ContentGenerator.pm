@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2012 The WeBWorK Project, http://github.com/openwebwork
+# Copyright ï¿½ 2000-2012 The WeBWorK Project, http://github.com/openwebwork
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -56,6 +56,7 @@ use WeBWorK::Template qw(template);
 use WeBWorK::Localize;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+use Scalar::Util qw(weaken);
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -93,6 +94,7 @@ sub new {
 		authz => $r->authz(), # with unconverted CGs
 		noContent => undef, # FIXME this should get clobbered at some point
 	};
+ 	weaken $self -> {r};
 	bless $self, $class;
 	return $self;
 }
@@ -481,7 +483,7 @@ sub content {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
-	my $themesDir = $ce->{webworkDirs}{templates};
+	my $themesDir = $ce->{webworkDirs}{themes};
 	my $theme = $r->param("theme") || $ce->{defaultTheme};
 	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
 	#$ce->{webworkURLs}->{stylesheet} = ($ce->{webworkURLs}->{htdocs})."/css/$theme.css";   # reset the style sheet
@@ -765,6 +767,7 @@ sub links {
 					if $ce->{showeditors}->{librarybrowser2};
 				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser3};
+#print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
@@ -1093,9 +1096,7 @@ The implementation in this package checks for a note in the request named
 sub warnings {
 	my ($self) = @_;
 	my $r = $self->r;
-
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
-
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 	print $self->warningOutput($warnings) if $warnings;
