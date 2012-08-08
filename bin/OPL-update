@@ -1,16 +1,18 @@
 #!/usr/bin/perl
 
-# This is the script formerly known as loadDB2.  It is used to update
-# the database when it comes to the National Problem Library (NPL).
-# This should be run after doing a cvs checkout or update for the NPL
+# This is the script formerly known as loadDB2, and then known as NPL-update.  
+
+#It is used to update
+# the database when it comes to the WeBWorK Open Problem Library (OPL).
+# This should be run after doing a git clone or pull for the OPL
 # files.
 
 # In order for this script to work:
-#   1) The NPL downloaded to your machine (the .pg files)
+#   1) The OPL downloaded to your machine (the .pg files)
 #   2) The environment variable WEBWORK_ROOT needs to be 
 #      correctly defined (as with other scripts here).
-#   3) Configuration for the NPL in site.conf needs to be
-#      done (basically just setting the path to the NPL files).
+#   3) Configuration for the OPL in site.conf needs to be
+#      done (basically just setting the path to the OPL files).
 
 #use strict;
 use File::Find;
@@ -29,13 +31,13 @@ BEGIN {
 ### Data for creating the database tables
 
 @create_tables = (
-['NPL-DBsubject', '
+['OPL_DBsubject', '
 	DBsubject_id int(15) NOT NULL auto_increment,
 	name varchar(127) NOT NULL,
 	KEY DBsubject (name),
 	PRIMARY KEY (DBsubject_id)
 '],
-['NPL-DBchapter', '
+['OPL_DBchapter', '
 	DBchapter_id int(15) NOT NULL auto_increment,
 	name varchar(127) NOT NULL,
 	DBsubject_id int(15) DEFAULT 0 NOT NULL,
@@ -43,7 +45,7 @@ BEGIN {
 	KEY (DBsubject_id),
 	PRIMARY KEY (DBchapter_id)
 '],
-['NPL-DBsection', '
+['OPL_DBsection', '
 	DBsection_id int(15) NOT NULL auto_increment,
 	name varchar(255) NOT NULL,
 	DBchapter_id int(15) DEFAULT 0 NOT NULL,
@@ -51,7 +53,7 @@ BEGIN {
 	KEY (DBchapter_id),
 	PRIMARY KEY (DBsection_id)
 '],
-['NPL-author', '
+['OPL_author', '
 	author_id int (15) NOT NULL auto_increment,
 	institution tinyblob,
 	lastname varchar (100) NOT NULL,
@@ -60,7 +62,7 @@ BEGIN {
 	KEY author (lastname, firstname),
 	PRIMARY KEY (author_id)
 '],
-['NPL-path', '
+['OPL_path', '
 	path_id int(15) NOT NULL auto_increment,
 	path varchar(255) NOT NULL,
 	machine varchar(127),
@@ -68,7 +70,7 @@ BEGIN {
 	KEY (path),
 	PRIMARY KEY (path_id)
 '],
-['NPL-pgfile', '
+['OPL_pgfile', '
 	pgfile_id int(15) NOT NULL auto_increment,
 	DBsection_id int(15) NOT NULL,
 	author_id int(15),
@@ -77,19 +79,19 @@ BEGIN {
 	filename varchar(255) NOT NULL,
 	PRIMARY KEY (pgfile_id)
 '],
-['NPL-keyword', '
+['OPL_keyword', '
 	keyword_id int(15) NOT NULL auto_increment,
 	keyword varchar(65) NOT NULL,
 	KEY (keyword),
 	PRIMARY KEY (keyword_id)
 '],
-['NPL-pgfile-keyword', '
+['OPL_pgfile_keyword', '
 	pgfile_id int(15) DEFAULT 0 NOT NULL,
 	keyword_id int(15) DEFAULT 0 NOT NULL,
 	KEY pgfile_keyword (keyword_id, pgfile_id),
 	KEY pgfile (pgfile_id)
 '],
-['NPL-textbook', '
+['OPL_textbook', '
 	textbook_id int (15) NOT NULL auto_increment,
 	title varchar (255) NOT NULL,
 	edition int (3) DEFAULT 0 NOT NULL,
@@ -99,7 +101,7 @@ BEGIN {
 	pubdate varchar (27),
 	PRIMARY KEY (textbook_id)
 '],
-['NPL-chapter', '
+['OPL_chapter', '
 	chapter_id int (15) NOT NULL auto_increment,
 	textbook_id int (15),
 	number int(3),
@@ -109,7 +111,7 @@ BEGIN {
 	KEY (number),
 	PRIMARY KEY (chapter_id)
 '],
-['NPL-section', '
+['OPL_section', '
 	section_id int(15) NOT NULL auto_increment,
 	chapter_id int (15),
 	number int(3),
@@ -119,7 +121,7 @@ BEGIN {
 	KEY (number),
 	PRIMARY KEY section (section_id)
 '],
-['NPL-problem', '
+['OPL_problem', '
 	problem_id int(15) NOT NULL auto_increment,
 	section_id int(15),
 	number int(4) NOT NULL,
@@ -128,7 +130,7 @@ BEGIN {
 	KEY (section_id),
 	PRIMARY KEY (problem_id)
 '],
-['NPL-pgfile-problem', '
+['OPL_pgfile_problem', '
 	pgfile_id int(15) DEFAULT 0 NOT NULL,
 	problem_id int(15) DEFAULT 0 NOT NULL,
 	PRIMARY KEY (pgfile_id, problem_id)
@@ -179,7 +181,13 @@ for my $tableinfo (@create_tables) {
 	$dbh->do($query);
 	$query = "CREATE TABLE `$tabname` ( $tabinit )";
 	$dbh->do($query);
+	$old_tabname = $tabname;
+	$old_tabname =~ s/OPL/NPL/;
+	$old_tabname =~ s/_/-/g;
+	$query = "DROP TABLE IF EXISTS `$old_tabname`";
+	$dbh -> do($query);
 }
+
 
 print "Mysql database reinitialized.\n";
 
@@ -213,13 +221,13 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 			my $title = $2;
 			if($chapsec=~ /(\d+)\.(\d+)/) { # We have a section
 				if(defined($bookid)) {
-					my $query = "SELECT chapter_id FROM `NPL-chapter` WHERE textbook_id = \"$bookid\" AND number = \"$1\"";
+					my $query = "SELECT chapter_id FROM `OPL_chapter` WHERE textbook_id = \"$bookid\" AND number = \"$1\"";
 					my $chapid = $dbh->selectrow_array($query);
 					if(defined($chapid)) {
-						$query = "SELECT section_id FROM `NPL-section` WHERE chapter_id = \"$chapid\" AND name = \"$title\"";
+						$query = "SELECT section_id FROM `OPL_section` WHERE chapter_id = \"$chapid\" AND name = \"$title\"";
 						my $sectid = $dbh->selectrow_array($query);
 						if (!defined($sectid)) {
-							$dbh->do("INSERT INTO `NPL-section`
+							$dbh->do("INSERT INTO `OPL_section`
 					VALUES(
 						\"\",
 						\"$chapid\",
@@ -238,10 +246,10 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 				}
 			} else { # We have a chapter entry
 				if(defined($bookid)) {
-					my $query = "SELECT chapter_id FROM `NPL-chapter` WHERE textbook_id = \"$bookid\" AND number = \"$chapsec\"";
+					my $query = "SELECT chapter_id FROM `OPL_chapter` WHERE textbook_id = \"$bookid\" AND number = \"$chapsec\"";
 					my $chapid = $dbh->selectrow_array($query);
 					if (!defined($chapid)) {
-						$dbh->do("INSERT INTO `NPL-chapter`
+						$dbh->do("INSERT INTO `OPL_chapter`
 					VALUES(
 						\"\",
 						\"$bookid\",
@@ -254,10 +262,10 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 
 						# Add dummy section entry for problems tagged to the chapter
 						# without a section
-						$query = "SELECT section_id FROM `NPL-section` WHERE chapter_id = \"$chapid\" AND number = -1";
+						$query = "SELECT section_id FROM `OPL_section` WHERE chapter_id = \"$chapid\" AND number = -1";
 						my $sectid = $dbh->selectrow_array($query);
 						if (!defined($sectid)) {
-							$dbh->do("INSERT INTO `NPL-section`
+							$dbh->do("INSERT INTO `OPL_section`
 						VALUES(
 							\"\",
 							\"$chapid\",
@@ -287,10 +295,10 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 				if(defined($textinfo{TitleText}) and 
 				   defined($textinfo{AuthorText}) and 
 				   defined($textinfo{EditionText})) {
-					my $query = "SELECT textbook_id FROM `NPL-textbook` WHERE title = \"$textinfo{TitleText}\" AND edition = \"$textinfo{EditionText}\" AND author=\"$textinfo{AuthorText}\"";
+					my $query = "SELECT textbook_id FROM `OPL_textbook` WHERE title = \"$textinfo{TitleText}\" AND edition = \"$textinfo{EditionText}\" AND author=\"$textinfo{AuthorText}\"";
 					$bookid = $dbh->selectrow_array($query);
 					if (!defined($bookid)) {
-						$dbh->do("INSERT INTO `NPL-textbook`
+						$dbh->do("INSERT INTO `OPL_textbook`
 					VALUES(
 						\"\",
 						\"$textinfo{TitleText}\",
@@ -512,11 +520,11 @@ sub pgfiles {
 			#
 			# DBsubject table
 			#
-			$query = "SELECT DBsubject_id FROM `NPL-DBsubject` WHERE name = \"$subject\"";
+			$query = "SELECT DBsubject_id FROM `OPL_DBsubject` WHERE name = \"$subject\"";
 			my $DBsubject_id = $dbh->selectrow_array($query);
 			if (!defined($DBsubject_id)) {
 				$dbh->do(
-						 "INSERT INTO `NPL-DBsubject`
+						 "INSERT INTO `OPL_DBsubject`
 					VALUES(
 						\"\",
 						\"$subject\"
@@ -528,10 +536,10 @@ sub pgfiles {
 
 			# DBchapter table
 			#
-			$query = "SELECT DBchapter_id FROM `NPL-DBchapter` WHERE name = \"$chapter\" and DBsubject_id = $DBsubject_id";
+			$query = "SELECT DBchapter_id FROM `OPL_DBchapter` WHERE name = \"$chapter\" and DBsubject_id = $DBsubject_id";
 			my $DBchapter_id = $dbh->selectrow_array($query);  
 			if (!defined($DBchapter_id)) {
-				$dbh->do("INSERT INTO `NPL-DBchapter` 
+				$dbh->do("INSERT INTO `OPL_DBchapter` 
 					VALUES(
 						\"\",
 						\"$chapter\",
@@ -544,10 +552,10 @@ sub pgfiles {
 
 			# DBsection table
 			#
-			$query = "SELECT DBsection_id FROM `NPL-DBsection` WHERE name = \"$section\" AND DBchapter_id = $DBchapter_id";
+			$query = "SELECT DBsection_id FROM `OPL_DBsection` WHERE name = \"$section\" AND DBchapter_id = $DBchapter_id";
 			my $DBsection_id = $dbh->selectrow_array($query);
 			if (!defined($DBsection_id)) {
-				$dbh->do("INSERT INTO `NPL-DBsection`
+				$dbh->do("INSERT INTO `OPL_DBsection`
 					VALUES(
 						\"\",
 						\"$section\",
@@ -566,10 +574,10 @@ sub pgfiles {
 			#remove leading and trailing spaces from firstname, which includes any middle name too.
 			$firstname =~ s/^\s*//;
 			$firstname =~ s/\s*$//;
-			$query = "SELECT author_id FROM `NPL-author` WHERE lastname = \"$lastname\" AND firstname=\"$firstname\"";
+			$query = "SELECT author_id FROM `OPL_author` WHERE lastname = \"$lastname\" AND firstname=\"$firstname\"";
 			my $author_id = $dbh->selectrow_array($query);
 			if (!defined($author_id)) {
-				$dbh->do("INSERT INTO `NPL-author`
+				$dbh->do("INSERT INTO `OPL_author`
 					VALUES(
 						\"\",
 						\"$institution\",
@@ -584,10 +592,10 @@ sub pgfiles {
 
 			# path table
 			#
-			$query = "SELECT path_id FROM `NPL-path` WHERE path = \"$pgpath\"";
+			$query = "SELECT path_id FROM `OPL_path` WHERE path = \"$pgpath\"";
 			my $path_id = $dbh->selectrow_array($query);
 			if (!defined($path_id)) {
-				$dbh->do("INSERT INTO `NPL-path`
+				$dbh->do("INSERT INTO `OPL_path`
 					VALUES(
 						\"\",
 						\"$pgpath\",
@@ -602,7 +610,7 @@ sub pgfiles {
 			# pgfile table
 			#
 			my $pgfile_id;
-			$dbh->do("INSERT INTO `NPL-pgfile`
+			$dbh->do("INSERT INTO `OPL_pgfile`
 					VALUES(
 						\"\",
 						\"$DBsection_id\",
@@ -613,17 +621,17 @@ sub pgfiles {
 					)"
 					);
 			dbug "INSERT INTO pgfile VALUES( \"\", \"$DBsection_id\", \"$author_id\", \"$institution\", \"$path_id\", \"$pgfile\", \"\" )\n";
-			$query = "SELECT pgfile_id FROM `NPL-pgfile` WHERE filename = \"$pgfile\" and path_id=$path_id";
+			$query = "SELECT pgfile_id FROM `OPL_pgfile` WHERE filename = \"$pgfile\" and path_id=$path_id";
 			$pgfile_id = $dbh->selectrow_array($query);
 
 			# keyword table, and problem_keyword many-many table
 			#
 			foreach my $keyword (@keyword) {
 				$keyword =~ s/[\'\"]//g;
-				$query = "SELECT keyword_id FROM `NPL-keyword` WHERE keyword = \"$keyword\"";
+				$query = "SELECT keyword_id FROM `OPL_keyword` WHERE keyword = \"$keyword\"";
 				my $keyword_id = $dbh->selectrow_array($query);
 				if (!defined($keyword_id)) {
-					$dbh->do("INSERT INTO `NPL-keyword`
+					$dbh->do("INSERT INTO `OPL_keyword`
 						VALUES(
 							\"\",
 							\"$keyword\"
@@ -633,10 +641,10 @@ sub pgfiles {
 					$keyword_id = $dbh->selectrow_array($query);
 				}
 
-				$query = "SELECT pgfile_id FROM `NPL-pgfile-keyword` WHERE keyword_id = \"$keyword_id\" and pgfile_id=\"$pgfile_id\"";
+				$query = "SELECT pgfile_id FROM `OPL_pgfile_keyword` WHERE keyword_id = \"$keyword_id\" and pgfile_id=\"$pgfile_id\"";
 				my $ok = $dbh->selectrow_array($query);
 				if (!defined($ok)) {
-					$dbh->do("INSERT INTO `NPL-pgfile-keyword`
+					$dbh->do("INSERT INTO `OPL_pgfile_keyword`
 						VALUES(
 							\"$pgfile_id\",
 							\"$keyword_id\"
@@ -660,10 +668,10 @@ sub pgfiles {
 				next unless($text and $textauthor);
 				my $chapnum = $texthashref->{chapter};
 				my $secnum = $texthashref->{section};
-				$query = "SELECT textbook_id FROM `NPL-textbook` WHERE title = \"$text\" AND edition = \"$edition\" AND author=\"$textauthor\"";
+				$query = "SELECT textbook_id FROM `OPL_textbook` WHERE title = \"$text\" AND edition = \"$edition\" AND author=\"$textauthor\"";
 				my $textbook_id = $dbh->selectrow_array($query);
 				if (!defined($textbook_id)) {
-					$dbh->do("INSERT INTO `NPL-textbook`
+					$dbh->do("INSERT INTO `OPL_textbook`
 					VALUES(
 						\"\",
 						\"$text\",
@@ -675,16 +683,16 @@ sub pgfiles {
 					)"
 							);
 					dbug "INSERT INTO textbook VALUES( \"\", \"$text\", \"$edition\", \"$textauthor\", \"\", \"\", \"\" )\n";
-					dbug "\nLate add into NPL-textbook \"$text\", \"$edition\", \"$textauthor\"\n", 1;
+					dbug "\nLate add into OPL_textbook \"$text\", \"$edition\", \"$textauthor\"\n", 1;
 					$textbook_id = $dbh->selectrow_array($query);
 				}
 
 				# chapter weak table of textbook
 				#
-				$query = "SELECT chapter_id FROM `NPL-chapter` WHERE textbook_id = \"$textbook_id\" AND number = \"$chapnum\"";
+				$query = "SELECT chapter_id FROM `OPL_chapter` WHERE textbook_id = \"$textbook_id\" AND number = \"$chapnum\"";
 				my $chapter_id = $dbh->selectrow_array($query);
 				if (!defined($chapter_id)) {
-					$dbh->do("INSERT INTO `NPL-chapter`
+					$dbh->do("INSERT INTO `OPL_chapter`
 					VALUES(
 						\"\",
 						\"$textbook_id\",
@@ -693,7 +701,7 @@ sub pgfiles {
 						\"\"
 					)"
 							);
-					dbug "\nLate add into NPL-textchapter \"$text\", \"$edition\", \"$textauthor\", $chapnum $chapter from $name\n", 1;
+					dbug "\nLate add into OPL-chapter \"$text\", \"$edition\", \"$textauthor\", $chapnum $chapter from $name\n", 1;
 					dbug "INSERT INTO chapter VALUES(\"\", \"$textbook_id\", \"".$chapnum."\", \"$chapter\", \"\" )\n";
 					$chapter_id = $dbh->selectrow_array($query);
 				}
@@ -701,10 +709,10 @@ sub pgfiles {
 				# section weak table of textbook
 				#
 				$section = '' if ($secnum < 0);
-				$query = "SELECT section_id FROM `NPL-section` WHERE chapter_id = \"$chapter_id\" AND number = \"$secnum\"";
+				$query = "SELECT section_id FROM `OPL_section` WHERE chapter_id = \"$chapter_id\" AND number = \"$secnum\"";
 				my $section_id = $dbh->selectrow_array($query);
 				if (!defined($section_id)) {
-					$dbh->do("INSERT INTO `NPL-section`
+					$dbh->do("INSERT INTO `OPL_section`
 					VALUES(
 						\"\",
 						\"$chapter_id\",
@@ -714,16 +722,16 @@ sub pgfiles {
 					)"
 							);
 					dbug "INSERT INTO section VALUES(\"\", \"$textbook_id\", \"$secnum\", \"$section\", \"\" )\n";
-					dbug "\nLate add into NPL-textsection \"$text\", \"$edition\", \"$textauthor\", $secnum $section from $name\n", 1;
+					dbug "\nLate add into OPL_section \"$text\", \"$edition\", \"$textauthor\", $secnum $section from $name\n", 1;
 					$section_id = $dbh->selectrow_array($query);
 				}
 
 				@textproblems = @{$texthashref->{problems}};
 				for my $tp (@textproblems) {
-					$query = "SELECT problem_id FROM `NPL-problem` WHERE section_id = \"$section_id\" AND number = \"$tp\"";
+					$query = "SELECT problem_id FROM `OPL_problem` WHERE section_id = \"$section_id\" AND number = \"$tp\"";
 					my $problem_id = $dbh->selectrow_array($query);
 					if (!defined($problem_id)) {
-						$dbh->do("INSERT INTO `NPL-problem`
+						$dbh->do("INSERT INTO `OPL_problem`
 					VALUES(
 						\"\",
 						\"$section_id\",
@@ -737,10 +745,10 @@ sub pgfiles {
 
 					# pgfile_problem table associates pgfiles with textbook problems
 					#
-					$query = "SELECT problem_id FROM `NPL-pgfile-problem` WHERE problem_id = \"$problem_id\" AND pgfile_id = \"$pgfile_id\"";
+					$query = "SELECT problem_id FROM `OPL_pgfile_problem` WHERE problem_id = \"$problem_id\" AND pgfile_id = \"$pgfile_id\"";
 					my $pg_problem_id = $dbh->selectrow_array($query);  
 					if (!defined($pg_problem_id)) {
-						$dbh->do("INSERT INTO `NPL-pgfile-problem`
+						$dbh->do("INSERT INTO `OPL_pgfile_problem`
 					VALUES(
 						\"$pgfile_id\",
 						\"$problem_id\"

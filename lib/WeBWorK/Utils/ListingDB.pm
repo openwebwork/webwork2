@@ -147,10 +147,10 @@ sub getDBTextbooks {
 	my $selectwhat = LIBRARY_STRUCTURE->{$thing}{select};
 	
 	my $query = "SELECT DISTINCT $selectwhat
-          FROM `NPL-textbook` tbk, `NPL-problem` prob, 
-			`NPL-pgfile-problem` pg, `NPL-pgfile` pgf,
-            `NPL-DBsection` s, `NPL-DBchapter` c, `NPL-DBsubject` t,
-			`NPL-chapter` tc, `NPL-section` ts
+          FROM `OPL_textbook` tbk, `OPL_problem` prob, 
+			`OPL_pgfile_problem` pg, `OPL_pgfile` pgf,
+            `OPL_DBsection` s, `OPL_DBchapter` c, `OPL_DBsubject` t,
+			`OPL_chapter` tc, `OPL_section` ts
           WHERE ts.section_id=prob.section_id AND 
             prob.problem_id=pg.problem_id AND
             s.DBchapter_id=c.DBchapter_id AND 
@@ -189,7 +189,7 @@ sub getAllDBsubjects {
 	my $r = shift;
 	my @results=();
 	my $row;
-	my $query = "SELECT DISTINCT name FROM `NPL-DBsubject`";
+	my $query = "SELECT DISTINCT name FROM `OPL_DBsubject`";
 	my $dbh = getDB($r->ce);
 	my $sth = $dbh->prepare($query);
 	$sth->execute();
@@ -213,8 +213,8 @@ sub getAllDBchapters {
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT c.name FROM `NPL-DBchapter` c, 
-				`NPL-DBsubject` t
+	my $query = "SELECT DISTINCT c.name FROM `OPL_DBchapter` c, 
+				`OPL_DBsubject` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
                  t.name = \"$subject\"";
 	my $all_chaps_ref = $dbh->selectall_arrayref($query);
@@ -237,8 +237,8 @@ sub getAllDBsections {
 	my $chapter = $r->param('library_chapters');
 	return () unless($chapter);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT s.name FROM `NPL-DBsection` s,
-                 `NPL-DBchapter` c, `NPL-DBsubject` t
+	my $query = "SELECT DISTINCT s.name FROM `OPL_DBsection` s,
+                 `OPL_DBchapter` c, `OPL_DBsubject` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
                  c.DBsubject_id = t.DBsubject_id AND
                  t.name = \"$subject\" AND c.name = \"$chapter\"";
@@ -267,7 +267,7 @@ sub getDBListings {
 	my $keywords = $r->param('library_keywords') || "";
 	my ($kw1, $kw2) = ('','');
 	if($keywords) {
-		$kw1 = ", `NPL-keyword` kw, `NPL-pgfile-keyword` pgkey";
+		$kw1 = ", `OPL_keyword` kw, `OPL_pgfile_keyword` pgkey";
 		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
 			 pgkey.pgfile_id=pgf.pgfile_id ". 
 			makeKeywordWhere($keywords) ;
@@ -303,18 +303,18 @@ sub getDBListings {
 	my $selectwhat = 'DISTINCT pgf.pgfile_id';
 	$selectwhat = 'COUNT(' . $selectwhat . ')' if ($amcounter);
 
-	my $query = "SELECT $selectwhat from `NPL-pgfile` pgf, 
-         `NPL-DBsection` dbsc, `NPL-DBchapter` dbc, `NPL-DBsubject` dbsj $kw1
+	my $query = "SELECT $selectwhat from `OPL_pgfile` pgf, 
+         `OPL_DBsection` dbsc, `OPL_DBchapter` dbc, `OPL_DBsubject` dbsj $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
               dbc.DBchapter_id = dbsc.DBchapter_id AND
               dbsc.DBsection_id = pgf.DBsection_id 
               \n $extrawhere 
               $kw2";
 	if($haveTextInfo) {
-      $query = "SELECT $selectwhat from `NPL-pgfile` pgf, 
-        `NPL-DBsection` dbsc, `NPL-DBchapter` dbc, `NPL-DBsubject` dbsj,
-		`NPL-pgfile-problem` pgp, `NPL-problem` prob, `NPL-textbook` tbk ,
-		`NPL-chapter` tc, `NPL-section` ts $kw1
+      $query = "SELECT $selectwhat from `OPL_pgfile` pgf, 
+        `OPL_DBsection` dbsc, `OPL_DBchapter` dbc, `OPL_DBsubject` dbsj,
+		`OPL_pgfile_problem` pgp, `OPL_problem` prob, `OPL_textbook` tbk ,
+		`OPL_chapter` tc, `OPL_section` ts $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
               dbc.DBchapter_id = dbsc.DBchapter_id AND
               dbsc.DBsection_id = pgf.DBsection_id AND
@@ -334,7 +334,7 @@ sub getDBListings {
 	}
 	my @results=();
 	for my $pgid (@pg_ids) {
-		$query = "SELECT path, filename FROM `NPL-pgfile` pgf, `NPL-path` p 
+		$query = "SELECT path, filename FROM `OPL_pgfile` pgf, `OPL_path` p 
           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
 		my $row = $dbh->selectrow_arrayref($query);
 		push @results, {'path' => $row->[0], 'filename' => $row->[1] };
