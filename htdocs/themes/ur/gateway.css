@@ -1,0 +1,54 @@
+/******************/
+/* gateway styles */
+/******************/
+
+div.gwMessage { background-color:#dddddd; color: black; }
+div.gwTiming { 
+	background-color:#ddddff; 
+	color: black; 
+	margin-top: 10px;
+	margin-bottom: 0px;
+}
+div.gwWarning { background-color:#ffffdd; color: black; }
+
+span.resultsWithError { background-color: #ffcccc; color: black; }
+span.resultsWithoutError { background-color: #66ff99; color: black; }
+div.gwCorrect { background-color: #66ff99; color: black; }
+div.gwIncorrect { background-color: #ff9999; color: black; }
+
+div.gwProblem {
+	clear: both; 
+	background-color: #E0E0E0; 
+	color: black;
+	padding: 3px;
+	border: solid black 1px;
+}
+div.gwSoln {
+/*	background-color: #e0e0ff; */
+	background-color: transparent;
+	color: black;
+/* 	padding: 2px; */,
+/* 	border: dashed black 1px; */
+}
+div.gwSoln b { color: navy; }
+
+p.gwPreview { 
+	font-size: smaller;
+	text-align: right; 
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+
+table.gwAttemptResults {
+	border-width: 0px;
+}
+table.gwAttemptResults td.label { 
+	font-weight: bold; 
+	background-color: transparent;
+	color: navy;
+}
+table.gwAttemptResults td.output {
+        padding: 2px;
+	border: solid black 1px;
+	background-color: #eeeeee;
+}
