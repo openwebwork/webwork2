@@ -483,7 +483,7 @@ sub content {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
-	my $themesDir = $ce->{webworkDirs}{templates};
+	my $themesDir = $ce->{webworkDirs}{themes};
 	my $theme = $r->param("theme") || $ce->{defaultTheme};
 	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
 	#$ce->{webworkURLs}->{stylesheet} = ($ce->{webworkURLs}->{htdocs})."/css/$theme.css";   # reset the style sheet

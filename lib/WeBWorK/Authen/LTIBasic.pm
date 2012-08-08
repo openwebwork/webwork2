@@ -310,6 +310,7 @@ sub verify_normal_user
 
 	# Parameters CANNOT be modified until after LTIBasic authentication
 	# has been done, because the parameters passed with the request
+
 	# are used in computing the OAuth_signature.  If there
 
 	# are any changes in $r -> {paramcache} (see Request.pm)
