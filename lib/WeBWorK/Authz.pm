@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.36 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.37 2012/06/08 22:59:54 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the

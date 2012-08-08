@@ -297,6 +297,7 @@ sub verify_normal_user
 	my ($r, $user_id, $session_key) 
 			= map {$self -> {$_};} ('r', 'user_id', 'session_key');
 
+
 	#debug("LTIBasic::verify_normal_user called for user |$user_id|");
 	
     # Call check_session in order to destroy any existing session cookies and Key table sessions
@@ -309,7 +310,9 @@ sub verify_normal_user
 
 	# Parameters CANNOT be modified until after LTIBasic authentication
 	# has been done, because the parameters passed with the request
+
 	# are used in computing the OAuth_signature.  If there
+
 	# are any changes in $r -> {paramcache} (see Request.pm)
 	# before authentication occurs, then authentication will FAIL
 	# even if the consumer_secret is correct.

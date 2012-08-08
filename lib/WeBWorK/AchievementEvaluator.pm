@@ -51,6 +51,7 @@ sub checkForAchievements {
     if (not $globalUserAchievement) {
 	$globalUserAchievement = $db->newGlobalUserAchievement();
 	$globalUserAchievement->user_id($user_id);
+	$globalUserAchievement->achievement_points(0);
 	$db->addGlobalUserAchievement($globalUserAchievement);
     }
 
@@ -209,7 +210,7 @@ sub checkForAchievements {
 	        
 	    my $points = $achievement->points;
 	    #just in case points is an ininitialzied variable
-	    $points = 0 if (not $points);
+	    $points = 0 unless $points;
 
 	    $globalUserAchievement->achievement_points(
 		$globalUserAchievement->achievement_points + $points);
