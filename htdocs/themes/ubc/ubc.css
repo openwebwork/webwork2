@@ -49,7 +49,7 @@ div.Title { font-size: 16pt; }
 div.Message { font-style: italic; }
 div.SubmitError { color: red; font-style: italic; }
 div.Body {  }
-div.Warnings {  }
+div.Warnings { background-color:#ff0000 }
 
 /* (shuld have Message here) */
 

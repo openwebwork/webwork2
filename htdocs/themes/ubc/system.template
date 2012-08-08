@@ -210,7 +210,7 @@ var _gaq = _gaq || [];_gaq.push(["_setAccount", "UA-25098488-1"]);_gaq.push(["_t
 			
 <!--			      ==============BEGIN BODY OF PROBLEM===============      -->
 			<!--#if warnings="1"-->
-				  <div class="Body" style="background-color:#ff0000">
+				  <div class="Warnings" >
 				  <p style="font-size:larger">
 				  Warning -- there may be something wrong with this question. Please inform your instructor
 				  including the warning messages below.
