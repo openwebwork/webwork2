@@ -6,22 +6,40 @@
 webwork.Browse = Backbone.Model.extend({
 
     defaults:{
-        name:"",
         library_subject:null,
         library_chapter:null,
         library_section:null
     },
 
     initialize: function(){
+        var self = this;
+        this.defaultRequestObject = {
+        };
+        _.defaults(this.defaultRequestObject, webwork.requestObject);
+        
         this.set('problems', new webwork.ProblemList);
         this.set('library_subjects', new Array());
         this.set('library_chapters', new Array());
-        this.set('library_section', new Array());
+        this.set('library_sections', new Array());
+        
+        this.on('change:library_subject', function(){
+           self.set('library_chapter', null);
+           self.set('library_section', null);
+           self.getAllDBchapters();
+           self.getSectionListings();
+        });
+        
+        this.on('change:library_chapter', function(){
+            self.set('library_section', null);
+           self.getSectionListings();
+        });
+        
+        this.getAllDBsubjects();
+        this.getAllDBchapters();
+        this.getSectionListings();
     },
 
-    go: function () {
-        this.updateInputs();
-        this.set(name, this.get('library_subject') + " " + this.get('library_chapter') + " " + this.get('library_section'));
+    go: function (callback) {
         var requestObject = {
             xml_command: "searchLib",
             subcommand: "getDBListings",
@@ -31,19 +49,20 @@ webwork.Browse = Backbone.Model.extend({
         };
         _.defaults(requestObject, this.defaultRequestObject);
         var self = this;
-        $.post(webserviceURL, requestObject, function (data) {
+        $.post(webwork.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
-            var results = response.result_data.split(",");
-
-            newSearchResult.problems = new Array();
+            var results = response.result_data;//.split(",");
+            
+            var newSearchResult = new Array();
             for (var i = 0; i < results.length; i++) {
-                newSearchResult.problems.push(new Problem(results[i]));
+                newSearchResult.push(new webwork.Problem({path: results[i]}));
             }
-            self.get('problems').reset(newSearchResult);
+            //self.get('problems').reset(newSearchResult);
+            callback(newSearchResult);
         });
     },
 
-    updateSubcategory: function (section, subcommand) {
+    updateSubcategory: function (subcommand, category) {
         var self = this;
         var requestObject = {
             xml_command: "searchLib",
@@ -53,10 +72,34 @@ webwork.Browse = Backbone.Model.extend({
             library_sections: this.get('library_section')
         };
         _.defaults(requestObject, this.defaultRequestObject);
-        $.post(webserviceURL, requestObject, function (data) {
+        $.post(webwork.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
-            self.set(subcommand, response.result_data.split(","));
+            console.log(response);
+            self.set(category, response.result_data);
         });
+    },
+    
+    getAllDBsubjects: function(){
+        this.updateSubcategory('getAllDBsubjects', 'library_subjects');
+    },
+    
+    getAllDBchapters: function(){
+        this.updateSubcategory('getAllDBchapters', 'library_chapters');
+    },
+    
+    getSectionListings: function(){
+        this.updateSubcategory('getSectionListings', 'library_sections');
+    }
+});
+
+webwork.BrowseResult = Backbone.Model.extend({
+    defaults:{
+        name: "",
+    },
+    
+    initialize:function(){
+        this.set('problems', new webwork.ProblemList);
+        this.set('name', this.get('name').replace(/ /g, "_"));
     }
 });
 

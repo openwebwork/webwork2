@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.16 2007/03/22 13:39:50 glarose Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.17 2012/06/08 22:50:50 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the

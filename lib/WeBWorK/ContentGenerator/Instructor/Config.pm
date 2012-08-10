@@ -414,7 +414,7 @@ use WeBWorK::CourseEnvironment;
 
 # Load the configuration parts defined in Constants.pm 
 
-our $ConfigValues = [] unless defined $ConfigValues;
+#our $ConfigValues = [] unless defined $ConfigValues;
 
 # Configuation data
 # It is organized by section.  The allowable types are 
@@ -476,11 +476,32 @@ sub print_navigation_tabs {
 		CGI::p();
 }
 
+sub getConfigValues {
+	my $ce = shift;
+	my $ConfigValues = $ce->{ConfigValues};
+	
+	# get the list of theme folders in the theme directory and remove . and ..
+	my $themeDir = $ce->{webworkDirs}{themes};
+	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
+	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
+	
+	# insert the anonymous array of theme folder names into ConfigValues
+	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
+
+	foreach my $oneConfig (@$ConfigValues) {
+		foreach my $hash (@$oneConfig) {
+			&$modifyThemes($hash);
+		}
+	}
+	
+	$ConfigValues;
+}
+	
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-
+	my $ConfigValues = getConfigValues($ce);
 	# Get a course environment without course.conf
 	$self->{default_ce} = WeBWorK::CourseEnvironment->new({
 		%WeBWorK::SeedCE,
@@ -539,7 +560,7 @@ sub body {
 	my $r = $self->r;
 	my $ce = $r->ce;		# course environment
 	my $db = $r->db;		# database
-
+	my $ConfigValues = getConfigValues($ce);
 	my $userName = $r->param('user');
 
 	my $user = $db->getUser($userName); # checked
