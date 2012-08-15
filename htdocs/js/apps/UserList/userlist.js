@@ -67,8 +67,16 @@ $(function(){
 			location.href = url;
 		    break;
 		    case "action4":  // Student Progress
+			var username = self.grid.getValueAt(rowIndex,2); //
+			
+			// send a relative path, but is this the best way?
+			var url = "../progress/student/" + username + "/?user=" + webwork.requestObject.user + "&effectiveUser=" + username + "&key=" +
+				    webwork.requestObject.session_key; 
+			location.href = url;
 		    break;
 		    case "action5":  // Email Student
+			
+			self.emailStudents([rowIndex]);
 		    break;
 		
 		   }
@@ -105,8 +113,33 @@ $(function(){
             
 	    this.users.on('add',this.addOne,this);
 	    
-	    this.users.on('success', function (msg) {this.announce.setText(msg);},this);
-	      // set the action column to have a cog initially. 
+	    
+	    // This handles all of the messages posted at the top of the page when updates are made to the user list.  
+	    this.users.on('success', function (type, user) {
+		
+		
+	    // PLS:  this seems clunky.  Perhaps we can clean up this code. 	
+		switch(type) {
+		    case "user_added":
+			if (this.messageType == "user_added"){
+			    this.announce.appendText(", " + user.attributes.user_id);
+			} else {
+			    this.messageType = "user_added";
+			    this.announce.setText("Success in adding the following users: " + user.attributes.user_id);
+			}
+			break;
+		    case "user_deleted":
+			if (this.messageType == "user_deleted"){
+			    this.announce.appendText(", " + user.attributes.user_id);
+			} else {
+			    this.messageType = "user_deleted";
+			    this.announce.setText("Success in deleting the following users: " + user.attributes.user_id);
+			}
+			break;
+		}
+		},this);
+	    
+	      // set the action column to have a cog initially.   Note: this is a hack to get an icon set in the Editable Table 
 	    this.users.on('fetchSuccess', function () {$("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");},this);
 	    
 	    // Setup the Add Student Wizard Dialog
@@ -140,6 +173,7 @@ $(function(){
 	takeBulkAction: function (evt) { switch (evt.target.value){
 	        
 		case "menuEmail":
+		    this.emailStudents(this.selectedRows);
 		    break;
 		case "menuChangePassword":
 		    this.changePassword(this.selectedRows);
@@ -170,6 +204,7 @@ $(function(){
 	    this.$el.append(_.template($("#userListTable").html()));
 	    
 	    this.$el.append(this.passwordPane = new webwork.ui.ChangePasswordView({model: new TempUserList()}));
+	    this.$el.append(this.emailPane = new webwork.ui.EmailStudentsView({model: new TempUserList()}));
 	    return this;
         },
 	addOne: function(user){
@@ -203,9 +238,9 @@ $(function(){
 		    self.grid.remove(row);
 			   
 		});
-		
+		this.selectedRows=[];
 	    }
-    }	,
+	},
 	changePassword: function(rows){
 	    var tempUsers = new TempUserList();
 	    var self = this; 
@@ -216,7 +251,19 @@ $(function(){
 	    this.passwordPane.render();
 	    this.passwordPane.$el.dialog("open");
 	    },
-	selectedRows: []
+	emailStudents: function(rows){
+	    var tempUsers = new TempUserList();
+	    var self = this; 
+	    _.each(rows, function (row){
+		tempUsers.add(self.users.where({user_id: self.grid.getDisplayValueAt(row,2)})[0]);
+	    })
+	    this.emailPane.model=tempUsers;
+	    this.emailPane.render();
+	    this.emailPane.$el.dialog("open");
+	    },
+	messageType: "",   // the type of message shown at the top of the page.     
+	
+	selectedRows: []  // which rows in the table are selected. 
 
 
     });
@@ -234,7 +281,6 @@ $(function(){
 	initialize: function(){
 	    _.bindAll(this, 'render','unrender','updateProp','removeUser'); // every function that uses 'this' as the current object should be in here
 	    this.model.bind('remove', this.unrender);
-	    //this.model.bind('error',function (model,error) { console.log(model);console.log(error);});
 	    this.render();
 	},
 	events: {
@@ -271,7 +317,7 @@ $(function(){
 	    this.parent = this.options.parent;
 	    this.render();
 	    
-	    for(var i = 0; i<1; i++) {this.users.add(new webwork.User())}  // add a single blank line. 
+	    this.users.add(new webwork.User());  // add a single blank line. 
 	    
 	    this.$el.dialog({autoOpen: false, modal: true, title: "Add Students by Hand",
 						width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
@@ -285,7 +331,9 @@ $(function(){
 	template: _.template($("#add_student_man_dialog_content").html()),
 	render: function(){
 	    var self = this;
-	    var tableHTML = $('#manStudentTableTmpl').html();
+	    var tableHTML = "<table id='man_student_table'><tbody><tr><td>Delete</td>"
+	    tableHTML += (_(webwork.userProps).map(function (prop) {return "<td>" + prop.longName + "</td>";})).join("") + "</tr></tbody></table>";
+	    
 	    this.$el.html(this.template({content: tableHTML}));
 	    _(this.users).each(function(user){ self.appendRow(user);}, this);
 	},
@@ -324,26 +372,26 @@ $(function(){
 	events: {
 	    "click button#importStudFromFileButton": "importStudents",
 	    "change input#files": "readFile",
-
+	    "change input#useLST" : "setHeadersForLST",
+	    "change input#useFirst" : "useFirstRow"
 	},
 	openDialog: function () { this.$el.dialog("open");},
 	closeDialog: function () {this.$el.dialog("close");},
 	render: function(){
-	    var self = this;
-//	    console.log(this.template({}));
 	    this.$el.html($("#add_student_file_dialog_content").html());
 	    return this; 
 	},
 	readFile: function(evt){
+	    var self = this; 
 	    console.log("in loadFile");
 	    $("li#step1").css("display","none");  // Hide the first step of the Wizard
 	    $("li#step2").css("display","block");  // And show the next step.
 	    $("button#importStudFromFileButton").css("display","block");
 		
 	    this.file = $("#files").get(0).files[0];
-	    $('#list').html('<em>' + escape(this.file.name));  //+  '(' +  (self.file.type || 'n/a') + ') - ' + 
-		//this.file.size +  ' bytes, last modified: ' +
-		// (this.file.lastModifiedDate ? this.file.lastModifiedDate.toLocaleDateString() : 'n/a') + '</em>');
+	    $('#list').html('<em>' + escape(this.file.name));
+    
+	    
         
 	    // Need to test if the browser can handle this new object.  If not, find alternative route.
 	
@@ -351,20 +399,50 @@ $(function(){
         
 	    reader.onload = function(event) {
 		var content = event.target.result;
-		var str = util.fillHTMLTableFromArray(util.CSVToArray(content),
-							  ["","Login Name","First Name","Last Name","Email","Student ID","Status",
-							    "Section","Recitation","Comment","Permission Level","Password"]);
-		    
-		$("#studentTable").html(str);
-        
-		$("#selectAllASW").click(function(){ $(".selRow").attr("checked",$("#selectAllASW").is(":checked")); });
+		headers = _(webwork.userProps).map(function(prop) {return prop.longName;});
+		headers.splice(0,0,"");
 		
-		console.log("loaded file");
+		// Parse the CSV file
+		
+		var str = util.CSVToHTMLTable(content,headers);
+
+		// build the table and set it up to scroll nicely. 		
+		$("#studentTable").html(str);
+		$("#selectAllASW").click(function(){ $(".selRow").attr("checked",$("#selectAllASW").is(":checked")); });
+		$("div.inner").width(25+($("#sTable thead td").length)*175);
+		$("#inner-table td").width($("#sTable thead td:nth-child(2)").width()+4)
+		$("#inner-table td:nth-child(1)").width($("#sTable thead td:nth-child(1)").width())
+
+		// test if it is a classlist file and then set the headers appropriately
+		
+		var re=new RegExp("\.lst$","i");
+		if (re.test(self.file.name)){self.setHeadersForLST();}
+
+	        $("select.colHeader").change(function(evt) {self.updateHeaders(evt.target);})
+		
+		
+	    
+	        console.log("loaded file"); 
 	    } 
 		    
 	    reader.readAsText(this.file);
 		
 		
+	},
+	updateHeaders: function(target) {  // Detect where the Login Name column is in the table and show duplicate entries of users. 
+	     if ($(target).val() == webwork.userProps[8].longName) {
+		var loginCol = Number($(target).attr("id").split("col")[1])+2;
+		var impUsers = $("#inner-table td:nth-child(" + loginCol + ")").map(function (i,cell) { return $.trim($(cell).html()).toLowerCase();}); 
+		
+		var users = App.users.map(function (user) {return user.attributes.user_id.toLowerCase();});
+		var duplicateUsers = _.intersection(impUsers,users);
+		
+		$("#inner-table td:nth-child(" + loginCol + ")").each(function (i,cell) {
+		   if (_(duplicateUsers).any(function (user) { return user.toLowerCase() == $.trim($(cell).html()).toLowerCase();})){
+		       $("#inner-table tr#row" + i).css("background-color","#EE5555");
+		   } 
+		});
+	     }
 	},
 	importStudents: function () {  // PLS:  Still need to check if student import is sucessful, like making sure that user_id is valid (not repeating, ...)
 	    // First check to make sure that the headers are not repeated.
@@ -375,7 +453,7 @@ $(function(){
 	    var heads = _(headers).map(function (obj) {return obj.header;});
 	    var sortedHeads = _(heads).sortBy(function (str) {return str;});
 	    
-	    //console.log(heads);
+	    // Determine if the user has selected a unique set of headers.  
 	    
 	    var validHeaders=true;
 	    for (var i=0;i<sortedHeads.length-1;i++){if(sortedHeads[i]==sortedHeads[i+1]) {validHeaders=false; break;}};
@@ -383,7 +461,10 @@ $(function(){
 	    
 	    // This is an array of the column numbers that the headers are in.  
 	    
-	    var headCols = _.map(headers, function (value,j) { return _.find(_.map($("select.colHeader"),function (val,i) {if (val.value==value) return i;}), function (num) { return typeof num === 'number' && num % 1 == 0; })});
+	    var headCols = _.map(headers, function (value,j)
+				 { return _.find(_.map($("select.colHeader"),
+						       function (val,i) {if (val.value==value) return i; else return -1;}),
+						 function (num) { return typeof num === 'number' && num % 1 == 0; })});
 	    
 	    // Determine the rows that have been selected.
 	    
@@ -402,13 +483,38 @@ $(function(){
 		//this.users.add(u);
 		
 		App.users.add(user);
+		
 	    });
-	    
-	    this.parent.announce.setText("<p>Successfully added " + rows.length + " students</p>");
 
-	this.closeDialog();    
-    }
+	this.closeDialog();
+	return;
+	},
+	useFirstRow: function (){
+	    var self = this; 
+	    console.log("in useFirstRow");
+	    
+	    // If the useFirstRow checkbox is selected, try to match the first row to the headers. 
+	    
+	    if ($("input#useFirst").is(":checked")) {
+	    _(webwork.userProps).each(function(user,j){
+		var re = new RegExp(user.regexp,"i");
+		
+		$("#sTable thead td").each(function (i,head){
+		    if (re.test($("#inner-table tr:nth-child(1) td:nth-child(" + (i+1) + ")").html())) {
+		    $(".colHeader",head).val(user.longName);
+		    self.updateHeaders($(".colHeader",head));  // keep track of the location of the Login Name
+		    }
+		});
+	    });
+	    } else {  // set the headers to blank. 
+		$("#sTable thead td").each(function (i,head){ $(".colheader",head).val("");});
+		$("#inner-table tr").css("background-color","none");
+	    }
+	}
 	,
+	setHeadersForLST: function(){
+		_($("select.colHeader")).each(function(col,i){$(col).val(webwork.userProps[i].longName);});
+	    },
 	appendRow: function(user){
 	    var tableRow = new UserRowView({model: user});
 	    $("table#man_student_table tbody",this.el).append(tableRow.el);

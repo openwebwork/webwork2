@@ -15,8 +15,8 @@ all rows in the table.   </p>
     
     <div id="help-container"></div>
 
-    <h4 style="color: red">All actions except student progress and email student should be working.</h4>
-    
+    <h4 style="color: red">All actions except email student should be working.</h4>
+    <h4>Please send any bugs or feature requests <a href="https://github.com/pstaabp/webwork2-dev/issues">here</a></h4>
 
 <div id="aboveTable" class="row">
 <div class="span2"
@@ -31,10 +31,10 @@ all rows in the table.   </p>
 </select>
 </div>
 
-    <div id="filterdiv" class="span3"><label for='filter'>Filter :</label><input type='text' class='filter'/></div>
+    <div id="filterdiv" class="span3"><label for='filter'>Filter :</label><input type='text' id='filter'/></div>
     
-<div class="span3"><input type="button"  value="Add Students" class="addStudentButton" /></div>
-
+<div class="span1"><input type="button"  value="Add Students" class="addStudentButton" /></div>
+<div class="span2" id="usersShownInfo"></div>
 </div>
 <div id="users_table"></div>
 <div id="belowTable" class="row">
@@ -62,26 +62,36 @@ all rows in the table.   </p>
 
 <script type="text/template" id="add_student_file_dialog_content">
 
-    <div style="float: right; width: 400px;">
-    <span>Select file:<input type="file" id="files" name="files" /></span><br>
-    <button id="importStudFromFileButton" style="display: none">Import Students</button>
-    </div>
-    
+<div id="impFromFileInstructions" class="row-fluid">
+    <div class="span8">
     <p>To import students from a file, there are a few simple steps:
         <ol>
-            <li id="step1">Select the file by clicking the "Select File" button above right (or drag a file onto the box).  Note: currently only CSV files are supported
+            <li id="step1">Select the file by clicking the "Select File" button above right (or drag a file onto the box).
+            Note: currently only CSV files are supported
             (click here for help on this).</li>
             
         
-        <li id="step2" style="display: none">Once the file is loaded, there are two things that must be done:
+        <li id="step2" style="display: none">Once the file is loaded, there are three things that must be done:
         <ol><li>Select the proper column header for each column. If you want to ignore a column, leave the column header blank.</li>
-        <li>Select the rows that you want to import into WeBWorK.  You may click the top checkbox to select/deselect all rows.
+        <li>Select the rows that you want to import into WeBWorK.  You may click the top checkbox to select/deselect all rows, and select the
+        checkbox <em>Use First Row for Headers</em> to tell WeBWorK to try to match the first row of data to the fields. </li>
+        <li> If a user already exists
+        in the userlist, the row will show up in red.  You may still import that student, but all the information will overwrite what is currently
+        in the class.  
             
         </li>
         <li>Click the <em>Import Students</em> button.  This will add the selected students to this class.</li>
         </ol></li>
         
         </ol></p>
+        </div>
+        
+    <div class="span4">
+    <span>Select file:<input type="file" id="files" name="files" /></span><br>
+    <button id="importStudFromFileButton" style="display: none">Import Students</button><br>
+    <!--<span><label for="useLST">The file is a WeBWorK classlist file</label><input type="checkbox" id="useLST"></input></span><br>-->
+    <span><label for="useFirst">Use First Row for Headers</label><input type="checkbox" id="useFirst"></input></span>
+    </div>
         
         
         <div id="studentTable"></div></p>
@@ -113,3 +123,9 @@ all rows in the table.   </p>
     
 </script>
 
+<script type="text/template" id="emailStudentTemplate">
+    Send email to the following students:<br/>
+    <span id="emailStudentList"></span><br/>
+    <textarea id="emailText" cols="40" rows="10"></textarea>
+    
+</script>

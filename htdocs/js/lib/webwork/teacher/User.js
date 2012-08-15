@@ -80,7 +80,7 @@ webwork.UserList = Backbone.Collection.extend({
             
             $.post(webwork.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-                self.trigger("success","User " + user.attributes.user_id + " added.");
+                self.trigger("success","user_added", user);
             });
             
             }, this);
@@ -95,7 +95,7 @@ webwork.UserList = Backbone.Collection.extend({
                 var response = $.parseJSON(data);
                 // see if the deletion was successful. 
     
-               self.trigger("success","User " + user.attributes.user_id + " deleted.");
+               self.trigger("success","user_deleted",user);
                return (response.result_data.delete == "success")
             });
 
@@ -125,17 +125,20 @@ webwork.UserList = Backbone.Collection.extend({
     
 });
 
-webwork.userProps = [{shortName: "user_id", longName: "Login Name"},
-                     {shortName: "first_name", longName: "First Name"},
-                     {shortName: "last_name", longName: "Last Name"},
-                     {shortName: "email_address", longName: "Email"},
-                     {shortName: "student_id", longName: "Student ID"},
-                     {shortName: "status", longName: "Status"},
-                     {shortName: "section", longName: "Section"},
-                     {shortName: "recitation", longName: "Recitation"},
-                     {shortName: "comment", longName: "Comment"},
-                     {shortName: "permission", longName: "Permission Level"},
-                     {shortName: "userpassword", longName: "Password"}];
+// Note: these are in the order given in the classlist format for LST files.  
+
+webwork.userProps = [{shortName: "student_id", longName: "Student ID", regexp: "student"},
+                     {shortName: "last_name", longName: "Last Name", regexp: "last"},
+                     {shortName: "first_name", longName: "First Name", regexp: "first"},
+                     {shortName: "status", longName: "Status", regexp: "status"},
+                     {shortName: "comment", longName: "Comment", regexp: "comment"},
+                     {shortName: "section", longName: "Section", regexp: "section" },
+                     {shortName: "recitation", longName: "Recitation", regexp: "recitation"},
+                     {shortName: "email_address", longName: "Email", regexp: "email"},
+                     {shortName: "user_id", longName: "Login Name", regexp: "login"},
+                     {shortName: "userpassword", longName: "Password", regexp: "pass"},
+                     {shortName: "permission", longName: "Permission Level", regexp: "permission"}
+                     ];
 
 webwork.userTableHeaders = [
                 { name: "Select", datatype: "boolean", editable: true},

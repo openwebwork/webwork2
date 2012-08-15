@@ -14,11 +14,14 @@ use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Utils qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
+use WeBWorK::ContentGenerator::Instructor::SendMail;
 use JSON;
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 use Time::HiRes qw/gettimeofday/; # for log timestamp
 use Date::Format; # for log timestamp
+
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 sub create {
 	my ($self, $params) = @_;
@@ -530,16 +533,42 @@ sub assignVisibleSets {
 	return 0;
 }
 
-sub actAsUser {
+##  pstaabp: This is currently not working.  We need to look into a nice robust way to send email.  It looks like the current
+## way that WW sends mail is a bit archaic.  The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a
+## bit more.  
+
+
+sub sendEmail {
 	my ($self, $params) = @_;
-	my $db = $self->{db};
 	my $ce = $self->{ce};
-	my $effectiveUserName;
-	if (defined($ce->{effectiveUser}) and $ce->{effectiveUser}=~/\S/ ) {
-		$effectiveUserName = $ce->{effectiveUser};
-	}
+
+# Should we build in the merge_file?  
+#  get merge file
+#		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
+#		my $delimiter       = ',';
+#		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
+#		unless (ref($rh_merge_data) ) {
+#			$self->addbadmessage(CGI::p("No merge data file"));
+#			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
+#			return;
+#		} ;
+#		$self->{rh_merge_data} = $rh_merge_data;
+		
+		# we don't set the response until we're sure that email can be sent
+#		$self->{response}         = 'send_email';
+		
+	my $smtpServer = $ce->{mail}->{smtpServer};
+		
+	debug("smtpServer: " . $smtpServer);
 	
-	debug("The course env params:" . $effectiveUserName);
+	
+	my $mailer = Mail::Sender->new({
+				from      => $smtpServer,
+				fake_from => "pstaab\@fitchburgstate.edu",
+				to        => "pstaab\@fitchburgstate.edu",
+				smtp      => $smtpServer,
+				subject   => "Test"
+			});
 }
 
 1;
