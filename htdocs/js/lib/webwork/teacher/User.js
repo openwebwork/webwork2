@@ -148,8 +148,7 @@ webwork.userTableHeaders = [
                         "action4":"Student Progess","action5":"Email Student"}
                 },
                 { label: "Login Name", name: "user_id", datatype: "string", editable: false },
-                { name: "Login Status", datatype: "string", editable: false },
-                { name: "Assigned Sets", datatype: "integer", editable: false },
+                { label: "Assigned Sets", name: "num_user_sets", datatype: "string", editable: false },
                 { label: "First Name", name: "first_name", datatype: "string", editable: true },
                 { label: "Last Name", name:"last_name", datatype: "string", editable: true },
                 { label: "Email", name: "email_address", datatype: "string", editable: true },

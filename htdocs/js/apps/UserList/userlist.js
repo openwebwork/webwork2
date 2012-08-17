@@ -109,7 +109,7 @@ $(function(){
                 self.addAll();
 		if (this.grid.getRowValues(0).user_id=='') {this.grid.remove(0);}  // this is a hack to remove the row with empty values. 
             }, this);
-            //this.users.on('all', this.render, this);
+
             
 	    this.users.on('add',this.addOne,this);
 	    
@@ -139,8 +139,18 @@ $(function(){
 		}
 		},this);
 	    
-	      // set the action column to have a cog initially.   Note: this is a hack to get an icon set in the Editable Table 
-	    this.users.on('fetchSuccess', function () {$("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");},this);
+	      // Decorate the Table: 
+	      // set the action column to have a cog initially.   Note: this is a hack to get an icon set in the Editable Table
+	      // also set the color to green for those users who are logged in.  
+	    this.users.on('fetchSuccess', function () {
+		$("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");
+		    _(this.loggedInUsers).each(function(user){
+			$("tr#UserListTable_" + user + " td:nth-child(3)").css("color","green").css("font-weight","bold");
+			console.log($("tr#UserListTable_" + user + " td:nth-child(3)").css("color"));
+		    });
+		    this.loggedInUsers = [];
+		    $("#usersShownInfo").html(this.grid.getRowCount() + " of " + this.users.length + " users shown.");
+		},this);
 	    
 	    // Setup the Add Student Wizard Dialog
 	    $("div#addStudDialog").dialog({autoOpen: false, modal: true, title: "Add Student Wizard", width: 300,
@@ -169,7 +179,10 @@ $(function(){
 	    'keyup input#filter' : 'filterUsers',
 	    
 	},
-	filterUsers: function (evt) {this.grid.filter($("#filter").val()) },
+	filterUsers: function (evt) {
+	    this.grid.filter($("#filter").val());
+	    $("#usersShownInfo").html(this.grid.getRowCount() + " of " + this.users.length + " users shown.");
+	},
 	takeBulkAction: function (evt) { switch (evt.target.value){
 	        
 		case "menuEmail":
@@ -211,10 +224,15 @@ $(function(){
             var userInfo = user.toJSON();
 	    userInfo.permission = ""+userInfo.permission.value;  // return only the String version of the Permission
 	    this.grid.append(user.cid, userInfo);
+	    if (userInfo.login_status==1){
+		this.loggedInUsers.push(user.cid);
+	    }
         },
 
         addAll: function(){
 	    console.log("in addAll");
+	    
+	    this.loggedInUsers=[];
             var self = this;
             this.users.each(function(user){self.addOne(user)});
 	    this.grid.refreshGrid();

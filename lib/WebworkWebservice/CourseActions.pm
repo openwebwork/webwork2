@@ -116,7 +116,8 @@ sub listUsers {
 
     my @tempArray = $db->listUsers;
     my @userInfo = $db->getUsers(@tempArray);
-
+    my $numGlobalSets = $db->countGlobalSets;
+    
     #%permissionsHash = reverse %permissionsHash;
     #for(@userInfo){
     #    @userInfo[i]->{'permission'} = $db->getPermissionLevel(@userInfo[i]->{'user_id'});
@@ -129,6 +130,11 @@ sub listUsers {
         $u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
 	my $studid= $u->{'student_id'};
 	$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
+        $u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
+	
+	my $Key = $db->getKey($u->{'user_id'});
+	$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		
     }
 
     #my %permissionsHash = $ce->{userRoles};

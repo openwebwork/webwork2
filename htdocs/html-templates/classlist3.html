@@ -2,11 +2,12 @@
 
 <script type="text/template" id="studentManagementHelp">
    <p>The Student Management page allows you to edit student information as well as perform actions
-(delete, email, act as user) on individuals or a group of students. To edit a student's information, click on the appropriate property
+(delete, email, act as user) on individuals or a group of students. To edit a student's information (name, email, section, recitation,
+   comment or permission),click on the appropriate property
 to change and retype or select the correct information.  To perform an action on an individual student, select the action
 from the <em>Action</em> column. To perform an action on a group of students, select those students using the checkboxes on the first
 column, then select the action from the button above (or below) the table.  Toggling the checkbox called <em>Select All</em> will select/deselect
-all rows in the table.   </p>
+all rows in the table.  Lastly, the <em>Filter Users</em> field will allow you to search for all users that have that string. </p>
     
 </script>
 
@@ -32,9 +33,9 @@ all rows in the table.   </p>
 </div>
 
     <div id="filterdiv" class="span3"><label for='filter'>Filter :</label><input type='text' id='filter'/></div>
-    
+<div class="span2" id="usersShownInfo"></div>    
 <div class="span1"><input type="button"  value="Add Students" class="addStudentButton" /></div>
-<div class="span2" id="usersShownInfo"></div>
+
 </div>
 <div id="users_table"></div>
 <div id="belowTable" class="row">
