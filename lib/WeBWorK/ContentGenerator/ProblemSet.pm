@@ -267,6 +267,7 @@ sub info {
 		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
 	
+	print CGI::start_div({class=>"info-wrapper"});
 	print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 	
 	if ($editorURL) {
@@ -281,6 +282,7 @@ sub info {
 		print $pg->{body_text};
 	}
 	
+	print CGI::end_div();
 	print CGI::end_div();
 	
 	return "";

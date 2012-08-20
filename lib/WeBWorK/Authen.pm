@@ -230,10 +230,17 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
-		if (!defined($error) or !$error) {
-			$error = $r->maketext("Your authentication failed.  Please try again."
-				. "  Please speak with your instructor if you need help.")
-		}
+#		if (defined($error) ) {
+		    #### I dont really understand what is being checked for
+		    # here, but it was causing the following error to appear
+		    # on the login page the first time it was loaded up 
+		    # (before any information could have been submitted)
+		    # it may be something else though so this probably shouldnt
+
+
+#			$error = $r->maketext("Your authentication failed.  Please try again."
+#				. "  Please speak with your instructor if you need help.")
+#		}
 		$self->maybe_kill_cookie;
 		if ($error) {
 			MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
