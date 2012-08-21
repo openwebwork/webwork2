@@ -526,6 +526,27 @@ sub changeUserPassword{
     return $self->do(WebworkWebservice::CourseActions::changeUserPassword($self, $in));
 }
 
+# Expecting a hash $in composed of
+#{
+#	'userID' => 'admin',		# these are the usual
+#	'password' => 'admin',		# auth credentials
+#	'courseID' => 'Math',		# used to initiate a
+#	'session_key' => 'key',		# session.
+#	"studentid": 87492466,
+#	"effectiveUser": "eUser"
+#}
+
+
+
+sub sendEmail{
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    return $self->do(WebworkWebservice::CourseActions::sendEmail($self, $in));
+}
+
+
+
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
 # test responses
 
