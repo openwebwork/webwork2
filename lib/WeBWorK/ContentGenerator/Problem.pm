@@ -781,7 +781,7 @@ sub warnings {
 	} 
 	# print "proceeding to SUPER::warnings";
 	$self->SUPER::warnings();
-	print $self->{pgerrors};
+	#  print $self->{pgerrors};
 	"";  #FIXME -- let's see if this is the appropriate output.
 }
 
@@ -808,6 +808,11 @@ sub head {
 	if ($ce->{achievementsEnabled}) {
 	    print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$ce->{webworkURLs}->{htdocs}/css/achievements.css\"/>";	
 	}
+        # Javascript and style for knowls
+        print qq{
+           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script> 
+           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1573,6 +1578,9 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	# This adds the dragmath functionality
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();

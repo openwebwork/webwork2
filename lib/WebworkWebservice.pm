@@ -1,6 +1,8 @@
 #!/user/bin/perl -w
 
-
+# initialize SOAP interface as well
+use WebworkSOAP;
+use WebworkSOAP::WSDL;
 
 BEGIN {
     $main::VERSION = "2.4.9";

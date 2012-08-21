@@ -1,0 +1,48 @@
+/*
+ *  Start with math.css
+ */
+@import url(math.css);
+
+/*
+ *  Additions/changes to math.css for moodle.css
+ */
+
+BODY {
+	margin: 0px;    /* no margin (use #fullPage for that) */
+	padding: 0px;
+}
+
+#fullPage {
+	border: 10px solid white;  /* needed to get height correctly */
+	margin:0px;
+	padding:0px;
+}
+
+#masthead {
+       margin: 0 0 .5em 0;  /* add space below masthead */
+                            /* rather than above big-wrapper */
+}
+
+#big-wrapper {
+       top: 0px;            /* see above */
+                            /* (shouldn't it have been margin-top anyway?) */
+}
+
+#breadcrumbs {
+       margin-bottom: .5em;  /* put space here rather than in content */
+}
+
+#content {
+	margin: 0 0 0 10.4em;  /* see above */
+}
+
+#site-navigation {
+       position: relative;  /* can't use absolute and still get the */
+       left: auto;          /* correct height in #fullPage */
+       top: auto;
+       float: left;
+}
+
+#footer {
+       margin: 0 .5em .2ex 0;  /* don't indent this */
+}

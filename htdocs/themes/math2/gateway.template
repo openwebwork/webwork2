@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/templates/math2/gateway.template,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/math.css"/>
+<!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/gateway.css"/>
+<title><!--#path style="text" text=" : " textonly="1"--></title>
+<!--#head-->
+<script language="javascript" type="text/javascript" 
+  src="<!--#url type="webwork" name="htdocs"-->/js/gateway.js"></script>
+</head>
+<body bgcolor="white">
+<div id="masthead">
+	<div id="loginstatus">
+		<!--#loginstatus-->
+	</div>
+	<div id="logo">
+		<img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" />
+	</div>
+</div>
+<hr class="for-broken-browsers"/>
+<div id="big-wrapper">
+	<div id="breadcrumbs">
+		<!--#path style="text" text=" &#x2192; "-->
+	</div>
+	<div id="content">
+		
+		<!--#if can="info"-->
+		<!--<div id="page-info">-->
+			<!--<div class="info-box" id="fisheye">-->
+				<!--#info-->
+			<!--</div>-->
+		<!--</div>-->
+		<!--#endif-->
+		
+		<!-- [gateway] removed nav button to go up -->
+		
+		<!--#if can="title"-->
+		<h1><!--#title--></h1>
+		<!--#endif-->
+		
+		<!--#if can="message"-->
+			<div class="Message">
+				<!--#message-->
+			</div>
+		<!--#endif-->
+
+		<!--#if can="body"-->
+		<div class="Body">
+			<!--#body-->
+		</div>
+		<!--#endif-->
+		
+		<!--#if warnings="1"-->
+		<hr>
+		<div class="Warnings">
+			<!--#warnings-->
+		</div>
+		<!--#endif-->
+		
+		<!--#if can="message"-->
+			<div class="Message">
+				<!--#message-->
+			</div>
+		<!--#endif-->
+		
+	</div> <!-- content -->
+	<hr class="for-broken-browsers"/>
+	<div id="footer">
+		<p id="last-modified">Page generated at <!--#timestamp--></p>
+		<div id="copyright">
+			WeBWorK &#169; 1996-2011 <a href="http://webwork.maa.org/">The WeBWorK Project</a>
+		</div>
+	</div>
+	<!-- [gateway] removed left sidebar -->
+</div> <!-- big-wrapper -->
+
+</body>
+</html>

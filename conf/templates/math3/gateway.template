@@ -28,6 +28,8 @@
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 <script language="javascript" type="text/javascript" 
+  src="<!--#url type="webwork" name="htdocs"-->/js/dragmath.js"></script>
+<script language="javascript" type="text/javascript" 
   src="<!--#url type="webwork" name="htdocs"-->/js/gateway.js"></script>
 </head>
 <body bgcolor="white">

@@ -57,7 +57,7 @@ msgstr "This is the classlist editor page, where you can view and edit the recor
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_2"
-msgstr "tr: This assignment had a Reduced Credit Period that began %1 andended on the due date, %2.  During that period all additional work done counted %3\% of the original."
+msgstr "This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
 
 #
 msgid "_LOGIN_MESSAGE"
