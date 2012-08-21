@@ -91,7 +91,7 @@ sub initialize {
 	
 	    foreach my $userID (@users) {
 		my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
-		
+		next unless $userProblem;
 		#update grades and set flags
 		$userProblem->{flags} =~ s/needs_grading/graded/;
 		if  ($r->param("$userID.mark_correct")) {
@@ -156,6 +156,8 @@ sub body {
 	my $problem = $db->getMergedProblem($userID, $setID, $problemID); # checked
 	my $user = $db->getUser($userID);
 
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
+
 	#set up a silly problem to render the problem text
 	my $pg = WeBWorK::PG->new(
 	    $ce,
@@ -213,8 +215,11 @@ sub body {
 	    my $userID = $userRecord->user_id;
 	    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 	    my $userAnswerString;
+	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
 
-	    if ($userPastAnswerID) {
+	    next unless $userProblem;
+
+	    if ($userPastAnswerID && $userProblem) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		my @scores = split(//,$userPastAnswer->scores);
 		my @answers = split(/\t/,$userPastAnswer->answer_string);
@@ -281,7 +286,6 @@ sub body {
 		$userAnswerString = "There are no answers for this student.";
 	    }
 	    
-	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
 	    my $score = int(100*$userProblem->status);
 	    
 	    my $prettyName = $userRecord->last_name
@@ -331,6 +335,7 @@ sub body {
 #		);
 
 	    print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
+
 	}
 
 	print CGI::end_table();
