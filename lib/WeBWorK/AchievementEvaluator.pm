@@ -171,10 +171,10 @@ sub checkForAchievements {
 	    #build the cheevo message. New level messages are slightly different
 	    my $imgSrc;
 	    if ($achievement->{icon}) {
-		$imgSrc = $ce->{courseURLs}->{achievements}."/".$achievement->{icon};
+		$imgSrc = $ce->{server_root_url}.$ce->{courseURLs}->{achievements}."/".$achievement->{icon};
 
 	    } else {           
-		$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
+		$imgSrc = $ce->{server_root_url}.$ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 	    }
 
 	    $cheevoMessage .=  CGI::start_div({class=>'cheevopopupouter'});
