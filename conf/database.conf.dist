@@ -289,8 +289,6 @@ $dbLayouts{sql_single} = {
 		},
 	},
 
-
-
 	achievement_user => {
 		record => "WeBWorK::DB::Record::UserAchievement",
 		schema => "WeBWorK::DB::Schema::NewSQL::Std",
