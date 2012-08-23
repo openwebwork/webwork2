@@ -77,6 +77,12 @@ sub checkForAchievements {
 
     my $compartment = new Safe;
 
+    #initialize things that are ""
+    if (not $achievementPoints) {
+	$achievementPoints = 0;
+	$globalUserAchievement->achievement_points(0);
+    }
+
     #Methods alowed in the safe container
     $compartment->permit(qw(time localtime));
 
@@ -166,6 +172,7 @@ sub checkForAchievements {
 	    my $imgSrc;
 	    if ($achievement->{icon}) {
 		$imgSrc = $ce->{server_root_url}.$ce->{courseURLs}->{achievements}."/".$achievement->{icon};
+
 	    } else {           
 		$imgSrc = $ce->{server_root_url}.$ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 	    }

@@ -93,7 +93,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
 	margin-bottom: 1ex; 
 	margin-top: 0;
-	width: 90%;
+/*	width: 90%; */
 	overflow: hidden;
 }
 .info-box h2,
@@ -431,8 +431,8 @@ clear: both;
  * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-	float: right; /*was right*/
-	max-width: 40%;
+	float: right;
+/*	max-width: 40%; */
 	min-width: 0;
 	overflow: hidden; /*was auto*/
 	/*margin-right: -1px;*/
@@ -639,11 +639,12 @@ table caption{
 .info-wrapper{
 	float: right;
 	min-height: 100px;
-	width: 39%;
+	width: 33%;
 	overflow: hidden;
 	margin-left: 5px;
-	position: absolute;
-	left: 810px;
+	max-width: 40%;
+/*	position: absolute;
+	left: 810px; */
 }
 
 /*The following styles create the links which look like buttons, which replaced the image elements which were previously used for the navigation buttons*/
@@ -801,7 +802,7 @@ span.gray_button{
 }
 
 table.problem_sets_table {
-	width: 640px;
+	width: 680px;
 	float: left;
 	margin-bottom: 3%;
 	overflow:hidden/*was not here*/;
