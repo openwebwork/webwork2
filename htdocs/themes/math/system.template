@@ -25,6 +25,10 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math/math.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math/codemirror2/lib/codemirror.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math/codemirror2/mode/pg/pg.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math/codemirror2/mode/math/math.css">
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
