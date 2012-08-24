@@ -232,6 +232,7 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
+
 		if (!defined($error) or !$error) {
 
 			if (defined($r->param("user")) or defined($r->param("user_id"))) {
@@ -240,6 +241,7 @@ sub verify {
 			}
 
 		}
+
 		$self->maybe_kill_cookie;
 		if (defined($error) and $error) {
 			MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
