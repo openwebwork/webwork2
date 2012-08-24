@@ -785,6 +785,24 @@ sub links {
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Stats
+				# old stats
+				print CGI::start_li(); # Stats_old
+				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+				if ($userID ne $eUserID or defined $setID) {
+					print CGI::start_ul();
+					if ($userID ne $eUserID) {
+						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
+					}
+					if (defined $setID) {
+						# make sure we don't try to send a versioned
+						#    set id in to the Stats_old link
+						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
+						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
+						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
+					}
+					print CGI::end_ul();
+				}
+				print CGI::end_li(); # end Stats_old
 				
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
