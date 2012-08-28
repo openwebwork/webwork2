@@ -162,6 +162,7 @@ sub body {
 	}
 
 	#Get all the achievements
+
 	my @allAchievementIDs = $db->listAchievements;
 	if ( @allAchievementIDs ) { # bail if there are no achievements 
 		my @achievements = $db->getAchievements(@allAchievementIDs);
@@ -218,6 +219,7 @@ sub body {
 		} else { # no achievements 
 		print CGI::p("No achievements have been assigned yet");
 		}
+
 	print CGI::br();
 
 	print CGI::end_div();
