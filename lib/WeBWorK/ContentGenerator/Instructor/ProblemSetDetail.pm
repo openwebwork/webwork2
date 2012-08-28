@@ -1951,15 +1951,6 @@ sub body {
 	# if needed, get user problem records for all problems in one go
 	my (%UserProblems, %MergedProblems);
 	if ($forOneUser) {
-		my @userKeypartsRef = map { [$editForUser[0], $setID, $_] } @problemIDList;
-		# DBFIXME shouldn't need to get key list here
-		@UserProblems{@problemIDList} = $db->getUserProblems(@userKeypartsRef);
-		if ( ! $editingSetVersion ) {
-			@MergedProblems{@problemIDList} = $db->getMergedProblems(@userKeypartsRef);
-		} else {
-			my @userversionKeypartsRef = map { [$editForUser[0], $setID, $editingSetVersion, $_] } @problemIDList;
-			@MergedProblems{@problemIDList} = $db->getMergedProblemVersions(@userversionKeypartsRef);
-		}
 	}
 	
 	if (scalar @problemIDList) {
@@ -2052,23 +2043,51 @@ sub body {
 					problem_list => [$problemFile],     #  [$problemRecord->source_file],
 				);
 			}
-
 			# we want to show the "Try It" and "Edit It" links if there's a 
 			#    well defined problem to view; this is when we're editing a 
 			#    homework set, or if we're editing a gateway set version, or 
 			#    if we're editing a gateway set and the problem is not a 
-			#    group problem
+			#    group problem		
+
+			# we also want "needs grading" or "regrade" links for problems which
+			# have essay questions.  
+	
 			my $showLinks = ( ! $isGatewaySet || 
 					  ( $editingSetVersion || $problemFile !~ /^group/ ));
-
-
+			
+			my $gradingLink = "";
+			if ($showLinks) {
+			    my @setUsers = $db->listSetUsers($setID);
+			    my $gradeable = 0;
+			    my $needs_grading = 0;
+			    foreach my $userID (@setUsers)  {
+				my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
+				if ($userProblem->flags =~ /needs_grading/) {
+				    $needs_grading = 1;
+				    $gradeable = 1;
+				    last;
+				} elsif ($userProblem->flags =~ /graded/) {
+				    $gradeable=1;
+				}
+				
+			    }
+			    if ($gradeable) {
+				
+				my $gradeProblemPage = $urlpath->new(type => 'instructor_set_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$gradingLink = CGI::Tr({}, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs Grading" : "Regrade")));
+			}
+			
+		}
+		
+			
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 1}) .
-					CGI::Tr({}, CGI::td({}, problem_number_popup($problemID, $maxProblemNumber))) .
+				CGI::Tr({}, CGI::td({}, problem_number_popup($problemID, $maxProblemNumber))) .
 					CGI::Tr({}, CGI::td({}, 
 							    $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, $r->maketext("Edit it")) : "" )) .
 					CGI::Tr({}, CGI::td({}, 
 							    $showLinks ? CGI::a({href => $viewProblemLink, target=>"WW_View"}, $r->maketext("Try it") . ($forOneUser ? " (as $editForUser[0])" : "")) : "" )) .
+						      $gradingLink . 
 					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
 #					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
 					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
