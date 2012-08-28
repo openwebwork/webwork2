@@ -288,6 +288,15 @@ $dbLayouts{sql_single} = {
 			tableOverride => "${courseName}_achievement"
 		},
 	},
+	past_answer => {
+		record => "WeBWorK::DB::Record::PastAnswer",
+		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		params => { %sqlParams,
+			non_native => 1,
+	 	},
+    },
 
 	achievement_user => {
 		record => "WeBWorK::DB::Record::UserAchievement",
