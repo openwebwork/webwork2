@@ -64,19 +64,77 @@ sub process_and_log_answer{
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
 	my $set = $self->{set};
+	my $urlpath = $r->urlpath;
+	my $courseID = $urlpath->arg("courseID");
 	
 	my $scoreRecordedMessage = "";
 	my $pureProblem;
+	my $isEssay = 0;
+
+	$pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
+	
+	# logging student answers
+
+	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
+	if ( defined($answer_log ) and defined($pureProblem)) {
+		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+		        my $answerString = ""; my $scores = "";
+			my %answerHash = %{ $pg->{answers} };
+			# FIXME  this is the line 552 error.  make sure original student ans is defined.
+			# The fact that it is not defined is probably due to an error in some answer evaluator.
+			# But I think it is useful to suppress this error message in the log.
+			foreach (sortByName(undef, keys %answerHash)) {
+				my $orig_ans = $answerHash{$_}->{original_student_ans};
+				my $student_ans = defined $orig_ans ? $orig_ans : '';
+				$answerString  .= $student_ans."\t";
+				# answer score *could* actually be a float, and this doesnt
+				# allow for fractional answers :(
+				$scores .= $answerHash{$_}->{score} >= 1 ? "1" : "0";
+				$isEssay = 1 if $answerHash{$_}->{type} eq 'essay';
+
+			}
+
+			$answerString = '' unless defined($answerString); # insure string is defined.
+			
+			my $timestamp = time();
+			writeCourseLog($self->{ce}, "answer_log",
+			        join("",
+						'|', $problem->user_id,
+						'|', $problem->set_id,
+						'|', $problem->problem_id,
+						'|', $scores, "\t",
+						$timestamp,"\t",
+						$answerString,
+					),
+			);
+
+			#add to PastAnswer db
+			my $pastAnswer = $db->newPastAnswer();
+			$pastAnswer->course_id($courseID);
+			$pastAnswer->user_id($problem->user_id);
+			$pastAnswer->set_id($problem->set_id);
+			$pastAnswer->problem_id($problem->problem_id);
+			$pastAnswer->timestamp($timestamp);
+			$pastAnswer->scores($scores);
+			$pastAnswer->answer_string($answerString);
+
+			$db->addPastAnswer($pastAnswer);
+
+			
+		}
+	}
+
+
 	if ($submitAnswers) {
 		# get a "pure" (unmerged) UserProblem to modify
 		# this will be undefined if the problem has not been assigned to this user
-		$pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
+
 		if (defined $pureProblem) {
 			# store answers in DB for sticky answers
 			my %answersToStore;
 			my %answerHash = %{ $pg->{answers} };
 			$answersToStore{$_} = $self->{formFields}->{$_}  #$answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  Don't use it!!
-				foreach (keys %answerHash);
+			foreach (keys %answerHash);
 			
 			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
 			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
@@ -87,7 +145,7 @@ sub process_and_log_answer{
 			# Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
 			my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}, @extra_answer_names);
 			my $answerString = encodeAnswers(%answersToStore,
-				 @answer_order);
+							 @answer_order);
 			
 			# store last answer to database
 			$problem->last_answer($answerString);
@@ -106,6 +164,16 @@ sub process_and_log_answer{
 				$pureProblem->attempted(1);
 				$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
+
+				#add flags for an essay question.  If its an essay question and 
+				# we are submitting then there could be potential changes, and it should 
+				# be flaged as needing grading
+
+				if ($isEssay && $pureProblem->{flags} !~ /needs_grading/) {
+				    $pureProblem->{flags} =~ s/graded,//;
+				    $pureProblem->{flags} .= "needs_grading,";
+				}
+
 				if ($db->putUserProblem($pureProblem)) {
 					$scoreRecordedMessage = "Your score was recorded.";
 				} else {
@@ -138,36 +206,6 @@ sub process_and_log_answer{
 		}
 	}
 	
-	# logging student answers
-
-	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
-	if ( defined($answer_log ) and defined($pureProblem)) {
-		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
-		        my $answerString = ""; my $scores = "";
-			my %answerHash = %{ $pg->{answers} };
-			# FIXME  this is the line 552 error.  make sure original student ans is defined.
-			# The fact that it is not defined is probably due to an error in some answer evaluator.
-			# But I think it is useful to suppress this error message in the log.
-			foreach (sortByName(undef, keys %answerHash)) {
-				my $orig_ans = $answerHash{$_}->{original_student_ans};
-				my $student_ans = defined $orig_ans ? $orig_ans : '';
-				$answerString  .= $student_ans."\t";
-				$scores .= $answerHash{$_}->{score} >= 1 ? "1" : "0";
-			}
-			$answerString = '' unless defined($answerString); # insure string is defined.
-			writeCourseLog($self->{ce}, "answer_log",
-			        join("",
-						'|', $problem->user_id,
-						'|', $problem->set_id,
-						'|', $problem->problem_id,
-						'|', $scores, "\t",
-						time(),"\t",
-						$answerString,
-					),
-			);
-			
-		}
-	}
 	
 	$self->{scoreRecordedMessage} = $scoreRecordedMessage;
 	return $scoreRecordedMessage;
