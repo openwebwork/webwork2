@@ -163,6 +163,12 @@ sub body {
 
 	#Get all the achievements
 	my @allAchievementIDs = $db->listAchievements; 
+
+	if (not @allAchievementIDs) {
+	    print ("There aren't any achievements!!");
+	    return;
+	}
+
 	my @achievements = $db->getAchievements(@allAchievementIDs);
 
 	@achievements = sortAchievements(@achievements);
