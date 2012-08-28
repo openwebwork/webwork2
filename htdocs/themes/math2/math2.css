@@ -93,6 +93,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
 	margin-bottom: 1ex; 
 	margin-top: 0;
+	width: 90%;
 	overflow: hidden;
 }
 .info-box h2,
@@ -155,6 +156,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 
 .Message {
 background-color:#ddd;
+clear: both;
 }
 /* --- Fisheye view (id) ---------------------------------------------------- */
 
@@ -278,13 +280,41 @@ background-color:#ddd;
 }*/
 /* [ww] instead of a search form, we want the loginstatus there */
 /*#masthead form {*/
-#masthead #loginstatus {
+
+/*Loginstatus -- the element fixed on the top right corner of the page, which tells the user whether they are logged in or not, and provides them with a log out link if they are logged in.*/
+
+#loginstatus {
+	color: white;
+	top: -75px;
+	left: 1170px;
+	width: 200px;
 	float: right;
+	text-align: center;
 	padding: 0;
 	margin: 1ex .5em .1ex .1em;
 	font-size: smaller;
+} 
+
+/*Relative Positioning -- a alternate style for the loginstatus which uses relative positioning.  Tested, but was decided that it didn't work great. Feel free to uncomment if you want to try it out.*/
+
+/*#loginstatus {
+	color: white;
+	position: relative;
+	top: -140px;
+	left: 470px;
+	width: 150px;
+	text-align: center;
+	padding: 0;
+	margin: 1ex .5em .1ex .1em;
+	font-size: smaller;
+}*/
+
+
+#loginstatus a{
+	color: white;
 }
-#masthead #loginstatus #Nav {
+
+#loginstatus #Nav {
 	padding: 1ex;
 }
 
@@ -401,10 +431,11 @@ background-color:#ddd;
  * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-	float: right;
-	width: 40%;
-	overflow: auto;
-	margin-right: -1px;
+	float: right; /*was right*/
+	min-width: 0;
+	width:100%;
+	overflow: hidden; /*was auto*/
+	/*margin-right: -1px;*/
 	background-color: #fff;
 }
 #InfoPanel ol {
@@ -427,18 +458,22 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.WarningMessage { background-color: #F55; padding: 3px 3px 3px 3px; }
+div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-div.ResultsWithError { color: #F55; background-color: inherit; } /* red */
+div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
-span.WarningMessage { background-color: #F55; padding: 3px 3px 3px 3px; }
+label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+label.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-span.ResultsWithError { color: #F55; background-color: inherit; } /* red */
+span.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
-span.incorrect { color: #F55; background-color: inherit; } /* red */
+span.incorrect { color: #FF9494; background-color: inherit; } /* red */
 input.correct   { color:inherit; background-color: #8F8; } /* green */
-input.incorrect { color;inherit; background-color: #F55; } /* red */
+input.incorrect { color;inherit; background-color: #FF9494; } /* red */
 
 /* styles used by WeBWorK::HTML::ScrollingRecordList */
 div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
@@ -513,3 +548,296 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 .Audit { font-style: normal; color: purple; background-color: inherit; }
 .Enrolled { font-weight: normal; color: black; background-color: inherit; }
 .Drop { font-style: italic; color: gray; background-color: inherit; }
+
+/*Styles for the login form -- mainly small alignment changes for all of the input elements on the login page*/
+
+#login_form input {
+	margin-top: 7px;
+}
+
+#login_form label{
+	margin-right: 2px;
+}
+
+#login_form #pswd_label{
+	margin-right: 4px;
+}
+
+#login_form #rememberme{
+	margin-left: 75px;
+}
+
+/*Styles for the edit forms, found on the homework sets editor page*/
+
+/*Following are mostly alignment fixes for the input elements and their lables on this page.*/
+.edit_form  input,select{
+	margin-top: 5px;
+}
+
+.edit_form label, .edit_form span{
+	margin-left: 40px;
+}
+
+.edit_form label.radio_label{
+	margin-left: 0px;
+}
+
+.edit_form  span#filter_err_msg{
+	display: none;
+}
+
+/*Styles for the classlist editor page*/
+
+/*The styles here correctly align the table elements in the set table*/
+.set_table{
+	margin-right: 5px;
+}
+
+.set_table td{
+	padding-right: 5px;
+}
+
+.set_table th{
+	text-align: center;
+	padding-right: 5px;
+	padding-left: 5px;
+}
+
+.set_table label{
+	margin-left: 0px;
+}
+
+/*General styles, for elements such as table captions input buttons, columns, etc.*/
+
+/*General styles for table captions*/
+table caption{
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+/*Styling the content that is found in the login page.*/
+.p_content{
+	width: 640px;
+}
+
+/*General styles for all input buttons*/
+.button_input{
+	margin-right: 5px;
+	margin-left: 5px;
+}
+
+/*General styles for all column divs, for pages which use column layouts*/
+.column {
+	float: left;
+	width: 50%;
+	height: 22%;
+	overflow: hidden;
+	margin-top: 10px;
+}
+
+/*General styles for the wrapper div element which goes around the InfoBoxes*/
+.info-wrapper{
+	float: right;
+	min-height: 100px;
+	max-width: 40%;
+	overflow: hidden;
+	margin-left: 5px;
+	left: 810px;
+}
+
+/*The following styles create the links which look like buttons, which replaced the image elements which were previously used for the navigation buttons*/
+a.nav_button{
+	color: black;
+	background-color: #DDDDDD;
+	text-decoration: none;
+	text-align: center;
+	font-size: 15px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px;
+	border-style: outset;
+}
+
+a.nav_button:hover{
+	background-color: #EEEEEE;
+	border-color: #00ADEE;
+}
+
+a.nav_button:active{
+	border-style: inset;
+}
+
+span.gray_button{
+	color: black;
+	background-color: #DDDDDD;
+	text-decoration: none;
+	text-align: center;
+	font-size: 15px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px;
+	border-style: outset;
+	opacity: 0.3;
+}
+
+/*an ID for elements that should have no style, if it is necessary to specifically specify such an element.*/
+#none{
+	/*Please do not do anything with elements with id "none"*/
+}
+
+/*Styles for the PGProblemEditor Page
+
+#editor{
+	background-color: #FFFFFF;
+}
+
+#editor #source_and_options{
+	float: left;
+	width: 50%;
+}
+
+#editor #problemContents_label{
+	text-align: center;
+	font-weight: bold;
+	text-decoration: underline;
+	margin-left: 30%;
+}
+
+#editor #problemContents_id{
+	width: 100%;
+	height: 50%;
+}
+
+#editor .editor_form{
+	margin-left: 40px;
+}
+
+#editor #form_div{
+	float: left;
+	width: 100%;
+}
+
+/*Styles specifically for the problem viewer*/
+
+#problem_viewer_form{
+	margin-left: 10px;
+	float: left;
+	width: 45%;
+	height: 100%;
+	border-left: solid;
+	border-width: 1px;
+}
+
+#problem_viewer_form>h3{
+	margin-left: 37%;
+}
+
+#problem_viewer_form #viewer_span{
+	margin-left: 10%;
+}
+
+#problem_viewer_form #reload_button{
+	margin-left: 20%;
+	margin-top: 5%;
+}
+
+#problem_viewer_form #problem_viewer{
+	width: 60%;
+	background-color: #E8E8E8;
+	margin-left: 20%;
+	margin-top: 5%;
+	padding: 1px;
+}
+
+#problem_viewer_form #problem_viewer_content{
+	border-style: solid;
+	padding: 5%;
+	border-width: 1px;
+}
+
+#problem_viewer_form #viewer_note{
+	margin-top: 10%;
+	margin-left: 10%;
+	margin-right: 10%;
+}*/
+
+#editor{
+	width: 585px;
+}
+
+#editor .pg_editor_input_span{
+	margin-bottom: 10px;
+	display: none;
+}
+
+#editor .pg_editor_input_div{
+	margin-top: 20px;
+	margin-left: 50px;
+}
+
+#editor #submit_input_div{
+	margin-top: 10px;
+	clear: both;
+}
+
+#pg_editor_header {
+    left: 790px;
+    position: absolute;
+    top: 130px;
+}
+
+#pg_editor_frame_id{
+	height: 474px;
+    left: 785px;
+    position: absolute;
+    top: 182px;
+    width: 50%;
+	overflow: scroll;
+}
+
+/*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
+
+.radio_span{
+	visibility: hidden;
+}
+
+table.problem_sets_table {
+	width: 640px;
+	float: left;
+	margin-bottom: 3%;
+	overflow:hidden/*was not here*/;
+}
+
+table.problem_sets_table caption {
+}
+
+table.problem_sets_table th{
+	width: 320px;
+	padding-bottom: 10px;
+}
+
+table.problem_sets_table td{
+	width: 320px;
+}
+
+div.problem_sets_options {
+	clear: both;
+	margin: 1% 1% 1% 1%;
+}
+
+/*This is the styling specifically for the tables of problems displayed for each problem set page*/
+table.problem_set_table{
+	margin-top: 30px;
+	#width: 640px;
+	text-align: left;
+	float: left;
+}
+table.problem_set_table th{
+	padding-right: 30px;
+}
+table.problem_set_table td{
+	padding-right: 30px;
+}
+/*BUG FIXES*/
+
+table#grades_table pre{
+	float: left;
+}

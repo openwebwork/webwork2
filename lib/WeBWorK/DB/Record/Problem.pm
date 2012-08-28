@@ -33,8 +33,6 @@ BEGIN {
 		source_file  => { type=>"TEXT" },
 		value        => { type=>"INT" },
 		max_attempts => { type=>"INT" },
-	        # a field for flags relating to this problem  
-	        flags => { type =>"TEXT" },
 	);
 }
 

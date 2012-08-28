@@ -230,6 +230,7 @@ sub head{
     	print "<link rel='stylesheet' href='$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
         print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
 	print "<link rel='stylesheet' type='text/css' href='$site_url/js/lib/vendor/jquery-ui-for-classlist3/css/ui-lightness/jquery-ui-1.8.21.custom.css' > </style>";
+	"";
 }
 
 # output_JS subroutine

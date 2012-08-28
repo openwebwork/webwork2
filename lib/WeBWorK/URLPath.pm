@@ -84,8 +84,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_list2                 /$courseID/instructor/sets2/
  instructor_set_detail2               /$courseID/instructor/sets2/$setID/ #not created yet
  instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
-
- instructor_set_grader                /$courseID/instructor/grader/$setID/$problemID
  
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
@@ -123,6 +121,10 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
+ 
+ instructor_statistics_old               /$courseID/instructor/stats_old/
+ instructor_set_statistics_old           /$courseID/instructor/stats_old/set/$setID/
+ instructor_user_statistics_old          /$courseID/instructor/stats_old/student/$userID/
  
  instructor_progress                  /$courseID/instructor/StudentProgress/
  instructor_set_progress              /$courseID/instructor/StudentProgress/set/$setID/
@@ -326,9 +328,8 @@ our %pathTypes = (
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_answer_log instructor_preflight instructor_statistics
+			instructor_answer_log instructor_preflight instructor_statistics instructor_statistics_old
 			instructor_progress			
-                        instructor_set_grader
 		/ ],
 		match   => qr|^instructor/|,
 		capture => [ qw// ],
@@ -422,17 +423,6 @@ our %pathTypes = (
 		produce => 'users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet',
 	},
-
-        instructor_set_grader => {
-		name    => 'Manual Grader for Set $setID Problem $problemID',
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^grader/([^/]+)/([^/]+)/|,
-		capture => [ qw/setID problemID/ ],
-		produce => 'grader/$setID/$problemID',
-		display => 'WeBWorK::ContentGenerator::Instructor::ProblemGrader',
-	},
-
 	
 	################################################################################
 	
@@ -682,6 +672,34 @@ our %pathTypes = (
 		capture => [ qw/statType userID/ ],
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
+	},
+	
+		instructor_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_set_statistics_old instructor_user_statistics_old/ ],
+		match   => qr|^stats_old/|,
+		capture => [ qw// ],
+		produce => 'stats_old/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+	instructor_set_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_statistics_old',
+		kids    => [ qw// ],
+		match   => qr|^(set)/([^/]+)/|,
+		capture => [ qw/statType setID/ ],
+		produce => 'set/$setID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+	instructor_user_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_statistics_old',
+		kids    => [ qw// ],
+		match   => qr|^(student)/([^/]+)/|,
+		capture => [ qw/statType userID/ ],
+		produce => 'student/$userID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
 	},
 
 	################################################################################
