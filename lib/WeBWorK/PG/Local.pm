@@ -360,8 +360,7 @@ EOF
 		# process student answers
 		############################################################################
 		
-	        #warn "PG: processing student answers\n";
-
+		#warn "PG: processing student answers\n";
 		$translator->process_answers($formFields);
 
         ############################################################################

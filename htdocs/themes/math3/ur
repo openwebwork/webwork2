@@ -129,5 +129,10 @@
             WeBWorK &#169; 2000-2007 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a>
         </div>
     </footer>
+
+    <!--#if can="output_JS"-->
+    	<!--#output_JS-->
+    <!--#endif-->
+
 </body>
 </html>

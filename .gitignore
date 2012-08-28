@@ -9,4 +9,5 @@ tmp/*
 logs/*
 conf/*.conf
 conf/*.apache2-config
-courses.dist/*
+htdocs/site_info.txt
+#courses.dist/*
