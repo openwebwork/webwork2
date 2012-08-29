@@ -84,8 +84,6 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_list2                 /$courseID/instructor/sets2/
  instructor_set_detail2               /$courseID/instructor/sets2/$setID/ #not created yet
  instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
-
- instructor_set_grader                /$courseID/instructor/grader/$setID/$problemID
  
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
@@ -332,7 +330,6 @@ our %pathTypes = (
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_answer_log instructor_preflight instructor_statistics instructor_statistics_old
 			instructor_progress			
-                        instructor_set_grader
 		/ ],
 		match   => qr|^instructor/|,
 		capture => [ qw// ],
@@ -426,17 +423,6 @@ our %pathTypes = (
 		produce => 'users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet',
 	},
-
-        instructor_set_grader => {
-		name    => 'Manual Grader for Set $setID Problem $problemID',
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^grader/([^/]+)/([^/]+)/|,
-		capture => [ qw/setID problemID/ ],
-		produce => 'grader/$setID/$problemID',
-		display => 'WeBWorK::ContentGenerator::Instructor::ProblemGrader',
-	},
-
 	
 	################################################################################
 	
