@@ -77,6 +77,12 @@ sub checkForAchievements {
 
     my $compartment = new Safe;
 
+    #initialize things that are ""
+    if (not $achievementPoints) {
+	$achievementPoints = 0;
+	$globalUserAchievement->achievement_points(0);
+    }
+
     #Methods alowed in the safe container
     $compartment->permit(qw(time localtime));
 

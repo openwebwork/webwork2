@@ -598,8 +598,46 @@ print
 			                      : '-'}			                   
 			                       @problemIDs 
 			]
-		)),
-		CGI::end_table();
+			));
+
+	#show a grading link if necc
+	my $gradingLink = "";
+	my @setUsers = $db->listSetUsers($setName);
+	my @GradeableRows;
+	my $showGradeRow = 0;
+	unshift (@GradeableRows, CGI::td({}, "manual grader"));
+	foreach my $problemID (@problemIDs) {
+	    my $gradeable = 0;
+	    my $needs_grading = 0;
+	    foreach my $userID (@setUsers)  {
+		    my $userProblem = $db->getUserProblem($userID,$setName,$problemID);
+		    if ($userProblem->flags =~ /needs_grading/) {
+			$needs_grading = 1;
+			$gradeable = 1;
+			$showGradeRow = 1;
+			last;
+		    } elsif ($userProblem->flags =~ /graded/) {
+			$gradeable=1;
+			$showGradeRow = 1;
+		    }
+		    
+		}
+		if ($gradeable) {
+		    
+		    my $gradeProblemPage = $urlpath->new(type => 'instructor_set_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
+		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs<br>Grading" : "Regrade")));
+		    
+		}  else {
+		    push (@GradeableRows, CGI::td());
+		}
+	}
+	
+	if ($showGradeRow) {
+	    print CGI::Tr(@GradeableRows);
+	}
+
+
+	print CGI::end_table();
 
 #####################################################################################
 # table showing percentile statistics for scores and success indices
