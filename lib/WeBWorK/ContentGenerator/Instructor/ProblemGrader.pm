@@ -85,7 +85,7 @@ sub initialize {
 
 	# if we need to gothrough and update grades
 	if ($r->param('assignGrades')) {
-	    $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems have been assigned to all current users."));
+	    $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Grades have been saved for all current users."));
 
 	    my @users = $db->listUsers;
 	
@@ -187,10 +187,17 @@ sub body {
 
 	print CGI::p($pg->{body_text});
 
-	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
+	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), name=>"classlist" });
 	 
+	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All Correct',
+				   onClick => "for (i in document.classlist.elements)  { 
+	                       if (document.classlist.elements[i].className == 'mark_correct') { 
+	                           document.classlist.elements[i].checked = true
+	                       }
+	                    }" });
+
 	print CGI::start_table({});
-	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Student Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct", "&nbsp;", "Score (%)"]));
+	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Student Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)"]));
 	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	# get user records
@@ -265,7 +272,7 @@ sub body {
 
 			my $htmlout = $pg->{body_text};
 
-			$htmlout =~ s/\(0 pts\)//;
+			$htmlout =~ s/^\(0.*\<BR\>//;
 
 			$userAnswerString .= CGI::p($htmlout);
 			
@@ -300,14 +307,15 @@ sub body {
 	    print CGI::Tr({-valign=>"top"}, 
 			  CGI::td({},[
 				      $userRecord->section,
-				      CGI::div({class=>$statusClass, style=>  
-						    $userProblem->flags =~ /needs_grading/ 
-						    ? "font-style:italic" :
-						    "font-style:normal"}, $prettyName), " ", 
+				      CGI::div({class=>
+			$userProblem->flags =~ /needs_grading/ 
+				   ? "NeedsGrading $statusClass" :
+				     $statusClass}, $prettyName), " ", 
 				      
 				      $userAnswerString, " ",
 				      CGI::checkbox({
 					  type=>"checkbox",
+					  class=>"mark_correct",
 					  name=>"$userID.mark_correct",
 					  value=>"1",
 					  label=>"",
