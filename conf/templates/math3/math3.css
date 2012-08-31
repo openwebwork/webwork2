@@ -547,6 +547,8 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 .Audit { font-style: normal; color: purple; background-color: inherit; }
 .Enrolled { font-weight: normal; color: black; background-color: inherit; }
 .Drop { font-style: italic; color: gray; background-color: inherit; }
+/* text colors for problem grader page */
+.NeedsGrading { font-weight: bold; }
 
 /*Styles for the login form -- mainly small alignment changes for all of the input elements on the login page*/
 
