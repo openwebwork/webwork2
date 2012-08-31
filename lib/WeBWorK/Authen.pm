@@ -233,7 +233,7 @@ sub verify {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
 
-		if (!defined($error) or !$error) {
+		if (defined($error) or !$error) {  #FIXME
 
 			if (defined($r->param("user")) or defined($r->param("user_id"))) {
 				$error = $r->maketext("Your authentication failed.  Please try again."

@@ -432,9 +432,8 @@ clear: both;
 #InfoPanel {
     font-size:100%;
 	float: right;
-/*	max-width: 40%; */
 	min-width: 0;
-	overflow: hidden; /*was auto*/
+	overflow: auto; /*was auto*/
 	/*margin-right: -1px;*/
 	background-color: #fff;
 }
@@ -640,10 +639,10 @@ table caption{
 	float: right;
 	min-height: 100px;
 	width: 33%;
-	overflow: hidden;
 	margin-left: 5px;
 	max-width: 40%;
 /*	position: absolute;
+	overflow: hidden;
 	left: 810px; */
 }
 
