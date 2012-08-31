@@ -246,8 +246,7 @@ $problemDefaults{max_attempts} = -1;
 # 	pgproblemeditor2   => 1,
 # 	pgproblemeditor3   => 1,
 
-
-);
+ );
 
 ################################################################################
 # Directory for temporary files
