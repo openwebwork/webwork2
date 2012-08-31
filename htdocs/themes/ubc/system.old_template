@@ -5,8 +5,7 @@
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-20012 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/templates/math2/system.template,v 1.2 2008/06/26 19:46:02 gage Exp $
+# Copyright (c) 2011 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -19,31 +18,27 @@
 # Artistic License for more details.
 ################################################################################
 -->
-<!--
-	Now altered to carry out most of the output operations in Problem.pm, as well as call general output subroutines.
-	-ghe3
--->
+
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/ubc.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/lib/codemirror.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/pg/pg.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/math/math.css">
 
-<!--#if can="output_tabber_CSS"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
-<!--#endif-->
-<!--#if can="output_jquery_ui_CSS"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
-<!--#endif-->
-<!--#if can="output_JS"-->
-	<!--#output_JS-->
-<!--#endif-->
 <title><!--#path style="text" text=" : " textonly="1"--></title>
-
+<script type="text/javascript">
+<!--//--><![CDATA[//><!--
+window.google_analytics_uacct = "UA-25098488-1";
+//--><!]]>
+</script>
+<script type="text/javascript">
+<!--//--><![CDATA[//><!--
+var _gaq = _gaq || [];_gaq.push(["_setAccount", "UA-25098488-1"]);_gaq.push(["_trackPageview"]);(function() {var ga = document.createElement("script");ga.type = "text/javascript";ga.async = true;ga.src = ("https:" == document.location.protocol ? "https://ssl" : "http://www") + ".google-analytics.com/ga.js";var s = document.getElementsByTagName("script")[0];s.parentNode.insertBefore(ga, s);})();
+//--><!]]>
+</script>
 <!--#head-->
     <style type="text/css">
       .body {
@@ -173,7 +168,7 @@
 		<!--#endif-->	
 			<!--#if can="nav"-->
 			<div class="Nav">
-				<!--#nav style="images" imageprefix="/webwork2_files/themes/ubc/images" imagesuffix=".gif" separator=" | "-->
+				<!--#nav style="images" imageprefix="/webwork2_files/themes/ubc/images" imagesuffix=".gif" separator="  "-->
 			</div>
 			<!--#endif-->
 			<!--#if can="title"-->
@@ -187,107 +182,10 @@
 				</div>
 			<!--#endif-->
 
-<!-- changes -->
-		    <hr style="clear:both"/>
-	
-  
-			<!--#if can="post_header_text"-->
-				<!--#post_header_text-->
-				<hr style="clear:both"/>
-			<!--#endif-->
-			
-			
-<!--			      ==============BEGIN BODY OF PROBLEM===============      -->
-			<!--#if warnings="1"-->
-				  <div class="Warnings" >
-				  <p style="font-size:larger">
-				  Warning -- there may be something wrong with this question. Please inform your instructor
-				  including the warning messages below.
-				  </p>
-				  </div>
-             <!--#endif-->
-             
-			 <!--#if can="output_problem_body"--> 
-				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
-				  <div class="Body" style="background-color:#ffffff">
-	
-					<!--#if can="output_custom_edit_message"-->
-						<!--#output_custom_edit_message-->
-					<!--#endif-->
-					<!--#if can="output_summary"-->
-					    <div>
-							<!--#output_summary-->
-						</div>
-					<!--#endif-->
-					
-					<!--#if can="output_hidden_info"-->
-						<!--#output_hidden_info-->
-					<!--#endif-->
-
-					<!--#if can="output_form_start"-->
-						<!--#output_form_start-->
-						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
-							<div class="problem">
-								<!--#if can="output_problem_body"-->
-									<!--#output_problem_body-->
-								<!--#endif-->
-								<!--#if can="output_message"-->
-									<!--#output_message-->
-								<!--#endif-->
-								<!--#if can="output_editorLink"-->
-									<!--#output_editorLink-->
-								<!--#endif-->
-							</div>
-						<!--#endif-->
-						<!--#if can="output_checkboxes" can="output_submit_buttons"-->
-							<p>
-								<!--#if can="output_checkboxes"-->
-									<!--#output_checkboxes-->
-								<!--#endif-->
-								<!--#if can="output_submit_buttons"-->
-									<!--#output_submit_buttons-->
-								<!--#endif-->
-							</p>
-						<!--#endif-->
-						<!--#if can="output_score_summary"-->
-							<div class="scoreSummary">
-								<!--#output_score_summary-->
-							</div>
-						<!--#endif-->
-						<!--#if can="output_misc"-->
-							<!--#output_misc-->
-						<!--#endif-->
-						</form>
-					<!--#endif-->
-				<!-- inserted problem piece by piece -->
-				<!--#if can="info"-->
-			  		<!--  styles could be different for different pages so they are not set here -->
-					<div class="InfoPanel">
-						<!--#info-->
-					</div>
-		    	<!--#endif-->
-
-				</div>	  
-			<!-- ====  end printing body parts   -->
-			<!--#else-->
-			<!-- ==== couldn't print body parts so we'll print entire body -->	
-				  <div class="Body" style="background-color:#ffffff; float:left;">
-				  	<!--#body-->
-				  </div>
-				  <!-- inserted body as a whole -->
-				<!--#if can="info"-->
-			  		<!--  styles could be different for different pages so they are not set here -->
-					<div class="InfoPanel">
-					<!--#info-->
-					</div>
-		    	<!--#endif-->
-
-			<!--#endif-->  
-<!--			      ==============END BODY OF PROBLEM===============      -->
-			
-			
-			
-			
+			<!--#if can="body"-->
+			<div class="Body">
+				<!--#body-->
+			</div>
 			<!--#endif-->
 			<!--#if warnings="1"-->
 			<hr>
@@ -301,30 +199,20 @@
 				</div>
 			<!--#endif-->
 		</td>
+		<!--#if can="info"-->
+		<td class="InfoPanel">
+			<!--<div class="Info">-->
+				<!--#info-->
+			<!--</div>-->
+		</td>
+		<!--#endif-->
  	</tr>
- 	
- 	<!-- changed -->
- 				<!--#if can="output_past_answer_button" can="output_email_instructor"-->
-				<div class="problemFooter">
-					<!--#if can="output_past_answer_button"-->
-						<!--#output_past_answer_button-->
-					<!--#endif-->
-					<!--#if can="output_email_instructor"-->
-						<!--#output_email_instructor-->
-					<!--#endif-->
-				</div>
-			<!--#endif-->
-	 	<!-- end changed -->
-
-	
  	<tr class="footer">
  	    <td class = "Timestamp", colspan=3>
  	        Updated: <!--#timestamp-->
  	    </td>
  	</tr>
 </table>
-
-
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/lib/codemirror.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/pg/pg.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/math/math.js"></script>

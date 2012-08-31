@@ -1951,15 +1951,6 @@ sub body {
 	# if needed, get user problem records for all problems in one go
 	my (%UserProblems, %MergedProblems);
 	if ($forOneUser) {
-	    my @userKeypartsRef = map { [$editForUser[0], $setID, $_] } @problemIDList;
-	    # DBFIXME shouldn't need to get key list here
-	    @UserProblems{@problemIDList} = $db->getUserProblems(@userKeypartsRef);
-	    if ( ! $editingSetVersion ) {
-		@MergedProblems{@problemIDList} = $db->getMergedProblems(@userKeypartsRef);
-	    } else {
-		my @userversionKeypartsRef = map { [$editForUser[0], $setID, $editingSetVersion, $_] } @problemIDList;
-		@MergedProblems{@problemIDList} = $db->getMergedProblemVersions(@userversionKeypartsRef);
-	    }
 	}
 	
 	if (scalar @problemIDList) {

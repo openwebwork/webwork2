@@ -225,11 +225,19 @@ $problemDefaults{value} = 1;
 $problemDefaults{max_attempts} = -1;   
 
 ################################################################################
+# "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
+################################################################################
+
+# $pg{specialPGEnvironmentVars}{DragMath} = 0;
+
+################################################################################
 # Temporary hack for displaying the different versions of the editors
 ################################################################################
 # These configurations can be placed in course.conf file to tune the behavior for individual courses
 # The items below can be used to override the settings in defaults.config
 # One can also use $showeditors{classlisteditor1}=0; to override
+# These will disappear (or at least decrease in number) once the final editor verisons
+# are determined. 
  %showeditors = (
  	classlisteditor1   => 1,
 # 	classlisteditor2   => 1,
@@ -246,7 +254,7 @@ $problemDefaults{max_attempts} = -1;
 # 	pgproblemeditor2   => 1,
 # 	pgproblemeditor3   => 1,
 
- );
+);
 
 ################################################################################
 # Directory for temporary files

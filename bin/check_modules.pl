@@ -61,9 +61,11 @@ my @modulesList = qw(
 	Getopt::Std
 	HTML::Entities
 	HTML::Tagset
+	HTML::Template
 	IO::File
 	Iterator
 	Iterator::Util
+	JSON
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
 	Mail::Sender

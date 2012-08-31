@@ -56,12 +56,12 @@ my %NPLtables = (
  path => 'NPL-path',
  pgfile => 'NPL-pgfile',
  keyword => 'NPL-keyword',
- pgfile-keyword => 'NPL-pgfile-keyword',
+ pgfile_keyword => 'NPL-pgfile-keyword',
  textbook => 'NPL-textbook',
  chapter => 'NPL-chapter',
  section => 'NPL-section',
  problem => 'NPL-problem',
- pgfile-problem => 'NPL-pgfile-problem',
+ pgfile_problem => 'NPL-pgfile-problem',
 );
 
 
@@ -97,19 +97,20 @@ sub dbug {
 
 ##Figure out which set of tables to use
 
+my %tables;
 if( -e "$libraryRoot/VERSION") {
   include("$libraryRoot/VERSION");
   if($OPL_VERSION eq '2.5.0') {
-	my %tables = %OPLtables;
+	%tables = %OPLtables;
 	my $lib = 'OPL';
 	print "Got OPLtables!\n";
   } else {
-	my %tables = %NPLtables;
+	%tables = %NPLtables;
 	my $lib = 'NPL';
 	print "Got NPLtables! (1)\n";
   }
-else {
-	my %tables = %NPLtables;
+} else {
+	%tables = %NPLtables;
 	my $lib = 'NPL';
 	print "Got NPLtables! (2)\n";
 }
