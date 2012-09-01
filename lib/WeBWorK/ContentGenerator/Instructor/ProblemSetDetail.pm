@@ -2073,7 +2073,7 @@ sub body {
 			    }
 			    if ($gradeable) {
 				
-				my $gradeProblemPage = $urlpath->new(type => 'instructor_set_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 				$gradingLink = CGI::Tr({}, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs Grading" : "Regrade")));
 			}
 			

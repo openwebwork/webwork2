@@ -85,13 +85,13 @@ sub initialize {
 
 	# if we need to gothrough and update grades
 	if ($r->param('assignGrades')) {
-	    $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems have been assigned to all current users."));
+	    $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Grades have been saved for all current users."));
 
 	    my @users = $db->listUsers;
 	
 	    foreach my $userID (@users) {
 		my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
-		
+		next unless $userProblem;
 		#update grades and set flags
 		$userProblem->{flags} =~ s/needs_grading/graded/;
 		if  ($r->param("$userID.mark_correct")) {
@@ -156,6 +156,8 @@ sub body {
 	my $problem = $db->getMergedProblem($userID, $setID, $problemID); # checked
 	my $user = $db->getUser($userID);
 
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
+
 	#set up a silly problem to render the problem text
 	my $pg = WeBWorK::PG->new(
 	    $ce,
@@ -187,10 +189,17 @@ sub body {
 
 	print CGI::p($pg->{body_text});
 
-	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
+	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), name=>"classlist" });
 	 
+	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All Correct',
+				   onClick => "for (i in document.classlist.elements)  { 
+	                       if (document.classlist.elements[i].className == 'mark_correct') { 
+	                           document.classlist.elements[i].checked = true
+	                       }
+	                    }" });
+
 	print CGI::start_table({});
-	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Student Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct", "&nbsp;", "Score (%)"]));
+	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Student Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)"]));
 	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	# get user records
@@ -213,8 +222,11 @@ sub body {
 	    my $userID = $userRecord->user_id;
 	    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 	    my $userAnswerString;
+	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
 
-	    if ($userPastAnswerID) {
+	    next unless $userProblem;
+
+	    if ($userPastAnswerID && $userProblem) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		my @scores = split(//,$userPastAnswer->scores);
 		my @answers = split(/\t/,$userPastAnswer->answer_string);
@@ -265,7 +277,7 @@ sub body {
 
 			my $htmlout = $pg->{body_text};
 
-			$htmlout =~ s/\(0 pts\)//;
+			$htmlout =~ s/^\(0.*\<BR\>//;
 
 			$userAnswerString .= CGI::p($htmlout);
 			
@@ -281,7 +293,6 @@ sub body {
 		$userAnswerString = "There are no answers for this student.";
 	    }
 	    
-	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
 	    my $score = int(100*$userProblem->status);
 	    
 	    my $prettyName = $userRecord->last_name
@@ -300,14 +311,15 @@ sub body {
 	    print CGI::Tr({-valign=>"top"}, 
 			  CGI::td({},[
 				      $userRecord->section,
-				      CGI::div({class=>$statusClass, style=>  
-						    $userProblem->flags =~ /needs_grading/ 
-						    ? "font-style:italic" :
-						    "font-style:normal"}, $prettyName), " ", 
+				      CGI::div({class=>
+			$userProblem->flags =~ /needs_grading/ 
+				   ? "NeedsGrading $statusClass" :
+				     $statusClass}, $prettyName), " ", 
 				      
 				      $userAnswerString, " ",
 				      CGI::checkbox({
 					  type=>"checkbox",
+					  class=>"mark_correct",
 					  name=>"$userID.mark_correct",
 					  value=>"1",
 					  label=>"",
@@ -331,6 +343,7 @@ sub body {
 #		);
 
 	    print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
+
 	}
 
 	print CGI::end_table();
