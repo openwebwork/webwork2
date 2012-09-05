@@ -417,21 +417,21 @@ sub initialize {
 			my $result_message = eval { $self->mail_message_to_recipients() };
 			if ($@) {
 				# add the die message to the result message
-				$result_message = "An error occurred while trying to send email.\n"
+				$result_message .= "An error occurred while trying to send email.\n"
 					. "The error message is:\n\n$@\n\n";
 				# and also write it to the apache log
-				$self->r->log->error("An error occurred while trying to send email: $@");
+				$r->log->error("An error occurred while trying to send email: $@\n");
 			}
 			# this could fail too...
 			eval { $self->email_notification($result_message) };
 			if ($@) {
-				$self->r->log->error("An error occured while trying to send the email notification: $@");
+				$r->log->error("An error occured while trying to send the email notification: $@\n");
 			}
 		};
 		if (MP2) {
-			$r->connection->pool->cleanup_register($post_connection_action);
+			$r->connection->pool->cleanup_register($post_connection_action, $r);
 		} else {
-			$r->post_connection($post_connection_action);
+			$r->post_connection($post_connection_action, $r);
 		}
 	} else {
 		$self->addbadmessage(CGI::p("Didn't recognize button $action"));
@@ -781,44 +781,55 @@ sub mail_message_to_recipients {
 	my $merge_file            = $self->{merge_file};  
 	my $result_message        = '';
 	my $failed_messages        = 0;
-	
+	my $error_messages         = '';
 	foreach my $recipient (@recipients) {
-			# warn "FIXME sending email to $recipient";
-			my $error_messages = '';
+			$error_messages = '';
+
 			my $ur      = $self->{db}->getUser($recipient); #checked
 			unless ($ur) {
-				$error_messages .= "Record for user $recipient not found\n";
+				$error_messages .= "Record for user $recipient not found\n";		 
 				next;
 			}
-			unless ($ur->email_address) {
-				$error_messages .="User $recipient does not have an email address -- skipping\n";
+			unless ($ur->email_address=~/\S/) { #unless address contains a non-blank charachter
+				$error_messages .="User $recipient does not have an email address -- skipping\n";		 
 				next;
 			}
+           	#warn "\nDEBUG: sending email to $recipient with email address ",$ur->email_address,"\n";
+
 			my $msg = eval { $self->process_message($ur,$rh_merge_data) };
 			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
-			my $mailer = Mail::Sender->new({
-				from      => $ce->{mail}{smtpSender},
-				fake_from => $from,
-				to        => $ur->email_address,
-				smtp      => $self->{smtpServer},
-				subject   => $subject,
-				headers   => "X-Remote-Host: ".$self->{remote_host},
-			});
-			unless (ref $mailer) {
-				$error_messages .= "Failed to create a mailer for user $recipient: $Mail::Sender::Error\n";
+			#warn "message is ok";
+			my $mailer = eval{ Mail::Sender->new({
+					from      => $ce->{mail}{smtpSender},
+					fake_from => $from,
+					to        => $ur->email_address,
+					smtp      => $self->{smtpServer},
+					subject   => $subject,
+					headers   => "X-Remote-Host: ".$self->{remote_host},
+				})
+			};
+			if ($@) {
+				$error_messages .= "Failed to create a mailer for user $recipient: $Mail::Sender::Error\n$@\n";		 
 				next;
 			}
-			unless (ref $mailer->Open()) {
-				$error_messages .= "Failed to open the mailer for user $recipient: $Mail::Sender::Error\n";
+			#warn "DEBUG: mailer created as $mailer\n";
+			unless (ref($mailer) and $mailer->Open()) {
+				$error_messages .= "Failed to open the mailer for user $recipient: $@\n $Mail::Sender::Error\n";
 				next;
 			}
-			my $MAIL         = $mailer->GetHandle() || ($error_messages .= "Couldn't get mailer handle \n");
-			print $MAIL        $msg                 || ($error_messages .= "Couldn't print to $MAIL");
-			close $MAIL                             || ($error_messages .= "Couldn't close $MAIL");
-		    #warn "FIXME mailed to $recipient: ", $ur->email_address, " from $from subject $subject Errors: $error_messages";
-		    $failed_messages++ if $error_messages;
-		    $result_message .= $error_messages;			 
-		} 
+			#warn "DEBUG: mailer opened\n";
+			my $MAIL         = $mailer->GetHandle() || ($error_messages .= "$recipient: Couldn't get mailer handle \n");
+			print $MAIL        $msg                 || ($error_messages .= "$recipient: Couldn't print to mail $MAIL\n");
+			close $MAIL                             || ($error_messages .= "$recipient: Couldn't close mail $MAIL -- possibly a badly formed address: ".$ur->email_address."\n");
+		    #warn "DEBUG: mailed to $recipient: ", $ur->email_address, " from $from subject $subject. Errors:\n $error_messages\n\n";
+		    #FIXME -- allow this list to be turned off with a "verbose" flag
+		    $result_message .= "Msg sent to $recipient at ".$ur->email_address."\n" unless $error_messages;
+		} continue { #update failed messages before continuing loop
+			if ($error_messages) {
+				$failed_messages++;
+		    	$result_message .= $error_messages;	
+		    } 	 		
+		}
 		my $courseName = $self->r->urlpath->arg("courseID");
 		my $number_of_recipients = scalar(@recipients) - $failed_messages;
 		$result_message = <<EndText.$result_message;
@@ -827,7 +838,7 @@ sub mail_message_to_recipients {
 			             $subject 
 			has been sent to 
 			$number_of_recipients recipient(s) in the class $courseName. 
-			There were $failed_messages message(s) that could not be delivered. 
+			There were $failed_messages message(s) that could not be sent.\n 
 		
 EndText
 
@@ -864,7 +875,7 @@ sub email_notification {
 	# clean up
 	close $MAIL;
 	
-    warn "instructor message sent to ", $self->{defaultFrom};
+    warn "\ninstructor message \"". $self->{subject}."\" sent to ", $self->{defaultFrom},"\n";
 
 }
 sub getRecord {
