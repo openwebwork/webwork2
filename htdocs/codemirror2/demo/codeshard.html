@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <title>CodeMirror2/CodeShard Demo</title>
+    <link rel="stylesheet" href="../lib/codeshard.css">
+    <script src="../lib/codeshard.js"></script>
+    <link rel="stylesheet" href="../mode/javascript-shard/javascript.css">
+    <script src="../mode/javascript-shard/javascript.js"></script>
+    <link rel="stylesheet" href="../css/docs.css">
+
+    <style type="text/css">
+      span.CodeShard {
+        height: 30px;
+        background: #eee;
+      }
+    </style>
+  </head>
+  <body>
+   <h1>CodeMirror2 / CodeShard Demo</h1>
+    <div id="frame" style="white-space:pre; height:120px; border: 1px solid #888; background: #ddd; width: 600px;;"
+      ><form action="/test" method="POST" >This is a test. Input one: <input id="code" name="code" value="Test" width="20" size="20"/>. And some more text.
+      <br/>
+      <input type="submit" name="Submit" style="position:relative; top: -30px;"/>
+      <br/>
+    </form>
+    </div>
+    <div id="debugconsole"></div>
+    <script src="codeshard.js"></script>
+  </body>
+</html>
