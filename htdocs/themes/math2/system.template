@@ -30,10 +30,11 @@
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math2/math2.css"/>
+<!--
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math2/codemirror2/lib/codemirror.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math2/codemirror2/mode/pg/pg.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math2/codemirror2/mode/math/math.css">
-
+-->
 
 <!--#if can="output_tabber_CSS"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
