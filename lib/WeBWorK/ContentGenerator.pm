@@ -1019,10 +1019,11 @@ sub footer(){
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	my $version = $ce->{WW_VERSION}||"unknown -- set version in defaults.config";
+	my $ww_version = $ce->{WW_VERSION}||"unknown -- set version in defaults.config";
+	my $pg_version = $ce->{PG_VERSION}||"unknown -- set version in defaults.config";
 	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
 	print CGI::p({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
-	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; $copyright_years", "| version: $version |", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
+	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; $copyright_years", "| ww_version: $ww_version | pg_version: $pg_version|", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
 	return ""
 }
 
