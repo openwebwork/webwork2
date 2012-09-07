@@ -28,7 +28,11 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/math3.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/lib/codemirror.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/pg/pg.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/math/math.css">
+
 <!--#if can="output_tabber_CSS"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
@@ -78,10 +82,6 @@
 
 		    <hr style="clear:both"/>
 	
-       		<!--#if can="info"-->
-			  <!--  styles could be different for different pages so they are not set here -->
-				<!--#info-->
-		    <!--#endif-->
 
 			<!--#if can="post_header_text"-->
 				<!--#post_header_text-->
@@ -114,7 +114,7 @@
 					<!--#if can="output_hidden_info"-->
 						<!--#output_hidden_info-->
 					<!--#endif-->
-					
+
 					<!--#if can="output_form_start"-->
 						<!--#output_form_start-->
 						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
@@ -150,13 +150,24 @@
 						<!--#endif-->
 						</form>
 					<!--#endif-->
+				<!-- inserted problem piece by piece -->
+				<!--#if can="info"-->
+			  		<!--  styles could be different for different pages so they are not set here -->
+					<!--#info-->
+		    	<!--#endif-->
+
 				</div>	  
 			<!-- ====  end printing body parts   -->
 			<!--#else-->
 			<!-- ==== couldn't print body parts so we'll print entire body -->	
-				  <div class="Body" style="background-color:#ffffff">
-				  <!--#body-->
+				  <div class="Body" style="background-color:#ffffff; float:left;">
+				  	<!--#body-->
 				  </div>
+				  <!-- inserted body as a whole -->
+				<!--#if can="info"-->
+			  		<!--  styles could be different for different pages so they are not set here -->
+					<!--#info-->
+		    	<!--#endif-->
 
 			<!--#endif-->  
 <!--			      ==============END BODY OF PROBLEM===============      -->

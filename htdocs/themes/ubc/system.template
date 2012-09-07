@@ -5,6 +5,8 @@
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
+# Copyright © 2000-20012 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/templates/math2/system.template,v 1.2 2008/06/26 19:46:02 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -17,19 +19,20 @@
 # Artistic License for more details.
 ################################################################################
 -->
-
+<!--
+	Now altered to carry out most of the output operations in Problem.pm, as well as call general output subroutines.
+	-ghe3
+-->
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/ubc.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/lib/codemirror.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/pg/pg.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/math/math.css">
 
-<!-- changed -->
-<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/math3.css"/>
 <!--#if can="output_tabber_CSS"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
@@ -39,7 +42,6 @@
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-<!-- end changed -->
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 
 <!--#head-->
@@ -171,7 +173,7 @@
 		<!--#endif-->	
 			<!--#if can="nav"-->
 			<div class="Nav">
-				<!--#nav style="images" imageprefix="/webwork2_files/themes/ubc/images" imagesuffix=".gif" separator="  "-->
+				<!--#nav style="images" imageprefix="/webwork2_files/themes/ubc/images" imagesuffix=".gif" separator=" | "-->
 			</div>
 			<!--#endif-->
 			<!--#if can="title"-->
@@ -188,11 +190,7 @@
 <!-- changes -->
 		    <hr style="clear:both"/>
 	
-       		<!--#if can="info"-->
-			  <!--  styles could be different for different pages so they are not set here -->
-				<!--#info-->
-		    <!--#endif-->
-
+  
 			<!--#if can="post_header_text"-->
 				<!--#post_header_text-->
 				<hr style="clear:both"/>
@@ -225,7 +223,7 @@
 					<!--#if can="output_hidden_info"-->
 						<!--#output_hidden_info-->
 					<!--#endif-->
-					
+
 					<!--#if can="output_form_start"-->
 						<!--#output_form_start-->
 						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
@@ -261,13 +259,28 @@
 						<!--#endif-->
 						</form>
 					<!--#endif-->
+				<!-- inserted problem piece by piece -->
+				<!--#if can="info"-->
+			  		<!--  styles could be different for different pages so they are not set here -->
+					<div class="InfoPanel">
+						<!--#info-->
+					</div>
+		    	<!--#endif-->
+
 				</div>	  
 			<!-- ====  end printing body parts   -->
 			<!--#else-->
 			<!-- ==== couldn't print body parts so we'll print entire body -->	
-				  <div class="Body" style="background-color:#ffffff">
-				  <!--#body-->
+				  <div class="Body" style="background-color:#ffffff; float:left;">
+				  	<!--#body-->
 				  </div>
+				  <!-- inserted body as a whole -->
+				<!--#if can="info"-->
+			  		<!--  styles could be different for different pages so they are not set here -->
+					<div class="InfoPanel">
+					<!--#info-->
+					</div>
+		    	<!--#endif-->
 
 			<!--#endif-->  
 <!--			      ==============END BODY OF PROBLEM===============      -->
@@ -288,13 +301,6 @@
 				</div>
 			<!--#endif-->
 		</td>
-		<!--#if can="info"-->
-		<td class="InfoPanel">
-			<!--<div class="Info">-->
-				<!--#info-->
-			<!--</div>-->
-		</td>
-		<!--#endif-->
  	</tr>
  	
  	<!-- changed -->

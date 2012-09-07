@@ -61,7 +61,12 @@ td.InfoPanel a:link,
 td.InfoPanel a:visited { color: blue; }
 td.InfoPanel a:active { color: red; }
 
-div.Info {  }
+div.InfoPanel { background-color: #DDDDDD; color: black; width: 30% }
+div.InfoPanel h2 { font-size: 120% }
+div.InfoPanel a:link,
+div.InfoPanel a:visited { color: blue; }
+div.InfoPanel a:active { color: red; }
+div.InfoPanel {float:right}
 
 /******************************************************************************/
 /* WeBWorK classes: These classes are emitted by WeBWorK code and should
