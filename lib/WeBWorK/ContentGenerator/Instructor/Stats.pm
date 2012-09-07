@@ -552,7 +552,10 @@ my $problabelxpixel = 0;
 my $problabelypixel = 0;
 foreach my $probID (@problemIDs) {
     $linkstring = $self->systemLink($problemPage{$probID});
-    $percentcorrect = sprintf("%0.0f",100*$correct_answers_for_problem{$probID}/$number_of_students_attempting_problem{$probID});
+    
+    $percentcorrect = ($number_of_students_attempting_problem{$probID})?
+    	sprintf("%0.0f",100*$correct_answers_for_problem{$probID}/$number_of_students_attempting_problem{$probID})
+    	: 0;  #avoid division by zero
     $barheight = sprintf("%d", $percentcorrect * $plotwindowheight / 100 );
     $barxpixel = $leftmargin + $probID * ($barwidth + 2*$barsep) + $barsep;
     $barypixel = $topmargin + $plotwindowheight - $barheight;
