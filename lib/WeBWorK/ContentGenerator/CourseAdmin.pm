@@ -2163,7 +2163,7 @@ sub upgrade_course_form {
 	print $self->hidden_fields("subDisplay");
 	
 		foreach my $courseID ( @courseIDs) {
-			next if $courseID eq "admin"; # done already above
+			#next if $courseID eq "admin"; # done already above  # on second thought even admin courses have to upgrade.
 			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
 			next unless $courseID =~/\S/;  # skip empty courseIDs (there shouldn't be any
 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
