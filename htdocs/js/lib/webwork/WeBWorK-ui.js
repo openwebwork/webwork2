@@ -86,10 +86,11 @@ webwork.ui.Closeable = Backbone.View.extend({
     text: "",
     display: "none",
     initialize: function(){
-	_.bindAll(this, 'render','close','setText'); // every function that uses 'this' as the current object should be in here
-        if (!(this.options.text == undefined)) {this.text = this.options.text;}
-        if (!(this.options.display == undefined)) {this.display = this.options.display;}
+	_.bindAll(this, 'render','close','setHTML','close','clear','appendHTML','open'); // every function that uses 'this' as the current object should be in here
+        if (this.options.text !== undefined) {this.text = this.options.text;}
+        if (this.options.display !== undefined) {this.display = this.options.display;}
 	this.render();
+	this.isOpen = false; 
         return this;
     },
     events: {
@@ -104,16 +105,23 @@ webwork.ui.Closeable = Backbone.View.extend({
 	    return this; // for chainable calls, like .render().el
 	},
     close: function () {
+	this.isOpen = false; 
         var self = this;
         this.$el.fadeOut("slow", function () { self.$el.css("display","none"); })},
-    setText: function (str) {
+    setHTML: function (str) {
         $(".closeable-text",this.el).html(str);
-        this.open();
+        if (!this.isOpen){this.open();}
     },
-    appendText: function(str) {
+    clear: function () {
+	$(".closeable-text",this.el).html("");
+    },
+    appendHTML: function(str) {
 	$(".closeable-text",this.el).append(str);
+	if (!this.isOpen){this.open();}
+	
     },
     open: function (){
+	this.isOpen = true;
         var self = this;
         this.$el.fadeIn("slow", function () { self.$el.css("display","block"); })
     }

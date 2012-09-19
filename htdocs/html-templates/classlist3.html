@@ -2,12 +2,23 @@
 
 <script type="text/template" id="studentManagementHelp">
    <p>The Student Management page allows you to edit student information as well as perform actions
-(delete, email, act as user) on individuals or a group of students. To edit a student's information (name, email, section, recitation,
-   comment or permission),click on the appropriate property
-to change and retype or select the correct information.  To perform an action on an individual student, select the action
-from the <em>Action</em> column. To perform an action on a group of students, select those students using the checkboxes on the first
+(delete, email, act as user) on individuals or a group of students.  Here is a list of features and helpful hints:
+   
+   <ul>
+   <li> To edit a student's information (name, email, section, recitation,
+   comment or permission),click on the appropriate property to change and retype or select the correct information.  Note: the columns <em>Login Name</em> and <em>Assigned Sets</em> cannot be changed. </li>
+   <li> There are a number of actions (email, change password, delete user, act as user) that you can perform:  To perform an action on an individual student, click on the gear icon in the <em>Action</em> column. </li>
+   <li> To perform an action on a group of students, select those students using the checkboxes on the first
 column, then select the action from the button above (or below) the table.  Toggling the checkbox called <em>Select All</em> will select/deselect
-all rows in the table.  Lastly, the <em>Filter Users</em> field will allow you to search for all users that have that string. </p>
+all rows in the table.  </li>
+<li> The <em>Filter:</em> text box will allow you to search for all users that have that string.  You can find a single student using this or all students by typing "Student" in the text box.  Clear the filter string with the X to the right of the text box.  Additionally, just above the table is information showing how many users are visible.    </li>
+
+<li>You can close this help box by clicking the X in the upper right corner of the help box.  Clicking <em>Help</em> in the bar at the top of the page will bring this help box back. </li>
+
+</ul>
+
+
+</p>
     
 </script>
 
@@ -19,7 +30,7 @@ all rows in the table.  Lastly, the <em>Filter Users</em> field will allow you t
     <h4 style="color: red">All actions except email student should be working.</h4>
     <h4>Please send any bugs or feature requests <a href="https://github.com/pstaabp/webwork2-dev/issues">here</a></h4>
 
-<div id="aboveTable" class="row">
+<div class="row">
 <div class="span2"
     <span id="selectalldiv"><label for="selectAll">Select All:</label><input type='checkbox' id='selectAllCB' /></span>
     </div>
@@ -31,10 +42,23 @@ all rows in the table.  Lastly, the <em>Filter Users</em> field will allow you t
 <option value="menuDelete">Delete Selected Students</option>
 </select>
 </div>
+<div class="span3">
+<select id="import-export">
+<option>Import or Export Students</option>
+<option>Add Students from a File</option>
+<option>Add Students Manually</option>
+<option>Export Students to a File</option>
+</select>
+</div>
+</div>
+<div class="row">
 
-    <div id="filterdiv" class="span3"><label for='filter'>Filter :</label><input type='text' id='filter'/></div>
-<div class="span2" id="usersShownInfo"></div>    
-<div class="span1"><input type="button"  value="Add Students" class="addStudentButton" /></div>
+
+    <div id="filterdiv" class="span6"><label for='filter'>Filter :</label>
+    <input type='text' id='filter' class="input-large search-query"></input>
+    <button id="clear-filter-text"><i class="icon-remove"></i></button>
+    </div>
+<div class="span2" id="usersShownInfo">Loading Users...<img src="/webwork2_files/images/ajax-loader-small.gif"></div>    
 
 </div>
 <div id="users_table"></div>
@@ -50,13 +74,6 @@ all rows in the table.  Lastly, the <em>Filter Users</em> field will allow you t
 </select>
 </div>
 
-</div>
-
-
-
-<div id="addStudDialog" class="dialog">
-    <p>Welcome to the Add Student Step-By-Step Wizard. Please select below if you wish to add students from a file or by typing them
-    in by hand.</p>
 </div>
 
 </script>
@@ -81,6 +98,7 @@ all rows in the table.  Lastly, the <em>Filter Users</em> field will allow you t
         in the class.  
             
         </li>
+        <li>Note: if no password column is selected, the student will be given the initial password from the <em>Student ID</em> column. </li>
         <li>Click the <em>Import Students</em> button.  This will add the selected students to this class.</li>
         </ol></li>
         
@@ -99,7 +117,7 @@ all rows in the table.  Lastly, the <em>Filter Users</em> field will allow you t
 </script>
 
 <script type="text/template" id="add_student_man_dialog_content">
-        <p>Add students below in the designated boxes.  If you leave the password field blank then the student will be given their user id
+        <p>Add students below in the designated boxes.  If you leave the password field blank then the student will be given their <em>student id</em>
             as the initial password. </p>
             <div id='man_student_list'><%= content %></div>
             <div id="manDialogTableFooter">

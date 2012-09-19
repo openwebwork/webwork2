@@ -36,35 +36,30 @@ webwork.User = Backbone.Model.extend({
             console.log(data);
             var response = $.parseJSON(data);
             var user = response.result_data;
-            self.set(user);
-            
-            // if this is successful, then report back by triggering a updateSuccess event
-            // Somehow it would be nice to deliver whether a general update of user information was made
-            // or a password change.  
-            
-            if (self.attributes.new_password == undefined)
-            { self.trigger("success","general");} else
-            {self.trigger("success", "Password Changed for user " + self.attributes.user_id);}
+            self.set(user);  // Not sure why this needs to be explicitly called.  
+
+	    self.trigger("success","property_changed",self)
         });
     },
-    
-    /*  The following is not need because it is changed in the edit User above */
-
-/*    setPassword:function(new_password){
-        var requestObject = {
-            "xml_command": 'changeUserPassword',
-            'new_password': new_password
-        };
-        _.extend(requestObject, this.attributes);
-        _.defaults(requestObject, webwork.requestObject);
-
-        requestObject.permission = requestObject.permission.value;
-
-        $.post(webwork.webserviceURL, requestObject, function(data){
-            console.log(data);
-            console.log("success?");
-        });
-    } */
+    validation: {
+        user_id: [{
+            required: true,
+            msg: "You must include a user id (login name)"},
+            {
+            pattern:/^[a-zA-Z]+[a-zA-Z0-9_]*$/,
+            msg: "Your user id (login name) is not value.  It must contain only the characters a-z, A-Z, 0-9, _ and must start with a letter."
+        }],
+        email_address: [
+          {pattern: 'email',
+          msg: 'The email address is not valid',
+	  required: false}
+          ]
+    },
+    toCSVString: function () {  // creates a string to be used
+        var self = this;
+         return (_(webwork.userProps).map(function (prop) { return  "\"" + ((prop.shortName ==='permission')? self.get(prop.shortName).value :  self.get(prop.shortName)) + "\"";})).join(",") + "\n";
+        
+    }
 });
 
 webwork.UserList = Backbone.Collection.extend({

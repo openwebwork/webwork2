@@ -37,6 +37,7 @@ our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 use strict;
 use warnings;
 use WebworkClient;
+use JSON;
 
 
 =head1 Description
@@ -458,7 +459,8 @@ sub content {
 	} else {
 		print '{"server_response":"'.$self->{output}->{text}.'",';
 		if($self->{output}->{ra_out}){
-			print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
+			# print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
+			print '"result_data":'.to_json($self->{output}->{ra_out}) . "}";
 		} else {
 			print '"result_data":""}';
 		}
