@@ -1,0 +1,6 @@
+.Body{
+    padding: 20px;
+}
+
+.calendar {border: 1px solid black; border-collapse: collapse; background: lightgray;}
+.calendar td {border: 1px solid black; width: 10%; height: 50px; vertical-align: top;}
