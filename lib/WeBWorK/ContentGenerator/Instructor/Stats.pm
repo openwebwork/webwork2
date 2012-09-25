@@ -561,7 +561,7 @@ foreach my $probID (@problemIDs) {
     $barypixel = $topmargin + $plotwindowheight - $barheight;
     $problabelxpixel = $leftmargin + ($probID-1) * $totalbarwidth + $barsep;
     $problabelypixel = $topmargin + $plotwindowheight - $barheight;
-    $svg = $svg . "<a xlink:href=\"". $linkstring ."\" target=\"_blank\"><rect id=\"bar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,153,198)\" /><text id=\"problem". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">". $probID ."</text></a>\n";
+    $svg = $svg . "<a xlink:href=\"". $linkstring ."\" target=\"_blank\"><rect id=\"bar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,153,198)\" /><text id=\"problem". $probID ."\" x=\"". $problabelxpixel ."\" y=\"". $problabelypixel ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">". $probID ."</text></a>\n";
 }
 
 $svg = $svg . "</svg>";
