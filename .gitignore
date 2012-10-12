@@ -11,3 +11,5 @@ conf/*.conf
 conf/*.apache2-config
 htdocs/site_info.txt
 #courses.dist/*
+node_modules
+node_modules/*
