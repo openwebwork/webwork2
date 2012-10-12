@@ -11,7 +11,7 @@ use WebworkWebservice;
 use base qw(WebworkWebservice); 
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Utils qw(runtime_use cryptPassword);
+use WeBWorK::Utils qw(runtime_use cryptPassword formatDateTime);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
@@ -106,6 +106,8 @@ sub listUsers {
     my $out = {};
     my $db = $self->{db};
     my $ce = $self->{ce};
+    
+    debug("in listUsers");
 
     # make sure course actions are enabled
     #if (!$ce->{webservices}{enableCourseActions}) {
@@ -538,6 +540,87 @@ sub assignVisibleSets {
 
 	return 0;
 }
+
+# This returns all problem sets of a course.
+
+sub getSets{
+  my $self = shift;
+  my $db = $self->{db};
+  my @found_sets;
+  @found_sets = $db->listGlobalSets;
+  
+  my @all_sets = $db->getGlobalSets(@found_sets);
+  
+  # fix the timeDate  
+ foreach my $set (@all_sets){
+	$set->{due_date} = formatDateTime($set->{due_date},'local');
+	$set->{open_date} = formatDateTime($set->{open_date},'local');
+	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+  }
+  
+  
+  my $out = {};
+  $out->{ra_out} = \@all_sets;
+  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  return $out;
+}
+
+
+sub updateSetProperties {
+	my ($self, $params) = @_;
+  my $db = $self->{db};
+  my @found_sets;
+  @found_sets = $db->listGlobalSets;
+  
+  my @all_sets = $db->getGlobalSets(@found_sets);
+  
+  my $theSet = $db->getGlobalSet("Demo");
+  
+  # fix the timeDate  
+ foreach my $set (@all_sets){
+	$set->{due_date} = formatDateTime($set->{due_date},'local');
+	$set->{open_date} = formatDateTime($set->{open_date},'local');
+	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+  }
+  
+  
+  my $out = {};
+  $out->{ra_out} = $theSet;
+  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  return $out;
+	
+	
+
+	#my $db = $self->{db};
+	#
+	#my @problemSetList = $db->listGlobalSets();
+	# 
+	#my @all_sets = $db->getGlobalSets(@problemSetList);
+	#
+	#debug("all sets: " . to_json(\@problemSetList));  
+	#my $set = from_json($params->{'set_props'});
+	#my $setName = $set->{'set_id'};
+	#
+	#my $exSet = $db->getGlobalSet($setName);
+	#debug("set name: " . $setName);
+	#debug("set: ". to_json($exSet,{allow_blessed=>1,convert_blessed=>1}));
+	#
+	#
+	
+	# check to see if this is an existing Problem Set
+	#if(grep $_ eq $setName, @problemSetList)
+	#{
+		# possibly do some validation here.  
+	#	my $rows = $db->putGlobalSet($set);
+	#	debug("rows: " . $rows);
+	#}
+	
+#	 my $out = {};
+#  $out->{ra_out} = "Successfully updated set " . $setName;
+#  $out->{text} = encode_base64("Successfully updated set " . $setName);
+#  return $out;
+}
+
 
 ##  pstaabp: This is currently not working.  We need to look into a nice robust way to send email.  It looks like the current
 ## way that WW sends mail is a bit archaic.  The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a

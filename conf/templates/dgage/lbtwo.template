@@ -90,7 +90,7 @@
 	</div>
 	<div class="span4"><button class="btn pull-right" id="help-link">Help</button></div>
     </div>
-	
+		
 	    <!--#if can="body"-->
 				<!--#if warnings="1"-->
 				  <div class="Body" style="background-color:#ffcccc">
@@ -126,10 +126,5 @@
             WeBWorK &#169; 2000-2007 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a>
         </div>
     </footer>
-
-    <!--#if can="output_JS"-->
-    	<!--#output_JS-->
-    <!--#endif-->
-
 </body>
 </html>

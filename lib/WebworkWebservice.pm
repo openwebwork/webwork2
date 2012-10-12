@@ -51,6 +51,7 @@ use strict;
 use warnings;
 use WeBWorK::Localize;
 
+
 our  $UNIT_TESTS_ON    = 0;
 
 # error formatting
@@ -115,6 +116,7 @@ use WebworkWebservice::CourseActions;
 package WebworkXMLRPC;
 use base qw(WebworkWebservice); 
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
+use WeBWorK::Debug;
 
 sub format_hash_ref {
 	my $hash = shift;
@@ -346,12 +348,16 @@ sub listLibraries {     # returns a list of libraries for the default course
   	return $self->do( WebworkWebservice::LibraryActions::listLibraries($self, $in) );
 }
 sub listSets {
+    
+    debug("in listSets");
   my $class = shift;
   my $in = shift;
   my $self = $class->initiate_session($in);
   	return $self->do(WebworkWebservice::SetActions::listLocalSets($self));
 }
+
 sub listSetProblems {
+    debug("in listSetProblems");
 	my $class = shift;
   	my $in = shift;
   	my $self = $class->initiate_session($in);
@@ -544,6 +550,21 @@ sub sendEmail{
     my $self = $class->initiate_session($in);
     return $self->do(WebworkWebservice::CourseActions::sendEmail($self, $in));
 }
+
+sub getSets {
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    return $self->do(WebworkWebservice::CourseActions::getSets($self, $in));
+}
+
+sub updateSetProperties{
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    return $self->do(WebworkWebservice::CourseActions::updateSetProperties($self, $in));
+}
+
 
 
 
