@@ -132,6 +132,7 @@ webwork.Problem = Backbone.Model.extend({
             //if we haven't gotten this problem yet, ask for it
             $.post(webwork.webserviceURL, requestObject, function (data) {
                 problem.set('data', data);
+                problem.trigger('rendered',false);
             });
         }
     },
@@ -238,12 +239,14 @@ webwork.SetList = Backbone.Collection.extend({
         var self = this;
 
         var requestObject = {
-            xml_command: "listSets"
+            xml_command: "getSets"
         };
         _.defaults(requestObject, this.defaultRequestObject);
         self.trigger('syncing', true);
         $.post(webwork.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
+            
+            console.log(response);
 
             var setNames = response.result_data;
             setNames.sort();
@@ -252,6 +255,7 @@ webwork.SetList = Backbone.Collection.extend({
             for (var i = 0; i < setNames.length; i++) {
                 //workAroundSetList.renderList(workAroundSetList.setNames[i]);
                 newSets.push({name:setNames[i]})
+                console.log("loading set: " + setNames[i]);
             }
             self.reset(newSets);
             self.trigger('syncing', false);

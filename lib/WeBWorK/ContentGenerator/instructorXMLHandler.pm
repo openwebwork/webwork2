@@ -26,6 +26,7 @@ use warnings;
 package WeBWorK::ContentGenerator::instructorXMLHandler;
 use base qw(WeBWorK::ContentGenerator);
 use MIME::Base64 qw( encode_base64 decode_base64);
+use WeBWorK::Debug;
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
@@ -216,6 +217,7 @@ sub pre_header_initialize {
              comment        => $r->param('comment') || undef,
              new_password   => $r->param('new_password') || undef,
              userpassword   => $r->param('userpassword') || undef,	# defaults to studentid if empty
+	     set_props	    => $r->param('set_props') || undef,
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -452,7 +454,8 @@ sub content {
    ###########################
    # Return content of rendered problem to the browser that requested it
    ###########################
-	my $self = shift;
+   	my $self = shift;
+	
 	#for handling errors...i'm to lazy to make it work right now
 	if($self->{output}->{problem_out}){
 		print $self->{output}->{problem_out}->{text};
@@ -460,7 +463,11 @@ sub content {
 		print '{"server_response":"'.$self->{output}->{text}.'",';
 		if($self->{output}->{ra_out}){
 			# print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
-			print '"result_data":'.to_json($self->{output}->{ra_out}) . "}";
+			if (ref($self->{output}->{ra_out})) {
+			print '"result_data": ' . to_json($self->{output}->{ra_out}) .'}';
+			} else {
+				print '"result_data": "' . $self->{output}->{ra_out} . '"}';
+			}
 		} else {
 			print '"result_data":""}';
 		}

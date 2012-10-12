@@ -59,14 +59,6 @@ use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
 use constant HIDE_USERS_THRESHHOLD => 200;
 
-# permissions needed to view a given field
-use constant FIELD_PERMS => {
-		act_as => "become_student",
-		sets	=> "assign_problem_sets",
-};
-
-use constant STATE_PARAMS => [qw(user effectiveUser key visible_users no_visible_users prev_visible_users no_prev_visible_users editMode passwordMode primarySortField secondarySortField ternarySortField labelSortMethod)];
-
 
 
 # template method
@@ -191,13 +183,13 @@ sub body {
 	#@allUserIDs = @{ $self->{allUserIDs} }; # do we need this one?
 	# DBFIXME instead of re-listing, why not add added users to $self->{allUserIDs} ?
 	# exclude set-level proctors
-	@allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers; # recompute value in case some were added
+	#@allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers; # recompute value in case some were added
 
-	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
-	my @prevVisibleUserIDs = @{ $self->{prevVisibleUserIDs} };
-	my @selectedUserIDs = @{ $self->{selectedUserIDs} };
-	my $editMode = $self->{editMode};
-	my $passwordMode = $self->{passwordMode};	
+	#my @visibleUserIDs = @{ $self->{visibleUserIDs} };
+	#my @prevVisibleUserIDs = @{ $self->{prevVisibleUserIDs} };
+	#my @selectedUserIDs = @{ $self->{selectedUserIDs} };
+	#my $editMode = $self->{editMode};
+	#my $passwordMode = $self->{passwordMode};	
 
 	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/classlist3.html');  
 	print $template->output(); 
@@ -205,7 +197,7 @@ sub body {
 
 	########## print end of form
 	
- 	print CGI::end_form();
+ 	#print CGI::end_form();
 
  	print $self->hidden_authen_fields;
     print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseName });
@@ -261,7 +253,7 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/teacher.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/User.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/util.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/fs.js"}), CGI::end_script();
+#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/fs.js"}), CGI::end_script();
 #	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/labs.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/UserList/userlist.js"}), CGI::end_script();
 

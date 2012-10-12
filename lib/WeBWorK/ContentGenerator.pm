@@ -727,7 +727,11 @@ sub links {
 					if $ce->{showeditors}->{homeworkseteditor1};
 				print "<br/>";
 				print &$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
-					if $ce->{showeditors}->{homeworkseteditor2};;
+					if $ce->{showeditors}->{homeworkseteditor2};
+				print "<br/>";
+				print &$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
+					if $ce->{showeditors}->{homeworkseteditor3};
+				
 				
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {

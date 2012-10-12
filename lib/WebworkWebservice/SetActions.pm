@@ -22,6 +22,8 @@ use Carp;
 use WWSafe;
 #use Apache;
 use WeBWorK::Utils;
+use WeBWorK::Debug;
+use JSON;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
@@ -43,6 +45,7 @@ our $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COUR
 our $UNIT_TESTS_ON =1;
 
 sub listLocalSets{
+  debug("in listLocalSets");
   my $self = shift;
   my $db = $self->{db};
   my @found_sets;
@@ -54,11 +57,13 @@ sub listLocalSets{
 }
 
 sub listLocalSetProblems{
+	debug("in listLocalSetProblems");
 	my $self = shift;
 	my $in = shift;
   	my $db = $self->{db};
   	my @found_problems;
   	my $selectedSet = $in->{set};
+	debug("INPUT " . to_json($in));
   	warn "Finding problems for set ", $in->{set} if $UNIT_TESTS_ON;
   	my $templateDir = $self->{ce}->{courseDirs}->{templates};
   	@found_problems = $db->listGlobalProblems($selectedSet);

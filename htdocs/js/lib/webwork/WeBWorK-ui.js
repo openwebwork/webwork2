@@ -81,25 +81,29 @@ webwork.ui.ChangePasswordView = Backbone.View.extend({
 /* This is a class of closeable Divs that take functionality from Boostrap-alert.  See http://twitter.github.com/bootstrap/javascript.html#alerts */
 
 webwork.ui.Closeable = Backbone.View.extend({
-    tagName: "div",
-    className: "alert fade in",
+    className: "closeablePane",
     text: "",
     display: "none",
     initialize: function(){
-	_.bindAll(this, 'render','close','setHTML','close','clear','appendHTML','open'); // every function that uses 'this' as the current object should be in here
+	var self = this; 
+	_.bindAll(this, 'render','setHTML','close','clear','appendHTML','open'); // every function that uses 'this' as the current object should be in here
         if (this.options.text !== undefined) {this.text = this.options.text;}
         if (this.options.display !== undefined) {this.display = this.options.display;}
+	this.$el.addClass("alert");
+	_(this.options.classes).each(function (cl) {self.$el.addClass(cl);});
+	
 	this.render();
+	
 	this.isOpen = false; 
         return this;
     },
     events: {
-	'button.close': 'close'
+	'click button.close': 'close'
     },
     render: function(){
             this.$el.html("<div class='row-fluid'><div class='span11 closeable-text'></div><div class='span1 pull-right'>" +
                           " <button type='button' class='close'>&times;</button></div></div>");
-            $(".closeable-text",this.el).html(this.text);
+            this.$(".closeable-text").html(this.text);
             this.$el.css("display",this.display);
             
 	    return this; // for chainable calls, like .render().el
@@ -107,16 +111,17 @@ webwork.ui.Closeable = Backbone.View.extend({
     close: function () {
 	this.isOpen = false; 
         var self = this;
-        this.$el.fadeOut("slow", function () { self.$el.css("display","none"); })},
+        this.$el.fadeOut("slow", function () { self.$el.css("display","none"); });
+    },
     setHTML: function (str) {
-        $(".closeable-text",this.el).html(str);
+        this.$(".closeable-text").html(str);
         if (!this.isOpen){this.open();}
     },
     clear: function () {
-	$(".closeable-text",this.el).html("");
+	this.$(".closeable-text").html("");
     },
     appendHTML: function(str) {
-	$(".closeable-text",this.el).append(str);
+	this.$(".closeable-text").append(str);
 	if (!this.isOpen){this.open();}
 	
     },

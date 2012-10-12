@@ -108,7 +108,6 @@ webwork.UserList = Backbone.Collection.extend({
 
         $.post(webwork.webserviceURL, requestObject, function(data){
             var response = $.parseJSON(data);
-            console.log(response);
             var users = response.result_data;
             self.reset(users);
             self.trigger("fetchSuccess");

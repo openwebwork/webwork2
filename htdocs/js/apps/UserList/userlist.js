@@ -318,24 +318,19 @@ $(function(){
 	    
 	    // Create an announcement pane for successful messages.
 	    
-	    this.announce = new webwork.ui.Closeable({id: "announce-bar"});
-	    this.announce.$el.addClass("alert-success");
-	    this.$el.append(this.announce.el)
-	    $("button.close",this.announce.el).click(function () {self.announce.close();}); // for some reason the event inside this.announce is not working  this is a hack.
-            //this.announce.delegateEvents();
+	    this.announce = new webwork.ui.Closeable({el:$("#announce-pane"),classes: ["alert-success"]});
+	    
 	    
    	    // Create an announcement pane for successful messages.
 	    
-	    this.errorPane = new webwork.ui.Closeable({id: "error-bar"});
-	    this.errorPane.$el.addClass("alert-error");
-	    this.$el.append(this.errorPane.el)
-	    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
+	    this.errorPane = new webwork.ui.Closeable({el:$("#error-pane"),classes: ["alert-error"]});
 	    
 	    
-   	    this.helpPane = new webwork.ui.Closeable({display: "block",text: $("#studentManagementHelp").html(),id: "helpPane"});
-	    this.$el.append(this.helpPane.el)
-	    $("button.close",this.helpPane.el).click(function () {self.helpPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
-            
+	    // This is the help Pane
+	    
+   	    this.helpPane = new webwork.ui.Closeable({display: "block",el:$("#help-pane"),text: $("#studentManagementHelp").html()});
+	    
+	    
 	    
 	    this.$el.append(_.template($("#userListTable").html()));
 	    
@@ -493,17 +488,17 @@ $(function(){
 	template: _.template($("#add_student_man_dialog_content").html()),
 	render: function(){
 	    var self = this;
-	    this.errorPane = new webwork.ui.Closeable({id: "error-bar"});
-	    this.errorPane.$el.addClass("alert-error");
-	    this.$el.html(this.errorPane.el);
-	    
-	    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
-
 	    var tableHTML = "<table id='man_student_table'><tbody><tr><td>Delete</td>"
 	    tableHTML += (_(webwork.userProps).map(function (prop) {return "<td>" + prop.longName + "</td>";})).join("") + "</tr></tbody></table>";
 	    
 	    this.$el.append(this.template({content: tableHTML}));
 	    _(this.collection).each(function(user){ self.appendRow(user);}, this);
+	    
+		    
+	    this.errorPane = new webwork.ui.Closeable({el: this.$("#error-pane-add-man"), classes : ["alert-error"]});
+	    
+	    
+	    
 	},
 	importStudents: function(){  // validate each student data then if successful upload to the server.
 	    var self = this,
