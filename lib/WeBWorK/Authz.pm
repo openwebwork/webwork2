@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.36 2007/08/13 22:59:54 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Authz.pm,v 1.37 2012/06/08 22:59:54 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -64,6 +64,7 @@ use Carp qw/croak/;
 use WeBWorK::Utils qw(before after between);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
+use Scalar::Util qw(weaken);
 
 ################################################################################
 
@@ -84,7 +85,9 @@ sub new {
 	my $self = {
 		r => $r,
 	};
+	weaken $self -> {r};
 	
+	$r -> {permission_retrieval_error} = 0;
 	bless $self, $class;
 	return $self;
 }
@@ -118,10 +121,54 @@ sub setCachedUser {
 	
 	if (defined $userID) {
 		$self->{userID} = $userID;
-		my $PermissionLevel = $db->getPermissionLevel($userID); # checked
-		if (defined $PermissionLevel) {
-			# store permission level record in database to avoid later database calls
+		if (! $db -> existsUser($userID) && defined($r -> param("lis_person_sourcedid"))) {
+			# This is a new user referred via an LTI link.
+			# Do not attempt to cache the permission here.
+			# Rather, the LTIBasic authentication module should cache the permission.
+			return 1;
+		}
+		my $PermissionLevel;
+		my $tryAgain=1;
+		my $count=0;
+		while ($tryAgain && $count < 2) {
+			eval {$PermissionLevel = $db->getPermissionLevel($userID); # checked
+				};
+			if ($@) {
+				$count++;
+			}
+			else {
+				$tryAgain=0;
+			}
+		}
+		if (defined $PermissionLevel and defined $PermissionLevel -> permission
+			and $PermissionLevel -> permission ne "") {
+			# cache the  permission level record in this request to avoid later database calls
 			$self->{PermissionLevel} = $PermissionLevel;
+		}
+		elsif (defined($r -> param("lis_person_sourcedid"))
+				or defined($r -> param("lis_person_sourced_id"))
+				or defined($r -> param("lis_person_source_id"))
+				or defined($r -> param("lis_person_sourceid"))
+				or defined($r -> param("lis_person_contact_email_primary")) ) {
+			# This is a new user referred via an LTI link.
+			# Do not attempt to cache the permission here.
+			# Rather, the LTIBasic authentication module should cache the permission.
+			return 1;
+		}
+		elsif (defined($r -> param("oauth_nonce"))) {
+			# This is a LTI attempt that doesn't have an lis_person_sourcedid username.
+			croak ("Your request did not specify your username.  Perhaps you were attempting to authenticate via LTI but the LTI tool did not transmit "
+				. "any variant of the lis_person_sourced_id parameter and did not transmit the lis_person_contact_email_primary parameter.");
+		}
+			
+		else {
+			if ($r->{permission_retrieval_error} == 0) {
+				$r->{permission_retrieval_error}=1;
+				croak "Unable to retrieve your permissions, perhaps due to a collision "
+					. "between your request and that of another user "
+					. "(or possibly an unfinished request of yours). "
+					. "Please press the BACK button on your browser and try again.";
+			}
 		}
 	} else {
 		warn "setCachedUser() called with userID undefined.";
@@ -148,13 +195,14 @@ assumes that the user does not have permission.
 # This currently only uses two of it's arguments, but it accepts any number, in
 # case in the future calculating certain permissions requires more information.
 sub hasPermissions {
-	if (@_ != 3) {
+	if (@_ != 3 and not( @_==4 and $_[3] eq 'equal') ) {
 		shift @_; # get rid of self
 		my $nargs = @_;
 		croak "hasPermissions called with $nargs arguments instead of the expected 2: '@_'"
 	}
-	
-	my ($self, $userID, $activity) = @_;
+
+	my ($self, $userID, $activity, $exactness) = @_;
+	if (!defined($exactness) ) {$exactness='ge';}
 	my $r = $self->{r};
 	my $ce = $r->ce;
 	my $db = $r->db;
@@ -167,6 +215,11 @@ sub hasPermissions {
 	return 0 unless defined $userID and $userID ne "";
 	
 	my $PermissionLevel;
+
+	if (not defined($self->{userID})) { 
+		#warn "self->{userID} is undefined";
+		$self-> setCachedUser($userID);
+	}
 	
 	my $cachedUserID = $self->{userID};
 	if (defined $cachedUserID and $cachedUserID ne "" and $cachedUserID eq $userID) {
@@ -175,7 +228,7 @@ sub hasPermissions {
 	} else {
 		# a different user, or no user was defined before
 		#my $prettyCachedUserID = defined $cachedUserID ? "'$cachedUserID'" : "undefined";
-		#warn "hasPermissions called with user '$userID', but cached user is $prettyCachedUserID. Accessing database.\n";
+		#warn "hasPermissions called with user  $userID , but cached user is $prettyCachedUserID. Accessing database.\n";
 		$PermissionLevel = $db->getPermissionLevel($userID); # checked
 	}
 	
@@ -183,9 +236,16 @@ sub hasPermissions {
 	
 	if (defined $PermissionLevel) {
 		$permission_level = $PermissionLevel->permission;
-	} else {
+	} 
+	elsif (defined($r -> param("lis_person_sourcedid"))){
+		# This is an LTI login.  Let's see if the LITBasic authentication module will handle this.
+		#return 1;
+	}
+	else {
 		# uh, oh. this user has no permission level record!
-		warn "User '$userID' has no PermissionLevel record -- assuming no permission.";
+		if ($r -> {permission_retrieval_error} != 1) {
+			warn "User '$userID' has no PermissionLevel record -- assuming no permission.";
+		}
 		return 0;
 	}
 	
@@ -203,23 +263,94 @@ sub hasPermissions {
 			if (exists $userRoles->{$activity_role}) {
 				my $role_permlevel = $userRoles->{$activity_role};
 				if (defined $role_permlevel) {
-					return $permission_level >= $role_permlevel;
+ 					if ($exactness eq 'ge') {
+ 						return $permission_level >= $role_permlevel;
+ 					}
+ 					elsif ($exactness eq 'equal') {
+ 						return $permission_level == $role_permlevel;
+ 					}
+ 					else {
+ 						return 0;
+ 					}
 				} else {
-					warn "Role '$activity_role' has undefined permisison level -- assuming no permission.";
+#					warn "Role '$activity_role' has undefined permission level -- assuming no permission.";
 					return 0;
 				}
 			} else {
-				warn "Role '$activity_role' for activity '$activity' not found in \%userRoles -- assuming no permission.";
+#				warn "Role '$activity_role' for activity '$activity' not found in \%userRoles -- assuming no permission.";
 				return 0;
 			}
 		} else {
+#			warn "Undefined Role, -- assuming no one has permission to perform $activity.";
 			return 0; # undefiend $activity_role, no one has permission to perform $activity
 		}
 	} else {
-		warn "Activity '$activity' not found in \%permissionLevels -- assuming no permission.";
+#		warn "Activity '$activity' not found in \%permissionLevels -- assuming no permission.";
 		return 0;
 	}
 }
+
+#########################  IU Addition  ###############
+sub hasExactPermissions {
+	my ($self, $userID, $activity) = @_;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
+	
+#	my $Permission = $db->getPermissionLevel($user); # checked
+#	return 0 unless defined $Permission;
+#	my $permissionLevel = $Permission->permission();
+
+##
+	my $PermissionLevel;
+
+	if (not defined($self->{userID})) { 
+		#warn "self->{userID} is undefined";
+		$self-> setCachedUser($userID);
+	}
+	
+	my $cachedUserID = $self->{userID};
+	if (defined $cachedUserID and $cachedUserID ne "" and $cachedUserID eq $userID) {
+		# this is the same user -- we can skip the database call
+		$PermissionLevel = $self->{PermissionLevel};
+	} else {
+		# a different user, or no user was defined before
+		#my $prettyCachedUserID = defined $cachedUserID ? "'$cachedUserID'" : "undefined";
+		#warn "hasPermissions called with user  $userID , but cached user is $prettyCachedUserID. Accessing database.\n";
+		$PermissionLevel = $db->getPermissionLevel($userID); # checked
+	}
+	
+	my $permission_level;
+	
+	if (defined $PermissionLevel) {
+		$permission_level = $PermissionLevel->permission;
+	} else {
+		# uh, oh. this user has no permission level record!
+		if ($r -> {permission_retrieval_error} != 1) {
+			warn "User '$userID' has no PermissionLevel record -- assuming no permission.";
+		}
+		return 0;
+	}
+	
+	unless (defined $permission_level and $permission_level ne "") {
+		warn "User '$userID' has empty permission level -- assuming no permission.";
+		return 0;
+	}
+
+##
+	
+	my $permissionLevels = $ce->{permissionLevels};
+	if (exists $permissionLevels->{$activity}) {
+		if (defined $permissionLevels->{$activity}) {
+			return $permission_level == $permissionLevels->{$activity};
+		} else {
+			return 0;
+		}
+	} else {
+		die "Activity '$activity' not found in %permissionLevels. Can't continue.\n";
+	}
+}
+#######################################################
 
 #### set-level authorization routines
 
@@ -334,7 +465,8 @@ sub checkSet {
 			"generator $node_name was called.  Try re-entering " .
 			"the set from the problem sets listing page.";
 	} elsif ( (! defined($set->assignment_type) ||
-		   $set->assignment_type eq 'homework') &&
+#		   $set->assignment_type eq 'homework') &&
+		   $set->assignment_type eq 'default') &&
 		  $node_name =~ /gateway/ ) {
 		return "Requested set '$setName' is a homework assignment " . 
 			"but the gateway/quiz content " .
@@ -377,7 +509,8 @@ sub invalidIPAddress {
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
 
-	return 0 if ($set->restrict_ip eq '' || $set->restrict_ip eq 'No' ||
+	return 0 if (!defined($set->restrict_ip) ||
+			$set->restrict_ip eq '' || $set->restrict_ip eq 'No' ||
 		     $self->hasPermissions($userName,'view_ip_restricted_sets'));
 
 	my $clientIP = new Net::IP($r->connection->remote_ip);
@@ -464,5 +597,6 @@ Written by Dennis Lambe, malsyned at math.rochester.edu. Modified by Sam
 Hathaway, sh002i at math.rochester.edu.
 
 =cut
+
 
 1;

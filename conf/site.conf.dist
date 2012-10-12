@@ -45,17 +45,17 @@
 
 # URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
 # that using "" may not work so we suggest sticking with "/webwork2".
-$webwork_url         = "/webwork2";
-$server_root_url   = "";   # e.g.  http://webwork.yourschool.edu or http://localhost
+$webwork_url       = '/webwork2';
+$server_root_url   = '';   # e.g.  'http://webwork.yourschool.edu' or 'http://localhost'
 
 # The following two variables must match the user ID and group ID respectively
 # under which apache is running.
 # In the apache configuration file (often called httpd.conf) you will find
-# User wwadmin   --- this is the $server_userID -- of course it may be wwhttpd or some other name
+# User www-data   --- this is the $server_userID -- of course it may be wwhttpd or some other name
 # Group wwdata   --- this is the $server_groupID -- this will have different names also
 
-$server_userID     = "wwadmin";
-$server_groupID    = "wwdata";
+$server_userID     = 'www-data';
+$server_groupID    = 'wwdata';
 
 
 ################################################################################
@@ -136,7 +136,7 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # database.conf isn't necessary.
 
 # You must initialize the database and set the password for webworkWrite.
-# Uncomment the $database_password line and replace 'passwordRW' by the actual password used in the GRANT command above
+# Edit the $database_password line and replace 'passwordRW' by the actual password used in the GRANT command above
 ################################################################################
 
 # The database dsn is the path to the WeBWorK database which you have created.
@@ -159,13 +159,12 @@ $database_password ="passwordRW";
 $pg_dir              = "/opt/webwork/pg";
 
 # URL and path to htdocs directory.
-# Uncomment the second line below when using lighttpd to serve static images
 $webwork_htdocs_url  = "/webwork2_files";
 $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 
 # URL and path to courses directory.
 $webwork_courses_url = "/webwork2_course_files";
-$webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the course directory
+$webwork_courses_dir = "/opt/webwork/courses"; # a typical place to put course directories
 
 
 ################################################################################
@@ -179,13 +178,13 @@ $webwork_courses_dir = "/opt/webwork/courses"; #(a typical place to put the cour
 # sent via this SMTP server.  localhost may work if your server is capable
 # of sending email, otherwise type the name of your School's outgoing email
 # server.
-$mail{smtpServer}            = '';
+$mail{smtpServer} = '';  # e.g. 'mail.yourschool.edu' or 'localhost'
 
 # When connecting to the above server, WeBWorK will send this address in the
 # MAIL FROM command. This has nothing to do with the "From" address on the mail
 # message. It can really be anything, but some mail servers require it contain
 # a valid mail domain, or at least be well-formed.
-$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
+$mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 
 # Seconds to wait before timing out when connecting to the SMTP server.
 $mail{smtpTimeout}           = 30;
@@ -196,7 +195,9 @@ $mail{smtpTimeout}           = 30;
 
 # For configuration instructions, see:
 # http://webwork.maa.org/wiki/National_Problem_Library
-# The directory containing the national problem library files - typically
+# The directory containing the WeBWorK Open Problem Library (OPL) files - typically
+# /opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary
+# or for the older National Problem Library (NPL)
 # /opt/webwork/libraries/NationalProblemLibrary
 # Set to "" if no problem library is installed.
 $problemLibrary{root}        = "";

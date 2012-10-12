@@ -426,7 +426,7 @@ HERE
 	my $libraryVersion = $r->{ce}->{problemLibrary}->{version} || 1;
 	if($libraryVersion == 1) {
 		return $self->browse_library_panel1;
-	} elsif($libraryVersion == 2) {
+	} elsif($libraryVersion >= 2) {
 		return $self->browse_library_panel2	if($self->{library_basic}==1);
 		return $self->browse_library_panel2adv;
 	} else {

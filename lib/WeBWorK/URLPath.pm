@@ -27,6 +27,7 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use WeBWorK::Localize;
+use Scalar::Util qw(weaken);
 {
 	no warnings "redefine";
 	
@@ -125,6 +126,10 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
+ 
+ instructor_statistics_old               /$courseID/instructor/stats_old/
+ instructor_set_statistics_old           /$courseID/instructor/stats_old/set/$setID/
+ instructor_user_statistics_old          /$courseID/instructor/stats_old/student/$userID/
  
  instructor_progress                  /$courseID/instructor/StudentProgress/
  instructor_set_progress              /$courseID/instructor/StudentProgress/set/$setID/
@@ -328,7 +333,7 @@ our %pathTypes = (
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_answer_log instructor_preflight instructor_statistics
+			instructor_answer_log instructor_preflight instructor_statistics instructor_statistics_old
 			instructor_progress			
 		/ ],
 		match   => qr|^instructor/|,
@@ -682,6 +687,34 @@ our %pathTypes = (
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
+	
+		instructor_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_set_statistics_old instructor_user_statistics_old/ ],
+		match   => qr|^stats_old/|,
+		capture => [ qw// ],
+		produce => 'stats_old/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+	instructor_set_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_statistics_old',
+		kids    => [ qw// ],
+		match   => qr|^(set)/([^/]+)/|,
+		capture => [ qw/statType setID/ ],
+		produce => 'set/$setID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+	instructor_user_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_statistics_old',
+		kids    => [ qw// ],
+		match   => qr|^(student)/([^/]+)/|,
+		capture => [ qw/statType userID/ ],
+		produce => 'student/$userID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
 
 	################################################################################
 
@@ -812,6 +845,7 @@ sub new {
 		args => {},
 		%fields,
 	};
+ 	weaken $self -> {r};
 	return bless $self, $class;
 }
 
