@@ -49,12 +49,26 @@ webwork.ProblemSet = Backbone.Model.extend({
         $.post(webwork.webserviceURL, requestObject, function(data){
             console.log(data);
             var response = $.parseJSON(data);
-            var user = response.result_data;
-            self.set(user);  // Not sure why this needs to be explicitly called.  
-
+            
 	    self.trigger("success","problem_set_changed",self)
         });
     },
+    fetch: function()
+    {
+        var self=this;
+        var requestObject = { xml_command: "getSet"};
+        _.extend(requestObject, this.attributes);
+        _.defaults(requestObject, webwork.requestObject);
+
+        $.get(webwork.webserviceURL, requestObject,
+            function (data) {
+
+                var response = $.parseJSON(data);
+                console.log(response);
+                _.extend(self.attributes,response.result_data);
+            });       
+    }
+
 });
     
 webwork.ProblemSetList = Backbone.Collection.extend({

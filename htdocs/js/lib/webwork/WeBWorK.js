@@ -216,7 +216,6 @@ webwork.Set = Backbone.Model.extend({
 
         this.get('problems').fetch();
     }
-
 });
 
 /**

@@ -52,6 +52,11 @@ $(function(){
                 $(".ps-drag").draggable({revert: "valid", start: function (event,ui) { self.objectDragging=true;},
                                         stop: function(event, ui) {self.objectDragging=false;}});
                 
+                            
+            this.calendarView = new webwork.ui.CalendarView({collection: this.collection});
+            $("#cal").append(this.calendarView.el);
+
+                
                 
                 self.setListView = new SetListView({collection: self.collection, el:$("div#list")});
                 }, this);
@@ -86,9 +91,6 @@ $(function(){
                 $(this).tab('show');
             });
             
-            
-            this.calendarView = new CalendarView();
-            $("#cal").append(this.calendarView.el);
             $("body").droppable();  // This helps in making drags return to their original place.
             
             new SettingsView({el: $("#settings")});
@@ -229,90 +231,7 @@ $(function(){
         }
     });
 
-    var CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
-        tagName: "td",
-        className: "calendar-day",
-        initialize: function (){
-            _.bindAll(this, 'render');  // include all functions that need the this object
-	    var self = this;
-            this.today = this.options.today; 
-            this.render();
-            return this;
-        },
-        render: function () {
-            var self = this;
-            var str = (this.model.getDate()==1)? this.model.toString("MMM dd") : this.model.toString("dd");
-            this.$el.html(str);
-            this.$el.attr("id","date-" + this.model.toString("yyyy-MM-dd"));
-            if (this.today.getMonth()===this.model.getMonth()){this.$el.addClass("this-month");}
-            if (this.today.diffDays(this.model)===0){this.$el.addClass("today");}
-            this.$el.droppable({
-                hoverClass: "highlight-day",
-                drop: function( event, ui ) {
-                    App.dragging = true; 
-                    //$(this).addClass("ui-state-highlight");
-                    console.log( "Dropped on " + self.$el.attr("id"));
-                    }
-                });
-            return this;
-        }
-    });
-      
-      
-    var CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
-        tagName: "tr",
-        className: "calendar-row",
-        initialize: function (){
-            _.bindAll(this, 'render');  // include all functions that need the this object
-	    if (this.options) {this.week=this.options.week; this.today = this.options.today;}
-            this.render();
-            return this; 
-        },
-        render: function () {
-            var self = this;
-            _(this.week).each(function(date) {
-                var calendarDay = new CalendarDayView({model: date, today: self.today});
-                self.$el.append(calendarDay.el);
-            });
-            return this;
-            }
-        });
-    
-    var CalendarView = Backbone.View.extend({
-        tagName: "table",
-        className: "calendar",
-        initialize: function (){
-            _.bindAll(this, 'render');  // include all functions that need the this object
-	    var self = this;
-            var theDate = this.date;; 
-            if (this.options.date) {theDate = this.options.date;}
-            if (! theDate) { theDate = new XDate();}
-            this.date = new XDate(theDate.getFullYear(),theDate.getMonth(),theDate.getDate());  // For the calendar, ignore the time part of the date object.
-            
-            this.render();
-            return this;
-            
-        },
-        render: function () {
-            // The collection is a array of rows containing the day of the current month.
-            
-            
-            var firstOfMonth = new XDate(this.date.getFullYear(),this.date.getMonth(),1);
-            var firstWeekOfMonth = firstOfMonth.clone().addDays(-1*firstOfMonth.getDay());
-            
-            this.$el.html(_.template($("#calendarHeader").html()));
-                        
-            for(var i = 0; i<6; i++){ var theWeek = [];
-                for(var j = 0; j < 7; j++){
-                 theWeek.push(firstWeekOfMonth.clone().addDays(j+7*i));
-                }
-                var calendarWeek = new CalendarRowView({week: theWeek,today: this.date});
-                this.$el.append(calendarWeek.el);                
-            }
-            return this;   
-        }
-    });
-    
+
     var SettingsRowView = Backbone.View.extend({
         tagName: "tr",
         initialize: function () {

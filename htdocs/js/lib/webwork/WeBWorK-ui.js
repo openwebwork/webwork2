@@ -132,6 +132,99 @@ webwork.ui.Closeable = Backbone.View.extend({
     }
 });
 
+
+webwork.ui.CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
+        tagName: "td",
+        className: "calendar-day",
+        initialize: function (){
+            _.bindAll(this, 'render');  // include all functions that need the this object
+	    var self = this;
+	    _.extend(this,this.options);
+            this.render();
+            return this;
+        },
+        render: function () {
+            var self = this;
+            var str = (this.model.getDate()==1)? this.model.toString("MMM dd") : this.model.toString("dd");
+            this.$el.html(str);
+            this.$el.attr("id","date-" + this.model.toString("yyyy-MM-dd"));
+            if (this.calendar.date.getMonth()===this.model.getMonth()){this.$el.addClass("this-month");}
+            if (this.calendar.date.diffDays(this.model)===0){this.$el.addClass("today");}
+	    
+	    var set = this.calendar.collection.find(function (model) { return model.get("set_id")==="Demo"});
+	    
+	    
+            this.$el.droppable({
+                hoverClass: "highlight-day",
+                drop: function( event, ui ) {
+                    App.dragging = true; 
+                    //$(this).addClass("ui-state-highlight");
+                    console.log( "Dropped on " + self.$el.attr("id"));
+                    }
+                });
+            return this;
+        }
+    });
+      
+      
+webwork.ui.CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
+        tagName: "tr",
+        className: "calendar-row",
+        initialize: function (){
+            _.bindAll(this, 'render');  // include all functions that need the this object
+            _.extend(this,this.options);
+
+            this.render();
+            return this; 
+        },
+        render: function () {
+            var self = this;
+            _(this.week).each(function(date) {
+                var calendarDay = new webwork.ui.CalendarDayView({model: date, calendar: self.calendar});
+                self.$el.append(calendarDay.el);
+            });
+            return this;
+            }
+        });
+    
+webwork.ui.CalendarView = Backbone.View.extend({
+        tagName: "table",
+        className: "calendar",
+        initialize: function (){
+            _.bindAll(this, 'render');  // include all functions that need the this object
+	    var self = this;
+            var theDate = this.date;; 
+            if (this.options.date) {theDate = this.options.date;}
+
+            if (! theDate) { theDate = new XDate();}
+            this.date = new XDate(theDate.getFullYear(),theDate.getMonth(),theDate.getDate());  // For the calendar, ignore the time part of the date object.
+            
+            this.render();
+            return this;
+            
+        },
+        render: function () {
+            // The collection is a array of rows containing the day of the current month.
+            
+            
+            var firstOfMonth = new XDate(this.date.getFullYear(),this.date.getMonth(),1);
+            var firstWeekOfMonth = firstOfMonth.clone().addDays(-1*firstOfMonth.getDay());
+            
+            this.$el.html(_.template($("#calendarHeader").html()));
+                        
+            for(var i = 0; i<6; i++){ var theWeek = [];
+                for(var j = 0; j < 7; j++){
+                 theWeek.push(firstWeekOfMonth.clone().addDays(j+7*i));
+                }
+                var calendarWeek = new webwork.ui.CalendarRowView({week: theWeek, calendar: this});
+                this.$el.append(calendarWeek.el);                
+            }
+            return this;   
+        }
+    });
+    
+
+
 /* This is the class webwork.WebPage that sets the framework for all webwork webpages */
 
 webwork.ui.WebPage = Backbone.View.extend({
@@ -142,3 +235,7 @@ webwork.ui.WebPage = Backbone.View.extend({
 //         this.helpView = new webwork.ui.CloseableDiv();
         },
     });
+
+
+
+
