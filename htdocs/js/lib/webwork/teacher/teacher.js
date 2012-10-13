@@ -5,7 +5,7 @@
  David Gage 2012
  */
 
-define(['Underscore','../WebWorK'], function(_, webwork){
+define(['underscore','../WebWorK'], function(_, webwork){
     //I want to put these in a config file built by a yeoman script
     _.extend(webwork.requestObject, {
         "xml_command":"listLib",
@@ -21,4 +21,6 @@ define(['Underscore','../WebWorK'], function(_, webwork){
     });
     
     webwork.webserviceURL = "/webwork2/instructorXMLHandler";
+
+    return webwork;
 });

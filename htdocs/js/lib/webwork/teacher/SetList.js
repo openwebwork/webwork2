@@ -1,4 +1,4 @@
-define(['Backbone', 'Underscore', '../WeBWorK', '../SetList'], function(Backbone, _, webwork, SetList){
+define(['Backbone', 'underscore', './teacher', '../SetList'], function(Backbone, _, webwork, SetList){
     /**
      *
      * @param model

@@ -13,3 +13,5 @@ htdocs/site_info.txt
 #courses.dist/*
 node_modules
 node_modules/*
+WeBWorK.sublime-project
+WeBWorK.sublime-workspace

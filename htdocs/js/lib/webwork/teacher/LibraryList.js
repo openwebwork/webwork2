@@ -1,12 +1,10 @@
-define(['Backbone', 'Underscore', '../WeBWorK', './Library'], function(Backbone, _, webwork, Library){
-    
-    
+define(['Backbone', 'underscore', './teacher', './Library'], function(Backbone, _, webwork, Library){
     /**
      *
      * @type {*}
      */
     var LibraryList = Backbone.Collection.extend({
-        model:webwork.Library,
+        model:Library,
     
         initialize: function(){
             var self = this;
@@ -16,10 +14,12 @@ define(['Backbone', 'Underscore', '../WeBWorK', './Library'], function(Backbone,
                 command: "dirOnly",
                 maxdepth: 0
             };
-            
-            this.model.set({children:new LibraryList});
-            this.model.get('children').url = self.get('path')
-            this.model.get('children').defaultRequestObject.library_name = this.get("path");
+
+            this.on('add', function(lib){
+                lib.set({children:new LibraryList});
+                lib.get('children').url = self.get('path')
+                lib.get('children').defaultRequestObject.library_name = this.get("path");
+            });
             
             _.defaults(this.defaultRequestObject, webwork.requestObject);
             this.syncing = false;
@@ -36,9 +36,9 @@ define(['Backbone', 'Underscore', '../WeBWorK', './Library'], function(Backbone,
     
             _.defaults(requestObject, this.defaultRequestObject);
             self.trigger('syncing', true);
+            console.log(requestObject);
             $.post(webwork.webserviceURL, requestObject,
                 function (data) {
-                    //console.log(data);
                     //try {
                     var response = $.parseJSON(data);
                     console.log(response);

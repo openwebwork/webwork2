@@ -22,9 +22,8 @@
 // undo and redo functions
 var undoing = false;
 var undo_stack = new Array();
-var redo_stack = new Array();
 
-define(['Backbone', 'Underscore'], function(Backbone, _){
+define(['Backbone', 'underscore'], function(Backbone, _){
     /**
      *
      * @class webwork
@@ -104,5 +103,5 @@ define(['Backbone', 'Underscore'], function(Backbone, _){
      */
     webwork.webserviceURL = "";
     
-    return webwork.
+    return webwork;
 });

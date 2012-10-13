@@ -15,18 +15,54 @@
 // by teachers we include the files in the `teacher` subdirectory and add in features
 // like adding and remove problems from a sets ProblemList and browsing a Library.
 
-//Start things off by wrapping everything in jquery so it will load after the dom is ready.
-$(function () {
+//require config
+require.config({
+    baseUrl: "/webwork2_files/js/lib/webwork",
+    paths: {
+        "Backbone": "components/backbone/Backbone",
+        "underscore": "components/underscore/underscore",
+        "jquery": "components/jquery/jquery",
+        "jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
+        "touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
+        "tabs": "../vendor/ui.tabs.closable"
+    },
+    urlArgs: "bust=" +  (new Date()).getTime(),
+    waitSeconds: 15,
+    shim: {
+        //ui specific shims:
+        'jquery-ui': ['jquery'],
+        'touch-pinch': ['jquery'],
+        'tabs': ['jquery-ui', 'jquery'],
+
+        //required shims
+        'underscore': {
+            exports: '_'
+        },
+        'backbone': {
+            //These script dependencies should be loaded before loading
+            //backbone.js
+            deps: ['underscore', 'jquery'],
+            //Once loaded, use the global 'Backbone' as the
+            //module value.
+            exports: 'Backbone'
+        }
+
+        
+    }
+});
+
+//Start things off by wrapping everything in requirejs
+require(['jquery', 'Backbone', 'underscore', 'WeBWorK', 'teacher/SetList', 'teacher/LibraryList', 'teacher/Browse', 'teacher/BrowseResult', 'jquery-ui', 'touch-pinch', 'tabs'], function($, Backbone, _, webwork, SetList, LibraryList, Browse, BrowseResult){
 
     //Since many of the views we'll define will all want to post alerts and messages to the same place
     //we define a global template and alert function for them.
-
     var alert_template = _.template('<div class="alert <%= classes %> fade in"><a class="close" data-dismiss="alert" href="#">×</a><%= message %></div>');
 
     //set up alerts to close
-    $().alert();
+    //$().alert();
 
     var alert = function(message, classes){
+        console.log("alert: "+message);
         $('#messages').html(alert_template({message: message, classes: classes}));
         setTimeout(function(){$(".alert").alert('close')}, 5000);
     };
@@ -328,6 +364,7 @@ $(function () {
     });
 
     var BrowseListView = Backbone.View.extend({
+
         tagName:'span',
         template:_.template($('#BrowseList-template').html()),
 
@@ -359,7 +396,7 @@ $(function () {
             console.log('running search');
             this.model.go(function(problems){
                 console.log(problems);
-                var result = new webwork.BrowseResult({name: self.model.get('library_subject') + "_" + self.model.get('library_chapter') + "_" + self.model.get('library_section')});
+                var result = new BrowseResult({name: self.model.get('library_subject') + "_" + self.model.get('library_chapter') + "_" + self.model.get('library_section')});
                 result.get('problems').reset(problems);
                 var view = new BrowseView({model: result});
                 view.render();
@@ -557,7 +594,6 @@ $(function () {
 
         }
     });
-
     //The APP!! yay!!
     var LibraryBrowser = Backbone.View.extend({
         el:$('#app_box'),
@@ -570,6 +606,7 @@ $(function () {
         },
 
         initialize:function () {
+
             var self = this;
 
             //Some default ajax stuff we can keep it or not
@@ -618,10 +655,10 @@ $(function () {
 
 
             //set up our models
-            this.homeworkSets = new webwork.SetList;
-            this.cardCatalog = new webwork.LibraryList;
+            this.homeworkSets = new SetList;
+            this.cardCatalog = new LibraryList;
             this.cardCatalog.defaultRequestObject.xml_command = "listLibraries";
-            this.browser = new webwork.Browse;
+            //this.browser = new Browse;
 
             this.render();
         },
@@ -657,8 +694,8 @@ $(function () {
             var cardCatalogView = new LibraryListView({model: this.cardCatalog, name: "root"});
             this.$("#CardCatalog").append(cardCatalogView.render().el);
             
-            var browserView = new BrowseListView({model: this.browser});
-            this.$("#Browser").append(browserView.render().el);
+            //var browserView = new BrowseListView({model: this.browser});
+            //this.$("#Browser").append(browserView.render().el);
         },
 
         undo:function () {

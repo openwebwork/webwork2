@@ -1,4 +1,4 @@
-define(['Backbone', 'Underscore', './WeBWorK', './Set'], function(Backbone, _, webwork, Set){
+define(['Backbone', 'underscore', 'WeBWorK', 'Set'], function(Backbone, _, webwork, Set){
     
     
     

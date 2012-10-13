@@ -1,4 +1,4 @@
-define(['Backbone', 'Underscore','../WeBWorK'], function(Backbone, _, webwork){
+define(['Backbone', 'underscore','../WeBWorK'], function(Backbone, _, webwork){
     var User = Backbone.Model.extend({
         defaults:{
             first_name: "",

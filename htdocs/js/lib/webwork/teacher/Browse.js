@@ -1,4 +1,4 @@
-define(['Backbone', 'Underscore','../WeBWorK', '../ProblemList', '../Problem'], function(Backbone, _, webwork, ProblemList, Problem){
+define(['Backbone', 'underscore','../WeBWorK', '../ProblemList', '../Problem'], function(Backbone, _, webwork, ProblemList, Problem){
     /**
      *
      * @constructor
@@ -92,16 +92,7 @@ define(['Backbone', 'Underscore','../WeBWorK', '../ProblemList', '../Problem'], 
         }
     });
     
-    webwork.BrowseResult = Backbone.Model.extend({
-        defaults:{
-            name: "",
-        },
-        
-        initialize:function(){
-            this.set('problems', new ProblemList);
-            this.set('name', this.get('name').replace(/ /g, "_"));
-        }
-    });
+    
     
     
     /*

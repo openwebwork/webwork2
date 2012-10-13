@@ -1,4 +1,4 @@
-define(['Backbone', 'Underscore', './WeBWorK', './Problem'], function(Backbone, _, webwork, Problem){
+define(['Backbone', 'underscore', './WeBWorK', './Problem'], function(Backbone, _, webwork, Problem){
     /**
      *
      * @type {*}

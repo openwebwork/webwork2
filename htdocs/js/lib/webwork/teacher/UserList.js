@@ -1,4 +1,4 @@
-define(['Backbone', 'Underscore', './User', '../WeBWorK'], function(Backbone, _, User, wework){
+define(['Backbone', 'underscore', './User', '../WeBWorK'], function(Backbone, _, User, wework){
     var UserList = Backbone.Collection.extend({
         model: User,
     
