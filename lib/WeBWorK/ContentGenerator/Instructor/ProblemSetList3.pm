@@ -471,7 +471,7 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone-validation.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"//ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.custom/js/jquery-ui-1.9.0.custom.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery.ui.touch-punch.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/xdate.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/FileSaver.js"}), CGI::end_script();
