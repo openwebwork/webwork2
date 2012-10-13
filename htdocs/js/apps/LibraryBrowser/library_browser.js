@@ -17,16 +17,16 @@
 
 //require config
 require.config({
-    baseUrl: "/webwork2_files/js/lib/webwork",
+    //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "components/backbone/Backbone",
-        "underscore": "components/underscore/underscore",
-        "jquery": "components/jquery/jquery",
-        "jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
-        "touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
-        "tabs": "../vendor/ui.tabs.closable",
+        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
+        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "jquery-ui": "/webwork2_files/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min",
+        "touch-pinch": "/webwork2_files/js/lib/vendor/jquery/jquery.ui.touch-punch",
+        "tabs": "/webwork2_files/js/lib/vendor/ui.tabs.closable",
         //this is important:
-        "config":"/webwork2_files/js/apps/LibraryBrowser/config"
+        "config":"/webwork2_files/js/apps/LibraryBrowser/config",
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -54,7 +54,7 @@ require.config({
 });
 
 //Start things off by wrapping everything in requirejs
-require(['jquery', 'Backbone', 'underscore', 'teacher/SetList', 'teacher/LibraryList', 'teacher/Browse', 'teacher/BrowseResult', 'jquery-ui', 'touch-pinch', 'tabs'], function($, Backbone, _, SetList, LibraryList, Browse, BrowseResult){
+require(['jquery', 'Backbone', 'underscore', '../../lib/webwork/teacher/SetList', '../../lib/webwork/teacher/LibraryList', '../../lib/webwork/teacher/Browse', '../../lib/webwork/teacher/BrowseResult', 'jquery-ui', 'touch-pinch', 'tabs'], function($, Backbone, _, SetList, LibraryList, Browse, BrowseResult){
 
     //Since many of the views we'll define will all want to post alerts and messages to the same place
     //we define a global template and alert function for them.

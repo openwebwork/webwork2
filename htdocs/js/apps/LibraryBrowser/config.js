@@ -3,7 +3,7 @@ define([], function(){
         requestObject: {
             "xml_command":"listLib",
             "pw":"",
-            "password":"nothing",
+            "password":"",
             "session_key":document.getElementById("hidden_key").value,
             "user":document.getElementById("hidden_user").value,
             "library_name":"Library",

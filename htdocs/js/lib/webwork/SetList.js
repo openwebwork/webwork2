@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', 'Set', 'config'], function(Backbone, _, Set, config){
+define(['Backbone', 'underscore', './Set', 'config'], function(Backbone, _, Set, config){
     
     
     
@@ -26,6 +26,7 @@ define(['Backbone', 'underscore', 'Set', 'config'], function(Backbone, _, Set, c
                 xml_command: "listSets"
             };
             _.defaults(requestObject, this.defaultRequestObject);
+            console.log(requestObject);
             self.trigger('syncing', true);
             $.post(this.webserviceURL, requestObject, function (data) {
                 var response = $.parseJSON(data);
