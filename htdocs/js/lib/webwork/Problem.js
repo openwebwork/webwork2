@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', './WeBWorK'], function(Backbone, _, webwork){
+define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
     /**
      *
      * @type {*}
@@ -23,12 +23,12 @@ define(['Backbone', 'underscore', './WeBWorK'], function(Backbone, _, webwork){
                 problemSource: this.get('path'),
                 xml_command: "renderProblem"
             };
-            _.defaults(requestObject, webwork.requestObject);
+            _.defaults(requestObject, config.requestObject);
     
     
             if (!problem.get('data')) {
                 //if we haven't gotten this problem yet, ask for it
-                $.post(webwork.webserviceURL, requestObject, function (data) {
+                $.post(config.webserviceURL, requestObject, function (data) {
                     problem.set('data', data);
                 });
             }

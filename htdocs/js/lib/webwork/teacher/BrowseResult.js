@@ -1,6 +1,6 @@
-define(['Backbone', 'underscore','../WeBWorK', '../ProblemList'], function(Backbone, _, webwork, ProblemList){
+define(['Backbone', 'underscore','config', '../ProblemList'], function(Backbone, _, config, ProblemList){
 
-    webwork.BrowseResult = Backbone.Model.extend({
+    var BrowseResult = Backbone.Model.extend({
         defaults:{
             name: "",
         },
@@ -10,4 +10,6 @@ define(['Backbone', 'underscore','../WeBWorK', '../ProblemList'], function(Backb
             this.set('name', this.get('name').replace(/ /g, "_"));
         }
     });
+
+    return BrowseResult;
 });

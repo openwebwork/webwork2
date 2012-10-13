@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','../WeBWorK'], function(Backbone, _, webwork){
+define(['Backbone', 'underscore','config'], function(Backbone, _, config){
     var User = Backbone.Model.extend({
         defaults:{
             first_name: "",
@@ -20,19 +20,19 @@ define(['Backbone', 'underscore','../WeBWorK'], function(Backbone, _, webwork){
     
         update: function(){
             
-            console.log("in webwork.User update");
+            console.log("in config.User update");
             var self = this;
             var requestObject = {
                 "xml_command": 'editUser'
             };
             _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, webwork.requestObject);
+            _.defaults(requestObject, config.requestObject);
     
             
             requestObject.permission = requestObject.permission.value;
             console.log(requestObject.permission);
     
-            $.post(webwork.webserviceURL, requestObject, function(data){
+            $.post(config.webserviceURL, requestObject, function(data){
                 console.log(data);
                 var response = $.parseJSON(data);
                 var user = response.result_data;
@@ -56,11 +56,11 @@ define(['Backbone', 'underscore','../WeBWorK'], function(Backbone, _, webwork){
                 'new_password': new_password
             };
             _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, webwork.requestObject);
+            _.defaults(requestObject, config.requestObject);
     
             requestObject.permission = requestObject.permission.value;
     
-            $.post(webwork.webserviceURL, requestObject, function(data){
+            $.post(config.webserviceURL, requestObject, function(data){
                 console.log(data);
                 console.log("success?");
             });
@@ -70,7 +70,7 @@ define(['Backbone', 'underscore','../WeBWorK'], function(Backbone, _, webwork){
     
     // Note: these are in the order given in the classlist format for LST files.  
     
-    webwork.userProps = [{shortName: "student_id", longName: "Student ID", regexp: "student"},
+    config.userProps = [{shortName: "student_id", longName: "Student ID", regexp: "student"},
                          {shortName: "last_name", longName: "Last Name", regexp: "last"},
                          {shortName: "first_name", longName: "First Name", regexp: "first"},
                          {shortName: "status", longName: "Status", regexp: "status"},
@@ -83,7 +83,7 @@ define(['Backbone', 'underscore','../WeBWorK'], function(Backbone, _, webwork){
                          {shortName: "permission", longName: "Permission Level", regexp: "permission"}
                          ];
     
-    webwork.userTableHeaders = [
+    config.userTableHeaders = [
                     { name: "Select", datatype: "boolean", editable: true},
             { name: "Action", datatype: "string", editable: true,
                         values: {"action1":"Change Password",

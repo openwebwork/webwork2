@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', './WeBWorK', './Problem'], function(Backbone, _, webwork, Problem){
+define(['Backbone', 'underscore', 'config', './Problem'], function(Backbone, _, config, Problem){
     /**
      *
      * @type {*}
@@ -6,13 +6,15 @@ define(['Backbone', 'underscore', './WeBWorK', './Problem'], function(Backbone, 
     ProblemList = Backbone.Collection.extend({
         model:Problem,
     
-        initialize: function(){
+        initialize: function(model, options){
             var self = this;
             this.defaultRequestObject = {
     
             };
-            _.defaults(this.defaultRequestObject, webwork.requestObject);
-    
+            
+            this.webserviceURL = config.webserviceURL;
+            _.defaults(this.defaultRequestObject, config.requestObject);
+
             if(this.addProblem && this.removeProblem){
                 this.on('add', this.addProblem, this);
                 this.on('remove', this.removeProblem, this);
@@ -34,7 +36,7 @@ define(['Backbone', 'underscore', './WeBWorK', './Problem'], function(Backbone, 
             var requestObject = {};
             _.defaults(requestObject, this.defaultRequestObject);
             self.trigger('syncing', true);
-            $.post(webwork.webserviceURL, requestObject,
+            $.post(config.webserviceURL, requestObject,
                 function (data) {
     
                     var response = $.parseJSON(data);

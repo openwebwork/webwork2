@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', './teacher', '../SetList'], function(Backbone, _, webwork, SetList){
+define(['Backbone', 'underscore', 'config', '../SetList'], function(Backbone, _, config, SetList){
     /**
      *
      * @param model
@@ -10,7 +10,7 @@ define(['Backbone', 'underscore', './teacher', '../SetList'], function(Backbone,
             new_set_name: model.name ? model.name : model.get("name")
         };
         _.defaults(requestObject, this.defaultRequestObject);
-        $.post(webwork.webserviceURL, requestObject, function (data) {
+        $.post(config.webserviceURL, requestObject, function (data) {
             //try {
             var response = $.parseJSON(data);
             console.log("result: " + response.server_response);

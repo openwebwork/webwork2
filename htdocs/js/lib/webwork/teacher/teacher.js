@@ -5,22 +5,22 @@
  David Gage 2012
  */
 
-define(['underscore','../WebWorK'], function(_, webwork){
+define(['underscore','module'], function(_, module){
     //I want to put these in a config file built by a yeoman script
-    _.extend(webwork.requestObject, {
+    _.extend(module.config().webwork.requestObject, {
         "xml_command":"listLib",
         "pw":"",
-        "password":webwork.PASSWORD,
-        "session_key":webwork.SESSIONKEY,
+        "password":module.config().webwork.PASSWORD,
+        "session_key":module.config().webwork.SESSIONKEY,
         "user":"user-needs-to-be-defined",
         "library_name":"Library",
-        "courseID":webwork.COURSE,
+        "courseID":module.config().webwork.COURSE,
         "set":"set0",
         "new_set_name":"new set",
         "command":"buildtree"
     });
     
-    webwork.webserviceURL = "/webwork2/instructorXMLHandler";
+    module.config().webwork.webserviceURL = "/webwork2/instructorXMLHandler";
 
     return webwork;
 });

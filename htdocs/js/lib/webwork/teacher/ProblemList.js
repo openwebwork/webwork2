@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','../WeBWorK', '../ProblemList'], function(Backbone, _, webwork, ProblemList){
+define(['Backbone', 'underscore','config', '../ProblemList'], function(Backbone, _, config, ProblemList){
     //Problem admin functions
     
     /**
@@ -15,7 +15,7 @@ define(['Backbone', 'underscore','../WeBWorK', '../ProblemList'], function(Backb
         };
         _.defaults(requestObject, this.defaultRequestObject);
     
-        $.post(webwork.webserviceURL, requestObject, function (data) {
+        $.post(config.webserviceURL, requestObject, function (data) {
             //try {
             var response = $.parseJSON(data);
             // still have to test for success..everywhere
@@ -48,7 +48,7 @@ define(['Backbone', 'underscore','../WeBWorK', '../ProblemList'], function(Backb
         };
         _.defaults(requestObject, this.defaultRequestObject);
     
-        $.post(webwork.webserviceURL, requestObject, function (data) {
+        $.post(config.webserviceURL, requestObject, function (data) {
             //try {
             var response = $.parseJSON(data);
             // still have to test for success....
@@ -86,7 +86,7 @@ define(['Backbone', 'underscore','../WeBWorK', '../ProblemList'], function(Backb
         _.defaults(requestObject, this.defaultRequestObject);
         console.log(requestObject.set);
     
-        $.post(webwork.webserviceURL, requestObject, function (data) {
+        $.post(config.webserviceURL, requestObject, function (data) {
             //try {
             var response = $.parseJSON(data);
             console.log("result: " + response.server_response);

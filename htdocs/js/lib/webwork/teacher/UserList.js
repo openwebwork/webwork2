@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', './User', '../WeBWorK'], function(Backbone, _, User, wework){
+define(['Backbone', 'underscore', './User', 'config'], function(Backbone, _, User, config){
     var UserList = Backbone.Collection.extend({
         model: User,
     
@@ -8,9 +8,9 @@ define(['Backbone', 'underscore', './User', '../WeBWorK'], function(Backbone, _,
                 var self = this;
                 var requestObject = {"xml_command": 'addUser'};
                 _.extend(requestObject, user.attributes);
-                _.defaults(requestObject, webwork.requestObject);
+                _.defaults(requestObject, config.requestObject);
                 
-                $.post(webwork.webserviceURL, requestObject, function(data){
+                $.post(config.webserviceURL, requestObject, function(data){
                     var response = $.parseJSON(data);
                     self.trigger("success","user_added", user);
                 });
@@ -18,10 +18,10 @@ define(['Backbone', 'underscore', './User', '../WeBWorK'], function(Backbone, _,
                 }, this);
             this.on('remove', function(user){
                 var request = {"xml_command": "deleteUser", "user_id" : user.user_id };
-            _.defaults(request,webwork.requestObject);
+            _.defaults(request,config.requestObject);
                 _.extend(request, user.attributes);
                 console.log(request);
-            $.post(webwork.webserviceURL,request,function (data) {
+            $.post(config.webserviceURL,request,function (data) {
                     
                     console.log(data);
                     var response = $.parseJSON(data);
@@ -41,9 +41,9 @@ define(['Backbone', 'underscore', './User', '../WeBWorK'], function(Backbone, _,
             var requestObject = {
                 "xml_command": 'listUsers'
             };
-            _.defaults(requestObject, webwork.requestObject);
+            _.defaults(requestObject, config.requestObject);
     
-            $.post(webwork.webserviceURL, requestObject, function(data){
+            $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
                 console.log(response);
                 var users = response.result_data;

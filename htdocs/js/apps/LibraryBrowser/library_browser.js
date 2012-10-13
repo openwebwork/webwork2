@@ -24,7 +24,9 @@ require.config({
         "jquery": "components/jquery/jquery",
         "jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
         "touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
-        "tabs": "../vendor/ui.tabs.closable"
+        "tabs": "../vendor/ui.tabs.closable",
+        //this is important:
+        "config":"/webwork2_files/js/apps/LibraryBrowser/config"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -52,7 +54,7 @@ require.config({
 });
 
 //Start things off by wrapping everything in requirejs
-require(['jquery', 'Backbone', 'underscore', 'WeBWorK', 'teacher/SetList', 'teacher/LibraryList', 'teacher/Browse', 'teacher/BrowseResult', 'jquery-ui', 'touch-pinch', 'tabs'], function($, Backbone, _, webwork, SetList, LibraryList, Browse, BrowseResult){
+require(['jquery', 'Backbone', 'underscore', 'teacher/SetList', 'teacher/LibraryList', 'teacher/Browse', 'teacher/BrowseResult', 'jquery-ui', 'touch-pinch', 'tabs'], function($, Backbone, _, SetList, LibraryList, Browse, BrowseResult){
 
     //Since many of the views we'll define will all want to post alerts and messages to the same place
     //we define a global template and alert function for them.
@@ -64,7 +66,7 @@ require(['jquery', 'Backbone', 'underscore', 'WeBWorK', 'teacher/SetList', 'teac
     var alert = function(message, classes){
         console.log("alert: "+message);
         $('#messages').html(alert_template({message: message, classes: classes}));
-        setTimeout(function(){$(".alert").alert('close')}, 5000);
+        //setTimeout(function(){$(".alert").alert('close')}, 5000);
     };
 
 
@@ -615,11 +617,11 @@ require(['jquery', 'Backbone', 'underscore', 'WeBWorK', 'teacher/SetList', 'teac
             });
 
             // get usernames and keys from hidden variables and set up webwork object:
-            var myUser = document.getElementById("hidden_user").value;
-            var mySessionKey = document.getElementById("hidden_key").value;
-            var myCourseID = document.getElementById("hidden_courseID").value;
+            //var myUser = document.getElementById("hidden_user").value;
+            //var mySessionKey = document.getElementById("hidden_key").value;
+            //var myCourseID = document.getElementById("hidden_courseID").value;
             // check to make sure that our credentials are available.
-            if (myUser && mySessionKey && myCourseID) {
+            /*if (myUser && mySessionKey && myCourseID) {
                 webwork.requestObject.user = myUser;
                 webwork.requestObject.session_key = mySessionKey;
                 webwork.requestObject.courseID = myCourseID;
@@ -627,7 +629,7 @@ require(['jquery', 'Backbone', 'underscore', 'WeBWorK', 'teacher/SetList', 'teac
                 alert("missing hidden credentials: user "
                     + myUser + " session_key " + mySessionKey
                     + " courseID" + myCourseID, "alert-error");
-            }
+            }*/
 
 
             //Set up the tabbed set lists and libraries:

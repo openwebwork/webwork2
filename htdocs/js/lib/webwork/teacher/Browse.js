@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','../WeBWorK', '../ProblemList', '../Problem'], function(Backbone, _, webwork, ProblemList, Problem){
+define(['Backbone', 'underscore','config', '../ProblemList', '../Problem'], function(Backbone, _, config, ProblemList, Problem){
     /**
      *
      * @constructor
@@ -15,7 +15,7 @@ define(['Backbone', 'underscore','../WeBWorK', '../ProblemList', '../Problem'], 
             var self = this;
             this.defaultRequestObject = {
             };
-            _.defaults(this.defaultRequestObject, webwork.requestObject);
+            _.defaults(this.defaultRequestObject, config.requestObject);
             
             this.set('problems', new ProblemList);
             this.set('library_subjects', new Array());
@@ -49,7 +49,7 @@ define(['Backbone', 'underscore','../WeBWorK', '../ProblemList', '../Problem'], 
             };
             _.defaults(requestObject, this.defaultRequestObject);
             var self = this;
-            $.post(webwork.webserviceURL, requestObject, function (data) {
+            $.post(config.webserviceURL, requestObject, function (data) {
                 var response = $.parseJSON(data);
                 var results = response.result_data;//.split(",");
                 
@@ -72,7 +72,7 @@ define(['Backbone', 'underscore','../WeBWorK', '../ProblemList', '../Problem'], 
                 library_sections: this.get('library_section')
             };
             _.defaults(requestObject, this.defaultRequestObject);
-            $.post(webwork.webserviceURL, requestObject, function (data) {
+            $.post(config.webserviceURL, requestObject, function (data) {
                 var response = $.parseJSON(data);
                 console.log(response);
                 self.set(category, response.result_data);

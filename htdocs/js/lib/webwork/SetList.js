@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', 'WeBWorK', 'Set'], function(Backbone, _, webwork, Set){
+define(['Backbone', 'underscore', 'Set', 'config'], function(Backbone, _, Set, config){
     
     
     
@@ -10,11 +10,11 @@ define(['Backbone', 'underscore', 'WeBWorK', 'Set'], function(Backbone, _, webwo
     var SetList = Backbone.Collection.extend({
         model:Set,
     
-        initialize: function(){
+        initialize: function(model, options){
             var self = this;
             this.defaultRequestObject = {};
-    
-            _.defaults(this.defaultRequestObject, webwork.requestObject);
+            this.webserviceURL = config.webserviceURL;
+            _.defaults(this.defaultRequestObject, config.requestObject);
             this.syncing = false;
             this.on('syncing', function(value){self.syncing = value});
         },
@@ -27,7 +27,7 @@ define(['Backbone', 'underscore', 'WeBWorK', 'Set'], function(Backbone, _, webwo
             };
             _.defaults(requestObject, this.defaultRequestObject);
             self.trigger('syncing', true);
-            $.post(webwork.webserviceURL, requestObject, function (data) {
+            $.post(this.webserviceURL, requestObject, function (data) {
                 var response = $.parseJSON(data);
     
                 var setNames = response.result_data;

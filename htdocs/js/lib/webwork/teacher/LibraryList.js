@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', './teacher', './Library'], function(Backbone, _, webwork, Library){
+define(['Backbone', 'underscore', 'config', './Library'], function(Backbone, _, config, Library){
     /**
      *
      * @type {*}
@@ -6,7 +6,7 @@ define(['Backbone', 'underscore', './teacher', './Library'], function(Backbone, 
     var LibraryList = Backbone.Collection.extend({
         model:Library,
     
-        initialize: function(){
+        initialize: function(models, options){
             var self = this;
             this.url = "";
             this.defaultRequestObject = {
@@ -14,14 +14,17 @@ define(['Backbone', 'underscore', './teacher', './Library'], function(Backbone, 
                 command: "dirOnly",
                 maxdepth: 0
             };
-
-            this.on('add', function(lib){
+            var addChildren = function(lib){
                 lib.set({children:new LibraryList});
-                lib.get('children').url = self.get('path')
-                lib.get('children').defaultRequestObject.library_name = this.get("path");
+                lib.get('children').url = lib.get('path')
+                lib.get('children').defaultRequestObject.library_name = lib.get("path");
+            };
+            this.on('add', addChildren);
+            this.on('reset', function(libs){
+                libs.forEach(function(lib){addChildren(lib);});
             });
-            
-            _.defaults(this.defaultRequestObject, webwork.requestObject);
+            this.webserviceURL = config.webserviceURL;
+            _.defaults(this.defaultRequestObject, config.requestObject);
             this.syncing = false;
             this.on('syncing', function(value){self.syncing = value});
         },
@@ -37,7 +40,7 @@ define(['Backbone', 'underscore', './teacher', './Library'], function(Backbone, 
             _.defaults(requestObject, this.defaultRequestObject);
             self.trigger('syncing', true);
             console.log(requestObject);
-            $.post(webwork.webserviceURL, requestObject,
+            $.post(this.webserviceURL, requestObject,
                 function (data) {
                     //try {
                     var response = $.parseJSON(data);

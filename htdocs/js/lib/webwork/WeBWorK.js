@@ -82,7 +82,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
      }
      */
     webwork.requestObject = {
-        "xml_command":"",
+        "xml_command":"listLib",
         "pw":"",
         "password":webwork.PASSWORD,
         "session_key":webwork.SESSIONKEY,
@@ -91,7 +91,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
         "courseID":webwork.COURSE,
         "set":"set0",
         "new_set_name":"new set",
-        "command":""
+        "command":"buildtree"
     };
     
     /**
