@@ -4,7 +4,7 @@
  * 
  */
              
-             
+define(['XDate'], function(XDate){
 var util = {             
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
@@ -70,3 +70,7 @@ function parseWWDate(str) {
 }
 
 XDate.parsers.push(parseWWDate);
+
+return util;
+
+});
