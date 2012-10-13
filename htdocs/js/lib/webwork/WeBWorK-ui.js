@@ -1,8 +1,9 @@
 // An object containing some of the User Interface objects for WeBWorK
+define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate){
 
-webwork.ui ={};
+var ui ={};
 
-webwork.ui.ChangePasswordRowView = Backbone.View.extend({
+ui.ChangePasswordRowView = Backbone.View.extend({
 	tagName: "tr",
 	className: "CPuserRow",
 	initialize: function(){
@@ -27,7 +28,7 @@ webwork.ui.ChangePasswordRowView = Backbone.View.extend({
     });
 
 
-webwork.ui.EmailStudentsView = Backbone.View.extend({
+ui.EmailStudentsView = Backbone.View.extend({
 	tagName: "div",
 	className: "emailDialog",
 	initialize: function() { _.bindAll(this,"render"); this.render(); return this;},
@@ -52,7 +53,7 @@ webwork.ui.EmailStudentsView = Backbone.View.extend({
    }
 });
 
-webwork.ui.ChangePasswordView = Backbone.View.extend({
+ui.ChangePasswordView = Backbone.View.extend({
     tagName: "div",
     className: "passwordDialog",
     initialize: function() { _.bindAll(this,"render"); this.render(); return this;},
@@ -61,7 +62,7 @@ webwork.ui.ChangePasswordView = Backbone.View.extend({
         var self = this; 
         this.$el.html(_.template($("#passwordDialogText").html(),this.model));
         this.model.each(function (user) {
-            var tableRow = new webwork.ui.ChangePasswordRowView({model: user});
+            var tableRow = new ui.ChangePasswordRowView({model: user});
             $("table tbody",self.$el).append(tableRow.el);
         });
         
@@ -80,7 +81,7 @@ webwork.ui.ChangePasswordView = Backbone.View.extend({
 
 /* This is a class of closeable Divs that take functionality from Boostrap-alert.  See http://twitter.github.com/bootstrap/javascript.html#alerts */
 
-webwork.ui.Closeable = Backbone.View.extend({
+ui.Closeable = Backbone.View.extend({
     className: "closeablePane",
     text: "",
     display: "none",
@@ -133,7 +134,7 @@ webwork.ui.Closeable = Backbone.View.extend({
 });
 
 
-webwork.ui.CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
+ui.CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
         tagName: "td",
         className: "calendar-day",
         initialize: function (){
@@ -177,7 +178,7 @@ webwork.ui.CalendarDayView = Backbone.View.extend({ // This displays a day in th
     });
       
       
-webwork.ui.CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
+ui.CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
         tagName: "tr",
         className: "calendar-row",
         initialize: function (){
@@ -190,14 +191,14 @@ webwork.ui.CalendarRowView = Backbone.View.extend({  // This displays a row of t
         render: function () {
             var self = this;
             _(this.week).each(function(date) {
-                var calendarDay = new webwork.ui.CalendarDayView({model: date, calendar: self.calendar});
+                var calendarDay = new ui.CalendarDayView({model: date, calendar: self.calendar});
                 self.$el.append(calendarDay.el);
             });
             return this;
             }
         });
     
-webwork.ui.CalendarView = Backbone.View.extend({
+ui.CalendarView = Backbone.View.extend({
         tagName: "table",
         className: "calendar",
         initialize: function (){
@@ -226,7 +227,7 @@ webwork.ui.CalendarView = Backbone.View.extend({
                 for(var j = 0; j < 7; j++){
                  theWeek.push(firstWeekOfMonth.clone().addDays(j+7*i));
                 }
-                var calendarWeek = new webwork.ui.CalendarRowView({week: theWeek, calendar: this});
+                var calendarWeek = new ui.CalendarRowView({week: theWeek, calendar: this});
                 this.$el.append(calendarWeek.el);                
             }
             return this;   
@@ -237,15 +238,18 @@ webwork.ui.CalendarView = Backbone.View.extend({
 
 /* This is the class webwork.WebPage that sets the framework for all webwork webpages */
 
-webwork.ui.WebPage = Backbone.View.extend({
+ui.WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
     initialize: function () {
-//         this.announceView = new webwork.ui.CloseableDiv({border: "2px solid darkgreen", background: "lightgreen"});
-//         this.helpView = new webwork.ui.CloseableDiv();
+//         this.announceView = new ui.CloseableDiv({border: "2px solid darkgreen", background: "lightgreen"});
+//         this.helpView = new ui.CloseableDiv();
         },
     });
 
+return ui;
+
+});
 
 
 

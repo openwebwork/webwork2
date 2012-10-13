@@ -82,13 +82,13 @@
           </div>
         </div><!-- /navbar-inner -->
     </div>
-    <div class="row">
+     <div class="row">
 	<div class="span8">
 	<ul class="breadcrumb">
 		<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
 	</ul>
 	</div>
-	<div class="span4"><button class="btn pull-right" id="help-link">Help</button></div>
+	<div class="span4"><span><!--#loginstatus--></span><button class="btn pull-right" id="help-link">Help</button></div>
     </div>
 		
 	    <!--#if can="body"-->

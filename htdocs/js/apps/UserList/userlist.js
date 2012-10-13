@@ -21,10 +21,81 @@ $LAB.setOptions({BasePath : "http://localhost/webwork2/htdocs/js/"})
     .script("lib/webwork/teacher/User.js")
     .script("lib/webwork/util.js").wait(  */
 
-$(function(){
+
+//require config
+require.config({
+    //baseUrl: "/webwork2_files/js/",
+    paths: {
+        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "backbone-validation":"/webwork2_files/js/lib/vendor/backbone-validation",
+        "FileSaver": "/webwork2_files/js/lib/vendor/FileSaver",
+        "BlobBuilder": "/webwork2_files/js/lib/vendor/BlobBuilder",
+        "jquery-ui-for-classlist3": "/webwork2_files/js/lib/vendor/jquery/jquery-ui-for-classlist3/js/jquery-ui-1.8.21.custom.min",
+        "WeBWorK-ui": "/webwork2_files/js/lib/webwork/WeBWorK-ui",
+        "util":"/webwork2_files/js/lib/webwork/util",
+        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
+        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
+        //"jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
+        //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
+        //"tabs": "../vendor/ui.tabs.closable",
+        //this is important:
+        "XDate":'/webwork2_files/js/lib/vendor/xdate',
+        "config":"config"
+    },
+    //deps:['EditableGrid'],
+    //callback:function(){console.log(EditableGrid)},
+    urlArgs: "bust=" +  (new Date()).getTime(),
+    waitSeconds: 15,
+    shim: {
+        //ui specific shims:
+        'jquery-ui-for-classlist3': ['jquery'],
+
+        //required shims
+        'underscore': {
+            exports: '_'
+        },
+        'Backbone': {
+            //These script dependencies should be loaded before loading
+            //backbone.js
+            deps: ['underscore', 'jquery'],
+            //Once loaded, use the global 'Backbone' as the
+            //module value.
+            exports: 'Backbone'
+        },
+        'backbone-validation':['Backbone'],
+        
+        'BlobBuilder': {
+        	exports: 'BlobBuilder'
+        },
+
+        "FileSaver":{
+        	exports: 'saveAs'
+        },
+
+        'XDate':{
+        	exports: 'XDate'
+        }
+        
+    }
+});
+
+require(['Backbone', 
+	'underscore',
+	'../../lib/webwork/teacher/User', 
+	'../../lib/webwork/teacher/UserList', 
+	'FileSaver', 
+	'BlobBuilder', 
+	'EditableGrid', 
+	'WeBWorK-ui', 
+	'util', 
+	'config', /*no exports*/, 
+	'jquery-ui-for-classlist3', 
+	'backbone-validation'], 
+function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, util, config){
 
     // get usernames and keys from hidden variables and set up webwork object:
-    var myUser = document.getElementById("hidden_user").value;
+    /*var myUser = document.getElementById("hidden_user").value;
     var mySessionKey = document.getElementById("hidden_key").value;
     var myCourseID = document.getElementById("hidden_courseID").value;
     // check to make sure that our credentials are available.
@@ -36,22 +107,21 @@ $(function(){
         alert("missing hidden credentials: user "
             + myUser + " session_key " + mySessionKey
             + " courseID" + myCourseID, "alert-error");
-    }
+    }*/
 
-    var UserListView = webwork.ui.WebPage.extend({
+    var UserListView = ui.WebPage.extend({
 	tagName: "div",
         initialize: function(){
-	    webwork.ui.WebPage.prototype.initialize.apply(this);
+	    ui.WebPage.prototype.initialize.apply(this);
 	    _.bindAll(this, 'render','addOne','addAll','deleteUsers','changePassword');  // include all functions that need the this object
 	    var self = this;
-	    this.collection = new webwork.UserList();  // This is a Backbone.Collection of users
-	    
+	    this.collection = new UserList();  // This is a Backbone.Collection of users
 	    
 	    
 	    
 	    this.grid = new EditableGrid("UserListTable", { enableSort: true});
-
-            this.grid.load({ metadata: webwork.userTableHeaders, data: [{id:0, values:{}}]});
+//what's here?
+            this.grid.load({ metadata: config.userTableHeaders, data: [{id:0, values:{}}]});
 	    
 	    this.render();
 	    
@@ -86,16 +156,16 @@ $(function(){
 			var username = self.grid.getValueAt(rowIndex,2); //
 			
 			// send a relative path, but is this the best way?
-			var url = "../../?user=" + webwork.requestObject.user + "&effectiveUser=" + username + "&key=" +
-				    webwork.requestObject.session_key; 
+			var url = "../../?user=" + config.requestObject.user + "&effectiveUser=" + username + "&key=" +
+				    config.requestObject.session_key; 
 			location.href = url;
 		    break;
 		    case "action4":  // Student Progress
 			var username = self.grid.getValueAt(rowIndex,2); //
 			
 			// send a relative path, but is this the best way?
-			var url = "../progress/student/" + username + "/?user=" + webwork.requestObject.user + "&effectiveUser=" + username + "&key=" +
-				    webwork.requestObject.session_key; 
+			var url = "../progress/student/" + username + "/?user=" + config.requestObject.user + "&effectiveUser=" + username + "&key=" +
+				    config.requestObject.session_key; 
 			location.href = url;
 		    break;
 		    case "action5":  // Email Student
@@ -232,7 +302,7 @@ $(function(){
 		    var bb = new BlobBuilder;
 		    
 		    // Write the headers out
-		    bb.append((_(webwork.userProps).map(function (prop) { return "\"" + prop.longName + "\"";})).join(",") + "\n");
+		    bb.append((_(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";})).join(",") + "\n");
 		    
                     // Write out the user Props
                     this.collection.each(function(user){bb.append(user.toCSVString())});
@@ -318,24 +388,24 @@ $(function(){
 	    
 	    // Create an announcement pane for successful messages.
 	    
-	    this.announce = new webwork.ui.Closeable({el:$("#announce-pane"),classes: ["alert-success"]});
+	    this.announce = new ui.Closeable({el:$("#announce-pane"),classes: ["alert-success"]});
 	    
 	    
    	    // Create an announcement pane for successful messages.
 	    
-	    this.errorPane = new webwork.ui.Closeable({el:$("#error-pane"),classes: ["alert-error"]});
+	    this.errorPane = new ui.Closeable({el:$("#error-pane"),classes: ["alert-error"]});
 	    
 	    
 	    // This is the help Pane
 	    
-   	    this.helpPane = new webwork.ui.Closeable({display: "block",el:$("#help-pane"),text: $("#studentManagementHelp").html()});
+   	    this.helpPane = new ui.Closeable({display: "block",el:$("#help-pane"),text: $("#studentManagementHelp").html()});
 	    
 	    
 	    
 	    this.$el.append(_.template($("#userListTable").html()));
 	    
-	    this.$el.append(this.passwordPane = new webwork.ui.ChangePasswordView({model: new TempUserList()}));
-	    this.$el.append(this.emailPane = new webwork.ui.EmailStudentsView({model: new TempUserList()}));
+	    this.$el.append(this.passwordPane = new ui.ChangePasswordView({model: new TempUserList()}));
+	    this.$el.append(this.emailPane = new ui.EmailStudentsView({model: new TempUserList()}));
 	    return this;
         },
 	addOne: function(user){
@@ -404,7 +474,7 @@ $(function(){
     // This is a Backbone collection of webwork.User(s).  This is different than the webwork.userList class  because we don't need
     // the added expense of additions to the server.
     
-    var TempUserList = Backbone.Collection.extend({model:webwork.User});
+    var TempUserList = Backbone.Collection.extend({model:User});
     
     // This the view class of the Add Students Manually for a row of the table. 
     
@@ -428,7 +498,7 @@ $(function(){
 	render: function(){
 	    var self = this;
 	    self.$el.append("<td><button class='removeUser'>Delete</button></td>");
-	    _.each(webwork.userProps, function (prop){self.$el.append("<td><input type='text' size='10' class='input-for-" + prop.shortName + "'></input></td>"); });
+	    _.each(config.userProps, function (prop){self.$el.append("<td><input type='text' size='10' class='input-for-" + prop.shortName + "'></input></td>"); });
 	    return this; // for chainable calls, like .render().el
 	},
        updateProp: function(evt){
@@ -467,7 +537,7 @@ $(function(){
 	    this.parent = this.options.parent;
 	    this.render();
 	    
-	    this.collection.add(new webwork.User());  // add a single blank line. 
+	    this.collection.add(new User);  // add a single blank line. 
 	    
 	    
 	    this.$el.dialog({autoOpen: false, modal: true, title: "Add Students by Hand",
@@ -489,13 +559,13 @@ $(function(){
 	render: function(){
 	    var self = this;
 	    var tableHTML = "<table id='man_student_table'><tbody><tr><td>Delete</td>"
-	    tableHTML += (_(webwork.userProps).map(function (prop) {return "<td>" + prop.longName + "</td>";})).join("") + "</tr></tbody></table>";
+	    tableHTML += (_(config.userProps).map(function (prop) {return "<td>" + prop.longName + "</td>";})).join("") + "</tr></tbody></table>";
 	    
 	    this.$el.append(this.template({content: tableHTML}));
 	    _(this.collection).each(function(user){ self.appendRow(user);}, this);
 	    
 		    
-	    this.errorPane = new webwork.ui.Closeable({el: this.$("#error-pane-add-man"), classes : ["alert-error"]});
+	    this.errorPane = new ui.Closeable({el: this.$("#error-pane-add-man"), classes : ["alert-error"]});
 	    
 	    
 	    
@@ -524,7 +594,7 @@ $(function(){
 	    var tableRow = new UserRowView({model: user});
 	    $("table#man_student_table tbody",this.el).append(tableRow.el);
 	},
-	addStudent: function (){ this.collection.add(new webwork.User());}
+	addStudent: function (){ this.collection.add(new User());}
     });
     
     var AddStudentFileView = Backbone.View.extend({
@@ -534,7 +604,7 @@ $(function(){
 	initialize: function(){
 	    _.bindAll(this, 'render','importStudents','addStudent','appendRow'); // every function that uses 'this' as the current object should be in here
 	    this.collection = new TempUserList();
-	    this.model = new webwork.User();
+	    this.model = new User();
 	    Backbone.Validation.bind(this);
 	    this.parent = this.options.parent;
 	    this.render();
@@ -554,7 +624,7 @@ $(function(){
 	closeDialog: function () {this.$el.dialog("close");},
 	render: function(){
 	    var self = this;
-	    this.errorPane = new webwork.ui.Closeable({id: "error-bar"});
+	    this.errorPane = new ui.Closeable({id: "error-bar"});
 	    this.errorPane.$el.addClass("alert-error");
 	    this.$el.html(this.errorPane.el);
 	    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.error is not working  this is a hack.
@@ -589,7 +659,7 @@ $(function(){
         
 	    reader.onload = function(event) {
 		var content = event.target.result;
-		headers = _(webwork.userProps).map(function(prop) {return prop.longName;});
+		headers = _(config.userProps).map(function(prop) {return prop.longName;});
 		headers.splice(0,0,"");
 		// Parse the CSV file
 		
@@ -640,13 +710,13 @@ $(function(){
 	    
 	    var rows = _.map($("input.selRow:checked"),function(val,i) {return parseInt(val.id.split("row")[1]);});
 	    _.each(rows, function(row){
-		var user = new webwork.User();
+		var user = new User();
 		_.each(headers, function(obj){
-			for(var i = 0; i < webwork.userProps.length; i++)
+			for(var i = 0; i < config.userProps.length; i++)
 			{
 			    // set the appropriate user property given the element in the table. 
-			   if(obj.header==webwork.userProps[i].longName) {
-			    var props = '{"' +  webwork.userProps[i].shortName + '":"' +$.trim($("tr#row"+row+" td.column" + obj.position).html()) + '"}';
+			   if(obj.header==config.userProps[i].longName) {
+			    var props = '{"' +  config.userProps[i].shortName + '":"' +$.trim($("tr#row"+row+" td.column" + obj.position).html()) + '"}';
 			    user.set($.parseJSON(props),{silent:true});  // send silent: true so this doesn't fire an "change" event resulting in a server hit
 			}
 			console.log(user);
@@ -663,7 +733,7 @@ $(function(){
 	    // If the useFirstRow checkbox is selected, try to match the first row to the headers. 
 	    
 	    if ($("input#useFirst").is(":checked")) {
-	    _(webwork.userProps).each(function(user,j){
+	    _(config.userProps).each(function(user,j){
 		var re = new RegExp(user.regexp,"i");
 		
 		$("#sTable thead td").each(function (i,head){
@@ -683,7 +753,7 @@ $(function(){
 		 changedHeader = $(target).val(),
 		 headers = _($(".colHeader")).map(function (col) { return $(col).val();}),
 		 loginCol = _(headers).indexOf("Login Name"),
-		 changedProperty = (_(webwork.userProps).find(function(user) {return user.longName===changedHeader})).shortName,
+		 changedProperty = (_(config.userProps).find(function(user) {return user.longName===changedHeader})).shortName,
 		 colNumber = parseInt($(target).attr("id").split("col")[1]);
 		 		 
 	     if (loginCol < 0 ) { $("#inner-table tr#row").css("background","white")} // if Login Name is not a header turn off the color of the rows
@@ -721,7 +791,7 @@ $(function(){
 	    var self = this;
 	    self.errorPane.clear();
 
-	    _(webwork.userProps).each(function (prop,i) {
+	    _(config.userProps).each(function (prop,i) {
 		var col = $("select#col"+i);
 		col.val(prop.longName);
 		self.updateHeaders(col); });
@@ -730,7 +800,7 @@ $(function(){
 	    var tableRow = new UserRowView({model: user});
 	    $("table#man_student_table tbody",this.el).append(tableRow.el);
 	},
-	addStudent: function (){ this.collection.add(new webwork.User());}
+	addStudent: function (){ this.collection.add(new User);}
     });
     
 //    var userListView = new UserListView();
