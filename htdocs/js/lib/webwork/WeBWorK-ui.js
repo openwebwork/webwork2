@@ -158,11 +158,9 @@ ui.CalendarDayView = Backbone.View.extend({ // This displays a day in the Calend
 	    var dueDate = new XDate(set.get("due_date"));
 	    if ((openDate.diffDays(this.model)>=0) && (dueDate.diffDays(this.model)<=0))
 	    {
-		console.log(this.model.diffDays(dueDate));
 		if ((this.model.diffDays(dueDate)<3) && (this.model.diffDays(dueDate) >2))  // This is hard-coded.  We need to lookup the reduced credit time.  
 		{
-			this.$el.append("<div class='assign assign-open assign-set-name'> Demo</div>");
-			this.$el.popover();
+			this.$el.append("<div class='assign assign-open assign-set-name'> <span class='pop' data-content='test' rel='popover'>Demo</span></div>");
 			
 		} else
 		if (Math.abs(this.model.diffDays(dueDate))<3)
