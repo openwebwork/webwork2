@@ -53,9 +53,18 @@ $(function(){
                                         stop: function(event, ui) {self.objectDragging=false;}});
                 
                             
-            this.calendarView = new webwork.ui.CalendarView({collection: this.collection});
-            $("#cal").append(this.calendarView.el);
+            this.calendarView = new webwork.ui.CalendarView({collection: this.collection, view: "student"});
 
+            $("#cal").append(this.calendarView.el);
+            
+            $(".calendar-day").droppable({  // This doesn't work right now.  
+                hoverClass: "highlight-day",
+                drop: function( event, ui ) {
+                    App.dragging = true; 
+                    //$(this).addClass("ui-state-highlight");
+                    console.log( "Dropped on " + self.$el.attr("id"));
+                    }
+                });    
                 
                 
                 self.setListView = new SetListView({collection: self.collection, el:$("div#list")});

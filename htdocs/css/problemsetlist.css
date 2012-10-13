@@ -3,8 +3,17 @@
 }
 
 .calendar {border: 1px solid black; border-collapse: collapse; background: lightgray;}
-.calendar td {border: 1px solid black; width: 13%; height: 50px; vertical-align: top;}
+.calendar td {border: 1px solid black; width: 13%; height: 75px; vertical-align: top;}
 
 .this-month {background-color: lightyellow}
 .today {background-color: orange}
 .highlight-day { border: 2px solid black; background-color: green;}
+
+.assign-open {background-color: rgb(180,180,255);}
+
+.assign-reduced-credit {background-color: rgb(255,128,0);}
+
+.assign { border-left: -2px; border-right: -2px; height: 15px;  width: 103%;
+float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size: 13px;}
+
+.assign-set-name {cursor: pointer;}

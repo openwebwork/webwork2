@@ -153,16 +153,28 @@ webwork.ui.CalendarDayView = Backbone.View.extend({ // This displays a day in th
 	    
 	    var set = this.calendar.collection.find(function (model) { return model.get("set_id")==="Demo"});
 	    
-	    
-            this.$el.droppable({
-                hoverClass: "highlight-day",
-                drop: function( event, ui ) {
-                    App.dragging = true; 
-                    //$(this).addClass("ui-state-highlight");
-                    console.log( "Dropped on " + self.$el.attr("id"));
-                    }
-                });
-            return this;
+	    var openDate = new XDate(set.get("open_date"));
+	    var dueDate = new XDate(set.get("due_date"));
+	    if ((openDate.diffDays(this.model)>=0) && (dueDate.diffDays(this.model)<=0))
+	    {
+		console.log(this.model.diffDays(dueDate));
+		if ((this.model.diffDays(dueDate)<3) && (this.model.diffDays(dueDate) >2))  // This is hard-coded.  We need to lookup the reduced credit time.  
+		{
+			this.$el.append("<div class='assign assign-open assign-set-name'> Demo</div>");
+			this.$el.popover();
+			
+		} else
+		if (Math.abs(this.model.diffDays(dueDate))<3)
+		{
+			this.$el.append("<div class='assign assign-reduced-credit'></div>");
+		} else
+		{
+			this.$el.append("<div class='assign assign-open'></div>");
+		}
+		
+		
+	    }
+	            return this;
         }
     });
       
