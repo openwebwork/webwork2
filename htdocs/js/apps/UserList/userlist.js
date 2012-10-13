@@ -4,24 +4,6 @@
   You must include the User.js code before this in order to user the UserList class. 
 */
 
-// First, we use the labsjs script loader to load in all needed js scripts.  Make sure that the labs.js is loaded before this class
-
-/* $LAB.setGlobalDefaults({AlwaysPreserveOrder:true});
-$LAB.setOptions({BasePath : "http://localhost/webwork2/htdocs/js/"})
-    .script("lib/vendor/jquery-1.7.2.min.js")
-    .script("lib/vendor/underscore.js")
-    .script("lib/vendor/backbone.js")
-    .script("lib/vendor/backbone-validation.js")
-    .script("lib/vendor/FileSaver.js")
-    .script("lib/vendor/BlobBuilder.js")
-    .script("lib/vendor/jquery-ui-for-classlist3/js/jquery-ui-1.8.21.custom.min.js")
-    .script("lib/webwork/WeBWorK.js")
-    .script("lib/webwork/WeBWorK-ui.js")
-    .script("lib/webwork/teacher/teacher.js")
-    .script("lib/webwork/teacher/User.js")
-    .script("lib/webwork/util.js").wait(  */
-
-
 //require config
 require.config({
     //baseUrl: "/webwork2_files/js/",
@@ -36,6 +18,7 @@ require.config({
         "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
         "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
         "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
+	"bootstrap":"/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         //"jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
         //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
         //"tabs": "../vendor/ui.tabs.closable",
@@ -75,7 +58,9 @@ require.config({
 
         'XDate':{
         	exports: 'XDate'
-        }
+        },
+
+        'bootstrap':['jquery']
         
     }
 });
@@ -91,7 +76,8 @@ require(['Backbone',
 	'util', 
 	'config', /*no exports*/, 
 	'jquery-ui-for-classlist3', 
-	'backbone-validation'], 
+	'backbone-validation',
+	'bootstrap'], 
 function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, util, config){
 
     // get usernames and keys from hidden variables and set up webwork object:
