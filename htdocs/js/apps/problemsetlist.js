@@ -66,6 +66,8 @@ $(function(){
                     }
                 });    
                 
+                // Set the popover on the set name
+               $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
                 
                 self.setListView = new SetListView({collection: self.collection, el:$("div#list")});
                 }, this);

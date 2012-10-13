@@ -3,7 +3,7 @@
 }
 
 .calendar {border: 1px solid black; border-collapse: collapse; background: lightgray;}
-.calendar td {border: 1px solid black; width: 13%; height: 75px; vertical-align: top;}
+.calendar td {border: 1px solid black; width: 13%; height: 100px; vertical-align: top;}
 
 .this-month {background-color: lightyellow}
 .today {background-color: orange}

@@ -65,8 +65,18 @@ webwork.ProblemSet = Backbone.Model.extend({
 
                 var response = $.parseJSON(data);
                 console.log(response);
+                self.attributes.due_date = new XDate(self.get("due_date"));
+                self.attributes.open_date = new XDate(self.get("open_date"));
+                self.attributes.answer_date = new XDate(self.get("answer_date"));
                 _.extend(self.attributes,response.result_data);
+                
+                
+                
             });       
+    },
+    isOpen: function(date) { // checks to see if the set is open on the given date. 
+        return ((this.get("open_date").diffDays(date)>=0) && (this.get("due_date").diffDays(date)<=0));
+        
     }
 
 });
