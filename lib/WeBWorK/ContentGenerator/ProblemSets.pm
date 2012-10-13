@@ -98,6 +98,12 @@ sub help {   # non-standard help, since the file path includes the course name
 	$name =~ s/\s/_/g;
 	$self->helpMacro($name);
 }
+# template method
+sub templateName {
+	return "lbtwo";
+}
+
+
 sub initialize {
 
 
