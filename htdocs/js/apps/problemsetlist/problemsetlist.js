@@ -18,6 +18,7 @@ require.config({
         "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
         "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
         "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
+        "bootstrap":"/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         //"jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
         //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
         //"tabs": "../vendor/ui.tabs.closable",
@@ -57,7 +58,9 @@ require.config({
 
         'XDate':{
             exports: 'XDate'
-        }
+        },
+
+        'bootstrap':['jquery']
         
     }
 });
@@ -66,7 +69,7 @@ require(['Backbone',
     'underscore',
     '../../lib/webwork/teacher/User', 
     '../../lib/webwork/teacher/ProblemSetList', 
-    '../../lib/webwork/teacher/ProblemPathList',
+    '../../lib/webwork/teacher/ProblemSetPathList',
     '../../lib/webwork/Problem',
     'FileSaver', 
     'BlobBuilder', 
@@ -75,8 +78,9 @@ require(['Backbone',
     'util', 
     'config', /*no exports*/, 
     'jquery-ui', 
+    'bootstrap',
     'backbone-validation'], 
-function(Backbone, _, User, ProblemSetList, ProblemPathList, Problem, saveAs, BlobBuilder, EditableGrid, ui, util, config){
+function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs, BlobBuilder, EditableGrid, ui, util, config){
     // get usernames and keys from hidden variables and set up webwork object:
     /*var myUser = document.getElementById("hidden_user").value;
     var mySessionKey = document.getElementById("hidden_key").value;
