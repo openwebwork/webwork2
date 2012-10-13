@@ -26,21 +26,21 @@ $LAB.setOptions({BasePath : "http://localhost/webwork2/htdocs/js/"})
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "webwork2_files/js/lib/webwork/components/backbone/Backbone",
-        "backbone-validation":"webwork2_files/js/lib/vendor/backbone-validation",
-        "FileSaver": "webwork2_files/js/lib/vendor/FileSaver",
-        "BlobBuilder": "webwork2_files/js/lib/vendor/BlobBuilder",
-        "jquery-ui-for-classlist3": "webwork2_files/js/lib/vendor/jquery/jquery-ui-for-classlist3/js/jquery-ui-1.8.21.custom.min",
-        "WeBWorK-ui": "webwork2_files/js/lib/webwork/WeBWorK-ui",
-        "util":"webwork2_files/js/lib/webwork/util",
-        "underscore": "webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery": "webwork2_files/js/lib/webwork/components/jquery/jquery",
-        "EditableGrid":"webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
+        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "backbone-validation":"/webwork2_files/js/lib/vendor/backbone-validation",
+        "FileSaver": "/webwork2_files/js/lib/vendor/FileSaver",
+        "BlobBuilder": "/webwork2_files/js/lib/vendor/BlobBuilder",
+        "jquery-ui-for-classlist3": "/webwork2_files/js/lib/vendor/jquery/jquery-ui-for-classlist3/js/jquery-ui-1.8.21.custom.min",
+        "WeBWorK-ui": "/webwork2_files/js/lib/webwork/WeBWorK-ui",
+        "util":"/webwork2_files/js/lib/webwork/util",
+        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
+        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
         //"jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
         //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
         //"tabs": "../vendor/ui.tabs.closable",
         //this is important:
-        "XDate":'webwork2_files/js/lib/vendor/xdate',
+        "XDate":'/webwork2_files/js/lib/vendor/xdate',
         "config":"config"
     },
     //deps:['EditableGrid'],
@@ -82,8 +82,8 @@ require.config({
 
 require(['Backbone', 
 	'underscore',
-	'lib/webwork/teacher/User', 
-	'lib/webwork/teacher/UserList', 
+	'../../lib/webwork/teacher/User', 
+	'../../lib/webwork/teacher/UserList', 
 	'FileSaver', 
 	'BlobBuilder', 
 	'EditableGrid', 
@@ -92,7 +92,7 @@ require(['Backbone',
 	'config', /*no exports*/, 
 	'jquery-ui-for-classlist3', 
 	'backbone-validation'], 
-function(Backbone, _, ../../lib/webwork/User, ../../lib/webwork/UserList, saveAs, BlobBuilder, EditableGrid, ui, util, config){
+function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, util, config){
 
     // get usernames and keys from hidden variables and set up webwork object:
     /*var myUser = document.getElementById("hidden_user").value;

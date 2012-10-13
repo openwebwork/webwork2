@@ -4,10 +4,81 @@
 */
 
 
-$(function(){
-    
+//require config
+require.config({
+    //baseUrl: "/webwork2_files/js/",
+    paths: {
+        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "backbone-validation":"/webwork2_files/js/lib/vendor/backbone-validation",
+        "FileSaver": "/webwork2_files/js/lib/vendor/FileSaver",
+        "BlobBuilder": "/webwork2_files/js/lib/vendor/BlobBuilder",
+        "jquery-ui": "/webwork2_files/js/jquery-ui-1.9.0.custom/js/jquery-ui-1.9.0.custom.min",
+        "WeBWorK-ui": "/webwork2_files/js/lib/webwork/WeBWorK-ui",
+        "util":"/webwork2_files/js/lib/webwork/util",
+        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
+        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
+        //"jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
+        //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
+        //"tabs": "../vendor/ui.tabs.closable",
+        //this is important:
+        "XDate":'/webwork2_files/js/lib/vendor/xdate',
+        "config":"config"
+    },
+    //deps:['EditableGrid'],
+    //callback:function(){console.log(EditableGrid)},
+    urlArgs: "bust=" +  (new Date()).getTime(),
+    waitSeconds: 15,
+    shim: {
+        //ui specific shims:
+        'jquery-ui': ['jquery'],
+
+        //required shims
+        'underscore': {
+            exports: '_'
+        },
+        'Backbone': {
+            //These script dependencies should be loaded before loading
+            //backbone.js
+            deps: ['underscore', 'jquery'],
+            //Once loaded, use the global 'Backbone' as the
+            //module value.
+            exports: 'Backbone'
+        },
+        'backbone-validation':['Backbone'],
+        
+        'BlobBuilder': {
+            exports: 'BlobBuilder'
+        },
+
+        "FileSaver":{
+            exports: 'saveAs'
+        },
+
+        'XDate':{
+            exports: 'XDate'
+        }
+        
+    }
+});
+
+require(['Backbone', 
+    'underscore',
+    '../../lib/webwork/teacher/User', 
+    '../../lib/webwork/teacher/ProblemSetList', 
+    '../../lib/webwork/teacher/ProblemPathList',
+    '../../lib/webwork/Problem',
+    'FileSaver', 
+    'BlobBuilder', 
+    'EditableGrid', 
+    'WeBWorK-ui', 
+    'util', 
+    'config', /*no exports*/, 
+    'jquery-ui', 
+    'backbone-validation'], 
+function(Backbone, _, User, ProblemSetList, ProblemPathList, Problem, saveAs, BlobBuilder, EditableGrid, ui, util, config){
     // get usernames and keys from hidden variables and set up webwork object:
-    var myUser = document.getElementById("hidden_user").value;
+    /*var myUser = document.getElementById("hidden_user").value;
     var mySessionKey = document.getElementById("hidden_key").value;
     var myCourseID = document.getElementById("hidden_courseID").value;
     // check to make sure that our credentials are available.
@@ -19,15 +90,36 @@ $(function(){
         alert("missing hidden credentials: user "
             + myUser + " session_key " + mySessionKey
             + " courseID" + myCourseID, "alert-error");
-    }
+    }*/
 
-    var HomeworkEditorView = webwork.ui.WebPage.extend({
+    var Property = Backbone.Model.extend({
+            defaults: {
+                name: "",
+                internal_name: "",
+                value: 0,
+                unit: ""
+            }
+        });
+
+    // Perhaps there is a better way to do this in order to validate the properties. 
+
+    var PropertyList = Backbone.Collection.extend({ model: Property});
+
+    var HomeworkEditor = {settings: new PropertyList([
+            new Property({name: "Time the Assignment is Due", internal_name: "time_assign_due", value: "11:59PM"}),
+            new Property({name: "When does the Assignment Open", internal_name: "assign_open_prior_to_due", value: "1 week"}),
+            new Property({name: "When do the Answers Open", internal_name: "answers_open_after_due", value: "2 days"}),
+            new Property({name: "Assignments have Reduced Credit", internal_name: "reduced_credit", value: true}),
+            new Property({name: "Amount of time for reduced Credit", internal_name: "reduced_credit_time", value: "3 days"}),
+    ])};
+
+    var HomeworkEditorView = ui.WebPage.extend({
 	tagName: "div",
         initialize: function(){
-	    webwork.ui.WebPage.prototype.initialize.apply(this);
+	    ui.WebPage.prototype.initialize.apply(this);
 	    _.bindAll(this, 'render');  // include all functions that need the this object
 	    var self = this;
-            this.collection = new webwork.ProblemSetList();
+            this.collection = new ProblemSetList();
             
             
             this.render();
@@ -53,7 +145,7 @@ $(function(){
                                         stop: function(event, ui) {self.objectDragging=false;}});
                 
                             
-            this.calendarView = new webwork.ui.CalendarView({collection: this.collection, view: "student"});
+            this.calendarView = new ui.CalendarView({collection: this.collection, view: "student"});
 
             $("#cal").append(this.calendarView.el);
             
@@ -75,7 +167,7 @@ $(function(){
 	    
 	    // Create an announcement pane for successful messages.
 	    
-	    this.announce = new webwork.ui.Closeable({id: "announce-bar"});
+	    this.announce = new ui.Closeable({id: "announce-bar"});
 	    this.announce.$el.addClass("alert-success");
 	    this.$el.append(this.announce.el)
 	    $("button.close",this.announce.el).click(function () {self.announce.close();}); // for some reason the event inside this.announce is not working  this is a hack.
@@ -83,12 +175,12 @@ $(function(){
 	    
    	    // Create an announcement pane for successful messages.
 	    
-	    this.errorPane = new webwork.ui.Closeable({id: "error-bar", classes: ["alert-error"]});
+	    this.errorPane = new ui.Closeable({id: "error-bar", classes: ["alert-error"]});
 	    this.$el.append(this.errorPane.el)
 	    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
 	    
 	    
-   	    this.helpPane = new webwork.ui.Closeable({display: "block",text: $("#homeworkEditorHelp").html(),id: "helpPane"});
+   	    this.helpPane = new ui.Closeable({display: "block",text: $("#homeworkEditorHelp").html(),id: "helpPane"});
 	    this.$el.append(this.helpPane.el)
 	    $("button.close",this.helpPane.el).click(function () {self.helpPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
             
@@ -184,12 +276,12 @@ $(function(){
             _.bindAll(this,'render');
             var self = this;
             this.render();
-            this.problemPathList = new webwork.ProblemSetPathList();
+            this.problemPathList = new ProblemSetPathList();
             this.problemPathList.fetch(this.model.get("set_id"));
             this.problemPathList.on("fetchSuccess",function () {
                 var hwDetailDiv = $("#hw-detail-problems");
                 self.problemPathList.each(function(_problem){
-                    var hwpv = new HWProblemView({model: new webwork.Problem({path: _problem.get("path")})});
+                    var hwpv = new HWProblemView({model: new Problem({path: _problem.get("path")})});
                     hwDetailDiv.append(hwpv.el);
 //                $("#hw-detail-problems").html((self.problemPathList.map(function(ProblemSet) {return ProblemSet.get("path");})).join(","));
                 });
@@ -280,31 +372,10 @@ $(function(){
         render: function () {
             this.$el.html("<table class='table bordered-table'><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody></tbody></table>");
             var tab = this.$("table");
-            webwork.HomeworkEditor.settings.each(function(setting){ tab.append((new SettingsRowView({model: setting})).el)});
+            HomeworkEditor.settings.each(function(setting){ tab.append((new SettingsRowView({model: setting})).el)});
             
         }
         });
     
     var App = new HomeworkEditorView({el: $("div#mainDiv")});
 });
-
-webwork.Property = Backbone.Model.extend({
-    defaults: {
-        name: "",
-        internal_name: "",
-        value: 0,
-        unit: ""
-    }
-    });
-
-// Perhaps there is a better way to do this in order to validate the properties. 
-
-webwork.PropertyList = Backbone.Collection.extend({ model: webwork.Property});
-
-webwork.HomeworkEditor = {settings: new webwork.PropertyList([
-        new webwork.Property({name: "Time the Assignment is Due", internal_name: "time_assign_due", value: "11:59PM"}),
-        new webwork.Property({name: "When does the Assignment Open", internal_name: "assign_open_prior_to_due", value: "1 week"}),
-        new webwork.Property({name: "When do the Answers Open", internal_name: "answers_open_after_due", value: "2 days"}),
-        new webwork.Property({name: "Assignments have Reduced Credit", internal_name: "reduced_credit", value: true}),
-        new webwork.Property({name: "Amount of time for reduced Credit", internal_name: "reduced_credit_time", value: "3 days"}),
-                                                              ])};
