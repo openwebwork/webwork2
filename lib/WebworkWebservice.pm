@@ -551,11 +551,19 @@ sub sendEmail{
     return $self->do(WebworkWebservice::CourseActions::sendEmail($self, $in));
 }
 
+
 sub getSets {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
     return $self->do(WebworkWebservice::CourseActions::getSets($self, $in));
+}
+
+sub getSet {
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    return $self->do(WebworkWebservice::CourseActions::getSet($self, $in));
 }
 
 sub updateSetProperties{

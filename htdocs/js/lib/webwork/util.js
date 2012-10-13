@@ -56,3 +56,17 @@ var util = {
         return str;
      }
 }
+
+function parseWWDate(str) {
+	// this example parses dates like "month/date/year"
+	var parts = str.split('/');
+	if (parts.length == 3) {
+		return new XDate(
+			parseInt(parts[2]), // year
+			parseInt(parts[0]), // month
+			parseInt(parts[1]) // date
+		);
+	}
+}
+
+XDate.parsers.push(parseWWDate);

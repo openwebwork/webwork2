@@ -11,7 +11,7 @@ use WebworkWebservice;
 use base qw(WebworkWebservice); 
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Utils qw(runtime_use cryptPassword formatDateTime);
+use WeBWorK::Utils qw(runtime_use cryptPassword formatDateTime parseDateTime);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
@@ -566,59 +566,63 @@ sub getSets{
 }
 
 
-sub updateSetProperties {
-	my ($self, $params) = @_;
+# This returns a single problem set with name stored in set_id
+
+sub getSet {
+  my ($self, $params) = @_;
   my $db = $self->{db};
-  my @found_sets;
-  @found_sets = $db->listGlobalSets;
+  my $setName = $params->{set_id};
+  my $set = $db->getGlobalSet($setName);
   
-  my @all_sets = $db->getGlobalSets(@found_sets);
+  # change the date/times to user readable strings.  
   
-  my $theSet = $db->getGlobalSet("Demo");
-  
-  # fix the timeDate  
- foreach my $set (@all_sets){
-	$set->{due_date} = formatDateTime($set->{due_date},'local');
-	$set->{open_date} = formatDateTime($set->{open_date},'local');
-	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
-  }
-  
+  $set->{due_date} = formatDateTime($set->{due_date},'local');
+  $set->{open_date} = formatDateTime($set->{open_date},'local');
+  $set->{answer_date} = formatDateTime($set->{answer_date},'local');
   
   my $out = {};
-  $out->{ra_out} = $theSet;
+  $out->{ra_out} = $set;
   $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
   return $out;
-	
-	
+  }
 
-	#my $db = $self->{db};
-	#
-	#my @problemSetList = $db->listGlobalSets();
-	# 
-	#my @all_sets = $db->getGlobalSets(@problemSetList);
-	#
-	#debug("all sets: " . to_json(\@problemSetList));  
-	#my $set = from_json($params->{'set_props'});
-	#my $setName = $set->{'set_id'};
-	#
-	#my $exSet = $db->getGlobalSet($setName);
-	#debug("set name: " . $setName);
-	#debug("set: ". to_json($exSet,{allow_blessed=>1,convert_blessed=>1}));
-	#
-	#
-	
-	# check to see if this is an existing Problem Set
-	#if(grep $_ eq $setName, @problemSetList)
-	#{
-		# possibly do some validation here.  
-	#	my $rows = $db->putGlobalSet($set);
-	#	debug("rows: " . $rows);
-	#}
-	
-#	 my $out = {};
-#  $out->{ra_out} = "Successfully updated set " . $setName;
-#  $out->{text} = encode_base64("Successfully updated set " . $setName);
-#  return $out;
+sub updateSetProperties {
+  my ($self, $params) = @_;
+  my $db = $self->{db};
+  
+  #my $theSet = $db->getGlobalSet($params->{set_id});
+  
+  my $set = $db->getGlobalSet($params->{set_id});
+  $set->set_header($params->{set_header});
+  $set->hardcopy_header($params->{hardcopy_header});
+  $set->open_date(parseDateTime($params->{open_date},"local"));
+  $set->due_date(parseDateTime($params->{due_date},"local"));
+  $set->answer_date(parseDateTime($params->{answer_date},"local"));
+  $set->visible($params->{visible});
+  $set->enable_reduced_scoring($params->{enable_reduced_scoring});
+  $set->assignment_type($params->{assignment_type});
+  $set->attempts_per_version($params->{attempts_per_version});
+  $set->time_interval($params->{time_interval});
+  $set->versions_per_interval($params->{versions_per_interval});
+  $set->version_time_limit($params->{version_time_limit});
+  $set->version_creation_time($params->{version_creation_time});
+  $set->problem_randorder($params->{problem_randorder});
+  $set->version_last_attempt_time($params->{version_last_attempt_time});
+  $set->problems_per_page($params->{problems_per_page});
+  $set->hide_score($params->{hide_score});
+  $set->hide_score_by_problem($params->{hide_score_by_problem});
+  $set->hide_work($params->{hide_work});
+  $set->time_limit_cap($params->{time_limit_cap});
+  $set->restrict_ip($params->{restrict_ip});
+  $set->relax_restrict_ip($params->{relax_restrict_ip});
+  $set->restricted_login_proctor($params->{restricted_login_proctor});
+  
+  $db->putGlobalSet($set);
+  
+  my $out = {};
+  $out->{ra_out} = $set;
+  $out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
+  return $out;
 }
 
 
