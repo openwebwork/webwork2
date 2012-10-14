@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', 'ProblemView'], function(Backbone, _, ProblemView){
+define(['Backbone', 'underscore', './ProblemView'], function(Backbone, _, ProblemView){
 	    //##The main Set view
     var SetView = Backbone.View.extend({
         template:_.template($('#set-template').html()),

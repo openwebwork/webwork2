@@ -76,7 +76,8 @@ require(['Backbone',
     'EditableGrid', 
     '../../lib/webwork/views/WebPage',
     '../../lib/webwork/views/Closeable',
-    '../../lib/webwork/views/Calendar/CalendarView',   
+    '../../lib/webwork/views/Calendar/CalendarView', 
+    //'../LibraryBrowser/LibraryBrowser',  
     'util', 
     'config', /*no exports*/, 
     'jquery-ui', 
@@ -129,7 +130,6 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
             
             
             this.render();
-            
             
             this.collection.fetch();
             
@@ -385,5 +385,7 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
         }
         });
     
+    
     var App = new HomeworkEditorView({el: $("div#mainDiv")});
+    //var libraryApp = new LibraryBrowser({el:$("div#library")});
 });

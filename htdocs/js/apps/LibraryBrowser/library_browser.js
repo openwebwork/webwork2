@@ -57,6 +57,6 @@ require.config({
 require(['LibraryBrowser', 'jquery-ui', 'touch-pinch', 'tabs'], function(LibraryBrowser){    
 
     //instantiate an instance of our app.
-    var App = new LibraryBrowser;
+    var App = new LibraryBrowser({el: "#app_box"});
 
 });
