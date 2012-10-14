@@ -8,7 +8,7 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/backbone",
         "backbone-validation":"/webwork2_files/js/lib/vendor/backbone-validation",
         "FileSaver": "/webwork2_files/js/lib/vendor/FileSaver",
         "BlobBuilder": "/webwork2_files/js/lib/vendor/BlobBuilder",
@@ -171,27 +171,27 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
                 }, this);
         },
         render: function(){
-	    var self = this; 
-	    
-	    // Create an announcement pane for successful messages.
-	    
-	    this.announce = new Closeable({id: "announce-bar"});
-	    this.announce.$el.addClass("alert-success");
-	    this.$el.append(this.announce.el)
-	    $("button.close",this.announce.el).click(function () {self.announce.close();}); // for some reason the event inside this.announce is not working  this is a hack.
-            //this.announce.delegateEvents();
-	    
-   	    // Create an announcement pane for successful messages.
-	    
-	    this.errorPane = new Closeable({id: "error-bar", classes: ["alert-error"]});
-	    this.$el.append(this.errorPane.el)
-	    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
-	    
-	    
-   	    this.helpPane = new Closeable({display: "block",text: $("#homeworkEditorHelp").html(),id: "helpPane"});
-	    this.$el.append(this.helpPane.el)
-	    $("button.close",this.helpPane.el).click(function () {self.helpPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
-            
+    	    var self = this; 
+    	    
+    	    // Create an announcement pane for successful messages.
+    	    
+    	    this.announce = new Closeable({id: "announce-bar"});
+    	    this.announce.$el.addClass("alert-success");
+    	    this.$el.append(this.announce.el)
+    	    $("button.close",this.announce.el).click(function () {self.announce.close();}); // for some reason the event inside this.announce is not working  this is a hack.
+                //this.announce.delegateEvents();
+    	    
+       	    // Create an announcement pane for successful messages.
+    	    
+    	    this.errorPane = new Closeable({id: "error-bar", classes: ["alert-error"]});
+    	    this.$el.append(this.errorPane.el)
+    	    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
+    	    
+    	    
+       	    this.helpPane = new Closeable({display: "block",text: $("#homeworkEditorHelp").html(),id: "helpPane"});
+    	    this.$el.append(this.helpPane.el)
+    	    $("button.close",this.helpPane.el).click(function () {self.helpPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
+                
             this.$el.append("<div class='row'><div id='left-column' class='span3'>Loading Homework Sets...<img src='/webwork2_files/images/ajax-loader-small.gif'></div><div id='tab-container' class='span9'></div></div>");
             
             $("#tab-container").append(_.template($("#tab-setup").html()));

@@ -103,7 +103,6 @@ sub templateName {
 	return "lbtwo";
 }
 
-
 sub initialize {
 
 
@@ -124,6 +123,19 @@ sub initialize {
 
 	}
 }
+
+sub head{
+	my $self = shift;
+	my $r = $self->r;
+    	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+    	print "<link rel='stylesheet' href='$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
+        print "<link rel='stylesheet' type='text/css' href='$site_url/css/problemsetlist.css' > </style>";
+	#print "<link rel='stylesheet' type='text/css' href='$site_url/js/lib/vendor/jquery-ui-for-classlist3/css/ui-lightness/jquery-ui-1.8.21.custom.css' > </style>";
+	return "";
+}
+
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -224,11 +236,12 @@ sub body {
 
     print CGI::start_form(-method=>"POST",-action=>$actionURL),
           $self->hidden_authen_fields;
+          print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseName });
     
 # and send the start of the table
 # UPDATE - ghe3
 # This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
-	print CGI::start_table({ -class=>"problem_set_table", -summary=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table."});
+	print CGI::start_table({ -class=>"problem_set_table span7", -summary=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table."});
 	print CGI::caption($r->maketext("Homework Sets"));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
@@ -290,11 +303,15 @@ sub body {
 
 	# UPDATE - ghe3
 	# Added reset button to form.
-	print CGI::start_div({-class=>"problem_set_options"});
+	print CGI::start_div({-class=>"problem_set_options span6"});
 	print CGI::p(WeBWorK::CGI_labeled_input(-type=>"reset", -input_attr=>{-value=>$r->maketext("Clear")}));
 	print CGI::p(WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}));
+	print CGI::end_div();
 	print CGI::endform();
-	
+my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/problemsetlist3.html');  
+	print $template->output();
+
+	print '<div id="cal" class="span10 pull-right"></div>';
 	## feedback form url
 	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",  $r, courseID => $courseName);
 	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
@@ -326,8 +343,13 @@ sub body {
 		showHints => "",
 		showSolutions => "",
 	);
+
 	print CGI::end_div();
 	
+
+	
+
+
 	return "";
 }
 
@@ -580,5 +602,23 @@ sub byUrgency {
 	}
 	return (  $a_parts[0] cmp  $b_parts[0] );
 }
+
+# output_JS subroutine
+
+# prints out the necessary JS for this page
+
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print qq!<script data-main="$site_url/js/apps/FrontPage/FrontPage" src="$site_url/js/lib/vendor/components/requirejs/require.js"></script>!;
+
+
+	
+	return "";
+}
+
 
 1;
