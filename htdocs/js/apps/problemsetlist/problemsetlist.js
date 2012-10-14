@@ -14,12 +14,13 @@ require.config({
         "BlobBuilder": "/webwork2_files/js/lib/vendor/BlobBuilder",
         "jquery-ui": "/webwork2_files/js/jquery-ui-1.9.0.custom/js/jquery-ui-1.9.0.custom.min",
         "WeBWorK-ui": "/webwork2_files/js/lib/webwork/WeBWorK-ui",
+        "webwork": "/webwork2_files/js/lib/webwork/webwork",
+        "Settings": "/webwork2_files/js/lib/webwork/Settings",
         "util":"/webwork2_files/js/lib/webwork/util",
         "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
         "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
         "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
         "bootstrap":"/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
-        //"jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
         //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
         //"tabs": "../vendor/ui.tabs.closable",
         //this is important:
@@ -60,7 +61,8 @@ require.config({
             exports: 'XDate'
         },
 
-        'bootstrap':['jquery']
+        'bootstrap':['jquery'],
+
         
     }
 });
@@ -73,49 +75,16 @@ require(['Backbone',
     '../../lib/webwork/Problem',
     'FileSaver', 
     'BlobBuilder', 
-    'EditableGrid', 
+    'EditableGrid',
+    'Settings', 
     'WeBWorK-ui', 
     'util', 
     'config', /*no exports*/, 
     'jquery-ui', 
     'bootstrap',
     'backbone-validation'], 
-function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs, BlobBuilder, EditableGrid, ui, util, config){
-    // get usernames and keys from hidden variables and set up webwork object:
-    /*var myUser = document.getElementById("hidden_user").value;
-    var mySessionKey = document.getElementById("hidden_key").value;
-    var myCourseID = document.getElementById("hidden_courseID").value;
-    // check to make sure that our credentials are available.
-    if (myUser && mySessionKey && myCourseID) {
-        webwork.requestObject.user = myUser;
-        webwork.requestObject.session_key = mySessionKey;
-        webwork.requestObject.courseID = myCourseID;
-    } else {
-        alert("missing hidden credentials: user "
-            + myUser + " session_key " + mySessionKey
-            + " courseID" + myCourseID, "alert-error");
-    }*/
-
-    var Property = Backbone.Model.extend({
-            defaults: {
-                name: "",
-                internal_name: "",
-                value: 0,
-                unit: ""
-            }
-        });
-
-    // Perhaps there is a better way to do this in order to validate the properties. 
-
-    var PropertyList = Backbone.Collection.extend({ model: Property});
-
-    var HomeworkEditor = {settings: new PropertyList([
-            new Property({name: "Time the Assignment is Due", internal_name: "time_assign_due", value: "11:59PM"}),
-            new Property({name: "When does the Assignment Open", internal_name: "assign_open_prior_to_due", value: "1 week"}),
-            new Property({name: "When do the Answers Open", internal_name: "answers_open_after_due", value: "2 days"}),
-            new Property({name: "Assignments have Reduced Credit", internal_name: "reduced_credit", value: true}),
-            new Property({name: "Amount of time for reduced Credit", internal_name: "reduced_credit_time", value: "3 days"}),
-    ])};
+function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs, BlobBuilder, EditableGrid, Settings,ui, util, config, webwork){
+    
 
     var HomeworkEditorView = ui.WebPage.extend({
 	tagName: "div",
@@ -123,51 +92,54 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
 	    ui.WebPage.prototype.initialize.apply(this);
 	    _.bindAll(this, 'render');  // include all functions that need the this object
 	    var self = this;
-            this.collection = new ProblemSetList();
-            
-            
-            this.render();
-            
-            
-            this.collection.fetch();
-            
-            this.collection.on('fetchSuccess', function () {
-                console.log("Yeah, downloaded successfully!");
-                console.log(this.collection);
-                $("#left-column").html("<div style='font-size:110%; font-weight:bold'>Homework Sets</div><div id='probSetList' class='btn-group btn-group-vertical'></div>");
-                this.collection.each(function (model) {
-                    var setName =  model.get("set_id");
-                    $("#probSetList").append("<div class='ps-drag btn' id='HW-" + setName + "'>" + setName + "</div>")
-                    $("div#HW-" + setName ).click(function(evt) {
-                        if (self.objectDragging) return;
-                        $('#hwedTabs a[href="#details"]').tab('show');
-                        self.showDetails($(evt.target).attr("id").split("HW-")[1]);
-                        });
-                    
-                });
-                $(".ps-drag").draggable({revert: "valid", start: function (event,ui) { self.objectDragging=true;},
-                                        stop: function(event, ui) {self.objectDragging=false;}});
-                
-                            
-            this.calendarView = new ui.CalendarView({collection: this.collection, view: "student"});
+        this.collection = new ProblemSetList();
+        this.settings = new Settings();  // need to get other settings from the server.  
 
-            $("#cal").append(this.calendarView.el);
             
-            $(".calendar-day").droppable({  // This doesn't work right now.  
-                hoverClass: "highlight-day",
-                drop: function( event, ui ) {
-                    App.dragging = true; 
-                    //$(this).addClass("ui-state-highlight");
-                    console.log( "Dropped on " + self.$el.attr("id"));
-                    }
-                });    
-                
-                // Set the popover on the set name
-               $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
-                
-                self.setListView = new SetListView({collection: self.collection, el:$("div#list")});
-                }, this);
-        },
+        this.render();
+            
+            
+        this.collection.fetch();
+             
+
+
+        this.collection.on('fetchSuccess', function () {
+        console.log("Yeah, downloaded successfully!");
+        console.log(this.collection);
+        $("#left-column").html("<div style='font-size:110%; font-weight:bold'>Homework Sets</div><div id='probSetList' class='btn-group btn-group-vertical'></div>");
+        this.collection.each(function (model) {
+            var setName =  model.get("set_id");
+            $("#probSetList").append("<div class='ps-drag btn' id='HW-" + setName + "'>" + setName + "</div>")
+            $("div#HW-" + setName ).click(function(evt) {
+                if (self.objectDragging) return;
+                $('#hwedTabs a[href="#details"]').tab('show');
+                self.showDetails($(evt.target).attr("id").split("HW-")[1]);
+                });
+            
+        });
+        $(".ps-drag").draggable({revert: "valid", start: function (event,ui) { self.objectDragging=true;},
+                                stop: function(event, ui) {self.objectDragging=false;}});
+            
+                        
+        this.calendarView = new ui.CalendarView({collection: this.collection, view: "student"});
+
+        $("#cal").append(this.calendarView.el);
+        
+        $(".calendar-day").droppable({  // This doesn't work right now.  
+            hoverClass: "highlight-day",
+            drop: function( event, ui ) {
+                App.dragging = true; 
+                //$(this).addClass("ui-state-highlight");
+                console.log( "Dropped on " + self.$el.attr("id"));
+                }
+            });    
+            
+            // Set the popover on the set name
+           $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
+            
+            self.setListView = new SetListView({collection: self.collection, el:$("div#list")});
+            }, this);
+    },
         render: function(){
 	    var self = this; 
 	    
@@ -200,7 +172,7 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
             
             $("body").droppable();  // This helps in making drags return to their original place.
             
-            new SettingsView({el: $("#settings")});
+            new SettingsView({el: $("#settings"), settings: self.settings});
 
             
             
@@ -343,10 +315,11 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
         tagName: "tr",
         initialize: function () {
             _.bindAll(this, 'render','editRow');  // include all functions that need the this object
+            _.extend(this,this.options);
             this.render();
         },
         render: function () {
-            this.$el.html("<td class='srv-name'> " + this.model.get("name") + "</td><td class='srv-value'> " + this.model.get("value") + "</td>");
+            this.$el.html("<td class='srv-name'> " + this.description + "</td><td class='srv-value'> " + this.value + "</td>");
             return this;
             
         },
@@ -373,12 +346,19 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
         className: "settings-view",
         initialize: function () {
             _.bindAll(this, 'render');  // include all functions that need the this object
+            this.settings = this.options.settings;
             this.render();
         },
         render: function () {
+            var self = this;
             this.$el.html("<table class='table bordered-table'><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody></tbody></table>");
             var tab = this.$("table");
-            HomeworkEditor.settings.each(function(setting){ tab.append((new SettingsRowView({model: setting})).el)});
+             _(this.settings.get("descriptions")).each(function(_value,_key){
+                var row = new SettingsRowView({description: self.settings.get("descriptions")[_key], key: _key, value: self.settings.get(_key)});
+                tab.append(row.el);
+            });
+           
+           
             
         }
         });

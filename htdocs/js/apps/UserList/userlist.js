@@ -370,21 +370,16 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	},
         render: function(){
 	    var self = this; 
-	    this.$el.html();
 	    
 	    // Create an announcement pane for successful messages.
-	    
 	    this.announce = new ui.Closeable({el:$("#announce-pane"),classes: ["alert-success"]});
 	    
-	    
-   	    // Create an announcement pane for successful messages.
-	    
+   	    // Create an announcement pane for error messages.
 	    this.errorPane = new ui.Closeable({el:$("#error-pane"),classes: ["alert-error"]});
 	    
-	    
 	    // This is the help Pane
-	    
-   	    this.helpPane = new ui.Closeable({display: "block",el:$("#help-pane"),text: $("#studentManagementHelp").html()});
+   	    this.helpPane = new ui.Closeable({display: "block",el:$("#help-pane"), closeableType : "Help",
+   	    			text: $("#studentManagementHelp").html()});
 	    
 	    
 	    
