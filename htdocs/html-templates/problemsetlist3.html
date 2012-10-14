@@ -1,0 +1,93 @@
+<div id="mainDiv">
+    
+</div>
+
+<script type="text/template" id="homeworkEditorHelp">
+   <p>The Help bar for the homework editor.
+
+</p>
+    
+</script>
+
+
+<script type="text/template" id="tab-setup">
+    <ul class="nav nav-tabs" id="hwedTabs">
+  <li class="active"><a href="#cal">Calendar View</a></li>
+  <li><a href="#list">List View</a></li>
+  <li><a href="#details">Homework Set Details</a></li>
+  <li><a href="#library">Library Browser</a></li>
+  <li><a href="#impexp">Import/Export</a></li>
+  <li><a href="#settings">Settings</a></li>
+</ul>
+ 
+<div class="tab-content">
+  <div class="tab-pane active" id="cal"></div>
+  <div class="tab-pane" id="list"></div>
+  <div class="tab-pane" id="details"></div>
+  
+  <div class="tab-pane" id="library"></div>
+  <div class="tab-pane" id="impexp"></div>
+  <div class="tab-pane" id="settings"></div>
+</div>
+    
+    
+</script>
+
+
+<script type="text/template" id="calendarHeader">
+    <thead>
+    <th>Sunday</th>
+    <th>Monday</th>
+    <th>Tuesday</th>
+    <th>Wednesday</th>
+    <th>Thursday</th>
+    <th>Friday</th>
+    <th>Saturday</th>
+</thead><tbody></tbody>
+</script>
+
+<script type="text/template" id="settings-template">
+    <p>The following are settings for the Homework Set Editor</p>
+    
+    <table class="table table-bordered"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody>
+    <tr><td>Time All Assignments are Due</td><td></td></tr>
+    <tr><td>Set Open Date</td><td>?? days/weeks before Due Date</td></tr>
+    <tr><td>Set Answer Date</td><td> ?? days/weeks after Due Date</td></tr>
+    <tr><td>All Assignments have reduced credit</td><td>True/False</td></tr>
+    <tr><td>Set Reduced Credit Time</td> ?? days/weeks before/after Due Date </td></tr>
+    </tbody>
+</table>
+    
+</script>
+
+<script type="text/template" id="HW-detail-template">
+<div class="accordion" id="accord-HW-detail">
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <a class="accordion-toggle" data-toggle="collapse" data-parent="#accord-HW-detail" href="#collapseOne">
+        Homework Properties
+      </a>
+    </div>
+    <div id="collapseOne" class="accordion-body collapse">
+      <div class="accordion-inner">
+        <table id='detail-table' class='table'><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <a class="accordion-toggle" data-toggle="collapse" data-parent="#accord-HW-detail" href="#collapseTwo">
+        Homework Problems
+      </a>
+    </div>
+    <div id="collapseTwo" class="accordion-body collapse in">
+      <div class="accordion-inner">
+      <div  id="hw-detail-problems"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+</script>
+

@@ -26,7 +26,7 @@ use warnings;
 package WeBWorK::ContentGenerator::instructorXMLHandler;
 use base qw(WeBWorK::ContentGenerator);
 use MIME::Base64 qw( encode_base64 decode_base64);
-use JSON; # imports encode_json, decode_json, to_json and from_json.
+use WeBWorK::Debug;
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
@@ -38,6 +38,7 @@ our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 use strict;
 use warnings;
 use WebworkClient;
+use JSON;
 
 
 =head1 Description
@@ -216,6 +217,32 @@ sub pre_header_initialize {
              comment        => $r->param('comment') || undef,
              new_password   => $r->param('new_password') || undef,
              userpassword   => $r->param('userpassword') || undef,	# defaults to studentid if empty
+	     set_props	    => $r->param('set_props') || undef,
+	     set_id	    => $r->param('set_id') || undef,
+	     due_date	    => $r->param('due_date') || undef,
+	     set_header     => $r->param('set_header') || undef,
+             hardcopy_header => $r->param('hardcopy_header') || undef,
+	     open_date       => $r->param('open_date') || undef,
+             due_date        => $r->param('due_date') || undef,
+             answer_date     => $r->param('answer_date') || undef,
+             visible         => $r->param('visible') || undef,
+             enable_reduced_scoring => $r->param('enable_reduced_scoring') || undef,
+             assignment_type        => $r->param('assignment_type') || undef,
+             attempts_per_version   => $r->param('attempts_per_version') || undef,
+             time_interval          => $r->param('time_interval') || undef,
+             versions_per_interval  => $r->param('versions_per_interval') || undef,
+             version_time_limit     => $r->param('version_time_limit') || undef,
+             version_creation_time  => $r->param('version_creation_time') || undef,
+             problem_randorder      => $r->param('problem_randorder') || undef,
+             version_last_attempt_time => $r->param('version_last_attempt_time') || undef,
+             problems_per_page      => $r->param('problems_per_page') || undef,
+             hide_score             => $r->param('hide_score') || undef,
+             hide_score_by_problem  => $r->param('hide_score_by_problem') || undef,
+             hide_work              => $r->param('hide_work') || undef,
+             time_limit_cap         => $r->param('time_limit_cap') || undef,
+             restrict_ip            => $r->param('restrict_ip') || undef,
+             relax_restrict_ip      => $r->param('relax_restrict_ip') || undef,
+             restricted_login_proctor => $r->param('restricted_login_proctor') || undef,
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -414,62 +441,63 @@ sub pretty_print_json {
 		#$out .= " type = UNDEFINED; ";
 	}
 	return $out."" unless defined($rh);
-		 
-	 if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
-            $indent++;
-	  		foreach my $key (sort keys %{$rh})  {
-	  			$out .= "  ".'"'.$key.'" : '. pretty_print_json( $rh->{$key}) . ",";
-	  		}
-	  		$indent--;
-	  		#get rid of the last comma
-	  		chop $out;
-	  		$out = "{\n$out\n"."}\n";
-	 
-	  	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
-	  		foreach my $elem ( @{$rh} )  {
-	  		 	$out .= pretty_print_json($elem).",";
-	  		
-	  		}
-	  		#get rid of the last comma
-	  		chop $out;
-	  		$out = "[\n$out\n"."]\n";
-	  		#$out =  '"'.$out.'"';
-	 } elsif ( ref($rh) =~ /SCALAR/ ) {
-	 	$out .= "scalar reference ". ${$rh};
-	 } elsif ( ref($rh) =~/Base64/ ) {
-	 	$out .= "base64 reference " .$$rh;
-	 
-	     } elsif ($rh  =~ /^[+-]?\d+$/){
-	         $out .=  $rh;
-	 } else {
-	 	$out .=  '"'.$rh.'"';
-	 }
-	 
-	 return $out."";
+	
+	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
+	    $indent++;
+ 		foreach my $key (sort keys %{$rh})  {
+ 			$out .= "  ".'"'.$key.'" : '. pretty_print_json( $rh->{$key}) . ",";
+ 		}
+ 		$indent--;
+ 		#get rid of the last comma
+ 		chop $out;
+ 		$out = "{\n$out\n"."}\n";
 
+ 	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
+ 		foreach my $elem ( @{$rh} )  {
+ 		 	$out .= pretty_print_json($elem).",";
+ 		
+ 		}
+ 		#get rid of the last comma
+ 		chop $out;
+ 		$out = "[\n$out\n"."]\n";
+ 		#$out =  '"'.$out.'"';
+	} elsif ( ref($rh) =~ /SCALAR/ ) {
+		$out .= "scalar reference ". ${$rh};
+	} elsif ( ref($rh) =~/Base64/ ) {
+		$out .= "base64 reference " .$$rh;
+
+    } elsif ($rh  =~ /^[+-]?\d+$/){
+        $out .=  $rh;
+	} else {
+		$out .=  '"'.$rh.'"';
+	}
+	
+	return $out."";
 }
 
 sub content {
    ###########################
    # Return content of rendered problem to the browser that requested it
    ###########################
-	my $self = shift;
- 	#for handling errors...i'm to lazy to make it work right now
- 	if($self->{output}->{problem_out}){
-            print $self->{output}->{problem_out}->{text};
- 	} else {
-            my $out = {server_response => $self->{output}->{text}};
-            #print '{"server_response":"'.$self->{output}->{text}.'",';
-            if($self->{output}->{ra_out}){
-                $out->{result_data} = $self->{output}->{ra_out}; 
-                #print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
-            } else {
-                $out->{result_data} = "";
-            }
-            print JSON->new->utf8->space_after->encode($out);
-
- 	}
-        #print "".pretty_print_json($self->{output}->{ra_out});
+   	my $self = shift;
+	
+	#for handling errors...i'm to lazy to make it work right now
+	if($self->{output}->{problem_out}){
+		print $self->{output}->{problem_out}->{text};
+	} else {
+		print '{"server_response":"'.$self->{output}->{text}.'",';
+		if($self->{output}->{ra_out}){
+			# print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
+			if (ref($self->{output}->{ra_out})) {
+			print '"result_data": ' . to_json($self->{output}->{ra_out}) .'}';
+			} else {
+				print '"result_data": "' . $self->{output}->{ra_out} . '"}';
+			}
+		} else {
+			print '"result_data":""}';
+		}
+	}
+	#print "".pretty_print_json($self->{output}->{ra_out});
 }
 
 
