@@ -102,6 +102,7 @@ $WeBWorK::PG::ImageGenerator::TexPreamble = <<'EOF';
 \usepackage{amsmath,amsfonts,amssymb}
 \def\gt{>}
 \def\lt{<}
+\usepackage{color}
 \usepackage[active,textmath,displaymath]{preview}
 \begin{document}
 EOF
