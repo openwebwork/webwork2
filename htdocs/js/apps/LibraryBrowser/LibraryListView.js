@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore'], function(Backbone, _){
+define(['Backbone', 'underscore', './LibraryView'], function(Backbone, _, LibraryView){
 	//This is global in order not to confuse the poor select boxes..
     //They can never tell who went last :)
     var libToLoad = false;

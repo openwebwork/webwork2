@@ -74,13 +74,15 @@ require(['Backbone',
     'FileSaver', 
     'BlobBuilder', 
     'EditableGrid', 
-    'WeBWorK-ui', 
+    '../../lib/webwork/views/WebPage',
+    '../../lib/webwork/views/Closeable',
+    '../../lib/webwork/views/Calendar/CalendarView',   
     'util', 
     'config', /*no exports*/, 
     'jquery-ui', 
     'bootstrap',
     'backbone-validation'], 
-function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs, BlobBuilder, EditableGrid, ui, util, config){
+function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs, BlobBuilder, EditableGrid, WebPage, Closeable, CalendarView, util, config){
     // get usernames and keys from hidden variables and set up webwork object:
     /*var myUser = document.getElementById("hidden_user").value;
     var mySessionKey = document.getElementById("hidden_key").value;
@@ -117,10 +119,10 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
             new Property({name: "Amount of time for reduced Credit", internal_name: "reduced_credit_time", value: "3 days"}),
     ])};
 
-    var HomeworkEditorView = ui.WebPage.extend({
+    var HomeworkEditorView = WebPage.extend({
 	tagName: "div",
         initialize: function(){
-	    ui.WebPage.prototype.initialize.apply(this);
+	    WebPage.prototype.initialize.apply(this);
 	    _.bindAll(this, 'render');  // include all functions that need the this object
 	    var self = this;
             this.collection = new ProblemSetList();
@@ -149,7 +151,7 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
                                         stop: function(event, ui) {self.objectDragging=false;}});
                 
                             
-            this.calendarView = new ui.CalendarView({collection: this.collection, view: "student"});
+            this.calendarView = new CalendarView({collection: this.collection, view: "student"});
 
             $("#cal").append(this.calendarView.el);
             
@@ -173,7 +175,7 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
 	    
 	    // Create an announcement pane for successful messages.
 	    
-	    this.announce = new ui.Closeable({id: "announce-bar"});
+	    this.announce = new Closeable({id: "announce-bar"});
 	    this.announce.$el.addClass("alert-success");
 	    this.$el.append(this.announce.el)
 	    $("button.close",this.announce.el).click(function () {self.announce.close();}); // for some reason the event inside this.announce is not working  this is a hack.
@@ -181,12 +183,12 @@ function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs,
 	    
    	    // Create an announcement pane for successful messages.
 	    
-	    this.errorPane = new ui.Closeable({id: "error-bar", classes: ["alert-error"]});
+	    this.errorPane = new Closeable({id: "error-bar", classes: ["alert-error"]});
 	    this.$el.append(this.errorPane.el)
 	    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
 	    
 	    
-   	    this.helpPane = new ui.Closeable({display: "block",text: $("#homeworkEditorHelp").html(),id: "helpPane"});
+   	    this.helpPane = new Closeable({display: "block",text: $("#homeworkEditorHelp").html(),id: "helpPane"});
 	    this.$el.append(this.helpPane.el)
 	    $("button.close",this.helpPane.el).click(function () {self.helpPane.close();}); // for some reason the event inside this.announce is not working  this is a hack.
             
