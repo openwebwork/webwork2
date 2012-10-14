@@ -875,7 +875,7 @@ sub encodeAnswers(\%\@) {
 	foreach my $key (@order) {
 		push @ordered_hash, $key, $hash{$key};
 	}
-	return Storable::freeze( \@ordered_hash);
+	return Storable::nfreeze( \@ordered_hash);
 
 }
 

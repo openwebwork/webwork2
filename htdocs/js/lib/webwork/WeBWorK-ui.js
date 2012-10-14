@@ -1,8 +1,9 @@
 // An object containing some of the User Interface objects for WeBWorK
+define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate){
 
-webwork.ui ={};
+var ui ={};
 
-webwork.ui.ChangePasswordRowView = Backbone.View.extend({
+ui.ChangePasswordRowView = Backbone.View.extend({
 	tagName: "tr",
 	className: "CPuserRow",
 	initialize: function(){
@@ -27,7 +28,7 @@ webwork.ui.ChangePasswordRowView = Backbone.View.extend({
     });
 
 
-webwork.ui.EmailStudentsView = Backbone.View.extend({
+ui.EmailStudentsView = Backbone.View.extend({
 	tagName: "div",
 	className: "emailDialog",
 	initialize: function() { _.bindAll(this,"render"); this.render(); return this;},
@@ -52,7 +53,7 @@ webwork.ui.EmailStudentsView = Backbone.View.extend({
    }
 });
 
-webwork.ui.ChangePasswordView = Backbone.View.extend({
+ui.ChangePasswordView = Backbone.View.extend({
     tagName: "div",
     className: "passwordDialog",
     initialize: function() { _.bindAll(this,"render"); this.render(); return this;},
@@ -61,7 +62,7 @@ webwork.ui.ChangePasswordView = Backbone.View.extend({
         var self = this; 
         this.$el.html(_.template($("#passwordDialogText").html(),this.model));
         this.model.each(function (user) {
-            var tableRow = new webwork.ui.ChangePasswordRowView({model: user});
+            var tableRow = new ui.ChangePasswordRowView({model: user});
             $("table tbody",self.$el).append(tableRow.el);
         });
         
@@ -80,52 +81,175 @@ webwork.ui.ChangePasswordView = Backbone.View.extend({
 
 /* This is a class of closeable Divs that take functionality from Boostrap-alert.  See http://twitter.github.com/bootstrap/javascript.html#alerts */
 
-webwork.ui.Closeable = Backbone.View.extend({
-    tagName: "div",
-    className: "alert fade in",
+ui.Closeable = Backbone.View.extend({
+    className: "closeablePane",
     text: "",
     display: "none",
     initialize: function(){
-	_.bindAll(this, 'render','close','setText'); // every function that uses 'this' as the current object should be in here
-        if (!(this.options.text == undefined)) {this.text = this.options.text;}
-        if (!(this.options.display == undefined)) {this.display = this.options.display;}
+	var self = this; 
+	_.bindAll(this, 'render','setHTML','close','clear','appendHTML','open'); // every function that uses 'this' as the current object should be in here
+        if (this.options.text !== undefined) {this.text = this.options.text;}
+        if (this.options.display !== undefined) {this.display = this.options.display;}
+	this.$el.addClass("alert");
+	_(this.options.classes).each(function (cl) {self.$el.addClass(cl);});
+	
 	this.render();
+	
+	this.isOpen = false; 
         return this;
     },
     events: {
-	'button.close': 'close'
+	'click button.close': 'close'
     },
     render: function(){
             this.$el.html("<div class='row-fluid'><div class='span11 closeable-text'></div><div class='span1 pull-right'>" +
                           " <button type='button' class='close'>&times;</button></div></div>");
-            $(".closeable-text",this.el).html(this.text);
+            this.$(".closeable-text").html(this.text);
             this.$el.css("display",this.display);
             
 	    return this; // for chainable calls, like .render().el
 	},
     close: function () {
+	this.isOpen = false; 
         var self = this;
-        this.$el.fadeOut("slow", function () { self.$el.css("display","none"); })},
-    setText: function (str) {
-        $(".closeable-text",this.el).html(str);
-        this.open();
+        this.$el.fadeOut("slow", function () { self.$el.css("display","none"); });
     },
-    appendText: function(str) {
-	$(".closeable-text",this.el).append(str);
+    setHTML: function (str) {
+        this.$(".closeable-text").html(str);
+        if (!this.isOpen){this.open();}
+    },
+    clear: function () {
+	this.$(".closeable-text").html("");
+    },
+    appendHTML: function(str) {
+	this.$(".closeable-text").append(str);
+	if (!this.isOpen){this.open();}
+	
     },
     open: function (){
+	this.isOpen = true;
         var self = this;
         this.$el.fadeIn("slow", function () { self.$el.css("display","block"); })
     }
 });
 
+
+ui.CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
+        tagName: "td",
+        className: "calendar-day",
+        initialize: function (){
+            _.bindAll(this, 'render');  // include all functions that need the this object
+	    var self = this;
+	    _.extend(this,this.options);
+            this.render();
+            return this;
+        },
+        render: function () {
+            var self = this;
+            var str = (this.model.getDate()==1)? this.model.toString("MMM dd") : this.model.toString("dd");
+            this.$el.html(str);
+            this.$el.attr("id","date-" + this.model.toString("yyyy-MM-dd"));
+            if (this.calendar.date.getMonth()===this.model.getMonth()){this.$el.addClass("this-month");}
+            if (this.calendar.date.diffDays(this.model)===0){this.$el.addClass("today");}
+	    
+	    var set = this.calendar.collection.find(function (model) { return model.get("set_id")==="Demo"});
+	    
+	    var openDate = new XDate(set.get("open_date"));
+	    var dueDate = new XDate(set.get("due_date"));
+	    if ((openDate.diffDays(this.model)>=0) && (dueDate.diffDays(this.model)<=0))
+	    {
+		if ((this.model.diffDays(dueDate)<3) && (this.model.diffDays(dueDate) >2))  // This is hard-coded.  We need to lookup the reduced credit time.  
+		{
+			this.$el.append("<div class='assign assign-open assign-set-name'> <span class='pop' data-content='test' rel='popover'>Demo</span></div>");
+			
+		} else
+		if (Math.abs(this.model.diffDays(dueDate))<3)
+		{
+			this.$el.append("<div class='assign assign-reduced-credit'></div>");
+		} else
+		{
+			this.$el.append("<div class='assign assign-open'></div>");
+		}
+		
+		
+	    }
+	            return this;
+        }
+    });
+      
+      
+ui.CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
+        tagName: "tr",
+        className: "calendar-row",
+        initialize: function (){
+            _.bindAll(this, 'render');  // include all functions that need the this object
+            _.extend(this,this.options);
+
+            this.render();
+            return this; 
+        },
+        render: function () {
+            var self = this;
+            _(this.week).each(function(date) {
+                var calendarDay = new ui.CalendarDayView({model: date, calendar: self.calendar});
+                self.$el.append(calendarDay.el);
+            });
+            return this;
+            }
+        });
+    
+ui.CalendarView = Backbone.View.extend({
+        tagName: "table",
+        className: "calendar",
+        initialize: function (){
+            _.bindAll(this, 'render');  // include all functions that need the this object
+	    var self = this;
+            var theDate = this.date;; 
+            if (this.options.date) {theDate = this.options.date;}
+
+            if (! theDate) { theDate = new XDate();}
+            this.date = new XDate(theDate.getFullYear(),theDate.getMonth(),theDate.getDate());  // For the calendar, ignore the time part of the date object.
+            
+            this.render();
+            return this;
+            
+        },
+        render: function () {
+            // The collection is a array of rows containing the day of the current month.
+            
+            
+            var firstOfMonth = new XDate(this.date.getFullYear(),this.date.getMonth(),1);
+            var firstWeekOfMonth = firstOfMonth.clone().addDays(-1*firstOfMonth.getDay());
+            
+            this.$el.html(_.template($("#calendarHeader").html()));
+                        
+            for(var i = 0; i<6; i++){ var theWeek = [];
+                for(var j = 0; j < 7; j++){
+                 theWeek.push(firstWeekOfMonth.clone().addDays(j+7*i));
+                }
+                var calendarWeek = new ui.CalendarRowView({week: theWeek, calendar: this});
+                this.$el.append(calendarWeek.el);                
+            }
+            return this;   
+        }
+    });
+    
+
+
 /* This is the class webwork.WebPage that sets the framework for all webwork webpages */
 
-webwork.ui.WebPage = Backbone.View.extend({
+ui.WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
     initialize: function () {
-//         this.announceView = new webwork.ui.CloseableDiv({border: "2px solid darkgreen", background: "lightgreen"});
-//         this.helpView = new webwork.ui.CloseableDiv();
+//         this.announceView = new ui.CloseableDiv({border: "2px solid darkgreen", background: "lightgreen"});
+//         this.helpView = new ui.CloseableDiv();
         },
     });
+
+return ui;
+
+});
+
+
+
