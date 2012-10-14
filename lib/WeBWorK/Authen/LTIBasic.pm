@@ -299,7 +299,7 @@ sub verify_normal_user
 
 
 	#debug("LTIBasic::verify_normal_user called for user |$user_id|");
-	
+
     # Call check_session in order to destroy any existing session cookies and Key table sessions
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 0);
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
