@@ -322,6 +322,8 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
+		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 
+			instructor_set_list instructor_set_list2 instructor_set_list3
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
@@ -406,6 +408,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'sets2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList2',
+	},
+	instructor_set_list3 => {
+		name    => 'Homework Manager',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_set_detail/ ],
+		match   => qr|^sets3/|,
+		capture => [ qw// ],
+		produce => 'sets3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList3',
 	},
 	instructor_set_detail => {
 		name    => 'Set Detail for set $setID',
