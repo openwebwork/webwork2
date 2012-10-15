@@ -11,7 +11,7 @@ use WebworkWebservice;
 use base qw(WebworkWebservice); 
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Utils qw(runtime_use cryptPassword);
+use WeBWorK::Utils qw(runtime_use cryptPassword formatDateTime parseDateTime);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
@@ -106,6 +106,8 @@ sub listUsers {
     my $out = {};
     my $db = $self->{db};
     my $ce = $self->{ce};
+    
+    debug("in listUsers");
 
     # make sure course actions are enabled
     #if (!$ce->{webservices}{enableCourseActions}) {
@@ -538,6 +540,91 @@ sub assignVisibleSets {
 
 	return 0;
 }
+
+# This returns all problem sets of a course.
+
+sub getSets{
+  my $self = shift;
+  my $db = $self->{db};
+  my @found_sets;
+  @found_sets = $db->listGlobalSets;
+  
+  my @all_sets = $db->getGlobalSets(@found_sets);
+  
+  # fix the timeDate  
+ foreach my $set (@all_sets){
+	$set->{due_date} = formatDateTime($set->{due_date},'local');
+	$set->{open_date} = formatDateTime($set->{open_date},'local');
+	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+  }
+  
+  
+  my $out = {};
+  $out->{ra_out} = \@all_sets;
+  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  return $out;
+}
+
+
+# This returns a single problem set with name stored in set_id
+
+sub getSet {
+  my ($self, $params) = @_;
+  my $db = $self->{db};
+  my $setName = $params->{set_id};
+  my $set = $db->getGlobalSet($setName);
+  
+  # change the date/times to user readable strings.  
+  
+  $set->{due_date} = formatDateTime($set->{due_date},'local');
+  $set->{open_date} = formatDateTime($set->{open_date},'local');
+  $set->{answer_date} = formatDateTime($set->{answer_date},'local');
+  
+  my $out = {};
+  $out->{ra_out} = $set;
+  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  return $out;
+  }
+
+sub updateSetProperties {
+  my ($self, $params) = @_;
+  my $db = $self->{db};
+  
+  #my $theSet = $db->getGlobalSet($params->{set_id});
+  
+  my $set = $db->getGlobalSet($params->{set_id});
+  $set->set_header($params->{set_header});
+  $set->hardcopy_header($params->{hardcopy_header});
+  $set->open_date(parseDateTime($params->{open_date},"local"));
+  $set->due_date(parseDateTime($params->{due_date},"local"));
+  $set->answer_date(parseDateTime($params->{answer_date},"local"));
+  $set->visible($params->{visible});
+  $set->enable_reduced_scoring($params->{enable_reduced_scoring});
+  $set->assignment_type($params->{assignment_type});
+  $set->attempts_per_version($params->{attempts_per_version});
+  $set->time_interval($params->{time_interval});
+  $set->versions_per_interval($params->{versions_per_interval});
+  $set->version_time_limit($params->{version_time_limit});
+  $set->version_creation_time($params->{version_creation_time});
+  $set->problem_randorder($params->{problem_randorder});
+  $set->version_last_attempt_time($params->{version_last_attempt_time});
+  $set->problems_per_page($params->{problems_per_page});
+  $set->hide_score($params->{hide_score});
+  $set->hide_score_by_problem($params->{hide_score_by_problem});
+  $set->hide_work($params->{hide_work});
+  $set->time_limit_cap($params->{time_limit_cap});
+  $set->restrict_ip($params->{restrict_ip});
+  $set->relax_restrict_ip($params->{relax_restrict_ip});
+  $set->restricted_login_proctor($params->{restricted_login_proctor});
+  
+  $db->putGlobalSet($set);
+  
+  my $out = {};
+  $out->{ra_out} = $set;
+  $out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
+  return $out;
+}
+
 
 ##  pstaabp: This is currently not working.  We need to look into a nice robust way to send email.  It looks like the current
 ## way that WW sends mail is a bit archaic.  The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a

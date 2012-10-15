@@ -353,6 +353,7 @@ sub attemptResults {
 	    $resultsRows{$_} = "";
 	}
 
+	my $answerScore = 0;
 	my $numCorrect = 0;
 	my $numAns = 0;
 	foreach my $name (@answerNames) {
@@ -362,7 +363,7 @@ sub attemptResults {
 		                    	? $self->previewAnswer($answerResult, $imgGen)
 		                    	: "");
 		my $correctAnswer = $answerResult->{correct_ans};
-		my $answerScore   = $answerResult->{score};
+		$answerScore   = $answerResult->{score};
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
 		$numCorrect += $answerScore > 0;
@@ -407,10 +408,12 @@ sub attemptResults {
 #		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 
 	my $summary = ""; 
-	if (scalar @answerNames == 1) {
-			if ($numCorrect == scalar @answerNames) {
+	if (scalar @answerNames == 1) { #Here there is just one answer blank
+			if ($answerScore == 1) { #The student might be totally right
 				$summary .= CGI::div({class=>"gwCorrect"},"This answer is correct.");
-			 } else {
+			 } elsif ($answerScore && $answerScore < 1) { #The student might be partially right
+				$summary .= CGI::div({class=>"gwIncorrect"},"Part of this answer is NOT correct.");
+			 } else { #The student might be completely wrong.
 			 	 $summary .= CGI::div({class=>"gwIncorrect"},"This answer is NOT correct.");
 			 }
 	} else {

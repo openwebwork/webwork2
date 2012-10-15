@@ -86,6 +86,11 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
 
  instructor_problem_grader                /$courseID/instructor/grader/$setID/$problemID
+
+ instructor_set_list3                 /$courseID/instructor/sets3/
+ instructor_set_detail3               /$courseID/instructor/sets3/$setID/ #not created yet
+ instructor_users_assigned_to_set3    /$courseID/instructor/sets3/$setID/users/ #not created yet
+
  
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
@@ -322,7 +327,7 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2
+		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2 instructor_set_list3
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
@@ -408,6 +413,18 @@ our %pathTypes = (
 		produce => 'sets2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList2',
 	},
+
+	instructor_set_list3 => {
+		name    => 'Hmwk Sets Editor3',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_set_detail/ ],
+		match   => qr|^sets3/|,
+		capture => [ qw// ],
+		produce => 'sets3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList3',
+	},
+
+	
 	instructor_set_detail => {
 		name    => 'Set Detail for set $setID',
 		parent  => 'instructor_set_list',
