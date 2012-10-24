@@ -23,6 +23,23 @@ $authen{user_module} = [
 #module but the sequence includes an internal authentication
 #system, e.g., Basic_TheLastOption, then the following line
 #must be uncommented for use by WeBWorK::Logout.
+# If it is uncommented and the value = 1,
+# then, if the authentication sequence reaches 
+# Basic_TheLastOption, then WeBWorK::Login
+# will display a screen directing the user
+# back to an external authentication system.
+# On the other hand, if the value = 0 or
+# the line is commented out, then WeBWorK::Login
+# will display the traditional passwork login screen.
+# Upon logging out, if the line is not commented out
+# and the value = 1, then the Logout screen will NOT
+# show a "Login Again" button and will display
+# a message directing the user to go to the
+# external authentication system.
+# On the other hand, if the line is commented out
+# or if the value = 0, then the Logout screen WILL
+# display a "Login Again" button that will take
+# the user to a pasword login screen.
 
 #$external_auth=1;
 

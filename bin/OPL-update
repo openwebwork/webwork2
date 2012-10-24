@@ -99,7 +99,7 @@ sub dbug {
 
 my %tables;
 if( -e "$libraryRoot/VERSION") {
-  include("$libraryRoot/VERSION");
+  require("$libraryRoot/VERSION");
   if($OPL_VERSION eq '2.5.0') {
 	%tables = %OPLtables;
 	my $lib = 'OPL';
