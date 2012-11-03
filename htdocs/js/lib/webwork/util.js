@@ -60,19 +60,24 @@ var util = {
 function parseWWDate(str) {
 	// this parses webwork dates in the form MM/DD/YYYY at HH:MM AM/PM TMZ
 	var wwDateRE = /(\d?\d)\/(\d?\d)\/(\d{4})\sat\s(\d?\d):(\d\d)([aApP][mM])\s([a-zA-Z]{3})/;
-        var parsedDate = wwDateRE.exec(str);
-	if (parsedDate) {
-            var hours = (/[pP][mM]/.test(parsedDate[6]))? (parseInt(parsedDate[4])-1):(parseInt(parsedDate[4])+11);
-		var date = new XDate();
-                date.setFullYear(parseInt(parsedDate[3]));
-                date.setMonth(parseInt(parsedDate[1])-1);
-                date.setDate(parseInt(parsedDate[2]));
-                date.setHours(hours);
-                date.setMinutes(parseInt(parsedDate[5]));
+    var parsedDate = wwDateRE.exec(str);
+
+
+
+    if (parsedDate) {
+        var year = parsedDate[3];
+        var month = (parseInt(parsedDate[1],10)<10)?("0"+parseInt(parsedDate[1],10)):parseInt(parsedDate[1],10);
+        var dayOfMonth = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
+    
+        var hours = (/[aA][mM]/.test(parsedDate[6],10))? (parseInt(parsedDate[4],10)):(parseInt(parsedDate[4],10)+12);
+        hours = (hours<10)?("0"+hours):hours;
+        
+        var dateTime = year+"-"+month+"-"+dayOfMonth+"T"+hours+":"+parsedDate[5];
+
+		var date = new XDate(dateTime);
+        // Do we need to include the time zone?
                 
-                // Do we need to include the time zone?
-                
-                return date;
+        return date;
 	}
 }
 

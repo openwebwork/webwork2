@@ -323,10 +323,6 @@ sub deleteUser {
 	#	return $out
 	#}
 	
-	debug($params->{'id'});
-	debug($params->{'user'});
-	debug(($params->{'id'} eq $params->{'user'} ));
-	
 	if ($params->{'id'} eq $params->{'user'} )
 	{
 		$out->{status} = "failure";
@@ -623,6 +619,27 @@ sub updateSetProperties {
   $out->{ra_out} = $set;
   $out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
   return $out;
+}
+
+sub listSetUsers {
+	my ($self,$params) = @_;
+	my $db = $self->{db};
+    
+    my $out = {};
+    my @users = $db->listSetUsers($params->{set_id});
+    $out->{ra_out} = \@users;
+    $out->{text} = encode_base64("Successfully found the number of users for " . $params->{set_id});
+    return $out;
+
+}
+
+sub getCourseSettings {
+	my ($self, $params) = @_;
+	my $ce = $self->ce;		# course environment
+	my $db = $self->db;		# database
+	my $ConfigValues = getConfigValues($ce);
+
+	debug(to_json($ConfigValues));
 }
 
 

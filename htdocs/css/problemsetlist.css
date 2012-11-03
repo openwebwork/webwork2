@@ -2,8 +2,11 @@
     padding: 20px;
 }
 
-.calendar {border: 1px solid black; border-collapse: collapse; background: lightgray;}
-.calendar td {border: 1px solid black; width: 13%; height: 100px; vertical-align: top;}
+#calendar-table {border: 1px solid black; border-collapse: collapse; background: lightgray;}
+#calendar-table td {border: 1px solid black; width: 13%;  vertical-align: top;}
+
+.month-view {height: 100px;}
+.week-view {height: 200px;}
 
 .this-month {background-color: lightyellow}
 .today {background-color: orange}
@@ -13,7 +16,12 @@
 
 .assign-reduced-credit {background-color: rgb(255,128,0);}
 
-.assign { border-left: -2px; border-right: -2px; height: 15px;  width: 103%;
+.empty {background-color: none;}
+
+.assign { border-left: -2px; border-right: -2px; height: 15px;  width: 103%; margin-top: 2px; margin-bottom: 2px;
 float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size: 13px;}
 
 .assign-set-name {cursor: pointer;}
+
+.calendar-button-row {margin: 20px;}
+

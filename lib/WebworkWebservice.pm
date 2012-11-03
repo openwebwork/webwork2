@@ -573,6 +573,20 @@ sub updateSetProperties{
     return $self->do(WebworkWebservice::CourseActions::updateSetProperties($self, $in));
 }
 
+sub listSetUsers {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::listSetUsers($self,$in));
+}
+
+
+sub getCourseSettings {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::getCourseSettings($self,$in));	
+}
 
 
 

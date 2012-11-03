@@ -104,6 +104,11 @@
 		    </div>
 		<!--#endif-->
 		
+		<!--#if can="info"-->
+			  		<!--  styles could be different for different pages so they are not set here -->
+					<!--#info-->
+		    	<!--#endif-->
+		
 
 	<footer class="footer">
 	    <div class="row-fluid"><span class="span4">Page generated at <!--#timestamp--></span>
