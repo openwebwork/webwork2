@@ -265,6 +265,8 @@ sub searchLib {    #API for searching the NPL database
 			$self->{library_subjects} = $rh->{library_subjects};
 			my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
 			$out->{ra_out} = \@chaps;
+                        $out->{text} = encode_base64("Chapters loaded.");
+
 			return($out);		
 		};
 		'getDBListings' eq $subcommand && do {
@@ -289,6 +291,8 @@ sub searchLib {    #API for searching the NPL database
 
 			my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self);
 			$out->{ra_out} = \@section_listings;
+                        $out->{text} = encode_base64("Sections loaded.");
+
 			return($out);
 		};
 	# else

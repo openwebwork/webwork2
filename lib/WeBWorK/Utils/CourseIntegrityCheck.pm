@@ -333,16 +333,46 @@ sub updateCourseDirectories {
 	my $ce = $self->{ce};
 	my @webworkDirectories = keys %{$ce->{webworkDirs}};
     my @courseDirectories = keys %{$ce->{courseDirs}};
-    
     my %updateable_directories = (html_temp=>1,mailmerge=>1,tmpEditFileDir=>1);  #FIXME this is hardwired for the time being.
-    
     foreach my $dir (sort @courseDirectories) {
+    	#HACK for upgrading the achievements directory
+    	if ($dir eq "achievements") {
+    		my $modelCourseAchievementsDir = $ce->{webworkDirs}{courses}."/modelCourse/templates/achievements";
+    		my $modelCourseAchievementsHtmlDir = $ce->{webworkDirs}{courses}."/modelCourse/html/achievements";
+    		my $courseAchievementsDir = $ce->{courseDirs}{achievements};
+    		my $courseAchievementsHtmlDir = $ce->{courseDirs}{achievements_html};
+    		my $courseTemplatesDir = $ce->{courseDirs}{templates};
+    		my $courseHtmlDir = $ce->{courseDirs}{html};
+    		unless  (-e $modelCourseAchievementsDir and -e $modelCourseAchievementsHtmlDir ) {
+    			print CGI::p( {style=>"color:red"},"Your modelCourse in the 'courses' directory is out of date or missing.
+    			 Please update it from webwork/webwork2/courses.dist directory before upgrading the other courses.");
+			} else {
+				unless (-e $courseAchievementsDir and -e $courseAchievementsHtmlDir ) {
+					print CGI::p( {style=>"color:green"},"we'll try to update the achievements 
+					   directory for ".$ce->{courseDirs}{root});
+					if (-e $courseAchievementsDir) {
+						print CGI::p({style=>"color:green"}, "Achievements directory is already present");
+					} else {
+						system "cp -RPpi $modelCourseAchievementsDir $courseTemplatesDir ";
+						print CGI::p({style=>"color:green"}, "Achievements directory created");
+					}
+					if (-e $courseAchievementsHtmlDir) {
+						print CGI::p({style=>"color:green"}, "Achievements html directory is already present");
+					} else {
+						system "cp -RPpi $modelCourseAchievementsHtmlDir $courseHtmlDir ";
+						print CGI::p({style=>"color:green"}, "Achievements html directory created");
+					}
+    			}
+    				
+			}
+			#print "done with achievements for ",$ce->{courseDirs}{root},"<br/>";
+     	} # end HACK for upgrading achivements
         next unless exists $updateable_directories{$dir};
         my $path = $ce->{courseDirs}->{$dir};
         unless ( -e $path) {   # if by some unlucky chance the tmpDirectory hasn't been created, create it.
 			my $parentDirectory =  $path;
 			$parentDirectory =~s|/$||;  # remove a trailing /
-			$parentDirectory =~s|/\w*$||; # remove last node
+			$parentDirectory =~s|/[^/]*$||; # remove last node
 			my ($perms, $groupID) = (stat $parentDirectory)[2,5];
 			WeBWorK::PG::IO::createDirectory($path, $perms, $groupID)
 					or warn "Failed to create directory at $path";

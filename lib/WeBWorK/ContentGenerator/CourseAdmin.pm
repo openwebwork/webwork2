@@ -2163,7 +2163,7 @@ sub upgrade_course_form {
 	print $self->hidden_fields("subDisplay");
 	
 		foreach my $courseID ( @courseIDs) {
-			next if $courseID eq "admin"; # done already above
+			#next if $courseID eq "admin"; # done already above  # on second thought even admin courses have to upgrade.
 			next if $courseID eq "modelCourse"; # modelCourse isn't a real course so don't create missing directories, etc
 			next unless $courseID =~/\S/;  # skip empty courseIDs (there shouldn't be any
 			my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);
@@ -3185,8 +3185,9 @@ sub display_registration_form {
 	my $self = shift;
 	my $ce   = $self->r->ce;
 	my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
-	#my $registration_subDisplay = ( $self->{method_to_call} eq "registration_form") ?  1: 0;
-	return 0  if $registeredQ or $self->r->param("register_site");     #otherwise return registration form
+	my $registration_subDisplay = ( defined($self->r->param('subDisplay') ) and $self->r->param('subDisplay') eq "registration") ?  1: 0;
+	my $register_site = ($self->r->param("register_site"))?1:0;
+	return 0  if $registeredQ or $register_site or $registration_subDisplay;     #otherwise return registration form
 	return  q! 
 	<center>
 	<table class="messagebox" style="background-color:#FFFFCC;width:60%">
@@ -3247,11 +3248,14 @@ sub registration_form {
 # 	the email to gage@math.rochester.edu
 # 	!
 	print  "\n",
-		CGI::p({style=>"text-align: left; width:60%"},
-			"Please click on ",
-			CGI::a({ href=>"http://forms.maa.org/r/WebworkSoftware/add.aspx" }, " this link "), 
-			"and  fill out the form.",
-		),"\n",
+		CGI::iframe({src => "http://forms.maa.org/r/WebworkSoftware/add.aspx", 
+		   style=>"width:100%;height:700px", id=>"maa_content"}, "Your browser cannot use iframes"),
+# 		CGI::p({style=>"text-align: left; width:60%"},
+# 			"Please click on ",
+# 			CGI::a({ href=>"http://forms.maa.org/r/WebworkSoftware/add.aspx" }, " this link "), 
+# 			"and  fill out the form.",
+# 		),
+		"\n",
 		 CGI::p({style=>"text-align: left; width:60%"},
 	 		"The form will be sent to the MAA and your site will be listed along with all of the others on the  ",
 	  		CGI::a({href=>"http://webwork.maa.org/wiki/WeBWorK_Sites"}, "site map"),
@@ -3266,11 +3270,19 @@ sub registration_form {
 	);
 	
 	print "</center>";
-	print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
+	print CGI::start_form(-method=>"POST", id=>"return_to_main_page", -action=>$self->r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"register_site", -label=>"Site has been registered"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-id => "register_site", -name=>"register_site", -label=>"Site has been registered"));
 	print CGI::end_form();
+	print q!<script type="text/javascript">
+# 			$("#maa_content").load( alert("loaded") );
+#  	     	$("#return_to_main_page").append(
+#  	     		"<center><p>hey site is registered cool</p></center>"
+#  	     	);
+#  	     	
+#  	        </script>
+#  	        !;
 }
 
 

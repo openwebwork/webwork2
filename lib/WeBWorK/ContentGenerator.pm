@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2012 The WeBWorK Project, http://github.com/openwebwork
+# Copyright ï¿½ 2000-2012 The WeBWorK Project, http://github.com/openwebwork
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -56,6 +56,7 @@ use WeBWorK::Template qw(template);
 use WeBWorK::Localize;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+use Scalar::Util qw(weaken);
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -93,6 +94,7 @@ sub new {
 		authz => $r->authz(), # with unconverted CGs
 		noContent => undef, # FIXME this should get clobbered at some point
 	};
+ 	weaken $self -> {r};
 	bless $self, $class;
 	return $self;
 }
@@ -481,7 +483,7 @@ sub content {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	
-	my $themesDir = $ce->{webworkDirs}{templates};
+	my $themesDir = $ce->{webworkDirs}{themes};
 	my $theme = $r->param("theme") || $ce->{defaultTheme};
 	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
 	#$ce->{webworkURLs}->{stylesheet} = ($ce->{webworkURLs}->{htdocs})."/css/$theme.css";   # reset the style sheet
@@ -737,7 +739,7 @@ sub links {
 					
 					if (defined $problemID) {
 						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"))
+						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
 						print CGI::end_ul();
 					}
@@ -745,6 +747,12 @@ sub links {
 						print CGI::start_ul();
 						print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
+						print CGI::end_ul();
+					}
+					if (defined $problemID) {
+						print CGI::start_ul();
+						print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+							if $ce->{showeditors}->{pgproblemeditor3};;
 						print CGI::end_ul();
 					}
 					
@@ -759,6 +767,7 @@ sub links {
 					if $ce->{showeditors}->{librarybrowser2};
 				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser3};
+#print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
@@ -776,6 +785,24 @@ sub links {
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Stats
+				# old stats
+				print CGI::start_li(); # Stats_old
+				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+				if ($userID ne $eUserID or defined $setID) {
+					print CGI::start_ul();
+					if ($userID ne $eUserID) {
+						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
+					}
+					if (defined $setID) {
+						# make sure we don't try to send a versioned
+						#    set id in to the Stats_old link
+						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
+						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
+						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
+					}
+					print CGI::end_ul();
+				}
+				print CGI::end_li(); # end Stats_old
 				
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
@@ -992,10 +1019,11 @@ sub footer(){
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	my $version = $ce->{WW_VERSION}||"unknown -- set version in defaults.config";
+	my $ww_version = $ce->{WW_VERSION}||"unknown -- set version in defaults.config";
+	my $pg_version = $ce->{PG_VERSION}||"unknown -- set version in defaults.config";
 	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
 	print CGI::p({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
-	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; $copyright_years", "| version: $version |", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
+	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; $copyright_years", "| ww_version: $ww_version | pg_version: $pg_version|", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
 	return ""
 }
 
@@ -1087,9 +1115,7 @@ The implementation in this package checks for a note in the request named
 sub warnings {
 	my ($self) = @_;
 	my $r = $self->r;
-
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
-
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 	print $self->warningOutput($warnings) if $warnings;

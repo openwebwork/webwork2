@@ -672,50 +672,12 @@ EOF
 	
 ######### print action forms
 		
+			print CGI::start_table({});
 			#print CGI::Tr({}, CGI::td({-colspan=>2}, "Select an action to perform:"));
 			
 			my @formsToShow = @{ ACTION_FORMS() };
 			my $default_choice = $formsToShow[0];
 			my $i = 0;
-			
-###################################################################COLUMN STYLE BEGIN###############################################################
-			
-			# foreach my $actionID (@formsToShow) {
-				# # Check permissions
-				# #next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
-				# my $actionForm = "${actionID}_form";
-				# my $newWindow = ($actionID =~ m/^(view|add_problem|save)$/)? 1: 0;
-				# my $onChange = "setRadio($i,$newWindow)";
-				# my %actionParams = $self->getActionParams($actionID);
-				# my $line_contents = $self->$actionForm($onChange, %actionParams);
-				# my $radio_params = {-type=>"radio", -name=>"action", -value=>$actionID};
-				# $radio_params->{checked}=1 if ($actionID eq $default_choice) ;
-				# $radio_params->{onclick} = "setTarget($newWindow)";
-				# $radio_params->{id} = "action$i";
-				# # print CGI::Tr({-valign=>"top"},
-					# # CGI::td({}, CGI::input($radio_params)),
-					# # CGI::td({}, $line_contents)
-				# # ) if $line_contents;
-				# if($line_contents){
-					# print CGI::start_div({-class=>"column"});
-					# print CGI::div({-class=>"pg_editor_input_span"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionForm."_id", -label_text=>ucfirst(WeBWorK::underscore_to_whitespace($actionForm)), -input_attr=>$radio_params),CGI::br());
-					# print CGI::div({-class=>"pg_editor_input_div"},$line_contents);
-					# print CGI::br();
-					# print CGI::end_div();
-				# }
-				# $i++;
-			# }
-			# my $checkbox = WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"newWindow", -label_text=>"Open in new window", -input_attr=>{-checked=>"checked", -onchange=>"updateTarget()"});
-			# $checkbox =~ s/\n//; # remove unwanted linebreak
-			# print CGI::div({-class=>"pd_editor_input_div", -id=>"submit_input_div"}, $checkbox, CGI::br(), WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submit_button_id", -input_attr=>{-name=>'submit', -value=>"Take Action!"}));
-			
-########################################################COLUMN STYLE END###########################################################################
-
-
-########################################################TABBER STYLE BEGIN#########################################################################			
-			
-			my @divArr = ();
-			
 			foreach my $actionID (@formsToShow) {
 				# Check permissions
 				#next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
@@ -728,33 +690,20 @@ EOF
 				$radio_params->{checked}=1 if ($actionID eq $default_choice) ;
 				$radio_params->{onclick} = "setTarget($newWindow)";
 				$radio_params->{id} = "action$i";
-				# print CGI::Tr({-valign=>"top"},
-					# CGI::td({}, CGI::input($radio_params)),
-					# CGI::td({}, $line_contents)
-				# ) if $line_contents;
-				if($line_contents){
-					my @titleArr = split(" ", ucfirst(WeBWorK::underscore_to_whitespace($actionForm)));
-					my $title = $titleArr[0];
-					push @divArr, join("",
-					CGI::h3($title),
-					CGI::div({-class=>"pg_editor_input_span"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionForm."_id", -label_text=>ucfirst(WeBWorK::underscore_to_whitespace($actionForm)), -input_attr=>$radio_params),CGI::br()),
-					CGI::div({-class=>"pg_editor_input_div"},$line_contents),
-					CGI::br())
-				}
+				print CGI::Tr({-valign=>"top"},
+					CGI::td({}, CGI::input($radio_params)),
+					CGI::td({}, $line_contents)
+				) if $line_contents;
+				
 				$i++;
 			}
-			
-			my $divArrRef = \@divArr;
-	
-			print CGI::div({-class=>"tabber"},
-				CGI::div({-class=>"tabbertab"},$divArrRef)
-			);
-			
-###################################################TABBER STYLE END##############################################################################
-			
-			my $checkbox = WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"newWindow", -label_text=>"Open in new window", -input_attr=>{-checked=>"checked", -onchange=>"updateTarget()"});
+			my $checkbox = CGI::input({-type=>"checkbox", -id=>"newWindow", -checked=>"checked",
+						   -onchange=>"updateTarget()"});
 			$checkbox =~ s/\n//; # remove unwanted linebreak
-			print CGI::div({-class=>"pd_editor_input_div", -id=>"submit_input_div"}, $checkbox, CGI::br(), WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submit_button_id", -input_attr=>{-name=>'submit', -value=>"Take Action!"}));
+			print CGI::Tr({}, CGI::td({-colspan=>2}, "Select above then:",
+			                  CGI::submit(-name=>'submit', -value=>"Take Action!"),
+						CGI::script("document.write('$checkbox in another window')")));
+			print CGI::end_table();	
 	
 	
 	print  CGI::end_form();
@@ -1271,17 +1220,15 @@ sub view_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $file_type     = $self->{file_type};
 	return "" if    $file_type eq 'hardcopy_header';  # these can't yet be edited from temporary files #FIXME
-	my $output_string = "";
+	my $output_string = "View";
 	unless ($file_type eq 'course_info' || $file_type eq 'options_info') {
 
 		$output_string .= join(" ",
-			# "Use what seed?: ",
-			# CGI::textfield(-name=>'action.view.seed',-value=>$self->{problemSeed},-onfocus=>$onChange),
-			WeBWorK::CGI_labeled_input(-type=>"text", -id=>"action_view_seed_id", -label_text=>"Using what seed?: ", -input_attr=>{-name=>'action.view.seed',-value=>$self->{problemSeed},-onfocus=>$onChange}),CGI::br(),
-			# "and display mode ",
-			# CGI::popup_menu(-name=>'action.view.displayMode', -values=>$self->r->ce->{pg}->{displayModes}, 
-			  # -default=>$self->{displayMode}, -onmousedown=>$onChange)
-			WeBWorK::CGI_labeled_input(-type=>"select", -id=>"action_view_displayMode_id", -label_text=>"Using what display mode?: ", -input_attr=>{-name=>'action.view.displayMode', -values=>$self->r->ce->{pg}->{displayModes}, -default=>$self->{displayMode}, -onmousedown=>$onChange}),CGI::br(),
+			" using seed ",
+			CGI::textfield(-name=>'action.view.seed',-value=>$self->{problemSeed},-onfocus=>$onChange),
+			"and display mode ",
+			CGI::popup_menu(-name=>'action.view.displayMode', -values=>$self->r->ce->{pg}->{displayModes}, 
+			  -default=>$self->{displayMode}, -onmousedown=>$onChange)
 		);
 	}
 
@@ -1440,9 +1387,11 @@ sub add_problem_form {
 	};
 	return "" if $self->{file_type} eq 'course_info' || $self->{file_type} eq 'options_info';
 	return join(" ",
-		WeBWorK::CGI_labeled_input(-type=>"select", -id=>"action_add_problem_target_set_id", -label_text=>"Add to what set?: ", -input_attr=>{name=>'action.add_problem.target_set', values=>\@allSetNames, default=>$setName, onmousedown=>$onChange}),CGI::br(),
-		WeBWorK::CGI_labeled_input(-type=>"select", -id=>"action_add_problem_file_type_id", -label_text=>"Add as what filetype?: ", -input_attr=>{name=>'action.add_problem.file_type', values=>['problem','set_header', 'hardcopy_header'], labels=>$labels, default=>$self->{file_type}, onmousedown=>$onChange}),
-		CGI::br()
+		"Add to set " ,
+		CGI::popup_menu({name=>'action.add_problem.target_set', values=>\@allSetNames, default=>$setName, onmousedown=>$onChange}),
+		" as ",
+		CGI::popup_menu({name=>'action.add_problem.file_type', values=>['problem','set_header', 'hardcopy_header'], labels=>$labels, default=>$self->{file_type}, onmousedown=>$onChange}),
+		
 	);  #FIXME  add -lables to the pop up menu
 	return "";
 }
@@ -1760,51 +1709,38 @@ sub save_as_form {  # calls the save_as_handler
     # don't addor replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
     
     my $replace_problem_in_set  = ($can_add_problem_to_set)?
-			 # CGI::input({
-    			 # -type      => 'radio',
-    			 # -name      => "action.save_as.saveMode",
-    			 # -value     => "rename",
-    			 # -label     => '',
-			 # },"and replace ".CGI::b("set $fullSetID$probNum").',') 
-			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>'action_save_as_saveMode_rename_id', -label_text=>"Replace ".CGI::b("set $fullSetID$probNum"), -input_attr=>{
-			 -name      => "action.save_as.saveMode",
-    		 -value     => "rename",
-			 }).CGI::br() : ''
+			 CGI::input({
+    			 -type      => 'radio',
+    			 -name      => "action.save_as.saveMode",
+    			 -value     => "rename",
+    			 -label     => '',
+			 },"and replace ".CGI::b("set $fullSetID$probNum").',')  : ''
     ;
     my $add_problem_to_set      = ($can_add_problem_to_set)?
-             # CGI::input({
-    			 # -type      => 'radio',
-    			 # -name      => "action.save_as.saveMode",
-    			 # -value     => 'add_to_set_as_new_problem',
-    			 # -label     => '',
-    			 # -onfocus   => $onChange,
-    		 # },"and append to end of set $fullSetID",) : ''
-			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_new_problem_id", -label_text=>"Append to end of set $fullSetID", -input_attr=>{
-				 -name      => "action.save_as.saveMode",
+             CGI::input({
+    			 -type      => 'radio',
+    			 -name      => "action.save_as.saveMode",
     			 -value     => 'add_to_set_as_new_problem',
-				 -onfocus   => $onChange,
-			 }).CGI::br() : ''
+    			 -label     => '',
+    			 -onfocus   => $onChange,
+    		 },"and append to end of set $fullSetID",) : ''
     ;  
     my $rh_new_problem_options = {
-    			# -type      => 'radio',
+    			 -type      => 'radio',
     			 -name      => "action.save_as.saveMode",
     			 -value     => "new_independent_problem",
     			 -onfocus   => $onChange,
     			 };
     $rh_new_problem_options->{checked}=1 unless $can_add_problem_to_set;
-    my $create_new_problem       =  WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_independent_problem_id", -label_text=>"Append as new independent problem", -input_attr=>$rh_new_problem_options).CGI::br(); #CGI::input($rh_new_problem_options,"as a new independent problem");
+    my $create_new_problem       = CGI::input($rh_new_problem_options,"as a new independent problem");
     
     $andRelink = CGI::br(). $replace_problem_in_set . $add_problem_to_set . $create_new_problem;
     			 
-	return #'Save AS [TMPL]/'.
-	        # CGI::textfield(
-			       # -name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  
-			       # -onfocus=>$onChange
-			      # ).",".
-			WeBWorK::CGI_labeled_input(-type=>"text", -id=>"action_save_as_target_file_id", -label_text=>"Save AS [TMPL]/", -input_attr=>{
-				-name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  
-			    -onfocus=>$onChange
-			}).
+	return 'Save AS [TMPL]/'.
+	        CGI::textfield(
+			       -name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  
+			       -onfocus=>$onChange
+			      ).",".
 			CGI::hidden(-name=>'action.save_as.source_file', -value=>$editFilePath ).
 			CGI::hidden(-name=>'action.save_as.file_type',-value=>$self->{file_type}).
 			$andRelink;
@@ -2015,21 +1951,7 @@ sub revert_handler {
 	# no redirect is needed
 }
 
-sub output_JS{
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
 
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
-	
-	return "";
-}
-
-sub output_tabber_CSS{
-	return "";
-}
 
 
 1;

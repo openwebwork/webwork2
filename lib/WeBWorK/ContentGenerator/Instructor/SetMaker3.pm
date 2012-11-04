@@ -113,6 +113,7 @@ sub head {
   print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/Problem.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/Set.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/Library.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/Browse.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/problem_grid.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/form_builder.js"></script>!;
@@ -154,10 +155,18 @@ sub body {
         '<div class="container">',
             '<ul class="nav">',
                 '<li>
+                    <div>
                     <span id="CardCatalog">
                         <!--Gonna put the lists of libraries and sub-libraries here-->
+                        
                     </span>
-                    <button class="btn btn-small" id="load_problems">Load Problems</button>
+                     <button class="btn btn-small" id="load_problems">Load Problems</button>                   
+                    
+                    <p id="Browser">
+                        <!--Subject, textbook, and so on browser-->
+                        
+                    </p>
+                    </div>
                 </li>',
             '</ul>',
             '<ul class="nav pull-right">',
@@ -253,6 +262,23 @@ sub body {
              '<option value=null>Pick a Library</option>',
              '</select>',
              '<span class="<%= name %> children"></span>',
+          '</script>';
+
+  print '<script type="text/template", id="BrowseList-template">',
+             '<select  id="library_subject" class="list">',
+             '<option value=null>Subject</option>',
+             '<% _.each(library_subjects, function(name) { %> <option value="<%= name %>" <% if(name == library_subject){ %> selected="selected" <% } %> ><%= name %></option> <% }); %>',
+             '</select>',
+             '<select  id="library_chapter" class="list">',
+             '<option value=null>Chapter</option>',
+             '<% _.each(library_chapters, function(name) { %> <option value="<%= name %>" <% if(name == library_chapter){ %> selected="selected" <% } %> ><%= name %></option> <% }); %>',
+             '</select>',
+             '<select  id="library_section" class="list">',
+             '<option value=null>Section</option>',
+             '<% _.each(library_sections, function(name) { %> <option value="<%= name %>"  <% if(name == library_section){ %> selected="selected" <% } %>  ><%= name %></option> <% }); %>',
+             '</select>',
+             '<button class="btn btn-small load_browse_problems">Load Problems</button>',
+
           '</script>';
 
   print '<script type="text/template", id="Library-template">',

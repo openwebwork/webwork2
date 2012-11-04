@@ -162,58 +162,63 @@ sub body {
 	}
 
 	#Get all the achievements
-	my @allAchievementIDs = $db->listAchievements; 
-	my @achievements = $db->getAchievements(@allAchievementIDs);
 
-	@achievements = sortAchievements(@achievements);
-	my $previousCategory = $achievements[0]->category;
-
-	#Loop through achievements and
-	foreach my $achievement (@achievements) {
-	    #skip the level achievements and only show achievements assigned to user
-	    last if ($achievement->category eq 'level');
-	    next unless ($db->existsUserAchievement($userID,$achievement->achievement_id));
-	    next unless $achievement->enabled;
-
-	    #separate categories with whitespace
-	    if ($previousCategory ne $achievement->category) {
-		print CGI::br();
-	    }
-	    $previousCategory = $achievement->category;
-
-	    my $userAchievement = $db->getUserAchievement($userID,$achievement->achievement_id);
-	    
-	    #dont show unearned secret achievements
-	    next if ($achievement->category eq 'secret' and not $userAchievement->earned);
- 
-	    #print achievement and associated progress bar (if there is one)
-	    print CGI::start_div({class=>sprintf("cheevoouterbox %s", $userAchievement->earned ? 'unlocked':'locked')});
-
-	    my $imgSrc;
-	    if ($achievement->{icon}) {
-		$imgSrc = $ce->{courseURLs}->{achievements}."/".$achievement->{icon};
-	    } else {
-		$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
-	    }
-
-	    print CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
-	    print CGI::start_div({class=>'cheevotextbox'});
-	    print CGI::h2($achievement->name);
-	    print CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
-	    
-	    if ($achievement->max_counter and not $userAchievement->earned) {
-		my $userCounter = $userAchievement->counter;
-		$userCounter = 0 unless ($userAchievement->counter);
-		my $percentage = int(100*$userCounter/$achievement->max_counter);
-		$percentage = $percentage <= 100 ? $percentage : 100;
-		print CGI::start_div({class=>'cheevoouterbar'});
-		print CGI::div({class=>'cheevoinnerbar', style=>sprintf("width:%i%%;", $percentage)},'');
-		print CGI::end_div();	
-	    }	
-	    print CGI::end_div();
-	    print CGI::end_div();
-	    
-	}	   
+	my @allAchievementIDs = $db->listAchievements;
+	if ( @allAchievementIDs ) { # bail if there are no achievements 
+		my @achievements = $db->getAchievements(@allAchievementIDs);
+	
+		@achievements = sortAchievements(@achievements);
+		my $previousCategory = $achievements[0]->category;
+	
+		#Loop through achievements and
+		foreach my $achievement (@achievements) {
+			#skip the level achievements and only show achievements assigned to user
+			last if ($achievement->category eq 'level');
+			next unless ($db->existsUserAchievement($userID,$achievement->achievement_id));
+			next unless $achievement->enabled;
+	
+			#separate categories with whitespace
+			if ($previousCategory ne $achievement->category) {
+			print CGI::br();
+			}
+			$previousCategory = $achievement->category;
+	
+			my $userAchievement = $db->getUserAchievement($userID,$achievement->achievement_id);
+			
+			#dont show unearned secret achievements
+			next if ($achievement->category eq 'secret' and not $userAchievement->earned);
+	 
+			#print achievement and associated progress bar (if there is one)
+			print CGI::start_div({class=>sprintf("cheevoouterbox %s", $userAchievement->earned ? 'unlocked':'locked')});
+	
+			my $imgSrc;
+			if ($achievement->{icon}) {
+			$imgSrc = $ce->{courseURLs}->{achievements}."/".$achievement->{icon};
+			} else {
+			$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
+			}
+	
+			print CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
+			print CGI::start_div({class=>'cheevotextbox'});
+			print CGI::h2($achievement->name);
+			print CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
+			
+			if ($achievement->max_counter and not $userAchievement->earned) {
+			my $userCounter = $userAchievement->counter;
+			$userCounter = 0 unless ($userAchievement->counter);
+			my $percentage = int(100*$userCounter/$achievement->max_counter);
+			$percentage = $percentage <= 100 ? $percentage : 100;
+			print CGI::start_div({class=>'cheevoouterbar'});
+			print CGI::div({class=>'cheevoinnerbar', style=>sprintf("width:%i%%;", $percentage)},'');
+			print CGI::end_div();	
+			}	
+			print CGI::end_div();
+			print CGI::end_div();
+			
+			}	   
+		} else { # no achievements 
+		print CGI::p("No achievements have been assigned yet");
+		}
 
 	print CGI::br();
 

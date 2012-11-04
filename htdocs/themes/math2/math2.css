@@ -1,0 +1,843 @@
+/* WeBWorK Online Homework Delivery System
+ * Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+ * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either: (a) the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any later
+ * version, or (b) the "Artistic License" which comes with this package.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+ * Artistic License for more details.
+ */
+
+/* --- Standard elements ---------------------------------------------------- */
+
+body {
+	background: white;
+	color: black;
+	margin: .5em .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
+	padding: 0;
+	font-family: Times, serif;
+	min-width: 25em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	/* FIXME "You have no background-color with your color" */
+	color: #225;
+	background: transparent;
+}
+h1 { font-size: 170%; }
+h2 { font-size: 140%; padding-bottom: 0; margin-bottom: .5ex }
+h3 { font-size: 120%; }
+h4 { font-size: 110%; }
+h5 { font-size: 105%; }
+h6 { font-size: 105%; } 
+
+a:link { color: #00e; background-color: inherit; }
+a:visited { color: #808; background-color: inherit; }
+
+/* --- Miscellaneous classes ---------------------------------------------- */
+
+/* show only to CSS-ignorant browsers */
+.for-broken-browsers { display: none }
+
+/* for hiding floats from Netscape 4.x */
+.float-left { float: left; }
+.float-right { float: right; }
+
+/* --- Compound titles (class) ---------------------------------------------- */
+
+/* WeBWorK is not using this, but it might be nice to have it around later */
+
+/* "Split" title, with main heading left-aligned above a horizontal line,
+ * and subheading right-aligned below the line. Usage:
+ *
+ * <h1 class="compound">Alumni Newsletter</h1>
+ * <h2 class="compound">Spring '00</h2>
+ */
+
+/*h1.compound {
+	border-bottom: 1px solid #559;
+	text-align: left;
+	padding: .5ex 0 0 0;
+	margin: 0;
+}
+h2.compound { float: right; margin: 0; padding: 0 }*/
+
+/* --- Info box (class) ----------------------------------------------------- */
+
+/* FIXME as a quick hack, the info() escape outputs a DIV with this class.
+ * don't let the placement of these styles fool you -- <div style="info-box">
+ * is output by WeBWorK! */
+
+/* Common style for a small box to hold supplemental info; typically this
+ * box will appear in a sidebar.  Sample usage:
+ *
+ * <div class="info-box">
+ *   <h2>Announcements</h2>
+ *   <ul>
+ *     <li>foo</li>
+ *   </ul>
+ *   <a class="more" href="bar">Older announcements...</a>
+ * </div>
+ */
+
+.info-box {
+	border: 1px solid #559;
+	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
+	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
+	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
+	margin-bottom: 1ex; 
+	margin-top: 0;
+	width: 90%;
+	overflow: hidden;
+}
+.info-box h2,
+.info-box h3,
+.info-box h4,
+.info-box h5,
+.info-box h6 {
+	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
+	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
+	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
+	border-bottom: 1px solid #559;
+	font-size: 100%;
+	text-align: center;
+	background: #88d;
+	color: white;
+	margin: 0;
+	padding: 0 .5em 0 .5em;
+}
+.info-box h2 a,
+.info-box h3 a,
+.info-box h4 a,
+.info-box h5 a,
+.info-box h6 a {
+	color: #fff;
+	background: inherit;
+}
+.info-box ul,
+.info-box ol {
+	margin: 1ex .5em 1ex 0;
+	padding-left: 3.5em;
+	font-size: 80%;
+}
+.info-box dl {
+	margin: 1ex .5em 1ex 1ex;
+	padding: 0;
+	font-size: 80%;
+}
+.info-box li,
+.info-box dt {
+	margin: 0 0 .5ex 0;
+	padding: 0;
+	line-height: 2.2ex;
+}
+.info-box dt { font-weight: bold }
+.info-box dd {
+	margin: 0 0 .5ex 1em;
+	padding: 0;
+	line-height: 2.2ex;
+}
+.info-box dd p {
+	margin-top: 0;
+}
+.info-box a.more {
+	float: right;
+	font-size: 80%;
+	font-style: italic;
+	margin-bottom: 1ex;
+	margin-right: .5em;
+}
+
+.Message {
+background-color:#ddd;
+clear: both;
+}
+/* --- Fisheye view (id) ---------------------------------------------------- */
+
+/* The "fisheye" view: a hierarchical view of the website to show the 
+ * user where they are in the document hierarchy.  Provides more "lateral" 
+ * information than breadcrumbs, but not as much as a full sitemap. To 
+ * appear within the #site-navigation div.  Inherits many of its attributes 
+ * from class info-box, and overrides some.
+ */
+
+#mini-sitemap,
+#fisheye {
+	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	padding: 0 0 1ex 0;
+}
+#mini-sitemap a,
+#fisheye a {
+	text-decoration: none;
+}
+#mini-sitemap a:hover,
+#fisheye a:hover {
+	text-decoration: underline;
+}
+#mini-sitemap li,
+#fisheye li {
+	line-height: 2.5ex;
+	margin: 0;
+}
+#mini-sitemap ul,
+#fisheye ul {
+	font-size: 90%;
+	list-style-type: none;
+	margin: 0 .1em .3ex .3em;
+	padding: 0;
+}
+#mini-sitemap ul ul,
+#fisheye ul ul {
+	font-size: 90%;
+	margin-left: 0;
+}
+#mini-sitemap ul li,
+#fisheye ul li {
+	font-weight: bold;
+}
+#mini-sitemap ul ul ul,
+#fisheye ul ul ul {
+	font-size: 95%;
+	margin-left: .3em;
+	padding-left: .5em;
+	border-left: 1px dotted gray;
+}
+#mini-sitemap ul ul li a.active,
+#fisheye ul ul li a.active {
+	font-weight: bold;
+	color: black;
+	background-color: inherit;
+}
+#mini-sitemap ul ul ul li,
+#fisheye ul ul ul li {
+	font-weight: normal;
+}
+#mini-sitemap ul ul ul ul,
+#fisheye ul ul ul ul {
+	font-size: 90%;
+}
+#mini-sitemap ul ul ul ul ul,
+#fisheye ul ul ul ul ul {
+	font-size: 90%;
+}
+
+/* --- Common layout elements for documents using templates ----------------- */
+
+/* The "masthead" of our document that tells users what site they're on.
+ * It contains a logo-ish title and some basic site navigation.  The
+ * masthead should appear at the top of the page, but we're not positioning
+ * it absolutely because we can't know its height in advance.  Therefore this 
+ * element should be placed at the very top of the <body> of our HTML document.
+ */
+#masthead {
+	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	font-size: 100%;
+	margin: 0;
+	padding: 0;
+	color: #fff;
+	border: 1px solid #000;
+	background-color: #038;
+	/* [ww] we could have some sort of spider web image here. */
+	/*background-image: url("/images/mandel-wide.jpg");*/
+	background-repeat: repeat-x;
+	background-position: top left;
+}
+#masthead a {
+	/* FIXME "You have no background-color with your color" */
+	color: #fff;
+	background: transparent;
+}
+/* [ww] since this is a logo and not text, we need borders that are the same
+ * width all the way around. after we find a nice background image, we can
+ * turn these back on. */
+/*#masthead #logo { padding: .5ex .2em .1ex .5em }*/
+#masthead #logo { padding: 1ex }
+/* [ww] don't need these -- logo itself an image */
+/*#masthead #logo h1 {
+	background-image: none;
+	background-color: transparent;
+	font-size: 100%;
+	font-weight: normal;
+	padding: 0;
+	margin: 0;
+	white-space: nowrap;
+	line-height: 1.9ex;
+}*/
+/*#masthead #logo h2 {
+	background-color: transparent;
+	background-image: none;
+	font-weight: bold;
+	font-size: 210%;
+	line-height: 1.9ex;
+	margin: 0;
+	padding: 0;
+}*/
+/* [ww] instead of a search form, we want the loginstatus there */
+/*#masthead form {*/
+
+/*Loginstatus -- the element fixed on the top right corner of the page, which tells the user whether they are logged in or not, and provides them with a log out link if they are logged in.*/
+
+#loginstatus {
+	color: white;
+	top: -75px;
+	left: 1170px;
+	width: 200px;
+	float: right;
+	text-align: center;
+	padding: 0;
+	margin: 1ex .5em .1ex .1em;
+	font-size: smaller;
+} 
+
+/*Relative Positioning -- a alternate style for the loginstatus which uses relative positioning.  Tested, but was decided that it didn't work great. Feel free to uncomment if you want to try it out.*/
+
+/*#loginstatus {
+	color: white;
+	position: relative;
+	top: -140px;
+	left: 470px;
+	width: 150px;
+	text-align: center;
+	padding: 0;
+	margin: 1ex .5em .1ex .1em;
+	font-size: smaller;
+}*/
+
+
+#loginstatus a{
+	color: white;
+}
+
+#loginstatus #Nav {
+	padding: 1ex;
+}
+
+/* "big-wrapper" contains everything other than the masthead.  It's merely 
+ * a relatively positioned div that allows us to use absolute positioning
+ * on elements within it -- and because it's relatively positioned,
+ * absolutely positioned objects *stay* within it.
+ */
+#big-wrapper {
+	position: relative;
+	top: 1ex;
+	width: 100%;
+	min-width: 18em;
+	margin: 0;
+	border: 0;
+}
+
+/*
+ * A simple list of "breadcrumbs" showing a path of links from the root of
+ * the site's hierarchy to our present location.  We are not positioning
+ * this element absolutely, because we don't know in advance how tall it
+ * will be, and we might want to place content under it.  So when coding
+ * our HTML document, we'll probably want to include this element right
+ * before the main content.
+ */
+
+#breadcrumbs {
+	margin-left: 10.4em;
+	margin-right: 0;
+	padding: 0 .4em;
+	border: 1px solid #559;
+	background: #88d;
+	color: #fff;
+	text-align: left; 
+	font-size: 100%;
+	font-family: "Trebuchet MS", "Arial", sans-serif;
+}
+#breadcrumbs a {
+	font-size: 100%;
+	white-space: nowrap;
+	background-color: inherit;
+	color: #fff;
+	text-decoration: none;
+}
+#breadcrumbs a.active { font-weight: bold; }
+#breadcrumbs a:hover { text-decoration: underline; }
+
+
+/* For the more CSS-compliant browsers, we'd like to provide site-wide
+ * navigation links (e.g., a mini site map) to appear in a column along
+ * the left side of the page, just below the masthead.  This column is
+ * absolutely positioned, so that ideally we should be able to include its
+ * contents anywhere within the body of our HTML documents.  However, we 
+ * probably want to include this data at the END of our documents -- after
+ * the main content -- so that it doesn't interfere with document flow in 
+ * browsers that don't understand CSS (e.g., lynx) -- or in browsers for
+ * which we've disabled CSS via some hack (e.g. Netscape Navigator 4.x).
+ *
+ * We consider this meta-information to be non-essential; it is NOT part of
+ * the content, and may not be displayed in some circumstances.
+ */
+#site-navigation {
+	position: absolute;
+	left: 0;
+	top: 0;
+	margin: 0;
+	padding: 0;
+	width: 9.8em;
+}
+
+/* The primary information content of the document, excluding masthead and
+ * site navigation.  We want to leave a wide left margin to prevent overlap
+ * with our site map, which will be displayed on the left-hand side of the
+ * screen.
+ */
+#content {
+	margin: .5em 0 0 10.4em;
+	padding: 0 0 0 0;
+	font-family: "Times", serif;
+	/* border-left: 1px dotted #bbf; */
+}
+#content h1 { margin: .4ex 0; } /* for crappy MSIE */
+
+
+#footer {
+	/* white-space: nowrap; */
+	clear: both;
+	/* border-top: 1px solid #559; */
+	margin: 0 .5em .2ex 10.4em;
+	padding: 0;
+	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+}
+#copyright { font-size: 75%; margin: 0;}
+#last-modified {
+	clear: both;
+	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	font-size: 75%;
+	background-color: inherit;
+	color: #444;
+	margin: 1ex 0 0 0;
+	padding: 0;
+	border-bottom: 1px solid #559;
+}
+
+/* --- WeBWorK classes ------------------------------------------------------ */
+
+/* These classes are emitted by WeBWorK code and should appear in ANY WeBWorK
+ * template. they need not be implemented the same way in each template though.
+ * (These are mostly copied from ur.css right atm.)
+ */
+
+/* the info escape emits a DIV with this id. (note that the same DIV has class
+ * "info-box" which is given above in the "template styles" section. Regardless,
+ * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
+#InfoPanel {
+    font-size:100%;
+	float: right; /*was right*/
+	min-width: 0;
+	width:100%;
+	overflow: hidden; /*was auto*/
+	/*margin-right: -1px;*/
+	background-color: #fff;
+}
+#InfoPanel ol {
+	font-size:100%;
+}
+
+/* tables used for laying out form fields shouldn't have a border */
+table.FormLayout { border: 0; }
+table.FormLayout tr { vertical-align: top; }
+table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
+table.FormLayout tr.ButtonRow { text-align: left; }
+table.FormLayout tr.ButtonRowCenter { text-align: center; }
+
+/* for problems which are rendered by themselves, e.g., by Set Maker */
+div.RenderSolo { background-color: #E0E0E0; color: black; }
+div.AuthorComment { background-color: #00E0E0; color: black; }
+
+/* minimal style for lists of links (generated by the links escape) */
+/*ul.LinksMenu { list-style: none; margin-left: 0; padding-left: 0; }*/
+/*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
+
+/* background styles for success and failure messages */
+div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+label.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+span.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.correct { color: inherit; background-color: #8F8; } /* green */
+span.incorrect { color: #FF9494; background-color: inherit; } /* red */
+input.correct   { color:inherit; background-color: #8F8; } /* green */
+input.incorrect { color;inherit; background-color: #FF9494; } /* red */
+
+/* styles used by WeBWorK::HTML::ScrollingRecordList */
+div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
+div.ScrollingRecordList select.ScrollingRecordList { width: 99%; }
+
+/* wraps the View Options form (generated by &optionsMacro) */
+/* FIXME: can't this style information just go in div.Options above? */
+div.viewOptions { font-size: small }
+
+/* messages, attempt results, answer previews, etc. go in this DIV */
+/* this used to be "float:left", but that was suspected of causing MSIE peekaboo bug */
+div.problemHeader {}
+
+/* styles for the attemptResults table */
+table.attemptResults {
+	border-style: outset; 
+	border-width: 1px; 
+	margin: 0px 10pt; 
+	border-spacing: 1px;
+}
+table.attemptResults td,
+table.attemptResults th {
+	border-style: inset; 
+	border-width: 1px; 
+	text-align: center; 
+	/*width: 15ex;*/ /* this was erroniously commented out with "#" */
+	padding: 2px 5px 2px 5px;
+	color: inherit;
+	background-color: #DDDDDD;
+}
+/* override above settings in tables used to display ans_array results */
+table.attemptResults td td,
+table.attemptResults td th,
+table.ArrayLayout td {
+	border-style: none; 
+	border-width: 0px; 
+	padding: 0px;
+}
+table.attemptResults td.Message {
+   text-align: left; 
+   padding: 2px 5px 2px 5px;
+   width: auto;
+}
+.attemptResultsSummary { font-style: italic; }
+.parsehilight { color: inherit; background-color: yellow; }
+
+/* the problem TEXT itself goes in this box */
+/* we used to make this a grey box, but surprise, MSIE is bug-ridden. */
+div.problem {  }
+
+/* jsMath emits this class when appropriate math fonts aren't available */
+div.NoFontMessage {
+	padding: 10px;
+	border-style: solid;
+	border-width: 3px;
+	border-color: #DD0000;
+	color: inherit;
+	background-color: #FFF8F8;
+	width: 75%;
+	text-align: left;
+	margin: 10px auto 10px 12%;
+}
+
+/* text colors for visible and hidden sets */
+font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
+font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
+
+/* styles used when editing a temporary file */
+.temporaryFile { font-style: italic; color: #F60; background-color: inherit; }
+
+/* text colors for Auditing, Current, and Dropped students */
+.Audit { font-style: normal; color: purple; background-color: inherit; }
+.Enrolled { font-weight: normal; color: black; background-color: inherit; }
+.Drop { font-style: italic; color: gray; background-color: inherit; }
+
+/*Styles for the login form -- mainly small alignment changes for all of the input elements on the login page*/
+
+#login_form input {
+	margin-top: 7px;
+}
+
+#login_form label{
+	margin-right: 2px;
+}
+
+#login_form #pswd_label{
+	margin-right: 4px;
+}
+
+#login_form #rememberme{
+	margin-left: 75px;
+}
+
+/*Styles for the edit forms, found on the homework sets editor page*/
+
+/*Following are mostly alignment fixes for the input elements and their lables on this page.*/
+.edit_form  input,select{
+	margin-top: 5px;
+}
+
+.edit_form label, .edit_form span{
+	margin-left: 40px;
+}
+
+.edit_form label.radio_label{
+	margin-left: 0px;
+}
+
+.edit_form  span#filter_err_msg{
+	display: none;
+}
+
+/*Styles for the classlist editor page*/
+
+/*The styles here correctly align the table elements in the set table*/
+.set_table{
+	margin-right: 5px;
+}
+
+.set_table td{
+	padding-right: 5px;
+}
+
+.set_table th{
+	text-align: center;
+	padding-right: 5px;
+	padding-left: 5px;
+}
+
+.set_table label{
+	margin-left: 0px;
+}
+
+/*General styles, for elements such as table captions input buttons, columns, etc.*/
+
+/*General styles for table captions*/
+table caption{
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+/*Styling the content that is found in the login page.*/
+.p_content{
+	width: 640px;
+}
+
+/*General styles for all input buttons*/
+.button_input{
+	margin-right: 5px;
+	margin-left: 5px;
+}
+
+/*General styles for all column divs, for pages which use column layouts*/
+.column {
+	float: left;
+	width: 50%;
+	height: 22%;
+	overflow: hidden;
+	margin-top: 10px;
+}
+
+/*General styles for the wrapper div element which goes around the InfoBoxes*/
+.info-wrapper{
+	float: right;
+	min-height: 100px;
+	max-width: 40%;
+	overflow: hidden;
+	margin-left: 5px;
+	left: 810px;
+}
+
+/*The following styles create the links which look like buttons, which replaced the image elements which were previously used for the navigation buttons*/
+a.nav_button{
+	color: black;
+	background-color: #DDDDDD;
+	text-decoration: none;
+	text-align: center;
+	font-size: 15px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px;
+	border-style: outset;
+}
+
+a.nav_button:hover{
+	background-color: #EEEEEE;
+	border-color: #00ADEE;
+}
+
+a.nav_button:active{
+	border-style: inset;
+}
+
+span.gray_button{
+	color: black;
+	background-color: #DDDDDD;
+	text-decoration: none;
+	text-align: center;
+	font-size: 15px;
+	padding: 1px 6px 1px 6px;
+	margin: 2px;
+	border-style: outset;
+	opacity: 0.3;
+}
+
+/*an ID for elements that should have no style, if it is necessary to specifically specify such an element.*/
+#none{
+	/*Please do not do anything with elements with id "none"*/
+}
+
+/*Styles for the PGProblemEditor Page
+
+#editor{
+	background-color: #FFFFFF;
+}
+
+#editor #source_and_options{
+	float: left;
+	width: 50%;
+}
+
+#editor #problemContents_label{
+	text-align: center;
+	font-weight: bold;
+	text-decoration: underline;
+	margin-left: 30%;
+}
+
+#editor #problemContents_id{
+	width: 100%;
+	height: 50%;
+}
+
+#editor .editor_form{
+	margin-left: 40px;
+}
+
+#editor #form_div{
+	float: left;
+	width: 100%;
+}
+
+/*Styles specifically for the problem viewer*/
+
+#problem_viewer_form{
+	margin-left: 10px;
+	float: left;
+	width: 45%;
+	height: 100%;
+	border-left: solid;
+	border-width: 1px;
+}
+
+#problem_viewer_form>h3{
+	margin-left: 37%;
+}
+
+#problem_viewer_form #viewer_span{
+	margin-left: 10%;
+}
+
+#problem_viewer_form #reload_button{
+	margin-left: 20%;
+	margin-top: 5%;
+}
+
+#problem_viewer_form #problem_viewer{
+	width: 60%;
+	background-color: #E8E8E8;
+	margin-left: 20%;
+	margin-top: 5%;
+	padding: 1px;
+}
+
+#problem_viewer_form #problem_viewer_content{
+	border-style: solid;
+	padding: 5%;
+	border-width: 1px;
+}
+
+#problem_viewer_form #viewer_note{
+	margin-top: 10%;
+	margin-left: 10%;
+	margin-right: 10%;
+}*/
+
+#editor{
+	width: 585px;
+}
+
+#editor .pg_editor_input_span{
+	margin-bottom: 10px;
+	display: none;
+}
+
+#editor .pg_editor_input_div{
+	margin-top: 20px;
+	margin-left: 50px;
+}
+
+#editor #submit_input_div{
+	margin-top: 10px;
+	clear: both;
+}
+
+#pg_editor_header {
+    left: 790px;
+    position: absolute;
+    top: 130px;
+}
+
+#pg_editor_frame_id{
+	height: 474px;
+    left: 785px;
+    position: absolute;
+    top: 182px;
+    width: 50%;
+	overflow: scroll;
+}
+
+/*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
+
+.radio_span{
+	visibility: hidden;
+}
+
+table.problem_sets_table {
+	width: 640px;
+	float: left;
+	margin-bottom: 3%;
+	overflow:hidden/*was not here*/;
+}
+
+table.problem_sets_table caption {
+}
+
+table.problem_sets_table th{
+	width: 320px;
+	padding-bottom: 10px;
+}
+
+table.problem_sets_table td{
+	width: 320px;
+}
+
+div.problem_sets_options {
+	clear: both;
+	margin: 1% 1% 1% 1%;
+}
+
+/*This is the styling specifically for the tables of problems displayed for each problem set page*/
+table.problem_set_table{
+	margin-top: 30px;
+	#width: 640px;
+	text-align: left;
+	float: left;
+}
+table.problem_set_table th{
+	padding-right: 30px;
+}
+table.problem_set_table td{
+	padding-right: 30px;
+}
+/*BUG FIXES*/
+
+table#grades_table pre{
+	float: left;
+}

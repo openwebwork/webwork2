@@ -38,7 +38,7 @@ our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
 our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PASSWORD     = $WebworkWebservice::PASSWORD;
-our $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
+our $ce           = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $COURSENAME});
 
 our $UNIT_TESTS_ON =1;
 

@@ -14,10 +14,14 @@ use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Utils qw(runtime_use cryptPassword);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
+use WeBWorK::ContentGenerator::Instructor::SendMail;
+use JSON;
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 use Time::HiRes qw/gettimeofday/; # for log timestamp
 use Date::Format; # for log timestamp
+
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 sub create {
 	my ($self, $params) = @_;
@@ -112,7 +116,8 @@ sub listUsers {
 
     my @tempArray = $db->listUsers;
     my @userInfo = $db->getUsers(@tempArray);
-
+    my $numGlobalSets = $db->countGlobalSets;
+    
     #%permissionsHash = reverse %permissionsHash;
     #for(@userInfo){
     #    @userInfo[i]->{'permission'} = $db->getPermissionLevel(@userInfo[i]->{'user_id'});
@@ -123,6 +128,13 @@ sub listUsers {
         my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
         $u->{'permission'}{'value'} = $PermissionLevel->{'permission'};
         $u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+	my $studid= $u->{'student_id'};
+	$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
+        $u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
+	
+	my $Key = $db->getKey($u->{'user_id'});
+	$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		
     }
 
     #my %permissionsHash = $ce->{userRoles};
@@ -141,9 +153,12 @@ sub listUsers {
 sub addUser {
 	my ($self, $params) = @_;
 	my $out = {};
+	$out->{text} = encode_base64("");
 	my $db = $self->{db};
 	my $ce = $self->{ce};
 	debug("Webservices add user request.");
+	debug("Last Name:" . $params->{'last_name'});
+	debug("First Name:" . $params->{'first_name'});
 
 	# make sure course actions are enabled
 	#if (!$ce->{webservices}{enableCourseActions}) {
@@ -177,16 +192,19 @@ sub addUser {
 		my $enrolled = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 		my $new_student = $db->{user}->{record}->new();
 		$new_student->user_id($id);
-		$new_student->first_name($params->{'firstname'});
-		$new_student->last_name($params->{'lastname'});
+		$new_student->first_name($params->{'first_name'});
+		$new_student->last_name($params->{'last_name'});
 		$new_student->status($enrolled);
-		$new_student->student_id($params->{'studentid'});
-		$new_student->email_address($params->{'email'});
+		$new_student->student_id($params->{'student_id'});
+		$new_student->email_address($params->{'email_address'});
+		$new_student->recitation($params->{'recitation'});
+		$new_student->section($params->{'section'});
+		$new_student->comment($params->{'comment'});
 		
 		# password record
 		my $cryptedpassword = "";
-		if ($params->{'userpassword'}) {
-			$cryptedpassword = cryptPassword($params->{'userpassword'});
+		if ($params->{'password'}) {
+			$cryptedpassword = cryptPassword($params->{'password'});
 		}
 		elsif ($new_student->student_id()) {
 			$cryptedpassword = cryptPassword($new_student->student_id());
@@ -274,6 +292,65 @@ sub dropUser {
 	return $out;
 }
 
+sub deleteUser {
+	my ($self, $params) = @_;
+	my $out = {};
+	my $db = $self->{db};
+	my $ce = $self->{ce};
+	$out->{text} = encode_base64("");
+	
+	my $user = $params->{'id'};
+	
+	
+	debug("Webservices delete user request.");
+        debug("Attempting to delete user: " . $user );
+	
+	
+	my $User = $db->getUser($params->{'id'}); # checked
+	die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
+
+	
+	# Why is the following commented out? 
+	
+	# make sure course actions are enabled
+	
+	#if (!$ce->{webservices}{enableCourseActions}) {
+	#	$out->{status} = "failure";
+	#	$out->{message} = "Course actions disabled by configuration.";
+	#	$out->{text} = encode_base64("Course actions disabled by configuration");
+	#	return $out
+	#}
+	
+	debug($params->{'id'});
+	debug($params->{'user'});
+	debug(($params->{'id'} eq $params->{'user'} ));
+	
+	if ($params->{'id'} eq $params->{'user'} )
+	{
+		$out->{status} = "failure";
+		$out->{message} = "You can't delete yourself from the course.";
+	} else {
+		my $del = $db->deleteUser($user);
+		
+		if($del)
+		{
+			my $result;
+			$result->{delete} = "success";
+			$out->{text} .=encode_base64("User " . $user . " successfully deleted");
+			$out->{ra_out} .= "delete: success";
+		}
+		else 
+		{
+			$out->{text}=encode_base64("User " . $user . " could not be deleted");
+			$out->{ra_out} .= "delete : failed";
+		}
+
+	}
+	
+	return $out;
+	
+}
+
 
 sub editUser {
 	my ($self, $params) = @_;
@@ -318,6 +395,14 @@ sub editUser {
     $PermissionLevel = $db->getPermissionLevel($User->{'user_id'});
     $User->{'permission'}{'value'} = $PermissionLevel->{'permission'};
     $User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+    
+    
+    # If the new_password param is set and not equal to the empty string, change the password.
+    
+    if((defined $params->{new_password}) and ($params->{new_password} ne "" ) ) {
+	return changeUserPassword($self,$params);
+    }
+    
 
     $out->{ra_out} = $User;
     $out->{text} .= encode_base64("Changes saved");
@@ -325,33 +410,63 @@ sub editUser {
 	return $out;
 }
 
+#  id :  is the user_id of the user to be changed.
+#  new_password : the 
+
+
 sub changeUserPassword {
 
 	my ($self, $params) = @_;
-    my $db = $self->{db};
-    my $ce = $self->{ce};
-    my $out = {};
+	my $out = {};
+	my $db = $self->{db};
+	my $ce = $self->{ce};
+	$out->{text} = encode_base64("");
+	
+	my $userid = $params->{'id'};
+	
+	# check to see if you have sufficient privileges. 
+	# Note: this is not implemented.  It seems like we should verify that the user has appropriate privileges to change
+	# a password or that the user sending the request is the same as the person whose password is being changed.  
+	#  my $PermissionLevel = $db->getPermissionLevel($params->{'user'}); # checked
+    
+	
+	debug("Webservices change user password request.");
+        debug("Attempting to change the password of user: " . $userid );
+	debug("The new password:" . $params->{new_password});
+	
+	
+	my $User = $db->getUser($userid); # checked
+	die ("record for visible user [_1] not found" . $params->{'id'}) unless $User;
+
 
     # make sure course actions are enabled
-        if (!$ce->{webservices}{enableCourseActions}) {
-        	$out->{status} = "failure";
-        	$out->{message} = "Course actions disabled by configuration.";
-        	return $out
-        }
+   #     if (!$ce->{webservices}{enableCourseActions}) {
+    #    	$out->{text} = "failure";
+     #   	$out->{ra_out} = "Course actions disabled by configuration.";
+     #   	return $out
+     #   }
 
-    my $User = $db->getUser($params->{'id'}); # checked
-	die ("record for visible user [_1] not found". $params->{'id'}) unless $User;
+    #my $User = $db->getUser($params->{'id'}); # checked
+    if(!(defined $User)){
+	$out->{text}=encode_base64("No record found for user: ". $params->{'id'});
+	return $out;
+    }
+    
+    # In the next few lines I (pls) changed $params->{$param}->[0] to $params->{$param} to fix a bug.  Not sure why ->[0] was there. 
 	my $param = "new_password";
-	if ((defined $params->{$param}->[0]) and ($params->{$param}->[0])) {
-		my $newP = $params->{$param}->[0];
+	if ((defined $params->{$param}) and ($params->{$param})) {
+		my $newP = $params->{$param};
 		my $Password = eval {$db->getPassword($User->user_id)}; # checked
-		my 	$cryptPassword = cryptPassword($newP);
+		my $cryptPassword = cryptPassword($newP);
 		$Password->password(cryptPassword($newP));
 		eval { $db->putPassword($Password) };
 	}
 
 	$self->{passwordMode} = 0;
-    $out->{message} = "New passwords saved";
+	$out->{text} = encode_base64("New passwords saved");
+	$out->{ra_out}= "password_change: success";
+	debug($out->{text});
+	debug($out->{ra_out});
 	return $out;
 }
 
@@ -422,6 +537,44 @@ sub assignVisibleSets {
 	}
 
 	return 0;
+}
+
+##  pstaabp: This is currently not working.  We need to look into a nice robust way to send email.  It looks like the current
+## way that WW sends mail is a bit archaic.  The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a
+## bit more.  
+
+
+sub sendEmail {
+	my ($self, $params) = @_;
+	my $ce = $self->{ce};
+
+# Should we build in the merge_file?  
+#  get merge file
+#		my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';
+#		my $delimiter       = ',';
+#		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
+#		unless (ref($rh_merge_data) ) {
+#			$self->addbadmessage(CGI::p("No merge data file"));
+#			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
+#			return;
+#		} ;
+#		$self->{rh_merge_data} = $rh_merge_data;
+		
+		# we don't set the response until we're sure that email can be sent
+#		$self->{response}         = 'send_email';
+		
+	my $smtpServer = $ce->{mail}->{smtpServer};
+		
+	debug("smtpServer: " . $smtpServer);
+	
+	
+	my $mailer = Mail::Sender->new({
+				from      => $smtpServer,
+				fake_from => "pstaab\@fitchburgstate.edu",
+				to        => "pstaab\@fitchburgstate.edu",
+				smtp      => $smtpServer,
+				subject   => "Test"
+			});
 }
 
 1;

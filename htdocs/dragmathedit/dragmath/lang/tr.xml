@@ -1,0 +1,350 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+
+    Document   : tr.xml
+
+    Created on : 28 September 2010, 13:59
+
+    Author     : Serkan Arslan
+
+    Description:
+
+        Purpose of the document follows.
+
+-->
+
+<Language>
+    
+	
+	
+    <!--  Error Messages   --> 
+	
+    <ReadingFile>Dosya okumada format hatası: Dosyayı kontrol edin</ReadingFile> 
+	
+    <ReadingFile2>Dosya yüklemede format hatası: </ReadingFile2> 
+	
+    <LoadingExp>İfade kaydedilirken yükleme hatası</LoadingExp>
+	
+    <SavingExp>İfade kaydedilirken hata</SavingExp>
+	
+    <Cut>Seçilen ifade kesilemedi: </Cut>
+	
+    <Copy>Seçilen ifade kopyalanamadı: </Copy>
+	
+    <Tree>Ağaç gösterilemez: </Tree>
+	
+    <Action>Eylem tamamlanamadı: </Action>
+	
+    <AddMatrix>Bu yerden matris eklenemedi</AddMatrix>
+	
+    <Operator>Operator konumunda eksiklik </Operator>
+	
+    <Argument>Operator argüğman konumunda eksiklik</Argument>
+	
+    <Image>Hata: formül resim olarak çıkarılamadı.Mathtran hesabı gerekli</Image>
+	
+	
+    
+    <!--  Status Bar Messages   --> 
+	
+    <ParseExp>Ifade ayrıştırılamadı</ParseExp>
+	
+    <LoadExpression>DragMath - Seçiniz bir ifade yüklemek için dosya</LoadExpression>
+	
+    <SaveExpression>DragMath - Seçiniz konumu ifade kaydetmek için</SaveExpression>
+	
+    <EnterRows>Matris satır sayısı seçiniz</EnterRows>
+	
+    <EnterColumns>Matris sütün sayısı seçiniz</EnterColumns>
+	
+    <MatrixDim>Matris boyutları</MatrixDim>
+	
+    <NoCut>Kesilmek için bir şey seçilmedi</NoCut>
+	
+    <NoPaste>Yapıştıracak bir şey yok</NoPaste>
+	
+    <NoBox>Yapıştırılacak kutu seçilmedi</NoBox>
+	
+    <NoCopy>Kopyalanacak kutu seçilmedi</NoCopy>
+	
+    <Copied>Kopyalandı</Copied>
+	
+    <ReadingData>Data çıktısı okuma hatası</ReadingData>
+	
+    <Clipboard>İfade clipborda çıkarıldı</Clipboard>
+	
+    <NoExpression>Dönüştürmek için ifade yok</NoExpression>
+	
+    <NoFormat>No dosya formatı henüz yüklenmiş oldu</NoFormat>
+	
+    <ImageSize>1-10 arasında görüntü boyu seç(küçükten büyüğe)</ImageSize>
+	
+	
+    
+    <!--  Tooltips for math buttons   -->
+	
+    <Multiply>Çarpma</Multiply>
+	
+    <Divide>Bölme</Divide>  
+	
+    <Add>Toplama</Add> 
+	
+    <Subtract>Çıkarma</Subtract>  
+	
+    <Comma>Virgül</Comma>
+	
+    <PlusMinus>Artı-Eksi</PlusMinus>
+	
+    <SquareRoot>Karekök</SquareRoot>  
+	
+    <NthRoot>N. dereceden kök</NthRoot>  
+	
+    <Power>Üs</Power>  
+	
+    <Subscript>Alt indis</Subscript>  
+	
+    <Matrix>Matris</Matrix>  
+	
+    <Integral>İntegral</Integral>
+	
+    <Differential>Difrensiyel</Differential>
+	
+    <LessThan>Küçüktür</LessThan>  
+	
+    <GreaterThan>Büyüktür</GreaterThan>  
+	
+    <LTEQ>Eşit ve küçük</LTEQ>  
+	
+    <GTEQ>Eşit ve büyük</GTEQ>
+	
+    <Equals>Eşittir</Equals>
+	
+    <NotEqual>Eşit değil</NotEqual> 
+	
+    <Union>Birleşim</Union>  
+	
+    <Intersection>Kesişim</Intersection>  
+	
+    <Subset>Alt küme</Subset>  
+	
+    <SubsetEq>Öz alt kümesi</SubsetEq>  
+	
+    <NSubset>Alt küme değil</NSubset>  
+	
+    <NSubsetEq>Alt küme yada eşiti</NSubsetEq> 
+	
+    <Sine>Sinüs</Sine>  
+	
+    <Cosine>Kosinüs</Cosine>  
+	
+    <Tangent>Tanjant</Tangent>  
+	
+    <ArcSine>Arc Sinüs</ArcSine>  
+	
+    <ArcCosine>Arc Kosinüs</ArcCosine> 
+	 
+    <ArcTangent>Arc Tanjant</ArcTangent> 
+	
+    <SineH>Hyperbolik Sinüs</SineH>  
+	
+    <CosineH>Hyperbolik Kosinüs</CosineH>  
+	
+    <TanH>Hyperbolik Tanjant</TanH>  
+	
+    <ArcSineH>Arc Hyperbolik Sinüs</ArcSineH>  
+	
+    <ArcCosineH>Arc Hyperbolik Kosinüs</ArcCosineH> 
+	 
+    <ArcTanH>Arc Hyperbolik Tanjant</ArcTanH>  
+	
+    <Logarithm>Logaritma</Logarithm>
+	
+    <NaturalLogarithm>Doğal Logaritma</NaturalLogarithm>  
+	
+    <Exp>Üstel Fonksiyon</Exp>  
+	
+    <UMinus>Eksi</UMinus>  
+	
+    <BracketsRnd>Yuvarlak Parantez</BracketsRnd>  
+	
+    <BracketsCurl>Küme Parantezi</BracketsCurl> 
+	 
+    <BracketsSq>Köşeli Parantez</BracketsSq>  
+	
+    <Abs>Mutlak Değer</Abs> 
+	
+    <Infinity>Sonsuz</Infinity>
+	
+    <GreekLetter>Yunan Harfleri</GreekLetter> 
+	
+    <Factorial>Faktöriyel</Factorial> 
+	
+    <Max>Maksimum</Max> 
+	
+    <Min>Minimum</Min> 
+	
+    <Assignment>Atama</Assignment>
+	
+    <Function>Bilinmeyen Fonksiyonlar</Function> 
+	
+    <Determinant>Determinant</Determinant>
+	
+    <Trace>Kare Matris Toplamı</Trace>
+	
+    <DefiniteIntegral>Belirli Integral</DefiniteIntegral>
+	
+    <Product>Çarpım Sembolü</Product>
+	
+    <Sum>Toplam Sembolü</Sum>
+	
+    <Limit>Limit</Limit>
+	
+    <Evaluate>Bi ifadedeki bir nokta değeri</Evaluate>
+	
+    <LeftArrow>Sola Ok</LeftArrow> 
+	
+    <RightArrow>Sağa Ok</RightArrow> 
+	
+    <UpArrow>Yukarı Ok</UpArrow> 
+	
+    <DownArrow>Aşağı Ok</DownArrow> 
+	
+    <LeftDblArrow>Sola Çift Ok</LeftDblArrow> 
+	
+    <RightDblArrow>Sağa Çift Ok</RightDblArrow> 
+	
+    <LeftRightArrow>Çift Taraflı Ok</LeftRightArrow> 
+	
+    <LeftRightDblArrow>Çift Taraflı Çift Ok</LeftRightDblArrow> 
+	
+    <NorthEastArrow>Kuzey-Doğu Ok</NorthEastArrow>	
+		
+    <SouthEastArrow>Güney-Doğu Ok</SouthEastArrow>	
+		
+    <NorthWestArrow>Kuzey-Batı Ok</NorthWestArrow>	
+		
+    <SouthWestArrow>Güney-Batı Ok</SouthWestArrow>
+	
+    <Multiply2>Çarpma</Multiply2>
+	
+    <Divide2>Bölme</Divide2>
+	
+    <Equiv>Denklik</Equiv>
+	
+    <Exists>Vardır, En az bir</Exists>
+	
+    <ForAll>Her, Bütün</ForAll>
+	
+    <IsIn>Elemanıdır</IsIn>
+	
+    <NotExists>En az bir yoktur</NotExists>
+	
+    <NotIn>Elemanı değildir</NotIn>
+	
+    <SimEq>Eşit yada çok yakın</SimEq>
+	
+    <Or>Yada</Or>
+	
+    <And>Ve</And>
+	
+    <Not>Not</Not>
+	
+    <PartialDifferential>Kısmi Diferansiyel</PartialDifferential>
+	
+    
+    
+    <!--  Tooltips for command buttons   -->
+	
+    <OpenButton>Dosyada İfade yükle</OpenButton>
+	
+    <SaveButton>İfadeyi dosya olarak kaydet</SaveButton>
+	
+    <ExportButton>Alandaki ifadeyi çıkart</ExportButton>
+	
+    <UndoButton>Geri</UndoButton>
+	
+    <RedoButton>İleri</RedoButton>
+	
+    <CutButton>Kes</CutButton>
+	
+    <CopyButton>Kopyala</CopyButton>
+	
+    <PasteButton>Yapıştır</PasteButton>
+	
+    <ClearButton>Alan girdilerini temizle</ClearButton>
+	
+    <SelectButton>alandaki ifadeleri seç</SelectButton>
+	
+    <LoadFormatButton>Dışarıdan dosya formatı yükle</LoadFormatButton>
+	
+    <LoadLangButton>Dil dosyası yükle</LoadLangButton>
+	
+    <ShowTreeButton>İfadeleri ağaç şeklinde göster</ShowTreeButton>
+	
+    <OutlineButton>Alandaki ifalere outline göster</OutlineButton>
+	
+    <OnlineHelpButton>Yardım dökümanlarını tarayıcıdan yükle</OnlineHelpButton>
+	
+    <AboutButton>DragMath hakkında</AboutButton>
+	
+    
+	
+    <!--  Menu   -->
+	
+    <FileMenu>Dosya</FileMenu>
+	
+    <OpenMenu>Aç...</OpenMenu>
+	
+    <SaveAsMenu>Farklı Kaydet...</SaveAsMenu>
+	
+    <ExportMenu>Clipboarda kopyala</ExportMenu>
+	
+    <ImageMenu>Resim olarak göster</ImageMenu>
+	
+	
+    
+    <EditMenu>Düzenle</EditMenu>
+	
+    <UndoMenu>Geri</UndoMenu>
+	
+    <RedoMenu>İleri</RedoMenu>
+	
+    <CutMenu>Kes</CutMenu>
+	
+    <CopyMenu>Kopyala</CopyMenu>
+	
+    <PasteMenu>Yapıştır</PasteMenu>
+	
+    <ClearMenu>Alanı Temizle</ClearMenu>
+	
+	
+	
+	
+    <SelectMenu>Hepsini seç</SelectMenu>
+    
+    <OptionsMenu>Özellikler</OptionsMenu>
+	
+    <SetExportMenu>Çıkış format seti</SetExportMenu>
+	
+    <SetLanguageMenu>Dil seti</SetLanguageMenu>
+	
+    <MultMenu>Örtük Çarpma</MultMenu>
+	
+	
+    
+    <HelpMenu>Yardım</HelpMenu>
+	
+    <DebugMenu>Debug</DebugMenu>
+	
+    <TreeMenu>İfadeleri ağaç şeklinde</TreeMenu>
+	
+    <OutlineMenu>Outline göster</OutlineMenu>
+	
+    <OnlineHelpMenu>Online yardım</OnlineHelpMenu>
+	
+    <AboutMenu>-DragMath hakkında</AboutMenu>
+	
+    
+	
+</Language>

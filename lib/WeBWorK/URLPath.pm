@@ -27,6 +27,7 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use WeBWorK::Localize;
+use Scalar::Util qw(weaken);
 {
 	no warnings "redefine";
 	
@@ -106,6 +107,11 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_problem_editor2_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor2/$setID/$problemID/
  
+  instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
+ instructor_problem_editor3_withset   /$courseID/instructor/pgProblemEditor3/$setID/
+ instructor_problem_editor3_withset_withproblem
+                                     /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
+ 
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
@@ -115,6 +121,10 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
+ 
+ instructor_statistics_old               /$courseID/instructor/stats_old/
+ instructor_set_statistics_old           /$courseID/instructor/stats_old/set/$setID/
+ instructor_user_statistics_old          /$courseID/instructor/stats_old/student/$userID/
  
  instructor_progress                  /$courseID/instructor/StudentProgress/
  instructor_set_progress              /$courseID/instructor/StudentProgress/set/$setID/
@@ -313,12 +323,12 @@ our %pathTypes = (
 		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_problem_editor2 
+			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
 			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_answer_log instructor_preflight instructor_statistics
+			instructor_answer_log instructor_preflight instructor_statistics instructor_statistics_old
 			instructor_progress			
 		/ ],
 		match   => qr|^instructor/|,
@@ -525,6 +535,15 @@ our %pathTypes = (
 		produce => 'pgProblemEditor2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
 	},
+	instructor_problem_editor3 => {
+		name    => 'Problem Editor3',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_problem_editor3_withset/ ],
+		match   => qr|^pgProblemEditor3/|,
+		capture => [ qw// ],
+		produce => 'pgProblemEditor3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
+	},
 	instructor_problem_editor_withset => {
 		name    => '$setID',
 		parent  => 'instructor_problem_editor',
@@ -538,6 +557,15 @@ our %pathTypes = (
 		name    => '$setID',
 		parent  => 'instructor_problem_editor2',
 		kids    => [ qw/instructor_problem_editor2_withset_withproblem/ ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/setID/ ],
+		produce => '$setID/',
+		display => undef,
+	},
+	instructor_problem_editor3_withset => {
+		name    => '$setID',
+		parent  => 'instructor_problem_editor3',
+		kids    => [ qw/instructor_problem_editor3_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
@@ -560,6 +588,15 @@ our %pathTypes = (
 		capture => [ qw/problemID/ ],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
+	},
+	instructor_problem_editor3_withset_withproblem => {
+		name    => '$problemID',
+		parent  => 'instructor_problem_editor3_withset',
+		kids    => [ qw// ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/problemID/ ],
+		produce => '$problemID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
 	instructor_scoring => {
 		name    => 'Scoring Tools',
@@ -635,6 +672,34 @@ our %pathTypes = (
 		capture => [ qw/statType userID/ ],
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
+	},
+	
+		instructor_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_set_statistics_old instructor_user_statistics_old/ ],
+		match   => qr|^stats_old/|,
+		capture => [ qw// ],
+		produce => 'stats_old/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+	instructor_set_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_statistics_old',
+		kids    => [ qw// ],
+		match   => qr|^(set)/([^/]+)/|,
+		capture => [ qw/statType setID/ ],
+		produce => 'set/$setID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+	instructor_user_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_statistics_old',
+		kids    => [ qw// ],
+		match   => qr|^(student)/([^/]+)/|,
+		capture => [ qw/statType userID/ ],
+		produce => 'student/$userID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
 	},
 
 	################################################################################
@@ -766,6 +831,7 @@ sub new {
 		args => {},
 		%fields,
 	};
+ 	weaken $self -> {r};
 	return bless $self, $class;
 }
 
