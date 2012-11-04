@@ -377,11 +377,6 @@ sub dispatch($) {
 	writeTimingLogEntry($ce, "[".$r->uri."]", sprintf("runTime = %.3f sec", $cg_duration)." ".$ce->{dbLayoutName}, "");
 	
 	debug("returning result: " . (defined $result ? $result : "UNDEF") . "\n");
-	    #@LimitedPolynomial::BOP::ISA; #FIXME this  is needed to zero out 
-	    #@LimitedPolynomial::UOP::ISA;
-	    #\@LimitedPolynomial::BOP::ISA and prevent error messages of the form 
-	    #[Sat May 15 14:23:08 2010] [warn] [client 127.0.0.1] [/webwork2/gage_course/test_set/6/] 
-	    #Can't locate package LimitedPolynomial::BOP for @LimitedPolynomial::BOP::add::ISA at /opt/webwork/webwork2/lib/Apache/WeBWorK.pm line 115., referer: http://localhost/webwork2/gage_course/test_set/6/ no one knows why
 	return $result;
 }
 
