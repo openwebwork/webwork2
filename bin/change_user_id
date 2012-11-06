@@ -16,6 +16,8 @@
 
 use strict;
 use warnings;
+use File::Copy;
+use File::Basename;
 
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n"
@@ -99,9 +101,11 @@ foreach(@old_user_sets) {
 }
 
 my $answer_log = $ce->{courseFiles}->{logs}->{answer_log};
-open(my $fh,">>",$answer_log);
-foreach(<$fh>) {
-    s/$//
+my $dirname = dirname($answer_log);
+copy($answer_log,"$dirname/answer_log.bak");
+open(my $in,'<',"$dirname/answer_log.bak") or die "Can't open $dirname/answer_log.bak:$!";
+open(my $out,'>',$answer_log);
+while(<$in>) {
+    s/$old_user_id/$new_user_id/g;
+    print $out $_;
 }
-   
-    
