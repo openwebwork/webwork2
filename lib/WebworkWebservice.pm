@@ -347,6 +347,15 @@ sub listLibraries {     # returns a list of libraries for the default course
     #warn "incoming request to listLibraries:  class is ",ref($self) if $UNIT_TESTS_ON ;
   	return $self->do( WebworkWebservice::LibraryActions::listLibraries($self, $in) );
 }
+
+sub getProblemDirectories {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::LibraryActions::getProblemDirectories($self,$in));
+}
+
+
 sub listSets {
     
     debug("in listSets");
@@ -588,6 +597,12 @@ sub getCourseSettings {
 	return $self->do(WebworkWebservice::CourseActions::getCourseSettings($self,$in));	
 }
 
+sub updateSetting {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));	
+}
 
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --

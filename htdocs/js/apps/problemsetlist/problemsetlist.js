@@ -8,26 +8,24 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        Backbone: "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
-        "backbone-validation":"/webwork2_files/js/lib/vendor/backbone-validation",
-        //"backbone-validation":"/webwork2_files/js/lib/vendor/backbone-validation-amd",
-        "FileSaver": "/webwork2_files/js/lib/vendor/FileSaver",
-        "BlobBuilder": "/webwork2_files/js/lib/vendor/BlobBuilder",
-        "jquery-ui": "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.0.custom",
-        "WeBWorK-ui": "/webwork2_files/js/lib/webwork/WeBWorK-ui",
-        "webwork": "/webwork2_files/js/lib/webwork/webwork",
-        "Settings": "/webwork2_files/js/lib/webwork/Settings",
-        "util":"/webwork2_files/js/lib/webwork/util",
-        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
-        "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
-        "bootstrap":"/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
-        "datepicker": "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker",
-        //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
-        //"tabs": "../vendor/ui.tabs.closable",
-        //this is important:
-        "XDate":'/webwork2_files/js/lib/vendor/xdate',
-        "config":"config"
+        "Backbone":             "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
+        "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.0.custom",
+        "underscore":           "/webwork2_files/js/lib/webwork/components/underscore/underscore",
+        "jquery":               "/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
+        "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
+        "webwork":              "/webwork2_files/js/lib/webwork/webwork",
+        "WeBWorKProperty":      "/webwork2_files/js/lib/webwork/models/WeBWorKProperty",
+        "Settings":             "/webwork2_files/js/lib/webwork/models/Settings",
+        "util":                 "/webwork2_files/js/lib/webwork/util",
+        "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker",
+        "LibraryViewer":        "/webwork2_files/js/lib/webwork/views/LibraryViewer",
+        "XDate":                "/webwork2_files/js/lib/vendor/xdate",
+        "ProblemList" :         "/webwork2_files/js/lib/webwork/models/ProblemList",
+        "Problem" :             "/webwork2_files/js/lib/webwork/models/Problem",
+        "ProblemView" :         "/webwork2_files/js/lib/webwork/views/ProblemView",
+        "config":               "config"
     },
     //deps:['EditableGrid'],
     //callback:function(){console.log(EditableGrid)},
@@ -51,75 +49,76 @@ require.config({
         },
         'datepicker': ['bootstrap'],
         'backbone-validation': ['Backbone'],
-        'BlobBuilder': {
-            exports: 'BlobBuilder'
-        },
-
-        "FileSaver":{
-            exports: 'saveAs'
-        },
 
         'XDate':{
             exports: 'XDate'
         },
 
         'bootstrap':['jquery'],
-
         
     }
 });
 
 require(['Backbone', 
     'underscore',
-    '../../lib/webwork/teacher/User',
-    '../../lib/webwork/teacher/UserList',
-    '../../lib/webwork/teacher/ProblemSetList', 
-    '../../lib/webwork/teacher/ProblemSetPathList',
-    '../../lib/webwork/Problem',
+    '../../lib/webwork/models/UserList',
+    '../../lib/webwork/models/ProblemSetList',
+    '../../lib/webwork/models/ProblemSetPathList', 
+    'Problem',
     '../../lib/webwork/views/Closeable',
-    '../../lib/webwork/views/Calendar/CalendarView',
+    '../../lib/webwork/views/CalendarView',
     '../../lib/webwork/views/HWDetailView',
-    'FileSaver', 
-    'BlobBuilder', 
-    'EditableGrid',
+    './LibraryBrowser',
     'Settings', 
-    'WeBWorK-ui', 
+    'WebPage', 
     'util', 
-    'config', /*no exports*/, 
-    'jquery-ui', 
-    'bootstrap',
-    'datepicker',
-    'backbone-validation'], 
-function(Backbone, _, User, UserList, ProblemSetList, ProblemSetPathList, Problem, Closeable,CalendarView,
-         HWDetailView,saveAs, BlobBuilder, EditableGrid, Settings,ui, util, config, webwork){
-    
+    'config', 
+    'backbone-validation',
+    'jquery-ui',
+    'bootstrap' 
+    ], 
+function(Backbone, _, UserList, ProblemSetList, ProblemSetPathList, Problem, Closeable,CalendarView,
+         HWDetailView, LibraryBrowser, Settings,WebPage, util, config){
 
-    var HomeworkEditorView = ui.WebPage.extend({
-	tagName: "div",
+    var HomeworkEditorView = WebPage.extend({
+	    tagName: "div",
         initialize: function(){
-	    ui.WebPage.prototype.initialize.apply(this);
-	    _.bindAll(this, 'render','postFetch');  // include all functions that need the this object
-	    var self = this;
-        this.dispatcher = _.clone(Backbone.Events);
-        this.collection = new ProblemSetList();
-        this.settings = new Settings();  // need to get other settings from the server.  
+    	    WebPage.prototype.initialize.apply(this);
+    	    _.bindAll(this, 'render','postFetch');  // include all functions that need the this object
+    	    var self = this;
+            this.dispatcher = _.clone(Backbone.Events);
 
-        this.users = new UserList();
-        this.users.fetch();
-        this.users.on("fetchSuccess", function (data){ console.log("users loaded");});
-        this.render();
-        this.collection.fetch();
-        this.collection.on('fetchSuccess', function () { this.postFetch(); }, this);
-        this.dispatcher.on("calendar-change",function () {self.setDropToEdit();});
-        this.collection.on("success",function(str) {
-            if (str==="problem_set_changed") {
-                self.calendarView.updateAssignments();
-                self.calendarView.render();
-            }
 
-        });
+
+            this.collection = new ProblemSetList();
+            this.collection.fetch();
+            this.collection.on('fetchSuccess', function () { this.postFetch(); }, this);
+            this.collection.on("success",function(str) {
+                if (str==="problem_set_changed") {
+                    self.calendarView.updateAssignments();
+                    self.calendarView.render();
+                    self.setListView.updateSetInfo();
+                }
+
+            });
+
+          
+            this.dispatcher.on("calendar-change",function () {self.setDropToEdit();});
             
-    },
+            this.settings = new Settings();  // need to get other settings from the server.  
+            this.settings.fetch();
+            this.settings.on("fetchSuccess", function (data){
+                new HWSettingsView({parent: self, el: $("#settings-table")});
+
+            },this);
+
+
+            this.users = new UserList();
+            this.users.fetch();
+            this.users.on("fetchSuccess", function (data){ console.log("users loaded");});
+            this.render();
+                
+        },
     render: function(){
 	    var self = this; 
 	    
@@ -145,14 +144,20 @@ function(Backbone, _, User, UserList, ProblemSetList, ProblemSetPathList, Proble
             $(this).tab('show');
         });
         
+        $("#settings").html(_.template($("#settings-template").html()));
+
+
         //$("body").droppable();  // This helps in making drags return to their original place.
         
-        new ui.PropertyListView({el: $("#settings"), model: self.settings});
+        //new ui.PropertyListView({el: $("#settings"), model: self.settings});
 
         this.HWDetails = new HWDetailView({parent: this});
 
-        
-        
+        // 
+
+        new LibraryBrowser({el:  $("#library")});
+
+
     },
     postFetch: function (){
         var self = this;
@@ -191,11 +196,12 @@ function(Backbone, _, User, UserList, ProblemSetList, ProblemSetPathList, Proble
         
         // Create the HW list view.  
 
-        self.setListView = new SetListView({collection: self.collection, el:$("div#list")});
+        self.setListView = new SetListView({parent: self, el:$("div#list")});
 
         // Create the HW details pane. 
 
-        $("#details").html(_.template($("#HW-detail-template").html()));    
+        $("#details").html(_.template($("#HW-detail-template").html()));  
+        
 
     },
             // This allows the homework sets generated above to be dragged onto the Calendar to set the due date. 
@@ -212,22 +218,27 @@ function(Backbone, _, User, UserList, ProblemSetList, ProblemSetPathList, Proble
             greedy: true,
             drop: function(ev,ui) {
                 var setName = $(ui.draggable).attr("id").split("HW-")[1];
+                var timeAssignDue = self.settings.getSettingValue("pg{timeAssignDue}");
+                var timezone = self.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
                 var theDueDate = /date-(\d{4})-(\d\d)-(\d\d)/.exec($(this).attr("id"));
-                var wwDueDate = theDueDate[2]+"/"+theDueDate[3] +"/"+theDueDate[1] + " at " + self.settings.get("time_assign_due") + " " + self.settings.get("timezone");
-
+                var assignOpenPriorToDue = self.settings.getSettingValue("pg{assignOpenPriorToDue}");
+                var answerAfterDueDate = self.settings.getSettingValue("pg{answersOpenAfterDueDate}");
+                
+                var wwDueDate = theDueDate[2]+"/"+theDueDate[3] +"/"+theDueDate[1] + " at " + timeAssignDue + " " + timezone;
                 var HWset = self.collection.find(function (_set) { return _set.get("set_id") === setName;});
+
                 console.log("Changing HW Set " + setName + " to be due on " + wwDueDate);
                 console.log(HWset.isValid("due_date",wwDueDate));
-                console.log(self.convertTimeToMinutes(self.settings.get("assign_open_prior_to_due")));
+                console.log(assignOpenPriorToDue);
                 var _openDate = new XDate(wwDueDate);
-                _openDate.addMinutes(-1*self.convertTimeToMinutes(self.settings.get("assign_open_prior_to_due")));
+                _openDate.addMinutes(-1*assignOpenPriorToDue);
+                var _answerDate = new XDate(wwDueDate);
+                _answerDate.addMinutes(answerAfterDueDate);
                 var tz = /\((\w{3})\)/.exec(_openDate.toString());
                 var wwOpenDate = _openDate.toString("MM/dd/yyyy") + " at " + _openDate.toString("hh:mmtt")+ " " + tz[1];
+                var wwAnswerDate = _answerDate.toString("MM/dd/yyyy") + " at " + _answerDate.toString("hh:mmtt") + " " + tz[1];
 
-                console.log(HWset.isValid("open_date",wwOpenDate));
-
-
-                HWset.set({due_date:wwDueDate, open_date: wwOpenDate});
+                HWset.set({due_date:wwDueDate, open_date: wwOpenDate, answer_date: wwAnswerDate});
                 ev.stopPropagation();
             },
         });
@@ -248,69 +259,129 @@ function(Backbone, _, User, UserList, ProblemSetList, ProblemSetPathList, Proble
     }
 });
 
- /*   var HWDetailRowView = Backbone.View.extend({
-        className: "set-detail-row",
-        tagName: "tr",
-        initialize: function () {
-            _.bindAll(this,'render','edit');
-            this.property = this.options.property;
-            this.dateRE =/(\d\d\/\d\d\/\d\d\d\d)\sat\s((\d\d:\d\d)([apAP][mM])\s([a-zA-Z]{3}))/;
-            this.render();
-            return this;
-        },
-        render: function() {
-            this.$el.html("<td>" + this.property + "</td><td id='value-col'> " + this.model.get(this.property) + "</td><td><button class='edit-button'>Edit</button>");
-        }
-        ,
-        events: {
-            "click .edit-button": "edit"
-        },
-        edit: function(evt){
-            var value; 
-            switch(this.property){
-                case "set_header":
-                case "hardcopy_header":
-                    value = this.$("#value-col").html();
-                    this.$("#value-col").html("<input type='text' size='20' id='edit-box'></input>");
-                    this.$("input#edit-box").val(value);
-                break;
-                case "open_date":
-                case "due_date":
-                case "answer_date":
 
-                    var dateParts = this.dateRE.exec(this.$("#value-col").html());
-                    theDate = dateParts[1];
-                    theTime = dateParts[2];
-                    this.$("#value-col").html("<input type='text' size='20' id='edit-box'></input>");
-                    this.$("input#edit-box").val(theDate);
-                    this.$("input#edit-box").datepicker({showButtonPanel: true});
-                    
-                    break;
-            
-            }
+
+/* This View provides the super class for any Settings in WebWork.  The list of Settings should be included by 
+    setting the "settings" field and providing it an array of WeBWorKProperty models. 
+    */
+
+var WWSettingsView = Backbone.View.extend({
+
+    initialize: function () {
+        _.bindAll(this,'render');
+        this.render();
+    },
+    render: function ()
+    {
+        var self = this;
+        _(this.settings).each(function(setting){
+            var settingView =new WWSettingRowView({property: setting}); 
+            self.$el.append(settingView.el);
+        });
+    }
+
+
+});
+
+var HWSettingsView = WWSettingsView.extend({
+    initialize: function () {
+//        _.bindAll(this,'render','edit');
+        this.parent = this.options.parent; 
+        this.settings = this.parent.settings.filter(function (setting) {return setting.get("category")==='PG - Problem Display/Answer Checking'});
+        WWSettingsView.prototype.initialize.apply(this);
+     }
+
+});
+
+
+
+var WWSettingRowView = Backbone.View.extend({
+    className: "set-detail-row",
+    tagName: "tr",
+    initialize: function () {
+        _.bindAll(this,'render','update');
+        this.property = this.options.property;
+        //this.dateRE =/(\d\d\/\d\d\/\d\d\d\d)\sat\s((\d\d:\d\d)([apAP][mM])\s([a-zA-Z]{3}))/;
+        this.render();
+        return this;
+    },
+    render: function() {
+        var self = this; 
+        this.$el.html("<td>" + this.property.get("doc") + "</td>");
+        switch(this.property.get("type")){
+            case "text":
+            case "number":
+                this.$el.append("<td><input type='text' value='" + this.property.get("value") + "'></input></td>");
+                break;
+            case "checkboxlist":
+                var opts = _(self.property.get("values")).map(function(v) {return "<li><input type='checkbox' value='"+v+"'>" + v + "</li>";});
+                this.$el.append("<td id='prop-" + self.property.cid + "'><ul style='list-style: none'>" + opts.join("") + "</ul></td>");
+                _(self.property.get("value")).each(function(v){
+                    self.$("#prop-" + self.property.cid + " input:checkbox[value='" + v + "']").attr("checked","checked");
+                })
+                break;
+            case "popuplist":
+                var opts = _(self.property.get("values")).map(function(v) {return "<option value='" + v + "'>" + v + "</option>";});
+                this.$el.append("<td id='prop-" + self.property.cid + "'><select class='popuplist'>" + opts + "</select>");
+                self.$("#prop-" + self.property.cid + " select.popuplist option[value='" + self.property.get("value") + "']").attr("selected","selected");
+                break;
+            case "boolean":
+                this.$el.append("<td id='prop-" + self.property.cid + "'>" + 
+                                "<select class='bool'><option value='1'>true</option><option value='0'>false</option></select");
+                //this.$("#prop-" + self.property.cid + " select.bool option[value='0']").attr("selected","selected")
+                this.$("#prop-" + self.property.cid + " select.bool option[value='" + self.property.get("value") +  "']").attr("selected","selected");
+ 
+               break;
+            default: 
+                this.$el.append("<td id='value-col'> " + this.property.get("value") + "</td>");
+
         }
-        });*/ 
+
     
-    var HWProblemView = Backbone.View.extend({
-        className: "set-detail-problem-view",
-        tagName: "div",
-        
-        initialize: function () {
-            _.bindAll(this,"render");
-            var self = this;
-            this.render();
-            this.model.on('rendered', function () {
-                self.$el.html(self.model.get("data"));
-            })
-        },
-        render: function () {
-            this.$el.html(this.model.get("path"));
-            this.model.render();
+    },
+    events: {
+        "change input": "update",
+        "change select": "update"
+    },
+    update: function(evt){
+        var self = this;
+        console.log("updating " + self.property.get("var"));
+        console.log("new value: " + $(evt.target).val());
+        switch(this.property.get("type")){
+            case "text":
+            case "number":
+                self.property.set("value",$(evt.target).val());
+                break;
+            case "checkboxlist":
+
+                break;
+            case "boolean":
+ 
+               break;
         }
+    }
+});
+
+var HWProblemView = Backbone.View.extend({
+    className: "set-detail-problem-view",
+    tagName: "div",
     
-    
-    });
-    
+    initialize: function () {
+        _.bindAll(this,"render");
+        var self = this;
+        this.render();
+        this.model.on('rendered', function () {
+            self.$el.html(self.model.get("data"));
+        })
+    },
+    render: function () {
+        this.$el.html(this.model.get("path"));
+        this.model.render();
+    }
+
+
+});
+
     
     
     var SetListRowView = Backbone.View.extend({
@@ -324,28 +395,33 @@ function(Backbone, _, User, UserList, ProblemSetList, ProblemSetPathList, Proble
         },
         render: function () {
             var self = this;
-            this.$el.append((_(["set_id","open_date","due_date","answer_date"]).map(function(v) {return "<td>" + self.model.get(v) + "</td>";})).join(""));
+            this.$el.append((_(["set_id","open_date","due_date","answer_date"]).map(function(v) {
+                return "<td>" + self.model.get(v) + "</td>"; })).join(""));
         }
         });
     
     var SetListView = Backbone.View.extend({
         className: "set-list-view",
         initialize: function () {
-            _.bindAll(this, 'render');  // include all functions that need the this object
-            var self = this;
-        
+            _.bindAll(this, 'render','updateSetInfo');  // include all functions that need the this object
+            this.parent = this.options.parent; 
             this.render();
             return this;
         },
         render: function () {
             var self = this;
-            this.$el.append("<table id='set-list-table' class='table table-bordered'><thead><tr><th>Name</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead><tbody></tbody></table>");
+            this.$el.html("<table id='set-list-table' class='table table-bordered'><thead><tr><th>Name</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead><tbody></tbody></table>");
             var tab = $("#set-list-table");
-            this.collection.each(function(m){
+            this.parent.collection.each(function(m){
                 tab.append((new SetListRowView({model: m})).el);
             });
             
+        },
+        updateSetInfo: function () {
+            this.render();
         }
+
+
     });
 
 

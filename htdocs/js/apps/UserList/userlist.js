@@ -8,17 +8,20 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
-        "backbone-validation":"/webwork2_files/js/lib/vendor/backbone-validation",
-        "FileSaver": "/webwork2_files/js/lib/vendor/FileSaver",
-        "BlobBuilder": "/webwork2_files/js/lib/vendor/BlobBuilder",
+        "Backbone": 			"/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "backbone-validation": 	"/webwork2_files/js/lib/vendor/backbone-validation",
+        "FileSaver": 			"/webwork2_files/js/lib/vendor/FileSaver",
+        "BlobBuilder": 			"/webwork2_files/js/lib/vendor/BlobBuilder",
         "jquery-ui-for-classlist3": "/webwork2_files/js/lib/vendor/jquery/jquery-ui-for-classlist3/js/jquery-ui-1.8.21.custom.min",
-        "WeBWorK-ui": "/webwork2_files/js/lib/webwork/WeBWorK-ui",
-        "util":"/webwork2_files/js/lib/webwork/util",
-        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
-        "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
-	"bootstrap":"/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
+        "Closeable": 			"/webwork2_files/js/lib/webwork/views/Closeable",
+        "WebPage": 				"/webwork2_files/js/lib/webwork/views/WebPage",
+        "ChangePasswordView": 	"/webwork2_files/js/lib/webwork/views/ChangePasswordView",
+        "EmailStudentsView": 	"/webwork2_files/js/lib/webwork/views/EmailStudentsView",
+        "util":  				"/webwork2_files/js/lib/webwork/util",
+        "underscore": 			"/webwork2_files/js/lib/webwork/components/underscore/underscore",
+        "jquery": 				"/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "EditableGrid":  		"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
+		"bootstrap": 			"/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         //"jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
         //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
         //"tabs": "../vendor/ui.tabs.closable",
@@ -67,18 +70,22 @@ require.config({
 
 require(['Backbone', 
 	'underscore',
-	'../../lib/webwork/teacher/User', 
-	'../../lib/webwork/teacher/UserList', 
+	'../../lib/webwork/models/User', 
+	'../../lib/webwork/models/UserList', 
 	'FileSaver', 
 	'BlobBuilder', 
 	'EditableGrid', 
-	'WeBWorK-ui', 
+	'Closeable',
+	'WebPage', 
+	'EmailStudentsView',
+	'ChangePasswordView',
 	'util', 
 	'config', /*no exports*/, 
 	'jquery-ui-for-classlist3', 
 	'backbone-validation',
 	'bootstrap'], 
-function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, util, config){
+function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, Closeable, WebPage, EmailStudentsView, 
+		ChangePasswordView, util, config){
 
     // get usernames and keys from hidden variables and set up webwork object:
     /*var myUser = document.getElementById("hidden_user").value;
@@ -95,10 +102,10 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
             + " courseID" + myCourseID, "alert-error");
     }*/
 
-    var UserListView = ui.WebPage.extend({
+    var UserListView = WebPage.extend({
 	tagName: "div",
         initialize: function(){
-	    ui.WebPage.prototype.initialize.apply(this);
+	    WebPage.prototype.initialize.apply(this);
 	    _.bindAll(this, 'render','addOne','addAll','deleteUsers','changePassword');  // include all functions that need the this object
 	    var self = this;
 	    this.collection = new UserList();  // This is a Backbone.Collection of users
@@ -119,16 +126,7 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    
 	    this.grid.modelChanged = function(rowIndex, columnIndex, oldValue, newValue) {
 		
-		// keep track of the selected rows. 
-		if (columnIndex == 0)
-		{
-		    if (newValue) {
-			self.selectedRows.push(rowIndex);
-			}
-		    else {
-			self.selectedRows = _.reject(self.selectedRows, function (num) { return num == rowIndex;});
-		    }
-		} else if (columnIndex == 1 )  // the takeAction column has been selected.
+		if (columnIndex == 1 )  // the takeAction column has been selected.
 		{
 		    
 		   switch (newValue){
@@ -205,46 +203,40 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 
             
 	    this.collection.on('add',this.addOne,this);
-	    /* this.collection.on('error',function(model, error) {
-		if (error.type==="email")
-		    {
-			self.errorPane.setHTML(error.message);
-		    }
-	    });*/
-	    
+
 	    // This handles all of the messages posted at the top of the page when updates are made to the user list.  
 	    this.collection.on('success', function (type, user) {
-		
-		
-	    // PLS:  this seems clunky.  Perhaps we can clean up this code. 	
-		switch(type) {
-		    case "user_added":
-			if (this.messageType == "user_added"){
-			    this.announce.appendHTML(", " + user.attributes.user_id);
-			} else {
-			    this.messageType = "user_added";
-			    this.announce.setHTML("Success in adding the following users: " + user.attributes.user_id);
+			
+			
+		    // PLS:  this seems clunky.  Perhaps we can clean up this code. 	
+			switch(type) {
+			    case "user_added":
+				if (this.messageType == "user_added"){
+				    this.announce.appendHTML(", " + user.attributes.user_id);
+				} else {
+				    this.messageType = "user_added";
+				    this.announce.setHTML("Success in adding the following users: " + user.attributes.user_id);
+				}
+				break;
+			    case "user_deleted":
+				if (this.messageType == "user_deleted"){
+				    this.announce.appendHTML(", " + user.attributes.user_id);
+				} else {
+				    this.messageType = "user_deleted";
+				    this.announce.setHTML("Success in deleting the following users: " + user.attributes.user_id);
+				}
+				break;
+			    case "property_changed":
+				if (this.updatedUser){
+				    this.announce.setHTML("The " + this.updatedUser.property + " of user " + this.updatedUser.user_id + " has changed. <br/>"
+							    + "Old Value: " + this.updatedUser.oldValue + "<br/>" 
+							    + "New Value: " + this.updatedUser.newValue); 
+				    this.updatedUser = null;
+				}
+				break;
 			}
-			break;
-		    case "user_deleted":
-			if (this.messageType == "user_deleted"){
-			    this.announce.appendHTML(", " + user.attributes.user_id);
-			} else {
-			    this.messageType = "user_deleted";
-			    this.announce.setHTML("Success in deleting the following users: " + user.attributes.user_id);
-			}
-			break;
-		    case "property_changed":
-			if (this.updatedUser){
-			    this.announce.setHTML("The " + this.updatedUser.property + " of user " + this.updatedUser.user_id + " has changed. <br/>"
-						    + "Old Value: " + this.updatedUser.oldValue + "<br/>" 
-						    + "New Value: " + this.updatedUser.newValue); 
-			    this.updatedUser = null;
-			}
-			break;
-		}
-		// make sure that the cog icon is visible again.  
-	        $("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");
+			// make sure that the cog icon is visible again.  
+		        $("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");
 
 		},this);
 	   
@@ -253,9 +245,7 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
 	     
-	    // Clear the search filter field
-	    $("button#clear-filter-text").click(function() {$("input#filter").val("");});
-	    
+
 	    // Make sure the take Action menu item is reset
 	    $("select#mainActionMenu").val("takeAction");
 	    $("button#help-link").click(function () {
@@ -268,11 +258,16 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    'change select.actionMenu' : 'takeBulkAction',
 	    'change select#import-export' : 'importExportOptions',
 	    'change input#selectAllCB' : 'toggleAllCheckBoxes',
-	    'keyup input#filter' : 'filterUsers'
+	    'keyup input#filter' : 'filterUsers',
+	    'click button#clear-filter-text': 'clearFilterText'
 	},
 	filterUsers: function (evt) {
 	    this.grid.filter($("#filter").val());
 	    $("#usersShownInfo").html(this.grid.getRowCount() + " of " + this.collection.length + " users shown.");
+	},
+	clearFilterText: function () {
+		$("input#filter").val("");
+		this.grid.filter("");
 	},
 	importExportOptions: function (evt) {
 	    switch(evt.target.value){
@@ -290,10 +285,12 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 		    // Write the headers out
 		    bb.append((_(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";})).join(",") + "\n");
 		    
-                    // Write out the user Props
-                    this.collection.each(function(user){bb.append(user.toCSVString())});
+            // Write out the user Props
+            this.collection.each(function(user){bb.append(user.toCSVString())});
 		    
-                    saveAs(bb.getBlob("text/csv;charset=utf-8"), "hello world.csv");            
+            // need a more appropriate filename
+
+            saveAs(bb.getBlob("text/csv;charset=utf-8"), "hello world.csv");            
 
 
 		break;
@@ -302,29 +299,37 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    $(evt.target).val("Import or Export Students");
 	    },
 	
-	takeBulkAction: function (evt) { switch (evt.target.value){
-	        
-		case "menuEmail":
-		    this.emailStudents(this.selectedRows);
-		    break;
-		case "menuChangePassword":
-		    this.changePassword(this.selectedRows);
-		    break;
-		case "menuDelete":
-		    this.deleteUsers(this.selectedRows);
-		    break;
+	takeBulkAction: function (evt) { 
+
+		var selectedRows = [];
+
+		for(var i = 0; i < this.grid.getRowCount(); i++){
+			if ($("#"+ $(this.grid.getRow(i)).attr("id") + " input:checkbox").attr("checked") === "checked"){
+				selectedRows.push(i);
+			}
+
+		}
+
+		switch (evt.target.value){
+	        case "menuEmail":
+			    this.emailStudents(selectedRows);
+			    break;
+			case "menuChangePassword":
+			    this.changePassword(selectedRows);
+			    break;
+			case "menuDelete":
+			    this.deleteUsers(selectedRows);
+			    break;
 	       }
 	       // reset the action menu
-	       $(evt.target).val("takeAction");
+	       $	(evt.target).val("takeAction");
 	    },
 	toggleAllCheckBoxes: function () {
 	    
 	    $("input:checkbox[id!='selectAllCB']").attr("checked",$("#selectAllCB").is(":checked"));
 	    
-	    this.selectedRows = new Array();
 	    for(var i = 0; i< this.grid.data.length; i++) {
 		if ($("input:checkbox#selectAllCB").attr("checked") === "checked") {
-		    this.selectedRows.push(i);
 		    this.grid.setValueAt(i,0,true,true);
 		} else {
 		    this.grid.setValueAt(i,0,false,true);
@@ -342,12 +347,12 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    var self = this;
 	    for(var i = 0; i < this.grid.getRowCount(); i++)
 	    {
-		if (this.grid.getRowValues(i).user_id==='') {this.grid.remove(i);}  // this is a hack to remove the row with empty values.
+			if (this.grid.getRowValues(i).user_id==='') {this.grid.remove(i);}  // this is a hack to remove the row with empty values.
 	    }
 		
 	    $("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");
 	    _(this.loggedInUsers).each(function(user){
-		$("tr#UserListTable_" + user + " td:nth-child(3)").css("color","green").css("font-weight","bold");
+			$("tr#UserListTable_" + user + " td:nth-child(3)").css("color","green").css("font-weight","bold");
 	    });
 		
 	    this.loggedInUsers = [];
@@ -368,25 +373,25 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	  
 
 	},
-        render: function(){
+    render: function(){
 	    var self = this; 
 	    
 	    // Create an announcement pane for successful messages.
-	    this.announce = new ui.Closeable({el:$("#announce-pane"),classes: ["alert-success"]});
+	    this.announce = new Closeable({el:$("#announce-pane"),classes: ["alert-success"]});
 	    
    	    // Create an announcement pane for error messages.
-	    this.errorPane = new ui.Closeable({el:$("#error-pane"),classes: ["alert-error"]});
+	    this.errorPane = new Closeable({el:$("#error-pane"),classes: ["alert-error"]});
 	    
 	    // This is the help Pane
-   	    this.helpPane = new ui.Closeable({display: "block",el:$("#help-pane"), closeableType : "Help",
+   	    this.helpPane = new Closeable({display: "block",el:$("#help-pane"), closeableType : "Help",
    	    			text: $("#studentManagementHelp").html()});
 	    
 	    
 	    
 	    this.$el.append(_.template($("#userListTable").html()));
 	    
-	    this.$el.append(this.passwordPane = new ui.ChangePasswordView({model: new TempUserList()}));
-	    this.$el.append(this.emailPane = new ui.EmailStudentsView({model: new TempUserList()}));
+	    this.$el.append(this.passwordPane = new ChangePasswordView({model: new TempUserList()}));
+	    this.$el.append(this.emailPane = new EmailStudentsView({model: new TempUserList()}));
 	    return this;
         },
 	addOne: function(user){
@@ -405,7 +410,7 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    this.grid.refreshGrid();
         },
 	deleteUsers: function(rows){
-	    rows = _(rows).sortBy(function (num) { return -1*num;});  // the rows need to be sorted in decreasing order so the rows in the table are
+	    rowsBackwards = _(rows).sortBy(function (num) { return -1*num;});  // the rows need to be sorted in decreasing order so the rows in the table are
 									// removed correctly. 
 	    var self = this;
 	    var str = "Do you wish to delete the following students: "
@@ -413,7 +418,7 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    var del = confirm(str);
 		    
 	    if (del){
-		_.each(rows,function (row){
+		_.each(rowsBackwards,function (row){
 		    console.log("Remove " + self.grid.getDisplayValueAt(row,2));  // The user_id property is in column 2 
 		    var user = self.collection.where({user_id: self.grid.getDisplayValueAt(row,2)})[0];
 		    self.collection.remove(user);
@@ -459,7 +464,7 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
     
     // This the view class of the Add Students Manually for a row of the table. 
     
-    var UserRowView = Backbone.View.extend({
+var UserRowView = Backbone.View.extend({
 	tagName: "tr",
 	className: "userRow",
 	initialize: function(){
@@ -500,11 +505,11 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    this.$el.remove();
 	},
 	removeUser: function() {this.model.destroy();}
-    });
+});
 	
     // This is the View for the dialog for addings students manually    
 	
-    var AddStudentManView = Backbone.View.extend({
+var AddStudentManView = Backbone.View.extend({
 	tagName: "div",
 	id: "addStudManDialog",
     
@@ -546,7 +551,7 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	    _(this.collection).each(function(user){ self.appendRow(user);}, this);
 	    
 		    
-	    this.errorPane = new ui.Closeable({el: this.$("#error-pane-add-man"), classes : ["alert-error"]});
+	    this.errorPane = new Closeable({el: this.$("#error-pane-add-man"), classes : ["alert-error"]});
 	    
 	    
 	    
@@ -605,7 +610,7 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 	closeDialog: function () {this.$el.dialog("close");},
 	render: function(){
 	    var self = this;
-	    this.errorPane = new ui.Closeable({id: "error-bar"});
+	    this.errorPane = new Closeable({id: "error-bar"});
 	    this.errorPane.$el.addClass("alert-error");
 	    this.$el.html(this.errorPane.el);
 	    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.error is not working  this is a hack.
@@ -700,7 +705,6 @@ function(Backbone, _, User, UserList, saveAs, BlobBuilder, EditableGrid, ui, uti
 			    var props = '{"' +  config.userProps[i].shortName + '":"' +$.trim($("tr#row"+row+" td.column" + obj.position).html()) + '"}';
 			    user.set($.parseJSON(props),{silent:true});  // send silent: true so this doesn't fire an "change" event resulting in a server hit
 			}
-			console.log(user);
 		    }});
 		
 		App.collection.add(user);

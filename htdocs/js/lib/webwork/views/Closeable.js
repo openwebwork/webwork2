@@ -1,5 +1,5 @@
 define(['Backbone', 'underscore'], function(Backbone, _){
-    Closeable = Backbone.View.extend({
+    var Closeable = Backbone.View.extend({
         className: "closeablePane",
         text: "",
         display: "none",

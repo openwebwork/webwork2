@@ -2,17 +2,16 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
-        "backbone-validation":"/webwork2_files/js/lib/vendor/backbone-validation",
-        "FileSaver": "/webwork2_files/js/lib/vendor/FileSaver",
-        "BlobBuilder": "/webwork2_files/js/lib/vendor/BlobBuilder",
-        "jquery-ui": "/webwork2_files/js/jquery-ui-1.9.0.custom/js/jquery-ui-1.9.0.custom.min",
-        "WeBWorK-ui": "/webwork2_files/js/lib/webwork/WeBWorK-ui",
-        "util":"/webwork2_files/js/lib/webwork/util",
-        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
-        "EditableGrid":"/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
-        "bootstrap":"/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
+        "Backbone":             "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
+        "FileSaver":            "/webwork2_files/js/lib/vendor/FileSaver",
+        "BlobBuilder":          "/webwork2_files/js/lib/vendor/BlobBuilder",
+        "WeBWorK-ui":           "/webwork2_files/js/lib/webwork/WeBWorK-ui",
+        "util":                 "/webwork2_files/js/lib/webwork/util",
+        "underscore":           "/webwork2_files/js/lib/webwork/components/underscore/underscore",
+        "jquery":               "/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "EditableGrid":         "/webwork2_files/js/lib/vendor/editablegrid-2.0.1/editablegrid",
+        "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         //"jquery-ui": "../vendor/jquery/jquery-ui-1.8.16.custom.min",
         //"touch-pinch": "../vendor/jquery/jquery.ui.touch-punch",
         //"tabs": "../vendor/ui.tabs.closable",
@@ -25,9 +24,6 @@ require.config({
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
     shim: {
-        //ui specific shims:
-        'jquery-ui': ['jquery'],
-
         //required shims
         'underscore': {
             exports: '_'
@@ -61,10 +57,10 @@ require.config({
 
 require(['Backbone', 
     'underscore',
-    '../../lib/webwork/teacher/User', 
-    '../../lib/webwork/teacher/ProblemSetList', 
-    '../../lib/webwork/teacher/ProblemSetPathList',
-    '../../lib/webwork/Problem',
+    '../../lib/webwork/models/User', 
+    '../../lib/webwork/models/ProblemSetList', 
+    '../../lib/webwork/models/ProblemSetPathList',
+    '../../lib/webwork/models/Problem',
     'FileSaver', 
     'BlobBuilder', 
     'EditableGrid', 
@@ -73,7 +69,6 @@ require(['Backbone',
     '../../lib/webwork/views/Calendar/CalendarView',   
     'util', 
     'config', /*no exports*/, 
-    'jquery-ui', 
     'bootstrap',
     'backbone-validation'], 
 function(Backbone, _, User, ProblemSetList, ProblemSetPathList, Problem, saveAs, BlobBuilder, EditableGrid, WebPage, Closeable, CalendarView, util, config){

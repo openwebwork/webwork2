@@ -101,14 +101,7 @@
 <script type="text/template" id="settings-template">
     <p>The following are settings for the Homework Set Editor</p>
     
-    <table class="table table-bordered"><thead><tr><th>Property</th><th>Value</th></tr></thead>
-    <tbody>
-    <tr><td>Time All Assignments are Due</td><td></td></tr>
-    <tr><td>Set Open Date</td><td>?? days/weeks before Due Date</td></tr>
-    <tr><td>Set Answer Date</td><td> ?? days/weeks after Due Date</td></tr>
-    <tr><td>All Assignments have reduced credit</td><td>True/False</td></tr>
-    <tr><td>Set Reduced Credit Time</td> ?? days/weeks before/after Due Date </td></tr>
-    </tbody>
+    <table class="table table-bordered" id="settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
 </table>
     
 </script>
@@ -158,4 +151,33 @@
 </div>
     
 </script>
+
+<script type="text/template" id="library-browser-template">
+<select id="library-selector" class="input-small">
+<option>View</option>
+<option>All Library Subjects</option>
+<option>The Problem Library</option>
+<option>and Search the Problem Library</option>
+<option>The Local Libraries</option>
+</select>
+<div id="library-viewer"></div>
+</script>
+
+
+<script type="text/template", id="problem-template">
+<%if(!remove_display){ %><div class="handle"><i class="icon-resize-vertical icon-large"></i></div><button type="button" class="remove">X</button><%}%>    <div class="problem" data-path="<%= path %>" ><%= data %></div></script>
+
+
+<script type="text/template", id="setList-template"></script>
+
+<script type="text/template", id="setName-template"><a data-problem_count=<%= problem_count %>><%= name %><span class="problem_count" style="float:right"><%= problem_count %></style></a></script>
+
+<script type="text/template", id="set-template"><h1>Problems</h1><ul class="list"></ul></script><script type="text/template", id="LibraryList-template"><select  class="<%= name %> list"><option value=null>Pick a Library</option></select><span class="<%= name %> children"></span></script>
+
+<script type="text/template", id="BrowseList-template">
+  <select  id="library_subject" class="list">
+    <option value=null>Subject</option><% _.each(library_subjects, function(name) { %> <option value="<%= name %>" <% if(name == library_subject){ %> selected="selected" <% } %> ><%= name %></option> <% }); %></select>
+    <select  id="library_chapter" class="list"><option value=null>Chapter</option><% _.each(library_chapters, function(name) { %> <option value="<%= name %>" <% if(name == library_chapter){ %> selected="selected" <% } %> ><%= name %></option> <% }); %></select><select  id="library_section" class="list"><option value=null>Section</option><% _.each(library_sections, function(name) { %> <option value="<%= name %>"  <% if(name == library_section){ %> selected="selected" <% } %>  ><%= name %></option> <% }); %></select><button class="btn btn-small load_browse_problems">Load Problems</button></script>
+
+<script type="text/template", id="Library-template"><h1>Problems</h1><ul class="list"></ul><span class="next_group" style="display:<%= enough_problems %>;">Load the next <%= group_size %> problems.</span></script>
 

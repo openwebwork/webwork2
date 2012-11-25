@@ -16,7 +16,7 @@ define([], function(){
     };
     // Note: these are in the order given in the classlist format for LST files.  
     
-    config.userProps = [{shortName: "student_id", longName: "Student ID", regexp: "student"},
+ /*   config.userProps = [{shortName: "student_id", longName: "Student ID", regexp: "student"},
                          {shortName: "last_name", longName: "Last Name", regexp: "last"},
                          {shortName: "first_name", longName: "First Name", regexp: "first"},
                          {shortName: "status", longName: "Status", regexp: "status"},
@@ -59,6 +59,6 @@ define([], function(){
                 }
             }
             
-                ];
+                ]; */
     return config;
 });

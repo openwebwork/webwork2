@@ -15,13 +15,15 @@ package WebworkWebservice::LibraryActions;
 use WebworkWebservice;
 use WeBWorK::Utils::ListingDB;
 use base qw(WebworkWebservice); 
+use WeBWorK::Debug;
+use JSON;
 
 use strict;
 use sigtrap;
 use Carp;
 use WWSafe;
 #use Apache;
-use WeBWorK::Utils;
+use WeBWorK::Utils qw(readDirectory sortByName);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::IO;
@@ -36,6 +38,19 @@ our $PG_DIRECTORY = $WebworkWebservice::PG_DIRECTORY;
 our $COURSENAME   = $WebworkWebservice::COURSENAME;
 our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PASSWORD     = "we-don't-need-no-stinking-passowrd";
+
+
+use constant MY_PROBLEMS => '  My Problems  ';
+use constant MAIN_PROBLEMS => '  Unclassified Problems  ';
+
+my %problib;	## This is configured in defaults.config
+
+# list of directories to ignore while search through the libraries.
+
+my %ignoredir = (
+	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
+	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1,
+);
 
 
 #our $ce           = WeBWorK::CourseEnvironment->new($WW_DIRECTORY, "", "", $COURSENAME);
@@ -291,7 +306,7 @@ sub searchLib {    #API for searching the NPL database
 
 			my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self);
 			$out->{ra_out} = \@section_listings;
-                        $out->{text} = encode_base64("Sections loaded.");
+            $out->{text} = encode_base64("Sections loaded.");
 
 			return($out);
 		};
@@ -299,6 +314,71 @@ sub searchLib {    #API for searching the NPL database
 	$out->{error}="Unrecognized command $subcommand";
 	return( $out );
 }
+
+sub get_library_sets {
+	my $top = shift; my $dir = shift;
+	# ignore directories that give us an error
+	my @lis = eval { readDirectory($dir) };
+	if ($@) {
+		warn $@;
+		return (0);
+	}
+	return (0) if grep /^=library-ignore$/, @lis;
+
+	my @pgfiles = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$dir/$_"} @lis;
+	my $pgcount = scalar(@pgfiles);
+	my $pgname = $dir; $pgname =~ s!.*/!!; $pgname .= '.pg';
+	my $combineUp = ($pgcount == 1 && $pgname eq $pgfiles[0] && !(grep /^=library-no-combine$/, @lis));
+
+	my @pgdirs;
+	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
+	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
+	foreach my $subdir (@dirs) {
+		my @results = get_library_sets(0, "$dir/$subdir");
+		$pgcount += shift @results; push(@pgdirs,@results);
+	}
+
+	return ($pgcount, @pgdirs) if $top || $combineUp || grep /^=library-combine-up$/, @lis;
+	return (0,@pgdirs,$dir);
+}
+
+
+sub getProblemDirectories {
+
+	my $self = shift;
+	my $rh = shift;
+	my $out = {};
+	my $ce = $self->{ce};
+
+	my %libraries = %{$self->{ce}->{courseFiles}->{problibs}};
+
+	debug(to_json(\%libraries));
+
+	my $lib = "Library";
+	my $source = $ce->{courseDirs}{templates};
+	my $main = MY_PROBLEMS; my $isTop = 1;
+	if ($lib) {$source .= "/$lib"; $main = MAIN_PROBLEMS; $isTop = 2}
+
+	debug("lib: " . $lib);
+	debug("main: " . $main);
+	debug("isTop: ". $isTop);
+	debug("source: ". $source);
+
+	my @all_problem_directories = get_library_sets($isTop, $source);
+	my $includetop = shift @all_problem_directories;
+	my $j;
+	for ($j=0; $j<scalar(@all_problem_directories); $j++) {
+		$all_problem_directories[$j] =~ s|^$ce->{courseDirs}->{templates}/?||;
+	}
+	@all_problem_directories = sortByName(undef, @all_problem_directories);
+	unshift @all_problem_directories, $main if($includetop);
+
+	$out->{ra_out} = \@all_problem_directories;
+    $out->{text} = encode_base64("Problem Directories loaded.");
+
+	return($out);
+}
+
 
 
 sub pretty_print_rh {
