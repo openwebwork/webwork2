@@ -917,16 +917,24 @@ sub make_data_row {
 		$add_box_data{ -checked } = 1;
 	}
 
-	my $inSet = ($self->{isInSet}{$sourceFileName})?
-	    CGI::span({-style=>"float:right; text-align: right"},
-	      CGI::i(CGI::b("(This problem is in the target set)"))) : "";
+	my $inSet = ($self->{isInSet}{$sourceFileName})?"(This problem is in the target set)" : "";
+	$inSet = CGI::span({-id=>"inset$cnt", -style=>"float:right; text-align: right"}, CGI::i(CGI::b($inSet)));
+	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
-	print CGI::Tr({-align=>"left"}, CGI::td(
+	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
+	my $path_holder = "File...";
+
+	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt"}, CGI::td(
 		CGI::div({-style=>"background-color: #DDDDDD; margin: 0px auto"},
-			CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
-			CGI::span({-style=>"float:right ; text-align: right"}, $edit_link, " ", $try_link)
-		), CGI::br(),
-		CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1),
+			"\n",CGI::span({-style=>"float:left ; text-align: left"},CGI::a({id=>"filepath$cnt", onClick=>"return pathsub($cnt, \"$sourceFileName\");"},"File...")),"\n",
+			"\n",CGI::span({-style=>"float:left ; text-align: left"},CGI::a({id=>"jjx$cnt", onClick=>"return opl();"},"OPL")),"\n",
+			CGI::span({-style=>"float:right ; text-align: right"}, $edit_link, " ", $try_link,
+			CGI::button(-name=>"dont_show", 
+				-value=>"x",
+				-onClick=>"return delrow($cnt)"),
+			)), 
+		#CGI::br(),
+		#CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1),
 		CGI::br(),
 		$inSet,
 		CGI::checkbox((%add_box_data),-override=>1),
@@ -1302,6 +1310,30 @@ sub title {
 sub options {
 	return "";
 }
+
+sub head {
+  my ($self) = @_;
+  my $ce = $self->r->ce;
+  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
+
+  print qq!<script src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/jquery-ui-1.8.18.custom.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/backbone.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/WeBWorK.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/teacher.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/Browse.js"></script>!;
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print "\n";
+  print qq!<script src="$webwork_htdocs_url/js/setmaker.js"></script>!;
+  print "\n";
+  return '';
+}
+
 
 sub body {
 	my ($self) = @_;

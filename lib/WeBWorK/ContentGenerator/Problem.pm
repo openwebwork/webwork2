@@ -962,6 +962,7 @@ sub body {
 	debug("end answer processing");
 	# output for templates that only use body instead of calling the body parts individually
 	$self ->output_JS;
+	$self ->output_tag_info;
 	$self ->output_custom_edit_message;
 	$self ->output_summary;
 	$self ->output_hidden_info;
@@ -1402,6 +1403,20 @@ sub output_summary{
 			# show attempt previews
 	}
 	
+	return "";
+}
+
+# output_tag_info
+# Puts the tags in the page
+
+sub output_tag_info{
+	my $self = shift;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	if ($authz->hasPermissions($user, "modify_tags")) {
+		print CGI::p(CGI::div("Tags go here"));
+	}
 	return "";
 }
 
