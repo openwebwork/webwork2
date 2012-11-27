@@ -164,9 +164,10 @@ sub  request_has_data_for_this_verification_module {
 			or !(defined $r -> param("oauth_signature"))
 			or !(defined $r -> param("oauth_nonce"))
 			or !(defined $r -> param("oauth_timestamp")) ) {
-	#debug("LTIBasic returning that it has insufficent data");
+		#debug("LTIBasic returning that it has insufficent data");
 		return(0);
 	} else {
+		#debug(("LTIBasic returning that it has sufficient data");
 		return(1);
 	}
 }
@@ -176,6 +177,7 @@ sub get_credentials {
 	my $r = $self->{r};
 	my $ce = $r -> {ce};
 	
+	#debug("LTIBasic::get_credentials has been called\n");
 	#disable password login
 	$self->{external_auth} = 1;
 	
@@ -195,10 +197,11 @@ sub get_credentials {
 						['oauth_timestamp', 'oauth_timestamp'],
 						['semester', 'custom_semester'],
 						['section', 'custom_section'],
+						['recitation', 'custom_recitation'],
 						);
 
 		# The following lines were substituted for the commented out line above
-		# because some LMS's misspell the lis_person_sourced_id parameter name
+		# because some LMS's misspell the lis_person_sourcedid parameter name
 		if (defined($r -> param("lis_person_sourced_id"))) {
 			$self -> {user_id} = $r -> param("lis_person_sourced_id"); 
 		} elsif (defined($r -> param("lis_person_sourcedid"))) {
@@ -213,8 +216,14 @@ sub get_credentials {
 		
 
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
-		if (!defined($self->{user_id})) {
+		if (!defined($self->{user_id})
+			or (defined($self -> {email})  
+				and defined($ce -> {preferred_source_of_username})
+				and $ce -> {preferred_source_of_username} eq "lis_person_contact_email_primary")) {
 			$self->{user_id} = $self -> {email};
+		}
+		if (!defined($self->{user_id})) {
+			croak "LTIBasic cannot find a username";
 		}
 		if (defined $ce -> {analyze_context_id}) {
 			$ce -> {analyze_context_id} ($self) ;
@@ -224,8 +233,10 @@ sub get_credentials {
 		}
 		$self->{login_type} = "normal";
 		$self -> {credential_source} = "LTIBasic";
+		#debug("LTIBasic::get_credentials is returning a 1\n");
 		return 1;
 		}
+	#debug("LTIBasic::get_credentials is returning a 0\n");
 	return 0;
 }
 
@@ -236,6 +247,8 @@ sub check_user {
 	my ($ce, $db, $authz) = map {$r -> $_ ;} ('ce', 'db', 'authz');
 	
 	my $user_id = $self->{user_id};
+
+	#debug("LTIBasic::check_user has been called for user_id = |$user_id|");
 	
 	if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
 		$self->{log_error} = "no user id specified";
@@ -249,10 +262,12 @@ sub check_user {
 		if ( defined($r -> param("lis_person_sourcedid"))
 			or defined($r -> param("lis_person_sourced_id"))
 			or defined($r -> param("lis_person_source_id"))
-			or defined($r -> param("lis_person_sourceid")) ) {
+			or defined($r -> param("lis_person_sourceid")) 
+			or defined($r -> param("lis_person_contact_email_primary")) ) {
+			#debug("User |$user_id| is unknown but may be an new user from an LSM via LTI.  About to return a 1");
 			return 1;  #This may be a new user coming in from a LMS via LTI.
 		} else {
-		$self->{log_error} .= "LOGIN FAILED $user_id - user unknonw";
+		$self->{log_error} .= " $user_id - user unknown";
 		$self->{error} = $r->maketext("Username presented:  " . $user_id . "<br />" . $GENERIC_UNKNOWN_USER_ERROR_MESSAGE);
 		return 0;
 		}
@@ -269,7 +284,7 @@ sub check_user {
 		$self->{error} = $r->maketext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
 		return 0;
 	}
-	
+	#debug("LTIBasic::check_user is about to return a 1.");	
 	return 1;
 }
 
@@ -281,29 +296,40 @@ sub verify_normal_user
 	my $self = shift;
 	my ($r, $user_id, $session_key) 
 			= map {$self -> {$_};} ('r', 'user_id', 'session_key');
+
+
+	#debug("LTIBasic::verify_normal_user called for user |$user_id|");
 	
     # Call check_session in order to destroy any existing session cookies and Key table sessions
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 0);
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
 	
-	#debug("Mark D");
 	my $auth_result = $self->authenticate;
-	#debug("Mark E");
+
 	#debug("auth_result=|${auth_result}|");	
+
+	# Parameters CANNOT be modified until after LTIBasic authentication
+	# has been done, because the parameters passed with the request
+
+	# are used in computing the OAuth_signature.  If there
+
+	# are any changes in $r -> {paramcache} (see Request.pm)
+	# before authentication occurs, then authentication will FAIL
+	# even if the consumer_secret is correct.
+
+	$r -> param("user" => $user_id);
 
 	if ($auth_result eq "1") 
 		{
-		#debug("Mark F");
 		#debug("About to call create_session.");
 		$self->{session_key} = $self->create_session($user_id);
-		#debug("Mark G");
 		#debug("session_key=|" . $self -> {session_key} . "|.");
 		return 1;
 		}
 	else  
 		{
 		$self->{error} = $r->maketext($auth_result);
-		$self-> {log_error} .= "LOGIN FAILED $user_id - authentication failed: ". $self->{error};
+		$self-> {log_error} .= "$user_id - authentication failed: ". $self->{error};
 		return 0;
 		} 
 }
@@ -312,7 +338,8 @@ sub authenticate
 {
 	my $self = shift;
 	my ($r, $user ) = map {$self -> {$_};} ('r', 'user_id');
-	#debug("user=|${user}|");
+
+	#debug("LTIBasic::authenticate called for user |$user|");
 	#debug "ref(r) = |". ref($r) . "|";
 	#debug "ref of r->{paramcache} = |" . ref($r -> {paramcache}) . "|";
 	#debug "request_method = |" . $r -> request_method . "|";
@@ -340,11 +367,9 @@ sub authenticate
 	my @keys = keys %{$r-> {paramcache}};
 	foreach my $key (@keys) {
 		$request_hash{$key} =  $r -> param($key); 
-	}
+		#debug("$key -> |" . $requestHash -> {$key} . "|");
+	}	
 	my $requestHash = \%request_hash;
-	#foreach my $key (@keys) {
-	#	debug( "$key -> |" . $requestHash->{$key} . "|");
-	#}
 
 	my $request;
 	eval 
@@ -360,25 +385,27 @@ sub authenticate
 		{
 		#debug("construction of Net::OAuth object failed: $@");
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
-		$self -> {error} = $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
-		$self -> {error} = $r->maketext("Something was wrong with your LTI parameters.  "
+		$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
+		$self -> {error} .= $r->maketext("Something was wrong with your LTI parameters.  "
 				. "If this recurs, please speak with your instructor");
+		$self -> {log_error} .= "Construction of OAuth request record failed";
 		return 0;
 		}
 	else
 		{
 		if (! $request -> verify) 
 			{
-			#debug("request-> verify failed");
-			#debug("<h2> oauthTest2: OAuth verification Failed</h2> "; print_keys($r));
-			$self -> {error} = $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
-			$self -> {error} = $r->maketext("Your LTI OAuth verification failed.  "
+			#debug("LTIBasic::authenticate request-> verify failed");
+			#debug("<h2> OAuth verification Failed</h2> "; print_keys($r));
+			$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
+			$self -> {error} .= $r->maketext("Your LTI OAuth verification failed.  "
 				. "If this recurs, please speak with your instructor");
+			$self -> {log_error} = "OAuth verification failed.  Check the Consumer Secret.";
 			return 0;
 			}
 		else
 			{
-			#debug("<h2> oauthTest2: OAuth verification SUCCEEDED !! </h2>");
+			#debug("<h2> OAuth verification SUCCEEDED !! </h2>");
 			my $userID = $self->{user_id};
 			my $LTIrolesString = $r -> param("roles");
 			my @LTIroles = split /,/, $LTIrolesString;
@@ -405,12 +432,15 @@ sub authenticate
 				}
 				my $newUser = $db -> newUser();
 					$newUser -> user_id($userID);
+					$self -> {last_name} =~ s/\+/ /g;
 					$newUser -> last_name($self -> {last_name});
+					$self -> {first_name} =~ s/\+/ /g;
 					$newUser -> first_name($self -> {first_name});
 					$newUser -> email_address($self -> {email});
 					$newUser -> status("C");
 					$newUser ->  section(($LTI_webwork_permissionLevel > $ce -> {userRoles} -> {"student"}) ?
 						"Admin" : (defined($self -> {section})) ? $self -> {section} : "");
+					$newUser -> recitation($self -> {recitation});
 					$newUser -> comment(formatDateTime(time, "local"));
 				$db -> addUser($newUser);
 				$self->write_log_entry("New user $userID added via LTIBasic login");
@@ -503,6 +533,7 @@ sub authenticate
 						}
 					}
 				}
+				$self -> {initial_login} = 1;
 			}
 		else 
 			{ # Existing user.  Possibly modify demographic information and permission level.
@@ -516,17 +547,22 @@ sub authenticate
 			else 
 				{
 				my $change_made = 0;
-				if ($user -> last_name ne $self -> {last_name}) 
+				$self -> {last_name} =~ s/\+/ /g;
+				if (defined($user -> last_name) and defined($self -> {last_name})
+					and $user -> last_name ne $self -> {last_name}) 
 					{
 					$user -> last_name($self -> {last_name});
 					$change_made = 1;
 					}
-				if ($user -> first_name ne $self -> {first_name}) 
+				$self -> {first_name} =~ s/\+/ /g;
+				if (defined($user -> first_name) and defined($self -> {first_name})
+					and $user -> first_name ne $self -> {first_name}) 
 					{
 					$user -> first_name($self -> {first_name});
 					$change_made = 1;
 					}
-				if ($user -> email_address ne $self -> {email}) 
+				if (defined($user -> email_address) and defined($self -> {email})
+					and $user -> email_address ne $self -> {email}) 
 					{
 					$user -> email_address($self -> {email});
 					$change_made = 1;
@@ -562,6 +598,11 @@ sub authenticate
 						$user -> section($self -> {"section"});
 						$change_made = 1;
 						}
+				if (defined($self -> {"recitation"}) and defined($user -> recitation)
+					and $user -> recitation ne $self -> {"recitation"})
+					{$user -> recitation($self ->{"recitation"});
+					$change_made = 1;
+				}
 				if ($change_made) 
 					{
 					$user -> comment(formatDateTime(time, "local"));
@@ -569,7 +610,7 @@ sub authenticate
 					$self->write_log_entry("Demographic data for user $userID modified via LTIBasic login");
 				}
 				  # Assign permission level
-######## Change due to faulty roles from Oncourse LTIBasic ######
+######## Changed due to Instructor roles passed from Sakai/Oncourse to LTIBasic ######
 #				if (!defined($permissionLevel -> permission) or $permissionLevel -> permission != $LTI_webwork_permissionLevel)
 				if (!defined($permissionLevel -> permission) )
 #################################################################
@@ -580,10 +621,12 @@ sub authenticate
 					$self->write_log_entry("Permission level for user $userID changed to $LTI_webwork_permissionLevel via LTIBasic login");
 				}
 			}
+			$self -> {initial_login} = 1;
 			}
 			return 1;
 		}
 	}
+	#debug("LTIBasic is returning a failed authentication");
 	$self -> {error} = $r->maketext($GENERIC_ERROR_MESSAGE);
 	return(0);
 }
@@ -653,14 +696,10 @@ sub print_keys {
 	my $key;
 	foreach $key (@keys) {
 		$request_hash{$key} =  $r -> param($key); 
+		warn("$key -> |" . $request_hash{$key} . "|");
 	}
 	my $requestHash = \%request_hash;
-	foreach $key (@keys) {
-		warn "$key -> |" . $requestHash->{$key} . "|";
-	}
 }
-
-
 
 1;
 

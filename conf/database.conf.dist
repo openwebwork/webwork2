@@ -288,6 +288,7 @@ $dbLayouts{sql_single} = {
 			tableOverride => "${courseName}_achievement"
 		},
 	},
+
 	achievement_user => {
 		record => "WeBWorK::DB::Record::UserAchievement",
 		schema => "WeBWorK::DB::Schema::NewSQL::Std",
@@ -296,7 +297,7 @@ $dbLayouts{sql_single} = {
 		params => { %sqlParams,
 			tableOverride => "${courseName}_achievement_user"
 	 	},
-        },
+    },
 	global_user_achievement => {
 		record => "WeBWorK::DB::Record::GlobalUserAchievement",
 		schema => "WeBWorK::DB::Schema::NewSQL::Std",

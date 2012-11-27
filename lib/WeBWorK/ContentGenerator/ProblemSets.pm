@@ -384,10 +384,10 @@ sub setListRow {
 	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
 	    ( defined( $set->assignment_type() ) && 
 	      $set->assignment_type() eq 'proctored_gateway' );
-	
-	$name =~ s/_/&nbsp;/g;
+	my $display_name = $name;
+	$display_name =~ s/_/&nbsp;/g;
 # this is the link to the homework assignment
-	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
+	my $interactive = CGI::a({-href=>$interactiveURL}, "$display_name");
 	
 	my $control = "";
 	
@@ -395,7 +395,7 @@ sub setListRow {
 	my $status = '';
 	if ( $gwtype ) {
 		if ( $gwtype == 1 ) {
-		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $name"; return()}
+		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $display_name"; return()}
 			if ( $problemRecords[0]->num_correct() + 
 			     $problemRecords[0]->num_incorrect() >= 
 			     ( ( !($set->attempts_per_version()) ) ? 0 : $set->attempts_per_version() ) ) {
@@ -413,7 +413,7 @@ sub setListRow {
 			# reset the link to give the test number
 			my $vnum = $set->version_id;
 			$interactive = CGI::a({-href=>$interactiveURL},
-					      $r->maketext("[_1] (test [_2])", $name, $vnum));
+					      $r->maketext("[_1] (test [_2])", $display_name, $vnum));
 		} else {
 			my $t = time();
 			if ( $t < $set->open_date() ) {
@@ -421,24 +421,24 @@ sub setListRow {
 				if ( $preOpenSets ) {
 					# reset the link
 					$interactive = CGI::a({-href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $name));
+							      $r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
-					$interactive = $r->maketext("[_1] test", $name);
+					$interactive = $r->maketext("[_1] test", $display_name);
 				}
 			} elsif ( $t < $set->due_date() ) {
 				$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 				$setIsOpen = 1;
 				$interactive = CGI::a({-href=>$interactiveURL},
-						      $r->maketext("Take [_1] test", $name));
+						      $r->maketext("Take [_1] test", $display_name));
 			} else {
 				$status = $r->maketext("Closed");
 
 				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
 					$interactive = CGI::a({-href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $name));
+							      $r->maketext("Take [_1] test", $display_name));
 				} else {
-					$interactive = $r->maketext("[_1] test", $name);
+					$interactive = $r->maketext("[_1] test", $display_name);
 				}
 			}
 		}

@@ -472,6 +472,13 @@ sub previewCorrectAnswer {
 # Template escape implementations
 ################################################################################
 
+sub content {
+  my $self = shift;
+  my $result = $self->SUPER::content(@_);
+  $self->{pg}->free if $self->{pg};   # be sure to clean up PG environment when the page is done
+  return $result;
+}
+
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -732,6 +739,20 @@ sub pre_header_initialize {
 	                    &&= $pg->{flags}->{showHintLimit}<=$pg->{state}->{num_of_incorrect_ans};
 	$can{showSolutions} &&= $pg->{flags}->{solutionExists};
 	
+	##### record errors #########
+	if (ref ($pg->{pgcore}) )  {
+		my @debug_messages     = @{$pg->{pgcore}->get_debug_messages};
+		my @warning_messages   = @{$pg->{pgcore}->get_warning_messages};
+		my @internal_errors    = @{$pg->{pgcore}->get_internal_debug_messages};
+		$self->{pgerrors}      = @debug_messages||@warning_messages||@internal_errors;  # is 1 if any of these are non-empty
+		$self->{pgdebug}       =    \@debug_messages;
+		$self->{pgwarning}     =    \@warning_messages;
+		$self->{pginternalerrors} = \@internal_errors ;
+	} else {
+		warn "Processing of this PG problem was not completed.  Probably because of a syntax error.
+		      The translator died prematurely and no PG warning messages were transmitted.";
+	}
+
 	##### store fields #####
 	
 	$self->{want} = \%want;
@@ -767,7 +788,8 @@ sub warnings {
 	} 
 	# print "proceeding to SUPER::warnings";
 	$self->SUPER::warnings();
-	"";
+	#  print $self->{pgerrors};
+	"";  #FIXME -- let's see if this is the appropriate output.
 }
 
 sub if_errors($$) {
@@ -1058,6 +1080,7 @@ sub output_editorLink{
 	# add edit link for set as well.
 	my $editorLink = "";
 	my $editorLink2 = "";
+	my $editorLink3 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
@@ -1066,13 +1089,19 @@ sub output_editorLink{
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit this problem")));
+		$editorLink = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor1'}, $r->maketext("Edit1")));
 	}
 	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor2}) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink2 = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit this problem with new editor")));
+		$editorLink2 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit2")));
+	}
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor3}) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3", $r, 
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
+		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
 	}
 	##### translation errors? #####
 
@@ -1080,16 +1109,14 @@ sub output_editorLink{
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink;
-			print $editorLink2;
+			print $editorLink, " ", $editorLink2, " ", $editorLink3;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink;
-		print $editorLink2;
+		print $editorLink, " ", $editorLink2, " ", $editorLink3;
 	}
 	return "";
 }
@@ -1573,6 +1600,9 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	# This adds the dragmath functionality
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();

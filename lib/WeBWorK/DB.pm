@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.111 2010/05/19 01:44:05 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.112 2012/06/08 22:40:00 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1262,7 +1262,11 @@ sub deleteGlobalUserAchievement {
 	# userAchievementID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $userID) = shift->checkArgs(\@_, "user_id$U");
-	return $self->{global_user_achievement}->delete($userID);
+	if ($self->{global_user_achievement}){
+		return $self->{global_user_achievement}->delete($userID);
+	} else {
+		return 0;
+	}
 }
 
 

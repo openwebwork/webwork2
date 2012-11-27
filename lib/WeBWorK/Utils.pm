@@ -27,6 +27,7 @@ use strict;
 use warnings;
 #use Apache::DB;
 use DateTime;
+use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
 use File::Copy;
@@ -481,6 +482,7 @@ sub parseDateTime($;$) {
 	my ($string, $display_tz) = @_;
 	warn "time zone not defined".caller() unless defined($display_tz);
 	$display_tz ||= "local";
+	$display_tz = verify_timezone($display_tz);
 
 
 	# use WeBWorK 1 date parsing routine
@@ -583,25 +585,6 @@ sub parseDateTime($;$) {
 	return $epoch;
 }
 
-=item $string = formatDateTime($dateTime, $display_tz)
-
-Formats the UNIX datetime $dateTime in the standard WeBWorK datetime format.
-$dateTime is assumed to be in the server's time zone. If $display_tz is given,
-the datetime is converted from the server's timezone to the timezone specified.
-
-=cut
-
-#sub formatDateTime($;$) {
-#	my ($dateTime, $display_tz) = @_;
-#	warn "Utils::formatDateTime is not a method. ", join(" ",caller(2)) if ref($dateTime); # catch bad calls to Utils::formatDateTime
-#	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz;
-#	$dateTime = $dateTime ||0;  # do our best to provide default values
-#	$display_tz ||= "local";    # do our best to provide default vaules
-#	
-#	my $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
-#	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
-#	return $dt->strftime(DATE_FORMAT);
-#}
 
 =item $string = formatDateTime($dateTime, $display_tz, $format_string, $locale)
 
@@ -625,6 +608,8 @@ sub formatDateTime($;$;$;$) {
 	warn "not defined formatDateTime('$dateTime', '$display_tz') ",join(" ",caller(2)) unless  $display_tz;
 	$dateTime = $dateTime ||0;  # do our best to provide default values
 	$display_tz ||= "local";    # do our best to provide default vaules
+	$display_tz = verify_timezone($display_tz);
+	
 	$format_string ||= DATE_FORMAT; # If a format is not provided, use the default WeBWorK date format
 	my $dt;
 	if($locale) {
@@ -657,6 +642,23 @@ Accepts a UNIX datetime or a formatted string, returns a UNIX datetime.
 sub intDateTime($) {
 	return ($_[0] =~ m/^\d*$/) ?  $_[0] : parseDateTime($_[0]);
 }
+
+=item verify_timezone($display_tz)
+
+If $display_tz is not a legal time zone then replace it with America/New_York and issue warning.
+
+
+
+=cut
+
+sub verify_timezone($) {
+		my $display_tz = shift;
+	    return $display_tz if (DateTime::TimeZone->is_valid_name($display_tz) );
+	    warn qq! $display_tz is not a legal time zone name. Fix it on the Course Configuration page. 
+	      <a href="http://en.wikipedia.org/wiki/List_of_zoneinfo_time_zones">View list of time zones.</a> \n!;
+	    return "America/New_York";
+}
+
 
 =item $timeinsec = timeToSec($time)
 
@@ -852,27 +854,14 @@ our $BASE64_ENCODED = 'base64_encoded:';
 #  was not evaluated in the matching and substitution
 #  statements
 
-# sub decodeAnswers($) {
-# 	my $string = shift;
-# 	return unless defined $string and $string;
-# 	
-# 	if ($string =~/^$BASE64_ENCODED/o) {
-# 		$string =~ s/^$BASE64_ENCODED//o;
-# 		$string = decode_base64($string);
-# 	}
-# 
-# 	my @array = split m/##/, $string;
-# 	$array[$_] =~ s/\\#\\/#/g foreach 0 .. $#array;
-# 	push @array, "" if @array%2;
-# 	return @array; # it's actually a hash ;)
-# }
 
 sub decodeAnswers($) {
 	my $serialized = shift;
 	return unless defined $serialized and $serialized;
 	my $array_ref = eval{ Storable::thaw($serialized) };
 	if ($@) {
-		warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away  permanently for this question.   $@";
+		# My hope is that this next warning is no longer needed since there are few legacy base64 days and the fix seems transparent.
+		# warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away  permanently for this question.   $@";
 		return ();
 	} else {
 		return @{$array_ref};
@@ -886,38 +875,11 @@ sub encodeAnswers(\%\@) {
 	foreach my $key (@order) {
 		push @ordered_hash, $key, $hash{$key};
 	}
-	return Storable::freeze( \@ordered_hash);
+	return Storable::nfreeze( \@ordered_hash);
 
 }
 
-# sub encodeAnswers(\%\@) {
-# 	my %hash = %{ shift() };
-# 	my @order = @{ shift() };
-# 	my $string = "";
-# 	foreach my $name (@order) {
-# 		my $value = defined $hash{$name} ? $hash{$name} : "";
-# 		$name  =~ s/#/\\#\\/g; # this is a WEIRD way to escape things
-# 		$value =~ s/#/\\#\\/g; # and it's not my fault!
-# 		if ($value =~ m/\\$/) {
-# 			# if the value ends with a backslash, string2hash will
-# 			# interpret that as a normal escape sequence (not part
-# 			# of the weird pound escape sequence) if the next
-# 			# character is &. So we have to protect against this.
-# 			# will adding a spcae at the end of the last answer
-# 			# hurt anything? i don't think so...
-# 			$value .= " ";
-# 		}
-# 		$string .= "$name##$value##"; # this is also not my fault
-# 	}
-# 	$string =~ s/##$//; # remove last pair of hashs
-# 
-# 	$string = $BASE64_ENCODED.encode_base64($string, "");
-# 	# Empty string in second argument prevents end-of-line characters from being used.
-# 	# This is nice for examining database contents manually since it prevents newlines
-# 	# from being introduced into database records.
-# 
-# 	return $string;
-# }
+
 
 sub max(@) {
 	my $soFar;
