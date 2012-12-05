@@ -107,7 +107,6 @@ sub listUsers {
     my $db = $self->{db};
     my $ce = $self->{ce};
     
-    debug("in listUsers");
 
     # make sure course actions are enabled
     #if (!$ce->{webservices}{enableCourseActions}) {
@@ -158,9 +157,6 @@ sub addUser {
 	$out->{text} = encode_base64("");
 	my $db = $self->{db};
 	my $ce = $self->{ce};
-	debug("Webservices add user request.");
-	debug("Last Name:" . $params->{'last_name'});
-	debug("First Name:" . $params->{'first_name'});
 
 	# make sure course actions are enabled
 	#if (!$ce->{webservices}{enableCourseActions}) {
@@ -463,8 +459,6 @@ sub changeUserPassword {
 	$self->{passwordMode} = 0;
 	$out->{text} = encode_base64("New passwords saved");
 	$out->{ra_out}= "password_change: success";
-	debug($out->{text});
-	debug($out->{ra_out});
 	return $out;
 }
 

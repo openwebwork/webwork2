@@ -675,8 +675,8 @@
   }
 
   function clearMenus() {
-    getParent($(toggle))
-      .removeClass('open')
+    $(toggle).parent()
+       .removeClass('open')
   }
 
   function getParent($this) {

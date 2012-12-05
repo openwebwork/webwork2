@@ -488,7 +488,7 @@ sub output_JS{
 #	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/fs.js"}), CGI::end_script();
 #	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/labs.min.js"}), CGI::end_script();
 	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/problemsetlist.js"}), CGI::end_script();
-	print qq!<script data-main="$site_url/js/apps/problemsetlist/problemsetlist" src="$site_url/js/lib/vendor/components/requirejs/require.js"></script>!;
+	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/lib/vendor/components/requirejs/require.js"></script>!;
 
 
 	

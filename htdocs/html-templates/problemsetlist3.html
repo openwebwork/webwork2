@@ -14,10 +14,15 @@
 
 
 <script type="text/template" id="tab-setup">
+<div id='mainDiv' class='row-fluid'>
+<div id='left-column' class='span2'>Loading Homework Sets...
+<img src='/webwork2_files/images/ajax-loader-small.gif'></div>
+<div id='tab-container' class='span10'>
     <ul class="nav nav-tabs" id="hwedTabs">
   <li class="active"><a href="#cal">Calendar View</a></li>
   <li><a href="#list">List View</a></li>
-  <li><a href="#details">Homework Set Details</a></li>
+  <li><a href="#details">Set Properties</a></li>
+  <li><a href="#problems">Set Problems</a></li>
   <li><a href="#library">Library Browser</a></li>
   <li><a href="#impexp">Import/Export</a></li>
   <li><a href="#settings">Settings</a></li>
@@ -27,13 +32,19 @@
   <div class="tab-pane active" id="cal"></div>
   <div class="tab-pane" id="list"></div>
   <div class="tab-pane" id="details"></div>
-  
+  <div class="tab-pane" id="problems"></div>
   <div class="tab-pane" id="library"></div>
   <div class="tab-pane" id="impexp"></div>
   <div class="tab-pane" id="settings"></div>
 </div>
-    
-    
+    </div>
+</script>
+
+<script type="text/template" id="problem-set-header">
+<div class='row-fluid'><div class='span9'>
+<span style='font-size:125%; font-weight: bold '>Problems for <%= set %> </span></div>
+<div class='span2 float-right'><button id='undo-delete-btn'>Undo Delete</button> </div> </div>
+                            <div id='prob-list'></div>
 </script>
 
 <script type="text/template" id="hwset-dates-tmpl">
@@ -136,7 +147,7 @@
       </div>
     </div>
   </div>
-  <div class="accordion-group">
+<!--  <div class="accordion-group">
     <div class="accordion-heading">
       <a class="accordion-toggle" data-toggle="collapse" data-parent="#accord-HW-detail" href="#collapseThree">
         Homework Problems
@@ -147,25 +158,39 @@
       <div  id="hw-detail-problems"></div>
       </div>
     </div>
-  </div>
+  </div>-->
 </div>
     
 </script>
 
 <script type="text/template" id="library-browser-template">
-<select id="library-selector" class="input-small">
-<option>View</option>
-<option>All Library Subjects</option>
-<option>The Problem Library</option>
-<option>and Search the Problem Library</option>
-<option>The Local Libraries</option>
-</select>
-<div id="library-viewer"></div>
+<div class="row-fluid"><div class="btn-group span2">
+
+  <a class="btn dropdown-toggle btn-small" data-toggle="dropdown" href="#">
+    View
+    <span class="caret"></span>
+  </a>
+<ul class="dropdown-menu">
+    <li><a class="link" data-link='view-all-subjects'>View All Library Subjects</a></li>
+  <li><a class="link" data-link="view-all-libraries">View Problems within a Library</a></li>
+  <li><a class="link" data-link="search-libraries">Search the Problem Library</a></li>
+  <li><a class="link" data-link="view-local-libraries">Browse The Local Libraries</a></li>
+  </ul>
+  </div>
+
+<div id="library-viewer" class="span10"></div>
+</div>
+<div id="lib-problem-viewer"> </div>
 </script>
 
 
 <script type="text/template", id="problem-template">
-<%if(!remove_display){ %><div class="handle"><i class="icon-resize-vertical icon-large"></i></div><button type="button" class="remove">X</button><%}%>    <div class="problem" data-path="<%= path %>" ><%= data %></div></script>
+<%if(deletable){ %><div class="handle"><i class="icon-resize-vertical icon-large"></i></div>
+<button type="button" class="remove">X</button><%}%>    
+<!--<div class="problem" data-path="<%= path %>" >-->
+
+<%= data %>
+</script>
 
 
 <script type="text/template", id="setList-template"></script>
@@ -179,5 +204,7 @@
     <option value=null>Subject</option><% _.each(library_subjects, function(name) { %> <option value="<%= name %>" <% if(name == library_subject){ %> selected="selected" <% } %> ><%= name %></option> <% }); %></select>
     <select  id="library_chapter" class="list"><option value=null>Chapter</option><% _.each(library_chapters, function(name) { %> <option value="<%= name %>" <% if(name == library_chapter){ %> selected="selected" <% } %> ><%= name %></option> <% }); %></select><select  id="library_section" class="list"><option value=null>Section</option><% _.each(library_sections, function(name) { %> <option value="<%= name %>"  <% if(name == library_section){ %> selected="selected" <% } %>  ><%= name %></option> <% }); %></select><button class="btn btn-small load_browse_problems">Load Problems</button></script>
 
-<script type="text/template", id="Library-template"><h1>Problems</h1><ul class="list"></ul><span class="next_group" style="display:<%= enough_problems %>;">Load the next <%= group_size %> problems.</span></script>
+<script type="text/template", id="Library-template"><h1>Problems</h1><ul class="list"></ul><button class="btn next_group" style="display:<%= enough_problems %>;">Load the next <%= group_size %> problems.</button
+
+></script>
 

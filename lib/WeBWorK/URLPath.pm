@@ -415,7 +415,7 @@ our %pathTypes = (
 	},
 
 	instructor_set_list3 => {
-		name    => 'Hmwk Sets Editor3',
+		name    => 'Homework Manager',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail/ ],
 		match   => qr|^sets3/|,

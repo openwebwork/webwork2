@@ -57,13 +57,11 @@ sub listLocalSets{
 }
 
 sub listLocalSetProblems{
-	debug("in listLocalSetProblems");
 	my $self = shift;
 	my $in = shift;
   	my $db = $self->{db};
   	my @found_problems;
   	my $selectedSet = $in->{set};
-	debug("INPUT " . to_json($in));
   	warn "Finding problems for set ", $in->{set} if $UNIT_TESTS_ON;
   	my $templateDir = $self->{ce}->{courseDirs}->{templates};
   	@found_problems = $db->listGlobalProblems($selectedSet);
@@ -165,7 +163,11 @@ sub reorderProblems {
 	  	$problem->problem_id($index);
 	  	die "global $problem not found." unless $problem;
 	  	#print "problem to be reordered: ".$problem."\n";
-	  	$db->putGlobalProblem($problem);
+	  	my $sourceFile = $problem->{source_file};
+	  	debug("before putGlobalProblem: $sourceFile");
+	  	my $probExists = $db->existsGlobalProblem($setID,$problem);
+	  	debug("problem Exists: $probExists");
+	  	#$db->addGlobalProblem($problem);
 
 	  	#need to deal with users?
 	  	foreach $user (@setUsers) {
@@ -228,26 +230,32 @@ sub assignProblemToAllSetUsers {
 
 sub addProblemToSet {
 	my $self = shift;
-	my $args = shift;
+	my $params = shift;
 	my $db = $self->{db};
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
 	
 
-	die "addProblemToSet called without specifying the set name." if $args->{setName} eq "";
-	my $setName = $args->{setName};
 
-	my $sourceFile = $args->{sourceFile} or 
+	die "addProblemToSet called without specifying the set name." if $params->{setName} eq "";
+	my $setName = $params->{setName};
+
+	my $sourceFile = $params->{sourceFile} or 
 		die "addProblemToSet called without specifying the sourceFile.";
+
+
+	debug("In addProblemToSet");
+	debug("setName: $setName");
+	debug("sourceFile: $sourceFile");
 
 	# The rest of the arguments are optional
 	
-#	my $value = $args{value} || $value_default;
+#	my $value = $params{value} || $value_default;
 	my $value = $value_default;
-	if (defined($args->{value})){$value = $args->{value};}  # 0 is a valid value for $args{value}  
+	if (defined($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value}  
 
-	my $maxAttempts = $args->{maxAttempts} || $max_attempts_default;
-	my $problemID = $args->{problemID};
+	my $maxAttempts = $params->{maxAttempts} || $max_attempts_default;
+	my $problemID = $params->{problemID};
 
 	unless ($problemID) {
 		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
@@ -266,10 +274,13 @@ sub addProblemToSet {
 
 sub addProblem {
 	my $self = shift;
-	my $in = shift;
+	my $params = shift;
 	my $db = $self->{db};
-	my $setName = $in->{set};
-	my $file = $in->{path};
+	my $setName = $params->{set};
+
+	debug("in addProblem:  setName : " . $setName);
+
+	my $file = $params->{path};
 	my $topdir = $self->{ce}->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
 	my $freeProblemID;

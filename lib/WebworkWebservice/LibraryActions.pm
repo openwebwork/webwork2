@@ -157,6 +157,8 @@ sub listLib {
 	my $dirPath = $self->{ce}->{courseDirs}{templates}."/".$rh->{library_name};
 	my $maxdepth= $rh->{maxdepth};
 	my $dirPath2 = $dirPath . ( ($rh->{dirPath}) ?  '/'.$rh->{dirPath}  : '' ) ;
+
+
     my @tare = $dirPath2=~m|/|g; 
     my $tare = @tare;     # counts number of "/" in dirPath prefix
 	my @outListLib;
@@ -191,6 +193,7 @@ sub listLib {
 	};
 	 
 	my $command = $rh->{command};
+
 	#warn "the command being executed is ' $command '";
 	$command = 'all' unless defined($command);
 	
@@ -238,6 +241,8 @@ sub listLib {
 		$command eq 'files' && do {  @outListLib=();
 									 #my $separator = ($dirPath =~m|/$|) ?'' : '/';
 									 #my $dirPath2 = $dirPath . $separator . $rh->{dirPath};
+
+									 debug($dirPath2);
 									 if ( -e $dirPath2) {
 										 find($wanted, $dirPath2);
 										 @outListLib = sort @outListLib;
@@ -352,17 +357,10 @@ sub getProblemDirectories {
 
 	my %libraries = %{$self->{ce}->{courseFiles}->{problibs}};
 
-	debug(to_json(\%libraries));
-
 	my $lib = "Library";
 	my $source = $ce->{courseDirs}{templates};
 	my $main = MY_PROBLEMS; my $isTop = 1;
 	if ($lib) {$source .= "/$lib"; $main = MAIN_PROBLEMS; $isTop = 2}
-
-	debug("lib: " . $lib);
-	debug("main: " . $main);
-	debug("isTop: ". $isTop);
-	debug("source: ". $source);
 
 	my @all_problem_directories = get_library_sets($isTop, $source);
 	my $includetop = shift @all_problem_directories;

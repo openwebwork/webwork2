@@ -1,5 +1,5 @@
 define(['Backbone'], function(Backbone){
-	WebPage = Backbone.View.extend({
+	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
     initialize: function () {

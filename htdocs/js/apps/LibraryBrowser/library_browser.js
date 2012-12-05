@@ -27,7 +27,7 @@ require.config({
         "tabs": "/webwork2_files/js/lib/vendor/ui.tabs.closable",
         "Library" :             "/webwork2_files/js/lib/webwork/models/Library",
         "LibraryList" :         "/webwork2_files/js/lib/webwork/models/LibraryList",
-        "ProblemList" :         "/webwork2_files/js/lib/webwork/models/ProblemList",
+        "ProblemList" :         "/webwork2_files/js/lib/webwork/ProblemList",
         "Problem" :         "/webwork2_files/js/lib/webwork/models/Problem",
         "SetList" :         "/webwork2_files/js/lib/webwork/models/SetList",
         "Set" :         "/webwork2_files/js/lib/webwork/models/Set",
