@@ -92,8 +92,7 @@ $WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgTransparent -D120 -q -depth";
 
 # If true, don't delete temporary files
 #
-$WeBWorK::PG::ImageGenerator::PreserveTempFiles = 0;
-
+$WeBWorK::PG::ImageGenerator::PreserveTempFiles = 0; 
 # TeX to prepend to equations to be processed.
 #
 $WeBWorK::PG::ImageGenerator::TexPreamble = <<'EOF';
