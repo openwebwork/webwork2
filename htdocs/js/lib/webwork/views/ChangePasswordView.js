@@ -1,4 +1,5 @@
-define(['Backbone', 'underscore'], function(Backbone, underscore){
+define(['Backbone', 'underscore'], 
+  function(Backbone, underscore){
 
   var ChangePasswordView = Backbone.View.extend({
       tagName: "div",

@@ -4,6 +4,7 @@
 use WebworkSOAP;
 use WebworkSOAP::WSDL;
 
+
 BEGIN {
     $main::VERSION = "2.4.9";
     use Cwd;
@@ -117,6 +118,7 @@ package WebworkXMLRPC;
 use base qw(WebworkWebservice); 
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 use WeBWorK::Debug;
+use JSON;
 
 sub format_hash_ref {
 	my $hash = shift;
@@ -355,10 +357,16 @@ sub getProblemDirectories {
 	return $self->do(WebworkWebservice::LibraryActions::getProblemDirectories($self,$in));
 }
 
+sub buildBrowseTree {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::LibraryActions::buildBrowseTree($self,$in));
+}	
+
+
 
 sub listSets {
-    
-    debug("in listSets");
   my $class = shift;
   my $in = shift;
   my $self = $class->initiate_session($in);
@@ -366,7 +374,6 @@ sub listSets {
 }
 
 sub listSetProblems {
-    debug("in listSetProblems");
 	my $class = shift;
   	my $in = shift;
   	my $self = $class->initiate_session($in);
@@ -378,6 +385,13 @@ sub createNewSet{
   	my $in = shift;
   	my $self = $class->initiate_session($in);
   	return $self->do(WebworkWebservice::SetActions::createNewSet($self, $in));
+}
+
+sub deleteProblemSet{
+	my $class = shift;
+  	my $in = shift;
+  	my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::deleteProblemSet($self, $in));
 }
 
 sub reorderProblems{

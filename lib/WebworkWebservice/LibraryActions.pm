@@ -261,61 +261,65 @@ sub listLib {
 }
 
 sub searchLib {    #API for searching the NPL database
+
 	my $self = shift;
 	my $rh = shift;
 	my $out = {};
 	my $ce = $self->{ce};
-	my $subcommand = $rh->{subcommand};
-		'getDBTextbooks' eq $subcommand && do {
-			$self->{library_subjects} = $rh->{library_subjects};
-			$self->{library_chapters} = $rh->{library_chapters};
-			$self->{library_sections} = $rh->{library_sections};
-			$self->{library_textchapter} = $rh->{library_textchapter};
-			my @textbooks = WeBWorK::Utils::ListingDB::getDBTextbooks($self);
-			$out->{ra_out} = \@textbooks;
-			return($out);		
-		};
-		'getAllDBsubjects' eq $subcommand && do {
-			my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
-			$out->{ra_out} = \@subjects;
-			$out->{text} = encode_base64("Subjects loaded.");
-			return($out);		
-		};
-		'getAllDBchapters' eq $subcommand && do {
-			$self->{library_subjects} = $rh->{library_subjects};
-			my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
-			$out->{ra_out} = \@chaps;
-                        $out->{text} = encode_base64("Chapters loaded.");
+	my $subcommand = $rh->{command};
+	
+	'getDBTextbooks' eq $subcommand && do {
+		$self->{library_subjects} = $rh->{library_subjects};
+		$self->{library_chapters} = $rh->{library_chapters};
+		$self->{library_sections} = $rh->{library_sections};
+		$self->{library_textchapter} = $rh->{library_textchapter};
+		my @textbooks = WeBWorK::Utils::ListingDB::getDBTextbooks($self);
+		$out->{ra_out} = \@textbooks;
+		return($out);		
+	};
+	'getAllDBsubjects' eq $subcommand && do {
+		my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
+		$out->{ra_out} = \@subjects;
+		$out->{text} = encode_base64("Subjects loaded.");
+		return($out);		
+	};
+	'getAllDBchapters' eq $subcommand && do {
+		$self->{library_subjects} = $rh->{library_subjects};
+		my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
+		$out->{ra_out} = \@chaps;
+        $out->{text} = encode_base64("Chapters loaded.");
 
-			return($out);		
-		};
-		'getDBListings' eq $subcommand && do {
-			my $templateDir = $self->{ce}->{courseDirs}->{templates};
-			$self->{library_subjects} = $rh->{library_subjects};
-			$self->{library_chapters} = $rh->{library_chapters};
-			$self->{library_sections} = $rh->{library_sections};
-			$self->{library_keywords} = $rh->{library_keywords};
-			$self->{library_textbook} = $rh->{library_textbook};
-			$self->{library_textchapter} = $rh->{library_textchapter};
-			$self->{library_textsection} = $rh->{library_textsection};
-			my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
-			my @output = map {$templateDir."/Library/".$_->{path}."/".$_->{filename}} @listings;
-			#change the hard coding!!!....just saying
-			$out->{ra_out} = \@output;
-			return($out);
-		};
-		'getSectionListings' eq $subcommand && do {
-			$self->{library_subjects} = $rh->{library_subjects};
-			$self->{library_chapters} = $rh->{library_chapters};
-			$self->{library_sections} = $rh->{library_sections};
+		return($out);		
+	};
+	'getDBListings' eq $subcommand && do {
 
-			my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self);
-			$out->{ra_out} = \@section_listings;
-            $out->{text} = encode_base64("Sections loaded.");
+		my $templateDir = $self->{ce}->{courseDirs}->{templates};
+		$self->{library_subjects} = $rh->{library_subjects};
+		$self->{library_chapters} = $rh->{library_chapters};
+		$self->{library_sections} = $rh->{library_sections};
+		$self->{library_keywords} = $rh->{library_keywords};
+		$self->{library_textbook} = $rh->{library_textbook};
+		$self->{library_textchapter} = $rh->{library_textchapter};
+		$self->{library_textsection} = $rh->{library_textsection};
 
-			return($out);
-		};
-	# else
+		debug(to_json($rh));
+		my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
+		my @output = map {$templateDir."/Library/".$_->{path}."/".$_->{filename}} @listings;
+		#change the hard coding!!!....just saying
+		$out->{ra_out} = \@output;
+		return($out);
+	};
+	'getSectionListings' eq $subcommand && do {
+		$self->{library_subjects} = $rh->{library_subjects};
+		$self->{library_chapters} = $rh->{library_chapters};
+		$self->{library_sections} = $rh->{library_sections};
+
+		my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self);
+		$out->{ra_out} = \@section_listings;
+        $out->{text} = encode_base64("Sections loaded.");
+
+		return($out);
+	};
 	$out->{error}="Unrecognized command $subcommand";
 	return( $out );
 }
@@ -374,6 +378,37 @@ sub getProblemDirectories {
 	$out->{ra_out} = \@all_problem_directories;
     $out->{text} = encode_base64("Problem Directories loaded.");
 
+	return($out);
+}
+
+##
+#  This subroutines outputs the entire library based on Subjects, chapters and sections. 
+#
+#  The output is an array in the form "Subject/Chapter/Section"
+##  
+
+sub buildBrowseTree {
+	my $self = shift;
+	my $rh = shift;
+	my $out = {};
+	my $ce = $self->{ce};
+	my @tree = ();
+	my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
+	foreach my $sub (@subjects) {
+		$self->{library_subjects} = $sub;
+		push(@tree,"Subjects/" . $sub);
+		my @chapters = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
+		foreach my $chap (@chapters){
+			$self->{library_chapters} = $chap; 
+			push(@tree, "Subjects/" .$sub . "/" . $chap);
+			my @sections = WeBWorK::Utils::ListingDB::getAllDBsections($self);
+			foreach my $sect (@sections){
+				push(@tree, "Subjects/" .$sub . "/" . $chap . "/" . $sect);
+			}
+		}
+	}
+	$out->{ra_out} = \@tree;
+	$out->{text} = encode_base64("Subjects, Chapters and Sections loaded.");
 	return($out);
 }
 

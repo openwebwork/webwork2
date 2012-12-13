@@ -87,6 +87,9 @@ sub createNewSet{
 	my $in = shift;
   	my $db = $self->{db};
   	my $out;
+
+
+
 	if ($in->{new_set_name} !~ /^[\w .-]*$/) {
 		$out->{text} = "need a different name";#not sure the best way to handle and error
 	} else {
@@ -98,7 +101,8 @@ sub createNewSet{
 			#debug("new value of local_sets is ", $r->param('local_sets'));
 			my $newSetRecord = $db->getGlobalSet($newSetName);
 			if (defined($newSetRecord)) {
-	            $out->{text} = encode_base64("Failed to create set, you may need to try another name.");
+	            $out->{out}=encode_base64("Failed to create set, you may need to try another name."),
+	            $out->{ra_out} = {'success' => 'false'};
 			} else {			# Do it!
 				# DBFIXME use $db->newGlobalSet
 				$newSetRecord = $db->{set}->{record}->new();
@@ -124,6 +128,26 @@ sub createNewSet{
 				}
 			}
 	}
+}
+
+sub deleteProblemSet {
+	my $self = shift;
+  	my $params = shift;
+	my $db = $self->{db};
+	my $setID = $params->{set_id};
+	my $result = $db->deleteGlobalSet($setID);
+
+		# check the result 
+	debug("in deleteProblemSet");
+	debug("deleted set:  $setID");
+	debug($result);
+
+	my $out->{text} = encode_base64("Deleted Problem Set " . $setID);
+
+
+
+	return $out; 
+
 }
 
 

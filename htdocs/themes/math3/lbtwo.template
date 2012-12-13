@@ -56,12 +56,14 @@
 		<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
 	</ul>
 	</div><div class="span3"><!--#loginstatus--></div>
-	    <div class="span2"><button class="btn" id="help-link">Help</button></div>
+	    <div class="span2"><button class="btn" id="help-link">Help</button>
+	    	<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2-dev/issues/new">Bugs!</a>
+	    </div>
                 
             <div class="nav-collapse">
               <ul class="nav pull-right">
 		<li class="dropdown" id="webwork_navigation">
-                  <a href="#webwork_navigation" class="dropdown-toggle" data-toggle="dropdown">Menu <b class="caret"></b></a>
+                  <a href="#webwork_navigation" target="_blank" class="dropdown-toggle" data-toggle="dropdown">Menu <b class="caret"></b></a>
                   <ul class="dropdown-menu">
                     <!--#if can="links"-->
                         <!--#links-->

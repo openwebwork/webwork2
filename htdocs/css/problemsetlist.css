@@ -31,6 +31,7 @@ float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size
 
 #prob-list {overflow: scroll;}
 
+#num-problems {margin-left: 10px;}
 
 
 

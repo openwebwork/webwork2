@@ -427,7 +427,7 @@ sub body {
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	
-	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/problemsetlist3.html');  
+	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/homework-manager.html');  
 	print $template->output();
 	
 	print $self->hidden_authen_fields;
@@ -460,34 +460,6 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
-
-
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.2.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/json2.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/underscore.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone-validation.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.custom/js/jquery-ui-1.9.0.custom.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery.ui.touch-punch.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/xdate.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/FileSaver.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/BlobBuilder.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.js"}), CGI::end_script();
-
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-ui-for-classlist3/js/jquery-ui-1.8.21.custom.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK-ui.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/teacher.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/User.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/ProblemSet.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/util.js"}), CGI::end_script();
-#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/fs.js"}), CGI::end_script();
-#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/labs.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/problemsetlist.js"}), CGI::end_script();
 	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/lib/vendor/components/requirejs/require.js"></script>!;
 
 

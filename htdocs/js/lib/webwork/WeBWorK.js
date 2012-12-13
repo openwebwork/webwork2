@@ -1,4 +1,6 @@
 
+/// THIS SHOULD BE DELETED
+
 /*
     structure styled after Three.js..kind of
 

@@ -57,31 +57,7 @@ var util = {
      }
 }
 
-function parseWWDate(str) {
-	// this parses webwork dates in the form MM/DD/YYYY at HH:MM AM/PM TMZ
-	var wwDateRE = /(\d?\d)\/(\d?\d)\/(\d{4})\sat\s(\d?\d):(\d\d)([aApP][mM])\s([a-zA-Z]{3})/;
-    var parsedDate = wwDateRE.exec(str);
 
-
-
-    if (parsedDate) {
-        var year = parsedDate[3];
-        var month = (parseInt(parsedDate[1],10)<10)?("0"+parseInt(parsedDate[1],10)):parseInt(parsedDate[1],10);
-        var dayOfMonth = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
-    
-        var hours = (/[aA][mM]/.test(parsedDate[6],10))? (parseInt(parsedDate[4],10)):(parseInt(parsedDate[4],10)+12);
-        hours = (hours<10)?("0"+hours):hours;
-        
-        var dateTime = year+"-"+month+"-"+dayOfMonth+"T"+hours+":"+parsedDate[5];
-
-		var date = new XDate(dateTime);
-        // Do we need to include the time zone?
-                
-        return date;
-	}
-}
-
-XDate.parsers.push(parseWWDate);
 
 return util;
 
