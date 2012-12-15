@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', 'ProblemView'], function(Backbone, _, ProblemView){
+define(['Backbone', 'underscore', './ProblemView'], function(Backbone, _, ProblemView){
 	//##The library View
     var LibraryView = Backbone.View.extend({
         template:_.template($('#Library-template').html()),
