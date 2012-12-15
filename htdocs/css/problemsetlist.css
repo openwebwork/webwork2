@@ -27,11 +27,16 @@ float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size
 
 .list {list-style: none;}
 
-#lib-problem-viewer { overflow: scroll;}
+.lib-problem-viewer { overflow: scroll;}
 
-#prob-list {overflow: scroll;}
+.prob-list {overflow: scroll;}
 
-#num-problems {margin-left: 10px;}
+.num-problems {margin-left: 10px;}
+
+.view-pane {display: none;}
+.view-header {display: none; font-size:125%; font-weight: bold;}
+
+.active {display: block;}
 
 
 
