@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', 'SetView'], function(Backbone, _, SetView){
+define(['Backbone', 'underscore', './SetView'], function(Backbone, _, SetView){
 	//##The Set view for the setlists
     var SetNameView = Backbone.View.extend({
         tagName:"li",
