@@ -1,0 +1,215 @@
+#!perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/global.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+# This file is used to set up the default WeBWorK course environment for all
+# requests. Values may be overwritten by the course.conf for a specific course.
+# All package variables set in this file are added to the course environment.
+# If you wish to set a variable here but omit it from the course environment,
+# use the "my" keyword. The $webwork_dir variable is set in the WeBWorK Apache
+# configuration file (webwork.apache-config) and is available for use here. In
+# addition, the $courseName variable holds the name of the current course.
+
+# This file is used to set up the basic paths and URLs specific to your
+# installation of WeBWorK, with the exception of the $webwork_dir variable which
+# is set in the WeBWorK Apache configuration file (webwork.apache2-config).
+# Any customization of global WeBWorK settings should be done in localOverrides.conf. 
+
+################################################################################
+# site.conf  -- this file
+################################################################################
+
+# site.conf includes all of the information specific to your server required
+# to run WeBWorK.
+
+################################################################################
+# Seed variables
+################################################################################
+
+$flash_root = "/Volumes/WW_test";
+
+# Set these variables to correspond to your configuration.  It is not
+# recommended to change any of the settings in this file once your
+# web server has been initially configured.
+
+# URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
+# that using "" may not work so we suggest sticking with "/webwork2".
+$webwork_url         = "/webwork2";
+$server_root_url   = "http://127.0.0.1";   # e.g.  http://webwork.yourschool.edu or http://localhost
+
+# The following two variables must match the user ID and group ID respectively
+# under which apache is running.
+# In the apache configuration file (often called httpd.conf) you will find
+# User wwadmin   --- this is the $server_userID -- of course it may be wwhttpd or some other name
+# Group wwdata   --- this is the $server_groupID -- this will have different names also
+
+$server_userID     = "_www";
+$server_groupID    = "_www";
+
+
+################################################################################
+# Paths to external programs 
+################################################################################
+
+# These applications are often found in /bin, but sometimes in /usr/bin 
+# or even in /opt/local/bin.
+# You can use "which tar"  for example to find out where the "tar" program is located
+
+####################################################
+# system utilities
+####################################################
+$externalPrograms{mv}    = "/bin/mv";
+$externalPrograms{cp}    = "/bin/cp";
+$externalPrograms{rm}    = "/bin/rm";
+$externalPrograms{mkdir} = "/bin/mkdir";
+$externalPrograms{tar}   = "/bin/tar";
+$externalPrograms{gzip}  = "/bin/gzip";
+
+####################################################
+# equation rendering/hardcopy utiltiies
+####################################################
+$externalPrograms{latex}    ="$flash_tex/latex";
+$externalPrograms{pdflatex} ="$flash_tex/pdflatex --shell-escape";
+$externalPrograms{dvipng}   ="$flash_tex/dvipng";
+$externalPrograms{tth}      ="/usr/texbin/tth";
+
+####################################################
+# NetPBM - basic image manipulation utilities
+# Most sites only need to configure $netpbm_prefix.
+####################################################
+my $netpbm_prefix = "$flash_root/opt/local/bin";
+$externalPrograms{giftopnm} = "$netpbm_prefix/giftopnm";
+$externalPrograms{ppmtopgm} = "$netpbm_prefix/ppmtopgm";
+$externalPrograms{pnmtops}  = "$netpbm_prefix/pnmtops";
+$externalPrograms{pnmtopng} = "$netpbm_prefix/pnmtopng";
+$externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
+
+####################################################
+# url checker
+####################################################
+
+$externalPrograms{checkurl} = "$flash_root/opt/local/bin/lwp-request -d -mHEAD "; # or "/usr/local/bin/w3c -head "
+
+####################################################
+# image conversions utiltiies
+# the source file is given on stdin, and the output expected on stdout.
+####################################################
+
+$externalPrograms{gif2eps} = "$externalPrograms{giftopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{png2eps} = "$externalPrograms{pngtopnm} | $externalPrograms{ppmtopgm} | $externalPrograms{pnmtops} -noturn 2>/dev/null";
+$externalPrograms{gif2png} = "$externalPrograms{giftopnm} | $externalPrograms{pnmtopng}";
+
+####################################################
+# mysql clients
+####################################################
+
+$externalPrograms{mysql}     ="$flash_root/opt/local/lib/mysql5/bin/mysql";
+$externalPrograms{mysqldump} ="$flash_root/opt/local/lib/mysql5/bin/mysqldump";
+
+
+####################################################
+# End paths to external utilities.
+####################################################
+
+################################################################################
+# Database options
+################################################################################
+
+
+# Standard permissions command used to initialize the webwork database
+# GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
+# where webworkWrite and passwordRW must match the corresponding variables in the next section.
+
+################################################################################
+# these variables are used by database.conf. we define them here so that editing
+# database.conf isn't necessary.
+
+# You must initialize the database and set the password for webworkWrite.
+# Uncomment the $database_password line and replace 'passwordRW' by the actual password used in the GRANT command above
+################################################################################
+
+# The database dsn is the path to the WeBWorK database which you have created.
+# Unless you have given the database a different name or the database resides on another
+# server you do not need to change this first value.
+# The format is dbi:mysql:[databasename] for databases on the local machine
+# For a remote database the format is dbi:mysql:[databasename]:[hostname]:[port]
+$database_dsn ="dbi:mysql:webwork";
+
+# The following two variables must match the GRANT statement run on the mysql server as described above.
+$database_username ="webworkWrite";
+$database_password ="zLZAmq";  
+
+#################################################################################
+# These variables describe the locations of various components of WeBWorK on your
+# server.  You may use the defaults unless you have things in different places.
+#################################################################################
+
+# Root directory of PG.
+$pg_dir              = "$flash_root/opt/webwork/pg";
+
+# URL and path to htdocs directory.
+# Uncomment the second line below when using lighttpd to serve static images
+$webwork_htdocs_url  = "/webwork2_files";
+$webwork_htdocs_dir  = "$webwork_dir/htdocs";
+
+# URL and path to courses directory.
+$webwork_courses_url = "/webwork2_course_files";
+$webwork_courses_dir = "$flash_root/opt/webwork/courses"; #(a typical place to put the course directory
+
+
+################################################################################
+# Mail settings
+################################################################################
+
+# The following directives need to be configured in order for your webwork
+# server to be able to send mail.
+
+# Mail sent by the PG system and the mail merge and feedback modules will be
+# sent via this SMTP server.  localhost may work if your server is capable
+# of sending email, otherwise type the name of your School's outgoing email
+# server.
+$mail{smtpServer}            = '';
+
+# When connecting to the above server, WeBWorK will send this address in the
+# MAIL FROM command. This has nothing to do with the "From" address on the mail
+# message. It can really be anything, but some mail servers require it contain
+# a valid mail domain, or at least be well-formed.
+$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
+
+# Seconds to wait before timing out when connecting to the SMTP server.
+$mail{smtpTimeout}           = 30;
+
+################################################################################
+#Time Zone
+################################################################################
+
+# Set the default timezone of courses on this server. To get a list of valid
+# timezones, run:
+# 
+#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::all_names'
+# 
+# To get a list of valid timezone "links" (deprecated names), run:
+# 
+#     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
+# 
+# If left blank, the system timezone will be used. This is usually what you
+# want. You might want to set this if your server is NOT in the same timezone as
+# your school. If just a few courses are in a different timezone, set this in
+# course.conf for the affected courses instead.
+# 
+$siteDefaults{timezone} = "America/New_York";
+
+1; #final line of the file to reassure perl that it was read properly.
