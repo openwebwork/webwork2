@@ -1,5 +1,4 @@
-define(['Backbone', 'underscore', 'LibraryListView','SetListView','LibraryList', 
-    'SetList'], function(Backbone, _, LibraryListView, SetListView, LibraryList, SetList){
+define(['Backbone', 'underscore', './LibraryListView', './SetListView', '../../lib/webwork/teacher/LibraryList', '../../lib/webwork/teacher/SetList'], function(Backbone, _, LibraryListView, SetListView, LibraryList, SetList){
 	//Since many of the views we'll define will all want to post alerts and messages to the same place
     //we define a global template and alert function for them.
     var alert_template = _.template('<div class="alert <%= classes %> fade in"><a class="close" data-dismiss="alert" href="#">×</a><%= message %></div>');
@@ -14,8 +13,8 @@ define(['Backbone', 'underscore', 'LibraryListView','SetListView','LibraryList',
     };
 	//The APP!! yay!!
     var LibraryBrowser = Backbone.View.extend({
-        el:$('#app_box'),
-
+        //el:$('#app_box'),
+        tagName:'div',
         events:{
             "click #undo_button":"undo",
             "click #redo_button":"redo",
@@ -106,6 +105,7 @@ define(['Backbone', 'underscore', 'LibraryListView','SetListView','LibraryList',
         },
 
         render: function(){
+            console.log(this.el);
             var homeworkSetsView = new SetListView({model: this.homeworkSets});
             this.$("#homework_sets_container").append(homeworkSetsView.render().el);
 

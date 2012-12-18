@@ -1,5 +1,5 @@
 define(['Backbone', 'underscore'], function(Backbone, _){
-    var Closeable = Backbone.View.extend({
+    Closeable = Backbone.View.extend({
         className: "closeablePane",
         text: "",
         display: "none",
@@ -47,12 +47,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
         open: function (){
     	this.isOpen = true;
             var self = this;
-            this.$el.fadeIn("slow", function () { self.$el.css("display","block"); });
-
-            if (this.$el.height()>0.3*screen.height) {
-                this.$el.css("overflow","scroll");
-                this.$el.height(0.3*screen.height);
-            }
+            this.$el.fadeIn("slow", function () { self.$el.css("display","block"); })
         }
     });
     return Closeable;

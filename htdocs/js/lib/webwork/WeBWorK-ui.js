@@ -3,8 +3,6 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate){
 
 var ui ={};
 
-/* In conjuction with the ui.ChangePasswordView, these Views provide basic ui interface for a password change. */
-
 ui.ChangePasswordRowView = Backbone.View.extend({
 	tagName: "tr",
 	className: "CPuserRow",
@@ -19,7 +17,7 @@ ui.ChangePasswordRowView = Backbone.View.extend({
 	render: function(){
             this.$el.html("<td> " + this.model.attributes.first_name + "</td><td>" + this.model.attributes.last_name + "</td><td>"
                           + this.model.attributes.user_id +" </td><td><input type='text' size='10' class='newPass'></input></td>");
-        
+
 	    return this; // for chainable calls, like .render().el
 	},
        updatePassword: function(evt){  
@@ -29,6 +27,31 @@ ui.ChangePasswordRowView = Backbone.View.extend({
 	}
     });
 
+
+ui.EmailStudentsView = Backbone.View.extend({
+	tagName: "div",
+	className: "emailDialog",
+	initialize: function() { _.bindAll(this,"render"); this.render(); return this;},
+   render: function ()
+   {
+        var self = this; 
+        this.$el.html(_.template($("#emailStudentTemplate").html(),this.model));
+	this.model.each(function (user){
+	$("#emailStudentList",self.$el).append(user.attributes.first_name + " " + user.attributes.last_name + ",");	
+		});
+	
+	
+        this.$el.dialog({autoOpen: false, modal: true, title: "Password Changes",
+			width: (0.75*window.innerWidth), height: (0.75*window.innerHeight),
+                        buttons: {"Send Email": function () {self.sendEmail(); self.$el.dialog("close")},
+                                  "Cancel": function () {self.$el.dialog("close");}}
+                        });
+   },
+   sendEmail: function ()
+   {
+	
+   }
+});
 
 ui.ChangePasswordView = Backbone.View.extend({
     tagName: "div",
@@ -48,7 +71,6 @@ ui.ChangePasswordView = Backbone.View.extend({
                         buttons: {"Save New Passwords": function () {self.savePasswords(); self.$el.dialog("close")},
                                   "Cancel": function () {self.$el.dialog("close");}}
                         });
-
    },
    savePasswords: function () {
         this.model.each(function(user) {user.change();});
@@ -57,93 +79,173 @@ ui.ChangePasswordView = Backbone.View.extend({
    
 });
 
-/* 
-This is a table row that contains a key-value pair generally for a set of properties.  The property description is passed in 
-the description field and the value in the value field.  For example:
+/* This is a class of closeable Divs that take functionality from Boostrap-alert.  See http://twitter.github.com/bootstrap/javascript.html#alerts */
 
-new ui.EditableRow({description: "How long is the piece of string": value: "6 inches"});
-*/
-
-ui.EditableRow = Backbone.View.extend({
-    tagName: "tr",
-    initialize: function () {
-        _.bindAll(this, 'render');
-        _.extend(this,this.options);
-        this.render();
+ui.Closeable = Backbone.View.extend({
+    className: "closeablePane",
+    text: "",
+    display: "none",
+    initialize: function(){
+	var self = this; 
+	_.bindAll(this, 'render','setHTML','close','clear','appendHTML','open'); // every function that uses 'this' as the current object should be in here
+        if (this.options.text !== undefined) {this.text = this.options.text;}
+        if (this.options.display !== undefined) {this.display = this.options.display;}
+	this.$el.addClass("alert");
+	_(this.options.classes).each(function (cl) {self.$el.addClass(cl);});
+	
+	this.render();
+	
+	this.isOpen = false; 
+        return this;
     },
-    render: function () {
-         this.$el.append("<td class='srv-name'> " + this.model["descriptions"][this.property] + "</td> ");
-         var ec = new ui.EditableCell({model: this.model, property: this.property});
-
-         this.$el.append(ec.render().el);
+    events: {
+	'click button.close': 'close'
+    },
+    render: function(){
+            this.$el.html("<div class='row-fluid'><div class='span11 closeable-text'></div><div class='span1 pull-right'>" +
+                          " <button type='button' class='close'>&times;</button></div></div>");
+            this.$(".closeable-text").html(this.text);
+            this.$el.css("display",this.display);
+            
+	    return this; // for chainable calls, like .render().el
+	},
+    close: function () {
+	this.isOpen = false; 
+        var self = this;
+        this.$el.fadeOut("slow", function () { self.$el.css("display","none"); });
+    },
+    setHTML: function (str) {
+        this.$(".closeable-text").html(str);
+        if (!this.isOpen){this.open();}
+    },
+    clear: function () {
+	this.$(".closeable-text").html("");
+    },
+    appendHTML: function(str) {
+	this.$(".closeable-text").append(str);
+	if (!this.isOpen){this.open();}
+	
+    },
+    open: function (){
+	this.isOpen = true;
+        var self = this;
+        this.$el.fadeIn("slow", function () { self.$el.css("display","block"); })
     }
-
 });
 
 
-/* 
-  This view displays all key/value pairs in an object.  There is no nesting of properties and the descriptions are 
-  listed in a descriptions field of the object.  For example, a small propertylist would be
-
-  var PropertyList = {key1: "value1", key2: "value2", key3: "value3", descriptions:
-    key1: "This describes key1", key2: "This describes key2", key3: "This describes key3"}}; 
-*/
-    
-    ui.PropertyListView = Backbone.View.extend({
-        className: "settings-view",
-        initialize: function () {
+ui.CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
+        tagName: "td",
+        className: "calendar-day",
+        initialize: function (){
             _.bindAll(this, 'render');  // include all functions that need the this object
-            _.extend(this, this.options);
+	    var self = this;
+	    _.extend(this,this.options);
             this.render();
+            return this;
         },
         render: function () {
             var self = this;
-            var props = _(this.model["descriptions"]).map(function (_value,_key) {return _key;});  // array of all of the keys
-            this.$el.html("<table class='table bordered-table'><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody></tbody></table>");
-            var tab = this.$("table");
-            if (this.showProperties){
-                props = _(props).intersection(this.showProperties);
-
-            }
-             _(props).each(function(_prop){
-                var row = new ui.EditableRow({model: self.model, property: _prop} ); 
-                //description: self.model.get("descriptions")[_prop], 
-                  //      key: _prop , value: self.mdoel.get(_prop)});
-                tab.append(row.el);
-            });
-           
+            var str = (this.model.getDate()==1)? this.model.toString("MMM dd") : this.model.toString("dd");
+            this.$el.html(str);
+            this.$el.attr("id","date-" + this.model.toString("yyyy-MM-dd"));
+            if (this.calendar.date.getMonth()===this.model.getMonth()){this.$el.addClass("this-month");}
+            if (this.calendar.date.diffDays(this.model)===0){this.$el.addClass("today");}
+	    
+	    var set = this.calendar.collection.find(function (model) { return model.get("set_id")==="Demo"});
+	    
+	    var openDate = new XDate(set.get("open_date"));
+	    var dueDate = new XDate(set.get("due_date"));
+	    if ((openDate.diffDays(this.model)>=0) && (dueDate.diffDays(this.model)<=0))
+	    {
+		if ((this.model.diffDays(dueDate)<3) && (this.model.diffDays(dueDate) >2))  // This is hard-coded.  We need to lookup the reduced credit time.  
+		{
+			this.$el.append("<div class='assign assign-open assign-set-name'> <span class='pop' data-content='test' rel='popover'>Demo</span></div>");
+			
+		} else
+		if (Math.abs(this.model.diffDays(dueDate))<3)
+		{
+			this.$el.append("<div class='assign assign-reduced-credit'></div>");
+		} else
+		{
+			this.$el.append("<div class='assign assign-open'></div>");
+		}
+		
+		
+	    }
+	            return this;
         }
+    });
+      
+      
+ui.CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
+        tagName: "tr",
+        className: "calendar-row",
+        initialize: function (){
+            _.bindAll(this, 'render');  // include all functions that need the this object
+            _.extend(this,this.options);
+
+            this.render();
+            return this; 
+        },
+        render: function () {
+            var self = this;
+            _(this.week).each(function(date) {
+                var calendarDay = new ui.CalendarDayView({model: date, calendar: self.calendar});
+                self.$el.append(calendarDay.el);
+            });
+            return this;
+            }
         });
+    
+ui.CalendarView = Backbone.View.extend({
+        tagName: "table",
+        className: "calendar",
+        initialize: function (){
+            _.bindAll(this, 'render');  // include all functions that need the this object
+	    var self = this;
+            var theDate = this.date;; 
+            if (this.options.date) {theDate = this.options.date;}
+
+            if (! theDate) { theDate = new XDate();}
+            this.date = new XDate(theDate.getFullYear(),theDate.getMonth(),theDate.getDate());  // For the calendar, ignore the time part of the date object.
+            
+            this.render();
+            return this;
+            
+        },
+        render: function () {
+            // The collection is a array of rows containing the day of the current month.
+            
+            
+            var firstOfMonth = new XDate(this.date.getFullYear(),this.date.getMonth(),1);
+            var firstWeekOfMonth = firstOfMonth.clone().addDays(-1*firstOfMonth.getDay());
+            
+            this.$el.html(_.template($("#calendarHeader").html()));
+                        
+            for(var i = 0; i<6; i++){ var theWeek = [];
+                for(var j = 0; j < 7; j++){
+                 theWeek.push(firstWeekOfMonth.clone().addDays(j+7*i));
+                }
+                var calendarWeek = new ui.CalendarRowView({week: theWeek, calendar: this});
+                this.$el.append(calendarWeek.el);                
+            }
+            return this;   
+        }
+    });
+    
 
 
+/* This is the class webwork.WebPage that sets the framework for all webwork webpages */
 
-/* This is the ui for sending email.  As of 10/2012, it's a shell that doesn't do anything.  */
-
-ui.EmailStudentsView = Backbone.View.extend({
+ui.WebPage = Backbone.View.extend({
     tagName: "div",
-    className: "emailDialog",
-    initialize: function() { _.bindAll(this,"render"); this.render(); return this;},
-   render: function ()
-   {
-        var self = this; 
-        this.$el.html(_.template($("#emailStudentTemplate").html(),this.model));
-    this.model.each(function (user){
-    $("#emailStudentList",self.$el).append(user.attributes.first_name + " " + user.attributes.last_name + ","); 
-        });
-    
-    
-        this.$el.dialog({autoOpen: false, modal: true, title: "Password Changes",
-            width: (0.75*window.innerWidth), height: (0.75*window.innerHeight),
-                        buttons: {"Send Email": function () {self.sendEmail(); self.$el.dialog("close")},
-                                  "Cancel": function () {self.$el.dialog("close");}}
-                        });
-   },
-   sendEmail: function ()
-   {
-    
-   }
-});
-
+    className: "webwork-container",
+    initialize: function () {
+//         this.announceView = new ui.CloseableDiv({border: "2px solid darkgreen", background: "lightgreen"});
+//         this.helpView = new ui.CloseableDiv();
+        },
+    });
 
 return ui;
 

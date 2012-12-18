@@ -25,12 +25,6 @@ require.config({
         "jquery-ui": "/webwork2_files/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min",
         "touch-pinch": "/webwork2_files/js/lib/vendor/jquery/jquery.ui.touch-punch",
         "tabs": "/webwork2_files/js/lib/vendor/ui.tabs.closable",
-        "Library" :             "/webwork2_files/js/lib/webwork/models/Library",
-        "LibraryList" :         "/webwork2_files/js/lib/webwork/models/LibraryList",
-        "ProblemList" :         "/webwork2_files/js/lib/webwork/ProblemList",
-        "Problem" :         "/webwork2_files/js/lib/webwork/models/Problem",
-        "SetList" :         "/webwork2_files/js/lib/webwork/models/SetList",
-        "Set" :         "/webwork2_files/js/lib/webwork/models/Set",
         //this is important:
         "config":"/webwork2_files/js/apps/LibraryBrowser/config",
     },
@@ -63,6 +57,6 @@ require.config({
 require(['LibraryBrowser', 'jquery-ui', 'touch-pinch', 'tabs'], function(LibraryBrowser){    
 
     //instantiate an instance of our app.
-    var App = new LibraryBrowser;
+    var App = new LibraryBrowser({el: "#app_box"});
 
 });

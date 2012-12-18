@@ -1,6 +1,4 @@
 
-/// THIS SHOULD BE DELETED
-
 /*
     structure styled after Three.js..kind of
 
@@ -104,25 +102,6 @@ define(['Backbone', 'underscore'], function(Backbone, _){
      * @default ""
      */
     webwork.webserviceURL = "";
-
-  /*  webwork.settings = Backbone.Model.extend({ 
-        values: {
-            time_assign_due: "11:59PM",
-            assign_open_prior_to_due: "1 week",
-            answers_open_after_due: "2 days",
-            reduced_credit: true,
-            reduced_credit_time: "3 days"
-        },
-        descriptions: {
-            time_assign_due: "Time that the Assignment is Due",
-            assign_open_prior_to_due: "Prior time that the Assignment is Open",
-            answers_open_after_due: "Time after Due Date that Answers are Open",
-            reduced_credit: "Assignment has Reduced Credit",
-            reduced_credit_time: "Length of Time for Reduced Credit"
-        }});
-
-    */
-
     
     return webwork;
 });
