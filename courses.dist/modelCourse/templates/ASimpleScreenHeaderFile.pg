@@ -1,0 +1,27 @@
+##ASimpleScreenHeaderFile.pg
+
+DOCUMENT();
+
+loadMacros(
+"PG.pl",
+"PGbasicmacros.pl",
+
+);
+
+BEGIN_TEXT
+$BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
+$PAR
+Here's the list of 
+\{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"functions and symbols") \}
+ that WeBWorK understands.
+END_TEXT
+
+
+# Uncomment and edit the lines below if this course has a web page. Note that this is comment in Perl mode.
+#BEGIN_TEXT
+#$PAR 
+#See the course web page for information \{ htmlLink(qq!http://yoururl/yourcourse!,"your course name") \}
+#END_TEXT
+
+ENDDOCUMENT();
+

@@ -1,0 +1,41 @@
+DOCUMENT();
+loadMacros( "PGbasicmacros.pl",
+	        "PGauxiliaryFunctions.pl",
+	        "PGchoicemacros.pl",
+	        "PGanswermacros.pl",
+);
+
+TEXT(beginproblem());
+
+$showPartialCorrectAnswers = 1;
+$showHint =0;
+
+$fx = random( 2.1, 6.0   , 0.1)   ; 
+$fy = random( 3.1, 8.0   , 0.1)   ;   
+$ansxy = sqrt($fx * $fx  + $fy * $fy); 
+$anscm = $ansxy*100;  
+
+BEGIN_TEXT
+This problem demonstrates how WeBWorK handles 
+numerical answers involving units.  WeBWorK can handle all units that
+are used in elementary physics courses.
+See \{ htmlLink("http://webwork.maa.org/wiki/Units","answers with units") \}  
+for more details. $PAR
+
+Two perpendicular sides of a triangle are $fx m and
+$fy m long respectively.  
+What is the length of the third side of the triangle? $BR$BR
+You can answer this in terms of m's, cm's, km's, in's, ft, etc. but you must enter the units. $BR$BR
+Check "Show Hint" and then "Submit Answer" if you don't remember the Pythagorean theorem.
+END_TEXT
+
+HINT(EV3(<<'EOT'));
+Remembering the Pythagorean theorem \( A^2 +B^2 = C^2 \), you can enter
+sqrt(${fx}${CARET}2 + ${fy}${CARET}2) m or  \{spf($ansxy, "%0.2f" )\} m or  \{spf($anscm, "%0.2f" )\} cm or ...
+EOT
+
+BEGIN_TEXT
+\{ans_rule(40) \}
+END_TEXT
+ANS(num_cmp("$ansxy", units => 'm'));
+ENDDOCUMENT()
