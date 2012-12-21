@@ -462,7 +462,7 @@ sub browse_library_panel1 {
 					CGI::popup_menu(-name=> 'library_chapters', 
 					                -values=>\@chaps,
 					                -default=> $chapter_selected,
-					                -onchange=>"submit();return true"
+					                -onchange=>"lib_update('sections', 'get');return true"
 					),
 					CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
 			CGI::Tr({},
@@ -515,7 +515,7 @@ sub browse_library_panel2 {
 				CGI::popup_menu(-name=> 'library_subjects', 
 					            -values=>\@subjs,
 					            -default=> $subject_selected,
-					             -onchange=>"submit();return true"
+					            -onchange=>"lib_update('chapters', 'get');return true"
 				)]),
 			CGI::td({-colspan=>2, -align=>"right"},
 				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter/Section Lists"))
@@ -525,7 +525,7 @@ sub browse_library_panel2 {
 				CGI::popup_menu(-name=> 'library_chapters', 
 					            -values=>\@chaps,
 					            -default=> $chapter_selected,
-					             -onchange=>"submit();return true"
+					            -onchange=>"lib_update('sections', 'get');return true"
 		    )]),
 			CGI::td({-colspan=>2, -align=>"right"},
 					CGI::submit(-name=>"library_advanced", -value=>"Advanced Search"))
@@ -535,11 +535,11 @@ sub browse_library_panel2 {
 			CGI::popup_menu(-name=> 'library_sections', 
 					        -values=>\@sects,
 					        -default=> $section_selected,
-							-onchange=>"submit();return true"
+						-onchange=>"lib_update('count', 'clear');return true"
 		    )]),
 		 ),
 		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
-		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center"}, $count_line)),
+		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center", -id=>"library_count_line"}, $count_line)),
 		 CGI::end_table(),
 	 ));
 	
@@ -629,7 +629,7 @@ sub browse_library_panel2adv {
 				CGI::popup_menu(-name=> 'library_subjects', 
 					            -values=>\@subjs,
 					            -default=> $selected{dbsubject},
-					             -onchange=>"submit();return true"
+					            -onchange=>"lib_update('chapters', 'get');return true"
 				)]),
 			CGI::td({-colspan=>2, -align=>"right"},
 				CGI::submit(-name=>"lib_select_subject", -value=>"Update Menus",
@@ -639,7 +639,7 @@ sub browse_library_panel2adv {
 				CGI::popup_menu(-name=> 'library_chapters', 
 					            -values=>\@chaps,
 					            -default=> $selected{dbchapter},
-					             -onchange=>"submit();return true"
+					            -onchange=>"lib_update('sections', 'get');return true"
 		    )]),
 			CGI::td({-colspan=>2, -align=>"right"},
 					CGI::submit(-name=>"library_reset", -value=>"Reset",
@@ -650,7 +650,7 @@ sub browse_library_panel2adv {
 			CGI::popup_menu(-name=> 'library_sections', 
 					        -values=>\@sects,
 					        -default=> $selected{dbsection},
-							-onchange=>"submit();return true"
+							-onchange=>"lib_update('count', 'clear');return true"
 		    )]),
 			CGI::td({-colspan=>2, -align=>"right"},
 					CGI::submit(-name=>"library_basic", -value=>"Basic Search",
@@ -682,7 +682,7 @@ sub browse_library_panel2adv {
 							-override=>1,
 							-size=>40))),
 		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
-		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center"}, $count_line)),
+		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center", -id=>"library_count_line"}, $count_line)),
 		 CGI::end_table(),
 	 ));
 	
@@ -757,12 +757,14 @@ sub make_top_row {
 		$set_selected = SELECT_SET_STRING;
 	}
 	#my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
+        my $courseID = $self->r->urlpath->arg("courseID");
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, "Add problems to ",
 		CGI::b("Target Set: "),
 		CGI::popup_menu(-name=> 'local_sets', 
 						-values=>$list_of_local_sets, 
 						-default=> $set_selected,
+                                                -onchange=> "return markinset()",
 						-override=>1),
 		CGI::submit(-name=>"edit_local", -value=>"Edit Target Set"),
 		CGI::hidden(-name=>"selfassign", -default=>0,-override=>1).
@@ -828,19 +830,15 @@ sub make_top_row {
 	        CGI::td({-class=>"InfoPanel", -align=>"center"},
 		      CGI::start_table({-border=>"0"}),
 		        CGI::Tr({}, CGI::td({ -align=>"center"},
-			       CGI::submit(-name=>"select_all", -style=>$these_widths,
-			            -value=>"Mark All For Adding"),
-			       CGI::submit(-name=>"select_none", -style=>$these_widths,
-			            -value=>"Clear All Marks"),
+			       CGI::button(-name=>"select_all", -style=>$these_widths,
+                                    -onClick=>'return addme("", "all")',
+			            -value=>"Add All"),
 		           CGI::submit(-name=>"cleardisplay", 
 		                -style=>$these_widths,
 		                -value=>"Clear Problem Display")
 		     )), 
 		CGI::Tr({}, 
 		 CGI::td({},
-			CGI::submit(-name=>"update", -style=>$these_widths. "; font-weight:bold",
-			            -value=>"Update Set"),
-
 			$prev_button, " ", $next_button,
 
 		    CGI::submit(-name=>"rerandomize", 
@@ -917,8 +915,8 @@ sub make_data_row {
 		$add_box_data{ -checked } = 1;
 	}
 
-	my $inSet = ($self->{isInSet}{$sourceFileName})?"(This problem is in the target set)" : "";
-	$inSet = CGI::span({-id=>"inset$cnt", -style=>"float:right; text-align: right"}, CGI::i(CGI::b($inSet)));
+	my $inSet = ($self->{isInSet}{$sourceFileName})?"(in target set)" : "";
+	$inSet = CGI::span({-id=>"inset$cnt", -style=>"text-align: right"}, CGI::i(CGI::b($inSet)));
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
 	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
@@ -926,18 +924,22 @@ sub make_data_row {
 
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt"}, CGI::td(
 		CGI::div({-style=>"background-color: #DDDDDD; margin: 0px auto"},
-			"\n",CGI::span({-style=>"float:left ; text-align: left"},CGI::a({id=>"filepath$cnt", onClick=>"return pathsub($cnt, \"$sourceFileName\");"},"File...")),"\n",
-			"\n",CGI::span({-style=>"float:left ; text-align: left"},CGI::a({id=>"jjx$cnt", onClick=>"return opl();"},"OPL")),"\n",
-			CGI::span({-style=>"float:right ; text-align: right"}, $edit_link, " ", $try_link,
+		    CGI::span({-style=>"float:left ; text-align: left"},CGI::button(-name=>"add_me", 
+		      -value=>"Add me",
+		      -onClick=>"return addme(\'$sourceFileName\', \'one\')")),
+			"\n",CGI::span({-style=>"float:left ; text-align: left"},CGI::a({id=>"filepath$cnt"},"File...")),"\n",
+                        '<script type="text/javascript">settoggle("filepath'.$cnt.'", "File...", "'.$sourceFileName.'")</script>',
+			CGI::span({-style=>"float:right ; text-align: right"}, 
+		        $inSet,
+                        $edit_link, " ", $try_link,
 			CGI::button(-name=>"dont_show", 
 				-value=>"x",
-				-onClick=>"return delrow($cnt)"),
+				-onClick=>"return delrow($cnt,\'$sourceFileName\')"),
 			)), 
 		#CGI::br(),
 		#CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1),
 		CGI::br(),
-		$inSet,
-		CGI::checkbox((%add_box_data),-override=>1),
+		#CGI::checkbox((%add_box_data),-override=>1),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1).
 		CGI::p($problem_output),
 	));
@@ -1326,7 +1328,7 @@ sub head {
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/backbone.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/webwork/WeBWorK.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/teacher.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/Browse.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
   print qq!<script src="$webwork_htdocs_url/js/setmaker.js"></script>!;
@@ -1399,8 +1401,10 @@ sub body {
 	$self->{isInSet} = \%isInSet;
 
 	##########	Top part
+        my $courseID = $self->r->urlpath->arg("courseID");
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
 		$self->hidden_authen_fields,
+                CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
 			'<div align="center">',
 	CGI::start_table({-border=>2});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
@@ -1408,13 +1412,12 @@ sub body {
 	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),
 		CGI::hidden(-name=>'problem_seed', -value=>$problem_seed, -override=>1);
 	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {
-		print CGI::hidden(-name=>"all_past_list$j", -value=>$pg_files[$j],-override=>1);
+		print CGI::hidden(-name=>"all_past_list$j", -value=>$pg_files[$j],-override=>1)."\n";
 	}
 
 	print CGI::hidden(-name=>'first_shown', -value=>$first_shown,-override=>1);
 	
 	print CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1);
-
 
 	########## Now print problems
 	my $jj;
