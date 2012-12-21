@@ -363,7 +363,7 @@ sub getDBListings {
               $kw2";
 	if($haveTextInfo) {
       $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
-        `$tables{DBsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
+        `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
 		`$tables{pgfile_problem}` pgp, `$tables{problem}` prob, `$tables{textbook}` tbk ,
 		`$tables{chapter}` tc, `$tables{section}` ts $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
