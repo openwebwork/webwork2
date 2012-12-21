@@ -82,6 +82,9 @@ sub pre_header_initialize {
 	}
 	$self->{keyError} = $keyError;
 
+	# Do any special processing needed by external authentication
+	$authen->logout_user() if $authen->can('logout_user');
+
 	# if we have an authen redirect, all of those errors may be 
 	#    moot, but I think that's unavoidable (-glarose)
 	if ( defined($authen->{redirect}) && $authen->{redirect} ) {
