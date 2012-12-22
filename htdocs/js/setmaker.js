@@ -4,6 +4,15 @@ function settoggle(id, text1, text2) {
   return true;
 }
 
+function toggle_content(id, text1, text2) {
+  var e = $('#'+id);
+  if(e.text() == text1)
+    e.text(text2);
+  else
+    e.text(text1);
+  return true;
+}
+
 function init_webservice(command) {
   var myUser = $('#hidden_user').val();
   var myCourseID = $('#hidden_courseID').val();

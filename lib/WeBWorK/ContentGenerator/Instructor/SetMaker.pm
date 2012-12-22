@@ -921,14 +921,20 @@ sub make_data_row {
 
 	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
 	my $path_holder = "File...";
+	my $popover = CGI::div({-id=>"popup$cnt", -style=>'display:none;',
+-onclick=>'$(\'#popup'.$cnt.'\').hide()'}, "Hi");
+	my $popovershow = CGI::div({-onclick=>'$(\'#popup'.$cnt.'\').show()'},"Ho");
+               
 
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt"}, CGI::td(
 		CGI::div({-style=>"background-color: #DDDDDD; margin: 0px auto"},
 		    CGI::span({-style=>"float:left ; text-align: left"},CGI::button(-name=>"add_me", 
 		      -value=>"Add me",
 		      -onClick=>"return addme(\'$sourceFileName\', \'one\')")),
-			"\n",CGI::span({-style=>"float:left ; text-align: left"},CGI::a({id=>"filepath$cnt"},"File...")),"\n",
-                        '<script type="text/javascript">settoggle("filepath'.$cnt.'", "File...", "'.$sourceFileName.'")</script>',
+			"\n",CGI::span({-style=>"float:left ; text-align: left"},CGI::a({id=>"sourcetrigger$cnt"}, "Path:"),CGI::span({id=>"filepath$cnt"},"...")),"\n",
+			"\n",'<script type="text/javascript">$(\'#sourcetrigger'.$cnt.'\').click(function() {toggle_content("filepath'.$cnt.'", "...", "'.$sourceFileName.'");return false;})</script>',
+#                        '<script type="text/javascript">settoggle("filepath'.$cnt.'", "...", "'.$sourceFileName.'")</script>',
+#"\n", CGI::span({-style=>"float:left ; text-align: left"},"File..."),
 			CGI::span({-style=>"float:right ; text-align: right"}, 
 		        $inSet,
                         $edit_link, " ", $try_link,
