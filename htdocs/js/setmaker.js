@@ -146,6 +146,7 @@ function addemcallback(wsURL, ro, probarray, count) {
   };
 }
 
+// Reset all the messages about who is in the current set
 function markinset() {
   var ro = init_webservice('listSetProblems');
   var target = $('[name="local_sets"] option:selected').val();
@@ -202,6 +203,29 @@ function delFromPGList(num, path) {
   $('[name="last_shown"]').val(ls);
   // update j-k of m shown line
   return true;
+}
+
+function randomize(filepath, el) {
+  var seed = Math.floor((Math.random()*10000));
+  var ro = init_webservice('renderProblem');
+  var templatedir = $('#hidden_templatedir').val();
+  ro.problemSeed = seed;
+  ro.problemSource = templatedir + '/' + filepath;
+  ro.set = ro.problemSource;
+  var displayMode = $('[name="mydisplayMode"] option:selected').val();
+  if(displayMode != 'None') {
+    ro.displayMode = displayMode;
+  }
+  ro.noprepostambles = 1;
+  return $.post(webwork.webserviceURL, ro, function (data) {
+    var response = data;
+    data = '<div class="RenderSolo">'+data+'</div>';
+    $('#'+el).html(data);
+    // run mathjax if that is the displaymode
+    if(displayMode=='MathJax')
+      MathJax.Hub.Typeset(el);
+    //console.log(data);
+  });
 }
 
 function showpglist() {

@@ -35,6 +35,7 @@ use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use File::Find;
+use MIME::Base64 qw(encode_base64);
 
 require WeBWorK::Utils::ListingDB;
 
@@ -835,16 +836,16 @@ sub make_top_row {
 			            -value=>"Add All"),
 		           CGI::submit(-name=>"cleardisplay", 
 		                -style=>$these_widths,
-		                -value=>"Clear Problem Display")
-		     )), 
-		CGI::Tr({}, 
-		 CGI::td({},
+		                -value=>"Clear Problem Display"),
 			$prev_button, " ", $next_button,
+		     )), 
+	#	CGI::Tr({}, 
+	#	 CGI::td({},
 
-		    CGI::submit(-name=>"rerandomize", 
-		                -style=>$these_widths,
-		                -value=>"Rerandomize"),
-	)), 
+		    #CGI::submit(-name=>"rerandomize", 
+		    #            -style=>$these_widths,
+		    #            -value=>"Rerandomize"),
+	#)), 
 	CGI::end_table()));
 }
 
@@ -921,22 +922,19 @@ sub make_data_row {
 
 	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
 	my $path_holder = "File...";
-	my $popover = CGI::div({-id=>"popup$cnt", -style=>'display:none;',
--onclick=>'$(\'#popup'.$cnt.'\').hide()'}, "Hi");
-	my $popovershow = CGI::div({-onclick=>'$(\'#popup'.$cnt.'\').show()'},"Ho");
-               
+        my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')"><i class="icon-random"></i></span>';
 
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt"}, CGI::td(
-		CGI::div({-style=>"background-color: #DDDDDD; margin: 0px auto"},
-		    CGI::span({-style=>"float:left ; text-align: left"},CGI::button(-name=>"add_me", 
+		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
+		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
 		      -value=>"Add me",
 		      -onClick=>"return addme(\'$sourceFileName\', \'one\')")),
-			"\n",CGI::span({-style=>"float:left ; text-align: left"},CGI::a({id=>"sourcetrigger$cnt"}, "Path:"),CGI::span({id=>"filepath$cnt"},"...")),"\n",
+			"\n",CGI::span({-style=>"text-align: left"},CGI::a({id=>"sourcetrigger$cnt", href=>'#'}, "Path:"),CGI::span({id=>"filepath$cnt"},"...")),"\n",
 			"\n",'<script type="text/javascript">$(\'#sourcetrigger'.$cnt.'\').click(function() {toggle_content("filepath'.$cnt.'", "...", "'.$sourceFileName.'");return false;})</script>',
 #                        '<script type="text/javascript">settoggle("filepath'.$cnt.'", "...", "'.$sourceFileName.'")</script>',
 #"\n", CGI::span({-style=>"float:left ; text-align: left"},"File..."),
 			CGI::span({-style=>"float:right ; text-align: right"}, 
-		        $inSet,
+		        $inSet, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::button(-name=>"dont_show", 
 				-value=>"x",
@@ -944,10 +942,9 @@ sub make_data_row {
 			)), 
 		#CGI::br(),
 		#CGI::checkbox(-name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1),
-		CGI::br(),
 		#CGI::checkbox((%add_box_data),-override=>1),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1).
-		CGI::p($problem_output),
+		CGI::div({-id=>"render$cnt"}, $problem_output),
 	));
 }
 
@@ -1411,6 +1408,8 @@ sub body {
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
+                #CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>encode_base64($ce->{courseDirs}->{templates})}),
+                CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>$ce->{courseDirs}->{templates}}),
 			'<div align="center">',
 	CGI::start_table({-border=>2});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
@@ -1449,8 +1448,8 @@ sub body {
 	if (scalar(@pg_files)>0) {
 		print CGI::p(($first_shown+1)."-".($last_shown+1)." of ".scalar(@pg_files).
 			" shown.", $prev_button, " ", $next_button,
-			CGI::submit(-name=>"update", -style=>"width:15ex; font-weight:bold",
-					-value=>"Update Set"));
+			#CGI::submit(-name=>"update", -style=>"width:15ex; font-weight:bold", -value=>"Update Set")
+		);
 	}
 	#	 }
 	print CGI::endform(), "\n";
