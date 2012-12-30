@@ -26,6 +26,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 self.problemsRendered.push(probNumber);
                 if (self.problemsRendered.length === self.collection.size()){
                     self.$el.height(0.8*$(window).height());
+                    self.parent.dispatcher.trigger("num-problems-shown");
                 }
             });
 
@@ -55,7 +56,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             if (this.undoStack.length>0){
                 var prob = this.undoStack.pop();
                 this.collection.addProblem(prob);
-                var probView = new ProblemView({model: prob, deletable: this.deletable, 
+                var probView = new ProblemView({model: prob, type: this.type, deletable: this.deletable, 
                         reorderable: this.reorderable, draggable: this.draggable});
                 this.$(".list").append(probView.el);
                 probView.render();
@@ -88,7 +89,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             var ul = this.$(".list");  
             _(problemsToView).each(function(i) {
                 var prob = self.collection.at(i);
-                var probView = new ProblemView({model: prob, deletable: self.deletable, 
+                var probView = new ProblemView({model: prob, type: self.type, deletable: self.deletable, 
                         reorderable: self.reorderable, draggable: self.draggable});
                 ul.append(probView.el);
 
@@ -96,7 +97,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             });
 
             this.lastProblemShown = _(problemsToView).last();
-            this.parent.dispatcher.trigger("num-problems-shown", lastProblem);
+            
 
             if (!allProblemsShown){                
                 this.$el.append("<button class='btn load-more-problems-btn'>Load " + this.group_size + " More Problems</button>");

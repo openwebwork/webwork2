@@ -13,7 +13,7 @@
 package WebworkWebservice::SetActions;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
-use WeBWorK::Utils qw(readDirectory max sortByName);
+use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime parseDateTime);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 
 use strict;
@@ -52,34 +52,131 @@ sub listLocalSets{
   @found_sets = $db->listGlobalSets;
   my $out = {};
   $out->{ra_out} = \@found_sets;
-  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  $out->{text} = encode_base64("Loaded sets for course: ".$self->{courseName});
   return $out;
 }
 
 sub listLocalSetProblems{
-	my $self = shift;
-	my $in = shift;
+	my ($self, $params) = @_;
+
   	my $db = $self->{db};
   	my @found_problems;
-  	my $selectedSet = $in->{set};
-  	warn "Finding problems for set ", $in->{set} if $UNIT_TESTS_ON;
+  	my $setName = $params->{set_id};
+
+  	debug("Loading problems for " . $setName);
+
   	my $templateDir = $self->{ce}->{courseDirs}->{templates};
-  	@found_problems = $db->listGlobalProblems($selectedSet);
-  	my $problem;
+  	@found_problems = $db->listGlobalProblems($setName);
+
   	my @pg_files=();
-  	for $problem (@found_problems) {
-		my $problemRecord = $db->getGlobalProblem($selectedSet, $problem); # checked
-		die "global $problem for set $selectedSet not found." unless
+  	for my $problem (@found_problems) {
+		my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
+		die "global $problem for set $setName not found." unless
 		$problemRecord;
 		push @pg_files, $templateDir."/".$problemRecord->source_file;
 
 	}
-	#@pg_files = sortByName(undef,@pg_files);
 	
   	my $out = {};
   	$out->{ra_out} = \@pg_files;
-  	$out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  	$out->{text} = encode_base64("Loaded Problems for set: " . $setName);
   	return $out;
+}
+
+# This returns all problem sets of a course.
+
+sub getSets{
+  my $self = shift;
+  my $db = $self->{db};
+  my @found_sets;
+  @found_sets = $db->listGlobalSets;
+  
+  my @all_sets = $db->getGlobalSets(@found_sets);
+  
+  # fix the timeDate  
+ foreach my $set (@all_sets){
+	$set->{due_date} = formatDateTime($set->{due_date},'local');
+	$set->{open_date} = formatDateTime($set->{open_date},'local');
+	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+  }
+  
+  
+  my $out = {};
+  $out->{ra_out} = \@all_sets;
+  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  return $out;
+}
+
+
+# This returns a single problem set with name stored in set_id
+
+sub getSet {
+  my ($self, $params) = @_;
+  my $db = $self->{db};
+  my $setName = $params->{set_id};
+  my $set = $db->getGlobalSet($setName);
+  
+  # change the date/times to user readable strings.  
+  
+  $set->{due_date} = formatDateTime($set->{due_date},'local');
+  $set->{open_date} = formatDateTime($set->{open_date},'local');
+  $set->{answer_date} = formatDateTime($set->{answer_date},'local');
+  
+  my $out = {};
+  $out->{ra_out} = $set;
+  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  return $out;
+  }
+
+sub updateSetProperties {
+  my ($self, $params) = @_;
+  my $db = $self->{db};
+    
+  #note some of the parameters are coming in as yes or no and need to be converted to 1 or 0.  
+
+  my $set = $db->getGlobalSet($params->{set_id});
+  $set->set_header($params->{set_header});
+  $set->hardcopy_header($params->{hardcopy_header});
+  $set->open_date(parseDateTime($params->{open_date},"local"));
+  $set->due_date(parseDateTime($params->{due_date},"local"));
+  $set->answer_date(parseDateTime($params->{answer_date},"local"));
+  $set->visible(($params->{visible} eq "yes")?1:0);
+  $set->enable_reduced_scoring(($params->{enable_reduced_scoring} eq "yes")?1:0);
+  $set->assignment_type($params->{assignment_type});
+  $set->attempts_per_version($params->{attempts_per_version});
+  $set->time_interval($params->{time_interval});
+  $set->versions_per_interval($params->{versions_per_interval});
+  $set->version_time_limit($params->{version_time_limit});
+  $set->version_creation_time($params->{version_creation_time});
+  $set->problem_randorder($params->{problem_randorder});
+  $set->version_last_attempt_time($params->{version_last_attempt_time});
+  $set->problems_per_page($params->{problems_per_page});
+  $set->hide_score($params->{hide_score});
+  $set->hide_score_by_problem($params->{hide_score_by_problem});
+  $set->hide_work($params->{hide_work});
+  $set->time_limit_cap($params->{time_limit_cap});
+  $set->restrict_ip($params->{restrict_ip});
+  $set->relax_restrict_ip($params->{relax_restrict_ip});
+  $set->restricted_login_proctor($params->{restricted_login_proctor});
+  
+  $db->putGlobalSet($set);
+  
+  my $out = {};
+  $out->{ra_out} = $set;
+  $out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
+  return $out;
+}
+
+sub listSetUsers {
+	my ($self,$params) = @_;
+	my $db = $self->{db};
+    
+    my $out = {};
+    my @users = $db->listSetUsers($params->{set_id});
+    $out->{ra_out} = \@users;
+    $out->{text} = encode_base64("Successfully found the number of users for " . $params->{set_id});
+    return $out;
+
 }
 
 sub createNewSet{
@@ -130,89 +227,53 @@ sub createNewSet{
 	}
 }
 
-sub deleteProblemSet {
-	my $self = shift;
-  	my $params = shift;
+sub assignSetToUsers {
+	my ($self,$params) = @_;
 	my $db = $self->{db};
-	my $setID = $params->{set_id};
-	my $result = $db->deleteGlobalSet($setID);
+    
+    my $setID = $params->{set_id};
+    my $GlobalSet = $db->getGlobalSet($params->{set_id});
 
-		# check the result 
-	debug("in deleteProblemSet");
-	debug("deleted set:  $setID");
-	debug($result);
+    debug("users: " . $params->{users});
+    my @users = split(',',$params->{users});
+    #my @users = decode_json($params->{users});
 
-	my $out->{text} = encode_base64("Deleted Problem Set " . $setID);
-
-
-
-	return $out; 
-
-}
-
-
-sub reorderProblems {
-  	my $self = shift;
-  	my $in = shift;
-	my $db = $self->{db};
-	my $setID = $in->{set};
-	my $problemListString = $in->{probList};
-	my @problemList = split(/,/, $problemListString);
-	my $topdir = $self->{ce}->{courseDirs}{templates};
-	#my (@problemIDList) = @_;
-	#my ($prob1, $prob2, $prob);
-	my $index = 1;
-	#get all the problems
-	my @problems = ();
-	foreach my $path (@problemList) {
-		$path =~ s|^$topdir/*||;
-	  	#this will work if i can get problems by name
-		my $problemRecord; # checked
-		foreach my $problem ($db->listGlobalProblems($setID)) {
-			my $tempProblem = $db->getGlobalProblem($setID, $problem);
-		  	if($tempProblem->source_file eq $path){
-		    	$problemRecord = $tempProblem;
-		  	}
+    my @results; 
+    foreach my $userID (@users) {
+		my $UserSet = $db->newUserSet;
+		$UserSet->user_id($userID);
+		$UserSet->set_id($setID);
+		
+		
+		
+		my $set_assigned = 0;
+		
+		eval { $db->addUserSet($UserSet) };
+		if ($@) {
+			if ($@ =~ m/user set exists/) {
+				push @results, "set $setID is already assigned to user $userID.";
+				$set_assigned = 1;
+			} else {
+				die $@;
+			}
 		}
-		die "global " .$path ." for set $setID not found." unless $problemRecord;
-		#print "found this problem to be reordered: ".$problemRecord."\n";
-		push @problems, $problemRecord;
-	  	$index = $index + 1;
-	}
-	#then change their info
-	my @setUsers = $db->listSetUsers($setID);
-	my $user;
-	$index = 1;
-	foreach my $problem (@problems) {
-	  	$problem->problem_id($index);
-	  	die "global $problem not found." unless $problem;
-	  	#print "problem to be reordered: ".$problem."\n";
-	  	my $sourceFile = $problem->{source_file};
-	  	debug("before putGlobalProblem: $sourceFile");
-	  	my $probExists = $db->existsGlobalProblem($setID,$problem);
-	  	debug("problem Exists: $probExists");
-	  	#$db->addGlobalProblem($problem);
+		
+		my @GlobalProblems = grep { defined $_ } $db->getAllGlobalProblems($setID);
+		foreach my $GlobalProblem (@GlobalProblems) {
+			my @result = assignProblemToUser($self,$userID, $GlobalProblem);
+			push @results, @result if @result and not $set_assigned;
+		}   		
+    }
 
-	  	#need to deal with users?
-	  	foreach $user (@setUsers) {
-  			#my $prob1 = $db->getUserProblem($user, $setID, $index);
-		  	#die " problem $index for set $setID and effective user $user not found"	unless $prob1;
-      		#$prob1->problem_id($index);
-  			#$db->putUserProblem($prob1);
-	  	}
-		$index = $index + 1;
-	}
-	my $out->{text} = encode_base64("Successfully reordered problems");
+	my $out = {};
+	$out->{ra_out} = \@results;
+	$out->{text} = encode_base64("Successfully assigned users to set " . $params->{set_id});
 	return $out;
 }
 
-
 #problem utils from Instructor.pm
 sub assignProblemToUser {
-	my $self = shift;
-	my $userID = shift;
-	my $GlobalProblem = shift;
-	my $seed = shift;;
+	my ($self,$userID,$GlobalProblem,$seed) = @_;
 	my $db = $self->{db};
 	
 	my $UserProblem = $db->newUserProblem;
@@ -235,46 +296,160 @@ sub assignProblemToUser {
 	return ();
 }
 
-sub assignProblemToAllSetUsers {
+
+sub deleteProblemSet {
 	my $self = shift;
-	my $GlobalProblem = shift;
+  	my $params = shift;
 	my $db = $self->{db};
-	my $setID = $GlobalProblem->set_id;
-	my @userIDs = $db->listSetUsers($setID);
-	
-	my @results;
-	
-	foreach my $userID (@userIDs) {
-		my @result = assignProblemToUser($self, $userID, $GlobalProblem);
-		push @results, @result if @result;
-	}
-	
-	return @results;
+	my $setID = $params->{set_id};
+	my $result = $db->deleteGlobalSet($setID);
+
+		# check the result 
+	debug("in deleteProblemSet");
+	debug("deleted set:  $setID");
+	debug($result);
+
+	my $out->{text} = encode_base64("Deleted Problem Set " . $setID);
+
+
+
+	return $out; 
+
 }
 
-sub addProblemToSet {
-	my $self = shift;
-	my $params = shift;
+
+sub reorderProblems {
+	my ($self,$params) =  @_; 
+
 	my $db = $self->{db};
+	my $setID = $params->{set_id};
+	my @problemList = split(/,/, $params->{probList});
+	my $topdir = $self->{ce}->{courseDirs}{templates};
+
+
+	# get all the problems
+	my @newProblems = ();
+	my @allProblems = $db->getAllGlobalProblems($setID);
+
+	foreach my $problem (@allProblems) {
+		my $index =1; 
+		debug($problem->{source_file});
+		debug($problem->{problem_id});
+		debug($problem->{set_id});
+		debug($problem->{value});
+
+		my $recordFound = 0; 
+		foreach my $path (@problemList) {
+			$path =~ s|^$topdir/*||;
+			
+		  	# this will work if i can get problems by name
+				if($problem->{source_file} eq $path){
+				   	$problem->problem_id($index);
+
+				   	#debug($problem->{source_file});
+				   	#debug($problem->{problem_id});
+		   			$db->putGlobalProblem($problem);
+		   			$recordFound = 1; 
+			 	}
+			$index = $index +1; 
+		}
+		die "global " .$problem->{source_file} ." for set $setID not found." unless $recordFound;
+			
+	}
+
+	#foreach my $problem (@newProblems){
+	#	debug($problem->{source_file});
+	#}
+
+	#then change their info
+	# my @setUsers = $db->listSetUsers($setID);
+	# my $user;
+	# my $index = 1;
+	# foreach my $problem (@problems) {
+	#    	$problem->problem_id($index);
+	#    	die "global $problem not found." unless $problem;
+	# #   	#print "problem to be reordered: ".$problem."\n";
+	#    	my $sourceFile = $problem->{source_file};
+	#    	debug("before putGlobalProblem: $sourceFile");
+	#    	my $probExists = $db->existsGlobalProblem($setID,$problem);
+	#    	debug("problem Exists: $probExists");
+	#    	#$db->addGlobalProblem($problem);
+
+	# #   	#need to deal with users?
+	#    	foreach $user (@setUsers) {
+ #   			my $prob1 = $db->getUserProblem($user, $setID, $index);
+	#  	  	die " problem $index for set $setID and effective user $user not found"	unless $prob1;
+ #       		$prob1->problem_id($index);
+ #   			$db->putUserProblem($prob1);
+	#    	}
+	#  	$index = $index + 1;
+	#  }
+	my $out;
+
+	$out->{text} = encode_base64("Successfully reordered problems");
+	return $out;
+}
+
+
+
+
+# sub assignProblemToAllSetUsers {
+# 	my $self = shift;
+# 	my $GlobalProblem = shift;
+# 	my $db = $self->{db};
+# 	my $setID = $GlobalProblem->set_id;
+# 	my @userIDs = $db->listSetUsers($setID);
+	
+# 	my @results;
+	
+# 	foreach my $userID (@userIDs) {
+# 		my @result = assignProblemToUser($self, $userID, $GlobalProblem);
+# 		push @results, @result if @result;
+# 	}
+	
+# 	return @results;
+# }
+
+# sub addProblemToSet {
+# 	my ($self,$params) = @_;
+# 	my $db = $self->{db};
+# 	my $value_default = $self->{ce}->{problemDefaults}->{value};
+# 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
+	
+
+
+# 	die "addProblemToSet called without specifying the set name." if $params->{set_id} eq "";
+# 	my $setName = $params->{set_id};
+
+# 	my $sourceFile = $params->{sourceFile} or die "addProblemToSet called without specifying the sourceFile.";
+
+
+# 	debug("In addProblemToSet");
+# 	debug("setName: $setName");
+# 	debug("sourceFile: $sourceFile");
+
+# 	# The rest of the arguments are optional
+	
+# #	my $value = $params{value} || $value_default;
+	
+# 	my $out->{text} = encode_base64("Problem added to ".$setName);
+# 	return $out;
+# }
+
+sub addProblem {
+	my ($self,$params) = @_;
+	my $db = $self->{db};
+	my $setName = $params->{set_id};
+
+	my $file = $params->{path};
+	my $topdir = $self->{ce}->{courseDirs}{templates};
+	$file =~ s|^$topdir/*||;
+	
+	# DBFIXME count would work just as well
+	my $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
-	
 
-
-	die "addProblemToSet called without specifying the set name." if $params->{setName} eq "";
-	my $setName = $params->{setName};
-
-	my $sourceFile = $params->{sourceFile} or 
-		die "addProblemToSet called without specifying the sourceFile.";
-
-
-	debug("In addProblemToSet");
-	debug("setName: $setName");
-	debug("sourceFile: $sourceFile");
-
-	# The rest of the arguments are optional
-	
-#	my $value = $params{value} || $value_default;
 	my $value = $value_default;
 	if (defined($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value}  
 
@@ -288,41 +463,31 @@ sub addProblemToSet {
 	my $problemRecord = $db->newGlobalProblem;
 	$problemRecord->problem_id($problemID);
 	$problemRecord->set_id($setName);
-	$problemRecord->source_file($sourceFile);
+	$problemRecord->source_file($file);
 	$problemRecord->value($value);
 	$problemRecord->max_attempts($maxAttempts);
 	$db->addGlobalProblem($problemRecord);
 
-	return $problemRecord;
-}
+	my @results; 
+	my @userIDs = $db->listSetUsers($setName);
+	foreach my $userID (@userIDs) {
+		my @result = assignProblemToUser($self, $userID, $problemRecord);
+		push @results, @result if @result;
+	}
+	
 
-sub addProblem {
-	my $self = shift;
-	my $params = shift;
-	my $db = $self->{db};
-	my $setName = $params->{set};
-
-	debug("in addProblem:  setName : " . $setName);
-
-	my $file = $params->{path};
-	my $topdir = $self->{ce}->{courseDirs}{templates};
-	$file =~ s|^$topdir/*||;
-	my $freeProblemID;
-	# DBFIXME count would work just as well
-	$freeProblemID = max($db->listGlobalProblems($setName)) + 1;
-	my $problemRecord = addProblemToSet($self, {setName => $setName, sourceFile => $file, problemID => $freeProblemID});
-	assignProblemToAllSetUsers($self, $problemRecord);
+	#assignProblemToAllSetUsers($self, $problemRecord);
 	my $out->{text} = encode_base64("Problem added to ".$setName);
 	return $out;
 }
 
 sub deleteProblem {
-	my $self = shift;
-	my $in = shift;
-	my $db = $self->{db};
-	my $setName = $in->{set};
+	my ($self,$params) = @_;
 	
-	my $file = $in->{path};
+	my $db = $self->{db};
+	my $setName = $params->{set_id};
+	
+	my $file = $params->{path};
 	my $topdir = $self->{ce}->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
 	# DBFIXME count would work just as well

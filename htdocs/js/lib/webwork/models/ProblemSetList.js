@@ -26,12 +26,16 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
 
             $.get(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
+                console.log(response.result_data);
                 var newSet = new Array();
                 _(response.result_data).each(function(set) { 
+                    // change some of the 0-1 Perl booleans to "yes/no"s
+                    _(["enable_reduced_scoring","visible"]).each(function(_prop){
+                        set[_prop] = (set[_prop]=="0")?"no":"yes";
+                    });
                     newSet.push(new ProblemSet(set)); 
-                   
                 });
-                console.log("The Problem Sets have loaded");
+                console.log("The Problem Sets have loaded");                    
                 self.reset(newSet);
                 self.trigger("fetchSuccess");
             });

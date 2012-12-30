@@ -38,6 +38,12 @@ float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size
 
 .active {display: block;}
 
+.no-bullets {list-style-type: none;}
+
+label.checklist {display: inline; margin-left: 8px;}
+
+.hw-assigned {color: blue;}
+
 
 
 

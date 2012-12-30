@@ -33,7 +33,8 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             var requestObject = null;
             switch(this.type){
                 case "Problem Set":
-                    requestObject = {xml_command: "listSetProblems", set: this.setName};
+                    console.log("fetching problems for Problem Set " + this.setName);
+                    requestObject = {xml_command: "listSetProblems", set_id: this.setName};
                     break;
                 case "Library Problems":
                     var pathParts = this.path.split("/");
@@ -58,6 +59,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 var response = $.parseJSON(data);
                 var problems = response.result_data;
                 console.log('Loading Problems');
+                console.log(response);
     
                 var newProblems = new Array();
                 for (var i = 0; i < problems.length; i++) {
@@ -77,7 +79,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         console.log("in ProblemList addProblem");
         var requestObject = {
             xml_command: "addProblem",
-            set: self.setName,
+            set_id: self.setName,
             problemPath: problem.get('path'),
             place: self.size()
         };
@@ -95,7 +97,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
     
         var requestObject = {
             xml_command: "deleteProblem",
-            set: self.setName,
+            set_id: self.setName,
             problemPath: problem.get("path") //notice the difference from create
         };
         _.defaults(requestObject, config.requestObject);
@@ -117,17 +119,16 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         var probListString = probList.join(",");
         console.log(probListString);
         var requestObject = {
-            set: self.setName,
+            set_id: self.setName,
             probList: probListString,
             xml_command: "reorderProblems"
         };
     
         _.defaults(requestObject, config.requestObject);
-        console.log(requestObject.set);
     
         $.post(config.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
-            console.log("result: " + response.server_response);
+            console.log("result: " + response.result_data);
         });
     }
 

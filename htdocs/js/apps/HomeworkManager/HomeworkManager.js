@@ -15,7 +15,8 @@ require.config({
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
         "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable"
+        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
+        "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -26,7 +27,8 @@ require.config({
         'bootstrap':['jquery'],
         'backbone-validation': ['Backbone'],
         'XDate':{ exports: 'XDate'},
-        'config': ['XDate']
+        'config': ['XDate'],
+        'datepicker': ['bootstrap']
     }
 });
 
@@ -43,7 +45,8 @@ require(['Backbone',
     'WebPage',
     'backbone-validation',
     'jquery-ui',
-    'bootstrap'
+    'bootstrap',
+    'datepicker'
     ], 
 function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetailView, 
             ProblemSetListView,SetListView,LibraryBrowser,WebPage){
@@ -69,9 +72,14 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
             this.dispatcher.on("calendar-change", self.setDropToEdit);
             this.problemSets.on("problem-set-changed", function (_set){
-                    self.calendarView.updateAssignments();
-                    self.calendarView.render();
-                    self.setListView.updateSetInfo();
+                
+                self.calendarView.updateAssignments();
+                self.calendarView.render();
+                self.setListView.updateSetInfo();
+                var keys = _.keys(_set.changed);
+                _(keys).each(function(key) {
+                    self.announce.appendHTML("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]);    
+                })
             });
             
             this.dispatcher.on("problem-set-added", function (set){
@@ -145,17 +153,11 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                 drop: function( event, ui ) { 
                     console.log("Adding a Problem to HW set " + $(event.target).data("setname"));
                     console.log($(ui.draggable).data("path"));
+                    var source = $(ui.draggable).data("source");
+                    console.log(source);
                     var set = self.problemSets.find(function (set) { return set.get("set_id")===""+$(event.target).data("setname");});
-                    var prob = self.libDirectoryBrowser.problemList.find(function(prob) { return prob.get("path")===$(ui.draggable).data("path");})
-                    if (prob) {
-                        set.addProblem(prob);
-                        return;
-                    }
-                    prob = self.libSubjectBrowser.problemList.find(function(prob) { return prob.get("path")===$(ui.draggable).data("path");})
-                    if (prob) {
-                        set.addProblem(prob);
-                        return;
-                    }
+                    var prob = self[source].problemList.find(function(prob) { return prob.get("path")===$(ui.draggable).data("path");})
+                    set.addProblem(prob);
                 }
             });
 

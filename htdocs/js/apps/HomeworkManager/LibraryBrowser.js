@@ -19,12 +19,14 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
             _.extend(this,this.options);
 
     		this.render();
+            this.dispatcher = {};
+            _.extend(this.dispatcher, Backbone.Events);
 
-    		this.parent.dispatcher.on("load-problems", function(path) { self.loadProblems(path);});
+    		this.dispatcher.on("load-problems", function(path) { self.loadProblems(path);});
 
             // The following needs to be changed it's being called when the problem set list is shown.  
 
-            this.parent.dispatcher.on("num-problems-shown", function(num){
+            this.dispatcher.on("num-problems-shown", function(num){
                     if (self.libraryTreeView){
                         self.libraryTreeView.$("span.library-tree-right").html(num + " of " + self.problemList.size() + " shown");
                     }
@@ -40,10 +42,12 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
             console.log(this.id);
             switch(this.id){
                 case "view-all-libraries":
+                    this.type = "libDirectoryBrowser";
                     this.libraryTreeView = new LibraryTreeView({parent: self, type: "directory-tree"});
                     self.$(".library-viewer").append(this.libraryTreeView.el);
                     break;
                 case "view-all-subjects":
+                    this.type = "libSubjectBrowser";
                     this.libraryTreeView = new LibraryTreeView({parent: self, type: "subject-tree"});
                     self.$(".library-viewer").append(this.libraryTreeView.el);
                     break;
@@ -59,7 +63,8 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
     	},
         showProblems: function (){
             console.log("in showProblems");
-            var plv = new ProblemListView({el: this.$(".lib-problem-viewer"), parent: this.parent, collection: this.problemList,
+            var plv = new ProblemListView({el: this.$(".lib-problem-viewer"), type: this.type, 
+                                            parent: this.parent, collection: this.problemList,
                                             reorderable: false, deletable: false, draggable: true});
             plv.render();
         },
@@ -71,7 +76,6 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
     	loadProblems: function (_path)
     	{
     		console.log(_path);
-	//			this.problemViewer = new ProblemListView({el: $("#lib-problem-viewer")});
 			this.problemList = new ProblemList({path:  _path, type: "Library Problems"});
             this.problemList.on("fetchSuccess",this.showProblems,this);
     	}

@@ -30,7 +30,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
             var self = this;
             if(problem.get('data')){
                 this.$el.html(this.template(this.model.toJSON()));
-                this.$el.addClass("problem")
+                this.$el.addClass("problem");
                 if (this.model.get("draggable")) {
                     this.$el.draggable({
                         //helper:'clone',
@@ -49,7 +49,8 @@ define(['Backbone', 'underscore'], function(Backbone, _){
             }
 
             this.el.id = this.model.cid;
-            this.el.setAttribute('data-path', this.model.get('path'));
+            this.$el.attr('data-path', this.model.get('path'));
+            this.$el.attr('data-source', this.model.get('type'));
 
 
             return this;
@@ -58,6 +59,8 @@ define(['Backbone', 'underscore'], function(Backbone, _){
         clear: function(){
             this.model.collection.remove(this.model);
             this.model.clear();
+
+            // update the number of problems shown
         }
     });
 

@@ -6,16 +6,16 @@ define(['Backbone','backbone-validation'], function(Backbone){
 
     var config = {
         requestObject: {
-            "xml_command":"listLib",
-            "pw":"",
-            "password":"nothing",
+            //"xml_command":"listLib",
+            //"pw":"",
+            //"password":"nothing",
             "session_key":document.getElementById("hidden_key").value,
             "user":document.getElementById("hidden_user").value,
-            "library_name":"Library",
+            //"library_name":"Library",
             "courseID":document.getElementById("hidden_courseID").value,
-            "set":"set0",
-            "new_set_name":"new set",
-            "command":"buildtree"
+            //"set":"set0",
+            //"new_set_name":"new set",
+            //"command":"buildtree"
         },
         webserviceURL: "/webwork2/instructorXMLHandler"
     };

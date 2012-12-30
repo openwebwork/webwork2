@@ -32,16 +32,6 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             restrict_ip: "No",
             relax_restrict_ip: "No",
             restricted_login_proctor: "No",
-            visible_to_students: "Yes",
-
-        },
-        initialize: function(options){
-            _.bindAll(this,"fetch","addProblem","update");
-            this.on('change',this.update);
-            this.usersAssigned = new Array(); 
-            this.saveProblems = new Array();   // holds added problems temporarily if the set hasn't been loaded. 
-            
-
         },
         validation: {
             open_date: {pattern: "wwdate"},
@@ -73,8 +63,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             time_limit_cap: "Time Limit Cap???",
             restrict_ip: "Restrict by IP Address???",
             relax_restrict_ip: "Relax Restrict IP???",
-            restricted_login_proctor: "Restricted to Login Proctor",
-            visible_to_students: "Visible to Students?",
+            restricted_login_proctor: "Restricted to Login Proctor"
         },
         types: {
             set_id: "string",
@@ -83,25 +72,33 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             open_date: "datetime",
             due_date: "datetime",
             answer_date: "datetime",
-            visible: "opt('yes','no')",
-            enable_reduced_scoring: "opt('yes','no')",
-            assignment_type: "opt('homework','gateway/quiz','proctored gateway/quiz')",
+            visible: "opt(yes,no)",
+            enable_reduced_scoring: "opt(yes,no)",
+            assignment_type: "opt(homework,gateway/quiz,proctored gateway/quiz)",
             attempts_per_version: "int(0+)",
             time_interval: "time(0+)",
             versions_per_interval: "int(0+)",
             version_time_limit: "time(0+)",
             version_creation_time: "time(0+)",
-            problem_randorder: "opt('yes','no')",
+            problem_randorder: "opt(yes,no)",
             version_last_attempt_time: "time(0+)",
             problems_per_page: "int(1+)",
-            hide_score: "opt('yes','no')",
-            hide_score_by_problem: "opt('yes','no')",
-            hide_work: "opt('yes','no')",
-            time_limit_cap: "opt('yes','no')",
-            restrict_ip: "opt('yes','no')",
-            relax_restrict_ip: "opt('yes','no')",
-            restricted_login_proctor: "opt('yes','no')",
-            visible_to_students: "opt('yes','no')",
+            hide_score: "opt(yes,no)",
+            hide_score_by_problem: "opt(yes,no)",
+            hide_work: "opt(yes,no)",
+            time_limit_cap: "opt(yes,no)",
+            restrict_ip: "opt(yes,no)",
+            relax_restrict_ip: "opt(yes,no)",
+            restricted_login_proctor: "opt(yes,no)",
+            visible_to_students: "opt(yes,no)",
+        },
+        initialize: function(options){
+            _.bindAll(this,"fetch","addProblem","update");
+            this.on('change',this.update);
+            this.usersAssigned = new Array(); 
+            this.saveProblems = new Array();   // holds added problems temporarily if the set hasn't been loaded. 
+            
+
         },
         addProblem: function (prob) {  
             var self = this; 
@@ -130,6 +127,8 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             _.extend(requestObject, this.attributes);
             _.defaults(requestObject, config.requestObject);
 
+            console.log(requestObject);
+
             $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
       	        self.collection.trigger("problem-set-changed",self)
@@ -143,6 +142,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             _.defaults(requestObject, config.requestObject);
 
             $.get(config.webserviceURL, requestObject, function (data) {
+                    console.log("fetching problem set " + self.get("set_id"));
                     var response = $.parseJSON(data);
                     self.problems = new ProblemList({setName: self.get("set_id"), type: "Problem Set"}); 
 
@@ -202,7 +202,23 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
                     self.trigger("countUsers",this.usersAssigned);
 
                 });        
+        },
+        assignToUsers: function (_users){  // assigns this problem set to the users that come in as an array of usernames.  
+            var self = this;
+
+
+            var requestObject = {xml_command: "assignSetToUsers", users: _users.join(","), set_id: this.get("set_id")};
+            _.defaults(requestObject,config.requestObject);
+
+            $.post(config.webserviceURL, requestObject, function(data) {
+                var response = $.parseJSON(data);
+
+                console.log(response);
+
+            });
+
         }
+
 
     });
      

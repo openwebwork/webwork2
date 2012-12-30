@@ -364,6 +364,12 @@ sub buildBrowseTree {
 	return $self->do(WebworkWebservice::LibraryActions::buildBrowseTree($self,$in));
 }	
 
+sub assignSetToUsers {
+  my $class = shift;
+  my $in = shift;
+  my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::assignSetToUsers($self,$in));
+}
 
 
 sub listSets {
@@ -579,28 +585,28 @@ sub getSets {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
-    return $self->do(WebworkWebservice::CourseActions::getSets($self, $in));
+    return $self->do(WebworkWebservice::SetActions::getSets($self, $in));
 }
 
 sub getSet {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
-    return $self->do(WebworkWebservice::CourseActions::getSet($self, $in));
+    return $self->do(WebworkWebservice::SetActions::getSet($self, $in));
 }
 
 sub updateSetProperties{
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
-    return $self->do(WebworkWebservice::CourseActions::updateSetProperties($self, $in));
+    return $self->do(WebworkWebservice::SetActions::updateSetProperties($self, $in));
 }
 
 sub listSetUsers {
 	my $class = shift;
 	my $in = shift;
 	my $self = $class->initiate_session($in);
-	return $self->do(WebworkWebservice::CourseActions::listSetUsers($self,$in));
+	return $self->do(WebworkWebservice::SetActions::listSetUsers($self,$in));
 }
 
 

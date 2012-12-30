@@ -7,15 +7,15 @@
   <div class="row-fluid">
     <!-- This is a list of all the parts of the page -->
     <div  id="view-header-list" class="span7">
-     <div class="view-header active" data-view="calendar"> Calendar</div>
-     <div class="view-header" data-view="problem-set"> Problem Set Details</div>
-<div class="view-header" data-view="hw-set-list">List of all Problem Sets</div>
-<div class="view-header" data-view="import-export">Import and Export Problem Sets</div>
-<div class="view-header" data-view="settings">Settings</div>
-<div class="view-header" data-view="view-all-subjects">View Problem Library by Subject</div>
-<div class="view-header" data-view="view-all-libraries">View Problem Library by Directory</div>
-<div class="view-header" data-view="search-libraries">Search the Problem Library</div>
-<div class="view-header" data-view="view-local-libraries">View the Local Libraries</div>
+    <div class="view-header active" data-view="calendar"> Calendar</div>
+    <div class="view-header" data-view="problem-set">Problem Set Details</div>
+    <div class="view-header" data-view="hw-set-list">List of all Problem Sets</div>
+    <div class="view-header" data-view="import-export">Import and Export Problem Sets</div>
+    <div class="view-header" data-view="settings">Settings</div>
+    <div class="view-header" data-view="view-all-subjects">View Problem Library by Subject</div>
+    <div class="view-header" data-view="view-all-libraries">View Problem Library by Directory</div>
+    <div class="view-header" data-view="search-libraries">Search the Problem Library</div>
+    <div class="view-header" data-view="view-local-libraries">View the Local Libraries</div>
 
     </div>
   <div  class='span3 pull-right'>
@@ -133,82 +133,50 @@
  <div id="delete-hw-set-list"></div>
 </script>
 
-
-
-<script type="text/template" id="tab-setup">
-<div id='mainDiv' class='row-fluid'>
-<div id='left-column' class='span2'></div>
-<div id='tab-container' class='span10'>
-    <ul class="nav nav-tabs" id="hwedTabs">
-  <li class="active"><a href="#cal">Calendar View</a></li>
-  <li><a href="#list">List View</a></li>
-  <li><a href="#details">Set Properties</a></li>
-  <li><a href="#problems">Set Problems</a></li>
-  <li><a href="#library">Library Browser</a></li>
-  <li><a href="#impexp">Import/Export</a></li>
-  <li><a href="#settings">Settings</a></li>
-</ul>
- 
-<div class="tab-content">
-  <div class="tab-pane active" id="cal"></div>
-  <div class="tab-pane" id="list"></div>
-  <div class="tab-pane" id="details"></div>
-  <div class="tab-pane" id="problems"></div>
-  <div class="tab-pane" id="library"></div>
-  <div class="tab-pane" id="impexp"><p>The Importing and Exporting of homework sets is not implemented yet. </div>
-  <div class="tab-pane" id="settings"></div>
-</div>
-    </div>
-</script>
-
 <script type="text/template" id="problem-set-header">
-<div class='row-fluid'><div class='span5'>
-<span style='font-size:125%; font-weight: bold '>Problems for <%= set %> </span>
+<div class='row-fluid'>
+  <div class='span5'>
+    <span style='font-size:125%; font-weight: bold '>Problems for <%= set %> </span>
+  </div>
+  <div class="span4 num-probs"></div>
+  <div class='span2 float-right'><button id='undo-delete-btn' class='btn btn-small'>Undo Delete</button> </div> 
 </div>
-<div class="span4 num-probs"></div>
-<div class='span2 float-right'><button id='undo-delete-btn' class='btn btn-small'>Undo Delete</button> </div> </div>
-                            <div class='prob-list'></div>
+<div class='prob-list'></div>
 </script>
 
 <script type="text/template" id="hwset-dates-tmpl">
 <table class="table">
 <thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
-<tbody><tr id="due-date-row"></tr>
-<tr><td>Number of Users Assigned</td>
-<td id="num-users-assigned"></td>
-</tr>
+<tbody>
+<tr id="due-date-row"></tr>
+<tr><td>HW Set visible to Users</td><td id='hwset-visible'></td></tr>
+<tr><td>Reduced Credit Enabled</td><td id='reduced-credit'></td></tr>
 </tbody>
 </table>
-<div class="row"><div id="left-date-footer" class="span4"><button class="btn" type="button" id="assign-to-all-users">Assign to All Users</button></div>
-<div id="right-date-footer" class="pull-right">
-<a href="#openUserDialog" role="button" class="btn" data-toggle="modal">Assign to Selected Users</a>
-</div></div>
-
-<div class="modal hide fade" id="openUserDialog" tabindex="-1" role="dialog" aria-labelledby="usersLabel" aria-hidden="true">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="usersLabel"></h3>
-  </div>
-  <div class="modal-body" id="userListDialogMain">
-    
-<ul class="nav nav-tabs" id="assignUsersTab">
-  <li class="active"><a href="#byName">Assign by Name</a></li>
-  <li><a href="#bySection">Assign by Section</a></li>
-  <li><a href="#byRecitation">Assign by Recitation</a></li>
-  </ul>
- 
-<div class="tab-content">
-  <div class="tab-pane active" id="byName"></div>
-  <div class="tab-pane" id="bySection"></div>
-  <div class="tab-pane" id="byRecitation"></div>
-  </div>
-
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-primary" id="assignUsersButton">Assign Selected Users</button>
-    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-  </div>
 </div>
+</script>
+
+<script type="text/template" id="users-assigned-tmpl">
+<p>Assign the problem set to the selected users.  Those highlighted already are assigned.</p>
+
+
+<table class="table">
+<tr>
+<td><button id='assign-to-selected-users-button' class='btn'>Assign to Selected Users</button</td>
+<td><label for="classlist-select-all"> <input type="checkbox" id="classlist-select-all">&nbsp;Select All</label></td>
+<td></td>
+</tr>
+<tr><td style="width: 30%"><ul class="no-bullets" id="classlist-col1"></ul></td>
+<td style="width: 30%"><ul class="no-bullets" id="classlist-col2"></ul></td>
+<td style="width: 30%"><ul class="no-bullets" id="classlist-col3"></ul></td></tr>
+<table>
+
+</script>
+
+<script type="text/template" id="selected-users-template">
+<li><input class='classlist-li' checked='checked' type='checkbox' data-username='<%= user %>' id='<%= cid %>'>
+    <label class='checklist' for='li-<%= cid %>'> <%= firstname %> <%= lastname %> ( <%= user %> ) </label></li>
+
 </script>
 
 <script type="text/template" id="calendarButtons">
@@ -240,9 +208,6 @@
     
 </script>
 
-<script type="text/template" id="selectedUsersHelp">
-<p>Assign the users and say more things here.</p>
-</script>
 
 <script type="text/template" id="HW-detail-template">
 <ul class="nav nav-tabs" id="problem-set-tabs">
@@ -297,23 +262,16 @@
 <script type="text/template" id="problem-template">
 <div class="handle row-fluid">
 <%if(reorderable){%><i class="icon-resize-vertical icon-large"></i><%}%>
-<%if(deletable){ %><button type="button" class="remove pull-right">&times;</button><%}%></div>    
-<!--<div class="problem" data-path="<%= path %>" >-->
+<%if(deletable){ %><button type="button" class="remove pull-right"><i class="icon-trash"></i></button><%}%></div>    
+<div class="problem" data-path="<%= path %>" data-source="<%= type %>">
 
 <%= data %>
 </script>
 
 
-<script type="text/template" id="setList-template"></script>
-
 <script type="text/template" id="setName-template"><a data-problem_count=<%= problem_count %>><%= name %><span class="problem_count" style="float:right"><%= problem_count %></style></a></script>
 
 <script type="text/template" id="set-template"><h1>Problems</h1><ul class="list"></ul></script><script type="text/template", id="LibraryList-template"><select  class="<%= name %> list"><option value=null>Pick a Library</option></select><span class="<%= name %> children"></span></script>
-
-<script type="text/template" id="BrowseList-template">
-  <select  id="library_subject" class="list">
-    <option value=null>Subject</option><% _.each(library_subjects, function(name) { %> <option value="<%= name %>" <% if(name == library_subject){ %> selected="selected" <% } %> ><%= name %></option> <% }); %></select>
-    <select  id="library_chapter" class="list"><option value=null>Chapter</option><% _.each(library_chapters, function(name) { %> <option value="<%= name %>" <% if(name == library_chapter){ %> selected="selected" <% } %> ><%= name %></option> <% }); %></select><select  id="library_section" class="list"><option value=null>Section</option><% _.each(library_sections, function(name) { %> <option value="<%= name %>"  <% if(name == library_section){ %> selected="selected" <% } %>  ><%= name %></option> <% }); %></select><button class="btn btn-small load_browse_problems">Load Problems</button></script>
 
 <script type="text/template", id="Library-template"><h1>Problems</h1><ul class="list"></ul><button class="btn next_group" style="display:<%= enough_problems %>;">Load the next <%= group_size %> problems.</button
 
