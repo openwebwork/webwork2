@@ -28,7 +28,7 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(before after readFile sortAchievements);
 
 use Safe;
-use Storable qw(nfreeze thaw);
+use Storable qw(nfreeze nthaw);
 
 sub checkForAchievements {
 
