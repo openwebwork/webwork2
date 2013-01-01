@@ -212,20 +212,36 @@ function randomize(filepath, el) {
   ro.problemSeed = seed;
   ro.problemSource = templatedir + '/' + filepath;
   ro.set = ro.problemSource;
-  var displayMode = $('[name="mydisplayMode"] option:selected').val();
+  var displayMode = $('[name="original_displayMode"]').val();
   if(displayMode != 'None') {
     ro.displayMode = displayMode;
   }
   ro.noprepostambles = 1;
-  return $.post(webwork.webserviceURL, ro, function (data) {
+  $.post(webwork.webserviceURL, ro, function (data) {
     var response = data;
     data = '<div class="RenderSolo">'+data+'</div>';
     $('#'+el).html(data);
     // run mathjax if that is the displaymode
     if(displayMode=='MathJax')
       MathJax.Hub.Typeset(el);
+    if(displayMode=='jsMath')
+      jsMath.ProcessBeforeShowing(el);
     //console.log(data);
   });
+  return false;
+}
+
+function togglemlt(cnt,noshowclass) {
+  if($('#mlt'+cnt).text()=='M') {
+    $('.'+noshowclass).show();
+    $('#mlt'+cnt).text("L");
+    $('#mlt'+cnt).attr("title","Show less like this");
+  } else {
+    $('.'+noshowclass).hide();
+    $('#mlt'+cnt).text("M");
+    $('#mlt'+cnt).attr("title","Show more like this");
+  }
+  return false;
 }
 
 function showpglist() {
