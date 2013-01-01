@@ -1,0 +1,23 @@
+setNumber=Orientation
+openDate = 6/26/04 at 11:30am
+dueDate = 4/4/15 at 12:20pm
+answerDate = 4/5/15 at 12:00pm
+paperHeaderFile = setOrientation/setHeader.pg
+screenHeaderFile = setOrientation/setHeader.pg
+
+problemList =
+setOrientation/prob01.pg, 1
+setOrientation/prob02.pg, 1
+setOrientation/prob03.pg, 1
+setOrientation/prob04.pg, 1
+setOrientation/prob05/prob05.pg, 1
+setOrientation/prob06.pg, 1
+setOrientation/prob07.pg, 1
+setOrientation/prob08.pg, 1
+setOrientation/prob09.pg, 1
+setOrientation/prob10.pg, 1
+setOrientation/prob11.pg, 1
+setOrientation/prob12.pg, 1
+setOrientation/prob13.pg, 1
+setOrientation/prob14/prob14.pg, 1
+setOrientation/prob15.pg, 1

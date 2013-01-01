@@ -4,6 +4,7 @@
 use WebworkSOAP;
 use WebworkSOAP::WSDL;
 
+
 BEGIN {
     $main::VERSION = "2.4.9";
     use Cwd;
@@ -117,6 +118,7 @@ package WebworkXMLRPC;
 use base qw(WebworkWebservice); 
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 use WeBWorK::Debug;
+use JSON;
 
 sub format_hash_ref {
 	my $hash = shift;
@@ -347,9 +349,30 @@ sub listLibraries {     # returns a list of libraries for the default course
     #warn "incoming request to listLibraries:  class is ",ref($self) if $UNIT_TESTS_ON ;
   	return $self->do( WebworkWebservice::LibraryActions::listLibraries($self, $in) );
 }
+
+sub getProblemDirectories {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::LibraryActions::getProblemDirectories($self,$in));
+}
+
+sub buildBrowseTree {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::LibraryActions::buildBrowseTree($self,$in));
+}	
+
+sub assignSetToUsers {
+  my $class = shift;
+  my $in = shift;
+  my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::assignSetToUsers($self,$in));
+}
+
+
 sub listSets {
-    
-    debug("in listSets");
   my $class = shift;
   my $in = shift;
   my $self = $class->initiate_session($in);
@@ -357,7 +380,6 @@ sub listSets {
 }
 
 sub listSetProblems {
-    debug("in listSetProblems");
 	my $class = shift;
   	my $in = shift;
   	my $self = $class->initiate_session($in);
@@ -369,6 +391,13 @@ sub createNewSet{
   	my $in = shift;
   	my $self = $class->initiate_session($in);
   	return $self->do(WebworkWebservice::SetActions::createNewSet($self, $in));
+}
+
+sub deleteProblemSet{
+	my $class = shift;
+  	my $in = shift;
+  	my $self = $class->initiate_session($in);
+  	return $self->do(WebworkWebservice::SetActions::deleteProblemSet($self, $in));
 }
 
 sub reorderProblems{
@@ -556,24 +585,44 @@ sub getSets {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
-    return $self->do(WebworkWebservice::CourseActions::getSets($self, $in));
+    return $self->do(WebworkWebservice::SetActions::getSets($self, $in));
 }
 
 sub getSet {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
-    return $self->do(WebworkWebservice::CourseActions::getSet($self, $in));
+    return $self->do(WebworkWebservice::SetActions::getSet($self, $in));
 }
 
 sub updateSetProperties{
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
-    return $self->do(WebworkWebservice::CourseActions::updateSetProperties($self, $in));
+    return $self->do(WebworkWebservice::SetActions::updateSetProperties($self, $in));
+}
+
+sub listSetUsers {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::SetActions::listSetUsers($self,$in));
 }
 
 
+sub getCourseSettings {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::getCourseSettings($self,$in));	
+}
+
+sub updateSetting {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));	
+}
 
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --

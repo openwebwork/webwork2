@@ -107,7 +107,6 @@ sub listUsers {
     my $db = $self->{db};
     my $ce = $self->{ce};
     
-    debug("in listUsers");
 
     # make sure course actions are enabled
     #if (!$ce->{webservices}{enableCourseActions}) {
@@ -158,9 +157,6 @@ sub addUser {
 	$out->{text} = encode_base64("");
 	my $db = $self->{db};
 	my $ce = $self->{ce};
-	debug("Webservices add user request.");
-	debug("Last Name:" . $params->{'last_name'});
-	debug("First Name:" . $params->{'first_name'});
 
 	# make sure course actions are enabled
 	#if (!$ce->{webservices}{enableCourseActions}) {
@@ -323,10 +319,6 @@ sub deleteUser {
 	#	return $out
 	#}
 	
-	debug($params->{'id'});
-	debug($params->{'user'});
-	debug(($params->{'id'} eq $params->{'user'} ));
-	
 	if ($params->{'id'} eq $params->{'user'} )
 	{
 		$out->{status} = "failure";
@@ -467,8 +459,6 @@ sub changeUserPassword {
 	$self->{passwordMode} = 0;
 	$out->{text} = encode_base64("New passwords saved");
 	$out->{ra_out}= "password_change: success";
-	debug($out->{text});
-	debug($out->{ra_out});
 	return $out;
 }
 
@@ -541,88 +531,145 @@ sub assignVisibleSets {
 	return 0;
 }
 
-# This returns all problem sets of a course.
 
-sub getSets{
-  my $self = shift;
-  my $db = $self->{db};
-  my @found_sets;
-  @found_sets = $db->listGlobalSets;
-  
-  my @all_sets = $db->getGlobalSets(@found_sets);
-  
-  # fix the timeDate  
- foreach my $set (@all_sets){
-	$set->{due_date} = formatDateTime($set->{due_date},'local');
-	$set->{open_date} = formatDateTime($set->{open_date},'local');
-	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
-  }
-  
-  
-  my $out = {};
-  $out->{ra_out} = \@all_sets;
-  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
-  return $out;
+
+sub getConfigValues {
+	my $ce = shift;
+	my $ConfigValues = $ce->{ConfigValues};
+
+	foreach my $oneConfig (@$ConfigValues) {
+		foreach my $hash (@$oneConfig) {
+			if (ref($hash) eq "HASH"){
+				my $str = '$ce->' . $hash->{hashVar};
+				$hash->{value} = eval($str);
+			} else {
+				debug($hash);
+			}
+		}
+	}
+
+	# get the list of theme folders in the theme directory and remove . and ..
+	my $themeDir = $ce->{webworkDirs}{themes};
+	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
+	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
+	
+	# insert the anonymous array of theme folder names into ConfigValues
+	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
+
+	foreach my $oneConfig (@$ConfigValues) {
+		foreach my $hash (@$oneConfig) {
+			&$modifyThemes($hash);
+		}
+	}
+	
+	$ConfigValues;
 }
 
+sub getCourseSettings {
+	my ($self, $params) = @_;
+	my $ce = $self->ce;		# course environment
+	my $db = $self->db;		# database
+	my $ConfigValues = getConfigValues($ce);
 
-# This returns a single problem set with name stored in set_id
+	#debug(eval("$siteDefaults{timezone}"));
 
-sub getSet {
-  my ($self, $params) = @_;
-  my $db = $self->{db};
-  my $setName = $params->{set_id};
-  my $set = $db->getGlobalSet($setName);
-  
-  # change the date/times to user readable strings.  
-  
-  $set->{due_date} = formatDateTime($set->{due_date},'local');
-  $set->{open_date} = formatDateTime($set->{open_date},'local');
-  $set->{answer_date} = formatDateTime($set->{answer_date},'local');
-  
-  my $out = {};
-  $out->{ra_out} = $set;
-  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
-  return $out;
-  }
+## until I figure out how to get the default timezone from the $ConfigValues object, this is hard coded.  
 
-sub updateSetProperties {
-  my ($self, $params) = @_;
-  my $db = $self->{db};
-  
-  #my $theSet = $db->getGlobalSet($params->{set_id});
-  
-  my $set = $db->getGlobalSet($params->{set_id});
-  $set->set_header($params->{set_header});
-  $set->hardcopy_header($params->{hardcopy_header});
-  $set->open_date(parseDateTime($params->{open_date},"local"));
-  $set->due_date(parseDateTime($params->{due_date},"local"));
-  $set->answer_date(parseDateTime($params->{answer_date},"local"));
-  $set->visible($params->{visible});
-  $set->enable_reduced_scoring($params->{enable_reduced_scoring});
-  $set->assignment_type($params->{assignment_type});
-  $set->attempts_per_version($params->{attempts_per_version});
-  $set->time_interval($params->{time_interval});
-  $set->versions_per_interval($params->{versions_per_interval});
-  $set->version_time_limit($params->{version_time_limit});
-  $set->version_creation_time($params->{version_creation_time});
-  $set->problem_randorder($params->{problem_randorder});
-  $set->version_last_attempt_time($params->{version_last_attempt_time});
-  $set->problems_per_page($params->{problems_per_page});
-  $set->hide_score($params->{hide_score});
-  $set->hide_score_by_problem($params->{hide_score_by_problem});
-  $set->hide_work($params->{hide_work});
-  $set->time_limit_cap($params->{time_limit_cap});
-  $set->restrict_ip($params->{restrict_ip});
-  $set->relax_restrict_ip($params->{relax_restrict_ip});
-  $set->restricted_login_proctor($params->{restricted_login_proctor});
-  
-  $db->putGlobalSet($set);
-  
-  my $out = {};
-  $out->{ra_out} = $set;
-  $out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
-  return $out;
+	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
+	my $dt = DateTime->now();
+
+	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
+
+
+	debug($tz->short_name_for_datetime($dt));
+
+	push(@$ConfigValues, \@tzabbr);
+  	
+	my $out = {};
+	$out->{ra_out} = $ConfigValues;
+	$out->{text} = encode_base64("Successfully found the course settings");
+    return $out;
+
+}
+
+sub updateSetting {
+	my ($self, $params) = @_;
+	my $ce = $self->ce;		# course environment
+	my $db = $self->db;		# database
+
+	my $setVar = $params->{var};
+	my $setValue = $params->{value};
+	debug("in updateSetting");
+	debug("var:  " . $setVar);
+	debug("value: " . $setValue);
+
+	my $filename = $ce->{courseDirs}->{root} . "/simple.conf";
+	debug("Write to file: " . $filename);
+
+		my $fileoutput = "#!perl
+# This file is automatically generated by WeBWorK's web-based
+# configuration module.  Do not make changes directly to this
+# file.  It will be overwritten the next time configuration
+# changes are saved.\n\n";
+
+
+	# read in the file 
+
+	open(DAT, $filename) || die("Could not open file!");
+	my @raw_data=<DAT>;
+	close(DAT);
+
+
+
+
+	my $var;
+	my $line;
+	my $value;
+	my $varFound = 0; 
+
+	foreach $line (@raw_data)
+	{
+		chomp $line;
+	 	if ($line =~ /^\$/) {
+	 		my @tmp = split(/\$/,$line);
+	 		($var,$value) = split(/\s+=\s+/,$tmp[1]);
+	 		if ($var eq $setVar){ 
+	 			$fileoutput .= "\$" . $var . " = " . $setValue . "\n";
+	 			$varFound = 1; 
+	 		} else {
+	 			$fileoutput .= "\$" . $var . " = " . $value . "\n";
+	 		}
+		}
+	}
+
+	if (! $varFound) {
+		$fileoutput .= "\$" . $setVar . " = " . $setValue . ";\n";
+	}
+
+	debug ($fileoutput);
+
+
+	my $writeFileErrors;
+	eval {                                                          
+		local *OUTPUTFILE;
+		if( open OUTPUTFILE, ">", $filename) {
+			print OUTPUTFILE $fileoutput;
+			close OUTPUTFILE;
+		} else {
+			$writeFileErrors = "I could not open $fileoutput".
+				"We will not be able to make configuration changes unless the permissions are set so that the web server can write to this file.";
+		}
+	};  # any errors are caught in the next block
+
+	$writeFileErrors = $@ if $@;
+
+	debug("errors: ". $writeFileErrors);
+
+
+	my $out = {};
+	$out->{ra_out} = "";
+	$out->{text} = encode_base64("Successfully updated the course settings");
+    return $out;
 }
 
 
