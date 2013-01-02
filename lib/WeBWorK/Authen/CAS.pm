@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2012 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -72,8 +72,8 @@ sub get_credentials {
 		  or $service =~ s/([?&])ticket=[^&]*&/$1/;
 		$service = $ce->{apache_root_url} . $service;
 		debug("service = $service");
-		my $ticket = $r->param('ticket') || 0;
-		unless ($ticket) {
+		my $ticket = $r->param('ticket');
+		unless (defined $ticket) {
 			# there's no ticket, so redirect to get one
 			#
 			my $go_to = $cas->getServerLoginURL($service);
