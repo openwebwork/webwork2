@@ -65,8 +65,12 @@ sub get_credentials {
 		my $cas = new AuthCAS(
 		  %{ $ce->{authen}{cas_options}{AuthCAS_opts} });
 
-		my $service = $ce->{apache_root_url} . $r->location . '/'
-		  . $r->urlpath->arg('courseID') . '/';
+		my $service = $r->unparsed_uri();
+		# Remove the "ticket=..." parameter that the CAS server added
+		# (Not sure if the second test is really needed.)
+		$service =~ s/[?&]ticket=[^&]*$//
+		  or $service =~ s/([?&])ticket=[^&]*&/$1/;
+		$service = $ce->{apache_root_url} . $service;
 		debug("service = $service");
 		my $ticket = $r->param('ticket') || 0;
 		unless ($ticket) {
