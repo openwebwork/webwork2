@@ -105,7 +105,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script data-main="$site_url/js/apps/FrontPage/FrontPage" src="$site_url/js/lib/vendor/components/requirejs/require.js"></script>!;
+	print qq!<script data-main="$site_url/js/apps/FrontPage/FrontPage" src="$site_url/js/lib/vendor/requirejs/require.js"></script>!;
 
 
 	

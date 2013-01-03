@@ -88,8 +88,7 @@ sub listLocalSetProblems{
 sub getSets{
   my $self = shift;
   my $db = $self->{db};
-  my @found_sets;
-  @found_sets = $db->listGlobalSets;
+  my @found_sets = $db->listGlobalSets;
   
   my @all_sets = $db->getGlobalSets(@found_sets);
   
@@ -106,6 +105,34 @@ sub getSets{
   $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
   return $out;
 }
+
+# This returns all problem sets of a course for a given user.
+# the set is stored in the set_id and the user in user_id
+
+
+sub getUserSets{
+  my ($self,$params) = @_;
+  my $db = $self->{db};
+  
+  my @userSetNames = $db->listUserSets($params->{user});
+  debug(@userSetNames);
+  my @userSets = $db->getGlobalSets(@userSetNames);
+  
+  # fix the timeDate  
+ foreach my $set (@userSets){
+	$set->{due_date} = formatDateTime($set->{due_date},'local');
+	$set->{open_date} = formatDateTime($set->{open_date},'local');
+	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+  }
+  
+  
+  
+  my $out = {};
+  $out->{ra_out} = \@userSets;
+  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  return $out;
+}
+
 
 
 # This returns a single problem set with name stored in set_id
@@ -328,62 +355,66 @@ sub reorderProblems {
 
 
 	# get all the problems
-	my @newProblems = ();
 	my @allProblems = $db->getAllGlobalProblems($setID);
 
-	foreach my $problem (@allProblems) {
-		my $index =1; 
-		debug($problem->{source_file});
-		debug($problem->{problem_id});
-		debug($problem->{set_id});
-		debug($problem->{value});
+	my @probOrder = ();
 
+	foreach my $problem (@allProblems) {		
 		my $recordFound = 0; 
-		foreach my $path (@problemList) {
-			$path =~ s|^$topdir/*||;
-			
-		  	# this will work if i can get problems by name
-				if($problem->{source_file} eq $path){
-				   	$problem->problem_id($index);
 
-				   	#debug($problem->{source_file});
-				   	#debug($problem->{problem_id});
-		   			$db->putGlobalProblem($problem);
-		   			$recordFound = 1; 
-			 	}
-			$index = $index +1; 
+		for (my $i = 0; $i < scalar(@problemList); $i++){
+			$problemList[$i] =~ s|^$topdir/*||;
+
+			if($problem->{source_file} eq $problemList[$i]){
+				push(@probOrder,$i+1);
+			   	if ($db->existsGlobalProblem($setID,$i+1)){
+			   		$problem->problem_id($i+1);		   			
+			   		$db->putGlobalProblem($problem);
+			   		debug("updating problem " . $problemList[$i] . " and setting the index to " . ($i+1));
+
+			   	} else {
+			   		# delete the problem with the old problem_id and create a new one
+			   		$db->deleteGlobalProblem($setID,$problem->{problem_id});
+			   		$problem->problem_id($i+1);
+			   		$db->addGlobalProblem($problem);
+
+			   		debug("adding new problem " . $problemList[$i]. " and setting the index to " . ($i+1));
+		   		}
+		 	}
+		 	$recordFound = 1; 
 		}
-		die "global " .$problem->{source_file} ." for set $setID not found." unless $recordFound;
-			
+		die "global " . $problem->{source_file} ." for set $setID not found." unless $recordFound;
+		
+
 	}
 
-	#foreach my $problem (@newProblems){
-	#	debug($problem->{source_file});
-	#}
+	# Not sure if the userProblem also need to be reordered.  
 
-	#then change their info
-	# my @setUsers = $db->listSetUsers($setID);
-	# my $user;
-	# my $index = 1;
-	# foreach my $problem (@problems) {
-	#    	$problem->problem_id($index);
-	#    	die "global $problem not found." unless $problem;
-	# #   	#print "problem to be reordered: ".$problem."\n";
-	#    	my $sourceFile = $problem->{source_file};
-	#    	debug("before putGlobalProblem: $sourceFile");
-	#    	my $probExists = $db->existsGlobalProblem($setID,$problem);
-	#    	debug("problem Exists: $probExists");
-	#    	#$db->addGlobalProblem($problem);
+	# set the userProblems as well
 
-	# #   	#need to deal with users?
-	#    	foreach $user (@setUsers) {
- #   			my $prob1 = $db->getUserProblem($user, $setID, $index);
-	#  	  	die " problem $index for set $setID and effective user $user not found"	unless $prob1;
- #       		$prob1->problem_id($index);
- #   			$db->putUserProblem($prob1);
-	#    	}
-	#  	$index = $index + 1;
-	#  }
+	# foreach my $user ($db->listSetUsers($setID)) {
+	# 	@allUserProblems = $db->getAllUserProblems($user,$setID);
+
+	# 	for (my $i = 0; $i < scalar(@allUserProblems); $i++){	
+	# 		foreach my $path (@problemList) {
+	# 			$path =~ s|^$topdir/*||;
+
+	# 			if($allUserProblems[$i]->{source_file} eq $path){
+
+	# 				if ($db->existsUserProblem($user,$setID,$i+1)){
+	# 					my $prob = $db->getUserProblem($user, $setID, $i+1);
+	# 		  	  		die " problem $index for set $setID and effective user $user not found"	unless $prob;
+	# 					$prob->problem_id($i+1);
+	# 				    $db->putUserProblem($prob);
+	# 			    } else {
+	# 			    	$db->deleteUserProblem($user,$setID,$problem->{problem_id});
+	# 			    	$problem->problem_id($i+1);
+	# 			    	$db->addUserProblem($problem);
+	# 			    }
+	# 			}
+	# 		}
+	# 	}
+	# }
 	my $out;
 
 	$out->{text} = encode_base64("Successfully reordered problems");

@@ -54,7 +54,7 @@ define(['Backbone',
                 });
 
                 // This sets messages 
-                this.model.on("deleteProblem",function (setName,place) {
+                this.model.problems.on("deleteProblem",function (setName,place) {
                     var str = "Problem #" + (place +1) + " Deleted from set: " + setName + " <br> "
                             + "To undo this, click the Undo button above the problem list. "; 
                     self.parent.announce.appendHTML(str);
@@ -86,7 +86,7 @@ define(['Backbone',
         renderProblems: function (){
             console.log("showing the problems for problem set " + this.model.get("set_id"));
             $("#prob-tab").html(_.template($("#problem-set-header").html(),{set: this.model.get("set_id")}));
-            var plv = new ProblemListView({el: this.$(".prob-list"), parent: this, collection: this.model.problems,
+            var plv = new ProblemListView({el: this.$("#list-of-problems"), parent: this, collection: this.model.problems,
                                         reorderable: true, deletable: true, draggable: false});
             plv.render();
         },
@@ -111,9 +111,9 @@ define(['Backbone',
             this.$el.html(_.template($("#hwset-dates-tmpl").html()));
 
 
-            this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "open_date"})).render().el);
-            this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "due_date"})).render().el);
-            this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "answer_date"})).render().el);
+                this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "open_date"})).render().el);
+                this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "due_date"})).render().el);
+                this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "answer_date"})).render().el);
 
             this.$("#hwset-visible").html((new EditableCell({model: this.model, property: "visible"})).render().el);
             this.$("#reduced-credit").html((new EditableCell({model: this.model, property: "enable_reduced_scoring"})).render().el);

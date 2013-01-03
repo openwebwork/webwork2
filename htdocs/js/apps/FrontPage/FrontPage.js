@@ -1,11 +1,11 @@
 //require config
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "Backbone":             "/webwork2_files/js/lib/webwork/backbone/Backbone",
         "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
         "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.2.custom",
-        "underscore":           "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/webwork/components/jquery/jquery-1.8.3",
+        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         "util":                 "/webwork2_files/js/lib/webwork/util",
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
@@ -49,7 +49,7 @@ function(Backbone, _, User, ProblemSetList, Problem, WebPage, CalendarView, Prob
             var self = this;
             this.dispatcher = _.clone(Backbone.Events);
 
-            this.problemSets = new ProblemSetList();
+            this.problemSets = new ProblemSetList({type: "Student"});
             
             
             this.problemSets.fetch();

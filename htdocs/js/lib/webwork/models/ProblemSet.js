@@ -92,13 +92,12 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             restricted_login_proctor: "opt(yes,no)",
             visible_to_students: "opt(yes,no)",
         },
-        initialize: function(options){
+        initialize: function(){
             _.bindAll(this,"fetch","addProblem","update");
             this.on('change',this.update);
             this.usersAssigned = new Array(); 
-            this.saveProblems = new Array();   // holds added problems temporarily if the set hasn't been loaded. 
+            this.saveProblems = new Array();   // holds added problems temporarily if the problems haven't been loaded. 
             
-
         },
         addProblem: function (prob) {  
             var self = this; 
