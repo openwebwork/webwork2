@@ -86,7 +86,7 @@ sub body {
 	my $root = $ce->{webworkURLs}->{root};
 
 	
-my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/frontPage.html');  
+my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/frontpage.html');  
 	print $template->output();
 
 	print $self->hidden_authen_fields;
@@ -105,7 +105,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script data-main="$site_url/js/apps/FrontPage/FrontPage" src="$site_url/js/lib/vendor/components/requirejs/require.js"></script>!;
+	print qq!<script data-main="$site_url/js/apps/FrontPage/FrontPage" src="$site_url/js/lib/vendor/requirejs/require.js"></script>!;
 
 
 	

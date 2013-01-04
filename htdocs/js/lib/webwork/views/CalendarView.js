@@ -61,7 +61,7 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
                    slot[k+1] = [];
                     n++;
                 }
-                /*_(slot).each(function(set,i){
+                /* _(slot).each(function(set,i){
                     console.log(i + " " + _(set).map(function(s){return s.get("set_id")}));
                 }); */
 

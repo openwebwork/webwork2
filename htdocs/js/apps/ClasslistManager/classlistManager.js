@@ -5,18 +5,17 @@
 
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "Backbone":             "/webwork2_files/js/lib/vendor/backbone/Backbone",
         "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
         "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.2.custom",
-        "underscore":           "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/webwork/components/jquery/jquery-1.8.3",
+        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         "util":                 "/webwork2_files/js/lib/webwork/util",
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
         "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":             "/webwork2_files/js/lib/webwork/views/Closeable",
-        "jquery-ui-custom":      '/webwork2_files/js/lib/vendor/jquery-ui-1.9.2.custom/js/jquery-ui-1.9.2.custom.min'
+        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -47,7 +46,7 @@ require(['Backbone',
 	'jquery-ui',
 	'backbone-validation',
 	'bootstrap',
-	'jquery-ui-custom'], 
+	'jquery-ui'], 
 function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView, 
 		ChangePasswordView, AddStudentFileView, AddStudentManView, util, config){
 
