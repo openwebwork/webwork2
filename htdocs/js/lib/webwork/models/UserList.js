@@ -19,6 +19,7 @@ define(['Backbone', 'underscore', './User', 'config'], function(Backbone, _, Use
             });
         },
         removeUser: function(user){
+            var self = this;
             var request = {"xml_command": "deleteUser", "user_id" : user.user_id };
             _.defaults(request,config.requestObject);
             _.extend(request, user.attributes);

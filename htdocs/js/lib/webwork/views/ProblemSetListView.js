@@ -39,7 +39,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
         {
             var self = this;
             if (this.viewType === "Instructor"){
-                this.$el.html(_.template($("#hw-set-template").html()));
+                this.$el.html(_.template($("#hw-set-list-template").html()));
+                this.$el.append(_.template($("#modal-template").html(), 
+                    {header: "<h3>Create a new Homework Set</h3>", saveButton: "Create New Set", id: "new-set-modal"}));
             }
             if(this.collection.size()>0){
                 this.$("a.link").on("click",this.addDeleteSet);

@@ -8,8 +8,8 @@ require.config({
         "Backbone":             "/webwork2_files/js/lib/vendor/Backbone-0.9.9",
         "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
         "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.2.custom",
-        "underscore":           "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/webwork/components/jquery/jquery-1.8.3",
+        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         "util":                 "/webwork2_files/js/lib/webwork/util",
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
@@ -42,6 +42,7 @@ require(['Backbone',
     '../../lib/webwork/views/ProblemSetListView',
     './SetListView',
     './LibraryBrowser',
+    './AssignUsersView',
     'WebPage',
     'backbone-validation',
     'jquery-ui',
@@ -49,7 +50,7 @@ require(['Backbone',
     'datepicker'
     ], 
 function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetailView, 
-            ProblemSetListView,SetListView,LibraryBrowser,WebPage){
+            ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage){
     var HomeworkEditorView = WebPage.extend({
 	    tagName: "div",
         initialize: function(){
@@ -59,7 +60,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             this.dispatcher = _.clone(Backbone.Events);
 
             this.settings = new Settings();  // need to get other settings from the server.  
-            this.problemSets = new ProblemSetList();
+            this.problemSets = new ProblemSetList({type: "Instructor"});
             this.settings.fetch();
 
             this.settings.on("fetchSuccess", function (data){
@@ -130,7 +131,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         this.libDirectoryBrowser = new LibraryBrowser({el:  $("#view-all-libraries"), id: "view-all-libraries", parent: this});
         this.libSubjectBrowser = new LibraryBrowser({el:  $("#view-all-subjects"), id: "view-all-subjects", parent: this});
 
-       
+        this.assignUsersView = new AssignUsersView({el: $("#assign-users"), id: "view-assign-users", parent: this});
 
 
     },
@@ -196,7 +197,8 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
         $("#details").html(_.template($("#HW-detail-template").html()));  
 
-
+        this.assignUsersView.initializeModel();
+        this.assignUsersView.render();
 
     },
             // This allows the homework sets generated above to be dragged onto the Calendar to set the due date. 
