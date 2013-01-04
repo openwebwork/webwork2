@@ -86,7 +86,7 @@ sub body {
 	my $root = $ce->{webworkURLs}->{root};
 
 	
-my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/frontPage.html');  
+my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/frontpage.html');  
 	print $template->output();
 
 	print $self->hidden_authen_fields;
