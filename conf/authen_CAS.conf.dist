@@ -19,7 +19,7 @@ $authen{cas_options} = {
 	# You need at least casUrl and CAFile; others can be set as well.
 	AuthCAS_opts => {
 		# URL of CAS server.  Edit the host below.
-		casURL => '', #e.g. 'https://auth.berkeley.edu/cas',
+		casUrl => '', #e.g. 'https://auth.berkeley.edu/cas',
 
 		# Path of certificate file for CAS server.
 		CAFile => '', #e.g. '/etc/pki/tls/certs/ca-bundle.crt',
