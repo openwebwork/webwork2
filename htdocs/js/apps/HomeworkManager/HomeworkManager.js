@@ -5,7 +5,7 @@
 
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/vendor/Backbone-0.9.9",
+        "Backbone":             "/webwork2_files/js/lib/vendor/backbone-0.9.9",
         "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
         "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.2.custom",
         "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
