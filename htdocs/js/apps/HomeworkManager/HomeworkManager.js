@@ -77,9 +77,10 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                 self.calendarView.updateAssignments();
                 self.calendarView.render();
                 self.setListView.updateSetInfo();
+                self.setDropToEdit();
                 var keys = _.keys(_set.changed);
                 _(keys).each(function(key) {
-                    self.announce.appendHTML("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]);    
+                    self.announce.appendHTML("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]+ "<br>");    
                 })
             });
             
@@ -147,6 +148,8 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
          console.log("in addHWSet");
 
+         // This allows the Problem Sets (in the left column) to accept problems to add a problem to a set.  
+
         $(".problem-set").droppable({
                 hoverClass: "btn-info",
                 accept: ".problem",
@@ -206,6 +209,8 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
     setDropToEdit: function ()
     {
         var self = this;
+
+        // The following helps determine if a problem set is being dragged or clicked on. 
         $(".problem-set").draggable({revert: "valid", start: function (event,ui) { self.objectDragging=true;},
                                 stop: function(event, ui) {self.objectDragging=false;}});
              
