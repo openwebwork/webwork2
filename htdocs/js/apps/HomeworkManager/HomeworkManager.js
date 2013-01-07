@@ -44,13 +44,14 @@ require(['Backbone',
     './LibraryBrowser',
     './AssignUsersView',
     'WebPage',
+    'config',
     'backbone-validation',
     'jquery-ui',
     'bootstrap',
     'datepicker'
     ], 
 function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetailView, 
-            ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage){
+            ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config){
     var HomeworkEditorView = WebPage.extend({
 	    tagName: "div",
         initialize: function(){
@@ -67,6 +68,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                 new HWSettingsView({parent: self, el: $("#settings-table")});
                 self.render();
                 self.problemSets.fetch();
+                config.timezone = self.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
             }); 
 
 
@@ -76,7 +78,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                 
                 self.calendarView.updateAssignments();
                 self.calendarView.render();
-                self.setListView.updateSetInfo();
+                self.setListView.render();
                 self.setDropToEdit();
                 var keys = _.keys(_set.changed);
                 _(keys).each(function(key) {
@@ -93,7 +95,10 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
             this.problemSets.on("problem-set-deleted",function(set){
                 self.announce.appendHTML("The HW set with name " + set.get("set_id") + " was deleted.");
-            })
+            });
+
+            this.problemSets.on("fetchSuccess",function() {self.setListView.render();})
+
 
             this.dispatcher.on("problem-sets-loaded",this.postHWLoaded);
 
@@ -126,6 +131,10 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         //new ui.PropertyListView({el: $("#settings"), model: self.settings});
 
         this.HWDetails = new HWDetailView({parent: this, el: $("#problem-set"), collection: this.problemSets});
+
+        // Create the HW list view.  
+
+        this.setListView = new SetListView({parent: self, collection: this.problemSets, el:$("div#hw-set-list")});
 
         // 
 
@@ -192,9 +201,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         // Set the popover on the set name
         $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
         
-        // Create the HW list view.  
-
-        self.setListView = new SetListView({parent: self, collection: this.problemSets, el:$("div#hw-set-list")});
+        
 
         // Create the HW details pane. 
 
@@ -221,12 +228,10 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             drop: function(ev,ui) {
                 var setName = $(ui.draggable).data("setname");
                 var timeAssignDue = self.settings.getSettingValue("pg{timeAssignDue}");
-                var timezone = self.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
                 var theDueDate = /date-(\d{4})-(\d\d)-(\d\d)/.exec($(this).attr("id"));
                 var assignOpenPriorToDue = self.settings.getSettingValue("pg{assignOpenPriorToDue}");
-                var answerAfterDueDate = self.settings.getSettingValue("pg{answersOpenAfterDueDate}");
-                
-                var wwDueDate = theDueDate[2]+"/"+theDueDate[3] +"/"+theDueDate[1] + " at " + timeAssignDue + " " + timezone;
+                var answerAfterDueDate = self.settings.getSettingValue("pg{answersOpenAfterDueDate}");                
+                var wwDueDate = theDueDate[2]+"/"+theDueDate[3] +"/"+theDueDate[1] + " at " + timeAssignDue + " " + config.timezone;
                 var HWset = self.problemSets.find(function (_set) { return _set.get("set_id") === setName;});
 
                 console.log("Changing HW Set " + setName + " to be due on " + wwDueDate);

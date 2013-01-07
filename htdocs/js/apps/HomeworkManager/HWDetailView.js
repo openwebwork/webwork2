@@ -111,9 +111,9 @@ define(['Backbone',
             this.$el.html(_.template($("#hwset-dates-tmpl").html()));
 
 
-                this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "open_date"})).render().el);
-                this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "due_date"})).render().el);
-                this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "answer_date"})).render().el);
+            this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "open_date"})).render().el);
+            this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "due_date"})).render().el);
+            this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "answer_date"})).render().el);
 
             this.$("#hwset-visible").html((new EditableCell({model: this.model, property: "visible"})).render().el);
             this.$("#reduced-credit").html((new EditableCell({model: this.model, property: "enable_reduced_scoring"})).render().el);

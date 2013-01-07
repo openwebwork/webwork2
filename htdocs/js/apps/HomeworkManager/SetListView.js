@@ -3,7 +3,7 @@
 *
 */
 
-define(['Backbone', 'underscore',], function(Backbone, _){
+define(['Backbone', 'underscore','../../lib/webwork/views/EditableCell'], function(Backbone, _,EditableCell){
     
     var SetListRowView = Backbone.View.extend({
         className: "set-list-row",
@@ -16,17 +16,18 @@ define(['Backbone', 'underscore',], function(Backbone, _){
         },
         render: function () {
             var self = this;
-            this.$el.append((_(["set_id","open_date","due_date","answer_date"]).map(function(v) {
-                return "<td>" + self.model.get(v) + "</td>"; })).join(""));
+            this.$el.append("<td>" + this.model.get("set_id") + "</td>");
+            this.$el.append( (new EditableCell({model : this.model, type: "datetime", property: "open_date"})).render().el);
+            this.$el.append( (new EditableCell({model : this.model, type: "datetime", property: "due_date"})).render().el);
+            this.$el.append( (new EditableCell({model : this.model, type: "datetime", property: "answer_date"})).render().el);
         }
         });
     
     var SetListView = Backbone.View.extend({
         className: "set-list-view",
         initialize: function () {
-            _.bindAll(this, 'render','updateSetInfo');  // include all functions that need the this object
+            _.bindAll(this, 'render');  // include all functions that need the this object
             this.parent = this.options.parent; 
-            this.render();
             return this;
         },
         render: function () {
@@ -37,9 +38,6 @@ define(['Backbone', 'underscore',], function(Backbone, _){
                 tab.append((new SetListRowView({model: m})).el);
             });
             
-        },
-        updateSetInfo: function () {
-            this.render();
         },
         addSet: function (_set) {
             this.$("#set-list-table").append((new SetListRowView({model: _set})).el);

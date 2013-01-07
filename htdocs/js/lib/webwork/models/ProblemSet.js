@@ -34,9 +34,18 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             restricted_login_proctor: "No",
         },
         validation: {
-            open_date: {pattern: "wwdate"},
-            due_date: {pattern: "wwdate"},
-            answer_date: {pattern: "wwdate"},
+            open_date: {
+                pattern: "wwdate",
+                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
+            },
+            due_date: {
+                pattern: "wwdate",
+                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
+            },
+            answer_date: {
+                pattern: "wwdate",
+                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
+            },
             set_id: {pattern: "setname"}
         },
         descriptions:  {
