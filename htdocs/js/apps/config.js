@@ -1,9 +1,6 @@
 define(['Backbone','backbone-validation'], function(Backbone){
 
-    _.extend(Backbone.Validation.patterns, { "wwdate": /(\d?\d\/\d?\d\/\d{4})\sat\s(\d?\d:\d\d[aApP][mM])\s\w{3}/}); 
-    _.extend(Backbone.Validation.patterns, { "setname": /^[\w\d\_\.]+$/});
-    _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);  
-
+    
     var config = {
         requestObject: {
             //"xml_command":"listLib",
@@ -65,24 +62,31 @@ define(['Backbone','backbone-validation'], function(Backbone){
             }
             
                 ];
+    config.regexp = {
+        wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/
+    };
+
+
+    _.extend(Backbone.Validation.patterns, { "wwdate": config.regexp.wwDate}); 
+    _.extend(Backbone.Validation.patterns, { "setname": /^[\w\d\_\.]+$/});
+    _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);  
 
 
         function parseWWDate(str) {
         // this parses webwork dates in the form MM/DD/YYYY at HH:MM AM/PM TMZ
-        var wwDateRE = /(\d?\d)\/(\d?\d)\/(\d{4})\sat\s(\d?\d):(\d\d)([aApP][mM])\s([a-zA-Z]{3})/;
-        var parsedDate = wwDateRE.exec(str);
+        var parsedDate = config.regexp.wwDate.exec(str);
 
 
 
         if (parsedDate) {
-            var year = parsedDate[3];
-            var month = (parseInt(parsedDate[1],10)<10)?("0"+parseInt(parsedDate[1],10)):parseInt(parsedDate[1],10);
-            var dayOfMonth = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
+            var year = parsedDate[4];
+            var month = (parseInt(parsedDate[1],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
+            var dayOfMonth = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[3],10)):parseInt(parsedDate[3],10);
         
-            var hours = (/[aA][mM]/.test(parsedDate[6],10))? (parseInt(parsedDate[4],10)):(parseInt(parsedDate[4],10)+12);
+            var hours = (/[aA][mM]/.test(parsedDate[6],10))? (parseInt(parsedDate[6],10)):(parseInt(parsedDate[6],10)+12);
             hours = (hours<10)?("0"+hours):hours;
             
-            var dateTime = year+"-"+month+"-"+dayOfMonth+"T"+hours+":"+parsedDate[5];
+            var dateTime = year+"-"+month+"-"+dayOfMonth+"T"+hours+":"+parsedDate[7];
 
             var date = new XDate(dateTime);
             // Do we need to include the time zone?

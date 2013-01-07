@@ -25,7 +25,7 @@ float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size
 
 .calendar-button-row {margin: 20px;}
 
-.list {list-style: none;}
+//.list {list-style: none;}
 
 .lib-problem-viewer { overflow: scroll;}
 
@@ -43,6 +43,8 @@ float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size
 label.checklist {display: inline; margin-left: 8px;}
 
 .hw-assigned {color: blue;}
+
+#probSetList {margin:0;}
 
 
 
