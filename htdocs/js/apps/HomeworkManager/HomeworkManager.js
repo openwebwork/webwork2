@@ -16,7 +16,8 @@ require.config({
         "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
-        "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker"
+        "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker",
+        "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -28,7 +29,8 @@ require.config({
         'backbone-validation': ['Backbone'],
         'XDate':{ exports: 'XDate'},
         'config': ['XDate'],
-        'datepicker': ['bootstrap']
+        'datepicker': ['bootstrap'],
+        'jquery-truncate': ['jquery']
     }
 });
 

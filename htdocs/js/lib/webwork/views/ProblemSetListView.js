@@ -5,7 +5,7 @@
 *
 */
 
-define(['Backbone', 'underscore','../models/ProblemSetList','../models/ProblemSet','config'], 
+define(['Backbone', 'underscore','../models/ProblemSetList','../models/ProblemSet','config','jquery-truncate'], 
 function(Backbone, _,ProblemSetList,ProblemSet,config){
 	
     var ProblemSetListView = Backbone.View.extend({
@@ -51,7 +51,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 this.collection.each(function (_model) {
                     self.$("#probSetList").append((new SetView({model: _model})).render().el);
                 });
-
+                var _width = self.$el.width() - 40; 
+                self.$(".problem-set").truncate({width: _width}); //if the Problem Set Names are too long.  
                
 
             }
