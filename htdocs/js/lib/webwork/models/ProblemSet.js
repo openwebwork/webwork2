@@ -99,7 +99,6 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             restrict_ip: "opt(yes,no)",
             relax_restrict_ip: "opt(yes,no)",
             restricted_login_proctor: "opt(yes,no)",
-            visible_to_students: "opt(yes,no)",
         },
         initialize: function(){
             _.bindAll(this,"fetch","addProblem","update");
@@ -193,7 +192,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             var dueDate2 = new XDate(_set.get("due_date"));
             return (openDate1<openDate2)?(dueDate1>openDate2):(dueDate2>openDate1);
         },
-        countSetUsers: function ()
+        countUsers: function ()
         {
             var self=this;
             if (this.usersAssigned.length>0) { self.trigger("countUsers",this.usersAssigned);}
@@ -205,7 +204,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             $.get(config.webserviceURL, requestObject, function (data) {
 
                     var response = $.parseJSON(data);
-                    this.usersAssigned = response.result_data;
+                    self.usersAssigned = response.result_data;
                     
                     self.trigger("countUsers",this.usersAssigned);
 
@@ -214,7 +213,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
         assignToUsers: function (_users){  // assigns this problem set to the users that come in as an array of usernames.  
             var self = this;
 
-
+            console.log("Assigning Problem Set " + this.get("set_id") + " to " + _users.join(" ")); 
             var requestObject = {xml_command: "assignSetToUsers", users: _users.join(","), set_id: this.get("set_id")};
             _.defaults(requestObject,config.requestObject);
 

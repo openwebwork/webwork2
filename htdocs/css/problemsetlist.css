@@ -16,12 +16,16 @@
 
 .assign-reduced-credit {background-color: rgb(255,128,0);}
 
+
 .empty {background-color: none;}
 
 .assign { border-left: -2px; border-right: -2px; height: 15px;  width: 103%; margin-top: 2px; margin-bottom: 2px;
 float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size: 13px;}
 
 .assign-set-name {cursor: pointer;}
+
+.assign-filled {height: 30px; background-color: rgb(250,100,100)}
+
 
 .calendar-button-row {margin: 20px;}
 

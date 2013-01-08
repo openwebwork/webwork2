@@ -64,6 +64,10 @@ define(['Backbone',
 			});
 			var _sets = this.parent.problemSets.filter(function(_set) { return (_(setNames).indexOf(_set.get("set_id")) >-1);});
 
+            console.log(_users);
+            console.log(_sets);
+
+            _(_sets).each(function(set) {set.assignToUsers(userNames)});
 		},
 		updateDates: function ()
 		{

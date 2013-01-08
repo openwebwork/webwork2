@@ -36,7 +36,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
         },
         render: function() {
             var self = this;
-            this.$el.html("<ul class='list'></ul>");
+            this.$el.html("<ul class='no-bullets'></ul>");
             $("#undo-delete-btn").on("click",this.undoDelete);
             if(this.reorderable){
                 this.$(".list").sortable({update: function (event,ui) { 

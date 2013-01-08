@@ -1,5 +1,7 @@
-define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
-	CalendarView = Backbone.View.extend({
+define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstrap'], 
+    function(Backbone, _, XDate,Closeable) {
+	
+    var CalendarView = Backbone.View.extend({
         tagName: "div",
         className: "calendar",
         initialize: function (){
@@ -17,7 +19,10 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
             
 
             if (! theDate) { theDate = new XDate();}
-            this.date = new XDate(theDate.getFullYear(),theDate.getMonth(),theDate.getDate());  // For the calendar, ignore the time part of the date object.
+
+            // For the calendar, ignore the time part of the date object.
+
+            this.date = new XDate(theDate.getFullYear(),theDate.getMonth(),theDate.getDate());  
             
             var firstOfMonth = new XDate(this.date.getFullYear(),this.date.getMonth(),1);
 
@@ -31,6 +36,11 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
             this.updateAssignments();
 
             this.render();
+
+             if ((this.timeSlot.length>5) && (this.viewType === "month")) {
+                this.errorBar.appendHTML($("#too-many-assignments-error").html());
+            }
+           
             return this;
 
 
@@ -69,16 +79,17 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
             slot.pop();  // there's always an empty array at the end. 
 
             this.timeSlot = slot;
+
+
             
         },
         render: function () {
             var self = this;
             // The collection is a array of rows containing the day of the current month.
             
-           this.$el.html(_.template($("#calendarButtons").html()));
-            this.$el.append("<table id='calendar-table' class='table-bordered'></table>")
+            this.$el.html(_.template($("#calendar-template").html()));
             var calendarTable = this.$('#calendar-table');
-            calendarTable.append(_.template($("#calendarHeader").html()));
+            this.errorBar = new Closeable({el : $("#calendar-error-bar"), classes: ["alert-error"]});
                         
             if (this.viewType === "month"){            
                 for(var i = 0; i<6; i++){ var theWeek = [];
@@ -102,7 +113,7 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
 
         
         this.$el.append(calendarTable.el);
-        this.$el.append(_.template($("#calendarButtons").html()));
+        //this.$el.append(_.template($("#calendarButtons").html()));
         $(".previous-week").on("click", function () {
             self.date.addDays(-7); 
             self.firstDayOfCalendar.addDays(-7); 
@@ -124,19 +135,24 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
             self.update(); 
         });
 
+        var dayWidth = parseInt($("#calendar-table").width()/7)-20;
+        $(".assign-open").truncate({width: dayWidth});
+        $(".assign-reduced-credit").truncate({width: dayWidth});
 
-            return this;   
-        },
-        update: function ()
-        {
-            console.log(this.date);
-            //this.updateAssignments();
-            this.render();
-             this.parent.dispatcher.trigger("calendar-change");
-           
-        }
+        if (this.view === "student"){
+            $(".assign-open,.assign-reduced-credit").attr("data-content","");
+        } 
+        $(".assign-open,.assign-reduced-credit").popover({placement: "top", html: true});
 
-    });
+        return this;   
+    },
+    update: function ()
+    {
+        this.render();
+        this.parent.dispatcher.trigger("calendar-change");
+    }
+
+});
 
     var CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
         tagName: "tr",
@@ -154,11 +170,12 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
                 var calendarDay = new CalendarDayView({model: date, calendar: self.calendar});
                 self.$el.append(calendarDay.el);
             });
+
             return this;
             }
     });
 
-    var     CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
+    var CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
         tagName: "td",
         className: "calendar-day",
         initialize: function (){
@@ -191,26 +208,36 @@ define(['Backbone', 'underscore', 'XDate'], function(Backbone, _, XDate) {
         },
         showAssignments: function () {
 
+            var threeDays = 3*24*60; // Why is this hard coded? 
             var self = this;
-            _(this.calendar.timeSlot).each(function (slot){
-                var slotFilled = false; 
-                _(slot).each(function(problemSet){
-                    if (problemSet.isDueOn(self.model,3*24*60)){
-                        self.$el.append("<div class='assign assign-open assign-set-name' data-set='" + problemSet.get("set_id") + "'><span> " 
-                                        + problemSet.get("set_id") + "</span></div>");
-                        slotFilled = true; 
-                    }
-                    else if (problemSet.isOpen(self.model,3*24*60))  {
-                        self.$el.append("<div class='assign assign-open assign-set-name' data-set='" + problemSet.get("set_id")+ "'></div>");
-                        slotFilled = true;  
-                    } else if (problemSet.isInReducedCredit(self.model,3*24*60)) {
-                        self.$el.append("<div class='assign assign-reduced-credit' data-set='" + problemSet.get("set_id")+ "'></div>");
-                        slotFilled = true; 
-                    } 
+            if ((this.calendar.viewType === "week") || (this.calendar.timeSlot.length<6)) {
+                _(this.calendar.timeSlot).each(function (slot){
+                    var slotFilled = false; 
+                    _(slot).each(function(problemSet){
+                        var props = {setname: problemSet.get("set_id"), usersAssigned: problemSet.usersAssigned.length, 
+                                    totalUsers: self.calendar.parent.users.size(), 
+                                    openToStudents: problemSet.get("visible"), showName: false};
+                        if (problemSet.isDueOn(self.model,threeDays)){
+                            self.$el.append(_.template($("#calendar-date-bar").html(),
+                                _.extend(props, {classes : "assign assign-set-name assign-open", showName: true}))); 
+                            slotFilled = true; 
+                        }
+                        else if (problemSet.isOpen(self.model,threeDays))  {
+                            self.$el.append(_.template($("#calendar-date-bar").html(),
+                                _.extend(props, {classes : "assign assign-open", showName: false}))); 
+                            slotFilled = true;  
+                        } else if (problemSet.isInReducedCredit(self.model,threeDays)) {
+                            self.$el.append(_.template($("#calendar-date-bar").html(),
+                                _.extend(props, {classes : "assign assign-reduced-credit", showName: false}))); 
+                            slotFilled = true; 
+                        } 
+                    });
+                    if (!slotFilled) {self.$el.append("<div class='assign empty'></div>");}
                 });
-                if (!slotFilled) {self.$el.append("<div class='assign empty'></div>");}
-            });
-
+            } else {
+                self.$el.append("<div class='assign assign-filled'></div>");
+                // denote that more than five assignments overlap. 
+            }
         }
     });
 

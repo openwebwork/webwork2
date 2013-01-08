@@ -25,7 +25,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
             });
             this.collection.on("fetchSuccess", function () {
                 self.render();
-                self.parent.dispatcher.trigger("problem-sets-loaded");
             });
 
             this.collection.on("problem-set-deleted", function (set) {

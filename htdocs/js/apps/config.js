@@ -80,8 +80,8 @@ define(['Backbone','backbone-validation'], function(Backbone){
 
         if (parsedDate) {
             var year = parsedDate[4];
-            var month = (parseInt(parsedDate[1],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
-            var dayOfMonth = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[3],10)):parseInt(parsedDate[3],10);
+            var month = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
+            var dayOfMonth = (parseInt(parsedDate[3],10)<10)?("0"+parseInt(parsedDate[3],10)):parseInt(parsedDate[3],10);
         
             var hours = (/[aA][mM]/.test(parsedDate[6],10))? (parseInt(parsedDate[6],10)):(parseInt(parsedDate[6],10)+12);
             hours = (hours<10)?("0"+hours):hours;

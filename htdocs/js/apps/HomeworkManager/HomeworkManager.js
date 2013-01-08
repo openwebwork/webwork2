@@ -17,7 +17,8 @@ require.config({
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
         "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker",
-        "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min"
+        "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min",
+        "jquery-tablesorter":   "/webwork2_files/js/lib/vendor/jquery.tablesorter.min"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -30,7 +31,8 @@ require.config({
         'XDate':{ exports: 'XDate'},
         'config': ['XDate'],
         'datepicker': ['bootstrap'],
-        'jquery-truncate': ['jquery']
+        'jquery-truncate': ['jquery'],
+        'jquery-tablesorter': ['jquery']
     }
 });
 
@@ -58,7 +60,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 	    tagName: "div",
         initialize: function(){
     	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-    	    _.bindAll(this, 'render','postHWLoaded');  // include all functions that need the this object
+    	    _.bindAll(this, 'render','postHWLoaded','setDropToEdit');  // include all functions that need the this object
     	    var self = this;
             this.dispatcher = _.clone(Backbone.Events);
 
@@ -99,10 +101,14 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                 self.announce.appendHTML("The HW set with name " + set.get("set_id") + " was deleted.");
             });
 
-            this.problemSets.on("fetchSuccess",function() {self.setListView.render();})
+            this.problemSets.on("fetchSuccess",function() {
+                self.problemSets.each(function(_set){
+                    _set.countUsers();
+                });
+                self.setListView.render();
+                self.postHWLoaded();
+            });
 
-
-            this.dispatcher.on("problem-sets-loaded",this.postHWLoaded);
 
             this.users = new UserList();
             this.users.fetch();

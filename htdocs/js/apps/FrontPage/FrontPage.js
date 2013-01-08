@@ -56,9 +56,10 @@ function(Backbone, _, User, ProblemSetList, Problem, WebPage, CalendarView, Prob
             
             this.problemSets.fetch();
             
-            this.dispatcher.on('problem-sets-loaded',this.postHWLoaded); 
-
-            this.render();
+            this.problemSets.on('fetchSuccess', function () {
+                self.render();
+                self.postHWLoaded();
+            }); 
 
 
 
