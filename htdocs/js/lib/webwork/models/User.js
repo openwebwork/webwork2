@@ -28,7 +28,15 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             _.extend(requestObject, this.attributes);
             _.defaults(requestObject, config.requestObject);
     
-            
+            // store the changed attribute. 
+
+            this.oldAttributes = _.clone(this.changedAttributes());
+
+            for(prop in this.changedAttributes())
+            {
+                this.oldAttributes[prop] = this.previous(prop);
+            }
+
             requestObject.permission = requestObject.permission.value;
             console.log(requestObject.permission);
     
@@ -36,15 +44,12 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
                 console.log(data);
                 var response = $.parseJSON(data);
                 var user = response.result_data;
-                self.set(user);
+                
                 
                 // if this is successful, then report back by triggering a updateSuccess event
                 // Somehow it would be nice to deliver whether a general update of user information was made
                 // or a password change.  
-                
-                if (self.attributes.new_password == undefined)
-                { self.trigger("success","general");} else
-                {self.trigger("success", "Password Changed for user " + self.attributes.user_id);}
+                self.trigger("success","property_changed", self);
             });
         },
         toCSVString: function (){

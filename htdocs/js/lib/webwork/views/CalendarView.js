@@ -214,9 +214,11 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
                 _(this.calendar.timeSlot).each(function (slot){
                     var slotFilled = false; 
                     _(slot).each(function(problemSet){
-                        var props = {setname: problemSet.get("set_id"), usersAssigned: problemSet.usersAssigned.length, 
-                                    totalUsers: self.calendar.parent.users.size(), 
-                                    openToStudents: problemSet.get("visible"), showName: false};
+                        var props = (self.calendar.view==="student")? 
+                                {setname: problemSet.get("set_id"),usersAssigned:"",totalUsers:"", openToStudents:""}:
+                                {setname: problemSet.get("set_id"), usersAssigned: problemSet.usersAssigned.length, 
+                                totalUsers: self.calendar.parent.users.size(), 
+                                openToStudents: problemSet.get("visible"), showName: false};
                         if (problemSet.isDueOn(self.model,threeDays)){
                             self.$el.append(_.template($("#calendar-date-bar").html(),
                                 _.extend(props, {classes : "assign assign-set-name assign-open", showName: true}))); 
