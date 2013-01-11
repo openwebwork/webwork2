@@ -416,6 +416,10 @@ sub pgfiles {
 	my ($edition, $textauthor, $textsection, $textproblem, $tagged);
 	%textinfo=();
 	my @textproblems = (-1);
+  if ($name =~ /swf$/ {
+      my $applet_file = basename($name);
+      symlink($name,"$webworkDirs{htdocs}/applets/$applet_file");
+    }
 	if ($name =~ /pg$/) {
 		$pgfile = basename($name);
 		$pgpath = dirname($name);
