@@ -50,9 +50,18 @@ function lib_update(who, what) {
   if(subj == 'All Subjects') { subj = '';};
   if(chap == 'All Chapters') { chap = '';};
   if(sect == 'All Sections') { sect = '';};
+  var lib_text = $('[name="library_textbook"] option:selected').val();
+  var lib_textchap = $('[name="library_textchapter"] option:selected').val();
+  var lib_textsect = $('[name="library_textsection"] option:selected').val();
+  if(lib_text == 'All Textbooks') { lib_text = '';};
+  if(lib_textchap == 'All Chapters') { lib_textchap = '';};
+  if(lib_textsect == 'All Sections') { lib_textsect = '';};
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
+  mydefaultRequestObject.library_textbooks = lib_text;
+  mydefaultRequestObject.library_textchapter = lib_textchap;
+  mydefaultRequestObject.library_textsection = lib_textsect;
 // Logic problem since we may be in _a clear_ now!
   if(who == 'count') {
     mydefaultRequestObject.subcommand = 'countDBListings';
@@ -176,32 +185,68 @@ function markinset() {
   });
 }
 
-function delrow(num, path) { 
+function delrow(num) { 
+  var path = $('[name="filetrial'+ num +'"]').val();
+  var APLindex = findAPLindex(path);
+  var mymlt = $('[name="all_past_mlt'+ APLindex +'"]').val();
+  var cnt = 1;
+  var loop = 1;
+  var mymltM = $('#mlt'+num);
+  if(mymltM) {
+    mymltM = mymltM.text();
+  } else {
+    mymltM = 'L';  // So we don't delete extra stuff below
+  }
   $('#pgrow'+num).remove(); 
   delFromPGList(num, path);
+  if((mymlt > 0) && mymltM=='M') { // delete hidden problems
+    while((newmlt = $('[name="all_past_mlt'+ APLindex +'"]')) && newmlt.val() == mymlt) {
+      cnt += 1;
+      num++;
+      path = $('[name="filetrial'+ num +'"]').val();
+      $('#pgrow'+num).remove(); 
+      delFromPGList(num, path);
+    }
+  }
+  // Update various variables in the page
+  var n1 = $('#lastshown').text();
+  var n2 = $('#totalshown').text();
+  $('#lastshown').text(n1-1);
+  $('#totalshown').text(n2-1);
+  var lastind = $('[name="last_index"]');
+  lastind.val(lastind.val()-cnt);
+  var ls = $('[name="last_shown"]').val();
+  ls--;
+  $('[name="last_shown"]').val(ls);
+  if(ls < $('[name="first_shown"]').val()) {
+    $('#what_shown').text('None');
+  }
 //  showpglist();
   return(true);
 }
 
-function delFromPGList(num, path) {
+function findAPLindex(path) {
   var j=0;
-  while ($('[name="all_past_list'+ j +'"]').val() != path) {
-    var v1=$('[name="all_past_list'+ j +'"]').val();
+  while ($('[name="all_past_list'+ j +'"]').val() != path && (j<100)) {
     j++;
   }
+  if(j==100) { alert("Cannot find "+path);}
+  return j;
+}
+
+function delFromPGList(num, path) {
+  var j = findAPLindex(path);
   j++;
   while ($('[name="all_past_list'+ j +'"]').length>0) {
     var jm = j-1;
     $('[name="all_past_list'+ jm +'"]').val($('[name="all_past_list'+ j +'"]').val());
+    $('[name="all_past_mlt'+ jm +'"]').val($('[name="all_past_mlt'+ j +'"]').val());
     j++;
   }
   j--;
-  var v = $('[name="all_past_list'+ j +'"]').val();
+  // var v = $('[name="all_past_list'+ j +'"]').val();
   $('[name="all_past_list'+ j +'"]').remove();
-  var ls = $('[name="last_shown"]').val();
-  ls--;
-  $('[name="last_shown"]').val(ls);
-  // update j-k of m shown line
+  $('[name="all_past_mlt'+ j +'"]').remove();
   return true;
 }
 
@@ -232,15 +277,22 @@ function randomize(filepath, el) {
 }
 
 function togglemlt(cnt,noshowclass) {
+  var count = $('.'+noshowclass).length;
+  var n1 = $('#lastshown').text();
+  var n2 = $('#totalshown').text();
   if($('#mlt'+cnt).text()=='M') {
     $('.'+noshowclass).show();
     $('#mlt'+cnt).text("L");
     $('#mlt'+cnt).attr("title","Show less like this");
+    count = -1*count;
   } else {
     $('.'+noshowclass).hide();
     $('#mlt'+cnt).text("M");
-    $('#mlt'+cnt).attr("title","Show more like this");
+    $('#mlt'+cnt).attr("title","Show "+$('.'+noshowclass).length+" more like this");
   }
+  $('#lastshown').text(n1-count);
+  $('#totalshown').text(n2-count);
+  $('[name="last_shown"]').val($('[name="last_shown"]').val()-count);
   return false;
 }
 
@@ -248,7 +300,7 @@ function showpglist() {
   var j=0;
   var s='';
   while ($('[name="all_past_list'+ j +'"]').length>0) {
-    s = s+ $('[name="all_past_list'+ j +'"]').val()+"\n";
+    s = s+ $('[name="all_past_list'+ j +'"]').val()+", "+ $('[name="all_past_mlt'+ j +'"]').val()+"\n";
     j++;
   }
   alert(s);
