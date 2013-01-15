@@ -14,7 +14,7 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
             this.on('add', this.addNewSet);
             this.on('remove', this.deleteSet);
             this.type = options.type; 
-
+            this.setLoaded = false; 
             
            },
 
@@ -37,7 +37,9 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
                 });
                 console.log("The Problem Sets have loaded");                    
                 self.reset(newSet);
+                self.setLoaded = true; 
                 self.trigger("fetchSuccess");
+
             });
         },
         addNewSet: function (problemSet){

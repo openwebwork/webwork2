@@ -15,9 +15,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
             var self = this;
             _.extend(this,this.options);
 
-            this.collectionLoaded = false; 
-
-            
+         
             
             this.collection.on("problem-set-added",function(set) {
                     console.log("in PSLV problem-set-added");
@@ -25,12 +23,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                     self.$("#zeroShown").remove();  // if needed
                     self.parent.dispatcher.trigger("problem-set-added", set);
             });
-            this.collection.on("fetchSuccess", function () {
-                self.collectionLoaded = true; 
-                self.render();
-                
-            });
-
             this.collection.on("problem-set-deleted", function (set) {
                 self.$(".problem-set").each(function(i,v){
                     if ($(v).data("setname")===set.get("set_id")){ $(v).remove();}
@@ -46,7 +38,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 this.$el.append(_.template($("#modal-template").html(), 
                     {header: "<h3>Create a new Homework Set</h3>", saveButton: "Create New Set", id: "new-set-modal"}));
             }
-            if(this.collectionLoaded){
+            if(this.collection.setLoaded){
                 this.$("a.link").on("click",this.addDeleteSet);
                 this.$("#set-list").html("<div style='font-size:110%; font-weight:bold'>Homework Sets</div>" +
                     "<ul id='probSetList' class='btn-group btn-group-vertical'></ul>");

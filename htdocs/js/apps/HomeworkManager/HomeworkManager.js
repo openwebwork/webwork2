@@ -86,7 +86,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                 self.problemSets.each(function(_set){
                     _set.countUsers();
                 });
-                self.setListView.render();
+                self.probSetListView.render();
                 self.postHWLoaded();
             });
 
@@ -101,7 +101,8 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 	    var self = this; 
             
         this.probSetListView = new ProblemSetListView({el: $("#left-column"), viewType: "Instructor",
-                                    collection: this.problemSets, parent: this});    
+                                    collection: this.problemSets, parent: this});
+        this.probSetListView.render();   
         
         $("#settings").html(_.template($("#settings-template").html()));
 
@@ -174,7 +175,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             self.setDropToEdit();
             var keys = _.keys(_set.changed);
             _(keys).each(function(key) {
-                self.announce.addMessage("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]+ "<br>");    
+                self.announce.addMessage("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]);    
             })
         });
         
