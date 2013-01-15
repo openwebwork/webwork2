@@ -38,7 +38,7 @@ define(['Backbone',
                 this.renderProblems();
                 this.model.problems.on("add",function (){
                     console.log("Added a Problem");
-                    self.parent.announce.appendHTML("Problem Added to set: " + self.model.get("set_id"));
+                    self.parent.announce.addMessage("Problem Added to set: " + self.model.get("set_id"));
                 });
 
                 new HWPropertiesView({el: $("#property-tab"), model: this.model});
@@ -57,7 +57,7 @@ define(['Backbone',
                 this.model.problems.on("deleteProblem",function (setName,place) {
                     var str = "Problem #" + (place +1) + " Deleted from set: " + setName + " <br> "
                             + "To undo this, click the Undo button above the problem list. "; 
-                    self.parent.announce.appendHTML(str);
+                    self.parent.announce.addMessage(str);
                 });
 
                 this.model.problems.on("remove",self.updateNumProblems);

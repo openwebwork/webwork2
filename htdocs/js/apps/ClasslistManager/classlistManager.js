@@ -93,26 +93,16 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 		    // pstaabp:  this seems clunky.  Perhaps we can clean up this code. 	
 			switch(type) {
 			    case "user_added":
-					if (this.messageType == "user_added"){
-					    this.announce.appendHTML(", " + user.get("user_id"));
-					} else {
-					    this.messageType = "user_added";
-					    this.announce.setHTML("Success in adding the following users: " + user.get("user_id"));
-					}
+					    this.announce.addMessage("Success in adding the following user: " + user.get("user_id"));
 					break;
 			    case "user_deleted":
-					if (this.messageType == "user_deleted"){
-					    this.announce.appendHTML(", " + user.get("user_id"));
-					} else {
-					    this.messageType = "user_deleted";
-					    this.announce.setHTML("Success in deleting the following users: " + user.get("user_id"));
-					}
+					    this.announce.addMessage("Success in deleting the following user: " + user.get("user_id"));
 					break;
 			    case "property_changed":
 			    	for(prop in user.changedAttributes()) { 
 			    		console.log(prop + " " + user.changedAttributes()[prop]);
-	  						this.announce.appendHTML("The " + prop + " of user " + user.get("user_id") + " has changed."
-							    + "from " + user.oldAttributes[prop] + " to " + user.get(prop)) + "<br>";
+	  						this.announce.addMessage("The " + prop + " of user " + user.get("user_id") + " has changed "
+							    + "from " + user.oldAttributes[prop] + " to " + user.get(prop));
 
 			    	}
 				break;
