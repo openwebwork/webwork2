@@ -58,6 +58,8 @@ function(Backbone, _, User, ProblemSetList, Problem, WebPage, CalendarView, Prob
             
             this.problemSets.on('fetchSuccess', function () {
                 self.render();
+                self.probSetListView.collectionLoaded = true;
+                self.probSetListView.render();
                 self.postHWLoaded();
             }); 
 

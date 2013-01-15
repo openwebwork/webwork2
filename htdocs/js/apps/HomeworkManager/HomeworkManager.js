@@ -274,7 +274,6 @@ var HWSettingsView = WWSettingsView.extend({
         this.parent = this.options.parent; 
         this.settings = this.parent.settings.filter(function (setting) {return setting.get("category")==='PG - Problem Display/Answer Checking'});
         this.constructor.__super__.initialize.apply(this,{settings: this.settings});
-        console.log(this.settings);
      }, 
      render: function () {
         this.constructor.__super__.render.apply(this);
