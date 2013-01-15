@@ -435,6 +435,10 @@ sub pgfiles {
 	my ($morelt, $morelt_leader);
 	%textinfo=();
 	my @textproblems = (-1);
+  if ($name =~ /swf$/) {
+      my $applet_file = basename($name);
+      symlink($name,$ce->{webworkDirs}->{htdocs}."/applets/".$applet_file);
+    }
 	if ($name =~ /pg$/) {
 		$pgfile = basename($name);
 		$pgpath = dirname($name);
