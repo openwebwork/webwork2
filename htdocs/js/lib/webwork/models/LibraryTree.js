@@ -36,7 +36,8 @@ define(['Backbone', 'underscore','config'], function(Backbone, _,config){
         },
         parsePathsToTree: function(start){
             var self=this;
-            var regexp = new RegExp("^" + start.replace(/\//g,"\\/"));
+            var startPath = start.replace("(","\\(").replace(")","\\)");
+            var regexp = new RegExp("^" + startPath.replace(/\//g,"\\/"));
             var stuff = _(self.libs).filter(function(lib) { return regexp.test(lib);});
             var paths = _(stuff).map( function(lib){ return (lib.split(regexp)[1])  });
             var subpaths = []; 
