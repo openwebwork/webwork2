@@ -62,7 +62,6 @@ function lib_update(who, what) {
   mydefaultRequestObject.library_textbooks = lib_text;
   mydefaultRequestObject.library_textchapter = lib_textchap;
   mydefaultRequestObject.library_textsection = lib_textsect;
-// Logic problem since we may be in _a clear_ now!
   if(who == 'count') {
     mydefaultRequestObject.subcommand = 'countDBListings';
     console.log(mydefaultRequestObject);
@@ -78,7 +77,6 @@ function lib_update(who, what) {
       $('#library_count_line').html(line);
       return true;
     });
-    // count goes in library_count_line
   }
   var subcommand = "getAllDBchapters";
   if(what == 'clear') {
@@ -264,7 +262,6 @@ function randomize(filepath, el) {
   ro.noprepostambles = 1;
   $.post(webwork.webserviceURL, ro, function (data) {
     var response = data;
-    data = '<div class="RenderSolo">'+data+'</div>';
     $('#'+el).html(data);
     // run mathjax if that is the displaymode
     if(displayMode=='MathJax')

@@ -559,6 +559,8 @@ sub browse_library_panel2 {
 				)]),
 #			CGI::td({-colspan=>2, -align=>"right"},
 #				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter/Section Lists"))
+			CGI::td({-colspan=>2, -align=>"right"},
+					CGI::submit(-name=>"library_advanced", -value=>"Advanced Search"))
 		),
 		CGI::Tr({},
 			CGI::td(["Chapter:",
@@ -567,8 +569,6 @@ sub browse_library_panel2 {
 					            -default=> $chapter_selected,
 					            -onchange=>"lib_update('sections', 'get');return true"
 		    )]),
-			CGI::td({-colspan=>2, -align=>"right"},
-					CGI::submit(-name=>"library_advanced", -value=>"Advanced Search"))
 		),
 		CGI::Tr({},
 			CGI::td(["Section:",
@@ -917,7 +917,7 @@ sub make_data_row {
 
 	my $problem_output = $pg->{flags}->{error_flag} ?
 		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
-		: CGI::div({class=>"RenderSolo"}, $pg->{body_text});
+		: CGI::div({class=>"RenderSolo", id=>"render$cnt"}, $pg->{body_text});
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 
@@ -995,7 +995,7 @@ sub make_data_row {
 			)), 
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1).
-		CGI::div({-id=>"render$cnt"}, $problem_output),
+		CGI::div($problem_output),
 	));
 }
 
