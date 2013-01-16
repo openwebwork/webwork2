@@ -26,7 +26,6 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
 
             $.get(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-                console.log(response.result_data);
                 var newSet = new Array();
                 _(response.result_data).each(function(set) { 
                     // change some of the 0-1 Perl booleans to "yes/no"s

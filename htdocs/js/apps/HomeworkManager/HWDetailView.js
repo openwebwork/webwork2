@@ -44,14 +44,14 @@ define(['Backbone',
                 new HWPropertiesView({el: $("#property-tab"), model: this.model});
 
 
-                this.model.countSetUsers();
+                /*this.model.countSetUsers();
                 this.model.on("countUsers",function(_assignedUsers){
                     console.log("in countUsers");
                     $("#num-users-assigned").html(_assignedUsers.length + " of " + self.parent.users.length);
                     $("#user-tab").html((new AssignUsersView({users: self.parent.users, assignedUsers: _assignedUsers, 
                                             model: self.model})).el);
 
-                });
+                }); */
 
                 // This sets messages 
                 this.model.problems.on("deleteProblem",function (setName,place) {

@@ -36,10 +36,10 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
         },
         render: function() {
             var self = this;
-            this.$el.html("<ul class='no-bullets'></ul>");
+            this.$el.html("<ul id='prob-list' class='no-bullets'></ul>");
             $("#undo-delete-btn").on("click",this.undoDelete);
             if(this.reorderable){
-                this.$(".list").sortable({update: function (event,ui) { 
+                this.$("#prob-list").sortable({update: function (event,ui) { 
                     console.log("I was reordered!");
                     self.$(".problem").each(function (i) { 
                         var path = $(this).data("path");
@@ -86,7 +86,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 allProblemsShown = true;
             }
             var problemsToView = _.range(start,lastProblem);
-            var ul = this.$(".list");  
+            var ul = this.$("#prob-list");  
             _(problemsToView).each(function(i) {
                 var prob = self.collection.at(i);
                 var probView = new ProblemView({model: prob, type: self.type, deletable: self.deletable, 
