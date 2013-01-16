@@ -60,8 +60,9 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 this.collection.addProblem(prob);
                 var probView = new ProblemView({model: prob, type: this.type, deletable: this.deletable, 
                         reorderable: this.reorderable, draggable: this.draggable});
-                this.$(".list").append(probView.el);
+                this.$("#prob-list").append(probView.el);
                 probView.render();
+                this.parent.dispatcher.trigger("num-problems-shown");
             }
 
         },
