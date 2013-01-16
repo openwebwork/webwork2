@@ -25,6 +25,7 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
             _.defaults(requestObject, config.requestObject);
 
             $.get(config.webserviceURL, requestObject, function(data){
+                console.log(response);
                 var response = $.parseJSON(data);
                 var newSet = new Array();
                 _(response.result_data).each(function(set) { 
