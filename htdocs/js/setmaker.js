@@ -263,11 +263,18 @@ function randomize(filepath, el) {
   $.post(webwork.webserviceURL, ro, function (data) {
     var response = data;
     $('#'+el).html(data);
-    // run mathjax if that is the displaymode
+    // run typesetter depending on the displaymode
     if(displayMode=='MathJax')
-      MathJax.Hub.Typeset(el);
+      MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
     if(displayMode=='jsMath')
       jsMath.ProcessBeforeShowing(el);
+    if(displayMode=='asciimath') {
+      //processNode(el);
+      translate();
+    }
+    if(displayMode=='LaTeXMathML') {
+      AMprocessNode(document.getElementsByTagName("body")[0], false);
+    }
     //console.log(data);
   });
   return false;

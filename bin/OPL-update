@@ -26,6 +26,8 @@ use DBI;
 BEGIN {
         die "WEBWORK_ROOT not found in environment.\n"
                 unless exists $ENV{WEBWORK_ROOT};
+	# Unused variable, but define it to avoid an error message.
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
 }
 
 ### Data for creating the database tables
@@ -450,54 +452,54 @@ sub pgfiles {
 		$tagged = 0;
 		while (<IN>) {
 		SWITCH: {
-				if (/\bKEYWORDS\((.*)\)/i) {
+				if (/#.*\bKEYWORDS\((.*)\)/i) {
 					@keyword = keywordcleaner($1);
 					last SWITCH;
 				}
-				if (/\bDBsubject\s*\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bDBsubject\s*\(\s*'?(.*?)'?\s*\)/) {
 					$subject = $1;
 					$subject =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bDBchapter\s*\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bDBchapter\s*\(\s*'?(.*?)'?\s*\)/) {
 					$chapter = $1;
 					$chapter =~ s/'/\'/g;
 					$tagged = 1;
 					last SWITCH;
 				}
-				if (/\bDBsection\s*\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bDBsection\s*\(\s*'?(.*?)'?\s*\)/) {
 					$section = $1;
 					$section =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bDate\s*\(\s*'(.*?)'\s*\)/) {
+				if (/#.*\bDate\s*\(\s*'(.*?)'\s*\)/) {
 					$date = $1;
 					$date =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bInstitution\s*\(\s*'(.*?)'\s*\)/) {
+				if (/#.*\bInstitution\s*\(\s*'(.*?)'\s*\)/) {
 					$institution = $1;
 					$institution =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bAuthor\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bAuthor\(\s*'?(.*?)'?\s*\)/) {
 					$author = $1;
 					$author =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bMLTleader\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bMLTleader\(\s*'?(.*?)'?\s*\)/) {
 					$morelt_leader = $1;
 					$morelt_leader =~ s/['"]//g;
 					$morelt_leader= ($morelt_leader =~ /\S/) ? 1 : 0;
 					last SWITCH;
 				}
-				if (/\bMLT\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bMLT\(\s*'?(.*?)'?\s*\)/) {
 					$morelt = $1;
 					$morelt =~ s/'//g;
 					$morelt = lc($morelt);
 					last SWITCH;
 				}
-				if (/\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$text = $2;
 					$text =~ s/'/\'/g;
@@ -507,7 +509,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bEditionText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bEditionText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;	
 					$edition = $2;
 					$edition =~ s/'/\'/g;
@@ -517,7 +519,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bAuthorText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bAuthorText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$textauthor = $2;
 					$textauthor =~ s/'/\'/g;
@@ -527,7 +529,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bSection(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bSection(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$textsection = $2;
 					$textsection =~ s/'/\'/g;
@@ -544,7 +546,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bProblem(\d+)\(\s*(.*?)\s*\)/) {
+				if (/#.*\bProblem(\d+)\(\s*(.*?)\s*\)/) {
 					$textno = $1;
 					$textproblem = $2;
 					$textproblem =~ s/\D/ /g;
@@ -568,6 +570,7 @@ sub pgfiles {
 			#
 			# kludge to fix the omission of a subject field
 			unless($subject) {
+print "NO SUBJECT $name\n";
 				if ($text =~ /precalculus/i) {
 					$subject = "Precalculus";
 				} elsif ($text =~ /calculus/i) {
@@ -600,6 +603,10 @@ sub pgfiles {
 			#    is the file wwdb_er_graph.pdf. Insert, in order, into the tables
 			#    in that file.
 			#
+
+			# Fill in missing data with Misc. instead of blank
+			$chapter = 'Misc.' unless $chapter =~ /\S/;
+			$section = 'Misc.' unless $section =~ /\S/;
 
 			#selectrow_array returns first field of first row in scalar context or undef 
 			# undef for failure also, $dbh->{RaiseError} = 1 should catch that case.
