@@ -69,6 +69,17 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             this.problemSets = new ProblemSetList({type: "Instructor"});
             this.settings.fetch();
 
+            /* There's a lot of things that need to be loaded as the App starts:
+             *    1. The settings
+             *    2. The ProblemSets
+             *    3. The set of assigned Users for each Problem Set
+             *    4. All Users of the course
+             *
+             *   The tricky part is to load all of these but don't wait until everything is loaded to show the page. 
+             *
+             */ 
+
+
             this.settings.on("fetchSuccess", function (data){
                 self.render();
                 self.problemSets.fetch();
@@ -77,17 +88,23 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             }); 
 
 
-
             this.dispatcher.on("calendar-change", self.setDropToEdit);
 
             this.setupMessages();
 
             this.problemSets.on("fetchSuccess",function() {
-                self.problemSets.each(function(_set){
-                    _set.countUsers();
+                var setsLoaded = [];
+                self.problemSets.each(function(_set,i){
+                    setsLoaded.push({set: _set.get("set_id"), loaded: false, pos: i}); 
+                    _set.getAssignedUsers();
+                    _set.on("usersLoaded", function(set){
+                        console.log("users Loaded for set " + set.get("set_id"));
+                        var foundSet = _(setsLoaded).find(function(obj){ return obj["set"]===set.get("set_id")});
+                        setsLoaded[foundSet.pos].loaded = true;
+                        if(_(_(setsLoaded).pluck("loaded")).all()) {self.postHWLoaded();}
+                    });
                 });
                 self.probSetListView.render();
-                self.postHWLoaded();
             });
 
 
@@ -175,7 +192,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             self.setDropToEdit();
             var keys = _.keys(_set.changed);
             _(keys).each(function(key) {
-                self.announce.addMessage("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]);    
+                self.announce.addMessage("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]+ "<br>");    
             })
         });
         

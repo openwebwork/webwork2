@@ -101,9 +101,9 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             restricted_login_proctor: "opt(yes,no)",
         },
         initialize: function(){
-            _.bindAll(this,"fetch","addProblem","update");
+            _.bindAll(this,"fetch","addProblem","update","getAssignedUsers");
             this.on('change',this.update);
-            this.usersAssigned = new Array(); 
+            this.assignedUsers = null; 
             this.saveProblems = new Array();   // holds added problems temporarily if the problems haven't been loaded. 
             
         },
@@ -192,10 +192,9 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             var dueDate2 = new XDate(_set.get("due_date"));
             return (openDate1<openDate2)?(dueDate1>openDate2):(dueDate2>openDate1);
         },
-        countUsers: function ()
+        getAssignedUsers: function ()
         {
             var self=this;
-            if (this.usersAssigned.length>0) { self.trigger("countUsers",this.usersAssigned);}
             
             var requestObject = { xml_command: "listSetUsers"};
             _.extend(requestObject, this.attributes);
@@ -203,13 +202,15 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
 
             $.get(config.webserviceURL, requestObject, function (data) {
 
-                    var response = $.parseJSON(data);
-                    self.usersAssigned = response.result_data;
-                    
-                    self.trigger("countUsers",this.usersAssigned);
+                var response = $.parseJSON(data);
+                self.assignedUsers = response.result_data;
+                self.trigger("usersLoaded", self);                
 
-                });        
+            });        
         },
+
+        // Currently, the list of users assigned to this set (stored in this.assignedUsers) is just an array
+        // of user_id's.  Perhaps, we should consider making this a UserList instead.  (Have to think about the pros and cons)
         assignToUsers: function (_users){  // assigns this problem set to the users that come in as an array of usernames.  
             var self = this;
 
@@ -221,9 +222,31 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
                 var response = $.parseJSON(data);
 
                 console.log(response);
+                self.trigger("usersAssigned", _users, self.get("set_id"));
 
             });
 
+        },
+        updateUserSet: function(_users,_openDate,_dueDate,_answerDate){
+            var self = this;
+            console.log("Updating the dates to users " + _users);
+            var requestObject = {xml_command: "updateUserSet", users: _users.join(","), set_id: this.get("set_id"),
+                                    open_date: _openDate, due_date: _dueDate, answer_date: _answerDate};
+            _.defaults(requestObject, config.requestObject);
+            $.post(config.webserviceURL, requestObject, function (data){
+                var response = $.parseJSON(data);
+                console.log(response);
+            });
+        },
+        unassignUsers: function(_users){
+            var self = this;
+            console.log("Unassigning users " + _users + " from set " + this.get("set_id"));
+            var requestObject = {xml_command: "unassignSetFromUsers", users: _users.join(","), set_id: this.get("set_id")};
+            _.defaults(requestObject, config.requestObject);
+            $.post(config.webserviceURL, requestObject, function (data){
+                var response = $.parseJSON(data);
+                console.log(response);
+            });  
         }
 
 

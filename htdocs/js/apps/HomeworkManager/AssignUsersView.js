@@ -10,7 +10,7 @@ define(['Backbone',
     function(Backbone, _,ProblemSet,EditableCell) {
 
     var AssignUsersView = Backbone.View.extend({
-    	template: _.template($("#selected-users-template").html()),
+    	template: _.template($("#user-template").html()),
     	initialize: function () {
     		_.bindAll(this,"render","initializeModel");
     		_.extend(this,this.options);

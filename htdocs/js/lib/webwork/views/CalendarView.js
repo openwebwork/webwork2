@@ -215,8 +215,8 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
                     var slotFilled = false; 
                     _(slot).each(function(problemSet){
                         var props = (self.calendar.view==="student")? 
-                                {setname: problemSet.get("set_id"),usersAssigned:"",totalUsers:"", openToStudents:""}:
-                                {setname: problemSet.get("set_id"), usersAssigned: problemSet.usersAssigned.length, 
+                                {setname: problemSet.get("set_id"),assignedUsers:"",totalUsers:"", openToStudents:""}:
+                                {setname: problemSet.get("set_id"), assignedUsers: problemSet.assignedUsers.length, 
                                 totalUsers: self.calendar.parent.users.size(), 
                                 openToStudents: problemSet.get("visible"), showName: false};
                         if (problemSet.isDueOn(self.model,threeDays)){

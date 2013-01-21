@@ -23,9 +23,9 @@ var EditableCell = Backbone.View.extend({
             
         },
         events: {"click .srv-value": "editString",
-                "click .edit-date": "editDate",
-                "click .edit-time": "editTime",
-                "change .edit-opt": "editOption"
+                 "click .edit-date": "editDate",
+                 "click .edit-time": "editTime",
+                 "change .edit-opt": "editOption"
         },
         editOption: function (event) {
             this.model.set(this.property,$(event.target).val());
@@ -74,18 +74,21 @@ var EditableCell = Backbone.View.extend({
             var _wwdate = date + " at " + time + " " + config.timezone;
             console.log(_wwdate);
             var error = this.model.preValidate(this.property,_wwdate);
-            console.log(error);
 
-            if (!(error)) {
-                this.model.set(this.property,_wwdate);
-                return true;
-            } else
-            {
+            if (error) {
                 box.attr("data-content",error);
                 box.attr("data-placement","top");
                 box.popover("show");
                 console.log(error);
                 return false; 
+                
+            } else if (this.silent) {
+                return true;
+                // don't save the property yet. 
+            } else 
+            {
+                this.model.set(this.property,_wwdate);
+                return true;
             } 
         },
         editString: function (event) {
@@ -103,6 +106,10 @@ var EditableCell = Backbone.View.extend({
                 
                 // need to also set the property on the server or 
                 }); 
+        },
+        getValue: function ()
+        {
+            return this.$el.text();
         }
         
         
