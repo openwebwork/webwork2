@@ -779,10 +779,10 @@ sub addKey {
 		my ($userID, $proctorID) = ($1, $2);
 		croak "addKey: user $userID not found"
 #			unless $self->{user}->exists($userID);
-			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
+			unless $Key -> key eq "nonce" or $self->{user}->exists($userID);
 		croak "addKey: proctor $proctorID not found"
 #			unless $self->{user}->exists($proctorID);
-			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
+			unless $Key -> key eq "nonce" or $self->{user}->exists($proctorID);
 	} else {
 		croak "addKey: user ", $Key->user_id, " not found"
 #			unless $self->{user}->exists($Key->user_id);
