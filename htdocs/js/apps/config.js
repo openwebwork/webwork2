@@ -63,7 +63,8 @@ define(['Backbone','backbone-validation'], function(Backbone){
             
                 ];
     config.regexp = {
-        wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/
+        wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,
+        number: /^\d*(\.\d*)?$/
     };
 
 
@@ -80,8 +81,8 @@ define(['Backbone','backbone-validation'], function(Backbone){
 
         if (parsedDate) {
             var year = parsedDate[4];
-            var month = (parseInt(parsedDate[1],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
-            var dayOfMonth = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[3],10)):parseInt(parsedDate[3],10);
+            var month = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
+            var dayOfMonth = (parseInt(parsedDate[3],10)<10)?("0"+parseInt(parsedDate[3],10)):parseInt(parsedDate[3],10);
         
             var hours = (/[aA][mM]/.test(parsedDate[6],10))? (parseInt(parsedDate[6],10)):(parseInt(parsedDate[6],10)+12);
             hours = (hours<10)?("0"+hours):hours;

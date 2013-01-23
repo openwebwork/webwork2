@@ -610,6 +610,20 @@ sub updateSetProperties{
     return $self->do(WebworkWebservice::SetActions::updateSetProperties($self, $in));
 }
 
+sub updateUserSet {
+	my $class = shift;
+	my $in = shift; 
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::SetActions::updateUserSet($self,$in));
+}
+
+sub unassignSetFromUsers {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::SetActions::unassignSetFromUsers($self,$in));
+}
+
 sub listSetUsers {
 	my $class = shift;
 	my $in = shift;

@@ -30,7 +30,7 @@ define(['Backbone', 'underscore', './User', 'config'], function(Backbone, _, Use
                 var response = $.parseJSON(data);
                 // see if the deletion was successful. 
                 self.trigger("success","user_deleted",user);
-                return (response.result_data.delete == "success")
+                return (response.result_data.delete == "success");
             });
         },
     

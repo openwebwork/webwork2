@@ -10,7 +10,7 @@ define(['Backbone',
     function(Backbone, _,ProblemSet,EditableCell) {
 
     var AssignUsersView = Backbone.View.extend({
-    	template: _.template($("#selected-users-template").html()),
+    	template: _.template($("#user-template").html()),
     	initialize: function () {
     		_.bindAll(this,"render","initializeModel");
     		_.extend(this,this.options);
@@ -64,6 +64,10 @@ define(['Backbone',
 			});
 			var _sets = this.parent.problemSets.filter(function(_set) { return (_(setNames).indexOf(_set.get("set_id")) >-1);});
 
+            console.log(_users);
+            console.log(_sets);
+
+            _(_sets).each(function(set) {set.assignToUsers(userNames)});
 		},
 		updateDates: function ()
 		{

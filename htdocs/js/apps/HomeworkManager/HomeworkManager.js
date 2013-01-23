@@ -17,7 +17,8 @@ require.config({
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
         "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker",
-        "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min"
+        "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min",
+        "jquery-tablesorter":   "/webwork2_files/js/lib/vendor/jquery.tablesorter.min"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -30,7 +31,8 @@ require.config({
         'XDate':{ exports: 'XDate'},
         'config': ['XDate'],
         'datepicker': ['bootstrap'],
-        'jquery-truncate': ['jquery']
+        'jquery-truncate': ['jquery'],
+        'jquery-tablesorter': ['jquery']
     }
 });
 
@@ -47,18 +49,19 @@ require(['Backbone',
     './AssignUsersView',
     'WebPage',
     'config',
+    '../../lib/webwork/views/WWSettingsView',
     'backbone-validation',
     'jquery-ui',
     'bootstrap',
     'datepicker'
     ], 
 function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetailView, 
-            ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config){
+            ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView){
     var HomeworkEditorView = WebPage.extend({
 	    tagName: "div",
         initialize: function(){
     	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-    	    _.bindAll(this, 'render','postHWLoaded');  // include all functions that need the this object
+    	    _.bindAll(this, 'render','postHWLoaded','setDropToEdit','setupMessages');  // include all functions that need the this object
     	    var self = this;
             this.dispatcher = _.clone(Backbone.Events);
 
@@ -66,43 +69,44 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             this.problemSets = new ProblemSetList({type: "Instructor"});
             this.settings.fetch();
 
+            /* There's a lot of things that need to be loaded as the App starts:
+             *    1. The settings
+             *    2. The ProblemSets
+             *    3. The set of assigned Users for each Problem Set
+             *    4. All Users of the course
+             *
+             *   The tricky part is to load all of these but don't wait until everything is loaded to show the page. 
+             *
+             */ 
+
+
             this.settings.on("fetchSuccess", function (data){
-                new HWSettingsView({parent: self, el: $("#settings-table")});
                 self.render();
                 self.problemSets.fetch();
                 config.timezone = self.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
+                self.HWSettingsView.render();
             }); 
 
 
-
             this.dispatcher.on("calendar-change", self.setDropToEdit);
-            this.problemSets.on("problem-set-changed", function (_set){
-                
-                self.calendarView.updateAssignments();
-                self.calendarView.render();
-                self.setListView.render();
-                self.setDropToEdit();
-                var keys = _.keys(_set.changed);
-                _(keys).each(function(key) {
-                    self.announce.appendHTML("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]+ "<br>");    
-                })
-            });
-            
-            this.dispatcher.on("problem-set-added", function (set){
-                console.log("this.dispatcher");
-                self.announce.appendHTML("The HW set with name " + set.get("set_id") + " was created.");
-                self.addHWSet(set); // update all other parts of the part with the new set.
-                    
-            });
 
-            this.problemSets.on("problem-set-deleted",function(set){
-                self.announce.appendHTML("The HW set with name " + set.get("set_id") + " was deleted.");
+            this.setupMessages();
+
+            this.problemSets.on("fetchSuccess",function() {
+                var setsLoaded = [];
+                self.problemSets.each(function(_set,i){
+                    setsLoaded.push({set: _set.get("set_id"), loaded: false, pos: i}); 
+                    _set.getAssignedUsers();
+                    _set.on("usersLoaded", function(set){
+                        console.log("users Loaded for set " + set.get("set_id"));
+                        var foundSet = _(setsLoaded).find(function(obj){ return obj["set"]===set.get("set_id")});
+                        setsLoaded[foundSet.pos].loaded = true;
+                        if(_(_(setsLoaded).pluck("loaded")).all()) {self.postHWLoaded();}
+                    });
+                });
+                self.probSetListView.render();
             });
 
-            this.problemSets.on("fetchSuccess",function() {self.setListView.render();})
-
-
-            this.dispatcher.on("problem-sets-loaded",this.postHWLoaded);
 
             this.users = new UserList();
             this.users.fetch();
@@ -114,14 +118,8 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 	    var self = this; 
             
         this.probSetListView = new ProblemSetListView({el: $("#left-column"), viewType: "Instructor",
-                                    collection: this.problemSets, parent: this});    
-        //this.$el.append(_.template($("#tab-setup").html()));
-
-        
-        //$('#hwedTabs a').click(function (e) {
-        //    e.preventDefault();
-        //    $(this).tab('show');
-        //});
+                                    collection: this.problemSets, parent: this});
+        this.probSetListView.render();   
         
         $("#settings").html(_.template($("#settings-template").html()));
 
@@ -132,18 +130,14 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         
         //new ui.PropertyListView({el: $("#settings"), model: self.settings});
 
-        this.HWDetails = new HWDetailView({parent: this, el: $("#problem-set"), collection: this.problemSets});
+        // render the parts of the Homework Manager. 
 
-        // Create the HW list view.  
-
-        this.setListView = new SetListView({parent: self, collection: this.problemSets, el:$("div#hw-set-list")});
-
-        // 
-
+        this.HWDetails           = new HWDetailView({el: $("#problem-set"),  collection: this.problemSets,parent: this});
+        this.setListView         = new SetListView({el:$("div#hw-set-list"), collection: this.problemSets, parent: self});
         this.libDirectoryBrowser = new LibraryBrowser({el:  $("#view-all-libraries"), id: "view-all-libraries", parent: this});
-        this.libSubjectBrowser = new LibraryBrowser({el:  $("#view-all-subjects"), id: "view-all-subjects", parent: this});
-
-        this.assignUsersView = new AssignUsersView({el: $("#assign-users"), id: "view-assign-users", parent: this});
+        this.libSubjectBrowser   = new LibraryBrowser({el:  $("#view-all-subjects"), id: "view-all-subjects", parent: this});
+        this.assignUsersView     = new AssignUsersView({el: $("#assign-users"), id: "view-assign-users", parent: this});
+        this.HWSettingsView      = new HWSettingsView({parent: self, el: $("#settings-table")});
 
 
     },
@@ -187,7 +181,33 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
         if (_set) {self.setListView.addSet(_set)};
     },
+    setupMessages: function () {
+        var self = this;
 
+        this.problemSets.on("problem-set-changed", function (_set){
+            
+            self.calendarView.updateAssignments();
+            self.calendarView.render();
+            self.setListView.render();
+            self.setDropToEdit();
+            var keys = _.keys(_set.changed);
+            _(keys).each(function(key) {
+                self.announce.addMessage("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]+ "<br>");    
+            })
+        });
+        
+        this.dispatcher.on("problem-set-added", function (set){
+            console.log("this.dispatcher");
+            self.announce.addMessage("The HW set with name " + set.get("set_id") + " was created.");
+            self.addHWSet(set); // update all other parts of the part with the new set.
+                
+        });
+
+        this.problemSets.on("problem-set-deleted",function(set){
+            self.announce.addMessage("The HW set with name " + set.get("set_id") + " was deleted.");
+        });
+
+    },
     postHWLoaded: function ()
     {
         var self = this;
@@ -266,109 +286,23 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
     }
 });
 
-
-
-/* This View provides the super class for any Settings in WebWork.  The list of Settings should be included by 
-    setting the "settings" field and providing it an array of WeBWorKProperty models. 
-    */
-
-var WWSettingsView = Backbone.View.extend({
-
-    initialize: function () {
-        _.bindAll(this,'render');
-        this.render();
-    },
-    render: function ()
-    {
-        var self = this;
-        _(this.settings).each(function(setting){
-            var settingView =new WWSettingRowView({property: setting}); 
-            self.$el.append(settingView.el);
-        });
-    }
-
-
-});
-
 var HWSettingsView = WWSettingsView.extend({
     initialize: function () {
 //        _.bindAll(this,'render','edit');
         this.parent = this.options.parent; 
         this.settings = this.parent.settings.filter(function (setting) {return setting.get("category")==='PG - Problem Display/Answer Checking'});
-        WWSettingsView.prototype.initialize.apply(this);
+        this.constructor.__super__.initialize.apply(this,{settings: this.settings});
+     }, 
+     render: function () {
+        this.constructor.__super__.render.apply(this);
      }
 
 });
 
 
+// The following is probably not needed. 
 
-var WWSettingRowView = Backbone.View.extend({
-    className: "set-detail-row",
-    tagName: "tr",
-    initialize: function () {
-        _.bindAll(this,'render','update');
-        this.property = this.options.property;
-        //this.dateRE =/(\d\d\/\d\d\/\d\d\d\d)\sat\s((\d\d:\d\d)([apAP][mM])\s([a-zA-Z]{3}))/;
-        this.render();
-        return this;
-    },
-    render: function() {
-        var self = this; 
-        this.$el.html("<td>" + this.property.get("doc") + "</td>");
-        switch(this.property.get("type")){
-            case "text":
-            case "number":
-                this.$el.append("<td><input type='text' value='" + this.property.get("value") + "'></input></td>");
-                break;
-            case "checkboxlist":
-                var opts = _(self.property.get("values")).map(function(v) {return "<li><input type='checkbox' value='"+v+"'>" + v + "</li>";});
-                this.$el.append("<td id='prop-" + self.property.cid + "'><ul style='list-style: none'>" + opts.join("") + "</ul></td>");
-                _(self.property.get("value")).each(function(v){
-                    self.$("#prop-" + self.property.cid + " input:checkbox[value='" + v + "']").attr("checked","checked");
-                })
-                break;
-            case "popuplist":
-                var opts = _(self.property.get("values")).map(function(v) {return "<option value='" + v + "'>" + v + "</option>";});
-                this.$el.append("<td id='prop-" + self.property.cid + "'><select class='popuplist'>" + opts + "</select>");
-                self.$("#prop-" + self.property.cid + " select.popuplist option[value='" + self.property.get("value") + "']").attr("selected","selected");
-                break;
-            case "boolean":
-                this.$el.append("<td id='prop-" + self.property.cid + "'>" + 
-                                "<select class='bool'><option value='1'>true</option><option value='0'>false</option></select");
-                //this.$("#prop-" + self.property.cid + " select.bool option[value='0']").attr("selected","selected")
-                this.$("#prop-" + self.property.cid + " select.bool option[value='" + self.property.get("value") +  "']").attr("selected","selected");
- 
-               break;
-            default: 
-                this.$el.append("<td id='value-col'> " + this.property.get("value") + "</td>");
-
-        }
-
-    
-    },
-    events: {
-        "change input": "update",
-        "change select": "update"
-    },
-    update: function(evt){
-        var self = this;
-        console.log("updating " + self.property.get("var"));
-        console.log("new value: " + $(evt.target).val());
-        switch(this.property.get("type")){
-            case "text":
-            case "number":
-                self.property.set("value",$(evt.target).val());
-                break;
-            case "checkboxlist":
-
-                break;
-            case "boolean":
- 
-               break;
-        }
-    }
-});
-
+/*
 var HWProblemView = Backbone.View.extend({
     className: "set-detail-problem-view",
     tagName: "div",
@@ -387,7 +321,7 @@ var HWProblemView = Backbone.View.extend({
     }
 
 
-});
+}); */
 
     
     

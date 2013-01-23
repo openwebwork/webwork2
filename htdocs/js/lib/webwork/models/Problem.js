@@ -18,7 +18,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
     
         },
         //this is a server render, different from a view render
-        render:function () {
+        fetch:function () {
             var problem = this;
             var requestObject = {
                 set: this.get('path'),
