@@ -532,7 +532,7 @@ my $yaxislabel = "";
 foreach my $i (0..5) {
     $yaxislabelypixel = $topmargin + 5 + ($i * sprintf("%d",$plotwindowheight/5));
     $yaxislabel = 20*(5 - $i);
-    $svg = $svg . "<text id=\"bargraphylabel". $yaxislabel ."\" x=\"". $yaxislabelxpixel ."\" y=\"". $yaxislabelypixel ."\"  font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"end\" font-weight=\"normal\">". $yaxislabel ." %</text>\n";
+    $svg = $svg . "<text id=\"bargraphylabel". $yaxislabel ."\" x=\"". $yaxislabelxpixel ."\" y=\"". $yaxislabelypixel ."\"  font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"end\" font-weight=\"normal\">". $yaxislabel ."%</text>\n";
 }
 
 my $yaxisruleypixel = 0;
@@ -549,7 +549,9 @@ my $barheight = 0;
 my $barxpixel = 0;
 my $barypixel = 0;
 my $problabelxpixel = 0;
-my $problabelypixel = 0;
+#my $problabelypixel = 0;
+my $problabelypixel = $topmargin + $plotwindowheight - $barheight + 15;
+
 foreach my $probID (@problemIDs) {
     $linkstring = $self->systemLink($problemPage{$probID});
     
@@ -557,7 +559,7 @@ foreach my $probID (@problemIDs) {
     	sprintf("%0.0f",100*$correct_answers_for_problem{$probID}/$number_of_students_attempting_problem{$probID})
     	: 0;  #avoid division by zero
     $barheight = sprintf("%d", $percentcorrect * $plotwindowheight / 100 );
-    $barxpixel = $leftmargin + $probID * ($barwidth + 2*$barsep) + $barsep;
+    $barxpixel = $leftmargin + ($probID-1) * ($barwidth + 2*$barsep) + $barsep;
     $barypixel = $topmargin + $plotwindowheight - $barheight;
     $problabelxpixel = $leftmargin + ($probID-1) * $totalbarwidth + $barsep;
     $problabelypixel = $topmargin + $plotwindowheight - $barheight;

@@ -28,7 +28,7 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(before after readFile sortAchievements);
 
 use Safe;
-use Storable qw(freeze thaw);
+use Storable qw(nfreeze thaw);
 
 sub checkForAchievements {
 
@@ -225,15 +225,15 @@ sub checkForAchievements {
 	    $achievementPoints += $points;
 	}    
 	
-	#update counter, freeze localData and store
+	#update counter, nfreeze localData and store
 	$userAchievement->counter($counter);
-	$userAchievement->frozen_hash(freeze($localData));	
+	$userAchievement->frozen_hash(nfreeze($localData));	
 	$db->putUserAchievement($userAchievement);
 	
     }  #end for loop
     
-    #freeze globalData and store
-    $globalUserAchievement->frozen_hash(freeze($globalData));
+    #nfreeze globalData and store
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return $cheevoMessage;
