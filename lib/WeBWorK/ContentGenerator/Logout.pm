@@ -82,6 +82,9 @@ sub pre_header_initialize {
 	}
 	$self->{keyError} = $keyError;
 
+	# Do any special processing needed by external authentication
+	$authen->logout_user() if $authen->can('logout_user');
+
 	# if we have an authen redirect, all of those errors may be 
 	#    moot, but I think that's unavoidable (-glarose)
 	if ( defined($authen->{redirect}) && $authen->{redirect} ) {
@@ -158,7 +161,7 @@ sub body {
 		"authentication system.  Please go there to login again.");
 	} else {
 		print CGI::start_form(-method=>"POST", -action=>$loginURL);
-	#	print CGI::hidden("user", $userID);     # don't fill in userID, it causes false a warning msg on page
+	#	print CGI::hidden("user", $userID);  ### Line Commented out to suppress error message when this button is used.  WHW
 		print CGI::hidden("force_passwd_authen", 1);
 		print CGI::p({align=>"center"}, CGI::submit(-name=>"submit", -label=>$r->maketext("Log In Again")));
 		print CGI::end_form();
