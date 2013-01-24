@@ -128,7 +128,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
     
         $.post(config.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
-            console.log("result: " + response.result_data);
+            console.log(response);
         });
     }
 

@@ -308,6 +308,7 @@ a better rendering.
 <script type="text/template" id="problem-template">
 <div class="handle row-fluid">
 <%if(reorderable){%><i class="icon-resize-vertical icon-large"></i><%}%>
+<%if(showPoints){%>Problem value:<input class="prob-value" type="text" value="<%=value%>" size="5"><%}%>
 <%if(deletable){ %><span class="remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
 <div class="problem" data-path="<%= path %>" data-source="<%= type %>">
 

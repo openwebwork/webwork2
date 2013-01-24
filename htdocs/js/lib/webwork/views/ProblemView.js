@@ -20,6 +20,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
         //In most model views initialize is used to set up listeners
         //on the views model.
         initialize:function () {
+            _.bindAll(this,"render","updateProblem","clear");
             _.extend(this.model.attributes,this.options);
             this.model.on('change:data', this.render, this);
             this.model.on('destroy', this.remove, this);
@@ -40,6 +41,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
                         //opacity:0.65
                     }); 
                 } 
+                this.$(".prob-value").on("change",this.updateProblem);
                 this.model.trigger("problemRendered",this.model.get("place"));
 
             } else {
@@ -54,7 +56,10 @@ define(['Backbone', 'underscore'], function(Backbone, _){
 
             return this;
         },
-
+        updateProblem: function(evt)
+        {
+            this.model.update({value: $(evt.target).val()});
+        },
         clear: function(){
             this.model.collection.remove(this.model);
             this.model.clear();

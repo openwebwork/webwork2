@@ -103,6 +103,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 open_date: openDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone,
                 due_date: dueDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone
             });
+            set.assignedUsers = [];
             var errorMessage = set.preValidate('set_id', setname);
             if (errorMessage){
                 this.$("#new-set-modal .modal-body").append("<div style='color:red'>The name of the set must contain only letters numbers, '.', _ and no spaces are allowed.");

@@ -59,7 +59,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 var prob = this.undoStack.pop();
                 this.collection.addProblem(prob);
                 var probView = new ProblemView({model: prob, type: this.type, deletable: this.deletable, 
-                        reorderable: this.reorderable, draggable: this.draggable});
+                        reorderable: this.reorderable, draggable: this.draggable, showPoints: this.showPoints});
                 this.$("#prob-list").append(probView.el);
                 probView.render();
                 this.parent.dispatcher.trigger("num-problems-shown");
@@ -91,7 +91,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             _(problemsToView).each(function(i) {
                 var prob = self.collection.at(i);
                 var probView = new ProblemView({model: prob, type: self.type, deletable: self.deletable, 
-                        reorderable: self.reorderable, draggable: self.draggable});
+                        reorderable: self.reorderable, draggable: self.draggable, showPoints: self.showPoints});
                 ul.append(probView.el);
 
                 probView.render();

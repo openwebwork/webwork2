@@ -426,6 +426,13 @@ sub renderProblem {
     my $self = $class->initiate_session($in);
     return $self->do( WebworkWebservice::RenderProblem::renderProblem($self,$in) ); 
 }
+
+sub updateProblem {
+	my ($class,$in) = @_;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::SetActions::updateProblem($self,$in));
+}
+
 sub readFile {
     my $class = shift;
     my $in   = shift;
