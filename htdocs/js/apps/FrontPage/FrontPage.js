@@ -11,7 +11,7 @@ require.config({
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
         "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":             "/webwork2_files/js/lib/webwork/views/Closeable",
+        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
         "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
@@ -56,9 +56,12 @@ function(Backbone, _, User, ProblemSetList, Problem, WebPage, CalendarView, Prob
             
             this.problemSets.fetch();
             
-            this.dispatcher.on('problem-sets-loaded',this.postHWLoaded); 
-
-            this.render();
+            this.problemSets.on('fetchSuccess', function () {
+                self.render();
+                self.probSetListView.collectionLoaded = true;
+                self.probSetListView.render();
+                self.postHWLoaded();
+            }); 
 
 
 

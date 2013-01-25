@@ -201,7 +201,7 @@ sub listSetUsers {
     my $out = {};
     my @users = $db->listSetUsers($params->{set_id});
     $out->{ra_out} = \@users;
-    $out->{text} = encode_base64("Successfully found the number of users for " . $params->{set_id});
+    $out->{text} = encode_base64("Successfully returned the users for set " . $params->{set_id});
     return $out;
 
 }
@@ -421,6 +421,84 @@ sub reorderProblems {
 	return $out;
 }
 
+sub updateUserSet {
+  	my ($self, $params) = @_;
+  	my $db = $self->{db};
+    
+  	debug("users: " . $params->{users});
+  	my @users = split(',',$params->{users});
+  	foreach my $user (@users) {
+		my $set = $db->getUserSet($user,$params->{set_id});
+	    $set->open_date(parseDateTime($params->{open_date},"local"));
+	    $set->due_date(parseDateTime($params->{due_date},"local"));
+	    $set->answer_date(parseDateTime($params->{answer_date},"local"));
+	  	$db->putUserSet($set);
+	}
+
+  
+  my $out = {};
+  #$out->{ra_out} = $set;
+  $out->{text} = encode_base64("Successfully updated set " . $params->{set_id} . " for users " . $params->{users});
+  return $out;
+}
+
+
+=item unassignSetFromUser($userID, $setID, $problemID)
+
+Unassigns the given set and all problems therein from the given user.
+
+=cut
+
+sub unassignSetFromUsers {
+  	my ($self, $params) = @_;
+  	my $db = $self->{db};
+  	my @users = split(',',$params->{users});
+    # should we check if the user is assigned before trying to unassign? 
+  	foreach my $user (@users) {
+		my $result = $db->deleteUserSet($user, $params->{set_id});
+	}
+	my $out = {};
+	$out->{text} = encode_base64("Successfully unassigned users: " + $params->{users} + " from set " + $params->{set_id});
+}
+
+=item assignAllSetsToUser($userID)
+
+Assigns all sets in the course and all problems contained therein to the
+specified user. This is more efficient than repeatedly calling
+assignSetToUser(). If any assignments fail, a list of failure messages is
+returned.
+
+=cut
+
+sub assignAllSetsToUser {
+	my ($self, $userID) = @_;
+	my $db = $self->{db};
+	
+	# assign only sets that are not already assigned
+	#my %userSetIDs = map { $_ => 1 } $db->listUserSets($userID);
+	#my @globalSetIDs = grep { not exists $userSetIDs{$_} } $db->listGlobalSets;
+	#my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	# FIXME: i don't think we need to do the above, since asignSetToUser fails
+	# silently if a UserSet already exists. instead we do this:
+	# DBFIXME shouldn't need to get list of set IDs
+	my @globalSetIDs = $db->listGlobalSets;
+	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	
+	my @results;
+	
+	my $i = 0;
+	foreach my $GlobalSet (@GlobalSets) {
+		if (not defined $GlobalSet) {
+			warn "record not found for global set $globalSetIDs[$i]";
+		} else {
+			my @result = $self->assignSetToUser($userID, $GlobalSet);
+			push @results, @result if @result;
+		}
+		$i++;
+	}
+	
+	return @results;
+}
 
 
 

@@ -15,19 +15,14 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
             var self = this;
             _.extend(this,this.options);
 
-            
-            
+         
             
             this.collection.on("problem-set-added",function(set) {
                     console.log("in PSLV problem-set-added");
                     self.$("#probSetList").append((new SetView({model: set})).render().el);
+                    self.$("#zeroShown").remove();  // if needed
                     self.parent.dispatcher.trigger("problem-set-added", set);
             });
-            this.collection.on("fetchSuccess", function () {
-                self.render();
-                self.parent.dispatcher.trigger("problem-sets-loaded");
-            });
-
             this.collection.on("problem-set-deleted", function (set) {
                 self.$(".problem-set").each(function(i,v){
                     if ($(v).data("setname")===set.get("set_id")){ $(v).remove();}
@@ -43,7 +38,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 this.$el.append(_.template($("#modal-template").html(), 
                     {header: "<h3>Create a new Homework Set</h3>", saveButton: "Create New Set", id: "new-set-modal"}));
             }
-            if(this.collection.size()>0){
+            if(this.collection.setLoaded){
                 this.$("a.link").on("click",this.addDeleteSet);
                 this.$("#set-list").html("<div style='font-size:110%; font-weight:bold'>Homework Sets</div>" +
                     "<ul id='probSetList' class='btn-group btn-group-vertical'></ul>");
@@ -54,7 +49,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 var _width = self.$el.width() - 40; 
                 self.$(".problem-set").truncate({width: _width}); //if the Problem Set Names are too long.  
                
-
+                if (this.collection.size() === 0 ) {
+                    $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
+                }
             }
 
 

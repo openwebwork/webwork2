@@ -26,17 +26,16 @@ define(['Backbone', 'underscore'], function(Backbone, _){
         },
 
         render:function () {
-            var problem = this.model;
             var self = this;
-            if(problem.get('data')){
+            if(this.model.get('data')){
                 this.$el.html(this.template(this.model.toJSON()));
                 this.$el.addClass("problem");
                 if (this.model.get("draggable")) {
                     this.$el.draggable({
-                        //helper:'clone',
+                        helper:'clone',
                         revert:true,
-                        //handle:'.problem',
-                        //appendTo:'body',
+                        handle:'.problem',
+                        appendTo:'body',
                         //cursorAt:{top:0,left:0}, 
                         //opacity:0.65
                     }); 
@@ -45,7 +44,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
 
             } else {
                 this.$el.html("<img src='/webwork2_files/images/ajax-loader-small.gif' alt='loading'/>");
-                problem.render();
+                this.model.fetch();
             }
 
             this.el.id = this.model.cid;

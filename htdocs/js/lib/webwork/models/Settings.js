@@ -1,18 +1,4 @@
 
-/*
-    structure styled after Three.js..kind of
-
-    David Gage 2012
-
-    requires backbone.js, underscore.js, and their dependencies
-*/
-
-/**
- The WeBWorK Settings javascript framework
-
- @module WeBWorK
- @main webwork
- **/
 
 
 define(['Backbone', './WeBWorKProperty','underscore','config'], function(Backbone, WeBWorKProperty,_,config){
@@ -27,13 +13,14 @@ var Settings = Backbone.Collection.extend({
     model: WeBWorKProperty,
     initialize: function (){
         _.bindAll(this,"fetch","getSettingValue");
+        this.on("update",this.update);
     },
     fetch: function () {
         var self=this;
         var requestObject = { xml_command: "getCourseSettings"};
         _.defaults(requestObject, config.requestObject);
 
-        this.collection = this.reset();
+        this.reset();
 
 
         $.get(config.webserviceURL, requestObject,
@@ -63,10 +50,9 @@ var Settings = Backbone.Collection.extend({
 
         },
         getSettingValue: function(_setting){
-            return (this.collection.find(function(v) { return v.get("var")===_setting;})).get("value");
+            return (this.find(function(v) { return v.get("var")===_setting;})).get("value");
         }
     });
-
     
 
     
