@@ -325,8 +325,7 @@ sub assignProblemToUser {
 
 
 sub deleteProblemSet {
-	my $self = shift;
-  	my $params = shift;
+	my ($self,$params) = @_;
 	my $db = $self->{db};
 	my $setID = $params->{set_id};
 	my $result = $db->deleteGlobalSet($setID);
@@ -420,6 +419,32 @@ sub reorderProblems {
 	$out->{text} = encode_base64("Successfully reordered problems");
 	return $out;
 }
+
+sub updateProblem{
+	my ($self,$params) = @_;
+	my $db = $self->{db};
+	my $setID = $params->{set_id};
+	my $path = $params->{path};
+	my $topdir = $self->{ce}->{courseDirs}{templates};
+	$path =~ s|^$topdir/*||;
+
+	my @problems = $db->getAllGlobalProblems($setID);
+	foreach my $problem (@problems){
+		if($problem->{source_file} eq $path ){
+			$problem->value($params->{value});
+			$db->putGlobalProblem($problem);
+		}
+	}
+
+		
+	my $out->{text} = encode_base64("Updated Problem Set " . $setID);
+
+
+
+	return $out; 
+
+}
+
 
 sub updateUserSet {
   	my ($self, $params) = @_;

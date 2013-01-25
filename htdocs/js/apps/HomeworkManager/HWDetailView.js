@@ -45,7 +45,7 @@ define(['Backbone',
                 self.propertyView = new HWPropertiesView({el: $("#property-tab"), model: this.model});
                 self.usersAssignedView = new AssignUsersView({users: self.parent.users, model: self.model});
                 self.customizeUserAssignView = new CustomizeUserAssignView({users: self.parent.users, model: self.model});
-                $("#num-users-assigned").html(this.model.assignedUsers.length + " of " + self.parent.users.length);
+                $("#num-users-assigned").html(length + " of " + self.parent.users.length);
                 $("#user-assign-tab").html(self.usersAssignedView.el);
                 $("#user-customize-tab").html(self.customizeUserAssignView.el);
 
@@ -57,6 +57,11 @@ define(['Backbone',
                 });
 
                 this.model.problems.on("remove",self.updateNumProblems);
+                this.model.problems.on("change",function(model)
+                {
+                    // need a announcement here.  
+                   // self.parent.announce.addMessage("Something changed. ");
+                })
 
                 this.model.on("usersAssigned",function(_users,setName){
                     self.parent.announce.addMessage("The following users are a assigned to set " + setName + " : " + _users.join(", "));
@@ -101,7 +106,7 @@ define(['Backbone',
             console.log("showing the problems for problem set " + this.model.get("set_id"));
             $("#prob-tab").html(_.template($("#problem-set-header").html(),{set: this.model.get("set_id")}));
             var plv = new ProblemListView({el: this.$("#list-of-problems"), parent: this, collection: this.model.problems,
-                                        reorderable: true, deletable: true, draggable: false});
+                                        reorderable: true, deletable: true, draggable: false, showPoints: true});
             plv.render();
         },
         updateNumProblems: function () {
