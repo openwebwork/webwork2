@@ -289,7 +289,8 @@ sub body {
 	    }
 	    
 	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
-	    my $score = int(100*$userProblem->status);
+	    warn ("user problem not defined $userID, $setID, $problemID ") unless ref($userProblem);
+	    my $score = int(100*$userProblem->status) if ref($userProblem);   #HACK FIXME
 	    
 	    my $prettyName = $userRecord->last_name
 		. ", "
@@ -326,8 +327,8 @@ sub body {
 						      -default => $score,
 				                      -labels => \%dropDown)
 				      ])
-		);
-
+		)  if ref($userProblem);   #HACK FIXME
+		
 #  Text field for gradex
 #				      CGI::input({type=>"text",
 #						  name=>"$userID.score",
