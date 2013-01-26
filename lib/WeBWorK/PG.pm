@@ -53,6 +53,19 @@ sub new {
 	return $renderer->new(@_);
 }
 
+sub free {
+	my $self = shift;
+	#
+	#  If certain MathObjects (e.g. LimitedPolynomials) are left in the PG structure, then
+	#  freeing them later can cause "Can't locate package ..." errors in the log during
+	#  perl garbage collection.  So free them here.
+	#
+	$self->{pgcore}{OUTPUT_ARRAY} = [];
+	$self->{answers} = {};
+	undef $self->{translator};
+	foreach (keys %{$self->{pgcore}{PG_ANSWERS_HASH}}) {undef $self->{pgcore}{PG_ANSWERS_HASH}{$_}}
+}
+
 sub defineProblemEnvir {
 	my (
 		$self,
