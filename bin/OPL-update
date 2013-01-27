@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # This is the script formerly known as loadDB2, and then known as NPL-update.  
 
@@ -84,6 +84,7 @@ my $dbh = DBI->connect(
 my $passwd = $ce->{database_password};
 my $user = $ce->{database_username};
 my $libraryRoot = $ce->{problemLibrary}->{root};
+my $libraryVersion = $ce->{problemLibrary}->{version};
 my $verbose = 0;
 my $cnt2 = 0;
 
@@ -98,21 +99,14 @@ sub dbug {
 ##Figure out which set of tables to use
 
 my %tables;
-if( -e "$libraryRoot/VERSION") {
-  require("$libraryRoot/VERSION");
-  if($OPL_VERSION eq '2.5.0') {
+if($libraryVersion eq '2.5') {
 	%tables = %OPLtables;
 	my $lib = 'OPL';
-	print "Got OPLtables!\n";
-  } else {
-	%tables = %NPLtables;
-	my $lib = 'NPL';
-	print "Got NPLtables! (1)\n";
-  }
+	warn "Library version is $libraryVersion; using OPLtables!\n";
 } else {
 	%tables = %NPLtables;
 	my $lib = 'NPL';
-	print "Got NPLtables! (2)\n";
+	print "Library version is $libraryVersion; NPLtables! \n";
 }
 
 @create_tables = (
@@ -422,6 +416,10 @@ sub pgfiles {
 	my ($edition, $textauthor, $textsection, $textproblem, $tagged);
 	%textinfo=();
 	my @textproblems = (-1);
+  if ($name =~ /swf$/) {
+      my $applet_file = basename($name);
+      symlink($name,$ce->{webworkDirs}->{htdocs}."/applets/".$applet_file);
+    }
 	if ($name =~ /pg$/) {
 		$pgfile = basename($name);
 		$pgpath = dirname($name);
