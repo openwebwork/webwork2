@@ -87,6 +87,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
 
  instructor_problem_grader                /$courseID/instructor/grader/$setID/$problemID
 
+
  instructor_set_list3                 /$courseID/instructor/sets3/
  instructor_set_detail3               /$courseID/instructor/sets3/$setID/ #not created yet
  instructor_users_assigned_to_set3    /$courseID/instructor/sets3/$setID/users/ #not created yet
