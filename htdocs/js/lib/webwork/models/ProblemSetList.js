@@ -8,25 +8,24 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
     var ProblemSetList = Backbone.Collection.extend({
         model: ProblemSet,
 
-        initialize: function(){
+        initialize: function(options){
             var self = this;
             _.bindAll(this,"fetch","addNewSet","deleteSet");
             this.on('add', this.addNewSet);
             this.on('remove', this.deleteSet);
-
+            this.type = options.type; 
+            this.setLoaded = false; 
             
            },
 
         fetch: function(){
             var self = this;
-            var requestObject = {
-                "xml_command": 'getSets'
-            };
+            var command = (this.type === "Instructor")?'getSets':'getUserSets';
+            var requestObject = {"xml_command": command};
             _.defaults(requestObject, config.requestObject);
 
             $.get(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-                console.log(response.result_data);
                 var newSet = new Array();
                 _(response.result_data).each(function(set) { 
                     // change some of the 0-1 Perl booleans to "yes/no"s
@@ -37,7 +36,9 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
                 });
                 console.log("The Problem Sets have loaded");                    
                 self.reset(newSet);
+                self.setLoaded = true; 
                 self.trigger("fetchSuccess");
+
             });
         },
         addNewSet: function (problemSet){

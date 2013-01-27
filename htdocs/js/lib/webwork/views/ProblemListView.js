@@ -29,14 +29,17 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                     self.parent.dispatcher.trigger("num-problems-shown");
                 }
             });
+            this.collection.on("reordered",function () {
+                self.parent.announce.append("Problem Set " + self.setName + " was reordered");
+            });
 
         },
         render: function() {
             var self = this;
-            this.$el.html("<ul class='list'></ul>");
-            self.$(".undo-delete-btn").on("click",this.undoDelete);
+            this.$el.html("<ul id='prob-list' class='no-bullets'></ul>");
+            $("#undo-delete-btn").on("click",this.undoDelete);
             if(this.reorderable){
-                this.$(".list").sortable({update: function (event,ui) { 
+                this.$("#prob-list").sortable({update: function (event,ui) { 
                     console.log("I was reordered!");
                     self.$(".problem").each(function (i) { 
                         var path = $(this).data("path");
@@ -46,34 +49,32 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                     self.collection.reorder();
                 }});
             }
-            //this.$el.html(this.template({enough_problems: 25, group_size: this.group_size}));
-
             this.loadNextGroup();
             
         },
+        //events: {"click #undo-delete-btn": "undoDelete"},
         undoDelete: function(){
             console.log("in undoDelete");
             if (this.undoStack.length>0){
                 var prob = this.undoStack.pop();
                 this.collection.addProblem(prob);
                 var probView = new ProblemView({model: prob, type: this.type, deletable: this.deletable, 
-                        reorderable: this.reorderable, draggable: this.draggable});
-                this.$(".list").append(probView.el);
+                        reorderable: this.reorderable, draggable: this.draggable, showPoints: this.showPoints});
+                this.$("#prob-list").append(probView.el);
                 probView.render();
+                this.parent.dispatcher.trigger("num-problems-shown");
             }
 
         },
         deleteProblem: function (prob){
-            console.log("delete");
             this.undoStack.push(prob);
-
-            // Also may need to reset the other places in the problems. 
         },
 
 
         //Define a new function loadNextGroup so that we can just load a few problems at once,
         //otherwise things get unwieldy :P
         loadNextGroup: function(){
+            console.log("in loadNextGroup");
             var self = this; 
             var start = this.lastProblemShown+1; 
             var allProblemsShown = false; 
@@ -86,11 +87,11 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 allProblemsShown = true;
             }
             var problemsToView = _.range(start,lastProblem);
-            var ul = this.$(".list");  
+            var ul = this.$("#prob-list");  
             _(problemsToView).each(function(i) {
                 var prob = self.collection.at(i);
                 var probView = new ProblemView({model: prob, type: self.type, deletable: self.deletable, 
-                        reorderable: self.reorderable, draggable: self.draggable});
+                        reorderable: self.reorderable, draggable: self.draggable, showPoints: self.showPoints});
                 ul.append(probView.el);
 
                 probView.render();

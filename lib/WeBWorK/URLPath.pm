@@ -368,7 +368,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
 	instructor_user_list3 => {
-    		name    => 'Classlist Editor3',
+    		name    => 'Classlist Manager',
     		parent  => 'instructor_tools',
     		kids    => [ qw/instructor_user_detail/ ],
     		match   => qr|^users3/|,

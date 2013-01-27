@@ -19,6 +19,7 @@ define(['Backbone', 'underscore', './User', 'config'], function(Backbone, _, Use
             });
         },
         removeUser: function(user){
+            var self = this;
             var request = {"xml_command": "deleteUser", "user_id" : user.user_id };
             _.defaults(request,config.requestObject);
             _.extend(request, user.attributes);
@@ -29,7 +30,7 @@ define(['Backbone', 'underscore', './User', 'config'], function(Backbone, _, Use
                 var response = $.parseJSON(data);
                 // see if the deletion was successful. 
                 self.trigger("success","user_deleted",user);
-                return (response.result_data.delete == "success")
+                return (response.result_data.delete == "success");
             });
         },
     

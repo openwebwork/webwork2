@@ -35,7 +35,7 @@ use strict;
 use sigtrap;
 use Carp;
 use WWSafe;
-#use Apache;
+use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::Local;
@@ -63,7 +63,7 @@ our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT";
 
 
 
-our $UNIT_TESTS_ON =0;
+our $UNIT_TESTS_ON =1;
 # 
 # #our $ce           = $WebworkWebservice::SeedCE;
 # # create a local course environment for some course
@@ -512,7 +512,6 @@ sub xml_filter {
 	$input;
 	
 }
-
 
 sub logTimingInfo{
     my ($beginTime,$endTime,) = @_;

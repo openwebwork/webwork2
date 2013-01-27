@@ -5,18 +5,17 @@
 
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "Backbone":             "/webwork2_files/js/lib/vendor/backbone-0.9.9",
         "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
         "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.2.custom",
-        "underscore":           "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/webwork/components/jquery/jquery-1.8.3",
+        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         "util":                 "/webwork2_files/js/lib/webwork/util",
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
         "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":             "/webwork2_files/js/lib/webwork/views/Closeable",
-        "jquery-ui-custom":      '/webwork2_files/js/lib/vendor/jquery-ui-1.9.2.custom/js/jquery-ui-1.9.2.custom.min'
+        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -47,7 +46,7 @@ require(['Backbone',
 	'jquery-ui',
 	'backbone-validation',
 	'bootstrap',
-	'jquery-ui-custom'], 
+	'jquery-ui'], 
 function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView, 
 		ChangePasswordView, AddStudentFileView, AddStudentManView, util, config){
 
@@ -56,15 +55,14 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 	tagName: "div",
         initialize: function(){
 	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-	    _.bindAll(this, 'render','addOne','addAll','deleteUsers','changePassword');  // include all functions that need the this object
+	    _.bindAll(this, 'render','addOne','addAll','deleteUsers','changePassword','gridChanged');  // include all functions that need the this object
 	    var self = this;
 	    this.collection = new UserList();  // This is a Backbone.Collection of users
 	    
 	    
 	    
 	    this.grid = new EditableGrid("UserListTable", { enableSort: true});
-//what's here?
-            this.grid.load({ metadata: config.userTableHeaders, data: [{id:0, values:{}}]});
+        this.grid.load({ metadata: config.userTableHeaders, data: [{id:0, values:{}}]});
 	    
 	    this.render();
 	    
@@ -74,82 +72,16 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 	    
 	    
 	    
-	    this.grid.modelChanged = function(rowIndex, columnIndex, oldValue, newValue) {
-		
-		if (columnIndex == 1 )  // the takeAction column has been selected.
-		{
-		    
-		   switch (newValue){
-		    case "action1":  // Change Password
-			self.changePassword([rowIndex]);
-		    break;
-		    case "action2":  // deleteUser
-		    self.deleteUsers([rowIndex]);
-		    break;
-		    case "action3":  // Act as User
-			var username = self.grid.getValueAt(rowIndex,2); //
-			
-			// send a relative path, but is this the best way?
-			var url = "../../?user=" + config.requestObject.user + "&effectiveUser=" + username + "&key=" +
-				    config.requestObject.session_key; 
-			location.href = url;
-		    break;
-		    case "action4":  // Student Progress
-			var username = self.grid.getValueAt(rowIndex,2); //
-			
-			// send a relative path, but is this the best way?
-			var url = "../progress/student/" + username + "/?user=" + config.requestObject.user + "&effectiveUser=" + username + "&key=" +
-				    config.requestObject.session_key; 
-			location.href = url;
-		    break;
-		    case "action5":  // Email Student
-			
-			self.emailStudents([rowIndex]);
-		    break;
-		
-		   }
-		   
-  		    // make sure that the cog icon is visible again.  
-		    $("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");
-
-		}
-		
-		// check to make sure that the updated information needs to be sent to the server
-		
-		else if (oldValue != newValue  ){
-		    var cid = self.grid.getRowId(rowIndex);
-		    var property = self.grid.getColumnName(columnIndex);
-		    var editedModel = self.collection.getByCid(cid);
-		    if(property == 'permission'){
-			newValue = {name: "", value: newValue};  // Do we need to make sure to set the name correctly too? 
-		    }
-		    console.log("just before editedModel.set");
-		    
-		    // The following checks if the data validates.  
-		    
-		    if(!(editedModel.set(property, newValue))){
-			self.errorPane.setHTML("There is an error in setting the " + property + " for user " + editedModel.attributes.user_id
-					    + " in the red box below. <br/>  " + self.error.errorText);
-			$("tr#UserListTable_" + cid + " td:nth-child("+(columnIndex+1) + ")").css("background-color","rgba(255,0,0,0.5)");
-			
-		    } else {
-			self.errorPane.close();
-			$("tr#UserListTable_" + cid + " td:nth-child("+(columnIndex+1) + ")").css("background","none");
-			
-			self.updatedUser = {user_id: editedModel.attributes.user_id, property: property, oldValue: oldValue, newValue: newValue};
-		    }
-                }
-		
-	    };
+	    this.grid.modelChanged = this.gridChanged; 
 	    
 	    // Resets the grid by deleting all rows and readding.  
 	                                                     
-            this.collection.on('reset', function(){
-                while(self.grid.getRowCount() > 1){
-                    self.grid.remove(1);
-                }
-                self.addAll();
-            }, this);
+        this.collection.on('reset', function(){
+            while(self.grid.getRowCount() > 1){
+                self.grid.remove(1);
+            }
+            self.addAll();
+        }, this);
 
             
 	    this.collection.on('add',this.addOne,this);
@@ -158,31 +90,21 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 	    this.collection.on('success', function (type, user) {
 			
 			
-		    // PLS:  this seems clunky.  Perhaps we can clean up this code. 	
+		    // pstaabp:  this seems clunky.  Perhaps we can clean up this code. 	
 			switch(type) {
 			    case "user_added":
-				if (this.messageType == "user_added"){
-				    this.announce.appendHTML(", " + user.attributes.user_id);
-				} else {
-				    this.messageType = "user_added";
-				    this.announce.setHTML("Success in adding the following users: " + user.attributes.user_id);
-				}
-				break;
+					    this.announce.addMessage("Success in adding the following user: " + user.get("user_id"));
+					break;
 			    case "user_deleted":
-				if (this.messageType == "user_deleted"){
-				    this.announce.appendHTML(", " + user.attributes.user_id);
-				} else {
-				    this.messageType = "user_deleted";
-				    this.announce.setHTML("Success in deleting the following users: " + user.attributes.user_id);
-				}
-				break;
+					    this.announce.addMessage("Success in deleting the following user: " + user.get("user_id"));
+					break;
 			    case "property_changed":
-				if (this.updatedUser){
-				    this.announce.setHTML("The " + this.updatedUser.property + " of user " + this.updatedUser.user_id + " has changed. <br/>"
-							    + "Old Value: " + this.updatedUser.oldValue + "<br/>" 
-							    + "New Value: " + this.updatedUser.newValue); 
-				    this.updatedUser = null;
-				}
+			    	for(prop in user.changedAttributes()) { 
+			    		console.log(prop + " " + user.changedAttributes()[prop]);
+	  						this.announce.addMessage("The " + prop + " of user " + user.get("user_id") + " has changed "
+							    + "from " + user.oldAttributes[prop] + " to " + user.get(prop));
+
+			    	}
 				break;
 			}
 			// make sure that the cog icon is visible again.  
@@ -201,8 +123,8 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 	    $("button#help-link").click(function () {self.helpPane.open();});
 	    
 	    
-        },
-        events: {
+    },
+    events: {
 	    'change select.actionMenu' : 'takeBulkAction',
 	    'change select#import-export' : 'importExportOptions',
 	    'change input#selectAllCB' : 'toggleAllCheckBoxes',
@@ -331,7 +253,76 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 	    this.$el.append(this.passwordPane = new ChangePasswordView({model: new TempUserList()}));
 	    this.$el.append(this.emailPane = new EmailStudentsView({model: new TempUserList()}));
 	    return this;
-        },
+    },
+    gridChanged: function(rowIndex, columnIndex, oldValue, newValue) {
+
+    	var self = this;
+		
+		if (columnIndex == 1 )  // the takeAction column has been selected.
+		{
+		    
+		   switch (newValue){
+		    case "action1":  // Change Password
+			self.changePassword([rowIndex]);
+		    break;
+		    case "action2":  // deleteUser
+		    self.deleteUsers([rowIndex]);
+		    break;
+		    case "action3":  // Act as User
+			var username = self.grid.getValueAt(rowIndex,2); //
+			
+			// send a relative path, but is this the best way?
+			var url = "../../?user=" + config.requestObject.user + "&effectiveUser=" + username + "&key=" +
+				    config.requestObject.session_key; 
+			location.href = url;
+		    break;
+		    case "action4":  // Student Progress
+			var username = self.grid.getValueAt(rowIndex,2); //
+			
+			// send a relative path, but is this the best way?
+			var url = "../progress/student/" + username + "/?user=" + config.requestObject.user + "&effectiveUser=" + username + "&key=" +
+				    config.requestObject.session_key; 
+			location.href = url;
+		    break;
+		    case "action5":  // Email Student
+			
+			self.emailStudents([rowIndex]);
+		    break;
+		
+		   }
+		   
+  		    // make sure that the cog icon is visible again.  
+		    $("#users_table tr[id*='UserListTable'] td:nth-child(2)").html("<i class='icon-cog'></i>");
+
+		}
+		
+		// check to make sure that the updated information needs to be sent to the server
+		
+		else if (oldValue !== newValue  ){
+		    var cid = self.grid.getRowId(rowIndex);
+		    var property = self.grid.getColumnName(columnIndex);
+		    var editedModel = self.collection.get(cid);
+		    if(property == 'permission'){
+				newValue = {name: "", value: newValue};  // Do we need to make sure to set the name correctly too? 
+		    }
+		    console.log("just before editedModel.set");
+		    
+		    // The following checks if the data validates.  
+		    
+
+		    if(editedModel.preValidate(property, newValue)){
+				self.errorPane.appendHTML("There is an error in setting the " + property + " for user " 
+							+ editedModel.attributes.user_id + " in the red box below. <br/>  ");
+				$("tr#UserListTable_" + cid + " td:nth-child("+(columnIndex+1) + ")").css("background-color","rgba(255,0,0,0.5)");
+				
+		    } else {
+				$("tr#UserListTable_" + cid + " td:nth-child("+(columnIndex+1) + ")").css("background","none");
+				self.updatedUser = {user_id: editedModel.attributes.user_id, property: property, oldValue: oldValue, newValue: newValue};
+				editedModel.set(property,newValue);
+			}
+        }
+		
+    },
 	addOne: function(user){
             var userInfo = user.toJSON();
 	    userInfo.permission = ""+userInfo.permission.value;  // return only the String version of the Permission
@@ -400,52 +391,6 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
     
     var TempUserList = Backbone.Collection.extend({model:User});
     
-    // This the view class of the Add Students Manually for a row of the table. 
-    
-var UserRowView = Backbone.View.extend({
-	tagName: "tr",
-	className: "userRow",
-	initialize: function(){
-	    _.bindAll(this, 'render','unrender','updateProp','removeUser'); // every function that uses 'this' as the current object should be in here
-	    this.model.bind('remove', this.unrender);
-	    this.model.on('validated:invalid', function (model,error) {
-	    	console.log(error);	
-	    });
-	    
-	    this.render();
-	    
-    	},
-	events: {
-	    'change input': 'updateProp',
-	    'click button.removeUser': 'removeUser'
-	},
-	render: function(){
-	    var self = this;
-	    self.$el.append("<td><button class='removeUser'>Delete</button></td>");
-	    _.each(config.userProps, function (prop){self.$el.append("<td><input type='text' size='10' class='input-for-" + prop.shortName + "'></input></td>"); });
-	    return this; // for chainable calls, like .render().el
-	},
-       updateProp: function(evt){
-	    var changedAttr = evt.target.className.split("for-")[1];
-	    this.model.set(changedAttr,evt.target.value,{silent: true});
-	    var errorMessage = this.model.preValidate(changedAttr, evt.target.value);
-	    if(errorMessage)
-	    {
-		$(evt.target).css("background-color","rgba(255,0,0,0.5)");
-		this.model.trigger("error",this.model, {type: changedAttr, message: errorMessage});
-	    }  else
-	    {
-		$(evt.target).css("background","none");
-	    }
-	    
-	},
-	unrender: function(){
-	    this.$el.remove();
-	},
-	removeUser: function() {this.model.destroy();}
-});
-	
-
 //    var userListView = new UserListView();
 
     var App = new UserListView({el: $("div#main")});

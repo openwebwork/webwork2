@@ -241,7 +241,9 @@ sub pre_header_initialize {
             restricted_login_proctor => $r->param('restricted_login_proctor') || undef,
             var 					=> $r->param('var') || undef,
             value   				=> $r->param('value') || undef,
-            users 					=> $r->param('users') || undef
+            users 					=> $r->param('users') || undef,
+            place 					=> $r->param('place') || undef,
+            path 					=> $r->param('path') || undef, 
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -289,6 +291,7 @@ sub pre_header_initialize {
 	}
 	
 	if($r->param('xml_command') eq "renderProblem"){
+		debug("in renderProblem");
 	    if (my $problemPath = $r->param('problemPath')) {
 	        $problemPath =~ m|templates/(.*)|;
 	        $problemPath = $1;    # get everything in the path after templates

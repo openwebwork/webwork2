@@ -16,6 +16,7 @@
 
 .assign-reduced-credit {background-color: rgb(255,128,0);}
 
+
 .empty {background-color: none;}
 
 .assign { border-left: -2px; border-right: -2px; height: 15px;  width: 103%; margin-top: 2px; margin-bottom: 2px;
@@ -23,13 +24,16 @@ float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size
 
 .assign-set-name {cursor: pointer;}
 
+.assign-filled {height: 30px; background-color: rgb(250,100,100)}
+
+
 .calendar-button-row {margin: 20px;}
 
-.list {list-style: none;}
+//.list {list-style: none;}
 
 .lib-problem-viewer { overflow: scroll;}
 
-.prob-list {overflow: scroll;}
+.scrollable {overflow: scroll;}
 
 .num-problems {margin-left: 10px;}
 
@@ -43,6 +47,8 @@ float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size
 label.checklist {display: inline; margin-left: 8px;}
 
 .hw-assigned {color: blue;}
+
+#probSetList {margin:0;}
 
 
 

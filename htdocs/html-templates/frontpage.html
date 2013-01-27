@@ -13,16 +13,16 @@
 
 <!-- The following is copied directly from the homework manager.  Code like this should appear in a separate file. -->
 
-<script type="text/template" id="calendarButtons">
+<script type="text/template" id="calendar-template">
+<div id="calendar-error-bar"></div>
 <div class="calendar-button-row">
-<button type="button" class="previous-week btn btn-small">Previous Week</button>
-<button type="button" class="next-week btn btn-small">Next Week</button>
+<button type="button" class="previous-week btn btn-small"><i class="icon-chevron-left"></i>Previous Week</button>
 <button type="button" class="view-month btn btn-small">Month View</button>
 <button type="button" class="view-week btn btn-small">Week View</button>
+<button type="button" class="next-week btn btn-small">Next Week<i class="icon-chevron-right"></i></button>
 </div>
-</script>
 
-<script type="text/template" id="calendarHeader">
+<table id='calendar-table' class='table-bordered'>
     <thead>
     <th>Sunday</th>
     <th>Monday</th>
@@ -32,4 +32,25 @@
     <th>Friday</th>
     <th>Saturday</th>
 </thead><tbody></tbody>
+<table id='calendar-table' class='table-bordered'></table>
+<div class="calendar-button-row">
+<button type="button" class="previous-week btn btn-small"><i class="icon-chevron-left"></i>Previous Week</button>
+<button type="button" class="view-month btn btn-small">Month View</button>
+<button type="button" class="view-week btn btn-small">Week View</button>
+<button type="button" class="next-week btn btn-small">Next Week<i class="icon-chevron-right"></i></button>
+</div>
 </script>
+
+
+<script type="text/template" id="calendar-date-bar">
+<div class="<%= classes %>" data-set="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=usersAssigned%>/<%=totalUsers%><br>Open To Students: <%=openToStudents%>"><span><%if(showName){%><%=setname %><%}%></span></div>
+
+</script>
+
+<script type="text/template" id="too-many-assignments-error">
+There are too many overlapping assignments to view efficiently.  Switch to week view for 
+a better rendering. 
+</script>
+
+
+
