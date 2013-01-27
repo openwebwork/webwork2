@@ -487,11 +487,11 @@ sub getConfigValues {
 	
 	# get list of localization dictionaries
 	my $localizeDir = $ce->{webworkDirs}{localize};
-	opendir(my $dh, $localizeDir) || die "can't opendir $localizeDir: $!";
+	opendir(my $dh2, $localizeDir) || die "can't opendir $localizeDir: $!";
 	my %seen=();  # find the languages in the localize direction
 	my $languages =[ grep {!$seen{$_} ++}        # remove duplicate items
 			     map {$_=~s/\...$//; $_}        # get rid of suffix 
-                 grep {/\.mo$|\.po$/; } sort readdir($dh) #look at only .mo and .po files          
+                 grep {/\.mo$|\.po$/; } sort readdir($dh2) #look at only .mo and .po files
                 ]; 
 	
 	
