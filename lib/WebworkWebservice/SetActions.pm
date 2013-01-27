@@ -61,6 +61,7 @@ sub listLocalSetProblems{
 
   	my $db = $self->{db};
   	my @found_problems;
+
   	my $setName = $params->{set_id};
 
   	debug("Loading problems for " . $setName);
@@ -68,12 +69,22 @@ sub listLocalSetProblems{
   	my $templateDir = $self->{ce}->{courseDirs}->{templates};
   	@found_problems = $db->listGlobalProblems($setName);
 
+# FIXME  -- what is supposed to go here?
+# =======
+#   	my $selectedSet = $in->{set};
+# 	my $relativePaths = $in->{subcommand};
+#   	warn "Finding problems for set ", $in->{set} if $UNIT_TESTS_ON;
+#   	my $templateDir = $self->{ce}->{courseDirs}->{templates}."/";
+# 	$templateDir = '' if $relativePaths;
+#   	@found_problems = $db->listGlobalProblems($selectedSet);
+#   	my $problem;
+# >>>>>>> d84b52974c40384787ece920830084a43d18dd76
   	my @pg_files=();
   	for my $problem (@found_problems) {
 		my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
 		die "global $problem for set $setName not found." unless
 		$problemRecord;
-		push @pg_files, $templateDir."/".$problemRecord->source_file;
+		push @pg_files, $templateDir.$problemRecord->source_file;
 
 	}
 	

@@ -102,6 +102,9 @@
 				  </div>
              <!--#endif-->
              
+		<!--#if can="output_tag_info"-->
+			<!--#output_tag_info-->
+		<!--#endif-->
 			 <!--#if can="output_problem_body"--> 
 				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
 				  <div class="Body" style="background-color:#ffffff">
