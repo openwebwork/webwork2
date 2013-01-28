@@ -431,6 +431,7 @@ sub updateProblem{
 	my @problems = $db->getAllGlobalProblems($setID);
 	foreach my $problem (@problems){
 		if($problem->{source_file} eq $path ){
+			debug($params->{value});
 			$problem->value($params->{value});
 			$db->putGlobalProblem($problem);
 		}
@@ -524,8 +525,6 @@ sub assignAllSetsToUser {
 	
 	return @results;
 }
-
-
 
 # sub assignProblemToAllSetUsers {
 # 	my $self = shift;

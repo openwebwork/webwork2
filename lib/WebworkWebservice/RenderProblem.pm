@@ -136,6 +136,8 @@ sub renderProblem {
 	my $db;
 	my $user;
 	my $beginTime = new Benchmark;
+
+	debug("in RenderProblem::renderProblem");
 # 	if (defined($self->{courseName}) and $self->{courseName} ) {
 # 		$courseName = $self->{courseName};
 # 	} elsif (defined($rh->{course}) and $rh->{course}=~/\S/ ) {
