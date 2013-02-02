@@ -485,12 +485,32 @@ sub getConfigValues {
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
 	
-	# insert the anonymous array of theme folder names into ConfigValues
-	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
+	# get list of localization dictionaries
+	my $localizeDir = $ce->{webworkDirs}{localize};
+	opendir(my $dh2, $localizeDir) || die "can't opendir $localizeDir: $!";
+	my %seen=();  # find the languages in the localize direction
+	my $languages =[ grep {!$seen{$_} ++}        # remove duplicate items
+			     map {$_=~s/\...$//; $_}        # get rid of suffix 
+                 grep {/\.mo$|\.po$/; } sort readdir($dh2) #look at only .mo and .po files
+                ]; 
 
+	# insert the anonymous array of theme folder names into ConfigValues
+	# FIXME?  Is there a reason this is an array? Couldn't we replace this
+	# with a hash and conceptually simplify this routine? MEG
+	my $modifyThemes = sub { my $item=shift; 
+	                         if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) {
+	                            $item->{values} =$themes 
+	                         } 
+	                        };
+    my $modifyLanguages = sub { my $item=shift; 
+	                         if (ref($item)=~/HASH/ and $item->{var} eq 'language' ) {
+	                            $item->{values} =$languages 
+	                         } 
+	                        };
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
 			&$modifyThemes($hash);
+			&$modifyLanguages($hash);
 		}
 	}
 	
