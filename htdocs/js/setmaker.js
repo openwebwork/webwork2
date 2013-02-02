@@ -1,3 +1,19 @@
+var basicRequestObject = {
+    "xml_command":"listLib",
+    "pw":"",
+    "password":'change-me',
+    "session_key":'change-me',
+    "user":"user-needs-to-be-defined",
+    "library_name":"Library",
+    "courseID":'change-me',
+    "set":"set0",
+    "new_set_name":"new set",
+    "command":"buildtree"
+};
+
+var basicWebserviceURL = "/webwork2/instructorXMLHandler";
+
+
 function settoggle(id, text1, text2) {
   $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
     function() {$('#'+id).html(text1)});
@@ -19,7 +35,7 @@ function init_webservice(command) {
   var mySessionKey = $('#hidden_key').val();
   var mydefaultRequestObject = {
         };
-  _.defaults(mydefaultRequestObject, webwork.requestObject);
+  _.defaults(mydefaultRequestObject, basicRequestObject);
   if (myUser && mySessionKey && myCourseID) {
     mydefaultRequestObject.user = myUser;
     mydefaultRequestObject.session_key = mySessionKey;
@@ -63,9 +79,9 @@ function lib_update(who, what) {
   mydefaultRequestObject.library_textchapter = lib_textchap;
   mydefaultRequestObject.library_textsection = lib_textsect;
   if(who == 'count') {
-    mydefaultRequestObject.subcommand = 'countDBListings';
+    mydefaultRequestObject.command = 'countDBListings';
     console.log(mydefaultRequestObject);
-    return $.post(webwork.webserviceURL, mydefaultRequestObject, function (data) {
+    return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
       console.log(response);
       var arr = response.result_data;
@@ -86,9 +102,9 @@ function lib_update(who, what) {
   if(who=='chapters' && subj=='') { return lib_update(who, 'clear'); }
   if(who=='sections' && chap=='') { return lib_update(who, 'clear'); }
   if(who=='sections') { subcommand = "getSectionListings";}
-  mydefaultRequestObject.subcommand = subcommand;
+  mydefaultRequestObject.command = subcommand;
   console.log(mydefaultRequestObject);
-  return $.post(webwork.webserviceURL, mydefaultRequestObject, function (data) {
+  return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
       console.log(response);
       var arr = response.result_data;
@@ -122,7 +138,7 @@ function addme(path, who) {
     // We failed
     return false;
   }
-  
+  mydefaultRequestObject.set_id = target;
   var pathlist = new Array();
   if(who=='one') {
     pathlist.push(path);
@@ -133,7 +149,7 @@ function addme(path, who) {
     }
   }
   mydefaultRequestObject.set = target;
-  addemcallback(webwork.webserviceURL, mydefaultRequestObject, pathlist, 0)(true);
+  addemcallback(basicWebserviceURL, mydefaultRequestObject, pathlist, 0)(true);
 }
 
 function addemcallback(wsURL, ro, probarray, count) {
@@ -143,7 +159,8 @@ function addemcallback(wsURL, ro, probarray, count) {
       if(count!=1) { phrase += "s";}
      // alert("Added "+phrase+" to "+ro.set);
       markinset();
-      return true;};
+      return true;
+    };
   }
   // Need to clone the object so the recursion works
   var ro2 = jQuery.extend(true, {}, ro);
@@ -161,14 +178,15 @@ function markinset() {
     target = null;
   }
   var shownprobs = $('[name^="filetrial"]'); // shownprobs.value
-  ro.set = target;
-  ro.subcommand = 'true';
-  return $.post(webwork.webserviceURL, ro, function (data) {
+  ro.set_id = target;
+  ro.command = 'true';
+  return $.post(basicWebserviceURL, ro, function (data) {
     var response = $.parseJSON(data);
     console.log(response);
     var arr = response.result_data;
     var pathhash = {};
     for(var i=0; i<arr.length; i++) {
+      arr[i] = arr[i].replace(/^\//,'');
       pathhash[arr[i]] = 1;
     }
     for(var i=0; i< shownprobs.length; i++) {
@@ -260,7 +278,7 @@ function randomize(filepath, el) {
     ro.displayMode = displayMode;
   }
   ro.noprepostambles = 1;
-  $.post(webwork.webserviceURL, ro, function (data) {
+  $.post(basicWebserviceURL, ro, function (data) {
     var response = data;
     $('#'+el).html(data);
     // run typesetter depending on the displaymode
