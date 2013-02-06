@@ -220,6 +220,9 @@ sub body {
 	    my $userID = $userRecord->user_id;
 	    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 	    my $userAnswerString;
+	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
+
+	    next unless $userProblem;
 
 	    if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
@@ -288,7 +291,6 @@ sub body {
 		$userAnswerString = "There are no answers for this student.";
 	    }
 	    
-	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
 	    my $score = int(100*$userProblem->status);
 	    
 	    my $prettyName = $userRecord->last_name
