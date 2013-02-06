@@ -1,0 +1,36 @@
+#!perl
+
+########################################################################################
+# authen_CAS.conf.dist
+# Copy this file to authen_CAS.conf. Then configure it to match your server's CAS configuration.
+# Then to activate add the following line to localOverrides.conf:
+# include("conf/authen_CAS.conf")
+########################################################################################
+
+# Set CAS as the authentication module to use.
+$authen{user_module} = {
+  "*" => "WeBWorK::Authen::CAS",
+};
+
+$authen{cas_options} = {
+	# Options to pass to the AuthCAS module.
+	# Note that this is (plain) AuthCAS, not Apache::AuthCAS
+	# or Apache2::AuthCAS.
+	# You need at least casUrl and CAFile; others can be set as well.
+	AuthCAS_opts => {
+		# URL of CAS server.  Edit the host below.
+		casUrl => '', #e.g. 'https://auth.berkeley.edu/cas',
+
+		# Path of certificate file for CAS server.
+		CAFile => '', #e.g. '/etc/pki/tls/certs/ca-bundle.crt',
+	},
+	# There are no options specific to CAS at this time.  If there were,
+	# though, they would go here.
+
+	# For debugging:
+	#su_from => '8315',
+	su_to => '999999',
+};
+
+
+1; #final line of the file to reassure perl that it was read properly.

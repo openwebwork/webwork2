@@ -1,5 +1,5 @@
-#!/usr/bin/perl
-
+#!/usr/bin/env perl
+#
 use strict;
 use warnings;
 
@@ -84,6 +84,7 @@ my @modulesList = qw(
 	Socket
 	SQL::Abstract
 	String::ShellQuote
+	Text::CSV
 	Text::Wrap
 	Tie::IxHash
 	Time::HiRes

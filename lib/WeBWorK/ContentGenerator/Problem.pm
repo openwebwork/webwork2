@@ -485,6 +485,13 @@ sub previewCorrectAnswer {
 # Template escape implementations
 ################################################################################
 
+sub content {
+  my $self = shift;
+  my $result = $self->SUPER::content(@_);
+  $self->{pg}->free if $self->{pg};   # be sure to clean up PG environment when the page is done
+  return $result;
+}
+
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;

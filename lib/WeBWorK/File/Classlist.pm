@@ -26,6 +26,7 @@ WeBWorK::File::Classlist - parse and write classlist files.
 use strict;
 use warnings;
 use IO::File;
+use Text::CSV;
 
 our $MIN_FIELDS = 9;
 our $MAX_FIELDS = 11;
@@ -38,10 +39,13 @@ our @EXPORT = qw/parse_classlist write_classlist/;
 sub parse_classlist($) {
 	my ($file) = @_;
 	
+	use open qw( :encoding(UTF-8) :std ); # assume classlist is utf8 encoded
 	my $fh = new IO::File($file, "<")
 		or die "Failed to open classlist '$file' for reading: $!\n";
 	
 	my (@records);
+
+	my $csv = Text::CSV->new({ binary => 1 }); # binary for utf8 compat
 	
 	while (<$fh>) {
 		chomp;
@@ -50,7 +54,12 @@ sub parse_classlist($) {
 		s/^\s*//;
 		s/\s*$//;
 		
-		my @fields = split /\s*,\s*/, $_, -1; # -1 == don't delete empty trailing fields
+		if (!$csv->parse($_)) {
+			warn "Unable to parse line $. of classlist '$file' as CSV.";
+			next;
+		}
+		my @fields = $csv->fields;
+
 		my $fields = @fields;
 		if ($fields < $MIN_FIELDS) {
 			warn "Skipped invalid line $. of classlist '$file': expected at least $MIN_FIELDS fields, got $fields fields.\n";
