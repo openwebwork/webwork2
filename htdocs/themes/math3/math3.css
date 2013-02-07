@@ -23,7 +23,7 @@
 	font-family: "Arial", sans-serif;
 	float:left; 
 	width:65%; 
-	overflow:hidden;
+	overflow:auto;
 }
 
 .barrier {
