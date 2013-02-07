@@ -43,8 +43,8 @@
 </div>
 </div>
 <div class="span10" id="main-view">
-  <div class="view-pane active" id="calendar"><h3>Calendar Loading...
-    <img src='/webwork2_files/images/ajax-loader-small.gif'></h3></div>
+  <div class="view-pane active" id="calendar">
+    <div id="progressbar"><div class="progress-label">Homework Manager Loading...</div></div></div>
   <div class="view-pane" id="problem-set"></div>
   <div class="view-pane" id="hw-set-list"></div>
   <div class="view-pane" id="assign-users"></div>
@@ -307,8 +307,9 @@ a better rendering.
 
 <script type="text/template" id="problem-template">
 <div class="handle row-fluid">
-<%if(reorderable){%><i class="icon-resize-vertical icon-large"></i><%}%>
-<%if(showPoints){%>Problem value:<input class="prob-value" type="text" value="<%=value%>" size="5"><%}%>
+<%if(reorderable){%><div class="span1"><i class="icon-resize-vertical icon-large"></i></div><%}%>
+<%if(showPoints){%><div class="span2"> Problem value:<input class="prob-value" type="text" value="<%=value%>" size="5"></div><%}%>
+<div class="span2 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
 <%if(deletable){ %><span class="remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
 <div class="problem" data-path="<%= path %>" data-source="<%= type %>">
 

@@ -7,7 +7,7 @@ require.config({
     paths: {
         "Backbone":             "/webwork2_files/js/lib/vendor/backbone-0.9.9",
         "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.2.custom",
+        "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-ui",
         "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
         "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
@@ -18,7 +18,8 @@ require.config({
         "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
         "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker",
         "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min",
-        "jquery-tablesorter":   "/webwork2_files/js/lib/vendor/jquery.tablesorter.min"
+        "jquery-tablesorter":   "/webwork2_files/js/lib/vendor/jquery.tablesorter.min",
+        "jquery-imagesloaded":  '/webwork2_files/js/lib/vendor/jquery.imagesloaded.min'
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -32,7 +33,8 @@ require.config({
         'config': ['XDate'],
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],
-        'jquery-tablesorter': ['jquery']
+        'jquery-tablesorter': ['jquery'],
+        'jquery-imagesloaded': { deps: ['jquery'], exports: 'jquery-imagesloaded'}
     }
 });
 
@@ -68,6 +70,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             this.settings = new Settings();  // need to get other settings from the server.  
             this.problemSets = new ProblemSetList({type: "Instructor"});
             this.settings.fetch();
+            this.preloading();
 
             /* There's a lot of things that need to be loaded as the App starts:
              *    1. The settings
@@ -94,13 +97,17 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
             this.problemSets.on("fetchSuccess",function() {
                 var setsLoaded = [];
+                $("#progressbar").progressbar({max: self.problemSets.size()});
                 self.problemSets.each(function(_set,i){
                     setsLoaded.push({set: _set.get("set_id"), loaded: false, pos: i}); 
                     _set.getAssignedUsers();
                     _set.on("usersLoaded", function(set){
+
                         console.log("users Loaded for set " + set.get("set_id"));
                         var foundSet = _(setsLoaded).find(function(obj){ return obj["set"]===set.get("set_id")});
                         setsLoaded[foundSet.pos].loaded = true;
+                        $("#progressbar").progressbar(
+                              {value: _(_(setsLoaded).pluck("loaded")).countBy(function(el) { return el===true;}).true});
                         if(_(_(setsLoaded).pluck("loaded")).all()) {self.postHWLoaded();}
                     });
                 });
@@ -113,6 +120,9 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             this.users.on("fetchSuccess", function (data){ console.log("users loaded");}); 
                 
         },
+    preloading: function() {
+        
+    },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
 	    var self = this; 
@@ -261,7 +271,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                 _openDate.addMinutes(-1*assignOpenPriorToDue);
                 var _answerDate = new XDate(wwDueDate);
                 _answerDate.addMinutes(answerAfterDueDate);
-                var tz = /\((\w{3})\)/.exec(_openDate.toString());
+                var tz = config.timezone;
                 var wwOpenDate = _openDate.toString("MM/dd/yyyy") + " at " + _openDate.toString("hh:mmtt")+ " " + tz[1];
                 var wwAnswerDate = _answerDate.toString("MM/dd/yyyy") + " at " + _answerDate.toString("hh:mmtt") + " " + tz[1];
 
