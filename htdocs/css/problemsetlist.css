@@ -50,6 +50,8 @@ label.checklist {display: inline; margin-left: 8px;}
 
 #probSetList {margin:0;}
 
+.prob-value {width: 20px;}
 
+.loading {background-color: orange;}
 
 

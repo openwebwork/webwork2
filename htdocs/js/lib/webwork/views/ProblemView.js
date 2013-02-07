@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore'], function(Backbone, _){
+define(['Backbone', 'underscore','jquery-imagesloaded'], function(Backbone, _){
 	//##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
@@ -31,6 +31,8 @@ define(['Backbone', 'underscore'], function(Backbone, _){
             if(this.model.get('data')){
                 this.$el.html(this.template(this.model.toJSON()));
                 this.$el.addClass("problem");
+                this.$el.css("background-color","lightgray");
+                this.$(".problem").css("opacity","0.5");
                 if (this.model.get("draggable")) {
                     this.$el.draggable({
                         helper:'clone',
@@ -40,10 +42,20 @@ define(['Backbone', 'underscore'], function(Backbone, _){
                         //cursorAt:{top:0,left:0}, 
                         //opacity:0.65
                     }); 
+
                 } 
                 this.$(".prob-value").on("change",this.updateProblem);
                 this.model.trigger("problemRendered",this.model.get("place"));
+                
 
+                var dfd = this.$el.imagesLoaded();
+                dfd.done( function( $images ){
+
+                    self.$el.removeAttr("style");
+                    self.$(".problem").removeAttr("style");
+                    self.$(".loading").remove();
+                });
+                
             } else {
                 this.$el.html("<img src='/webwork2_files/images/ajax-loader-small.gif' alt='loading'/>");
                 this.model.fetch();

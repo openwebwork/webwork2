@@ -291,14 +291,13 @@ sub pre_header_initialize {
 	}
 	
 	if($r->param('xml_command') eq "renderProblem"){
-		debug("in renderProblem");
 	    if (my $problemPath = $r->param('problemPath')) {
 	        $problemPath =~ m|templates/(.*)|;
 	        $problemPath = $1;    # get everything in the path after templates
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$self->{output}->{problem_out} = $xmlrpc_client->xmlrpcCall('renderProblem', $input);
-		
+			
 		#$self->{output}->{text} = "Rendered problem";
 	} else {	
 		$self->{output} = $xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);

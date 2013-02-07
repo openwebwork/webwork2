@@ -81,7 +81,8 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             xml_command: "addProblem",
             set_id: self.setName,
             problemPath: problem.get('path'),
-            place: self.size()
+            place: self.size(),
+            value: problem.get("value")
         };
         _.defaults(requestObject, config.requestObject);
         $.post(config.webserviceURL, requestObject, function (data) {
