@@ -492,10 +492,9 @@ sub getConfigValues {
 	my $languages =[ grep {!$seen{$_} ++}        # remove duplicate items
 			     map {$_=~s/\...$//; $_}        # get rid of suffix 
                  grep {/\.mo$|\.po$/; } sort readdir($dh2) #look at only .mo and .po files
-              
+
                 ]; 
-	
-	
+
 	# insert the anonymous array of theme folder names into ConfigValues
 	# FIXME?  Is there a reason this is an array? Couldn't we replace this
 	# with a hash and conceptually simplify this routine? MEG
