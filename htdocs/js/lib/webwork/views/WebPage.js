@@ -23,7 +23,6 @@ define(['Backbone','Closeable'], function(Backbone,Closeable){
         this.$el.prepend(this.helpPane.el);
 
         $("button#help-link").click(function () {
-                console.log("clicked");
                 self.helpPane.open();});
 
     }

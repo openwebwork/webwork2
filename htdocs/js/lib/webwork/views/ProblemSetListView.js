@@ -5,7 +5,7 @@
 *
 */
 
-define(['Backbone', 'underscore','../models/ProblemSetList','../models/ProblemSet','config'], 
+define(['Backbone', 'underscore','../models/ProblemSetList','../models/ProblemSet','config','jquery-truncate'], 
 function(Backbone, _,ProblemSetList,ProblemSet,config){
 	
     var ProblemSetListView = Backbone.View.extend({
@@ -15,19 +15,14 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
             var self = this;
             _.extend(this,this.options);
 
-            
-            
+         
             
             this.collection.on("problem-set-added",function(set) {
                     console.log("in PSLV problem-set-added");
                     self.$("#probSetList").append((new SetView({model: set})).render().el);
+                    self.$("#zeroShown").remove();  // if needed
                     self.parent.dispatcher.trigger("problem-set-added", set);
             });
-            this.collection.on("fetchSuccess", function () {
-                self.render();
-                self.parent.dispatcher.trigger("problem-sets-loaded");
-            });
-
             this.collection.on("problem-set-deleted", function (set) {
                 self.$(".problem-set").each(function(i,v){
                     if ($(v).data("setname")===set.get("set_id")){ $(v).remove();}
@@ -39,9 +34,11 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
         {
             var self = this;
             if (this.viewType === "Instructor"){
-                this.$el.html(_.template($("#hw-set-template").html()));
+                this.$el.html(_.template($("#hw-set-list-template").html()));
+                this.$el.append(_.template($("#modal-template").html(), 
+                    {header: "<h3>Create a new Homework Set</h3>", saveButton: "Create New Set", id: "new-set-modal"}));
             }
-            if(this.collection.size()>0){
+            if(this.collection.setLoaded){
                 this.$("a.link").on("click",this.addDeleteSet);
                 this.$("#set-list").html("<div style='font-size:110%; font-weight:bold'>Homework Sets</div>" +
                     "<ul id='probSetList' class='btn-group btn-group-vertical'></ul>");
@@ -49,9 +46,12 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 this.collection.each(function (_model) {
                     self.$("#probSetList").append((new SetView({model: _model})).render().el);
                 });
-
+                var _width = self.$el.width() - 40; 
+                self.$(".problem-set").truncate({width: _width}); //if the Problem Set Names are too long.  
                
-
+                if (this.collection.size() === 0 ) {
+                    $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
+                }
             }
 
 
@@ -103,6 +103,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 open_date: openDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone,
                 due_date: dueDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone
             });
+            set.assignedUsers = [];
             var errorMessage = set.preValidate('set_id', setname);
             if (errorMessage){
                 this.$("#new-set-modal .modal-body").append("<div style='color:red'>The name of the set must contain only letters numbers, '.', _ and no spaces are allowed.");

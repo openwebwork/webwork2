@@ -2,7 +2,10 @@
 
 define(['Backbone', 
 	'underscore',
-	'Closeable'], function(Backbone, _,Closeable){	
+	'Closeable',
+	'../../lib/webwork/models/User',
+	'config',
+	'../../lib/webwork/views/UserRowView'], function(Backbone, _,Closeable,User,config,UserRowView){	
 	var AddStudentManView = Backbone.View.extend({
 		tagName: "div",
 		id: "addStudManDialog",
@@ -24,7 +27,7 @@ define(['Backbone',
 							width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
 		    
 		    this.collection.on('error',function(model, error) {
-			self.errorPane.appendHTML(error.message + "<br/>");
+				self.errorPane.appendHTML(error.message + "<br/>");
 		    });
 		    
 		     Backbone.Validation.bind(this);
@@ -56,7 +59,7 @@ define(['Backbone',
 			
 		    this.errorPane.setHTML("");
 		    
-		    _(this.collection.models).each(function(user){
+		    this.collection.each(function(user){
 				_(user.attributes).each(function(value,key) {
 			    
 					var errorMessage = user.preValidate(key, value);
@@ -70,7 +73,10 @@ define(['Backbone',
 		    
 		    console.log(usersValid);
 		    
-		    if (_.all(usersValid, _.identity)) { this.closeDialog();}
+		    if (_.all(usersValid, _.identity)) { 
+		    	this.closeDialog();
+		    	this.collection.each(function(_user) {self.parent.collection.add(_user);});
+		    }
 		},
 		appendRow: function(user){
 		    var tableRow = new UserRowView({model: user});
@@ -79,6 +85,10 @@ define(['Backbone',
 		addStudent: function (){ this.collection.add(new User());}
 	    });
 	    
+	    // This is a Backbone collection of webwork.User(s).  This is different than the webwork.userList class  because we don't need
+    // the added expense of additions to the server.
+    
+    var TempUserList = Backbone.Collection.extend({model:User});
 
     return AddStudentManView;
 

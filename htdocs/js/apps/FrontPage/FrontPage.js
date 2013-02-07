@@ -1,17 +1,18 @@
 //require config
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
+        "Backbone":             "/webwork2_files/js/lib/vendor/backbone-0.9.9",
         "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
         "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-drag-drop/js/jquery-ui-1.9.2.custom",
-        "underscore":           "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/webwork/components/jquery/jquery-1.8.3",
+        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
         "util":                 "/webwork2_files/js/lib/webwork/util",
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
         "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":             "/webwork2_files/js/lib/webwork/views/Closeable"
+        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
+        "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -22,7 +23,8 @@ require.config({
         'bootstrap':['jquery'],
         'backbone-validation': ['Backbone'],
         'XDate':{ exports: 'XDate'},
-        'util': ['XDate']
+        'util': ['XDate'],
+        'jquery-truncate' : ['jquery']
     }
 });
 
@@ -49,14 +51,17 @@ function(Backbone, _, User, ProblemSetList, Problem, WebPage, CalendarView, Prob
             var self = this;
             this.dispatcher = _.clone(Backbone.Events);
 
-            this.problemSets = new ProblemSetList();
+            this.problemSets = new ProblemSetList({type: "Student"});
             
             
             this.problemSets.fetch();
             
-            this.dispatcher.on('problem-sets-loaded',this.postHWLoaded); 
-
-            this.render();
+            this.problemSets.on('fetchSuccess', function () {
+                self.render();
+                self.probSetListView.collectionLoaded = true;
+                self.probSetListView.render();
+                self.postHWLoaded();
+            }); 
 
 
 

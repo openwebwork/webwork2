@@ -191,7 +191,7 @@ sub body {
 	#my $editMode = $self->{editMode};
 	#my $passwordMode = $self->{passwordMode};	
 
-	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/classlist3.html');  
+	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/classlist-manager.html');  
 	print $template->output(); 
 
 
@@ -221,7 +221,7 @@ sub head{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     print "<link rel='stylesheet' href='$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
     print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
-	print "<link rel='stylesheet' type='text/css' href='$site_url/js/lib/vendor/jquery/jquery-ui-for-classlist3/css/ui-lightness/jquery-ui-1.8.21.custom.css' > </style>";
+	print "<link rel='stylesheet' href='$site_url/js/lib/vendor/jquery-ui-1.10.0.custom/css/ui-lightness/jquery-ui-1.10.0.custom.min.css' type='text/css' media='screen'>";
 	return "";
 }
 
@@ -235,28 +235,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
-
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.js"}), CGI::end_script();
-
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.7.2.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/json2.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/underscore.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/backbone-validation.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/FileSaver.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/BlobBuilder.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-ui-for-classlist3/js/jquery-ui-1.8.21.custom.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/WeBWorK-ui.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/teacher.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/teacher/User.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/webwork/util.js"}), CGI::end_script();
-#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/fs.js"}), CGI::end_script();
-#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/labs.min.js"}), CGI::end_script();
-	#print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/UserList/userlist.js"}), CGI::end_script();
-	print qq!<script data-main="$site_url/js/apps/UserList/userlist" src="$site_url/js/lib/vendor/components/requirejs/require.js"></script>!;
+	print qq!<script data-main="$site_url/js/apps/ClasslistManager/classlistManager" src="$site_url/js/lib/vendor/requirejs/require.js"></script>!;
 
 	
 	return "";

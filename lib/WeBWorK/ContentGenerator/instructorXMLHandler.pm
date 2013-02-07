@@ -241,7 +241,9 @@ sub pre_header_initialize {
             restricted_login_proctor => $r->param('restricted_login_proctor') || undef,
             var 					=> $r->param('var') || undef,
             value   				=> $r->param('value') || undef,
-            users 					=> $r->param('users') || undef
+            users 					=> $r->param('users') || undef,
+            place 					=> $r->param('place') || undef,
+            path 					=> $r->param('path') || undef, 
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -295,7 +297,7 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$self->{output}->{problem_out} = $xmlrpc_client->xmlrpcCall('renderProblem', $input);
-		
+			
 		#$self->{output}->{text} = "Rendered problem";
 	} else {	
 		$self->{output} = $xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);

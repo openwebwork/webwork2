@@ -81,7 +81,8 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             xml_command: "addProblem",
             set_id: self.setName,
             problemPath: problem.get('path'),
-            place: self.size()
+            place: self.size(),
+            value: problem.get("value")
         };
         _.defaults(requestObject, config.requestObject);
         $.post(config.webserviceURL, requestObject, function (data) {
@@ -106,7 +107,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             var response = $.parseJSON(data);
             console.log("in removeProblem");
             console.log(response);
-            self.trigger("deleteProblem",parseInt(self.lastProblemRemoved));
+            self.trigger("deleteProblem",self.setName, parseInt(self.lastProblemRemoved));
         });
         this.lastProblemRemoved = problem.get("place"); // This is a way to save the Problem # deleted. 
         problem.destroy();
@@ -128,7 +129,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
     
         $.post(config.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
-            console.log("result: " + response.result_data);
+            console.log(response);
         });
     }
 

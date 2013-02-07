@@ -445,6 +445,8 @@ sub head{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     	print "<link rel='stylesheet' href='$site_url/js/lib/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
+    	print "<link rel='stylesheet' href='$site_url/js/lib/vendor/jquery-ui-1.10.0.custom/css/ui-lightness/jquery-ui-1.10.0.custom.min.css' type='text/css' media='screen'>";
+    	
         print "<link rel='stylesheet' type='text/css' href='$site_url/css/problemsetlist.css' > </style>";
 	#print "<link rel='stylesheet' type='text/css' href='$site_url/js/lib/vendor/jquery-ui-for-classlist3/css/ui-lightness/jquery-ui-1.8.21.custom.css' > </style>";
 	return "";
@@ -460,7 +462,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/lib/vendor/components/requirejs/require.js"></script>!;
+	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/lib/vendor/requirejs/require.js"></script>!;
 
 
 	

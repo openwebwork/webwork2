@@ -426,6 +426,13 @@ sub renderProblem {
     my $self = $class->initiate_session($in);
     return $self->do( WebworkWebservice::RenderProblem::renderProblem($self,$in) ); 
 }
+
+sub updateProblem {
+	my ($class,$in) = @_;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::SetActions::updateProblem($self,$in));
+}
+
 sub readFile {
     my $class = shift;
     my $in   = shift;
@@ -588,6 +595,14 @@ sub getSets {
     return $self->do(WebworkWebservice::SetActions::getSets($self, $in));
 }
 
+sub getUserSets {
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    return $self->do(WebworkWebservice::SetActions::getUserSets($self, $in));
+}
+
+
 sub getSet {
     my $class = shift;
     my $in = shift;
@@ -600,6 +615,20 @@ sub updateSetProperties{
     my $in = shift;
     my $self = $class->initiate_session($in);
     return $self->do(WebworkWebservice::SetActions::updateSetProperties($self, $in));
+}
+
+sub updateUserSet {
+	my $class = shift;
+	my $in = shift; 
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::SetActions::updateUserSet($self,$in));
+}
+
+sub unassignSetFromUsers {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::SetActions::unassignSetFromUsers($self,$in));
 }
 
 sub listSetUsers {

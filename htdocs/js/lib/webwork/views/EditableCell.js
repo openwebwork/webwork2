@@ -1,4 +1,4 @@
-define(['Backbone'],function(Backbone) {
+define(['Backbone','config'],function(Backbone,config) {
 
 var EditableCell = Backbone.View.extend({
         tagName: "td",
@@ -9,9 +9,8 @@ var EditableCell = Backbone.View.extend({
         render: function () {
             var optsRe = /opt\((.*)\)/;
             if(this.model.types[this.property]==="datetime"){
-                var re = /(\d?\d\/\d?\d\/\d{4})\sat\s(\d?\d:\d\d[aApP][mM])\s\w{3}/;
-                var dt = re.exec(this.model.get(this.property));
-                this.$el.html("<span class='edit-date'>" + dt[1] + "</span> at <span class='edit-time'>" + dt[2] +"</span>"); 
+                var dt = config.regexp.wwDate.exec(this.model.get(this.property));
+                this.$el.html("<span class='edit-date'>" + dt[1] + "</span> at <span class='edit-time'>" + dt[5] +"</span>"); 
             } else if (optsRe.test(this.model.types[this.property])) 
             {
                 var opts = optsRe.exec(this.model.types[this.property])[1].split(",");
@@ -24,9 +23,9 @@ var EditableCell = Backbone.View.extend({
             
         },
         events: {"click .srv-value": "editString",
-                "click .edit-date": "editDate",
-                "click .edit-time": "editString",
-                "change .edit-opt": "editOption"
+                 "click .edit-date": "editDate",
+                 "click .edit-time": "editTime",
+                 "change .edit-opt": "editOption"
         },
         editOption: function (event) {
             this.model.set(this.property,$(event.target).val());
@@ -40,32 +39,57 @@ var EditableCell = Backbone.View.extend({
             inputBox.val(currentValue);
             inputBox.focus();
             inputBox.datepicker().on("changeDate",function (event){
-                var _wwdate = inputBox.val() + " at " + self.$(".edit-time").text() + " EDT";
-                console.log(_wwdate);
-                var valid = self.model.preValidate(self.property,_wwdate);
-
-                if (self.model.isValid(self.property)) {
+                var valid = self.saveDateTime(inputBox, inputBox.val(),self.$(".edit-time").text());
+                if (valid) {
                     inputBox.datepicker("hide");
-                    tableCell.html(inputBox.val());
-                    self.model.set(self.property,_wwdate);
-                } else
-                {
-                    console.log(valid);
-                }
-
+                    tableCell.html(inputBox.val());    
+                } 
             });
             inputBox.datepicker("show");
-            //inputBox.datepicker({autoclose: true});
-            //inputBox.click(function (event) {event.stopPropagation();});
             this.$(".srv-edit-box").focusout(function() {
-                
-                inputBox.datepicker("hide");
-
-                }); 
+                var valid = self.saveDateTime(inputBox, inputBox.val(),self.$(".edit-time").text()); 
+                if (valid) {
+                    inputBox.datepicker("hide");
+                    tableCell.html(inputBox.val());
+                }
+            }); 
            
         },
         editTime: function() {
+            var self = this;
+            var tableCell = $(event.target);
+            var currentValue = tableCell.html();
+            tableCell.html("<input class='srv-edit-box' size='20' type='text'></input>");
+            var inputBox = this.$(".srv-edit-box");
+            inputBox.focus();
+            inputBox.val(currentValue);
+            inputBox.click(function (event) {event.stopPropagation();});
+            this.$(".srv-edit-box").focusout(function() {
+                var valid = self.saveDateTime(inputBox,self.$(".edit-date").text(),inputBox.val());
+                if (valid) {tableCell.html(inputBox.val());}
+            }); 
+        },
+        saveDateTime: function(box,date,time){
 
+            var _wwdate = date + " at " + time + " " + config.timezone;
+            console.log(_wwdate);
+            var error = this.model.preValidate(this.property,_wwdate);
+
+            if (error) {
+                box.attr("data-content",error);
+                box.attr("data-placement","top");
+                box.popover("show");
+                console.log(error);
+                return false; 
+                
+            } else if (this.silent) {
+                return true;
+                // don't save the property yet. 
+            } else 
+            {
+                this.model.set(this.property,_wwdate);
+                return true;
+            } 
         },
         editString: function (event) {
             var self = this;
@@ -82,6 +106,10 @@ var EditableCell = Backbone.View.extend({
                 
                 // need to also set the property on the server or 
                 }); 
+        },
+        getValue: function ()
+        {
+            return this.$el.text();
         }
         
         

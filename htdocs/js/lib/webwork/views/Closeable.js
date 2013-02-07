@@ -1,19 +1,21 @@
-define(['Backbone', 'underscore'], function(Backbone, _){
+define(['Backbone', 'underscore','../../lib/webwork/models/MessageList','../../lib/webwork/models/Message'], 
+    function(Backbone, _,MessageList,Message){
     var Closeable = Backbone.View.extend({
         className: "closeablePane",
         text: "",
         display: "none",
         initialize: function(){
-    	var self = this; 
-    	_.bindAll(this, 'render','setHTML','close','clear','appendHTML','open'); // every function that uses 'this' as the current object should be in here
-            if (this.options.text !== undefined) {this.text = this.options.text;}
-            if (this.options.display !== undefined) {this.display = this.options.display;}
-    	this.$el.addClass("alert");
-    	_(this.options.classes).each(function (cl) {self.$el.addClass(cl);});
-    	
-    	this.render();
-    	
-    	this.isOpen = false; 
+        	var self = this; 
+            // every function that uses 'this' as the current object should be in here
+        	_.bindAll(this, 'render','setHTML','close','clear','appendHTML','open','addMessage','removeMessage','showMessages'); 
+            _.extend(this,this.options);
+        	this.$el.addClass("alert");
+        	_(this.options.classes).each(function (cl) {self.$el.addClass(cl);});
+        	
+            this.messages = new MessageList();
+        	this.render();
+        	
+        	this.isOpen = false; 
             return this;
         },
         events: {
@@ -45,7 +47,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
     	
         },
         open: function (){
-    	this.isOpen = true;
+    	    this.isOpen = true;
             var self = this;
             this.$el.fadeIn("slow", function () { self.$el.css("display","block"); });
 
@@ -53,7 +55,25 @@ define(['Backbone', 'underscore'], function(Backbone, _){
                 this.$el.css("overflow","scroll");
                 this.$el.height(0.3*screen.height);
             }
+        },
+        addMessage: function (_text, _expiration){
+            var self = this;
+            var msg = new Message({text: _text, expiration: _expiration});
+            this.messages.add(msg);
+            this.showMessages();
+            setTimeout(function () {self.removeMessage(msg)}, 1000*parseInt(msg.get("expiration")));
+        },
+        removeMessage: function (msg) {
+            console.log("removing the message");
+            msg.destroy();
+            this.showMessages();
+        },
+        showMessages: function() {
+            this.setHTML(this.messages.pluck("text").join("<br>"));
+            if (this.messages.size() === 0)
+                { this.close();}
         }
+
     });
     return Closeable;
 });

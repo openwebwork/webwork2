@@ -64,7 +64,7 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
         showProblems: function (){
             console.log("in showProblems");
             var plv = new ProblemListView({el: this.$(".lib-problem-viewer"), type: this.type, 
-                                            parent: this.parent, collection: this.problemList,
+                                            parent: this.parent, collection: this.problemList, showPoints: false,
                                             reorderable: false, deletable: false, draggable: true});
             plv.render();
         },

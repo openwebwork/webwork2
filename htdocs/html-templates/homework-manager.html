@@ -10,6 +10,7 @@
     <div class="view-header active" data-view="calendar"> Calendar</div>
     <div class="view-header" data-view="problem-set">Problem Set Details</div>
     <div class="view-header" data-view="hw-set-list">List of all Problem Sets</div>
+    <div class="view-header" data-view="assign-users">Assign Sets to Users</div>
     <div class="view-header" data-view="import-export">Import and Export Problem Sets</div>
     <div class="view-header" data-view="settings">Settings</div>
     <div class="view-header" data-view="view-all-subjects">View Problem Library by Subject</div>
@@ -29,8 +30,9 @@
   <li> <a class="link" data-link="calendar">View Calendar</a></li>
   <li><a class="link" data-link="problem-set">View Problem Set</a></li>
   <li><a class="link" data-link="hw-set-list">View All HW sets</a></li>
+  <li><a class="link" data-link="assign-users">Assign Sets to Users</a></li>
   <li><a class="link" data-link="import-export">Import and Export HW sets</a></li>
-  <li><a class="link" data-link="settings">View Settings</a></li>
+  <li><a class="link" data-link="settings">View HW Settings</a></li>
   <li class="divider"></li>
   <li><a class="link" data-link='view-all-subjects'>View All Library Subjects</a></li>
   <li><a class="link" data-link="view-all-libraries">View Problems within a Library</a></li>
@@ -41,9 +43,11 @@
 </div>
 </div>
 <div class="span10" id="main-view">
-  <div class="view-pane active" id="calendar"></div>
+  <div class="view-pane active" id="calendar">
+    <div id="progressbar"><div class="progress-label">Homework Manager Loading...</div></div></div>
   <div class="view-pane" id="problem-set"></div>
   <div class="view-pane" id="hw-set-list"></div>
+  <div class="view-pane" id="assign-users"></div>
   <div class="view-pane" id="import-export"><p>The Importing and Exporting of homework sets is not implemented yet.</p> </div>
   <div class="view-pane" id="settings"></div>
   <div class="view-pane" id="view-all-subjects"></div>
@@ -85,20 +89,23 @@
     
 </script>
 
-<script type="text/template" id="hw-set-template">
-<div id="new-set-modal" class="modal hide fade">
+<script type="text/template" id="modal-template">
+<div id="<%= id %>" class="modal hide fade">
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h3>Create a new Homework Set</h3>
+    <%= header %>
   </div>
   <div class="modal-body">
   </div>
   <div class="modal-footer">
     <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-    <button class="btn btn-primary">Create New Set</button>
+    <button class="btn btn-primary"><%= saveButton %></button>
   </div>
 </div>
 
+</script>
+
+<script type="text/template" id="hw-set-list-template">
 <div id="set-list">Loading Homework Sets...
 <img src='/webwork2_files/images/ajax-loader-small.gif'></div>
 
@@ -141,19 +148,18 @@
   <div class="span4 num-probs"></div>
   <div class='span2 float-right'><button id='undo-delete-btn' class='btn btn-small'>Undo Delete</button> </div> 
 </div>
-<div class='prob-list'></div>
+<div id="list-of-problems" class='scrollable'></div>
 </script>
 
 <script type="text/template" id="hwset-dates-tmpl">
 <table class="table">
 <thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
 <tbody>
-<tr id="due-date-row"></tr>
-<tr><td>HW Set visible to Users</td><td id='hwset-visible'></td></tr>
-<tr><td>Reduced Credit Enabled</td><td id='reduced-credit'></td></tr>
+<tr class="due-date-row"></tr>
+<tr><td>HW Set visible to Users</td><td class='hwset-visible'></td></tr>
+<tr><td>Reduced Credit Enabled</td><td class='reduced-credit'></td></tr>
 </tbody>
 </table>
-</div>
 </script>
 
 <script type="text/template" id="users-assigned-tmpl">
@@ -161,34 +167,54 @@
 
 
 <table class="table">
+<tr id="users-assigned-row"></tr>
 <tr>
-<td><button id='assign-to-selected-users-button' class='btn'>Assign to Selected Users</button</td>
 <td><label for="classlist-select-all"> <input type="checkbox" id="classlist-select-all">&nbsp;Select All</label></td>
-<td></td>
-</tr>
-<tr><td style="width: 30%"><ul class="no-bullets" id="classlist-col1"></ul></td>
-<td style="width: 30%"><ul class="no-bullets" id="classlist-col2"></ul></td>
-<td style="width: 30%"><ul class="no-bullets" id="classlist-col3"></ul></td></tr>
-<table>
+<td><button id='assign-to-selected-users-button' class='btn'>Assign to Selected Users</button></td>
+<td></td></tr>
+</table>
 
 </script>
 
-<script type="text/template" id="selected-users-template">
-<li><input class='classlist-li' checked='checked' type='checkbox' data-username='<%= user %>' id='<%= cid %>'>
+<script type="text/template" id="custom-assign-tmpl">
+<p>Select the users below, change the desired due dates by clicking on the date or time.  Finally 
+click the "Save Changes" button.</p>
+<table class="table">
+<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<tbody>
+<tr class="due-date-row"></tr>
+<tr id="custom-user-row"></tr>
+<tr><td><label for="custom-select-all"> <input type="checkbox" id="custom-select-all">&nbsp;Select All</label></td> 
+<td><button class='btn' id="custom-save-changes">Save Changes</button></td>
+<td><button class='btn' id="unassign-users">Unassign Users from this Set</button></td>
+</tr>
+</tbody>
+</table>
+
+</script>
+
+
+
+<script type="text/template" id="user-template">
+<li><input class='classlist-li' type='checkbox' data-username='<%= user %>' id='li-<%= cid %>'>
     <label class='checklist' for='li-<%= cid %>'> <%= firstname %> <%= lastname %> ( <%= user %> ) </label></li>
 
 </script>
 
-<script type="text/template" id="calendarButtons">
+
+
+
+<script type="text/template" id="calendar-template">
+<div id="calendar-error-bar"></div>
 <div class="calendar-button-row">
-<button type="button" class="previous-week btn btn-small">Previous Week</button>
-<button type="button" class="next-week btn btn-small">Next Week</button>
+<button type="button" class="previous-week btn btn-small"><i class="icon-chevron-left"></i>Previous Week</button>
+
 <button type="button" class="view-month btn btn-small">Month View</button>
 <button type="button" class="view-week btn btn-small">Week View</button>
+<button type="button" class="next-week btn btn-small">Next Week<i class="icon-chevron-right"></i></button>
 </div>
-</script>
 
-<script type="text/template" id="calendarHeader">
+<table id='calendar-table' class='table-bordered'>
     <thead>
     <th>Sunday</th>
     <th>Monday</th>
@@ -198,10 +224,28 @@
     <th>Friday</th>
     <th>Saturday</th>
 </thead><tbody></tbody>
+<table id='calendar-table' class='table-bordered'></table>
+<div class="calendar-button-row">
+<button type="button" class="previous-week btn btn-small"><i class="icon-chevron-left"></i>Previous Week</button>
+<button type="button" class="view-month btn btn-small">Month View</button>
+<button type="button" class="view-week btn btn-small">Week View</button>
+<button type="button" class="next-week btn btn-small">Next Week<i class="icon-chevron-right"></i></button>
+</div>
+
+</script>
+
+<script type="text/template" id="calendar-date-bar">
+<div class="<%= classes %>" data-set="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Open To Students: <%=openToStudents%>"><span><%if(showName){%><%=setname %><%}%></span></div>
+
+</script>
+
+<script type="text/template" id="too-many-assignments-error">
+There are too many overlapping assignments to view efficiently.  Switch to week view for 
+a better rendering. 
 </script>
 
 <script type="text/template" id="settings-template">
-    <p>The following are settings for the Homework Manager (not yet implemented).</p>
+    <p>The following are homework settings relevant to the the Homework Manager.</p>
     
     <table class="table table-bordered" id="settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
 </table>
@@ -213,14 +257,16 @@
 <ul class="nav nav-tabs" id="problem-set-tabs">
   <li class="active"><a href="#prob-tab">Problems</a></li>
   <li><a href="#property-tab">Properties</a></li>
-  <li><a href="#user-tab">Assign to Users</a></li>
+  <li><a href="#user-assign-tab">Assign to Users</a></li>
+  <li><a href="#user-customize-tab">Customize Set to Users</a></li>
 </ul>
  
 <div class="tab-content">
   <div class="tab-pane active" id="prob-tab"><p>Click on a Problem Set Name on the left to view the set.</p>
   <div class="prob-list"></div></div>
   <div class="tab-pane" id="property-tab">Problem Set Properties (to be implemented)</div>
-  <div class="tab-pane" id="user-tab">Assign to Users (to be implemented)</div>
+  <div class="tab-pane" id="user-assign-tab">Assign to Users (to be implemented)</div>
+  <div class="tab-pane" id="user-customize-tab">Customize Set to Users (to be implemented)</div>
 </div>
     
 </script>
@@ -261,19 +307,38 @@
 
 <script type="text/template" id="problem-template">
 <div class="handle row-fluid">
-<%if(reorderable){%><i class="icon-resize-vertical icon-large"></i><%}%>
-<%if(deletable){ %><button type="button" class="remove pull-right"><i class="icon-trash"></i></button><%}%></div>    
+<%if(reorderable){%><div class="span1"><i class="icon-resize-vertical icon-large"></i></div><%}%>
+<%if(showPoints){%><div class="span2"> Problem value:<input class="prob-value" type="text" value="<%=value%>" size="5"></div><%}%>
+<div class="span2 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
+<%if(deletable){ %><span class="remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
 <div class="problem" data-path="<%= path %>" data-source="<%= type %>">
 
 <%= data %>
 </script>
 
+<script type="text/template" id="assign-users-template">
+<p>Select the users and the problem sets then click the button to change the assignment dates. </p>
+<p><button type="button" id="assign-users-sets" class="btn">Assign Users to Sets</button></p>
 
-<script type="text/template" id="setName-template"><a data-problem_count=<%= problem_count %>><%= name %><span class="problem_count" style="float:right"><%= problem_count %></style></a></script>
+<table class="table">
+<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<tbody>
+<tr id="assign-users-due-date-row"></tr>
+</tbody>
+</table>
 
-<script type="text/template" id="set-template"><h1>Problems</h1><ul class="list"></ul></script><script type="text/template", id="LibraryList-template"><select  class="<%= name %> list"><option value=null>Pick a Library</option></select><span class="<%= name %> children"></span></script>
+<table class="table">
+<thead>
+<tr><th>Users</th><th><input type="checkbox" id="select-users-checkbox" class="select-all">&nbsp;Select All</th>
+<th>Sets</th><th><input type="checkbox" id="select-sets-checkbox" class="select-all">&nbsp;Select All</th></tr>
+</thead>
+<tbody>
+<tr><td colspan="2"><ul id='assign-users-list' class="no-bullets scrollable"></ul></td>
+<td colspan="2"><ul id='assign-sets-list' class="no-bullets scrollable"></ul></td></tr>
+</tbody>
+</table>
 
-<script type="text/template", id="Library-template"><h1>Problems</h1><ul class="list"></ul><button class="btn next_group" style="display:<%= enough_problems %>;">Load the next <%= group_size %> problems.</button
 
-></script>
 
+
+</script>
