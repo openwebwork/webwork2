@@ -294,14 +294,9 @@ sub body {
 	    } else {
 		$userAnswerString = "There are no answers for this student.";
 	    }
-<<<<<<< HEAD
-
-	    my $score = int(100*$userProblem->status);	    
-=======
 	    
 	    my $score = int(100*$userProblem->status);
 	    
->>>>>>> ww2.5.1.3
 	    my $prettyName = $userRecord->last_name
 		. ", "
 		. $userRecord->first_name;
