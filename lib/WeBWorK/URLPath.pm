@@ -85,12 +85,14 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_detail2               /$courseID/instructor/sets2/$setID/ #not created yet
  instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
 
+
  instructor_problem_grader                /$courseID/instructor/grader/$setID/$problemID
 
 
  instructor_set_list3                 /$courseID/instructor/sets3/
  instructor_set_detail3               /$courseID/instructor/sets3/$setID/ #not created yet
  instructor_users_assigned_to_set3    /$courseID/instructor/sets3/$setID/users/ #not created yet
+
 
  
  instructor_add_users                /$courseID/instructor/add_users/
