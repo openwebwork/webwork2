@@ -1142,7 +1142,10 @@ sub output_checkboxes{
 	my $r = $self->r;
 	my %can = %{ $self->{can} };
 	my %will = %{ $self->{will} };
-
+	my $ce = $r->ce;
+    my $showHintButton = $ce->{pg}{options}{show_hint_button};
+    my $showSolutionButton = $ce->{pg}{options}{show_solution_button};
+    
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
@@ -1161,8 +1164,8 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
-	if ($can{showHints}) {
-
+	
+	if ($can{showHints} and $showHintButton) {
 		print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
@@ -1180,7 +1183,8 @@ sub output_checkboxes{
 				}
 		),"&nbsp;";
 	}
-	if ($can{showSolutions}) {
+	
+	if ($can{showSolutions} and $showSolutionButton) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
 			-id		 => "showSolutions_id",
