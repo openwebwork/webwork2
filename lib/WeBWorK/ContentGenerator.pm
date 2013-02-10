@@ -1528,7 +1528,7 @@ sub optionsMacro {
 		my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 		my @active_modes = grep { exists $display_modes{$_} } @{$self->r->ce->{pg}->{displayModes}};
 		if (@active_modes > 1) {
-			$result .= "View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;";
+			$result .= $r->maketext("View equations as").":";
 			$result .= CGI::br();
 			$result .= CGI::radio_group(
 				-name => "displayMode",
@@ -1544,13 +1544,13 @@ sub optionsMacro {
 		# Note, 0 is a legal value, so we can't use || in setting this
 		my $curr_showOldAnswers = defined($self->r->param("showOldAnswers")) ?
 			$self->r->param("showOldAnswers") : $self->r->ce->{pg}->{options}->{showOldAnswers};
-		$result .= "Show&nbsp;saved&nbsp;answers?";
+		$result .= $r->maketext("Show saved answers?");
 		$result .= CGI::br();
 		$result .= CGI::radio_group(
 			-name => "showOldAnswers",
 			-values => [1,0],
 			-default => $curr_showOldAnswers,
-			-labels => { 0=>'No', 1=>'Yes' },
+			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
 		);
 		$result .= CGI::br();
 	}
