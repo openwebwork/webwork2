@@ -683,7 +683,7 @@ sub pre_header_initialize {
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
 	);
-	
+
 	# are certain options enforced?
 	my %must = (
 		showOldAnswers     => 0,
@@ -854,7 +854,7 @@ sub options {
 	my $displayMode = $self->{displayMode};
 	my %can = %{ $self->{can} };
 	
-	my @options_to_show = "displayMode";
+	my  @options_to_show = "displayMode";
 	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
 	push @options_to_show, "showHints" if $can{showHints};
 	push @options_to_show, "showSolutions" if $can{showSolutions};
@@ -1143,9 +1143,11 @@ sub output_checkboxes{
 	my %can = %{ $self->{can} };
 	my %will = %{ $self->{will} };
 	my $ce = $r->ce;
-    my $showHintButton = $ce->{pg}{options}{show_hint_button};
-    my $showSolutionButton = $ce->{pg}{options}{show_solution_button};
-    
+    my $showHintCheckbox      = $ce->{pg}->{options}->{show_hint_checkbox};
+    my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
+    my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
+    my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
+    #  warn "showHintCheckbox $showHintCheckbox  showSolutionCheckbox $showSolutionCheckbox";
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
@@ -1164,8 +1166,10 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
-	
-	if ($can{showHints} and $showHintButton) {
+	#  warn "can showHints $can{showHints} can show solutions $can{showSolutions}";
+	if ($can{showHints} ) {
+	  # warn "can showHints is ", $can{showHints};
+	  if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
 		print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
@@ -1182,9 +1186,14 @@ sub output_checkboxes{
 					-value   => 1,
 				}
 		),"&nbsp;";
+	  } else {
+	  	print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
+	  
+	  }
 	}
 	
-	if ($can{showSolutions} and $showSolutionButton) {
+	if ($can{showSolutions} ) {
+	  if (  $showSolutionCheckbox or not $useKnowlsForSolutions ) { # always allow checkbox to display if knowls are not used.
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
 			-id		 => "showSolutions_id",
@@ -1201,6 +1210,9 @@ sub output_checkboxes{
 				-value   => 1,
 			}
 		),"&nbsp;";
+	  } else {
+	    print CGI::hidden({id=>"showSolutions_id", name => "showSolutions", value=>1})
+	  }
 	}
 	
 	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
