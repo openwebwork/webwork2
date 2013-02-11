@@ -647,7 +647,10 @@ table caption{
 	overflow: hidden;
 	margin-top: 10px;
 }
+.problemFooter {
+	clear:both;  /* the footer shouldn't float at all */
 
+}
 /*General styles for the wrapper div element which goes around the InfoBoxes*/
 .info-wrapper{
 	float: right;
