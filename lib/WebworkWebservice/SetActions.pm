@@ -217,40 +217,42 @@ sub createNewSet{
 	if ($in->{new_set_name} !~ /^[\w .-]*$/) {
 		$out->{text} = "need a different name";#not sure the best way to handle and error
 	} else {
-			my $newSetName = $in->{new_set_name};
-			# if we want to munge the input set name, do it here
-			$newSetName =~ s/\s/_/g;
-			#debug("local_sets was ", $r->param('local_sets'));
-			#$r->param('local_sets',$newSetName);  ## use of two parameter param
-			#debug("new value of local_sets is ", $r->param('local_sets'));
-			my $newSetRecord = $db->getGlobalSet($newSetName);
-			if (defined($newSetRecord)) {
-	            $out->{out}=encode_base64("Failed to create set, you may need to try another name."),
-	            $out->{ra_out} = {'success' => 'false'};
-			} else {			# Do it!
-				# DBFIXME use $db->newGlobalSet
-				$newSetRecord = $db->{set}->{record}->new();
-				$newSetRecord->set_id($newSetName);
-				$newSetRecord->set_header("defaultHeader");
-				$newSetRecord->hardcopy_header("defaultHeader");
-				$newSetRecord->open_date(time()+60*60*24*7); # in one week
-				$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
-				$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
-				eval {$db->addGlobalSet($newSetRecord)};
-				if ($@) {
-					$out->{text} = encode_base64("Failed to create set, you may need to try another name.");
-					#$self->addbadmessage("Problem creating set $newSetName<br> $@");
-				} else {
-					#figure this bit out later
-					#$self->addgoodmessage("Set $newSetName has been created.");
-					my $selfassign = $in->{selfassign};
-					$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
-					if($selfassign) {
-						$self->assignSetToUser($self->{user}, $newSetRecord);
-						#$self->addgoodmessage("Set $newSetName was assigned to $userName.");
-					}
+		my $newSetName = $in->{new_set_name};
+		# if we want to munge the input set name, do it here
+		$newSetName =~ s/\s/_/g;
+		#debug("local_sets was ", $r->param('local_sets'));
+		#$r->param('local_sets',$newSetName);  ## use of two parameter param
+		#debug("new value of local_sets is ", $r->param('local_sets'));
+		my $newSetRecord = $db->getGlobalSet($newSetName);
+		if (defined($newSetRecord)) {
+            $out->{out}=encode_base64("Failed to create set, you may need to try another name."),
+            $out->{ra_out} = {'success' => 'false'};
+		} else {			# Do it!
+			# DBFIXME use $db->newGlobalSet
+			$newSetRecord = $db->{set}->{record}->new();
+			$newSetRecord->set_id($newSetName);
+			$newSetRecord->set_header("defaultHeader");
+			$newSetRecord->hardcopy_header("defaultHeader");
+			$newSetRecord->open_date(time()+60*60*24*7); # in one week
+			$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
+			$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
+			eval {$db->addGlobalSet($newSetRecord)};
+			if ($@) {
+				$out->{text} = encode_base64("Failed to create set, you may need to try another name.");
+				#$self->addbadmessage("Problem creating set $newSetName<br> $@");
+			} else {
+				my $selfassign = $in->{selfassign};
+				debug($selfassign);
+				$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
+				if($selfassign) {
+					debug("Assigning to user: " . $in->{user});
+					my $userSet = $db->newUserSet;
+					$userSet->user_id($in->{user});
+					$userSet->set_id($newSetName);
+					$db->addUserSet($userSet);
 				}
 			}
+		}
 	}
 }
 

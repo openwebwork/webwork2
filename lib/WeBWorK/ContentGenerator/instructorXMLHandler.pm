@@ -239,6 +239,7 @@ sub pre_header_initialize {
             users 					=> $r->param('users') || undef,
             place 					=> $r->param('place') || undef,
             path 					=> $r->param('path') || undef, 
+            selfassign 			    => $r->param('selfassign') || undef, 
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",

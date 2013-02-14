@@ -63,7 +63,7 @@ our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT";
 
 
 
-our $UNIT_TESTS_ON =1;
+our $UNIT_TESTS_ON =0;
 # 
 # #our $ce           = $WebworkWebservice::SeedCE;
 # # create a local course environment for some course
