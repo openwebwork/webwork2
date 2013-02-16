@@ -23,7 +23,7 @@
 	font-family: "Arial", sans-serif;
 	float:left; 
 	width:65%; 
-	overflow:hidden;
+	overflow:auto;
 }
 
 .barrier {
@@ -159,7 +159,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	margin-top: 0;
 }
 .info-box a.more {
-	float: right;
+	float: left;
 	font-size: 80%;
 	font-style: italic;
 	margin-bottom: 1ex;
@@ -443,7 +443,7 @@ clear: both;
  * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-	float: right; /*was right*/
+	float: left; /*was right*/
 	min-width: 0;
 	overflow: hidden; /*was auto*/
 	/*margin-right: -1px;*/
@@ -647,7 +647,10 @@ table caption{
 	overflow: hidden;
 	margin-top: 10px;
 }
+.problemFooter {
+	clear:both;  /* the footer shouldn't float at all */
 
+}
 /*General styles for the wrapper div element which goes around the InfoBoxes*/
 .info-wrapper{
 	float: right;
@@ -848,6 +851,9 @@ table.problem_set_table th{
 }
 table.problem_set_table td{
 	padding-right: 30px;
+}
+div.problem_set_options {
+	clear: both;
 }
 /*BUG FIXES*/
 

@@ -319,6 +319,8 @@ $dbLayouts{sql_single} = {
 
 };
 
+# include ("conf/database.conf");  # uncomment to provide local overrides
+
 
 =head1 DATABASE LAYOUT METADATA
 
