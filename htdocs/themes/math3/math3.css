@@ -22,8 +22,7 @@
 	padding: 0;
 	font-family: "Arial", sans-serif;
 	float:left; 
-	width:65%; 
-	overflow:auto;
+	max-width:85%; 
 }
 
 .barrier {
