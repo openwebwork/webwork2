@@ -11,12 +11,11 @@ print STDERR "Localize.pm: Full path for the localization directory set to |$WeB
 use Locale::Maketext;
 use Locale::Maketext::Lexicon;
 
-my $pkg = "WeBWorK::Localize::I18N";
 my $path = "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize";
-my $pattern = File::Spec->catfile($path, '*.[pm]o');
-my $decode = 0;
-my $encoding = undef;
-our $loc_lang, $loc, $lh;
+my   $pattern = File::Spec->catfile($path, '*.[pm]o');
+my   $decode = 0;
+my   $encoding = undef;
+
 eval "
 	package WeBWorK::Localize::I18N;
 	use base 'Locale::Maketext';
@@ -30,27 +29,12 @@ eval "
 	*tense = sub { \$_[1] . ((\$_[2] eq 'present') ? 'ing' : 'ed') };
 	
 " or die $@;
-# 	$lh = $pkg->get_handle("tr");
-# 	$loc_lang = sub { $lh = $pkg->get_handle(@_);};
-# 	$loc = sub {$lh->maketext(@_)};
-# 
-package WeBWorK::Localize; 
  
-#  my $foo = getLoc("tr");
-#  warn "get handle ", $lh = $pkg->get_handle("tr"), "\n";
-#  warn "get loc ", $lh->maketext("Homework Sets");
-#  warn "\n\ngrades $foo :", &$foo("Grades");
-#  warn "\n lh ", %$lh,  "::::", eval(qq! join(" ", %{"WeBWorK::Localize::I18N::tr"."::"} )! );
-#  warn "\n isa ", @WeBWorK::Localize::I18N::fr::ISA ;
-#  warn "\n up ", join(" ", sort %WeBWorK::Localize::I18N::);
-#  warn "\n isa ", @WeBWorK::Localize::I18N::ISA ;
-#  warn "\n up ", join(" ", sort %Locale::Maketext::);
-#  sub foo {
-#  	$lh->maketext(@_);
-#  }
+package WeBWorK::Localize; 
+
 sub getLoc {
 	my $lang = shift;
-	my $lh = $pkg->get_handle($lang);	
+	my $lh = WeBWorK::Localize::I18N->get_handle($lang);	
 	return sub {$lh->maketext(@_)};
 }
 
