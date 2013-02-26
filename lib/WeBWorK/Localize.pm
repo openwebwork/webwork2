@@ -36,15 +36,15 @@ eval "
 
 package WeBWorK::Localize; 
  
- my $foo = getLoc("tr");
- warn "get handle ", $lh = $pkg->get_handle("tr"), "\n";
- warn "get loc ", $lh->maketext("Homework Sets");
- warn "\n\ngrades $foo :", &$foo("Grades");
- warn "\n lh ", %$lh,  "::::", eval(qq! join(" ", %{"WeBWorK::Localize::I18N::tr"."::"} )! );
- warn "\n isa ", @WeBWorK::Localize::I18N::fr::ISA ;
- warn "\n up ", join(" ", sort %WeBWorK::Localize::I18N::);
- warn "\n isa ", @WeBWorK::Localize::I18N::ISA ;
- warn "\n up ", join(" ", sort %Locale::Maketext::);
+#  my $foo = getLoc("tr");
+#  warn "get handle ", $lh = $pkg->get_handle("tr"), "\n";
+#  warn "get loc ", $lh->maketext("Homework Sets");
+#  warn "\n\ngrades $foo :", &$foo("Grades");
+#  warn "\n lh ", %$lh,  "::::", eval(qq! join(" ", %{"WeBWorK::Localize::I18N::tr"."::"} )! );
+#  warn "\n isa ", @WeBWorK::Localize::I18N::fr::ISA ;
+#  warn "\n up ", join(" ", sort %WeBWorK::Localize::I18N::);
+#  warn "\n isa ", @WeBWorK::Localize::I18N::ISA ;
+#  warn "\n up ", join(" ", sort %Locale::Maketext::);
  sub foo {
  	$lh->maketext(@_);
  }
