@@ -18,9 +18,9 @@ my $decode = 0;
 my $encoding = undef;
 our $loc_lang, $loc, $lh;
 eval "
-	package $pkg;
+	package WeBWorK::Localize::I18N;
 	use base 'Locale::Maketext';
-    %${pkg}::Lexicon = ( '_AUTO' => 1 );
+    %WeBWorK::Localize::I18N::Lexicon = ( '_AUTO' => 1 );
 	Locale::Maketext::Lexicon->import({
 	    'i-default' => [ 'Auto' ],
 	    '*'	=> [ Gettext => \$pattern ],
@@ -30,10 +30,10 @@ eval "
 	*tense = sub { \$_[1] . ((\$_[2] eq 'present') ? 'ing' : 'ed') };
 	
 " or die $@;
-	$lh = $pkg->get_handle("tr");
-	$loc_lang = sub { $lh = $pkg->get_handle(@_);};
-	$loc = sub {$lh->maketext(@_)};
-
+# 	$lh = $pkg->get_handle("tr");
+# 	$loc_lang = sub { $lh = $pkg->get_handle(@_);};
+# 	$loc = sub {$lh->maketext(@_)};
+# 
 package WeBWorK::Localize; 
  
 #  my $foo = getLoc("tr");
@@ -45,13 +45,13 @@ package WeBWorK::Localize;
 #  warn "\n up ", join(" ", sort %WeBWorK::Localize::I18N::);
 #  warn "\n isa ", @WeBWorK::Localize::I18N::ISA ;
 #  warn "\n up ", join(" ", sort %Locale::Maketext::);
- sub foo {
- 	$lh->maketext(@_);
- }
+#  sub foo {
+#  	$lh->maketext(@_);
+#  }
 sub getLoc {
 	my $lang = shift;
-	&$loc_lang($lang);	
-	return $loc;
+	my $lh = $pkg->get_handle($lang);	
+	return sub {$lh->maketext(@_)};
 }
 
 # this is like [quant] but it doesn't write the number
