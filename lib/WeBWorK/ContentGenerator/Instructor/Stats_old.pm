@@ -76,7 +76,7 @@ sub title {
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $type                = $self->{type};
-	my $string              = $r->maketext("Statistics for").$self->{ce}->{courseName}." ";
+	my $string              = $r->maketext("Statistics for")." ".$self->{ce}->{courseName}." ";
 	
 	if ($type eq 'student') {
 		$string             .= $r->maketext("student")." ".$self->{studentName};
