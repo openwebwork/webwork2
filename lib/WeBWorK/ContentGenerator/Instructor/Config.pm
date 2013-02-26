@@ -208,7 +208,7 @@ sub entry_widget {
 	my $ce = $self->{Module}->{r}->{ce};
 	my $permHash = {};
 	my %userRoles = %{$ce->{userRoles}};
-	$userRoles{nobody} = 99999999; # insure that nobody comes at the end
+	$userRoles{nobody} = 99999999; # insure that nobody comes at the end #FIXME? this is set in defaults.config
 	my %reverseUserRoles = reverse %userRoles;
 
 	# the value of a permission can be undefined (for nobody),
