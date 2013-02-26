@@ -4,7 +4,7 @@
 
 #constants
 my %validproblems = (
-	'TestSet' => { #now you show which problems are valid like:
+	'SetNameHere' => { #now you show which problems are valid like:
             '1' => 1,
 	    '2' => 1, }, #and put more sets here
 	);
