@@ -676,7 +676,7 @@ sub pgfiles {
 					)"
 					);
 			dbug "INSERT INTO pgfile VALUES( \"\", \"$DBsection_id\", \"$author_id\", \"$institution\", \"$path_id\", \"$pgfile\", \"\" )\n";
-			$query = "SELECT pgfile_id FROM `$tables{pgfile}` WHERE filename = \"$pgfile\" and path_id=$path_id";
+			$query = "SELECT pgfile_id FROM `$tables{pgfile}` WHERE filename = \"$pgfile\" and path_id=\"$path_id\"";
 			$pgfile_id = $dbh->selectrow_array($query);
 
 			# keyword table, and problem_keyword many-many table
