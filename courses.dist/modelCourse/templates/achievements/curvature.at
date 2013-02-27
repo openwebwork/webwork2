@@ -4,11 +4,9 @@
 
 #constants
 my %validproblems = (
-	'Set10' => { #now you show which problems are valid like:
+	'SetNameHere' => { #now you show which problems are valid like:
             '2' => 1,
-	    '3' => 1, },
-        'Set11' => { #now you show which problems are valid like:
-	    '3' => 1, }, #and put more sets here
+	    '3' => 1, }, #now add more sets here
 	);
 
 #check and see if this problem was solved
