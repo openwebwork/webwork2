@@ -1626,6 +1626,11 @@ sub output_JS{
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
+	
+	# The Base64.js file, which handles base64 encoding and decoding.
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/Base64.js"}), CGI::end_script();
+	
+	
 	return "";
 }
 
