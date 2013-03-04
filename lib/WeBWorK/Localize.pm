@@ -16,6 +16,10 @@ my   $pattern = File::Spec->catfile($path, '*.[pm]o');
 my   $decode = 0;
 my   $encoding = undef;
 
+# For some reason this next stanza needs to be evaluated 
+# separately.  I'm not sure why it can't be
+# directly entered into the code.
+
 eval "
 	package WeBWorK::Localize::I18N;
 	use base 'Locale::Maketext';
