@@ -48,8 +48,8 @@ label.checklist {display: inline; margin-left: 8px;}
 
 .hw-assigned {color: blue;}
 
-#probSetList {margin:0;}
-
+#probSetList {margin:0}
+.prob-set-container {overflow-y: scroll;}
 .prob-value {width: 20px;}
 
 .loading {background-color: orange;}

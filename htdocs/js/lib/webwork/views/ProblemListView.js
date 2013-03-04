@@ -26,7 +26,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 self.problemsRendered.push(probNumber);
                 if (self.problemsRendered.length === self.collection.size()){
                     self.$el.height(0.8*$(window).height());
-                    self.parent.dispatcher.trigger("num-problems-shown");
+                    self.collection.trigger("num-problems-shown");
                 }
             });
             this.collection.on("reordered",function () {

@@ -106,9 +106,14 @@
 </script>
 
 <script type="text/template" id="hw-set-list-template">
+<%if(loading){%>
 <div id="set-list">Loading Homework Sets...
 <img src='/webwork2_files/images/ajax-loader-small.gif'></div>
-
+<%} else {%>
+<div style='font-size:110%; font-weight:bold'>Homework Sets</div>
+<div class="prob-set-container">
+  <ul id='probSetList' class='btn-group btn-group-vertical'></ul>
+</div>
 <div class="btn-group">
 
   <a class="btn dropdown-toggle btn-small" data-toggle="dropdown" href="#">
@@ -120,6 +125,8 @@
   <li><a class="link" data-link="delete-hw-set">Delete a Set</a></li>
   </ul>
   </div>
+
+<%}%>
 
 </script>
 
@@ -255,21 +262,51 @@ a better rendering.
 
 <script type="text/template" id="HW-detail-template">
 <ul class="nav nav-tabs" id="problem-set-tabs">
-  <li class="active"><a href="#prob-tab">Problems</a></li>
-  <li><a href="#property-tab">Properties</a></li>
-  <li><a href="#user-assign-tab">Assign to Users</a></li>
-  <li><a href="#user-customize-tab">Customize Set to Users</a></li>
+  <li class="active"><a href="#problem-list-tab" data-toggle="tab">Problems</a></li>
+  <li><a href="#property-tab" data-toggle="tab">Properties</a></li>
+  <li><a href="#user-assign-tab" data-toggle="tab">Assign to Users</a></li>
+  <li><a href="#user-customize-tab" data-toggle="tab">Customize Set to Users</a></li>
 </ul>
  
 <div class="tab-content">
-  <div class="tab-pane active" id="prob-tab"><p>Click on a Problem Set Name on the left to view the set.</p>
-  <div class="prob-list"></div></div>
-  <div class="tab-pane" id="property-tab">Problem Set Properties (to be implemented)</div>
-  <div class="tab-pane" id="user-assign-tab">Assign to Users (to be implemented)</div>
-  <div class="tab-pane" id="user-customize-tab">Customize Set to Users (to be implemented)</div>
-</div>
-    
+  <div class="tab-pane active" id="problem-list-tab"><p>Click on a Problem Set Name on the left to view the set.</p></div>
+  <div class="tab-pane" id="property-tab"></div>
+  <div class="tab-pane" id="user-assign-tab"></div>
+  <div class="tab-pane" id="user-customize-tab"></div>
+</div> 
 </script>
+
+<script type="text/template" id="problem-set-props-template">
+
+</script>
+
+<script type="text/template" id="assign-users-template">
+<p>Select the users and the problem sets then click the button to change the assignment dates. </p>
+<p><button type="button" id="assign-users-sets" class="btn">Assign Users to Sets</button></p>
+
+<table class="table">
+<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<tbody>
+<tr id="assign-users-due-date-row"></tr>
+</tbody>
+</table>
+
+<table class="table">
+<thead>
+<tr><th>Users</th><th><input type="checkbox" id="select-users-checkbox" class="select-all">&nbsp;Select All</th>
+<th>Sets</th><th><input type="checkbox" id="select-sets-checkbox" class="select-all">&nbsp;Select All</th></tr>
+</thead>
+<tbody>
+<tr><td colspan="2"><ul id='assign-users-list' class="no-bullets scrollable"></ul></td>
+<td colspan="2"><ul id='assign-sets-list' class="no-bullets scrollable"></ul></td></tr>
+</tbody>
+</table>
+
+
+
+
+</script>
+
 
 <script type="text/template" id="old-library-browswer-template">
 <div class="btn-group span2">
@@ -316,29 +353,3 @@ a better rendering.
 <%= data %>
 </script>
 
-<script type="text/template" id="assign-users-template">
-<p>Select the users and the problem sets then click the button to change the assignment dates. </p>
-<p><button type="button" id="assign-users-sets" class="btn">Assign Users to Sets</button></p>
-
-<table class="table">
-<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
-<tbody>
-<tr id="assign-users-due-date-row"></tr>
-</tbody>
-</table>
-
-<table class="table">
-<thead>
-<tr><th>Users</th><th><input type="checkbox" id="select-users-checkbox" class="select-all">&nbsp;Select All</th>
-<th>Sets</th><th><input type="checkbox" id="select-sets-checkbox" class="select-all">&nbsp;Select All</th></tr>
-</thead>
-<tbody>
-<tr><td colspan="2"><ul id='assign-users-list' class="no-bullets scrollable"></ul></td>
-<td colspan="2"><ul id='assign-sets-list' class="no-bullets scrollable"></ul></td></tr>
-</tbody>
-</table>
-
-
-
-
-</script>
