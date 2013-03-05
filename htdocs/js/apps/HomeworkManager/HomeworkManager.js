@@ -121,7 +121,12 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             });
         });
         this.problemSets.on("problem-set-added", function (set){
-            this.probSetListView.render();
+            self.probSetListView.render();
+        });
+
+        this.problemSets.on("problem-set-deleted", function(){
+            self.calendarView.updateAssignments();
+            self.calendarView.render();
         });
         
         // set up messages associated with problem Sets.  
@@ -227,8 +232,6 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
     {
         var self = this;
 
-       // this.addHWSet();
- 
         self.calendarView = new CalendarView({el: $("#calendar"), parent: this, 
                 collection: this.problemSets, view: "instructor"});
         
@@ -237,13 +240,6 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         // Set the popover on the set name
         $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
                
-
-        // Create the HW details pane. 
-     //   $("#details").html(_.template($("#HW-detail-template").html()));  
-
-        this.assignUsersView.initializeModel();
-        this.assignUsersView.render();
-
     },
             // This allows the homework sets generated above to be dragged onto the Calendar to set the due date. 
 
@@ -252,8 +248,13 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         var self = this;
 
         // The following helps determine if a problem set is being dragged or clicked on. 
-        $(".problem-set").draggable({revert: "valid", start: function (event,ui) { self.objectDragging=true;},
-                                stop: function(event, ui) {self.objectDragging=false;}});
+        $(".problem-set").draggable(
+            {revert: "valid", 
+             scroll: false, 
+             helper: "clone",
+             appendTo: "body",
+            start: function (event,ui) { self.objectDragging=true;},
+            stop: function(event, ui) {self.objectDragging=false;}});
              
         $(".calendar-day").droppable({
             hoverClass: "highlight-day",

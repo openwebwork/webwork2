@@ -5,6 +5,8 @@
 #calendar-table {border: 1px solid black; border-collapse: collapse; background: lightgray;}
 #calendar-table td {border: 1px solid black; width: 13%;  vertical-align: top;}
 
+.calendar-day {z-index: 5;}
+
 .month-view {height: 100px;}
 .week-view {height: 200px;}
 
@@ -16,11 +18,13 @@
 
 .assign-reduced-credit {background-color: rgb(255,128,0);}
 
+.assign-not-visible {background-color: darkgray;}
+
 
 .empty {background-color: none;}
 
 .assign { border-left: -2px; border-right: -2px; height: 15px;  width: 103%; margin-top: 2px; margin-bottom: 2px;
-float: left; display: table-cell; vertical-align: bottom;  z-index: 2; font-size: 13px;}
+float: left; display: table-cell; vertical-align: bottom;  z-index: 10; font-size: 13px;}
 
 .assign-set-name {cursor: pointer;}
 
@@ -49,7 +53,7 @@ label.checklist {display: inline; margin-left: 8px;}
 .hw-assigned {color: blue;}
 
 #probSetList {margin:0}
-.prob-set-container {overflow-y: scroll;}
+.prob-set-container {overflow-y: scroll; width: 100%;}
 .prob-value {width: 20px;}
 
 .loading {background-color: orange;}

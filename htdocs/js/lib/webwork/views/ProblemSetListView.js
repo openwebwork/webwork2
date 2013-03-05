@@ -62,6 +62,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
 
 
         },
+        events: {"click a.link": "addDeleteSet"},
         addDeleteSet: function (evt){
             var self = this;
             switch($(evt.target).data("link")){
