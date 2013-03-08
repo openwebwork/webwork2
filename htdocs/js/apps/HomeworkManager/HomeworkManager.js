@@ -30,7 +30,7 @@ require.config({
         'bootstrap':['jquery'],
         'backbone-validation': ['Backbone'],
         'XDate':{ exports: 'XDate'},
-        'config': ['XDate'],
+        'config': { deps: ['XDate'], exports: 'config'},
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],
         'jquery-tablesorter': ['jquery'],
@@ -156,6 +156,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         });
 
         this.probSetListView.render();
+        this.setListView.render();
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
@@ -170,10 +171,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
         $("#hw-manager-menu a.link").on("click", function (evt) {  self.changeView($(evt.target).data("link")) });
 
-        //$("body").droppable();  // This helps in making drags return to their original place.
-        
-        //new ui.PropertyListView({el: $("#settings"), model: self.settings});
-
+    
         // render the parts of the Homework Manager. 
 
         this.HWDetails           = new HWDetailView({el: $("#problem-set"),  collection: this.problemSets,parent: this});
@@ -191,19 +189,12 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         this.HWDetails.changeHWSet($(evt.target).data("setname")); 
     },
     changeView: function (linkname){
+
         $(".view-header").removeClass("active");
         $(".view-header[data-view='" + linkname + "']").addClass("active");
         $(".view-pane").removeClass("active");
         $("#"+linkname).addClass("active");
     },
-    /*addHWSet: function(_set){
-        var self = this;
-         // Allow problems to be dropped onto homework sets
-
-         console.log("in addHWSet");
-
-        if (_set) {self.setListView.addSet(_set)};
-    },  */
     setupMessages: function () {
         var self = this;
 
@@ -233,7 +224,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         var self = this;
 
         self.calendarView = new CalendarView({el: $("#calendar"), parent: this, 
-                collection: this.problemSets, view: "instructor"});
+                collection: this.problemSets, view: "instructor", viewType: "month"});
         
         self.setDropToEdit();        
         

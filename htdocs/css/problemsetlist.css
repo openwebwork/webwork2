@@ -1,5 +1,6 @@
 .Body{
     padding: 20px;
+    padding-top: 45px;
 }
 
 #calendar-table {border: 1px solid black; border-collapse: collapse; background: lightgray;}
@@ -19,6 +20,8 @@
 .assign-reduced-credit {background-color: rgb(255,128,0);}
 
 .assign-not-visible {background-color: darkgray;}
+
+.help-hidden {display: none;}
 
 
 .empty {background-color: none;}

@@ -114,10 +114,16 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_problem_editor2_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor2/$setID/$problemID/
  
-  instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
+ instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
  instructor_problem_editor3_withset   /$courseID/instructor/pgProblemEditor3/$setID/
  instructor_problem_editor3_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
+
+ instructor_simple_editor           /$courseID/instructor/SimplePGEditor/
+ instructor_simple_editor_withset   /$courseID/instructor/SimplePGEditor/$setID/
+ instructor_simple_editor_withset_withproblem
+                                     /$courseID/instructor/SimplePGEditor/$setID/$problemID/
+
  
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
@@ -330,7 +336,7 @@ our %pathTypes = (
 		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2 instructor_set_list3
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
+			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3 instructor_simple_editor
 			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
@@ -366,14 +372,14 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
 	instructor_user_list3 => {
-    		name    => 'Classlist Manager',
-    		parent  => 'instructor_tools',
-    		kids    => [ qw/instructor_user_detail/ ],
-    		match   => qr|^users3/|,
-    		capture => [ qw// ],
-    		produce => 'users3/',
-    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
-    	},
+		name    => 'Classlist Manager',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_user_detail/ ],
+		match   => qr|^users3/|,
+		capture => [ qw// ],
+		produce => 'users3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
+	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',
@@ -575,6 +581,15 @@ our %pathTypes = (
 		produce => 'pgProblemEditor3/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
+	instructor_simple_editor => {
+		name    => 'Simple Editor',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_simple_editor_withset/ ],
+		match   => qr|^SimplePGEditor/|,
+		capture => [ qw// ],
+		produce => 'SimplePGEditor/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SimplePGEditor',
+	},
 	instructor_problem_editor_withset => {
 		name    => '$setID',
 		parent  => 'instructor_problem_editor',
@@ -597,6 +612,15 @@ our %pathTypes = (
 		name    => '$setID',
 		parent  => 'instructor_problem_editor3',
 		kids    => [ qw/instructor_problem_editor3_withset_withproblem/ ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/setID/ ],
+		produce => '$setID/',
+		display => undef,
+	},
+	instructor_simple_editor_withset => {
+		name    => '$setID',
+		parent  => 'instructor_simple_editor',
+		kids    => [ qw/instructor_simple_editor_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
@@ -628,6 +652,15 @@ our %pathTypes = (
 		capture => [ qw/problemID/ ],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
+	},
+	instructor_simple_editor_withset_withproblem => {
+		name    => '$problemID',
+		parent  => 'instructor_simple_editor_withset',
+		kids    => [ qw// ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/problemID/ ],
+		produce => '$problemID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SimplePGEditor',
 	},
 	instructor_scoring => {
 		name    => 'Scoring Tools',

@@ -48,42 +48,32 @@
 <!--<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">-->
 <body>
 
-    <div class="navbar">
+    <div class="navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
-	    <div class="span8" style="margin-left: 0px">
-            <ul class="breadcrumb">
-		<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
-	</ul>
-	</div>
-<div class="span3"><!--#loginstatus--></div>
-	    <div class="span2"><button class="btn" id="help-link">Help</button>
-	    	<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2-dev/issues/new">Bugs!</a>
-    </div>
-   
-             
-            <div class="nav-collapse">
-              <ul class="nav pull-right">
-		<li class="dropdown" id="webwork_navigation">
-                  <a href="#webwork_navigation" class="dropdown-toggle" data-toggle="dropdown">Menu <b class="caret"></b></a>
-                  <ul class="dropdown-menu">
-                    <!--#if can="links"-->
-                        <!--#links-->
-                    <!--#endif-->
-                     <!--#if can="siblings"-->
-                        <!--#siblings-->
-                     <!--#endif-->
-                     <!--#if can="options"-->
-                        <ul>
-                     	    <h2>Display Options</h2>
-                     		<!--#options-->
-                     	</ul>
-                     <!--#endif-->
-                  </ul>
-                </li>
-              </ul>
-            </div><!-- /.nav-collapse -->
-          </div>
+         	<div class="container">
+	    		<div class="span6" style="margin-left: 0px">
+            		<ul class="breadcrumb">
+						<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
+					</ul>
+				</div>
+				<div class="span3"><!--#loginstatus--></div>
+	    		<div class="span2"><button class="btn" id="help-link">Help</button>
+	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2-dev/issues/new">Bugs!</a>
+    			</div>
+   				<ul class="nav pull-right">
+						<li class="dropdown" id="webwork_navigation">
+	                  <a href="#webwork_navigation" class="dropdown-toggle" data-toggle="dropdown">Menu <b class="caret"></b>
+	                  	</a>
+	                  <ul class="dropdown-menu">
+			               <ul>
+		                     <h4>Display Options</h4>
+		                     		<!--#options-->
+	               		</ul>
+	                     		<!--#endif-->
+	            		</ul>
+                  </li>
+	            </ul>            
+          	</div>
         </div><!-- /navbar-inner -->
     </div>
 		

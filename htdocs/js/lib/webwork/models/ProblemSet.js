@@ -178,6 +178,8 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
 
         },
         isInReducedCredit: function (_date,reducedCredit){
+            //console.log(this.get("set_id") + " " + this.);
+            if (this.get("enable_reduced_scoring")==="no") {return false;}
             var date = new XDate(_date);
             var openDate = new XDate(this.get("open_date"));
             var dueDate = new XDate(this.get("due_date"));
@@ -232,6 +234,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             console.log("Updating the dates to users " + _users);
             var requestObject = {xml_command: "updateUserSet", users: _users.join(","), set_id: this.get("set_id"),
                                     open_date: _openDate, due_date: _dueDate, answer_date: _answerDate};
+            console.log(requestObject);
             _.defaults(requestObject, config.requestObject);
             $.post(config.webserviceURL, requestObject, function (data){
                 var response = $.parseJSON(data);

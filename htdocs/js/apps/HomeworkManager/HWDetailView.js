@@ -203,17 +203,17 @@ define(['Backbone',
 
         render: function() {
             this.$el.html($("#custom-assign-tmpl").html());
-            this.openDate = new EditableCell({model : this.model, type: "datetime", property: "open_date", silent: true});
-            this.dueDate = new EditableCell({model : this.model, type: "datetime", property: "due_date", silent: true});
-            this.answerDate = new EditableCell({model : this.model, type: "datetime", property: "answer_date", silent: true});
+            this.openDate = new EditableCell({model : this.parent.model, type: "datetime", property: "open_date", silent: true});
+            this.dueDate = new EditableCell({model : this.parent.model, type: "datetime", property: "due_date", silent: true});
+            this.answerDate = new EditableCell({model : this.parent.model, type: "datetime", property: "answer_date", silent: true});
             this.$(".due-date-row").append(this.openDate.render().el);
             this.$(".due-date-row").append(this.dueDate.render().el);
             this.$(".due-date-row").append(this.answerDate.render().el);
 
-            var allUsers = this.users.sortBy(function(_user) { return _user.get("last_name");});
+            var allUsers = this.parent.parent.users.sortBy(function(_user) { return _user.get("last_name");});
 
             this.usersListView = new UserListView({users: allUsers, checked: false, el: this.$("#custom-user-row")}).render();
-            this.usersListView.highlightUsers(this.model.assignedUsers);
+            this.usersListView.highlightUsers(this.parent.model.assignedUsers);
             return this;
         },
          events: {  "click #custom-save-changes": "customizeSelected",
@@ -222,7 +222,7 @@ define(['Backbone',
         customizeSelected: function ()
         {
             var users = this.usersListView.getSelectedUsers();
-            this.model.updateUserSet(users,this.openDate.getValue()+ " " + config.timezone, 
+            this.parent.model.updateUserSet(users,this.openDate.getValue()+ " " + config.timezone, 
                 this.dueDate.getValue()+ " " + config.timezone, this.answerDate.getValue()+ " " + config.timezone);
         },
         selectAll: function (){
@@ -230,8 +230,8 @@ define(['Backbone',
         },
         unassignUsers: function(){
             var users = this.usersListView.getSelectedUsers();
-            this.model.unassignUsers(users);
-            this.model.assignedUsers = _.difference(this.model.assignedUsers,users);
+            this.parent.model.unassignUsers(users);
+            this.parent.model.assignedUsers = _.difference(this.parent.model.assignedUsers,users);
 
         }
     });

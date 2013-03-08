@@ -449,18 +449,31 @@ sub updateProblem{
 }
 
 
+# This updates the userSet for a problem set (just the open, due and answer dates)
+
+
 sub updateUserSet {
   	my ($self, $params) = @_;
   	my $db = $self->{db};
-    
-  	debug("users: " . $params->{users});
   	my @users = split(',',$params->{users});
-  	foreach my $user (@users) {
-		my $set = $db->getUserSet($user,$params->{set_id});
-	    $set->open_date(parseDateTime($params->{open_date},"local"));
-	    $set->due_date(parseDateTime($params->{due_date},"local"));
-	    $set->answer_date(parseDateTime($params->{answer_date},"local"));
-	  	$db->putUserSet($set);
+  	
+  	foreach my $userID (@users) {
+		my $set = $db->getUserSet($userID,$params->{set_id});
+		if ($set){
+		    $set->open_date($params->{open_date});
+		    $set->due_date($params->{due_date});
+		    $set->answer_date($params->{answer_date});
+		  	$db->putUserSet($set);
+		} else {
+			my $newSet = $db->newUserSet;
+			$newSet->user_id($userID);
+			$newSet->set_id($params->{set_id});
+		    $newSet->open_date($params->{open_date});
+		    $newSet->due_date($params->{due_date});
+		    $newSet->answer_date($params->{answer_date});
+					
+			$newSet = $db->addUserSet($newSet);
+		} 
 	}
 
   

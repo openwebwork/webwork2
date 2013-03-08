@@ -52,7 +52,7 @@
 
 <body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
     <div id="messages"></div>
-    <div class="navbar">
+    <div class="navbar-fixed-top">
         <div class="navbar-inner">
           <div class="container">
             <!--#if can="title"-->

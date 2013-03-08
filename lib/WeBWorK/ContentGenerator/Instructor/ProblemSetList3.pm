@@ -89,49 +89,49 @@ use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 500;
-use constant DEFAULT_VISIBILITY_STATE => 1;
-use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
-use constant ONE_WEEK => 60*60*24*7;  
+#use constant DEFAULT_VISIBILITY_STATE => 1;
+#use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
+#use constant ONE_WEEK => 60*60*24*7;  
 
-use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
-use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
+#use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
+#use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
+#use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
-use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
+#use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
+#use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
+#use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
-use constant FORM_PERMS => {
-		saveEdit => "modify_problem_sets",
-		edit => "modify_problem_sets",
-		publish => "modify_problem_sets",
-		import => "create_and_delete_problem_sets",
-		export => "modify_set_def_files",
-		saveExport => "modify_set_def_files",
-		score => "score_sets",
-		create => "create_and_delete_problem_sets",
-		delete => "create_and_delete_problem_sets",
-};
+#use constant FORM_PERMS => {
+#		saveEdit => "modify_problem_sets",
+#		edit => "modify_problem_sets",
+#		publish => "modify_problem_sets",
+#		import => "create_and_delete_problem_sets",
+#		export => "modify_set_def_files",
+#		saveExport => "modify_set_def_files",
+#		score => "score_sets",
+#		create => "create_and_delete_problem_sets",
+#		delete => "create_and_delete_problem_sets",
+#};
 
 # permissions needed to view a given field
-use constant FIELD_PERMS => {
-		problems => "modify_problem_sets",
-		users	=> "assign_problem_sets",
-};
+#use constant FIELD_PERMS => {
+#		problems => "modify_problem_sets",
+#		users	=> "assign_problem_sets",
+#};
 
-use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode exportMode primarySortField secondarySortField)];
+#use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode exportMode primarySortField secondarySortField)];
 
-use constant SORT_SUBS => {
-	set_id		=> \&bySetID,
+#use constant SORT_SUBS => {
+#	set_id		=> \&bySetID,
 #	set_header	=> \&bySetHeader,  # can't figure out why these are useful
 #	hardcopy_header	=> \&byHardcopyHeader,  # can't figure out why these are useful
-	open_date	=> \&byOpenDate,
-	due_date	=> \&byDueDate,
-	answer_date	=> \&byAnswerDate,
-	visible	=> \&byVisible,
+#	open_date	=> \&byOpenDate,
+#	due_date	=> \&byDueDate,
+#	answer_date	=> \&byAnswerDate,
+#	visible	=> \&byVisible,
 
-};
+#};
 
 # note that field_properties for some fields, in particular, gateway 
 # parameters, are not currently shown in the edit or display tables
