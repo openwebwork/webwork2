@@ -86,7 +86,12 @@ function knowl_click_handler($el) {
     $knowl.hide();
     // DRG: inline code
     if ($el.attr("class") == 'internal') {
-      $output.html($el.attr("value"));
+      if ($el.attr("base64") == 1 ){
+      	$output.html(Base64.decode( $el.attr("value") ));
+      } else {
+      	$output.html( $el.attr("value") );
+      }
+      //console.log("here" +Base64.decode( $el.attr("value") ));
       $knowl.hide();
       $el.addClass("active");
       if(window.MathJax == undefined) {

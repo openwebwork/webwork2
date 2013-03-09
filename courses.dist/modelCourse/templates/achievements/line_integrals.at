@@ -1,4 +1,8 @@
 #This problem checks to see if a particular problem from a list of valid
+# sets and problems has been solved.  If it has then it updates the counter
+#(You would edit this file to say which sets and problems count.) 
+
+#This problem checks to see if a particular problem from a list of valid
 # sets and problems has been solved.  (You would edit this file to say which
 # sets and problems count.) 
 
@@ -18,7 +22,6 @@ if ($validproblems{$problem->set_id} &&
     }
 
     return 0;   
-
 
 # -You have access to a variety of variables:
 #   - $problem : the problem data (changes to this variable will not be saved!)

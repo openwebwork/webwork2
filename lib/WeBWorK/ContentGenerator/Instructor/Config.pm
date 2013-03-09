@@ -208,7 +208,7 @@ sub entry_widget {
 	my $ce = $self->{Module}->{r}->{ce};
 	my $permHash = {};
 	my %userRoles = %{$ce->{userRoles}};
-	$userRoles{nobody} = 99999999; # insure that nobody comes at the end
+	$userRoles{nobody} = 99999999; # insure that nobody comes at the end #FIXME? this is set in defaults.config
 	my %reverseUserRoles = reverse %userRoles;
 
 	# the value of a permission can be undefined (for nobody),
@@ -570,7 +570,7 @@ sub pre_header_initialize {
 		if ($write_result) {
 			$self->addbadmessage($write_result);
 		} else {
-			$self->addgoodmessage("Changes saved.");
+			$self->addgoodmessage($r->maketext("Changes saved."));
 		}
 	}
 }
@@ -647,7 +647,7 @@ is up to date.");
 	print CGI::p(CGI::div({-align=>'center'}, CGI::b($configTitle)));
 
 	print CGI::start_table({-border=>"1"});
-	print '<tr>'.CGI::th('What'). CGI::th('Default') .CGI::th('Current');
+	print '<tr>'.CGI::th($r->maketext('What')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
 	for my $con (@configSectionArray) {
 		my $conobject = $self->objectify($con);
 		print "\n<tr>";
@@ -658,7 +658,7 @@ is up to date.");
 		$widget_count++;
 	}
 	print CGI::end_table();
-	print CGI::p(CGI::submit(-name=>'make_changes', -value=>'Save Changes'));
+	print CGI::p(CGI::submit(-name=>'make_changes', -value=>$r->maketext('Save Changes')));
 	print CGI::end_form();
 
 

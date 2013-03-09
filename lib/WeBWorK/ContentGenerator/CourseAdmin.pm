@@ -595,15 +595,15 @@ sub add_course_form {
 		CGI::td({},
 			CGI::table({class=>"FormLayout"},
 				CGI::Tr({},
-					CGI::th({class=>"LeftHeader"}, "First Name:"),
+					CGI::th({class=>"LeftHeader"}, $r->maketext("First Name").":"),
 					CGI::td(CGI::textfield(-name=>"add_initial_firstName", -value=>$add_initial_firstName, -size=>25)),
 				),
 				CGI::Tr({},
-					CGI::th({class=>"LeftHeader"}, "Last Name:"),
+					CGI::th({class=>"LeftHeader"}, $r->maketext("Last Name").":"),
 					CGI::td(CGI::textfield(-name=>"add_initial_lastName", -value=>$add_initial_lastName, -size=>25)),
 				),
 				CGI::Tr({},
-					CGI::th({class=>"LeftHeader"}, "Email Address:"),
+					CGI::th({class=>"LeftHeader"}, $r->maketext("Email Address").":"),
 					CGI::td(CGI::textfield(-name=>"add_initial_email", -value=>$add_initial_email, -size=>25)),
 				),
 			),
@@ -2464,7 +2464,7 @@ sub manage_location_form {
 
 	print CGI::start_table({});
 	print CGI::Tr({}, CGI::th({-colspan=>4,-align=>"left"}, 
-				  "Select an action to perform:"));
+				  $r->maketext("Select an action to perform:")));
 
 	# edit action
 	print CGI::Tr({}, 
