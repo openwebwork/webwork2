@@ -112,7 +112,7 @@ sub initialize {
 	
 	    foreach my $userID (@users) {
 		my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
-		next unless $userProblem;
+		next unless $userProblem && $r->param("$userID.score");
 		#update grades and set flags
 		$userProblem->{flags} =~ s/needs_grading/graded/;
 		if  ($r->param("$userID.mark_correct")) {
