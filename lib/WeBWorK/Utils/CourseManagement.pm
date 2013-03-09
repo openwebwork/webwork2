@@ -263,7 +263,7 @@ sub addCourse {
 	writeCourseConf($fh, $ce, %courseOptions);
 	close $fh;
 	
-	##### step 5: copy templates #####
+	##### step 5: copy templates and html #####
 	
 	if (exists $options{templatesFrom}) {
 		my $sourceCourse = $options{templatesFrom};
@@ -272,7 +272,7 @@ sub addCourse {
 			courseName => $sourceCourse,        # override courseName
 		});
 		my $sourceDir = $sourceCE->{courseDirs}->{templates};
-		
+		## copy templates ##
 		if (-d $sourceDir) {
 			my $destDir = $ce->{courseDirs}{templates};
 			my $cp_cmd = "2>&1 " . $ce->{externalPrograms}{cp} . " -R " . shell_quote($sourceDir) . "/* " . shell_quote($destDir);
@@ -286,7 +286,24 @@ sub addCourse {
 		} else {
 			warn "Failed to copy templates from course '$sourceCourse': templates directory '$sourceDir' does not exist.\n";
 		}
+		## copy html ##
+		## this copies the html/tmp directory as well which is not optimal
+		$sourceDir = $sourceCE->{courseDirs}->{html};
+		if (-d $sourceDir) {
+			my $destDir = $ce->{courseDirs}{html};
+			my $cp_cmd = "2>&1 " . $ce->{externalPrograms}{cp} . " -R " . shell_quote($sourceDir) . "/* " . shell_quote($destDir);
+			my $cp_out = readpipe $cp_cmd;
+			if ($?) {
+				my $exit = $? >> 8;
+				my $signal = $? & 127;
+				my $core = $? & 128;
+				warn "Failed to copy html from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
+			}
+		} else {
+			warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
+		}
 	}
+	######## set 6: copy html/achievements contents ##############
 }
 
 ################################################################################
