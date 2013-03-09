@@ -166,6 +166,7 @@ sub defineProblemEnvir {
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $ce->{courseName};
 	$envir{enable_reduced_scoring} = $set->enable_reduced_scoring;
+	$envir{language}            = $ce->{language};
 	
 	# Student Information
 	# ADDED: studentID

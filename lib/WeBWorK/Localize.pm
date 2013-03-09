@@ -1,19 +1,45 @@
 package WeBWorK::Localize;
 
 
-use Locale::Maketext::Simple;  
-use base ("Locale::Maketext::Simple");
+#use Locale::Maketext::Simple; 
+ 
+#use base ("Locale::Maketext::Simple");
+use File::Spec;
 
 print STDERR "Localize.pm: Full path for the localization directory set to |$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize|\n";
-Locale::Maketext::Simple->import(Path => "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize");
-# use Locale::Maketext;
-# use base ('Locale::Maketext');
+#Locale::Maketext::Simple->import(Path => "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize");
+use Locale::Maketext;
+use Locale::Maketext::Lexicon;
+
+my $path = "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize";
+my   $pattern = File::Spec->catfile($path, '*.[pm]o');
+my   $decode = 0;
+my   $encoding = undef;
+
+# For some reason this next stanza needs to be evaluated 
+# separately.  I'm not sure why it can't be
+# directly entered into the code.
+
+eval "
+	package WeBWorK::Localize::I18N;
+	use base 'Locale::Maketext';
+    %WeBWorK::Localize::I18N::Lexicon = ( '_AUTO' => 1 );
+	Locale::Maketext::Lexicon->import({
+	    'i-default' => [ 'Auto' ],
+	    '*'	=> [ Gettext => \$pattern ],
+	    _decode => \$decode,
+	    _encoding => \$encoding,
+	});
+	*tense = sub { \$_[1] . ((\$_[2] eq 'present') ? 'ing' : 'ed') };
+	
+" or die $@;
+ 
+package WeBWorK::Localize; 
 
 sub getLoc {
 	my $lang = shift;
-	loc_lang($lang);
-	
-	return \&loc;
+	my $lh = WeBWorK::Localize::I18N->get_handle($lang);	
+	return sub {$lh->maketext(@_)};
 }
 
 # this is like [quant] but it doesn't write the number
@@ -101,6 +127,7 @@ original.
 "_USER_TABLE_SUMMARY"    => q{A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user.},
 
 	);
+	
 package WeBWorK::Localize::I18N;
 use base(WeBWorK::Localize);
 

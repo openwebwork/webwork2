@@ -29,11 +29,14 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
+
+
 <!--
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/lib/codemirror.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/pg/pg.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/math/math.css">
 -->
+
 <!--#if can="output_tabber_CSS"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
@@ -157,22 +160,27 @@
 				<!-- inserted problem piece by piece -->
 				<!--#if can="info"-->
 			  		<!--  styles could be different for different pages so they are not set here -->
+			  		<div id="info-panel-right" >
 					<!--#info-->
+					</div>
 		    	<!--#endif-->
 
 				</div>	  
 			<!-- ====  end printing body parts   -->
 			<!--#else-->
 			<!-- ==== couldn't print body parts so we'll print entire body -->	
-				  <div class="Body" style="background-color:#ffffff; float:left;">
+			 <div class="barrier"></div>
+				  <div class="body">
 				  	<!--#body-->
 				  </div>
 				  <!-- inserted body as a whole -->
 				<!--#if can="info"-->
+				    <div id="info-panel-right" class="info-box">
 			  		<!--  styles could be different for different pages so they are not set here -->
 					<!--#info-->
+					</div>
 		    	<!--#endif-->
-
+              <div class="barrier"></div>
 			<!--#endif-->  
 <!--			      ==============END BODY OF PROBLEM===============      -->
 			<!--#if can="output_past_answer_button" can="output_email_instructor"-->

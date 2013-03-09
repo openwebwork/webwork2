@@ -15,15 +15,26 @@
 
 /* --- Standard elements ---------------------------------------------------- */
 
-body {
+.body {
 	background: white;
 	color: black;
 	margin: .5em .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
 	padding: 0;
 	font-family: "Arial", sans-serif;
-	min-width: 25em;
+	float:left; 
+	max-width:85%; 
 }
 
+.barrier {
+	clear:both;
+	border: none; /* 1px solid grey; */
+}
+#info-panel-right {
+	float:left; 
+	border: 4px solid grey; 
+	padding: .2em;
+	max-width:30%
+}
 h1, h2, h3, h4, h5, h6 {
 	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
 	/* FIXME "You have no background-color with your color" */
@@ -147,7 +158,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	margin-top: 0;
 }
 .info-box a.more {
-	float: right;
+	float: left;
 	font-size: 80%;
 	font-style: italic;
 	margin-bottom: 1ex;
@@ -431,7 +442,7 @@ clear: both;
  * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-	float: right; /*was right*/
+	float: left; /*was right*/
 	min-width: 0;
 	overflow: hidden; /*was auto*/
 	/*margin-right: -1px;*/
@@ -547,6 +558,8 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 .Audit { font-style: normal; color: purple; background-color: inherit; }
 .Enrolled { font-weight: normal; color: black; background-color: inherit; }
 .Drop { font-style: italic; color: gray; background-color: inherit; }
+/* text colors for problem grader page */
+.NeedsGrading { font-weight: bold; }
 
 /*Styles for the login form -- mainly small alignment changes for all of the input elements on the login page*/
 
@@ -633,12 +646,15 @@ table caption{
 	overflow: hidden;
 	margin-top: 10px;
 }
+.problemFooter {
+	clear:both;  /* the footer shouldn't float at all */
 
+}
 /*General styles for the wrapper div element which goes around the InfoBoxes*/
 .info-wrapper{
 	float: right;
 	min-height: 100px;
-	max-width: 40%;
+	/* max-width: 40%; */
 	overflow: hidden;
 	margin-left: 5px;
 	left: 810px;
@@ -834,6 +850,9 @@ table.problem_set_table th{
 }
 table.problem_set_table td{
 	padding-right: 30px;
+}
+div.problem_set_options {
+	clear: both;
 }
 /*BUG FIXES*/
 
