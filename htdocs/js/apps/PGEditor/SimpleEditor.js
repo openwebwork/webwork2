@@ -39,8 +39,10 @@ function(Backbone, _,WebPage){
     var HomeworkEditorView = WebPage.extend({
         initialize: function() {
             this.constructor.__super__.initialize.apply(this, {el: this.el});
-        }
+        }, 
+        render: function (){
 
+        }
 
     });
 

@@ -230,8 +230,6 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
                                     {classes : "assign assign-not-visible", showName: false}))); 
                                 slotFilled = true; 
                             }
-                            
-
                         }
                         else if (problemSet.isDueOn(self.model,self.calendar.reducedScoringMinutes)){
                             self.$el.append(self.template(_.extend(props,{classes : "assign assign-set-name assign-open", showName: true}))); 

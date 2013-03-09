@@ -178,7 +178,6 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
 
         },
         isInReducedCredit: function (_date,reducedCredit){
-            //console.log(this.get("set_id") + " " + this.);
             if (this.get("enable_reduced_scoring")==="no") {return false;}
             var date = new XDate(_date);
             var openDate = new XDate(this.get("open_date"));

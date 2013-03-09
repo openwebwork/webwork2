@@ -344,9 +344,15 @@ a better rendering.
 
 <script type="text/template" id="problem-template">
 <div class="handle row-fluid">
+<%if(showTools){%><span class="add-problem"><i class="icon-plus-sign"></i></span> <%}%>
 <%if(reorderable){%><div class="span1"><i class="icon-resize-vertical icon-large"></i></div><%}%>
 <%if(showPoints){%><div class="span2"> Problem value:<input class="prob-value" type="text" value="<%=value%>" size="5"></div><%}%>
 <div class="span2 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
+<%if(showTools){%><a target="WW_editor" href="<%=editUrl%>"><i class="icon-pencil"></i></a>
+<span class="refresh-problem"><i class="icon-refresh"></i></span>    
+<a target="WW_view" href='<%=viewUrl%>'><i class="icon-eye-open"></i></a>    
+<span class="hide-problem link">&times;</span>
+<%}%>
 <%if(deletable){ %><span class="remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
 <div class="problem" data-path="<%= path %>" data-source="<%= type %>">
 

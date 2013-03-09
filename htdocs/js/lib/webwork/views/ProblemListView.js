@@ -91,7 +91,8 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             _(problemsToView).each(function(i) {
                 var prob = self.collection.at(i);
                 var probView = new ProblemView({model: prob, type: self.type, deletable: self.deletable, 
-                        reorderable: self.reorderable, draggable: self.draggable, showPoints: self.showPoints});
+                        reorderable: self.reorderable, draggable: self.draggable, showPoints: self.showPoints,
+                        showTools: true});
                 ul.append(probView.el);
 
                 probView.render();

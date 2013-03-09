@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','jquery-imagesloaded'], function(Backbone, _){
+define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backbone, _,config){
 	//##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
@@ -22,6 +22,12 @@ define(['Backbone', 'underscore','jquery-imagesloaded'], function(Backbone, _){
         initialize:function () {
             _.bindAll(this,"render","updateProblem","clear");
             _.extend(this.model.attributes,this.options);
+            var thePath = this.model.get("path").split("templates/")[1];
+            var probURL = "?effectiveUser=" + config.requestObject.user + "&editMode=SetMaker&displayMode=images&key=" 
+                + config.requestObject.session_key 
+                + "&sourceFilePath=" + thePath + "&user=" + config.requestObject.user + "&problemSeed=1234";
+            _.extend(this.model.attributes,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL,
+                viewUrl: "../../Undefined_Set/1/" + probURL});
             this.model.on('change:data', this.render, this);
             this.model.on('destroy', this.remove, this);
         },
@@ -67,6 +73,10 @@ define(['Backbone', 'underscore','jquery-imagesloaded'], function(Backbone, _){
 
 
             return this;
+        },
+        events: {"click .hide-problem": "hideProblem"},
+        hideProblem: function(evt){
+            $(evt.target).parent().parent().css("display","none")
         },
         updateProblem: function(evt)
         {
