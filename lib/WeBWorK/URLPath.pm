@@ -85,11 +85,14 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_detail2               /$courseID/instructor/sets2/$setID/ #not created yet
  instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
 
+
  instructor_problem_grader                /$courseID/instructor/grader/$setID/$problemID
+
 
  instructor_set_list3                 /$courseID/instructor/sets3/
  instructor_set_detail3               /$courseID/instructor/sets3/$setID/ #not created yet
  instructor_users_assigned_to_set3    /$courseID/instructor/sets3/$setID/users/ #not created yet
+
 
  
  instructor_add_users                /$courseID/instructor/add_users/
@@ -372,14 +375,14 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
 	instructor_user_list3 => {
-		name    => 'Classlist Manager',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_user_detail/ ],
-		match   => qr|^users3/|,
-		capture => [ qw// ],
-		produce => 'users3/',
-		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
-	},
+    		name    => 'Classlist Manager',
+    		parent  => 'instructor_tools',
+    		kids    => [ qw/instructor_user_detail/ ],
+    		match   => qr|^users3/|,
+    		capture => [ qw// ],
+    		produce => 'users3/',
+    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
+    	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',
@@ -508,6 +511,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
+	},
+	instructor_set_maker_no_js => {
+		name    => 'Library Browser no js',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^setmakernojs/|,
+		capture => [ qw// ],
+		produce => 'setmakernojs/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SetMakernojs',
 	},
 	instructor_set_maker2 => {
 		name    => 'Library Browser 2',

@@ -248,6 +248,7 @@ sub attemptResults {
 	my @tableRows = ( $header );
 	my $numCorrect = 0;
 	my $numBlanks  =0;
+	my $numEssay = 0;
 	my $tthPreambleCache;
 	foreach my $name (@answerNames) {
 		my $answerResult  = $pg->{answers}->{$name};
@@ -261,7 +262,8 @@ sub attemptResults {
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
-		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   # unless student answer contains entry
+		$numEssay += $answerResult->{type} eq 'essay';
+		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
 
 		my $resultString;
 		if ($answerScore >= 1) {
@@ -316,14 +318,14 @@ sub attemptResults {
 					 $summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
 				 }
 		} else {
-				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the answers above are correct."));
+				if ($numCorrect + $numEssay == scalar @answerNames) {
+					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the [_1] answers above are correct.",  $numEssay ? "gradeable":""));
 				 } 
 				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
-				 elsif ($numBlanks != scalar( @answerNames)) {
+				 elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
 					$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
 				 }
-				 if ($numBlanks) {
+				 if ($numBlanks > $numEssay) {
 					my $s = ($numBlanks>1)?'':'s';
 					$summary .= CGI::div({class=>"ResultsAlert"},$r->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
 				 }
@@ -482,6 +484,13 @@ sub previewCorrectAnswer {
 ################################################################################
 # Template escape implementations
 ################################################################################
+
+sub content {
+  my $self = shift;
+  my $result = $self->SUPER::content(@_);
+  $self->{pg}->free if $self->{pg};   # be sure to clean up PG environment when the page is done
+  return $result;
+}
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -988,6 +997,7 @@ sub body {
 	debug("end answer processing");
 	# output for templates that only use body instead of calling the body parts individually
 	$self ->output_JS;
+	$self ->output_tag_info;
 	$self ->output_custom_edit_message;
 	$self ->output_summary;
 	$self ->output_hidden_info;
@@ -1441,6 +1451,20 @@ sub output_summary{
 			# show attempt previews
 	}
 	
+	return "";
+}
+
+# output_tag_info
+# Puts the tags in the page
+
+sub output_tag_info{
+	my $self = shift;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	if ($authz->hasPermissions($user, "modify_tags")) {
+		print CGI::p(CGI::div("Tags go here"));
+	}
 	return "";
 }
 

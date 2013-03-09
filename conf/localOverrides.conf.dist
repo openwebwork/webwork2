@@ -105,6 +105,10 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 $problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 $problemLibrary{version}     ="2.5";
 
+# uncomment these lines below and comment out the line above if using OPL instead of NPL
+#$problemLibrary{root}       ="/opt/webwork/library/webwork-open-problem-library/OpenProblemLibrary";
+#$problemLibrary{version}    = "2.5";  
+
 # Additional library buttons can be added to the Library Browser (SetMaker.pm)
 # by adding the libraries you want to the following line.  For each key=>value
 # in the list, if a directory (or link to a directory) with name 'key' appears
@@ -257,6 +261,7 @@ $problemDefaults{max_attempts} = -1;
 # 	homeworkseteditor2 => 1,
 # 	homeworkseteditor3 => 1,
 # 	
+# 	librarybrowsernojs    => 1,
  	librarybrowser1    => 1,
 # 	librarybrowser2    => 1,
 # 	librarybrowser3    => 1,
@@ -266,6 +271,7 @@ $problemDefaults{max_attempts} = -1;
 # 	pgproblemeditor3   => 1,
 
 );
+
 
 ################################################################################
 # Directory for temporary files

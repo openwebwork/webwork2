@@ -274,6 +274,7 @@ sub renderProblem {
 	my $setName       =  (defined($rh->{envir}->{setNumber}) )    ? $rh->{envir}->{setNumber}    : '';
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
 	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
+	$problemSeed = $rh->{problemSeed} || $problemSeed;
 	my $psvn          =  (defined($rh->{envir}->{psvn})      )    ? $rh->{envir}->{psvn}         : 1234 ;
 	my $problemStatus =  $rh->{problem_state}->{recorded_score}|| 0 ;
 	my $problemValue  =  (defined($rh->{envir}->{problemValue}))   ? $rh->{envir}->{problemValue}  : 1 ;
@@ -348,7 +349,7 @@ sub renderProblem {
 			print STDERR "RenderProblem.pm: source file is ", $problemRecord->source_file,"\n";
 			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
 	}
-    #warn "problem Record is $problemRecord";
+    # warn "problem Record is $problemRecord";
 	# now we're sure we have valid UserSet and UserProblem objects
 	# yay!
 
@@ -371,7 +372,9 @@ sub renderProblem {
 	
 	my $formFields = $rh->{envir}->{inputs_ref};
 	my $key        = $rh->{envir}->{key} || '';
-	
+
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
+        local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
 	
 	#check definitions
 	#warn "setRecord is ", WebworkWebservice::pretty_print_rh($setRecord);

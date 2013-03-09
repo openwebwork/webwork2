@@ -301,7 +301,6 @@ sub searchLib {    #API for searching the NPL database
 		$self->{library_textbook} = $rh->{library_textbook};
 		$self->{library_textchapter} = $rh->{library_textchapter};
 		$self->{library_textsection} = $rh->{library_textsection};
-
 		debug(to_json($rh));
 		my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
 		my @output = map {$templateDir."/Library/".$_->{path}."/".$_->{filename}} @listings;
@@ -320,6 +319,22 @@ sub searchLib {    #API for searching the NPL database
 
 		return($out);
 	};
+
+	'countDBListings' eq $subcommand && do {
+		$self->{library_subjects} = $rh->{library_subjects};
+		$self->{library_chapters} = $rh->{library_chapters};
+		$self->{library_sections} = $rh->{library_sections};
+		$self->{library_keywords} = $rh->{library_keywords};
+		$self->{library_textbook} = $rh->{library_textbook};
+		$self->{library_textchapter} = $rh->{library_textchapter};
+		$self->{library_textsection} = $rh->{library_textsection};
+		my $count = WeBWorK::Utils::ListingDB::countDBListings($self);
+					$out->{text} = encode_base64("Count done.");
+		$out->{ra_out} = [$count];
+		return($out);
+	};
+	
+	#else (no match )
 	$out->{error}="Unrecognized command $subcommand";
 	return( $out );
 }
