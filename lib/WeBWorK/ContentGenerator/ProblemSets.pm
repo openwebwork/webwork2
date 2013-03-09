@@ -50,8 +50,8 @@ sub info {
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 		
-		print CGI::start_div({-class=>"info-wrapper"});
-		print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
+		#print CGI::start_div({-class=>"info-wrapper"});
+		#print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 		
 		# deal with instructor crap
 		my $editorURL;
@@ -84,8 +84,8 @@ sub info {
 			}
 		}
 
-		print CGI::end_div();
-		print CGI::end_div();
+		#print CGI::end_div();
+		#print CGI::end_div();
 		
 		return "";
 	}

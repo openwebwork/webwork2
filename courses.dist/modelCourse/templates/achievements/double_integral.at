@@ -1,6 +1,6 @@
 #This problem checks to see if a particular problem from a list of valid
-# sets and problems has been solved.  (You would edit this file to say which
-# sets and problems count.) 
+# sets and problems has been solved.  If it has then it updates the counter
+#(You would edit this file to say which sets and problems count.) 
 
 #constants
 my %validproblems = (
@@ -14,11 +14,15 @@ if ($validproblems{$problem->set_id} &&
 	$validproblems{$problem->set_id}{$problem->problem_id} &&
 	$problem->status == 1 &&
 	$problem->num_correct == 1) {
-	    return 1; 
+            #update counter;
+            $counter++;
     }
 
-    return 0;   
-
+if ($counter >= $maxCounter) {
+    return 1;
+} else {
+    return 0;
+}
 
 # -You have access to a variety of variables:
 #   - $problem : the problem data (changes to this variable will not be saved!)
