@@ -90,6 +90,7 @@ my $dbh = DBI->connect(
 my $passwd = $ce->{database_password};
 my $user = $ce->{database_username};
 my $libraryRoot = $ce->{problemLibrary}->{root};
+$libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
 my $verbose = 0;
 my $cnt2 = 0;
