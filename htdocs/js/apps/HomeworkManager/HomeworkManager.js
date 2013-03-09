@@ -5,7 +5,7 @@
 
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/vendor/backbone-0.9.9",
+        "Backbone":             "/webwork2_files/js/lib/vendor/backbone",
         "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
         "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-ui",
         "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
@@ -30,7 +30,7 @@ require.config({
         'bootstrap':['jquery'],
         'backbone-validation': ['Backbone'],
         'XDate':{ exports: 'XDate'},
-        'config': ['XDate'],
+        'config': { deps: ['XDate'], exports: 'config'},
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],
         'jquery-tablesorter': ['jquery'],
@@ -63,13 +63,16 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 	    tagName: "div",
         initialize: function(){
     	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-    	    _.bindAll(this, 'render','postHWLoaded','setDropToEdit','setupMessages');  // include all functions that need the this object
+    	    _.bindAll(this, 'render','postHWLoaded','setDropToEdit','setupMessages','postSettingsFetched',
+                            'postProblemSetsFetched',"showHWdetails");  // include all functions that need the this object
     	    var self = this;
             this.dispatcher = _.clone(Backbone.Events);
 
             this.settings = new Settings();  // need to get other settings from the server.  
-            this.problemSets = new ProblemSetList({type: "Instructor"});
             this.settings.fetch();
+            this.settings.on("fetchSuccess",this.postSettingsFetched);
+            this.problemSets = new ProblemSetList({type: "Instructor"});
+            
             this.preloading();
 
             /* There's a lot of things that need to be loaded as the App starts:
@@ -83,38 +86,8 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
              */ 
 
 
-            this.settings.on("fetchSuccess", function (data){
-                self.render();
-                self.problemSets.fetch();
-                config.timezone = self.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
-                self.HWSettingsView.render();
-            }); 
-
 
             this.dispatcher.on("calendar-change", self.setDropToEdit);
-
-            this.setupMessages();
-
-            this.problemSets.on("fetchSuccess",function() {
-                var setsLoaded = [];
-                $("#progressbar").progressbar({max: self.problemSets.size()});
-                self.problemSets.each(function(_set,i){
-                    setsLoaded.push({set: _set.get("set_id"), loaded: false, pos: i}); 
-                    _set.getAssignedUsers();
-                    _set.on("usersLoaded", function(set){
-
-                        console.log("users Loaded for set " + set.get("set_id"));
-                        var foundSet = _(setsLoaded).find(function(obj){ return obj["set"]===set.get("set_id")});
-                        setsLoaded[foundSet.pos].loaded = true;
-                        $("#progressbar").progressbar(
-                              {value: _(_(setsLoaded).pluck("loaded")).countBy(function(el) { return el===true;}).true});
-                        if(_(_(setsLoaded).pluck("loaded")).all()) {self.postHWLoaded();}
-                    });
-                });
-                self.probSetListView.render();
-            });
-
-
             this.users = new UserList();
             this.users.fetch();
             this.users.on("fetchSuccess", function (data){ console.log("users loaded");}); 
@@ -122,6 +95,68 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         },
     preloading: function() {
         
+    },
+    postSettingsFetched: function (collection, response, options){
+        this.render();
+        this.problemSets.fetch();
+        this.problemSets.on("fetchSuccess",this.postProblemSetsFetched);
+        config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
+        this.HWSettingsView.render();
+    },
+    postProblemSetsFetched: function (data){
+        var self=this;
+        var setsLoaded = [];
+        $("#progressbar").progressbar({max: this.problemSets.size()});
+        this.problemSets.each(function(_set,i){
+            setsLoaded.push({set: _set.get("set_id"), loaded: false, pos: i}); 
+            _set.getAssignedUsers();
+            _set.on("usersLoaded", function(set){
+
+                console.log("users Loaded for set " + set.get("set_id"));
+                var foundSet = _(setsLoaded).find(function(obj){ return obj["set"]===set.get("set_id")});
+                setsLoaded[foundSet.pos].loaded = true;
+                $("#progressbar").progressbar(
+                      {value: _(_(setsLoaded).pluck("loaded")).countBy(function(el) { return el===true;}).true});
+                if(_(_(setsLoaded).pluck("loaded")).all()) {self.postHWLoaded();}
+            });
+        });
+        this.problemSets.on("problem-set-added", function (set){
+            self.probSetListView.render();
+        });
+
+        this.problemSets.on("problem-set-deleted", function(){
+            self.calendarView.updateAssignments();
+            self.calendarView.render();
+        });
+        
+        // set up messages associated with problem Sets.  
+        this.setupMessages();
+
+        
+        this.problemSets.on("rendered",function(){
+            console.log("after rendering");
+            // This allows the Problem Sets (in the left column) to accept problems to add a problem to a set.  
+            $(".problem-set").droppable({
+                hoverClass: "btn-info",
+                accept: ".problem",
+                tolerance: "pointer",
+                drop: function( event, ui ) { 
+                    console.log("Adding a Problem to HW set " + $(event.target).data("setname"));
+                    console.log($(ui.draggable).data("path"));
+                    var source = $(ui.draggable).data("source");
+                    console.log(source);
+                    var set = self.problemSets.find(function (set) { return set.get("set_id")===""+$(event.target).data("setname");});
+                    var prob = self[source].problemList.find(function(prob) { return prob.get("path")===$(ui.draggable).data("path");})
+                    set.addProblem(prob);
+                }
+            });
+            // When the HW sets are clicked, open the HW details tab.          
+            $(".problem-set").on('click', self.showHWdetails);
+
+        });
+
+        this.probSetListView.render();
+        this.setListView.render();
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
@@ -136,10 +171,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
         $("#hw-manager-menu a.link").on("click", function (evt) {  self.changeView($(evt.target).data("link")) });
 
-        //$("body").droppable();  // This helps in making drags return to their original place.
-        
-        //new ui.PropertyListView({el: $("#settings"), model: self.settings});
-
+    
         // render the parts of the Homework Manager. 
 
         this.HWDetails           = new HWDetailView({el: $("#problem-set"),  collection: this.problemSets,parent: this});
@@ -149,47 +181,19 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         this.assignUsersView     = new AssignUsersView({el: $("#assign-users"), id: "view-assign-users", parent: this});
         this.HWSettingsView      = new HWSettingsView({parent: self, el: $("#settings-table")});
 
-
+    },
+    showHWdetails: function(evt){
+        if (this.objectDragging) return;
+        this.changeView("problem-set");
+        this.HWDetails.render();
+        this.HWDetails.changeHWSet($(evt.target).data("setname")); 
     },
     changeView: function (linkname){
+
         $(".view-header").removeClass("active");
         $(".view-header[data-view='" + linkname + "']").addClass("active");
         $(".view-pane").removeClass("active");
         $("#"+linkname).addClass("active");
-    },
-    addHWSet: function(_set){
-        var self = this;
-         // Allow problems to be dropped onto homework sets
-
-         console.log("in addHWSet");
-
-         // This allows the Problem Sets (in the left column) to accept problems to add a problem to a set.  
-
-        $(".problem-set").droppable({
-                hoverClass: "btn-info",
-                accept: ".problem",
-                tolerance: "pointer",
-                drop: function( event, ui ) { 
-                    console.log("Adding a Problem to HW set " + $(event.target).data("setname"));
-                    console.log($(ui.draggable).data("path"));
-                    var source = $(ui.draggable).data("source");
-                    console.log(source);
-                    var set = self.problemSets.find(function (set) { return set.get("set_id")===""+$(event.target).data("setname");});
-                    var prob = self[source].problemList.find(function(prob) { return prob.get("path")===$(ui.draggable).data("path");})
-                    set.addProblem(prob);
-                }
-            });
-
-        // When the HW sets are clicked, open the HW details tab.  
-        
-        $(".problem-set").on('click', function(evt) {
-            if (self.objectDragging) return;
-            self.changeView("problem-set");
-            self.HWDetails.changeHWSet($(evt.target).data("setname")); 
-
-        });
-
-        if (_set) {self.setListView.addSet(_set)};
     },
     setupMessages: function () {
         var self = this;
@@ -202,15 +206,12 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             self.setDropToEdit();
             var keys = _.keys(_set.changed);
             _(keys).each(function(key) {
-                self.announce.addMessage("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]+ "<br>");    
+                self.announce.addMessage("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]);    
             })
         });
         
-        this.dispatcher.on("problem-set-added", function (set){
-            console.log("this.dispatcher");
+        this.problemSets.on("problem-set-added", function (set){
             self.announce.addMessage("The HW set with name " + set.get("set_id") + " was created.");
-            self.addHWSet(set); // update all other parts of the part with the new set.
-                
         });
 
         this.problemSets.on("problem-set-deleted",function(set){
@@ -222,26 +223,14 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
     {
         var self = this;
 
-        this.addHWSet();
- 
         self.calendarView = new CalendarView({el: $("#calendar"), parent: this, 
-                collection: this.problemSets, view: "instructor"});
+                collection: this.problemSets, view: "instructor", viewType: "month"});
         
         self.setDropToEdit();        
         
-
         // Set the popover on the set name
         $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
-        
-        
-
-        // Create the HW details pane. 
-
-        $("#details").html(_.template($("#HW-detail-template").html()));  
-
-        this.assignUsersView.initializeModel();
-        this.assignUsersView.render();
-
+               
     },
             // This allows the homework sets generated above to be dragged onto the Calendar to set the due date. 
 
@@ -250,14 +239,20 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         var self = this;
 
         // The following helps determine if a problem set is being dragged or clicked on. 
-        $(".problem-set").draggable({revert: "valid", start: function (event,ui) { self.objectDragging=true;},
-                                stop: function(event, ui) {self.objectDragging=false;}});
+        $(".problem-set").draggable(
+            {revert: "valid", 
+             scroll: false, 
+             helper: "clone",
+             appendTo: "body",
+            start: function (event,ui) { self.objectDragging=true;},
+            stop: function(event, ui) {self.objectDragging=false;}});
              
         $(".calendar-day").droppable({
             hoverClass: "highlight-day",
             accept: ".problem-set",
             greedy: true,
             drop: function(ev,ui) {
+                ev.stopPropagation();
                 var setName = $(ui.draggable).data("setname");
                 var timeAssignDue = self.settings.getSettingValue("pg{timeAssignDue}");
                 var theDueDate = /date-(\d{4})-(\d\d)-(\d\d)/.exec($(this).attr("id"));
@@ -272,11 +267,10 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                 var _answerDate = new XDate(wwDueDate);
                 _answerDate.addMinutes(answerAfterDueDate);
                 var tz = config.timezone;
-                var wwOpenDate = _openDate.toString("MM/dd/yyyy") + " at " + _openDate.toString("hh:mmtt")+ " " + tz[1];
-                var wwAnswerDate = _answerDate.toString("MM/dd/yyyy") + " at " + _answerDate.toString("hh:mmtt") + " " + tz[1];
+                var wwOpenDate = _openDate.toString("MM/dd/yyyy") + " at " + _openDate.toString("hh:mmtt")+ " " + tz;
+                var wwAnswerDate = _answerDate.toString("MM/dd/yyyy") + " at " + _answerDate.toString("hh:mmtt") + " " + tz;
 
                 HWset.set({due_date:wwDueDate, open_date: wwOpenDate, answer_date: wwAnswerDate});
-                ev.stopPropagation();
             },
         });
 
@@ -308,32 +302,6 @@ var HWSettingsView = WWSettingsView.extend({
      }
 
 });
-
-
-// The following is probably not needed. 
-
-/*
-var HWProblemView = Backbone.View.extend({
-    className: "set-detail-problem-view",
-    tagName: "div",
-    
-    initialize: function () {
-        _.bindAll(this,"render");
-        var self = this;
-        this.render();
-        this.model.on('rendered', function () {
-            self.$el.html(self.model.get("data"));
-        })
-    },
-    render: function () {
-        this.$el.html(this.model.get("path"));
-        this.model.render();
-    }
-
-
-}); */
-
-    
     
     var App = new HomeworkEditorView({el: $("div#mainDiv")});
 });

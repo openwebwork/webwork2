@@ -18,6 +18,8 @@ function(Backbone, _,EditableCell,config){
                 var settingView =new WWSettingRowView({property: setting}); 
                 self.$el.append(settingView.el);
             });
+
+            //this.$(".help-button").popover();
         }
 
 
@@ -26,6 +28,7 @@ function(Backbone, _,EditableCell,config){
     var WWSettingRowView = Backbone.View.extend({
         className: "set-detail-row",
         tagName: "tr",
+        template: _.template($("#setting-row-template").html()),
         initialize: function () {
             _.bindAll(this,'render','update');
             this.property = this.options.property;
@@ -35,9 +38,8 @@ function(Backbone, _,EditableCell,config){
         },
         render: function() {
             var self = this; 
-            this.$el.html("<td>" + this.property.get("doc") 
-                    + "<button class='btn btn-small' style='margin-left: 25px' data-var='" + this.property.get("var") 
-                    +"'><i class='icon-question-sign'></i></button></td>");
+            this.$el.html(this.template(this.property.attributes));
+            
             switch(this.property.get("type")){
                 case "text":
                 case "number":
@@ -71,7 +73,15 @@ function(Backbone, _,EditableCell,config){
         },
         events: {
             "change input": "update",
-            "change select": "update"
+            "change select": "update",
+            "click .help-button": "openHelp",
+            "click .close": "closeHelp",
+        },
+        openHelp: function (evt){
+            $(evt.target).siblings(".help-hidden").css("display","block");
+        },
+        closeHelp: function (evt){
+            $(evt.target).parent().css("display","none");
         },
         update: function(evt){
             var self = this;

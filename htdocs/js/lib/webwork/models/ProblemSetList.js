@@ -43,7 +43,7 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
         },
         addNewSet: function (problemSet){
             var self = this;
-            var requestObject = {"xml_command": 'createNewSet'};
+            var requestObject = {"xml_command": 'createNewSet', 'selfassign' : true};
             _.extend(requestObject, problemSet.attributes);
             _.defaults(requestObject, config.requestObject);
             

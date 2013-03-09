@@ -34,14 +34,14 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
         {
             var self = this;
             if (this.viewType === "Instructor"){
-                this.$el.html(_.template($("#hw-set-list-template").html()));
-                this.$el.append(_.template($("#modal-template").html(), 
-                    {header: "<h3>Create a new Homework Set</h3>", saveButton: "Create New Set", id: "new-set-modal"}));
+                this.$el.html(_.template($("#hw-set-list-template").html(),{loading: true}));
             }
             if(this.collection.setLoaded){
                 this.$("a.link").on("click",this.addDeleteSet);
-                this.$("#set-list").html("<div style='font-size:110%; font-weight:bold'>Homework Sets</div>" +
-                    "<ul id='probSetList' class='btn-group btn-group-vertical'></ul>");
+                this.$("#set-list").html(_.template($("#hw-set-list-template").html(),{loading:false}));
+                this.$el.append(_.template($("#modal-template").html(), 
+                    {header: "<h3>Create a new Homework Set</h3>", saveButton: "Create New Set", id: "new-set-modal"}));
+
             
                 this.collection.each(function (_model) {
                     self.$("#probSetList").append((new SetView({model: _model})).render().el);
@@ -52,10 +52,17 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 if (this.collection.size() === 0 ) {
                     $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
                 }
+
+                self.$(".prob-set-container").height($(window).height()*.80);
+
+                console.log("in PSLV render");
+                self.collection.trigger("rendered");
             }
 
 
+
         },
+        events: {"click a.link": "addDeleteSet"},
         addDeleteSet: function (evt){
             var self = this;
             switch($(evt.target).data("link")){
@@ -80,7 +87,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
 
         },
         addSet: function () {
-            // need to validate the set name
+
             var setname = $(".modal-body input:text").val();
             
             // set up the standard open and due dates first. 
@@ -98,19 +105,20 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
 
             // _openDate.toString("MM/dd/yyyy") + " at " + _openDate.toString("hh:mmtt")+ " " + tz[1];            
 
-            var set = new ProblemSet({set_id: setname,
+            var problemSet = new ProblemSet({set_id: setname,
                 answer_date: answerDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone,
                 open_date: openDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone,
                 due_date: dueDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone
             });
-            set.assignedUsers = [];
-            var errorMessage = set.preValidate('set_id', setname);
+            problemSet.assignedUsers = [];
+            var errorMessage = problemSet.preValidate('set_id', setname);
             if (errorMessage){
                 this.$("#new-set-modal .modal-body").append("<div style='color:red'>The name of the set must contain only letters numbers, '.', _ and no spaces are allowed.");
                 return;
             }
-            set.set({"new_set_name":setname},{silent: true});
-            this.collection.add(set);
+            problemSet.set({"new_set_name":setname},{silent: true});
+            this.collection.add(problemSet);
+            console.log("added the set " + setname);
             this.$("#new-set-modal").modal("hide");
         },
         deleteSet: function () {

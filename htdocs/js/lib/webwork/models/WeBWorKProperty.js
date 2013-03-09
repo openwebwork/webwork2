@@ -35,10 +35,7 @@ define(['Backbone','underscore','config'], function(Backbone,_,config){
         },
     
         update: function(){
-            console.log("in update WeBWorkProperty");
-            console.log(this.get("var"));
-            console.log(this.get("value"));
-
+           
             var self = this;
             var requestObject = {
                 "xml_command": 'updateSetting'
