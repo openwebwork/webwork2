@@ -51,6 +51,15 @@ our @EXPORT_OK = qw(
 
 );
 
+use constant {             # constants describing the comparison of two hashes.
+           ONLY_IN_A=>0, 
+           ONLY_IN_B=>1,
+           DIFFER_IN_A_AND_B=>2, 
+           SAME_IN_A_AND_B=>3
+};
+################################################################################
+
+
 # 	checkCourseTables
 # 	updateCourseTables
 # 	checkCourseDirectories
@@ -978,7 +987,7 @@ sub initNonNativeTables {
 	    #warn "table is $table";
 	    #warn "checking $database_table_name";
 	    my $database_table_exists = ($db->{$table}->tableExists) ? 1:0;
-	    unless ($database_table_exists ) { # exists means the table can be described;
+	    if  (!$database_table_exists ) { # exists means the table can be described;
 	    	my $schema_obj = $db->{$table};
 	    	if ($schema_obj->can("create_table")) {
 			    #warn "creating table $database_table_name  with object $schema_obj";
@@ -987,8 +996,36 @@ sub initNonNativeTables {
 			} else {
 				# warn "Skipping creation of '$table' table: no create_table method\n";
 			}
-	    
+	    #if table exists then we need to check its fields, we only check if it is missing
+	    #fields in the schema.  Its not a huge issue if the database table has extra columns.
+	    } else {
+		my %fieldStatus;
+		my $fields_ok=1;
+		my @schema_field_names =  $db->{$table}->{record}->FIELDS;
+		my %schema_override_field_names=();
+		foreach my $field (sort @schema_field_names) {
+		    my $field_name  = $db->{$table}->{params}->{fieldOverride}->{$field} ||$field;
+		    $schema_override_field_names{$field_name}=$field;	
+		    my $database_field_exists = $db->{$table}->tableFieldExists($field_name);
+		    #if the field doesn't exist then try to add it... 
+		    if (!$database_field_exists) { 
+			$fields_ok = 0;
+			$fieldStatus{$field} =[ONLY_IN_A];
+			warn "$field from $database_table_name is only in schema, not in database, so adding it ... ";
+			if ( $db->{$table}->can("add_column_field") ) {
+			    if ($db->{$table}->add_column_field($field_name)) {
+				warn "added column $field_name to table $database_table_name";
+			    } else {
+				warn "couldn't add column $field_name to table $database_table_name";
+			    }
+		    }
+			
+		}
+	       
+		}
+			
 	    }
+	    
 	   
 	}
 	
