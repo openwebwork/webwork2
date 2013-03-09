@@ -155,7 +155,7 @@ $dbLayouts{sql_single} = {
 		source => $database_dsn,
 		params => { %sqlParams,
 			tableOverride => "${courseName}_set",
-			fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
+			#fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
 		},
 	},
 	set_user => {
@@ -165,7 +165,7 @@ $dbLayouts{sql_single} = {
 		source => $database_dsn,
 		params => { %sqlParams,
 			tableOverride => "${courseName}_set_user",
-			fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
+			#fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
 		},
 	},
 	set_merged => {
@@ -187,7 +187,7 @@ $dbLayouts{sql_single} = {
 		params => { %sqlParams,
 			non_native => 1,
 			tableOverride => "${courseName}_set_user",
-			fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
+			#fieldOverride => { visible => "published" }, # for compatibility -- visible was originally called published
 
 		},
 	},
@@ -288,6 +288,15 @@ $dbLayouts{sql_single} = {
 			tableOverride => "${courseName}_achievement"
 		},
 	},
+	past_answer => {
+		record => "WeBWorK::DB::Record::PastAnswer",
+		schema => "WeBWorK::DB::Schema::NewSQL::Std",
+		driver => "WeBWorK::DB::Driver::SQL",
+		source => $database_dsn,
+		params => { %sqlParams,
+			non_native => 1,
+	 	},
+    },
 
 	achievement_user => {
 		record => "WeBWorK::DB::Record::UserAchievement",

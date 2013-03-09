@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Problem.pm,v 1.9 2006/10/02 15:04:27 sh002i Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Set.pm,v 1.22 2007/08/13 22:59:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -14,12 +14,12 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::DB::Record::Problem;
+package WeBWorK::DB::Record::PastAnswer;
 use base WeBWorK::DB::Record;
 
 =head1 NAME
 
-WeBWorK::DB::Record::Problem - represent a record from the problem table.
+WeBWorK::DB::Record::PastAnswers - Represents a past answer
 
 =cut
 
@@ -28,13 +28,17 @@ use warnings;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		set_id       => { type=>"TINYBLOB NOT NULL", key=>1 },
-		problem_id   => { type=>"INT NOT NULL", key=>1 },
-		source_file  => { type=>"TEXT" },
-		value        => { type=>"INT" },
-		max_attempts => { type=>"INT" },
-	        # a field for flags relating to this problem  
-	        flags => { type =>"TEXT" },
+
+	    #answer_id not key because of autoincrement
+	    answer_id          => {   type=>"INT AUTO_INCREMENT", key=>1},
+	    course_id            => { type=>"TINYBLOB NOT NULL"},
+	    user_id            => { type=>"TINYBLOB NOT NULL"},	
+	    set_id            => { type=>"TINYBLOB NOT NULL"},
+	    problem_id            => { type=>"TINYBLOB NOT NULL"},
+	    timestamp         => { type=>"INT" }, 
+	    scores            => { type=>"TINYTEXT"}, 
+            answer_string            => { type=>"VARCHAR(1024)"}
+
 	);
 }
 
