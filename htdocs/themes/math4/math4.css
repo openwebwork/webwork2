@@ -521,7 +521,7 @@ table caption{
 }
 
 /*General styles for all column divs, for pages which use column layouts*/
-.column {
+/*.column {
 	float: left;
 	width: 50%;
 	margin-top: 10px;
@@ -530,7 +530,7 @@ table caption{
 .column input[type="radio"] {
     margin-right:1ex;
 }
-
+*/
 .problemFooter {
 	clear:both;  /* the footer shouldn't float at all */
 
@@ -667,8 +667,10 @@ table caption{
     width:95%;
 }
 
-.radio_span{
-	visibility: hidden;
+.radio_span, 
+.radio_span input,
+.radio_span label{
+    display:none;
 }
 
 table.problem_sets_table {
@@ -792,3 +794,8 @@ table#grades_table pre{
 #problem-grader-form select {
     width:60px;
 }
+
+.tabber {
+    margin-bottom:1ex;
+}
+
