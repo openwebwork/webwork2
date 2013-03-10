@@ -112,7 +112,7 @@ sub initialize {
 	
 	    foreach my $userID (@users) {
 		my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
-		next unless $userProblem && $r->param("$userID.score");
+		next unless $userProblem && defined($r->param("$userID.score"));
 		#update grades and set flags
 		$userProblem->{flags} =~ s/needs_grading/graded/;
 		if  ($r->param("$userID.mark_correct")) {
@@ -134,14 +134,13 @@ sub initialize {
 		    
 		    my $scrubber = HTML::Scrubber->new();
 		    my $comment = $scrubber->scrub($r->param("$userID.comment"));
-		    
 
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 		    
 		    if ($userPastAnswerID) {
 			my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 			$userPastAnswer->comment_string($comment);
-			$db->putPastAnswer($userPastAnswer);
+			warn "Couldn't save comment" unless $db->putPastAnswer($userPastAnswer);
 		    }
 		}
 	    }
