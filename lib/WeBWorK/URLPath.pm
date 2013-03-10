@@ -102,6 +102,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_maker                /$courseID/instructor/setmaker/
  instructor_set_maker2               /$courseID/instructor/setmaker2/
  instructor_set_maker3               /$courseID/instructor/setmaker3/
+ instructor_set_maker_no_js          /$courseID/instructor/setmakernojs/
  instructor_get_target_set_problems  /$courseID/instructor/GetTargetSetProblems/
  instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
@@ -119,15 +120,13 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
  instructor_problem_editor3_withset   /$courseID/instructor/pgProblemEditor3/$setID/
- instructor_problem_editor3_withset_withproblem
-                                     /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
-
+ instructor_problem_editor3_withset_withproblem /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
+ 
  instructor_simple_editor           /$courseID/instructor/SimplePGEditor/
  instructor_simple_editor_withset   /$courseID/instructor/SimplePGEditor/$setID/
- instructor_simple_editor_withset_withproblem
-                                     /$courseID/instructor/SimplePGEditor/$setID/$problemID/
-
+ instructor_simple_editor_withset_withproblem /$courseID/instructor/SimplePGEditor/$setID/$problemID/
  
+
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
@@ -340,7 +339,7 @@ our %pathTypes = (
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3 instructor_simple_editor
-			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
+			instructor_set_maker instructor_set_maker_no_js instructor_set_maker2 instructor_set_maker3 
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge

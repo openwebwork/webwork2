@@ -264,7 +264,7 @@ sub process_editorLink{
 
 # output_JS subroutine
 
-# prints out the wz_tooltip.js script for the current site.
+# prints out the legacy/vendor/wz_tooltip.js script for the current site.
 
 sub output_JS{
 	
@@ -273,7 +273,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
 }
 
 # output_summary subroutine

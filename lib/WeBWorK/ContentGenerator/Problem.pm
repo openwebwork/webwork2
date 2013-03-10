@@ -830,9 +830,9 @@ sub head {
 	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery.js"></script> 
+           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery/jquery.js"></script> 
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1594,7 +1594,7 @@ sub output_hidden_info{
 
 # output_JS subroutine
 
-# prints out the wz_tooltip.js script for the current site.
+# prints out the legacy/vendor/wz_tooltip.js script for the current site.
 
 sub output_wztooltip_JS{
 	
@@ -1604,7 +1604,7 @@ sub output_wztooltip_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
 	return "";
 }
 
@@ -1623,16 +1623,16 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# This adds the dragmath functionality
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/dragmath.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/java_init.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
 	return "";
 }
 
