@@ -767,6 +767,8 @@ sub links {
 					if $ce->{showeditors}->{librarybrowser2};
 				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser3};
+				print CGI::li(&$makelink("${pfx}SetMakernojs", text=>$r->maketext("Orig. Lib. Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{librarybrowsernojs};
 #print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
@@ -849,7 +851,7 @@ sub links {
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
 					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				print CGI::li({}, $self->helpMacro('instructor_links','Help'),$self->help() );
+				print CGI::li({}, $self->helpMacro('instructor_links',$r->maketext('Help')),$self->help() );
 				if ($authz->hasPermissions($userID, "manage_course_files") # show this only on the FileManager page
 				     && $r->urlpath->module eq "WeBWorK::ContentGenerator::Instructor::FileManager") {
 				    my %augmentedSystemLinks = %systemlink_args;
@@ -1528,7 +1530,7 @@ sub optionsMacro {
 		my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 		my @active_modes = grep { exists $display_modes{$_} } @{$self->r->ce->{pg}->{displayModes}};
 		if (@active_modes > 1) {
-			$result .= "View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;";
+			$result .= $r->maketext("View equations as").":";
 			$result .= CGI::br();
 			$result .= CGI::radio_group(
 				-name => "displayMode",
@@ -1544,13 +1546,13 @@ sub optionsMacro {
 		# Note, 0 is a legal value, so we can't use || in setting this
 		my $curr_showOldAnswers = defined($self->r->param("showOldAnswers")) ?
 			$self->r->param("showOldAnswers") : $self->r->ce->{pg}->{options}->{showOldAnswers};
-		$result .= "Show&nbsp;saved&nbsp;answers?";
+		$result .= $r->maketext("Show saved answers?");
 		$result .= CGI::br();
 		$result .= CGI::radio_group(
 			-name => "showOldAnswers",
 			-values => [1,0],
 			-default => $curr_showOldAnswers,
-			-labels => { 0=>'No', 1=>'Yes' },
+			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
 		);
 		$result .= CGI::br();
 	}
