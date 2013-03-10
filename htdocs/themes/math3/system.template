@@ -30,7 +30,6 @@
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
 
-
 <!--
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/lib/codemirror.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/pg/pg.css">
@@ -102,6 +101,9 @@
 				  </div>
              <!--#endif-->
              
+		<!--#if can="output_tag_info"-->
+			<!--#output_tag_info-->
+		<!--#endif-->
 			 <!--#if can="output_problem_body"--> 
 				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
 				  <div class="Body" style="background-color:#ffffff">
@@ -114,6 +116,12 @@
 							<!--#output_summary-->
 						</div>
 					<!--#endif-->
+
+					<!--#if can="output_achievement_message"-->
+					    <div>
+							<!--#output_achievement_message-->
+						</div>
+					<!--#endif-->
 					
 					<!--#if can="output_hidden_info"-->
 						<!--#output_hidden_info-->
@@ -121,6 +129,13 @@
 
 					<!--#if can="output_form_start"-->
 						<!--#output_form_start-->
+
+						<!--#if can="output_comments" "-->
+						<div>
+						  <!--#output_comments-->
+						</div>
+						<!--#endif-->
+						
 						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 							<div class="problem">
 								<!--#if can="output_problem_body"-->
@@ -134,6 +149,7 @@
 								<!--#endif-->
 							</div>
 						<!--#endif-->
+
 						<!--#if can="output_checkboxes" can="output_submit_buttons"-->
 							<p>
 								<!--#if can="output_checkboxes"-->

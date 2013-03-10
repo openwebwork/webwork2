@@ -117,6 +117,7 @@ sub process_and_log_answer{
 			$pastAnswer->timestamp($timestamp);
 			$pastAnswer->scores($scores);
 			$pastAnswer->answer_string($answerString);
+			$pastAnswer->source_file($problem->source_file);
 
 			$db->addPastAnswer($pastAnswer);
 

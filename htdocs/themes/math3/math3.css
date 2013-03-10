@@ -30,8 +30,7 @@
 	border: none; /* 1px solid grey; */
 }
 #info-panel-right {
-	float:left; 
-	border: 4px solid grey; 
+	float:right; 
 	padding: .2em;
 	max-width:30%
 }
@@ -442,11 +441,11 @@ clear: both;
  * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-	float: left; /*was right*/
-	min-width: 0;
-	overflow: hidden; /*was auto*/
-	/*margin-right: -1px;*/
-	background-color: #fff;
+    float: left; /*was right*/
+    min-width: 0;
+    overflow: hidden; /*was auto*/
+    /*margin-right: -1px;*/
+    background-color: #fff;
 }
 #InfoPanel ol {
 	font-size:100%;
@@ -514,6 +513,20 @@ table.attemptResults th {
 	color: inherit;
 	background-color: #DDDDDD;
 }
+
+/*styles for the instructor comment box */
+
+.answerComments {
+    margin-left: 40px;
+    width: 100%;
+    border-style: outset;
+    border-width: 1px;
+    border-spacing: 2px;
+    border-color: gray;
+    padding: 2px 5px 2px 5px;
+    background-color: #E8E8E8;
+}
+
 /* override above settings in tables used to display ans_array results */
 table.attemptResults td td,
 table.attemptResults td th,
@@ -650,6 +663,7 @@ table caption{
 	clear:both;  /* the footer shouldn't float at all */
 
 }
+
 /*General styles for the wrapper div element which goes around the InfoBoxes*/
 .info-wrapper{
 	float: right;
@@ -657,7 +671,6 @@ table caption{
 	/* max-width: 40%; */
 	overflow: hidden;
 	margin-left: 5px;
-	left: 810px;
 }
 
 /*The following styles create the links which look like buttons, which replaced the image elements which were previously used for the navigation buttons*/
