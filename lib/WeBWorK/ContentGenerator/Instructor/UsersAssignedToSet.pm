@@ -118,7 +118,7 @@ sub body {
 	
 	# DBFIXME duplicate call
 	my @users = $db->listUsers;
-	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
+	print CGI::start_form({id=>"user-set-form", name=>"user-set-form", method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
 	 
 	print CGI::p(
 		    CGI::submit({name=>"assignToAll", value => "Assign to All Current Users"}), CGI::i("This action can take a long time if there are many students.")

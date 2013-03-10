@@ -499,7 +499,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist2", -class=>"edit_form", -id=>"edit_form_id"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"problemsetlist2", name=>"problemsetlist2", -class=>"edit_form", -id=>"edit_form_id"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -2176,7 +2176,7 @@ sub fieldEditHTML {
 	
 	if ($type eq "number" or $type eq "text") {
 		my $id = $fieldName."_id";
-		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>"", size=>$size});
+		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>$value, size=>$size});
 		my $content = "";
 		my $bareName = "";
 		my $timezone = substr($value, -3);

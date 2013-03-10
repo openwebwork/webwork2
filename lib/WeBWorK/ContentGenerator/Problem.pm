@@ -339,7 +339,7 @@ sub attemptResults {
 
 	return
 		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
+		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : '&nbsp;');
 }
 
 
@@ -1038,7 +1038,7 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
-	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
+	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
 	print $self->hidden_authen_fields;
 	return "";
 }
@@ -1625,7 +1625,7 @@ sub output_past_answer_button{
 			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
 			CGI::hidden(-name => 'problemID', -value=>$problem->problem_id), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
-			CGI::hidden(-name => 'studentUser',    -value=>$problem->user_id), "\n",
+               		CGI::hidden(-name => 'studentUser',  -value=>$problem->user_id), "\n",
 			CGI::p( {-align=>"left"},
 				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",
