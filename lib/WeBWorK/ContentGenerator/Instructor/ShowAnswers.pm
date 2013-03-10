@@ -117,6 +117,11 @@ sub body {
 		$answer = CGI::small(CGI::i("empty")) if ($answer eq "");
 		push(@row,CGI::td({width=>20}),CGI::td($td,$answer));
 	    }
+
+	    if ($pastAnswer->comment_string) {
+		push(@row,CGI::td({width=>20}),CGI::td("Comment: ".$pastAnswer->comment_string));
+	    }
+
 	    print CGI::Tr(@row);
 
 	    

@@ -1008,6 +1008,7 @@ sub body {
 	$self ->output_checkboxes;
 	$self ->output_submit_buttons;
 	$self ->output_score_summary;
+	$self ->output_comments;
 	$self ->output_misc;
 	print "</form>";
 	# debugging stuff
@@ -1406,6 +1407,76 @@ sub output_misc{
 	return "";
 }
 
+# output_comments subroutine
+
+# prints out any instructor comments present in the latest past_answer entry
+
+sub output_comments{
+	my $self = shift;
+
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+
+	my $problem = $self->{problem};
+	my $set = $self->{set};
+	my $urlpath        = $r->urlpath;
+	my $courseName     = $urlpath->arg("courseID");
+	my $setID          = $urlpath->arg("setID");
+	my $problemID      = $urlpath->arg("problemID");
+	my $key = $r->param('key');
+	my $userID           = $r->param('user');
+	my $displayMode   = $self->{displayMode};
+	my $authz = $r->authz;
+	
+	my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
+
+	#if there is a comment then render it and print it 
+	if ($userPastAnswerID) {
+		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
+		if ($userPastAnswer->comment_string) {
+
+		    my $comment = $userPastAnswer->comment_string;
+		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
+		    my $user = $db->getUser($userID);
+
+		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
+		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
+		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n BEGIN_TEXT\n";
+		    $source .= $comment . "\nEND_TEXT\n ENDDOCUMENT();";
+		    my $pg = WeBWorK::PG->new(
+			$ce,
+			$user,
+			$key,
+			$set,
+			$problem,
+			$set->psvn, # FIXME: this field should be removed
+			$formFields,
+			{ # translation options
+			    displayMode     => $displayMode,
+			    showHints       => 0,
+			    showSolutions   => 0,
+			    refreshMath2img => 1,
+			    processAnswers  => 0,
+			    permissionLevel => 0,
+			    effectivePermissionLevel => 0,
+			    r_source => \$source,
+			},
+			);
+		    
+		    
+		    my $htmlout = $pg->{body_text};
+		    
+		    print CGI::div({class=>"answerComments"},
+		    CGI::b("Instructor Comment:"),
+		    CGI::br(),
+		    $htmlout);
+		}
+	}
+
+	return "";
+}
+
 # output_summary subroutine
 
 # prints out the summary of the questions that the student has answered 
@@ -1440,24 +1511,17 @@ sub output_summary{
 	    # print this if user submitted answers OR requested correct answers	    
 	    my $results = $self->attemptResults($pg, 1,
 						$will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
-	    
-	    #If achievements enabled check to see if there are new ones.and print them
-	    if ($ce->{achievementsEnabled} && $will{recordAnswers}) {
-		my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
-		print $achievementMessage;
-	    }
-	    
+			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);	    
 	    print $results;
-
+	    
 	} elsif ($checkAnswers) {
-		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
-		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
-			# show attempt answers
-			# show correct answers if asked
-			# show attempt results (correctness)
-			# show attempt previews
+	    # print this if user previewed answers
+	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
+	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
+	    # show attempt answers
+	    # show correct answers if asked
+	    # show attempt results (correctness)
+	    # show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
 		print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
@@ -1467,6 +1531,37 @@ sub output_summary{
 			# show attempt previews
 	}
 	
+	return "";
+}
+
+# prints the achievement message if there is one
+
+sub output_achievement_message{
+
+    	my $self = shift;
+	
+	my $editMode = $self->{editMode};
+	my $problem = $self->{problem};
+	my $pg = $self->{pg};
+	my $submitAnswers = $self->{submitAnswers};
+	my %will = %{ $self->{will} };
+
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	
+	
+
+	#If achievements enabled check to see if there are new ones.and print them
+	if ($ce->{achievementsEnabled} && $will{recordAnswers} && $submitAnswers) {
+	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
+	    print $achievementMessage;
+	}
+	
+
 	return "";
 }
 
