@@ -4,8 +4,8 @@ define(['Backbone',
 	'underscore',
 	'Closeable',
 	'../../lib/webwork/models/User',
-	'../../lib/vendor/FileSaver', 
-	'../../lib/vendor/BlobBuilder',
+	'../../vendor/other/FileSaver', 
+	'../../vendor/other/BlobBuilder',
 	'config',
 	'../../lib/webwork/util'], function(Backbone, _,Closeable,User,saveAs,BlobBuilder,config,util){	
 	    var AddStudentFileView = Backbone.View.extend({

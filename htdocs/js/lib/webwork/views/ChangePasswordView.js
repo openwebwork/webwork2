@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','/webwork2_files/js/lib/vendor/jquery-ui-1.9.2.custom/js/jquery-ui-1.9.2.custom.js'], 
+define(['Backbone', 'underscore'], 
   function(Backbone, underscore){
 
   var ChangePasswordView = Backbone.View.extend({

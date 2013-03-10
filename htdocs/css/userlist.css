@@ -1,5 +1,6 @@
 .Body{
     padding: 20px;
+    padding-top: 45px;
 }
 
 #users_table td, table.testgrid th { padding: 5px; border: 1px solid #E0E0E0; }

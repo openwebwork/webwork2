@@ -4,15 +4,15 @@
 */
 
 require.config({
-    paths: {
-        "Backbone":             "/webwork2_files/js/lib/vendor/backbone-0.9.9",
-        "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-ui",
-        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
+	paths: {
+        "Backbone":             "/webwork2_files/js/vendor/backbone/backbone",
+        "backbone-validation":  "/webwork2_files/js/vendor/backbone/modules/backbone-validation",
+        "jquery-ui":            "/webwork2_files/js/vendor/jquery/jquery-ui-1.9.2.custom/js/jquery-ui-1.9.2.custom",
+        "underscore":           "/webwork2_files/js/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/vendor/jquery/jquery",
+        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
         "util":                 "/webwork2_files/js/lib/webwork/util",
-        "XDate":                "/webwork2_files/js/lib/vendor/xdate",
+        "XDate":                "/webwork2_files/js/vendor/other/xdate",
         "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable"
@@ -35,7 +35,7 @@ require(['Backbone',
 	'underscore',
 	'../../lib/webwork/models/User', 
 	'../../lib/webwork/models/UserList', 
-	'../../lib/vendor/editablegrid-2.0.1/editablegrid', 
+	'../../vendor/editablegrid-2.0.1/editablegrid', 
 	'WebPage', 
 	'../../lib/webwork/views/EmailStudentsView',
 	'../../lib/webwork/views/ChangePasswordView',
