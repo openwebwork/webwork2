@@ -1,5 +1,3 @@
-
-
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -1460,21 +1458,23 @@ sub head {
   my ($self) = @_;
   my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
-  
+  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
+
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui-1.9.2.custom/js/jquery-ui-1.9.2.custom.min.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;  
+  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/lib/webwork/WeBWorK.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/lib/webwork/models/teacher.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"></script>!;
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
   print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
   print "\n";
   return '';
 }
-
 
 
 sub body {
@@ -1609,6 +1609,3 @@ Written by John Jones, jj (at) asu.edu.
 =cut
 
 1;
-
-
-
