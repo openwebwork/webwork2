@@ -83,7 +83,7 @@ $(function(){
     $('#problemsetlist2').addClass('form-inline set-list-form');
     $('.set-list-form select').addClass('input-medium');
     $('.set-list-form input:text').addClass('input-medium');
-      $('.set-list-form select[name="action.filter.scope"]').addClass('input-large').removeClass('input-medium');
+    $('.set-list-form select[name="action.filter.scope"]').addClass('input-large').removeClass('input-medium');
     $('.set-list-form select[name="action.import.source"]').addClass('input-large').removeClass('input-medium');
     $('.set-list-form input:button').addClass('btn btn-info');
     $('.set-list-form input:reset').addClass('btn btn-info');

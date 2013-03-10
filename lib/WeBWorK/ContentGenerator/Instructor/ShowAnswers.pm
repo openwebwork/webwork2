@@ -63,6 +63,7 @@ sub body {
 	
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
 	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
+
 	
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
