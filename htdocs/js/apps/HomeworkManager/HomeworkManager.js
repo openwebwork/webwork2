@@ -5,21 +5,21 @@
 
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/vendor/backbone",
-        "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-ui",
-        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
+        "Backbone":             "/webwork2_files/js/vendor/backbone/backbone",
+        "backbone-validation":  "/webwork2_files/js/vendor/backbone/modules/backbone-validation",
+        "jquery-ui":            "/webwork2_files/js/vendor/jquery/jquery-ui",
+        "underscore":           "/webwork2_files/js/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/vendor/jquery/jquery",
+        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
         "util":                 "/webwork2_files/js/lib/webwork/util",
-        "XDate":                "/webwork2_files/js/lib/vendor/xdate",
+        "XDate":                "/webwork2_files/js/vendor/other/xdate",
         "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
-        "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker",
-        "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min",
-        "jquery-tablesorter":   "/webwork2_files/js/lib/vendor/jquery.tablesorter.min",
-        "jquery-imagesloaded":  '/webwork2_files/js/lib/vendor/jquery.imagesloaded.min'
+        "datepicker":           "/webwork2_files/js/vendor/datepicker/js/bootstrap-datepicker",
+        "jquery-truncate":      "/webwork2_files/js/vendor/jquery/modules/jquery.truncate.min",
+        "jquery-tablesorter":   "/webwork2_files/js/vendor/jquery/modules/jquery.tablesorter.min",
+        "jquery-imagesloaded":  '/webwork2_files/js/vendor/jquery/modules/jquery.imagesloaded.min'
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
