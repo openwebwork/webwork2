@@ -4,7 +4,7 @@
  * 
  */
              
-             
+define(['XDate'], function(XDate){
 var util = {             
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
@@ -56,3 +56,28 @@ var util = {
         return str;
      }
 }
+
+function parseWWDate(str) {
+	// this parses webwork dates in the form MM/DD/YYYY at HH:MM AM/PM TMZ
+	var wwDateRE = /(\d?\d)\/(\d?\d)\/(\d{4})\sat\s(\d?\d):(\d\d)([aApP][mM])\s([a-zA-Z]{3})/;
+        var parsedDate = wwDateRE.exec(str);
+	if (parsedDate) {
+            var hours = (/[pP][mM]/.test(parsedDate[6]))? (parseInt(parsedDate[4])-1):(parseInt(parsedDate[4])+11);
+		var date = new XDate();
+                date.setFullYear(parseInt(parsedDate[3]));
+                date.setMonth(parseInt(parsedDate[1])-1);
+                date.setDate(parseInt(parsedDate[2]));
+                date.setHours(hours);
+                date.setMinutes(parseInt(parsedDate[5]));
+                
+                // Do we need to include the time zone?
+                
+                return date;
+	}
+}
+
+XDate.parsers.push(parseWWDate);
+
+return util;
+
+});
