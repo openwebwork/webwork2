@@ -560,15 +560,10 @@ sub body {
 			# CGI::td({}, $self->$actionForm($onChange, %actionParams))
 		# );
 		
-		my $extraspace = (ucfirst(WeBWorK::split_cap($actionID)) eq "Filter") ? "" : CGI::br();
-		
 		push @divArr, join("",
 			CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
 			CGI::span({-class=>"radio_span"}, WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
-			CGI::br(),
 			$self->$actionForm($onChange, %actionParams),
-			CGI::br(),
-			$extraspace,
 		);
 		$i++;
 	}

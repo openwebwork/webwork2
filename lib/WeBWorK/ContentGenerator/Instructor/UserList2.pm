@@ -520,18 +520,29 @@ sub body {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
 	
+	print CGI::start_div({-class=>"tabber"});
+
 	my $i = 0;
 	foreach my $actionID (@formsToShow) {
-		# Check permissions
-		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
-		my $actionForm = "${actionID}_form";
-		my $onChange = "document.userlist.action[$i].checked=true";
-		my %actionParams = $self->getActionParams($actionID);
-		
-		print CGI::div({-class=>"column"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"}),CGI::br(),$self->$actionForm($onChange, %actionParams),CGI::br());
+
+	    # Check permissions
+	    next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
+	    my $actionForm = "${actionID}_form";
+	    my $onChange = "document.userlist.action[$i].checked=true";
+	    my %actionParams = $self->getActionParams($actionID);
+	    
+	    print CGI::div({-class=>"tabbertab"},
+			   CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
+			   CGI::span({-class=>"radio_span"},  WeBWorK::CGI_labeled_input(-type=>"radio", 
+			   -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), 
+                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
+			    $self->$actionForm($onChange, %actionParams));
 		
 		$i++;
 	}
+
+
+	print CGI::end_div();
 
 	print CGI::start_div();
 
@@ -1187,7 +1198,7 @@ sub export_handler {
 sub cancelEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span("-".$r->maketext("Abandon changes"));
+	return CGI::span($r->maketext("Abandon changes"));
 }
 
 sub cancelEdit_handler {
@@ -1211,7 +1222,7 @@ sub cancelEdit_handler {
 sub saveEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span("-".$r->maketext("Save changes"));
+	return CGI::span($r->maketext("Save changes"));
 }
 
 sub saveEdit_handler {
@@ -1259,7 +1270,7 @@ sub saveEdit_handler {
 sub cancelPassword_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span("-".$r->maketext("Abandon changes"));
+	return CGI::span($r->maketext("Abandon changes"));
 }
 
 sub cancelPassword_handler {
@@ -1283,7 +1294,7 @@ sub cancelPassword_handler {
 sub savePassword_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span("-".$r->maketext("Save changes"));
+	return CGI::span($r->maketext("Save changes"));
 }
 
 sub savePassword_handler {
@@ -1899,9 +1910,19 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/classlist_handlers.js"}), CGI::end_script();
 	return "";
 }
 
+# Just tells template to output the stylesheet for Tabber
+sub output_tabber_CSS{
+	return "";
+}
+
+#Tells template to output stylesheet for Jquery-UI
+sub output_jquery_ui_CSS{
+	return "";
+}
 1;
 
