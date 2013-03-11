@@ -5,7 +5,7 @@
 
 $(function(){
 
-    $(".preview").popover({html:"true", trigger:"click", placement:"left"});
+    $(".preview").popover({html:"true", trigger:"manual", placement:"left", delay: { show: 0, hide: 2 }});
 
     $(".preview").click(function(evt) {
 
