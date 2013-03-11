@@ -9,10 +9,10 @@
 
 define(['Backbone', 
     'underscore',
-    '../../lib/webwork/views/EditableCell',
-    '../../lib/webwork/views/ProblemListView',
-    '../../lib/webwork/models/ProblemList',
-    '../../lib/webwork/views/UserListView','config','bootstrap'], 
+    '../../lib/views/EditableCell',
+    '../../lib/views/ProblemListView',
+    '../../lib/models/ProblemList',
+    '../../lib/views/UserListView','config','bootstrap'], 
     function(Backbone, _,EditableCell,ProblemListView,ProblemList,UserListView,config){
 	var HWDetailView = Backbone.View.extend({
         className: "set-detail-view",

@@ -28,8 +28,7 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
                     this.date.clone().addDays(-1*this.date.getDay());
 
             this.createCalendar(firstDayOfCalendar,(this.viewType==="month")?6:2);
-
-            this.render();
+            
             return this;
         },
         createCalendar: function(firstDayOfCalendar,numberOfWeeks){

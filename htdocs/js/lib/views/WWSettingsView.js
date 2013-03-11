@@ -4,7 +4,7 @@
 
 define(['Backbone', 
     'underscore',
-    '../../../lib/webwork/views/EditableCell','../../../apps/config'], 
+    '../../lib/views/EditableCell','config'], 
 function(Backbone, _,EditableCell,config){
     var WWSettingsView = Backbone.View.extend({
 

@@ -11,12 +11,7 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
         //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
 
-        //Register events that a problem's view should listen for,
-        //in this case it removes the problem if the button with class 'remove' is clicked.
-        events:{
-            "click .remove": 'clear'
-        },
-
+    
         //In most model views initialize is used to set up listeners
         //on the views model.
         initialize:function () {
@@ -71,10 +66,10 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
             this.$el.attr('data-path', this.model.get('path'));
             this.$el.attr('data-source', this.model.get('type'));
 
-
             return this;
         },
-        events: {"click .hide-problem": "hideProblem"},
+        events: {"click .hide-problem": "hideProblem",
+            "click .remove": 'clear'},
         hideProblem: function(evt){
             $(evt.target).parent().parent().css("display","none")
         },
@@ -83,6 +78,7 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
             this.model.update({value: $(evt.target).val()});
         },
         clear: function(){
+            console.log("removing problem");
             this.model.collection.remove(this.model);
             this.model.clear();
 

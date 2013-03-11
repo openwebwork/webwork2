@@ -1,63 +1,53 @@
-<div id="mainDiv">
-<div class="row-fluid">  
-  <div id='left-column' class='span2'></div>
+<div id="mainDiv" class="container">
+<div class="row">  
+  <div id='left-column' class='span3'>
+    <div id="hw-manager-menu" class="btn-group">
+      <button class="btn btn-large" id="viewHeader">Calendar</button>
+      <button class="btn dropdown-toggle btn-large" data-toggle="dropdown">
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="link" data-link="calendar" data-name="Calendar">View Calendar</a></li>
+        <li><a class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
+        <li><a class="link" data-link='libraryBrowser' data-name="Library Browser">Library Browser</a></li>
+        <li><a class="link" data-link="allSets" data-name="All Sets">View All Sets</a></li>
+        <li><a class="link" data-link="assignSets" data-name="Assign Sets">Assign Sets to Users</a></li>
+        <li><a class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>
+        <li><a class="link" data-link="settings" data-name="Settings">View HW Settings</a></li>
+        
+      </ul>
+    </div>
+    <div id="hw-set-list-container" class="well"></div>
+  </div>
+  <div class="span9" id="main-view">
+    <div class="view-pane active" id="calendar">
+      <div id="progressbar"><div class="progress-label">Homework Manager Loading...</div></div>
+    </div>
+    <div class="view-pane" id="allSets"></div>
+    <div class="view-pane" id="setDetails"></div>
+    <div class="view-pane" id="assignSets"></div>
+    <div class="view-pane" id="importExport"><p>The Importing and Exporting of homework sets is not implemented yet.</p> </div>
+    <div class="view-pane" id="settings"></div>
+    <div class="view-pane" id="libraryBrowser"></div>
+    </div>
 
-
-
-  <div class="row-fluid">
-    <!-- This is a list of all the parts of the page -->
-    <div  id="view-header-list" class="span7">
-    <div class="view-header active" data-view="calendar"> Calendar</div>
-    <div class="view-header" data-view="problem-set">Problem Set Details</div>
-    <div class="view-header" data-view="hw-set-list">List of all Problem Sets</div>
-    <div class="view-header" data-view="assign-users">Assign Sets to Users</div>
-    <div class="view-header" data-view="import-export">Import and Export Problem Sets</div>
-    <div class="view-header" data-view="settings">Settings</div>
-    <div class="view-header" data-view="view-all-subjects">View Problem Library by Subject</div>
-    <div class="view-header" data-view="view-all-libraries">View Problem Library by Directory</div>
-    <div class="view-header" data-view="search-libraries">Search the Problem Library</div>
-    <div class="view-header" data-view="view-local-libraries">View the Local Libraries</div>
+<!--    <div  id="view-header-list" class="span7">
+      <div class="view-header active" data-view="calendar"></div>
+      <div class="view-header" data-view="problem-set"></div>
+      <div class="view-header" data-view="hw-set-list"></div>
+      <div class="view-header" data-view="assign-users"></div>
+      <div class="view-header" data-view="import-export"></div>
+      <div class="view-header" data-view="settings"></div>
+      <div class="view-header" data-view="view-all-subjects"></div>
+      <div class="view-header" data-view="view-all-libraries"></div>
+      <div class="view-header" data-view="search-libraries"></div>
+      <div class="view-header" data-view="view-local-libraries"></div> 
+ -->
 
     </div>
-  <div  class='span3 pull-right'>
-    <!-- This is the pulldown menu at the top right of the page --> 
-    <div id="hw-manager-menu" class="btn-group">
-  <button class="btn">Change View</button>
-  <button class="btn dropdown-toggle" data-toggle="dropdown">
-    <span class="caret"></span>
-  </button>
-  <ul class="dropdown-menu">
-  <li> <a class="link" data-link="calendar">View Calendar</a></li>
-  <li><a class="link" data-link="problem-set">View Problem Set</a></li>
-  <li><a class="link" data-link="hw-set-list">View All HW sets</a></li>
-  <li><a class="link" data-link="assign-users">Assign Sets to Users</a></li>
-  <li><a class="link" data-link="import-export">Import and Export HW sets</a></li>
-  <li><a class="link" data-link="settings">View HW Settings</a></li>
-  <li class="divider"></li>
-  <li><a class="link" data-link='view-all-subjects'>View All Library Subjects</a></li>
-  <li><a class="link" data-link="view-all-libraries">View Problems within a Library</a></li>
-  <li><a class="link" data-link="search-libraries">Search the Problem Library</a></li>
-  <li><a class="link" data-link="view-local-libraries">Browse The Local Libraries</a></li>
-
-  </ul>
-</div>
-</div>
-<div class="span10" id="main-view">
-  <div class="view-pane active" id="calendar">
-    <div id="progressbar"><div class="progress-label">Homework Manager Loading...</div></div></div>
-  <div class="view-pane" id="problem-set"></div>
-  <div class="view-pane" id="hw-set-list"></div>
-  <div class="view-pane" id="assign-users"></div>
-  <div class="view-pane" id="import-export"><p>The Importing and Exporting of homework sets is not implemented yet.</p> </div>
-  <div class="view-pane" id="settings"></div>
-  <div class="view-pane" id="view-all-subjects"></div>
-  <div class="view-pane" id="view-all-libraries"></div>
-  <div class="view-pane" id="search-libraries"><p>The Searching of the libraries is not implemented yet.</p></div>
-  <div class="view-pane" id="view-local-libraries"><p>The viewing of the local libraries is not implemented yet.</p></div>
-
   </div>
 </div>
-</div>
+
 
 <script type="text/template" id="help-text">
 <h3>Help for the Homework Manager</h3>
@@ -302,42 +292,45 @@ a better rendering.
 </tbody>
 </table>
 
-
-
-
 </script>
-
-
-<script type="text/template" id="old-library-browswer-template">
-<div class="btn-group span2">
-
-  <a class="btn dropdown-toggle btn-small" data-toggle="dropdown" href="#">
-    View
-    <span class="caret"></span>
-  </a>
-<ul class="dropdown-menu">
-    <li><a class="link" data-link='view-all-subjects'>View All Library Subjects</a></li>
-  <li><a class="link" data-link="view-all-libraries">View Problems within a Library</a></li>
-  <li><a class="link" data-link="search-libraries">Search the Problem Library</a></li>
-  <li><a class="link" data-link="view-local-libraries">Browse The Local Libraries</a></li>
-  </ul>
-  </div>
-
-</script>
-
 
 <script type="text/template" id="library-browser-template">
+<ul class="nav nav-tabs" id="library-browser-tabs">
+  <li class="active"><a href="#library-subjects-tab" data-toggle="tab">Browse By Subject</a></li>
+  <li><a href="#library-directories-tab" data-toggle="tab">Browse By Filename</a></li>
+  <li><a href="#library-local-tab" data-toggle="tab">Browse Local Library</a></li>
+  <li><a href="#library-search-tab" data-toggle="tab">Search the Library</a></li>
+</ul>
+ 
+<div class="tab-content">
+  <div class="tab-pane active" id="library-subjects-tab"></div>
+  <div class="tab-pane" id="library-directories-tab"></div>
+  <div class="tab-pane" id="library-local-tab"></div>
+  <div class="tab-pane" id="library-search-tab"></div>
+</div> 
+
+
+</script>
+
+
+<script type="text/template" id="library-view-template">
 
 
 <div class="row-fluid">
 <div class="library-viewer span10"></div>
+<div class="span2"><select class="target-set"><option>Target Set</option></select></div> 
 </div>
 <div class="lib-problem-viewer"> </div>
 </script>
 
 <script type="text/template" id="library-tree-template">
-<span class='library-tree-left'><span class='throbber'><img src='/webwork2_files/images/ajax-loader-small.gif'></span></span>
+<span class='library-tree-left'><span class='throbber'>Loading the Library...<img src='/webwork2_files/images/ajax-loader-small.gif'></span></span>
 <span class="library-tree-right"></span> 
+</script>
+
+<script type="text/template" id="target-set-template">
+  <option><%=set_id%></option>
+
 </script>
 
 

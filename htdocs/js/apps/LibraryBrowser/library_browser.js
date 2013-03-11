@@ -19,9 +19,9 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
-        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "Backbone": "/webwork2_files/js/lib/components/backbone/Backbone",
+        "underscore": "/webwork2_files/js/lib/components/underscore/underscore",
+        "jquery": "/webwork2_files/js/lib/components/jquery/jquery",
         "jquery-ui": "/webwork2_files/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min",
         "touch-pinch": "/webwork2_files/js/lib/vendor/jquery/jquery.ui.touch-punch",
         "tabs": "/webwork2_files/js/lib/vendor/ui.tabs.closable",

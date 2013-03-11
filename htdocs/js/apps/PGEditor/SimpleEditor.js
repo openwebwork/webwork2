@@ -11,11 +11,11 @@ require.config({
         "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
         "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
-        "util":                 "/webwork2_files/js/lib/webwork/util",
+        "util":                 "/webwork2_files/js/lib/util",
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
-        "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
+        "WebPage":              "/webwork2_files/js/lib/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable"
+        "Closeable":            "/webwork2_files/js/lib/views/Closeable"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,

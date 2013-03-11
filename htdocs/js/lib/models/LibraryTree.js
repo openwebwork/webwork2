@@ -5,22 +5,24 @@ define(['Backbone', 'underscore','config'], function(Backbone, _,config){
 	 *   The tree consists of nested arrays.  
 	 **/
 
-	 // Does this need to be a Backbone model?  What does it gain us since there is no collection of trees.  
-
 	var LibraryTree = Backbone.Model.extend({
 
 		initialize: function (){
             _.bindAll(this,"fetch","parsePathsToTree");
+            this.fetched = false; 
 			//console.log("LibraryTree");
 		},
         fetch: function (){
             var self = this,
                 requestObject = null;
-            if (this.get("type") === "directory-tree"){
+            if (this.get("type") === "allLibraries"){
                 requestObject = {xml_command: "getProblemDirectories"};
                 this.header = "Library/";
-            } else if (this.get("type") === "subject-tree"){
+            } else if (this.get("type") === "allLibSubjects"){
                 requestObject = {xml_command: "buildBrowseTree"};
+                this.header = "Subjects/";
+            } else if (this.get("type") === "searchLibraries"){
+                requestObject = {xml_command: "buildBrowseTree"};  // This is just a temporary spot for searching. 
                 this.header = "Subjects/";
             }
             _.defaults(requestObject, config.requestObject);
@@ -31,6 +33,7 @@ define(['Backbone', 'underscore','config'], function(Backbone, _,config){
                 self.tree = self.parsePathsToTree(self.header);
                 delete self.libs;
              	self.trigger("fetchSuccess");
+                self.fetched = true; 
             });
 
         },

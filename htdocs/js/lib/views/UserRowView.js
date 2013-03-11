@@ -6,7 +6,7 @@
 define(['Backbone', 
 	'underscore',
 	//'Closeable',
-	//'../../lib/webwork/models/User',
+	//'../../lib/models/User',
 	'config'
 	], function(Backbone, _,config){
     

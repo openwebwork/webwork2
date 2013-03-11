@@ -23,7 +23,8 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             var self = this;
             var requestObject = {
                 problemSource: this.get('path'),
-                xml_command: "renderProblem"
+                xml_command: "renderProblem",
+                displayMode: "images"
             };
             _.defaults(requestObject, config.requestObject);
     

@@ -14,18 +14,20 @@ function(Backbone, _,LibraryTree){
             var self = this;
             this.parent = this.options.parent; 
             this.libraryTree = new LibraryTree({type: this.options.type});
-            this.libraryTree.fetch();
             this.libraryTree.on("fetchSuccess", function () {
                 self.$(".throbber").remove();
                 self.buildTreeView(self.libraryTree.tree,0);
             });
-    		this.render();
-
-
 
     	},
     	render: function(){
             this.$el.html(_.template($("#library-tree-template").html()));
+            if (!this.libraryTree.fetched) {
+                this.libraryTree.fetch();
+            } else {
+                this.$(".throbber").remove();
+                this.buildTreeView(this.libraryTree.tree,0);
+            }
     	},
         buildTreeView: function (libs,index){
             var self = this;
@@ -73,7 +75,6 @@ function(Backbone, _,LibraryTree){
             
         },
         loadProblems: function (evt) {
-            console.log(evt);
             var path = _(this.$(".lib-select")).map(function(item){ return $(item).val()});
             if (this.$(".lib-select").last().val()==="Choose A Library") {path.pop();}
             this.parent.dispatcher.trigger("load-problems",this.libraryTree.header+path.join("/"));

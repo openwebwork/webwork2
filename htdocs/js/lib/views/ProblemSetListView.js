@@ -37,7 +37,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                 this.$el.html(_.template($("#hw-set-list-template").html(),{loading: true}));
             }
             if(this.collection.setLoaded){
-                this.$("a.link").on("click",this.addDeleteSet);
+            
                 this.$("#set-list").html(_.template($("#hw-set-list-template").html(),{loading:false}));
                 this.$el.append(_.template($("#modal-template").html(), 
                     {header: "<h3>Create a new Homework Set</h3>", saveButton: "Create New Set", id: "new-set-modal"}));
