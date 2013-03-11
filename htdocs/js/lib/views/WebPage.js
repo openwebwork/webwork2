@@ -61,6 +61,8 @@ define(['Backbone','Closeable'], function(Backbone,Closeable){
 
         $("#webwork_navigation").attr("style","");
 
+        $(".breadcrumb li:last").css("font-size","125%");
+
 
 
     }

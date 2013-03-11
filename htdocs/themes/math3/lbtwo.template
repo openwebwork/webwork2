@@ -52,13 +52,12 @@
                      <!--#endif-->
 	            	  <!-- </ul> -->
                   </div>
-    		              <a href="#" class="brand span3">Homework Manager</a>
 		            
-<!--	    		<div class="span6" style="margin-left: 0px">
-            		<ul class="breadcrumb"> -->
-						<!--#p a t h style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
-				<!---	</ul>
-				</div> -->
+	    		<div class="span6" style="margin-left: 0px">
+            		<ul class="breadcrumb"> 
+						<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
+					</ul>
+				</div> 
 				<div class="span2"><!--#loginstatus--></div>
 	    		<div class="span2"><button class="btn" id="help-link">Help</button>
 	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2-dev/issues/new">Bugs!</a>

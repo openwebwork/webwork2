@@ -9,5 +9,5 @@
 
 .breadcrumb {padding: 2px 15px ;}  //overrides the bootstrap css
 
-.hidden {display: none;}
+.breadcrumb li:last {font-size: 150%;}
 
