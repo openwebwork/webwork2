@@ -290,7 +290,6 @@ sub body {
 		    #generate answer text.  Need to process it if its an essay answer
 		    # if the answwer Type is undefined then just print the result and hope for the best. 
 
-<<<<<<< Updated upstream
 		    if (!defined($answerTypes[$i])) {
 			$userAnswerString .= CGI::p($answer);
 		    
