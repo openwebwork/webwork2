@@ -197,8 +197,6 @@ sub body {
 
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
 
-	#local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-	#local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';	local $ce{
 	#set up a silly problem to render the problem text
 	my $pg = WeBWorK::PG->new(
 	    $ce,
@@ -230,7 +228,7 @@ sub body {
 
 	print CGI::p($pg->{body_text});
 
-	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), name=>"classlist" });
+	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), id=>"problem-grader-form", name=>"problem-grader-form" });
 	 
 	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All',
 				   onClick => "for (i in document.classlist.elements)  { 
@@ -239,7 +237,7 @@ sub body {
 	                       }
 	                    }" });
 
-	print CGI::start_table({class=>"table table-condensed",width=>"1020px"});
+	print CGI::start_table({width=>"1020px"});
 	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)", "&nbsp;", "Comment"]));
 	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
@@ -265,6 +263,7 @@ sub body {
 	    my $userAnswerString;
 	    my $comment = "";
 	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
+	    my $noCommentField=0;
 
 	    next unless $userProblem;
 
@@ -335,6 +334,7 @@ sub body {
 		}
 		
 	    } else {
+		$noCommentField = 1;
 		$userAnswerString = "There are no answers for this student.";
 	    }
 	    
@@ -346,6 +346,13 @@ sub body {
 
 	    #create form for scoring
 
+	    my $commentBox = '';
+	    $commentBox= CGI::textarea({name=>"$userID.comment",
+				      value=>"$comment",
+				      rows=>3,
+					cols=>30,}).CGI::br().CGI::input({-class=>'preview', -type=>'button', -name=>"$userID.preview", -value=>"Preview" }) unless $noCommentField;
+	    
+	    
 	    my %dropDown;
 	    #construct the drop down.  Right now it does all numbers from 
 	    # 1 to 100, but this could be changed by config
@@ -375,11 +382,7 @@ sub body {
 						      -values => [sort {$b <=> $a} keys %dropDown],
 						      -default => $score,
 				                      -labels => \%dropDown)
-				      ," ",
-			  CGI::textarea({name=>"$userID.comment",
-				      value=>"$comment",
-				      rows=>3,
-				      cols=>30,}).CGI::br().CGI::input({-class=>'preview', -type=>'button', -name=>"$userID.preview", -value=>"Preview" })	   	    
+				      ," ", $commentBox
 				  ])	  
 		);
 	    print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
