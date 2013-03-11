@@ -19,7 +19,7 @@ $(function(){
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
 
-    // Makes the fisheye stuff into proper navigation
+    // Makes the fisheye stuff bootstrap nav
     $('#site-navigation ul').addClass('nav nav-list');
     $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
     $('#site-navigation a.active').parent().addClass('active');
@@ -35,7 +35,10 @@ $(function(){
     $('#problem-sets-form').addClass('form-inline');
     $('.body:has(.problem_set_table)').addClass('problem_set_body');
     $('.problem_set_table').addClass('table');
-    $('.problem_set_table td a').addClass('btn btn-primary');
+    if($('.problem_set_table th:contains("Test Score")').length > 0) {
+	$('.problem_set_table').addClass('small-table-text');
+    }
+    $('.problem_set_table td a').addClass('btn btn-primary btn-small');
     $('#hardcopy-form').addClass('form-inline');
 
     $('.problem_set_options input').addClass('btn btn-info');
@@ -75,7 +78,7 @@ $(function(){
     $('.user-list-form input:button').addClass('btn btn-info');
     $('.user-list-form input:reset').addClass('btn btn-info');
     $('.user-list-form').wrapInner('<div />');
-    $('.classlist-table').addClass('table table-condensed');
+    $('.classlist-table').addClass('small-table-text table table-condensed');
     $('#show_hide').addClass('btn btn-info');
 
     //Homework sets editor config
@@ -88,7 +91,7 @@ $(function(){
     $('.set-list-form input:button').addClass('btn btn-info');
     $('.set-list-form input:reset').addClass('btn btn-info');
     $('.set-list-form').wrapInner('<div />');
-    $('.set_table').addClass('table table-condensed');
+    $('.set_table').addClass('small-table-text table table-condensed');
     $('.set_table input:text').removeClass('input-medium');
     $('#show_hide').addClass('btn btn-info');
     $('#problem_set_form').addClass('form-inline');

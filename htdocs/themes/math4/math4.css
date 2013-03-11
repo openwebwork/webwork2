@@ -779,10 +779,17 @@ table#grades_table pre{
     margin-right:.5ex;
 }
 
-#mainform .btn{
+#mainform .btn,
+#problem_set_form .btn {
     margin-bottom:.25ex;
     margin-top:.25ex;
 }
+
+#problem_set_form input[type="checkbox"] {
+    margin-bottom:.5ex;
+}
+
+
 
 #editor input[type="radio"]{
     margin-right:.5ex;
@@ -791,4 +798,21 @@ table#grades_table pre{
 
 #problem-grader-form select {
     width:60px;
+}
+
+.tabberlive {
+    margin-bottom:1ex;
+}
+
+.tabbertab {
+    min-height:2em;
+}
+
+.small-table-text,
+.small-table-text td {
+    font-size:small;
+}
+
+.nav-list li {
+    font-size:small;
 }
