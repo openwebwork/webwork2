@@ -441,11 +441,13 @@ clear: both;
  * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-    float: left; /*was right*/
-    min-width: 0;
-    overflow: hidden; /*was auto*/
-    /*margin-right: -1px;*/
-    background-color: #fff;
+
+	float: left; /*was right*/
+	min-width: 0;
+	overflow: auto; /*was hidden*/
+	/*margin-right: -1px;*/
+	background-color: #fff;
+
 }
 #InfoPanel ol {
 	font-size:100%;

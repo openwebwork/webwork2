@@ -830,7 +830,7 @@ sub head {
 	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script> 
+           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery.js"></script> 
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
            <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
 
@@ -1095,6 +1095,7 @@ sub output_editorLink{
 	my $editorLink = "";
 	my $editorLink2 = "";
 	my $editorLink3 = "";
+	my $editorLink4 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
@@ -1117,20 +1118,27 @@ sub output_editorLink{
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
 	}
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{simplepgeditor}) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::SimplePGEditor", $r, 
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
+		$editorLink4 = CGI::span(CGI::a({href=>$editorURL,target =>'Simple_Editor'}, $r->maketext("SimpleEdit")));
+	}
+
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink, " ", $editorLink2, " ", $editorLink3;
+			print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink, " ", $editorLink2, " ", $editorLink3;
+		print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
 	}
 	return "";
 }

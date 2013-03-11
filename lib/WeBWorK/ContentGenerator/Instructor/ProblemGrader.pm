@@ -194,6 +194,7 @@ sub body {
 	my $set = $db->getMergedSet($userID, $setID); # checked
 	my $problem = $db->getMergedProblem($userID, $setID, $problemID); # checked
 	my $user = $db->getUser($userID);
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
 
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
 
@@ -268,6 +269,7 @@ sub body {
 	    next unless $userProblem;
 
 	    if ($userPastAnswerID && $userProblem) {
+
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		my @scores = split(//,$userPastAnswer->scores);
 		my @answers = split(/\t/,$userPastAnswer->answer_string);
