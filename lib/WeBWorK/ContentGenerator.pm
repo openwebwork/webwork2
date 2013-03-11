@@ -727,7 +727,7 @@ sub links {
 				print CGI::start_li(); # Homework Set Editor
 				print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
 					if $ce->{showeditors}->{homeworkseteditor1};
-				print "<br/>";
+				print "<br>" if ($ce->{showeditors}->{homeworkseteditor1} && $ce->{showeditors}->{homeworkseteditor2});
 				print &$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
 					if $ce->{showeditors}->{homeworkseteditor2};;
 				
@@ -767,6 +767,8 @@ sub links {
 					if $ce->{showeditors}->{librarybrowser2};
 				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser3};
+				print CGI::li(&$makelink("${pfx}SetMakernojs", text=>$r->maketext("Orig. Lib. Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{librarybrowsernojs};
 #print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
@@ -786,23 +788,23 @@ sub links {
 				}
 				print CGI::end_li(); # end Stats
 				# old stats
-				print CGI::start_li(); # Stats_old
-				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				if ($userID ne $eUserID or defined $setID) {
-					print CGI::start_ul();
-					if ($userID ne $eUserID) {
-						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
-					}
-					if (defined $setID) {
-						# make sure we don't try to send a versioned
-						#    set id in to the Stats_old link
-						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
-						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
-						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
-					}
-					print CGI::end_ul();
-				}
-				print CGI::end_li(); # end Stats_old
+#				print CGI::start_li(); # Stats_old
+#				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+#				if ($userID ne $eUserID or defined $setID) {
+#					print CGI::start_ul();
+#					if ($userID ne $eUserID) {
+#						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
+#					}
+#					if (defined $setID) {
+#						# make sure we don't try to send a versioned
+#						#    set id in to the Stats_old link
+#						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
+#						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
+#						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
+#					}
+#					print CGI::end_ul();
+#				}
+#				print CGI::end_li(); # end Stats_old
 				
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);

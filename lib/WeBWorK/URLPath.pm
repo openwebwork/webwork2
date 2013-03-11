@@ -94,6 +94,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_maker                /$courseID/instructor/setmaker/
  instructor_set_maker2               /$courseID/instructor/setmaker2/
  instructor_set_maker3               /$courseID/instructor/setmaker3/
+ instructor_set_maker_no_js          /$courseID/instructor/setmakernojs/
  instructor_get_target_set_problems  /$courseID/instructor/GetTargetSetProblems/
  instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
@@ -117,7 +118,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
- instructor_answer_log               /$courseID/instructor/show_answers/
+ 
  instructor_preflight               /$courseID/instructor/preflight/
  
  instructor_statistics               /$courseID/instructor/stats/
@@ -134,7 +135,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
-
+answer_log                           /$courseID/show_answers/
  achievements                        /$courseID/achievements
  instructor_achievement_list         /$courseID//instructor/achievement_list
  instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
@@ -188,7 +189,7 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy achievements
+		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz answer_log grades hardcopy achievements
 			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -226,6 +227,17 @@ our %pathTypes = (
 		produce => 'quiz_mode/$setID/',
 		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
 	},
+
+    	answer_log => {
+		name    => 'Answer Log',
+		parent  => 'set_list',
+		kids    => [ qw// ],
+		match   => qr|^show_answers/|,
+		capture => [ qw// ],
+		produce => 'show_answers/',
+		display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
+	},
+
 	proctored_gateway_quiz => {
 		name    => 'Proctored Gateway Quiz $setID',
 		parent  => 'set_list',
@@ -326,11 +338,11 @@ our %pathTypes = (
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
-			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
+			instructor_set_maker instructor_set_maker_no_js instructor_set_maker2 instructor_set_maker3 
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_answer_log instructor_preflight instructor_statistics instructor_statistics_old
+			instructor_preflight instructor_statistics instructor_statistics_old
 			instructor_progress			
                         instructor_problem_grader
 		/ ],
@@ -486,6 +498,15 @@ our %pathTypes = (
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
 	},
+	instructor_set_maker_no_js => {
+		name    => 'Library Browser no js',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^setmakernojs/|,
+		capture => [ qw// ],
+		produce => 'setmakernojs/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SetMakernojs',
+	},
 	instructor_set_maker2 => {
 		name    => 'Library Browser 2',
 		parent  => 'instructor_tools',
@@ -638,15 +659,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'send_mail/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SendMail',
-	},
-	instructor_answer_log => {
-		name    => 'Answer Log',
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^show_answers/|,
-		capture => [ qw// ],
-		produce => 'show_answers/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
 	},
 	instructor_preflight => {
 		name    => 'Preflight Log',

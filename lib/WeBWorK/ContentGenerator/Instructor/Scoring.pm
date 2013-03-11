@@ -155,7 +155,7 @@ sub body {
 		unless $authz->hasPermissions($user, "score_sets");
 
 	print join("",
-			CGI::start_form(-method=>"POST", -action=>$scoringURL),"\n",
+			CGI::start_form(-name=>"scoring-form", -id=>"scoring-form", -method=>"POST", -action=>$scoringURL),"\n",
 			$self->hidden_authen_fields,"\n",
 			CGI::hidden({-name=>'scoreSelected', -value=>1}),
 			CGI::start_table({border=>1,}),

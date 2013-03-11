@@ -20,6 +20,7 @@ package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
 use base qw(WeBWorK::ContentGenerator);
 use WeBWorK::Utils qw(sortByName ); 
 use WeBWorK::PG;
+use HTML::Scrubber;
 
 =head1 NAME
 
@@ -54,6 +55,25 @@ sub pre_header_initialize {
 	$self->{displayMode}    = $displayMode;
 }
 
+sub head {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/lib/vendor/bootstrap/css/bootstrap.popover.css\">";
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.7.2.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
+	
+	return "";
+
+}
+
+
 sub options {
 	my ($self) = @_;
 	
@@ -74,6 +94,7 @@ sub initialize {
 	my $urlpath    = $r->urlpath;
 	my $authz      = $r->authz;
 	my $db         = $r->db;	
+	my $courseName     = $urlpath->arg("courseID");
 	my $setID      = $urlpath->arg("setID");
 	my $problemID  = $urlpath->arg("problemID");
 	my $user       = $r->param('user');
@@ -91,7 +112,7 @@ sub initialize {
 	
 	    foreach my $userID (@users) {
 		my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
-		next unless $userProblem;
+		next unless $userProblem && defined($r->param("$userID.score"));
 		#update grades and set flags
 		$userProblem->{flags} =~ s/needs_grading/graded/;
 		if  ($r->param("$userID.mark_correct")) {
@@ -104,6 +125,24 @@ sub initialize {
 		}
 
 		$db->putUserProblem($userProblem);
+
+		#if the instructor added a comment we should save that to the latest answer
+		if ($r->param("$userID.comment")) {
+
+		    ### $comment needs to be sanitized.  It could currently contain badness written 
+		    ### into the comment by the instructor 
+		    
+		    my $scrubber = HTML::Scrubber->new();
+		    my $comment = $scrubber->scrub($r->param("$userID.comment"));
+
+		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
+		    
+		    if ($userPastAnswerID) {
+			my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
+			$userPastAnswer->comment_string($comment);
+			warn "Couldn't save comment" unless $db->putPastAnswer($userPastAnswer);
+		    }
+		}
 	    }
 	}
 }
@@ -189,18 +228,18 @@ sub body {
 
 	print CGI::p($pg->{body_text});
 
-	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), name=>"classlist" });
+	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), id=>"problem-grader-form", name=>"problem-grader-form" });
 	 
-	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All Correct',
+	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All',
 				   onClick => "for (i in document.classlist.elements)  { 
 	                       if (document.classlist.elements[i].className == 'mark_correct') { 
 	                           document.classlist.elements[i].checked = true
 	                       }
 	                    }" });
 
-	print CGI::start_table({});
-	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Student Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)"]));
-	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
+	print CGI::start_table({width=>"1020px"});
+	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)", "&nbsp;", "Comment"]));
+	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	# get user records
 	my @userRecords  = ();
@@ -222,7 +261,9 @@ sub body {
 	    my $userID = $userRecord->user_id;
 	    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 	    my $userAnswerString;
+	    my $comment = "";
 	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
+	    my $noCommentField=0;
 
 	    next unless $userProblem;
 
@@ -230,29 +271,34 @@ sub body {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		my @scores = split(//,$userPastAnswer->scores);
 		my @answers = split(/\t/,$userPastAnswer->answer_string);
+		$comment = $userPastAnswer->comment_string;
+		
+		#Skip this answer if the pg file doesn't match the current pg file
+		if (defined($userPastAnswer->source_file) &&
+		    $userPastAnswer->source_file ne $problem->source_file) {
+		    next;
+		}
+
+
 
 		for (my $i = 0; $i<= $#answers; $i++) {
 		    
 		    my $answer = $answers[$i];
 
 		    #generate answer text.  Need to process it if its an essay answer
+		    # if the answwer Type is undefined then just print the result and hope for the best. 
 
-		    if ($answerTypes[$i] eq 'essay') {
+		    if (!defined($answerTypes[$i])) {
+			$userAnswerString .= CGI::p($answer);
+		    
+		    } elsif ($answerTypes[$i] eq 'essay') {
 			
 			#if its an essay type answer then set up a silly problem to render the text 
 			# provided by the student.  There *has* to be a better way to do this.  
 
-			#### WARNING #####
-			### $answer needs to be sanitized.  It could currently contain badness written 
-			### into the answer by the student
-			# Ad Hoc Sanitization :( 
-						
-			$answer =~ s/script/ohnoyoudiint/g;
-			
-			$problem->value(0);
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n TEXT(\&beginproblem);\n BEGIN_TEXT\n";
+			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n BEGIN_TEXT\n";
 			$source .= $answer . "\nEND_TEXT\n ENDDOCUMENT();";
 			my $pg = WeBWorK::PG->new(
 			    $ce,
@@ -277,8 +323,6 @@ sub body {
 
 			my $htmlout = $pg->{body_text};
 
-			$htmlout =~ s/^\(0.*\<BR\>//;
-
 			$userAnswerString .= CGI::p($htmlout);
 			
 		    } else {
@@ -290,6 +334,7 @@ sub body {
 		}
 		
 	    } else {
+		$noCommentField = 1;
 		$userAnswerString = "There are no answers for this student.";
 	    }
 	    
@@ -301,6 +346,13 @@ sub body {
 
 	    #create form for scoring
 
+	    my $commentBox = '';
+	    $commentBox= CGI::textarea({name=>"$userID.comment",
+				      value=>"$comment",
+				      rows=>3,
+					cols=>30,}).CGI::br().CGI::input({-class=>'preview', -type=>'button', -name=>"$userID.preview", -value=>"Preview" }) unless $noCommentField;
+	    
+	    
 	    my %dropDown;
 	    #construct the drop down.  Right now it does all numbers from 
 	    # 1 to 100, but this could be changed by config
@@ -326,11 +378,15 @@ sub body {
 		
 						    }), " ",
 				      CGI::popup_menu(-name=>"$userID.score",
+						      -class=>"span1",
 						      -values => [sort {$b <=> $a} keys %dropDown],
 						      -default => $score,
 				                      -labels => \%dropDown)
-				      ])
+				      ," ", $commentBox
+				  ])	  
 		);
+	    print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
+
 
 #  Text field for gradex
 #				      CGI::input({type=>"text",
@@ -342,7 +398,6 @@ sub body {
 #				  ])
 #		);
 
-	    print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
 
 	}
 

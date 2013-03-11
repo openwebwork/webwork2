@@ -59,8 +59,10 @@ sub listLocalSetProblems{
   	my $db = $self->{db};
   	my @found_problems;
   	my $selectedSet = $in->{set};
+	my $relativePaths = $in->{subcommand};
   	warn "Finding problems for set ", $in->{set} if $UNIT_TESTS_ON;
-  	my $templateDir = $self->{ce}->{courseDirs}->{templates};
+  	my $templateDir = $self->{ce}->{courseDirs}->{templates}."/";
+	$templateDir = '' if $relativePaths;
   	@found_problems = $db->listGlobalProblems($selectedSet);
   	my $problem;
   	my @pg_files=();
@@ -68,7 +70,7 @@ sub listLocalSetProblems{
 		my $problemRecord = $db->getGlobalProblem($selectedSet, $problem); # checked
 		die "global $problem for set $selectedSet not found." unless
 		$problemRecord;
-		push @pg_files, $templateDir."/".$problemRecord->source_file;
+		push @pg_files, $templateDir.$problemRecord->source_file;
 
 	}
 	#@pg_files = sortByName(undef,@pg_files);

@@ -59,8 +59,9 @@ sub info {
 	}
 	
 	if (defined $result and $result ne "") {
-		return CGI::div({-class=>"info-wrapper"},CGI::div({class=>"info-box", id=>"InfoPanel"},
-			CGI::h2("Site Information"), $result));
+#		return CGI::div({-class=>"info-wrapper"},CGI::div({class=>"info-box", id=>"InfoPanel"},
+#			CGI::h2("Site Information"), $result));
+	    return CGI::h2("Site Information"). $result;
 	} else {
 		return "";
 	}

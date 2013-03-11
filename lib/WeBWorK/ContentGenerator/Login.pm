@@ -106,7 +106,8 @@ sub info {
 
 	
 	if (defined $result and $result ne "") {
-		return CGI::div({-class=>"info-wrapper"},CGI::div({class=>"info-box", id=>"InfoPanel"}, $result));
+#		return CGI::div({-class=>"info-wrapper"},CGI::div({class=>"info-box", id=>"InfoPanel"}, $result));
+	    return $result;
 	} else {
 		return "";
 	}

@@ -569,7 +569,7 @@ sub pre_header_initialize {
 		if ($write_result) {
 			$self->addbadmessage($write_result);
 		} else {
-			$self->addgoodmessage("Changes saved.");
+			$self->addgoodmessage($r->maketext("Changes saved."));
 		}
 	}
 }
@@ -635,7 +635,7 @@ is up to date.");
 	my @tab_names = map { $_->[0] } @{$ConfigValues};
 	$self->print_navigation_tabs($current_tab, @tab_names);
 
-	print CGI::startform({method=>"post", action=>$r->uri, name=>"configform"});
+	print CGI::startform({method=>"post", action=>$r->uri, id=>"config-form", name=>"config-form"});
 	print $self->hidden_authen_fields();
 	print CGI::hidden(-name=> 'section_tab', -value=> $current_tab);
 
@@ -646,7 +646,7 @@ is up to date.");
 	print CGI::p(CGI::div({-align=>'center'}, CGI::b($configTitle)));
 
 	print CGI::start_table({-border=>"1"});
-	print '<tr>'.CGI::th('What'). CGI::th('Default') .CGI::th('Current');
+	print '<tr>'.CGI::th($r->maketext('What')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
 	for my $con (@configSectionArray) {
 		my $conobject = $self->objectify($con);
 		print "\n<tr>";
@@ -657,7 +657,7 @@ is up to date.");
 		$widget_count++;
 	}
 	print CGI::end_table();
-	print CGI::p(CGI::submit(-name=>'make_changes', -value=>'Save Changes'));
+	print CGI::p(CGI::submit(-name=>'make_changes', -value=>$r->maketext('Save Changes')));
 	print CGI::end_form();
 
 

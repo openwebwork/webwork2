@@ -72,6 +72,7 @@ my @modulesList = qw(
 	MIME::Base64
 	Net::IP
 	Net::LDAPS
+	Net::OAuth
 	Net::SMTP
 	Opcode
 	PadWalker

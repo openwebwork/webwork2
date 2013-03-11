@@ -147,7 +147,7 @@ sub call_next_authen_method {
 
 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
 	#debug("user_authen_module = |$user_authen_module|");	
-	if (!defined($user_authen_module or $user_authen_module eq "")) {
+	if (!defined($user_authen_module) or ($user_authen_module eq "")) {
 		$self->{error} = $r->maketext("No authentication method found for your request.  "
 			. "If this recurs, please speak with your instructor.");
 		$self->{log_error} .= "None of the specified authentication modules could handle the request.";
