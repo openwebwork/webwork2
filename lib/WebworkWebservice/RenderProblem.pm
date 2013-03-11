@@ -35,7 +35,7 @@ use strict;
 use sigtrap;
 use Carp;
 use WWSafe;
-#use Apache;
+use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::Local;
@@ -136,6 +136,8 @@ sub renderProblem {
 	my $db;
 	my $user;
 	my $beginTime = new Benchmark;
+
+	debug("in RenderProblem::renderProblem");
 # 	if (defined($self->{courseName}) and $self->{courseName} ) {
 # 		$courseName = $self->{courseName};
 # 	} elsif (defined($rh->{course}) and $rh->{course}=~/\S/ ) {
@@ -512,7 +514,6 @@ sub xml_filter {
 	$input;
 	
 }
-
 
 sub logTimingInfo{
     my ($beginTime,$endTime,) = @_;

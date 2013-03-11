@@ -659,7 +659,6 @@ table caption{
 #render-modal.modal {
     width:1024px;
     left:25%;
-    top:40%;
 }
 
 #render-modal .modal-body {
