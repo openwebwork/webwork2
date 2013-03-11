@@ -627,7 +627,7 @@ print
 		if ($gradeable) {
 		    
 		    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
-		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs<br>Grading" : "Regrade")));
+		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs Grading" : "Regrade")));
 		    
 		}  else {
 		    push (@GradeableRows, CGI::td());

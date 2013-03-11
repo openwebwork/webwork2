@@ -197,8 +197,6 @@ sub body {
 
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
 
-	#local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-	#local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';	local $ce{
 	#set up a silly problem to render the problem text
 	my $pg = WeBWorK::PG->new(
 	    $ce,
