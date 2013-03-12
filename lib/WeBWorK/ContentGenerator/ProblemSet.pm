@@ -266,8 +266,8 @@ sub info {
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
 		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
-	print CGI::start_div({class=>"info-wrapper"});
-	print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
+	#print CGI::start_div({class=>"info-wrapper"});
+	#print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 	
 	if ($editorURL) {
 		print CGI::h2({},$r->maketext("Set Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[edit~]")));
@@ -281,8 +281,8 @@ sub info {
 		print $pg->{body_text};
 	}
 	
-	print CGI::end_div();
-	print CGI::end_div();
+	#print CGI::end_div();
+	#print CGI::end_div();
 	return "";
 }
 

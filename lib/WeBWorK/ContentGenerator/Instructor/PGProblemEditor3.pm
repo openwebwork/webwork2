@@ -615,7 +615,7 @@ sub body {
 	}
 	my $target = 'WW_View'; #"problem$edit_level"; # increasing edit_level gives you a new window with each edit.
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script type="text/javascript" src="$site_url/js/wz_tooltip.js"></script>!;
+	print qq!<script type="text/javascript" src="$site_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::script(<<EOF);
  		function setTarget(inWindow) {
 		  document.getElementById("newWindow").checked = inWindow;
@@ -2027,10 +2027,9 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/pg_editor_handlers.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/jquery.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	
 	return "";
 }

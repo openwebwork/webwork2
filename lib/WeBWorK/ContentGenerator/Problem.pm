@@ -248,6 +248,7 @@ sub attemptResults {
 	my @tableRows = ( $header );
 	my $numCorrect = 0;
 	my $numBlanks  =0;
+	my $numEssay = 0;
 	my $tthPreambleCache;
 	foreach my $name (@answerNames) {
 		my $answerResult  = $pg->{answers}->{$name};
@@ -261,18 +262,25 @@ sub attemptResults {
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
-		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   # unless student answer contains entry
-		my $resultString = $answerScore >= 1 ? CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct")) :
-		                   $answerScore > 0  ? $r->maketext("[_1]% correct", int($answerScore*100)) :
-                                                       CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
-		$fully = $r->maketext("completely") if $answerScore >0 and $answerScore < 1;
-		
-		push @correct_ids,   $name if $answerScore == 1;
-		push @incorrect_ids, $name if $answerScore < 1;
+		$numEssay += $answerResult->{type} eq 'essay';
+		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
+
+		my $resultString;
+		if ($answerScore >= 1) {
+		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
+		    push @correct_ids,   $name if $answerScore == 1;
+		} elsif ($answerResult->{type} eq 'essay') {
+		    $resultString =  $r->maketext("Ungraded"); 
+		    $self->{essayFlag} = 1;
+		} elsif (not $answerScore) {
+		    push @incorrect_ids, $name if $answerScore < 1;
+		    $resultString = CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
+		} else {
+		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
+		    push @incorrect_ids, $name if $answerScore < 1;
+		}
 		
 		# need to capture auxiliary answers as well and identify their ids.
-		
-		
 		my $row;
 		#$row .= CGI::td($name);
 		if ($showEvaluatedAnswers) {
@@ -304,18 +312,20 @@ sub attemptResults {
 		if (scalar @answerNames == 1) {  #default messages
 				if ($numCorrect == scalar @answerNames) {
 					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("The answer above is correct."));
+				} elsif ($self->{essayFlag}) {
+				    $summary .= CGI::div($r->maketext("The answer will be graded later.", $fully));
 				 } else {
 					 $summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
 				 }
 		} else {
-				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the answers above are correct."));
+				if ($numCorrect + $numEssay == scalar @answerNames) {
+					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the [_1] answers above are correct.",  $numEssay ? "gradeable":""));
 				 } 
 				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
-				 elsif ($numBlanks != scalar( @answerNames)) {
+				 elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
 					$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
 				 }
-				 if ($numBlanks) {
+				 if ($numBlanks > $numEssay) {
 					my $s = ($numBlanks>1)?'':'s';
 					$summary .= CGI::div({class=>"ResultsAlert"},$r->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
 				 }
@@ -334,6 +344,7 @@ sub attemptResults {
 
 
 # Note: previewAnswer is lifted into GatewayQuiz.pm
+
 
 sub previewAnswer {
 	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
@@ -354,6 +365,8 @@ sub previewAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
+	} elsif ($answerResult->{type} eq 'essay') {
+	    return $tex;
 	} elsif ($displayMode eq "formattedText") {
 		
 		# read the TTH preamble, or use the cached copy passed in from the caller
@@ -817,9 +830,9 @@ sub head {
 	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script> 
+           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery/jquery.js"></script> 
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -984,6 +997,7 @@ sub body {
 	debug("end answer processing");
 	# output for templates that only use body instead of calling the body parts individually
 	$self ->output_JS;
+	$self ->output_tag_info;
 	$self ->output_custom_edit_message;
 	$self ->output_summary;
 	$self ->output_hidden_info;
@@ -1080,6 +1094,7 @@ sub output_editorLink{
 	my $editorLink = "";
 	my $editorLink2 = "";
 	my $editorLink3 = "";
+	my $editorLink4 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
@@ -1102,20 +1117,27 @@ sub output_editorLink{
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
 	}
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{simplepgeditor}) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::SimplePGEditor", $r, 
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
+		$editorLink4 = CGI::span(CGI::a({href=>$editorURL,target =>'Simple_Editor'}, $r->maketext("SimpleEdit")));
+	}
+
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink, " ", $editorLink2, " ", $editorLink3;
+			print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink, " ", $editorLink2, " ", $editorLink3;
+		print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
 	}
 	return "";
 }
@@ -1399,17 +1421,17 @@ sub output_summary{
 
 	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 
-		# print this if user submitted answers OR requested correct answers	    
+	    # print this if user submitted answers OR requested correct answers	    
 	    my $results = $self->attemptResults($pg, 1,
-			$will{showCorrectAnswers},
+						$will{showCorrectAnswers},
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
-
-           #If achievements enabled check to see if there are new ones.and print them
-	    if ($ce->{achievementsEnabled}) {
+	    
+	    #If achievements enabled check to see if there are new ones.and print them
+	    if ($ce->{achievementsEnabled} && $will{recordAnswers}) {
 		my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
 		print $achievementMessage;
 	    }
-
+	    
 	    print $results;
 
 	} elsif ($checkAnswers) {
@@ -1429,6 +1451,20 @@ sub output_summary{
 			# show attempt previews
 	}
 	
+	return "";
+}
+
+# output_tag_info
+# Puts the tags in the page
+
+sub output_tag_info{
+	my $self = shift;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	if ($authz->hasPermissions($user, "modify_tags")) {
+		print CGI::p(CGI::div("Tags go here"));
+	}
 	return "";
 }
 
@@ -1558,7 +1594,7 @@ sub output_hidden_info{
 
 # output_JS subroutine
 
-# prints out the wz_tooltip.js script for the current site.
+# prints out the legacy/vendor/wz_tooltip.js script for the current site.
 
 sub output_wztooltip_JS{
 	
@@ -1568,7 +1604,7 @@ sub output_wztooltip_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
 	return "";
 }
 
@@ -1587,16 +1623,16 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# This adds the dragmath functionality
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/dragmath.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/java_init.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
 	return "";
 }
 
