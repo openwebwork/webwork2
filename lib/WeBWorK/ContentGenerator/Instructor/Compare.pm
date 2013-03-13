@@ -111,7 +111,7 @@ sub body {
 	print '<hr size="5" color="blue" />';
 	if (scalar(@pathlist)>1) {
 		print CGI::h2('Diff output');
-		my $use_hdiff = 0;
+		my $use_hdiff = 1;
 		if($use_hdiff) {
 			# If you have hdiff installed, you can get colorized diffs
 			my $diffout = `hdiff -t " " -c "File 1" -C "File 2" -N $ce->{courseDirs}->{templates}/$pathlist[0] $ce->{courseDirs}->{templates}/$pathlist[1]`;

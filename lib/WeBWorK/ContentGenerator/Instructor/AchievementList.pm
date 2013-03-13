@@ -809,6 +809,7 @@ sub import_handler {
 	    #write achievement data.  The "format" for this isn't written down anywhere (!)
 	    my $achievement = $db->newAchievement();
 	    $achievement->achievement_id($achievement_id);
+	    $data[1] =~ s/\;/,/;
 	    $achievement->name($data[1]);
 	    $achievement->category($data[2]);
 	    $data[3] =~ s/\;/,/;
@@ -936,7 +937,9 @@ sub saveExport_handler {
 	#run through achievements outputing data as csv list.  This format is not documented anywhere
 	foreach my $achievement (@achievements) {
 	    print EXPORT $achievement->achievement_id.", ";
-	    print EXPORT $achievement->name.", ";
+	    my $name = $achievement->name;
+	    $name =~ s/,/\;/;
+	    print EXPORT $name.", ";
 	    print EXPORT $achievement->category.", ";
 	    my $description = $achievement->description;
 	    $description =~ s/,/\;/;

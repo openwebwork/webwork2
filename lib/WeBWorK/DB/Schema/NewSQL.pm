@@ -52,6 +52,18 @@ sub where_achievement_id_eq {
     return {achievement_id=>$achievement_id};
 }
 
+#can be used for past answers
+sub where_answer_id_eq {
+    my ($self, $flags, $answer_id) = @_;
+    return {answer_id=>$answer_id};
+}
+
+# can be used for past_answers
+sub where_course_id_eq_user_id_eq_set_id_eq_problem_id_eq {
+    my ($self, $flags, $course_id, $user_id, $set_id, $problem_id) = @_;
+    return {course_id=>$course_id, user_id=>$user_id, set_id=>$set_id, problem_id=>$problem_id};
+}
+
 # can be used for user,password,permission,key,set_user,problem_user
 sub where_user_id_like {
 	my ($self, $flags, $user_id) = @_;

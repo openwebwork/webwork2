@@ -1,0 +1,364 @@
+<div id="mainDiv">
+<div class="row-fluid">  
+  <div id='left-column' class='span2'></div>
+
+
+
+  <div class="row-fluid">
+    <!-- This is a list of all the parts of the page -->
+    <div  id="view-header-list" class="span7">
+    <div class="view-header active" data-view="calendar"> Calendar</div>
+    <div class="view-header" data-view="problem-set">Problem Set Details</div>
+    <div class="view-header" data-view="hw-set-list">List of all Problem Sets</div>
+    <div class="view-header" data-view="assign-users">Assign Sets to Users</div>
+    <div class="view-header" data-view="import-export">Import and Export Problem Sets</div>
+    <div class="view-header" data-view="settings">Settings</div>
+    <div class="view-header" data-view="view-all-subjects">View Problem Library by Subject</div>
+    <div class="view-header" data-view="view-all-libraries">View Problem Library by Directory</div>
+    <div class="view-header" data-view="search-libraries">Search the Problem Library</div>
+    <div class="view-header" data-view="view-local-libraries">View the Local Libraries</div>
+
+    </div>
+  <div  class='span3 pull-right'>
+    <!-- This is the pulldown menu at the top right of the page --> 
+    <div id="hw-manager-menu" class="btn-group">
+  <button class="btn">Change View</button>
+  <button class="btn dropdown-toggle" data-toggle="dropdown">
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu">
+  <li> <a class="link" data-link="calendar">View Calendar</a></li>
+  <li><a class="link" data-link="problem-set">View Problem Set</a></li>
+  <li><a class="link" data-link="hw-set-list">View All HW sets</a></li>
+  <li><a class="link" data-link="assign-users">Assign Sets to Users</a></li>
+  <li><a class="link" data-link="import-export">Import and Export HW sets</a></li>
+  <li><a class="link" data-link="settings">View HW Settings</a></li>
+  <li class="divider"></li>
+  <li><a class="link" data-link='view-all-subjects'>View All Library Subjects</a></li>
+  <li><a class="link" data-link="view-all-libraries">View Problems within a Library</a></li>
+  <li><a class="link" data-link="search-libraries">Search the Problem Library</a></li>
+  <li><a class="link" data-link="view-local-libraries">Browse The Local Libraries</a></li>
+
+  </ul>
+</div>
+</div>
+<div class="span10" id="main-view">
+  <div class="view-pane active" id="calendar">
+    <div id="progressbar"><div class="progress-label">Homework Manager Loading...</div></div></div>
+  <div class="view-pane" id="problem-set"></div>
+  <div class="view-pane" id="hw-set-list"></div>
+  <div class="view-pane" id="assign-users"></div>
+  <div class="view-pane" id="import-export"><p>The Importing and Exporting of homework sets is not implemented yet.</p> </div>
+  <div class="view-pane" id="settings"></div>
+  <div class="view-pane" id="view-all-subjects"></div>
+  <div class="view-pane" id="view-all-libraries"></div>
+  <div class="view-pane" id="search-libraries"><p>The Searching of the libraries is not implemented yet.</p></div>
+  <div class="view-pane" id="view-local-libraries"><p>The viewing of the local libraries is not implemented yet.</p></div>
+
+  </div>
+</div>
+</div>
+
+<script type="text/template" id="help-text">
+<h3>Help for the Homework Manager</h3>
+   <p>The Homework Manager is where all creating and editing of homwork sets takes place.  The left side of the 
+   page is a list of the homework sets and a button to create a new homework set. The rest of the page is a set of tabs that contain a Calendar View (default on opening), a List View, Homework Set Properties, Homework Problems, Library Browser,
+   Importing and Exporting Homework Sets and Settings.  Here are a number of the common features. 
+
+   <ul>
+   <li>To close the help, click the X in the upper left.  To reopen Help, click the "Help" button on the top bar. </li>
+   <li>To Create a New Homework, click on the "Create New Homework Set" button.  Put in the name of the set.</li>
+   <li>To change the due date of a homework set, you can drag the set from the left column to the day on the calendar.  
+   The open date and information about reduced credit will be set automatically based on the settings (for example, the reduced credit time is 3 days and the open date is 10 days before the due date.)</li>
+   <li>Further changes in the open date, due date and answer date can be made in the "Set Properties" tab. You must click on the homework set that you wish to make changes to. </li>
+   <li>To add problems to a homework set, use the Library Browser tab.  There are 4 views of the browser:
+   <ul>
+   <li> View By Subject, Chapter, Section:  This shows all problems narrowed by Subject (such as Algebra, Calculus, etc.).</li>
+   <li> View By Library Directory: If you know the problems come from a particular library (often listed by University), select this. </li>
+   <li> Search the Library:  You can search by keywords (or ?????) </li>
+   <li> Browse the Local Library:  These are the problems in your course ???? </li>
+   </ul></li>
+   <li> Once a set of problems appears from the browser, click and drag the desired problems onto the homework set on the left.  
+   </li>
+  <li>To view the problems in a homework set, click on the name of the set on the left.  The "Set Problems" tab opens and 
+  a list of the problems appear.  You can reorder the problems by clicking and dragging the problems and can delete a problems
+  by clicking the X at the top of a problem. Note: to undo the delete, click the "Undo Delete" button and the problem will be returned to the set at the end.   </li>
+
+   </ul>
+</p>
+    
+</script>
+
+<script type="text/template" id="modal-template">
+<div id="<%= id %>" class="modal hide fade">
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <%= header %>
+  </div>
+  <div class="modal-body">
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    <button class="btn btn-primary"><%= saveButton %></button>
+  </div>
+</div>
+
+</script>
+
+<script type="text/template" id="hw-set-list-template">
+<%if(loading){%>
+<div id="set-list">Loading Homework Sets...
+<img src='/webwork2_files/images/ajax-loader-small.gif'></div>
+<%} else {%>
+<div style='font-size:110%; font-weight:bold'>Homework Sets</div>
+<div class="prob-set-container">
+  <ul id='probSetList' class='btn-group btn-group-vertical'></ul>
+</div>
+<div class="btn-group dropup">
+
+  <a class="btn dropdown-toggle btn-small" data-toggle="dropdown" href="#">
+    Add or Delete a Set
+    <span class="caret"></span>
+  </a>
+<ul class="dropdown-menu">
+    <li><a class="link" data-link='add-new-hw-set'>Add a New Set</a></li>
+  <li><a class="link" data-link="delete-hw-set">Delete a Set</a></li>
+  </ul>
+  </div>
+
+<%}%>
+
+</script>
+
+<script type="text/template" id="add-hw-set-template">
+  <p>A new homework set with the name below will be created.  In addition, it will be assigned to you 
+  (user: <%= name %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p
+  <table><tr>
+    <td>Homework Set Name:</td>
+    <td><input type='text' size='20' id='hw-set-name'></td>
+    </tr>
+    </table>
+
+</script>
+
+<script type="text/template" id="delete-hw-set-template">
+ <p>Select the following sets that you wish to delete.  Note: this process is final and <b>cannont</b> 
+ be undone. </p>
+ <div id="delete-hw-set-list"></div>
+</script>
+
+<script type="text/template" id="problem-set-header">
+<div class='row-fluid'>
+  <div class='span5'>
+    <span style='font-size:125%; font-weight: bold '>Problems for <%= set %> </span>
+  </div>
+  <div class="span4 num-probs"></div>
+  <div class='span2 float-right'><button id='undo-delete-btn' class='btn btn-small'>Undo Delete</button> </div> 
+</div>
+<div id="list-of-problems" class='scrollable'></div>
+</script>
+
+<script type="text/template" id="hwset-dates-tmpl">
+<table class="table">
+<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<tbody>
+<tr class="due-date-row"></tr>
+<tr><td>HW Set visible to Users</td><td class='hwset-visible'></td></tr>
+<tr><td>Reduced Credit Enabled</td><td class='reduced-credit'></td></tr>
+</tbody>
+</table>
+</script>
+
+<script type="text/template" id="users-assigned-tmpl">
+<p>Assign the problem set to the selected users.  Those highlighted already are assigned.</p>
+
+
+<table class="table">
+<tr id="users-assigned-row"></tr>
+<tr>
+<td><label for="classlist-select-all"> <input type="checkbox" id="classlist-select-all">&nbsp;Select All</label></td>
+<td><button id='assign-to-selected-users-button' class='btn'>Assign to Selected Users</button></td>
+<td></td></tr>
+</table>
+
+</script>
+
+<script type="text/template" id="custom-assign-tmpl">
+<p>Select the users below, change the desired due dates by clicking on the date or time.  Finally 
+click the "Save Changes" button.</p>
+<table class="table">
+<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<tbody>
+<tr class="due-date-row"></tr>
+<tr id="custom-user-row"></tr>
+<tr><td><label for="custom-select-all"> <input type="checkbox" id="custom-select-all">&nbsp;Select All</label></td> 
+<td><button class='btn' id="custom-save-changes">Save Changes</button></td>
+<td><button class='btn' id="unassign-users">Unassign Users from this Set</button></td>
+</tr>
+</tbody>
+</table>
+
+</script>
+
+
+
+<script type="text/template" id="user-template">
+<li><input class='classlist-li' type='checkbox' data-username='<%= user %>' id='li-<%= cid %>'>
+    <label class='checklist' for='li-<%= cid %>'> <%= firstname %> <%= lastname %> ( <%= user %> ) </label></li>
+
+</script>
+
+
+
+
+<script type="text/template" id="calendar-template">
+<div id="calendar-error-bar"></div>
+<div class="calendar-button-row">
+<button type="button" class="previous-week btn btn-small"><i class="icon-chevron-left"></i>Previous Week</button>
+
+<button type="button" class="view-month btn btn-small">Month View</button>
+<button type="button" class="view-week btn btn-small">Week View</button>
+<button type="button" class="next-week btn btn-small">Next Week<i class="icon-chevron-right"></i></button>
+</div>
+
+<table id='calendar-table' class='table-bordered'>
+    <thead>
+    <th>Sunday</th>
+    <th>Monday</th>
+    <th>Tuesday</th>
+    <th>Wednesday</th>
+    <th>Thursday</th>
+    <th>Friday</th>
+    <th>Saturday</th>
+</thead><tbody></tbody>
+<table id='calendar-table' class='table-bordered'></table>
+<div class="calendar-button-row">
+<button type="button" class="previous-week btn btn-small"><i class="icon-chevron-left"></i>Previous Week</button>
+<button type="button" class="view-month btn btn-small">Month View</button>
+<button type="button" class="view-week btn btn-small">Week View</button>
+<button type="button" class="next-week btn btn-small">Next Week<i class="icon-chevron-right"></i></button>
+</div>
+
+</script>
+
+<script type="text/template" id="calendar-date-bar">
+<div class="<%= classes %>" data-set="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Open To Students: <%=openToStudents%>"><span><%if(showName){%><%=setname %><%}%></span></div>
+
+</script>
+
+<script type="text/template" id="too-many-assignments-error">
+There are too many overlapping assignments to view efficiently.  You have been switched to week view for 
+a better rendering. 
+</script>
+
+<script type="text/template" id="settings-template">
+    <p>The following are homework settings relevant to the the Homework Manager.</p>
+    
+    <table class="table table-bordered" id="settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+</table>
+    
+</script>
+
+
+<script type="text/template" id="HW-detail-template">
+<ul class="nav nav-tabs" id="problem-set-tabs">
+  <li class="active"><a href="#problem-list-tab" data-toggle="tab">Problems</a></li>
+  <li><a href="#property-tab" data-toggle="tab">Properties</a></li>
+  <li><a href="#user-assign-tab" data-toggle="tab">Assign to Users</a></li>
+  <li><a href="#user-customize-tab" data-toggle="tab">Customize Set to Users</a></li>
+</ul>
+ 
+<div class="tab-content">
+  <div class="tab-pane active" id="problem-list-tab"><p>Click on a Problem Set Name on the left to view the set.</p></div>
+  <div class="tab-pane" id="property-tab"></div>
+  <div class="tab-pane" id="user-assign-tab"></div>
+  <div class="tab-pane" id="user-customize-tab"></div>
+</div> 
+</script>
+
+<script type="text/template" id="problem-set-props-template">
+
+</script>
+
+<script type="text/template" id="assign-users-template">
+<p>Select the users and the problem sets then click the button to change the assignment dates. </p>
+<p><button type="button" id="assign-users-sets" class="btn">Assign Users to Sets</button></p>
+
+<table class="table">
+<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<tbody>
+<tr id="assign-users-due-date-row"></tr>
+</tbody>
+</table>
+
+<table class="table">
+<thead>
+<tr><th>Users</th><th><input type="checkbox" id="select-users-checkbox" class="select-all">&nbsp;Select All</th>
+<th>Sets</th><th><input type="checkbox" id="select-sets-checkbox" class="select-all">&nbsp;Select All</th></tr>
+</thead>
+<tbody>
+<tr><td colspan="2"><ul id='assign-users-list' class="no-bullets scrollable"></ul></td>
+<td colspan="2"><ul id='assign-sets-list' class="no-bullets scrollable"></ul></td></tr>
+</tbody>
+</table>
+
+
+
+
+</script>
+
+
+<script type="text/template" id="old-library-browswer-template">
+<div class="btn-group span2">
+
+  <a class="btn dropdown-toggle btn-small" data-toggle="dropdown" href="#">
+    View
+    <span class="caret"></span>
+  </a>
+<ul class="dropdown-menu">
+    <li><a class="link" data-link='view-all-subjects'>View All Library Subjects</a></li>
+  <li><a class="link" data-link="view-all-libraries">View Problems within a Library</a></li>
+  <li><a class="link" data-link="search-libraries">Search the Problem Library</a></li>
+  <li><a class="link" data-link="view-local-libraries">Browse The Local Libraries</a></li>
+  </ul>
+  </div>
+
+</script>
+
+
+<script type="text/template" id="library-browser-template">
+
+
+<div class="row-fluid">
+<div class="library-viewer span10"></div>
+</div>
+<div class="lib-problem-viewer"> </div>
+</script>
+
+<script type="text/template" id="library-tree-template">
+<span class='library-tree-left'><span class='throbber'><img src='/webwork2_files/images/ajax-loader-small.gif'></span></span>
+<span class="library-tree-right"></span> 
+</script>
+
+
+
+<script type="text/template" id="problem-template">
+<div class="handle row-fluid">
+<%if(reorderable){%><div class="span1"><i class="icon-resize-vertical icon-large"></i></div><%}%>
+<%if(showPoints){%><div class="span2"> Problem value:<input class="prob-value" type="text" value="<%=value%>" size="5"></div><%}%>
+<div class="span2 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
+<%if(deletable){ %><span class="remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
+<div class="problem" data-path="<%= path %>" data-source="<%= type %>">
+
+<%= data %>
+</script>
+
+<script type="text/template" id="setting-row-template">
+<td> <%= doc %> <button class='btn btn-small help-button' style='margin-left: 25px'>
+  <i class='icon-question-sign'></i></button>
+  <div class="help-hidden">
+  <button class="close">&times;</button>
+  <%=doc2%></div>
+
+  </td>
+</script>
