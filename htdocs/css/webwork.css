@@ -1,0 +1,13 @@
+.Body{
+    padding: 10px;
+    padding-top: 50px;
+
+}
+
+#navigation-menu { width: 250px;}
+
+
+.breadcrumb {padding: 2px 15px ;}  //overrides the bootstrap css
+
+.breadcrumb li:last {font-size: 150%;}
+
