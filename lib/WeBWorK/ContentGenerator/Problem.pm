@@ -1734,19 +1734,19 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# This adds the dragmath functionality
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/dragmath.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/java_init.js"}), CGI::end_script();
+	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
 	
 	# The Base64.js file, which handles base64 encoding and decoding.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/Base64.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
 	
 	
 	return "";

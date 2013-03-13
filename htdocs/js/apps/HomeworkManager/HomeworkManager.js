@@ -5,21 +5,21 @@
 
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/vendor/backbone",
-        "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-ui",
-        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
-        "util":                 "/webwork2_files/js/lib/webwork/util",
-        "XDate":                "/webwork2_files/js/lib/vendor/xdate",
-        "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
+        "Backbone":             "/webwork2_files/js/vendor/backbone/backbone",
+        "backbone-validation":  "/webwork2_files/js/vendor/backbone/modules/backbone-validation",
+        "jquery-ui":            "/webwork2_files/js/vendor/jquery/jquery-ui",
+        "underscore":           "/webwork2_files/js/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/vendor/jquery/jquery",
+        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
+        "util":                 "/webwork2_files/js/lib/util",
+        "XDate":                "/webwork2_files/js/vendor/other/xdate",
+        "WebPage":              "/webwork2_files/js/lib/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable",
-        "datepicker":           "/webwork2_files/js/lib/vendor/datepicker/js/bootstrap-datepicker",
-        "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min",
-        "jquery-tablesorter":   "/webwork2_files/js/lib/vendor/jquery.tablesorter.min",
-        "jquery-imagesloaded":  '/webwork2_files/js/lib/vendor/jquery.imagesloaded.min'
+        "Closeable":            "/webwork2_files/js/lib/views/Closeable",
+        "datepicker":           "/webwork2_files/js/vendor/datepicker/js/bootstrap-datepicker",
+        "jquery-truncate":      "/webwork2_files/js/vendor/jquery/modules/jquery.truncate.min",
+        "jquery-tablesorter":   "/webwork2_files/js/vendor/jquery/modules/jquery.tablesorter.min",
+        "jquery-imagesloaded":  '/webwork2_files/js/vendor/jquery/modules/jquery.imagesloaded.min'
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -40,18 +40,18 @@ require.config({
 
 require(['Backbone', 
     'underscore',
-    '../../lib/webwork/models/UserList',
-    '../../lib/webwork/models/ProblemSetList',
-    '../../lib/webwork/models/Settings',   
-    '../../lib/webwork/views/CalendarView',
+    '../../lib/models/UserList',
+    '../../lib/models/ProblemSetList',
+    '../../lib/models/Settings',   
+    '../../lib/views/CalendarView',
     './HWDetailView',
-    '../../lib/webwork/views/ProblemSetListView',
+    '../../lib/views/ProblemSetListView',
     './SetListView',
     './LibraryBrowser',
     './AssignUsersView',
     'WebPage',
     'config',
-    '../../lib/webwork/views/WWSettingsView',
+    '../../lib/views/WWSettingsView',
     'backbone-validation',
     'jquery-ui',
     'bootstrap',
@@ -101,7 +101,6 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         this.problemSets.fetch();
         this.problemSets.on("fetchSuccess",this.postProblemSetsFetched);
         config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
-        this.HWSettingsView.render();
     },
     postProblemSetsFetched: function (data){
         var self=this;
@@ -146,7 +145,8 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
                     var source = $(ui.draggable).data("source");
                     console.log(source);
                     var set = self.problemSets.find(function (set) { return set.get("set_id")===""+$(event.target).data("setname");});
-                    var prob = self[source].problemList.find(function(prob) { return prob.get("path")===$(ui.draggable).data("path");})
+                    var prob = self.views.libraryBrowser.views[source].problemList.find(function(prob) 
+                            { return prob.get("path")===$(ui.draggable).data("path");});
                     set.addProblem(prob);
                 }
             });
@@ -156,44 +156,34 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         });
 
         this.probSetListView.render();
-        this.setListView.render();
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
 	    var self = this; 
             
-        this.probSetListView = new ProblemSetListView({el: $("#left-column"), viewType: "Instructor",
+        this.probSetListView = new ProblemSetListView({el: $("#hw-set-list-container"), viewType: "Instructor",
                                     collection: this.problemSets, parent: this});
         this.probSetListView.render();   
         
-        $("#settings").html(_.template($("#settings-template").html()));
-
-
-        $("#hw-manager-menu a.link").on("click", function (evt) {  self.changeView($(evt.target).data("link")) });
-
-    
         // render the parts of the Homework Manager. 
 
-        this.HWDetails           = new HWDetailView({el: $("#problem-set"),  collection: this.problemSets,parent: this});
-        this.setListView         = new SetListView({el:$("div#hw-set-list"), collection: this.problemSets, parent: self});
-        this.libDirectoryBrowser = new LibraryBrowser({el:  $("#view-all-libraries"), id: "view-all-libraries", parent: this});
-        this.libSubjectBrowser   = new LibraryBrowser({el:  $("#view-all-subjects"), id: "view-all-subjects", parent: this});
-        this.assignUsersView     = new AssignUsersView({el: $("#assign-users"), id: "view-assign-users", parent: this});
-        this.HWSettingsView      = new HWSettingsView({parent: self, el: $("#settings-table")});
 
     },
+    events: {"click #hw-manager-menu a.link": "changeView"},
     showHWdetails: function(evt){
         if (this.objectDragging) return;
-        this.changeView("problem-set");
-        this.HWDetails.render();
-        this.HWDetails.changeHWSet($(evt.target).data("setname")); 
+        this.changeView(null,"setDetails", "Set Details");
+        this.views.setDetails.render();
+        this.views.setDetails.changeHWSet($(evt.target).data("setname")); 
     },
-    changeView: function (linkname){
-
-        $(".view-header").removeClass("active");
-        $(".view-header[data-view='" + linkname + "']").addClass("active");
+    changeView: function (evt,link,header){
+        var linkname = (link)?link:$(evt.target).data("link");
+        //$(".view-header").removeClass("active");
+        //$(".view-header[data-view='" + linkname + "']").addClass("active");
         $(".view-pane").removeClass("active");
         $("#"+linkname).addClass("active");
+        $("#viewHeader").html((header)?header:$(evt.target).data("name"));
+        this.views[linkname].render();
     },
     setupMessages: function () {
         var self = this;
@@ -221,12 +211,22 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
     },
     postHWLoaded: function ()
     {
-        var self = this;
-
-        self.calendarView = new CalendarView({el: $("#calendar"), parent: this, 
-                collection: this.problemSets, view: "instructor", viewType: "month"});
         
-        self.setDropToEdit();        
+        this.setDropToEdit();        
+
+        this.views = {
+            calendar : new CalendarView({el: $("#calendar"), parent: this, 
+                collection: this.problemSets, view: "instructor", viewType: "month"}),
+            setDetails:  new HWDetailView({el: $("#setDetails"),  collection: this.problemSets,parent: this}),
+            allSets:  new SetListView({el:$("#allSets"), collection: this.problemSets, parent: self}),
+            assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", parent: this}),
+            importExport:  new ImportExport(),
+            libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), parent: this}),
+            settings      :  new HWSettingsView({parent: this, el: $("#settings")})
+        };
+
+
+        this.views.calendar.render();
         
         // Set the popover on the set name
         $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
@@ -292,16 +292,29 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
 var HWSettingsView = WWSettingsView.extend({
     initialize: function () {
-//        _.bindAll(this,'render','edit');
-        this.parent = this.options.parent; 
-        this.settings = this.parent.settings.filter(function (setting) {return setting.get("category")==='PG - Problem Display/Answer Checking'});
+        _.bindAll(this,'render');
+
+        this.settings = this.options.parent.settings.filter(function (setting) {return setting.get("category")==='PG - Problem Display/Answer Checking'});
         this.constructor.__super__.initialize.apply(this,{settings: this.settings});
      }, 
      render: function () {
+        $("#settings").html(_.template($("#settings-template").html()));
         this.constructor.__super__.render.apply(this);
+
+    
      }
 
 });
+
+var ImportExport = Backbone.View.extend({
+    initialize: function (){
+        _.bindAll(this,"render");
+    },
+    render: function () {
+
+    }
+});
+
     
     var App = new HomeworkEditorView({el: $("div#mainDiv")});
 });
