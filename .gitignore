@@ -18,3 +18,4 @@ node_modules
 node_modules/*
 WeBWorK.sublime-project
 WeBWorK.sublime-workspace
+conf/*.apache-config
