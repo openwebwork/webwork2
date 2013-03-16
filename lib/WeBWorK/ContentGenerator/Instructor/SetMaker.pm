@@ -1460,15 +1460,12 @@ sub head {
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
   print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
 
-  print qq!<script src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/jquery-ui-1.8.18.custom.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/jquery.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/backbone.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/WeBWorK.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/teacher.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
