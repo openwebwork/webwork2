@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.23 2008/06/24 22:54:04 gage Exp $
+# Copyright © 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -18,22 +17,37 @@
 # support in your Apache configuration, add the following line to the end of
 # your Apache configuration file (usually apache.conf or httpd.conf):
 # 
-#     Include /path/to/webwork.apache-config
+#     Include /path/to/webwork.apache2-config
 # 
-# Customize the variables below to match your WeBWorK installation.
+# Customize the variable $webwork_dir below to match the location of your
+# WeBWorK installation.
+# 
+# ATTENTION APACHE 2.2 USERS: There is a bug in mod_perl 2.0.2 that prevents the
+#                             FollowSymlinksOption from working when specified
+#                             in a <Perl> section. See below for workaround.
+
 
 # Uncomment the ScriptAliasMatch to allow access to show-source.cgi
 # This allows the "show source" button to work for demonstration "courses"
 # See for example Davide Cervone's Knoxville lectures on math objects
+# It requires that a show-source.cgi script be customized and placed in 
+# the myCourse/html  directory of the course
+# The "show source" button is most useful for webwork "courses" used to train new authors
+# It is not desirable to expose the code of regular homework questions to students
 
-#ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
+ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
 
+
+
+PerlModule mod_perl2
 
 <Perl>
 
+#################################################################
 # Set this variable to the path to your WeBWorK installation.
-my $webwork_dir = "/opt/webwork/webwork2";
+#################################################################
 
+my $webwork_dir = "/opt/webwork/webwork2";
 # Cache this value for use by other scripts not necessarily in the Apache2 hierarchy
 # Different scripts use different locations :-)
 
@@ -41,17 +55,42 @@ $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
 
-# This code reads defaults.config and extracts the remaining configuration
+
+#################################################################
+# The following code reads defauls.config and extracts the remaining configuration
 # variables. There is no need to modify it.
+#################################################################
+
+# link to WeBWorK code libraries
 eval "use lib '$webwork_dir/lib'"; die $@ if $@;
 eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+
+# grab course environment (by reading webwork2/conf/defaults.config)
 my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
-my $webwork_url = $ce->{webwork_url};
-my $pg_dir = $ce->{pg_dir};
-my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};
-my $webwork_courses_url = $ce->{webwork_courses_url};
-my $webwork_courses_dir = $ce->{webwork_courses_dir};
+
+#  set important configuration variables (from defaults.config)
+
+my $webwork_url = $ce->{webwork_url};                    # e.g.  /webwork2
+my $pg_dir = $ce->{pg_dir};                              # e.g.  /opt/webwork/pg         
+my $webwork_htdocs_url = $ce->{webwork_htdocs_url};      # e.g.  /webwork2_files
+my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/webwork2/htdocs
+my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
+my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/courses
+
+
+#################################################################
+# report server setup when child process starts up -- for example when restarting the server
+#################################################################
+print "webwork.apache2-config:  WeBWorK server is starting\n";
+print "webwork.apache2-config:  WeBWorK root directory set to $webwork_dir in webwork2/conf/webwork.apache2-config\n";
+print "webwork.apache2-config:  The following locations and urls are set in webwork2/conf/site.conf\n";
+print "webwork.apache2-config:  PG root directory set to $pg_dir\n";
+print "webwork.apache2-config:  WeBWorK server userID is ", $ce->{server_userID}, "\n";
+print "webwork.apache2-config:  WeBWorK server groupID is ", $ce->{server_groupID}, "\n";
+print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
+
+
+# link to PG code libraries
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
 
 require Apache::WeBWorK; # force compilation of pretty much everything
@@ -81,11 +120,10 @@ $Location{$webwork_url} = {
 # Provide access to system-wide resources.
 # 
 push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
-# make sure old alias is available even if we use lighttpd
-push @Alias, [ "/webwork2_files" => $webwork_htdocs_dir ];
 $Directory{$webwork_htdocs_dir} = {
 	Order => "allow,deny",
 	Allow => "from all",
+	# APACHE 2.2 USERS: comment out the following line.
 	Options => "FollowSymLinks",
 	AllowOverride => "none",
 };
@@ -96,6 +134,7 @@ push @AliasMatch, [ "$webwork_courses_url/([^/]*)/(.*)", "$webwork_courses_dir/\
 $Directory{"$webwork_courses_dir/*/html"} = {
 	Order => "allow,deny",
 	Allow => "from all",
+	# APACHE 2.2 USERS: comment out the following line.
 	Options => "FollowSymLinks",
 	AllowOverride => "none",
 };
@@ -108,90 +147,71 @@ if ($webwork_url eq "") {
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
 
-
-# The following stanzas can be uncommented to enable various experimental
-# WeBWorK web services. These are still in testing and have not been audited
-# for security.
-
-# uncomment the line below if you use the XMLRPC, RQP, or SOAP installations below
-
-$ENV{WEBWORK_ROOT} = $webwork_dir;
-
-$PerlConfig .= <<EOF;
-# ##### Sam's WeBWorK::Request-based XML-RPC testbed #####
-# #
-# #PerlModule WeBWorK::RPC
-# #<Location /webwork2_rpc>
-# #	SetHandler perl-script
-# #	PerlHandler Apache::XMLRPC::Lite
-# #	PerlSetVar dispatch_to "WeBWorK::RPC WeBWorK::RPC::CourseManagement"
-# #</Location>
-# 
-# ########## XMLRPC installation ##########
-# # 
-# #PerlModule WebworkWebservice
-# #<Location /mod_xmlrpc>
-# #	SetHandler perl-script
-# #	PerlHandler Apache::XMLRPC::Lite
-# #	PerlSetVar dispatch_to "WebworkXMLRPC"
-# #	PerlSetVar options "compress_threshold => 10000"
-# #	Order Allow,Deny
-# #	Allow from All
-# #</Location>
-# 
-# ##########  RQP installation ##########
-# # 
-# #PerlModule RQP
-# ##<Location /rqp>
-# ##	SetHandler perl-script
-# ##	PerlHandler Apache::SOAP
-# ##	PerlSetVar dispatch_to "RQP"
-# ##	PerlSetVar options "compress_threshold => 10000"
-# ##	Order Allow,Deny
-# ##	Allow from All
-# ##</Location>
-# #<Location /rqp>
-# #	SetHandler perl-script
-# #	PerlHandler MySOAP
-# #	Order Allow,Deny
-# #	Allow from All
-# #</Location>
-# 
-# ########## SOAP installation ##########
-# # 
-# #PerlModule WebworkWebservice
-# #<Location /mod_soap>
-# #	SetHandler perl-script
-# #	PerlHandler Apache::SOAP
-# #	PerlSetVar dispatch_to "WebworkXMLRPC" 
-# #	PerlSetVar options "compress_threshold => 10000"
-# #	Order Allow,Deny
-# #	Allow from All
-# #</Location>
-# 
-# PerlModule WebworkSOAP
-
-# #WEBWORK SOAP CONFIGURATION
-# <Location /webwork2_rpc>
-#         PerlHandler Apache::SOAP
-#         SetHandler perl-script
-#         PerlSetVar dispatch_to "WebworkSOAP"
-#         PerlSetVar options "compress_threshold => 10000"
-#         Order Allow,Deny
-#         Allow from All
-# </Location>
-
-# #WEBWORK SOAP WSDL HANDLER :: TO BE REPLACED WITH A FILE FOR PRODUCTION SERVERS
-# <Location /webwork2_wsdl>
-#         PerlSetVar dispatch_to "WebworkSOAP::WSDL"
-#         PerlSetVar options "compress_threshold => 10000"
-#         PerlHandler WebworkSOAP::WSDL
-#         SetHandler perl-script
-#         Order Allow,Deny
-#         Allow from All
-# </Location>
-
-EOF
-
 </Perl>
 
+####################################################################
+# WebworkSOAP handlers (for integration with moodle)
+####################################################################
+ PerlModule WebworkSOAP
+
+ # WEBWORK SOAP CONFIGURATION
+ <Location /webwork2_rpc>
+         PerlHandler Apache2::SOAP
+         SetHandler perl-script
+         PerlSetVar dispatch_to "WebworkSOAP"
+         PerlSetVar options "compress_threshold => 10000"
+         Order Allow,Deny
+         Allow from All
+ </Location>
+
+####################################################################
+# WebworkSOAP WSDL HANDLER :: TO BE REPLACED WITH A FILE FOR PRODUCTION SERVERS
+####################################################################
+ <Location /webwork2_wsdl>
+         PerlSetVar dispatch_to "WebworkSOAP::WSDL"
+         PerlSetVar options "compress_threshold => 10000"
+         PerlHandler WebworkSOAP::WSDL
+         SetHandler perl-script
+         Order Allow,Deny
+         Allow from All
+ </Location>
+
+
+####################################################################
+# WebworkWebservice handlers -- for integration with external editor
+####################################################################
+
+
+########### WebworkWebservice XMLRPC handler ##########
+
+PerlModule WebworkWebservice
+
+<Location /mod_xmlrpc>
+	SetHandler perl-script
+	PerlHandler Apache::XMLRPC::Lite
+	PerlSetVar dispatch_to "WebworkXMLRPC"
+	PerlSetVar options "compress_threshold => 10000"
+	Order Allow,Deny
+	Allow from All
+</Location>
+
+
+
+########## WebworkWebservice SOAP handler ##########
+
+#PerlModule WebworkWebservice
+#
+#<Location /mod_soap>
+#	SetHandler perl-script
+#	PerlHandler Apache::SOAP
+#	PerlSetVar dispatch_to "WebworkXMLRPC" 
+#	PerlSetVar options "compress_threshold => 10000"
+#	Order Allow,Deny
+#	Allow from All
+#</Location>
+
+####################################################################
+# WebworkSOAP  "bridge2" handler 
+####################################################################
+
+# Include /opt/webwork/wwqs/conf/problemserver.apache-config
