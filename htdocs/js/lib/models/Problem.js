@@ -6,13 +6,11 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
      * @type {*}
      */
     var Problem = Backbone.Model.extend({
-        defaults:function () {
-            return{
-                path:"",
+        defaults:{  path:"",
                 data: null,
                 place: 0,
                 value: 1,
-            };
+                displayMode: "MathJax"
         },
     
         initialize:function () {
@@ -24,7 +22,8 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             var requestObject = {
                 problemSource: this.get('path'),
                 xml_command: "renderProblem",
-                displayMode: "images"
+                displayMode: this.get("displayMode"),
+                problemSeed: this.get("problemSeed")
             };
             _.defaults(requestObject, config.requestObject);
     

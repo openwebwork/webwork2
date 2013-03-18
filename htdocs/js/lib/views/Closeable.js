@@ -56,11 +56,12 @@ define(['Backbone', 'underscore','../../lib/models/MessageList','../../lib/model
                 this.$el.height(0.3*screen.height);
             }
         },
-        addMessage: function (_text, _expiration){
+        addMessage: function (props){
             var self = this;
-            var msg = new Message({text: _text, expiration: _expiration});
+            var msg = new Message(props);
             this.messages.add(msg);
             this.showMessages();
+            //console.log("add message " + _text + " for " + _expiration + " seconds. ");
             setTimeout(function () {self.removeMessage(msg)}, 1000*parseInt(msg.get("expiration")));
         },
         removeMessage: function (msg) {

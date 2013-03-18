@@ -17,7 +17,7 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
             this.reducedScoringMinutes = this.parent.settings.find(function(setting) { return setting.get("var")==="pg{ansEvalDefaults}{reducedScoringPeriod}";}).get("value");
 
             if ((this.timeSlot.length>5) && (this.viewType === "month")) {
-                this.parent.errorPane.addMessage($("#too-many-assignments-error").html());
+                this.parent.errorPane.addMessage({text: $("#too-many-assignments-error").html()});
                 this.viewType = "week";
             }
 

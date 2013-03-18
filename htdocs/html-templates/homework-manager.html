@@ -252,10 +252,10 @@ a better rendering.
 
 <script type="text/template" id="HW-detail-template">
 <ul class="nav nav-tabs" id="problem-set-tabs">
-  <li class="active"><a href="#problem-list-tab" data-toggle="tab">Problems</a></li>
-  <li><a href="#property-tab" data-toggle="tab">Properties</a></li>
-  <li><a href="#user-assign-tab" data-toggle="tab">Assign to Users</a></li>
-  <li><a href="#user-customize-tab" data-toggle="tab">Customize Set to Users</a></li>
+  <li class="active"><a href="#problem-list-tab" data-toggle="tab" data-view="problemsView">Problems</a></li>
+  <li><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
+  <li><a href="#user-assign-tab" data-toggle="tab" data-view="usersAssignedView">Assign to Users</a></li>
+  <li><a href="#user-customize-tab" data-toggle="tab" data-view="customizeUserAssignView">Customize Set to Users</a></li>
 </ul>
  
 <div class="tab-content">
@@ -268,6 +268,14 @@ a better rendering.
 
 <script type="text/template" id="problem-set-props-template">
 
+</script>
+
+<script type="text/template" id="problem-list-template">
+<div class="row"><div class="span3 pull-right">
+Display Mode: <select class="display-mode-options input-small"></select>
+</div>
+</div>
+<ul id='prob-list' class='no-bullets'></ul>
 </script>
 
 <script type="text/template" id="assign-users-template">
@@ -336,17 +344,23 @@ a better rendering.
 
 
 <script type="text/template" id="problem-template">
+<div class="span4 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
 <div class="handle row-fluid">
-<%if(showTools){%><span class="add-problem"><i class="icon-plus-sign"></i></span> <%}%>
-<%if(reorderable){%><div class="span1"><i class="icon-resize-vertical icon-large"></i></div><%}%>
-<%if(showPoints){%><div class="span2"> Problem value:<input class="prob-value" type="text" value="<%=value%>" size="5"></div><%}%>
-<div class="span2 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
-<%if(showTools){%><a target="WW_editor" href="<%=editUrl%>"><i class="icon-pencil"></i></a>
-<span class="refresh-problem"><i class="icon-refresh"></i></span>    
-<a target="WW_view" href='<%=viewUrl%>'><i class="icon-eye-open"></i></a>    
-<span class="hide-problem link">&times;</span>
+<%if(reorderable){%><div class="span1"><a class="reorder-handle btn btn-small" href="#"><i class="icon-resize-vertical icon-large"></i></a></div><%}%>
+<%if(showPoints){%>
+<div class="span3 form-">
+    <label class="control-label">Value: 
+      <input type="text" class="prob-value input-small"></label>
+  </div>
 <%}%>
-<%if(deletable){ %><span class="remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
+<div class="span4 btn-group">
+<%if(showAddTool){%><a class="btn btn-small" href="#" class="add-problem"><i class="icon-plus-sign"></i></a><%}%>
+<%if(showEditTool){%><a class="btn btn-small" target="WW_editor" href="<%=editUrl%>"><i class="icon-pencil"></i></a><%}%>
+<%if(showRefreshTool){%><a href="#"  class="btn btn-small refresh-problem"><i class="icon-refresh"></i></a><%}%>    
+<%if(showViewTool){%><a class="btn btn-small" target="WW_view" href='<%=viewUrl%>'><i class="icon-eye-open"></i></a><%}%>    
+<%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link">&times;</a><%}%>
+</div>
+<%if(deletable){ %><span class="span1 remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
 <div class="problem" data-path="<%= path %>" data-source="<%= type %>">
 
 <%= data %>

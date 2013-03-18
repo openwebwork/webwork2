@@ -66,7 +66,8 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                     if (problems[i] != "") {
                         newProblems.push(new Problem({path:problems[i],place: i}));
                     }
-                }  
+                } 
+                console.log(self);
                 self.reset(newProblems);
                 self.trigger("fetchSuccess");
             });
@@ -130,6 +131,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         $.post(config.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
             console.log(response);
+            self.trigger("reordered");
         });
     }
 

@@ -59,42 +59,37 @@ require(['Backbone',
     ], 
 function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetailView, 
             ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView){
-    var HomeworkEditorView = WebPage.extend({
-	    tagName: "div",
-        initialize: function(){
-    	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-    	    _.bindAll(this, 'render','postHWLoaded','setDropToEdit','setupMessages','postSettingsFetched',
-                            'postProblemSetsFetched',"showHWdetails");  // include all functions that need the this object
-    	    var self = this;
-            this.dispatcher = _.clone(Backbone.Events);
+var HomeworkEditorView = WebPage.extend({
+    tagName: "div",
+    initialize: function(){
+	    this.constructor.__super__.initialize.apply(this, {el: this.el});
+	    _.bindAll(this, 'render','postHWLoaded','setDropToEdit','setupMessages','postSettingsFetched',
+                        'postProblemSetsFetched',"showHWdetails");  // include all functions that need the this object
+	    var self = this;
+        this.dispatcher = _.clone(Backbone.Events);
 
-            this.settings = new Settings();  // need to get other settings from the server.  
-            this.settings.fetch();
-            this.settings.on("fetchSuccess",this.postSettingsFetched);
-            this.problemSets = new ProblemSetList({type: "Instructor"});
-            
-            this.preloading();
-
-            /* There's a lot of things that need to be loaded as the App starts:
-             *    1. The settings
-             *    2. The ProblemSets
-             *    3. The set of assigned Users for each Problem Set
-             *    4. All Users of the course
-             *
-             *   The tricky part is to load all of these but don't wait until everything is loaded to show the page. 
-             *
-             */ 
-
-
-
-            this.dispatcher.on("calendar-change", self.setDropToEdit);
-            this.users = new UserList();
-            this.users.fetch();
-            this.users.on("fetchSuccess", function (data){ console.log("users loaded");}); 
-                
-        },
-    preloading: function() {
+        this.settings = new Settings();  // need to get other settings from the server.  
+        this.settings.fetch();
+        this.settings.on("fetchSuccess",this.postSettingsFetched);
+        this.problemSets = new ProblemSetList({type: "Instructor"});
         
+        /* There's a lot of things that need to be loaded as the App starts:
+         *    1. The settings
+         *    2. The ProblemSets
+         *    3. The set of assigned Users for each Problem Set
+         *    4. All Users of the course
+         *
+         *   The tricky part is to load all of these but don't wait until everything is loaded to show the page. 
+         *
+         */ 
+
+
+
+        this.dispatcher.on("calendar-change", self.setDropToEdit);
+        this.users = new UserList();
+        this.users.fetch();
+        this.users.on("fetchSuccess", function (data){ console.log("users loaded");}); 
+            
     },
     postSettingsFetched: function (collection, response, options){
         this.render();
@@ -109,7 +104,7 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
         this.problemSets.each(function(_set,i){
             setsLoaded.push({set: _set.get("set_id"), loaded: false, pos: i}); 
             _set.getAssignedUsers();
-            _set.on("usersLoaded", function(set){
+            _set.on("usersLoaded", function(set){  // wait for all of the users to be loaded and set the progress bar. 
 
                 console.log("users Loaded for set " + set.get("set_id"));
                 var foundSet = _(setsLoaded).find(function(obj){ return obj["set"]===set.get("set_id")});
@@ -196,16 +191,16 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
             self.setDropToEdit();
             var keys = _.keys(_set.changed);
             _(keys).each(function(key) {
-                self.announce.addMessage("The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]);    
+                self.announce.addMessage({text: "The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]});    
             })
         });
         
         this.problemSets.on("problem-set-added", function (set){
-            self.announce.addMessage("The HW set with name " + set.get("set_id") + " was created.");
+            self.announce.addMessage({text: "The HW set with name " + set.get("set_id") + " was created."});
         });
 
         this.problemSets.on("problem-set-deleted",function(set){
-            self.announce.addMessage("The HW set with name " + set.get("set_id") + " was deleted.");
+            self.announce.addMessage({text: "The HW set with name " + set.get("set_id") + " was deleted."});
         });
 
     },
@@ -216,12 +211,12 @@ function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetai
 
         this.views = {
             calendar : new CalendarView({el: $("#calendar"), parent: this, 
-                collection: this.problemSets, view: "instructor", viewType: "month"}),
-            setDetails:  new HWDetailView({el: $("#setDetails"),  collection: this.problemSets,parent: this}),
+            collection: this.problemSets, view: "instructor", viewType: "month"}),
+            setDetails:  new HWDetailView({el: $("#setDetails"),  hwManager: this}),
             allSets:  new SetListView({el:$("#allSets"), collection: this.problemSets, parent: self}),
             assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", parent: this}),
             importExport:  new ImportExport(),
-            libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), parent: this}),
+            libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), parent: this, hwManager: this}),
             settings      :  new HWSettingsView({parent: this, el: $("#settings")})
         };
 

@@ -28,6 +28,9 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
             });
             this.libraryTreeView = new LibraryTreeView({parent: self, type: this.libBrowserType});
 
+            this.problemViewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true,
+                    showRefreshTool: true, showViewTool: true, showHideTool: true, deletable: false, draggable: true};
+
             
     	},
     	events: {"change #library-selector": "changeView"},
@@ -51,9 +54,8 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
     	},
         showProblems: function (){
             console.log("in showProblems");
-            var plv = new ProblemListView({el: this.$(".lib-problem-viewer"), type: this.libBrowserType, 
-                                            parent: this.parent, collection: this.problemList, showPoints: false,
-                                            reorderable: false, deletable: false, draggable: true});
+            var plv = new ProblemListView({el: this.$(".lib-problem-viewer"), type: this.libBrowserType, hwManager: this.hwManager,
+                                            parent: this.parent, viewAttrs: this.problemViewAttrs, collection: this.problemList});
             plv.render();
         },
     	changeView: function (evt) {

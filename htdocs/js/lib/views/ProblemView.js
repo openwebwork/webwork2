@@ -16,13 +16,15 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
         //on the views model.
         initialize:function () {
             _.bindAll(this,"render","updateProblem","clear");
-            _.extend(this.model.attributes,this.options);
+            // this.options.viewAttrs will determine which tools are shown on the problem
+            this.allAttrs = {};
+            _.extend(this.allAttrs,this.options.viewAttrs,{type: this.options.type});
+
             var thePath = this.model.get("path").split("templates/")[1];
             var probURL = "?effectiveUser=" + config.requestObject.user + "&editMode=SetMaker&displayMode=images&key=" 
                 + config.requestObject.session_key 
                 + "&sourceFilePath=" + thePath + "&user=" + config.requestObject.user + "&problemSeed=1234";
-            _.extend(this.model.attributes,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL,
-                viewUrl: "../../Undefined_Set/1/" + probURL});
+            _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
             this.model.on('change:data', this.render, this);
             this.model.on('destroy', this.remove, this);
         },
@@ -30,11 +32,24 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
         render:function () {
             var self = this;
             if(this.model.get('data')){
-                this.$el.html(this.template(this.model.toJSON()));
+                _.extend(this.allAttrs,this.model.attributes);
+                this.$el.html(this.template(this.allAttrs));
                 this.$el.addClass("problem");
                 this.$el.css("background-color","lightgray");
                 this.$(".problem").css("opacity","0.5");
-                if (this.model.get("draggable")) {
+                this.$(".prob-value").on("change",this.updateProblem);
+                this.model.trigger("problemRendered",this.model.get("place"));
+                
+                // if images  mode is used
+                var dfd = this.$el.imagesLoaded();
+                dfd.done( function( $images ){
+
+                    self.$el.removeAttr("style");
+                    self.$(".problem").removeAttr("style");
+                    self.$(".loading").remove();
+                });
+
+                if (this.options.viewAttrs.draggable) {
                     this.$el.draggable({
                         helper:'clone',
                         revert:true,
@@ -45,17 +60,10 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
                     }); 
 
                 } 
-                this.$(".prob-value").on("change",this.updateProblem);
-                this.model.trigger("problemRendered",this.model.get("place"));
-                
 
-                var dfd = this.$el.imagesLoaded();
-                dfd.done( function( $images ){
-
-                    self.$el.removeAttr("style");
-                    self.$(".problem").removeAttr("style");
-                    self.$(".loading").remove();
-                });
+                if(this.model.get("displayMode")==="MathJax"){
+                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
+                }
                 
             } else {
                 this.$el.html("<img src='/webwork2_files/images/ajax-loader-small.gif' alt='loading'/>");
@@ -69,7 +77,14 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
             return this;
         },
         events: {"click .hide-problem": "hideProblem",
-            "click .remove": 'clear'},
+            "click .remove": 'clear',
+            "click .refresh-problem": 'reloadWithRandomSeed'},
+        reloadWithRandomSeed: function (){
+            var seed = Math.floor((Math.random()*10000));
+            this.model.set({data:"", problemSeed: seed},{silent: true});
+
+            this.render();
+        },
         hideProblem: function(evt){
             $(evt.target).parent().parent().css("display","none")
         },

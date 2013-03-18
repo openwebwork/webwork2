@@ -757,7 +757,7 @@ sub links {
 					}
 					if (defined $problemID) {
 						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}SimpleEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 							if $ce->{showeditors}->{simplepgeditor};;
 						print CGI::end_ul();
 					}

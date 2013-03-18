@@ -103,6 +103,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
         initialize: function(){
             _.bindAll(this,"fetch","addProblem","update","getAssignedUsers");
             this.on('change',this.update);
+            this.problems = null;
             this.assignedUsers = null; 
             this.saveProblems = new Array();   // holds added problems temporarily if the problems haven't been loaded. 
             
@@ -224,7 +225,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
 
                 console.log(response);
                 self.trigger("usersAssigned", _users, self.get("set_id"));
-
+                self.assignedUsers = _(self.assignedUsers).union(_users);
             });
 
         },

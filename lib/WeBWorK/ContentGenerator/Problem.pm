@@ -821,8 +821,8 @@ sub head {
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
 	print qq{
-		<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/keys/keys.css">
-		<script src="$webwork_htdocs_url/js/lib/vendor/keys/keys.js"></script>
+		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
+		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
 	};
 	#If we are using achievements then print the achievement css file
 	if ($ce->{achievementsEnabled}) {
@@ -830,9 +830,9 @@ sub head {
 	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery.js"></script> 
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script> 
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1715,7 +1715,7 @@ sub output_wztooltip_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
 	return "";
 }
 

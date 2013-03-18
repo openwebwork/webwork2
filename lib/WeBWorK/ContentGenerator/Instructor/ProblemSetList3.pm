@@ -460,6 +460,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
 	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/vendor/requirejs/require.js"></script>!;
 
 

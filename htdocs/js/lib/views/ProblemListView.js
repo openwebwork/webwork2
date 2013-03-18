@@ -15,14 +15,24 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
 
         initialize: function(){
             var self = this;
-            _.bindAll(this,"render","loadNextGroup","deleteProblem","undoDelete");
-            _.extend(this,this.options);
+            _.bindAll(this,"render","loadNextGroup","deleteProblem","undoDelete","reorder");
+            this.viewAttrs = this.options.viewAttrs;
+            this.type = this.options.type;
+            this.parent = this.options.parent;
+            this.hwManager = this.options.hwManager;
+            //_.extend(this,this.options);
             this.lastProblemShown = -1; 
             this.group_size = 25;
             this.undoStack = new Array(); 
             this.collection.on("remove",this.deleteProblem);
+            this.problemViews = [];  // an array of ProblemViews to render the problems. 
+
+            // run this after all of the problems have been rendered. 
+            // this will set the size of the window (although we should do this will CSS)
+            // and showing the number of problems shown
+
             this.problemsRendered = new Array();
-            this.collection.on("problemRendered", function (probNumber) {  // run this after all of the problems have been rendered. 
+            this.collection.on("problemRendered", function (probNumber) {  
                 self.problemsRendered.push(probNumber);
                 if (self.problemsRendered.length === self.collection.size()){
                     self.$el.height(0.8*$(window).height());
@@ -30,27 +40,43 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 }
             });
             this.collection.on("reordered",function () {
-                self.parent.announce.append("Problem Set " + self.setName + " was reordered");
+                self.hwManager.announce.addMessage({text: "Problem Set " + self.parent.problemSet.get("set_id") + " was reordered"});
             });
 
         },
         render: function() {
             var self = this;
-            this.$el.html("<ul id='prob-list' class='no-bullets'></ul>");
+            this.$el.html(_.template($("#problem-list-template").html()));
+
+            var displayModes = this.hwManager.settings.getSettingValue("pg{displayModes}");
+            console.log(displayModes);
+            this.$(".display-mode-options").append(_(displayModes).map(function(mode) {return "<option>" + mode + "</option>";}).join(""));
+
             $("#undo-delete-btn").on("click",this.undoDelete);
-            if(this.reorderable){
-                this.$("#prob-list").sortable({update: function (event,ui) { 
-                    console.log("I was reordered!");
-                    self.$(".problem").each(function (i) { 
-                        var path = $(this).data("path");
-                        var p = self.collection.find(function(prob) { return prob.get("path")===path});
-                        p.set({place: i}, {silent: true});  // set the new order of the problems.  
-                    });   
-                    self.collection.reorder();
-                }});
+            if(this.viewAttrs.reorderable){
+                this.$("#prob-list").sortable({update: this.reorder, handle: ".reorder-handle", //placeholder: ".sortable-placeholder",
+                                                axis: "y"});
             }
-            this.loadNextGroup();
-            
+            this.loadNextGroup();            
+        },
+        events: {"change .display-mode-options": "changeDisplayMode"},
+        changeDisplayMode: function () {
+            var _displayMode = this.$(".display-mode-options").val();
+            console.log("Changing the display mode to " + _displayMode);
+            _(this.problemViews).each(function(problemView) {
+                problemView.model.set({data: "", displayMode: _displayMode}, {silent: true});
+                problemView.render();
+            });
+        },
+        reorder: function (event,ui) {
+            var self = this;
+            console.log("I was reordered!");
+            self.$(".problem").each(function (i) { 
+                var path = $(this).data("path");
+                var p = self.collection.find(function(prob) { return prob.get("path")===path});
+                p.set({place: i}, {silent: true});  // set the new order of the problems.  
+            });   
+            self.collection.reorder();
         },
         //events: {"click #undo-delete-btn": "undoDelete"},
         undoDelete: function(){
@@ -58,8 +84,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             if (this.undoStack.length>0){
                 var prob = this.undoStack.pop();
                 this.collection.addProblem(prob);
-                var probView = new ProblemView({model: prob, type: this.type, deletable: this.deletable, 
-                        reorderable: this.reorderable, draggable: this.draggable, showPoints: this.showPoints});
+                var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
                 this.$("#prob-list").append(probView.el);
                 probView.render();
                 this.parent.dispatcher.trigger("num-problems-shown");
@@ -89,13 +114,8 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             var problemsToView = _.range(start,lastProblem);
             var ul = this.$("#prob-list");  
             _(problemsToView).each(function(i) {
-                var prob = self.collection.at(i);
-                var probView = new ProblemView({model: prob, type: self.type, deletable: self.deletable, 
-                        reorderable: self.reorderable, draggable: self.draggable, showPoints: self.showPoints,
-                        showTools: true});
-                ul.append(probView.el);
-
-                probView.render();
+                self.problemViews[i] =new ProblemView({model: self.collection.at(i), type: self.type, viewAttrs: self.viewAttrs});
+                ul.append(self.problemViews[i].render().el);
             });
 
             this.lastProblemShown = _(problemsToView).last();

@@ -20,9 +20,9 @@ function(Backbone, _,LibraryView){
                              searchLibraries: "library-search-tab"};
 
             this.views = {
-                allLibSubjects  :  new LibraryView({libBrowserType: "allLibSubjects", parent: this}),
-                allLibraries    :  new LibraryView({libBrowserType: "allLibraries", parent: this}),
-                searchLibraries :  new LibraryView({libBrowserType: "searchLibraries", parent: this})
+                allLibSubjects  :  new LibraryView({libBrowserType: "allLibSubjects", parent: this, hwManager: this.hwManager}),
+                allLibraries    :  new LibraryView({libBrowserType: "allLibraries", parent: this, hwManager: this.hwManager}),
+                searchLibraries :  new LibraryView({libBrowserType: "searchLibraries", parent: this, hwManager: this.hwManager})
             }
             
     	},
