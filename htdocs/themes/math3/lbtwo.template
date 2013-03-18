@@ -53,7 +53,7 @@
 	            	  <!-- </ul> -->
                   </div>
 		            
-	    		<div class="span6" style="margin-left: 0px">
+	    		<div class="span4">
             		<ul class="breadcrumb"> 
 						<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
 					</ul>

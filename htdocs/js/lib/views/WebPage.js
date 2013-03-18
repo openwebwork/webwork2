@@ -61,9 +61,11 @@ define(['Backbone','Closeable'], function(Backbone,Closeable){
 
         $("#webwork_navigation").attr("style","");
 
-        $(".breadcrumb li:last").css("font-size","125%");
+        var toolName = $(".navbar .breadcrumb li:last").text();
 
-
+        var toolSpan = $(".navbar .breadcrumb").parent();
+        toolSpan.html(toolName);
+        toolSpan.addClass("brand");
 
     }
 
