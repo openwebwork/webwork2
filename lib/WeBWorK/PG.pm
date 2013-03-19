@@ -251,9 +251,6 @@ sub defineProblemEnvir {
 		$envir{mailer} = new WeBWorK::Utils::RestrictedClosureClass($extras->{mailer}, "add_message");
 	}
 	
-	#  ADDED: jsMath options
-	$envir{jsMath} = {%{$ce->{pg}{displayModeOptions}{jsMath}}};
-	
 	# Other things...
 	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX}; # used by quizzes
 	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{options}->{grader};
