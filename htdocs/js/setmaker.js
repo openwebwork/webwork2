@@ -279,15 +279,6 @@ function randomize(filepath, el) {
     // run typesetter depending on the displaymode
     if(displayMode=='MathJax')
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
-    if(displayMode=='jsMath')
-      jsMath.ProcessBeforeShowing(el);
-    if(displayMode=='asciimath') {
-      //processNode(el);
-      translate();
-    }
-    if(displayMode=='LaTeXMathML') {
-      AMprocessNode(document.getElementsByTagName("body")[0], false);
-    }
     //console.log(data);
   });
   return false;

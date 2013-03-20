@@ -685,17 +685,6 @@ sub pretty_print_rh {
 }
 
 
-sub tth {shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-	my $in = shift;
-	my $tthpath = "/usr/local/bin/tth";
-    # $tthpath -L -f5 -r 2>/dev/null " . $inputString;
-    return $in;
-
-}
-
-
-
-
 package WWd;
 
 #use lib '/home/gage/webwork/xmlrpc/daemon';
