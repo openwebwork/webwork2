@@ -20,16 +20,25 @@ function(Backbone, _,LibraryView){
                              searchLibraries: "library-search-tab"};
 
             this.views = {
-                allLibSubjects  :  new LibraryView({libBrowserType: "allLibSubjects", parent: this, hwManager: this.hwManager}),
-                allLibraries    :  new LibraryView({libBrowserType: "allLibraries", parent: this, hwManager: this.hwManager}),
-                searchLibraries :  new LibraryView({libBrowserType: "searchLibraries", parent: this, hwManager: this.hwManager})
+                allLibSubjects  :  new LibraryView({libBrowserType: "allLibSubjects", errorPane: this.hwManager.errorPane, 
+                                            problemSets: this.hwManager.problemSets}),
+                allLibraries    :  new LibraryView({libBrowserType: "allLibraries", errorPane: this.hwManager.errorPane, 
+                                            problemSets: this.hwManager.problemSets}),
+                searchLibraries :  new LibraryView({libBrowserType: "searchLibraries", errorPane: this.hwManager.errorPane, 
+                                            problemSets: this.hwManager.problemSets})
             }
+
+/*            this.hwManager.problemSets.each(function(set){
+                set.on('add',function(model){
+                    console.log(model);
+                });
+            });*/
             
     	},
     	render: function (){
             var self = this; 
         	this.$el.html(_.template($("#library-browser-template").html()));
-            _(_(this.elements).keys()).each(function(key){
+            _.chain(this.elements).keys().each(function(key){
                 self.views[key].setElement(self.$("#"+self.elements[key]));
             });
             this.views.allLibSubjects.render();
@@ -39,10 +48,6 @@ function(Backbone, _,LibraryView){
 
             var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab
             this.views[_(tabType).values()[0]].render();
-            
-
-
-            //this.views[libraryType].render();
         }
 
 

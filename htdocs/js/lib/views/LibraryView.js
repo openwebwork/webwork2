@@ -12,8 +12,10 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
     	tagName: "td",
     	initialize: function (){
     		var self = this; 
-            _.bindAll(this,'render','changeView','showProblems');
-            _.extend(this,this.options);
+            _.bindAll(this,'render','changeView','showProblems','addProblem');
+            this.allProblemSets = this.options.problemSets;
+            this.errorPane = this.options.errorPane;
+            this.libBrowserType = this.options.libBrowserType;
             this.dispatcher = {};
             _.extend(this.dispatcher, Backbone.Events);
 
@@ -26,21 +28,19 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
                         self.libraryTreeView.$("span.library-tree-right").html(num + " of " + self.problemList.size() + " shown");
                     }
             });
-            this.libraryTreeView = new LibraryTreeView({parent: self, type: this.libBrowserType});
+            this.libraryTreeView = new LibraryTreeView({dispatcher: this.dispatcher, orientation: "dropdown", type: this.libBrowserType});
 
             this.problemViewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true,
                     showRefreshTool: true, showViewTool: true, showHideTool: true, deletable: false, draggable: true};
 
             
     	},
-    	events: {"change #library-selector": "changeView"},
+    	events: {"change #library-selector": "changeView",
+                    "change .target-set": "resetDisplayModes"},
     	render: function (){
             var self = this;
-            var allProblemSets = this.parent.parent.problemSets;
 
-
-
-    		this.$el.html(_.template($("#library-view-template").html()));
+    		this.$el.html(_.template($("#library-view-template").html(), {sets: this.allProblemSets.pluck("set_id")}));
             this.libraryTreeView.render();
             this.$(".library-viewer").append(this.libraryTreeView.el);
 
@@ -48,15 +48,32 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
 
             var targetSetSelect = self.$(".target-set")
     		
-            allProblemSets.each(function(set){
-                    targetSetSelect.append(_.template($("#target-set-template").html(),set.attributes)) });
+/*            this.allProblemSets.each(function(set){
+                    targetSetSelect.append(_.template($("#target-set-template").html(),set.attributes)) 
+                }); */
 
     	},
         showProblems: function (){
             console.log("in showProblems");
-            var plv = new ProblemListView({el: this.$(".lib-problem-viewer"), type: this.libBrowserType, hwManager: this.hwManager,
-                                            parent: this.parent, viewAttrs: this.problemViewAttrs, collection: this.problemList});
-            plv.render();
+            var plv = new ProblemListView({el: this.$(".lib-problem-viewer"), type: this.libBrowserType,  
+                                                viewAttrs: this.problemViewAttrs, headerTemplate: "#library-problems-header"});
+            plv.setProblems(this.problemList);
+            this.problemList.on("add-to-target",this.addProblem);
+        },
+        addProblem: function(model){
+            var targetSet = this.$(".target-set option:selected").val();
+            var problemSet = this.allProblemSets.find(function(set) {return set.get("set_id")===targetSet});
+            console.log(problemSet);
+            if(!problemSet){
+                this.errorPane.addMessage({text: "You need to select a target set"});
+                this.$(".target-set").css('background-color','pink');
+                return;
+            }
+            if (!problemSet.problems){
+                problemSet.problems = new ProblemList();
+                }
+            problemSet.problems.add(model);
+
         },
     	changeView: function (evt) {
     		var self = this;
@@ -68,7 +85,10 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
     		console.log(_path);
 			this.problemList = new ProblemList({path:  _path, type: "Library Problems"});
             this.problemList.on("fetchSuccess",this.showProblems,this);
-    	}
+    	}, 
+        resetDisplayModes: function(){
+            this.$('.target-set').css('background-color','white');
+        }
 
     });
 

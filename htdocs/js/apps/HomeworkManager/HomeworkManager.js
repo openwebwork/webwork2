@@ -119,8 +119,8 @@ var HomeworkEditorView = WebPage.extend({
         });
 
         this.problemSets.on("problem-set-deleted", function(){
-            self.calendarView.updateAssignments();
-            self.calendarView.render();
+            self.views.calendar.updateAssignments();
+            self.views.calendar.render();
         });
         
         // set up messages associated with problem Sets.  
@@ -185,9 +185,9 @@ var HomeworkEditorView = WebPage.extend({
 
         this.problemSets.on("problem-set-changed", function (_set){
             
-            self.calendarView.updateAssignments();
-            self.calendarView.render();
-            self.setListView.render();
+            self.views.calendar.updateAssignments();
+            self.views.calendar.render();
+            self.views.allSets.render();
             self.setDropToEdit();
             var keys = _.keys(_set.changed);
             _(keys).each(function(key) {
@@ -210,8 +210,7 @@ var HomeworkEditorView = WebPage.extend({
         this.setDropToEdit();        
 
         this.views = {
-            calendar : new CalendarView({el: $("#calendar"), parent: this, 
-            collection: this.problemSets, view: "instructor", viewType: "month"}),
+            calendar : new CalendarView({el: $("#calendar"), parent: this, collection: this.problemSets, view: "instructor", viewType: "month"}),
             setDetails:  new HWDetailView({el: $("#setDetails"),  hwManager: this}),
             allSets:  new SetListView({el:$("#allSets"), collection: this.problemSets, parent: self}),
             assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", parent: this}),

@@ -135,11 +135,9 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             _.extend(requestObject, this.attributes);
             _.defaults(requestObject, config.requestObject);
 
-            console.log(requestObject);
-
             $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-      	        self.collection.trigger("problem-set-changed",self)
+      	        self.trigger("problem-set-changed",self)
             });
         },
         fetch: function()
@@ -215,7 +213,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
         // of user_id's.  Perhaps, we should consider making this a UserList instead.  (Have to think about the pros and cons)
         assignToUsers: function (_users){  // assigns this problem set to the users that come in as an array of usernames.  
             var self = this;
-
+            self.assignedUsers = _(self.assignedUsers).union(_users);
             console.log("Assigning Problem Set " + this.get("set_id") + " to " + _users.join(" ")); 
             var requestObject = {xml_command: "assignSetToUsers", users: _users.join(","), set_id: this.get("set_id")};
             _.defaults(requestObject,config.requestObject);
@@ -225,7 +223,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
 
                 console.log(response);
                 self.trigger("usersAssigned", _users, self.get("set_id"));
-                self.assignedUsers = _(self.assignedUsers).union(_users);
+                
             });
 
         },

@@ -186,7 +186,7 @@ ENDDOCUMENT();
    Context()->texStrings;
    BEGIN_TEXT
    <%=problemStatement%>
-   Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}\
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}
 
    END_TEXT
    Context()->normalStrings;
@@ -279,7 +279,7 @@ ENDDOCUMENT();
    ANS($answer->cmp);
 </script>
 
-
+   
 <!-- The interval/inequality option -->
 
 <script id="interval-or-inequality-option-template" type="text/template">

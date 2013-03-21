@@ -22,15 +22,18 @@ define(['Backbone',
             this.hwManager = this.options.hwManager;
             this.problemSet = this.model;
 
+            this.problemViewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showEditTool: true,
+                    showRefreshTool: true, showViewTool: true, showHideTool: false, deletable: true, draggable: false};
+
+            
+
             this.views = {
-                problemsView : new ProblemsView({parent: this, hwManager: this.hwManager}),
-                usersAssignedView : new AssignUsersView({hwManager: this.hwManager}),
-                propertiesView : new PropertySetDetailView({parent: this}),
+                problemListView : new ProblemListView({headerTemplate: "#problem-set-header", viewAttrs: this.problemViewAttrs}),
+                usersAssignedView : new AssignUsersView({hwManager: this.hwManager, problemSet: this.problemSet}),
+                propertiesView : new PropertySetDetailView({users: this.hwManager.users, problemSet: this.problemSet}),
                 customizeUserAssignView : new CustomizeUserAssignView({hwManager: this.hwManager, parent: this})
             };
 
-            this.problemViewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showEditTool: true,
-                    showRefreshTool: true, showViewTool: true, showHideTool: false, deletable: true, draggable: false};
 
             
         },
@@ -38,7 +41,8 @@ define(['Backbone',
             var self = this;
             this.$el.html(_.template($("#HW-detail-template").html()));
             
-            this.views.problemsView.setElement($("#problem-list-tab"));
+            this.views.problemListView.displayModes = this.hwManager.settings.getSettingValue("pg{displayModes}");
+            this.views.problemListView.setElement($("#problem-list-tab"));
             this.views.usersAssignedView.setElement($("#user-assign-tab"));
             this.views.propertiesView.setElement($("#property-tab"));
             this.views.customizeUserAssignView.setElement($("#user-customize-tab"));       
@@ -54,14 +58,17 @@ define(['Backbone',
 
             $("#problem-set-tabs a:first").tab("show");  // shows the problems tab
         	this.problemSet = this.hwManager.problemSets.find(function(set) {return set.get("set_id")===setName;});
-
             
             if(this.problemSet.problems){ // have the problems been fetched yet? 
                 console.log("changing the HW Set to " + setName);
-                this.views.problemsView.render();
+                this.views.problemListView.setProblems(this.problemSet.problems);
+                this.views.problemListView.render();
+                this.$(".problem-set-name").html("Problem Set "+ setName);
+                this.updateNumProblems();
+
                 this.problemSet.problems.on("add",function (){
                     console.log("Added a Problem");
-                    self.hwManager.announce.addMessage({text: "Problem Added to set: " + self.model.get("set_id")});
+                    self.hwManager.announce.addMessage({text: "Problem Added to set: " + self.problemSet.get("set_id")});
                 });
 
                 // This sets messages 
@@ -72,20 +79,27 @@ define(['Backbone',
                 });
 
                 this.problemSet.problems.on("remove",self.updateNumProblems);
-                this.problemSet.problems.on("change",function(model)
+                this.problemSet.on("change",function(model)
                 {
+                    _.chain(model.changed).pairs().each(function(p){
+                        self.hwManager.announce.addMessage({text: "The value of " + p[0] + " has changed to " + p[1]});
+
+                    });
                     // need a announcement here.  
-                   // self.hwManager.announce.addMessage("Something changed. ");
+                    
                 })
 
                 this.problemSet.on("usersAssigned",function(_users,setName){
                     self.hwManager.announce.addMessage({text: "The following users are a assigned to set " + setName + " : " + _users.join(", ")});
-                    self.problemSet.assignedUsers = _(_users).union(self.model.assignedUsers);
-                    console.log(self.problemSet.assignedUsers);
-                    self.usersAssignedView.updateUserList();
+                    var view = $("#setDetails .tab-content .active").data("view");
+                    self.views[view].render(); 
                 });
 
+
                 this.problemSet.problems.on("num-problems-shown", self.updateNumProblems);
+                this.problemSet.on("problem-set-changed", function (set){
+                    //self.hwManager.announce.addMessage({text: "Something changed. "});
+                });
             
             } else {
                 this.problemSet.problems = new ProblemList({type: "Problem Set", setName: setName});
@@ -99,35 +113,31 @@ define(['Backbone',
         }
     });
 
-    var ProblemsView = Backbone.View.extend({
-        initialize: function () {
-            _.bindAll(this,'render');
-            this.parent = this.options.parent;
-            this.hwManager = this.options.hwManager;
-        },
-        render: function () {
-            console.log("showing the problems for problem set " + this.parent.problemSet.get("set_id"));
-            $("#prob-tab").html(_.template($("#problem-set-header").html(),{set: this.parent.problemSet.get("set_id")}));
-            var plv = new ProblemListView({el: this.el, hwManager: this.hwManager, parent: this.parent,
-                                        collection: this.parent.problemSet.problems,
-                                        type: this.parent.problemSet.get("set_id"), viewAttrs: this.parent.problemViewAttrs});
-            plv.render();  
-        }
-    });
-
     var PropertySetDetailView = Backbone.View.extend({
         initialize: function () {
             _.bindAll(this,'render');
-            this.parent = this.options.parent;
+            this.problemSet = this.options.problemSet;
+            this.users = this.options.users;
         },
         render: function () {
-            this.$el.html(_.template($("#hwset-dates-tmpl").html()));
-            this.$(".due-date-row").append( (new EditableCell({model : this.parent.problemSet, type: "datetime", property: "open_date"})).render().el);
-            this.$(".due-date-row").append( (new EditableCell({model : this.parent.problemSet, type: "datetime", property: "due_date"})).render().el);
-            this.$(".due-date-row").append( (new EditableCell({model : this.parent.problemSet, type: "datetime", property: "answer_date"})).render().el);
-            this.$(".hwset-visible").html((new EditableCell({model: this.parent.problemSet, property: "visible"})).render().el);
-            this.$(".reduced-credit").html((new EditableCell({model: this.parent.problemSet, property: "enable_reduced_scoring"})).render().el);
+            this.$el.html(_.template($("#hwset-dates-tmpl").html(), 
+                {assignedUsers: this.problemSet.assignedUsers.length, numUsers: this.users.length}));
+            (new EditableCell({el: this.$(".open-date"), model : this.problemSet, type: "datetime", 
+                    property: "open_date"})).render();
+            (new EditableCell({el: this.$(".due-date"), model : this.problemSet, type: "datetime", 
+                    property: "due_date"})).render();
+            (new EditableCell({el: this.$(".answer-date"), model : this.problemSet, type: "datetime", 
+                    property: "answer_date"})).render();
 
+            (new EditableCell({el: this.$(".hwset-visible"), model: this.problemSet, property: "visible"})).render();
+            (new EditableCell({el: this.$(".reduced-credit"), model: this.problemSet, 
+                    property: "enable_reduced_scoring"})).render();
+
+        },
+        events: {"click .assign-all-users": "assignAllUsers"},
+        assignAllUsers: function(){
+            var userNames = this.users.pluck("user_id");
+            this.problemSet.assignToUsers(_.difference(userNames,this.problemSet.assignedUsers));
         }
     });
 
@@ -162,7 +172,7 @@ define(['Backbone',
             console.log(selectedUsers)
             console.log("assigning to selected users");
 
-            this.problemSet.assignToUsers(_.difference(selectedUsers,this.hwManager.model.assignedUsers));
+            this.problemSet.assignToUsers(_.difference(selectedUsers,this.problemSet.assignedUsers));
         },
         selectAll: function (){
             this.$(".classlist-li").attr("checked",this.$("#classlist-select-all").attr("checked")==="checked");

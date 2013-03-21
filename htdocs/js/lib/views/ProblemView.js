@@ -6,6 +6,7 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
     var ProblemView = Backbone.View.extend({
         //We want the problem to render in a `li` since it will be included in a list
         tagName:"li",
+        className: "problem",
         //Add the 'problem' class to every problem
         //className: "problem",
         //This is the template for a problem, the html is defined in SetMaker3.pm
@@ -34,11 +35,10 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
             if(this.model.get('data')){
                 _.extend(this.allAttrs,this.model.attributes);
                 this.$el.html(this.template(this.allAttrs));
-                this.$el.addClass("problem");
                 this.$el.css("background-color","lightgray");
                 this.$(".problem").css("opacity","0.5");
                 this.$(".prob-value").on("change",this.updateProblem);
-                this.model.trigger("problemRendered",this.model.get("place"));
+                this.model.collection.trigger("problemRendered",this.model.get("place"));
                 
                 // if images  mode is used
                 var dfd = this.$el.imagesLoaded();
@@ -53,7 +53,7 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
                     this.$el.draggable({
                         helper:'clone',
                         revert:true,
-                        handle:'.problem',
+                        handle:'.drag-handle',
                         appendTo:'body',
                         //cursorAt:{top:0,left:0}, 
                         //opacity:0.65
@@ -72,18 +72,22 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
 
             this.el.id = this.model.cid;
             this.$el.attr('data-path', this.model.get('path'));
-            this.$el.attr('data-source', this.model.get('type'));
+            this.$el.attr('data-source', this.allAttrs.type);
 
             return this;
         },
         events: {"click .hide-problem": "hideProblem",
             "click .remove": 'clear',
-            "click .refresh-problem": 'reloadWithRandomSeed'},
+            "click .refresh-problem": 'reloadWithRandomSeed',
+            "click .add-problem": "addProblem"},
         reloadWithRandomSeed: function (){
             var seed = Math.floor((Math.random()*10000));
             this.model.set({data:"", problemSeed: seed},{silent: true});
 
             this.render();
+        },
+        addProblem: function (evt){
+            this.model.collection.trigger("add-to-target",this.model);
         },
         hideProblem: function(evt){
             $(evt.target).parent().parent().css("display","none")

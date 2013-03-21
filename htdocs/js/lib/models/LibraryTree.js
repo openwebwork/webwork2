@@ -10,11 +10,10 @@ define(['Backbone', 'underscore','config'], function(Backbone, _,config){
 		initialize: function (){
             _.bindAll(this,"fetch","parsePathsToTree");
             this.fetched = false; 
-			//console.log("LibraryTree");
 		},
         fetch: function (){
-            var self = this,
-                requestObject = null;
+            var self = this
+              , requestObject = null;
             if (this.get("type") === "allLibraries"){
                 requestObject = {xml_command: "getProblemDirectories"};
                 this.header = "Library/";

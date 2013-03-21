@@ -1,6 +1,12 @@
 /**
 *  This view is the interface to the Library Tree and allows the user to easier navigate the Library. 
 *
+*  To use the LibraryTreeView the following parameters are needed:
+*  dispatcher:  A backbone Event dispatcher to send a event when a library is accessed.  // can be null
+*  orientation: either "pulldown" or "horiztonal" as two layouts of the library
+*  type:  the type of library needed which is passed to the Library Tree
+*  
+*
 */
 
 define(['Backbone', 
@@ -12,12 +18,10 @@ function(Backbone, _,LibraryTree){
     	initialize: function (){
     		_.bindAll(this,"render","buildTreeView","updateLibraryTree","loadProblems");
             var self = this;
-            this.parent = this.options.parent; 
+            this.dispatcher = this.options.dispatcher; 
+            this.orientation = this.options.orientation;
             this.libraryTree = new LibraryTree({type: this.options.type});
-            this.libraryTree.on("fetchSuccess", function () {
-                self.$(".throbber").remove();
-                self.buildTreeView(self.libraryTree.tree,0);
-            });
+            this.libraryTree.on("fetchSuccess", this.render);
 
     	},
     	render: function(){
@@ -26,9 +30,31 @@ function(Backbone, _,LibraryTree){
                 this.libraryTree.fetch();
             } else {
                 this.$(".throbber").remove();
-                this.buildTreeView(this.libraryTree.tree,0);
+                //this.buildTreeView(this.libraryTree.tree,0);
+                this.$(".library-tree-left").html(_.template($("#library-dropdown-template").html(),{subjects: this.libraryTree.tree}));
             }
     	},
+        events: { "click .library-tree-left a": "selectLibrary"},
+        selectLibrary: function(evt){
+            var leaf = $(evt.target);
+            if (leaf.text().trim() === "Library"){ return; }
+
+
+            var path = leaf.text().trim();
+            var level = parseInt(leaf.closest("li").data('level'));
+
+            while(level>0){
+                leaf = leaf.closest("li").parent().parent().children("a");
+                path = leaf.text().trim() + "/" + path;
+                level--;
+            }
+
+            console.log(this.libraryTree.header+path);
+            this.dispatcher.trigger("load-problems",this.libraryTree.header+path);
+
+
+            
+        },
         buildTreeView: function (libs,index){
             var self = this;
             var i;
