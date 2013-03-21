@@ -971,6 +971,17 @@ sub make_data_row {
 	}
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
+        my $tagwidget = '';
+        my $user = scalar($r->param('user'));
+        if ($r->authz->hasPermissions($user, "modify_tags")) {
+          my $tagid = 'tagger'.$cnt;
+          $tagwidget =  CGI::div({id=>$tagid}, '');
+          my $templatedir = $r->ce->{courseDirs}->{templates};
+          my $sourceFilePath = $templatedir .'/'. $sourceFileName;
+          my $site_url = $r->ce->{webworkURLs}->{htdocs};
+          $tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tagwidget.js"}). CGI::end_script();
+          $tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
+        }
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
@@ -994,7 +1005,8 @@ sub make_data_row {
 				-onClick=>"return delrow($cnt)"),
 			)), 
 		#CGI::br(),
-		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1).
+		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
+                $tagwidget,
 		CGI::div($problem_output),
 	));
 }

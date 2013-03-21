@@ -364,6 +364,20 @@ sub buildBrowseTree {
 	return $self->do(WebworkWebservice::LibraryActions::buildBrowseTree($self,$in));
 }	
 
+sub getProblemTags {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+		return $self->do( WebworkWebservice::LibraryActions::getProblemTags($self, $in) );
+}
+
+sub setProblemTags {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+		return $self->do( WebworkWebservice::LibraryActions::setProblemTags($self, $in) );
+}
+
 sub assignSetToUsers {
   my $class = shift;
   my $in = shift;

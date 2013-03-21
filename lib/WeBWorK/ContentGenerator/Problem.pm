@@ -748,6 +748,7 @@ sub head {
         # Javascript and style for knowls
         print qq{
            <script type="text/javascript" src="$webwork_htdocs_url/js/jquery.js"></script> 
+           <script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
            <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
 
@@ -1491,7 +1492,15 @@ sub output_tag_info{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	if ($authz->hasPermissions($user, "modify_tags")) {
-		print CGI::p(CGI::div("Tags go here"));
+		print CGI::p(CGI::div({id=>'tagger'}, ''));
+                print $self->hidden_authen_fields;
+                my $courseID = $self->r->urlpath->arg("courseID");
+                print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID });
+		my $templatedir = $r->ce->{courseDirs}->{templates};
+		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
+		my $site_url = $r->ce->{webworkURLs}->{htdocs};
+                print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tagwidget.js"}), CGI::end_script();
+                print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
 }
