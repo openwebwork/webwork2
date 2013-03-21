@@ -29,9 +29,9 @@ use Carp;
 use IO::File;
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(
+our @EXPORT_OK = qw();
 #	list_set_versions
-);
+#);
 
 use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT);
 use constant NUMBERED => qw( TitleText AuthorText EditionText Section Problem );
@@ -122,8 +122,9 @@ sub settag {
   my $self = shift;
   my $tagname = shift;
   my $newval = shift;
+  my $force = shift;
 
-  if(defined($newval) and $newval and ($newval ne $self->{$tagname})) {
+  if(defined($newval) and ((defined($force) and $force) or $newval) and ($newval ne $self->{$tagname})) {
     $self->{modified}=1;
     $self->{$tagname} = $newval;
   }
@@ -181,7 +182,7 @@ sub new {
 
   $self->{isplaceholder} = 0;
   $self->{modified} = 0;
-  my $lasttag =0;
+  my $lasttag = 1;
 
   my ($text, $edition, $textauthor, $textsection, $textproblem);
   my $textno;
