@@ -427,6 +427,32 @@ sub buildBrowseTree {
 	return($out);
 }
 
+sub getProblemTags {
+	my $self = shift;
+	my $rh = shift;
+	my $out = {};
+	my $path = $rh->{command};
+        # Get a pointer to a hash of DBchapter, ..., DBsection
+	my $tags = WeBWorK::Utils::ListingDB::getProblemTags($path);
+	$out->{ra_out} = $tags;
+	$out->{text} = encode_base64("Tags loaded.");
+	
+	return($out);
+}
+
+sub setProblemTags {
+	my $self = shift;
+	my $rh = shift;
+	my $path = $rh->{command};
+        my $dbsubj = $rh->{library_subjects};
+        my $dbchap = $rh->{library_chapters};
+        my $dbsect = $rh->{library_sections};
+	# result is [success, message] with success = 0 or 1
+	my $result = WeBWorK::Utils::ListingDB::setProblemTags($path, $dbsubj, $dbchap, $dbsect);
+	my $out = {};
+	$out->{text} = encode_base64($result->[1]);
+	return($out);
+}
 
 
 sub pretty_print_rh {

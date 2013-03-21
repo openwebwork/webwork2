@@ -123,7 +123,7 @@ our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 	$XML_URL             =  "$server_root_url/mod_xmlrpc";
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/instructorXMLHandler";
 
-use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
+use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
 
 
 
@@ -380,7 +380,6 @@ sub environment {
 		dueDate=> '4014438528',
 		externalGif2EpsPath=>'not defined',
 		externalPng2EpsPath=>'not defined',
-		externalTTHPath=>'/usr/local/bin/tth',
 		fileName=>'the XMLHandlerenvironment->{fileName} should be set',
 		formattedAnswerDate=>'6/19/00',
 		formattedDueDate=>'6/19/00',

@@ -6,7 +6,6 @@ $TEX_PROB_FOOTER	texProbFooter.tex	screenProblemPostamble.tex
 $TEX_PROB_PREAMBLE	texProbPreamble.tex	screenProblemPreamble.tex	
 $TEX_SET_FOOTER		texSetFooter.tex	paperSetPostamble.tex		hardcopy generation (see below) 
 $TEX_SET_PREAMBLE	texSetPreamble.tex	paperSetPreamble.tex		hardcopy generation (see below)
-(none)			tthPreamble.tex		tthPreamble.tex			prepended to an equation by the translator before sending it to TTH
 
 
     $set->set_header  is  paperSetHeader
