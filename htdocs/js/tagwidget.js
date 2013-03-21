@@ -56,7 +56,7 @@ function tag_widget(id, path) {
   sect.change(function() {tag_widget_clear_message(id);});
   this.tw_gettags(path, id);
   var savebutton = $el.append('<button id="'+id+'Save">Save</button>');
-  $('#'+id+'Save').click(function() {tag_widget_savetags(id, path);});
+  $('#'+id+'Save').click(function() {tag_widget_savetags(id, path);return false;});
   $el.append('<span id="'+id+'result"></span>');
   return false;
 }
@@ -102,7 +102,6 @@ tag_widget_savetags = function(id, path) {
       console.log(response);
       $('#'+id+'result').text(mesg);
     });
-  return true;
 }
 
 tag_widget_clear_message = function(id) {
