@@ -585,7 +585,7 @@ sub print_form {
 
 	#############################################################################################		
 
-	print CGI::start_form({method=>"post", action=>$sendMailURL});
+	print CGI::start_form({id=>"send-mail-form", name=>"send-mail-form", method=>"post", action=>$sendMailURL});
 	print $self->hidden_authen_fields();
 	#############################################################################################
 	#	begin upper table

@@ -132,7 +132,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
- instructor_answer_log               /$courseID/instructor/show_answers/
+ 
  instructor_preflight               /$courseID/instructor/preflight/
  
  instructor_statistics               /$courseID/instructor/stats/
@@ -149,7 +149,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
-
+answer_log                           /$courseID/show_answers/
  achievements                        /$courseID/achievements
  instructor_achievement_list         /$courseID//instructor/achievement_list
  instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
@@ -203,7 +203,7 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy achievements
+		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz answer_log grades hardcopy achievements
 			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -241,6 +241,17 @@ our %pathTypes = (
 		produce => 'quiz_mode/$setID/',
 		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
 	},
+
+    	answer_log => {
+		name    => 'Answer Log',
+		parent  => 'set_list',
+		kids    => [ qw// ],
+		match   => qr|^show_answers/|,
+		capture => [ qw// ],
+		produce => 'show_answers/',
+		display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
+	},
+
 	proctored_gateway_quiz => {
 		name    => 'Proctored Gateway Quiz $setID',
 		parent  => 'set_list',
@@ -345,7 +356,7 @@ our %pathTypes = (
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_answer_log instructor_preflight instructor_statistics instructor_statistics_old
+			instructor_preflight instructor_statistics instructor_statistics_old
 			instructor_progress			
                         instructor_problem_grader
 		/ ],
@@ -701,15 +712,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'send_mail/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SendMail',
-	},
-	instructor_answer_log => {
-		name    => 'Answer Log',
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^show_answers/|,
-		capture => [ qw// ],
-		produce => 'show_answers/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
 	},
 	instructor_preflight => {
 		name    => 'Preflight Log',

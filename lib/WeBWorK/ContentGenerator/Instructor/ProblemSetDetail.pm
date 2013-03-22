@@ -1792,7 +1792,7 @@ sub body {
 		print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students.")));
 	}
 
-	print CGI::start_form({method=>"POST", action=>$setDetailURL});
+	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")});
