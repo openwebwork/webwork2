@@ -249,14 +249,13 @@ sub attemptResults {
 	my $numCorrect = 0;
 	my $numBlanks  =0;
 	my $numEssay = 0;
-	my $tthPreambleCache;
 	foreach my $name (@answerNames) {
 		my $answerResult  = $pg->{answers}->{$name};
 		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
 		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen, \$tthPreambleCache)
+		                    	? $self->previewAnswer($answerResult, $imgGen)
 		                    	: "");
-		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache);
+		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen);
 		my $correctAnswer = $answerResult->{correct_ans};
 		my $answerScore   = $answerResult->{score};
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
@@ -347,7 +346,7 @@ sub attemptResults {
 
 
 sub previewAnswer {
-	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
+	my ($self, $answerResult, $imgGen) = @_;
 	my $ce            = $self->r->ce;
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
@@ -357,7 +356,7 @@ sub previewAnswer {
 	# note: right now, we have to do things completely differently when we are
 	# rendering math from INSIDE the translator and from OUTSIDE the translator.
 	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
+	# duplication that can be dealt with later by abstracting out dvipng/etc.
 	
 	my $tex = $answerResult->{preview_latex_string};
 	
@@ -367,55 +366,14 @@ sub previewAnswer {
 		return $tex;
 	} elsif ($answerResult->{type} eq 'essay') {
 	    return $tex;
-	} elsif ($displayMode eq "formattedText") {
-		
-		# read the TTH preamble, or use the cached copy passed in from the caller
-		my $tthPreamble='';
-		if (defined $$tthPreambleCache) {
-			$tthPreamble = $$tthPreambleCache;
-		} else {
-			my $tthPreambleFile = $ce->{courseDirs}->{templates} . "/tthPreamble.tex";
-			if (-r $tthPreambleFile) {
-				$tthPreamble = readFile($tthPreambleFile);
-				# thanks to Jim Martino. each line in the definition file should end with
-				#a % to prevent adding supurious paragraphs to output:
-				$tthPreamble =~ s/(.)\n/$1%\n/g;
-				# solves the problem if the file doesn't end with a return:
-				$tthPreamble .="%\n";
-				# store preamble in cache:
-				$$tthPreambleCache = $tthPreamble;
-			} else {
-			}
-		}
-		
-		# construct TTH command line
-		my $tthCommand = $ce->{externalPrograms}->{tth}
-			. " -L -f5 -u -r  2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. $tthPreamble . "\\[" . $tex . "\\]\n"
-			. "END_OF_INPUT\n";
-		
-		# call tth
-		my $result = `$tthCommand`;
-		if ($?) {
-			return "<b>[tth failed: $? $@]</b>";
-		} else {
-			#  avoid border problems in tables and remove unneeded initial <br>
-			$result =~ s/(<table [^>]*)>/$1 CLASS="ArrayLayout">/gi;
-			$result =~ s!\s*<br clear="all" />!!;
-			return $result;
-		}
-		
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
 		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	} elsif ($displayMode eq "jsMath") {
-		$tex =~ s/&/&amp;/g; $tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
-		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
 	}
 }
 sub previewCorrectAnswer {
-	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
+	my ($self, $answerResult, $imgGen) = @_;
 	my $ce            = $self->r->ce;
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
@@ -425,7 +383,7 @@ sub previewCorrectAnswer {
 	# note: right now, we have to do things completely differently when we are
 	# rendering math from INSIDE the translator and from OUTSIDE the translator.
 	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
+	# duplication that can be dealt with later by abstracting out dvipng/etc.
 	
 	my $tex = $answerResult->{correct_ans_latex_string};
 	return $answerResult->{correct_ans} unless defined $tex and $tex=~/\S/;   # some answers don't have latex strings defined
@@ -433,51 +391,10 @@ sub previewCorrectAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
-	} elsif ($displayMode eq "formattedText") {
-		
-		# read the TTH preamble, or use the cached copy passed in from the caller
-		my $tthPreamble='';
-		if (defined $$tthPreambleCache) {
-			$tthPreamble = $$tthPreambleCache;
-		} else {
-			my $tthPreambleFile = $ce->{courseDirs}->{templates} . "/tthPreamble.tex";
-			if (-r $tthPreambleFile) {
-				$tthPreamble = readFile($tthPreambleFile);
-				# thanks to Jim Martino. each line in the definition file should end with
-				#a % to prevent adding supurious paragraphs to output:
-				$tthPreamble =~ s/(.)\n/$1%\n/g;
-				# solves the problem if the file doesn't end with a return:
-				$tthPreamble .="%\n";
-				# store preamble in cache:
-				$$tthPreambleCache = $tthPreamble;
-			} else {
-			}
-		}
-		
-		# construct TTH command line
-		my $tthCommand = $ce->{externalPrograms}->{tth}
-			. " -L -f5 -u -r  2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. $tthPreamble . "\\[" . $tex . "\\]\n"
-			. "END_OF_INPUT\n";
-		
-		# call tth
-		my $result = `$tthCommand`;
-		if ($?) {
-			return "<b>[tth failed: $? $@]</b>";
-		} else {
-			#  avoid border problems in tables and remove unneeded initial <br>
-			$result =~ s/(<table [^>]*)>/$1 CLASS="ArrayLayout">/gi;
-			$result =~ s!\s*<br clear="all" />!!;
-			return $result;
-		}
-		
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
 		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	} elsif ($displayMode eq "jsMath") {
-		$tex =~ s/&/&amp;/g; $tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
-		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
 	}
 }
 
@@ -821,8 +738,8 @@ sub head {
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
 	print qq{
-		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
+		<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/keys/keys.css">
+		<script src="$webwork_htdocs_url/js/lib/vendor/keys/keys.js"></script>
 	};
 	#If we are using achievements then print the achievement css file
 	if ($ce->{achievementsEnabled}) {
@@ -830,9 +747,10 @@ sub head {
 	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script> 
+           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery.js"></script> 
+           <script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1574,7 +1492,15 @@ sub output_tag_info{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	if ($authz->hasPermissions($user, "modify_tags")) {
-		print CGI::p(CGI::div("Tags go here"));
+		print CGI::p(CGI::div({id=>'tagger'}, ''));
+                print $self->hidden_authen_fields;
+                my $courseID = $self->r->urlpath->arg("courseID");
+                print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID });
+		my $templatedir = $r->ce->{courseDirs}->{templates};
+		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
+		my $site_url = $r->ce->{webworkURLs}->{htdocs};
+                print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tagwidget.js"}), CGI::end_script();
+                print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
 }
@@ -1715,7 +1641,7 @@ sub output_wztooltip_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
 	return "";
 }
 
@@ -1734,19 +1660,19 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# This adds the dragmath functionality
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
+	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
 	
 	# The Base64.js file, which handles base64 encoding and decoding.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/Base64.js"}), CGI::end_script();
 	
 	
 	return "";

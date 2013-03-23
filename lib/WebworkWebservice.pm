@@ -364,6 +364,20 @@ sub buildBrowseTree {
 	return $self->do(WebworkWebservice::LibraryActions::buildBrowseTree($self,$in));
 }	
 
+sub getProblemTags {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+		return $self->do( WebworkWebservice::LibraryActions::getProblemTags($self, $in) );
+}
+
+sub setProblemTags {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+		return $self->do( WebworkWebservice::LibraryActions::setProblemTags($self, $in) );
+}
+
 sub assignSetToUsers {
   my $class = shift;
   my $in = shift;
@@ -683,17 +697,6 @@ sub echo {
 sub pretty_print_rh {
 	WebworkWebservice::pretty_print_rh(@_);
 }
-
-
-sub tth {shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-	my $in = shift;
-	my $tthpath = "/usr/local/bin/tth";
-    # $tthpath -L -f5 -r 2>/dev/null " . $inputString;
-    return $in;
-
-}
-
-
 
 
 package WWd;

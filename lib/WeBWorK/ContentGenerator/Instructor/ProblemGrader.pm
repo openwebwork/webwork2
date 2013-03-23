@@ -181,8 +181,6 @@ sub body {
 	);
 	
 
-	my $tthPreambleCache;
-
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to acces the Instructor tools."))
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 		

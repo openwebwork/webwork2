@@ -971,6 +971,17 @@ sub make_data_row {
 	}
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
+        my $tagwidget = '';
+        my $user = scalar($r->param('user'));
+        if ($r->authz->hasPermissions($user, "modify_tags")) {
+          my $tagid = 'tagger'.$cnt;
+          $tagwidget =  CGI::div({id=>$tagid}, '');
+          my $templatedir = $r->ce->{courseDirs}->{templates};
+          my $sourceFilePath = $templatedir .'/'. $sourceFileName;
+          my $site_url = $r->ce->{webworkURLs}->{htdocs};
+          $tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tagwidget.js"}). CGI::end_script();
+          $tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
+        }
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
@@ -994,7 +1005,8 @@ sub make_data_row {
 				-onClick=>"return delrow($cnt)"),
 			)), 
 		#CGI::br(),
-		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1).
+		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
+                $tagwidget,
 		CGI::div($problem_output),
 	));
 }
@@ -1458,20 +1470,18 @@ sub head {
   my ($self) = @_;
   my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
+  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
 
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui-1.9.2.custom/js/jquery-ui-1.9.2.custom.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/webwork/WeBWorK.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/webwork/models/teacher.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/jquery.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/backbone.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
-  print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/setmaker.js"></script>!;
   print "\n";
   return '';
 }
@@ -1547,7 +1557,7 @@ sub body {
 	##########	Top part
         my $courseID = $self->r->urlpath->arg("courseID");
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-	print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/wz_tooltip.js"></script>!;
+	print qq!<script src="$webwork_htdocs_url/js/wz_tooltip.js"></script>!;
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
