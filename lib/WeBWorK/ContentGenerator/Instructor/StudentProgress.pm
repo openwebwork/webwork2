@@ -825,7 +825,7 @@ sub displaySets {
 	# continue with table output
 	if ( ! $setIsVersioned ) {
 	    print
-		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
+		CGI::start_table({-class=>"progress-table", -border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
 			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},$r->maketext('First')).
 			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},$r->maketext('Last')).CGI::br().
@@ -873,7 +873,7 @@ sub displaySets {
 	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %params})},'Login Name') )
 		if ( $showColumns{ 'login' } );
 
-	    print CGI::start_table({-border=>5,style=>'font-size:smaller'}),
+	    print CGI::start_table({-class=>"progress-table", -border=>5,style=>'font-size:smaller'}),
 	        CGI::Tr(CGI::td(  {-align=>'left'},
 		    [ @columnHdrs ] ) ),
 	    ;

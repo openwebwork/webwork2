@@ -1549,7 +1549,7 @@ sub body {
         my $courseID = $self->r->urlpath->arg("courseID");
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	print qq!<script src="$webwork_htdocs_url/js/wz_tooltip.js"></script>!;
-	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
+	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
                 #CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>encode_base64($ce->{courseDirs}->{templates})}),

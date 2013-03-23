@@ -823,8 +823,18 @@ span.gray_button{
 
 /*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
 
-.radio_span{
-	visibility: hidden;
+.radio_span, 
+.radio_span input,
+.radio_span label{
+    display:none;
+}
+
+.tabberlive {
+    margin-bottom:1ex;
+}
+
+.tabbertab {
+    min-height:2em;
 }
 
 table.problem_sets_table {
