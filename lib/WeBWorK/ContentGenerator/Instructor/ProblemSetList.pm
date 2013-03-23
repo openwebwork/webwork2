@@ -499,7 +499,7 @@ sub body {
 
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist", id=>"problemsetlist"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -2337,9 +2337,9 @@ sub printTableHTML {
 
 	# print the table
 	if ($editMode or $exportMode) {
-		print CGI::start_table({});
+		print CGI::start_table({id=>"set_table_id", class=>"set_table"});
 	} else {
-		print CGI::start_table({-border=>1});
+		print CGI::start_table({-border=>1, -class=>"set_table", id=>"set_table_id"});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));

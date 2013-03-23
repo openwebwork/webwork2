@@ -1,3 +1,5 @@
+var setmakerWebserviceURL = "/webwork2/instructorXMLHandler";
+
 function settoggle(id, text1, text2) {
   $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
     function() {$('#'+id).html(text1)});
@@ -17,21 +19,31 @@ function init_webservice(command) {
   var myUser = $('#hidden_user').val();
   var myCourseID = $('#hidden_courseID').val();
   var mySessionKey = $('#hidden_key').val();
-  var mydefaultRequestObject = {
-        };
-  _.defaults(mydefaultRequestObject, webwork.requestObject);
+  var requestObject = {
+    "xml_command":"listLib",
+    "pw":"",
+    "password":'change-me',
+    "session_key":'change-me',
+    "user":"user-needs-to-be-defined",
+    "library_name":"Library",
+    "courseID":'change-me',
+    "set":"set0",
+    "new_set_name":"new set",
+    "command":"buildtree"
+  };
+
   if (myUser && mySessionKey && myCourseID) {
-    mydefaultRequestObject.user = myUser;
-    mydefaultRequestObject.session_key = mySessionKey;
-    mydefaultRequestObject.courseID = myCourseID;
+    requestObject.user = myUser;
+    requestObject.session_key = mySessionKey;
+    requestObject.courseID = myCourseID;
   } else {
     alert("missing hidden credentials: user "
       + myUser + " session_key " + mySessionKey+ " courseID "
       + myCourseID, "alert-error");
     return null;
   }
-  mydefaultRequestObject.xml_command = command;
-  return mydefaultRequestObject;
+  requestObject.xml_command = command;
+  return requestObject;
 }
 
 function lib_update(who, what) {
@@ -63,9 +75,10 @@ function lib_update(who, what) {
   mydefaultRequestObject.library_textchapter = lib_textchap;
   mydefaultRequestObject.library_textsection = lib_textsect;
   if(who == 'count') {
-    mydefaultRequestObject.subcommand = 'countDBListings';
+    mydefaultRequestObject.command = 'countDBListings';
     console.log(mydefaultRequestObject);
-    return $.post(webwork.webserviceURL, mydefaultRequestObject, function (data) {
+
+    return $.post(setmakerWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
       console.log(response);
       var arr = response.result_data;
@@ -86,9 +99,9 @@ function lib_update(who, what) {
   if(who=='chapters' && subj=='') { return lib_update(who, 'clear'); }
   if(who=='sections' && chap=='') { return lib_update(who, 'clear'); }
   if(who=='sections') { subcommand = "getSectionListings";}
-  mydefaultRequestObject.subcommand = subcommand;
+  mydefaultRequestObject.command = subcommand;
   console.log(mydefaultRequestObject);
-  return $.post(webwork.webserviceURL, mydefaultRequestObject, function (data) {
+  return $.post(setmakerWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
       console.log(response);
       var arr = response.result_data;
@@ -133,7 +146,7 @@ function addme(path, who) {
     }
   }
   mydefaultRequestObject.set = target;
-  addemcallback(webwork.webserviceURL, mydefaultRequestObject, pathlist, 0)(true);
+  addemcallback(setmakerWebserviceURL, mydefaultRequestObject, pathlist, 0)(true);
 }
 
 function addemcallback(wsURL, ro, probarray, count) {
@@ -162,8 +175,8 @@ function markinset() {
   }
   var shownprobs = $('[name^="filetrial"]'); // shownprobs.value
   ro.set = target;
-  ro.subcommand = 'true';
-  return $.post(webwork.webserviceURL, ro, function (data) {
+  ro.command = 'true';
+  return $.post(setmakerWebserviceURL, ro, function (data) {
     var response = $.parseJSON(data);
     console.log(response);
     var arr = response.result_data;
@@ -260,21 +273,12 @@ function randomize(filepath, el) {
     ro.displayMode = displayMode;
   }
   ro.noprepostambles = 1;
-  $.post(webwork.webserviceURL, ro, function (data) {
+  $.post(setmakerWebserviceURL, ro, function (data) {
     var response = data;
     $('#'+el).html(data);
     // run typesetter depending on the displaymode
     if(displayMode=='MathJax')
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
-    if(displayMode=='jsMath')
-      jsMath.ProcessBeforeShowing(el);
-    if(displayMode=='asciimath') {
-      //processNode(el);
-      translate();
-    }
-    if(displayMode=='LaTeXMathML') {
-      AMprocessNode(document.getElementsByTagName("body")[0], false);
-    }
     //console.log(data);
   });
   return false;
