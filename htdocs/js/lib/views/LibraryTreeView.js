@@ -49,7 +49,6 @@ function(Backbone, _,LibraryTree){
                 level--;
             }
 
-            console.log(this.libraryTree.header+path);
             this.dispatcher.trigger("load-problems",this.libraryTree.header+path);
 
 
