@@ -107,6 +107,13 @@ passwords to students, import/export student records from/to external files, or 
 the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the
 page contains a table containing the student usernames and their information.
 },
+"_ACHIEVEMENTS_EDITOR_DESCRIPTION" => q{
+tr: This is the Achievent Editor.  It is used to edit the achievements available to students.  Please keep in mind the following facts: 
+-The achievements are always sorted by category and then by name.
+-Achievments are displayed, and evaluated, in the order they are listed.
+-The \"secret\" category always comes first and creates achievements which are not visible to students until they are earned.
+-The \"level\" category is used for the achievements associated to a users level.;
+},
 "_REDUCED_CREDIT_MESSAGE_1" => q{
 tr: This assignment has a Reduced Credit Period that begins [_1] and
 ends on the due date, [_2].  During this period all additional work done counts [_3]\% of the

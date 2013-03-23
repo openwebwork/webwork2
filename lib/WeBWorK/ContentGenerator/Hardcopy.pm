@@ -455,7 +455,7 @@ sub display_form {
 # 	}
 # 	print CGI::end_p();
 	
-	print CGI::start_form(-method=>"POST", -action=>$r->uri);
+	print CGI::start_form(-name=>"hardcopy-form", -id=>"hardcopy-form", -method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields();
 	print CGI::hidden("in_hc_form", 1);
 	

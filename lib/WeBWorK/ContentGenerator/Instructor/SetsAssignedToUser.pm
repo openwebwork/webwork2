@@ -154,7 +154,7 @@ sub body {
 	} @Sets;
 	
 	
-	print CGI::start_form({method=>"post", action=>$setsAssignedToUserURL});
+	print CGI::start_form({id=>"set-user-form", name=>"set-user-form", method=>"post", action=>$setsAssignedToUserURL});
 	print $self->hidden_authen_fields;
 	
 	# get the global user, if there is one
