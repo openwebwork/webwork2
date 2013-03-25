@@ -581,7 +581,7 @@ print CGI::p("$svg"); # insert SVG graph inside an html paragraph
 print  
 
 	   CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
-		CGI::start_table({-border=>1}),
+		CGI::start_table({-border=>1, -class=>"stats-table"}),
 		CGI::Tr(CGI::td(
 			['Problem #', 
 			   map {CGI::a({ href=>$self->systemLink($problemPage{$_}) },$_)} @problemIDs
@@ -627,7 +627,7 @@ print
 		if ($gradeable) {
 		    
 		    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
-		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs<br>Grading" : "Regrade")));
+		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs Grading" : "Regrade")));
 		    
 		}  else {
 		    push (@GradeableRows, CGI::td());
@@ -647,7 +647,7 @@ print
 	print  
 
 	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores. The median score is in the 50% column.'))),
-			CGI::start_table({-border=>1}),
+			CGI::start_table({-border=>1,-class=>"stats-table"}),
 				CGI::Tr(
 					CGI::td( [$r->maketext('% students'),
 					          (map {  "&nbsp;".$_   } @brackets1) ,
@@ -684,7 +684,7 @@ print
 	print  
 
 	    	CGI::p(CGI::i($r->maketext('Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.'))),
-			CGI::start_table({-border=>1}),
+			CGI::start_table({-border=>1,-class=>"stats-table"}),
 				CGI::Tr(
 					CGI::td( [$r->maketext('% students'),
 					          (map {  "&nbsp;".($_)  } @brackets2) ,

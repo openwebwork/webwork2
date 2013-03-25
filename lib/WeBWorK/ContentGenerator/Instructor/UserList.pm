@@ -473,7 +473,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"userlist"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"classlist-form", id=>"classlist-form"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -1761,9 +1761,9 @@ sub printTableHTML {
         
 	# print the table
 	if ($editMode or $passwordMode) {
-		print CGI::start_table({});
+		print CGI::start_table({class=>"classlist-table",id=>"classlist-table"});
 	} else {
-		print CGI::start_table({-border=>1, -nowrap=>1});
+		print CGI::start_table({-border=>1, -nowrap=>1, class=>"classlist-table",id=>"classlist-table"});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));

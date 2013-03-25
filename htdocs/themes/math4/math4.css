@@ -15,14 +15,50 @@
 
 /* --- Standard elements ---------------------------------------------------- */
 
+body {
+	font-size: 16px;
+	font-family: "Arial", sans-serif;
+}
+
 .body {
 	background: white;
 	color: black;
 	margin: .5em .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
 	padding: 0;
-	font-family: "Arial", sans-serif;
 	float:left; 
-	max-width:85%; 
+	max-width:90%; 
+}
+
+.problem_set_body {
+    max-width:65%;
+}
+
+blockquote {
+  padding: 0 0 0 0;
+  margin: 0 0 0 1em;
+  border-left-width: 0;
+}
+
+label,
+input,
+button,
+select,
+textarea {
+  font-size: 16px;
+  font-weight: normal;
+  line-height: 18px;
+  width: auto;
+}
+
+input {
+    height:auto;
+}
+
+p {
+  margin: 0 0 9px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 18px;
 }
 
 .barrier {
@@ -30,9 +66,9 @@
 	border: none; /* 1px solid grey; */
 }
 #info-panel-right {
-	float:right; 
-	padding: .2em;
-	max-width:30%
+    float: right;
+    padding: .2em;
+    max-width:30%
 }
 h1, h2, h3, h4, h5, h6 {
 	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
@@ -40,17 +76,12 @@ h1, h2, h3, h4, h5, h6 {
 	color: #225;
 	background: transparent;
 }
-h1 { font-size: 170%; }
-h2 { font-size: 140%; padding-bottom: 0; margin-bottom: .5ex }
-h3 { font-size: 120%; }
-h4 { font-size: 110%; }
-h5 { font-size: 105%; }
+h1 { font-size: 200%; }
+h2 { font-size: 170%; padding-bottom: 0; margin-bottom: .5ex }
+h3 { font-size: 140%; margin-bottom: 1ex;}
+h4 { font-size: 120%; }
+h5 { font-size: 110%; }
 h6 { font-size: 105%; } 
-
-a:link { color: #00e; background-color: inherit; }
-a:visited { color: #808; background-color: inherit; }
-
-/* --- Miscellaneous classes ---------------------------------------------- */
 
 /* show only to CSS-ignorant browsers */
 .for-broken-browsers { display: none }
@@ -59,50 +90,15 @@ a:visited { color: #808; background-color: inherit; }
 .float-left { float: left; }
 .float-right { float: right; }
 
-/* --- Compound titles (class) ---------------------------------------------- */
-
-/* WeBWorK is not using this, but it might be nice to have it around later */
-
-/* "Split" title, with main heading left-aligned above a horizontal line,
- * and subheading right-aligned below the line. Usage:
- *
- * <h1 class="compound">Alumni Newsletter</h1>
- * <h2 class="compound">Spring '00</h2>
- */
-
-/*h1.compound {
-	border-bottom: 1px solid #559;
-	text-align: left;
-	padding: .5ex 0 0 0;
-	margin: 0;
-}
-h2.compound { float: right; margin: 0; padding: 0 }*/
-
-/* --- Info box (class) ----------------------------------------------------- */
-
-/* FIXME as a quick hack, the info() escape outputs a DIV with this class.
- * don't let the placement of these styles fool you -- <div style="info-box">
- * is output by WeBWorK! */
-
-/* Common style for a small box to hold supplemental info; typically this
- * box will appear in a sidebar.  Sample usage:
- *
- * <div class="info-box">
- *   <h2>Announcements</h2>
- *   <ul>
- *     <li>foo</li>
- *   </ul>
- *   <a class="more" href="bar">Older announcements...</a>
- * </div>
- */
-
 .info-box {
 	border: 1px solid #559;
 	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
 	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
 	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
 	margin-bottom: 1ex; 
+	margin-left:1ex;
 	margin-top: 0;
+	margin-right:1ex;
 	width: 90%;
 	overflow: hidden;
 }
@@ -122,20 +118,7 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	margin: 0;
 	padding: 0 .5em 0 .5em;
 }
-.info-box h2 a,
-.info-box h3 a,
-.info-box h4 a,
-.info-box h5 a,
-.info-box h6 a {
-	color: #fff;
-	background: inherit;
-}
-.info-box ul,
-.info-box ol {
-	margin: 1ex .5em 1ex 0;
-	padding-left: 3.5em;
-	font-size: 80%;
-}
+
 .info-box dl {
 	margin: 1ex .5em 1ex 1ex;
 	padding: 0;
@@ -164,87 +147,42 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	margin-right: .5em;
 }
 
+.info-box form {
+    margin-bottom:0px;
+}
+
 .Message {
 background-color:#ddd;
 clear: both;
 }
-/* --- Fisheye view (id) ---------------------------------------------------- */
-
-/* The "fisheye" view: a hierarchical view of the website to show the 
- * user where they are in the document hierarchy.  Provides more "lateral" 
- * information than breadcrumbs, but not as much as a full sitemap. To 
- * appear within the #site-navigation div.  Inherits many of its attributes 
- * from class info-box, and overrides some.
- */
 
 #mini-sitemap,
 #fisheye {
 	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
 	padding: 0 0 1ex 0;
 }
-#mini-sitemap a,
-#fisheye a {
+#mini-sitemap a, #mini-sitemap a:link, #mini-sitemap a:visted,
+#fisheye a, #fisheye a:link, #fisheye a:visted {
 	text-decoration: none;
 }
-#mini-sitemap a:hover,
-#fisheye a:hover {
-	text-decoration: underline;
+
+#fisheye ul,
+#fisheye li,
+#fisheye a{
+	font-size: small;
+	padding-top: 0px;
+	padding-bottom: 0px;
+	color:#009;
 }
-#mini-sitemap li,
-#fisheye li {
-	line-height: 2.5ex;
-	margin: 0;
+
+#fisheye a:hover{
+    text-decoration: none;
 }
-#mini-sitemap ul,
+
 #fisheye ul {
-	font-size: 90%;
-	list-style-type: none;
-	margin: 0 .1em .3ex .3em;
-	padding: 0;
-}
-#mini-sitemap ul ul,
-#fisheye ul ul {
-	font-size: 90%;
-	margin-left: 0;
-}
-#mini-sitemap ul li,
-#fisheye ul li {
-	font-weight: bold;
-}
-#mini-sitemap ul ul ul,
-#fisheye ul ul ul {
-	font-size: 95%;
-	margin-left: .3em;
-	padding-left: .5em;
-	border-left: 1px dotted gray;
-}
-#mini-sitemap ul ul li a.active,
-#fisheye ul ul li a.active {
-	font-weight: bold;
-	color: black;
-	background-color: inherit;
-}
-#mini-sitemap ul ul ul li,
-#fisheye ul ul ul li {
-	font-weight: normal;
-}
-#mini-sitemap ul ul ul ul,
-#fisheye ul ul ul ul {
-	font-size: 90%;
-}
-#mini-sitemap ul ul ul ul ul,
-#fisheye ul ul ul ul ul {
-	font-size: 90%;
+    padding-left: 1ex;
 }
 
-/* --- Common layout elements for documents using templates ----------------- */
-
-/* The "masthead" of our document that tells users what site they're on.
- * It contains a logo-ish title and some basic site navigation.  The
- * masthead should appear at the top of the page, but we're not positioning
- * it absolutely because we can't know its height in advance.  Therefore this 
- * element should be placed at the very top of the <body> of our HTML document.
- */
 #masthead {
 	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
 	font-size: 100%;
@@ -258,40 +196,8 @@ clear: both;
 	background-repeat: repeat-x;
 	background-position: top left;
 }
-#masthead a {
-	/* FIXME "You have no background-color with your color" */
-	color: #fff;
-	background: transparent;
-}
-/* [ww] since this is a logo and not text, we need borders that are the same
- * width all the way around. after we find a nice background image, we can
- * turn these back on. */
-/*#masthead #logo { padding: .5ex .2em .1ex .5em }*/
-#masthead #logo { padding: 1ex }
-/* [ww] don't need these -- logo itself an image */
-/*#masthead #logo h1 {
-	background-image: none;
-	background-color: transparent;
-	font-size: 100%;
-	font-weight: normal;
-	padding: 0;
-	margin: 0;
-	white-space: nowrap;
-	line-height: 1.9ex;
-}*/
-/*#masthead #logo h2 {
-	background-color: transparent;
-	background-image: none;
-	font-weight: bold;
-	font-size: 210%;
-	line-height: 1.9ex;
-	margin: 0;
-	padding: 0;
-}*/
-/* [ww] instead of a search form, we want the loginstatus there */
-/*#masthead form {*/
 
-/*Loginstatus -- the element fixed on the top right corner of the page, which tells the user whether they are logged in or not, and provides them with a log out link if they are logged in.*/
+#masthead #logo { padding: 1ex }
 
 #loginstatus {
 	color: white;
@@ -305,21 +211,6 @@ clear: both;
 	font-size: smaller;
 } 
 
-/*Relative Positioning -- a alternate style for the loginstatus which uses relative positioning.  Tested, but was decided that it didn't work great. Feel free to uncomment if you want to try it out.*/
-
-/*#loginstatus {
-	color: white;
-	position: relative;
-	top: -140px;
-	left: 470px;
-	width: 150px;
-	text-align: center;
-	padding: 0;
-	margin: 1ex .5em .1ex .1em;
-	font-size: smaller;
-}*/
-
-
 #loginstatus a{
 	color: white;
 }
@@ -328,11 +219,6 @@ clear: both;
 	padding: 1ex;
 }
 
-/* "big-wrapper" contains everything other than the masthead.  It's merely 
- * a relatively positioned div that allows us to use absolute positioning
- * on elements within it -- and because it's relatively positioned,
- * absolutely positioned objects *stay* within it.
- */
 #big-wrapper {
 	position: relative;
 	top: 1ex;
@@ -341,15 +227,6 @@ clear: both;
 	margin: 0;
 	border: 0;
 }
-
-/*
- * A simple list of "breadcrumbs" showing a path of links from the root of
- * the site's hierarchy to our present location.  We are not positioning
- * this element absolutely, because we don't know in advance how tall it
- * will be, and we might want to place content under it.  So when coding
- * our HTML document, we'll probably want to include this element right
- * before the main content.
- */
 
 #breadcrumbs {
 	margin-left: 10.4em;
@@ -360,6 +237,7 @@ clear: both;
 	color: #fff;
 	text-align: left; 
 	font-size: 100%;
+	line-height:normal;
 	font-family: "Trebuchet MS", "Arial", sans-serif;
 }
 #breadcrumbs a {
@@ -372,20 +250,6 @@ clear: both;
 #breadcrumbs a.active { font-weight: bold; }
 #breadcrumbs a:hover { text-decoration: underline; }
 
-
-/* For the more CSS-compliant browsers, we'd like to provide site-wide
- * navigation links (e.g., a mini site map) to appear in a column along
- * the left side of the page, just below the masthead.  This column is
- * absolutely positioned, so that ideally we should be able to include its
- * contents anywhere within the body of our HTML documents.  However, we 
- * probably want to include this data at the END of our documents -- after
- * the main content -- so that it doesn't interfere with document flow in 
- * browsers that don't understand CSS (e.g., lynx) -- or in browsers for
- * which we've disabled CSS via some hack (e.g. Netscape Navigator 4.x).
- *
- * We consider this meta-information to be non-essential; it is NOT part of
- * the content, and may not be displayed in some circumstances.
- */
 #site-navigation {
 	position: absolute;
 	left: 0;
@@ -395,11 +259,6 @@ clear: both;
 	width: 9.8em;
 }
 
-/* The primary information content of the document, excluding masthead and
- * site navigation.  We want to leave a wide left margin to prevent overlap
- * with our site map, which will be displayed on the left-hand side of the
- * screen.
- */
 #content {
 	margin: .5em 0 0 10.4em;
 	padding: 0 0 0 0;
@@ -429,38 +288,24 @@ clear: both;
 	border-bottom: 1px solid #559;
 }
 
-/* --- WeBWorK classes ------------------------------------------------------ */
-
-/* These classes are emitted by WeBWorK code and should appear in ANY WeBWorK
- * template. they need not be implemented the same way in each template though.
- * (These are mostly copied from ur.css right atm.)
- */
-
-/* the info escape emits a DIV with this id. (note that the same DIV has class
- * "info-box" which is given above in the "template styles" section. Regardless,
- * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-
-	float: left; /*was right*/
-	min-width: 0;
-	overflow: auto; /*was hidden*/
-	/*margin-right: -1px;*/
-	background-color: #fff;
-
+    float: left; /*was right*/
+    min-width: 0;
+    overflow: hidden; /*was auto*/
+    /*margin-right: -1px;*/
+    background-color: #fff;
 }
 #InfoPanel ol {
 	font-size:100%;
 }
 
-/* tables used for laying out form fields shouldn't have a border */
 table.FormLayout { border: 0; }
 table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
 table.FormLayout tr.ButtonRow { text-align: left; }
 table.FormLayout tr.ButtonRowCenter { text-align: center; }
 
-/* for problems which are rendered by themselves, e.g., by Set Maker */
 div.RenderSolo { background-color: #E0E0E0; color: black; }
 div.AuthorComment { background-color: #00E0E0; color: black; }
 
@@ -492,7 +337,15 @@ div.ScrollingRecordList select.ScrollingRecordList { width: 99%; }
 
 /* wraps the View Options form (generated by &optionsMacro) */
 /* FIXME: can't this style information just go in div.Options above? */
-div.viewOptions { font-size: small }
+
+.viewOptions  {
+    margin-left:1ex;
+    font-size:small;
+}
+
+.viewOptions label {
+    font-size:small;
+}
 
 /* messages, attempt results, answer previews, etc. go in this DIV */
 /* this used to be "float:left", but that was suspected of causing MSIE peekaboo bug */
@@ -502,9 +355,12 @@ div.problemHeader {}
 table.attemptResults {
 	border-style: outset; 
 	border-width: 1px; 
-	margin: 0px 10pt; 
+	margin-bottom: 1em; 
 	border-spacing: 1px;
+	float:left;
+	clear:right;
 }
+
 table.attemptResults td,
 table.attemptResults th {
 	border-style: inset; 
@@ -519,13 +375,14 @@ table.attemptResults th {
 /*styles for the instructor comment box */
 
 .answerComments {
-    margin-left: 40px;
-    width: 100%;
+    margin-left: 2em;
+    max-width: 80%;
     border-style: outset;
     border-width: 1px;
     border-spacing: 2px;
     border-color: gray;
     padding: 2px 5px 2px 5px;
+    margin-bottom:1em;
     background-color: #E8E8E8;
 }
 
@@ -544,6 +401,11 @@ table.attemptResults td.Message {
 }
 .attemptResultsSummary { font-style: italic; }
 .parsehilight { color: inherit; background-color: yellow; }
+
+.problem-main-form input {
+    margin-left:.5ex;
+    margin-right:.5ex;
+}
 
 /* the problem TEXT itself goes in this box */
 /* we used to make this a grey box, but surprise, MSIE is bug-ridden. */
@@ -598,11 +460,16 @@ font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; backgroun
 
 /*Following are mostly alignment fixes for the input elements and their lables on this page.*/
 .edit_form  input,select{
-	margin-top: 5px;
+	margin-top: .25em;
+	margin-bottom: .25em;
 }
 
-.edit_form label, .edit_form span{
+.edit_form label {
 	margin-left: 40px;
+}
+
+.edit_form span {
+    float: none;
 }
 
 .edit_form label.radio_label{
@@ -654,13 +521,16 @@ table caption{
 }
 
 /*General styles for all column divs, for pages which use column layouts*/
-.column {
+/*.column {
 	float: left;
 	width: 50%;
-	height: 22%;
-	overflow: hidden;
 	margin-top: 10px;
 }
+
+.column input[type="radio"] {
+    margin-right:1ex;
+}
+*/
 .problemFooter {
 	clear:both;  /* the footer shouldn't float at all */
 
@@ -675,45 +545,17 @@ table caption{
 	margin-left: 5px;
 }
 
-/*The following styles create the links which look like buttons, which replaced the image elements which were previously used for the navigation buttons*/
-a.nav_button{
-	color: black;
-	background-color: #DDDDDD;
-	text-decoration: none;
-	text-align: center;
-	font-size: 15px;
-	padding: 1px 6px 1px 6px;
-	margin: 2px;
-	border-style: outset;
+
+#show_hide{
+    margin-bottom:.5ex;
 }
 
-a.nav_button:hover{
-	background-color: #EEEEEE;
-	border-color: #00ADEE;
-}
 
-a.nav_button:active{
-	border-style: inset;
-}
-
-span.gray_button{
-	color: black;
-	background-color: #DDDDDD;
-	text-decoration: none;
-	text-align: center;
-	font-size: 15px;
-	padding: 1px 6px 1px 6px;
-	margin: 2px;
-	border-style: outset;
-	opacity: 0.3;
-}
-
-/*an ID for elements that should have no style, if it is necessary to specifically specify such an element.*/
 #none{
 	/*Please do not do anything with elements with id "none"*/
 }
 
-/*Styles for the PGProblemEditor Page
+/*Styles for the PGProblemEditor Page*/
 
 #editor{
 	background-color: #FFFFFF;
@@ -808,35 +650,26 @@ span.gray_button{
 	clear: both;
 }
 
-#pg_editor_header {
-    left: 790px;
-    position: absolute;
-    top: 130px;
-}
-
 #pg_editor_frame_id{
-	height: 474px;
-    left: 785px;
-    position: absolute;
-    top: 182px;
-    width: 50%;
-	overflow: scroll;
+    width:95%;
+    height:390px;
+    overflow:hidden;
 }
 
-/*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
+#render-modal.modal {
+    width:1024px;
+    left:25%;
+}
+
+#render-modal .modal-body {
+    height:95%;
+    width:95%;
+}
 
 .radio_span, 
 .radio_span input,
 .radio_span label{
     display:none;
-}
-
-.tabberlive {
-    margin-bottom:1ex;
-}
-
-.tabbertab {
-    min-height:2em;
 }
 
 table.problem_sets_table {
@@ -870,17 +703,118 @@ table.problem_set_table{
 	text-align: left;
 	float: left;
 }
-table.problem_set_table th{
-	padding-right: 30px;
+
+table.problem_set_table a.btn{
+    margin-left:10px;
 }
-table.problem_set_table td{
-	padding-right: 30px;
+
+table.problem_set_table form{
+    margin-bottom:0px;
 }
+
 div.problem_set_options {
 	clear: both;
+	width:100%;
 }
 /*BUG FIXES*/
 
 table#grades_table pre{
 	float: left;
 }
+
+#config-form input[type="checkbox"] {
+    margin-right:1.5ex;
+}
+
+.file-manager-btn {
+    margin-bottom:.5ex;
+    margin-top:.5ex;
+}
+
+/*mainform is in the library browser*/
+.classlist-table,
+.classlist-table label,
+.setlist-table,
+.setlist-table label,
+.user-list-form,
+.user-list-form label,
+.user-list-form input,
+.user-list-form select,
+.set-list-form,
+.set-list-form label,
+.set-list-form input,
+.set-list-form select,
+#mainform,
+#mainform label,
+#mainform input,
+#mainform select{
+    font-size:small;
+}
+
+#send-mail-form input,
+#send-mail-form select,
+.set-list-form input,
+.set-list-form select,
+.user-list-form input,
+.user-list-form select {
+    margin-top: .15em;
+    margin-bottom: .25em;
+}
+
+.user-list-form select,
+.set-list-form select {
+    height:27px;
+}
+
+.set-list-form select[multiple] {
+    height:auto;
+}
+
+.classlist-table .table_checkbox, 
+.setlist-table .table_checkbox {
+    margin-right:1ex;
+}
+
+#problem_set_form .btn {
+    margin-left:.5ex;
+    margin-right:.5ex;
+}
+
+#mainform .btn,
+#problem_set_form .btn {
+    margin-bottom:.25ex;
+    margin-top:.25ex;
+}
+
+#problem_set_form input[type="checkbox"] {
+    margin-bottom:.5ex;
+}
+
+
+
+#editor input[type="radio"]{
+    margin-right:.5ex;
+    
+}
+
+#problem-grader-form select {
+    width:60px;
+}
+
+.tabberlive {
+    margin-bottom:1ex;
+}
+
+.tabbertab {
+    min-height:2em;
+}
+
+.small-table-text,
+.small-table-text td {
+    font-size:small;
+}
+
+.nav-list li {
+    font-size:small;
+}
+
