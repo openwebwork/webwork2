@@ -3,7 +3,7 @@
 //
 // This is the current iteration of the library browser for webwork.
 // It's built out of models contained in the `webwork.*` framework that
-// you can find in the `js/lib/webwork` folder.
+// you can find in the `js/lib` folder.
 //
 // The idea was to use this as a proof of concept of how to write single page
 // webapps for webwork out of a general client side framework quickly, easily
@@ -19,9 +19,9 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/lib/webwork/components/backbone/Backbone",
-        "underscore": "/webwork2_files/js/lib/webwork/components/underscore/underscore",
-        "jquery": "/webwork2_files/js/lib/webwork/components/jquery/jquery",
+        "Backbone": "/webwork2_files/js/lib/components/backbone/Backbone",
+        "underscore": "/webwork2_files/js/lib/components/underscore/underscore",
+        "jquery": "/webwork2_files/js/lib/components/jquery/jquery",
         "jquery-ui": "/webwork2_files/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min",
         "touch-pinch": "/webwork2_files/js/lib/vendor/jquery/jquery.ui.touch-punch",
         "tabs": "/webwork2_files/js/lib/vendor/ui.tabs.closable",

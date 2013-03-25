@@ -2001,7 +2001,7 @@ sub head{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     	
     print "<link rel='stylesheet' type='text/css' href='$site_url/css/simple-pg-editor.css' > </style>";
-	print qq!<script data-main="$site_url/js/apps/PGEditor/SimpleEditor" src="$site_url/js/lib/vendor/requirejs/require.js"></script>!;
+	print qq!<script data-main="$site_url/js/apps/PGEditor/SimpleEditor" src="$site_url/js/vendor/requirejs/require.js"></script>!;
 	return "";
 }
 
@@ -2015,18 +2015,18 @@ sub templateName {
 
 # prints out the necessary JS for this page
 
-sub output_JS{
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+# sub output_JS{
+# 	my $self = shift;
+# 	my $r = $self->r;
+# 	my $ce = $r->ce;
 
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script data-main="$site_url/js/apps/PGEditor/SimpleEditor" src="$site_url/js/lib/vendor/requirejs/require.js"></script>!;
+# 	my $site_url = $ce->{webworkURLs}->{htdocs};
+# 	print qq!<script data-main="$site_url/js/apps/PGEditor/SimpleEditor" src="$site_url/js/vendor/requirejs/require.js"></script>!;
 
 
 	
-	return "";
-}
+# 	return "";
+# }
 
 1;
 =head1 AUTHOR

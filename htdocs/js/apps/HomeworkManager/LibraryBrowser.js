@@ -5,80 +5,51 @@
 */ 
 
 
-define(['Backbone', 'underscore',
-    '../../lib/webwork/views/ProblemListView',
-	'../../lib/webwork/models/ProblemList',
-	'../../lib/webwork/views/LibraryTreeView'], 
-function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
+define(['Backbone', 'underscore','../../lib/views/LibraryView'], 
+function(Backbone, _,LibraryView){
     var LibraryBrowser = Backbone.View.extend({
         className: "lib-browser",
     	tagName: "td",
     	initialize: function (){
     		var self = this; 
-            _.bindAll(this,'render','changeView','showProblems');
+            _.bindAll(this,'render');
             _.extend(this,this.options);
 
-    		this.render();
-            this.dispatcher = {};
-            _.extend(this.dispatcher, Backbone.Events);
+            this.elements = {allLibSubjects: "library-subjects-tab",
+                             allLibraries: "library-directories-tab",
+                             searchLibraries: "library-search-tab"};
 
-    		this.dispatcher.on("load-problems", function(path) { self.loadProblems(path);});
-
-            // The following needs to be changed it's being called when the problem set list is shown.  
-
-            this.dispatcher.on("num-problems-shown", function(num){
-                    if (self.libraryTreeView){
-                        self.libraryTreeView.$("span.library-tree-right").html(num + " of " + self.problemList.size() + " shown");
-                    }
-            });
-
-            
-    	},
-    	events: {"change #library-selector": "changeView"},
-    	render: function (){
-            var self = this;
-    		this.$el.html(_.template($("#library-browser-template").html()));
-
-            console.log(this.id);
-            switch(this.id){
-                case "view-all-libraries":
-                    this.type = "libDirectoryBrowser";
-                    this.libraryTreeView = new LibraryTreeView({parent: self, type: "directory-tree"});
-                    self.$(".library-viewer").append(this.libraryTreeView.el);
-                    break;
-                case "view-all-subjects":
-                    this.type = "libSubjectBrowser";
-                    this.libraryTreeView = new LibraryTreeView({parent: self, type: "subject-tree"});
-                    self.$(".library-viewer").append(this.libraryTreeView.el);
-                    break;
-                case "search-libraries":
-                case "view-local-libraries":
-                    break;
-
+            this.views = {
+                allLibSubjects  :  new LibraryView({libBrowserType: "allLibSubjects", errorPane: this.hwManager.errorPane, 
+                                            problemSets: this.hwManager.problemSets}),
+                allLibraries    :  new LibraryView({libBrowserType: "allLibraries", errorPane: this.hwManager.errorPane, 
+                                            problemSets: this.hwManager.problemSets}),
+                searchLibraries :  new LibraryView({libBrowserType: "searchLibraries", errorPane: this.hwManager.errorPane, 
+                                            problemSets: this.hwManager.problemSets})
             }
 
-    		this.$(".lib-problem-viewer").height(0.8*screen.height);
-    		
-
+/*            this.hwManager.problemSets.each(function(set){
+                set.on('add',function(model){
+                    console.log(model);
+                });
+            });*/
+            
     	},
-        showProblems: function (){
-            console.log("in showProblems");
-            var plv = new ProblemListView({el: this.$(".lib-problem-viewer"), type: this.type, 
-                                            parent: this.parent, collection: this.problemList, showPoints: false,
-                                            reorderable: false, deletable: false, draggable: true});
-            plv.render();
-        },
-    	changeView: function (evt) {
-    		var self = this;
-            $(".lib-problem-viewer").html("");
-
+    	render: function (){
+            var self = this; 
+        	this.$el.html(_.template($("#library-browser-template").html()));
+            _.chain(this.elements).keys().each(function(key){
+                self.views[key].setElement(self.$("#"+self.elements[key]));
+            });
+            this.views.allLibSubjects.render();
     	},
-    	loadProblems: function (_path)
-    	{
-    		console.log(_path);
-			this.problemList = new ProblemList({path:  _path, type: "Library Problems"});
-            this.problemList.on("fetchSuccess",this.showProblems,this);
-    	}
+        events: {"shown a[data-toggle='tab']": "changeView"},
+        changeView: function(evt){
+
+            var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab
+            this.views[_(tabType).values()[0]].render();
+        }
+
 
     });
 
