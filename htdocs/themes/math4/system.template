@@ -122,6 +122,14 @@
 						</div>
 					<!--#endif-->
 					
+					<!--#if can="output_comments" "-->
+					<div>
+						  <!--#output_comments-->
+					</div>
+					<!--#endif-->
+						
+
+
 					<!--#if can="output_hidden_info"-->
 						<!--#output_hidden_info-->
 					<!--#endif-->
@@ -129,12 +137,6 @@
 					<!--#if can="output_form_start"-->
 						<!--#output_form_start-->
 
-						<!--#if can="output_comments" "-->
-						<div>
-						  <!--#output_comments-->
-						</div>
-						<!--#endif-->
-						
 						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 							<div class="problem">
 								<!--#if can="output_problem_body"-->
