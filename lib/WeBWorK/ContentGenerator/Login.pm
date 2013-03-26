@@ -106,7 +106,8 @@ sub info {
 
 	
 	if (defined $result and $result ne "") {
-		return CGI::div({-class=>"info-wrapper"},CGI::div({class=>"info-box", id=>"InfoPanel"}, $result));
+#		return CGI::div({-class=>"info-wrapper"},CGI::div({class=>"info-box", id=>"InfoPanel"}, $result));
+	    return $result;
 	} else {
 		return "";
 	}
@@ -116,6 +117,16 @@ sub links {
 	my @return = (" ");
 	return( @return);
 }
+
+sub pre_header_initialize {
+	my ($self) = @_;
+	my $authen = $self->r->authen;
+	
+	if ( defined($authen->{redirect}) && $authen->{redirect} ) {
+		$self->reply_with_redirect($authen->{redirect});
+	}
+}
+
 
 sub body {
 	my ($self) = @_;

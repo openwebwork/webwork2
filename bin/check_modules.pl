@@ -1,5 +1,5 @@
-#!/usr/bin/perl
-
+#!/usr/bin/env perl
+#
 use strict;
 use warnings;
 
@@ -72,6 +72,7 @@ my @modulesList = qw(
 	MIME::Base64
 	Net::IP
 	Net::LDAPS
+	Net::OAuth
 	Net::SMTP
 	Opcode
 	PadWalker
@@ -84,6 +85,7 @@ my @modulesList = qw(
 	Socket
 	SQL::Abstract
 	String::ShellQuote
+	Text::CSV
 	Text::Wrap
 	Tie::IxHash
 	Time::HiRes

@@ -85,7 +85,15 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_detail2               /$courseID/instructor/sets2/$setID/ #not created yet
  instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
 
+
  instructor_problem_grader                /$courseID/instructor/grader/$setID/$problemID
+
+
+ instructor_set_list3                 /$courseID/instructor/sets3/
+ instructor_set_detail3               /$courseID/instructor/sets3/$setID/ #not created yet
+ instructor_users_assigned_to_set3    /$courseID/instructor/sets3/$setID/users/ #not created yet
+
+
  
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
@@ -94,6 +102,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_maker                /$courseID/instructor/setmaker/
  instructor_set_maker2               /$courseID/instructor/setmaker2/
  instructor_set_maker3               /$courseID/instructor/setmaker3/
+ instructor_set_maker_no_js          /$courseID/instructor/setmakernojs/
  instructor_get_target_set_problems  /$courseID/instructor/GetTargetSetProblems/
  instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
@@ -109,15 +118,21 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_problem_editor2_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor2/$setID/$problemID/
  
-  instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
+ instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
  instructor_problem_editor3_withset   /$courseID/instructor/pgProblemEditor3/$setID/
  instructor_problem_editor3_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
+
+ instructor_simple_editor           /$courseID/instructor/SimplePGEditor/
+ instructor_simple_editor_withset   /$courseID/instructor/SimplePGEditor/$setID/
+ instructor_simple_editor_withset_withproblem
+                                     /$courseID/instructor/SimplePGEditor/$setID/$problemID/
+
  
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
- instructor_answer_log               /$courseID/instructor/show_answers/
+ 
  instructor_preflight               /$courseID/instructor/preflight/
  
  instructor_statistics               /$courseID/instructor/stats/
@@ -134,7 +149,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
-
+answer_log                           /$courseID/show_answers/
  achievements                        /$courseID/achievements
  instructor_achievement_list         /$courseID//instructor/achievement_list
  instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
@@ -188,7 +203,7 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy achievements
+		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz answer_log grades hardcopy achievements
 			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -226,6 +241,17 @@ our %pathTypes = (
 		produce => 'quiz_mode/$setID/',
 		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
 	},
+
+    	answer_log => {
+		name    => 'Answer Log',
+		parent  => 'set_list',
+		kids    => [ qw// ],
+		match   => qr|^show_answers/|,
+		capture => [ qw// ],
+		produce => 'show_answers/',
+		display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
+	},
+
 	proctored_gateway_quiz => {
 		name    => 'Proctored Gateway Quiz $setID',
 		parent  => 'set_list',
@@ -322,15 +348,15 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2
+		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2 instructor_set_list3
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
-			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
+			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3 instructor_simple_editor
+			instructor_set_maker instructor_set_maker2 instructor_set_maker3 instructor_set_maker_no_js
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_answer_log instructor_preflight instructor_statistics instructor_statistics_old
+			instructor_preflight instructor_statistics instructor_statistics_old
 			instructor_progress			
                         instructor_problem_grader
 		/ ],
@@ -361,14 +387,14 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
 	instructor_user_list3 => {
-    		name    => 'Classlist Editor3',
-    		parent  => 'instructor_tools',
-    		kids    => [ qw/instructor_user_detail/ ],
-    		match   => qr|^users3/|,
-    		capture => [ qw// ],
-    		produce => 'users3/',
-    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
-    	},
+		name    => 'Classlist Manager',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_user_detail/ ],
+		match   => qr|^users3/|,
+		capture => [ qw// ],
+		produce => 'users3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
+	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',
@@ -408,6 +434,18 @@ our %pathTypes = (
 		produce => 'sets2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList2',
 	},
+
+	instructor_set_list3 => {
+		name    => 'Homework Manager',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_set_detail/ ],
+		match   => qr|^sets3/|,
+		capture => [ qw// ],
+		produce => 'sets3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList3',
+	},
+
+	
 	instructor_set_detail => {
 		name    => 'Set Detail for set $setID',
 		parent  => 'instructor_set_list',
@@ -486,6 +524,15 @@ our %pathTypes = (
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
 	},
+	instructor_set_maker_no_js => {
+		name    => 'Library Browser no js',
+		parent  => 'instructor_tools',
+		kids    => [ qw// ],
+		match   => qr|^setmakernojs/|,
+		capture => [ qw// ],
+		produce => 'setmakernojs/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SetMakernojs',
+	},
 	instructor_set_maker2 => {
 		name    => 'Library Browser 2',
 		parent  => 'instructor_tools',
@@ -558,6 +605,15 @@ our %pathTypes = (
 		produce => 'pgProblemEditor3/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
+	instructor_simple_editor => {
+		name    => 'Simple Editor',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_simple_editor_withset/ ],
+		match   => qr|^SimplePGEditor/|,
+		capture => [ qw// ],
+		produce => 'SimplePGEditor/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SimplePGEditor',
+	},
 	instructor_problem_editor_withset => {
 		name    => '$setID',
 		parent  => 'instructor_problem_editor',
@@ -580,6 +636,15 @@ our %pathTypes = (
 		name    => '$setID',
 		parent  => 'instructor_problem_editor3',
 		kids    => [ qw/instructor_problem_editor3_withset_withproblem/ ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/setID/ ],
+		produce => '$setID/',
+		display => undef,
+	},
+	instructor_simple_editor_withset => {
+		name    => '$setID',
+		parent  => 'instructor_simple_editor',
+		kids    => [ qw/instructor_simple_editor_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
@@ -612,6 +677,15 @@ our %pathTypes = (
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
+	instructor_simple_editor_withset_withproblem => {
+		name    => '$problemID',
+		parent  => 'instructor_simple_editor_withset',
+		kids    => [ qw// ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/problemID/ ],
+		produce => '$problemID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::SimplePGEditor',
+	},
 	instructor_scoring => {
 		name    => 'Scoring Tools',
 		parent  => 'instructor_tools',
@@ -638,15 +712,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'send_mail/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SendMail',
-	},
-	instructor_answer_log => {
-		name    => 'Answer Log',
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^show_answers/|,
-		capture => [ qw// ],
-		produce => 'show_answers/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
 	},
 	instructor_preflight => {
 		name    => 'Preflight Log',

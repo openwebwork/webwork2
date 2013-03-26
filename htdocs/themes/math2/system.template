@@ -47,6 +47,7 @@
 	<!--#output_JS-->
 <!--#endif-->
 
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 
 <!--#head-->
@@ -106,7 +107,7 @@
              
 			 <!--#if can="output_problem_body"--> 
 				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
-				  <div class="Body" style="background-color:#ffffff">
+				  <div class="main_body">
 	
 					<!--#if can="output_custom_edit_message"-->
 						<!--#output_custom_edit_message-->
@@ -154,7 +155,10 @@
 						<!--#if can="output_misc"-->
 							<!--#output_misc-->
 						<!--#endif-->
+						</div> /* end main_body */
 						</form>
+					  	
+					
 					<!--#endif-->
 				<!-- inserted problem piece by piece -->
 				<!--#if can="info"-->
@@ -166,13 +170,14 @@
 			<!-- ====  end printing body parts   -->
 			<!--#else-->
 			<!-- ==== couldn't print body parts so we'll print entire body -->	
-				  <div class="Body" style="background-color:#ffffff; float:left;">
+				  <div class="main_body">
 				  	<!--#body-->
 				  </div>
 				  <!-- inserted body as a whole -->
 				<!--#if can="info"-->
-			  		<!--  styles could be different for different pages so they are not set here -->
+			  		<div class="info-box" id="right-info-box">
 					<!--#info-->
+					</div>
 		    	<!--#endif-->
 
 			<!--#endif-->  
@@ -229,10 +234,13 @@
 </div><!--content-->
 </div> <!-- big-wrapper -->
 
+<!--
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math2/codemirror2/lib/codemirror.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math2/codemirror2/mode/pg/pg.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math2/codemirror2/mode/math/math.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math2/codeshard.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror.js"></script>
+
+-->
 </body>
 </html>

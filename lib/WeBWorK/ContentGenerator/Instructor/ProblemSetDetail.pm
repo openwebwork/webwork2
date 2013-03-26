@@ -270,12 +270,14 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => 6,
 		override  => "any",
+                default => "1",
 	},
 	max_attempts => {
 		name      => "Max&nbsp;attempts",
 		type      => "edit",
 		size      => 6,
 		override  => "any",
+                default => "unlimited",
 		labels    => {
 				"-1" => "unlimited",
 		},
@@ -292,7 +294,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => 6,
 		override  => "one",
-		default   => 0,
+		default   => "0",
 	},
 	attempted => {
 		name      => "Attempted",
@@ -303,7 +305,7 @@ use constant FIELD_PROPERTIES => {
 				1 => "Yes",
 				0 => "No",
 		},
-		default   => 0,
+		default   => "0",
 	},
 	last_answer => {
 		name      => "Last Answer",
@@ -314,13 +316,13 @@ use constant FIELD_PROPERTIES => {
 		name      => "Correct",
 		type      => "hidden",
 		override  => "none",
-		default   => 0,
+		default   => "0",
 	},
 	num_incorrect => {
 		name      => "Incorrect",
 		type      => "hidden",
 		override  => "none",
-		default   => 0,
+		default   => "0",
 	},	
 };
 
@@ -989,9 +991,9 @@ sub initialize {
 
 					if (defined $override && $override eq $field) {
 
-						my $param = $r->param("set.$setID.$field");
-						$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
-						my $unlabel = $undoLabels{$field}->{$param};
+					    my $param = $r->param("set.$setID.$field");
+					    $param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
+					    my $unlabel = $undoLabels{$field}->{$param};
 						$param = $unlabel if defined $unlabel;
 #						$param = $undoLabels{$field}->{$param} || $param;
 						if ($field =~ /_date/) {
@@ -1097,8 +1099,7 @@ sub initialize {
 				next unless canChange($forUsers, $field);
 
 				my $param = $r->param("set.$setID.$field");
-				$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
-
+				$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
 				my $unlabel = $undoLabels{$field}->{$param};
 				$param = $unlabel if defined $unlabel;
 				if ($field =~ /_date/) {
@@ -1285,7 +1286,7 @@ sub initialize {
 						if (defined $override && $override eq $field) {
 
 							my $param = $r->param("problem.$problemID.$field");
-							$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
+							$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
 							my $unlabel = $undoLabels{$field}->{$param};
 							$param = $unlabel if defined $unlabel;
 												#protect exploits with source_file
@@ -1311,7 +1312,7 @@ sub initialize {
 						next unless canChange($forUsers, $field);
 
 						my $param = $r->param("problem.$problemID.$field");
-						$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
+						$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
 						my $unlabel = $undoLabels{$field}->{$param};
 						$param = $unlabel if defined $unlabel;
 											#protect exploits with source_file
@@ -1344,7 +1345,7 @@ sub initialize {
 					next unless canChange($forUsers, $field);
 
 					my $param = $r->param("problem.$problemID.$field");
-					$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
+					$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
 					my $unlabel = $undoLabels{$field}->{$param};
 					$param = $unlabel if defined $unlabel;
 					
@@ -1388,7 +1389,7 @@ sub initialize {
 							next unless canChange($forUsers, $field);
 
 							my $param = $r->param("problem.$problemID.$field");
-							$param = $properties{$field}->{default} || "" unless defined $param && $param ne "";
+							$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
 							my $unlabel = $undoLabels{$field}->{$param};
 							$param = $unlabel if defined $unlabel;
 							$changed ||= changed($record->$field, $param);
@@ -1791,7 +1792,7 @@ sub body {
 		print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students.")));
 	}
 
-	print CGI::start_form({method=>"POST", action=>$setDetailURL});
+	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")});
@@ -1951,6 +1952,15 @@ sub body {
 	# if needed, get user problem records for all problems in one go
 	my (%UserProblems, %MergedProblems);
 	if ($forOneUser) {
+		my @userKeypartsRef = map { [$editForUser[0], $setID, $_] } @problemIDList;
+		# DBFIXME shouldn't need to get key list here
+		@UserProblems{@problemIDList} = $db->getUserProblems(@userKeypartsRef);
+		if ( ! $editingSetVersion ) {
+			@MergedProblems{@problemIDList} = $db->getMergedProblems(@userKeypartsRef);
+		} else {
+			my @userversionKeypartsRef = map { [$editForUser[0], $setID, $editingSetVersion, $_] } @problemIDList;
+			@MergedProblems{@problemIDList} = $db->getMergedProblemVersions(@userversionKeypartsRef);
+		}
 	}
 	
 	if (scalar @problemIDList) {
