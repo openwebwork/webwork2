@@ -971,6 +971,17 @@ sub make_data_row {
 	}
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
+        my $tagwidget = '';
+        my $user = scalar($r->param('user'));
+        if ($r->authz->hasPermissions($user, "modify_tags")) {
+          my $tagid = 'tagger'.$cnt;
+          $tagwidget =  CGI::div({id=>$tagid}, '');
+          my $templatedir = $r->ce->{courseDirs}->{templates};
+          my $sourceFilePath = $templatedir .'/'. $sourceFileName;
+          my $site_url = $r->ce->{webworkURLs}->{htdocs};
+          $tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tagwidget.js"}). CGI::end_script();
+          $tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
+        }
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
@@ -994,7 +1005,8 @@ sub make_data_row {
 				-onClick=>"return delrow($cnt)"),
 			)), 
 		#CGI::br(),
-		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1).
+		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
+                $tagwidget,
 		CGI::div($problem_output),
 	));
 }
@@ -1460,15 +1472,12 @@ sub head {
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
   print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
 
-  print qq!<script src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/jquery-ui-1.8.18.custom.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/jquery.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/backbone.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/WeBWorK.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/teacher.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
