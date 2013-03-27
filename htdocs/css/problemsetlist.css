@@ -1,7 +1,7 @@
-.Body{
-    padding: 20px;
-    padding-top: 45px;
-}
+@import "webwork.css";
+
+#hw-set-list-container {margin: 20px 15px;  padding:10px;}
+
 
 #calendar-table {border: 1px solid black; border-collapse: collapse; background: lightgray;}
 #calendar-table td {border: 1px solid black; width: 13%;  vertical-align: top;}
@@ -40,6 +40,8 @@ float: left; display: table-cell; vertical-align: bottom;  z-index: 10; font-siz
 
 .lib-problem-viewer { overflow: scroll;}
 
+.target-set {width: 100%}
+
 .scrollable {overflow: scroll;}
 
 .num-problems {margin-left: 10px;}
@@ -60,5 +62,9 @@ label.checklist {display: inline; margin-left: 8px;}
 .prob-value {width: 20px;}
 
 .loading {background-color: orange;}
+
+.problem-set-name {font-size: 125%;}
+
+.problem-set-header-row .btn-toolbar {margin-top: 0px;}
 
 

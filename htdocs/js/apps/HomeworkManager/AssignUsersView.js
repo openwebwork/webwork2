@@ -6,7 +6,7 @@
 
 
 define(['Backbone', 
-    'underscore','../../lib/webwork/models/ProblemSet','../../lib/webwork/views/EditableCell'], 
+    'underscore','../../lib/models/ProblemSet','../../lib/views/EditableCell'], 
     function(Backbone, _,ProblemSet,EditableCell) {
 
     var AssignUsersView = Backbone.View.extend({
@@ -18,6 +18,7 @@ define(['Backbone',
     	render: function ()
     	{
     		var self = this;
+            this.initializeModel();
     		this.$el.html(_.template($("#assign-users-template").html()));
     		var userList = this.$("#assign-users-list");
     		this.parent.users.each(function(user){
