@@ -302,6 +302,31 @@ ENDDOCUMENT();
    </div>
 </script>
 
+<script id="interval-or-inequality-option-pg-setup" type="text/template">
+      <% if (allowInterval && !allowInequality) { print('Context("Interval");')
+      } else if (!allowInterval && allowInequality) { print('Context("Inequalities-Only")')
+      } else {print('Context("Inequalities")')} %>
+
+      $answer = Compute("<%=answer%>");
+</script>
+
+
+<script id="interval-or-inequality-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=problemStatement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp(<% (allowInterval && !allowInequality) ? print('"interval"') : print('"inequalities"')%>)\}\
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="interval-or-inequality-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
+<!-- The comma-separated list of values option -->
+
 <script id="comma-separated-list-option-template" type="text/template">
    <div class="control-group">
       <div class="controls">          
@@ -309,6 +334,8 @@ ENDDOCUMENT();
       </div>
    </div>
 </script>
+
+<!-- The multiple choice option -->
 
 <script id="multiple-choice-option-template" type="text/template">
 <div class="control-group">

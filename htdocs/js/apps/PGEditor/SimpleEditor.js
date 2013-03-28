@@ -92,16 +92,23 @@ function(Backbone, _,WebPage,LibraryTreeView){
 
               , _type = $("#answerType-select option:selected").data("type")
               , _withUnits = $("#requireUnitsCheckBox").prop("checked")
+              , _allowInterval = $("#allowIntervalCheckBox").prop("checked")
+              , _allowInequality = $("#allowInequalityCheckBox").prop("checked")
               , _variableList = $("#VariableList-input").val();
-
+console.log(_allowInterval);
+console.log(_allowInequality);
             if(_variableList){
                var _variables = _variableList.split(",").join("=>Real,")+"=>Real"; 
             }
 
 
-            var _setupSection = _.template($(_type + "-pg-setup").text(),{answer: inputAnswer, withUnits: _withUnits, 
+            var _setupSection = _.template($(_type + "-pg-setup").text(),{answer: inputAnswer, withUnits: _withUnits,
+                        allowInterval: _allowInterval,
+                        allowInequality: _allowInequality,
                         variables: _variables})
-              , _textSection = _.template($(_type + "-pg-text").text(),{problemStatement: inputProblemStatement})
+              , _textSection = _.template($(_type + "-pg-text").text(),{problemStatement: inputProblemStatement,
+                                            allowInterval: _allowInterval,
+                                            allowInequality: _allowInequality,})
               , _answerSection = _.template($(_type + "-pg-answer").text(),{});            
 
 
