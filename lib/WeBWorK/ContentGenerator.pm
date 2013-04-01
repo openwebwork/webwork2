@@ -715,22 +715,24 @@ sub links {
 				print &$makelink("${pfx}Index", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				print CGI::start_ul();
 				
-
+                #class list editor
 				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{classlisteditor1};
 				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor2};;
+					if $ce->{showeditors}->{classlisteditor2};
 				print CGI::li(&$makelink("${pfx}UserList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor3};;
+					if $ce->{showeditors}->{classlisteditor3};
 
 				
-				print CGI::start_li(); # Homework Set Editor
-				print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
+				# Homework Set Editor
+				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor1};
-				print "<br/>";
-				print &$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
-					if $ce->{showeditors}->{homeworkseteditor2};;
-				
+
+				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{homeworkseteditor2};
+				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{homeworkseteditor3};
+
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
 					print CGI::start_ul();
@@ -755,11 +757,16 @@ sub links {
 							if $ce->{showeditors}->{pgproblemeditor3};;
 						print CGI::end_ul();
 					}
+					if (defined $problemID) {
+						print CGI::start_ul();
+						print CGI::li(&$makelink("${pfx}SimpleEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+							if $ce->{showeditors}->{simplepgeditor};;
+						print CGI::end_ul();
+					}
 					
 					print CGI::end_li(); # end $setID
 					print CGI::end_ul();
 				}
-				print CGI::end_li(); # end Homework Set Editor
 				
 				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser1};
@@ -767,6 +774,8 @@ sub links {
 					if $ce->{showeditors}->{librarybrowser2};
 				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser3};
+				print CGI::li(&$makelink("${pfx}SetMakernojs", text=>$r->maketext("Orig. Lib. Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{librarybrowsernojs};
 #print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
@@ -786,23 +795,23 @@ sub links {
 				}
 				print CGI::end_li(); # end Stats
 				# old stats
-				print CGI::start_li(); # Stats_old
-				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				if ($userID ne $eUserID or defined $setID) {
-					print CGI::start_ul();
-					if ($userID ne $eUserID) {
-						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
-					}
-					if (defined $setID) {
-						# make sure we don't try to send a versioned
-						#    set id in to the Stats_old link
-						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
-						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
-						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
-					}
-					print CGI::end_ul();
-				}
-				print CGI::end_li(); # end Stats_old
+#				print CGI::start_li(); # Stats_old
+#				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+#				if ($userID ne $eUserID or defined $setID) {
+#					print CGI::start_ul();
+#					if ($userID ne $eUserID) {
+#						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
+#					}
+#					if (defined $setID) {
+#						# make sure we don't try to send a versioned
+#						#    set id in to the Stats_old link
+#						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
+#						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
+#						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
+#					}
+#					print CGI::end_ul();
+#				}
+#				print CGI::end_li(); # end Stats_old
 				
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
@@ -849,7 +858,7 @@ sub links {
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
 					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				print CGI::li({}, $self->helpMacro('instructor_links','Help'),$self->help() );
+				print CGI::li({}, $self->helpMacro('instructor_links',$r->maketext('Help')),$self->help() );
 				if ($authz->hasPermissions($userID, "manage_course_files") # show this only on the FileManager page
 				     && $r->urlpath->module eq "WeBWorK::ContentGenerator::Instructor::FileManager") {
 				    my %augmentedSystemLinks = %systemlink_args;
@@ -1528,7 +1537,7 @@ sub optionsMacro {
 		my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 		my @active_modes = grep { exists $display_modes{$_} } @{$self->r->ce->{pg}->{displayModes}};
 		if (@active_modes > 1) {
-			$result .= "View&nbsp;equations&nbsp;as:&nbsp;&nbsp;&nbsp;&nbsp;";
+			$result .= $r->maketext("View equations as").":";
 			$result .= CGI::br();
 			$result .= CGI::radio_group(
 				-name => "displayMode",
@@ -1544,13 +1553,13 @@ sub optionsMacro {
 		# Note, 0 is a legal value, so we can't use || in setting this
 		my $curr_showOldAnswers = defined($self->r->param("showOldAnswers")) ?
 			$self->r->param("showOldAnswers") : $self->r->ce->{pg}->{options}->{showOldAnswers};
-		$result .= "Show&nbsp;saved&nbsp;answers?";
+		$result .= $r->maketext("Show saved answers?");
 		$result .= CGI::br();
 		$result .= CGI::radio_group(
 			-name => "showOldAnswers",
 			-values => [1,0],
 			-default => $curr_showOldAnswers,
-			-labels => { 0=>'No', 1=>'Yes' },
+			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
 		);
 		$result .= CGI::br();
 	}

@@ -187,34 +187,6 @@ sub initialize {
 	
 }
 
-sub info {
-	my ($self) = @_;
-	my $r            = $self->r;
-	my $db           = $r->db;
-	my $ce           = $r->ce;
-	my $urlpath      = $r->urlpath;
-	my $courseName   = $urlpath->arg("courseID");
-	
-	my $evalpath = $ce->{courseDirs}{achievements};
-	$evalpath =~ s/$ce->{courseDirs}{root}/$courseName/;
-	my $iconpath = $ce->{courseURLs}{achievements};
-	$iconpath =~ s/$ce->{courseURLs}{html}/$ce->{courseDirs}{html}/;
-	$iconpath =~ s/$ce->{courseDirs}{root}/$courseName/;
-
-	print CGI::div("This is the Achievent Editor.  It is used to edit the achievements available to students.  Please keep in mind the following facts:");
-	print CGI::start_ul();
-	print CGI::li("The achievements are always sorted by category and then by name.");
-	print CGI::li("Achievments are displayed, and evaluated, in the order they are listed.");
-	print CGI::li('The "secret" category always comes first and creates achievements which are not visible to students until they are earned.');
-	print CGI::li('The "level" category is used for the achievements associated to a users level.');
-	print CGI::li("The evaluator files are stored in $evalpath");
-	print CGI::li("The icons are stored in $iconpath");
-	print CGI::end_ul();
-	
-	return "";
-}
-
-
 sub body {
 	my ($self)       = @_;
 	my $r            = $self->r;
@@ -250,10 +222,14 @@ sub body {
 	    @Achievements = sortAchievements(@Achievements);
 	}
 
-
+	########## print site identifying information
+	
+	print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
+	print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_ACHIEVEMENTS_EDITOR_DESCRIPTION")));
+	
 	########## print beginning of form
 
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"achievementlist"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"achievement-list", name=>"achievement-list"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -809,6 +785,7 @@ sub import_handler {
 	    #write achievement data.  The "format" for this isn't written down anywhere (!)
 	    my $achievement = $db->newAchievement();
 	    $achievement->achievement_id($achievement_id);
+	    $data[1] =~ s/\;/,/;
 	    $achievement->name($data[1]);
 	    $achievement->category($data[2]);
 	    $data[3] =~ s/\;/,/;
@@ -936,7 +913,9 @@ sub saveExport_handler {
 	#run through achievements outputing data as csv list.  This format is not documented anywhere
 	foreach my $achievement (@achievements) {
 	    print EXPORT $achievement->achievement_id.", ";
-	    print EXPORT $achievement->name.", ";
+	    my $name = $achievement->name;
+	    $name =~ s/,/\;/;
+	    print EXPORT $name.", ";
 	    print EXPORT $achievement->category.", ";
 	    my $description = $achievement->description;
 	    $description =~ s/,/\;/;
@@ -1273,9 +1252,9 @@ sub printTableHTML {
 	
 	# print the table
 	if ($exportMode) {
-	    print CGI::start_table({});
+	    print CGI::start_table({class=>"classlist-table", id=>"achievement-table"});
 	} else {
-	    print CGI::start_table({-border=>1, -cellpadding=>5});
+	    print CGI::start_table({-border=>1, -cellpadding=>5, class=>"classlist-table", id=>"achievement-table"});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));
@@ -1308,6 +1287,17 @@ sub getAxpList {
 	my $ce = $self->{ce};
 	my $dir = $ce->{courseDirs}->{achievements};
 	return $self->read_dir($dir, qr/.*\.axp/);
+}
+
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
+	return "";
 }
 
 1;

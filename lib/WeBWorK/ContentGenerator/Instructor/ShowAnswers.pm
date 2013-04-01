@@ -61,8 +61,10 @@ sub body {
 	my $key           = $r->param('key');
 	my $studentUser   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
 	
-	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
+	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
+
 	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
+
 	
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
@@ -71,61 +73,76 @@ sub body {
 	# print form
 	#####################################################################
 
-	print CGI::p(),CGI::hr();
+	#only instructors should be able to veiw other people's answers.
+	
+	if ($instructor) {
+	    print CGI::p(),CGI::hr();
+	    
+	    print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
+	    $self->hidden_authen_fields;
+	    print CGI::submit(-name => 'action', -value=>'Past Answers for')," &nbsp; ",
+	    CGI::textfield(-name => 'studentUser', -value => $studentUser, -size =>10 ),
+	    " &nbsp; Set: &nbsp;",
+	    CGI::textfield( -name => 'setID', -value => $setName, -size =>10  ), 
+	    " &nbsp; Problem: &nbsp;",
+	    CGI::textfield(-name => 'problemID', -value => $problemNumber,-size =>10  ),  
+	    " &nbsp; ";
+	    print CGI::end_form();
+	}
 
-	print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
-	      $self->hidden_authen_fields;
-	print CGI::submit(-name => 'action', -value=>'Past Answers for')," &nbsp; ",
-	      CGI::textfield(-name => 'studentUser', -value => $studentUser, -size =>10 ),
-	      " &nbsp; Set: &nbsp;",
-	      CGI::textfield( -name => 'setID', -value => $setName, -size =>10  ), 
-              " &nbsp; Problem: &nbsp;",
-	      CGI::textfield(-name => 'problemID', -value => $problemNumber,-size =>10  ),  
-  	      " &nbsp; ";
-	print CGI::end_form();
-
-	if (defined($setName) and defined($problemNumber) )  {
 		#####################################################################
 		# print result table of answers
 		#####################################################################
-		my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
-	
-		$studentUser = $r->param('studentUser') if ( defined($r->param('studentUser')) );
-		
-		print CGI::h3("Past Answers for $studentUser, set $setName, problem $problemNumber" );
-	
-		$studentUser = "[^|]*"   if ($studentUser eq ""    or $studentUser eq "*");
-		$setName = "[^|]*"       if ($setName eq ""  or $setName eq "*");
-		$problemNumber = "[^|]*" if ($problemNumber eq "" or $problemNumber eq "*");
-		
-		my $pattern = "^[^|]*\\|$studentUser\\|$setName\\|$problemNumber\\|";
-		
-		if (-e $answer_log) {
-			if (open my $log, $answer_log) {
-				my $line;
-				$self->{lastdate} = '';
-				$self->{lasttime} = 0;
-				$self->{lastID}   = '';
-				$self->{lastn}    = 0;
-				
-				my @lines = grep(/$pattern/,<$log>); close($log);
-				chomp(@lines);
-				foreach $line (@lines) {$line = substr($line,27)}; # remove datestamp
-				
-				print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
-				print "No entries for $studentUser set $setName, problem $problemNumber" unless @lines;
-				foreach $line (sort byData @lines) {$self->tableRow(split("\t",$line,-1))}
-				print CGI::Tr(CGI::td({colspan=>$self->{lastn}},CGI::hr({size=>3}))) if ($self->{lastn});
-				print CGI::end_table();
-			} else {
-				$self->addbadmessage("Failed to open the answer log '$answer_log': $!");
-			}
-		} else {
-			# no answer log exists yet -- this is probably not an error
-			print "No answers have been logged. (Answer log '$answer_log' does not exist.)";
-		}
+
+	# If not instructor then force table to use current user-id
+	if (!$instructor) {
+	    $studentUser = $user;
 	}
-		
+
+	my @pastAnswerIDs = $db->listProblemPastAnswers($courseName, $studentUser, $setName, $problemNumber);
+
+	print CGI::start_table({id=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
+	print CGI::h3("Past Answers for $studentUser, set $setName, problem $problemNumber" );
+	print "No entries for $studentUser set $setName, problem $problemNumber" unless @pastAnswerIDs;
+
+	# changed this to use the db for the past answers.  
+        # The code is better but the actual html out put is considerably less pretty
+	# Todo: prettify
+
+	foreach my $answerID (@pastAnswerIDs) {
+	    my $pastAnswer = $db->getPastAnswer($answerID);
+	    my $answers = $pastAnswer->answer_string;
+	    my $scores = $pastAnswer->scores;
+	    my $time = $self->formatDateTime($pastAnswer->timestamp);
+
+	    my @scores = split(//, $scores);
+	    my @answers = split(/\t/,$answers);
+	    
+	    my @row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
+	    my $td = {nowrap => 1};
+	    foreach my $answer (@answers) {
+		$answer = showHTML($answer);
+		my $score = shift(@scores); 
+		#Only color answer if its an instructor
+		if ($instructor) {
+		    $td->{style} = $score? "color:#006600": "color:#660000";
+		} 
+		delete($td->{style}) unless $answer ne "" && defined($score);
+		$answer = CGI::small(CGI::i("empty")) if ($answer eq "");
+		push(@row,CGI::td({width=>20}),CGI::td($td,$answer));
+	    }
+
+	    if ($pastAnswer->comment_string) {
+		push(@row,CGI::td({width=>20}),CGI::td("Comment: ".$pastAnswer->comment_string));
+	    }
+
+	    print CGI::Tr(@row);
+
+	    
+	}
+
+	print CGI::end_table();
+	    
 	return "";
 }
 
@@ -134,60 +151,6 @@ sub byData {
   $A =~ s/\|[01]*\t([^\t]+)\t.*/|$1/; # remove answers and correct/incorrect status
   $B =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;
   return $A cmp $B;
-}
-
-sub tableRow {
-  my $self = shift;
-  my ($answer,$score,$studentUser,$set,$prob);
-  my ($ID,$rtime,@answers) = @_; pop(@answers);
-  my $scores = ''; $scores = $1 if ($ID =~ s/\|([01]+)$/|/);
-  my @scores = split(//, $scores);
-  my $date = scalar(localtime($rtime)); $date =~ s/\s+/ /g;
-  my ($day,$month,$mdate,$time,$year) = split(" ",$date);
-  $date = "$mdate $month $year";
-  my $n = 2*(scalar(@answers)+1);
-
-  if ($self->{lastID} ne $ID) {
-    if ($self->{lastn}) {
-      print CGI::Tr(CGI::td({colspan=>$self->{lastn}},CGI::hr({size=>3}))),
-            CGI::end_table(),CGI::p();
-      print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
-    }
-    ($studentUser,$set,$prob) = (split('\|',$ID))[1,2,3];
-    print CGI::Tr({align=>"center"},
-		  CGI::td({colspan=>$n},CGI::hr({size=>3}),
-			  "User: "   .CGI::b($studentUser)." &nbsp; ",
-			  "Set: "    .CGI::b($set)." &nbsp; ",
-			  "Problem: ".CGI::b($prob))),"\n";
-    $self->{lastID}   = $ID;
-    $self->{lasttime} = 0;
-    $self->{lastdate} = "";
-  }
-
-  print CGI::Tr(CGI::td({colspan=>$n},CGI::hr({size=>1})))
-    if ($rtime - $self->{lasttime} > 30*60);
-  $self->{lasttime} = $rtime;
-  $self->{lastn} = $n;
-
-  if ($self->{lastdate} ne $date) {
-    print CGI::Tr(CGI::td({colspan=>$n},CGI::small(CGI::i($date))));
-    $self->{lastdate} = $date;
-  }
-
-  ##
-  ##  These colors really should use CSS and the template
-  ##
-  my @row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
-  my $td = {nowrap => 1};
-  foreach $answer (@answers) {
-    $answer =~ s/(^\s+|\s+$)//g;
-    $answer = showHTML($answer);
-    $score = shift(@scores); $td->{style} = $score? "color:#006600": "color:#660000";
-    delete($td->{style}) unless $answer ne "" && defined($score);
-    $answer = CGI::small(CGI::i("empty")) if ($answer eq "");
-    push(@row,CGI::td({width=>20}),CGI::td($td,$answer));
-  }
-  print CGI::Tr(@row);
 }
 
 ##################################################
