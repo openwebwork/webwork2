@@ -210,7 +210,7 @@ ENDDOCUMENT();
 
 <script id="string-option-pg-setup" type="text/template">
       Context("Numeric");
-      Context()->strings->add("<%=answer%>"=>{})
+      Context()->strings->add("<%=answer%>"=>{});
 
       $answer = Compute("<%=answer%>");
 
@@ -304,8 +304,8 @@ ENDDOCUMENT();
 
 <script id="interval-or-inequality-option-pg-setup" type="text/template">
       <% if (allowInterval && !allowInequality) { print('Context("Interval");')
-      } else if (!allowInterval && allowInequality) { print('Context("Inequalities-Only")')
-      } else {print('Context("Inequalities")')} %>
+      } else if (!allowInterval && allowInequality) { print('Context("Inequalities-Only");')
+      } else {print('Context("Inequalities");')} %>
 
       $answer = Compute("<%=answer%>");
 </script>
@@ -335,6 +335,27 @@ ENDDOCUMENT();
    </div>
 </script>
 
+<script id="comma-separated-list-option-pg-setup" type="text/template">
+      Context("Numeric");
+
+      $answer = List("<%=answer%>");
+</script>
+
+
+<script id="comma-separated-list-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=problemStatement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}\
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="comma-separated-list-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
 <!-- The multiple choice option -->
 
 <script id="multiple-choice-option-template" type="text/template">
@@ -350,7 +371,7 @@ ENDDOCUMENT();
    </div>
    <div class="control-group">
       <div class="controls">          
-         <input id="LastChoice-input-input" class="answer-option" type="text" placeholder="Last Choice">
+         <input id="LastChoice-input" class="answer-option" type="text" placeholder="Last Choice">
       </div>
    </div>   
    <div class="control-group">
@@ -361,6 +382,30 @@ ENDDOCUMENT();
    </div>
 
 </script>
+
+
+<script id="multiple-choice-option-pg-setup" type="text/template">
+      $mc = new_multiple_choice();
+      $mc->qa("<%=problemStatement%>","<%=answer%>");
+      $mc->extra("<%=extraChoiceString%>");
+      <% if(lastChoiceOption) {print('$mc->makeLast("'+ lastChoice +'"); ')} %>
+</script>
+         
+<script id="multiple-choice-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   \{$mc->print_q()\}
+   $BR
+   \{$mc->print_a()\}
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="multiple-choice-option-pg-answer" type="text/template">
+   ANS(radio_cmp($mc->correct_ans()));
+</script>
+
+<!-- Other information -->
 
 <script type="text/template" id="author-info-template">
    <div class="control-group">Author Information</div>
