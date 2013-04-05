@@ -29,7 +29,6 @@ use warnings;
 BEGIN {
 	__PACKAGE__->_fields(
 
-	    #answer_id not key because of autoincrement
 	    answer_id         => {   type=>"INT AUTO_INCREMENT", key=>1},
 	    course_id         => { type=>"VARCHAR(100) NOT NULL", key=>1},
 	    user_id           => { type=>"VARCHAR(100) NOT NULL", key=>1},	
