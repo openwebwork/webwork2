@@ -5,17 +5,17 @@
 
 require.config({
     paths: {
-        "Backbone":             "/webwork2_files/js/lib/vendor/backbone-0.9.9",
-        "backbone-validation":  "/webwork2_files/js/lib/vendor/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/lib/vendor/jquery-ui",
-        "underscore":           "/webwork2_files/js/lib/vendor/underscore/underscore",
-        "jquery":               "/webwork2_files/js/lib/vendor/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/lib/vendor/bootstrap/js/bootstrap",
-        "util":                 "/webwork2_files/js/lib/webwork/util",
-        "XDate":                "/webwork2_files/js/lib/vendor/xdate",
-        "WebPage":              "/webwork2_files/js/lib/webwork/views/WebPage",
+        "Backbone":             "/webwork2_files/js/vendor/backbone/backbone",
+        "backbone-validation":  "/webwork2_files/js/vendor/backbone/modules/backbone-validation",
+        "jquery-ui":            "/webwork2_files/js/vendor/jquery/jquery-ui",
+        "underscore":           "/webwork2_files/js/vendor/underscore/underscore",
+        "jquery":               "/webwork2_files/js/vendor/jquery/jquery",
+        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
+        "util":                 "/webwork2_files/js/lib/util",
+        "XDate":                "/webwork2_files/js/vendor/other/xdate",
+        "WebPage":              "/webwork2_files/js/lib/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/webwork/views/Closeable"
+        "Closeable":            "/webwork2_files/js/lib/views/Closeable"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -33,15 +33,15 @@ require.config({
 
 require(['Backbone', 
 	'underscore',
-	'../../lib/webwork/models/User', 
-	'../../lib/webwork/models/UserList', 
-	'../../lib/vendor/editablegrid-2.0.1/editablegrid', 
+	'../../lib/models/User', 
+	'../../lib/models/UserList', 
+	'../../vendor/editablegrid-2.0.1/editablegrid', 
 	'WebPage', 
-	'../../lib/webwork/views/EmailStudentsView',
-	'../../lib/webwork/views/ChangePasswordView',
+	'../../lib/views/EmailStudentsView',
+	'../../lib/views/ChangePasswordView',
 	'./AddStudentFileView',
 	'./AddStudentManView',
-	'../../lib/webwork/util', 
+	'../../lib/util', 
 	'config', /*no exports*/, 
 	'jquery-ui',
 	'backbone-validation',
@@ -93,16 +93,16 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 		    // pstaabp:  this seems clunky.  Perhaps we can clean up this code. 	
 			switch(type) {
 			    case "user_added":
-					    this.announce.addMessage("Success in adding the following user: " + user.get("user_id"));
+					    this.announce.addMessage({text: "Success in adding the following user: " + user.get("user_id")});
 					break;
 			    case "user_deleted":
-					    this.announce.addMessage("Success in deleting the following user: " + user.get("user_id"));
+					    this.announce.addMessage({text: "Success in deleting the following user: " + user.get("user_id")});
 					break;
 			    case "property_changed":
 			    	for(prop in user.changedAttributes()) { 
 			    		console.log(prop + " " + user.changedAttributes()[prop]);
-	  						this.announce.addMessage("The " + prop + " of user " + user.get("user_id") + " has changed "
-							    + "from " + user.oldAttributes[prop] + " to " + user.get(prop));
+	  						this.announce.addMessage({text: "The " + prop + " of user " + user.get("user_id") + " has changed "
+							    + "from " + user.oldAttributes[prop] + " to " + user.get(prop)});
 
 			    	}
 				break;

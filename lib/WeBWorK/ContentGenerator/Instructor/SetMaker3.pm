@@ -104,11 +104,11 @@ sub head {
   #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
 
 
-  print qq!<script data-main="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser" src="$webwork_htdocs_url/js/lib/vendor/components/requirejs/require.js"></script>!;
+  print qq!<script data-main="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser" src="$webwork_htdocs_url/js/vendor/requirejs/require.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/problem_grid.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/form_builder.js"></script>!;
 
-  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
   #my ($self) = @_;
   #my $r = $self->r;
   #start a timer to save people's stuff idk if people want this

@@ -1616,9 +1616,9 @@ sub options {
 }
 
 sub head {
-  print '<script src="/webwork2_files/js/dnd.js"></script>';
-  print '<script src="/webwork2_files/js/problem_grid.js"></script>';
-  print '<script src="/webwork2_files/js/form_builder.js"></script>';
+  print '<script src="/webwork2_files/js/legacy/dnd.js"></script>';
+  print '<script src="/webwork2_files/js/legacy/problem_grid.js"></script>';
+  print '<script src="/webwork2_files/js/legacy/form_builder.js"></script>';
   #my ($self) = @_;
   #my $r = $self->r;
   #start a timer to save people's stuff idk if people want this
