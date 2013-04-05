@@ -803,12 +803,8 @@ table#grades_table pre{
     width:60px;
 }
 
-.tabberlive {
-    margin-bottom:1ex;
-}
-
-.tabbertab {
-    min-height:2em;
+.tab-pane {
+    margin-bottom:10px;
 }
 
 .small-table-text,

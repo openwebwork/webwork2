@@ -30,6 +30,7 @@ $(function(){
     $('.viewOptions label:has(input:radio)').addClass('radio');
     $('label.radio').nextUntil(':not(br)').remove();
     $('.viewOptions input:submit').addClass('btn-small');
+    $('.facebookbox input:submit').addClass('btn-small');
 
     //Reformats the problem_set_table.  
     $('#problem-sets-form').addClass('form-inline');
@@ -132,5 +133,16 @@ $(function(){
     $('#mainform select').addClass('input-xxlarge');
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
+
+    //Change tabber tabs to twitter tabs
+    if ($('div.tabber').length > 0) {tabberAutomatic({});}
+    $('ul.tabbernav').removeClass('tabbernav').addClass('old-tabber nav nav-tabs');
+    $('ul.old-tabber li a').each(function () { $(this).attr('href','#'+$(this).attr('title')).attr('data-toggle','tab');});
+    $('div.tabberlive').removeClass('tabberlive').addClass('tab-content');
+    $('div.tabbertab').each(function() { $(this).removeClass('tabbertab').addClass('tab-pane').attr('id',$(this).find('h3').html())});
+    $('div.tab-pane h3').remove();
+    if ($('li.tabberactive a').length > 0) { 
+        $('li.tabberactive a').tab('show');}
+
 
 })
