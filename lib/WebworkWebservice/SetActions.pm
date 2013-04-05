@@ -84,7 +84,7 @@ sub listLocalSetProblems{
 		my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
 		die "global $problem for set $setName not found." unless
 		$problemRecord;
-		push @pg_files, $templateDir.$problemRecord->source_file;
+		push @pg_files, $templateDir."/".$problemRecord->source_file;
 
 	}
 	

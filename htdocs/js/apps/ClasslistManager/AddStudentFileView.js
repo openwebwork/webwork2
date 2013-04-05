@@ -3,11 +3,11 @@
 define(['Backbone', 
 	'underscore',
 	'Closeable',
-	'../../lib/webwork/models/User',
-	'../../lib/vendor/FileSaver', 
-	'../../lib/vendor/BlobBuilder',
+	'../../lib/models/User',
+	'../../vendor/other/FileSaver', 
+	'../../vendor/other/BlobBuilder',
 	'config',
-	'../../lib/webwork/util'], function(Backbone, _,Closeable,User,saveAs,BlobBuilder,config,util){	
+	'../../lib/util'], function(Backbone, _,Closeable,User,saveAs,BlobBuilder,config,util){	
 	    var AddStudentFileView = Backbone.View.extend({
 		tagName: "div",
 		id: "addStudFileDialog",
