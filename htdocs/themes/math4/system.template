@@ -28,14 +28,13 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
 
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/jquery-1.8.1.min.js"></script>
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
-
 <!--#if can="output_tabber_CSS"-->
+<script type="text/javascript">
+var tabberOptions = {manualStartup:true};
+</script>
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
 <!--#if can="output_jquery_ui_CSS"-->
@@ -44,6 +43,12 @@
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
+
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
+
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
@@ -122,6 +127,14 @@
 						</div>
 					<!--#endif-->
 					
+					<!--#if can="output_comments" "-->
+					<div>
+						  <!--#output_comments-->
+					</div>
+					<!--#endif-->
+						
+
+
 					<!--#if can="output_hidden_info"-->
 						<!--#output_hidden_info-->
 					<!--#endif-->
@@ -129,12 +142,6 @@
 					<!--#if can="output_form_start"-->
 						<!--#output_form_start-->
 
-						<!--#if can="output_comments" "-->
-						<div>
-						  <!--#output_comments-->
-						</div>
-						<!--#endif-->
-						
 						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 							<div class="problem">
 								<!--#if can="output_problem_body"-->

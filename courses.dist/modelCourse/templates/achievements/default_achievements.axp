@@ -17,7 +17,7 @@
 07_chipping_away, Just Keep Chipping Away, 01_one_timer, Work on a single homework set over the course of 48 hours., 10, , chipping_away.at, chipping_away.png, 
 08_speed_mather, Go Speed Math-er, 01_one_timer, Spend less than 1 hour working on a homework set., 10, , speed_mather.at, speed_mather.png, 
 09_three_in_a_row, Three in a Row, 01_one_timer, Complete 3 problems in a row with no incorrect answers., 10, 3, three_in_a_row.at, three_in_a_row.png, 
-10_on_fire, Your on Fire!, 01_one_timer, Complete 10 problems in a row with no incorrect answers., 20, 10, on_fire.at, on_fire.png, 
+10_on_fire, You're on Fire!, 01_one_timer, Complete 10 problems in a row with no incorrect answers., 20, 10, on_fire.at, on_fire.png, 
 01_complete_one_set, One Set Wonder, 03_complete_sets, Get 100% on one homework set., 10, , complete_one_set.at, complete_one_set.png, 
 02_complete_five_sets, High Five, 03_complete_sets, Get 100% on five homework sets., 10, 5, complete_five_sets.at, complete_five_sets.png, 
 03_complete_ten_sets, One For Each Finger, 03_complete_sets, Get 100% on ten homework sets., 10, 10, complete_ten_sets.at, complete_ten_sets.png, 
