@@ -29,6 +29,10 @@
 	clear:both;
 	border: none; /* 1px solid grey; */
 }
+.table-input {
+	width:15em;
+    font-size:75%;
+}
 #info-panel-right {
 	float:right; 
 	padding: .2em;
@@ -563,7 +567,9 @@ div.NoFontMessage {
 /* text colors for visible and hidden sets */
 font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
 font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
-
+table font {font-size:75%}
+table a {font-size:75%}
+table th {font-size:75%}
 /* styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #F60; background-color: inherit; }
 
