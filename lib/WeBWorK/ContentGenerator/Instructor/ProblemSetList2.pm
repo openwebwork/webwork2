@@ -1316,11 +1316,11 @@ sub import_form {
 				-label_text=>$r->maketext("Assign this set to which users?").": ",
 				-input_attr=>{
 					-name => "action.import.assign",
-					-value => [qw(all none)],
+					-value => [qw(all user)],
 					-default => $actionParams{"action.import.assign"}->[0] || "none",
 					-labels => {
-						all => $r->maketext("all users"),
-						none => $r->maketext("no users"),
+						all => $r->maketext("all current users").".",
+						user => $r->maketext("only")." ".$user.".",
 					},
 					-onchange => $onChange,
 				}
