@@ -3,7 +3,7 @@
 *
 */
 
-define(['Backbone', 'underscore','../../lib/webwork/views/EditableCell','jquery-tablesorter'], function(Backbone, _,EditableCell){
+define(['Backbone', 'underscore','../../lib/views/EditableCell','jquery-tablesorter'], function(Backbone, _,EditableCell){
     
     var SetListRowView = Backbone.View.extend({
         className: "set-list-row",

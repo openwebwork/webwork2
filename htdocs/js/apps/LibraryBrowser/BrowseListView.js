@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', 'BrowseView', '../../lib/webwork/BrowseResult'], function(Backbone, _, BrowseView, BrowseResult){
+define(['Backbone', 'underscore', 'BrowseView', '../../lib/BrowseResult'], function(Backbone, _, BrowseView, BrowseResult){
 	var BrowseListView = Backbone.View.extend({
 
         tagName:'span',

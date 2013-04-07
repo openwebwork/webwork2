@@ -3,9 +3,9 @@
 define(['Backbone', 
 	'underscore',
 	'Closeable',
-	'../../lib/webwork/models/User',
+	'../../lib/models/User',
 	'config',
-	'../../lib/webwork/views/UserRowView'], function(Backbone, _,Closeable,User,config,UserRowView){	
+	'../../lib/views/UserRowView'], function(Backbone, _,Closeable,User,config,UserRowView){	
 	var AddStudentManView = Backbone.View.extend({
 		tagName: "div",
 		id: "addStudManDialog",
