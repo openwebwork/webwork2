@@ -28,8 +28,12 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/jquery-1.8.1.min.js"></script>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
+
 
 <!--#if can="output_tabber_CSS"-->
 <script type="text/javascript">
@@ -43,11 +47,6 @@ var tabberOptions = {manualStartup:true};
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
-
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
