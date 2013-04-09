@@ -527,6 +527,15 @@ sub RefreshEdit {
 	my $name = "$pwd/$file"; $name =~ s!^\./?!!;
 
 	my %button = (type=>"submit",name=>"action",style=>"width:6em");
+	#Begin CODE Jquery MathView
+		print "<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/jquery-1.8.2.min.js\"></script>\n";
+		print "<script type=\"text/javascript\" src=\"http://code.jquery.com/ui/1.9.0/jquery-ui.js\"></script>\n";
+		print "<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\"></script>\n";
+		print "<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/jquery-mathview-1.1.0.js\"></script>\n";
+		print "<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/operations.js\"></script>\n";
+		print "<script type=\"text/javascript\">\$(function(){\$('[name=\"data\"]').addMathEditorButton(\"LATEX\");});</script>\n";
+	#End CODE Jquery MathView
+
 	print CGI::p();
 	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});
 	print CGI::Tr([

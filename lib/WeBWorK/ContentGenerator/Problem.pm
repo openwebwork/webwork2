@@ -1038,7 +1038,18 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
+
+# Added CODE JQuery MathView
+	print "<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/jquery-1.8.2.min.js\"></script>\n";
+	print "<script type=\"text/javascript\" src=\"http://code.jquery.com/ui/1.9.0/jquery-ui.js\"></script>\n";
+	print "<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\"></script>\n";
+	print "<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/jquery-mathview-1.1.0.js\"></script>\n";
+	print "<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/operations.js\"></script>\n";
+	print "<script type=\"text/javascript\">\$(function(){\$('.codeshard').addMathEditorButton(\"PGML\");});</script>\n";
+# End CODE JQuery MathView
+
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
+
 	print $self->hidden_authen_fields;
 	return "";
 }
