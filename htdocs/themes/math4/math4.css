@@ -655,7 +655,7 @@ table caption{
 #pg_editor_frame_id{
     width:95%;
     height:390px;
-    overflow:hidden;
+    overflow:scroll;
 }
 
 #render-modal.modal {
