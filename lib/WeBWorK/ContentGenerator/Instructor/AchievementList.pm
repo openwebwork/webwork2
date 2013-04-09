@@ -245,8 +245,7 @@ sub body {
 	
 	print CGI::p(CGI::b("Any changes made below will be reflected in the achievement for ALL students.")) if $editMode;
 
-	print CGI::start_table({});
-	print CGI::Tr({}, CGI::td({-colspan=>2}, "Select an action to perform:"));
+	print CGI::p($r->maketext("Select an action to perform").":");
 
 	my @formsToShow;
 	if ($editMode) {
@@ -259,6 +258,8 @@ sub body {
 		@formsToShow = @{ EXPORT_FORMS() };
 	}
 	
+	print CGI::start_div({-class=>"tabber"});
+
 	my $i = 0;
 	foreach my $actionID (@formsToShow) {
 
@@ -266,10 +267,12 @@ sub body {
 		my $onChange = "document.achievementlist.action[$i].checked=true";
 		my %actionParams = $self->getActionParams($actionID);
 		
-		print CGI::Tr({-valign=>"top"},
-			CGI::td({}, CGI::input({-type=>"radio", -name=>"action", -value=>$actionID})),
-			CGI::td({}, $self->$actionForm($onChange, %actionParams))
-		);
+		print CGI::div({-class=>"tabbertab"},
+			   CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
+			   CGI::span({-class=>"radio_span"},  WeBWorK::CGI_labeled_input(-type=>"radio", 
+			   -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), 
+                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
+			    $self->$actionForm($onChange, %actionParams));
 		
 		$i++;
 	}
@@ -292,10 +295,11 @@ sub body {
 			)
 		);
 	}
-	print CGI::Tr({}, CGI::td({-colspan=>2, -align=>"center"},
-		CGI::submit(-value=>"Take Action!"))
-	);
-	print CGI::end_table();
+
+	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
+	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
+
+	print CGI::end_div();
 	
 	########## print table
 
@@ -1297,6 +1301,13 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
+
+	return "";
+}
+
+# Just tells template to output the stylesheet for Tabber
+sub output_tabber_CSS{
 	return "";
 }
 
