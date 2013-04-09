@@ -64,7 +64,7 @@ sub head {
 
 	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/lib/vendor/bootstrap/css/bootstrap.popover.css\">";
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.7.2.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
@@ -181,8 +181,6 @@ sub body {
 	);
 	
 
-	my $tthPreambleCache;
-
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to acces the Instructor tools."))
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 		
@@ -194,6 +192,7 @@ sub body {
 	my $set = $db->getMergedSet($userID, $setID); # checked
 	my $problem = $db->getMergedProblem($userID, $setID, $problemID); # checked
 	my $user = $db->getUser($userID);
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
 
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
 
@@ -268,6 +267,7 @@ sub body {
 	    next unless $userProblem;
 
 	    if ($userPastAnswerID && $userProblem) {
+
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		my @scores = split(//,$userPastAnswer->scores);
 		my @answers = split(/\t/,$userPastAnswer->answer_string);
@@ -298,7 +298,7 @@ sub body {
 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n BEGIN_TEXT\n";
+			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"contextTypeset.pl\");\n Context(\"Typeset\");\n BEGIN_TEXT\n";
 			$source .= $answer . "\nEND_TEXT\n ENDDOCUMENT();";
 			my $pg = WeBWorK::PG->new(
 			    $ce,
