@@ -2005,6 +2005,28 @@ problem rendering.
 
 =cut
 
+=item mathview_scripts()
+
+Prints javascript calls needed to run mathview.
+
+=cut
+
+sub mathview_scripts {
+	my $self = shift;
+	my $enable_mathview = $self->r->ce->{pg}{specialPGEnvironmentVars}{MathView}//0; # initialize to zero if undefined.
+# Added CODE JQuery MathView
+	my @out = (
+	"<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/jquery-1.8.2.min.js\"></script>\n",
+	"<script type=\"text/javascript\" src=\"http://code.jquery.com/ui/1.9.0/jquery-ui.js\"></script>\n",
+	"<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\"></script>\n",
+	"<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/jquery-mathview-1.1.0.js\"></script>\n",
+	"<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/operations.js\"></script>\n",
+	"<script type=\"text/javascript\">\$(function(){\$('.codeshard').addMathEditorButton(\"PGML\");});</script>\n",
+	);
+	($enable_mathview)? @out:(); 
+}
+# End CODE JQuery MathView
+
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
 	my $r = $self->{r};
