@@ -527,6 +527,8 @@ sub RefreshEdit {
 	my $name = "$pwd/$file"; $name =~ s!^\./?!!;
 
 	my %button = (type=>"submit",name=>"action",style=>"width:6em");
+	print $self->mathview_scripts();
+
 	print CGI::p();
 	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});
 	print CGI::Tr([

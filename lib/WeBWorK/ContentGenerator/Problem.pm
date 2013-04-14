@@ -1038,7 +1038,10 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
+	print $self->mathview_scripts();
+
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
+
 	print $self->hidden_authen_fields;
 	return "";
 }
