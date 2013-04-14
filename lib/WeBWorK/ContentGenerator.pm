@@ -2013,15 +2013,26 @@ Prints javascript calls needed to run mathview.
 
 sub mathview_scripts {
 	my $self = shift;
-	my $enable_mathview = $self->r->ce->{pg}{specialPGEnvironmentVars}{MathView}//0; # initialize to zero if undefined.
+	my $ce = $self->r->ce;
+	my $enable_mathview = $ce->{pg}{specialPGEnvironmentVars}{MathView}//0; # initialize to zero if undefined.
+	my $site_url = $ce->{webworkURLs}->{htdocs};
 # Added CODE JQuery MathView
 	my @out = (
-	"<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/jquery-1.8.2.min.js\"></script>\n",
-	"<script type=\"text/javascript\" src=\"http://code.jquery.com/ui/1.9.0/jquery-ui.js\"></script>\n",
-	"<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\"></script>\n",
-	"<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/jquery-mathview-1.1.0.js\"></script>\n",
-	"<script type=\"text/javascript\" src=\"/webwork2_files/js/mathview/operations.js\"></script>\n",
-	"<script type=\"text/javascript\">\$(function(){\$('.codeshard').addMathEditorButton(\"PGML\");});</script>\n",
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
+		CGI::end_script(),	"\n",	
+		CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
+		CGI::end_script(),"\n",		
+		CGI::start_script({type=>"text/javascript", src=>"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"}), 
+		CGI::end_script(),	"\n",			
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-mathview-1.1.0.js"}), 
+		CGI::end_script(),"\n",
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/operations.js"}), 
+		CGI::end_script(),"\n",
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/operations.js"}), 
+		CGI::end_script(), "\n",
+		CGI::start_script({type=>"text/javascript"}),
+		 q{  $(function(){$('.codeshard').addMathEditorButton("PGML");});  },
+        CGI::end_script(), "\n",
 	);
 	($enable_mathview)? @out:(); 
 }
