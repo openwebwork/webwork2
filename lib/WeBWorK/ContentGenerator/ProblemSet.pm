@@ -357,7 +357,7 @@ sub body {
 		    my $userProblem = $db->getUserProblem($userID,$setName,$problemID);
 		    if ($userProblem->flags =~ /needs_grading/ || $userProblem->flags =~/graded/) {
 			$canScoreProblems = 1;
-			@gradeableProblems[$problemID] = 1;
+			$gradeableProblems[$problemID] = 1;
 			last;
 		    }
 		}
