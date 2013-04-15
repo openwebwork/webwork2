@@ -1038,7 +1038,10 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
+	print $self->mathview_scripts();
+
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
+
 	print $self->hidden_authen_fields;
 	return "";
 }
@@ -1742,6 +1745,11 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/Base64.js"}), CGI::end_script();
 	
 	
+	return "";
+}
+
+#Tells template to output stylesheet for Jquery-UI
+sub output_jquery_ui_CSS{
 	return "";
 }
 

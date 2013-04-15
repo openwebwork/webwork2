@@ -94,7 +94,7 @@ use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
@@ -595,7 +595,7 @@ sub body {
 	########## print table
 	
 	########## first adjust heading if in editMode
-	$prettyFieldNames{set_id} = $r->maketext("Edit All Set Data") if $editMode;
+	$prettyFieldNames{set_id} = $r->maketext("Edit Set") if $editMode;
 	$prettyFieldNames{enable_reduced_scoring} = $r->maketext('Enable Reduced Credit') if $editMode;
 	
 	
@@ -1316,11 +1316,11 @@ sub import_form {
 				-label_text=>$r->maketext("Assign this set to which users?").": ",
 				-input_attr=>{
 					-name => "action.import.assign",
-					-value => [qw(all none)],
+					-value => [qw(all user)],
 					-default => $actionParams{"action.import.assign"}->[0] || "none",
 					-labels => {
-						all => $r->maketext("all users"),
-						none => $r->maketext("no users"),
+						all => $r->maketext("all current users").".",
+						user => $r->maketext("only")." ".$user.".",
 					},
 					-onchange => $onChange,
 				}
@@ -2171,7 +2171,7 @@ sub fieldEditHTML {
 	
 	if ($type eq "number" or $type eq "text") {
 		my $id = $fieldName."_id";
-		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>$value, size=>$size});
+		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>$value, size=>$size, class=>"table-input"});
 		my $content = "";
 		my $bareName = "";
 		my $timezone = substr($value, -3);
@@ -2329,10 +2329,12 @@ CONTENT
 		# FIXME: kludge (R)
 		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		# in which case the hidden field overrides the parameter with a 0
+		# kludge 2  -- get visible and reduced scoring to have no names (might reduce accessibility)
+		# my $label_text = $properties->{label_text} || "NoLabel";
 		return WeBWorK::CGI_labeled_input(
 			-type=>"checkbox",
 			-id=>$fieldName."_id",
-			-label_text=>ucfirst($fieldName),
+			-label_text=>"", #$label_text,
 			-input_attr=>{
 				-name => $fieldName,
 				-checked => $value,
@@ -2394,17 +2396,16 @@ sub recordEditHTML {
 					
 	
 	# Select
+	my $label="";
+	my $label_text="";
 	if ($editMode) {
 		# column not there
+		$label_text = CGI::a({href=>$problemListURL}, "$set_id");
 	} else {
 		# selection checkbox
-		# Set ID
-		my $label = "";
-		if ($editMode) {
-			$label = CGI::a({href=>$problemListURL}, "$set_id");
-		} else {		
-			$label = CGI::font({class=>$visibleClass}, $set_id . $imageLink);
-		}
+		# Set ID		
+		$label = CGI::font({class=>$visibleClass}, $set_id . $imageLink);
+
 		
 		push @tableCells, WeBWorK::CGI_labeled_input(
 			-type=>"checkbox",
@@ -2429,6 +2430,7 @@ sub recordEditHTML {
 	# Problems link
 	if ($editMode) {
 		# column not there
+		push @tableCells, $label_text;
 	} else {
 		# "problem list" link
 		push @tableCells, CGI::a({href=>$problemListURL}, "$problems");
@@ -2536,14 +2538,12 @@ sub printTableHTML {
 
 
 	my @tableHeadings = map { $fieldNames{$_} } @realFieldNames;
-	shift @tableHeadings;
+	#shift @tableHeadings;   # removed "select" so there is no need to shift headings -- checkbox occurs in column.
 	
-	# prepend selection checkbox? only if we're NOT editing!
-#	unshift @tableHeadings, "Select", "Set", "Problems" unless $editMode;
 
 	# print the table
 	if ($editMode or $exportMode) {
-		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
+		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY"). " This is a subset of all homework sets" });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	} else {
 		print CGI::start_table({-id=>"set_table_id", -border=>1, -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") }); #"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	}
