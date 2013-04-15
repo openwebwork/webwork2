@@ -1748,6 +1748,11 @@ sub output_JS{
 	return "";
 }
 
+#Tells template to output stylesheet for Jquery-UI
+sub output_jquery_ui_CSS{
+	return "";
+}
+
 # Simply here to indicate to the template that this page has body part methods which can be called
 
 sub can_body_parts{
