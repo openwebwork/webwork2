@@ -2016,13 +2016,18 @@ sub mathview_scripts {
 	my $ce = $self->r->ce;
 	my $enable_mathview = $ce->{pg}{specialPGEnvironmentVars}{MathView}//0; # initialize to zero if undefined.
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+# FIXME -- this gives the correct locations for release/2.7 but is 
+# definitely not correct for the develop (and probably the next release ) version
+# where the organization of the js directory has been completely rearranged. -- MEG
 # Added CODE JQuery MathView
 	my @out = (
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
 		CGI::end_script(),	"\n",	
-		CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
+		#CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 
 		CGI::end_script(),"\n",		
-		CGI::start_script({type=>"text/javascript", src=>"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"}), 
+#		CGI::start_script({type=>"text/javascript", src=>"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"}), 
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS_HTML-full"}), 
 		CGI::end_script(),	"\n",			
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-mathview-1.1.0.js"}), 
 		CGI::end_script(),"\n",
