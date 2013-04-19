@@ -48,13 +48,15 @@ require(['Backbone',
     'underscore',
     'WebPage',
     '../../lib/views/LibraryTreeView',
+    '../../lib/models/PGProblem',
     'bootstrap'
     ], 
-function(Backbone, _,WebPage,LibraryTreeView){
+function(Backbone, _,WebPage,LibraryTreeView,PGProblem){
     var SimpleEditorView = WebPage.extend({
         initialize: function() {
             this.constructor.__super__.initialize.apply(this, {el: this.el});
             this.render();
+            this.problem = new PGProblem();
 
         },
         render: function (){
@@ -65,7 +67,8 @@ function(Backbone, _,WebPage,LibraryTreeView){
             this.$("#textbook-info-container").html($("#textbook-info-template").html());
         },
         events: {"click #build-script": "buildScript",
-            "change #answerType-select": "changeAnswerType"},
+            "change #answerType-select": "changeAnswerType",
+            "click #testSave": "saveFile"},
             
         changeAnswerType: function(evt){
 
@@ -74,6 +77,11 @@ function(Backbone, _,WebPage,LibraryTreeView){
             this.answerType = new AnswerChoiceView({template: $(type+"-template"), el: $("#answerArea")});
             this.answerType.render(); 
         },        
+        saveFile: function(){
+            console.log("Saving the file");
+            this.problem.save(this.buildScript());
+
+        },
         buildScript: function (){           
             var pgTemplate = _.template($("#pg-template").text())
               , inputProblemDescription = $("#ProblemDescription-input").val()
@@ -192,6 +200,7 @@ function(Backbone, _,WebPage,LibraryTreeView){
                
             $("#problem-code").text(pgTemplate(fields));
             
+            return pgTemplate(fields);
           
         }
     });

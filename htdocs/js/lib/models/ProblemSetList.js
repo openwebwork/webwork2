@@ -29,9 +29,9 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
                 var newSet = new Array();
                 _(response.result_data).each(function(set) { 
                     // change some of the 0-1 Perl booleans to "yes/no"s
-                    _(["enable_reduced_scoring","visible"]).each(function(_prop){
-                        set[_prop] = (set[_prop]=="0")?"no":"yes";
-                    });
+                    //_(["enable_reduced_scoring","visible"]).each(function(_prop){
+                    //    set[_prop] = (set[_prop]=="0")?"no":"yes";
+                    // });
                     newSet.push(new ProblemSet(set)); 
                 });
                 console.log("The Problem Sets have loaded");                    

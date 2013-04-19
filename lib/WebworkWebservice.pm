@@ -447,6 +447,12 @@ sub updateProblem {
 	return $self->do(WebworkWebservice::SetActions::updateProblem($self,$in));
 }
 
+sub saveProblem {
+	my ($class,$in) = @_;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::LibraryActions::saveProblem($self,$in));
+}
+
 sub readFile {
     my $class = shift;
     my $in   = shift;

@@ -396,6 +396,27 @@ sub getProblemDirectories {
 	return($out);
 }
 
+sub saveProblem {
+	my ($self,$params) = @_; 
+	my $ce = $self->{ce};
+
+	# the templates directory
+	my $editFilePath = $ce->{courseDirs}->{templates};
+
+
+	debug($editFilePath);
+	#debug($forcedSourceFile);
+
+	# let's just try to save any file.
+
+	debug("Saving the problem");
+	my $out = {};
+	$out->{ra_out} = "The Problem was saved.";	
+	$out->{text} = encode_base64("The Problem was saved.");	
+
+	return $out;
+}
+
 ##
 #  This subroutines outputs the entire library based on Subjects, chapters and sections. 
 #

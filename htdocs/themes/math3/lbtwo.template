@@ -53,12 +53,12 @@
 	            	  <!-- </ul> -->
                   </div>
 		            
-	    		<div class="span4">
+	    		<div class="span3">
             		<ul class="breadcrumb"> 
 						<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
 					</ul>
 				</div> 
-				<div class="span2"><!--#loginstatus--></div>
+				<div class="span3"><!--#loginstatus--></div>
 	    		<div class="span2"><button class="btn" id="help-link">Help</button>
 	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2-dev/issues/new">Bugs!</a>
     			</div>

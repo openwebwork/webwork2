@@ -169,8 +169,6 @@ sub getSet {
 sub updateSetProperties {
   my ($self, $params) = @_;
   my $db = $self->{db};
-    
-  #note some of the parameters are coming in as yes or no and need to be converted to 1 or 0.  
 
   my $set = $db->getGlobalSet($params->{set_id});
   $set->set_header($params->{set_header});
@@ -178,8 +176,8 @@ sub updateSetProperties {
   $set->open_date(parseDateTime($params->{open_date},"local"));
   $set->due_date(parseDateTime($params->{due_date},"local"));
   $set->answer_date(parseDateTime($params->{answer_date},"local"));
-  $set->visible(($params->{visible} eq "yes")?1:0);
-  $set->enable_reduced_scoring(($params->{enable_reduced_scoring} eq "yes")?1:0);
+  $set->visible($params->{visible});
+  $set->enable_reduced_scoring($params->{enable_reduced_scoring});
   $set->assignment_type($params->{assignment_type});
   $set->attempts_per_version($params->{attempts_per_version});
   $set->time_interval($params->{time_interval});
@@ -218,47 +216,76 @@ sub listSetUsers {
 }
 
 sub createNewSet{
-	my $self = shift;
-	my $in = shift;
+	my ($self,$params) = @_;
   	my $db = $self->{db};
   	my $out;
 
+  	debug("in createNewSet");
+  	debug(to_json($params));
 
 
-	if ($in->{new_set_name} !~ /^[\w .-]*$/) {
+	if ($params->{new_set_name} !~ /^[\w .-]*$/) {
 		$out->{text} = "need a different name";#not sure the best way to handle and error
 	} else {
-		my $newSetName = $in->{new_set_name};
+		my $newSetName = $params->{new_set_name};
 		# if we want to munge the input set name, do it here
 		$newSetName =~ s/\s/_/g;
-		#debug("local_sets was ", $r->param('local_sets'));
-		#$r->param('local_sets',$newSetName);  ## use of two parameter param
-		#debug("new value of local_sets is ", $r->param('local_sets'));
+
+
 		my $newSetRecord = $db->getGlobalSet($newSetName);
 		if (defined($newSetRecord)) {
             $out->{out}=encode_base64("Failed to create set, you may need to try another name."),
             $out->{ra_out} = {'success' => 'false'};
 		} else {			# Do it!
 			# DBFIXME use $db->newGlobalSet
-			$newSetRecord = $db->{set}->{record}->new();
+			# $newSetRecord = $db->{set}->{record}->new();
+
+			# debug($params->{selfassign});
+			# debug($params->{set_id});
+			# debug($params->{new_set_name});
+			# debug($params->{open_date});
+			# debug($params->{due_date});
+			# debug($params->{visible});
+			# debug(to_json($params));
+
+			$newSetRecord = $db->newGlobalSet;
 			$newSetRecord->set_id($newSetName);
 			$newSetRecord->set_header("defaultHeader");
 			$newSetRecord->hardcopy_header("defaultHeader");
-			$newSetRecord->open_date(time()+60*60*24*7); # in one week
-			$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
-			$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
-			eval {$db->addGlobalSet($newSetRecord)};
+			$newSetRecord->open_date(parseDateTime($params->{open_date},"local"));
+			$newSetRecord->due_date(parseDateTime($params->{due_date},"local"));
+			$newSetRecord->answer_date(parseDateTime($params->{answer_date},"local"));
+			$newSetRecord->visible($params->{visible});
+			$newSetRecord->enable_reduced_scoring($params->{enable_reduced_scoring});
+			$newSetRecord->assignment_type($params->{assignment_type});
+			$newSetRecord->attempts_per_version($params->{attempts_per_version});
+			$newSetRecord->time_interval($params->{time_interval});
+			$newSetRecord->versions_per_interval($params->{versions_per_interval});
+			$newSetRecord->version_time_limit($params->{version_time_limit});
+			$newSetRecord->version_creation_time($params->{version_creation_time});
+			$newSetRecord->problem_randorder($params->{problem_randorder});
+			$newSetRecord->version_last_attempt_time($params->{version_last_attempt_time});
+			$newSetRecord->problems_per_page($params->{problems_per_page});
+			$newSetRecord->hide_score($params->{hide_score});
+			$newSetRecord->hide_score_by_problem($params->{hide_score_by_problem});
+			$newSetRecord->hide_work($params->{hide_work});
+			$newSetRecord->time_limit_cap($params->{time_limit_cap});
+			$newSetRecord->restrict_ip($params->{restrict_ip});
+			$newSetRecord->relax_restrict_ip($params->{relax_restrict_ip});
+			$newSetRecord->restricted_login_proctor($params->{restricted_login_proctor});
+			
+			$db->addGlobalSet($newSetRecord);
 			if ($@) {
 				$out->{text} = encode_base64("Failed to create set, you may need to try another name.");
 				#$self->addbadmessage("Problem creating set $newSetName<br> $@");
 			} else {
-				my $selfassign = $in->{selfassign};
+				my $selfassign = $params->{selfassign};
 				debug($selfassign);
 				$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
 				if($selfassign) {
-					debug("Assigning to user: " . $in->{user});
+					debug("Assigning to user: " . $params->{user});
 					my $userSet = $db->newUserSet;
-					$userSet->user_id($in->{user});
+					$userSet->user_id($params->{user});
 					$userSet->set_id($newSetName);
 					$db->addUserSet($userSet);
 				}
@@ -552,48 +579,6 @@ sub assignAllSetsToUser {
 	return @results;
 }
 
-# sub assignProblemToAllSetUsers {
-# 	my $self = shift;
-# 	my $GlobalProblem = shift;
-# 	my $db = $self->{db};
-# 	my $setID = $GlobalProblem->set_id;
-# 	my @userIDs = $db->listSetUsers($setID);
-	
-# 	my @results;
-	
-# 	foreach my $userID (@userIDs) {
-# 		my @result = assignProblemToUser($self, $userID, $GlobalProblem);
-# 		push @results, @result if @result;
-# 	}
-	
-# 	return @results;
-# }
-
-# sub addProblemToSet {
-# 	my ($self,$params) = @_;
-# 	my $db = $self->{db};
-# 	my $value_default = $self->{ce}->{problemDefaults}->{value};
-# 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
-	
-
-
-# 	die "addProblemToSet called without specifying the set name." if $params->{set_id} eq "";
-# 	my $setName = $params->{set_id};
-
-# 	my $sourceFile = $params->{sourceFile} or die "addProblemToSet called without specifying the sourceFile.";
-
-
-# 	debug("In addProblemToSet");
-# 	debug("setName: $setName");
-# 	debug("sourceFile: $sourceFile");
-
-# 	# The rest of the arguments are optional
-	
-# #	my $value = $params{value} || $value_default;
-	
-# 	my $out->{text} = encode_base64("Problem added to ".$setName);
-# 	return $out;
-# }
 
 sub addProblem {
 	my ($self,$params) = @_;

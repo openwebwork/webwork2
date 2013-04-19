@@ -157,7 +157,7 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
  
- 	
+ 	debug($r->param("visible"));	
  
  
  
@@ -176,29 +176,29 @@ sub pre_header_initialize {
 	
 	my $input = {#can I just use $->param? it looks like a hash
 
-		     pw              =>   $r->param('pw') ||undef,
-		     session_key     =>   $r->param("session_key") ||undef,
-		     userID          =>   $r->param("user") ||undef,
-		     library_name    =>   $r->param( "library_name") ||undef,
-		     user        	 =>   $r->param("user") ||undef,
-		     set             =>   $r->param("set") ||undef,
-		     fileName        =>   $r->param("file_name") ||undef,
-		     new_set_name	 =>	  $r->param("new_set_name") ||undef,
-		     probList		 =>	  $r->param("probList") ||undef,
-		     command     	 =>   $r->param("command") ||undef,
-		     subcommand		 =>   $r->param("subcommand") ||undef,
-		     maxdepth		 =>	  $r->param("maxdepth") || 0,
-		     problemSeed	 =>	  $r->param("problemSeed") || 0,
-		     displayMode	 =>	  $r->param("displayMode") || undef,
-		     noprepostambles	 =>	  $r->param("noprepostambles") || undef,
-		     library_subjects	=> 	$r->param("library_subjects") ||undef,
-		     library_chapters	=> 	$r->param("library_chapters") ||undef,
-		     library_sections	=> 	$r->param("library_sections") ||undef,
-		     library_textbook	=> 	$r->param("library_textbook") ||undef,
-		     library_keywords	=> 	$r->param("library_keywords") ||undef,
-		     library_textchapter	=> 	$r->param("library_textchapter") ||undef,
-		     library_textsection	=> 	$r->param("library_textsection") ||undef,
-		     source			 =>   '',
+		    pw                      => $r->param('pw') ||undef,
+		    session_key             => $r->param("session_key") ||undef,
+		    userID                  => $r->param("user") ||undef,
+		    library_name            => $r->param("library_name") ||undef,
+		    user        	        => $r->param("user") ||undef,
+		    set                     => $r->param("set") ||undef,
+		    fileName                => $r->param("file_name") ||undef,
+		    new_set_name	        => $r->param("new_set_name") ||undef,
+		    probList		        => $r->param("probList") ||undef,
+		    command     	        => $r->param("command") ||undef,
+		    subcommand		        => $r->param("subcommand") ||undef,
+		    maxdepth		        => $r->param("maxdepth") || 0,
+		    problemSeed	            => $r->param("problemSeed") || 0,
+		    displayMode	            => $r->param("displayMode") || undef,
+		    noprepostambles	        => $r->param("noprepostambles") || undef,
+		    library_subjects	    => $r->param("library_subjects") ||undef,
+		    library_chapters	    => $r->param("library_chapters") ||undef,
+		    library_sections	    => $r->param("library_sections") ||undef,
+		    library_textbook	    => $r->param("library_textbook") ||undef,
+		    library_keywords	    => $r->param("library_keywords") ||undef,
+		    library_textchapter     => $r->param("library_textchapter") ||undef,
+		    library_textsection     => $r->param("library_textsection") ||undef,
+		    source			        =>  '',
 
 		     #course stuff
 		    first_name       		=> $r->param('first_name') || undef,
@@ -290,6 +290,8 @@ sub pre_header_initialize {
 	if($r->param('xml_command') eq "addProblem" || $r->param('xml_command') eq "deleteProblem"){
 		$input->{path} = $r->param('problemPath');
 	}
+
+	debug(to_json($input));
 	
 	if($r->param('xml_command') eq "renderProblem"){
 	    if (my $problemPath = $r->param('problemPath')) {

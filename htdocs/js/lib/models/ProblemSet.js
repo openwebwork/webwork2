@@ -140,7 +140,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
       	        self.trigger("problem-set-changed",self)
             });
         },
-        fetch: function()
+        fetch: function()  // this fetches the problems for the ProblemSet.  
         {
             var self=this;
             var requestObject = { xml_command: "getSet"};

@@ -70,6 +70,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
                     this.$("#new-set-modal .modal-body").html(_.template($("#add-hw-set-template").html(),{name : config.requestObject.user}));
                     this.$("#new-set-modal .btn-primary").html("Create New Set");
                     this.$("#new-set-modal").modal("show");
+                    this.$("#hw-set-name").focus();
                     this.$("#new-set-modal .btn-primary").on('click',this.addSet);
                     break;
                 case "delete-hw-set":
