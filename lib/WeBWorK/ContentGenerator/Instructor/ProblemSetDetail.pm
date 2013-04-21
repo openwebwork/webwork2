@@ -2187,17 +2187,21 @@ sub output_JS {
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	
-# print javaScript for dateTimePicker	
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
+	# print javaScript for dateTimePicker	
+    print "\n\n<!-- add to header ProblemSetDetail-->\n\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
+#  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-		print CGI::start_script({-type=>"text/javascript"}),"\n";
-		print "addOnLoadEvent(function() {\n";
-		print WeBWorK::Utils::DataPickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
-		print WeBWorK::Utils::DataPickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
-		print WeBWorK::Utils::DataPickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
-		print "});\n";
-		print CGI::end_script();
+	print CGI::start_script({-type=>"text/javascript"}),"\n";
+	print "addOnLoadEvent(function() {\n";
+	print WeBWorK::Utils::DataPickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
+	print WeBWorK::Utils::DataPickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
+	print WeBWorK::Utils::DataPickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
+	print "});\n";
+	print CGI::end_script();
+	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
+	return "";
 }
 1;
 
