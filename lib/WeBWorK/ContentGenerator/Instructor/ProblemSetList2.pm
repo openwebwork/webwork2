@@ -85,7 +85,7 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
 
-use WeBWorK::Utils::DataPickerScripts;
+use WeBWorK::Utils::DatePickerScripts;
 
 use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_VISIBILITY_STATE => 1;
@@ -2182,22 +2182,23 @@ sub fieldEditHTML {
 			my @temp = split(/.open_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			$content = WeBWorK::Utils::DataPickerScripts::open_date_script($bareName, $timezone);
+			#$content = WeBWorK::Utils::DatePickerScripts::open_date_script($bareName, $timezone);
 		}
 		elsif(index($fieldName, ".due_date") != -1){
 			my @temp = split(/.due_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			$content = WeBWorK::Utils::DataPickerScripts::due_date_script($bareName, $timezone);
+			#$content = WeBWorK::Utils::DatePickerScripts::due_date_script($bareName, $timezone);
 		}
 		elsif(index($fieldName, ".answer_date") != -1){
 			my @temp = split(/.answer_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			$content = WeBWorK::Utils::DataPickerScripts::answer_date_script($bareName, $timezone);
+			#$content = WeBWorK::Utils::DatePickerScripts::answer_date_script($bareName, $timezone);
 		}
 		
-		push @$dateTimeScripts, $content;
+		#push @$dateTimeScripts, $content;
+		push @$dateTimeScripts, WeBWorK::Utils::DatePickerScripts::date_scripts($bareName,$timezone);
 		return $out;
 	}
 	
@@ -2378,7 +2379,7 @@ sub recordEditHTML {
 	
 	my @chooseDateTimeScripts = ();
 	
-	push @chooseDateTimeScripts, "addOnLoadEvent(function() {";
+	#push @chooseDateTimeScripts, "addOnLoadEvent(function() {";
 
 	# Set Fields
 	foreach my $field (@fieldsToShow) {
@@ -2394,11 +2395,7 @@ sub recordEditHTML {
 		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
-	
-	push @chooseDateTimeScripts, "});";
-	
-	#@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
-	
+		
 	my $out = CGI::Tr({}, CGI::td({}, \@tableCells));
 	my $scripts = CGI::start_script({-type=>"text/javascript"}).(join("", @chooseDateTimeScripts)).CGI::end_script();
 
@@ -2506,27 +2503,36 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     
     print "\n\n<!-- add to header ProblemSetList2.pm -->";
+        
+	print q!<link rel="stylesheet" type="text/css" href="http://localhost/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
+	print q!<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">!,"\n";
+	print q!<link rel="stylesheet" media="all" type="text/css" href="http://localhost/webwork2_files/css/jquery-ui-timepicker-addon.css">!,"\n";
+
+	print q!<style> .ui-datepicker{font-size:85%} 
+	.auto-changed {background-color: #ffffcc}; 
+    </style>!,"\n";
+    
 	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script(),"\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
 	
 	# these scripts (for specific courses) are printed from within fieldEditHTML
 #   print CGI::start_script({-type=>"text/javascript"}),"\n";
 # 	print "addOnLoadEvent(function() {\n";
-# 	print WeBWorK::Utils::DataPickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
-# 	print WeBWorK::Utils::DataPickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
-# 	print WeBWorK::Utils::DataPickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
+# 	print WeBWorK::Utils::DatePickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
+# 	print WeBWorK::Utils::DatePickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
+# 	print WeBWorK::Utils::DatePickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
 # 	print "});\n";
 # 	print CGI::end_script();
 	# print other javaScript
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
-	print "\n\n<!-- add to header ProblemSetList2.pm -->";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script(),"\n";
+	print "\n\n<!-- END add to header ProblemSetList2.pm -->";
 	return "";
 }
 

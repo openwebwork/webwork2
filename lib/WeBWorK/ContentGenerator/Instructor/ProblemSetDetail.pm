@@ -2176,11 +2176,7 @@ sub body {
 	return "";
 }
 
-sub head {
 
-	print q!<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css">!;
-
-}
 sub output_JS {
 	my $self = shift;
 	my $r = $self->r;
@@ -2189,23 +2185,29 @@ sub output_JS {
 	my $timezone = $self->{timezone_shortname};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
-	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# print javaScript for dateTimePicker	
     print "\n\n<!-- add to header ProblemSetDetail-->\n\n";
-# jquery 1.7.1 loaded second to keep compatibility with timepicker.
-# FIXME? replace timepicker with twitter bootstrap time picker?
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+        
+	print q!<link rel="stylesheet" type="text/css" href="http://localhost/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
+	print q!<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">!,"\n";
+	print q!<link rel="stylesheet" media="all" type="text/css" href="http://localhost/webwork2_files/css/jquery-ui-timepicker-addon.css">!,"\n";
+
+	print q!<style> .ui-datepicker{font-size:85%} 
+	.auto-changed {background-color: #ffffcc}; 
+    </style>!,"\n";
+    
+    # jquery 1.7.1 loaded second to keep compatibility with timepicker.
+    # FIXME? replace timepicker with twitter bootstrap time picker?
+	# print javaScript for dateTimePicker	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script(),"\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
+    	
 	print CGI::start_script({-type=>"text/javascript"}),"\n";
-	print "addOnLoadEvent(function() {\n";
-	print WeBWorK::Utils::DataPickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
-	print WeBWorK::Utils::DataPickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
-	print WeBWorK::Utils::DataPickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
-	print "});\n";
+	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
 	print CGI::end_script();
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
