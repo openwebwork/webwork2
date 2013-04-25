@@ -952,10 +952,15 @@ sub initialize {
 		}
 
 	}
+	
 	if ($error) {
 		$self->addbadmessage($r->maketext("No changes were saved!"));
 	}
 	
+	# grab short name for timezone
+	# used to set proper timezone name in datepicker
+	$self->{timezone_shortname} = substr($due_date, -3); #this is fragile
+
 	if (defined $r->param('submit_changes') && !$error) {
 
 		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
@@ -2181,7 +2186,7 @@ sub output_JS {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $setID   = $r->urlpath->arg("setID");
-	my $timezone = $ce->{siteDefaults}{timezone};
+	my $timezone = $self->{timezone_shortname};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
@@ -2189,8 +2194,10 @@ sub output_JS {
 	
 	# print javaScript for dateTimePicker	
     print "\n\n<!-- add to header ProblemSetDetail-->\n\n";
+# jquery 1.7.1 loaded second to keep compatibility with timepicker.
+# FIXME? replace timepicker with twitter bootstrap time picker?
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
   	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
-#  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({-type=>"text/javascript"}),"\n";
