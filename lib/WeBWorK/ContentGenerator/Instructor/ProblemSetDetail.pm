@@ -950,16 +950,16 @@ sub initialize {
 			$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
+			# grab short name for timezone
+			# used to set proper timezone name in datepicker
+
+			$self->{timezone_shortname} = substr($due_date, -3); #this is fragile
 
 	}
 	
 	if ($error) {
 		$self->addbadmessage($r->maketext("No changes were saved!"));
 	}
-	
-	# grab short name for timezone
-	# used to set proper timezone name in datepicker
-	$self->{timezone_shortname} = substr($due_date, -3); #this is fragile
 
 	if (defined $r->param('submit_changes') && !$error) {
 
@@ -2207,6 +2207,7 @@ sub output_JS {
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
     	
 	print CGI::start_script({-type=>"text/javascript"}),"\n";
+	print q!$(".ui-datepicker").draggable();!,"\n";
 	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
 	print CGI::end_script();
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";

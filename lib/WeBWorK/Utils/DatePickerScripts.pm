@@ -33,9 +33,9 @@ var update = function() {
 	var openDate = open_rule.datetimepicker('getDate');
 	var dueDate = due_rule.datetimepicker('getDate');
 	var answerDate = answer_rule.datetimepicker('getDate');
- 	open_rule.removeClass("auto-changed");
-	due_rule.removeClass("auto-changed");
-	answer_rule.removeClass("auto-changed");
+// 	open_rule.removeClass("auto-changed");
+//	due_rule.removeClass("auto-changed");
+//	answer_rule.removeClass("auto-changed");
 	if ( due_rule.val() =='') {
 		dueDate = new Date(openDate);
         dueDate.setDate(dueDate.getDate()+dueDateOffset);
@@ -70,6 +70,7 @@ open_rule.datetimepicker({
     onSelect: function (selectedDateTime){
         var open = \$(this).datetimepicker('getDate');
 		var open_obj = new Date(open.getTime());
+		open_rule.addClass("auto-changed");
         due_rule.datetimepicker('option', 'minDate', open_obj);
         due_rule.addClass("auto-changed");
         answer_rule.datetimepicker('option', 'minDate', open_obj);
@@ -87,10 +88,9 @@ due_rule.datetimepicker({
     		var openDate = new Date(dateText);
     		openDate.setDate(openDate.getDate() -dueDateOffset );
     		open_rule.datetimepicker('setDate',openDate);
-    		open_changed =1;	
+    		open_rule.addClass("auto-changed");	
     	}
     	update();
-    	if (open_changed) {open_rule.addClass("auto-changed");}
 	},
     onSelect: function (selectedDateTime){
         var due = \$(this).datetimepicker('getDate');
