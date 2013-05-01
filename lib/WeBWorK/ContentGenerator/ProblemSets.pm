@@ -216,7 +216,7 @@ sub body {
 		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, $r->maketext("Status"));
 # print the start of the form
 
-    print CGI::start_form(-method=>"POST",-action=>$actionURL),
+    print CGI::start_form(-name=>"problem-sets-form", -id=>"problem-sets-form", -method=>"POST",-action=>$actionURL),
           $self->hidden_authen_fields;
     
 # and send the start of the table

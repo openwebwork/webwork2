@@ -503,7 +503,7 @@ sub displaySets {
 print  
 
 	   CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
-		CGI::start_table({-border=>1}),
+		CGI::start_table({-class=>"stats-table", -border=>1}),
 		CGI::Tr(CGI::td(
 			[$r->maketext('Problem').' #', 
 			   map {CGI::a({ href=>$self->systemLink($problemPage{$_}) },$_)} @problemIDs
@@ -531,7 +531,7 @@ print
 	print  
 
 	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores. The median score is in the 50% column. '))),
-			CGI::start_table({-border=>1}),
+			CGI::start_table({-class=>"stats-table",-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% '.$r->maketext('students'),
 					          (map {  "&nbsp;".$_   } @brackets1) ,
@@ -568,7 +568,7 @@ print
 	print  
 
 	    	CGI::p(CGI::i($r->maketext('Percentile cutoffs for number of attempts. <br/> The 50% column shows the median number of attempts'))),
-			CGI::start_table({-border=>1}),
+			CGI::start_table({-class=>"stats-table",-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% '.$r->maketext('students'),
 					          (map {  "&nbsp;".($_)  } @brackets2) ,

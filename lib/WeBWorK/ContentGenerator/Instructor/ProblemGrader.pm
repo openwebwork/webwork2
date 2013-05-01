@@ -64,7 +64,7 @@ sub head {
 
 	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/lib/vendor/bootstrap/css/bootstrap.popover.css\">";
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.7.2.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
@@ -187,8 +187,6 @@ sub body {
 	);
 	
 
-	my $tthPreambleCache;
-
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to acces the Instructor tools."))
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 		
@@ -200,11 +198,10 @@ sub body {
 	my $set = $db->getMergedSet($userID, $setID); # checked
 	my $problem = $db->getMergedProblem($userID, $setID, $problemID); # checked
 	my $user = $db->getUser($userID);
+	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
 
 	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
 
-	#local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-	#local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';	local $ce{
 	#set up a silly problem to render the problem text
 	my $pg = WeBWorK::PG->new(
 	    $ce,
@@ -236,7 +233,7 @@ sub body {
 
 	print CGI::p($pg->{body_text});
 
-	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), name=>"classlist" });
+	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), id=>"problem-grader-form", name=>"problem-grader-form" });
 	 
 	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All',
 				   onClick => "for (i in document.classlist.elements)  { 
@@ -245,7 +242,7 @@ sub body {
 	                       }
 	                    }" });
 
-	print CGI::start_table({class=>"table table-condensed",width=>"1020px"});
+	print CGI::start_table({width=>"1020px"});
 	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)", "&nbsp;", "Comment"]));
 	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
@@ -271,10 +268,12 @@ sub body {
 	    my $userAnswerString;
 	    my $comment = "";
 	    my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
+	    my $noCommentField=0;
 
 	    next unless $userProblem;
 
 	    if ($userPastAnswerID && $userProblem) {
+
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		my @scores = split(//,$userPastAnswer->scores);
 		my @answers = split(/\t/,$userPastAnswer->answer_string);
@@ -305,7 +304,7 @@ sub body {
 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n BEGIN_TEXT\n";
+			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"contextTypeset.pl\");\n Context(\"Typeset\");\n BEGIN_TEXT\n";
 			$source .= $answer . "\nEND_TEXT\n ENDDOCUMENT();";
 			my $pg = WeBWorK::PG->new(
 			    $ce,
@@ -341,6 +340,7 @@ sub body {
 		}
 		
 	    } else {
+		$noCommentField = 1;
 		$userAnswerString = "There are no answers for this student.";
 	    }
 	    
@@ -352,6 +352,13 @@ sub body {
 
 	    #create form for scoring
 
+	    my $commentBox = '';
+	    $commentBox= CGI::textarea({name=>"$userID.comment",
+				      value=>"$comment",
+				      rows=>3,
+					cols=>30,}).CGI::br().CGI::input({-class=>'preview', -type=>'button', -name=>"$userID.preview", -value=>"Preview" }) unless $noCommentField;
+	    
+	    
 	    my %dropDown;
 	    #construct the drop down.  Right now it does all numbers from 
 	    # 1 to 100, but this could be changed by config
@@ -381,11 +388,7 @@ sub body {
 						      -values => [sort {$b <=> $a} keys %dropDown],
 						      -default => $score,
 				                      -labels => \%dropDown)
-				      ," ",
-			  CGI::textarea({name=>"$userID.comment",
-				      value=>"$comment",
-				      rows=>3,
-				      cols=>30,}).CGI::br().CGI::input({-class=>'preview', -type=>'button', -name=>"$userID.preview", -value=>"Preview" })	   	    
+				      ," ", $commentBox
 				  ])	  
 		);
 	    print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));

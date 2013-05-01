@@ -169,11 +169,11 @@ sub checkForAchievements {
 	    }
 
 	    #build the cheevo message. New level messages are slightly different
-	    my $imgSrc;
+	    my $imgSrc = $ce->{server_root_url};
 	    if ($achievement->{icon}) {
-			$imgSrc = $ce->{courseURLs}->{achievements}."/".$achievement->{icon};
+			$imgSrc .= $ce->{courseURLs}->{achievements}."/".$achievement->{icon};
 	    } else {           
-			$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
+			$imgSrc .= $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 	    }
 
 	    $cheevoMessage .=  CGI::start_div({class=>'cheevopopupouter'});
@@ -193,12 +193,12 @@ sub checkForAchievements {
 	    }
 	    
 	    #if facebook integration is enables then create a facebook popup
-	    if ($globalUserAchievement->facebooker) {
+	    if ($ce->{allowFacebooking}&& $globalUserAchievement->facebooker) {
 			$cheevoMessage .= CGI::div({id=>'fb-root'},'');
 			$cheevoMessage .= CGI::script({src=>'http://connect.facebook.net/en_US/all.js'},'');
 			$cheevoMessage .= CGI::start_script();
-			#WCU specific appID
-			$cheevoMessage .= "FB.init({appId:'193051384078348', cookie:true,status:true, xfbml:true });\n";
+			
+			$cheevoMessage .= "FB.init({appId:'".$ce->{facebookAppId}."', cookie:true,status:true, xfbml:true });\n";
 	
 			my $facebookmessage;
 			if ($achievement->category eq 'level') {
