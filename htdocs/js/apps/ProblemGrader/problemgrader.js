@@ -9,7 +9,7 @@ $(function(){
 
     $(".preview").click(function(evt) {
 
-	$(evt.target).attr("data-content",$(evt.target).siblings("textarea").val());
+	$(evt.target).attr("data-content",$(evt.target).siblings("textarea").val().replace(/</g,'< ').replace(/>/g,' >'));
 	$(evt.target).popover('toggle');
 	if (window.MathJax) {
 	    MathJax.Hub.Queue(["Typeset",MathJax.Hub])
