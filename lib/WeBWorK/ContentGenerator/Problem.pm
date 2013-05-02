@@ -42,6 +42,7 @@ use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
+use HTML::Scrubber;
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -720,6 +721,24 @@ sub pre_header_initialize {
 		# do this only if new answers are NOT being submitted
 		my %oldAnswers = decodeAnswers($problem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
+	}
+	
+	##### scrub answer fields for xss badness #####
+     	my $scrubber = HTML::Scrubber->new(
+	    default=> 1,
+	    script => 0,
+	    process => 0,
+	    comment => 0
+	    );
+	foreach my $key (keys %$formFields) {
+	    if ($key =~ /AnSwEr/) {
+		$formFields->{$key} = $scrubber->scrub($formFields->{$key});
+		### HTML::scrubber is a little too enthusiastic about
+		### removing > and < so we have to add them back in otherwise
+		### they confuse pg
+		$formFields->{$key} =~ s/&lt;/</g;
+		$formFields->{$key} =~ s/&gt;/>/g;
+	    }
 	}
 	
 	##### translation #####
@@ -1432,6 +1451,7 @@ sub output_comments{
 		if ($userPastAnswer->comment_string) {
 
 		    my $comment = $userPastAnswer->comment_string;
+		    $comment = CGI::escapeHTML($comment);
 		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 		    my $user = $db->getUser($userID);
 

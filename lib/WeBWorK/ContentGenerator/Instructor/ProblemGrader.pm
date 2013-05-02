@@ -132,9 +132,15 @@ sub initialize {
 		    ### $comment needs to be sanitized.  It could currently contain badness written 
 		    ### into the comment by the instructor 
 		    
-		    my $scrubber = HTML::Scrubber->new();
-		    my $comment = $scrubber->scrub($r->param("$userID.comment"));
 
+		    my $scrubber = HTML::Scrubber->new(
+			default=> 1,
+			script => 0,
+			process => 0,
+			comment => 0
+			);
+		    
+		    my $comment = $scrubber->scrub($r->param("$userID.comment"));
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 		    
 		    if ($userPastAnswerID) {
