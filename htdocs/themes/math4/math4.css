@@ -13,12 +13,32 @@
  * Artistic License for more details.
  */
 
-/* --- Standard elements ---------------------------------------------------- */
-
-body {
-	font-size: 16px;
-	font-family: "Arial", sans-serif;
+/* Bootstrap Overrides */
+.container-fluid {
+	padding: 0.5em !important;
 }
+
+/* Footer */
+#footer {
+	clear: both;
+	display: block;
+	font-size: 0.8em;
+	color: #888;
+	text-align: center;
+	padding: 1em;
+	margin-top: 1em;
+}
+
+#footer p {
+	margin-bottom: 0; /* overrides bootstrap default so there's no weird space*/
+}
+
+#footer a {
+	color: #555;
+}
+
+
+/* --- Standard elements ---------------------------------------------------- */
 
 .body {
 	background: white;
@@ -54,13 +74,6 @@ input {
     height:auto;
 }
 
-p {
-  margin: 0 0 9px;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 18px;
-}
-
 .barrier {
 	clear:both;
 	border: none; /* 1px solid grey; */
@@ -83,23 +96,8 @@ h4 { font-size: 120%; }
 h5 { font-size: 110%; }
 h6 { font-size: 105%; } 
 
-/* show only to CSS-ignorant browsers */
-.for-broken-browsers { display: none }
-
-/* for hiding floats from Netscape 4.x */
-.float-left { float: left; }
-.float-right { float: right; }
-
 .info-box {
 	border: 1px solid #559;
-	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
-	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
-	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
-	margin-bottom: 1ex; 
-	margin-left:1ex;
-	margin-top: 0;
-	margin-right:1ex;
-	width: 90%;
 	overflow: hidden;
 }
 .info-box h2,
@@ -229,7 +227,6 @@ clear: both;
 }
 
 #breadcrumbs {
-	margin-left: 10.4em;
 	margin-right: 0;
 	padding: 0 .4em;
 	border: 1px solid #559;
@@ -249,44 +246,6 @@ clear: both;
 }
 #breadcrumbs a.active { font-weight: bold; }
 #breadcrumbs a:hover { text-decoration: underline; }
-
-#site-navigation {
-	position: absolute;
-	left: 0;
-	top: 0;
-	margin: 0;
-	padding: 0;
-	width: 9.8em;
-}
-
-#content {
-	margin: .5em 0 0 10.4em;
-	padding: 0 0 0 0;
-	font-family: "Arial", sans-serif;
-	/* border-left: 1px dotted #bbf; */
-}
-#content h1 { margin: .4ex 0; } /* for crappy MSIE */
-
-
-#footer {
-	/* white-space: nowrap; */
-	clear: both;
-	/* border-top: 1px solid #559; */
-	margin: 0 .5em .2ex 10.4em;
-	padding: 0;
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-}
-#copyright { font-size: 75%; margin: 0;}
-#last-modified {
-	clear: both;
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-	font-size: 75%;
-	background-color: inherit;
-	color: #444;
-	margin: 1ex 0 0 0;
-	padding: 0;
-	border-bottom: 1px solid #559;
-}
 
 #InfoPanel {
     font-size:100%;
