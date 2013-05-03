@@ -90,9 +90,10 @@ var tabberOptions = {manualStartup:true};
 
 <!-- Main Content Area -->
 <div id="content" class="span10" >
-		<div id="breadcrumbs">
-			<!--#path style="text" text=" &#x2192; "-->
-		</div>
+	<ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+	</ul>
+
             <span style="font-size:larger; color:#00F; float:left;  width:60%;   ">
 			<!--#if can="title"-->
 				<!--#title-->
