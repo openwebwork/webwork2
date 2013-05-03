@@ -73,10 +73,15 @@ ul.nav li a:hover {
 /* Main Content */
 .body {
 	display: inline-block;
+	float: left;
 }
 
 .shrinkbody {
 	width: 72%;
+}
+
+h2.page-title {
+	border-bottom: 1px solid #ccc;
 }
 
 #info-panel-right {
@@ -87,6 +92,21 @@ ul.nav li a:hover {
 	vertical-align: top;
 	float: right;
 }
+
+/* Question nav section */
+.problem-nav {
+	margin-bottom: 1em;
+}
+
+/* Message section */
+
+.Message div, .Message span {
+	background-color:#eee;
+	padding: 0.5em;
+}
+
+font.visible   { font-weight: bold; }
+font.hidden { font-style: italic; } 
 
 /* Home Page */
 ul.courses-list {
@@ -108,6 +128,11 @@ ul.courses-list a:hover {
 	text-decoration: none;
 	background: #038;
 	color: white;
+}
+
+/* Homework Sets */
+.problem_set_body input[type='checkbox'] {
+	margin: 0.5em; /* keep the assignment buttons from crowding chkbox */
 }
 
 /* Info Box */
@@ -193,10 +218,6 @@ ul.courses-list a:hover {
 
 /* --- Standard elements ---------------------------------------------------- */
 
-.problem_set_body {
-    max-width:65%;
-}
-
 blockquote {
   padding: 0 0 0 0;
   margin: 0 0 0 1em;
@@ -217,11 +238,6 @@ textarea {
 .barrier {
 	clear:both;
 	border: none; /* 1px solid grey; */
-}
-
-.Message {
-background-color:#ddd;
-clear: both;
 }
 
 #mini-sitemap {
@@ -369,10 +385,6 @@ div.NoFontMessage {
 	text-align: left;
 	margin: 10px auto 10px 12%;
 }
-
-/* text colors for visible and hidden sets */
-font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
-font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
 
 /* styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #F60; background-color: inherit; }
@@ -643,25 +655,6 @@ div.problem_sets_options {
 }
 
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
-table.problem_set_table{
-	margin-top: 30px;
-	#width: 640px;
-	text-align: left;
-	float: left;
-}
-
-table.problem_set_table a.btn{
-    margin-left:10px;
-}
-
-table.problem_set_table form{
-    margin-bottom:0px;
-}
-
-div.problem_set_options {
-	clear: both;
-	width:100%;
-}
 /*BUG FIXES*/
 
 table#grades_table pre{
