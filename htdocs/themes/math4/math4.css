@@ -19,7 +19,7 @@
 }
 
 /* Nav */
-#site-navigation {
+#site-navigation ul:first-child {
 	border-radius: 8px;
 	border: 1px solid #e6e6e6;
 	background: #f6f6f6;
@@ -29,103 +29,65 @@ ul.nav li a:hover {
 	background: #e1e1e1;	
 }
 
-/* Footer */
-#footer {
-	clear: both;
-	display: block;
-	font-size: 0.8em;
-	color: #888;
-	text-align: center;
-	padding: 1em;
-	margin-top: 1em;
+#site-navigation .info-box {
+	margin-top: 0.5em;
 }
 
-#footer p {
-	margin-bottom: 0; /* overrides bootstrap default so there's no weird space*/
-}
-
-#footer a {
-	color: #555;
-}
-
-
-/* --- Standard elements ---------------------------------------------------- */
-
+/* Main Content */
 .body {
-	background: white;
-	color: black;
-	margin: .5em .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
-	padding: 0;
-	float:left; 
-	max-width:90%; 
+	width: 72%;
+	display: inline-block;
 }
 
-.problem_set_body {
-    max-width:65%;
-}
-
-blockquote {
-  padding: 0 0 0 0;
-  margin: 0 0 0 1em;
-  border-left-width: 0;
-}
-
-label,
-input,
-button,
-select,
-textarea {
-  font-size: 16px;
-  font-weight: normal;
-  line-height: 18px;
-  width: auto;
-}
-
-input {
-    height:auto;
-}
-
-.barrier {
-	clear:both;
-	border: none; /* 1px solid grey; */
-}
 #info-panel-right {
-    float: right;
-    padding: .2em;
-    max-width:30%
-}
-h1, h2, h3, h4, h5, h6 {
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-	/* FIXME "You have no background-color with your color" */
-	color: #225;
-	background: transparent;
-}
-h1 { font-size: 200%; }
-h2 { font-size: 170%; padding-bottom: 0; margin-bottom: .5ex }
-h3 { font-size: 140%; margin-bottom: 1ex;}
-h4 { font-size: 120%; }
-h5 { font-size: 110%; }
-h6 { font-size: 105%; } 
-
-.info-box {
-	border: 1px solid #559;
+	margin-bottom: 0.5em;
+	width: 25%;
 	overflow: hidden;
+	display: inline-block;
+	vertical-align: top;
+	float: right;
 }
-.info-box h2,
-.info-box h3,
-.info-box h4,
-.info-box h5,
-.info-box h6 {
-	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
-	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
-	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
-	border-bottom: 1px solid #559;
-	font-size: 100%;
-	text-align: center;
-	background: #88d;
+
+/* Home Page */
+ul.courses-list {
+	list-style-type: none;
+	margin: 0;
+}
+
+ul.courses-list a {
+	border: 1px solid #e6e6e6;
+	display: block;
+	padding: 0.5em;
+	margin-bottom: 0.5em;
+	background: #f6f6f6;
+	width: 95%;
+	font-weight: bold;
+}
+
+ul.courses-list a:hover {
+	text-decoration: none;
+	background: #038;
+	color: white;
+}
+
+/* Info Box */
+.info-box {
+	padding: 0.5em;
+	border-radius: 8px;
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+.info-box h2, .info-box h3, .info-box h4, .info-box h5, .info-box h6 {
+	background: #038;
+	border-radius: 8px;
 	color: white;
 	margin: 0;
-	padding: 0 .5em 0 .5em;
+	padding: 0;
+	line-height: 30px;
+	margin-bottom: 0.5em;
+	font-size: 1.1em;
+	text-align: center;
 }
 
 .info-box dl {
@@ -160,35 +122,69 @@ h6 { font-size: 105%; }
     margin-bottom:0px;
 }
 
+/* Footer */
+#footer {
+	clear: both;
+	display: block;
+	font-size: 0.8em;
+	color: #888;
+	text-align: center;
+	padding: 1em;
+	margin-top: 1em;
+}
+
+#footer p {
+	margin-bottom: 0; /* overrides bootstrap default so there's no weird space*/
+}
+
+#footer a {
+	color: #555;
+}
+
+
+/* --- Standard elements ---------------------------------------------------- */
+
+.problem_set_body {
+    max-width:65%;
+}
+
+blockquote {
+  padding: 0 0 0 0;
+  margin: 0 0 0 1em;
+  border-left-width: 0;
+}
+
+label,
+input,
+button,
+select,
+textarea {
+  font-size: 16px;
+  font-weight: normal;
+  line-height: 18px;
+  width: auto;
+}
+
+input {
+    height:auto;
+}
+
+.barrier {
+	clear:both;
+	border: none; /* 1px solid grey; */
+}
+
 .Message {
 background-color:#ddd;
 clear: both;
 }
 
-#mini-sitemap,
-#fisheye {
+#mini-sitemap {
 	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
 	padding: 0 0 1ex 0;
 }
-#mini-sitemap a, #mini-sitemap a:link, #mini-sitemap a:visted,
-#fisheye a, #fisheye a:link, #fisheye a:visted {
+#mini-sitemap a, #mini-sitemap a:link, #mini-sitemap a:visted {
 	text-decoration: none;
-}
-
-#fisheye ul,
-#fisheye li,
-#fisheye a{
-	font-size: small;
-	padding-top: 0px;
-	padding-bottom: 0px;
-}
-
-#fisheye a:hover{
-    text-decoration: none;
-}
-
-#fisheye ul {
-    padding-left: 1ex;
 }
 
 #masthead {

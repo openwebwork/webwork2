@@ -81,7 +81,7 @@ var tabberOptions = {manualStartup:true};
 		<!--#siblings-->
 	<!--#endif-->
 	<!--#if can="options"-->
-	<div class="info-box" id="fisheye">
+	<div class="info-box">
 		<!--#options-->
 	</div>
 	<!--#endif-->
@@ -211,7 +211,6 @@ var tabberOptions = {manualStartup:true};
 			<!-- ====  end printing body parts   -->
 			<!--#else-->
 			<!-- ==== couldn't print body parts so we'll print entire body -->	
-			 <div class="barrier"></div>
 				  <div class="body">
 				  	<!--#body-->
 				  </div>
@@ -222,7 +221,6 @@ var tabberOptions = {manualStartup:true};
 					<!--#info-->
 					</div>
 		    	<!--#endif-->
-              <div class="barrier"></div>
 			<!--#endif-->  
 <!--			      ==============END BODY OF PROBLEM===============      -->
 			<!--#if can="output_past_answer_button" can="output_email_instructor"-->
