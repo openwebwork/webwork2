@@ -18,6 +18,17 @@
 	padding: 0.5em !important;
 }
 
+/* Nav */
+#site-navigation {
+	border-radius: 8px;
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+ul.nav li a:hover {
+	background: #e1e1e1;	
+}
+
 /* Footer */
 #footer {
 	clear: both;
@@ -170,7 +181,6 @@ clear: both;
 	font-size: small;
 	padding-top: 0px;
 	padding-bottom: 0px;
-	color:#009;
 }
 
 #fisheye a:hover{
