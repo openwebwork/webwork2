@@ -18,6 +18,43 @@
 	padding: 0.5em !important;
 }
 
+/* Banner */
+#masthead {
+	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	font-size: 100%;
+	margin: 0;
+	padding: 0;
+	color: #fff;
+	border: 1px solid #000;
+	background-color: #038;
+	/* [ww] we could have some sort of spider web image here. */
+	/*background-image: url("/images/mandel-wide.jpg");*/
+	background-repeat: repeat-x;
+	background-position: top left;
+}
+
+#masthead #logo { padding: 1ex }
+
+#loginstatus {
+	color: white;
+	top: -75px;
+	left: 1170px;
+	width: 200px;
+	float: right;
+	text-align: center;
+	padding: 0;
+	margin: 1ex .5em .1ex .1em;
+	font-size: smaller;
+} 
+
+#loginstatus a{
+	color: white;
+}
+
+#loginstatus #Nav {
+	padding: 1ex;
+}
+
 /* Nav */
 #site-navigation ul:first-child {
 	border-radius: 8px;
@@ -35,8 +72,11 @@ ul.nav li a:hover {
 
 /* Main Content */
 .body {
-	width: 72%;
 	display: inline-block;
+}
+
+.shrinkbody {
+	width: 72%;
 }
 
 #info-panel-right {
@@ -122,6 +162,15 @@ ul.courses-list a:hover {
     margin-bottom:0px;
 }
 
+/* Library Browser */
+.library-browser-table td {
+	padding-top: 0.2em;
+	padding-bottom: 0.2em;
+}
+.library-browser-table .table-separator {
+	border-bottom: 1px solid #ccc;
+}
+
 /* Footer */
 #footer {
 	clear: both;
@@ -165,10 +214,6 @@ textarea {
   width: auto;
 }
 
-input {
-    height:auto;
-}
-
 .barrier {
 	clear:both;
 	border: none; /* 1px solid grey; */
@@ -186,72 +231,6 @@ clear: both;
 #mini-sitemap a, #mini-sitemap a:link, #mini-sitemap a:visted {
 	text-decoration: none;
 }
-
-#masthead {
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-	font-size: 100%;
-	margin: 0;
-	padding: 0;
-	color: #fff;
-	border: 1px solid #000;
-	background-color: #038;
-	/* [ww] we could have some sort of spider web image here. */
-	/*background-image: url("/images/mandel-wide.jpg");*/
-	background-repeat: repeat-x;
-	background-position: top left;
-}
-
-#masthead #logo { padding: 1ex }
-
-#loginstatus {
-	color: white;
-	top: -75px;
-	left: 1170px;
-	width: 200px;
-	float: right;
-	text-align: center;
-	padding: 0;
-	margin: 1ex .5em .1ex .1em;
-	font-size: smaller;
-} 
-
-#loginstatus a{
-	color: white;
-}
-
-#loginstatus #Nav {
-	padding: 1ex;
-}
-
-#big-wrapper {
-	position: relative;
-	top: 1ex;
-	width: 100%;
-	min-width: 18em;
-	margin: 0;
-	border: 0;
-}
-
-#breadcrumbs {
-	margin-right: 0;
-	padding: 0 .4em;
-	border: 1px solid #559;
-	background: #88d;
-	color: #fff;
-	text-align: left; 
-	font-size: 100%;
-	line-height:normal;
-	font-family: "Trebuchet MS", "Arial", sans-serif;
-}
-#breadcrumbs a {
-	font-size: 100%;
-	white-space: nowrap;
-	background-color: inherit;
-	color: #fff;
-	text-decoration: none;
-}
-#breadcrumbs a.active { font-weight: bold; }
-#breadcrumbs a:hover { text-decoration: underline; }
 
 #InfoPanel {
     font-size:100%;

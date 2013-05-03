@@ -20,6 +20,7 @@
 
 <html lang="en-US">
 <head>
+<meta charset='utf-8'>
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
@@ -133,7 +134,7 @@ var tabberOptions = {manualStartup:true};
 		<!--#endif-->
 			 <!--#if can="output_problem_body"--> 
 				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
-				  <div class="Body" style="background-color:#ffffff">
+				  <div class="Body">
 	
 					<!--#if can="output_custom_edit_message"-->
 						<!--#output_custom_edit_message-->
@@ -211,14 +212,17 @@ var tabberOptions = {manualStartup:true};
 			<!-- ====  end printing body parts   -->
 			<!--#else-->
 			<!-- ==== couldn't print body parts so we'll print entire body -->	
-				  <div class="body">
-				  	<!--#body-->
-				  </div>
-				  <!-- inserted body as a whole -->
 				<!--#if can="info"-->
-				    <div id="info-panel-right" class="info-box">
-			  		<!--  styles could be different for different pages so they are not set here -->
-					<!--#info-->
+					<div class="body shrinkbody">
+						<!--#body-->
+					</div>
+					<div id="info-panel-right" class="info-box">
+						<!--  styles could be different for different pages so they are not set here -->
+						<!--#info-->
+					</div>
+				<!--#else-->
+					<div class="body">
+						<!--#body-->
 					</div>
 		    	<!--#endif-->
 			<!--#endif-->  
