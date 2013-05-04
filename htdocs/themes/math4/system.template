@@ -98,7 +98,7 @@ var tabberOptions = {manualStartup:true};
 
 	<!-- Page Title -->
 	<!--#if can="title"-->
-		<h2 class='page-title'><!--#title--></h2>
+		<h2 class='page-title'><!--#title --></h2>
 	<!--#endif-->
 
 	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
@@ -108,11 +108,6 @@ var tabberOptions = {manualStartup:true};
 		</div>
 	<!--#endif-->
 
-	<!-- No clue what this is --> 
-	<!--#if can="post_header_text"-->
-		<!--#post_header_text-->
-	<!--#endif-->
-
 	<!-- Message for the user -->
 	<!--#if can="message"-->
 		<div class="Message">
@@ -120,132 +115,136 @@ var tabberOptions = {manualStartup:true};
 		</div>
 	<!--#endif-->
 	
-<!--			      ==============BEGIN BODY OF PROBLEM===============      -->
-			<!--#if warnings="1"-->
-				  <div class="Body" style="background-color:#ff0000">
-				  <p style="font-size:larger">
-				  Warning -- there may be something wrong with this question. Please inform your instructor
-				  including the warning messages below.
-				  </p>
-				  </div>
-             <!--#endif-->
+	<!-- No clue what this is --> 
+	<!--#if can="post_header_text"-->
+		<!--#post_header_text-->
+	<!--#endif-->
+
+<!--	==============BEGIN BODY OF PROBLEM===============	-->
+
+	<!-- Indicate presence of perl warnings -->
+	<!--#if warnings="1"-->
+		<div class="alert alert-error">
+			<strong>Warning</strong> -- there may be something wrong with this question. Please inform your instructor including the warning messages below.
+		</div>
+	<!--#endif-->
              
-		<!--#if can="output_tag_info"-->
-			<!--#output_tag_info-->
-		<!--#endif-->
-			 <!--#if can="output_problem_body"--> 
-				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
-				  <div class="Body">
-	
-					<!--#if can="output_custom_edit_message"-->
-						<!--#output_custom_edit_message-->
-					<!--#endif-->
-					<!--#if can="output_summary"-->
-					    <div>
-							<!--#output_summary-->
-						</div>
-					<!--#endif-->
+	<!--#if can="output_tag_info"-->
+		<!--#output_tag_info-->
+	<!--#endif-->
 
-					<!--#if can="output_achievement_message"-->
-					    <div>
-							<!--#output_achievement_message-->
-						</div>
-					<!--#endif-->
-					
-					<!--#if can="output_comments" "-->
-					<div>
-						  <!--#output_comments-->
-					</div>
-					<!--#endif-->
-						
+	<!--#if can="output_problem_body"--> 
+		<!-- ==== in this case print body parts --ELSE-- print entire body -->		
+		  <div class="Body">
 
-
-					<!--#if can="output_hidden_info"-->
-						<!--#output_hidden_info-->
-					<!--#endif-->
-
-					<!--#if can="output_form_start"-->
-						<!--#output_form_start-->
-
-						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
-							<div class="problem">
-								<!--#if can="output_problem_body"-->
-									<!--#output_problem_body-->
-								<!--#endif-->
-								<!--#if can="output_message"-->
-									<!--#output_message-->
-								<!--#endif-->
-								<!--#if can="output_editorLink"-->
-									<!--#output_editorLink-->
-								<!--#endif-->
-							</div>
-						<!--#endif-->
-
-						<!--#if can="output_checkboxes" can="output_submit_buttons"-->
-							<p>
-								<!--#if can="output_checkboxes"-->
-									<!--#output_checkboxes-->
-								<!--#endif-->
-								<!--#if can="output_submit_buttons"-->
-									<!--#output_submit_buttons-->
-								<!--#endif-->
-							</p>
-						<!--#endif-->
-						<!--#if can="output_score_summary"-->
-							<div class="scoreSummary">
-								<!--#output_score_summary-->
-							</div>
-						<!--#endif-->
-						<!--#if can="output_misc"-->
-							<!--#output_misc-->
-						<!--#endif-->
-						</form>
-					<!--#endif-->
-				<!-- inserted problem piece by piece -->
-				<!--#if can="info"-->
-			  		<!--  styles could be different for different pages so they are not set here -->
-			  		<div id="info-panel-right" >
-					<!--#info-->
-					</div>
-		    	<!--#endif-->
-
-				</div>	  
-			<!-- ====  end printing body parts   -->
-			<!--#else-->
-			<!-- ==== couldn't print body parts so we'll print entire body -->	
-				<!--#if can="info"-->
-					<div class="body shrinkbody">
-						<!--#body-->
-					</div>
-					<div id="info-panel-right" class="info-box">
-						<!--  styles could be different for different pages so they are not set here -->
-						<!--#info-->
-					</div>
-				<!--#else-->
-					<div class="body">
-						<!--#body-->
-					</div>
-		    	<!--#endif-->
-			<!--#endif-->  
-<!--			      ==============END BODY OF PROBLEM===============      -->
-			<!--#if can="output_past_answer_button" can="output_email_instructor"-->
-				<div class="problemFooter">
-					<!--#if can="output_past_answer_button"-->
-						<!--#output_past_answer_button-->
-					<!--#endif-->
-					<!--#if can="output_email_instructor"-->
-						<!--#output_email_instructor-->
-					<!--#endif-->
+			<!--#if can="output_custom_edit_message"-->
+				<!--#output_custom_edit_message-->
+			<!--#endif-->
+			<!--#if can="output_summary"-->
+				<div>
+					<!--#output_summary-->
 				</div>
 			<!--#endif-->
-		
-		<!--#if warnings="1"-->
-		
-		<hr/>
-		<div class="Warnings">
-			<!--#warnings-->
+
+			<!--#if can="output_achievement_message"-->
+				<div>
+					<!--#output_achievement_message-->
+				</div>
+			<!--#endif-->
+			
+			<!--#if can="output_comments" "-->
+			<div>
+				  <!--#output_comments-->
+			</div>
+			<!--#endif-->
+				
+
+
+			<!--#if can="output_hidden_info"-->
+				<!--#output_hidden_info-->
+			<!--#endif-->
+
+			<!--#if can="output_form_start"-->
+				<!--#output_form_start-->
+
+				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
+					<div class="problem">
+						<!--#if can="output_problem_body"-->
+							<!--#output_problem_body-->
+						<!--#endif-->
+						<!--#if can="output_message"-->
+							<!--#output_message-->
+						<!--#endif-->
+						<!--#if can="output_editorLink"-->
+							<!--#output_editorLink-->
+						<!--#endif-->
+					</div>
+				<!--#endif-->
+
+				<!--#if can="output_checkboxes" can="output_submit_buttons"-->
+					<p>
+						<!--#if can="output_checkboxes"-->
+							<!--#output_checkboxes-->
+						<!--#endif-->
+						<!--#if can="output_submit_buttons"-->
+							<!--#output_submit_buttons-->
+						<!--#endif-->
+					</p>
+				<!--#endif-->
+				<!--#if can="output_score_summary"-->
+					<div class="scoreSummary">
+						<!--#output_score_summary-->
+					</div>
+				<!--#endif-->
+				<!--#if can="output_misc"-->
+					<!--#output_misc-->
+				<!--#endif-->
+				</form>
+			<!--#endif-->
+		<!-- inserted problem piece by piece -->
+		<!--#if can="info"-->
+			<p>Form2</p>
+			<!--  styles could be different for different pages so they are not set here -->
+			<div id="info-panel-right" >
+			<!--#info-->
+			</div>
+		<!--#endif-->
+
+		</div>	  
+	<!-- ====  end printing body parts   -->
+	<!--#else-->
+	<!-- ==== couldn't print body parts so we'll print entire body -->	
+		<!--#if can="info"-->
+		<div class="body shrinkbody">
+			<!--#body-->
+		</div>
+		<div id="info-panel-right" class="info-box">
+			<!--  styles could be different for different pages so they are not set here -->
+			<!--#info-->
+		</div>
+		<!--#else-->
+		<div class="body">
+			<!--#body-->
 		</div>
 		<!--#endif-->
+	<!--#endif-->  
+<!--			      ==============END BODY OF PROBLEM===============      -->
+	<!--#if can="output_past_answer_button" can="output_email_instructor"-->
+		<div class="problemFooter">
+			<!--#if can="output_past_answer_button"-->
+				<!--#output_past_answer_button-->
+			<!--#endif-->
+			<!--#if can="output_email_instructor"-->
+				<!--#output_email_instructor-->
+			<!--#endif-->
+		</div>
+	<!--#endif-->
+
+<!--#if warnings="1"-->
+<div class="Warnings alert alert-error">
+	<!--#warnings-->
+</div>
+<!--#endif-->
 		
 </div><!--content-->
 
