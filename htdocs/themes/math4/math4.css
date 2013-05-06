@@ -19,41 +19,69 @@
 }
 
 /* Banner */
-#masthead {
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-	font-size: 100%;
+ul#masthead {
+	background-color: #038;
+	list-style-type: none;
 	margin: 0;
 	padding: 0;
-	color: #fff;
-	border: 1px solid #000;
-	background-color: #038;
-	/* [ww] we could have some sort of spider web image here. */
-	/*background-image: url("/images/mandel-wide.jpg");*/
-	background-repeat: repeat-x;
-	background-position: top left;
+	padding: 5px;
 }
 
-#masthead #logo { padding: 1ex }
+li.webwork_logo {
+	background-color: #1048ae;
+	font-size: 1.6em;
+	font-weight: 500;
+	border: 1px solid #5577b0;
+	padding: 2px 10px 0 6px; /* attempt to even out the blank space so that
+								the logo & text doesn't look lopsided */
+}
 
-#loginstatus {
+li.webwork_logo img {
+	padding-right: 5px; /* distance itself to the Webwork text */
+}
+
+li.maa_logo img {
+	vertical-align: center;
+}
+
+ul#masthead li {
+	display: inline-block;
+	margin-right: 1em;
+	background: 
+	margin: 0;
+}
+
+ul#masthead a {
 	color: white;
-	top: -75px;
-	left: 1170px;
-	width: 200px;
-	float: right;
-	text-align: center;
+}
+
+ul#masthead a:hover {
+	text-decoration: none;
+}
+
+ul#masthead li#loginstatus {
+	margin-right: 2px;
+}
+
+li#loginstatus {
+	color: white;
+	text-align: right;
 	padding: 0;
-	margin: 1ex .5em .1ex .1em;
-	font-size: smaller;
+	float: right;
+	font-size: 0.85em;
+	font-weight: normal;
 } 
 
-#loginstatus a{
-	color: white;
+li#loginstatus a {
+	color: black;
+	margin-left: 0.5em;
 }
 
-#loginstatus #Nav {
-	padding: 1ex;
+li#loginstatus a .icon-signout {
+	font-size: 1em;
+	padding-left: 0.3em;
 }
+
 
 /* Nav */
 #site-navigation ul:first-child {
@@ -95,6 +123,10 @@ h2.page-title {
 
 .breadcrumb {
 	border: 1px solid #e6e6e6;
+}
+
+.Warnings {
+	clear: both;
 }
 
 /* Question nav section */
@@ -150,7 +182,7 @@ table.classlist-table {
 }
 
 /* Homework Sets */
-.problem_set_body input[type='checkbox'] {
+.problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
 	margin: 0.5em; /* keep the assignment buttons from crowding chkbox */
 }
 

@@ -13,7 +13,8 @@ $(function(){
     $('#login_form input').addClass('input-large');
     
     // Changes links in masthead
-    $('#loginstatus a').addClass('btn btn-mini btn-info');
+    $('#loginstatus a').addClass('btn btn-small');
+    $('#loginstatus a').append(' <i class="icon-signout"></i>');
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');

@@ -23,6 +23,7 @@
 <meta charset='utf-8'>
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
 <script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 <script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
@@ -47,6 +48,7 @@ var tabberOptions = {manualStartup:true};
 -->
 <script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
 
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
@@ -57,15 +59,17 @@ var tabberOptions = {manualStartup:true};
 
 
 <!-- Header -->
-<div id="masthead">
-	<div id="loginstatus">
+<ul id="masthead">
+	<li class="webwork_logo">
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+	</li>
+	<li class="maa_logo">
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+	</li>
+	<li id="loginstatus">
 		<!--#loginstatus-->
-	</div>
-	<div id="logo">
-                <a href="http://webwork.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="image link to webwork main web site" height="51" width="267" /></a>&nbsp;
-                <a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo.png" alt="image link to MAA (Mathematical Association of America) main web site" height="51" width="449" /></a>
-	</div>
-</div>
+	</li>
+</ul>
 
 
 <!-- Bootstrap Fluid Layout Scaffolding start -->
@@ -133,7 +137,7 @@ var tabberOptions = {manualStartup:true};
 		<!--#output_tag_info-->
 	<!--#endif-->
 
-	<!--#if can="output_problem_body"--> 
+	 <!--#if can="output_problem_body"--> 
 		<!-- ==== in this case print body parts --ELSE-- print entire body -->		
 		  <div class="Body">
 
@@ -214,20 +218,18 @@ var tabberOptions = {manualStartup:true};
 	<!-- ====  end printing body parts   -->
 	<!--#else-->
 	<!-- ==== couldn't print body parts so we'll print entire body -->	
-		<!--#if can="info"-->
-		<div class="body shrinkbody">
+		<div class="body <!--#if can="info"-->shrinkbody<!--#endif-->">
 			<!--#body-->
 		</div>
+		<!-- inserted body as a whole -->
+		<!--#if can="info"-->
 		<div id="info-panel-right" class="info-box">
 			<!--  styles could be different for different pages so they are not set here -->
 			<!--#info-->
 		</div>
-		<!--#else-->
-		<div class="body">
-			<!--#body-->
-		</div>
 		<!--#endif-->
 	<!--#endif-->  
+
 <!--			      ==============END BODY OF PROBLEM===============      -->
 	<!--#if can="output_past_answer_button" can="output_email_instructor"-->
 		<div class="problemFooter">
