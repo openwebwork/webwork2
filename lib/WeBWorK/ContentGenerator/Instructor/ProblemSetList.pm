@@ -2339,7 +2339,7 @@ sub printTableHTML {
 	if ($editMode or $exportMode) {
 		print CGI::start_table({id=>"set_table_id", class=>"set_table"});
 	} else {
-		print CGI::start_table({-border=>1, -class=>"set_table", id=>"set_table_id"});
+		print CGI::start_table({-class=>"set_table", id=>"set_table_id"});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));
