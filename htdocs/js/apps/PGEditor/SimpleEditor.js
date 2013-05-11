@@ -17,19 +17,6 @@ require.config({
         "XDate":                "/webwork2_files/js/vendor/other/xdate"        
     },
 
- //paths: {
- //       "Backbone":             "../../../js/lib/vendor/backbone",
- //       "backbone-validation":  "../../../js/lib/vendor/backbone-validation",
- //       "jquery-ui":            "../../../js/lib/vendor/jquery-ui",
- //       "underscore":           "../../../js/lib/vendor/underscore/underscore",
- //       "jquery":               "../../../js/lib/vendor/jquery/jquery",
- //       "bootstrap":            "../../../js/lib/vendor/bootstrap/js/bootstrap",
- //       "util":                 "../../../js/lib/webwork/util",
- //       "XDate":                "../../../js/lib/vendor/xdate",
- //       "WebPage":              "../../../js/lib/webwork/views/WebPage",
- //       "config":               "../../../js/apps/config",
- //       "Closeable":            "../../../js/lib/webwork/views/Closeable"
- //   },
 
 urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -100,84 +87,37 @@ function(Backbone, _,WebPage,LibraryTreeView,PGProblem){
 
               , _type = $("#answerType-select option:selected").data("type")
               , _withUnits = $("#requireUnitsCheckBox").prop("checked")
-              , _variableList = $("#VariableList-input").val();
-
+              , _allowInterval = $("#allowIntervalCheckBox").prop("checked")
+              , _allowInequality = $("#allowInequalityCheckBox").prop("checked")
+              , _variableList = $("#VariableList-input").val()
+              , _inputExtraMultipleChoice = $("#ExtraMultipleChoice-input").val()
+              , _lastChoice = $("#LastChoice-input").val()
+              , _lastChoiceOption = $("#LastChoiceCheckBox").prop("checked")
+              , _extraChoiceString;
+            if(_inputExtraMultipleChoice){
+              var _extraChoiceString = _inputExtraMultipleChoice.split(",").join('","');
+            };
             if(_variableList){
                var _variables = _variableList.split(",").join("=>Real,")+"=>Real"; 
-            }
+            };
 
 
-            var _setupSection = _.template($(_type + "-pg-setup").text(),{answer: inputAnswer, withUnits: _withUnits, 
-                        variables: _variables})
-              , _textSection = _.template($(_type + "-pg-text").text(),{problemStatement: inputProblemStatement})
+            var _setupSection = _.template($(_type + "-pg-setup").text(),{
+                        answer: inputAnswer
+                        , withUnits: _withUnits
+                        , problemStatement: inputProblemStatement
+                        , allowInterval: _allowInterval
+                        , allowInequality: _allowInequality
+                        , variables: _variables
+                        , extraChoiceString: _extraChoiceString
+                        , lastChoice: _lastChoice
+                        , lastChoiceOption: _lastChoiceOption})
+              , _textSection = _.template($(_type + "-pg-text").text(),{
+                        problemStatement: inputProblemStatement
+                        , allowInterval: _allowInterval
+                        , allowInequality: _allowInequality})
               , _answerSection = _.template($(_type + "-pg-answer").text(),{});            
 
-
-            /* if (answer_type == "Number") {
-                if ($("#requireUnitsCheckBox").prop("checked")){
-                    _setupSection = "Context(\"Numeric\");\n \n$answer = NumberWithUnits(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"numbers\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-     
-                } else {
-                    _setupSection = "Context(\"Numeric\");\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"numbers\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-                }
-            } else if (answer_type == "String") {
-                _setupSection = "Context(\"Numeric\");\nContext()->strings->add(\""+inputAnswer+"\"=>{});\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"numbers\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                _answerSection = "ANS($answer->cmp);";
-            } else if (answer_type == "Formula") {
-                if ($("#requireUnitsCheckBox").prop("checked")){
-                    var inputVariableList = $("#VariableList-input").val();
-                    var VariableListArray = inputVariableList.split(",");
-                    var VariableListString = "Context()->variables->are(";
-                    VariableListString = VariableListArray.join('=>\"Real\",\n');
-                    _setupSection = "Context(\"Numeric\");\nContext()->variables->are("+VariableListString+"=>\"Real\");"+" \n$answer = FormulaWithUnits(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"formulas\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-                } else {
-                    var inputVariableList = $("#VariableList-input").val();
-                    var VariableListArray = inputVariableList.split(",");
-                    var VariableListString = "Context()->variables->are(";
-                    VariableListString = VariableListArray.join('=>\"Real\",\n');
-                    _setupSection = "Context(\"Numeric\");\nContext()->variables->are("+VariableListString+"=>\"Real\");"+" \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"formulas\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-                }
-            } else if (answer_type == "Interval or Inequality") {
-                if ($("#allowIntervalCheckBox").prop("checked") && !$("#allowInequalityCheckBox").prop("checked")){
-                    _setupSection = "Context(\"Interval\");\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"interval\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";                    
-                } else if (!$("#allowIntervalCheckBox").prop("checked") && $("#allowInequalityCheckBox").prop("checked")){
-                    _setupSection = "Context(\"Inequalities-Only\");\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"inequalities\")\\}$BR\n\nNote:  Use NONE for the empty set.\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-                } else {
-                    _setupSection = "Context(\"Inequalities\");\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"inequalities\")\\}$BR\n\nNote:  Use NONE or {} for the empty set.\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-
-                }
-            } else if (answer_type == "Comma Separated List of Values") {
-                _setupSection = "Context(\"Numeric\");\n \n$answer = List(\" ".concat(inputAnswer).concat("\");");
-                _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"numbers\")\\}\n$BR\nEnter answers as a comma separated list.\nEND_TEXT\nContext()->normalStrings;");
-                _answerSection = "ANS($answer->cmp);";
-            } else if (answer_type == "Multiple Choice") {
-                var inputExtraMultipleChoice = $("#ExtraMultipleChoice-input").val();
-                var ExtraChoiceArray = inputExtraMultipleChoice.split(",");
-                var inputLastChoice = $("#LastChoice-input").val();
-                var LastChoiceString = "";
-                if ($("#LastChoiceCheckBox").prop("checked")){
-                LastChoiceString = "$mc->makeLast(\""+inputLastChoice+"\");"
-                };
-                ExtraChoiceString = ExtraChoiceArray.join('","');         
-                _setupSection = "$mc = new_multiple_choice();\n$mc->qa(\"".concat(inputProblemStatement).concat("\",\"").concat(inputAnswer).concat("\");\n$mc->extra(\"").concat(ExtraChoiceString).concat("\");\n").concat(LastChoiceString);
-                _textSection = "Context()->texStrings;\nBEGIN_TEXT \n\\{$mc->print_q()\\}\n$BR\n\\{$mc->print_a()\\}\nEND_TEXT\nContext()->normalStrings;";
-                _answerSection = "ANS(radio_cmp($mc->correct_ans()));";
-            } */
 
             var fields = {ProblemDescription:inputProblemDescription,
                                   DBsubject:$("#DBsubject-select option:selected").val(),
