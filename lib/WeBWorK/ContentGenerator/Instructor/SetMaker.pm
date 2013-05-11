@@ -979,7 +979,7 @@ sub make_data_row {
           my $templatedir = $r->ce->{courseDirs}->{templates};
           my $sourceFilePath = $templatedir .'/'. $sourceFileName;
           my $site_url = $r->ce->{webworkURLs}->{htdocs};
-          $tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}). CGI::end_script();
+          $tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tagwidget.js"}). CGI::end_script();
           $tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
         }
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
@@ -1470,14 +1470,14 @@ sub head {
   my ($self) = @_;
   my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
+  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
 
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/modernizr-2.0.6.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
@@ -1557,7 +1557,7 @@ sub body {
 	##########	Top part
         my $courseID = $self->r->urlpath->arg("courseID");
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-	print qq!<script src="$webwork_htdocs_url/js/wz_tooltip.js"></script>!;
+	print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
