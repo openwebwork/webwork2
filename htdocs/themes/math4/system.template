@@ -125,7 +125,7 @@ var tabberOptions = {manualStartup:true};
 	<!--#if can="post_header_text"-->
 		<!--#post_header_text-->
 	<!--#endif-->
-
+    <div class="barrier"></div>
 <!--	==============BEGIN BODY OF PROBLEM===============	-->
 
 	<!-- Indicate presence of perl warnings -->
