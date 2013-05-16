@@ -741,13 +741,8 @@ sub head {
 		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
 		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
 	};
-	#If we are using achievements then print the achievement css file
-	if ($ce->{achievementsEnabled}) {
-	    print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$ce->{webworkURLs}->{htdocs}/css/achievements.css\"/>";	
-	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script> 
            <script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
            <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
@@ -1677,6 +1672,10 @@ sub output_JS{
 	
 	
 	return "";
+}
+
+sub output_achievement_CSS {
+    return "";
 }
 
 # Simply here to indicate to the template that this page has body part methods which can be called

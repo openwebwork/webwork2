@@ -986,7 +986,7 @@ sub saveEdit_handler {
 	
 	$self->{editMode} = 0;
 	
-	return CGI::div({class=>"ResultsWithError"}, "changes saved" );
+	return CGI::div({class=>"ResultsWithoutError"}, "changes saved" );
 }
 
 ################################################################################

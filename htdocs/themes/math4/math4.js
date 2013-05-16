@@ -48,6 +48,9 @@ $(function(){
     // Problem formatting
     $('#problemMainForm').addClass('problem-main-form form-inline');
     $('.attemptResults').addClass('table table-condensed table-bordered');
+    $(window).load(function() { $('#achievementModal').modal('show');
+				setTimeout(function(){$('#achievementModal').modal('hide');},5000);
+			      });
 
     // Past answers formatting
     $('#past-answer-table').addClass('table');
