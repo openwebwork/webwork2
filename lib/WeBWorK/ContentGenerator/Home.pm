@@ -94,7 +94,7 @@ sub body {
 	
 	print CGI::h2($r->maketext("Courses"));
 	
-	print CGI::start_ul();
+	print CGI::start_ul({class => "courses-list"});
 	
 	foreach my $courseID (sort {lc($a) cmp lc($b) } @courseIDs) {
 		next if $courseID eq "admin"; # done already above
