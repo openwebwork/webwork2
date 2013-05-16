@@ -33,7 +33,9 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
         render: function() {
             var self = this;
             this.lastProblemShown = -1; 
-            this.$el.html(_.template($(this.headerTemplate).html(),{displayModes: this.displayModes}));
+            var openEditorURL = "/webwork2/" + $("#hidden_courseID").val() + "/instructor/SimplePGEditor/" 
+                                    + this.problems.setName + "/" + (this.problems.length +1);
+            this.$el.html(_.template($(this.headerTemplate).html(),{displayModes: this.displayModes, editorURL: openEditorURL}));
             this.loadNextGroup();  
             if(this.viewAttrs.reorderable){
                 this.$("#prob-list").sortable({update: this.reorder, handle: ".reorder-handle", //placeholder: ".sortable-placeholder",
@@ -42,7 +44,8 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
           
         },
         events: {"click #undo-delete-btn": "undoDelete",
-            "click .display-mode-options a": "changeDisplayMode"},
+            "click .display-mode-options a": "changeDisplayMode",
+            "click #create-new-problem": "openSimpleEditor"},
         setProblems: function(_problems){  // _problems should be a ProblemList
             var self = this; 
 
@@ -80,6 +83,10 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 problemView.model.set({data: "", displayMode: _displayMode}, {silent: true});
                 problemView.render();
             });
+        },
+        /* when the "new" button is clicked open up the simple editor. */
+        openSimpleEditor: function(){  
+            console.log(); 
         },
         reorder: function (event,ui) {
             var self = this;

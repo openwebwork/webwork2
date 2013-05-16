@@ -157,7 +157,7 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
  
- 	debug($r->param("visible"));	
+ 	# debug($r->param("visible"));	
  
  
  
@@ -245,6 +245,7 @@ sub pre_header_initialize {
             place 					=> $r->param('place') || undef,
             path 					=> $r->param('path') || undef, 
             selfassign 			    => $r->param('selfassign') || undef, 
+            pgCode					=> $r->param('pgCode') || undef,
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -291,7 +292,7 @@ sub pre_header_initialize {
 		$input->{path} = $r->param('problemPath');
 	}
 
-	debug(to_json($input));
+	#debug(to_json($input));
 	
 	if($r->param('xml_command') eq "renderProblem"){
 	    if (my $problemPath = $r->param('problemPath')) {

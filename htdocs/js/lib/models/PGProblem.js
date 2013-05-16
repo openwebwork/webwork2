@@ -16,7 +16,7 @@ define(['Backbone', 'underscore','config'], function(Backbone, _,config){
     		path: ""
 		},
 		initialize: function (){
-
+            _.bindAll(this,"save");
 		},
 		parse: function(str){
 
@@ -31,8 +31,10 @@ define(['Backbone', 'underscore','config'], function(Backbone, _,config){
             _.defaults(requestObject, config.requestObject,this.attributes, {pgCode: prob});
 
             $.post(config.webserviceURL, requestObject, function (data) {
-            	console.log("Saving the file at path:" + this.path);
-            	console.log(data);
+                var response = $.parseJSON(data);
+                self.set("path",response.result_data.path);
+            	console.log("Saving the file at path:" + self.get("path"));
+                self.trigger("saveSuccess");
             });
     
 

@@ -32,6 +32,7 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
 
         render:function () {
             var self = this;
+            console.log("rendering problem with path: " + this.model.get("path"));
             if(this.model.get('data')){
                 _.extend(this.allAttrs,this.model.attributes);
                 this.$el.html(this.template(this.allAttrs));
@@ -40,7 +41,6 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
                 this.$(".prob-value").on("change",this.updateProblem);
                 this.model.collection.trigger("problemRendered",this.model.get("place"));
                 
-                // if images  mode is used
                 var dfd = this.$el.imagesLoaded();
                 dfd.done( function( $images ){
 
@@ -48,6 +48,7 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
                     self.$(".problem").removeAttr("style");
                     self.$(".loading").remove();
                 });
+
 
                 if (this.options.viewAttrs.draggable) {
                     this.$el.draggable({

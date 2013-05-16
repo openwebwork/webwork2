@@ -23,7 +23,7 @@ use sigtrap;
 use Carp;
 use WWSafe;
 #use Apache;
-use WeBWorK::Utils qw(readDirectory sortByName);
+use WeBWorK::Utils qw(readDirectory sortByName path_is_subdir);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::IO;
@@ -401,17 +401,39 @@ sub saveProblem {
 	my $ce = $self->{ce};
 
 	# the templates directory
-	my $editFilePath = $ce->{courseDirs}->{templates};
+	my $filePath = $self->{ce}->{courseDirs}{templates} . "/" . $params->{'path'};
+	
 
 
-	debug($editFilePath);
-	#debug($forcedSourceFile);
+	debug($filePath);
+
+	my $writeFileErrors;
 
 	# let's just try to save any file.
 
+	# make sure any missing directories are created
+	WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},$filePath);
+	die "outputFilePath is unsafe!" unless path_is_subdir($filePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
+
+	my $code = $params->{pgCode};
+	debug('code: ' . $code);
+
+	eval {
+		local *OUTPUTFILE;
+		open OUTPUTFILE,  ">$filePath" or die "Failed to open $filePath";
+		print OUTPUTFILE $code;
+		close OUTPUTFILE;		
+	  # any errors are caught in the next block
+	};
+
+	$writeFileErrors = $@ if $@;
+
+	debug($writeFileErrors);
+
 	debug("Saving the problem");
 	my $out = {};
-	$out->{ra_out} = "The Problem was saved.";	
+	$out->{ra_out}->{msg} = "The Problem was saved.";	
+	$out->{ra_out}->{path} = $filePath;
 	$out->{text} = encode_base64("The Problem was saved.");	
 
 	return $out;

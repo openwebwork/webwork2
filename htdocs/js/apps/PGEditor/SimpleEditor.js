@@ -14,7 +14,8 @@ require.config({
         "WebPage":              "/webwork2_files/js/lib/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/views/Closeable",
-        "XDate":                "/webwork2_files/js/vendor/other/xdate"        
+        "XDate":                "/webwork2_files/js/vendor/other/xdate",
+        "jquery-imagesloaded":  '/webwork2_files/js/vendor/jquery/modules/jquery.imagesloaded.min'       
     },
 
 
@@ -27,7 +28,8 @@ urlArgs: "bust=" +  (new Date()).getTime(),
         'bootstrap':['jquery'],
         'backbone-validation': ['Backbone'],
         'XDate':{ exports: 'XDate'},
-        'config': ['XDate']
+        'config': ['XDate'],
+        'jquery-imagesloaded': { deps: ['jquery'], exports: 'jquery-imagesloaded'}
         }
 });
 
@@ -36,14 +38,27 @@ require(['Backbone',
     'WebPage',
     '../../lib/views/LibraryTreeView',
     '../../lib/models/PGProblem',
+    '../../lib/models/Problem',
+    '../../lib/models/ProblemList',
+    '../../lib/views/ProblemView',
+    '../../lib/views/WWSettingsView',
+    '../../lib/models/Settings',
     'bootstrap'
     ], 
-function(Backbone, _,WebPage,LibraryTreeView,PGProblem){
+function(Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemList,ProblemView,WWSettingsView,Settings){
     var SimpleEditorView = WebPage.extend({
         initialize: function() {
             this.constructor.__super__.initialize.apply(this, {el: this.el});
-            this.render();
+            _.bindAll(this,"render","renderProblem","postSettingsFetched");
             this.problem = new PGProblem();
+            this.model = new Problem();
+            var urlSplit = location.href.split("/");
+            var index = _(urlSplit).indexOf("SimplePGEditor");
+            this.setInfo = {name: urlSplit[index+1], number: urlSplit[index+2] };
+            this.problem.on("saveSuccess",this.renderProblem);
+            this.settings = new Settings();  // need to get other settings from the server.  
+            this.settings.fetch();
+            this.settings.on("fetchSuccess",this.postSettingsFetched);
 
         },
         render: function (){
@@ -52,11 +67,24 @@ function(Backbone, _,WebPage,LibraryTreeView,PGProblem){
             this.libraryTreeView.render();
             this.$("#author-info-container").html($("#author-info-template").html());
             this.$("#textbook-info-container").html($("#textbook-info-template").html());
+            this.editorSettingsView.render();
         },
         events: {"click #build-script": "buildScript",
             "change #answerType-select": "changeAnswerType",
             "click #testSave": "saveFile"},
-            
+        renderProblem: function(){
+          console.log("rendering the problem");
+          this.model.set("path",this.problem.get("path"));
+          this.showProblemView = new ShowProblemView({model: this.model, el: $("#viewer-tab")});
+          this.showProblemView.render();
+          this.$("a[href='#viewer-tab']").tab("show");
+
+        },
+        postSettingsFetched: function(){
+            this.editorSettingsView = new EditorSettingsView({el: $("#settings-tab"), settings: this.settings});
+            console.log(this.settings);
+            this.render();
+        },
         changeAnswerType: function(evt){
 
             var type = $(evt.target).find("option:selected").data("type");
@@ -66,6 +94,7 @@ function(Backbone, _,WebPage,LibraryTreeView,PGProblem){
         },        
         saveFile: function(){
             console.log("Saving the file");
+            this.problem.set("path","set"+this.setInfo.name+"/Problem" + this.setInfo.number + ".pg");
             this.problem.save(this.buildScript());
 
         },
@@ -143,6 +172,34 @@ function(Backbone, _,WebPage,LibraryTreeView,PGProblem){
             return pgTemplate(fields);
           
         }
+    });
+
+    var ShowProblemView = Backbone.View.extend({
+        initialize: function() {
+          _.bindAll(this,'render');
+          this.model.set("data","");
+          this.collection = new ProblemList();  // this is done as a hack b/c Problem View assumes that all problems 
+                                                // are in a ProblemList. 
+          this.collection.add(this.model);
+          problemViewAttrs = {reorderable: false, showPoints: false, showAddTool: false, showEditTool: false,
+                    showRefreshTool: false, showViewTool: false, showHideTool: false, deletable: false, draggable: false};
+          this.problemView = new ProblemView({model: this.model, viewAttrs: problemViewAttrs});
+        },
+        render: function (){
+            this.$(".problemList").html("").append(this.problemView.render().el);
+        }
+    });
+
+    var EditorSettingsView = WWSettingsView.extend({
+        initialize: function () {
+            _.bindAll(this,'render');
+            this.settings = this.options.settings.filter(function (setting) {return setting.get("category")==='Editor'});
+            this.constructor.__super__.initialize.apply(this,{settings: this.settings});
+         }, 
+         render: function () {
+            //$("#settings").html(_.template($("#settings-template").html()));
+            this.constructor.__super__.render.apply(this);
+         }
     });
 
     var AnswerChoiceView = Backbone.View.extend({
