@@ -222,7 +222,7 @@ sub body {
 		    print CGI::end_div();
 		    print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"itemform_$itemnumber", class=>"achievementitemform"});
 		    print CGI::start_div({class=>"modal-body"});
-		    print $item->print_form(\@sets,\@setProblemCount);
+		    print $item->print_form(\@sets,\@setProblemCount,$r);
 		    print CGI::hidden({name=>"useditem", value=>"$itemnumber"});
 		    print CGI::end_div();
 		    print CGI::start_div({-class=>"modal-footer"});
