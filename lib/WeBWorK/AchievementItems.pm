@@ -138,6 +138,14 @@ sub use_item {
 
     $db->putUserSet($set);
 	
+    my @probIDs = $db->listUserProblems($userName,$setID);
+
+    foreach my $probID (@probIDs) {
+	my $problem = $db->getUserProblem($userName,$setID,$probID);
+	$problem->problem_seed($problem->problem_seed + 100);
+	$db->putUserProblem($problem);
+    }
+
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
@@ -177,7 +185,7 @@ sub print_form {
     my $maxProblems=0;
 
     for (my $i=0; $i<$#$sets; $i++) {
-	if (between($$sets[$i]->open_date, $$sets[$i]->due_date+86400)  && $$sets[$i]->assignment_type eq "default") {
+	if (between($$sets[$i]->open_date, $$sets[$i]->answer_date)  && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	}
     }
@@ -258,7 +266,7 @@ sub print_form {
     my $maxProblems=0;
 
     for (my $i=0; $i<$#$sets; $i++) {
-	if (between($$sets[$i]->open_date, $$sets[$i]->due_date+60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod})  && $$sets[$i]->assignment_type eq "default") {
+	if (between($$sets[$i]->open_date, $$sets[$i]->answer_date)  && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	}
     }
