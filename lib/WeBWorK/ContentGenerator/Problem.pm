@@ -1670,6 +1670,8 @@ sub output_JS{
 	# The Base64.js file, which handles base64 encoding and decoding.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
 	
+	# This is for any page specific js.  Right now its just used for achievement popups
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
 	
 	return "";
 }

@@ -62,7 +62,7 @@ sub head {
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/bootstrap/css/bootstrap.popover.css\">";
+#	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/bootstrap/css/bootstrap.popover.css\">";
 
 	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
