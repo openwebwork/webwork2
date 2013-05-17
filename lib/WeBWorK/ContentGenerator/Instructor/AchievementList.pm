@@ -271,8 +271,9 @@ sub body {
 			   CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
 			   CGI::span({-class=>"radio_span"},  WeBWorK::CGI_labeled_input(-type=>"radio", 
 			   -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), 
-                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
-			    $self->$actionForm($onChange, %actionParams));
+                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),			       
+			       $self->$actionForm($onChange, %actionParams)
+		    );
 		
 		$i++;
 	}
@@ -506,7 +507,8 @@ sub score_form {
 			-onchange => $onChange,
 		),
 	);
-	
+
+
 }
 
 #handler for scoring
