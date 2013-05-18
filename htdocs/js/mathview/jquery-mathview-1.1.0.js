@@ -510,7 +510,8 @@ function PopUpEquation() {
 
 		+ jqmv_basepath
 
-		+ "eqEditor.gif' style='visibility:hidden; z-index:2;'/>")
+		+ "eqEditor.gif' style='visibility:hidden; max-width:100; z-index:2;'/>") 
+		/* max-width protects against being clobbered by bootstrap.css matching against img max-width */
 
 		.click(
 
