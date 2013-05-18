@@ -90,7 +90,7 @@ For example:
  <!--#endif-->
  <!--#if can="path"-->
  <div class="Path">
- 	<!--#path style="text" image="/webwork2_files/images/right_arrow.png" text=" > "-->
+ 	<!--#path style="text" image="<!--#url type="webwork" name="htdocs"-->/images/right_arrow.png" text=" > "-->
  </div>
  <!--#endif-->
 
