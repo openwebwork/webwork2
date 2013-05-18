@@ -615,7 +615,7 @@ sub print_form {
 				 ), "\n",
 				 "\n",
 				 #CGI::hr(),
-				 CGI::div({style=>"background-color: #CCCCCC"},
+				 CGI::div(
 					 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
 					 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
 					 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  

@@ -13,7 +13,8 @@ $(function(){
     $('#login_form input').addClass('input-large');
     
     // Changes links in masthead
-    $('#loginstatus a').addClass('btn btn-mini btn-info');
+    $('#loginstatus a').addClass('btn btn-small');
+    $('#loginstatus a').append(' <i class="icon-signout"></i>');
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
@@ -79,7 +80,7 @@ $(function(){
     $('.user-list-form input:button').addClass('btn btn-info');
     $('.user-list-form input:reset').addClass('btn btn-info');
     $('.user-list-form').wrapInner('<div />');
-    $('.classlist-table').addClass('small-table-text table table-condensed');
+    $('.classlist-table').addClass('table table-condensed');
     $('#show_hide').addClass('btn btn-info');
 
     //Homework sets editor config

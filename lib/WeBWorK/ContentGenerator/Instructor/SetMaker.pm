@@ -819,7 +819,7 @@ sub make_top_row {
 					   -override=>1, -size=>30),
 	));
 
-	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
+	print CGI::Tr(CGI::td({class=>'table-separator'}));
 
 	# Tidy this list up since it is used in two different places
 	if ($list_of_local_sets->[0] eq SELECT_SET_STRING) {
@@ -835,7 +835,6 @@ sub make_top_row {
 		$libs,
 	));
 
-	#print CGI::Tr(CGI::td({-bgcolor=>"black"}));
 	print CGI::hr();
 
 	if ($browse_which eq 'browse_local') {
@@ -850,7 +849,7 @@ sub make_top_row {
 		$self->browse_local_panel($library_selected,$browse_which);
 	}
 
-	print CGI::Tr(CGI::td({-bgcolor=>"black"}));
+	print CGI::Tr(CGI::td({class=>'table-separator'}));
 
     # For next/previous buttons
 	my ($next_button, $prev_button) = ("", "");
@@ -1564,7 +1563,7 @@ sub body {
                 #CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>encode_base64($ce->{courseDirs}->{templates})}),
                 CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>$ce->{courseDirs}->{templates}}),
 			'<div align="center">',
-	CGI::start_table({-border=>2});
+	CGI::start_table({class=>"library-browser-table"});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
 				 'browse_which'=> $browse_which);
 	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),
