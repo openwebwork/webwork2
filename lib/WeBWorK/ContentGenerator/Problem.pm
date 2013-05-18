@@ -263,14 +263,14 @@ sub attemptResults {
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
-		$numEssay += $answerResult->{type} eq 'essay';
+		$numEssay += ($answerResult->{type}// '') eq 'essay';
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
 
 		my $resultString;
 		if ($answerScore >= 1) {
 		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
 		    push @correct_ids,   $name if $answerScore == 1;
-		} elsif ($answerResult->{type} eq 'essay') {
+		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded"); 
 		    $self->{essayFlag} = 1;
 		} elsif (not $answerScore) {
@@ -366,7 +366,7 @@ sub previewAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
-	} elsif ($answerResult->{type} eq 'essay') {
+	} elsif (($answerResult->{type}//'') eq 'essay') {
 	    return $tex;
 	} elsif ($displayMode eq "formattedText") {
 		
