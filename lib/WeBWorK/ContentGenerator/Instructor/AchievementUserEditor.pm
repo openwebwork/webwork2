@@ -79,17 +79,17 @@ sub initialize {
 				$userAchievement->earned($updatedEarned);
 				my $globalUserAchievement = $db->getGlobalUserAchievement($selectedUser);
 				my $achievement = $db->getAchievement($achievementID);
+
+				my $points = $achievement->points || 0;
 				#add the correct number of points if we 
 				# are saying that the user now earned the
 				# achievement, or remove them otherwise
 				if ($updatedEarned) {
 				    $globalUserAchievement->achievement_points(
-					$globalUserAchievement->achievement_points +
-					$achievement->points);
+					$globalUserAchievement->achievement_points +	$points);
 				} else {
 				    $globalUserAchievement->achievement_points(
-					$globalUserAchievement->achievement_points -
-					$achievement->points);
+					$globalUserAchievement->achievement_points -	$points);
 				}
 
 				$db->putGlobalUserAchievement($globalUserAchievement);
@@ -140,7 +140,7 @@ sub body {
 		
 	# DBFIXME duplicate call
 	my @users = $db->listUsers;
-	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
+	print CGI::start_form({name=>"user-achievement-form", id=>"user-achievement-form", method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
 	 
 	# Assign to everyone message
 	print CGI::p(

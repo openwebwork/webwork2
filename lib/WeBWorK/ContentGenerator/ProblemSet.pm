@@ -266,8 +266,8 @@ sub info {
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
 		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
-	print CGI::start_div({class=>"info-wrapper"});
-	print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
+	#print CGI::start_div({class=>"info-wrapper"});
+	#print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 	
 	if ($editorURL) {
 		print CGI::h2({},$r->maketext("Set Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[edit~]")));
@@ -281,8 +281,8 @@ sub info {
 		print $pg->{body_text};
 	}
 	
-	print CGI::end_div();
-	print CGI::end_div();
+	#print CGI::end_div();
+	#print CGI::end_div();
 	return "";
 }
 
@@ -291,14 +291,19 @@ sub options { shift->optionsMacro }
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
+	my $authz = $r->authz;
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 
+	
+
 	my $courseID = $urlpath->arg("courseID");
 	my $setName = $urlpath->arg("setID");
 	my $effectiveUser = $r->param('effectiveUser');
+	my $user = $r->param('user');
 
+	
 	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
 	# FIXME: this was already caught in initialize()
 	# die "set $setName for user $effectiveUser not found" unless $set;
@@ -338,6 +343,28 @@ sub body {
 	
 	# DBFIXME use iterator
 	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
+
+	# Check permissions and see if any of the problems have are gradeable
+	my $canScoreProblems =0;
+	if ($authz->hasPermissions($user, "access_instructor_tools") &&
+	    $authz->hasPermissions($user, "score_sets")) {
+
+	    my @setUsers = $db->listSetUsers($setName);
+	    my @gradeableProblems;
+
+	    foreach my $problemID (@problemNumbers) {
+		foreach my $userID (@setUsers)  {
+		    my $userProblem = $db->getUserProblem($userID,$setName,$problemID);
+		    if ($userProblem->flags =~ /needs_grading/ || $userProblem->flags =~/graded/) {
+			$canScoreProblems = 1;
+			$gradeableProblems[$problemID] = 1;
+			last;
+		    }
+		}
+	    }
+
+	    $self->{gradeableProblems} = \@gradeableProblems if $canScoreProblems;
+	}
 	
 	if (@problemNumbers) {
 		# UPDATE - ghe3
@@ -351,13 +378,14 @@ sub body {
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
 			CGI::th($r->maketext("Status")),
+			$canScoreProblems ? CGI::th($r->maketext("Grader")) : ""
 
 		);
 		
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
 			my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
 			die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
-			print $self->problemListRow($set, $problem);
+			print $self->problemListRow($set, $problem, $canScoreProblems);
 		}
 		
 		print CGI::end_table();
@@ -406,7 +434,7 @@ sub body {
 }
 
 sub problemListRow($$$) {
-	my ($self, $set, $problem) = @_;
+	my ($self, $set, $problem, $canScoreProblems) = @_;
 	my $r = $self->r;
 	my $urlpath = $r->urlpath;
 	
@@ -436,6 +464,12 @@ sub problemListRow($$$) {
 	
 #	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
 	
+	my $graderLink = "";
+	if ($canScoreProblems && $self->{gradeableProblems}[$problemID]) {
+	    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
+	    $graderLink = CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem");
+	}
+
 	return CGI::Tr({},
 		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
 		CGI::td({-nowrap=>1, -align=>"center"},
@@ -443,7 +477,8 @@ sub problemListRow($$$) {
 				$attempts,
 				$remaining,
 				$problem->value,
-				$status,
+				$status, 
+			        $graderLink
 			]));
 }
 

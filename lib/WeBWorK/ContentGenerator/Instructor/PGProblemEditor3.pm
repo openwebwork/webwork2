@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.99 2010/05/18 18:39:40 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -615,7 +615,7 @@ sub body {
 	}
 	my $target = 'WW_View'; #"problem$edit_level"; # increasing edit_level gives you a new window with each edit.
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script type="text/javascript" src="$site_url/js/wz_tooltip.js"></script>!;
+	print qq!<script type="text/javascript" src="$site_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::script(<<EOF);
  		function setTarget(inWindow) {
 		  document.getElementById("newWindow").checked = inWindow;
@@ -760,11 +760,22 @@ EOF
 	
 	print  CGI::end_form();
 
+	print CGI::start_div({id=>"render-modal", class=>"modal hide fade"});
+	print CGI::start_div({class=>'modal-header'});
+	print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
+	print CGI::h3("Problem Viewer"); 
+	print CGI::end_div();
+	print CGI::start_div({class=>"modal-body"});
 	print CGI::script("updateTarget()");
-	
-	print CGI::h3({-id=>"pg_editor_header"}, "Problem Viewer");
-	print CGI::start_iframe({-id=>"pg_editor_frame_id", -name=>"pg_editor_frame"});
+	print CGI::start_iframe({id=>"pg_editor_frame_id", name=>"pg_editor_frame"});
 	print CGI::end_iframe();
+	print CGI::end_div();
+	print CGI::start_div({-class=>"modal-footer"});
+	print CGI::button({type=>"button", value=>"Close", "data-dismiss"=>"modal"});
+	print CGI::end_div();
+	print CGI::end_div();
+
+#	print CGI::a({href=>"#render-modal", role=>"button", class=>"btn", "data-toggle"=>"modal"},"Launch demo modal");
 	
 	return "";
 
@@ -1817,7 +1828,7 @@ sub save_as_form {  # calls the save_as_handler
 }
 # suggestions for improvement
 # save as ......
-# ¥replacing foobar (rename) ¥ and add to set (add_new_problem) ¥ as an independent file (new_independent_problem)
+# Â¥replacing foobar (rename) Â¥ and add to set (add_new_problem) Â¥ as an independent file (new_independent_problem)
  
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
@@ -2027,10 +2038,12 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/pg_editor_handlers.js"}), CGI::end_script();
+
+#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/jquery.js"}), CGI::end_script();
+#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
 	
 	return "";
 }

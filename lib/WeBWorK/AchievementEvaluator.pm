@@ -169,22 +169,23 @@ sub checkForAchievements {
 	    }
 
 	    #build the cheevo message. New level messages are slightly different
-	    my $imgSrc;
+	    my $imgSrc = $ce->{server_root_url};
 	    if ($achievement->{icon}) {
-
-			$imgSrc = $ce->{server_root_url}.$ce->{courseURLs}->{achievements}."/".$achievement->{icon};
+			$imgSrc .= $ce->{courseURLs}->{achievements}."/".$achievement->{icon};
 	    } else {           
-			$imgSrc = $ce->{server_root_url}.$ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
+			$imgSrc .= $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 	    }
 
-	    $cheevoMessage .=  CGI::start_div({class=>'cheevopopupouter'});
+	    $cheevoMessage .=  CGI::start_div({id=>"test", class=>'cheevopopupouter modal-body'});
 	    $cheevoMessage .=  CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
 	    $cheevoMessage .= CGI::start_div({class=>'cheevopopuptext'});  
 	    if ($achievement->category eq 'level') {
 		
 			$cheevoMessage = $cheevoMessage . CGI::h1("Level Up: $achievement->{name}");
-			$cheevoMessage = $cheevoMessage . CGI::div("Congratulations, you earned a new level!");
-			$cheevoMessage = $cheevoMessage . CGI::end_div();
+			#print out description as part of message if we are using items
+			
+			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled} ?  $achievement->{description} : "Congratulations, you earned a new level!");
+			$cheevoMessage .= CGI::end_div();
 
 	    } else {
 		
@@ -194,12 +195,12 @@ sub checkForAchievements {
 	    }
 	    
 	    #if facebook integration is enables then create a facebook popup
-	    if ($globalUserAchievement->facebooker) {
+	    if ($ce->{allowFacebooking}&& $globalUserAchievement->facebooker) {
 			$cheevoMessage .= CGI::div({id=>'fb-root'},'');
 			$cheevoMessage .= CGI::script({src=>'http://connect.facebook.net/en_US/all.js'},'');
 			$cheevoMessage .= CGI::start_script();
-			#WCU specific appID
-			$cheevoMessage .= "FB.init({appId:'193051384078348', cookie:true,status:true, xfbml:true });\n";
+			
+			$cheevoMessage .= "FB.init({appId:'".$ce->{facebookAppId}."', cookie:true,status:true, xfbml:true });\n";
 	
 			my $facebookmessage;
 			if ($achievement->category eq 'level') {
@@ -214,6 +215,7 @@ sub checkForAchievements {
 	    }
 	        
 	    $cheevoMessage .= CGI::end_div();
+	    
 	        
 	    my $points = $achievement->points;
 	    #just in case points is an ininitialzied variable
@@ -235,6 +237,10 @@ sub checkForAchievements {
     #nfreeze globalData and store
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
+
+    if ($cheevoMessage) {
+	$cheevoMessage = CGI::div({id=>"achievementModal", class=>"modal hide fade"},$cheevoMessage);
+    }
 
     return $cheevoMessage;
 }

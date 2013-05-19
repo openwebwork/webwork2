@@ -1,0 +1,18 @@
+This is the README file for the WeBWorK htdocs/js folder. 
+
+Please follow these guidelines for putting javascript in your webwork pages. 
+
+
+app:    This directory contain the "new" finished apps for WeBWork. 
+  	     Each app should have its own directory.
+
+app-dev: A directory for apps that are being developed.  
+
+lib:	 Common files for the web apps. 
+   |_    models:  directory for the models
+   |
+   |_    views: directory for the views. 
+
+vendor:  This is the directory for all 3rd party javascript files. 
+         If it is a single file, then it should just go in the vendor directory
+         All bundles should go in a directory (i.e. Jquery and plugins.)

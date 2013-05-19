@@ -35,7 +35,7 @@ use strict;
 use sigtrap;
 use Carp;
 use WWSafe;
-#use Apache;
+use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::Local;
@@ -95,26 +95,19 @@ use constant DISPLAY_MODES => {
 	# display name   # mode name
 	tex           => "TeX",
 	plainText     => "HTML",
-	formattedText => "HTML_tth",
 	images        => "HTML_dpng",
-	jsMath	      => "HTML_jsMath",
 	MathJax	      => "HTML_MathJax",
-	asciimath     => "HTML_asciimath",
 };
 
 use constant DISPLAY_MODE_FAILOVER => {
 		TeX            => [],
 		HTML           => [],
-		HTML_tth       => [ "HTML", ],
-		HTML_dpng      => [ "HTML_tth", "HTML", ],
-		HTML_jsMath    => [ "HTML_dpng", "HTML_tth", "HTML", ],
-		HTML_MathJax    => [ "HTML_dpng", "HTML_tth", "HTML", ],
-		HTML_asciimath => [ "HTML_dpng", "HTML_tth", "HTML", ],
+		HTML_dpng      => [ "HTML", ],
+		HTML_MathJax    => [ "HTML_dpng", "HTML", ],
 		# legacy modes -- these are not supported, but some problems might try to
 		# set the display mode to one of these values manually and some macros may
 		# provide rendered versions for these modes but not the one we want.
-		Latex2HTML  => [ "TeX", "HTML", ],
-		HTML_img    => [ "HTML_dpng", "HTML_tth", "HTML", ],
+		HTML_img    => [ "HTML_dpng", "HTML", ],
 };
 	
 
@@ -136,6 +129,8 @@ sub renderProblem {
 	my $db;
 	my $user;
 	my $beginTime = new Benchmark;
+
+	debug("in RenderProblem::renderProblem");
 # 	if (defined($self->{courseName}) and $self->{courseName} ) {
 # 		$courseName = $self->{courseName};
 # 	} elsif (defined($rh->{course}) and $rh->{course}=~/\S/ ) {
@@ -272,6 +267,7 @@ sub renderProblem {
 	my $setName       =  (defined($rh->{envir}->{setNumber}) )    ? $rh->{envir}->{setNumber}    : '';
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
 	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
+	$problemSeed = $rh->{problemSeed} || $problemSeed;
 	my $psvn          =  (defined($rh->{envir}->{psvn})      )    ? $rh->{envir}->{psvn}         : 1234 ;
 	my $problemStatus =  $rh->{problem_state}->{recorded_score}|| 0 ;
 	my $problemValue  =  (defined($rh->{envir}->{problemValue}))   ? $rh->{envir}->{problemValue}  : 1 ;
@@ -346,7 +342,7 @@ sub renderProblem {
 			print STDERR "RenderProblem.pm: source file is ", $problemRecord->source_file,"\n";
 			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
 	}
-    #warn "problem Record is $problemRecord";
+    # warn "problem Record is $problemRecord";
 	# now we're sure we have valid UserSet and UserProblem objects
 	# yay!
 
@@ -369,7 +365,9 @@ sub renderProblem {
 	
 	my $formFields = $rh->{envir}->{inputs_ref};
 	my $key        = $rh->{envir}->{key} || '';
-	
+
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
+        local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
 	
 	#check definitions
 	#warn "setRecord is ", WebworkWebservice::pretty_print_rh($setRecord);
@@ -509,7 +507,6 @@ sub xml_filter {
 	$input;
 	
 }
-
 
 sub logTimingInfo{
     my ($beginTime,$endTime,) = @_;

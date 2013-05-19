@@ -150,7 +150,7 @@ sub template {
 			} elsif ($ifstack[-1]) {
 				if ($cg->can($function)) {
 					my @result = $cg->$function({@args});
-					if (@result) {
+					if (@result && defined($result[0])) {
 						print @result;
 					} else {
 						warn "Template escape $function returned an empty list.";

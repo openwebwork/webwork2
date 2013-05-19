@@ -50,8 +50,8 @@ sub info {
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 		
-		print CGI::start_div({-class=>"info-wrapper"});
-		print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
+		#print CGI::start_div({-class=>"info-wrapper"});
+		#print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 		
 		# deal with instructor crap
 		my $editorURL;
@@ -84,8 +84,8 @@ sub info {
 			}
 		}
 
-		print CGI::end_div();
-		print CGI::end_div();
+		#print CGI::end_div();
+		#print CGI::end_div();
 		
 		return "";
 	}
@@ -216,7 +216,7 @@ sub body {
 		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, $r->maketext("Status"));
 # print the start of the form
 
-    print CGI::start_form(-method=>"POST",-action=>$actionURL),
+    print CGI::start_form(-name=>"problem-sets-form", -id=>"problem-sets-form", -method=>"POST",-action=>$actionURL),
           $self->hidden_authen_fields;
     
 # and send the start of the table

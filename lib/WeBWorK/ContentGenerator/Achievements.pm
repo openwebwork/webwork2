@@ -17,6 +17,7 @@
 # This module prints out the list of achievements that a student has earned
 package WeBWorK::ContentGenerator::Achievements;
 use base qw(WeBWorK::ContentGenerator);
+use WeBWorK::AchievementItems;
 
 =head1 NAME
 
@@ -36,9 +37,11 @@ sub head {
 	my $r = $self->r;
 	my $ce = $r->ce;
 
-	#Print the achievement css file
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$ce->{webworkURLs}->{htdocs}/css/achievements.css\"/>";	
 	return "";
+}
+
+sub output_achievement_CSS {
+    return "";
 }
 
 sub initialize {
@@ -57,52 +60,79 @@ sub initialize {
 	my $globalUserAchievement = $db->getGlobalUserAchievement($effectiveUserName);
 
 	$self->{globalData} = $globalUserAchievement;
+
+	if ($ce->{achievementItemsEnabled} && defined $globalUserAchievement) {
+	    
+	    my $items = WeBWorK::AchievementItems::UserItems($effectiveUserName, $db, $ce);
+
+	    $self->{achievementItems} = $items;
+	    
+	    my $usedItem = $r->param('useditem');
+	    
+	    if (defined $usedItem) {
+		my $error = $$items[$usedItem]->use_item($effectiveUserName, $r);
+		if ($error) {
+		    $self->addmessage(CGI::div({class=>"ResultsWithError"}, $error ));
+		} else {
+		    splice(@$items, $usedItem, 1);
+		    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, "Item Used Successfully!" ));
+		}	
+	    }
+	}
 	
 }
 
-
-sub options {
-	my ($self) = @_;
+ sub if_can {
+	my ($self, $arg) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $globalUserAchievement = $self->{globalData};
 
-	#Print the facebook sidepane.  This allows users to turn facebook integration on and off.
+	if ($arg eq 'options' && (not $ce->{allowFacebooking} || not defined($globalUserAchievement))) {
+	    return 0;
+ 	} else {
+	    return $self->SUPER::if_can($arg);
+ 	}
+ }
 
-	if (defined($globalUserAchievement)) {
+sub options {
+    	my ($self) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	my $ce = $r->ce;
+	my $authz = $r->authz;
+	my $globalUserAchievement = $self->{globalData};
 
-	    my $changeFacebooking = $r->param('changeFacebooking');
-	    
-	    if ($changeFacebooking) {
-		$globalUserAchievement->facebooker(!$globalUserAchievement->facebooker);
-		$db->putGlobalUserAchievement($globalUserAchievement);
-	    }
-
-	    print CGI::start_center();
-	    print CGI::start_div({class=>'facebookbox'});
-	    print CGI::start_form(-method=>'POST', -action=>$r->uri);
-	    print $self->hidden_authen_fields;
-	    print CGI::submit('changeFacebooking', $globalUserAchievement->facebooker 
-			      ? "Disable Facebook \n  Integration" : "Enable Facebook \n Integration");
-	    print CGI::end_form();
-	    print CGI::end_div();
-	    
-	    if ($globalUserAchievement->facebooker) {
-		#Print Facebook stuff (uses WCU specific appID)
-		print CGI::start_div({class=>'facebookbox'});
-		print CGI::div({id=>'fb-root'},'');
-		print CGI::script({src=>'http://connect.facebook.net/en_US/all.js'},"");
-		print CGI::script("FB.init({appId:'193051384078348', cookie:true, status:true, xfbml:true });");
-		print "<fb:login-button perms=\"publish_stream\">";
-		print "Login to FB";
-		print "</fb:login-button>";
-		print CGI::end_div();
-	    }
-	    print CGI::end_center();
+	my $changeFacebooking = $r->param('changeFacebooking');
+	
+	if ($changeFacebooking) {
+	    $globalUserAchievement->facebooker(!$globalUserAchievement->facebooker);
+	    $db->putGlobalUserAchievement($globalUserAchievement);
 	}
 	
+	print CGI::start_center();
+	print CGI::start_div({class=>'facebookbox'});
+	print CGI::start_form(-method=>'POST', -action=>$r->uri);
+	print $self->hidden_authen_fields;
+	print CGI::submit('changeFacebooking', $globalUserAchievement->facebooker 
+			  ? "Disable Facebook \n  Integration" : "Enable Facebook \n Integration");
+	print CGI::end_form();
+	print CGI::end_div();
+	
+	if ($globalUserAchievement->facebooker) {
+	    #Print Facebook stuff (uses WCU specific appID)
+	    print CGI::start_div({class=>'facebookbox'});
+	    print CGI::div({id=>'fb-root'},'');
+	    print CGI::script({src=>'http://connect.facebook.net/en_US/all.js'},"");
+	    print CGI::script("FB.init({appId:'".$ce->{facebookAppId}."', cookie:true, status:true, xfbml:true });");
+	    print "<fb:login-button perms=\"publish_stream\">";
+	    print "Login to FB";
+	    print "</fb:login-button>";
+	    print CGI::end_div();
+	}
+	print CGI::end_center();
 	return "";
 }
 
@@ -161,6 +191,54 @@ sub body {
 	    print CGI::end_div();
 	}
 
+
+	#print any items they have if they have items
+	if ($ce->{achievementItemsEnabled} && $self->{achievementItems}) {
+	    my @items = @{$self->{achievementItems}};
+	    my $urlpath = $r->urlpath;
+	    my @setIDs = $db->listUserSets($userID);
+	    my @setProblemCount;
+	    
+	    for (my $i=0; $i<$#setIDs; $i++) {
+		$setProblemCount[$i] = $db->countUserProblems($userID,$setIDs[$i]);
+	    }
+	    
+	    my @userSetIDs = map {[$userID, $_]} @setIDs;
+	    my @sets = $db->getMergedSets(@userSetIDs);
+	    
+	    print CGI::h2("Items");
+
+	    if (@items) {
+		my $itemnumber = 0;
+		foreach my $item (@items) {
+		    print CGI::start_div({class=>"achievement-item"});
+		    print CGI::h3($item->name());
+		    print CGI::p($item->description());
+		    print CGI::a({href=>"\#modal_".$item->id(), role=>"button", "data-toggle"=>"modal",class=>"btn",id=>"popup_".$item->id()},"Use Item");
+		    print CGI::start_div({id=>"modal_".$item->id(),class=>"modal hide fade"});
+		    print CGI::start_div({class=>'modal-header'});
+		    print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
+		    print CGI::h3($item->name()); 
+		    print CGI::end_div();
+		    print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"itemform_$itemnumber", class=>"achievementitemform"});
+		    print CGI::start_div({class=>"modal-body"});
+		    print $item->print_form(\@sets,\@setProblemCount,$r);
+		    print CGI::hidden({name=>"useditem", value=>"$itemnumber"});
+		    print CGI::end_div();
+		    print CGI::start_div({-class=>"modal-footer"});
+		    print CGI::submit({value=>"Submit"});
+		    print CGI::end_div();
+		    print CGI::end_form();
+		    print CGI::end_div();
+		    print CGI::end_div();
+		    
+		    $itemnumber++;
+		}
+	    }
+	    
+	    print CGI::h2("Achievements");
+	}
+
 	#Get all the achievements
 
 	my @allAchievementIDs = $db->listAchievements;
@@ -200,7 +278,7 @@ sub body {
 	
 			print CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
 			print CGI::start_div({class=>'cheevotextbox'});
-			print CGI::h2($achievement->name);
+			print CGI::h3($achievement->name);
 			print CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
 			
 			if ($achievement->max_counter and not $userAchievement->earned) {

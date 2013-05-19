@@ -33,12 +33,8 @@ use constant DISPLAY_MODES => {
 	# display name   # mode name
 	tex           => "TeX",
 	plainText     => "HTML",
-	formattedText => "HTML_tth",
 	images        => "HTML_dpng",
-	jsMath	      => "HTML_jsMath",
 	MathJax	      => "HTML_MathJax",
-	asciimath     => "HTML_asciimath",
-	LaTeXMathML   => "HTML_LaTeXMathML",
 };
 
 sub new {
@@ -166,6 +162,7 @@ sub defineProblemEnvir {
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $ce->{courseName};
 	$envir{enable_reduced_scoring} = $set->enable_reduced_scoring;
+	$envir{language}            = $ce->{language};
 	
 	# Student Information
 	# ADDED: studentID
@@ -191,7 +188,6 @@ sub defineProblemEnvir {
 	# ADDED: externalLaTeXPath, externalDvipngPath,
 	#        externalGif2EpsPath, externalPng2EpsPath
 	
-	$envir{externalTTHPath}      = $ce->{externalPrograms}->{tth};
 	$envir{externalLaTeXPath}    = $ce->{externalPrograms}->{latex};
 	$envir{externalDvipngPath}   = $ce->{externalPrograms}->{dvipng};
 	$envir{externalGif2EpsPath}  = $ce->{externalPrograms}->{gif2eps};
@@ -224,10 +220,7 @@ sub defineProblemEnvir {
 	$envir{scriptDirectory}        = undef;
 	$envir{webworkDocsURL}         = $ce->{webworkURLs}->{docs}."/";
 	$envir{localHelpURL}           = $ce->{webworkURLs}->{local_help}."/";
-	$envir{jsMathURL}              = $ce->{webworkURLs}->{jsMath};
 	$envir{MathJaxURL}             = $ce->{webworkURLs}->{MathJax};
-	$envir{asciimathURL}	         = $ce->{webworkURLs}->{asciimath};
-	$envir{LaTeXMathMLURL}	       = $ce->{webworkURLs}->{LaTeXMathML};
 	$envir{server_root_url}        = $ce->{apache_root_url}|| '';
 	
 	# Information for sending mail
@@ -257,9 +250,6 @@ sub defineProblemEnvir {
 		#$envir{mailer} = $safe_hole->wrap($rmailer);
 		$envir{mailer} = new WeBWorK::Utils::RestrictedClosureClass($extras->{mailer}, "add_message");
 	}
-	
-	#  ADDED: jsMath options
-	$envir{jsMath} = {%{$ce->{pg}{displayModeOptions}{jsMath}}};
 	
 	# Other things...
 	$envir{QUIZ_PREFIX}              = $options->{QUIZ_PREFIX}; # used by quizzes
