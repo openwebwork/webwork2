@@ -2508,8 +2508,10 @@ sub output_JS{
 	print q!<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">!,"\n";
 	print q!<link rel="stylesheet" media="all" type="text/css" href="http://localhost/webwork2_files/css/jquery-ui-timepicker-addon.css">!,"\n";
 
-	print q!<style> .ui-datepicker{font-size:85%} 
-	.auto-changed {background-color: #ffffcc}; 
+	print q!<style> 
+	.ui-datepicker{font-size:85%} 
+	.auto-changed{background-color: #ffffcc} 
+	.changed {background-color: #ffffcc}
     </style>!,"\n";
     
 	# print javaScript for dateTimePicker	
