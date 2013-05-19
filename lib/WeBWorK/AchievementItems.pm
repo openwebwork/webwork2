@@ -6,6 +6,20 @@ use warnings;
 
 use Storable qw(nfreeze thaw);
 
+#have to add any new items to this list
+use constant ITEMS => [qw(
+ResetIncorrectAttempts
+DuplicateProb
+DoubleProb
+HalfCreditProb
+FullCreditProb
+ReducedCred
+ExtendDueDate
+DoubleSet
+RessurectHW
+Surprise
+)];
+
 =head2 NAME
 
 Item - this is the base class for achievement times.  This defines an 
@@ -32,37 +46,10 @@ sub UserItems {
     my $globalData = thaw($globalUserAchievement->frozen_hash);
     my @items;
 
-# You have to add any new items here so that it will properly check the 
-# global hash for the appropriate flags 
-
-    push (@items, WeBWorK::AchievementItems::ReducedCred->new) if
-	($globalData->{ReducedCred});
-
-    push (@items, WeBWorK::AchievementItems::ExtendDueDate->new) if
-	($globalData->{ExtendDueDate});
-
-    push (@items, WeBWorK::AchievementItems::DoubleWeight->new) if
-	($globalData->{DoubleWeight});
-
-    push (@items, WeBWorK::AchievementItems::RessurectHW->new) if
-	($globalData->{RessurectHW});
-
-    push (@items, WeBWorK::AchievementItems::ResetIncorrectAttempts->new) if
-	($globalData->{ResetIncorrectAttempts});
-
-    push (@items, WeBWorK::AchievementItems::DuplicateProb->new) if
-	($globalData->{DuplicateProb});
-
-    push (@items, WeBWorK::AchievementItems::HalfCreditProb->new) if
-	($globalData->{HalfCreditProb});
-
-    push (@items, WeBWorK::AchievementItems::FullCreditProb->new) if
-	($globalData->{FullCreditProb});
-
-    push (@items, WeBWorK::AchievementItems::Surprise->new) if
-	($globalData->{Surprise});
-
-
+    foreach my $item (@{+ITEMS}) {
+	push (@items, eval("WeBWorK::AchievementItems::${item}->new")) if
+	    ($globalData->{$item});
+    }
 
     return \@items;
 }
@@ -316,7 +303,7 @@ sub use_item {
 
 #Item to make a homework set worth twice as much
 
-package WeBWorK::AchievementItems::DoubleWeight;
+package WeBWorK::AchievementItems::DoubleSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
 use WeBWorK::Utils qw(sortByName before after between);
@@ -326,8 +313,8 @@ sub new {
     my %options = @_;
 
     my $self = {
-	id => "DoubleWeight",
-	name => "Cookie of Enlargment",
+	id => "DoubleSet",
+	name => "Cake of Enlargment",
 	description => "Cause the selected homework set to count for twice as many points as it normally would.",
 	%options,
     };
@@ -383,7 +370,7 @@ sub use_item {
     my @probIDs = $db->listUserProblems($userName,$setID);
 
     foreach my $probID (@probIDs) {
-	my $globalproblem = $db->getGlobalProblem($setID,$probID);
+	my $globalproblem = $db->getMergedProblem($userName, $setID,$probID);
 	my $problem = $db->getUserProblem($userName,$setID,$probID);
 	$problem->value($globalproblem->value*2);
 	$db->putUserProblem($problem);
@@ -492,6 +479,109 @@ sub use_item {
 
     $db->putUserProblem($problem);
 	
+    $globalData->{$self->{id}} = 0;
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $db->putGlobalUserAchievement($globalUserAchievement);
+
+    return;
+}
+
+#Item to make a problem worth double.  
+package WeBWorK::AchievementItems::DoubleProb;
+our @ISA = qw(WeBWorK::AchievementItems);
+use Storable qw(nfreeze thaw);
+use WeBWorK::Utils qw(sortByName before after between);
+
+sub new {
+    my $class = shift;
+    my %options = @_;
+
+    my $self = {
+	id => "DoubleProb",
+	name => "Cupcake of Enlargement",
+	description => "Causes a single homework problem to be worth twice as much..",
+	%options,
+    };
+    
+    bless($self, $class);
+    return $self;
+}
+    
+sub print_form {
+    my $self = shift;
+    my $sets = shift;
+    my $setProblemCount = shift;
+
+    my @openSets;
+    my @openSetCount;
+    my $maxProblems=0;
+
+    for (my $i=0; $i<$#$sets; $i++) {
+	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
+	    push(@openSets,$$sets[$i]->set_id);
+	    push(@openSetCount,$$setProblemCount[$i]);
+	    $maxProblems = $$setProblemCount[$i] if ($$setProblemCount[$i]>$maxProblems);
+	}
+    }
+
+    my @problemIDs;
+    my %attributes;
+
+    for (my $i=1; $i<=$maxProblems; $i++) {
+	push(@problemIDs,$i);
+	if ($i > $openSetCount[0]) {
+	    $attributes{$i}{style} = 'display:none;';
+	}
+    }
+	
+    my $problem_id_script = "var setid = \$('\#dbp_set_id').val(); var max = null; switch(setid) {";
+    foreach (my $i=0; $i<$#openSets; $i++) {
+	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
+    }
+    $problem_id_script .= "default: max = $openSetCount[0];} ";
+    $problem_id_script .= "\$('\#dbp_problem_id option').slice(max,$maxProblems).hide(); ";
+    $problem_id_script .= "\$('\#dbp_problem_id option').slice(0,max).show();";
+
+    return join("",
+	CGI::p("Please choose the set name and problem number of the question which should have its weight doubled."),
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"dbp_set_id", name=>"dbp_set_id",onchange=>$problem_id_script}),
+	" ",
+	"Problem Number ",
+	CGI::popup_menu({values=>\@problemIDs,name=>"dbp_problem_id",id=>"dbp_problem_id",attributes=>\%attributes}));
+
+}
+
+sub use_item {
+    my $self = shift;
+    my $userName = shift;
+    my $r = shift;
+    my $db = $r->db;
+    my $ce = $r->ce;
+
+    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
+    return "No achievement data?!?!?!" 
+	unless ($globalUserAchievement->frozen_hash);
+    my $globalData = thaw($globalUserAchievement->frozen_hash);
+
+    return "You are $self->{id} trying to use an item you don't have" unless
+	($globalData->{$self->{id}});
+
+    my $setID = $r->param('dbp_set_id');
+    return "You need to input a Set Name" unless
+	(defined $setID);
+    my $problemID = $r->param('dbp_problem_id');
+    return "You need to input a Problem Number" unless
+	($problemID);
+
+    my $globalproblem = $db->getMergedProblem($userName, $setID,$problemID);
+    my $problem = $db->getUserProblem($userName, $setID, $problemID);
+
+    return "There was an error accessing that problem." unless $problem;
+
+    $problem->value($globalproblem->value*2);
+    $db->putUserProblem($problem);
+
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
@@ -806,7 +896,7 @@ sub use_item {
     return "You need to pick 2 different problems!" if
 	($problemID == $problemID2);
 
-    my $problem = $db->getGlobalProblem($setID, $problemID);
+    my $problem = $db->getMergedProblem($userName, $setID, $problemID);
     my $problem2 = $db->getUserProblem($userName, $setID, $problemID2);
 
     return "There was an error accessing that problem." unless $problem;
@@ -822,7 +912,7 @@ sub use_item {
     return;
 }
 
-#Item to print a suprise
+#Item to print a suprise message
 package WeBWorK::AchievementItems::Surprise;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);

@@ -61,7 +61,7 @@ sub initialize {
 
 	$self->{globalData} = $globalUserAchievement;
 
-	if ($ce->{achievementItemsEnabled}) {
+	if ($ce->{achievementItemsEnabled} && defined $globalUserAchievement) {
 	    
 	    my $items = WeBWorK::AchievementItems::UserItems($effectiveUserName, $db, $ce);
 
@@ -193,7 +193,7 @@ sub body {
 
 
 	#print any items they have if they have items
-	if ($ce->{achievementItemsEnabled}) {
+	if ($ce->{achievementItemsEnabled} && $self->{achievementItems}) {
 	    my @items = @{$self->{achievementItems}};
 	    my $urlpath = $r->urlpath;
 	    my @setIDs = $db->listUserSets($userID);

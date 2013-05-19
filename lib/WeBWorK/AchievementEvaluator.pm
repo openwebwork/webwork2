@@ -182,9 +182,10 @@ sub checkForAchievements {
 	    if ($achievement->category eq 'level') {
 		
 			$cheevoMessage = $cheevoMessage . CGI::h1("Level Up: $achievement->{name}");
-			#print out description as part of message if its around
-			$cheevoMessage = $cheevoMessage . CGI::div("Congratulations, you earned a new level! $achievement->{description}");
-			$cheevoMessage = $cheevoMessage . CGI::end_div();
+			#print out description as part of message if we are using items
+			
+			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled} ?  $achievement->{description} : "Congratulations, you earned a new level!");
+			$cheevoMessage .= CGI::end_div();
 
 	    } else {
 		
