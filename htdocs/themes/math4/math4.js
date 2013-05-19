@@ -137,12 +137,11 @@ $(function(){
     //Change tabber tabs to twitter tabs
     if ($('div.tabber').length > 0) {tabberAutomatic({});}
     $('ul.tabbernav').removeClass('tabbernav').addClass('old-tabber nav nav-tabs');
-    $('ul.old-tabber li a').each(function () { $(this).attr('href','#'+$(this).attr('title')).attr('data-toggle','tab');});
+    $('ul.old-tabber li a').each(function () { $(this).attr('href','#'+$(this).attr('title').replace(/\s+/g, '')).attr('data-toggle','tab');});
     $('div.tabberlive').removeClass('tabberlive').addClass('tab-content');
-    $('div.tabbertab').each(function() { $(this).removeClass('tabbertab').addClass('tab-pane').attr('id',$(this).find('h3').html())});
+    $('div.tabbertab').each(function() { $(this).removeClass('tabbertab').addClass('tab-pane').attr('id',$(this).find('h3').html().replace(/\s+/g,''))});
     $('div.tab-pane h3').remove();
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
-
 
 })
