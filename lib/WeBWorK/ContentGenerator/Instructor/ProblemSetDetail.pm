@@ -1749,7 +1749,7 @@ sub body {
 	}
 	
 	# handle renumbering of problems if necessary
- 	print CGI::a({name=>"problems"});
+	print CGI::a({name=>"problems"}, "");
 
 	my %newProblemNumbers = ();
 	my $maxProblemNumber = -1;

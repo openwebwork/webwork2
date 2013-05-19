@@ -1763,7 +1763,7 @@ sub printTableHTML {
 	if ($editMode or $passwordMode) {
 		print CGI::start_table({class=>"classlist-table",id=>"classlist-table"});
 	} else {
-		print CGI::start_table({-border=>1, -nowrap=>1, class=>"classlist-table",id=>"classlist-table"});
+		print CGI::start_table({class=>"classlist-table",id=>"classlist-table"});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));

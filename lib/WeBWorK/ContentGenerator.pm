@@ -625,8 +625,8 @@ sub links {
 		
 		my $new_anchor;
 		if ($active) {
-			# add <strong> for old browsers
-			$new_anchor = CGI::strong(CGI::a({href=>$new_systemlink, id=>$id, class=>"active", %target}, $text));
+			# add active class for current location
+			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, class=>"active", %target}, $text);
 		} else {
 			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, %target}, "$text");
 		}
@@ -656,18 +656,16 @@ sub links {
 	my %systemlink_args;
 	$systemlink_args{params} = \%params if %params;
 	
-	print CGI::h2($r->maketext("Main Menu"));
 	print CGI::start_ul();
+	print CGI::start_li({class => "nav-header"});
+	print $r->maketext("Main Menu");
+	print CGI::end_li();
 	print CGI::start_li(); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
+	print CGI::end_li(); # end Courses
 	
 	if (defined $courseID) {
-		#print CGI::start_ul();
-		#print CGI::start_li(); # $courseID
-		#print CGI::strong(CGI::span({class=>"active"}, $courseID));
-		
 		if ($authen->was_verified) {
-			print CGI::start_ul();
 			print CGI::start_li(); # Homework Sets
 			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			
@@ -870,23 +868,17 @@ sub links {
 				print CGI::end_li(); # end Instructor Tools
 			} # /* access_instructor_tools */
 			
-			print CGI::end_ul();
-			
-			print CGI::start_ul();
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li(CGI::a({style=>'font-size:larger', href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
+				print CGI::li({class=>'divider'});
+				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
+			print CGI::end_ul();
 	
-	print CGI::end_ul();
-
 		} # /* authentication was_verified */
 		
-		#print CGI::end_li(); # end $courseID
-		#print CGI::end_ul();
 	} # /* defined $courseID */
 	
-	print CGI::end_li(); # end Courses
 	print CGI::end_ul();
 	
 	
@@ -921,9 +913,9 @@ sub loginstatus {
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 		
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::br() . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 		} else {
-			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out")) . CGI::br();
+			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 			print $r->maketext("Acting as [_1]. ", $eUserID) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
 		}
 	} else {
