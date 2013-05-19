@@ -165,71 +165,8 @@ var tabberOptions = {manualStartup:true};
 				<!--#output_hidden_info-->
 			<!--#endif-->
 
-<<<<<<< HEAD
-<!--			      ==============BEGIN BODY OF PROBLEM===============      -->
-			<!--#if warnings="1"-->
-				  <div class="Body" style="background-color:#ff0000">
-				  <p style="font-size:larger">
-				  Warning -- there may be something wrong with this question. Please inform your instructor
-				  including the warning messages below.
-				  </p>
-				  </div>
-             <!--#endif-->
-             
-		<!--#if can="output_tag_info"-->
-			<!--#output_tag_info-->
-		<!--#endif-->
-			 <!--#if can="output_problem_body"--> 
-				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
-				  <div class="Body" style="background-color:#ffffff">
-	
-					<!--#if can="output_custom_edit_message"-->
-						<!--#output_custom_edit_message-->
-					<!--#endif-->
-					<!--#if can="output_summary"-->
-					    <div>
-							<!--#output_summary-->
-						</div>
-					<!--#endif-->
-
-					<!--#if can="output_achievement_message"-->
-					    <div>
-							<!--#output_achievement_message-->
-					    </div>
-					<!--#endif-->
-					
-					<!--#if can="output_comments" "-->
-					<div>
-						  <!--#output_comments-->
-					</div>
-					<!--#endif-->
-						
-
-
-					<!--#if can="output_hidden_info"-->
-						<!--#output_hidden_info-->
-					<!--#endif-->
-
-					<!--#if can="output_form_start"-->
-						<!--#output_form_start-->
-
-						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
-							<div class="problem">
-								<!--#if can="output_problem_body"-->
-									<!--#output_problem_body-->
-								<!--#endif-->
-								<!--#if can="output_message"-->
-									<!--#output_message-->
-								<!--#endif-->
-								<!--#if can="output_editorLink"-->
-									<!--#output_editorLink-->
-								<!--#endif-->
-							</div>
-						<!--#endif-->
-=======
 			<!--#if can="output_form_start"-->
 				<!--#output_form_start-->
->>>>>>> a1ad0a890cb54044b12d24950ee7b249665721d8
 
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">
