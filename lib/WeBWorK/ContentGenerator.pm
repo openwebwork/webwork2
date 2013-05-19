@@ -704,6 +704,7 @@ sub links {
 			
 			if ($ce->{achievementsEnabled}) {
 			    print CGI::li(&$makelink("${pfx}Achievements", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)); 
+
 			}
 
 			if ($authz->hasPermissions($userID, "access_instructor_tools")) {

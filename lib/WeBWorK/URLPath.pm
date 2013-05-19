@@ -151,7 +151,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  problem_detail                      /$courseID/$setID/$problemID/
 answer_log                           /$courseID/show_answers/
  achievements                        /$courseID/achievements
- instructor_achievement_list         /$courseID//instructor/achievement_list
+ instructor_achievement_list         /$courseID/instructor/achievement_list
  instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
  instructor_achievement_user_editor  /$courseID/instructor/achievement_list/$achievementID/users
 
