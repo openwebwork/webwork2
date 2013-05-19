@@ -104,6 +104,10 @@ ul.nav li a:hover {
 	float: left;
 }
 
+#content {
+    margin-left: 0px;
+}
+
 .shrinkbody {
 	width: 72%;
 }
@@ -274,6 +278,7 @@ blockquote {
   margin: 0 0 0 1em;
   border-left-width: 0;
 }
+
 
 label,
 input,
@@ -662,7 +667,7 @@ table caption{
 #pg_editor_frame_id{
     width:95%;
     height:390px;
-    overflow:hidden;
+    overflow:scroll;
 }
 
 #render-modal.modal {
