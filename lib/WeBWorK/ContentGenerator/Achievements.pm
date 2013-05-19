@@ -234,6 +234,8 @@ sub body {
 		    
 		    $itemnumber++;
 		}
+	    } else {
+		print CGI::p("You don't have any items!");
 	    }
 	    
 	    print CGI::h2("Achievements");
