@@ -234,7 +234,7 @@ sub attemptResults {
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 	
-	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers};
+	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
 
 	my $header;
 	#$header .= CGI::th("Part");
@@ -252,18 +252,18 @@ sub attemptResults {
 	my $numEssay = 0;
 	my $tthPreambleCache;
 	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name};
-		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+		my $answerResult  = $pg->{answers}->{$name}//'';
+		my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
 		my $preview       = ($showAttemptPreview
 		                    	? $self->previewAnswer($answerResult, $imgGen, \$tthPreambleCache)
 		                    	: "");
-		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache);
-		my $correctAnswer = $answerResult->{correct_ans};
-		my $answerScore   = $answerResult->{score};
-		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
+		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache)//'';
+		my $correctAnswer = $answerResult->{correct_ans}//'';
+		my $answerScore   = $answerResult->{score}//0;
+		my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
-		$numEssay += ($answerResult->{type}// '') eq 'essay';
+		$numEssay += ($answerResult->{type}//'') eq 'essay';
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
 
 		my $resultString;
