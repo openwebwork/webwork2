@@ -2026,7 +2026,8 @@ sub mathview_scripts {
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 
 		CGI::end_script(),"\n",		
 #		CGI::start_script({type=>"text/javascript", src=>"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"}), 
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS_HTML-full"}), 
+#		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS_HTML-full"}), 
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML-full"}), #better accessibility
 		CGI::end_script(),	"\n",			
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-mathview-1.1.0.js"}), 
 		CGI::end_script(),"\n",
