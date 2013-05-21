@@ -13,110 +13,197 @@
  * Artistic License for more details.
  */
 
-/* --- Standard elements ---------------------------------------------------- */
-
-body {
-	font-size: 16px;
-	font-family: "Arial", sans-serif;
+/* Bootstrap Overrides */
+.container-fluid {
+	padding: 0.5em;
 }
 
-.body {
-	background: white;
-	color: black;
-	margin: .5em .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
+/* Banner */
+ul#masthead {
+	background-color: #038;
+	list-style-type: none;
+	margin: 0;
 	padding: 0;
-	float:left; 
-	max-width:90%; 
+	padding: 5px;
 }
 
-.problem_set_body {
-    max-width:65%;
+li.webwork_logo {
+	background-color: #1048ae;
+	font-size: 1.6em;
+	font-weight: 500;
+	border: 1px solid #5577b0;
+	padding: 2px 10px 0 6px; /* attempt to even out the blank space so that
+								the logo & text doesn't look lopsided */
 }
 
-blockquote {
-  padding: 0 0 0 0;
-  margin: 0 0 0 1em;
-  border-left-width: 0;
+li.webwork_logo img {
+	padding-right: 5px; /* distance itself to the Webwork text */
 }
 
-label,
-input,
-button,
-select,
-textarea {
-  font-size: 16px;
-  font-weight: normal;
-  line-height: 18px;
-  width: auto;
+li.maa_logo img {
+	vertical-align: center;
 }
 
-input {
-    height:auto;
+ul#masthead li {
+	display: inline-block;
+	margin-right: 1em;
+	background: 
+	margin: 0;
 }
 
-p {
-  margin: 0 0 9px;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 18px;
+ul#masthead a {
+	color: white;
 }
 
-.barrier {
-	clear:both;
-	border: none; /* 1px solid grey; */
+ul#masthead a:hover {
+	text-decoration: none;
 }
+
+ul#masthead li#loginstatus {
+	margin-right: 2px;
+}
+
+li#loginstatus {
+	color: white;
+	text-align: right;
+	padding: 0;
+	float: right;
+	font-size: 0.85em;
+	font-weight: normal;
+} 
+
+li#loginstatus a {
+	color: black;
+	margin-left: 0.5em;
+}
+
+li#loginstatus a .icon-signout {
+	font-size: 1em;
+	padding-left: 0.3em;
+}
+
+
+/* Nav */
+#site-navigation ul:first-child {
+	border-radius: 8px;
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+ul.nav li a:hover {
+	background: #e1e1e1;	
+}
+
+#site-navigation .info-box {
+	margin-top: 0.5em;
+}
+
+/* Main Content */
+.body {
+	display: inline-block;
+	float: left;
+}
+
+.shrinkbody {
+	width: 72%;
+}
+
+h2.page-title {
+	border-bottom: 1px solid #ccc;
+}
+
 #info-panel-right {
-    float: right;
-    padding: .2em;
-    max-width:30%
-}
-h1, h2, h3, h4, h5, h6 {
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-	/* FIXME "You have no background-color with your color" */
-	color: #225;
-	background: transparent;
-}
-h1 { font-size: 200%; }
-h2 { font-size: 170%; padding-bottom: 0; margin-bottom: .5ex }
-h3 { font-size: 140%; margin-bottom: 1ex;}
-h4 { font-size: 120%; }
-h5 { font-size: 110%; }
-h6 { font-size: 105%; } 
-
-/* show only to CSS-ignorant browsers */
-.for-broken-browsers { display: none }
-
-/* for hiding floats from Netscape 4.x */
-.float-left { float: left; }
-.float-right { float: right; }
-
-.info-box {
-	border: 1px solid #559;
-	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
-	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
-	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
-	margin-bottom: 1ex; 
-	margin-left:1ex;
-	margin-top: 0;
-	margin-right:1ex;
-	width: 90%;
+	margin-bottom: 0.5em;
+	width: 25%;
 	overflow: hidden;
+	display: inline-block;
+	vertical-align: top;
+	float: right;
 }
-.info-box h2,
-.info-box h3,
-.info-box h4,
-.info-box h5,
-.info-box h6 {
-	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
-	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
-	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
-	border-bottom: 1px solid #559;
-	font-size: 100%;
-	text-align: center;
-	background: #88d;
+
+.breadcrumb {
+	border: 1px solid #e6e6e6;
+}
+
+.Warnings {
+	clear: both;
+}
+
+/* Question nav section */
+.problem-nav {
+	width: 30%;
+	margin-bottom: 1em;
+	display: inline-block;
+}
+
+/* Message section */
+
+.Message {
+	display: inline-block;
+}
+
+.Message div, .Message span {
+	background-color:#eee;
+	padding: 0.5em;
+}
+
+font.visible   { font-weight: bold; }
+font.hidden { font-style: italic; } 
+
+/* Home Page */
+ul.courses-list {
+	list-style-type: none;
+	margin: 0;
+}
+
+ul.courses-list a {
+	border: 1px solid #e6e6e6;
+	display: block;
+	padding: 0.5em;
+	margin-bottom: 0.5em;
+	background: #f6f6f6;
+	width: 95%;
+	font-weight: bold;
+}
+
+ul.courses-list a:hover {
+	text-decoration: none;
+	background: #038;
+	color: white;
+}
+
+/* Classlist Editor */
+/* this table is a pain, it wants to be a certain width and it'll force you
+ * to scroll if you don't have that width, don't know how to fix it */
+table.classlist-table {
+	display: block;
+	max-width: 95%; /* prevent it from violating container-fluid's padding,
+					 only valid in a rare edge case */
+}
+
+/* Homework Sets */
+.problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
+	margin: 0.5em; /* keep the assignment buttons from crowding chkbox */
+}
+
+/* Info Box */
+.info-box {
+	padding: 0.5em;
+	border-radius: 8px;
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+.info-box h2, .info-box h3, .info-box h4, .info-box h5, .info-box h6 {
+	background: #038;
+	border-radius: 8px;
 	color: white;
 	margin: 0;
-	padding: 0 .5em 0 .5em;
+	padding: 0;
+	line-height: 30px;
+	margin-bottom: 0.5em;
+	font-size: 1.1em;
+	text-align: center;
 }
 
 .info-box dl {
@@ -151,141 +238,67 @@ h6 { font-size: 105%; }
     margin-bottom:0px;
 }
 
-.Message {
-background-color:#ddd;
-clear: both;
+/* Library Browser */
+.library-browser-table td {
+	padding-top: 0.2em;
+	padding-bottom: 0.2em;
+}
+.library-browser-table .table-separator {
+	border-bottom: 1px solid #ccc;
 }
 
-#mini-sitemap,
-#fisheye {
+/* Footer */
+#footer {
+	clear: both;
+	display: block;
+	font-size: 0.8em;
+	color: #888;
+	text-align: center;
+	padding: 1em;
+	margin-top: 1em;
+}
+
+#footer p {
+	margin-bottom: 0; /* overrides bootstrap default so there's no weird space*/
+}
+
+#footer a {
+	color: #555;
+}
+
+
+/* --- Standard elements ---------------------------------------------------- */
+
+blockquote {
+  padding: 0 0 0 0;
+  margin: 0 0 0 1em;
+  border-left-width: 0;
+}
+
+label,
+input,
+button,
+select,
+textarea {
+  font-size: 16px;
+  font-weight: normal;
+  line-height: 18px;
+  width: auto;
+}
+input {
+	height: auto;
+}
+.barrier {
+	clear:both;
+	border: none; /* 1px solid grey; */
+}
+
+#mini-sitemap {
 	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
 	padding: 0 0 1ex 0;
 }
-#mini-sitemap a, #mini-sitemap a:link, #mini-sitemap a:visted,
-#fisheye a, #fisheye a:link, #fisheye a:visted {
+#mini-sitemap a, #mini-sitemap a:link, #mini-sitemap a:visted {
 	text-decoration: none;
-}
-
-#fisheye ul,
-#fisheye li,
-#fisheye a{
-	font-size: small;
-	padding-top: 0px;
-	padding-bottom: 0px;
-	color:#009;
-}
-
-#fisheye a:hover{
-    text-decoration: none;
-}
-
-#fisheye ul {
-    padding-left: 1ex;
-}
-
-#masthead {
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-	font-size: 100%;
-	margin: 0;
-	padding: 0;
-	color: #fff;
-	border: 1px solid #000;
-	background-color: #038;
-	/* [ww] we could have some sort of spider web image here. */
-	/*background-image: url("/images/mandel-wide.jpg");*/
-	background-repeat: repeat-x;
-	background-position: top left;
-}
-
-#masthead #logo { padding: 1ex }
-
-#loginstatus {
-	color: white;
-	top: -75px;
-	left: 1170px;
-	width: 200px;
-	float: right;
-	text-align: center;
-	padding: 0;
-	margin: 1ex .5em .1ex .1em;
-	font-size: smaller;
-} 
-
-#loginstatus a{
-	color: white;
-}
-
-#loginstatus #Nav {
-	padding: 1ex;
-}
-
-#big-wrapper {
-	position: relative;
-	top: 1ex;
-	width: 100%;
-	min-width: 18em;
-	margin: 0;
-	border: 0;
-}
-
-#breadcrumbs {
-	margin-left: 10.4em;
-	margin-right: 0;
-	padding: 0 .4em;
-	border: 1px solid #559;
-	background: #88d;
-	color: #fff;
-	text-align: left; 
-	font-size: 100%;
-	line-height:normal;
-	font-family: "Trebuchet MS", "Arial", sans-serif;
-}
-#breadcrumbs a {
-	font-size: 100%;
-	white-space: nowrap;
-	background-color: inherit;
-	color: #fff;
-	text-decoration: none;
-}
-#breadcrumbs a.active { font-weight: bold; }
-#breadcrumbs a:hover { text-decoration: underline; }
-
-#site-navigation {
-	position: absolute;
-	left: 0;
-	top: 0;
-	margin: 0;
-	padding: 0;
-	width: 9.8em;
-}
-
-#content {
-	margin: .5em 0 0 10.4em;
-	padding: 0 0 0 0;
-	font-family: "Arial", sans-serif;
-	/* border-left: 1px dotted #bbf; */
-}
-#content h1 { margin: .4ex 0; } /* for crappy MSIE */
-
-
-#footer {
-	/* white-space: nowrap; */
-	clear: both;
-	/* border-top: 1px solid #559; */
-	margin: 0 .5em .2ex 0.5em;
-	padding: 0;
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-}
-#copyright { font-size: 75%; margin: 0;}
-#last-modified {
-	clear: both;
-	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
-	font-size: 75%;
-	background-color: inherit;
-	color: #444;
-	margin: 1ex 0 0 0;
-	padding: 0;
-	border-bottom: 1px solid #559;
 }
 
 #InfoPanel {
@@ -425,10 +438,6 @@ div.NoFontMessage {
 	text-align: left;
 	margin: 10px auto 10px 12%;
 }
-
-/* text colors for visible and hidden sets */
-font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
-font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
 
 /* styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #F60; background-color: inherit; }
@@ -655,7 +664,7 @@ table caption{
 #pg_editor_frame_id{
     width:95%;
     height:390px;
-    overflow:scroll;
+    overflow:hidden;
 }
 
 #render-modal.modal {
@@ -699,25 +708,6 @@ div.problem_sets_options {
 }
 
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
-table.problem_set_table{
-	margin-top: 30px;
-	#width: 640px;
-	text-align: left;
-	float: left;
-}
-
-table.problem_set_table a.btn{
-    margin-left:10px;
-}
-
-table.problem_set_table form{
-    margin-bottom:0px;
-}
-
-div.problem_set_options {
-	clear: both;
-	width:100%;
-}
 /*BUG FIXES*/
 
 table#grades_table pre{
@@ -734,8 +724,6 @@ table#grades_table pre{
 }
 
 /*mainform is in the library browser*/
-.classlist-table,
-.classlist-table label,
 .setlist-table,
 .setlist-table label,
 .user-list-form,
@@ -770,11 +758,6 @@ table#grades_table pre{
 
 .set-list-form select[multiple] {
     height:auto;
-}
-
-.classlist-table .table_checkbox, 
-.setlist-table .table_checkbox {
-    margin-right:1ex;
 }
 
 #problem_set_form .btn {

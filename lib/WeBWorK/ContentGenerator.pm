@@ -625,8 +625,8 @@ sub links {
 		
 		my $new_anchor;
 		if ($active) {
-			# add <strong> for old browsers
-			$new_anchor = CGI::strong(CGI::a({href=>$new_systemlink, id=>$id, class=>"active", %target}, $text));
+			# add active class for current location
+			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, class=>"active", %target}, $text);
 		} else {
 			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, %target}, "$text");
 		}
@@ -656,18 +656,16 @@ sub links {
 	my %systemlink_args;
 	$systemlink_args{params} = \%params if %params;
 	
-	print CGI::h2($r->maketext("Main Menu"));
 	print CGI::start_ul();
+	print CGI::start_li({class => "nav-header"});
+	print $r->maketext("Main Menu");
+	print CGI::end_li();
 	print CGI::start_li(); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
+	print CGI::end_li(); # end Courses
 	
 	if (defined $courseID) {
-		#print CGI::start_ul();
-		#print CGI::start_li(); # $courseID
-		#print CGI::strong(CGI::span({class=>"active"}, $courseID));
-		
 		if ($authen->was_verified) {
-			print CGI::start_ul();
 			print CGI::start_li(); # Homework Sets
 			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			
@@ -715,22 +713,24 @@ sub links {
 				print &$makelink("${pfx}Index", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				print CGI::start_ul();
 				
-
+                #class list editor
 				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{classlisteditor1};
 				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor2};;
+					if $ce->{showeditors}->{classlisteditor2};
 				print CGI::li(&$makelink("${pfx}UserList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor3};;
+					if $ce->{showeditors}->{classlisteditor3};
 
 				
-				print CGI::start_li(); # Homework Set Editor
-				print &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
+				# Homework Set Editor
+				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor1};
-				print "<br>" if ($ce->{showeditors}->{homeworkseteditor1} && $ce->{showeditors}->{homeworkseteditor2});
-				print &$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)
-					if $ce->{showeditors}->{homeworkseteditor2};;
-				
+
+				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{homeworkseteditor2};
+#				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+#					if $ce->{showeditors}->{homeworkseteditor3};
+
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
 					print CGI::start_ul();
@@ -755,11 +755,16 @@ sub links {
 							if $ce->{showeditors}->{pgproblemeditor3};;
 						print CGI::end_ul();
 					}
+					if (defined $problemID) {
+						print CGI::start_ul();
+						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+							if $ce->{showeditors}->{simplepgeditor};;
+						print CGI::end_ul();
+					}
 					
 					print CGI::end_li(); # end $setID
 					print CGI::end_ul();
 				}
-				print CGI::end_li(); # end Homework Set Editor
 				
 				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser1};
@@ -862,23 +867,17 @@ sub links {
 				print CGI::end_li(); # end Instructor Tools
 			} # /* access_instructor_tools */
 			
-			print CGI::end_ul();
-			
-			print CGI::start_ul();
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li(CGI::a({style=>'font-size:larger', href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
+				print CGI::li({class=>'divider'});
+				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
+			print CGI::end_ul();
 	
-	print CGI::end_ul();
-
 		} # /* authentication was_verified */
 		
-		#print CGI::end_li(); # end $courseID
-		#print CGI::end_ul();
 	} # /* defined $courseID */
 	
-	print CGI::end_li(); # end Courses
 	print CGI::end_ul();
 	
 	
@@ -913,9 +912,9 @@ sub loginstatus {
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 		
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::br() . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 		} else {
-			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out")) . CGI::br();
+			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 			print $r->maketext("Acting as [_1]. ", $eUserID) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
 		}
 	} else {
@@ -2027,7 +2026,8 @@ sub mathview_scripts {
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 
 		CGI::end_script(),"\n",		
 #		CGI::start_script({type=>"text/javascript", src=>"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"}), 
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS_HTML-full"}), 
+#		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS_HTML-full"}), 
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML-full"}), #better accessibility
 		CGI::end_script(),	"\n",			
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-mathview-1.1.0.js"}), 
 		CGI::end_script(),"\n",
