@@ -285,7 +285,9 @@ textarea {
   line-height: 18px;
   width: auto;
 }
-
+input {
+	height: auto;
+}
 .barrier {
 	clear:both;
 	border: none; /* 1px solid grey; */
