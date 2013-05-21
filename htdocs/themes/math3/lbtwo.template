@@ -60,7 +60,7 @@
 				</div> 
 				<div class="span3"><!--#loginstatus--></div>
 	    		<div class="span2"><button class="btn" id="help-link">Help</button>
-	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2-dev/issues/new">Bugs!</a>
+	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2/issues/new">Bugs!</a>
     			</div>
    				
 				            
