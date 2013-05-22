@@ -1,6 +1,8 @@
 #!/user/bin/perl -w
 
 # initialize SOAP interface as well
+
+use JSON;
 use WebworkSOAP;
 use WebworkSOAP::WSDL;
 

@@ -221,7 +221,7 @@ sub createNewSet{
   	my $out;
 
   	debug("in createNewSet");
-  	debug(to_json($params));
+  	#debug(to_json($params));
 
 
 	if ($params->{new_set_name} !~ /^[\w .-]*$/) {
@@ -239,14 +239,6 @@ sub createNewSet{
 		} else {			# Do it!
 			# DBFIXME use $db->newGlobalSet
 			# $newSetRecord = $db->{set}->{record}->new();
-
-			# debug($params->{selfassign});
-			# debug($params->{set_id});
-			# debug($params->{new_set_name});
-			# debug($params->{open_date});
-			# debug($params->{due_date});
-			# debug($params->{visible});
-			# debug(to_json($params));
 
 			$newSetRecord = $db->newGlobalSet;
 			$newSetRecord->set_id($newSetName);
@@ -280,7 +272,7 @@ sub createNewSet{
 				#$self->addbadmessage("Problem creating set $newSetName<br> $@");
 			} else {
 				my $selfassign = $params->{selfassign};
-				debug($selfassign);
+				debug("selfassign: " . $selfassign);
 				$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
 				if($selfassign) {
 					debug("Assigning to user: " . $params->{user});

@@ -187,8 +187,8 @@ sub pre_header_initialize {
 		    probList		        => $r->param("probList") ||undef,
 		    command     	        => $r->param("command") ||undef,
 		    subcommand		        => $r->param("subcommand") ||undef,
-		    maxdepth		        => $r->param("maxdepth") || 0,
-		    problemSeed	            => $r->param("problemSeed") || 0,
+		    maxdepth		        => $r->param("maxdepth") // 0,
+		    problemSeed	            => $r->param("problemSeed") // 0,
 		    displayMode	            => $r->param("displayMode") || undef,
 		    noprepostambles	        => $r->param("noprepostambles") || undef,
 		    library_subjects	    => $r->param("library_subjects") ||undef,
@@ -206,7 +206,7 @@ sub pre_header_initialize {
             student_id     			=> $r->param('student_id') || undef,
             id             			=> $r->param('user_id') || undef,
             email_address  			=> $r->param('email_address') || undef,
-            permission     			=> $r->param('permission') || 0,	# valid values from %userRoles in defaults.config
+            permission     			=> $r->param('permission') // 0,	# valid values from %userRoles in defaults.config
             status         			=> $r->param('status') || undef,#'Enrolled, audit, proctor, drop
             section        			=> $r->param('section') || undef,
             recitation     			=> $r->param('recitation') || undef,
@@ -221,8 +221,8 @@ sub pre_header_initialize {
 	     	open_date       	   	=> $r->param('open_date') || undef,
             due_date        	   	=> $r->param('due_date') || undef,
             answer_date     	   	=> $r->param('answer_date') || undef,
-            visible         	   	=> $r->param('visible') || undef,
-            enable_reduced_scoring 	=> $r->param('enable_reduced_scoring') || undef,
+            visible         	   	=> $r->param('visible') // 0,
+            enable_reduced_scoring 	=> $r->param('enable_reduced_scoring') // 0,
             assignment_type        	=> $r->param('assignment_type') || undef,
             attempts_per_version   	=> $r->param('attempts_per_version') || undef,
             time_interval         	=> $r->param('time_interval') || undef,
@@ -291,8 +291,6 @@ sub pre_header_initialize {
 	if($r->param('xml_command') eq "addProblem" || $r->param('xml_command') eq "deleteProblem"){
 		$input->{path} = $r->param('problemPath');
 	}
-
-	#debug(to_json($input));
 	
 	if($r->param('xml_command') eq "renderProblem"){
 	    if (my $problemPath = $r->param('problemPath')) {

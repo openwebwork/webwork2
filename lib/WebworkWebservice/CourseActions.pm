@@ -581,7 +581,7 @@ sub getCourseSettings {
 	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
 
 
-	debug($tz->short_name_for_datetime($dt));
+	#debug($tz->short_name_for_datetime($dt));
 
 	push(@$ConfigValues, \@tzabbr);
   	
