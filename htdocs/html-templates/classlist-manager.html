@@ -123,10 +123,13 @@ all rows in the table.  </li>
             </div>
 </script>
 <script type="text/template" id="manStudentTableTmpl">
-    <table id='man_student_table'><tbody><tr><td>Delete</td>
+    <table id='man_student_table'><thead><tr><td>Delete</td>
     <td>Login Name</td><td>First Name</td><td>Last Name</td><td>Email</td><td>Student Id</td><td>Status</td>
     <td>Section</td><td>Recitation</td>
-    <td>Comment</td><td>Permission Level</td><td>Password</td></tr></tbody></table>
+    <td>Comment</td><td>Permission Level</td><td>Password</td></tr></thead><tbody></tbody></table>
+    <button class="btn" id="import-stud-button">Import Students</button>
+    <button class="btn" id="add-more-button">Add One Student</button>
+    <button class="btn" id="cancel-import">Cancel Import</button>
 </script>
 <script type="text/template" id="passwordDialogText">
     Change the password of the users below:
@@ -144,4 +147,19 @@ all rows in the table.  </li>
     <span id="emailStudentList"></span><br/>
     <textarea id="emailText" cols="40" rows="10"></textarea>
     
+</script>
+
+<script type="text/template" id="user-row-template">
+    <td><button class="btn delete-button"><i class="icon-trash"></i></button</td>
+    <td><input class="login-name"></td>
+    <td><input class="first-name"></td>
+    <td><input class="last-name"></td>
+    <td><input class="email"></td>
+    <td><input class="student-id"></td>
+    <td><input class="status"></td>
+    <td><input class="section"></td>
+    <td><input class="recitation"></td>
+    <td><input class="comment"></td>
+    <td><select class="permission span2"></select></td>
+    <td><input class="password"></td>
 </script>

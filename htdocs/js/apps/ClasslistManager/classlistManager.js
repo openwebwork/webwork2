@@ -1,35 +1,7 @@
-/*  userlist.js:
-   This is the base javascript code for the UserList3.pm (Classlist Editor3).  This sets up the View and the classlist object.
+/*  ClasslistManager.js:
+   This is the base javascript code for the UserList3.pm (Classlist Manager).  This sets up the View and the classlist object.
   
 */
-
-require.config({
-    paths: {
-        "Backbone":             "/webwork2_files/js/vendor/backbone/backbone",
-        "backbone-validation":  "/webwork2_files/js/vendor/backbone/modules/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/vendor/jquery/jquery-ui",
-        "underscore":           "/webwork2_files/js/vendor/underscore/underscore",
-        "jquery":               "/webwork2_files/js/vendor/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
-        "util":                 "/webwork2_files/js/lib/util",
-        "XDate":                "/webwork2_files/js/vendor/other/xdate",
-        "WebPage":              "/webwork2_files/js/lib/views/WebPage",
-        "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/views/Closeable"
-    },
-    urlArgs: "bust=" +  (new Date()).getTime(),
-    waitSeconds: 15,
-     shim: {
-        'jquery-ui': ['jquery'],
-        'jquery-ui-custom': ['jquery'],
-        'underscore': { exports: '_' },
-        'Backbone': { deps: ['underscore', 'jquery'], exports: 'Backbone'},
-        'bootstrap':['jquery'],
-        'backbone-validation': ['Backbone'],
-        'XDate':{ exports: 'XDate'},
-        'config': ['XDate']
-    }
-});
 
 require(['Backbone', 
 	'underscore',
@@ -58,7 +30,7 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 	    _.bindAll(this, 'render','addOne','addAll','deleteUsers','changePassword','gridChanged');  // include all functions that need the this object
 	    var self = this;
 	    this.collection = new UserList();  // This is a Backbone.Collection of users
-	    
+	    this.collection.fetch();
 	    
 	    
 	    this.grid = new EditableGrid("UserListTable", { enableSort: true});
@@ -67,7 +39,7 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 	    this.render();
 	    
 	    this.grid.renderGrid('users_table', 'usersTableClass', 'userTable');
-	    this.collection.fetch();
+	    
 	    this.grid.refreshGrid();
 	    
 	    
@@ -146,7 +118,7 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 		    addStudFileDialog.openDialog();
 		    break;
 		case "Add Students Manually":
-		    var addStudManDialog = new AddStudentManView({parent: this});
+		    var addStudManDialog = new AddStudentManView({users: this.collection});
 		    addStudManDialog.openDialog();
 		    break;
 		case "Export Students to a File":
@@ -301,10 +273,10 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 		else if (oldValue !== newValue  ){
 		    var cid = self.grid.getRowId(rowIndex);
 		    var property = self.grid.getColumnName(columnIndex);
-		    var editedModel = self.collection.get(cid);
-		    if(property == 'permission'){
+		    var editedModel = self.collection.getByCid(cid);
+		    /* if(property == 'permission'){
 				newValue = {name: "", value: newValue};  // Do we need to make sure to set the name correctly too? 
-		    }
+		    } */
 		    console.log("just before editedModel.set");
 		    
 		    // The following checks if the data validates.  
@@ -324,20 +296,19 @@ function(Backbone, _, User, UserList, EditableGrid, WebPage, EmailStudentsView,
 		
     },
 	addOne: function(user){
-            var userInfo = user.toJSON();
-	    userInfo.permission = ""+userInfo.permission.value;  // return only the String version of the Permission
+        var userInfo = user.toJSON();
 	    this.grid.append(user.cid, userInfo);
 	    if (userInfo.login_status==1){
-		this.loggedInUsers.push(user.cid);
+			this.loggedInUsers.push(user.cid);
 	    }
-        },
+    },
 
-        addAll: function(){
-	    this.loggedInUsers=[];  // this will store the rows of the users who are currently logged in.  Perhaps this should go elsewhere. 
-            var self = this;
-            this.collection.each(function(user){self.addOne(user)});
-	    this.grid.refreshGrid();
-        },
+    addAll: function(){
+    	this.loggedInUsers=[];  // this will store the rows of the users who are currently logged in.  Perhaps this should go elsewhere. 
+        var self = this;
+        this.collection.each(function(user){self.addOne(user)});
+    	this.grid.refreshGrid();
+    },
 	deleteUsers: function(rows){
 	    rowsBackwards = _(rows).sortBy(function (num) { return -1*num;});  // the rows need to be sorted in decreasing order so the rows in the table are
 									// removed correctly. 

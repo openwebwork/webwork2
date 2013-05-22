@@ -127,24 +127,19 @@ sub listUsers {
     foreach my $u (@userInfo)
     {
         my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
-        $u->{'permission'}{'value'} = $PermissionLevel->{'permission'};
-        $u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
-	my $studid= $u->{'student_id'};
-	$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
+        $u->{'permission'} = $PermissionLevel->{'permission'};
+        #$u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+
+
+		my $studid= $u->{'student_id'};
+		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
         $u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
 	
-	my $Key = $db->getKey($u->{'user_id'});
-	$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		my $Key = $db->getKey($u->{'user_id'});
+		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
 		
     }
 
-    #my %permissionsHash = $ce->{userRoles};
-    #
-    #push(@userInfo, %permissionsHash);
-
-    #foreach $user (@userInfo){
-    #    $user->{permission}
-    #}
 
     $out->{ra_out} = \@userInfo;
     $out->{text} = encode_base64("Users for course: ".$self->{courseName});
@@ -387,8 +382,8 @@ sub editUser {
 
     my %permissionsHash = reverse %{$ce->{userRoles}};
     $PermissionLevel = $db->getPermissionLevel($User->{'user_id'});
-    $User->{'permission'}{'value'} = $PermissionLevel->{'permission'};
-    $User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+    $User->{'permission'} = $PermissionLevel->{'permission'};
+    #$User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
     
     
     # If the new_password param is set and not equal to the empty string, change the password.

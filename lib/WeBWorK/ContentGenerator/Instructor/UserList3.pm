@@ -235,6 +235,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script data-main="$site_url/js/apps/ClasslistManager/classlistManager" src="$site_url/js/vendor/requirejs/require.js"></script>!;
 
 	
