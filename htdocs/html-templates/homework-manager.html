@@ -2,8 +2,8 @@
 <div class="row">  
   <div id='left-column' class='span3'>
     <div id="hw-manager-menu" class="btn-group">
-      <button class="btn btn-large" id="viewHeader">Calendar</button>
-      <button class="btn dropdown-toggle btn-large" data-toggle="dropdown">
+      <button class="btn btn-large disabled" id="viewHeader">Calendar</button>
+      <button class="btn dropdown-toggle btn-large disabled" data-toggle="dropdown">
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu">
@@ -397,4 +397,18 @@ a better rendering.
   <%=doc2%></div>
 
   </td>
+</script>
+
+<script type="text/template" id='problem-set-row-template'>
+    <td class='set-name'></td>
+    <td class='open-date' contenteditable='true'></td>
+    <td class='due-date' contenteditable='true'></td>
+    <td class='answer-date' contenteditable='true'></td>
+</script>
+
+<script type="text/template" id="problem-set-list-template">
+<table id='set-list-table' class='table table-bordered'>
+<thead><tr><th>Name</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<tbody></tbody>
+</table>
 </script>

@@ -2,42 +2,6 @@
    This is the base javascript code for the Homework Manager.  This sets up the View and ....
   
 */
-
-require.config({
-    paths: {
-        "Backbone":             "/webwork2_files/js/vendor/backbone/backbone",
-        "backbone-validation":  "/webwork2_files/js/vendor/backbone/modules/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/vendor/jquery/jquery-ui",
-        "underscore":           "/webwork2_files/js/vendor/underscore/underscore",
-        "jquery":               "/webwork2_files/js/vendor/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
-        "util":                 "/webwork2_files/js/lib/util",
-        "XDate":                "/webwork2_files/js/vendor/other/xdate",
-        "WebPage":              "/webwork2_files/js/lib/views/WebPage",
-        "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/views/Closeable",
-        "datepicker":           "/webwork2_files/js/vendor/datepicker/js/bootstrap-datepicker",
-        "jquery-truncate":      "/webwork2_files/js/vendor/jquery/modules/jquery.truncate.min",
-        "jquery-tablesorter":   "/webwork2_files/js/vendor/jquery/modules/jquery.tablesorter.min",
-        "jquery-imagesloaded":  '/webwork2_files/js/vendor/jquery/modules/jquery.imagesloaded.min'
-    },
-    urlArgs: "bust=" +  (new Date()).getTime(),
-    waitSeconds: 15,
-    shim: {
-        'jquery-ui': ['jquery'],
-        'underscore': { exports: '_' },
-        'Backbone': { deps: ['underscore', 'jquery'], exports: 'Backbone'},
-        'bootstrap':['jquery'],
-        'backbone-validation': ['Backbone'],
-        'XDate':{ exports: 'XDate'},
-        'config': { deps: ['XDate'], exports: 'config'},
-        'datepicker': ['bootstrap'],
-        'jquery-truncate': ['jquery'],
-        'jquery-tablesorter': ['jquery'],
-        'jquery-imagesloaded': { deps: ['jquery'], exports: 'jquery-imagesloaded'}
-    }
-});
-
 require(['Backbone', 
     'underscore',
     '../../lib/models/UserList',
@@ -109,8 +73,10 @@ var HomeworkEditorView = WebPage.extend({
                 console.log("users Loaded for set " + set.get("set_id"));
                 var foundSet = _(setsLoaded).find(function(obj){ return obj["set"]===set.get("set_id")});
                 setsLoaded[foundSet.pos].loaded = true;
+
+                    // update the progress bar
                 $("#progressbar").progressbar(
-                      {value: _(_(setsLoaded).pluck("loaded")).countBy(function(el) { return el===true;}).true});
+                      {value: _(_(setsLoaded).pluck("loaded")).countBy(function(el) { return el===true;}).true});  
                 if(_(_(setsLoaded).pluck("loaded")).all()) {self.postHWLoaded();}
             });
         });
@@ -224,6 +190,8 @@ var HomeworkEditorView = WebPage.extend({
         
         // Set the popover on the set name
         $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
+
+        $("#hw-manager-menu button").removeClass("disabled");
                
     },
             // This allows the homework sets generated above to be dragged onto the Calendar to set the due date. 
