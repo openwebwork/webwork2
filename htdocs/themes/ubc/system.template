@@ -156,7 +156,7 @@
 				<tr valign="top">
 					<td class="TopPanel">
 						<!--#if can="path"-->
-						<span class="Path"><!--#path style="text" image="/webwork2_files/images/right_arrow.png" text=" > "--></span>
+						<span class="Path"><!--#path style="text" image="<!--#url type="webwork" name="htdocs"-->/images/right_arrow.png" text=" > "--></span>
 						<!--#endif-->
 					</td>
 					<td class="TopPanel" align="right" nowrap>
@@ -176,7 +176,7 @@
 		<!--#endif-->	
 			<!--#if can="nav"-->
 			<div class="Nav">
-				<!--#nav style="images" imageprefix="/webwork2_files/themes/ubc/images" imagesuffix=".gif" separator=" | "-->
+				<!--#nav style="images" imageprefix="<!--#url type="webwork" name="htdocs"-->/themes/ubc/images" imagesuffix=".gif" separator=" | "-->
 			</div>
 			<!--#endif-->
 			<!--#if can="title"-->

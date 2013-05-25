@@ -530,11 +530,12 @@ sub FieldHTML {
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = "";
 	if ($edit) {
-		$inputType = CGI::input({
+		$inputType = CGI::font({class=>"visible"}, CGI::input({
 				name => "$recordType.$recordID.$field",
+				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
-		});
+		}));
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
 		# but $userValue and and $globalValue are the values in the hash not the keys
@@ -560,6 +561,7 @@ sub FieldHTML {
 			
 		$inputType = CGI::popup_menu({
 				name => "$recordType.$recordID.$field",
+				id   => "$recordType.$recordID.${field}_id",
 				values => $properties{choices},
 				labels => \%labels,
 				default => $value,
@@ -948,12 +950,17 @@ sub initialize {
 			$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
+			# grab short name for timezone
+			# used to set proper timezone name in datepicker
+
+			$self->{timezone_shortname} = substr($due_date, -3); #this is fragile
 
 	}
+	
 	if ($error) {
 		$self->addbadmessage($r->maketext("No changes were saved!"));
 	}
-	
+
 	if (defined $r->param('submit_changes') && !$error) {
 
 		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
@@ -1825,6 +1832,7 @@ sub body {
 	print CGI::Tr({}, CGI::td({}, [
 		$self->FieldTable($userToShow, $setID, undef, $setRecord, $userSetRecord),
 	]));
+
 	print CGI::end_table();	
 
 	# spacing
@@ -2168,6 +2176,47 @@ sub body {
 	return "";
 }
 
+
+sub output_JS {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $setID   = $r->urlpath->arg("setID");
+	my $timezone = $self->{timezone_shortname};
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	
+	
+	# print javaScript for dateTimePicker	
+    print "\n\n<!-- add to header ProblemSetDetail-->\n\n";
+        
+	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
+
+	print q!<style> 
+	.ui-datepicker{font-size:85%} 
+	.ui-datepicker{font-size:85%} 
+	.auto-changed{background-color: #ffffcc}
+	.changed {background-color: #ffffcc}
+    
+    </style>!,"\n";
+    
+    # jquery 1.7.1 loaded second to keep compatibility with timepicker.
+    # FIXME? replace timepicker with twitter bootstrap time picker?
+	# print javaScript for dateTimePicker	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script(),"\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
+    	
+	print CGI::start_script({-type=>"text/javascript"}),"\n";
+	print q!$(".ui-datepicker").draggable();!,"\n";
+	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
+	print CGI::end_script();
+	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
+	return "";
+}
 1;
 
 =head1 AUTHOR
