@@ -313,6 +313,14 @@ input {
 	font-size:100%;
 }
 
+#problem-content {
+  margin-left:auto;
+  margin-right:auto;
+  width: 90%;
+  border: 2px solid black;
+  padding: 10px;
+
+}
 table.FormLayout { border: 0; }
 table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
