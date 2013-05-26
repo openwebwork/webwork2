@@ -1471,7 +1471,7 @@ sub head {
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
   print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
 
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
+#  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;

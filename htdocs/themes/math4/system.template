@@ -29,6 +29,10 @@
 <script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
 <script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 
+<!--#if can="output_achievement_CSS"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/achievements.css"/>
+<!--#endif-->
+
 <!--#if can="output_tabber_CSS"-->
 <script type="text/javascript">
 var tabberOptions = {manualStartup:true};
@@ -41,13 +45,6 @@ var tabberOptions = {manualStartup:true};
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-
-<!--
-    Kludge to get around the fact that loading jquery in output_JS breaks 
-    bootstrap.js
--->
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
