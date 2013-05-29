@@ -1231,11 +1231,6 @@ sub head {
         my $ce = $self->r->ce;
         my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-        # Javascript and style for knowls
-        print qq{
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/knowl.js"></script>};
-
         return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
 }
 

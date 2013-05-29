@@ -26,6 +26,9 @@
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/gateway.css"/>
 
+<link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/other/knowl.js"></script>
+
 <!-- Gateway Specific JS -->
 <script language="javascript" type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/apps/GatewayQuiz/gateway.js"></script>
 
