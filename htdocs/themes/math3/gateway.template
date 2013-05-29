@@ -27,8 +27,7 @@
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/gateway.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
-<script language="javascript" type="text/javascript" 
-  src="<!--#url type="webwork" name="htdocs"-->/js/gateway.js"></script>
+<script language="javascript" type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/apps/GatewayQuiz/gateway.js"></script>
 </head>
 <body bgcolor="white">
 <div id="masthead">
