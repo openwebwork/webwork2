@@ -140,8 +140,8 @@ var tabberOptions = {manualStartup:true};
 	<!--#endif-->
 
 	 <!--#if can="output_problem_body"--> 
-		<!-- ==== in this case print body parts --ELSE-- print entire body -->		
-		  <div class="Body">
+		<!-- ==== in this case print body parts --ELSE-- print entire body -->		<div class="row-fluid">
+		  <div class="Body span8">
 
 			<!--#if can="output_custom_edit_message"-->
 				<!--#output_custom_edit_message-->
@@ -207,7 +207,9 @@ var tabberOptions = {manualStartup:true};
 				<!--#endif-->
 				</form>
 			<!--#endif-->
+			</div>
 		<!-- inserted problem piece by piece -->
+		<div class="span2 offset2">
 		<!--#if can="info"-->
 			<p>Form2</p>
 			<!--  styles could be different for different pages so they are not set here -->
@@ -215,8 +217,9 @@ var tabberOptions = {manualStartup:true};
 			<!--#info-->
 			</div>
 		<!--#endif-->
-
-		</div>	  
+		</div>
+		</div>
+         </div>	  
 	<!-- ====  end printing body parts   -->
 	<!--#else-->
 	<!-- ==== couldn't print body parts so we'll print entire body -->	
