@@ -285,7 +285,6 @@ EOF
 	
 	print  CGI::end_form();
 
-	print CGI::script("updateTarget()");
 	return "";
 
 
