@@ -141,7 +141,7 @@ var tabberOptions = {manualStartup:true};
 
 	 <!--#if can="output_problem_body"--> 
 		<!-- ==== in this case print body parts --ELSE-- print entire body -->		<div class="row-fluid">
-		  <div class="Body span8">
+		  <div class="Body">
 
 			<!--#if can="output_custom_edit_message"-->
 				<!--#output_custom_edit_message-->
