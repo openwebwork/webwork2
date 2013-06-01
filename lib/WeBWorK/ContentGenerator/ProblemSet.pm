@@ -84,8 +84,8 @@ sub initialize {
 	}
 
 	my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
-	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
-	$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::font({class=>$visiblityStateClass}, $visiblityStateText)))) if $authz->hasPermissions($userName, "view_hidden_sets");
+	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
+	$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText)))) if $authz->hasPermissions($userName, "view_hidden_sets");
 
 
 	$self->{userName}        = $userName;

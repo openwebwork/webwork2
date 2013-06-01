@@ -563,8 +563,8 @@ div.NoFontMessage {
 }
 
 /* text colors for visible and hidden sets */
-font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
-font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
+.font-visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
+.font-hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
 
 /* styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #F60; background-color: inherit; }

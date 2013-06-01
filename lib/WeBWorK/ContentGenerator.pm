@@ -838,10 +838,12 @@ sub links {
 				if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, "edit_achievements")) {
 				    print CGI::li(&$makelink("${pfx}AchievementList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				    if (defined $achievementID ) {
+					print CGI::start_li();
 					print CGI::start_ul();
 					print CGI::start_li(); # $achievementID
 					print &$makelink("${pfx}AchievementEditor", text=>"$prettyAchievementID", urlpath_args=>{%args,achievementID=>$achievementID}, systemlink_args=>\%systemlink_args);
 					print CGI::end_ul();
+					print CGI::end_li();
 				    }
 				    
 				}
@@ -870,20 +872,16 @@ sub links {
 			
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li({class=>'divider'});
+				print CGI::li({class=>'divider'},"");
 				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
-			print CGI::end_ul();
 	
 		} # /* authentication was_verified */
-		
+				
 	} # /* defined $courseID */
-	
 	print CGI::end_ul();
-	
-	
+		
 
-	
 	return "";
 }
 

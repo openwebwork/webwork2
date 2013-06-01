@@ -538,9 +538,9 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
 		}
 
-		my $visiblityStateClass = ($set->visible) ? $r->maketext("visible") : $r->maketext("hidden");
+		my $visiblityStateClass = ($set->visible) ? $r->maketext("font-visible") : $r->maketext("font-hidden");
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
-		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::font({class=>$visiblityStateClass}, $visiblityStateText))));
+		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText))));
 
   # test for additional problem validity if it's not already invalid
         } else {

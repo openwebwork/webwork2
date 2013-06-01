@@ -499,9 +499,9 @@ sub setListRow {
 		}
 	}
 
-	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
+	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
 
-	$status = CGI::font({class=>$visiblityStateClass}, $status) if $preOpenSets;
+	$status = CGI::span({class=>$visiblityStateClass}, $status) if $preOpenSets;
 	
 # check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {

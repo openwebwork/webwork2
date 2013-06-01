@@ -252,12 +252,10 @@ EOF
 	foreach my $actionID (@formsToShow) {
 
 	    my $actionForm = "${actionID}_form";
-	    my $onChange = "setRadio($i)";
 	    my %actionParams = $self->getActionParams($actionID);
-	    my $line_contents = $self->$actionForm($onChange, %actionParams);
+	    my $line_contents = $self->$actionForm( %actionParams);
 	    my $radio_params = {-type=>"radio", -name=>"action", -value=>$actionID};
-	    $radio_params->{checked}=1 if ($actionID eq $default_choice) ;
-	    $radio_params->{id} = "action$i";
+	    $radio_params->{checked}="checked" if ($actionID eq $default_choice) ;
 
 	    if($line_contents){
 		my @titleArr = split(" ", ucfirst(WeBWorK::underscore_to_whitespace($actionForm)));
@@ -270,6 +268,7 @@ EOF
 				   CGI::div({-class=>"pg_editor_input_div"},$line_contents),
 				   CGI::br())
 	    }
+
 	    $i++;
 	}
 	
@@ -279,9 +278,9 @@ EOF
 		       CGI::div({-class=>"tabbertab"},$divArrRef)
 	    );
 	
-	print CGI::Tr({}, CGI::td({-colspan=>2}, "Select above then:",
+	print CGI::div("Select above then:",
 				  CGI::submit(-name=>'submit', -value=>"Take Action!"),
-				  ));
+				  );
 	
 	print  CGI::end_form();
 
@@ -441,7 +440,7 @@ sub fixAchievementContents {
 }
 
 sub save_form {
-    	my ($self, $onChange, %actionParams) = @_;
+    	my ($self, %actionParams) = @_;
 	my $r => $self->r;
 
 	if (-w $self->{sourceFilePath}) {
@@ -478,7 +477,7 @@ sub save_handler {
 
 
 sub save_as_form {  # calls the save_as_handler 
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $sourceFilePath  = $self->{sourceFilePath};
 	my $achievementsDir  =  $self->r->ce->{courseDirs}->{achievements};
 	my $achievementID    = $self->{achievementID};	
@@ -491,9 +490,7 @@ sub save_as_form {  # calls the save_as_handler
 		-type      => 'radio',
 		-name      => "action.save_as.saveMode",
 		-value     => "use_in_current",
-		-label     => '',
-		-onfocus   => $onChange,
-		       },"and use in achievement ".CGI::b("$achievementID"));
+		       })."and use in achievement ".CGI::b("$achievementID");
 		       
 	#Use can use it in a new achievement
 	my $create_new_achievement      =
@@ -501,12 +498,10 @@ sub save_as_form {  # calls the save_as_handler
 		-type      => 'radio',
 		-name      => "action.save_as.saveMode",
 		-value     => 'use_in_new',
-    			 -label     => '',
-		       },"and use in new achievement ",).CGI::textfield(
+		       })."and use in new achievement ".CGI::textfield(
 		-name => "action.save_as.id",
 		-value => "",
-		-onfocus   => $onChange,
-		-width => "50",
+#		-width => "50",
 			   );  
 	
 	#you can not use it at all
@@ -515,9 +510,7 @@ sub save_as_form {  # calls the save_as_handler
 		-type      => 'radio',
 		-name      => "action.save_as.saveMode",
 		-value     => "dont_use",
-		-label     => '',
-		-onfocus   => $onChange,
-		       },"and don't use in an achievement");
+		       })."and don't use in an achievement";
 	
 	my $andRelink = CGI::br(). $use_in_current_achievement.CGI::br().
 	    $create_new_achievement.CGI::br().$dont_use_in_achievement;

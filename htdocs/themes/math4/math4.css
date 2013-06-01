@@ -13,21 +13,20 @@
  * Artistic License for more details.
  */
 
-/* Bootstrap Overrides */
-.container-fluid {
-	padding: 0.5em;
+/* Bootstrap overrides */
+.row-fluid [class*="span"] {
+    min-height:0px;
 }
 
 /* Banner */
-ul#masthead {
+#masthead {
 	background-color: #038;
-	list-style-type: none;
 	margin: 0;
 	padding: 0;
 	padding: 5px;
 }
 
-li.webwork_logo {
+.webwork_logo {
 	background-color: #1048ae;
 	font-size: 1.6em;
 	font-weight: 500;
@@ -36,50 +35,36 @@ li.webwork_logo {
 								the logo & text doesn't look lopsided */
 }
 
-li.webwork_logo img {
+.webwork_logo img {
 	padding-right: 5px; /* distance itself to the Webwork text */
 }
 
-li.maa_logo img {
+.maa_logo img {
 	vertical-align: center;
 }
 
-ul#masthead li {
-	display: inline-block;
-	margin-right: 1em;
-	background: 
-	margin: 0;
-}
-
-ul#masthead a {
+#masthead a {
 	color: white;
 }
 
-ul#masthead a:hover {
+#masthead a:hover {
 	text-decoration: none;
 }
 
-ul#masthead li#loginstatus {
-	margin-right: 2px;
-}
-
-li#loginstatus {
+#loginstatus {
+    	padding-top:1ex;
 	color: white;
 	text-align: right;
-	padding: 0;
-	float: right;
 	font-size: 0.85em;
 	font-weight: normal;
 } 
 
-li#loginstatus a {
+#loginstatus a {
 	color: black;
-	margin-left: 0.5em;
 }
 
-li#loginstatus a .icon-signout {
+#loginstatus a .icon-signout {
 	font-size: 1em;
-	padding-left: 0.3em;
 }
 
 
@@ -114,11 +99,11 @@ h2.page-title {
 
 #info-panel-right {
 	margin-bottom: 0.5em;
-	width: 25%;
+/*	width: 25%; 8*/
 	overflow: hidden;
 	display: inline-block;
 	vertical-align: top;
-	float: right;
+/*	float: right; */
 }
 
 .breadcrumb {
@@ -132,7 +117,6 @@ h2.page-title {
 /* Question nav section */
 .problem-nav {
 	width: 30%;
-	margin-bottom: 1em;
 	display: inline-block;
 }
 
@@ -147,8 +131,8 @@ h2.page-title {
 	padding: 0.5em;
 }
 
-font.visible   { font-weight: bold; }
-font.hidden { font-style: italic; } 
+.font-visible   { font-weight: bold; }
+.font-hidden { font-style: italic; } 
 
 /* Home Page */
 ul.courses-list {
