@@ -6,11 +6,6 @@
  * within gateway tests, manages the timer, and posts 
  * alerts when test time is winding up.
  *
- * To install, include
- *    <script language="javascript" type="text/javascript" 
- *      src="<!--#url type="webwork" name="htdocs"-->/js/gateway.js"></script>
- * to the head othe the template file being used.
- * 
  * The code here relies heavily on the existence of form elements 
  * created by GatewayQuiz.pm
  *
@@ -24,8 +19,6 @@ function jumpTo(ref) {  // scrolling javascript function
 	    scrollTop: $("#prob"+pn).offset().top
 	}, 500);
     }
-    
-    
     return false; // prevent link from being followed
 }
 
@@ -108,12 +101,5 @@ function toMinSec(t) {
     return mn + ":" + sc;
 }
 
-// for some reason putting this as an onload event in the body tag
-// isn't working.  so start the timer here; the 500ms delay is to be 
-// sure that the timer has loaded
-setTimeout("runtimer()",500);
-// this does not work either
-// window.onload=runtimer();
-
-/* end of gateway javascript routines
- ***********************************************************/
+// Start timer after the DOM is ready
+$(setTimeout("runtimer()",500));

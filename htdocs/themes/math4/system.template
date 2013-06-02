@@ -2,7 +2,7 @@
 <html lang="en-US">
 <head>
 <meta charset='utf-8'>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!--
 ################################################################################
@@ -24,6 +24,7 @@
 
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
@@ -74,7 +75,7 @@ var tabberOptions = {manualStartup:true};
 
 
 <!-- Navigation -->
-<div id="site-navigation" class="span2">
+<div id="site-navigation" class="span2 hidden-phone">
 	<!--#if can="links"-->
         <div id="site-links">
 		<!--#links-->
@@ -192,7 +193,9 @@ var tabberOptions = {manualStartup:true};
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">
 						<!--#if can="output_problem_body"-->
+						<div class="problem-content">
 							<!--#output_problem_body-->
+						</div>
 						<!--#endif-->
 						<!--#if can="output_message"-->
 							<!--#output_message-->
