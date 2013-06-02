@@ -76,10 +76,15 @@ var tabberOptions = {manualStartup:true};
 <!-- Navigation -->
 <div id="site-navigation" class="span2">
 	<!--#if can="links"-->
+        <div>
 		<!--#links-->
+	</div>
 	<!--#endif-->
+
 	<!--#if can="siblings"-->
+	<div>
 		<!--#siblings-->
+	</div>
 	<!--#endif-->
 	<!--#if can="options"-->
 	<div class="info-box">
@@ -151,24 +156,26 @@ var tabberOptions = {manualStartup:true};
 		  <div class="Body span12">
 
 			<!--#if can="output_custom_edit_message"-->
+			<div class="row-fluid"><div class="span10">
 				<!--#output_custom_edit_message-->
+			</div><div class="span2"></div></div>
 			<!--#endif-->
 			<!--#if can="output_summary"-->
-				<div>
+			<div class="row-fluid"><div class="span10">
 					<!--#output_summary-->
-				</div>
+			</div><div class="span2"></div></div>
 			<!--#endif-->
 
 			<!--#if can="output_achievement_message"-->
-				<div>
+			<div class="row-fluid"><div class="span10">
 					<!--#output_achievement_message-->
-				</div>
+			</div><div class="span2"></div></div>
 			<!--#endif-->
 			
 			<!--#if can="output_comments" "-->
-			<div>
+			<div class="row-fluid"><div class="span10">
 				  <!--#output_comments-->
-			</div>
+			</div><div class="span2"></div></div>
 			<!--#endif-->
 				
 
@@ -178,6 +185,8 @@ var tabberOptions = {manualStartup:true};
 			<!--#endif-->
 
 			<!--#if can="output_form_start"-->
+			<div class="row-fluid">
+			  <div class="span10">
 				<!--#output_form_start-->
 
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
@@ -223,7 +232,7 @@ var tabberOptions = {manualStartup:true};
 			</div>
 		<!--#endif-->
 
-		</div></div>
+		</div><div class="span2"></div></div>
 	<!-- ====  end printing body parts   -->
 	<!--#else-->
 	<!-- ==== couldn't print body parts so we'll print entire body -->	       <div class="row-fluid">

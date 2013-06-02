@@ -626,9 +626,11 @@ sub links {
 		my $new_anchor;
 		if ($active) {
 			# add active class for current location
-			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, class=>"active", %target}, $text);
+#			$new_anchor = CGI::a({href=>$new_systemlink, class=>"$id active", %target}, $text);
+			$new_anchor = CGI::a({href=>$new_systemlink, class=>"active", %target}, $text);
 		} else {
-			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, %target}, "$text");
+#			$new_anchor = CGI::a({href=>$new_systemlink, class=>$id, %target}, "$text");
+			$new_anchor = CGI::a({href=>$new_systemlink, %target}, "$text");
 		}
 		
 		return $new_anchor;
@@ -734,37 +736,47 @@ sub links {
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
-					print CGI::start_ul();
+				    print CGI::start_li();
+				    print CGI::start_ul();
 					print CGI::start_li(); # $setID
 					print &$makelink("${pfx}ProblemSetDetail", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 					
 					if (defined $problemID) {
+					    print CGI::start_li();
 						print CGI::start_ul();
 						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
 						print CGI::end_ul();
+					    print CGI::end_li();
 					}
 					if (defined $problemID) {
+					    print CGI::start_li();
 						print CGI::start_ul();
 						print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
 						print CGI::end_ul();
+					    print CGI::end_li();
 					}
 					if (defined $problemID) {
+					    print CGI::start_li();
 						print CGI::start_ul();
 						print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 							if $ce->{showeditors}->{pgproblemeditor3};;
 						print CGI::end_ul();
+					    print CGI::end_li();
 					}
 					if (defined $problemID) {
+					    print CGI::start_li();
 						print CGI::start_ul();
 						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 							if $ce->{showeditors}->{simplepgeditor};;
 						print CGI::end_ul();
+					    print CGI::end_li();
 					}
 					
 					print CGI::end_li(); # end $setID
 					print CGI::end_ul();
+				    print CGI::end_li();
 				}
 				
 				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
@@ -1603,13 +1615,17 @@ sub feedbackMacro_email {
 	my $feedbackName = $r->maketext($ce->{feedback_button_name}) || $r->maketext("Email instructor");
 	
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackURL) . "\n";
-	$result .= $self->hidden_authen_fields . "\n";
+	#This is being used on forms with hidden_authen_fields already included
+	# in many pages so we need to change the fields to be hidden
+	my $hiddenFields = $self->hidden_authen_fields;
+	$hiddenFields =~ s/\"hidden_/\"email-hidden_/g;
+	$result .=  $hiddenFields."\n";
 	
 	while (my ($key, $value) = each %params) {
 	    next if $key eq 'pg_object';    # not used in internal feedback mechanism
 		$result .= CGI::hidden($key, $value) . "\n";
 	}
-	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
+	$result .= CGI::p(CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
 	$result .= CGI::endform() . "\n";
 	
 	return $result;
@@ -1626,8 +1642,9 @@ sub feedbackMacro_form {
 	my $feedbackName = $r->maketext($ce->{feedback_button_name}) || $r->maketext("Email instructor");
 	
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackFormURL,-target=>"WW_info") . "\n";
-	$result .= $self->hidden_authen_fields . "\n";
-	
+
+	$result .= $self->hidden_authen_fields . "\n";	
+
 	while (my ($key, $value) = each %params) {
 	    if ($key eq 'pg_object') {
 	        my $tmp = $value->{body_text}; 

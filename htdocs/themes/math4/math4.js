@@ -8,6 +8,8 @@ $(function(){
     // replace pencil gifs by something prettier
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
 
+    // Turn summaries into popovers
+    $('a.table-summary').popover();
 
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');
@@ -49,6 +51,7 @@ $(function(){
     // Problem formatting
     $('#problemMainForm').addClass('problem-main-form form-inline');
     $('.attemptResults').addClass('table table-condensed table-bordered');
+    $('#problem-content').addClass('well well-small');
 
     // Past answers formatting
     $('#past-answer-table').addClass('table');
@@ -131,8 +134,9 @@ $(function(){
     $('#mainform ').addClass('form-inline');
     $('#mainform input:button').addClass('btn btn-primary');
     $('#mainform .btn').addClass('btn-small');
-    $('#mainform select').addClass('input-xxlarge');
+    $('#mainform .InfoPanel select').addClass('input-xxlarge');
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
+    $('#mainform select[name=local_sets]').addClass('input-small').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
 
     //Change tabber tabs to twitter tabs
