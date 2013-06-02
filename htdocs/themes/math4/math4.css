@@ -70,13 +70,13 @@
 
 /* Nav */
 
-#site-navigation ul {
+#site-links ul {
 	border-radius: 8px;
 	border: 1px solid #e6e6e6;
 	background: #f6f6f6;
 }
 
-#site-navigation ul ul {
+#site-links ul ul {
     border:0px;
 }
 

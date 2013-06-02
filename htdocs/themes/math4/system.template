@@ -76,7 +76,7 @@ var tabberOptions = {manualStartup:true};
 <!-- Navigation -->
 <div id="site-navigation" class="span2">
 	<!--#if can="links"-->
-        <div>
+        <div id="site-links">
 		<!--#links-->
 	</div>
 	<!--#endif-->

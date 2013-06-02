@@ -95,19 +95,7 @@ table.gwAttemptResults td.output {
 }
 
 div.gwPrintMe { 
-	width: 25%;
 	float: right;
 	margin-top: 2em;
-	margin-right: 1em;
-/*	position: relative;
-	left: 65%;
-	top: -1em;
-	z-index: 1; */
-/*	margin-left: auto;
-	margin-right: 2em;
-	margin-top: 3px; */
-	border: dashed black 1px;
-	padding: 3px;
-	color: black;
-	background-color: #e0e0ff;
+	margin-right: 1ex;
 }

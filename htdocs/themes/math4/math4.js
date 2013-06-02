@@ -149,5 +149,11 @@ $(function(){
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
 
+     //GAtewayQuiz
+    $('.gwPrintMe a').addClass('btn btn-info');
+    $('.gwPreview a').addClass('btn');
+
 })
 
+
+  
