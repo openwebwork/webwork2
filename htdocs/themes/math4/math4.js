@@ -83,7 +83,9 @@ $(function(){
     $('.user-list-form input:button').addClass('btn btn-info');
     $('.user-list-form input:reset').addClass('btn btn-info');
     $('.user-list-form').wrapInner('<div />');
-    $('.classlist-table').addClass('table table-condensed');
+    $('.classlist-table').addClass('table table-condensed table-bordered');
+    $('.classlist-table').attr('border',0);
+    $('.classlist-table').attr('cellpadding',0);
     $('#show_hide').addClass('btn btn-info');
 
     //Homework sets editor config
