@@ -1233,8 +1233,7 @@ sub head {
 
         # Javascript and style for knowls
         print qq{
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/knowl.js"></script>};
+           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
 
         return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
 }
@@ -2094,10 +2093,10 @@ sub body {
 				my $points = ($pv > 1) ? 
 					" (" . $pv . " points)" : 
 					" (1 point)";
-				print CGI::a({-name=>"#$i1"},"");
+				print CGI::a({-href=>"#", -id=>"prob$i"},"");
 				print CGI::strong("Problem $problemNumber."), 
 					"$points\n", $recordMessage;
-				print CGI::p($pg->{body_text}),
+				print CGI::div($pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
 				       CGI::b("Note: ") : "", 
 				       CGI::i($pg->{result}->{msg}));
@@ -2120,7 +2119,7 @@ sub body {
 				# keep the jump to anchors so that jumping to 
 				#    problem number 6 still works, even if 
 				#    we're viewing only problems 5-7, etc.
-				print CGI::a({-name=>"#$i1"},""), "\n";
+				print CGI::a({-href=>"#", -id=>"prob$i"},""), "\n";
 				# and print out hidden fields with the current 
 				#    last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
@@ -2139,7 +2138,7 @@ sub body {
 # 	    print CGI::hidden({-name=>$probid, -value=>$probval}), "\n";
 			}
 		}
-		print CGI::p($jumpLinks, "\n");
+		print CGI::div($jumpLinks, "\n");
 		print "\n",CGI::hr(), "\n";
 
 		if ($can{showCorrectAnswers}) {
@@ -2204,15 +2203,17 @@ sub body {
 	# finally, put in a show answers option if appropriate
 	# print answer inspection button
 	if ($authz->hasPermissions($user, "view_answers")) {
+	    my $hiddenFields = $self->hidden_authen_fields;
+	    $hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, courseID => $ce->{courseName});
 		my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
 		print "\n", CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
-			$self->hidden_authen_fields,"\n",
+			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$ce->{courseName}), "\n",
 			CGI::hidden(-name => 'problemID', -value=>($startProb+1)), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$setVName), "\n",
 			CGI::hidden(-name => 'studentUser',    -value=>$effectiveUser), "\n",
-			CGI::p( {-align=>"left"},
+			CGI::p(
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 				), "\n",
 			CGI::endform();
@@ -2371,7 +2372,19 @@ sub problemListRow($$$) {
 
 ##### logging subroutine ####
 
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
 
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
+	#This is for page specfific js
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
+	
+	return "";
+}
 
 
 1;

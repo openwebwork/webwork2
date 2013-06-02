@@ -965,7 +965,7 @@ sub output_problem_body{
 	my $pg = $self->{pg};
 
 	print "\n";
-	print CGI::p($pg->{body_text});
+	print CGI::div($pg->{body_text});
 	return "";
 }
 
@@ -1297,7 +1297,7 @@ sub output_misc{
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
 	#HACK FIXME
 	print q{
-		<script language="javascript"> 
+		<script> 
 			var new_keyboard = new Keys([
 			{value: 'sqrt()',
 			 display: '$ \\\\sqrt{} $',
@@ -1549,14 +1549,16 @@ sub output_past_answer_button{
 		
 	# print answer inspection button
 	if ($authz->hasPermissions($user, "view_answers")) {
+	        my $hiddenFields = $self->hidden_authen_fields;
+		$hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		print "\n",
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
-			$self->hidden_authen_fields,"\n",
+			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
 			CGI::hidden(-name => 'problemID', -value=>$problem->problem_id), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
                		CGI::hidden(-name => 'studentUser',  -value=>$problem->user_id), "\n",
-			CGI::p( {-align=>"left"},
+			CGI::p(
 				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",
 			CGI::endform();

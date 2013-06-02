@@ -51,7 +51,7 @@ $(function(){
     // Problem formatting
     $('#problemMainForm').addClass('problem-main-form form-inline');
     $('.attemptResults').addClass('table table-condensed table-bordered');
-    $('#problem-content').addClass('well well-small');
+    $('.problem .problem-content').addClass('well well-small');
 
     // Past answers formatting
     $('#past-answer-table').addClass('table');

@@ -378,8 +378,7 @@ sub body {
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
 			CGI::th($r->maketext("Status")),
-			$canScoreProblems ? CGI::th($r->maketext("Grader")) : ""
-
+			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th("")
 		);
 		
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {

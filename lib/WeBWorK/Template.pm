@@ -143,6 +143,9 @@ sub template {
 			if ($function eq "if") {
 				# a predicate can only be true if everything else on the ifstack is already true, for ANDing
 				push @ifstack, (if_handler($cg, [@args]) && $ifstack[-1]);
+				#Need to deal with the case where there are nested elses.  So an else should only become true if its inside a block that was printing.  
+			} elsif ($function eq "else" and @ifstack > 2) {
+				$ifstack[-1] = (not $ifstack[-1]) && $ifstack[-2];
 			} elsif ($function eq "else" and @ifstack > 1) {
 				$ifstack[-1] = not $ifstack[-1];
 			} elsif ($function eq "endif" and @ifstack > 1) {

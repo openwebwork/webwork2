@@ -152,7 +152,7 @@ var tabberOptions = {manualStartup:true};
 	<!--#endif-->
 
 	 <!--#if can="output_problem_body"--> 
-	    <!-- ==== in this case print body parts --ELSE-- print entire body -->		<div class="row-fluid">
+	    <!-- ==== in this case print body parts ELSE print entire body -->		<div class="row-fluid">
 		  <div class="Body span12">
 
 			<!--#if can="output_custom_edit_message"-->
@@ -233,14 +233,16 @@ var tabberOptions = {manualStartup:true};
 		<!--#endif-->
 
 		</div><div class="span2"></div></div>
+                </div></div>
+
 	<!-- ====  end printing body parts   -->
 	<!--#else-->
-	<!-- ==== couldn't print body parts so we'll print entire body -->	       <div class="row-fluid">
-	<!--#if can="info"-->
-	<div class="body span8">
-	<!--#else-->
-	<div class="body span12">
-	<!--#endif-->
+	<!-- ==== couldn't print body parts so we'll print entire body -->	         <div class="row-fluid">
+	  <!--#if can="info"-->
+	  <div class="body span8">
+	  <!--#else-->
+	    <div class="body span12">
+	  <!--#endif-->
 	      <!--#body-->
 	</div>
 	<!-- inserted body as a whole -->

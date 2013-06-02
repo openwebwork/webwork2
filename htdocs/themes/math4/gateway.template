@@ -1,5 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset='utf-8'>
+
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
@@ -17,34 +20,45 @@
 # Artistic License for more details.
 ################################################################################
 -->
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<meta http-equiv="Pragma" content="no-cache"/>
-<meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/gateway.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/gateway.css"/>
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
-<script language="javascript" type="text/javascript" 
-  src="<!--#url type="webwork" name="htdocs"-->/js/gateway.js"></script>
+<!--#output_JS-->
 </head>
-<body bgcolor="white">
-<div id="masthead">
-	<div id="loginstatus">
+<body>
+
+<div class="container-fluid">
+<!-- Header -->
+<div id = "masthead" class="row-fluid">
+	<div class="span2 webwork_logo">
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+	</div>
+	<div class="span4 maa_logo">
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+	</div>
+	<div id="loginstatus" class="offset3 span3">
 		<!--#loginstatus-->
 	</div>
-	<div id="logo">
-		<img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" />
-	</div>
 </div>
-<hr class="for-broken-browsers"/>
-<div id="big-wrapper">
-	<div id="breadcrumbs">
-		<!--#path style="text" text=" &#x2192; "-->
-	</div>
-	<div id="content">
+	<!-- Breadcrumb -->
+	<div class="row-fluid"><div class="span12">
+	<ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+	</ul>
+	</div></div>
+
+<div class="row-fluid">
+
+
+  <div id="content" class="span12">
 		
 		<!--#if can="info"-->
 		<!--<div id="page-info">-->
@@ -94,7 +108,7 @@
 		</div>
 	</div>
 	<!-- [gateway] removed left sidebar -->
-</div> <!-- big-wrapper -->
+</div></div> <!-- big-wrapper -->
 
 </body>
 </html>

@@ -670,8 +670,9 @@ sub links {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
 			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-			
+			print CGI::end_li();
 			if (defined $setID) {
+			    print CGI::start_li();
 				print CGI::start_ul();
 				print CGI::start_li(); # $setID
 				# show a link if we're displaying a homework set, or a version
@@ -684,19 +685,21 @@ sub links {
 				} elsif ($setID =~ /,v(\d)+$/) {
 					print &$makelink("${pfx}GatewayQuiz", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 				}
+			    print CGI::end_li();
 
 				if (defined $problemID) {
+				    print CGI::start_li();
 					print CGI::start_ul();
 					print CGI::start_li(); # $problemID
-					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $problemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
-					
+					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $problemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);					
 					print CGI::end_li(); # end $problemID
 					print CGI::end_ul();
+				    print CGI::end_li();
 				}
-				print CGI::end_li(); # end $setID
 				print CGI::end_ul();
+			    print CGI::end_li(); # end Homework Sets
 			}
-			print CGI::end_li(); # end Homework Sets
+
 			
 			if ($authz->hasPermissions($userID, "change_password") or $authz->hasPermissions($userID, "change_email_address")) {
 				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
@@ -714,6 +717,8 @@ sub links {
 				
 				print CGI::start_li(); # Instructor Tools
 				print &$makelink("${pfx}Index", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+				print CGI::end_li();
+				print CGI::start_li();
 				print CGI::start_ul();
 				
                 #class list editor
@@ -740,41 +745,25 @@ sub links {
 				    print CGI::start_ul();
 					print CGI::start_li(); # $setID
 					print &$makelink("${pfx}ProblemSetDetail", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+                     		        print CGI::end_li();
 					
 					if (defined $problemID) {
 					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
+					    print CGI::start_ul();
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
-						print CGI::end_ul();
-					    print CGI::end_li();
-					}
-					if (defined $problemID) {
-					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
-						print CGI::end_ul();
-					    print CGI::end_li();
-					}
-					if (defined $problemID) {
-					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
-							if $ce->{showeditors}->{pgproblemeditor3};;
-						print CGI::end_ul();
-					    print CGI::end_li();
-					}
-					if (defined $problemID) {
-					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-							if $ce->{showeditors}->{simplepgeditor};;
-						print CGI::end_ul();
+					    
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+						if $ce->{showeditors}->{pgproblemeditor3};;
+	
+					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+						if $ce->{showeditors}->{simplepgeditor};;
+					    print CGI::end_ul();
 					    print CGI::end_li();
 					}
 					
-					print CGI::end_li(); # end $setID
 					print CGI::end_ul();
 				    print CGI::end_li();
 				}
@@ -1531,8 +1520,14 @@ sub optionsMacro {
 	print CGI::h2($r->maketext("Display Options"));
 	
 	my $result = CGI::start_form("POST", $self->r->uri);
-	$result .= $self->hidden_authen_fields;
-	$result .= $self->hidden_fields(@extra_params) if @extra_params;
+	my $hiddenFields = $self->hidden_authen_fields;
+	$hiddenFields =~ s/\"hidden_/\"options-hidden_/g;
+	$result .= $hiddenFields;
+	if (@extra_params) {
+	    $hiddenFields = $self->hidden_fields(@extra_params);
+	    $hiddenFields =~ s/\"hidden_/\"options-hidden_/g;
+	    $result .= $hiddenFields;
+	}
 	$result .= CGI::start_div({class=>"viewOptions"});
 	
 	if (exists $options_to_show{displayMode}) {
