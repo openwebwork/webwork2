@@ -27,7 +27,7 @@ function init_webservice(command) {
     "user":"user-needs-to-be-defined",
     "library_name":"Library",
     "courseID":'change-me',
-    "set":"set0",
+    "set_id":"set0",
     "new_set_name":"new set",
     "command":"buildtree"
   };
@@ -133,6 +133,7 @@ function addme(path, who) {
   var mydefaultRequestObject = init_webservice('addProblem');
   if(mydefaultRequestObject == null) {
     // We failed
+    console.log("Could not get webservice request object");
     return false;
   }
   
@@ -145,7 +146,7 @@ function addme(path, who) {
       pathlist.push(allprobs[i].value);
     }
   }
-  mydefaultRequestObject.set = target;
+  mydefaultRequestObject.set_id = target;
   addemcallback(setmakerWebserviceURL, mydefaultRequestObject, pathlist, 0)(true);
 }
 
@@ -174,7 +175,7 @@ function markinset() {
     target = null;
   }
   var shownprobs = $('[name^="filetrial"]'); // shownprobs.value
-  ro.set = target;
+  ro.set_id = target;
   ro.command = 'true';
   return $.post(setmakerWebserviceURL, ro, function (data) {
     var response = $.parseJSON(data);
