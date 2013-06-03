@@ -1495,7 +1495,7 @@ sub output_tag_info{
 		my $templatedir = $r->ce->{courseDirs}->{templates};
 		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-                print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tagwidget.js"}), CGI::end_script();
+                print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}), CGI::end_script();
                 print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
