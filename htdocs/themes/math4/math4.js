@@ -13,7 +13,8 @@ $(function(){
     $('#login_form input').addClass('input-large');
     
     // Changes links in masthead
-    $('#loginstatus a').addClass('btn btn-mini btn-info');
+    $('#loginstatus a').addClass('btn btn-small');
+    $('#loginstatus a').append(' <i class="icon-signout"></i>');
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
@@ -79,7 +80,7 @@ $(function(){
     $('.user-list-form input:button').addClass('btn btn-info');
     $('.user-list-form input:reset').addClass('btn btn-info');
     $('.user-list-form').wrapInner('<div />');
-    $('.classlist-table').addClass('small-table-text table table-condensed');
+    $('.classlist-table').addClass('table table-condensed');
     $('#show_hide').addClass('btn btn-info');
 
     //Homework sets editor config
@@ -137,12 +138,12 @@ $(function(){
     //Change tabber tabs to twitter tabs
     if ($('div.tabber').length > 0) {tabberAutomatic({});}
     $('ul.tabbernav').removeClass('tabbernav').addClass('old-tabber nav nav-tabs');
-    $('ul.old-tabber li a').each(function () { $(this).attr('href','#'+$(this).attr('title')).attr('data-toggle','tab');});
+    $('ul.old-tabber li a').each(function () { $(this).attr('href','#'+$(this).attr('title').replace(/\s+/g, '')).attr('data-toggle','tab');});
     $('div.tabberlive').removeClass('tabberlive').addClass('tab-content');
-    $('div.tabbertab').each(function() { $(this).removeClass('tabbertab').addClass('tab-pane').attr('id',$(this).find('h3').html())});
+    $('div.tabbertab').each(function() { $(this).removeClass('tabbertab').addClass('tab-pane').attr('id',$(this).find('h3').html().replace(/\s+/g,''))});
     $('div.tab-pane h3').remove();
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
 
-
 })
+

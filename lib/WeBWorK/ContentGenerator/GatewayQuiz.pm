@@ -392,7 +392,7 @@ sub attemptResults {
 			     CGI::td({-class=>"output"}, $self->nbsp($resultString)) )  : "";
 		$resultsData{'Results'} = '';
 		$resultsRows{'Messages'} .= $showMessages ? 
-		    CGI::Tr( $pre . $resultsData{'Messages'} . 
+		    CGI::Tr( $resultsData{'Messages'} . 
 			     CGI::td({-class=>"output"}, $self->nbsp($answerMessage)) ) : "";
 
 		$numAns++;
@@ -1231,12 +1231,6 @@ sub head {
         my $ce = $self->r->ce;
         my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-        # Javascript and style for knowls
-        print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/knowl.js"></script>};
-
         return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
 }
 
@@ -1890,10 +1884,8 @@ sub body {
 			}
 		}
 	} else {
-		print CGI::start_div({class=>'gwMessage'});
-
 		if ( ! $checkAnswers && ! $submitAnswers ) {
-
+			print CGI::start_div({class=>'gwMessage'});
 			if ( $can{showScore} ) {
 				my $scMsg = "Your recorded score on this " .
 					"(test number $versionNumber) is " .
@@ -1907,16 +1899,20 @@ sub body {
 				}
 				print CGI::strong($scMsg), CGI::br();
 			}
+			print CGI::end_div();
 		}
 
 		if ( $set->version_last_attempt_time ) {
+			print CGI::start_div({class=>'gwMessage'});
 			print "Time taken on test: $elapsedTime min " .
 				"($allowed min allowed).";
+			print CGI::end_div();
 		} elsif ( $exceededAllowedTime && $recordedScore != 0 ) {
+			print CGI::start_div({class=>'gwMessage'});
 			print "(This test is overtime because it was not " .
 				"submitted in the allowed time.)";
+			print CGI::end_div();
 		}
-		print CGI::end_div();
 
 		if ( $canShowWork && $set->set_id ne "Undefined_Set" ) {
 			print "The test (which is number $versionNumber) may " .

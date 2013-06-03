@@ -741,13 +741,8 @@ sub head {
 		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
 		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
 	};
-	#If we are using achievements then print the achievement css file
-	if ($ce->{achievementsEnabled}) {
-	    print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$ce->{webworkURLs}->{htdocs}/css/achievements.css\"/>";	
-	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script> 
            <script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
            <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
@@ -1675,8 +1670,14 @@ sub output_JS{
 	# The Base64.js file, which handles base64 encoding and decoding.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
 	
+	# This is for any page specific js.  Right now its just used for achievement popups
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
 	
 	return "";
+}
+
+sub output_achievement_CSS {
+    return "";
 }
 
 # Simply here to indicate to the template that this page has body part methods which can be called

@@ -2147,18 +2147,24 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "checked") {
-		
-		# FIXME: kludge (R)
-		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
-		# in which case the hidden field overrides the parameter with a 0
-		return CGI::checkbox(
-			-name => $fieldName,
-			-checked => $value,
-			-label => "",
-			-value => 1
-		) . CGI::hidden(
-			-name => $fieldName,
-			-value => 0
+	
+	    my %attr = ( name => $fieldName,
+			 label => "",
+			 value => 1
+		);
+	    
+	    $attr{'checked'} = 1 if ($value);
+	    
+	    
+	    
+	    
+	    
+	    # FIXME: kludge (R)
+	    # if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
+	    # in which case the hidden field overrides the parameter with a 0
+	    return CGI::checkbox( \%attr ) . CGI::hidden(
+		-name => $fieldName,
+		-value => 0
 		);
 	}
 }
@@ -2339,7 +2345,7 @@ sub printTableHTML {
 	if ($editMode or $exportMode) {
 		print CGI::start_table({id=>"set_table_id", class=>"set_table"});
 	} else {
-		print CGI::start_table({-border=>1, -class=>"set_table", id=>"set_table_id"});
+		print CGI::start_table({-class=>"set_table", id=>"set_table_id"});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));

@@ -265,7 +265,9 @@ sub pre_header_initialize {
 		if ($scope eq "none") { 
 			return $r->maketext("No sets selected for scoring".".");
 		} elsif ($scope eq "all") {
-			@setsToScore = @{ $r->param("allSetIDs") };
+#			@setsToScore = @{ $r->param("allSetIDs") };
+		    @setsToScore = $db->listGlobalSets;
+
 		} elsif ($scope eq "visible") {
 			@setsToScore = @{ $r->param("visibleSetIDs") };
 		} elsif ($scope eq "selected") {
@@ -968,7 +970,7 @@ sub enable_reduced_scoring_form {
 			-input_attr=>{
 				-name => "action.enable_reduced_scoring.value",
 				-values => [ 0, 1 ],
-				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "1",
+				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "0",
 				-labels => {
 					0 => $r->maketext("Disable"),
 					1 => $r->maketext("Enable"),
@@ -2325,23 +2327,26 @@ CONTENT
 	}
 	
 	if ($type eq "checked") {
-		
+
 		# FIXME: kludge (R)
 		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		# in which case the hidden field overrides the parameter with a 0
-		return WeBWorK::CGI_labeled_input(
-			-type=>"checkbox",
-			-id=>$fieldName."_id",
-			-label_text=>ucfirst($fieldName),
-			-input_attr=>{
-				-name => $fieldName,
-				-checked => $value,
-				-label => "",
-				-value => 1
-			}
+	    my %attr = ( name => $fieldName,
+			 label => "",
+			 value => 1
+	    );
+
+	    $attr{'checked'} = 1 if ($value);
+
+
+	    return WeBWorK::CGI_labeled_input(
+		-type=>"checkbox",
+		-id=>$fieldName."_id",
+		-label_text=>ucfirst($fieldName),
+		-input_attr=>\%attr
 		) . CGI::hidden(
-			-name => $fieldName,
-			-value => 0
+		-name => $fieldName,
+		-value => 0
 		);
 	}
 }
@@ -2584,7 +2589,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/jquery.js"}), CGI::end_script();
+#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/jquery.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
