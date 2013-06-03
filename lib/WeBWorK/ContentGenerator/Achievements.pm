@@ -61,6 +61,9 @@ sub initialize {
 
 	$self->{globalData} = $globalUserAchievement;
 
+	#Checks to see if user items are enavbled and if the user has
+	# achievement data
+
 	if ($ce->{achievementItemsEnabled} && defined $globalUserAchievement) {
 	    
 	    my $items = WeBWorK::AchievementItems::UserItems($effectiveUserName, $db, $ce);
@@ -69,6 +72,10 @@ sub initialize {
 	    
 	    my $usedItem = $r->param('useditem');
 	    
+	    # if the useditem parameter is defined then the student wanted to
+	    # use an item so lets do that by calling the appropriate item's 
+	    # use method and printing results
+
 	    if (defined $usedItem) {
 		my $error = $$items[$usedItem]->use_item($effectiveUserName, $r);
 		if ($error) {
@@ -211,9 +218,13 @@ sub body {
 	    if (@items) {
 		my $itemnumber = 0;
 		foreach my $item (@items) {
+		    # Print each items name and description 
 		    print CGI::start_div({class=>"achievement-item"});
 		    print CGI::h3($item->name());
 		    print CGI::p($item->description());
+		    # Print a modal popup for each item which contains the form
+		    # necessary to get the data to use the item.  Print the 
+		    # form in the modal body.  
 		    print CGI::a({href=>"\#modal_".$item->id(), role=>"button", "data-toggle"=>"modal",class=>"btn",id=>"popup_".$item->id()},"Use Item");
 		    print CGI::start_div({id=>"modal_".$item->id(),class=>"modal hide fade"});
 		    print CGI::start_div({class=>'modal-header'});
@@ -222,6 +233,8 @@ sub body {
 		    print CGI::end_div();
 		    print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"itemform_$itemnumber", class=>"achievementitemform"});
 		    print CGI::start_div({class=>"modal-body"});
+		    #Note: we provide the item with some information about
+		    #the current sets to help set up the form fields. 
 		    print $item->print_form(\@sets,\@setProblemCount,$r);
 		    print CGI::hidden({name=>"useditem", value=>"$itemnumber"});
 		    print CGI::end_div();
