@@ -47,7 +47,6 @@ my %OPLtables = (
  section => 'OPL_section',
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
- morelt_pgfile => 'OPL_morelt_pgfile',
  pgfile_problem => 'OPL_pgfile_problem',
 );
 
@@ -66,7 +65,6 @@ my %NPLtables = (
  section => 'NPL-section',
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
- morelt_pgfile => 'NPL-morelt-pgfile',
  pgfile_problem => 'NPL-pgfile-problem',
 );
 
@@ -164,6 +162,7 @@ if($libraryVersion eq '2.5') {
 	path_id int(15) NOT NULL,
 	filename varchar(255) NOT NULL,
 	morelt_id int(15),
+	level int(15),
 	PRIMARY KEY (pgfile_id)
 '],
 [$tables{keyword}, '
@@ -224,11 +223,6 @@ if($libraryVersion eq '2.5') {
 	leader int(15), # pgfile_id of the MLT leader
 	KEY (name),
 	PRIMARY KEY (morelt_id)
-'],
-[$tables{morelt_pgfile}, '
-	morelt_id int(15) DEFAULT 0 NOT NULL,
-	pgfile_id int(15) DEFAULT 0 NOT NULL,
-	PRIMARY KEY (morelt_id, pgfile_id)
 '],
 [$tables{pgfile_problem}, '
 	pgfile_id int(15) DEFAULT 0 NOT NULL,
@@ -435,7 +429,7 @@ sub pgfiles {
 	my $name = $File::Find::name;
 	my ($subject, $chapter, $section, $date, $institution, $author, $text);
 	my ($edition, $textauthor, $textsection, $textproblem, $tagged);
-	my ($morelt, $morelt_leader);
+	my ($morelt, $morelt_leader, $level);
 	%textinfo=();
 	my @textproblems = (-1);
   if ($name =~ /swf$/) {
@@ -498,6 +492,12 @@ sub pgfiles {
 					$morelt = $1;
 					$morelt =~ s/'//g;
 					$morelt = lc($morelt);
+					last SWITCH;
+				}
+				if (/#.*\bLevel\(\s*'?(.*?)'?\s*\)/) {
+					$level = $1;
+					$level =~ s/\D//g;
+					$level = int($level);
 					last SWITCH;
 				}
 				if (/#.*\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
@@ -704,6 +704,7 @@ print "NO SUBJECT $name\n";
 			# pgfile table
 			#
 			my $pgfile_id;
+                        $level = $level || 0;
 			$dbh->do("INSERT INTO `$tables{pgfile}`
 					VALUES(
 						\"\",
@@ -712,14 +713,15 @@ print "NO SUBJECT $name\n";
 						\"$institution\",
 						\"$path_id\",
 						\"$pgfile\",
-						\"\" # morelt_id filled in below
+						\"\", # morelt_id filled in below
+						\"$level\"
 					)"
 					);
 			dbug "INSERT INTO pgfile VALUES( \"\", \"$DBsection_id\", \"$author_id\", \"$institution\", \"$path_id\", \"$pgfile\", \"\" )\n";
 			$query = "SELECT pgfile_id FROM `$tables{pgfile}` WHERE filename = \"$pgfile\" and path_id=\"$path_id\"";
 			$pgfile_id = $dbh->selectrow_array($query);
 
-			# morelt table, and morelt_pgfile many-many table
+			# morelt table
 			if($morelt) {
 				$query = "SELECT morelt_id FROM `$tables{morelt}` WHERE name = \"$morelt\"";
 				$morelt_id = $dbh->selectrow_array($query);
@@ -746,10 +748,6 @@ print "NO SUBJECT $name\n";
 					);
 					dbug "UPDATE morelt leader for $morelt_id to $pgfile_id\n";
 				}
-				$dbh->do("INSERT INTO `$tables{morelt_pgfile}`
-					VALUES(\"$morelt_id\", \"$pgfile_id\")");
-				dbug "INSERT INTO `$tables{morelt_pgfile}`
-					VALUES($morelt_id, $pgfile_id)";
 			}
 
 			# keyword table, and problem_keyword many-many table
