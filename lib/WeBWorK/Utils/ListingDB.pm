@@ -63,7 +63,6 @@ my %OPLtables = (
  section => 'OPL_section',
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
- morelt_pgfile => 'OPL_morelt_pgfile',
  pgfile_problem => 'OPL_pgfile_problem',
 );
 
@@ -82,7 +81,6 @@ my %NPLtables = (
  section => 'NPL-section',
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
- morelt_pgfile => 'NPL-morelt-pgfile',
  pgfile_problem => 'NPL-pgfile-problem',
 );
 
