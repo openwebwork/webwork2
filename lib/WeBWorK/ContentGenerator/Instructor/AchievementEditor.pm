@@ -219,6 +219,13 @@ sub body {
 		CGI::hidden(-name=>'sourceFilePath',
 		            -default=>$self->{sourceFilePath}) : '';
 
+		print CGI::script(<<EOF);
+		function setRadio(i) {
+		  document.getElementById('action'+i).checked = true;
+		}
+EOF
+
+
 	print CGI::p($header),
 
 		CGI::start_form({method=>"POST", id=>"editor", name=>"editor", action=>"$uri", enctype=>"application/x-www-form-urlencoded"}),
@@ -237,36 +244,47 @@ sub body {
 	
 ######### print action forms
 		
-	print CGI::start_table({});
-	
 	my @formsToShow = @{ ACTION_FORMS() };
 	my $default_choice = $formsToShow[0];
 	my $i = 0;
+	my @divArr = ();
+	
 	foreach my $actionID (@formsToShow) {
+
 	    my $actionForm = "${actionID}_form";
+	    my $onChange = "setRadio($i)";
 	    my %actionParams = $self->getActionParams($actionID);
-	    my $line_contents = $self->$actionForm(%actionParams);
+	    my $line_contents = $self->$actionForm($onChange, %actionParams);
 	    my $radio_params = {-type=>"radio", -name=>"action", -value=>$actionID};
 	    $radio_params->{checked}=1 if ($actionID eq $default_choice) ;
 	    $radio_params->{id} = "action$i";
-	    print CGI::Tr({-valign=>"top"},
-			  CGI::td({}, CGI::input($radio_params)),
-			  CGI::td({}, $line_contents)
-		) if $line_contents;
-	    
+
+	    if($line_contents){
+		my @titleArr = split(" ", ucfirst(WeBWorK::underscore_to_whitespace($actionForm)));
+		pop @titleArr;
+		my $title = join(" ", @titleArr);
+
+		push @divArr, join("",
+				   CGI::h3($title),
+				   CGI::div({-class=>"pg_editor_input_span"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionForm."_id", -label_text=>ucfirst(WeBWorK::underscore_to_whitespace($actionForm)), -input_attr=>$radio_params),CGI::br()),
+				   CGI::div({-class=>"pg_editor_input_div"},$line_contents),
+				   CGI::br())
+	    }
 	    $i++;
 	}
+	
+	my $divArrRef = \@divArr;
+	
+	print CGI::div({-class=>"tabber"},
+		       CGI::div({-class=>"tabbertab"},$divArrRef)
+	    );
 	
 	print CGI::Tr({}, CGI::td({-colspan=>2}, "Select above then:",
 				  CGI::submit(-name=>'submit', -value=>"Take Action!"),
 				  ));
 	
-	print CGI::end_table();	
-	
-	
 	print  CGI::end_form();
 
-	print CGI::script("updateTarget()");
 	return "";
 
 
@@ -423,7 +441,7 @@ sub fixAchievementContents {
 }
 
 sub save_form {
-	my ($self, %actionParams) = @_;
+    	my ($self, $onChange, %actionParams) = @_;
 	my $r => $self->r;
 
 	if (-w $self->{sourceFilePath}) {
@@ -460,7 +478,7 @@ sub save_handler {
 
 
 sub save_as_form {  # calls the save_as_handler 
-	my ($self, %actionParams) = @_;
+	my ($self, $onChange, %actionParams) = @_;
 	my $sourceFilePath  = $self->{sourceFilePath};
 	my $achievementsDir  =  $self->r->ce->{courseDirs}->{achievements};
 	my $achievementID    = $self->{achievementID};	
@@ -474,6 +492,7 @@ sub save_as_form {  # calls the save_as_handler
 		-name      => "action.save_as.saveMode",
 		-value     => "use_in_current",
 		-label     => '',
+		-onfocus   => $onChange,
 		       },"and use in achievement ".CGI::b("$achievementID"));
 		       
 	#Use can use it in a new achievement
@@ -486,6 +505,7 @@ sub save_as_form {  # calls the save_as_handler
 		       },"and use in new achievement ",).CGI::textfield(
 		-name => "action.save_as.id",
 		-value => "",
+		-onfocus   => $onChange,
 		-width => "50",
 			   );  
 	
@@ -496,6 +516,7 @@ sub save_as_form {  # calls the save_as_handler
 		-name      => "action.save_as.saveMode",
 		-value     => "dont_use",
 		-label     => '',
+		-onfocus   => $onChange,
 		       },"and don't use in an achievement");
 	
 	my $andRelink = CGI::br(). $use_in_current_achievement.CGI::br().
@@ -503,8 +524,8 @@ sub save_as_form {  # calls the save_as_handler
 	    
 	return 'Save as '.
 	    CGI::textfield(
-		-name=>'action.save_as.target_file', -size=>80, -value=>"$sourceFileName",  
-	    ).",".
+		-name=>'action.save_as.target_file', -size=>40, -value=>"$sourceFileName",  
+	    ).
 	    CGI::hidden(-name=>'action.save_as.source_file', -value=>$sourceFilePath ).
 	    $andRelink;
 }
@@ -651,5 +672,20 @@ sub fresh_edit_handler {
 	#$self->addgoodmessage("fresh_edit_handler called");
 }
 
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	
+	return "";
+}
+
+sub output_tabber_CSS{
+	return "";
+}
 
 1;
