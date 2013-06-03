@@ -91,6 +91,7 @@ $(function(){
     //Homework sets editor config
     $('#problemsetlist').addClass('form-inline set-list-form');
     $('#problemsetlist2').addClass('form-inline set-list-form');
+    $('.set-id-tooltip').tooltip().click(function() {});
     $('.set-list-form select').addClass('input-medium');
     $('.set-list-form input:text').addClass('input-medium');
     $('.set-list-form select[name="action.filter.scope"]').addClass('input-large').removeClass('input-medium');

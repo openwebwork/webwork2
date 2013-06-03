@@ -706,6 +706,13 @@ div.problem_sets_options {
 	margin: 1% 1% 1% 1%;
 }
 
+#set_table_id a.set-id-tooltip,
+#set_table_id a.set-id-tooltip:hover {
+    text-decoration: none;
+    color: #000000;
+}
+
+
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 /*BUG FIXES*/
 

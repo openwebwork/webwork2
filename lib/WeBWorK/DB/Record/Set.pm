@@ -37,6 +37,7 @@ BEGIN {
 		visible                   => { type=>"INT" },
 		enable_reduced_scoring    => { type=>"INT" },
 		assignment_type           => { type=>"TEXT" },
+	        description               => { type=>"TEXT" },
 		attempts_per_version      => { type=>"INT" },
 		time_interval             => { type=>"INT" },
 		versions_per_interval     => { type=>"INT" },

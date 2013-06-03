@@ -336,6 +336,7 @@ sub setListRow {
 	my $authz = $r->authz;
 	my $user = $r->param("user");
 	my $urlpath = $r->urlpath;
+	my $globalSet = $db->getGlobalSet($set->set_id);
 	$gwtype = 0 if ( ! defined( $gwtype ) );
 	$tmplSet = $set if ( ! defined( $tmplSet ) );
 	
@@ -386,8 +387,8 @@ sub setListRow {
 	      $set->assignment_type() eq 'proctored_gateway' );
 	my $display_name = $name;
 	$display_name =~ s/_/&nbsp;/g;
-# this is the link to the homework assignment
-	my $interactive = CGI::a({-href=>$interactiveURL}, "$display_name");
+# this is the link to the homework assignment, it has tooltip with the hw description 
+	my $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, "$display_name");
 	
 	my $control = "";
 	
@@ -420,25 +421,24 @@ sub setListRow {
 				$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
 				if ( $preOpenSets ) {
 					# reset the link
-					$interactive = CGI::a({-href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $display_name));
+					$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
-					$interactive = $r->maketext("[_1] test", $display_name);
+										$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description()}, $r->maketext("Take [_1] test", $display_name));
 				}
 			} elsif ( $t < $set->due_date() ) {
 				$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 				$setIsOpen = 1;
-				$interactive = CGI::a({-href=>$interactiveURL},
-						      $r->maketext("Take [_1] test", $display_name));
+				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+
 			} else {
 				$status = $r->maketext("Closed");
 
 				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
-					$interactive = CGI::a({-href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $display_name));
+				    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+							      
 				} else {
-					$interactive = $r->maketext("[_1] test", $display_name);
+				    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 				}
 			}
 		}

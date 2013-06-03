@@ -2408,7 +2408,7 @@ sub recordEditHTML {
 		if ($editMode) {
 			$label = CGI::a({href=>$problemListURL}, "$set_id");
 		} else {		
-			$label = CGI::font({class=>$visibleClass}, $set_id . $imageLink);
+			$label = CGI::a({class=>"$visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $set_id) . $imageLink;
 		}
 		
 		push @tableCells, WeBWorK::CGI_labeled_input(

@@ -38,7 +38,7 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -97,6 +97,12 @@ use constant FIELD_PROPERTIES => {
 		override  => "all",
 		module    => "hardcopy_preselect_set",
 		default   => "",		
+	},
+	description => {
+		name      => "Description",
+		type      => "edit",
+		override  => "all",
+		default   => "",
 	},
 	open_date => {
 		name      => "Opens",
@@ -1828,8 +1834,19 @@ sub body {
 	print CGI::end_table();	
 
 	# spacing
-	print CGI::p();
+	print CGI::start_p();
 
+	####################################################################
+	# Display Field for putting in a set description
+	####################################################################
+	print CGI::h5("Set Description");
+	print CGI::textarea({name=>"set.$setID.description",
+			     id=>"set.$setID.description",
+			     value=>$setRecord->description(),
+			     rows=>5,
+			     cols=>62,});
+
+	print CGI::end_p();
 	
 	#####################################################################
 	# Display header information
