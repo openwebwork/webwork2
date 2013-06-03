@@ -42,6 +42,7 @@ use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
+use HTML::Scrubber;
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -233,7 +234,7 @@ sub attemptResults {
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 	
-	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers};
+	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
 
 	my $header;
 	#$header .= CGI::th("Part");
@@ -249,26 +250,29 @@ sub attemptResults {
 	my $numCorrect = 0;
 	my $numBlanks  =0;
 	my $numEssay = 0;
+	my $tthPreambleCache;
 	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name};
-		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+		my $answerResult  = $pg->{answers}->{$name}//'';
+		my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
 		my $preview       = ($showAttemptPreview
 		                    	? $self->previewAnswer($answerResult, $imgGen)
 		                    	: "");
-		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen);
-		my $correctAnswer = $answerResult->{correct_ans};
-		my $answerScore   = $answerResult->{score};
-		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
+
+		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache)//'';
+		my $correctAnswer = $answerResult->{correct_ans}//'';
+		my $answerScore   = $answerResult->{score}//0;
+		my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
+
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
-		$numEssay += $answerResult->{type} eq 'essay';
+		$numEssay += ($answerResult->{type}//'') eq 'essay';
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
 
 		my $resultString;
 		if ($answerScore >= 1) {
 		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
 		    push @correct_ids,   $name if $answerScore == 1;
-		} elsif ($answerResult->{type} eq 'essay') {
+		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded"); 
 		    $self->{essayFlag} = 1;
 		} elsif (not $answerScore) {
@@ -364,7 +368,7 @@ sub previewAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
-	} elsif ($answerResult->{type} eq 'essay') {
+	} elsif (($answerResult->{type}//'') eq 'essay') {
 	    return $tex;
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
@@ -639,6 +643,24 @@ sub pre_header_initialize {
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
 	}
 	
+	##### scrub answer fields for xss badness #####
+     	my $scrubber = HTML::Scrubber->new(
+	    default=> 1,
+	    script => 0,
+	    process => 0,
+	    comment => 0
+	    );
+	foreach my $key (keys %$formFields) {
+	    if ($key =~ /AnSwEr/) {
+		$formFields->{$key} = $scrubber->scrub($formFields->{$key});
+		### HTML::scrubber is a little too enthusiastic about
+		### removing > and < so we have to add them back in otherwise
+		### they confuse pg
+		$formFields->{$key} =~ s/&lt;/</g;
+		$formFields->{$key} =~ s/&gt;/>/g;
+	    }
+	}
+	
 	##### translation #####
 
 	debug("begin pg processing");
@@ -706,9 +728,9 @@ sub warnings {
 		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
     } elsif ( $self->{pgerrors} > 0 ) {
-        my @pgdebug          = @{ $self->{pgdebug}           };
- 		my @pgwarning        = @{ $self->{pgwarning}         };
- 		my @pginternalerrors = @{ $self->{pginternalerrors}  };
+        my @pgdebug          = @{ $self->{pgdebug}           }//();
+ 		my @pgwarning        = @{ $self->{pgwarning}         }//();
+ 		my @pginternalerrors = @{ $self->{pginternalerrors}  }//();
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
 		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
@@ -951,7 +973,10 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
+	print $self->mathview_scripts();
+
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
+
 	print $self->hidden_authen_fields;
 	return "";
 }
@@ -1350,6 +1375,7 @@ sub output_comments{
 		if ($userPastAnswer->comment_string) {
 
 		    my $comment = $userPastAnswer->comment_string;
+		    $comment = CGI::escapeHTML($comment);
 		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 		    my $user = $db->getUser($userID);
 
@@ -1680,6 +1706,11 @@ sub output_JS{
 
 sub output_achievement_CSS {
     return "";
+}
+
+#Tells template to output stylesheet for Jquery-UI
+sub output_jquery_ui_CSS{
+	return "";
 }
 
 # Simply here to indicate to the template that this page has body part methods which can be called

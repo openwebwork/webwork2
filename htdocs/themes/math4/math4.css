@@ -13,6 +13,7 @@
  * Artistic License for more details.
  */
 
+<<<<<<< HEAD
 /* Bootstrap overrides */
 .row-fluid [class*="span"] {
     min-height:0px;
@@ -24,6 +25,11 @@
 	margin: 0;
 	padding: 0;
 	padding: 5px;
+}
+
+/* Bootstrap Overrides */
+.container-fluid {
+	padding: 0.5em;
 }
 
 .webwork_logo {
@@ -274,7 +280,6 @@ blockquote {
   border-left-width: 0;
 }
 
-
 label,
 input,
 button,
@@ -284,6 +289,10 @@ textarea {
   font-weight: normal;
   line-height: 18px;
   width: auto;
+}
+
+input {
+	height: auto;
 }
 
 .barrier {
@@ -310,7 +319,6 @@ textarea {
 #InfoPanel ol {
 	font-size:100%;
 }
-
 
 table.FormLayout { border: 0; }
 table.FormLayout tr { vertical-align: top; }
@@ -711,7 +719,6 @@ div.problem_sets_options {
     text-decoration: none;
     color: #000000;
 }
-
 
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 /*BUG FIXES*/
