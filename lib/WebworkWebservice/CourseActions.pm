@@ -566,10 +566,6 @@ sub getCourseSettings {
 	my $db = $self->db;		# database
 	my $ConfigValues = getConfigValues($ce);
 
-	#debug(eval("$siteDefaults{timezone}"));
-
-## until I figure out how to get the default timezone from the $ConfigValues object, this is hard coded.  
-
 	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
 	my $dt = DateTime->now();
 

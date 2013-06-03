@@ -3,7 +3,7 @@
  * of problems.  More specifially, it also contains a Problem List of type "Problem Set".  
  *
  * */
-define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Backbone, _, config,XDate,ProblemList){
+define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Backbone, _, config,moment,ProblemList){
 
 
     var ProblemSet = Backbone.Model.extend({
@@ -105,8 +105,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             this.on('change',this.update);
             this.problems = null;
             this.assignedUsers = null; 
-            this.saveProblems = new Array();   // holds added problems temporarily if the problems haven't been loaded. 
-            
+            this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         addProblem: function (prob) {  
             var self = this; 
@@ -137,7 +136,7 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
 
             $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-      	        self.trigger("problem-set-changed",self)
+      	        self.collection.trigger("change",self)
             });
         },
         fetch: function()  // this fetches the problems for the ProblemSet.  

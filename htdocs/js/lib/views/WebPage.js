@@ -35,7 +35,7 @@ define(['Backbone','Closeable'], function(Backbone,Closeable){
 
     setUpNavMenu: function ()
     {
-        $("#webwork_navigation h2").remove() //  Remove the "Main Menu" in the menu. 
+        // $("#webwork_navigation h2").remove() //  Remove the "Main Menu" in the menu. 
 
         var allCourses = $("#webwork_navigation ul:eq(0)").addClass("dropdown-menu");
 

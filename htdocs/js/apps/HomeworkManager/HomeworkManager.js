@@ -7,7 +7,7 @@ require(['Backbone',
     '../../lib/models/UserList',
     '../../lib/models/ProblemSetList',
     '../../lib/models/Settings',   
-    '../../lib/views/CalendarView',
+    '../../lib/views/AssignmentCalendarView',
     './HWDetailView',
     '../../lib/views/ProblemSetListView',
     './SetListView',
@@ -21,7 +21,7 @@ require(['Backbone',
     'bootstrap',
     'datepicker'
     ], 
-function(Backbone, _,  UserList, ProblemSetList, Settings, CalendarView, HWDetailView, 
+function(Backbone, _,  UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
             ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView){
 var HomeworkEditorView = WebPage.extend({
     tagName: "div",
@@ -174,7 +174,9 @@ var HomeworkEditorView = WebPage.extend({
         this.setDropToEdit();        
 
         this.views = {
-            calendar : new CalendarView({el: $("#calendar"), parent: this, collection: this.problemSets, view: "instructor", viewType: "month"}),
+            calendar : new AssignmentCalendarView({el: $("#calendar"), problemSets: this.problemSets, 
+                    viewType: "instructor", calendarType: "month", 
+                    reducedScoringMinutes: this.settings.find(function(setting) { return setting.get("var")==="pg{ansEvalDefaults}{reducedScoringPeriod}";}).get("value")}),
             setDetails:  new HWDetailView({el: $("#setDetails"),  hwManager: this}),
             allSets:  new SetListView({el:$("#allSets"), collection: this.problemSets, parent: self}),
             assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", parent: this}),

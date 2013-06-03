@@ -441,7 +441,7 @@ sub body {
 sub head{
 	my $self = shift;
 	my $r = $self->r;
-    	my $ce = $r->ce;
+    my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     	print "<link rel='stylesheet' href='$site_url/js/vendor/jquery/jquery-ui-1.10.0.custom/css/ui-lightness/jquery-ui-1.10.0.custom.min.css' type='text/css' media='screen'>";

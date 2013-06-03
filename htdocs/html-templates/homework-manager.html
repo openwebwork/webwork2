@@ -212,7 +212,7 @@ click the "Save Changes" button.</p>
 
 <script type="text/template" id="calendar-template">
 <div id="calendar-error-bar"></div>
-<div class="calendar-button-row">
+<div class="calendar-button-row btn-group">
 <button type="button" class="previous-week btn btn-small"><i class="icon-chevron-left"></i>Previous Week</button>
 
 <button type="button" class="view-month btn btn-small">Month View</button>
@@ -221,15 +221,7 @@ click the "Save Changes" button.</p>
 </div>
 
 <table id='calendar-table' class='table-bordered'>
-    <thead>
-    <th>Sunday</th>
-    <th>Monday</th>
-    <th>Tuesday</th>
-    <th>Wednesday</th>
-    <th>Thursday</th>
-    <th>Friday</th>
-    <th>Saturday</th>
-</thead><tbody></tbody>
+    <thead></thead><tbody></tbody>
 <table id='calendar-table' class='table-bordered'></table>
 <div class="calendar-button-row">
 <button type="button" class="previous-week btn btn-small"><i class="icon-chevron-left"></i>Previous Week</button>
@@ -240,15 +232,14 @@ click the "Save Changes" button.</p>
 
 </script>
 
+
+
 <script type="text/template" id="calendar-date-bar">
-<div class="<%= classes %>" data-set="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Open To Students: <%=openToStudents%>"><span><%if(showName){%><%=setname %><%}%></span></div>
+<div class="<%= classes %>" data-set="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Visible To Students: <%=visibleToStudents%>">
+ <span><%if(showName){%><%=setname %><%}%></span></div>
 
 </script>
 
-<script type="text/template" id="too-many-assignments-error">
-There are too many overlapping assignments to view efficiently.  You have been switched to week view for 
-a better rendering. 
-</script>
 
 <script type="text/template" id="settings-template">
     <p>The following are homework settings relevant to the the Homework Manager.</p>
