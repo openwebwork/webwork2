@@ -53,9 +53,21 @@ $(function(){
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
 
+    $("table.attemptResults td[onmouseover*='Tip']").each(function () {
+	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/)[1];
+	$(this).attr('onmouseover','');
+	if (data) {
+	    $(this).wrapInner('<div class="results-popover" />');
+	    var titlestr ='<i class=" answer-popover icon-remove" onclick="$($($(this).parents()[2]).children()[0]).popover(\'hide\');"></i>';
+	    var popdiv = $('div', this);
+	    popdiv.popover({placement:'bottom', html:'true', trigger:'click',title: titlestr ,content:data});	
+	} 
+	    
+    });
+    
     // Past answers formatting
     $('#past-answer-table').addClass('table');
-
+    
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
     $('#grades_table a').addClass('btn btn-primary');
