@@ -120,7 +120,7 @@ our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 	$XML_URL             =  "$server_root_url/mod_xmlrpc";
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
 
-use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
+use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
 
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 

@@ -1,0 +1,138 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/templates/math/system.template,v 1.11 2008/10/09 02:18:37 gage Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap.css"/>
+<style>
+    body{
+
+    }
+    input{
+        height:auto;
+    }
+    .navbar {
+        margin-bottom: 0px;
+    }
+    .breadcrumb{
+        margin:0px;
+    }
+    #messages{
+        position:absolute;
+        width:50%;
+        margin-left:25%;
+        margin-right:25%;
+    }
+</style>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap-responsive.css"/>
+<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/jquery-1.7.2.min.js"></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
+<title><!--#path style="text" text=" : " textonly="1"--></title>
+<!--#head-->
+</head>
+
+
+<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
+    <div id="messages"></div>
+    <div class="navbar">
+        <div class="navbar-inner">
+          <div class="container">
+            <!--#if can="title"-->
+            <a class="brand" href="#"><!--#title--></a>
+            <!--#endif-->
+            <div class="nav-collapse">
+              <ul class="nav pull-right">
+                <li class="dropdown" id="webwork_navigation">
+                  <a href="#webwork_navigation" class="dropdown-toggle" data-toggle="dropdown">Main Menu <b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+                    <!--#if can="links"-->
+                        <!--#links-->
+                    <!--#endif-->
+                     <!--#if can="siblings"-->
+                        <!--#siblings-->
+                     <!--#endif-->
+                     <!--#if can="options"-->
+                        <ul>
+                     	    <h2>Display Options</h2>
+                     		<!--#options-->
+                     	</ul>
+                     <!--#endif-->
+                  </ul>
+                </li>
+              </ul>
+            </div><!-- /.nav-collapse -->
+          </div>
+        </div><!-- /navbar-inner -->
+    </div>
+    <div class="row">
+	<div class="span8">
+	<ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
+	</ul>
+	</div>
+	<div class="span4"><button class="btn pull-right" id="help-link">Help</button></div>
+    </div>
+	
+	    <!--#if can="body"-->
+				<!--#if warnings="1"-->
+				  <div class="Body" style="background-color:#ffcccc">
+				  <p style="font-size:larger">
+				  Warning -- there may be something wrong with this question. Please inform your instructor
+				  including the warning messages below.
+				  </p>
+				<!--#else-->
+				  <div class="Body" style="background-color:#ffffff">
+				<!--#endif-->
+				
+				<!--#body-->
+				</div>
+			<!--#endif-->
+		
+		<!--#if warnings="1"-->
+		    <div class="Warnings">
+			    <!--#warnings-->
+		    </div>
+		<!--#endif-->
+		
+		<!--#if can="message"-->
+			<div class="Message">
+				<!--#message-->
+			</div>
+		<!--#endif-->
+
+	<footer class="footer">
+        <p class="pull-right"><!--#loginstatus--></p>
+        <p id="last-modified">Page generated at <!--#timestamp--></p>
+        <p>styled using twitter bootstrap</p>
+        <div id="copyright">
+            WeBWorK &#169; 2000-2007 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a>
+        </div>
+    </footer>
+
+    <!--#if can="output_JS"-->
+    	<!--#output_JS-->
+    <!--#endif-->
+
+</body>
+</html>

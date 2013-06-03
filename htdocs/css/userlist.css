@@ -1,6 +1,4 @@
-.Body{
-    padding: 20px;
-}
+@import "webwork.css";
 
 #users_table td, table.testgrid th { padding: 5px; border: 1px solid #E0E0E0; }
 #users_table th { background: #E5E5E5; text-align: left; font-size: 90%; padding: 5px;}
@@ -41,4 +39,6 @@ table#inner-table td {border: 1px solid black; word-break:break-all;}
 div.inner {overflow-y: auto;  height: 400px;}
 
 table#sTable select {width: 150px;}
+
+
 	    

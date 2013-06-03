@@ -19,6 +19,7 @@ package WeBWorK::Utils::ListingDB;
 use strict;
 use DBI;
 use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils::Tags;
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
@@ -61,6 +62,8 @@ my %OPLtables = (
  chapter => 'OPL_chapter',
  section => 'OPL_section',
  problem => 'OPL_problem',
+ morelt => 'OPL_morelt',
+ morelt_pgfile => 'OPL_morelt_pgfile',
  pgfile_problem => 'OPL_pgfile_problem',
 );
 
@@ -78,6 +81,8 @@ my %NPLtables = (
  chapter => 'NPL-chapter',
  section => 'NPL-section',
  problem => 'NPL-problem',
+ morelt => 'NPL-morelt',
+ morelt_pgfile => 'NPL-morelt-pgfile',
  pgfile_problem => 'NPL-pgfile-problem',
 );
 
@@ -108,6 +113,43 @@ sub getDB {
 	);
 	die "Cannot connect to problem library database" unless $dbh;
 	return($dbh);
+}
+
+=item getProblemTags($path) and setProblemTags($path, $subj, $chap, $sect)
+Get and set tags using full path and Tagging module
+                                                                                
+=cut                                                                            
+
+sub getProblemTags {
+	my $path = shift;
+	my $tags = WeBWorK::Utils::Tags->new($path);
+	my %thash = ();
+	for my $j ('DBchapter', 'DBsection', 'DBsubject') {
+		$thash{$j} = $tags->{$j};
+	}
+	return \%thash;
+}
+
+sub setProblemTags {
+	my $path = shift;
+        if (-w $path) {
+		my $subj= shift;
+		my $chap = shift;
+		my $sect = shift;
+		my $tags = WeBWorK::Utils::Tags->new($path);
+		$tags->settag('DBsubject', $subj, 1);
+		$tags->settag('DBchapter', $chap, 1);
+		$tags->settag('DBsection', $sect, 1);
+		eval {
+			$tags->write();
+			1;
+		} or do {
+			return [0, "Problem writing file"];
+		};
+		return [1, "Tags written"];
+        } else {
+		return [0, "Do not have permission to write to the problem file"];
+	}
 }
 
 =item kwtidy($s) and keywordcleaner($s)
@@ -309,9 +351,9 @@ Here, we search on all known fields out of r
 
 sub getDBListings {
 	my $r = shift;
-	my %tables = getTables($r->ce);
 	my $amcounter = shift;
 	my $ce = $r->ce;
+	my %tables = getTables($ce);
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
@@ -385,10 +427,10 @@ sub getDBListings {
 	}
 	my @results=();
 	for my $pgid (@pg_ids) {
-		$query = "SELECT path, filename FROM `$tables{pgfile}` pgf, `$tables{path}` p 
+		$query = "SELECT path, filename, morelt_id, pgfile_id FROM `$tables{pgfile}` pgf, `$tables{path}` p 
           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
 		my $row = $dbh->selectrow_arrayref($query);
-		push @results, {'path' => $row->[0], 'filename' => $row->[1] };
+		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3] };
 		
 	}
 	return @results;
@@ -397,6 +439,16 @@ sub getDBListings {
 sub countDBListings {
 	my $r = shift;
 	return (getDBListings($r,1));
+}
+
+sub getMLTleader {
+	my $r = shift;
+	my $mltid = shift;
+	my %tables = getTables($r->ce);
+	my $dbh = getDB($r->ce);
+	my $query = "SELECT leader FROM `$tables{morelt}` WHERE morelt_id=\"$mltid\"";
+	my $row = $dbh->selectrow_arrayref($query);
+	return $row->[0];
 }
 
 ##############################################################################

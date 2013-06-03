@@ -1,5 +1,4 @@
-*~
-.svn
+vn
 .DS_Store
 .*
 *~
@@ -10,6 +9,12 @@ logs/*
 conf/*.conf
 conf/*.apache2-config
 htdocs/site_info.txt
+htdocs/applets/*.swf
 bin/wwapache2ctl
 webwork2.komodoproject
 #courses.dist/*
+node_modules
+node_modules/*
+WeBWorK.sublime-project
+WeBWorK.sublime-workspace
+conf/*.apache-config

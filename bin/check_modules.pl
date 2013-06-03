@@ -12,7 +12,6 @@ my @applicationsList = qw(
 	latex
 	pdflatex
 	dvipng
-	tth
 	giftopnm
 	ppmtopgm
 	pnmtops
@@ -72,6 +71,7 @@ my @modulesList = qw(
 	MIME::Base64
 	Net::IP
 	Net::LDAPS
+	Net::OAuth
 	Net::SMTP
 	Opcode
 	PadWalker

@@ -15,7 +15,8 @@ my $newLevelThreshold = 1050;
 #Code
 
 if ($achievementPoints >= $nextLevelPoints) {
-    #set new threshold and return 1 
+    #set new threshold and return 1
+    $globalData->{ExtendDueDate} = 1; 
     $nextLevelPoints = $newLevelThreshold;
     return 1;
 } else {

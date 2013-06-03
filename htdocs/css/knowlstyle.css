@@ -1,7 +1,3 @@
-a {
-   color: #009;
-}
-
 /** page wide defs for knowls, the *[knowl] is a selector for
  *  all elements, that have a knowl attribute set to any value */
 .knowl-content {

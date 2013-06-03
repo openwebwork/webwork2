@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+
+<html lang="en-US">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
+<!-- Vendors, import order is significant for dependencies -->
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
+
+<link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/other/knowl.js"></script>
+
+<!-- Theme -->
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
+
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/gateway.css"/>
+
+<!-- Gateway Specific JS -->
+<script language="javascript" type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/apps/GatewayQuiz/gateway.js"></script>
+
+<title><!--#path style="text" text=" : " textonly="1"--></title>
+<!--#head-->
+</head>
+<body>
+
+<!-- Banner -->
+<ul id="masthead">
+	<li class="webwork_logo">
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+	</li>
+	<li id="loginstatus">
+		<!--#loginstatus-->
+	</li>
+</ul>
+
+<!-- Main Content Area -->
+<div id="content">
+	<!-- Breadcrumb -->
+	<ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+	</ul>
+
+	<!--#if can="info"-->
+	<!--<div id="page-info">-->
+		<!--<div class="info-box" id="fisheye">-->
+			<!--#info-->
+		<!--</div>-->
+	<!--</div>-->
+	<!--#endif-->
+	
+	<!-- [gateway] removed nav button to go up -->
+	
+	<!--#if can="title"-->
+	<h1><!--#title--></h1>
+	<!--#endif-->
+	
+	<!--#if can="message"-->
+		<div class="Message"><!--#message--></div>
+	<!--#endif-->
+
+	<!--#if can="body"-->
+	<div class="Body">
+		<!--#body-->
+	</div>
+	<!--#endif-->
+	
+	<!--#if warnings="1"-->
+	<div class="Warnings">
+		<!--#warnings-->
+	</div>
+	<!--#endif-->
+	
+</div> <!-- content -->
+
+<!-- Footer -->
+<div id="footer">
+	<!--#footer-->
+</div>
+
+</body>
+</html>
+
+

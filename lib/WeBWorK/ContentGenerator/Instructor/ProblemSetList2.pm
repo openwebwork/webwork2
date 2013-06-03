@@ -265,7 +265,9 @@ sub pre_header_initialize {
 		if ($scope eq "none") { 
 			return $r->maketext("No sets selected for scoring".".");
 		} elsif ($scope eq "all") {
-			@setsToScore = @{ $r->param("allSetIDs") };
+#			@setsToScore = @{ $r->param("allSetIDs") };
+		    @setsToScore = $db->listGlobalSets;
+
 		} elsif ($scope eq "visible") {
 			@setsToScore = @{ $r->param("visibleSetIDs") };
 		} elsif ($scope eq "selected") {
@@ -499,7 +501,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist2", -class=>"edit_form", -id=>"edit_form_id"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"problemsetlist2", name=>"problemsetlist2", -class=>"edit_form", -id=>"edit_form_id"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -560,15 +562,10 @@ sub body {
 			# CGI::td({}, $self->$actionForm($onChange, %actionParams))
 		# );
 		
-		my $extraspace = (ucfirst(WeBWorK::split_cap($actionID)) eq "Filter") ? "" : CGI::br();
-		
 		push @divArr, join("",
 			CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
 			CGI::span({-class=>"radio_span"}, WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
-			CGI::br(),
 			$self->$actionForm($onChange, %actionParams),
-			CGI::br(),
-			$extraspace,
 		);
 		$i++;
 	}
@@ -973,7 +970,7 @@ sub enable_reduced_scoring_form {
 			-input_attr=>{
 				-name => "action.enable_reduced_scoring.value",
 				-values => [ 0, 1 ],
-				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "1",
+				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "0",
 				-labels => {
 					0 => $r->maketext("Disable"),
 					1 => $r->maketext("Enable"),
@@ -2176,7 +2173,7 @@ sub fieldEditHTML {
 	
 	if ($type eq "number" or $type eq "text") {
 		my $id = $fieldName."_id";
-		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>"", size=>$size});
+		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>$value, size=>$size});
 		my $content = "";
 		my $bareName = "";
 		my $timezone = substr($value, -3);
@@ -2330,23 +2327,26 @@ CONTENT
 	}
 	
 	if ($type eq "checked") {
-		
+
 		# FIXME: kludge (R)
 		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		# in which case the hidden field overrides the parameter with a 0
-		return WeBWorK::CGI_labeled_input(
-			-type=>"checkbox",
-			-id=>$fieldName."_id",
-			-label_text=>ucfirst($fieldName),
-			-input_attr=>{
-				-name => $fieldName,
-				-checked => $value,
-				-label => "",
-				-value => 1
-			}
+	    my %attr = ( name => $fieldName,
+			 label => "",
+			 value => 1
+	    );
+
+	    $attr{'checked'} = 1 if ($value);
+
+
+	    return WeBWorK::CGI_labeled_input(
+		-type=>"checkbox",
+		-id=>$fieldName."_id",
+		-label_text=>ucfirst($fieldName),
+		-input_attr=>\%attr
 		) . CGI::hidden(
-			-name => $fieldName,
-			-value => 0
+		-name => $fieldName,
+		-value => 0
 		);
 	}
 }
@@ -2589,14 +2589,14 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
+#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/jquery.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
 	return "";
 }
 

@@ -253,6 +253,7 @@ sub renderProblems {
 	
 	# special case for display mode 'None' -- we don't have to do anything
 	# FIXME i think this should be handled in SetMaker.pm
+	# SetMaker is not the only user of 'None'
 	if ($displayMode eq 'None') {
 		return map { {body_text=>''} } @problem_list;
 	}
@@ -270,6 +271,7 @@ sub renderProblems {
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 	my $problem = fake_problem($db, 'problem_seed'=>$problem_seed);
+	$problem->{value} = 1;
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
 	my @output;
