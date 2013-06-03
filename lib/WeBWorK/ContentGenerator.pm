@@ -764,10 +764,12 @@ sub links {
 					    print CGI::end_li();
 					}
 					if (defined $problemID) {
+					    print CGI::start_li();
 						print CGI::start_ul();
 						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 							if $ce->{showeditors}->{simplepgeditor};;
 						print CGI::end_ul();
+					    print CGI::end_li();
 					}
 					
 					print CGI::end_ul();
@@ -882,7 +884,6 @@ sub links {
 				print CGI::li({class=>'divider'},"");
 				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
-			print CGI::end_ul();
 	
 		} # /* authentication was_verified */
 				
@@ -2040,7 +2041,7 @@ sub mathview_scripts {
 # where the organization of the js directory has been completely rearranged. -- MEG
 # Added CODE JQuery MathView
 	my @out = (
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
+#		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
 		CGI::end_script(),	"\n",	
 		#CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 

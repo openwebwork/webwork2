@@ -2510,7 +2510,7 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     
     print "\n\n<!-- add to header ProblemSetList2.pm -->";
-        
+
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
@@ -2521,23 +2521,14 @@ sub output_JS{
     </style>!,"\n";
     
 	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
-	
-	# these scripts (for specific courses) are printed from within fieldEditHTML
-#   print CGI::start_script({-type=>"text/javascript"}),"\n";
-# 	print "addOnLoadEvent(function() {\n";
-# 	print WeBWorK::Utils::DatePickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
-# 	print WeBWorK::Utils::DatePickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
-# 	print WeBWorK::Utils::DatePickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
-# 	print "});\n";
-# 	print CGI::end_script();
-	# print other javaScript
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script(),"\n";
+	        print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+
 	print "\n\n<!-- END add to header ProblemSetList2.pm -->";
 	return "";
 }
