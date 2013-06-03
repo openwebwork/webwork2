@@ -1256,7 +1256,12 @@ sub head {
         print qq{
            <script type="text/javascript" src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script>
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/Base64.js"></script>
+           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>
+           
+
+           
+        };
 
         return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
 }
