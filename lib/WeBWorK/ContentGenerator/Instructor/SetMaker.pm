@@ -989,11 +989,11 @@ sub make_data_row {
 		      -value=>"Add",
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\'$sourceFileName\', \'one\')")),
-			"\n",CGI::span({-style=>"text-align: left"},'Path',CGI::span({id=>"filepath$cnt"},"...")),"\n",
+			"\n",CGI::span({-style=>"text-align: left"},CGI::span({id=>"filepath$cnt"},"Path...")),"\n",
 			#"\n",CGI::span({onclick=>qq!Tip("$sourceFileName",SHADOW, false, DELAY, 0, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, BGCOLOR, '#EEEEEE', TITLEBGCOLOR, '#EEEEEE', TITLEFONTCOLOR, '#000000')!}, 'Path...'),
 # Next line is one to keep
 			#"\n",'<script type="text/javascript">$(\'#sourcetrigger'.$cnt.'\').click(function() {toggle_content("filepath'.$cnt.'", "...", "'.$sourceFileName.'");return false;})</script>',
-                        '<script type="text/javascript">settoggle("filepath'.$cnt.'", "...", "'.$sourceFileName.'")</script>',
+                        '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Path ...", "Path '.$sourceFileName.'")</script>',
 #"\n", CGI::span({-style=>"float:left ; text-align: left"},"File..."),
 			CGI::span({-style=>"float:right ; text-align: right"}, 
 		        $inSet, $mlt, $rerand,
