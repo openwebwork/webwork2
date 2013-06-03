@@ -21,17 +21,20 @@ use base qw/WeBWorK::Authen/;
 WeBWorK::Authen::Shibboleth - Authentication plug in for Shibboleth. 
 This is basd on Cosign.pm
 
-to use: include in global.conf or course.conf
+For documentation, please refer to http://webwork.maa.org/wiki/External_(Shibboleth)_Authentication
+
+to use: include in localOverrides.conf or course.conf
   $authen{user_module} = "WeBWorK::Authen::Shibboleth";
 and add /webwork2/courseName as a Shibboleth Protected
-Location
+Location or enable lazy session.
 
 if $r->ce->{shiboff} is set for a course, authentication reverts
 to standard WeBWorK authentication.
 
-add the following to global.conf to setup the Shibboleth
+add the following to localOverrides.conf to setup the Shibboleth
   
-$shibboleth{logout_script} = "/Shibboleth.sso/Logout"?return=".$server_root_url.$webwork_url; # return URL after logout
+$shibboleth{login_script} = "/Shibboleth.sso/Login"; # login handler
+$shibboleth{logout_script} = "/Shibboleth.sso/Logout?return=".$server_root_url.$webwork_url; # return URL after logout
 $shibboleth{session_header} = "Shib-Session-ID"; # the header to identify if there is an existing shibboleth session
 $shibboleth{manage_session_timeout} = 1; # allow shib to manage session time instead of webwork
 $shibboleth{hash_user_id_method} = "MD5"; # possible values none, MD5. Use it when you want to hide real user_ids from showing in url. 
@@ -43,6 +46,7 @@ $shibboleth{mapping}{user_id} = "username";
 
 use strict;
 use warnings;
+use CGI qw/:standard/;
 use WeBWorK::Debug;
 use Data::Dumper;
 
@@ -94,6 +98,10 @@ sub get_credentials {
 			$self->{credential_source} = "params";
 		} else {
 			debug("Couldn't shib header or user_id");
+			my $q = new CGI;
+			my $go_to = $ce->{shibboleth}{login_script}."?target=".$q->url();
+			$self->{redirect} = $go_to;
+			print $q->redirect($go_to);
 			return 0;
 		}
 

@@ -473,14 +473,14 @@ sub formatRenderedProblem {
 	# PG debug messages generated with DEBUG_message();
 	#################################################
 	
-	my $debug_messages = $rh_result->{flags}->{DEBUG_messages} ||     [];
+	my $debug_messages = $rh_result->{debug_messages} ||     [];
     $debug_messages = join("<br/>\n", @{  $debug_messages }    );
     
 	#################################################    
 	# PG warning messages generated with WARN_message();
 	#################################################
 
-    my $PG_warning_messages =  $rh_result->{flags}->{WARNING_messages} ||     [];
+    my $PG_warning_messages =  $rh_result->{warning_messages} ||     [];
     $PG_warning_messages = join("<br/>\n", @{  $PG_warning_messages }    );
     
 	#################################################
@@ -492,6 +492,8 @@ sub formatRenderedProblem {
 
     my $internal_debug_messages = $rh_result->{internal_debug_messages} || [];
     $internal_debug_messages = join("<br/>\n", @{ $internal_debug_messages  } );
+    
+    my $fileName = $self->{input}->{envir}->{fileName} || "Can't find file name";
 	# collect answers
 	my $answerTemplate    = q{<hr>ANSWERS <table border="3" align="center">};
 	my $problemNumber     = 1;
@@ -500,7 +502,7 @@ sub formatRenderedProblem {
     }
 	$answerTemplate      .= q{</table> <hr>};
 
-
+	my $test = pretty_print($rh_result);
 	my $XML_URL      = $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
@@ -515,6 +517,7 @@ sub formatRenderedProblem {
 <title>$XML_URL WeBWorK Editor using host $XML_URL</title>
 </head>
 <body>
+
 <h2> WeBWorK Editor using host $XML_URL</h2>
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
@@ -523,7 +526,7 @@ sub formatRenderedProblem {
 	       <input type="hidden" name="problemAddress" value="probSource"> 
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
 	       <input type="hidden" name="problemSeed" value="1234"> 
-	       <input type="hidden" name="pathToProblemFile" value="foobar">
+	       <input type="hidden" name="pathToProblemFile" value="$fileName">
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">

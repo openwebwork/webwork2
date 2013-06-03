@@ -1,0 +1,175 @@
+#!perl
+
+#############################################################################
+# authen_LTI.conf
+# Configuration for using LTI authentication.
+# To enable this file, uncomment the appropriate lines in localOverrides.conf
+#############################################################################
+
+# This first section enables LTI authentication.  To enable failover to another
+# Authentication method, uncomment the remaining lines, and fill in the
+# appropriate authentication module.
+
+$authen{user_module} = [ 
+	{
+		"*" => "WeBWorK::Authen::LTIBasic", 
+	},
+#	{
+#		"*" => "WeBWorK::Authen::Basic_TheLastOption",
+#	}
+];
+
+#If the preferred module is an external authentication
+#module but the sequence includes an internal authentication
+#system, e.g., Basic_TheLastOption, then the following line
+#must be uncommented for use by WeBWorK::Logout.
+# If it is uncommented and the value = 1,
+# then, if the authentication sequence reaches 
+# Basic_TheLastOption, then WeBWorK::Login
+# will display a screen directing the user
+# back to an external authentication system.
+# On the other hand, if the value = 0 or
+# the line is commented out, then WeBWorK::Login
+# will display the traditional passwork login screen.
+# Upon logging out, if the line is not commented out
+# and the value = 1, then the Logout screen will NOT
+# show a "Login Again" button and will display
+# a message directing the user to go to the
+# external authentication system.
+# On the other hand, if the line is commented out
+# or if the value = 0, then the Logout screen WILL
+# display a "Login Again" button that will take
+# the user to a pasword login screen.
+
+#$external_auth=1;
+
+################################################################################
+# LTI Basic parameters
+################################################################################
+
+################################################################################
+# LTI Preferred Source of Username
+################################################################################
+
+
+# If both lis_person_sourcedid (or one of its variants)
+# and lis_person_contact_email_primary are present,
+# then one needs to state which one is preferred
+# as the WeBWorK username.
+# The considerations are (1) ensuring that usernames
+# are unique and (2) being as compatible as possible with the practices
+# of the institutions that are being served in a site.
+# If a site is only being used be students from a single
+# institution and the value  lis_person_sourcedid  is
+# unique across the population and matches the  logon username
+# at that institution, then lis_person_sourcedid is
+# probably the better choice.
+# On the other hand, if a site is serving a population
+# from several institutions and  lis_person_sourcedid  is not
+# necessarily unique across the population, then
+# lis_person_contact_email_primary is the better choice.
+# Because the WeBWorK username must be unique across
+# the population served by a site, the default if
+# neither line is uncommented will be the value of
+# lis_person_contact_email_primary.
+# NOTE: Even if a course management system sends 
+# one of the common misspellings of "lis_person_sourcedid", i.e.,
+# lis_person_sourced_id, lis_person_source_id, and
+# lis_person_sourceid, one must nevertheless use
+# the correct spelling here, i.e. "lis_person_sourcedid".
+
+$preferred_source_of_username = "lis_person_sourcedid";
+#$preferred_source_of_username = "lis_person_contact_email_primary";
+
+
+################################################################################
+# LTI Basic Authentication Parameters to be put into a site's course.conf file
+################################################################################
+
+#The following paramters should be put into site's course.conf file.
+
+#$LTIBasicToThisSiteURL = "URL to site", e.g.,
+#$LTIBasicToThisSiteURL = "https://localserver/webwork2/DemoCourse";
+#$LTIBasicConsumerSecret = "Consumer Secret - shared with the Course Management Site, e.g.";
+#$LTIBasicConsumerSecret = "webworkLTIB";
+
+
+################################################################################
+# LTI Basic Authentication Parameters
+################################################################################
+
+################################################################################
+# Reasonable Number of Problems for Late Adds to do per day to catch up
+################################################################################
+
+# Uncomment the following line to adjust due dates for late adds
+# who authenticate via LTIBasic
+$adjustDueDatesForLateAdds = "1";
+
+$reasonableProblemsPerDayMakeup = 15;
+
+#The purpose of the LTI nonces is to prevent man-in-the-middle attacks.
+#The NonceLifeTime (in seconds) must be short enought to prevent
+#at least casual man-in-the-middle attacks but
+#long enough to accommodate normal server and networking delays
+#(and perhaps non-synchronization of server time clocks).
+#
+
+$NonceLifeTime=10; # in seconds
+
+################################################################################
+# Authorization system   LTI:  LMS Roles Mapped to WeBWorK Roles
+################################################################################
+
+## Each institution will need to customize these correspondences
+## to take into account the roles that are used in its
+## Learning Management System.
+
+%LMSrolesToWeBWorKroles = (
+	"AI/TA" => "ta",
+	"assistant" => "empowered_AI",
+	"instructor" => "professor",
+	"librarian" => "guest",
+	"librarian+" => "empoweredAI",
+	"observer" => "guest",
+    "student" => "student",
+	"visitor" => "guest",
+	"Instructor" => "professor",
+    "Student" => "student",
+    "Learner" => "student",
+	"Teaching Assistant" => "ta",
+);
+
+################################################################################
+# Local routine to analyze the context_id forwarded to LTIBasic
+################################################################################
+
+#The section number/identifier should be passed a "custom" parameter
+#by the Course Management System, usually by adding a parameter
+#of the form
+#  section=1234
+#in the parameters section of the Course Management Systems
+#LTI configuration for a site.  (LTI should automatically
+#convert this to  "custom_section=1234".
+#However, if no custom_section paramter is passed to WeBWorK,
+#then a site can optionally attempt to parse the context_id
+#to determine a section name.
+
+# An example from Indiana University, Bloomington
+#
+#$analyze_context_id = 
+#	sub {my $self = shift;
+#	if (! (defined($self -> {semester}) && defined($self -> {section})) ) {
+#	   		my @course_id=split /-/, $self -> {"context_id"};
+#      		$self -> {"semester"} = "4" . substr($course_id[0],2,2)
+#  						. (substr($course_id[0],0,2) eq "FA") ? "8"
+#          				: substr($course_id[0],0,2) eq "SP"? "2" : "5";
+#      		$self -> {"section"} = $course_id[4];
+#	        }
+#		};
+
+#$analyze_context_id = sub {my $self = shift; $self -> {section} = "0000";};
+
+################################################################################
+
+1; #final line of the file to reassure perl that it was read properly.

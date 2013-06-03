@@ -44,7 +44,7 @@ use Fcntl;
 
 ###########################################################
 # This editor will edit problem files or set header files or files, such as course_info
-# whose name is defined in the global.conf database
+# whose name is defined in the defaults.config file
 #
 # Only files under the template directory ( or linked to this location) can be edited.
 #
@@ -92,7 +92,7 @@ use Fcntl;
 #
 #  file_type  eq 'blank_problem'
 #                 This is a special call which allows one to create and edit a new PG problem.  The "stationery" source for this problem is
-#                 stored in the conf/snippets directory and defined in global.conf by $webworkFiles{screenSnippets}{blankProblem}
+#                 stored in the conf/snippets directory and defined in defauls.config by $webworkFiles{screenSnippets}{blankProblem}
 #############################################################
 # Requested actions  -- these and the file_type determine the state of the module
 #      Save                       ---- action = save
@@ -487,7 +487,7 @@ sub body {
 	# intelligent bug reporting.
 	
 	#########################################################################    
-    # Construct reference row for PGproblemEditor.
+    # Construct reference row for PGproblemEditor2.
 	#########################################################################
 	
        my @PG_Editor_Reference_Links = (

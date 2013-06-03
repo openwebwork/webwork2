@@ -1,0 +1,335 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-20012 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/templates/math2/system.template,v 1.2 2008/06/26 19:46:02 gage Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+<!--
+	Now altered to carry out most of the output operations in Problem.pm, as well as call general output subroutines.
+	-ghe3
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/ubc.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/lib/codemirror.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/pg/pg.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/math/math.css">
+
+<!--#if can="output_tabber_CSS"-->
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
+<!--#endif-->
+<!--#if can="output_jquery_ui_CSS"-->
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+<!--#endif-->
+<!--#if can="output_JS"-->
+	<!--#output_JS-->
+<!--#endif-->
+<title><!--#path style="text" text=" : " textonly="1"--></title>
+
+<!--#head-->
+    <style type="text/css">
+      .body {
+         height: 100%;
+      }
+      .html {
+         height: 100%;
+      }
+      body > table {
+         height: 100%;
+      }
+      tr {
+         valign: top;
+      }
+      td {
+         valign: top;
+      }
+      tr.wwcontent td {
+         height: 100%;
+      }
+      tr.wwcontent td {
+         height: 100%;
+      }
+      tr.footer {
+         height: 40;
+      }
+
+      .ProblemEditor {
+        background: #ffe;
+        width: 800px;
+        border: 1px solid #000;
+      }
+
+      .AnswerField {
+       background: #eee;
+       background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FFFFDD), to(#FFFFFF));
+       background-image: -webkit-linear-gradient(top, #EEEEEE, #FFFFFF);
+       background-image: -moz-linear-gradient(top, #EEEEEE, #FFFFFF);
+       background-image: -ms-linear-gradient(top, #EEEEEE, #FFFFFF);
+       background-image: -o-linear-gradient(top, #EEEEEE, #FFFFFF);
+
+
+       height: 25px;
+       min-height: 25px;
+       overflow: hidden;
+       width: 100px;
+       display: -moz-inline-stack;
+       display: inline-block;
+       vertical-align: middle;
+       border-top: 1px solid #333;
+       border-left: 1px solid #666;
+       border-right: 1px solid #999;
+       margin: 3px 0px 3px 0px;
+
+       zoom: 1;
+       *display: inline;
+       _height: 25px;
+       -moz-border-radius: 1px;
+       -webkit-border-radius: 1px;
+       -o-border-radius: 1px;
+       border-radius: 3px;
+      }
+    </style>
+</head>
+<body bgcolor="white" onload="if (typeof(initializeAction) == 'function') {initializeAction()}">
+
+<!-- this is a table based layout as opposed to a css based layout -->
+
+<table width="100%" cellpadding="10" cellspacing="0" border="0" height="100%">
+	<tr valign="top">
+		<td align="left" valign="top" rowspan="2" class="LeftPanel" height="100%">
+                     <a href="http://webwork.math.rochester.edu">
+			<img src="/webwork2_files/images/wwlogo04.png" alt="WeBWorK" />
+                     </a>
+			<!--
+			<hr />
+			<div class="Logo">				
+				<a href="http://webwork3.math.rochester.edu/bugzilla/enter_bug.cgi?product=WeBWorK%20mod_perl" target="bugzillaPage">Report bugs</a>
+			</div>
+			-->
+			<!--#if loggedin="1"-->
+			<hr />
+			<div class="Links">
+				<!--#links-->
+			</div>
+			<!--#if can="links"-->
+			<!--#if can="siblings"-->
+			<hr />
+			<!--#endif-->
+			<!--#endif-->
+			<div class="Siblings">
+				<!--#siblings-->
+			</div>
+			<!--#if can="options"-->
+			<div class="Options">
+				<!--#options-->
+			</div>
+			<!--#endif-->
+			<!--#endif-->
+		</td>
+		<!--#if can="info"-->
+		<td class="TopPanel" colspan="2">
+		<!--#else-->
+		<td class="TopPanel" >
+		<!--#endif-->
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<tr valign="top">
+					<td class="TopPanel">
+						<!--#if can="path"-->
+						<span class="Path"><!--#path style="text" image="/webwork2_files/images/right_arrow.png" text=" > "--></span>
+						<!--#endif-->
+					</td>
+					<td class="TopPanel" align="right" nowrap>
+						<!--#if can="loginstatus"-->
+						<span class="LoginStatus"><!--#loginstatus--></span>
+						<!--#endif-->
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr valign="top" class="wwcontent">
+		<!--#if warnings="1"-->
+		<td class="ContentPanelError" bgcolor="#ffcccc">
+		<!--#else-->
+		<td class="ContentPanel" bgcolor="#ffffff">
+		<!--#endif-->	
+			<!--#if can="nav"-->
+			<div class="Nav">
+				<!--#nav style="images" imageprefix="/webwork2_files/themes/ubc/images" imagesuffix=".gif" separator=" | "-->
+			</div>
+			<!--#endif-->
+			<!--#if can="title"-->
+			<div class="Title">
+				<!--#title-->
+			</div>
+			<!--#endif-->
+			<!--#if can="message"-->
+				<div class="Message">
+					<!--#message-->
+				</div>
+			<!--#endif-->
+
+<!-- changes -->
+		    <hr style="clear:both"/>
+	
+  
+			<!--#if can="post_header_text"-->
+				<!--#post_header_text-->
+				<hr style="clear:both"/>
+			<!--#endif-->
+			
+			
+<!--			      ==============BEGIN BODY OF PROBLEM===============      -->
+			<!--#if warnings="1"-->
+				  <div class="Warnings" >
+				  <p style="font-size:larger">
+				  Warning -- there may be something wrong with this question. Please inform your instructor
+				  including the warning messages below.
+				  </p>
+				  </div>
+             <!--#endif-->
+             
+			 <!--#if can="output_problem_body"--> 
+				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
+				  <div class="Body" style="background-color:#ffffff">
+	
+					<!--#if can="output_custom_edit_message"-->
+						<!--#output_custom_edit_message-->
+					<!--#endif-->
+					<!--#if can="output_summary"-->
+					    <div>
+							<!--#output_summary-->
+						</div>
+					<!--#endif-->
+					
+					<!--#if can="output_hidden_info"-->
+						<!--#output_hidden_info-->
+					<!--#endif-->
+
+					<!--#if can="output_form_start"-->
+						<!--#output_form_start-->
+						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
+							<div class="problem">
+								<!--#if can="output_problem_body"-->
+									<!--#output_problem_body-->
+								<!--#endif-->
+								<!--#if can="output_message"-->
+									<!--#output_message-->
+								<!--#endif-->
+								<!--#if can="output_editorLink"-->
+									<!--#output_editorLink-->
+								<!--#endif-->
+							</div>
+						<!--#endif-->
+						<!--#if can="output_checkboxes" can="output_submit_buttons"-->
+							<p>
+								<!--#if can="output_checkboxes"-->
+									<!--#output_checkboxes-->
+								<!--#endif-->
+								<!--#if can="output_submit_buttons"-->
+									<!--#output_submit_buttons-->
+								<!--#endif-->
+							</p>
+						<!--#endif-->
+						<!--#if can="output_score_summary"-->
+							<div class="scoreSummary">
+								<!--#output_score_summary-->
+							</div>
+						<!--#endif-->
+						<!--#if can="output_misc"-->
+							<!--#output_misc-->
+						<!--#endif-->
+						</form>
+					<!--#endif-->
+				<!-- inserted problem piece by piece -->
+				<!--#if can="info"-->
+			  		<!--  styles could be different for different pages so they are not set here -->
+					<div class="InfoPanel">
+						<!--#info-->
+					</div>
+		    	<!--#endif-->
+
+				</div>	  
+			<!-- ====  end printing body parts   -->
+			<!--#else-->
+			<!-- ==== couldn't print body parts so we'll print entire body -->	
+				  <div class="Body" style="background-color:#ffffff; float:left;">
+				  	<!--#body-->
+				  </div>
+				  <!-- inserted body as a whole -->
+				<!--#if can="info"-->
+			  		<!--  styles could be different for different pages so they are not set here -->
+					<div class="InfoPanel">
+					<!--#info-->
+					</div>
+		    	<!--#endif-->
+
+			<!--#endif-->  
+<!--			      ==============END BODY OF PROBLEM===============      -->
+			
+			
+			
+			
+			<!--#endif-->
+			<!--#if warnings="1"-->
+			<hr>
+			<div class="Warnings">
+				<!--#warnings-->
+			</div>
+			<!--#endif-->
+			<!--#if can="message"-->
+				<div class="Message">
+					<!--#message-->
+				</div>
+			<!--#endif-->
+		</td>
+ 	</tr>
+ 	
+ 	<!-- changed -->
+ 				<!--#if can="output_past_answer_button" can="output_email_instructor"-->
+				<div class="problemFooter">
+					<!--#if can="output_past_answer_button"-->
+						<!--#output_past_answer_button-->
+					<!--#endif-->
+					<!--#if can="output_email_instructor"-->
+						<!--#output_email_instructor-->
+					<!--#endif-->
+				</div>
+			<!--#endif-->
+	 	<!-- end changed -->
+
+	
+ 	<tr class="footer">
+ 	    <td class = "Timestamp", colspan=3>
+ 	        Updated: <!--#timestamp-->
+ 	    </td>
+ 	</tr>
+</table>
+
+
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/lib/codemirror.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/pg/pg.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/math/math.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codeshard.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror.js"></script>
+</body>
+
+</html>

@@ -65,7 +65,7 @@ Specifies the password to use when connecting to the SQL server.
 
 Specifies the name of the database to delete. (This is usually
 "webwork_COURSENAME", but can be overridden by changing the database layout in
-F<global.conf>.)
+F<localOverrides.conf>.)
 
 =back
 

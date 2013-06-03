@@ -1,8 +1,3 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: WeBWorK Online Homework System\n"
@@ -18,7 +13,7 @@ msgstr ""
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_1"
-msgstr "This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3 % of the original."
+msgstr "tr: This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3\% of the original."
 
 #
 msgid "_REQUEST_ERROR"
@@ -50,7 +45,7 @@ msgstr "Prev"
 
 #
 msgid "navProbListGrey"
-msgstr "Up"
+msgstr "tr: Up"
 
 #
 msgid "navNextGrey"
@@ -62,7 +57,7 @@ msgstr "This is the classlist editor page, where you can view and edit the recor
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_2"
-msgstr "This assignment had a Reduced Credit Period that began %1 andended on the due date, %2.  During that period all additional work done counted %3 % of the original."
+msgstr "This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
 
 #
 msgid "_LOGIN_MESSAGE"
@@ -80,3 +75,10 @@ msgstr "Prev"
 msgid "_GUEST_LOGIN_MESSAGE"
 msgstr "This course supports guest logins. Click %1 to log into this course as a guest."
 
+#
+msgid "_PROBLEM_SET_SUMMARY"
+msgstr "This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."
+
+#
+msgid "_USER_TABLE_SUMMARY"
+msgstr "A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."

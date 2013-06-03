@@ -18,7 +18,7 @@ package WeBWorK::CourseEnvironment;
 
 =head1 NAME
 
-WeBWorK::CourseEnvironment - Read configuration information from global.conf
+WeBWorK::CourseEnvironment - Read configuration information from defaults.config
 and course.conf files.
 
 =head1 SYNOPSIS
@@ -41,7 +41,7 @@ and course.conf files.
 
 =head1 DESCRIPTION
 
-The WeBWorK::CourseEnvironment module reads the system-wide F<global.conf> and
+The WeBWorK::CourseEnvironment module reads the system-wide F<defaults.config> and
 course-specific F<course.conf> files used by WeBWorK to calculate and store
 settings needed throughout the system. The F<.conf> files are perl source files
 that can contain any code allowed under the default safe compartment opset.
@@ -68,7 +68,7 @@ HASHREF is a reference to a hash containing scalar variables with which to seed
 the course environment. It must contain at least a value for the key
 C<webworkRoot>.
 
-The C<new> method finds the file F<conf/global.conf> relative to the given
+The C<new> method finds the file F<conf/defaults.config> relative to the given
 C<webwork_dir> directory. After reading this file, it uses the
 C<$courseFiles{environment}> variable, if present, to locate the course
 environment file. If found, the file is read and added to the environment.
@@ -106,7 +106,7 @@ sub new {
 	if (ref $rest[0] eq "HASH") {
 		%seedVars = %{$rest[0]};
 	} else {
-		debug __PACKAGE__, ": deprecated four-argument form of new() used.\n";
+		debug __PACKAGE__, ": deprecated four-argument form of new() used.", caller(1),"\n", caller(2),"\n";
 		$seedVars{webwork_dir}    = $rest[0];
 		$seedVars{webwork_url}    = $rest[1];
 		$seedVars{pg_dir}         = $rest[2];
@@ -133,11 +133,11 @@ sub new {
 			local @INC = ();
 			my $result = do $fullPath;
 			if ($!) {
-				warn "Failed to read include file $fullPath (has it been created from the corresponding .dist file?): $!";
+				die "Failed to read include file $fullPath (has it been created from the corresponding .dist file?): $!";
 			} elsif ($@) {
-				warn "Failed to compile include file $fullPath: $@";
+				die "Failed to compile include file $fullPath: $@";
 			} elsif (not $result) {
-				warn "Include file $fullPath did not return a true value.";
+				die "Include file $fullPath did not return a true value.";
 			}
 		}
 	} ];
@@ -150,11 +150,9 @@ sub new {
 	
 	# determine location of globalEnvironmentFile
 	my $globalEnvironmentFile;
-	if (-r "$seedVars{webwork_dir}/conf/global.conf") {
-		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf";
-	} elsif (-r "$seedVars{webwork_dir}/conf/global.conf.dist") { # default version
-		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/global.conf.dist";
-	}		
+	if (-r "$seedVars{webwork_dir}/conf/defaults.config") {
+		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/defaults.config";
+	}
 	
 	# read and evaluate the global environment file
 	my $globalFileContents = readFile($globalEnvironmentFile);

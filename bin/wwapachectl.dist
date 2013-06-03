@@ -38,7 +38,7 @@ WEBWORKROOT=$HOME/webwork2
 
 # Change these only if you need to customize the locations
 PID=$WEBWORKROOT/logs/httpd.pid
-CONFIG_GLOBAL=$WEBWORKROOT/conf/global.conf
+CONFIG_GLOBAL=$WEBWORKROOT/conf/defaults.config
 CONFIG_DATABASE=$WEBWORKROOT/conf/database.conf
 CONFIG_DEVEL=$WEBWORKROOT/conf/devel.apache-config
 CONFIG_DEVEL_SITE=$WEBWORKROOT/conf/devel-site.apache-config

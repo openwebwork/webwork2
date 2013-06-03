@@ -21,7 +21,7 @@ wwdb - command-line interface to the WeBWorK libraries.
 
 =cut
 
-use Data::Dumper;
+
 
 BEGIN {
 	DB::parse_options("NonStop=1");
@@ -33,6 +33,7 @@ BEGIN {
 use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
+use Data::Dumper;
 
 our $ce;
 our $db;

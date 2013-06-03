@@ -26,6 +26,7 @@ use warnings;
 package WeBWorK::ContentGenerator::instructorXMLHandler;
 use base qw(WeBWorK::ContentGenerator);
 use MIME::Base64 qw( encode_base64 decode_base64);
+use JSON; # imports encode_json, decode_json, to_json and from_json.
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
@@ -96,13 +97,13 @@ unless ($webwork_dir) {
 	"\$WeBWorK::Constants::WEBWORK_DIRECTORY by webwork.apache-config or webwork.apache2-config\n";
 }
 
-# read the webwork2/conf/global.conf file to determine other parameters
+# read the webwork2/conf/defaults.config file to determine other parameters
 #
 my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
 my $server_root_url = $seed_ce->{server_root_url};
 unless ($server_root_url) {
 	die "unable to determine apache server url using course environment |$seed_ce|.".
-	    "check that the variable \$server_root_url has been properly set in conf/global.conf\n";
+	    "check that the variable \$server_root_url has been properly set in conf/site.conf\n";
 }
 
 ############################
@@ -201,6 +202,20 @@ sub pre_header_initialize {
 		     library_textchapter	=> 	$r->param("library_textchapter") ||undef,
 		     library_textsection	=> 	$r->param("library_textsection") ||undef,
 		     source			 =>   '',
+
+		     #course stuff
+		     first_name       => $r->param('first_name') || undef,
+             last_name       => $r->param('last_name') || undef,
+             student_id     => $r->param('student_id') || undef,
+             id             =>  $r->param('user_id') || undef,
+             email_address  => $r->param('email_address') || undef,
+             permission     => $r->param('permission') || 0,	# valid values from %userRoles in defaults.config
+             status         => $r->param('status') || undef,#'Enrolled, audit, proctor, drop
+             section        => $r->param('section') || undef,
+             recitation     => $r->param('recitation') || undef,
+             comment        => $r->param('comment') || undef,
+             new_password   => $r->param('new_password') || undef,
+             userpassword   => $r->param('userpassword') || undef,	# defaults to studentid if empty
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -399,34 +414,39 @@ sub pretty_print_json {
 		#$out .= " type = UNDEFINED; ";
 	}
 	return $out."" unless defined($rh);
-	
-	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
-	    $indent++;
- 		foreach my $key (sort keys %{$rh})  {
- 			$out .= "  ".'"'.$key.'" : '. pretty_print_json( $rh->{$key}) . ",";
- 		}
- 		$indent--;
- 		#get rid of the last comma
- 		chop $out;
- 		$out = "{\n$out\n"."}\n";
+		 
+	 if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
+            $indent++;
+	  		foreach my $key (sort keys %{$rh})  {
+	  			$out .= "  ".'"'.$key.'" : '. pretty_print_json( $rh->{$key}) . ",";
+	  		}
+	  		$indent--;
+	  		#get rid of the last comma
+	  		chop $out;
+	  		$out = "{\n$out\n"."}\n";
+	 
+	  	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
+	  		foreach my $elem ( @{$rh} )  {
+	  		 	$out .= pretty_print_json($elem).",";
+	  		
+	  		}
+	  		#get rid of the last comma
+	  		chop $out;
+	  		$out = "[\n$out\n"."]\n";
+	  		#$out =  '"'.$out.'"';
+	 } elsif ( ref($rh) =~ /SCALAR/ ) {
+	 	$out .= "scalar reference ". ${$rh};
+	 } elsif ( ref($rh) =~/Base64/ ) {
+	 	$out .= "base64 reference " .$$rh;
+	 
+	     } elsif ($rh  =~ /^[+-]?\d+$/){
+	         $out .=  $rh;
+	 } else {
+	 	$out .=  '"'.$rh.'"';
+	 }
+	 
+	 return $out."";
 
- 	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
- 		foreach my $elem ( @{$rh} )  {
- 		 	$out .= pretty_print_json($elem).",";
- 		
- 		}
- 		#get rid of the last comma
- 		chop $out;
- 		$out =  '"'.$out.'"';
-	} elsif ( ref($rh) =~ /SCALAR/ ) {
-		$out .= "scalar reference ". ${$rh};
-	} elsif ( ref($rh) =~/Base64/ ) {
-		$out .= "base64 reference " .$$rh;
-	} else {
-		$out .=  $rh;
-	}
-	
-	return $out."";
 }
 
 sub content {
@@ -434,18 +454,22 @@ sub content {
    # Return content of rendered problem to the browser that requested it
    ###########################
 	my $self = shift;
-	#for handling errors...i'm to lazy to make it work right now
-	if($self->{output}->{problem_out}){
-		print $self->{output}->{problem_out}->{text};
-	} else {
-		print '{"server_response":"'.$self->{output}->{text}.'",';
-		if($self->{output}->{ra_out}){
-			print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
-		} else {
-			print '"result_data":""}';
-		}
-	}
-	#print "".pretty_print_json($self->{output}->{ra_out});
+ 	#for handling errors...i'm to lazy to make it work right now
+ 	if($self->{output}->{problem_out}){
+            print $self->{output}->{problem_out}->{text};
+ 	} else {
+            my $out = {server_response => $self->{output}->{text}};
+            #print '{"server_response":"'.$self->{output}->{text}.'",';
+            if($self->{output}->{ra_out}){
+                $out->{result_data} = $self->{output}->{ra_out}; 
+                #print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
+            } else {
+                $out->{result_data} = "";
+            }
+            print JSON->new->utf8->space_after->encode($out);
+
+ 	}
+        #print "".pretty_print_json($self->{output}->{ra_out});
 }
 
 

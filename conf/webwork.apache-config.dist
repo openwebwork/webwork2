@@ -41,7 +41,7 @@ $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
 
-# This code reads global.conf and extracts the remaining configuration
+# This code reads defaults.config and extracts the remaining configuration
 # variables. There is no need to modify it.
 eval "use lib '$webwork_dir/lib'"; die $@ if $@;
 eval "use WeBWorK::CourseEnvironment"; die $@ if $@;

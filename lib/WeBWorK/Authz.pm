@@ -48,7 +48,7 @@ the contents of the %permissionLevels hash in the course environment.
 
 %permissionLevels maps text strings describing activities to numeric permission
 levels. The definitive list of activities is contained in the default version of
-%permissionLevels, in the file F<conf/global.conf.dist>.
+%permissionLevels, in the file F<conf/defaults.config>.
 
 A user is able to engage in an activity if their permission level is greater
 than or equal to the level associated with the activity. If the level associated
@@ -64,6 +64,7 @@ use Carp qw/croak/;
 use WeBWorK::Utils qw(before after between);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
+use Scalar::Util qw(weaken);
 
 ################################################################################
 
@@ -84,6 +85,7 @@ sub new {
 	my $self = {
 		r => $r,
 	};
+	weaken $self -> {r};
 	
 	$r -> {permission_retrieval_error} = 0;
 	bless $self, $class;
@@ -463,7 +465,8 @@ sub checkSet {
 			"generator $node_name was called.  Try re-entering " .
 			"the set from the problem sets listing page.";
 	} elsif ( (! defined($set->assignment_type) ||
-		   $set->assignment_type eq 'homework') &&
+#		   $set->assignment_type eq 'homework') &&
+		   $set->assignment_type eq 'default') &&
 		  $node_name =~ /gateway/ ) {
 		return "Requested set '$setName' is a homework assignment " . 
 			"but the gateway/quiz content " .
@@ -506,7 +509,8 @@ sub invalidIPAddress {
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
 
-	return 0 if ($set->restrict_ip eq '' || $set->restrict_ip eq 'No' ||
+	return 0 if (!defined($set->restrict_ip) ||
+			$set->restrict_ip eq '' || $set->restrict_ip eq 'No' ||
 		     $self->hasPermissions($userName,'view_ip_restricted_sets'));
 
 	my $clientIP = new Net::IP($r->connection->remote_ip);

@@ -41,13 +41,59 @@ BEGIN
 	&createListing &updateListing &deleteListing &getAllChapters
 	&getAllSections &searchListings &getAllListings &getSectionListings
 	&getAllDBsubjects &getAllDBchapters &getAllDBsections &getDBTextbooks
-	&getDBListings &countDBListings
+	&getDBListings &countDBListings &getTables
 	);
 	%EXPORT_TAGS		=();
 	@EXPORT_OK		=qw();
 }
 use vars @EXPORT_OK;
 
+my %OPLtables = (
+ dbsubject => 'OPL_DBsubject',
+ dbchapter => 'OPL_DBchapter',
+ dbsection => 'OPL_DBsection',
+ author => 'OPL_author',
+ path => 'OPL_path',
+ pgfile => 'OPL_pgfile',
+ keyword => 'OPL_keyword',
+ pgfile_keyword => 'OPL_pgfile_keyword',
+ textbook => 'OPL_textbook',
+ chapter => 'OPL_chapter',
+ section => 'OPL_section',
+ problem => 'OPL_problem',
+ pgfile_problem => 'OPL_pgfile_problem',
+);
+
+
+my %NPLtables = (
+ dbsubject => 'NPL-DBsubject',
+ dbchapter => 'NPL-DBchapter',
+ dbsection => 'NPL-DBsection',
+ author => 'NPL-author',
+ path => 'NPL-path',
+ pgfile => 'NPL-pgfile',
+ keyword => 'NPL-keyword',
+ pgfile_keyword => 'NPL-pgfile-keyword',
+ textbook => 'NPL-textbook',
+ chapter => 'NPL-chapter',
+ section => 'NPL-section',
+ problem => 'NPL-problem',
+ pgfile_problem => 'NPL-pgfile-problem',
+);
+
+
+sub getTables {
+	my $ce = shift;
+	my $libraryRoot = $ce->{problemLibrary}->{root};
+	my %tables;
+
+       if($ce->{problemLibrary}->{version} == 2.5) {
+		%tables = %OPLtables;
+	  } else {
+		%tables = %NPLtables;
+	  }
+	return %tables;
+}
 
 sub getDB {
 	my $ce = shift;
@@ -111,6 +157,7 @@ sub getDBTextbooks {
 	my $r = shift;
 	my $thing = shift || 'textbook';
 	my $dbh = getDB($r->ce);
+	my %tables = getTables($r->ce);
 	my $extrawhere = '';
 	# Handle DB* restrictions
 	my $subj = $r->param('library_subjects') || "";
@@ -147,10 +194,10 @@ sub getDBTextbooks {
 	my $selectwhat = LIBRARY_STRUCTURE->{$thing}{select};
 	
 	my $query = "SELECT DISTINCT $selectwhat
-          FROM `NPL-textbook` tbk, `NPL-problem` prob, 
-			`NPL-pgfile-problem` pg, `NPL-pgfile` pgf,
-            `NPL-DBsection` s, `NPL-DBchapter` c, `NPL-DBsubject` t,
-			`NPL-chapter` tc, `NPL-section` ts
+          FROM `$tables{textbook}` tbk, `$tables{problem}` prob, 
+			`$tables{pgfile_problem}` pg, `$tables{pgfile}` pgf,
+            `$tables{dbsection}` s, `$tables{dbchapter}` c, `$tables{dbsubject}` t,
+			`$tables{chapter}` tc, `$tables{section}` ts
           WHERE ts.section_id=prob.section_id AND 
             prob.problem_id=pg.problem_id AND
             s.DBchapter_id=c.DBchapter_id AND 
@@ -187,9 +234,10 @@ $r is the Apache request object
 
 sub getAllDBsubjects {
 	my $r = shift;
+	my %tables = getTables($r->ce);
 	my @results=();
 	my $row;
-	my $query = "SELECT DISTINCT name FROM `NPL-DBsubject`";
+	my $query = "SELECT DISTINCT name FROM `$tables{dbsubject}`";
 	my $dbh = getDB($r->ce);
 	my $sth = $dbh->prepare($query);
 	$sth->execute();
@@ -210,11 +258,12 @@ $r is the Apache request object
 
 sub getAllDBchapters {
 	my $r = shift;
+	my %tables = getTables($r->ce);
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT c.name FROM `NPL-DBchapter` c, 
-				`NPL-DBsubject` t
+	my $query = "SELECT DISTINCT c.name FROM `$tables{dbchapter}` c, 
+				`$tables{dbsubject}` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
                  t.name = \"$subject\"";
 	my $all_chaps_ref = $dbh->selectall_arrayref($query);
@@ -232,13 +281,14 @@ $r is the Apache request object
 
 sub getAllDBsections {
 	my $r = shift;
+	my %tables = getTables($r->ce);
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $chapter = $r->param('library_chapters');
 	return () unless($chapter);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT s.name FROM `NPL-DBsection` s,
-                 `NPL-DBchapter` c, `NPL-DBsubject` t
+	my $query = "SELECT DISTINCT s.name FROM `$tables{dbsection}` s,
+                 `$tables{dbchapter}` c, `$tables{dbsubject}` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
                  c.DBsubject_id = t.DBsubject_id AND
                  t.name = \"$subject\" AND c.name = \"$chapter\"";
@@ -259,6 +309,7 @@ Here, we search on all known fields out of r
 
 sub getDBListings {
 	my $r = shift;
+	my %tables = getTables($r->ce);
 	my $amcounter = shift;
 	my $ce = $r->ce;
 	my $subj = $r->param('library_subjects') || "";
@@ -267,7 +318,7 @@ sub getDBListings {
 	my $keywords = $r->param('library_keywords') || "";
 	my ($kw1, $kw2) = ('','');
 	if($keywords) {
-		$kw1 = ", `NPL-keyword` kw, `NPL-pgfile-keyword` pgkey";
+		$kw1 = ", `$tables{keyword}` kw, `$tables{pgfile_keyword}` pgkey";
 		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
 			 pgkey.pgfile_id=pgf.pgfile_id ". 
 			makeKeywordWhere($keywords) ;
@@ -303,18 +354,18 @@ sub getDBListings {
 	my $selectwhat = 'DISTINCT pgf.pgfile_id';
 	$selectwhat = 'COUNT(' . $selectwhat . ')' if ($amcounter);
 
-	my $query = "SELECT $selectwhat from `NPL-pgfile` pgf, 
-         `NPL-DBsection` dbsc, `NPL-DBchapter` dbc, `NPL-DBsubject` dbsj $kw1
+	my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
+         `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
               dbc.DBchapter_id = dbsc.DBchapter_id AND
               dbsc.DBsection_id = pgf.DBsection_id 
               \n $extrawhere 
               $kw2";
 	if($haveTextInfo) {
-      $query = "SELECT $selectwhat from `NPL-pgfile` pgf, 
-        `NPL-DBsection` dbsc, `NPL-DBchapter` dbc, `NPL-DBsubject` dbsj,
-		`NPL-pgfile-problem` pgp, `NPL-problem` prob, `NPL-textbook` tbk ,
-		`NPL-chapter` tc, `NPL-section` ts $kw1
+      $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
+        `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
+		`$tables{pgfile_problem}` pgp, `$tables{problem}` prob, `$tables{textbook}` tbk ,
+		`$tables{chapter}` tc, `$tables{section}` ts $kw1
         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
               dbc.DBchapter_id = dbsc.DBchapter_id AND
               dbsc.DBsection_id = pgf.DBsection_id AND
@@ -334,7 +385,7 @@ sub getDBListings {
 	}
 	my @results=();
 	for my $pgid (@pg_ids) {
-		$query = "SELECT path, filename FROM `NPL-pgfile` pgf, `NPL-path` p 
+		$query = "SELECT path, filename FROM `$tables{pgfile}` pgf, `$tables{path}` p 
           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
 		my $row = $dbh->selectrow_arrayref($query);
 		push @results, {'path' => $row->[0], 'filename' => $row->[1] };
@@ -357,6 +408,7 @@ sub countDBListings {
 
 sub createListing {
 	my $ce = shift;
+	my %tables = getTables($ce);
 	my %listing_data = @_; 
 	my $classify_id;
 	my $dbh = getDB($ce);
@@ -410,6 +462,7 @@ sub createListing {
 
 sub searchListings {
 	my $ce = shift;
+	my %tables = getTables($ce);
 	my %searchterms = @_;
 	#print STDERR "ListingDB::searchListings  input array @_\n";
 	my @results;
@@ -451,6 +504,7 @@ sub searchListings {
 sub getAllChapters {
 	#print STDERR "ListingDB::getAllChapters\n";
 	my $ce = shift;
+	my %tables = getTables($ce);
 	my @results=();
 	my ($row,$listing);
 	my $query = "SELECT DISTINCT chapter FROM classify";
@@ -483,6 +537,7 @@ sub getAllChapters {
 sub getAllSections {
 	#print STDERR "ListingDB::getAllSections\n";
 	my $ce = shift;
+	my %tables = getTables($ce);
 	my $chapter = shift;
 	my @results=();
 	my ($row,$listing);
@@ -520,6 +575,7 @@ sub getAllListings {
 	my @results;
 	my ($row,$key);
 	my $dbh = getDB($ce);
+	my %tables = getTables($ce);
 	my $query = "SELECT c.*, p.path
 			FROM classify c, pgfiles p
 			WHERE c.pgfiles_id = p.pgfiles_id";
@@ -545,7 +601,7 @@ sub getSectionListings	{
 	my $r = shift;
 	my $ce = $r->ce;
 	my $version = $ce->{problemLibrary}->{version} || 1;
-	if($version == 2) { return(getDBListings($r, 0))}
+	if($version => 2) { return(getDBListings($r, 0))}
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
@@ -566,6 +622,7 @@ sub getSectionListings	{
 	FROM classify c, pgfiles p
 	WHERE $chapstring $secstring c.pgfiles_id = p.pgfiles_id";
 	my $dbh = getDB($ce);
+	my %tables = getTables($ce);
 	my $sth = $dbh->prepare($query);
 	
 	$sth->execute();
@@ -598,6 +655,7 @@ sub deleteListing {
 	#print STDERR "ListingDB::deleteListing(): listing == '$listing_id'\n";
 
 	my $dbh = getDB($ce);
+	my %tables = getTables($ce);
 
 	return undef;
 }

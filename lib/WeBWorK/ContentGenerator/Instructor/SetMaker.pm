@@ -69,7 +69,7 @@ use constant HIDDEN => (1 << 1);
 use constant SUCCESS => (1 << 2);
 
 ##	for additional problib buttons
-my %problib;	## filled in in global.conf
+my %problib;	## This is configured in defaults.config
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
 	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1,
@@ -414,7 +414,7 @@ sub browse_library_panel {
 			my $msg =	 <<"HERE";
 You are missing the directory <code>templates/Library</code>, which is needed
 for the Problem Library to function.	It should be a link pointing to
-<code>$libraryRoot</code>, which you set in <code>conf/global.conf</code>.
+<code>$libraryRoot</code>, which you set in <code>conf/site.conf</code>.
 I tried to make the link for you, but that failed.	Check the permissions
 in your <code>templates</code> directory.
 HERE
@@ -426,7 +426,7 @@ HERE
 	my $libraryVersion = $r->{ce}->{problemLibrary}->{version} || 1;
 	if($libraryVersion == 1) {
 		return $self->browse_library_panel1;
-	} elsif($libraryVersion == 2) {
+	} elsif($libraryVersion >= 2) {
 		return $self->browse_library_panel2	if($self->{library_basic}==1);
 		return $self->browse_library_panel2adv;
 	} else {

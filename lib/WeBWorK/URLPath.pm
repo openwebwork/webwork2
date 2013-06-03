@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2012 The openWeBWorK Project, http://github.com/openwebwork
 # $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.36 2008/04/29 19:27:34 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -27,6 +27,7 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use WeBWorK::Localize;
+use Scalar::Util qw(weaken);
 {
 	no warnings "redefine";
 	
@@ -72,6 +73,9 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_user_detail2              /$courseID/instructor/users2/$userID/ #not created yet
  instructor_sets_assigned_to_user2    /$courseID/instructor/users2/$userID/sets/ #not created yet
 
+ instructor_user_list3                /$courseID/instructor/users3/
+ instructor_user_detail3              /$courseID/instructor/users3/$userID/ #not created yet
+ instructor_sets_assigned_to_user3    /$courseID/instructor/users3/$userID/sets/ #not created yet
  
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
@@ -103,6 +107,11 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_problem_editor2_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor2/$setID/$problemID/
  
+  instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
+ instructor_problem_editor3_withset   /$courseID/instructor/pgProblemEditor3/$setID/
+ instructor_problem_editor3_withset_withproblem
+                                     /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
+ 
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
@@ -113,12 +122,21 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
  
+ instructor_statistics_old               /$courseID/instructor/stats_old/
+ instructor_set_statistics_old           /$courseID/instructor/stats_old/set/$setID/
+ instructor_user_statistics_old          /$courseID/instructor/stats_old/student/$userID/
+ 
  instructor_progress                  /$courseID/instructor/StudentProgress/
  instructor_set_progress              /$courseID/instructor/StudentProgress/set/$setID/
  instructor_user_progress             /$courseID/instructor/StudentProgress/student/$userID/
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
+
+ achievements                        /$courseID/achievements
+ instructor_achievement_list         /$courseID//instructor/achievement_list
+ instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
+ instructor_achievement_user_editor  /$courseID/instructor/achievement_list/$achievementID/users
 
 =cut
 
@@ -168,7 +186,7 @@ our %pathTypes = (
 	set_list => {
 		name    => '$courseID',
 		parent  => 'root',
-		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy
+		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz grades hardcopy achievements
 			logout options instructor_tools problem_list
 		/ ],
 		match   => qr|^([^/]+)/|,
@@ -233,6 +251,15 @@ our %pathTypes = (
 		produce => 'grades/',
 		display => 'WeBWorK::ContentGenerator::Grades',
 	},
+        achievements  => {
+	        name    => 'Achievements',
+                parent  => 'set_list',
+                kids    => [ qw// ],
+                match   => qr|^achievements/|,
+                capture => [ qw// ],
+                produce => 'achievements/',
+                display => 'WeBWorK::ContentGenerator::Achievements',
+        },
 	hardcopy => {
 		name    => 'Hardcopy Generator',
 		parent  => 'set_list',
@@ -293,15 +320,15 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2 
-		    instructor_add_users
+		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2
+		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_problem_editor2 
+			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
 			instructor_set_maker instructor_set_maker2 instructor_set_maker3 
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_answer_log instructor_preflight instructor_statistics
+			instructor_answer_log instructor_preflight instructor_statistics instructor_statistics_old
 			instructor_progress			
 		/ ],
 		match   => qr|^instructor/|,
@@ -330,6 +357,15 @@ our %pathTypes = (
 		produce => 'users2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
+	instructor_user_list3 => {
+    		name    => 'Classlist Editor3',
+    		parent  => 'instructor_tools',
+    		kids    => [ qw/instructor_user_detail/ ],
+    		match   => qr|^users3/|,
+    		capture => [ qw// ],
+    		produce => 'users3/',
+    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
+    	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',
@@ -499,6 +535,15 @@ our %pathTypes = (
 		produce => 'pgProblemEditor2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
 	},
+	instructor_problem_editor3 => {
+		name    => 'Problem Editor3',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_problem_editor3_withset/ ],
+		match   => qr|^pgProblemEditor3/|,
+		capture => [ qw// ],
+		produce => 'pgProblemEditor3/',
+		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
+	},
 	instructor_problem_editor_withset => {
 		name    => '$setID',
 		parent  => 'instructor_problem_editor',
@@ -512,6 +557,15 @@ our %pathTypes = (
 		name    => '$setID',
 		parent  => 'instructor_problem_editor2',
 		kids    => [ qw/instructor_problem_editor2_withset_withproblem/ ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/setID/ ],
+		produce => '$setID/',
+		display => undef,
+	},
+	instructor_problem_editor3_withset => {
+		name    => '$setID',
+		parent  => 'instructor_problem_editor3',
+		kids    => [ qw/instructor_problem_editor3_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
@@ -534,6 +588,15 @@ our %pathTypes = (
 		capture => [ qw/problemID/ ],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
+	},
+	instructor_problem_editor3_withset_withproblem => {
+		name    => '$problemID',
+		parent  => 'instructor_problem_editor3_withset',
+		kids    => [ qw// ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/problemID/ ],
+		produce => '$problemID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
 	instructor_scoring => {
 		name    => 'Scoring Tools',
@@ -611,6 +674,67 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	
+		instructor_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_set_statistics_old instructor_user_statistics_old/ ],
+		match   => qr|^stats_old/|,
+		capture => [ qw// ],
+		produce => 'stats_old/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+	instructor_set_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_statistics_old',
+		kids    => [ qw// ],
+		match   => qr|^(set)/([^/]+)/|,
+		capture => [ qw/statType setID/ ],
+		produce => 'set/$setID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+	instructor_user_statistics_old => {
+		name    => 'Statistics_old',
+		parent  => 'instructor_statistics_old',
+		kids    => [ qw// ],
+		match   => qr|^(student)/([^/]+)/|,
+		capture => [ qw/statType userID/ ],
+		produce => 'student/$userID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
+	},
+
+	################################################################################
+
+        instructor_achievement_list => {
+                name    =>  'Achievement Editor',
+                parent  =>  'instructor_tools', 
+                kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
+                match   =>  qr|^achievement_list/|,
+                capture =>  [ qw// ],
+                produce =>  'achievement_list/',
+                display =>  'WeBWorK::ContentGenerator::Instructor::AchievementList',
+        },
+
+        instructor_achievement_editor => {
+	        name    => 'Achievement Evaluator Editor',
+                parent  => 'instructor_achievement_list', 
+                kids => [ qw// ],
+                match => qr|^([^/]+)/editor/|,
+		capture => [ qw/achievementID/ ],
+                produce => '$achievementID/editor/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementEditor',
+	},
+
+        instructor_achievement_user_editor => {
+	        name    => 'Achievement User Editor',
+                parent  => 'instructor_achievement_list', 
+                kids => [ qw// ],
+		match   => qr|^([^/]+)/users/|,
+		capture => [ qw/achievementID/ ],
+		produce => '$achievementID/users/',
+		display => 'WeBWorK::ContentGenerator::Instructor::AchievementUserEditor',
+	},
+
+
 	################################################################################
 	
 	instructor_progress => {
@@ -707,6 +831,7 @@ sub new {
 		args => {},
 		%fields,
 	};
+ 	weaken $self -> {r};
 	return bless $self, $class;
 }
 

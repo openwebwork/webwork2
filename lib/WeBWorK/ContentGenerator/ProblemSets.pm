@@ -384,10 +384,10 @@ sub setListRow {
 	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
 	    ( defined( $set->assignment_type() ) && 
 	      $set->assignment_type() eq 'proctored_gateway' );
-	
-	$name =~ s/_/&nbsp;/g;
+	my $display_name = $name;
+	$display_name =~ s/_/&nbsp;/g;
 # this is the link to the homework assignment
-	my $interactive = CGI::a({-href=>$interactiveURL}, "$name");
+	my $interactive = CGI::a({-href=>$interactiveURL}, "$display_name");
 	
 	my $control = "";
 	
@@ -395,7 +395,7 @@ sub setListRow {
 	my $status = '';
 	if ( $gwtype ) {
 		if ( $gwtype == 1 ) {
-		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $name"; return()}
+		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $display_name"; return()}
 			if ( $problemRecords[0]->num_correct() + 
 			     $problemRecords[0]->num_incorrect() >= 
 			     ( ( !($set->attempts_per_version()) ) ? 0 : $set->attempts_per_version() ) ) {
@@ -405,7 +405,7 @@ sub setListRow {
 				$status = $r->maketext("over time: closed.");
 			} else {
 				$status = $r->maketext("open: complete by [_1]",  
-					$self->formatDateTime($set->due_date()));
+					$self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
 			}
 			# we let people go back to old tests
 			$setIsOpen = 1;
@@ -413,55 +413,55 @@ sub setListRow {
 			# reset the link to give the test number
 			my $vnum = $set->version_id;
 			$interactive = CGI::a({-href=>$interactiveURL},
-					      $r->maketext("[_1] (test [_2])", $name, $vnum));
+					      $r->maketext("[_1] (test [_2])", $display_name, $vnum));
 		} else {
 			my $t = time();
 			if ( $t < $set->open_date() ) {
-				$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date));
+				$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
 				if ( $preOpenSets ) {
 					# reset the link
 					$interactive = CGI::a({-href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $name));
+							      $r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
-					$interactive = $r->maketext("[_1] test", $name);
+					$interactive = $r->maketext("[_1] test", $display_name);
 				}
 			} elsif ( $t < $set->due_date() ) {
-				$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date);
+				$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 				$setIsOpen = 1;
 				$interactive = CGI::a({-href=>$interactiveURL},
-						      $r->maketext("Take [_1] test", $name));
+						      $r->maketext("Take [_1] test", $display_name));
 			} else {
 				$status = $r->maketext("Closed");
 
 				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
 					$interactive = CGI::a({-href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $name));
+							      $r->maketext("Take [_1] test", $display_name));
 				} else {
-					$interactive = $r->maketext("[_1] test", $name);
+					$interactive = $r->maketext("[_1] test", $display_name);
 				}
 			}
 		}
 
 # old conditional
 	} elsif (time < $set->open_date) {
-		$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date));
+		$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date) {
-			$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date);
+			$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 			my $enable_reduced_scoring = $set->enable_reduced_scoring;
 			my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
 			if ($reducedScoringPeriod > 0 and $enable_reduced_scoring ) {
 				my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
-				my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec);
+				my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec,undef,$ce->{studentDateDisplayFormat});
 #				$status .= '. <FONT COLOR="#cc6600">Reduced Credit starts ' . $beginReducedScoringPeriod . '</FONT>';
 				$status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Credit Starts: [_1]", $beginReducedScoringPeriod));
 
 			}
 		$setIsOpen = 1;
 	} elsif (time < $set->answer_date) {
-		$status = $r->maketext("closed, answers on [_1]", $self->formatDateTime($set->answer_date));
+		$status = $r->maketext("closed, answers on [_1]", $self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat}));
 	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
 		$status = $r->maketext("closed, answers recently available");
 	} else {

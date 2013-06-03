@@ -1,5 +1,5 @@
-#!/usr/bin/perl
-
+#!/usr/bin/env perl
+#
 use strict;
 use warnings;
 
@@ -61,9 +61,11 @@ my @modulesList = qw(
 	Getopt::Std
 	HTML::Entities
 	HTML::Tagset
+	HTML::Template
 	IO::File
 	Iterator
 	Iterator::Util
+	JSON
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
 	Mail::Sender
@@ -82,6 +84,7 @@ my @modulesList = qw(
 	Socket
 	SQL::Abstract
 	String::ShellQuote
+	Text::CSV
 	Text::Wrap
 	Tie::IxHash
 	Time::HiRes

@@ -13,7 +13,7 @@ Image generation alternatives:
 
 
 
-global.conf:
+defaults.config:
 	- the "root" of the modperl handler should be sent in from outside
 	- right now, it's in $webworkURLs{root}
 

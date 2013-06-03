@@ -1,0 +1,10 @@
+
+$db->addUser($db->newUser(user_id=>"profa", first_name=>"Prof", last_name=>"A",email_address=>"", student_id=>"profa", status=>"C",section=>"", recitation=>"",comment=>"administrator"));
+
+$db->addPassword($db->newPassword(user_id=>"profa", password=>crypt("profa", "dc")));
+
+$db->addPermissionLevel($db->newPermissionLevel(user_id=>"profa", permission=>"10"));
+
+
+exit;
+

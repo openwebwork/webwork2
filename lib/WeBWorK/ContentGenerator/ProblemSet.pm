@@ -266,7 +266,7 @@ sub info {
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
 		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
-	
+	print CGI::start_div({class=>"info-wrapper"});
 	print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 	
 	if ($editorURL) {
@@ -282,7 +282,7 @@ sub info {
 	}
 	
 	print CGI::end_div();
-	
+	print CGI::end_div();
 	return "";
 }
 
