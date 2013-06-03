@@ -594,6 +594,11 @@ sub updateSetting {
 
 	my $setVar = $params->{var};
 	my $setValue = $params->{value};
+
+	# this shouldn't be needed, but it seems like it's not get parsed correctly. 
+	#if($params->{sendViaJSON}){
+	#	$setValue = decode_json($setValue);
+	#}
 	debug("in updateSetting");
 	debug("var:  " . $setVar);
 	debug("value: " . $setValue);

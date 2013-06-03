@@ -29,7 +29,7 @@ var Settings = Backbone.Collection.extend({
                 console.log("The course settings have loaded");
                 var settingsData = response.result_data;
 
-                if (settingsData.length === 5) {
+                if (settingsData.length === 6) {  // this is a hack.  The timezone comes in the last array slot, but could be better. 
                     var tzData = settingsData.pop();
                     self.add(new WeBWorKProperty({category: "timezone", "var": "timezone", value: tzData[1]},{silent: true}));
                 }

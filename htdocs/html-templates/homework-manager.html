@@ -252,8 +252,12 @@ a better rendering.
 
 <script type="text/template" id="settings-template">
     <p>The following are homework settings relevant to the the Homework Manager.</p>
+
+    <!--
+    <p><button class="btn save-settings-button">Save the Settings</button></p>-->
     
-    <table class="table table-bordered" id="settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <table class="table table-bordered settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody></tbody>
 </table>
     
 </script>
@@ -387,6 +391,18 @@ a better rendering.
 <%if(deletable){ %><span class="span1 remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
 
 <%= data %>
+</script>
+
+<script type="text/template" id="ww-setting-row-template">
+<td><span class="doc"></span>
+<button class='btn btn-small help-button' style='margin-left: 25px'>
+  <i class='icon-question-sign'></i></button>
+  <div class="help-hidden">
+  <button class="close">&times;</button>
+  <span class="doc2"></span></div>
+
+  </td>
+  <td class="col2"></td>
 </script>
 
 <script type="text/template" id="setting-row-template">

@@ -246,6 +246,7 @@ sub pre_header_initialize {
             path 					=> $r->param('path') || undef, 
             selfassign 			    => $r->param('selfassign') || undef, 
             pgCode					=> $r->param('pgCode') || undef,
+            sendViaJSON				=> $r->param('sendViaJSON') || undef
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -436,6 +437,7 @@ sub pretty_print_json {
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
 	my $rh = shift;
 	my $indent = shift || 0;
+	
 	my $out = "";
 	my $type = ref($rh);
 
@@ -493,7 +495,7 @@ sub content {
 		if($self->{output}->{ra_out}){
 			# print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
 			if (ref($self->{output}->{ra_out})) {
-			print '"result_data": ' . to_json($self->{output}->{ra_out}) .'}';
+				print '"result_data": ' . to_json($self->{output}->{ra_out}) .'}';
 			} else {
 				print '"result_data": "' . $self->{output}->{ra_out} . '"}';
 			}

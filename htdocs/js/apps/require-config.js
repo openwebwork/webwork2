@@ -22,7 +22,7 @@ var require = {
         "jquery-imagesloaded":  '/webwork2_files/js/vendor/jquery/modules/jquery.imagesloaded.min'
 
     },
-    urlArgs: "bust=" +  (new Date()).getTime(),
+    //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
      shim: {
         'jquery-ui': ['jquery'],

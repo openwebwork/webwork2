@@ -89,8 +89,6 @@ var HomeworkEditorView = WebPage.extend({
             self.views.calendar.render();
         });
         
-        // set up messages associated with problem Sets.  
-        this.setupMessages();
 
         
         this.problemSets.on("rendered",function(){
@@ -149,7 +147,7 @@ var HomeworkEditorView = WebPage.extend({
     setupMessages: function () {
         var self = this;
 
-        this.problemSets.on("problem-set-changed", function (_set){
+        this.problemSets.on("change", function (_set){
             
             self.views.calendar.updateAssignments();
             self.views.calendar.render();
@@ -161,11 +159,11 @@ var HomeworkEditorView = WebPage.extend({
             })
         });
         
-        this.problemSets.on("problem-set-added", function (set){
+        this.problemSets.on("add", function (set){
             self.announce.addMessage({text: "The HW set with name " + set.get("set_id") + " was created."});
         });
 
-        this.problemSets.on("problem-set-deleted",function(set){
+        this.problemSets.on("remove",function(set){
             self.announce.addMessage({text: "The HW set with name " + set.get("set_id") + " was deleted."});
         });
 
@@ -187,6 +185,8 @@ var HomeworkEditorView = WebPage.extend({
 
 
         this.views.calendar.render();
+
+        this.setupMessages();
         
         // Set the popover on the set name
         $("span.pop").popover({title: "Homework Set Details", placement: "top", offset: 10});
