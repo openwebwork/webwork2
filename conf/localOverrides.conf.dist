@@ -252,7 +252,7 @@ $problemDefaults{max_attempts} = -1;
 # 	
 # 	librarybrowsernojs    => 1,
  	librarybrowser1    => 1,
- 	librarybrowser2    => 1,
+# 	librarybrowser2    => 1,
 # 	librarybrowser3    => 1,
 # 	
 #	pgproblemeditor1   => 1,
