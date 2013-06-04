@@ -189,18 +189,6 @@ $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 # Seconds to wait before timing out when connecting to the SMTP server.
 $mail{smtpTimeout}           = 30;
 
-################################################################################
-# Problem library options
-################################################################################
-
-# For configuration instructions, see:
-# http://webwork.maa.org/wiki/National_Problem_Library
-# The directory containing the WeBWorK Open Problem Library (OPL) files - typically
-# /opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary
-# or for the older National Problem Library (NPL)
-# /opt/webwork/libraries/NationalProblemLibrary
-# Set to "" if no problem library is installed.
-$problemLibrary{root}        = "";
 
 ################################################################################
 #Time Zone

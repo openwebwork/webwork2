@@ -90,7 +90,7 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 
 
 ################################################################################
-# National Problem Library
+# NationalProblemLibrary -- OpenProblemLibrary
 ################################################################################
 
 
@@ -98,10 +98,10 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 # http://webwork.maa.org/wiki/National_Problem_Library
 # The directory containing the natinal problem library files. Set to "" if no problem
 # library is installed.
-$problemLibrary{root}        ="/opt/webwork/libraries/NationalProblemLibrary";
-
+$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
+$problemLibrary[version]     = "2";
 # uncomment these lines below and comment out the line above if using OPL instead of NPL
-#$problemLibrary{root}       ="/opt/webwork/library/webwork-open-problem-library/OpenProblemLibrary";
+#$problemLibrary{root}       = "/opt/webwork/library/webwork-open-problem-library/OpenProblemLibrary";
 #$problemLibrary{version}    = "2.5";  
 
 # Additional library buttons can be added to the Library Browser (SetMaker.pm)
