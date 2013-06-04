@@ -65,6 +65,10 @@ sub head {
 #	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/bootstrap/css/bootstrap.popover.css\">";
 
 	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
+	my $MathJax = $ce->{webworkURLs}->{MathJax};
+	
+	print CGI::start_script({type=>"text/javascript", src=>$MathJax}), CGI::end_script();
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
 	
 	return "";
@@ -130,9 +134,15 @@ sub initialize {
 		    ### $comment needs to be sanitized.  It could currently contain badness written 
 		    ### into the comment by the instructor 
 		    
-		    my $scrubber = HTML::Scrubber->new();
-		    my $comment = $scrubber->scrub($r->param("$userID.comment"));
 
+		    my $scrubber = HTML::Scrubber->new(
+			default=> 1,
+			script => 0,
+			process => 0,
+			comment => 0
+			);
+		    
+		    my $comment = $scrubber->scrub($r->param("$userID.comment"));
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 		    
 		    if ($userPastAnswerID) {

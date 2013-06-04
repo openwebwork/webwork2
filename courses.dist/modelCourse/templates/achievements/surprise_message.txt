@@ -1,0 +1,3 @@
+The message for the Mysterious Package (with Ribbons) item goes in the file templates/achievements/surprise_message.txt.  <br>
+For example:  Here is a picture of a kitten <br>
+<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Kitten_in_Rizal_Park%2C_Manila.jpg/400px-Kitten_in_Rizal_Park%2C_Manila.jpg">

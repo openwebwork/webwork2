@@ -163,7 +163,7 @@ sub body {
 		print CGI::start_form(-method=>"POST", -action=>$loginURL);
 	#	print CGI::hidden("user", $userID);  ### Line Commented out to suppress error message when this button is used.  WHW
 		print CGI::hidden("force_passwd_authen", 1);
-		print CGI::p({align=>"center"}, CGI::submit(-name=>"submit", -label=>$r->maketext("Log In Again")));
+		print CGI::p( CGI::submit(-name=>"submit", -label=>$r->maketext("Log In Again")));
 		print CGI::end_form();
 	}
 	return "";

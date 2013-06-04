@@ -6,7 +6,9 @@ use warnings;
 
 use Storable qw(nfreeze thaw);
 
-#have to add any new items to this list
+#have to add any new items to this list, furthermore
+# the elements of this list have to match the class name/id of the
+# item classes defined below. 
 use constant ITEMS => [qw(
 ResetIncorrectAttempts
 DuplicateProb
@@ -25,7 +27,9 @@ Surprise
 Item - this is the base class for achievement times.  This defines an 
 interface for all of the achievement items.  Each achievement item will have 
 a name, a description, a method for creating an html form to get its inputs
-and a method for applying those inputs.  
+called print_form and a method for applying those inputs called use_item.  
+
+Note: the ID has to match the name of the class. 
 
 =cut
 
@@ -39,6 +43,7 @@ sub UserItems {
     my $db = shift;
     my $ce = shift;
 
+    # return unless the user has global achievement data
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     
     return unless ($globalUserAchievement->frozen_hash);
@@ -46,6 +51,7 @@ sub UserItems {
     my $globalData = thaw($globalUserAchievement->frozen_hash);
     my @items;
 
+    # ugly eval to get a new item object for each type of item.  
     foreach my $item (@{+ITEMS}) {
 	push (@items, eval("WeBWorK::AchievementItems::${item}->new")) if
 	    ($globalData->{$item});
@@ -85,6 +91,8 @@ sub print_form {
     my @openSetCount;
     my $maxProblems=0;
 
+    #Find all of the closed sets and put them in form
+
     for (my $i=0; $i<$#$sets; $i++) {
 	if (after($$sets[$i]->due_date()) & $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
@@ -104,6 +112,7 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    #check and see if student really has the item and if the data is valid
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
@@ -120,6 +129,8 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
+
+    # Set a new due date and answer time for the student and remove the item
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
 
@@ -171,6 +182,7 @@ sub print_form {
     my @openSetCount;
     my $maxProblems=0;
 
+    #find all currently open sets and print to a form
     for (my $i=0; $i<$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->answer_date)  && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
@@ -190,6 +202,7 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    #check and see if the student has the achievement and if the data is valid
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
@@ -206,6 +219,7 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
+    #add time to the due date and answer datae and remove item from inventory
     $set->due_date($set->due_date()+86400);
     $set->answer_date($set->answer_date()+86400);
 
@@ -232,7 +246,8 @@ sub new {
     my $self = {
 	id => "ReducedCred",
 	name => "Ring of Reduction",
-	#Reduced credit needs to be set up in course configuration
+	#Reduced credit needs to be set up in course configuration for this
+	# item to work,
 	description => "Enable reduced credit for a homework set.  This will allow you to submit answers for partial credit for limited time after the due date.",
 	%options,
     };
@@ -252,6 +267,8 @@ sub print_form {
     my @openSetCount;
     my $maxProblems=0;
 
+
+    #print names of open sets
     for (my $i=0; $i<$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->answer_date)  && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
@@ -271,11 +288,16 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+
+    #check variables
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
     my $globalData = thaw($globalUserAchievement->frozen_hash);
 
+    return "This item won't work unless your instructor enables the reduced scoring feature.  Let them know that you recieved this message." unless $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
+	
+    
     return "You are $self->{id} trying to use an item you don't have" unless
 	($globalData->{$self->{id}});
 
@@ -287,6 +309,9 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
+
+    # enable reduced scoring on the set and add the reduced scoring period 
+    # to the due date.  
     my $additionalTime = 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
     $set->enable_reduced_scoring(1);
     $set->due_date($set->due_date()+$additionalTime);
@@ -332,6 +357,8 @@ sub print_form {
 
     my @openSets;
 
+    #print open sets
+
     for (my $i=0; $i<$#$sets; $i++) {
 	if ($$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
@@ -351,6 +378,8 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    #validate input data
+
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
@@ -366,6 +395,8 @@ sub use_item {
     my $set = $db->getMergedSet($userName,$setID);
     return "Couldn't find that set!" unless
 	($set);
+
+    # got through the problems in the set and double the value/weight of each
 
     my @probIDs = $db->listUserProblems($userName,$setID);
 
@@ -413,6 +444,9 @@ sub print_form {
     my @openSetCount;
     my $maxProblems=0;
 
+    #print open sets in a drop down and some javascript which will cause the 
+    #second drop down to have the correct number of problems for each set
+
     for (my $i=0; $i<$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
@@ -456,6 +490,7 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    #validate data
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
@@ -474,6 +509,8 @@ sub use_item {
     my $problem = $db->getUserProblem($userName, $setID, $problemID);
 
     return "There was an error accessing that problem." unless $problem;
+
+    #set number of incorrect attempts to zero
 
     $problem->num_incorrect(0);
 
@@ -515,6 +552,9 @@ sub print_form {
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
+
+    #print open sets and javascript to mach second dropdown to number of
+    #problems in each set
 
     for (my $i=0; $i<$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
@@ -559,6 +599,8 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    #validate data
+
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
@@ -574,10 +616,13 @@ sub use_item {
     return "You need to input a Problem Number" unless
 	($problemID);
 
+
     my $globalproblem = $db->getMergedProblem($userName, $setID,$problemID);
     my $problem = $db->getUserProblem($userName, $setID, $problemID);
 
     return "There was an error accessing that problem." unless $problem;
+
+    #double value of problem
 
     $problem->value($globalproblem->value*2);
     $db->putUserProblem($problem);
@@ -618,6 +663,9 @@ sub print_form {
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
+
+    #print form with open sets and javasscript to have appropriate number 
+    # of items in second drop down
 
     for (my $i=0; $i<$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
@@ -662,6 +710,8 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    #validate data
+
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
@@ -680,6 +730,8 @@ sub use_item {
     my $problem = $db->getUserProblem($userName, $setID, $problemID);
 
     return "There was an error accessing that problem." unless $problem;
+
+    #set status (grade) to .5 if that makes it larger. 
 
     $problem->status(.5) if ($problem->status < .5);
 
@@ -721,6 +773,8 @@ sub print_form {
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
+
+    #print form getting set and problem number
 
     for (my $i=0; $i<$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
@@ -765,6 +819,8 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    #validate data
+
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
@@ -783,6 +839,8 @@ sub use_item {
     my $problem = $db->getUserProblem($userName, $setID, $problemID);
 
     return "There was an error accessing that problem." unless $problem;
+
+    #set status of the file to one. 
 
     $problem->status(1);
 
@@ -824,6 +882,8 @@ sub print_form {
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
+
+    # print open sets and allow for a choice of two problems from the set
 
     for (my $i=0; $i<$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
@@ -875,6 +935,8 @@ sub use_item {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    #validate data
+
     my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
     return "No achievement data?!?!?!" 
 	unless ($globalUserAchievement->frozen_hash);
@@ -900,6 +962,8 @@ sub use_item {
     my $problem2 = $db->getUserProblem($userName, $setID, $problemID2);
 
     return "There was an error accessing that problem." unless $problem;
+
+    #set the source of the second problem to that of the first problem. 
 
     $problem2->source_file($problem->source_file);
 
@@ -937,11 +1001,18 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
+    my $r = shift;
 
-    return join("",
-		 CGI::p("Surprise! Here is a picture of a kitten!"),
-		 CGI::img({src=>'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYxHWUrJRyHH5uheK14P2ZKdT3XbIpUoTSyxdkUsd04kxlXm_K'})
-	);
+    # the form opens the file "suprise_message.txt" in the achievements 
+    # folder and then prints the contetnts of the file.  
+
+    my $sourceFilePath = $r->{ce}->{courseDirs}->{achievements}.'/surprise_message.txt';
+
+    open MESSAGE, $sourceFilePath or return CGI::p("I couldn't find the file [ACHEVDIR]/surprise_message.txt!");
+
+    my @message = <MESSAGE>;
+
+    return CGI::p(@message);
 
 }
 
@@ -951,6 +1022,8 @@ sub use_item {
     my $r = shift;
     my $db = $r->db;
     my $ce = $r->ce;
+
+    #doesn't do anything
 
     return;
 }
