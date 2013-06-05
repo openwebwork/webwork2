@@ -688,7 +688,7 @@ table caption{
 .radio_span, 
 .radio_span input,
 .radio_span label{
-    display:none;
+    display:none !important;
 }
 
 table.problem_sets_table {
