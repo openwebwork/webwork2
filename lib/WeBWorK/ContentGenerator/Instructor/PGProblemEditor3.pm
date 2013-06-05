@@ -1472,7 +1472,7 @@ sub add_problem_form {
 
 sub add_problem_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r=>$self->r;
+	my $r= $self->r;
 	#$self->addgoodmessage("add_problem_handler called");
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
@@ -1826,7 +1826,7 @@ sub save_as_form {  # calls the save_as_handler
 			       # -onfocus=>$onChange
 			      # ).",".
 			WeBWorK::CGI_labeled_input(-type=>"text", -id=>"action_save_as_target_file_id", -label_text=>"Save file to: [TMPL]/", -input_attr=>{
-				-name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  
+				-name=>'action.save_as.target_file', -size=>40, -value=>"$shortFilePath",  
 			    -onfocus=>$onChange
 			}).
 			CGI::hidden(-name=>'action.save_as.source_file', -value=>$editFilePath ).

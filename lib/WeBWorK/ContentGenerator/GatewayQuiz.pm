@@ -2124,7 +2124,8 @@ sub body {
 				print CGI::a({-name=>"#$i1"},"");
 				print CGI::strong("Problem $problemNumber."), 
 					"$points\n", $recordMessage;
-				print CGI::p($pg->{body_text}),
+				print CGI::div({class=>
+"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
 				       CGI::b("Note: ") : "", 
 				       CGI::i($pg->{result}->{msg}));

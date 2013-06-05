@@ -88,6 +88,7 @@ li#loginstatus a .icon-signout {
 	border-radius: 8px;
 	border: 1px solid #e6e6e6;
 	background: #f6f6f6;
+	overflow: hidden;
 }
 
 ul.nav li a:hover {

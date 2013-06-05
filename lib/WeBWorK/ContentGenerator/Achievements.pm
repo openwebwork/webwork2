@@ -230,8 +230,6 @@ sub body {
 
 	print CGI::br();
 
-	print CGI::end_div();
-
 	return "";
 	
 }

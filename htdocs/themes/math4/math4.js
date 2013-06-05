@@ -131,8 +131,9 @@ $(function(){
     $('#mainform ').addClass('form-inline');
     $('#mainform input:button').addClass('btn btn-primary');
     $('#mainform .btn').addClass('btn-small');
-    $('#mainform select').addClass('input-xxlarge');
+    $('#mainform .InfoPanel select').addClass('input-xxlarge');
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
+    $('#mainform select[name=local_sets]').addClass('input-small').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
 
     //Change tabber tabs to twitter tabs

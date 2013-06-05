@@ -186,6 +186,7 @@ var tabberOptions = {manualStartup:true};
 						<!--#endif-->
 					</div>
 				<!--#endif-->
+				<div class="barrier"></div>
 
 				<!--#if can="output_checkboxes" can="output_submit_buttons"-->
 					<p>
