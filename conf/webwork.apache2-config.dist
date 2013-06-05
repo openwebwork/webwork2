@@ -68,6 +68,8 @@ eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
 # grab course environment (by reading webwork2/conf/defaults.config)
 my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
 
+die "webwork.apach2-config: Can't establish initial Course environment" unless ref($ce);
+
 #  set important configuration variables (from defaults.config)
 
 my $webwork_url = $ce->{webwork_url};                    # e.g.  /webwork2
