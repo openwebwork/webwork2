@@ -119,7 +119,6 @@ sub options {
 	    $db->putGlobalUserAchievement($globalUserAchievement);
 	}
 	
-	print CGI::start_center();
 	print CGI::start_div({class=>'facebookbox'});
 	print CGI::start_form(-method=>'POST', -action=>$r->uri);
 	print $self->hidden_authen_fields;
@@ -139,7 +138,6 @@ sub options {
 	    print "</fb:login-button>";
 	    print CGI::end_div();
 	}
-	print CGI::end_center();
 	return "";
 }
 
@@ -313,9 +311,6 @@ sub body {
 		print CGI::p("No achievements have been assigned yet");
 		}
 
-	print CGI::br();
-
-	print CGI::end_div();
 
 	return "";
 	
