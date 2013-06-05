@@ -501,7 +501,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"problemsetlist2", name=>"problemsetlist2", -class=>"edit_form", -id=>"edit_form_id"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"problemsetlist2", name=>"problemsetlist", -class=>"edit_form", -id=>"edit_form_id"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
