@@ -57,7 +57,7 @@ $mail{feedbackRecipients}    = [
 # Theme
 ################################################################################
 
-$defaultTheme = "math3";
+$defaultTheme = "math4";
 $defaultThemeTemplate = "system";
 
 ################################################################################
@@ -256,7 +256,7 @@ $problemDefaults{max_attempts} = -1;
 # 	librarybrowser3    => 1,
 # 	
 #	pgproblemeditor1   => 1,
-# 	pgproblemeditor2   => 1,
+	pgproblemeditor2   => 1,
  	pgproblemeditor3   => 1,
 );
 

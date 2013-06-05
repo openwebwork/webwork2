@@ -1074,7 +1074,7 @@ sub output_problem_body{
 	my $pg = $self->{pg};
 
 	print "\n";
-	print CGI::p($pg->{body_text});
+	print CGI::div({class=>"problem-content", id=>"problem-content"},$pg->{body_text});
 	return "";
 }
 
