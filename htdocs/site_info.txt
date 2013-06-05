@@ -1,3 +1,2 @@
-This file is at htdocs/site_info.txt.  Use it to display information for the entire WeBWorK site which will be viewed at login time.
-
+Welcome to the Western Carolina University WeBWorK server.  You should log in with your catamount email username and password.
 

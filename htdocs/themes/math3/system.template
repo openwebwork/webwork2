@@ -31,7 +31,12 @@
 <!-- End Jquery MathView CODE add -->
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<!-- Minimal bootstrap for newer features -->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery.js"></script>
+<!-- Minimal bootstrap for newer features -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap.js"></script>
 
 <!--
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/lib/codemirror.css">
