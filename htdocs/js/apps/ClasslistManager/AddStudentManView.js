@@ -7,7 +7,7 @@ define(['Backbone', 'underscore','Closeable','../../lib/models/User','../../lib/
 		initialize: function(){
 		    var self=this;
 		    _.bindAll(this, 'render','importStudents','addStudent','openDialog','closeDialog'); // every function that uses 'this' as the current object should be in here
-		    this.collection = new UserList([new User({student_id: "1234", last_name: "Howedy"})]);  // add a single blank user to the collection of students to import.		    		    
+		    this.collection = new UserList([new User()]);  // add a single blank user to the collection of students to import.		    		    
 
 		    this.rowTemplate = $("#user-row-template").html();
 		    this.collection.bind('add', this.render);
