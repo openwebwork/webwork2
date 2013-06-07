@@ -1,4 +1,4 @@
-define(['Backbone','moment','backbone-validation'], function(Backbone,moment){
+define(['Backbone','moment','backbone-validation','stickit'], function(Backbone,moment){
 
     
     var config = {
@@ -64,24 +64,17 @@ define(['Backbone','moment','backbone-validation'], function(Backbone,moment){
         },
         parseWWDate: function(str) {
             // this parses webwork dates in the form MM/DD/YYYY at HH:MM AM/PM TMZ
+            // and returns the date (as a moment object) and the timezone (as a string)
+
             var parsedDate = config.regexp.wwDate.exec(str);
 
 
 
             if (parsedDate) {
-                var year = parsedDate[4];
-                var month = (parseInt(parsedDate[2],10)<10)?("0"+parseInt(parsedDate[2],10)):parseInt(parsedDate[2],10);
-                var dayOfMonth = (parseInt(parsedDate[3],10)<10)?("0"+parseInt(parsedDate[3],10)):parseInt(parsedDate[3],10);
-            
-                var hours = (/[aA][mM]/.test(parsedDate[6],10))? (parseInt(parsedDate[6],10)):(parseInt(parsedDate[6],10)+12);
-                hours = (hours<10)?("0"+hours):hours;
-                
-                var dateTime = year+"-"+month+"-"+dayOfMonth+"T"+hours+":"+parsedDate[7];
-
-                var date = new moment(parsedDate[1]+" "+parsedDate[5],"MM/DD/YYYY HH:mmA");
-                // Do we need to include the time zone?
+                var timePart = moment(parsedDate[5],"hh:mmA");
+                var date = moment(parsedDate[1],"MM/DD/YYYY").hours(timePart.hours()).minutes(timePart.minutes());
                         
-                return date;
+                return {"date": date, "time_zone": parsedDate[9]};
             }
         }
     }
@@ -91,6 +84,39 @@ define(['Backbone','moment','backbone-validation'], function(Backbone,moment){
     _.extend(Backbone.Validation.patterns, { "setname": /^[\w\d\_\.]+$/});
     _.extend(Backbone.Validation.patterns, { "loginname": /^[\w\d\_]+$/});
     _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);  
+
+    // This implements a stickit handler for elements of type wwdate
+    // see https://github.com/NYTimes/backbone.stickit for more info.
+    //
+    // This takes a webwork date-time (for open_date, due-date, etc.) and creates a pair of html spans to handle 
+    // the date and time separately
+
+    Backbone.Stickit.addHandler({
+      selector: '.wwdatetime',
+      initialize: function($el, model, options) {
+        var setModel = function (evt) {
+            console.log("saving the model");
+            var datePart = evt.data.$el.children(".wwdate").val();
+            var timePart = evt.data.$el.children(".wwtime").text().trim();
+            var timeZone = config.parseWWDate(evt.data.model.get(evt.data.options.observe)).time_zone;
+
+            evt.data.model.set(evt.data.options.observe,datePart + " at " + timePart + " " + timeZone);
+            
+        }; 
+        $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, setModel);
+        $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, setModel);
+        $el.children(".wwdate").datepicker();
+
+      },
+      updateMethod: 'html',
+      //update: function($el, val, model, options) { $el.val(val); }
+      onGet: function(val) { 
+
+        var theDate = config.parseWWDate(val);
+        return '<input class="wwdate" size="12" value="' + theDate.date.format("MM/DD/YYYY") + '"> at ' +
+                '<span class="wwtime" contenteditable="true"> ' + theDate.date.format("hh:mmA") + '</span>'; 
+        }
+    });
 
 
 
