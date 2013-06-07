@@ -124,6 +124,16 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
                 });
             }
         },
+        // sets the date for the field attr  in the form MM/DD/YYYY (should be more flexible)
+        setDate: function(attr,_date){
+            var currentDate = moment(this.get("attr"))
+                , newDate = moment(_date,"MM/DD/YYYY");
+
+            currentDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
+            
+
+
+        },
         update: function(){
             
             console.log("in ProblemSet update");

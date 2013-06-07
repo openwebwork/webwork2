@@ -15,6 +15,11 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
             this.on('remove', this.deleteSet);
             this.type = options.type; 
             this.setLoaded = false; 
+
+           /* this.on('change',function(model){
+                console.log("in PSL change");
+                console.log(model);
+            }) */
             
            },
 
@@ -49,7 +54,7 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
             
             $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-                self.trigger("problem-set-added", problemSet);
+                //self.trigger("problem-set-added", problemSet);
             });
             
         },
@@ -65,7 +70,7 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
                     console.log(response);
                     // see if the deletion was successful. 
         
-                   self.trigger("problem-set-deleted",problemSet);
+                   //self.trigger("problem-set-deleted",problemSet);
                 });
 
                 
