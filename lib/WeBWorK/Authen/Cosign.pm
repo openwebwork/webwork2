@@ -76,7 +76,8 @@ sub site_checkPassword {
 	my ( $self, $userID, $clearTextPassword ) = @_;
 
 	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::checkPassword( $userID, $clearTextPassword );
+	    return 0;
+		#return $self->SUPER::checkPassword( $userID, $clearTextPassword );
 	} else {
 		# this is easy; if we're here at all, we've authenticated
 		# through cosign
