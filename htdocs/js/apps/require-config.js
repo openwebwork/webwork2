@@ -17,13 +17,13 @@ var require = {
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/views/Closeable",
         "stickit": 				"/webwork2_files/js/vendor/backbone/modules/backbone-stickit/backbone.stickit",
-        "datepicker":           "/webwork2_files/js/vendor/datepicker/js/bootstrap-datepicker",
+        //"datepicker":           "/webwork2_files/js/vendor/datepicker/js/bootstrap-datepicker",
         "jquery-truncate":      "/webwork2_files/js/vendor/jquery/modules/jquery.truncate.min",
         "jquery-tablesorter":   "/webwork2_files/js/vendor/jquery/modules/jquery.tablesorter.min",
         "jquery-imagesloaded":  '/webwork2_files/js/vendor/jquery/modules/jquery.imagesloaded.min'
 
     },
-    //urlArgs: "bust=" +  (new Date()).getTime(),
+    urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
      shim: {
         'jquery-ui': ['jquery'],

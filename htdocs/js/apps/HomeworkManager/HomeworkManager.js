@@ -18,8 +18,7 @@ require(['Backbone',
     '../../lib/views/WWSettingsView',
     'backbone-validation',
     'jquery-ui',
-    'bootstrap',
-    'datepicker'
+    'bootstrap'
     ], 
 function(Backbone, _,  UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
             ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView){
@@ -149,7 +148,7 @@ var HomeworkEditorView = WebPage.extend({
 
         this.problemSets.on("change", function (_set){
             
-            self.views.calendar.updateAssignments();
+            //self.views.calendar.updateAssignments();
             self.views.calendar.render();
             self.views.allSets.render();
             self.setDropToEdit();
