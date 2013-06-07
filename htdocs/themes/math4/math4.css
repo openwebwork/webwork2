@@ -749,6 +749,10 @@ table#grades_table pre{
     font-size:small;
 }
 
+#mainform i.icon-random {
+    cursor: hand;
+}
+
 #send-mail-form input,
 #send-mail-form select,
 .set-list-form input,
