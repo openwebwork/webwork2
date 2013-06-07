@@ -1,1 +1,1 @@
-jquery-ui-1.10.0.custom/js/jquery-ui-1.10.0.custom.min.js
+jquery-ui-1.10.3/dist/jquery-ui.js
