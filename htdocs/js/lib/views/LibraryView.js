@@ -46,6 +46,7 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
 
     		this.$(".lib-problem-viewer").height(0.8*screen.height);
 
+
             var targetSetSelect = self.$(".target-set")
     		
 /*            this.allProblemSets.each(function(set){

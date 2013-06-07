@@ -17,13 +17,13 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
 
          
             
-            this.collection.on("problem-set-added",function(set) {
+            this.collection.on("add",function(set) {
                     console.log("in PSLV problem-set-added");
                     self.$("#probSetList").append((new SetView({model: set})).render().el);
                     self.$("#zeroShown").remove();  // if needed
                     self.parent.dispatcher.trigger("problem-set-added", set);
             });
-            this.collection.on("problem-set-deleted", function (set) {
+            this.collection.on("remove", function (set) {
                 self.$(".problem-set").each(function(i,v){
                     if ($(v).data("setname")===set.get("set_id")){ $(v).remove();}
                 })
