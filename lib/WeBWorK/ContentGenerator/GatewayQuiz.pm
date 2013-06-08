@@ -1019,7 +1019,9 @@ sub pre_header_initialize {
 	    );
 	foreach my $key (keys %$formFields) {
 	    if ($key =~ /AnSwEr/) {
-		$formFields->{$key} = $scrubber->scrub($formFields->{$key});
+		$formFields->{$key} = $scrubber->scrub(		
+			(defined $formFields->{$key})? $formFields->{key}:'' # using // would be more elegant but breaks perl 5.8.x
+		);
 		### HTML::scrubber is a little too enthusiastic about
 		### removing > and < so we have to add them back in otherwise
 		### they confuse pg
