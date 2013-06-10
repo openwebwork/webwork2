@@ -41,6 +41,7 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
 use PGrandom;
+use HTML::Scrubber;
 
 # template method
 sub templateName {
@@ -1009,6 +1010,25 @@ sub pre_header_initialize {
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
+	##### scrub answer fields for xss badness #####
+	my $scrubber = HTML::Scrubber->new(
+	    default=> 1,
+	    script => 0,
+	    process => 0,
+	    comment => 0
+	    );
+	foreach my $key (keys %$formFields) {
+	    if ($key =~ /AnSwEr/) {
+		$formFields->{$key} = $scrubber->scrub($formFields->{$key});
+		### HTML::scrubber is a little too enthusiastic about
+		### removing > and < so we have to add them back in otherwise
+		### they confuse pg
+		$formFields->{$key} =~ s/&lt;/</g;
+		$formFields->{$key} =~ s/&gt;/>/g;
+	    }
+	}
+	
+	
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
@@ -1202,6 +1222,7 @@ sub pre_header_initialize {
 			my %oldAnswers = decodeAnswers( $ProblemN->last_answer);
 			$formFields->{$_} = $oldAnswers{$_} foreach ( keys %oldAnswers );
 		}
+		
 		push( @problems, $ProblemN );
 
 		# if we don't have to translate this problem, just save the 
@@ -2091,10 +2112,10 @@ sub body {
 				my $points = ($pv > 1) ? 
 					" (" . $pv . " points)" : 
 					" (1 point)";
-				print CGI::a({-name=>"#$i1"},"");
+				print CGI::a({-href=>"#", -id=>"prob$i"},"");
 				print CGI::strong("Problem $problemNumber."), 
 					"$points\n", $recordMessage;
-				print CGI::p($pg->{body_text}),
+				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
 				       CGI::b("Note: ") : "", 
 				       CGI::i($pg->{result}->{msg}));
@@ -2117,7 +2138,7 @@ sub body {
 				# keep the jump to anchors so that jumping to 
 				#    problem number 6 still works, even if 
 				#    we're viewing only problems 5-7, etc.
-				print CGI::a({-name=>"#$i1"},""), "\n";
+				print CGI::a({-href=>"#", -id=>"prob$i"},""), "\n";
 				# and print out hidden fields with the current 
 				#    last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
@@ -2136,7 +2157,7 @@ sub body {
 # 	    print CGI::hidden({-name=>$probid, -value=>$probval}), "\n";
 			}
 		}
-		print CGI::p($jumpLinks, "\n");
+		print CGI::div($jumpLinks, "\n");
 		print "\n",CGI::hr(), "\n";
 
 		if ($can{showCorrectAnswers}) {
@@ -2201,15 +2222,17 @@ sub body {
 	# finally, put in a show answers option if appropriate
 	# print answer inspection button
 	if ($authz->hasPermissions($user, "view_answers")) {
+	    my $hiddenFields = $self->hidden_authen_fields;
+	    $hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, courseID => $ce->{courseName});
 		my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
 		print "\n", CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
-			$self->hidden_authen_fields,"\n",
+			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$ce->{courseName}), "\n",
 			CGI::hidden(-name => 'problemID', -value=>($startProb+1)), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$setVName), "\n",
 			CGI::hidden(-name => 'studentUser',    -value=>$effectiveUser), "\n",
-			CGI::p( {-align=>"left"},
+			CGI::p(
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 				), "\n",
 			CGI::endform();
@@ -2368,7 +2391,19 @@ sub problemListRow($$$) {
 
 ##### logging subroutine ####
 
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
 
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
+	#This is for page specfific js
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
+	
+	return "";
+}
 
 
 1;

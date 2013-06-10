@@ -1469,7 +1469,8 @@ sub head {
   my ($self) = @_;
   my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
+
+    print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
 
 #  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
