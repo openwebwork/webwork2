@@ -83,6 +83,8 @@ sub options {
 	my $authz = $r->authz;
 	my $globalUserAchievement = $self->{globalData};
 
+	return "" unless defined $globalUserAchievement;
+
 	my $changeFacebooking = $r->param('changeFacebooking');
 	
 	if ($changeFacebooking) {
