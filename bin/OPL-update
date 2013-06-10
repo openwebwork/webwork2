@@ -92,6 +92,8 @@ $libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
 my $verbose = 0;
 my $cnt2 = 0;
+# Can force library version
+$libraryVersion = $ARGV[0] if(@ARGV);
 
 $| = 1; # autoflush output
 

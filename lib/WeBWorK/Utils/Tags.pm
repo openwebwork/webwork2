@@ -33,7 +33,7 @@ our @EXPORT_OK = qw();
 #	list_set_versions
 #);
 
-use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT);
+use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT Level Language );
 use constant NUMBERED => qw( TitleText AuthorText EditionText Section Problem );
 
 my $basics = join('|', BASIC);
@@ -204,6 +204,7 @@ sub new {
     $self->{$tagname} = '';
   }
   $self->{keywords} = [];
+  #$self->{Language} = 'eng'; # Default to English
 
 
   while (<IN>) {
@@ -335,7 +336,7 @@ sub dumptags {
   my $fh = shift;
 
   for my $tagname ( BASIC ) {
-    print $fh "## $tagname('".$self->{$tagname}."')\n" if($self->{$tagname});
+    print $fh "## $tagname(".$self->{$tagname}.")\n" if($self->{$tagname});
   }
   my @textinfo = @{$self->{textinfo}};
   my $textno = 0;

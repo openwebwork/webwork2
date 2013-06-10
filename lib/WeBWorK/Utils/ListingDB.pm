@@ -122,7 +122,7 @@ sub getProblemTags {
 	my $path = shift;
 	my $tags = WeBWorK::Utils::Tags->new($path);
 	my %thash = ();
-	for my $j ('DBchapter', 'DBsection', 'DBsubject') {
+	for my $j ('DBchapter', 'DBsection', 'DBsubject', 'Level') {
 		$thash{$j} = $tags->{$j};
 	}
 	return \%thash;
@@ -134,10 +134,12 @@ sub setProblemTags {
 		my $subj= shift;
 		my $chap = shift;
 		my $sect = shift;
+		my $level = shift;
 		my $tags = WeBWorK::Utils::Tags->new($path);
 		$tags->settag('DBsubject', $subj, 1);
 		$tags->settag('DBchapter', $chap, 1);
 		$tags->settag('DBsection', $sect, 1);
+		$tags->settag('Level', $level, 1);
 		eval {
 			$tags->write();
 			1;
