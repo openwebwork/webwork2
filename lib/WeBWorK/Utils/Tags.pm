@@ -33,7 +33,7 @@ our @EXPORT_OK = qw();
 #	list_set_versions
 #);
 
-use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT Level Language );
+use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level Language );
 use constant NUMBERED => qw( TitleText AuthorText EditionText Section Problem );
 
 my $basics = join('|', BASIC);
