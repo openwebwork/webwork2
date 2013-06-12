@@ -7,13 +7,10 @@
 #navigation-menu { width: 250px;}
 
 
-.breadcrumb {padding: 2px 15px ;}  //overrides the bootstrap css
-
-
+.breadcrumb {padding: 2px 15px ;} 
 
 .sortable-placeholder {border: 1px solid black; background-color: lightyellow;}
 
-
-// styling for a webwork date/time. 
+/* a wwdate is generally an input and we want to make it look like a span */
 
 .wwdate { width: auto; border: none;}

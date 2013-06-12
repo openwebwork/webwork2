@@ -12,15 +12,19 @@
 .week-view {height: 200px;}
 
 .this-month {background-color: lightyellow}
-.today {background-color: lightgreen}
-.highlight-day { border: 2px solid black; background-color: green;}
+.today {background-color: pink}
+.highlight-day { border: 2px solid black; background-color: lightblue;}
 
-.assign-open {background-color: rgb(180,180,255);}
+.assign-open {background-color: lightgreen;}
 .assign-due {background-color: red;}
 
 .assign-reduced-credit {background-color: rgb(255,128,0);}
 
 .assign-not-visible {background-color: darkgray;}
+
+.assign-calendar-name {font-size: 90%;}
+
+.assign-info {cursor: pointer;}
 
 .help-hidden {display: none;}
 
@@ -29,7 +33,18 @@
 .assign {text-align: center;
 -moz-border-radius: 5px;
 -webkit-border-radius: 5px;
-border-radius: 5px;}
+border-radius: 5px;
+cursor: move;
+border: 1px gray solid;
+margin: 1px;}
+
+.dropdown-submenu a {width: 180px; overflow: hidden;}
+
+/* the num-users in the left-column */
+
+.num-users { margin-left: 2ex;}
+
+.not-visible {font-style: italic;}
 
 .assign-set-name {cursor: pointer;}
 
