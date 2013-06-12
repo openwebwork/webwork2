@@ -412,7 +412,7 @@ if(open(IN, "$libraryRoot/Taxonomy")) {
 			$subj = safe_get_id($tables{dbsubject}, 'DBsubject_id',
 				qq(WHERE name = ?), [$line], "", $line);
 		} elsif($count == 1) { #DBchapter
-			$chap = safe_get_id($tables{dbchapter}, 'DBsubject_id',
+			$chap = safe_get_id($tables{dbchapter}, 'DBchapter_id',
 				qq(WHERE name = ? and DBsubject_id = ?), [$line, $subj], "", $line, $subj);
 		} else { #DBsection
 			$sect = safe_get_id($tables{dbsection}, 'DBsection_id',
