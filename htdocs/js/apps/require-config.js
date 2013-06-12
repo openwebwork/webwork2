@@ -4,24 +4,24 @@
 
 var require = {
     paths: {
-        "Backbone":             "/webwork2_files/js/vendor/backbone/backbone",
-        "backbone-validation":  "/webwork2_files/js/vendor/backbone/modules/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/vendor/jquery/jquery-ui",
-        "underscore":           "/webwork2_files/js/vendor/underscore/underscore",
-        "jquery":               "/webwork2_files/js/vendor/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
+        "Backbone":             "/webwork2_files/js/components/backbone/backbone",
+        "backbone-validation":  "/webwork2_files/js/components/backbone-validation/dist/backbone-validation",
+        "jquery-ui":            "/webwork2_files/js/components/jquery-ui/ui/jquery-ui",
+        "underscore":           "/webwork2_files/js/components/underscore/underscore",
+        "jquery":               "/webwork2_files/js/components/jquery/jquery",
+        "bootstrap":            "/webwork2_files/js/components/bootstrap/docs/assets/js/bootstrap",
+        "moment":               "/webwork2_files/js/components/moment/moment",
         "util":                 "/webwork2_files/js/lib/util",
-        //"XDate":                "/webwork2_files/js/vendor/other/xdate",
-        "moment":               "/webwork2_files/js/vendor/other/moment.min",
+        "stickit":              "/webwork2_files/js/components/backbone.stickit/backbone.stickit",
+        "imagesloaded":         "/webwork2_files/js/components/imagesloaded/imagesloaded",
+        "jquery-truncate":      "/webwork2_files/js/components/jquery-truncate/jquery.truncate",
+        "eventie":              "/webwork2_files/js/components/eventie/eventie",
+        "eventEmitter":         "/webwork2_files/js/components/eventEmitter/EventEmitter",
+        
         "WebPage":              "/webwork2_files/js/lib/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/views/Closeable",
-        "stickit": 				"/webwork2_files/js/vendor/backbone/modules/backbone-stickit/backbone.stickit",
-        //"datepicker":           "/webwork2_files/js/vendor/datepicker/js/bootstrap-datepicker",
-        "jquery-truncate":      "/webwork2_files/js/vendor/jquery/modules/jquery.truncate.min",
-        "jquery-tablesorter":   "/webwork2_files/js/vendor/jquery/modules/jquery.tablesorter.min",
-        "jquery-imagesloaded":  '/webwork2_files/js/vendor/jquery/modules/jquery.imagesloaded.min'
-
+        
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
@@ -32,13 +32,12 @@ var require = {
         'Backbone': { deps: ['underscore', 'jquery'], exports: 'Backbone'},
         'bootstrap':['jquery'],
         'backbone-validation': ['Backbone'],
-        //'XDate':{ exports: 'XDate'},
         'moment': {exports: 'moment'},
         'config': {deps: ['moment'], exports: 'config'},
         'stickit': ["Backbone","jquery"],
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],
-        'jquery-tablesorter': ['jquery'],
-        'jquery-imagesloaded': { deps: ['jquery'], exports: 'jquery-imagesloaded'}
+        //'jquery-tablesorter': ['jquery'],
+        'imagesloaded': { deps: ['eventie','eventEmitter'], exports: 'imagesloaded'}
     }
 };
