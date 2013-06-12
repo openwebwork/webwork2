@@ -309,6 +309,12 @@ sub isplaceholder {
   return $self->{isplaceholder};
 }
 
+sub istagged {
+  my $self = shift;
+  return 1 if (defined($self->{DBchapter}) and $self->{DBchapter} and (not $self->{isplaceholder}));
+	return 0;
+}
+
 # Try to copy in the contents of another Tag object.
 # Return 1 if ok, 0 if not compatible
 sub copyin {
