@@ -87,16 +87,19 @@ foreach my $i (0..$#subjects){
 
 		my @subfields = ();
 		while ( my @row = $sth->fetchrow_array ) {
-		    push(@subfields,$row[1]);
-		  }
+			my $section_name;
+			$section_name->{name} = $row[1];
+			my $clone = { %{ $section_name } };  # need to clone it before pushing into the @subfields array.
+		    push(@subfields,$clone);
+	    }
 
 		my $chapter_tree;
-
 		$chapter_tree->{name} = $chapter_name;
 		$chapter_tree->{subfields} = \@subfields;
 
 		my $clone = { %{ $chapter_tree } };  # need to clone it before pushing into the @chapter_tree array.
 		push(@chapter_tree,$clone);
+
 
 
 	}
@@ -125,7 +128,7 @@ my $OUTFILE;
 
 # use the three arguments version of open
 # and check for errors
-open $OUTFILE, '>>', $file  or die "Cannot open $file";
+open $OUTFILE, '>', $file  or die "Cannot open $file";
 
 # you can check for errors (e.g., if after opening the disk gets full)
 print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
@@ -134,5 +137,5 @@ print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
 close $OUTFILE or die "Cannot close $file";
 
 
-print "\nDone.\n";
+print "Wrote Library Tree to $file\n";
 
