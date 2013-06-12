@@ -97,7 +97,7 @@ sub listLocalSetProblems{
 # This returns all problem sets of a course.
 
 sub getSets{
-  my $self = shift;
+  my ($self,$params) = @_;
   my $db = $self->{db};
   my @found_sets = $db->listGlobalSets;
   
@@ -108,6 +108,10 @@ sub getSets{
 	$set->{due_date} = formatDateTime($set->{due_date},'local');
 	$set->{open_date} = formatDateTime($set->{open_date},'local');
 	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+
+	my @users = $db->listSetUsers($set->{set_id});
+	$set->{assigned_users} = \@users;
+
   }
   
   
@@ -227,7 +231,7 @@ sub createNewSet{
 	if ($params->{new_set_name} !~ /^[\w .-]*$/) {
 		$out->{text} = "need a different name";#not sure the best way to handle and error
 	} else {
-		my $newSetName = $params->{new_set_name};
+		my $newSetName = $params->{set_id};
 		# if we want to munge the input set name, do it here
 		$newSetName =~ s/\s/_/g;
 

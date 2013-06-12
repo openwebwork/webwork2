@@ -15,12 +15,6 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
             this.on('remove', this.deleteSet);
             this.type = options.type; 
             this.setLoaded = false; 
-
-           /* this.on('change',function(model){
-                console.log("in PSL change");
-                console.log(model);
-            }) */
-            
            },
 
         fetch: function(){
@@ -31,15 +25,8 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
 
             $.get(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-                var newSet = new Array();
-                _(response.result_data).each(function(set) { 
-                    // change some of the 0-1 Perl booleans to "yes/no"s
-                    //_(["enable_reduced_scoring","visible"]).each(function(_prop){
-                    //    set[_prop] = (set[_prop]=="0")?"no":"yes";
-                    // });
-                    newSet.push(new ProblemSet(set)); 
-                });
-                console.log("The Problem Sets have loaded");                    
+                var newSet = [];
+                _(response.result_data).each(function(set) { newSet.push(new ProblemSet(set)); });                  
                 self.reset(newSet);
                 self.setLoaded = true; 
                 self.trigger("fetchSuccess");
@@ -54,7 +41,6 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
             
             $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-                //self.trigger("problem-set-added", problemSet);
             });
             
         },
@@ -63,14 +49,8 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
             var request = {"xml_command": "deleteProblemSet", "problem_set_name" : problemSet.name };
             _.defaults(request,config.requestObject);
             _.extend(request, problemSet.attributes);
-            console.log("deleting");
-            console.log(request);
             $.post(config.webserviceURL,request,function (data) {
                     var response = $.parseJSON(data);
-                    console.log(response);
-                    // see if the deletion was successful. 
-        
-                   //self.trigger("problem-set-deleted",problemSet);
                 });
 
                 
