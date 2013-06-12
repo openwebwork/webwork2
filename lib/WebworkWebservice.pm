@@ -366,6 +366,27 @@ sub buildBrowseTree {
 	return $self->do(WebworkWebservice::LibraryActions::buildBrowseTree($self,$in));
 }	
 
+sub loadBrowseTree {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::LibraryActions::loadBrowseTree($self,$in));
+}	
+
+sub loadLocalLibraryTree {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::LibraryActions::loadLocalLibraryTree($self,$in));
+}
+
+sub getLocalProblems {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::LibraryActions::getLocalProblems($self,$in));	
+}
+
 sub getProblemTags {
 	my $class = shift;
 	my $in = shift;
