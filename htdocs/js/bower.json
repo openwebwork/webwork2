@@ -1,0 +1,23 @@
+{
+  "name": "WeBWorK",
+  "version": "2.7.0",
+  "main": "/stylesheets/style.css",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components"
+  ],
+  "dependencies": {
+    "jquery": ">=2.0",
+    "backbone" : "1.0",
+    "underscore": "1.4",
+    "jquery-ui": "1.10",
+    "requirejs": "2.1.6",
+    "moment": "2.0",
+    "bootstrap": "2.3.2",
+    "backbone.stickit": "0.6.3",
+    "backbone-validation": "0.7.1",
+    "jquery-truncate": "git://github.com/tbasse/jquery-truncate.git"
+    "imagesloaded": "3.0.1"
+  }
+}
