@@ -266,12 +266,15 @@ sub pre_header_initialize {
 	# Fix the environment display mode
 	$input->{envir}->{displayMode} = $input->{displayMode} if($input->{displayMode});
 	
+	## getting an error below (pstaab on 6/10/2013)  I don't this this is used anymore.  
+
+
 	##########################################
 	# FIXME hack to get fileName or filePath   param("set") contains the path
-	my $problemPath = $input->{set};   # FIXME should rename this ????
-	$problemPath =~ m|templates/(.*)|;
-	$problemPath = $1;    # get everything in the path after templates
-	$input->{envir}->{fileName}= $problemPath;
+	# my $problemPath = $input->{set};   # FIXME should rename this ????
+	# $problemPath =~ m|templates/(.*)|;
+	# $problemPath = $1;    # get everything in the path after templates
+	# $input->{envir}->{fileName}= $problemPath;
 	##################################################
 	$input->{courseID} = $r->param('courseID');
 
