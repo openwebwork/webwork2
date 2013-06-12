@@ -41,7 +41,7 @@ define(['Backbone',
             var self = this;
             this.$el.html(_.template($("#HW-detail-template").html()));
             
-            this.views.problemListView.displayModes = this.hwManager.settings.getSettingValue("pg{displayModes}");
+            this.views.problemListView.displayModes = config.settings.getSettingValue("pg{displayModes}");
             this.views.problemListView.setElement($("#problem-list-tab"));
             this.views.usersAssignedView.setElement($("#user-assign-tab"));
             this.views.propertiesView.setElement($("#property-tab"));
