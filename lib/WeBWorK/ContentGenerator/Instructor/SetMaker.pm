@@ -1471,13 +1471,13 @@ sub head {
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
   print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
 
-#  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/components/jquery/jquery-ui.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/components/jquery/modules/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/components/underscore/underscore.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/components/backbone/backbone.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/components/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
   print qq!<script src="$webwork_htdocs_url/js/setmaker.js"></script>!;
