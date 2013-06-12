@@ -276,6 +276,11 @@ var tabberOptions = {manualStartup:true};
 	<!--#warnings-->
 </div>
 <!--#endif-->
+<!--#if can="message"-->
+<div class="Message">
+  <!--#message-->
+</div>
+<!--#endif-->
 		
 </div><!--content-->
 

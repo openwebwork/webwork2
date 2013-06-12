@@ -2207,7 +2207,7 @@ sub output_JS {
     print "\n\n<!-- add to header ProblemSetDetail-->\n\n";
         
 	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
 	print q!<style> 
