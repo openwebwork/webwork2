@@ -32,6 +32,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             restrict_ip: "No",
             relax_restrict_ip: "No",
             restricted_login_proctor: "No",
+            assigned_users: []
         },
         validation: {
             open_date: {
@@ -102,10 +103,26 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
         },
         initialize: function(){
             _.bindAll(this,"fetch","addProblem","update","getAssignedUsers");
-            this.on('change',this.update);
+            //this.on('change',this.update);
             this.problems = null;
-            this.assignedUsers = null; 
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
+        },
+        setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
+                                                // as a moment object and defined settings.
+
+            var _dueDate = theDueDate? moment(theDueDate): moment()
+            , timeAssignDue = moment(config.settings.getSettingValue("pg{timeAssignDue}"),"hh:mmA")
+            , assignOpenPriorToDue = config.settings.getSettingValue("pg{assignOpenPriorToDue}")
+            , answerAfterDueDate = config.settings.getSettingValue("pg{answersOpenAfterDueDate}"); 
+
+            _dueDate.hours(timeAssignDue.hours()).minutes(timeAssignDue.minutes());
+            var _openDate = moment(_dueDate).subtract(parseInt(assignOpenPriorToDue),"minutes")
+            , _answerDate = moment(_dueDate).add(parseInt(answerAfterDueDate),"minutes")
+            , wwDueDate = _dueDate.format("MM/DD/YYYY") + " at " + _dueDate.format("hh:mmA") + " " + config.timezone
+            , wwOpenDate = _openDate.format("MM/DD/YYYY") + " at " + _openDate.format("hh:mmA")+ " " + config.timezone
+            , wwAnswerDate = _answerDate.format("MM/DD/YYYY") + " at " + _answerDate.format("hh:mmA") + " " + config.timezone;
+            this.set({due_date:wwDueDate, open_date: wwOpenDate, answer_date: wwAnswerDate});
+            return this;
         },
         addProblem: function (prob) {  
             var self = this; 
@@ -124,15 +141,13 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
                 });
             }
         },
-        // sets the date for the field attr  in the form MM/DD/YYYY (should be more flexible)
+        // sets the date for the field attr  in the form YYYY/MM/DD (should be more flexible)
         setDate: function(attr,_date){
-            var currentDate = moment(this.get("attr"))
-                , newDate = moment(_date,"MM/DD/YYYY");
+            var currentDate = moment(this.get(attr))
+                , newDate = moment(_date,"YYYY/MM/DD");
 
             currentDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
-            
-
-
+            this.set(attr,newDate.format("MM/DD/YYYY") + " at " + newDate.format("hh:mmA") + " " + config.timezone);
         },
         update: function(){
             
@@ -144,9 +159,11 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             _.extend(requestObject, this.attributes);
             _.defaults(requestObject, config.requestObject);
 
+            //requestObject.assigned_users = JSON.stringify(requestObject.assigned_users);
+
             $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-      	        self.collection.trigger("change",self)
+      	        //self.collection.trigger("change",self)
             });
         },
         fetch: function()  // this fetches the problems for the ProblemSet.  
@@ -212,7 +229,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             $.get(config.webserviceURL, requestObject, function (data) {
 
                 var response = $.parseJSON(data);
-                self.assignedUsers = response.result_data;
+                self.set("assigned_users", response.result_data);
                 self.trigger("usersLoaded", self);                
 
             });        
@@ -222,7 +239,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
         // of user_id's.  Perhaps, we should consider making this a UserList instead.  (Have to think about the pros and cons)
         assignToUsers: function (_users){  // assigns this problem set to the users that come in as an array of usernames.  
             var self = this;
-            self.assignedUsers = _(self.assignedUsers).union(_users);
+            self.set("assigned_users",_(self.get("assigned_users")).union(_users));
             console.log("Assigning Problem Set " + this.get("set_id") + " to " + _users.join(" ")); 
             var requestObject = {xml_command: "assignSetToUsers", users: _users.join(","), set_id: this.get("set_id")};
             _.defaults(requestObject,config.requestObject);
