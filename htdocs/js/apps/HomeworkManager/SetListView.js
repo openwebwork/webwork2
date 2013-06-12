@@ -3,7 +3,7 @@
  *
  */
 
-define(['Backbone', 'underscore','jquery-tablesorter','stickit'], 
+define(['Backbone', 'underscore','stickit'], 
     function(Backbone, _){
 
     
@@ -12,19 +12,19 @@ define(['Backbone', 'underscore','jquery-tablesorter','stickit'],
         initialize: function () {
             _.bindAll(this, 'render');  // include all functions that need the this object
             this.rowTemplate = $("#problem-set-row-template").html();
-            this.collection.on("change",function (model) {
+            /* this.collection.on("change",function (model) {
                 console.log(model)
-            });
+            }); */
         },
         render: function () {
             var self = this;
-            this.$el.html($("#problem-set-list-template").html());
+            this.$el.html($("#all-problem-sets-template").html());
             var tab = $("#set-list-table tbody");
             this.collection.each(function(m){
                 tab.append((new SetListRowView({model: m, rowTemplate: self.rowTemplate})).render().el);
             });
             
-            tab.tablesorter();
+            //tab.tablesorter();
         },  // why is this needed?  
         addSet: function (_set) {
             this.$("#set-list-table").append((new SetListRowView({model: _set})).render().el);
@@ -49,7 +49,14 @@ define(['Backbone', 'underscore','jquery-tablesorter','stickit'],
         bindings: {".set-name": "set_id", 
                     ".open-date": "open_date",
                     ".due-date": "due_date",
-                    ".answer-date": "answer_date"}
+                    ".answer-date": "answer_date",
+                    ".visible": { observe: "visible", 
+                        selectOptions: {collection : [{label: "Yes", value: 1}, {label: "No", value: 0}]}
+                    },
+                    ".reduced-credit": { observe: "enable_reduced_scoring", 
+                        selectOptions: {collection : [{label: "Yes", value: 1}, {label: "No", value: 0}]}
+                    },
+                }
     });
 
 

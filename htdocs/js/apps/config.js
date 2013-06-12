@@ -1,4 +1,4 @@
-define(['Backbone','moment','backbone-validation','stickit'], function(Backbone,moment){
+define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], function(Backbone,moment){
 
     
     var config = {
