@@ -17,7 +17,7 @@
         
       </ul>
     </div>
-    <div id="hw-set-list-container" class="well"></div>
+    <div id="problem-set-list-container" class="well"></div>
   </div>
   <div class="span9" id="main-view">
     <div class="view-pane active" id="calendar">
@@ -67,7 +67,7 @@
 </script>
 
 <script type="text/template" id="modal-template">
-<div id="<%= id %>" class="modal hide fade">
+<div class="modal hide fade">
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
     <%= header %>
@@ -82,7 +82,7 @@
 
 </script>
 
-<script type="text/template" id="hw-set-list-template">
+<script type="text/template" id="problem-set-list-template">
 <%if(loading){%>
 <div id="set-list">Loading Homework Sets...
 <img src='/webwork2_files/images/ajax-loader-small.gif'></div>
@@ -91,6 +91,7 @@
 <div class="prob-set-container">
   <ul id='probSetList' class='btn-group btn-group-vertical'></ul>
 </div>
+
 <div class="btn-group dropup">
 
   <a class="btn dropdown-toggle btn-small" data-toggle="dropdown" href="#">
@@ -108,20 +109,22 @@
 </script>
 
 <script type="text/template" id="add-hw-set-template">
+  <div class="add-problem-set-dialog-content">
   <p>A new homework set with the name below will be created.  In addition, it will be assigned to you 
-  (user: <%= name %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p
+  (user: <%= name %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
   <table><tr>
     <td>Homework Set Name:</td>
-    <td><input type='text' size='20' id='hw-set-name'></td>
+    <td><input type='text' size='20' class='problem-set-name'></td>
     </tr>
     </table>
+    </div>
 
 </script>
 
 <script type="text/template" id="delete-hw-set-template">
- <p>Select the following sets that you wish to delete.  Note: this process is final and <b>cannont</b> 
- be undone. </p>
- <div id="delete-hw-set-list"></div>
+ <p>Select the following sets that you wish to delete.  Note: this process is final and <b>cannot</b> 
+ be undone.  Using the Shift, Command or Control keys to select more than one.  </p>
+ <select multiple="multiple" class="delete-problem-sets-list"></select>
 </script>
 
 <script type="text/template" id="library-problems-header">
@@ -207,6 +210,9 @@ click the "Save Changes" button.</p>
 
 </script>
 
+<script type="text/template" id="set-view-template">
+<span class="set-name"></span><span class="num-users"></span>
+</script>
 
 
 
@@ -235,8 +241,8 @@ click the "Save Changes" button.</p>
 
 
 <script type="text/template" id="calendar-date-bar">
-<div class="<%= classes %>" data-set="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Visible To Students: <%=visibleToStudents%>">
- <span><%if(showName){%><%=setname %><%}%></span></div>
+<div class="<%= classes %>" data-setname="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Visible To Students: <% if(visibleToStudents==1){ print('yes'); } else { print('no');}%>">
+ <span class="assign-calendar-name"><%if(showName){%><%=setname %><%}%></span><span class="assign-info"><i class="icon-info-sign"></i></span></div>
 
 </script>
 
@@ -342,16 +348,16 @@ click the "Save Changes" button.</p>
       <span class="caret"></span>
     </a>
     <ul class="dropdown-menu" role="menu">
-      <% _(subjects).each(function(subj){print('<li class="dropdown-submenu" data-level="0"> <a href="#">' + subj[0] 
-                                                  +'</a><ul class="dropdown-menu">');
-               _(subj[1]).each(function(subsubj){ print('<li class="dropdown-submenu" data-level="1"><a href="#">' + subsubj[0] 
-                                                  //+ '</a>');                
-                                                  +'</a><ul class="dropdown-menu">');
-                
-                      _(subsubj[1]).each(function(s) { print('<li data-level="2"><a href="#">' + s + '</a></li>') });
-                  print('</ul></li>'); });
-                  //print('</li>'); });
-               print('</ul></li>');
+      <% _(subjects).each(function(subj){print('<li class="dropdown-submenu" data-level="0"> <a href="#">' + subj.name +'</a>');
+            if(subj.subfields){
+              print('<ul class="dropdown-menu">');
+               _(subj.subfields).each(function(subsubj){ print('<li class="dropdown-submenu" data-level="1"><a href="#">' + subsubj.name + '</a>');
+                    if(subsubj.subfields) {
+                      print("<ul class='dropdown-menu'>")
+                      _(subsubj.subfields).each(function(s) { print('<li data-level="2"><a href="#">' + s.name + '</a></li>') });
+                  print('</ul></li>'); }
+                });
+               print('</ul></li>');}
                }); %>
     </ul>
   </div>
@@ -407,15 +413,17 @@ click the "Save Changes" button.</p>
 </script>
 
 <script type="text/template" id='problem-set-row-template'>
-    <td class='set-name'></td>
+    <td class="set-name"></td>
+    <td><select class="visible"></select></td>
+    <td><select class="reduced-credit"></select></td>
     <td class='open-date wwdatetime'></td>
     <td class='due-date wwdatetime'></td>
     <td class='answer-date wwdatetime'></td>
 </script>
 
-<script type="text/template" id="problem-set-list-template">
-<table id='set-list-table' class='table table-bordered'>
-<thead><tr><th>Name</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<script type="text/template" id="all-problem-sets-template">
+<table id='set-list-table' class='table table-bordered span9'>
+<thead><tr><th>Name</th><th>Visible to Students</th><th>Reduced Credit</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
 <tbody></tbody>
 </table>
 </script>
