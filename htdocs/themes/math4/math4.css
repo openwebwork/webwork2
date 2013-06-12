@@ -690,7 +690,7 @@ table caption{
 .radio_span, 
 .radio_span input,
 .radio_span label{
-    display:none;
+    display:none !important;
 }
 
 table.problem_sets_table {
@@ -755,6 +755,10 @@ table#grades_table pre{
 #mainform input,
 #mainform select{
     font-size:small;
+}
+
+#mainform i.icon-random {
+    cursor: hand;
 }
 
 #send-mail-form input,

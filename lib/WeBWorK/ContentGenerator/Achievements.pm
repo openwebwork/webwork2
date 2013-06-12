@@ -112,6 +112,8 @@ sub options {
 	my $authz = $r->authz;
 	my $globalUserAchievement = $self->{globalData};
 
+	return "" unless defined $globalUserAchievement;
+
 	my $changeFacebooking = $r->param('changeFacebooking');
 	
 	if ($changeFacebooking) {
@@ -310,7 +312,6 @@ sub body {
 		} else { # no achievements 
 		print CGI::p("No achievements have been assigned yet");
 		}
-
 
 	return "";
 	

@@ -106,7 +106,7 @@ $problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-libra
 $problemLibrary{version}     ="2.5";
 
 # uncomment these lines below and comment out the line above if using OPL instead of NPL
-#$problemLibrary{root}       ="/opt/webwork/library/webwork-open-problem-library/OpenProblemLibrary";
+#$problemLibrary{root}       = "/opt/webwork/library/webwork-open-problem-library/OpenProblemLibrary";
 #$problemLibrary{version}    = "2.5";  
 
 # Additional library buttons can be added to the Library Browser (SetMaker.pm)
