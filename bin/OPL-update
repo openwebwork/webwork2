@@ -86,8 +86,6 @@ my $dbh = DBI->connect(
         },
 );
 
-my $passwd = $ce->{database_password};
-my $user = $ce->{database_username};
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
@@ -679,7 +677,98 @@ sub pgfiles {
 	}
 }
 
+# Now run the script build-library-tree
+# This is used to create the file library-tree.json which can be used to 
+# load in subject-chapter-section information for the OPL
+
+use strict;
+use warnings;
+use JSON;
+
+
+my $tree;  # the library subject tree will be stored as arrays of objects. 
+
+my $sth = $dbh->prepare("select * from OPL_DBsubject");
+$sth->execute;
+
+my @subjects = ();
+my @subject_names = ();
+while ( my @row = $sth->fetchrow_array ) {
+	push(@subjects,$row[0]);
+	push(@subject_names,$row[1]);
+}
+
+
+my @subject_tree;  # array to store the individual library tree for each subject 
+
+foreach my $i (0..$#subjects){
+
+	my $subject_row = $subjects[$i];
+	my $subject_name = $subject_names[$i];
+
+	my $sth = $dbh->prepare("select * from OPL_DBchapter where DBsubject_id = $subject_row;");
+	$sth->execute;
+
+	my @chapters = ();
+	my @chapter_names = ();
+	while ( my @row = $sth->fetchrow_array ) {
+		push(@chapters,$row[0]);
+		push(@chapter_names,$row[1]);
+	}
+
+
+	my @chapter_tree; # array to store the individual library tree for each chapter
+
+	foreach my $j (0..$#chapters) {
+		my $chapter_row = $chapters[$j];
+		my $chapter_name = $chapter_names[$j];
+		my $sth = $dbh->prepare("SELECT * FROM OPL_DBsection WHERE DBchapter_id=$chapter_row");
+		$sth->execute;
+
+		my @subfields = ();
+		while ( my @row = $sth->fetchrow_array ) {
+		    push(@subfields,$row[1]);
+		}
+
+		my $chapter_tree;
+
+		$chapter_tree->{name} = $chapter_name;
+		$chapter_tree->{subfields} = \@subfields;
+
+		my $clone = { %{ $chapter_tree } };  # need to clone it before pushing into the @chapter_tree array.
+		push(@chapter_tree,$clone);
+
+
+	}
+
+	my $subject_tree; 
+	$subject_tree->{name} = $subject_name;
+	$subject_tree->{subfields} = \@chapter_tree; 
+
+	my $clone = { % {$subject_tree}};
+	push (@subject_tree, $clone);
+}
+
+	#print to_json(\@subject_tree);
+	#print "\n\n";
 
 $dbh->disconnect;
+
+my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
+
+my $file = "$webwork_htdocs/library-tree.json";
+
+# use a variable for the file handle
+my $OUTFILE;
+
+# use the three arguments version of open
+# and check for errors
+open $OUTFILE, '>', $file  or die "Cannot open $file";
+
+# you can check for errors (e.g., if after opening the disk gets full)
+print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
+
+# check for errors
+close $OUTFILE or die "Cannot close $file";
 
 print "\nDone.\n";
