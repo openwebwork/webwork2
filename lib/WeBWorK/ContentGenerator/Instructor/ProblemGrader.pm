@@ -142,7 +142,7 @@ sub initialize {
 			comment => 0
 			);
 		    
-		    my $comment = $scrubber->scrub($r->param("$userID.comment"));
+		    my $comment = $scrubber->scrub( ( defined $r->param("$userID.comment") )?$r->param("$userID.comment"):'' );
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 		    
 		    if ($userPastAnswerID) {

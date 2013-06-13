@@ -2414,11 +2414,11 @@ sub do_upgrade_course {
 	#############################################################################
 	# Submit buttons -- return to beginning
 	#############################################################################
-	print CGI::h3("do_upgrade_course subroutine");
+	print CGI::h3("Upgrade process completed");
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);  #send back to this script
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"decline_upgrade_course", -value=>"Continue") );
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"decline_upgrade_course", -value=>"Done") );
 	print CGI::end_form();
 }
 	

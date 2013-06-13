@@ -229,7 +229,7 @@ sub body {
 	
 	########## print beginning of form
 
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"achievement-list", name=>"achievement-list"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"achievement-list", name=>"achievementlist"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
