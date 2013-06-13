@@ -977,6 +977,7 @@ sub make_data_row {
           $tagwidget =  CGI::div({id=>$tagid}, '');
           my $templatedir = $r->ce->{courseDirs}->{templates};
           my $sourceFilePath = $templatedir .'/'. $sourceFileName;
+					$sourceFilePath =~ s/'/\\'/g;
           my $site_url = $r->ce->{webworkURLs}->{htdocs};
           $tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}). CGI::end_script();
           $tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();

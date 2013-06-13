@@ -51,6 +51,12 @@ function tag_widget(id, path) {
   $el.append('<select id="'+id+'sections"></select>');
   var sect = $('#'+id+'sections');
   sect.append('<option value="All Sections">All Sections</option>');
+  $el.append('<select id="'+id+'level"></select>');
+  var levels = $('#'+id+'level');
+  levels.append('<option value="">Level</option>');
+  for (var j=1; j<7; j++) {
+    levels.append('<option value="'+j+'">'+j+'</option>');
+  }
   subj.change(function() {tag_widget_clear_message(id);tag_widget_update('chapters', 'get', id, nodata);});
   chap.change(function() {tag_widget_clear_message(id);tag_widget_update('sections', 'get', id, nodata);});
   sect.change(function() {tag_widget_clear_message(id);});
@@ -88,12 +94,15 @@ tag_widget_savetags = function(id, path) {
   var subj = $('#'+id+'subjects').find(':selected').text();
   var chap = $('#'+id+'chapters').find(':selected').text();
   var sect = $('#'+id+'sections').find(':selected').text();
+  var level = $('#'+id+'level').find(':selected').text();
   if(subj == 'All Subjects') { subj = '';};
   if(chap == 'All Chapters') { chap = '';};
   if(sect == 'All Sections') { sect = '';};
+  if(level == 'Level') { level = '';};
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
+  mydefaultRequestObject.library_level = level;
   mydefaultRequestObject.command = path;
   console.log(mydefaultRequestObject);
   return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
@@ -110,10 +119,13 @@ tag_widget_clear_message = function(id) {
 
 tag_widget_update = function(who, what, where, values) {
   // where is the start of the id's for the parts
-  var child = { subjects : 'chapters', chapters : 'sections', sections : 'count'};
+  var child = { subjects : 'chapters', chapters : 'sections', sections : 'level', level : 'count'};
 
 // console.log({"who": who, "what": what, "where":where, "values": values});
   var all = 'All ' + capFirstLetter(who);
+  if(who=='level') {
+    all = 'Level';
+  }
 
   if(who=='count') {
     return false;
@@ -122,6 +134,7 @@ tag_widget_update = function(who, what, where, values) {
      $('#'+where+'subjects').remove();
      $('#'+where+'chapters').remove();
      $('#'+where+'sections').remove();
+     $('#'+where+'level').remove();
      $('#'+where+'Save').remove();
      $('#'+where+'result').text(' Problem file is a pointer to another file');
      return false;
@@ -134,17 +147,25 @@ tag_widget_update = function(who, what, where, values) {
   var subj = $('#'+where+'subjects').find(':selected').text();
   var chap = $('#'+where+'chapters').find(':selected').text();
   var sect = $('#'+where+'sections').find(':selected').text();
+  var level = $('#'+where+'level').find(':selected').text();
   if(subj == 'All Subjects') { subj = '';};
   if(chap == 'All Chapters') { chap = '';};
   if(sect == 'All Sections') { sect = '';};
+  if(level == 'Level') { level = '';};
   // Now override in case we were fed values
   if(values.DBsubject) { subj = values.DBsubject;}
   if(values.DBchapter) { chap = values.DBchapter;}
   if(values.DBsection) { sect = values.DBsection;}
+  if(values.Level) { level = values.Level;}
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
   var subcommand = "getAllDBsubjects";
+  if(who == 'level') {
+    setselectbyid(where+who, ['Level',1,2,3,4,5,6]);
+    $('#'+where+who).val(level); 
+    return true;
+  }
   if(what == 'clear') {
     setselectbyid(where+who, [all]);
     return tag_widget_update(child[who], 'clear',where, values);
