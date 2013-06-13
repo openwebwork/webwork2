@@ -71,6 +71,7 @@ sub listLocalSetProblems{
         # If a command is passed, then we want relative paths rather than
         # absolute paths.  Do that by setting templateDir to the empty
         # string.
+
  	my $relativePaths = $params->{command};
  	$templateDir = '' if $relativePaths;
 

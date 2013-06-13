@@ -33,6 +33,7 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+use WeBWorK::Utils::DatePickerScripts;
 
 # Important Note: the following two sets of constants may seem similar 
 # 	but they are functionally and semantically different
@@ -537,11 +538,13 @@ sub FieldHTML {
 	my $inputType = "";
 	if ($edit) {
 		$inputType = CGI::font({class=>"visible"}, CGI::input({
+		                type => "text",
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
 		}));
+
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
 		# but $userValue and and $globalValue are the values in the hash not the keys
@@ -2201,36 +2204,29 @@ sub output_JS {
 	my $setID   = $r->urlpath->arg("setID");
 	my $timezone = $self->{timezone_shortname};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	
-	
-	# print javaScript for dateTimePicker	
-    print "\n\n<!-- add to header ProblemSetDetail-->\n\n";
-        
+
+	    print "\n\n<!-- add to header ProblemSetDetail.pm -->";
 	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
 	print q!<style> 
 	.ui-datepicker{font-size:85%} 
-	.ui-datepicker{font-size:85%} 
-	.auto-changed{background-color: #ffffcc}
+	.auto-changed{background-color: #ffffcc} 
 	.changed {background-color: #ffffcc}
-    
     </style>!,"\n";
     
-    # jquery 1.7.1 loaded second to keep compatibility with timepicker.
-    # FIXME? replace timepicker with twitter bootstrap time picker?
 	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
-    	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+
 	print CGI::start_script({-type=>"text/javascript"}),"\n";
 	print q!$(".ui-datepicker").draggable();!,"\n";
 	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
 	print CGI::end_script();
+
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }
