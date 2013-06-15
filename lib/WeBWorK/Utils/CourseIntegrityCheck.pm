@@ -238,6 +238,10 @@ sub checkTableFields {
  	my %database_field_names =  map {${$_}[0]=>[$_]} @$result;             # drill down in the result to the field name level
                                                            #  result is array:  Field      | Type     | Null | Key | Default | Extra 
  	foreach my $field_name (sort keys %database_field_names) {
+ 	    if ($field_name eq "published") {  #hack to stop warning about residual "published" fields.
+ 	    	warn "Harmless: $table_name has extra column 'published' for older course. \n";
+ 	        next;
+ 	    }
  		my $exists = exists($schema_override_field_names{$field_name} );
  		$fields_ok=0 unless $exists;
  		$fieldStatus{$field_name} = [ONLY_IN_B] unless $exists;
@@ -374,8 +378,12 @@ sub updateCourseDirectories {
 			$parentDirectory =~s|/$||;  # remove a trailing /
 			$parentDirectory =~s|/[^/]*$||; # remove last node
 			my ($perms, $groupID) = (stat $parentDirectory)[2,5];
-			WeBWorK::PG::IO::createDirectory($path, $perms, $groupID)
-					or warn "Failed to create directory at $path";
+			if (-w $parentDirectory) {
+				WeBWorK::PG::IO::createDirectory($path, $perms, $groupID)
+					or warn "Failed to create directory at $path.\n";
+			} else {
+				warn "Permissions error. Can't create directory at $path. Lack write permission on $parentDirectory.\n"
+			}
 		
 		}
 	}

@@ -309,6 +309,10 @@ clear: both;
 	font-size: smaller;
 } 
 
+#mainform i.icon-random {
+    cursor: hand;
+}
+
 /*Relative Positioning -- a alternate style for the loginstatus which uses relative positioning.  Tested, but was decided that it didn't work great. Feel free to uncomment if you want to try it out.*/
 
 /*#loginstatus {
@@ -829,6 +833,16 @@ span.gray_button{
     width:95%;
     height:390px;
     overflow:scroll;
+}
+
+#render-modal.modal {
+    width:1024px;
+    left:25%;
+}
+
+#render-modal .modal-body {
+    height:95%;
+    width:95%;
 }
 
 /*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
