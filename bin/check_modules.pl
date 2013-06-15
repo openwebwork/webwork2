@@ -60,6 +60,7 @@ my @modulesList = qw(
 	Getopt::Long
 	Getopt::Std
 	HTML::Entities
+	HTML::Scrubber
 	HTML::Tagset
 	HTML::Template
 	IO::File
@@ -72,6 +73,7 @@ my @modulesList = qw(
 	MIME::Base64
 	Net::IP
 	Net::LDAPS
+	Net::OAuth
 	Net::SMTP
 	Opcode
 	PadWalker

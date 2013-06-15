@@ -208,7 +208,7 @@ sub entry_widget {
 	my $ce = $self->{Module}->{r}->{ce};
 	my $permHash = {};
 	my %userRoles = %{$ce->{userRoles}};
-	$userRoles{nobody} = 99999999; # insure that nobody comes at the end
+	$userRoles{nobody} = 99999999; # insure that nobody comes at the end #FIXME? this is set in defaults.config
 	my %reverseUserRoles = reverse %userRoles;
 
 	# the value of a permission can be undefined (for nobody),
@@ -485,12 +485,32 @@ sub getConfigValues {
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
 	
-	# insert the anonymous array of theme folder names into ConfigValues
-	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
+	# get list of localization dictionaries
+	my $localizeDir = $ce->{webworkDirs}{localize};
+	opendir(my $dh2, $localizeDir) || die "can't opendir $localizeDir: $!";
+	my %seen=();  # find the languages in the localize direction
+	my $languages =[ grep {!$seen{$_} ++}        # remove duplicate items
+			     map {$_=~s/\...$//; $_}        # get rid of suffix 
+                 grep {/\.mo$|\.po$/; } sort readdir($dh2) #look at only .mo and .po files
+                ]; 
 
+	# insert the anonymous array of theme folder names into ConfigValues
+	# FIXME?  Is there a reason this is an array? Couldn't we replace this
+	# with a hash and conceptually simplify this routine? MEG
+	my $modifyThemes = sub { my $item=shift; 
+	                         if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) {
+	                            $item->{values} =$themes 
+	                         } 
+	                        };
+    my $modifyLanguages = sub { my $item=shift; 
+	                         if (ref($item)=~/HASH/ and $item->{var} eq 'language' ) {
+	                            $item->{values} =$languages 
+	                         } 
+	                        };
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
 			&$modifyThemes($hash);
+			&$modifyLanguages($hash);
 		}
 	}
 	
@@ -549,7 +569,7 @@ sub pre_header_initialize {
 		if ($write_result) {
 			$self->addbadmessage($write_result);
 		} else {
-			$self->addgoodmessage("Changes saved.");
+			$self->addgoodmessage($r->maketext("Changes saved."));
 		}
 	}
 }
@@ -615,7 +635,7 @@ is up to date.");
 	my @tab_names = map { $_->[0] } @{$ConfigValues};
 	$self->print_navigation_tabs($current_tab, @tab_names);
 
-	print CGI::startform({method=>"post", action=>$r->uri, name=>"configform"});
+	print CGI::startform({method=>"post", action=>$r->uri, id=>"config-form", name=>"config-form"});
 	print $self->hidden_authen_fields();
 	print CGI::hidden(-name=> 'section_tab', -value=> $current_tab);
 
@@ -626,7 +646,7 @@ is up to date.");
 	print CGI::p(CGI::div({-align=>'center'}, CGI::b($configTitle)));
 
 	print CGI::start_table({-border=>"1"});
-	print '<tr>'.CGI::th('What'). CGI::th('Default') .CGI::th('Current');
+	print '<tr>'.CGI::th($r->maketext('What')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
 	for my $con (@configSectionArray) {
 		my $conobject = $self->objectify($con);
 		print "\n<tr>";
@@ -637,7 +657,7 @@ is up to date.");
 		$widget_count++;
 	}
 	print CGI::end_table();
-	print CGI::p(CGI::submit(-name=>'make_changes', -value=>'Save Changes'));
+	print CGI::p(CGI::submit(-name=>'make_changes', -value=>$r->maketext('Save Changes')));
 	print CGI::end_form();
 
 

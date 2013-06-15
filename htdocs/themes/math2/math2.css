@@ -15,13 +15,16 @@
 
 /* --- Standard elements ---------------------------------------------------- */
 
-body {
+.body {
 	background: white;
 	color: black;
 	margin: .5em .5em 0 .5em; /* MSIE ignores bottom margin; Gecko doesn't */
 	padding: 0;
 	font-family: Times, serif;
 	min-width: 25em;
+	width: 50%;
+	overflow:hidden;
+	float:left;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -93,8 +96,12 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
 	margin-bottom: 1ex; 
 	margin-top: 0;
-	width: 90%;
+	padding: .1em;
 	overflow: hidden;
+}
+#right-info-box {
+	width:30%;
+
 }
 .info-box h2,
 .info-box h3,
@@ -376,6 +383,7 @@ clear: both;
  * We consider this meta-information to be non-essential; it is NOT part of
  * the content, and may not be displayed in some circumstances.
  */
+ 
 #site-navigation {
 	position: absolute;
 	left: 0;
@@ -440,6 +448,15 @@ clear: both;
 }
 #InfoPanel ol {
 	font-size:100%;
+}
+
+#problem-content {
+  margin-left:auto;
+  margin-right:auto;
+  width: 90%;
+  border: 2px solid black;
+  padding: 10px;
+
 }
 
 /* tables used for laying out form fields shouldn't have a border */
@@ -633,6 +650,10 @@ table caption{
 	height: 22%;
 	overflow: hidden;
 	margin-top: 10px;
+}
+.problemFooter {
+	clear:both;  /* the footer shouldn't float at all */
+
 }
 
 /*General styles for the wrapper div element which goes around the InfoBoxes*/
@@ -835,6 +856,9 @@ table.problem_set_table th{
 }
 table.problem_set_table td{
 	padding-right: 30px;
+}
+div.problem_set_options {
+	clear: both;
 }
 /*BUG FIXES*/
 

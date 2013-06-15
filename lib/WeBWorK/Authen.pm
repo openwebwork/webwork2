@@ -147,7 +147,7 @@ sub call_next_authen_method {
 
 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
 	#debug("user_authen_module = |$user_authen_module|");	
-	if (!defined($user_authen_module or $user_authen_module eq "")) {
+	if (!defined($user_authen_module) or ($user_authen_module eq "")) {
 		$self->{error} = $r->maketext("No authentication method found for your request.  "
 			. "If this recurs, please speak with your instructor.");
 		$self->{log_error} .= "None of the specified authentication modules could handle the request.";
@@ -350,23 +350,32 @@ sub get_credentials {
 		if ($cookieUser ne $r->param("user")) {
 			croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
 		}
-		if (defined $cookieKey and defined $r->param("key")) {
-			$self -> {user_id} = $cookieUser;
-			$self -> {password} = $r->param("passwd");
-			$self -> {login_type} = "normal";
-			$self -> {credential_source} = "params_and_cookie";
-			$self -> {session_key} = $cookieKey;
-			$self -> {cookie_timestamp} = $cookieTimeStamp;
-			if ($cookieKey ne $r->param("key")) {
-				warn ("cookieKey = $cookieKey and param key = " . $r -> param("key") . " are different, perhaps"
-					 ." because you opened several windows for the same site and then backed up from a newer one to an older one."
-					 ."  Avoid doing so.");
-			$self -> {credential_source} = "conflicting_params_and_cookie";
-			}
-			debug("params and cookie user '", $self->{user_id}, "' credential_source = '", $self->{credential_source},
-				"' params and cookie session key = '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
-			return 1;
-		} elsif (defined $r -> param("key")) {
+# I don't understand this next segment.
+# If both key and $cookieKey exist then why not just ignore the cookieKey?
+
+# 		if (defined $cookieKey and defined $r->param("key")) {
+# 			$self -> {user_id} = $cookieUser;
+# 			$self -> {password} = $r->param("passwd");
+# 			$self -> {login_type} = "normal";
+# 			$self -> {credential_source} = "params_and_cookie";
+# 			$self -> {session_key} = $cookieKey;
+# 			$self -> {cookie_timestamp} = $cookieTimeStamp;
+# 			if ($cookieKey ne $r->param("key")) {
+# 				warn ("cookieKey = $cookieKey and param key = " . $r -> param("key") . " are different, perhaps"
+# 					 ." because you opened several windows for the same site and then backed up from a newer one to an older one."
+# 					 ."  Avoid doing so.");
+# 			$self -> {credential_source} = "conflicting_params_and_cookie";
+# 			}
+# 			debug("params and cookie user '", $self->{user_id}, "' credential_source = '", $self->{credential_source},
+# 				"' params and cookie session key = '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+# 			return 1;
+# 		} els
+
+# Use session key for verification
+# else   use cookieKey for verification
+# else    use cookie user name but use password provided by request.
+
+		if (defined $r -> param("key")) {
 			$self->{user_id} = $r->param("user");
 			$self->{session_key} = $r->param("key");
 			$self->{password} = $r->param("passwd");
