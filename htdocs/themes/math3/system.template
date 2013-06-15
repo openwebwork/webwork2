@@ -26,14 +26,24 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
 <head>
+<!-- Begin Jquery MathView CODE add -->
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+<!-- End Jquery MathView CODE add -->
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<!-- Minimal bootstrap for newer features -->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery.js"></script>
+<!-- Minimal bootstrap for newer features -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap.js"></script>
+
 <!--
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/lib/codemirror.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/pg/pg.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/math/math.css">
 -->
+
 <!--#if can="output_tabber_CSS"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
@@ -99,6 +109,9 @@
 				  </div>
              <!--#endif-->
              
+		<!--#if can="output_tag_info"-->
+			<!--#output_tag_info-->
+		<!--#endif-->
 			 <!--#if can="output_problem_body"--> 
 				<!-- ==== in this case print body parts --ELSE-- print entire body -->		
 				  <div class="Body" style="background-color:#ffffff">
@@ -111,6 +124,12 @@
 							<!--#output_summary-->
 						</div>
 					<!--#endif-->
+
+					<!--#if can="output_achievement_message"-->
+					    <div>
+							<!--#output_achievement_message-->
+						</div>
+					<!--#endif-->
 					
 					<!--#if can="output_hidden_info"-->
 						<!--#output_hidden_info-->
@@ -118,6 +137,13 @@
 
 					<!--#if can="output_form_start"-->
 						<!--#output_form_start-->
+
+						<!--#if can="output_comments" "-->
+						<div>
+						  <!--#output_comments-->
+						</div>
+						<!--#endif-->
+						
 						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 							<div class="problem">
 								<!--#if can="output_problem_body"-->
@@ -131,6 +157,7 @@
 								<!--#endif-->
 							</div>
 						<!--#endif-->
+
 						<!--#if can="output_checkboxes" can="output_submit_buttons"-->
 							<p>
 								<!--#if can="output_checkboxes"-->
@@ -154,22 +181,27 @@
 				<!-- inserted problem piece by piece -->
 				<!--#if can="info"-->
 			  		<!--  styles could be different for different pages so they are not set here -->
+			  		<div id="info-panel-right" >
 					<!--#info-->
+					</div>
 		    	<!--#endif-->
 
 				</div>	  
 			<!-- ====  end printing body parts   -->
 			<!--#else-->
 			<!-- ==== couldn't print body parts so we'll print entire body -->	
-				  <div class="Body" style="background-color:#ffffff; float:left;">
+			 <div class="barrier"></div>
+				  <div class="body">
 				  	<!--#body-->
 				  </div>
 				  <!-- inserted body as a whole -->
 				<!--#if can="info"-->
+				    <div id="info-panel-right" class="info-box">
 			  		<!--  styles could be different for different pages so they are not set here -->
 					<!--#info-->
+					</div>
 		    	<!--#endif-->
-
+              <div class="barrier"></div>
 			<!--#endif-->  
 <!--			      ==============END BODY OF PROBLEM===============      -->
 			<!--#if can="output_past_answer_button" can="output_email_instructor"-->
@@ -199,10 +231,6 @@
 	
 	<hr class="for-broken-browsers"/>
 	<div id="footer">
-		<!-- <p id="last-modified">Page generated at <!--#timestamp--></p>
-		<div id="copyright">
-			WeBWorK &#169; 1996-2011 <a href="http://webwork.maa.org/">The WeBWorK Project</a>
-		</div> -->
 		<!--#footer-->
 	</div>
 	<div id="site-navigation">

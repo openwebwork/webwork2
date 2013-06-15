@@ -285,7 +285,7 @@ system(DISPLAY_COMMAND().TEMPOUTPUTFILE());
 # 
 # sub read_session_credentials {
 # 	local(*FH);
-# 	open(FH, '<'.CREDENTIALFILE) or die "Can't open file ".CREDENTIALFILE()." for writing";
+# 	open(FH, '<'.CREDENTIALFILE) or die "Can't open file ".CREDENTIALFILE()." for reading";
 # 	local ($|);
 # 	my $string = <FH>;   # slurp the contents
 # 	my $session_credentials = eval( $string);

@@ -62,7 +62,7 @@ our $HC_DEFAULT_FORMAT = "pdf"; # problems if this is not an allowed format for 
 our %HC_FORMATS = (
 	tex => { name => "TeX Source", subr => "generate_hardcopy_tex" },
 	pdf => { name => "Adobe PDF",  subr => "generate_hardcopy_pdf" },
-	tikz =>{ name => "TIKZ PDF file", subr => "generate_hardcopy_tigz"},
+	tikz =>{ name => "TikZ PDF file", subr => "generate_hardcopy_tigz"},
 );
 
 # custom fields used in $self hash
@@ -355,7 +355,7 @@ sub display_form {
 	}
 	
 	# get format names hash for radio buttons
-	my %format_labels = map { $_ => $HC_FORMATS{$_}{name} || $_ } @formats;
+	my %format_labels = map { $_ => $r->maketext($HC_FORMATS{$_}{name}) || $_ } @formats;
 	
 	# get users for selection
 	my @Users;
@@ -446,7 +446,7 @@ sub display_form {
 	my $ss = $perm_multiuser ? "s" : "";
 	my $aa = $perm_multiuser ? " " : " a ";
 	my $phrase_for_privileged_users = $perm_multiuser ? "to privileged users or" : "";
-	my $button_label = $perm_multiuser ? "Generate hardcopy for selected sets and selected users" :"Generate hardcopy";
+	my $button_label = $perm_multiuser ? $r->maketext("Generate hardcopy for selected sets and selected users") : $r->maketext("Generate Hardcopy");
 	
 # 	print CGI::start_p();
 # 	print "Select the homework set$ss for which to generate${aa}hardcopy version$ss.";
@@ -455,19 +455,19 @@ sub display_form {
 # 	}
 # 	print CGI::end_p();
 	
-	print CGI::start_form(-method=>"POST", -action=>$r->uri);
+	print CGI::start_form(-name=>"hardcopy-form", -id=>"hardcopy-form", -method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields();
 	print CGI::hidden("in_hc_form", 1);
 	
 	if ($perm_multiuser and $perm_multiset) {
-		print CGI::p("Select the homework sets for which to generate hardcopy versions. You may"
+		print CGI::p($r->maketext("Select the homework sets for which to generate hardcopy versions. You may"
 		      ." also select multiple users from the users list. You will receive hardcopy" 
-		      ." for each (set, user) pair.");
+		      ." for each (set, user) pair."));
 		
 		print CGI::table({class=>"FormLayout"},
 			CGI::Tr({},
-				CGI::th("Users"),
-				CGI::th("Sets"),
+				CGI::th($r->maketext("Users")),
+				CGI::th($r->maketext("Sets")),
 			),
 			CGI::Tr({},
 				CGI::td($scrolling_user_list),
@@ -485,36 +485,37 @@ sub display_form {
 
 	        # make display for versioned sets a bit nicer
 		$selected_set_id =~ s/,v(\d+)$/ (test $1)/;
-		
-		print CGI::p("Download hardcopy of set ", $selected_set_id, " for ", $Users[0]->first_name, " ",$Users[0]->last_name,"?");
+	
+		# FIXME!	
+		print CGI::p($r->maketext("Download hardcopy of set [_1] for [_2]?", $selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name));
 	
 	}
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
-				CGI::small("You may choose to show any of the following data. Correct answers and solutions are only 
-				            available $phrase_for_privileged_users after the answer date of the homework set."),
+				# FIXME!
+				CGI::small($r->maketext("You may choose to show any of the following data. Correct answers and solutions are only available [_1] after the answer date of the homework set.", $phrase_for_privileged_users)),
 				CGI::br(),
-				CGI::b("Show:"), " ",
+				CGI::b($r->maketext("Show:")), " ",
 				CGI::checkbox(
 					-name    => "printStudentAnswers",
 					-checked => defined($r->param("printStudentAnswers"))? $r->param("printStudentAnswers") : 1, # checked by default
-					-label   => "Student answers",
+					-label   => $r->maketext("Student answers"),
 				),
 				CGI::checkbox(
 					-name    => "showCorrectAnswers",
 					-checked => scalar($r->param("showCorrectAnswers")) || 0,
-					-label   => "Correct answers",
+					-label   => $r->maketext("Correct answers"),
 				),
 				CGI::checkbox(
 					-name    => "showHints",
 					-checked => scalar($r->param("showHints")) || 0,
-					-label   => "Hints",
+					-label   => $r->maketext("Hints"),
 				),
 				CGI::checkbox(
 					-name    => "showSolutions",
 					-checked => scalar($r->param("showSolutions")) || 0,
-					-label   => "Solutions",
+					-label   => $r->maketext("Solutions"),
 				),
 			),
 		),

@@ -474,8 +474,7 @@ sub save_as_form {  # calls the save_as_handler
 		-name      => "action.save_as.saveMode",
 		-value     => "use_in_current",
 		-label     => '',
-		-checked   => 'checked',
-			 },"and use in achievement ".CGI::b("$achievementID"));
+		       },"and use in achievement ".CGI::b("$achievementID"));
 		       
 	#Use can use it in a new achievement
 	my $create_new_achievement      =

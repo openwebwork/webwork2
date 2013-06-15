@@ -36,7 +36,7 @@ sub checkPassword {
     #return 0 if ($userID !~ /admin/);
 	
 	# optional: fail over to superclass checkPassword
-	if (($failover eq "all" or $failover == 1) || ($failover eq "local" and $ret < 0)) {
+	if (($failover eq "all" or $failover eq "1") || ($failover eq "local" and $ret < 0)) {
 		$self->write_log_entry("AUTH LDAP: authentication failed, deferring to superclass");
 		return $self->SUPER::checkPassword($userID, $possibleClearPassword);
 	}

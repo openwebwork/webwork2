@@ -61,6 +61,8 @@ my %OPLtables = (
  chapter => 'OPL_chapter',
  section => 'OPL_section',
  problem => 'OPL_problem',
+ morelt => 'OPL_morelt',
+ morelt_pgfile => 'OPL_morelt_pgfile',
  pgfile_problem => 'OPL_pgfile_problem',
 );
 
@@ -78,6 +80,8 @@ my %NPLtables = (
  chapter => 'NPL-chapter',
  section => 'NPL-section',
  problem => 'NPL-problem',
+ morelt => 'NPL-morelt',
+ morelt_pgfile => 'NPL-morelt-pgfile',
  pgfile_problem => 'NPL-pgfile-problem',
 );
 
@@ -309,9 +313,9 @@ Here, we search on all known fields out of r
 
 sub getDBListings {
 	my $r = shift;
-	my %tables = getTables($r->ce);
 	my $amcounter = shift;
 	my $ce = $r->ce;
+	my %tables = getTables($ce);
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
@@ -385,10 +389,10 @@ sub getDBListings {
 	}
 	my @results=();
 	for my $pgid (@pg_ids) {
-		$query = "SELECT path, filename FROM `$tables{pgfile}` pgf, `$tables{path}` p 
+		$query = "SELECT path, filename, morelt_id, pgfile_id FROM `$tables{pgfile}` pgf, `$tables{path}` p 
           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
 		my $row = $dbh->selectrow_arrayref($query);
-		push @results, {'path' => $row->[0], 'filename' => $row->[1] };
+		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3] };
 		
 	}
 	return @results;
@@ -397,6 +401,16 @@ sub getDBListings {
 sub countDBListings {
 	my $r = shift;
 	return (getDBListings($r,1));
+}
+
+sub getMLTleader {
+	my $r = shift;
+	my $mltid = shift;
+	my %tables = getTables($r->ce);
+	my $dbh = getDB($r->ce);
+	my $query = "SELECT leader FROM `$tables{morelt}` WHERE morelt_id=\"$mltid\"";
+	my $row = $dbh->selectrow_arrayref($query);
+	return $row->[0];
 }
 
 ##############################################################################
