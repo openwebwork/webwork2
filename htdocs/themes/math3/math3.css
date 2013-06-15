@@ -102,12 +102,11 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 
 .info-box {
 	border: 1px solid #559;
-	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
 	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
 	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
 	margin-bottom: 1ex; 
 	margin-top: 0;
-	width: 90%;
+	width: 100%;
 	overflow: hidden;
 }
 .info-box h2,
@@ -462,10 +461,8 @@ clear: both;
 #problem-content {
   margin-left:auto;
   margin-right:auto;
-  width: 90%;
   border: 2px solid black;
   padding: 10px;
-
 }
 /* tables used for laying out form fields shouldn't have a border */
 table.FormLayout { border: 0; }
@@ -577,8 +574,8 @@ div.NoFontMessage {
 }
 
 /* text colors for visible and hidden sets */
-font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
-font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
+font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; display:inline-table; visibility: visible; } /* black */
+font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; display:inline-table; visibility: visible;} /* light grey */
 table font {font-size:75%}
 table a {font-size:75%}
 table th {font-size:75%}
