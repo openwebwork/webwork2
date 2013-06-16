@@ -124,7 +124,8 @@ sub settag {
   my $newval = shift;
   my $force = shift;
 
-  if(defined($newval) and ((defined($force) and $force) or $newval) and ($newval ne $self->{$tagname})) {
+  if(defined($newval) and ((defined($force) and $force) or $newval) and ((not de
+	fined($self->{$tagname})) or ($newval ne $self->{$tagname}))) {
     $self->{modified}=1;
     $self->{$tagname} = $newval;
   }
