@@ -14,19 +14,10 @@
 function jumpTo(ref) {  // scrolling javascript function
     if ( ref ) {
         var pn = ref - 1; // we start anchors at 1, not zero
-        if ( navigator.appName == "Netscape" && 
-             parseFloat(navigator.appVersion) < 5 ) {
-            var xpos = document.anchors[pn].x;
-            var ypos = document.anchors[pn].y;
-        } else {
-            var xpos = document.anchors[pn].offsetLeft;
-            var ypos = document.anchors[pn].offsetTop;
-        }
-        if ( window.scrollTo == null ) { // cover for anyone
-            window.scroll(xpos,ypos);    //   lacking js1.2
-        } else {
-            window.scrollTo(xpos,ypos);
-        }
+    
+	$('html, body').animate({
+	    scrollTop: $("#prob"+pn).offset().top
+	}, 500);
     }
     return false; // prevent link from being followed
 }

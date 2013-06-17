@@ -157,7 +157,8 @@ sub defineProblemEnvir {
 	$envir{AnsDateTimeZone}     = formatDateTime($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%Z", $ce->{siteDefaults}{locale});
 	$envir{AnsDateTime12}       = formatDateTime($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%I:%M%P", $ce->{siteDefaults}{locale});
 	$envir{AnsDateTime24}       = formatDateTime($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%R", $ce->{siteDefaults}{locale});
-	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0);
+	my $ungradedAttempts        = ($formFields->{submitAnswers})?1:0; # is an attempt about to be graded?
+	$envir{numOfAttempts}       = ($problem->num_correct || 0) + ($problem->num_incorrect || 0) +$ungradedAttempts;
 	$envir{problemValue}        = $problem->value;
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $ce->{courseName};

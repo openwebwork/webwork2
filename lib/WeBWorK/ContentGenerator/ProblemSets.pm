@@ -222,8 +222,8 @@ sub body {
 # and send the start of the table
 # UPDATE - ghe3
 # This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
-	print CGI::start_table({ -class=>"problem_set_table", -summary=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table."});
-	print CGI::caption($r->maketext("Homework Sets"));
+	print CGI::start_table({ -class=>"problem_set_table"});
+	print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.", "data-original-title"=>"Homework Sets", "data-placement"=>"bottom"}, "Homework Sets"));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
 		    CGI::th({-scope=>"col"},$nameHeader),
@@ -285,8 +285,9 @@ sub body {
 	# UPDATE - ghe3
 	# Added reset button to form.
 	print CGI::start_div({-class=>"problem_set_options"});
-	print CGI::p(WeBWorK::CGI_labeled_input(-type=>"reset", -input_attr=>{-value=>$r->maketext("Clear")}));
-	print CGI::p(WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}));
+	print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear", -input_attr=>{ -value=>$r->maketext("Clear")}).CGI::end_p();
+	print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"hardcopy",-input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}).CGI::end_p();
+	print CGI::end_div();
 	print CGI::endform();
 	
 	## feedback form url
@@ -320,7 +321,6 @@ sub body {
 		showHints => "",
 		showSolutions => "",
 	);
-	print CGI::end_div();
 	
 	return "";
 }
@@ -336,6 +336,7 @@ sub setListRow {
 	my $authz = $r->authz;
 	my $user = $r->param("user");
 	my $urlpath = $r->urlpath;
+	my $globalSet = $db->getGlobalSet($set->set_id);
 	$gwtype = 0 if ( ! defined( $gwtype ) );
 	$tmplSet = $set if ( ! defined( $tmplSet ) );
 	
@@ -386,8 +387,8 @@ sub setListRow {
 	      $set->assignment_type() eq 'proctored_gateway' );
 	my $display_name = $name;
 	$display_name =~ s/_/&nbsp;/g;
-# this is the link to the homework assignment
-	my $interactive = CGI::a({-href=>$interactiveURL}, "$display_name");
+# this is the link to the homework assignment, it has tooltip with the hw description 
+	my $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, "$display_name");
 	
 	my $control = "";
 	
@@ -420,25 +421,24 @@ sub setListRow {
 				$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
 				if ( $preOpenSets ) {
 					# reset the link
-					$interactive = CGI::a({-href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $display_name));
+					$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
-					$interactive = $r->maketext("[_1] test", $display_name);
+										$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description()}, $r->maketext("Take [_1] test", $display_name));
 				}
 			} elsif ( $t < $set->due_date() ) {
 				$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 				$setIsOpen = 1;
-				$interactive = CGI::a({-href=>$interactiveURL},
-						      $r->maketext("Take [_1] test", $display_name));
+				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+
 			} else {
 				$status = $r->maketext("Closed");
 
 				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
-					$interactive = CGI::a({-href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $display_name));
+				    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+							      
 				} else {
-					$interactive = $r->maketext("[_1] test", $display_name);
+				    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 				}
 			}
 		}
@@ -499,9 +499,9 @@ sub setListRow {
 		}
 	}
 
-	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
+	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
 
-	$status = CGI::font({class=>$visiblityStateClass}, $status) if $preOpenSets;
+	$status = CGI::span({class=>$visiblityStateClass}, $status) if $preOpenSets;
 	
 # check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {

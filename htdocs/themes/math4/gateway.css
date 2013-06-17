@@ -120,7 +120,7 @@ div.gwPrintMe {
 	margin-top: 1em;
 }
 
-div.gwPrintMe a, p.gwPreview a {
+/*div.gwPrintMe a, p.gwPreview a {
 	color: white;
 	border-radius: 8px;
 	padding: 0.5em 1em;
@@ -132,8 +132,10 @@ div.gwPrintMe a:hover, p.gwPreview a:hover {
 	background-color: dodgerblue;
 	text-decoration: none;
 }
+*/
 
 /* Fix checkbox input's label text not aligned with the checkbox. */
 label input[type='checkbox'] {
 	margin: 0 0.2em 0.1em 0;
+
 }

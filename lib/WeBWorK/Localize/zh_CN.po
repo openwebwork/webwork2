@@ -1,0 +1,2059 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# 
+# Translators:
+# chenhappiness <chenlipi@msu.edu>, 2013
+# chenhappiness <chenlipi@msu.edu>, 2013
+msgid ""
+msgstr ""
+"Project-Id-Version: WeBWorK\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2013-06-03 17:24+0000\n"
+"Last-Translator: chenhappiness <chenlipi@msu.edu>\n"
+"Language-Team: Chinese (China) <trans@webwork.maa.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. ($name, $vnum)
+#: ContentGenerator/ProblemSets.pm:416
+msgid "%1 (test %2)"
+msgstr "%1(测试 %2)"
+
+#. ($numAdded, $numSkipped, join(", ", @$skipped)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1581
+msgid "%1 sets added, %2 sets skipped. Skipped sets: (%3)"
+msgstr "%1次作业已添加，%2次作业已跳过。跳过的作业有：(%3)"
+
+#. ($numExported, $numSkipped, (($numSkipped)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1701
+msgid "%1 sets exported, %2 sets skipped. Skipped sets: (%3)"
+msgstr "%1次作业已导出，%2次作业已跳过。跳过的作业有：(%3)"
+
+#. ($name)
+#: ContentGenerator/ProblemSets.pm:427 ContentGenerator/ProblemSets.pm:441
+msgid "%1 test"
+msgstr "%1 测试"
+
+#. (scalar @userIDsToExport, $dir, $fileName)
+#: ContentGenerator/Instructor/UserList.pm:1385
+msgid "%1 users exported to file %2/%3"
+msgstr "%1 个用户导出到文件 %2/%3"
+
+#. ($numReplaced, $numAdded, $numSkipped, join (", ", @$skipped)
+#: ContentGenerator/Instructor/UserList.pm:1269
+msgid ""
+"%1 users replaced, %2 users added, %3 users skipped. Skipped users: (%4)"
+msgstr "%1个用户已替换，%2个用户已添加，%3个用户已跳过。跳过的用户有：(%4)"
+
+#. (int($answerScore*100)
+#: ContentGenerator/Problem.pm:265
+msgid "%1% correct"
+msgstr "%1% 正确"
+
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:171
+msgid "%1's Current Address"
+msgstr "%1 的当前地址"
+
+#. ($user_name)
+#: ContentGenerator/Options.pm:126
+msgid "%1's Current Password"
+msgstr "%1 的当前密码"
+
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:175
+msgid "%1's New Address"
+msgstr "%1 的新地址"
+
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:130
+msgid "%1's New Password"
+msgstr "%1 的新密码"
+
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:101
+msgid "%1's new password cannot be blank."
+msgstr "%1的新密码不能为空。"
+
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:84
+msgid "%1's password has been changed."
+msgstr "%1的密码已修改。"
+
+#. ($setID, $problemID)
+#: ContentGenerator/Problem.pm:884
+msgid "%1: Problem %2"
+msgstr "%1：第%2题"
+
+#. ($numBlanks)
+#: ContentGenerator/Problem.pm:319
+msgid ""
+"%quant(%1,of the questions remains,of the questions remain) unanswered."
+msgstr "%quant(%1,个问题,个问题) 未完成。"
+
+#: ContentGenerator/Problem.pm:1188
+msgid "(This problem will not count towards your grade.)"
+msgstr "(这道题将不会计入您的成绩.)"
+
+#: ContentGenerator/Problem.pm:1299
+msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
+msgstr "答案仅检查 -- 答案没有被记录"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1708
+#: ContentGenerator/Instructor/UserList.pm:1391
+#: ContentGenerator/Instructor/UserList.pm:1463
+msgid "Abandon changes"
+msgstr "放弃更改"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1647
+msgid "Abandon export"
+msgstr "放弃输出"
+
+#. ($eUserID)
+#: ContentGenerator.pm:848
+msgid "Acting as %1. "
+msgstr "您现在的身份是 %1。"
+
+#: ContentGenerator/Instructor/UserList.pm:1927
+msgid "Active"
+msgstr "活跃的"
+
+#: ContentGenerator/Instructor/UserList.pm:1142
+msgid "Add how many students?"
+msgstr "增加多少学生?"
+
+#: ContentGenerator/Instructor/UserList.pm:1220
+msgid "Add which new users?"
+msgstr "增加哪种新用户?"
+
+#: ContentGenerator/Problem.pm:311
+msgid "All of the answers above are correct."
+msgstr "上面的所有答案都是正确的."
+
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1052
+msgid "All selected sets %1 all students"
+msgstr "所有选中的作业 %1 所有学生"
+
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1046
+msgid "All sets %1 all students"
+msgstr "所有作业 %1 所有学生。"
+
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1049
+msgid "All visible sets %1 all students"
+msgstr "所有可见的作业 %1 所有学生"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:446
+#: ContentGenerator/Instructor/ProblemSetList.pm:832
+#: ContentGenerator/Instructor/ProblemSetList.pm:870
+msgid "Answer Date"
+msgstr "答案日期"
+
+#: ContentGenerator/Problem.pm:242
+msgid "Answer Preview"
+msgstr "答案预览"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:531
+msgid "Any changes made below will be reflected in the set for ALL students."
+msgstr "以下所有修改会影响所有学生的这次作业。"
+
+#: ContentGenerator.pm:1481
+msgid "Apply Options"
+msgstr "使用选项"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1545
+msgid "Assign this set to which users?"
+msgstr "这次作业留给哪些用户?"
+
+#: ContentGenerator/Instructor/UserList.pm:2064
+msgid "Assigned Sets"
+msgstr "已布置的作业"
+
+#. ($fully)
+#: ContentGenerator/Problem.pm:315
+msgid "At least one of the answers above is NOT %1correct."
+msgstr "以上答案至少其中一个不是%1c正确。"
+
+#: ContentGenerator/ProblemSet.pm:350
+msgid "Attempts"
+msgstr "尝试次数"
+
+#. ($eUserID,$@)
+#: ContentGenerator/Options.pm:71
+msgid "Can't get password record for effective user '%1': %2"
+msgstr "取不到有效用户'%1'的密码纪录：%2"
+
+#. ($userID,$@)
+#: ContentGenerator/Options.pm:68
+msgid "Can't get password record for user '%1': %2"
+msgstr "取不到用户'%1'的密码纪录：%2"
+
+#: ContentGenerator/Options.pm:142
+msgid "Change Email Address"
+msgstr "修改电子邮箱地址"
+
+#: ContentGenerator/Options.pm:61
+msgid "Change Password"
+msgstr "更改密码"
+
+#: ContentGenerator/Instructor/UserList.pm:1409
+#: ContentGenerator/Instructor/UserList.pm:1481
+msgid "Changes abandoned"
+msgstr "放弃修改"
+
+#: ContentGenerator/Instructor/UserList.pm:1457
+msgid "Changes saved"
+msgstr "保存修改"
+
+#: ContentGenerator/Problem.pm:1118
+msgid "Check Answers"
+msgstr "检查答案"
+
+#: ContentGenerator/Problem.pm:1227
+msgid "Checking additional error messages"
+msgstr "检查额外的错误信息"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1011
+msgid "Choose visibility of the sets to be affected"
+msgstr "选择要修改可见性的作业"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1084
+#: ContentGenerator/Instructor/ProblemSetList.pm:982
+msgid "Choose which sets to be affected"
+msgstr "选择要修改的作业"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:597
+#: ContentGenerator/Instructor/UserList.pm:550
+#: ContentGenerator/ProblemSets.pm:288
+msgid "Clear"
+msgstr "清除"
+
+#: ContentGenerator/Instructor/UserList.pm:562
+msgid ""
+"Click on the login name to edit individual problem set data, (e.g. due "
+"dates) for these students."
+msgstr "点击用户名去修改该用户的作业信息(比如截至日期)。"
+
+#: ContentGenerator/ProblemSets.pm:435
+msgid "Closed"
+msgstr "已关闭"
+
+#: ContentGenerator/Instructor/UserList.pm:2072
+#: ContentGenerator/Instructor/UserList.pm:290
+#: ContentGenerator/Instructor/UserList.pm:818
+#: ContentGenerator/Instructor/UserList.pm:861
+#: ContentGenerator/Instructor/UserList.pm:904
+msgid "Comment"
+msgstr "评论"
+
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:134 ContentGenerator/Options.pm:95
+msgid "Confirm %1's New Password"
+msgstr "确认%1的新密码"
+
+#: ContentGenerator/Login.pm:206
+msgid "Continue"
+msgstr "继续"
+
+#: ContentGenerator/Problem.pm:243
+msgid "Correct"
+msgstr "正确"
+
+#. ($e_user_name,$@)
+#: ContentGenerator/Options.pm:80
+msgid "Couldn't change %1's password: %2"
+msgstr "不能修改%1的密码：%2"
+
+#. ($@)
+#: ContentGenerator/Options.pm:153
+msgid "Couldn't change your email address: %1"
+msgstr "不能修改您的电子邮箱地址：%1"
+
+#: ContentGenerator/ProblemSets.pm:71 ContentGenerator/ProblemSets.pm:73
+msgid "Course Info"
+msgstr "课程信息"
+
+#: ContentGenerator.pm:657 ContentGenerator/Home.pm:94
+msgid "Courses"
+msgstr "课程"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1351
+msgid "Create as what type of set?"
+msgstr "创建为哪种类型的作业？"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1263
+#: ContentGenerator/Instructor/UserList.pm:1082
+msgid "Delete how many?"
+msgstr "删除多少?"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1119
+msgid "Disable"
+msgstr "禁用"
+
+#: ContentGenerator.pm:1442
+msgid "Display Options"
+msgstr "显示选项"
+
+#. ($pl)
+#: ContentGenerator/ProblemSets.pm:283
+msgid "Download Hardcopy for Selected %plural(%1,Set,Sets)"
+msgstr "下载选中的 %plural(%1,作业,作业)"
+
+#: ContentGenerator/ProblemSet.pm:321
+msgid "Download PDF or TeX Hardcopy for Current Set"
+msgstr "下载当前作业的PDF或者TeX文件"
+
+#: ContentGenerator/ProblemSets.pm:289
+msgid "Download PDF or TeX Hardcopy for Selected Sets"
+msgstr "下载已选定的作业的PDF或者TeX文件"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:445
+#: ContentGenerator/Instructor/ProblemSetList.pm:831
+#: ContentGenerator/Instructor/ProblemSetList.pm:869
+msgid "Due Date"
+msgstr "截止日期"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1812
+msgid "Duplicate this set and name it"
+msgstr "复制这次作业并重命名"
+
+#: ContentGenerator/Instructor/UserList.pm:1720
+#: ContentGenerator/Instructor/UserList.pm:1785
+#: ContentGenerator/Instructor/UserList.pm:1818
+msgid "Edit"
+msgstr "编辑"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:603
+msgid "Edit All Set Data"
+msgstr "编辑所有作业数据"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:439
+msgid "Edit Assigned Users"
+msgstr "编辑选中的用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:438
+msgid "Edit Problems"
+msgstr "编辑题目"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:441
+msgid "Edit Set Data"
+msgstr "编辑作业信息"
+
+#: ContentGenerator/Instructor/UserList.pm:961
+msgid "Edit Which Users?"
+msgstr "编辑哪些用户?"
+
+#: ContentGenerator/Problem.pm:1011
+msgid "Edit this problem"
+msgstr "编辑这道题"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:923
+msgid "Edit which sets?"
+msgstr "编辑哪些作业"
+
+#: ContentGenerator/Instructor/UserList.pm:2067
+#: ContentGenerator/Instructor/UserList.pm:285
+#: ContentGenerator/Instructor/UserList.pm:813
+#: ContentGenerator/Instructor/UserList.pm:856
+#: ContentGenerator/Instructor/UserList.pm:899
+msgid "Email Address"
+msgstr "电子邮件地址"
+
+#: ContentGenerator.pm:1526 ContentGenerator.pm:1549 ContentGenerator.pm:1572
+msgid "Email instructor"
+msgstr "发电子邮件给老师"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1120
+msgid "Enable"
+msgstr "启用"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:604
+msgid "Enable Reduced Credit"
+msgstr "启用减分模式"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1113
+msgid "Enable/Disable reduced scoring for selected sets"
+msgstr "对选中的作业 启用/禁用 减分系统"
+
+#: ContentGenerator/Instructor/UserList.pm:815
+#: ContentGenerator/Instructor/UserList.pm:858
+#: ContentGenerator/Instructor/UserList.pm:901
+msgid "Enrollment Status"
+msgstr "注册状态"
+
+#: ContentGenerator/Instructor/UserList.pm:1321
+msgid "Enter filename below"
+msgstr "输入文件名"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1502
+msgid "Enter filenames below"
+msgstr "输入文件名"
+
+#: ContentGenerator/Problem.pm:240
+msgid "Entered"
+msgstr "已输入"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1671
+msgid "Export selected sets"
+msgstr "导出已选定的作业"
+
+#: ContentGenerator/Instructor/UserList.pm:1317
+msgid "Export to what kind of file?"
+msgstr "导出为哪种文件类型？"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1604
+msgid "Export which sets?"
+msgstr "导出哪些作业？"
+
+#: ContentGenerator/Instructor/UserList.pm:1292
+msgid "Export which users?"
+msgstr "导出哪些用户？"
+
+#. ($@)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1435
+msgid "Failed to create new set: %1"
+msgstr "创建新作业：%1失败"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1374
+msgid "Failed to create new set: no set name specified!"
+msgstr "创建新作业失败：没有给定作业名！"
+
+#. ($@)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1848
+msgid "Failed to duplicate set: %1"
+msgstr "复制作业：%1 失败"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1832
+msgid "Failed to duplicate set: no set name specified!"
+msgstr "复制作业失败：没有给定作业名！"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1396
+#: ContentGenerator/Instructor/ProblemSetList.pm:1830
+msgid "Failed to duplicate set: no set selected for duplication!"
+msgstr "复制作业失败：没有指定要复制的作业！"
+
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1834
+msgid "Failed to duplicate set: set %1 already exists!"
+msgstr "复制作业失败：作业 %1 已存在"
+
+#: ContentGenerator/Instructor/UserList.pm:1339
+msgid "Filename"
+msgstr "文件名"
+
+#: ContentGenerator/Instructor/UserList.pm:678
+msgid "Filter by what text?"
+msgstr "关键字"
+
+#: ContentGenerator/Instructor/UserList.pm:2065
+#: ContentGenerator/Instructor/UserList.pm:283
+#: ContentGenerator/Instructor/UserList.pm:811
+#: ContentGenerator/Instructor/UserList.pm:854
+#: ContentGenerator/Instructor/UserList.pm:897
+msgid "First Name"
+msgstr "名"
+
+#: ContentGenerator/Instructor/UserList.pm:1020
+msgid "Give new password to which users?"
+msgstr "为哪些用户设置新密码？"
+
+#: ContentGenerator/Login.pm:231
+msgid "Guest Login"
+msgstr "游客登录"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:443
+#: ContentGenerator/Instructor/ProblemSetList.pm:829
+#: ContentGenerator/Instructor/ProblemSetList.pm:867
+msgid "Hardcopy Header"
+msgstr "文件头"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1017
+msgid "Hidden"
+msgstr "隐藏"
+
+#: ContentGenerator.pm:667 ContentGenerator/ProblemSet.pm:110
+#: ContentGenerator/ProblemSets.pm:226
+msgid "Homework Sets"
+msgstr "作业"
+
+#: ContentGenerator/Instructor/UserList.pm:558
+msgid ""
+"If a password field is left blank, the student's current password will be "
+"maintained."
+msgstr "若密码栏为空，则保留学生当前密码。"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1498
+msgid "Import from where?"
+msgstr "从哪儿导入？"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1473
+msgid "Import how many sets?"
+msgstr "导入多少次作业？"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1520
+msgid "Import sets with names"
+msgstr "导入作业名为"
+
+#: ContentGenerator/Instructor/UserList.pm:1165
+msgid "Import users from what file?"
+msgstr "从哪个文件导入用户？"
+
+#: ContentGenerator/Instructor/UserList.pm:1927
+msgid "Inactive"
+msgstr "不活跃的"
+
+#: Authen.pm:148
+msgid "Invalid user ID or password."
+msgstr "无效的用户名或者密码."
+
+#: ContentGenerator/Instructor/UserList.pm:2066
+#: ContentGenerator/Instructor/UserList.pm:284
+#: ContentGenerator/Instructor/UserList.pm:812
+#: ContentGenerator/Instructor/UserList.pm:855
+#: ContentGenerator/Instructor/UserList.pm:898
+msgid "Last Name"
+msgstr "姓"
+
+#: ContentGenerator.pm:730
+msgid "Library Browser"
+msgstr "浏览资料库"
+
+#: ContentGenerator.pm:731
+msgid "Library Browser 2"
+msgstr "浏览资料库2"
+
+#: ContentGenerator/Logout.pm:124
+msgid "Log In Again"
+msgstr "重新登录"
+
+#: ContentGenerator.pm:845 ContentGenerator.pm:847
+msgid "Log Out"
+msgstr "登出"
+
+#. ($userID)
+#: ContentGenerator.pm:845 ContentGenerator.pm:847
+msgid "Logged in as %1. "
+msgstr "登录为 %1 。"
+
+#: ContentGenerator/Login.pm:74 ContentGenerator/Login.pm:77
+msgid "Login Info"
+msgstr "登录信息"
+
+#: ContentGenerator/Instructor/UserList.pm:2062
+#: ContentGenerator/Instructor/UserList.pm:282
+#: ContentGenerator/Instructor/UserList.pm:810
+#: ContentGenerator/Instructor/UserList.pm:853
+#: ContentGenerator/Instructor/UserList.pm:896
+msgid "Login Name"
+msgstr "登录名"
+
+#: ContentGenerator/Instructor/UserList.pm:2063
+msgid "Login Status"
+msgstr "登录状态"
+
+#: ContentGenerator.pm:654
+msgid "Main Menu"
+msgstr "主菜单"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:705
+msgid "Match on what? (separate multiple IDs with commas)"
+msgstr "关键字？ (用逗号分开多个用户名)"
+
+#: ContentGenerator/Problem.pm:245
+msgid "Messages"
+msgstr "消息"
+
+#: ContentGenerator/ProblemSet.pm:349 ContentGenerator/ProblemSets.pm:212
+#: ContentGenerator/ProblemSets.pm:213
+msgid "Name"
+msgstr "名称"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1328
+msgid "Name the new set"
+msgstr "命名新作业"
+
+#: ContentGenerator/Instructor/UserList.pm:1937
+#: ContentGenerator/Instructor/UserList.pm:2077
+msgid "New Password"
+msgstr "新密码"
+
+#: ContentGenerator/Instructor/UserList.pm:1519
+msgid "New passwords saved"
+msgstr "新密码已保存"
+
+#: ContentGenerator/Problem.pm:864 ContentGenerator/Problem.pm:866
+msgid "Next Problem"
+msgstr "下一题"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2625
+#: ContentGenerator/Instructor/ProblemSetList.pm:2626
+msgid "No"
+msgstr "否"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1043
+#: ContentGenerator/Instructor/ProblemSetList.pm:1145
+msgid "No change made to any set"
+msgstr "没有修改任何作业"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1217
+msgid "No sets selected for scoring"
+msgstr "没有选中作业去计分"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:266
+msgid "No sets selected for scoring."
+msgstr "没有选中作业去计分。"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2722
+msgid ""
+"No sets shown.  Choose one of the options above to list the sets in the "
+"course."
+msgstr "没有显示作业。选择以上某个选项去列出这门课满足条件的作业。"
+
+#: ContentGenerator/Instructor/UserList.pm:2110
+msgid ""
+"No students shown.  Choose one of the options above to \n"
+"\t              list the students in the course."
+msgstr "没有显示学生。选择以上某个选项去列出这门课满足条件的学生名单。"
+
+#: ContentGenerator.pm:851
+msgid "Not logged in."
+msgstr "没有登录。"
+
+#: ContentGenerator/Problem.pm:975
+msgid "Note"
+msgstr "注意"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:444
+#: ContentGenerator/Instructor/ProblemSetList.pm:830
+#: ContentGenerator/Instructor/ProblemSetList.pm:868
+msgid "Open Date"
+msgstr "开始日期"
+
+#: ContentGenerator/Problem.pm:1307
+msgid "PREVIEW ONLY -- ANSWERS NOT RECORDED"
+msgstr "只是预览 -- 答案未记录"
+
+#. (timestamp($self)
+#: ContentGenerator.pm:953
+msgid "Page generated at %1"
+msgstr "页面生成于 %1"
+
+#: ContentGenerator/Login.pm:202
+msgid "Password"
+msgstr "密码"
+
+#: ContentGenerator/Instructor/UserList.pm:2073
+#: ContentGenerator/Instructor/UserList.pm:291
+#: ContentGenerator/Instructor/UserList.pm:819
+#: ContentGenerator/Instructor/UserList.pm:862
+#: ContentGenerator/Instructor/UserList.pm:905
+msgid "Permission Level"
+msgstr "权限等级"
+
+#. (CGI::b($r->maketext($course)
+#: ContentGenerator/Login.pm:154
+msgid "Please enter your username and password for %1 below:"
+msgstr "请在下面%1处输入你的用户名和密码 :"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:396
+msgid "Please select action to be performed."
+msgstr "请选择需要进行的操作。"
+
+#: ContentGenerator/Problem.pm:1116
+msgid "Preview Answers"
+msgstr "答案预览"
+
+#: ContentGenerator/Problem.pm:850 ContentGenerator/Problem.pm:852
+msgid "Previous Problem"
+msgstr "上一题"
+
+#. ($problemID)
+#: ContentGenerator.pm:686 ContentGenerator/Problem.pm:808
+#: ContentGenerator/ProblemSet.pm:424
+msgid "Problem %1"
+msgstr "第%1题"
+
+#: ContentGenerator/Problem.pm:856 ContentGenerator/Problem.pm:858
+msgid "Problem List"
+msgstr "题目列表"
+
+#: ContentGenerator/Problem.pm:796 ContentGenerator/ProblemSet.pm:346
+msgid "Problems"
+msgstr "题目"
+
+#: ContentGenerator/Instructor/UserList.pm:2071
+#: ContentGenerator/Instructor/UserList.pm:289
+#: ContentGenerator/Instructor/UserList.pm:817
+#: ContentGenerator/Instructor/UserList.pm:860
+#: ContentGenerator/Instructor/UserList.pm:903
+msgid "Recitation"
+msgstr "习题课"
+
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1148
+msgid "Reduced Credit %1 for all sets"
+msgstr "降低所有作业的总分为%1"
+
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1154
+msgid "Reduced Credit %1 for selected sets"
+msgstr "降低选中作业的总分为%1"
+
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1151
+msgid "Reduced Credit %1 for visable sets"
+msgstr "降低可见的作业总分为%1"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2523
+msgid "Reduced Credit Disabled"
+msgstr "减分模式已禁用"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2523
+#: ContentGenerator/Instructor/ProblemSetList.pm:448
+msgid "Reduced Credit Enabled"
+msgstr "减分模式已启用"
+
+#. ($beginReducedScoringPeriod)
+#: ContentGenerator/ProblemSets.pm:459
+msgid "Reduced Credit Starts: %1"
+msgstr "降低总分开始于：%1"
+
+#: ContentGenerator/ProblemSet.pm:351
+msgid "Remaining"
+msgstr "剩余"
+
+#: ContentGenerator/Login.pm:204
+msgid "Remember Me"
+msgstr "自动登录"
+
+#: ContentGenerator/Instructor/UserList.pm:1190
+msgid "Replace which users?"
+msgstr "替换哪些用户？"
+
+#: ContentGenerator.pm:799
+msgid "Report bugs"
+msgstr "报告错误"
+
+#: ContentGenerator/Problem.pm:244
+msgid "Result"
+msgstr "结果"
+
+#. (CGI::i($self->$actionHandler(\%genericParams, \%actionParams,
+#. \%tableParams)
+#: ContentGenerator/Instructor/UserList.pm:376
+msgid "Result of last action performed: %1"
+msgstr "最近一次操作的结果：%1"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:386
+msgid "Results of last action performed"
+msgstr "最后一次操作的结果"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1732
+#: ContentGenerator/Instructor/UserList.pm:1415
+#: ContentGenerator/Instructor/UserList.pm:1487
+msgid "Save changes"
+msgstr "保存修变"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1186
+msgid "Score which sets?"
+msgstr "对哪些作业进行计分？"
+
+#: ContentGenerator/Instructor/UserList.pm:2070
+#: ContentGenerator/Instructor/UserList.pm:288
+#: ContentGenerator/Instructor/UserList.pm:816
+#: ContentGenerator/Instructor/UserList.pm:859
+#: ContentGenerator/Instructor/UserList.pm:902
+msgid "Section"
+msgstr "班级"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:582
+msgid "Select all sets"
+msgstr "选中所有作业"
+
+#: ContentGenerator/Instructor/UserList.pm:535
+msgid "Select all users"
+msgstr "选中所有用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:534
+#: ContentGenerator/Instructor/UserList.pm:512
+msgid "Select an action to perform"
+msgstr "选择一个操作去执行"
+
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1375
+msgid "Set %1 exists.  No set created"
+msgstr "作业 %1 已存在。没有作业被创建"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:440
+msgid "Set Definition Filename"
+msgstr "定义作业的文件名"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:442
+#: ContentGenerator/Instructor/ProblemSetList.pm:828
+#: ContentGenerator/Instructor/ProblemSetList.pm:866
+msgid "Set Header"
+msgstr "作业头"
+
+#: ContentGenerator/ProblemSet.pm:273 ContentGenerator/ProblemSet.pm:275
+msgid "Set Info"
+msgstr "作业信息"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2700
+msgid "Set List"
+msgstr "作业清单"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:827
+#: ContentGenerator/Instructor/ProblemSetList.pm:865
+msgid "Set Name"
+msgstr "作业名"
+
+#: ContentGenerator/ProblemSet.pm:153
+msgid "Sets"
+msgstr "作业"
+
+#: ContentGenerator/Problem.pm:1063
+msgid "Show Hints"
+msgstr "显示提示"
+
+#: ContentGenerator/Problem.pm:1370
+msgid "Show Past Answers"
+msgstr "显示以往的回答"
+
+#: ContentGenerator/Problem.pm:1082
+msgid "Show Solutions"
+msgstr "显示答案"
+
+#: ContentGenerator/Instructor/UserList.pm:645
+msgid "Show Which Users?"
+msgstr "显示哪些用户？"
+
+#: ContentGenerator/Problem.pm:1044
+msgid "Show correct answers"
+msgstr "显示正确答案"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:683
+msgid "Show which sets?"
+msgstr "显示哪些作业？"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:497
+#: ContentGenerator/Instructor/UserList.pm:475
+msgid "Show/Hide Site Description"
+msgstr "显示/隐藏站点描述"
+
+#. (scalar @visibleSetIDs, scalar @allSetIDs)
+#: ContentGenerator/Instructor/ProblemSetList.pm:607
+msgid "Showing %1 out of %2 sets."
+msgstr "显示 %2 次作业中的 %1 次。"
+
+#. (scalar @Users, scalar @allUserIDs)
+#: ContentGenerator/Instructor/UserList.pm:556
+msgid "Showing %1 out of %2 users"
+msgstr "显示 %2 个用户中的 %1 个"
+
+#: ContentGenerator/Login.pm:96 ContentGenerator/Login.pm:99
+msgid "Site Information"
+msgstr "站点信息"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:821
+#: ContentGenerator/Instructor/UserList.pm:804
+msgid "Sort by"
+msgstr "排序方式为"
+
+#. ($names{$primary}, $names{$secondary})
+#: ContentGenerator/Instructor/ProblemSetList.pm:899
+msgid "Sort by %1 and then by %2"
+msgstr "先依据 %1 排序再依据 %2"
+
+#: ContentGenerator/Instructor/UserList.pm:2069
+#: ContentGenerator/Instructor/UserList.pm:287
+#: ContentGenerator/ProblemSet.pm:353 ContentGenerator/ProblemSets.pm:215
+#: ContentGenerator/ProblemSets.pm:216
+msgid "Status"
+msgstr "状态"
+
+#: ContentGenerator.pm:848
+msgid "Stop Acting"
+msgstr "停止担任"
+
+#: ContentGenerator/Instructor/UserList.pm:2068
+#: ContentGenerator/Instructor/UserList.pm:286
+#: ContentGenerator/Instructor/UserList.pm:814
+#: ContentGenerator/Instructor/UserList.pm:857
+#: ContentGenerator/Instructor/UserList.pm:900
+msgid "Student ID"
+msgstr "学号"
+
+#: ContentGenerator/Problem.pm:1127
+msgid "Submit Answers"
+msgstr "提交答案"
+
+#. ($effectiveUser)
+#: ContentGenerator/Problem.pm:1124
+msgid "Submit Answers for %1"
+msgstr "替 %1 提交答案"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1850
+msgid "Success"
+msgstr "成功"
+
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1437
+msgid "Successfully created new set %1"
+msgstr "成功创建新作业 %1"
+
+#. ($name)
+#: ContentGenerator/ProblemSets.pm:424 ContentGenerator/ProblemSets.pm:433
+#: ContentGenerator/ProblemSets.pm:439
+msgid "Take %1 test"
+msgstr "参加 %1 测试"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:598
+#: ContentGenerator/Instructor/UserList.pm:551
+msgid "Take Action!"
+msgstr "确认操作！"
+
+#: ContentGenerator/ProblemSets.pm:236
+msgid "Test Date"
+msgstr "考试日期"
+
+#: ContentGenerator/ProblemSets.pm:235
+msgid "Test Score"
+msgstr "考试成绩"
+
+#: ContentGenerator.pm:954
+msgid "The WeBWorK Project"
+msgstr "WeBWorK项目"
+
+#. ($fully)
+#: ContentGenerator/Problem.pm:307
+msgid "The answer above is NOT %1correct."
+msgstr "以上答案不是%1c正确。"
+
+#: ContentGenerator/Problem.pm:305
+msgid "The answer above is correct."
+msgstr "上面的答案是正确的."
+
+#. (CGI::b($r->maketext("[_1]'s Current Password",$user_name)
+#: ContentGenerator/Options.pm:107
+msgid ""
+"The password you entered in the %1 \n"
+"\t\t\t\t\t\tfield does not match your current\n"
+"\t\t\t\t\t\tpassword. Please retype your current password and try\n"
+"\t\t\t\t\t\tagain."
+msgstr "你在%1里输入的密码与您当前密码不匹配。请重新输入您当前密码再试一次。"
+
+#. (CGI::b($r->maketext("[_1]'s New Password",$e_user_name)
+#: ContentGenerator/Options.pm:91
+msgid ""
+"The passwords you entered in the \n"
+"\t\t\t\t\t\t\t\t%1 and %2\n"
+"\t\t\t\t\t\t\t\tfields don't match. Please retype your new password and try\n"
+"\t\t\t\t\t\t\t\tagain."
+msgstr "你在%1和%2里输入的密码不匹配。请重新输入您的新密码再试一次。"
+
+#. ($setName,$effectiveUser)
+#: ContentGenerator/ProblemSet.pm:308
+msgid "The selected problem set (%1) is not a valid set for %2"
+msgstr "选中的作业(%1)对%2不是有效的"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:859
+#: ContentGenerator/Instructor/UserList.pm:847
+#: ContentGenerator/Instructor/UserList.pm:890
+msgid "Then by"
+msgstr "然后按"
+
+#: ContentGenerator/ProblemSet.pm:365
+msgid "This homework set contains no problems."
+msgstr "这个作业没有包含任何题目。"
+
+#: ContentGenerator/Problem.pm:1175
+msgid "This homework set is closed."
+msgstr "这个作业已关闭。"
+
+#: ContentGenerator/Problem.pm:1173
+msgid "This homework set is not yet open."
+msgstr "这个作业还未开始。"
+
+#: ContentGenerator/Problem.pm:611
+msgid "This problem will not count towards your grade."
+msgstr "这道题目不算成绩。"
+
+#. (CGI::font({class=>$visiblityStateClass}, $visiblityStateText)
+#: ContentGenerator/Problem.pm:605 ContentGenerator/ProblemSet.pm:88
+msgid "This set is %1"
+msgstr "当前作业是 %1"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:588
+msgid "Unselect all sets"
+msgstr "取消选中所有作业"
+
+#: ContentGenerator/Instructor/UserList.pm:541
+msgid "Unselect all users"
+msgstr "取消选中所有用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2683
+msgid "Use System Default"
+msgstr "使用系统默认配置"
+
+#: ContentGenerator/Login.pm:200
+msgid "Username"
+msgstr "用户名"
+
+#: ContentGenerator/Instructor/UserList.pm:2087
+msgid "Users List"
+msgstr "用户列表"
+
+#. ($names{$primary}, $names{$secondary}, $names{$ternary})
+#: ContentGenerator/Instructor/UserList.pm:938
+msgid "Users sorted by %1, then by %2, then by %3"
+msgstr "依据 %1 对用户进行排序，再依据 %2，接着依据 %3"
+
+#: ContentGenerator/ProblemSet.pm:230
+msgid "Viewing temporary file"
+msgstr "打开临时文件"
+
+#: ContentGenerator/Problem.pm:1332 ContentGenerator/ProblemSets.pm:63
+msgid "Viewing temporary file: "
+msgstr "打开临时文件: "
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:833
+#: ContentGenerator/Instructor/ProblemSetList.pm:871
+msgid "Visibility"
+msgstr "可见性"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1018
+#: ContentGenerator/Instructor/ProblemSetList.pm:447
+msgid "Visible"
+msgstr "可见的"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1259
+#: ContentGenerator/Instructor/UserList.pm:1078
+msgid "Warning: Deletion destroys all user-related data and is not undoable!"
+msgstr "警告：删除会销毁所有与用户相关的资料且不可撤销！"
+
+#: ContentGenerator/Home.pm:87
+msgid "Welcome to WeBWorK!"
+msgstr "欢迎来到WebWorK!"
+
+#: ContentGenerator/Instructor/UserList.pm:665
+msgid "What field should filtered users match on?"
+msgstr "匹配用户哪项信息？"
+
+#: ContentGenerator/ProblemSet.pm:352
+msgid "Worth"
+msgstr "分数"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2625
+#: ContentGenerator/Instructor/ProblemSetList.pm:2626
+msgid "Yes"
+msgstr "是"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:306
+#: ContentGenerator/Instructor/ProblemSetList.pm:418
+#: ContentGenerator/Instructor/UserList.pm:262
+msgid "You are not authorized to access the instructor tools."
+msgstr "您没有被授权使用教师工具。"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:339
+msgid "You are not authorized to modify homework sets."
+msgstr "您没有被授权修改作业。"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:344
+msgid "You are not authorized to modify set definition files."
+msgstr "您没有被授权修改作业定义文件。"
+
+#: ContentGenerator/Instructor/UserList.pm:329
+#: ContentGenerator/Instructor/UserList.pm:335
+msgid "You are not authorized to modify student data"
+msgstr "您没有授权修改学生数据"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:389
+#: ContentGenerator/Instructor/UserList.pm:380
+msgid "You are not authorized to perform this action."
+msgstr "您没有被授权执行此操作。"
+
+#: ContentGenerator/Instructor/UserList.pm:1121
+msgid "You cannot delete yourself!"
+msgstr "你不能删除自己!"
+
+#: ContentGenerator/Options.pm:163 ContentGenerator/Options.pm:180
+msgid "You do not have permission to change email addresses."
+msgstr "你没有权限改变电子邮件地址。"
+
+#: ContentGenerator/Options.pm:117 ContentGenerator/Options.pm:139
+msgid "You do not have permission to change your password."
+msgstr "你没有权限改变你的密码。"
+
+#. ($attemptsLeft,$attemptsLeftNoun)
+#: ContentGenerator/Problem.pm:1196
+msgid "You have %1 %2 remaining."
+msgstr "您还剩下 %1 %2。"
+
+#. ($attemptsLeft)
+#: ContentGenerator/Problem.pm:1197
+msgid "You have %negquant(%1,unlimited attempts,attempt,attempts) remaining."
+msgstr "您还剩下 %negquant(%1,无限次尝试,尝试,尝试)。"
+
+#. ($attempts)
+#: ContentGenerator/Problem.pm:1191
+msgid "You have attempted this problem %quant(%1,time,times)."
+msgstr "您已经试过这个题目%quant(%1,次,次)。"
+
+#: ContentGenerator/Logout.pm:119
+msgid "You have been logged out of WeBWorK."
+msgstr "你已经登出WeBWorK."
+
+#: ContentGenerator/Instructor/UserList.pm:1933
+msgid "You may not change your own password here!"
+msgstr "您不能在这里修改您自己的密码！"
+
+#: Authen.pm:317
+msgid "You must specify a user ID."
+msgstr "您必须指定用户名。"
+
+#. (sprintf("%.0f%%", $pg->{result}->{score} * 100)
+#: ContentGenerator/Problem.pm:1192
+msgid "You received a score of %1 for this attempt."
+msgstr "这次您得到%1分。"
+
+#: ContentGenerator/Options.pm:157
+msgid "Your email address has been changed."
+msgstr "你的电子邮件地址已经改变."
+
+#. ($lastScore,$notCountedMessage)
+#: ContentGenerator/Problem.pm:1194
+msgid "Your overall recorded score is %1.  %2"
+msgstr "您总的纪录分数是%1. %2"
+
+#: Authen.pm:416
+msgid "Your session has timed out due to inactivity. Please log in again."
+msgstr "您的会话已因闲置超时。请重新登录。"
+
+#: ContentGenerator/ProblemSet.pm:273 ContentGenerator/ProblemSets.pm:71
+msgid "[edit]"
+msgstr "[修改]"
+
+#: ContentGenerator/Instructor/UserList.pm:476
+msgid "_CLASSLIST_EDITOR_DESCRIPTION"
+msgstr "这是班级名单修改页面，您可以在这里查看并修改这门课目前已注册的所有学生的记录。在该页最上方有一些表格，您可以输入一些关键字去搜索学生，按照某种规则对学生进行排序，修改学生记录，给学生设置新密码，导入/导出学生记录从/到外部文件，或者添加/删除学生。使用方法：首先选择您想执行的操作，接着在信息栏中输入相关信息，然后点击在表格底部的“确认执行！” 。该页的下方是一个显示学生用户名以及他们信息的表格。"
+
+#. (CGI::strong($r->maketext($course)
+#: ContentGenerator/Login.pm:151
+msgid "_EXTERNAL_AUTH_MESSAGE"
+msgstr "[_1]使用外部身份验证系统。您已授权使用那个系统，但没有权限登录这门课。"
+
+#. (CGI::b($r->maketext("Guest Login")
+#: ContentGenerator/Login.pm:230
+msgid "_GUEST_LOGIN_MESSAGE"
+msgstr "这门课支持以游客身份登录。 点击[_1]以游客身份登陆这门课。"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:498
+msgid "_HMWKSETS_EDITOR_DESCRIPTION"
+msgstr "这是作业修改页面，您可以在这里查看并修改这门课目前已有的作业和题目。在该页最上方有一些表格，您可以输入一些关键字去搜索作业，按照某种规则对作业进行排序，修改作业设置，给学生布置作业，导入/导出作业从/到外部文件，或者添加/删除学生。使用方法：首先选择您想执行的操作，接着在信息栏中输入相关信息，然后点击在表格底部的“确认执行！”。 该页的下方是一个显示作业以及它们相关信息的表格。"
+
+#. (CGI::b($r->maketext("Remember Me")
+#: ContentGenerator/Login.pm:155
+msgid "_LOGIN_MESSAGE"
+msgstr "如果您选中 %1，您的登录信息将会被您当前使用的浏览器记录，这样下次您访问WeBWorK页面时不需要在输入您的用户名和密码（直到您的会话到期）。此功能在公共服务器，不可信赖的机器和您不能直接控制的电脑上使用不安全。"
+
+#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#: ContentGenerator/ProblemSet.pm:333
+msgid "_REDUCED_CREDIT_MESSAGE_1"
+msgstr "这个作业有个减分期间，开始于[_1]，结束于[_2]。在这段时间里所做的所有作业的总分只有原来的[_3]%。"
+
+#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#: ContentGenerator/ProblemSet.pm:335
+msgid "_REDUCED_CREDIT_MESSAGE_2"
+msgstr "这个作业有个减分期间，开始于[_1]，结束于[_2]。在那段时间里所做的所有作业的总分只有原来的[_3]%。"
+
+#: ContentGenerator.pm:1951
+msgid "_REQUEST_ERROR"
+msgstr "在处理这道题时，WeBWorK碰到一个系统错误。很可能是问题本身有错误，如果您是学生，请将这个错误信息报告给您的老师。如果您是老师，您可以从下面的错误输出获得跟多信息。"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1358
+msgid "a duplicate of the first selected set"
+msgstr "第一个选中作业的副本"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1357
+msgid "a new empty set"
+msgstr "一个新的空作业(没有题目)"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1479
+msgid "a single set"
+msgstr "单个作业"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1091
+#: ContentGenerator/Instructor/ProblemSetList.pm:1193
+#: ContentGenerator/Instructor/ProblemSetList.pm:1610
+#: ContentGenerator/Instructor/ProblemSetList.pm:689
+#: ContentGenerator/Instructor/ProblemSetList.pm:929
+#: ContentGenerator/Instructor/ProblemSetList.pm:989
+msgid "all sets"
+msgstr "所有作业"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1551
+#: ContentGenerator/Instructor/UserList.pm:1026
+#: ContentGenerator/Instructor/UserList.pm:1298
+#: ContentGenerator/Instructor/UserList.pm:651
+#: ContentGenerator/Instructor/UserList.pm:967
+msgid "all users"
+msgstr "所有用户"
+
+#: ContentGenerator/Instructor/UserList.pm:1196
+#: ContentGenerator/Instructor/UserList.pm:1226
+msgid "any users"
+msgstr "任何用户"
+
+#: ContentGenerator/Problem.pm:1165
+msgid "attempt"
+msgstr "尝试"
+
+#: ContentGenerator/Problem.pm:1162 ContentGenerator/Problem.pm:1165
+msgid "attempts"
+msgstr "尝试次数"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1726
+msgid "changes abandoned"
+msgstr "已放弃修改"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1790
+msgid "changes saved"
+msgstr "已保存修改"
+
+#: ContentGenerator/ProblemSets.pm:468
+msgid "closed, answers available"
+msgstr "已关闭，查看答案"
+
+#. ($self->formatDateTime($set->answer_date)
+#: ContentGenerator/ProblemSets.pm:464
+msgid "closed, answers on %1"
+msgstr "已关闭，答案在%1"
+
+#: ContentGenerator/ProblemSets.pm:466
+msgid "closed, answers recently available"
+msgstr "已关闭, 答案在近期公布"
+
+#: ContentGenerator/ProblemSets.pm:402
+msgid "completed."
+msgstr "已完成。"
+
+#: ContentGenerator/Problem.pm:267
+msgid "completely"
+msgstr "百分百"
+
+#: ContentGenerator/Problem.pm:264
+msgid "correct"
+msgstr "正确"
+
+#. ($num)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1310
+msgid "deleted %1 sets"
+msgstr "删除 %1 次作业"
+
+#. ($num)
+#: ContentGenerator/Instructor/UserList.pm:1135
+msgid "deleted %1 users"
+msgstr "删除 %1 个用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:947
+msgid "editing all sets"
+msgstr "编辑所有作业"
+
+#: ContentGenerator/Instructor/UserList.pm:985
+msgid "editing all users"
+msgstr "编辑所有用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:953
+msgid "editing selected sets"
+msgstr "编辑选中的作业"
+
+#: ContentGenerator/Instructor/UserList.pm:991
+msgid "editing selected users"
+msgstr "编辑选中的用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:950
+msgid "editing visible sets"
+msgstr "编辑可见的作业"
+
+#: ContentGenerator/Instructor/UserList.pm:988
+msgid "editing visible users"
+msgstr "编辑可见的用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:694
+msgid "enter matching set IDs below"
+msgstr "在下面输入用于匹配的作业名"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1665
+msgid "export abandoned"
+msgstr "已放弃导出"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1629
+msgid "exporting all sets"
+msgstr "导出所有作业"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1636
+msgid "exporting selected sets"
+msgstr "导出选中的作业"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1633
+msgid "exporting visible sets"
+msgstr "导出可见的作业"
+
+#: ContentGenerator/Instructor/UserList.pm:1044
+msgid "giving new passwords to all users"
+msgstr "给所有用户设置新密码"
+
+#: ContentGenerator/Instructor/UserList.pm:1050
+msgid "giving new passwords to selected users"
+msgstr "给选中的用户设置新密码"
+
+#: ContentGenerator/Instructor/UserList.pm:1047
+msgid "giving new passwords to visible users"
+msgstr "给所有可见的用户设置新密码"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2522
+#: ContentGenerator/Problem.pm:603
+msgid "hidden"
+msgstr "隐藏"
+
+#: ContentGenerator/Problem.pm:604 ContentGenerator/ProblemSet.pm:86
+msgid "hidden from students"
+msgstr "对学生隐藏"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:693
+msgid "hidden sets"
+msgstr "隐藏的作业"
+
+#: ContentGenerator/Problem.pm:266
+msgid "incorrect"
+msgstr "错误"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1480
+msgid "multiple sets"
+msgstr "多个作业"
+
+#: ContentGenerator/Problem.pm:864
+msgid "navNext"
+msgstr "下一题"
+
+#: ContentGenerator/Problem.pm:866
+msgid "navNextGrey"
+msgstr "下一题"
+
+#: ContentGenerator/Problem.pm:850
+msgid "navPrev"
+msgstr "上一题"
+
+#: ContentGenerator/Problem.pm:852
+msgid "navPrevGrey"
+msgstr "上一题"
+
+#: ContentGenerator/Problem.pm:856
+msgid "navProbList"
+msgstr "上一级"
+
+#: ContentGenerator/Problem.pm:858
+msgid "navProbListGrey"
+msgstr "上一级"
+
+#: ContentGenerator/ProblemSet.pm:110
+msgid "navUp"
+msgstr "上一级"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1090
+#: ContentGenerator/Instructor/ProblemSetList.pm:1192
+#: ContentGenerator/Instructor/ProblemSetList.pm:1269
+#: ContentGenerator/Instructor/ProblemSetList.pm:690
+#: ContentGenerator/Instructor/ProblemSetList.pm:988
+msgid "no sets"
+msgstr "没有作业"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1552
+#: ContentGenerator/Instructor/UserList.pm:1088
+#: ContentGenerator/Instructor/UserList.pm:1199
+#: ContentGenerator/Instructor/UserList.pm:1227
+#: ContentGenerator/Instructor/UserList.pm:652
+msgid "no users"
+msgstr "没有用户"
+
+#: ContentGenerator/ProblemSets.pm:430 ContentGenerator/ProblemSets.pm:452
+msgid "now open, due "
+msgstr "现在开放中, 截止于"
+
+#. ($self->formatDateTime($set->due_date()
+#: ContentGenerator/ProblemSets.pm:408
+msgid "open: complete by %1"
+msgstr "进行中：已完成 %1"
+
+#: ContentGenerator/ProblemSets.pm:405
+msgid "over time: closed."
+msgstr "超时: 已关闭."
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1093
+#: ContentGenerator/Instructor/ProblemSetList.pm:1194
+#: ContentGenerator/Instructor/ProblemSetList.pm:1271
+#: ContentGenerator/Instructor/ProblemSetList.pm:1612
+#: ContentGenerator/Instructor/ProblemSetList.pm:691
+#: ContentGenerator/Instructor/ProblemSetList.pm:931
+#: ContentGenerator/Instructor/ProblemSetList.pm:991
+msgid "selected sets"
+msgstr "选中的作业"
+
+#: ContentGenerator/Instructor/UserList.pm:1028
+#: ContentGenerator/Instructor/UserList.pm:1090
+#: ContentGenerator/Instructor/UserList.pm:1198
+#: ContentGenerator/Instructor/UserList.pm:1300
+#: ContentGenerator/Instructor/UserList.pm:653
+#: ContentGenerator/Instructor/UserList.pm:969
+msgid "selected users"
+msgstr "选中的用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:762
+msgid "showing all sets"
+msgstr "显示所有作业"
+
+#: ContentGenerator/Instructor/UserList.pm:738
+msgid "showing all users"
+msgstr "显示所有用户"
+
+#: ContentGenerator/Instructor/UserList.pm:747
+msgid "showing matching users"
+msgstr "显示匹配的用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:765
+msgid "showing no sets"
+msgstr "没有显示任何作业"
+
+#: ContentGenerator/Instructor/UserList.pm:741
+msgid "showing no users"
+msgstr "没有显示任何用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:768
+msgid "showing selected sets"
+msgstr "显示选中的作业"
+
+#: ContentGenerator/Instructor/UserList.pm:744
+msgid "showing selected users"
+msgstr "显示选中的用户"
+
+#: ContentGenerator/Problem.pm:1124
+msgid "submitAnswers"
+msgstr "提交答案"
+
+#: ContentGenerator/Problem.pm:1154
+msgid "time"
+msgstr "次"
+
+#: ContentGenerator/Problem.pm:1154
+msgid "times"
+msgstr "次"
+
+#: ContentGenerator/Problem.pm:1161 ContentGenerator/ProblemSet.pm:427
+msgid "unlimited"
+msgstr "无限"
+
+#: ContentGenerator/Instructor/UserList.pm:654
+msgid "users who match on selected field"
+msgstr "匹配所选字段的用户"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:2522
+#: ContentGenerator/Problem.pm:603
+msgid "visible"
+msgstr "可见的"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:1611
+#: ContentGenerator/Instructor/ProblemSetList.pm:692
+#: ContentGenerator/Instructor/ProblemSetList.pm:930
+msgid "visible sets"
+msgstr "可见的作业"
+
+#: ContentGenerator/Problem.pm:604 ContentGenerator/ProblemSet.pm:86
+msgid "visible to students"
+msgstr "对学生是可见的"
+
+#: ContentGenerator/Instructor/UserList.pm:1027
+#: ContentGenerator/Instructor/UserList.pm:1197
+#: ContentGenerator/Instructor/UserList.pm:1299
+#: ContentGenerator/Instructor/UserList.pm:968
+msgid "visible users"
+msgstr "可见的用户"
+
+#. ($self->formatDateTime($set->open_date)
+#: ContentGenerator/ProblemSets.pm:420 ContentGenerator/ProblemSets.pm:448
+msgid "will open on %1"
+msgstr "开放于 %1"
+
+msgid "Add to which set?"
+msgstr "添加到哪个作业？"
+
+msgid "Course Information for course [_1]"
+msgstr "课程 [_1] 的课程信息"
+
+msgid "report bugs in this problem"
+msgstr "报告这道题中的错误"
+
+msgid "Problem [_1]"
+msgstr "第 [_1] 题"
+
+msgid "Cancel Password"
+msgstr "取消修改密码"
+
+msgid "WeBWorK"
+msgstr "WeBWorK"
+
+msgid "Audit"
+msgstr "审核中"
+
+msgid "Hardcopy Header for set [_1]"
+msgstr "作业 [_1] 的文件名"
+
+msgid ""
+"Report bugs in a WeBWorK question/problem using this link. The very first "
+"time you do this you will need to register with an email address so that "
+"information on the bug fix can be reported back to you."
+msgstr "通过这个链接报告WeBWorK题目中的错误。如果您是第一次使用，您需要使用您的电子邮件地址注册一下，这样有关于错误修复的消息可以汇报给您。"
+
+msgid "Pad Fields"
+msgstr "填补栏"
+
+msgid "Set Header for set [_1]"
+msgstr "设置 [_1] 的作业名"
+
+msgid "Statistics for [_1]"
+msgstr " [_1]的统计数据"
+
+msgid "Filter"
+msgstr "过滤"
+
+msgid "set [_1]/problem [_2]"
+msgstr "作业[_1]/第[_2]题"
+
+msgid "You are not authorized to modify problems."
+msgstr "您没有被授权修改题目。"
+
+msgid "hardcopy header file"
+msgstr "文件头名"
+
+msgid ""
+"Write permissions have not been enabled in the templates directory.  No "
+"changes can be made."
+msgstr "模版目录的写入权限未启用。不能做任何修改。"
+
+msgid "Save [_1] and View"
+msgstr "保存 [_1] 并打开"
+
+msgid "Create"
+msgstr "创建"
+
+msgid "Changes in this file have not yet been permanently saved."
+msgstr "对这个文件的修改还未永久保存。"
+
+msgid "Instructor Tools"
+msgstr "教师工具"
+
+msgid "Score"
+msgstr "成绩"
+
+msgid "Show in another window"
+msgstr "在新的窗口里显示"
+
+msgid "Copied auxiliary files from [_1] to  new location at [_2]"
+msgstr "已从 [_1] 复制新文件到新的位置 [_2]"
+
+msgid "Unpublished"
+msgstr "未发布"
+
+msgid "Login"
+msgstr "登入"
+
+msgid "Email"
+msgstr "电子邮件"
+
+msgid "File Manager"
+msgstr "文件管理"
+
+msgid "Unable to change the hardcopy header for set [_1]. Unknown error."
+msgstr "不能修改作业 [_1] 的文件名。未知的错误。"
+
+msgid "Unable to make '[_1]' the set header for [_2]"
+msgstr "不能用 '[_1]' 作为 [_2] 的作业名"
+
+msgid "Can't determine user of temporary edit file [_1]."
+msgstr "不能决定哪个用户在临时修改文件 [_1]。"
+
+msgid "Download a hardcopy of this homework set."
+msgstr "打印这个作业为文件。"
+
+msgid "Problem Editor"
+msgstr "题目编辑"
+
+msgid "The file '[_1]' is protected!"
+msgstr "这个文件 '[_1]' 是受保护的！"
+
+msgid "Top level of author information on the wiki."
+msgstr "作者信息可在wiki上找到。"
+
+msgid "Score selected set(s) and save to:"
+msgstr "对选中的作业进行计分并保存到："
+
+msgid "Save Password"
+msgstr "保存密码"
+
+msgid "The file '[_1]' is a blank problem!"
+msgstr "这个文件 '[_1]' 不存在！"
+
+msgid "Add as what filetype?"
+msgstr "添加为哪种文件类型？"
+
+msgid "no action"
+msgstr "没有任何操作"
+
+msgid "Added '[_1]' to [_2] as new set header"
+msgstr "添加 '[_1]' 到 [_2] 作为新的文件名"
+
+msgid "View statistics by set"
+msgstr "查看作业统计数据"
+
+msgid "Set"
+msgstr "作业"
+
+msgid ""
+"This is a blank problem template file and can not be edited directly. Use "
+"the 'Save as' action below to create a local copy of the file and add it to "
+"the current problem set."
+msgstr "这是一个空的不能直接修改的题目模版文件。使用下面的'另存为'操作去创建该文件的一个副本并将它加入到当前的作业中。"
+
+msgid "Logout"
+msgstr "登出"
+
+msgid "You do not have permission to view the details of this error."
+msgstr "您没有权限去查看这个错误的详细信息。"
+
+msgid "Reverting to original file '[_1]'"
+msgstr "恢复到原文件 '[_1]'"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Wiki summary page for MathObjects"
+msgstr "Wiki上介绍MathObjects的页面"
+
+msgid "Your score was recorded."
+msgstr "您的成绩已记录。"
+
+msgid "You must specify an file name in order to save a new file."
+msgstr "您必须指定文件名已保持一个新文件。"
+
+msgid ""
+"To edit this text you must first make a copy of this file using the 'Save "
+"as' action below."
+msgstr "要编辑这个文本您必须先用下面的'另存为'操作生成这个文件的一个副本。"
+
+msgid "unassigned problem file"
+msgstr "没有布置的题目"
+
+msgid "View statistics by student"
+msgstr "查看学生统计数据"
+
+msgid "Publish"
+msgstr "发布"
+
+msgid "Password/Email"
+msgstr "密码/电子邮件"
+
+msgid "Cancel Edit"
+msgstr "取消编辑"
+
+msgid "Math Objects"
+msgstr "数学函数对象"
+
+msgid "Snippets of PG code illustrating specific techniques"
+msgstr "这些PG代码的片段解释了具体方法"
+
+msgid "Error copying [_1] to [_2]"
+msgstr "复制 [_1] 到 [_2] 出错"
+
+msgid "Hmwk Sets Editor"
+msgstr "作业编辑"
+
+msgid "This set is [_1] students."
+msgstr "这个作业对学生是[_1]。"
+
+msgid "header file"
+msgstr "头文件"
+
+msgid "Include Index"
+msgstr "包括索引"
+
+msgid "Display Mode"
+msgstr "显示模式"
+
+msgid "You can earn partial credit on this problem."
+msgstr "这一题你可以得到部分成绩"
+
+msgid ""
+"Write permissions have not been enabled in '[_1]'.  Changes must be saved to"
+" a different directory for viewing."
+msgstr "未在'[_1]'中启用写入权限。要查看所做的修改必须将其保持到另外一个目录。"
+
+msgid "blank problem"
+msgstr "空白问题"
+
+msgid "Save Edit"
+msgstr "保存编辑"
+
+msgid "Enrolled"
+msgstr "已注册"
+
+msgid ""
+"Write permissions have not been enabled for '[_1]'.  Changes must be saved "
+"to another file for viewing."
+msgstr "未在'[_1]'中启用写入权限。要查看所做的修改必须将其保持到另外一个文件。"
+
+msgid ""
+"Note: this problem viewer is for viewing purposes only. As of right now, "
+"testing functionality is not possible."
+msgstr "注意：这个题目预览只是为了查看题目。截至目前，不能测试功能。"
+
+msgid "Save Export"
+msgstr "保存导出"
+
+msgid "webwork"
+msgstr "webwork"
+
+msgid "Problem Viewer"
+msgstr "题目预览"
+
+msgid "submit button clicked"
+msgstr "已点击提交按钮"
+
+msgid "Student Progress for [_1]"
+msgstr "学生进度 [_1]"
+
+msgid ""
+"A new file has been created at '[_1]' with the contents below. No changes "
+"have been made to set [_2]."
+msgstr "一个包含以下内容的新文件已在'[_1]'中创建。没有对[_2]做任何修改。"
+
+msgid ""
+"Your score was not recorded because this problem has not been assigned to "
+"you."
+msgstr "因为这个题目没有布置给您，所以您的成绩没有被记录。"
+
+msgid "Sort"
+msgstr "排序"
+
+msgid "Add problem"
+msgstr "添加题目"
+
+msgid "Author Info"
+msgstr "作者信息"
+
+msgid "Replace [_1]"
+msgstr "替换 [_1]"
+
+msgid "Help"
+msgstr "帮助"
+
+msgid "Add Users"
+msgstr "添加用户"
+
+msgid "Problem Source Code"
+msgstr "题目源代码"
+
+msgid ""
+"Test snippets of PG code in interactive lab.  Good way to learn PG language."
+msgstr "PG代码的片段在互动实验室中。学习PG语言的好方法。"
+
+msgid "Page generated at [_1] at [_2]"
+msgstr "页面生成于 [_1], [_2]"
+
+msgid "Import"
+msgstr "导入"
+
+msgid "View Using Seed Number"
+msgstr "查看所使用的种子值"
+
+msgid "Grades"
+msgstr "成绩"
+
+msgid "Published"
+msgstr "已发布"
+
+msgid "Your score was not recorded because this homework set is closed."
+msgstr "因为这个作业已经截止了，所以您的成绩没有记录。"
+
+msgid ""
+"The text box now contains the source of the original problem. You can "
+"recover lost edits by using the Back button on your browser."
+msgstr "这个文本框中包含原问题的来源。您可以通过点击您的浏览器上的后退按钮来恢复丢失的修改。"
+
+msgid "The file '[_1]' is a directory!"
+msgstr "这个文件'[_1]'是一个目录！"
+
+msgid "Save As"
+msgstr "另存为"
+
+msgid ""
+"Documentation from source code for PG modules and macro files. Often the "
+"most up-to-date information."
+msgstr "文档从PG模版和宏文件的源代码中得到。一般都是最新的信息。"
+
+msgid "Problem Techniques"
+msgstr "问题方法"
+
+msgid "Course Configuration"
+msgstr "课程配置"
+
+msgid "Feedback"
+msgstr "反馈信息"
+
+msgid "Export"
+msgstr "导出"
+
+msgid ""
+"PG mark down syntax used to format WeBWorK questions. This interactive lab "
+"can help you to learn the techniques."
+msgstr "PG标记出了用于设置WeBWorK问题格式的语法。这个互动实验室可以帮助您学习这些方法。"
+
+msgid "Record Scores for Single Sets"
+msgstr "记录单个作业的成绩"
+
+msgid "Append to end of set [_1]"
+msgstr "添加到这个作业 [_1] 的最后面"
+
+msgid "Unrecognized saveMode: |[_1]|. Unknown error."
+msgstr "不能识别的保持模式|[_1]|。未知的错误。"
+
+msgid ""
+"Your score was not recorded because there was a failure in storing the "
+"problem record to the database."
+msgstr "您的成绩没有被记录因为在将该问题的分数存入到数据库时出错。"
+
+msgid "The hardcopy header for set [_1] has been renamed to '[_2]'."
+msgstr "作业[_1]的副本文件名被改为'[_2]'。"
+
+msgid "Save as"
+msgstr "另存为"
+
+msgid "Select action below"
+msgstr "选择以下操作"
+
+msgid "The file '[_1]' cannot be found."
+msgstr "找不到这个文件 '[_1]'。"
+
+msgid "Unable to write to '[_1]': [_2]"
+msgstr "不能写入'[_1]': [_2]"
+
+msgid "Save"
+msgstr "保存"
+
+msgid ""
+"File '[_1]' exists. File not saved. No changes have been made. You can "
+"change the file path for this problem manually from the 'Hmwk Sets Editor' "
+"page"
+msgstr "文件'[_1]'已存在。文件未保存。未做任何修改。您需要在'作业编辑'中手动修改文件路径。"
+
+msgid "The set header for set [_1] has been renamed to '[_2]'."
+msgstr "作业[_1]的文件名被改为'[_2]'。"
+
+msgid ""
+"Error: This path is already in the temporary edit directory -- no new "
+"temporary file is created. path = [_1]"
+msgstr "错误：这个路径已在临时编辑目录下 -- 没有创建新的临时文件。路径 = [_1]"
+
+msgid ""
+"Please use radio buttons to choose the method for saving this file. Can't "
+"recognize saveMode: |[_1]|."
+msgstr "请用单选按钮去选择保存这个文件的方式。不能识别保持模式：|[_1]|。"
+
+msgid "Saved to file '[_1]'"
+msgstr "已保存到'[_1]'"
+
+msgid "Please specify a file to save to."
+msgstr "请指定要保存到的文件。"
+
+msgid "The selected problem ([_1]) is not a valid problem for set [_2]."
+msgstr "选中的问题([_1])不是作业[_2]中的有效题目。"
+
+msgid "Editing [_1] in file '[_2]'"
+msgstr "编辑 [_1] 在文件 '[_2]' 中"
+
+msgid "Deleting temp file at [_1]"
+msgstr "删除[_1]中临时文件"
+
+msgid "hidden from"
+msgstr "隐藏于"
+
+msgid "View student progress by set"
+msgstr "看学生在某个作业上的进度"
+
+msgid "View"
+msgstr "查看"
+
+msgid "Resources"
+msgstr "资源"
+
+msgid "Scoring Download"
+msgstr "成绩下载"
+
+msgid "Duplicate"
+msgstr "复制"
+
+msgid "This path |[_1]| is not the path to a temporary edit file."
+msgstr "这个路径|[_1]| 不是指向一个临时编辑文件的路径。"
+
+msgid "visible to"
+msgstr "可见于"
+
+msgid ""
+"Unable to change the source file path for set [_1], problem [_2]. Unknown "
+"error."
+msgstr "不能修改作业[_1]，问题[_2]的源文件路径。未知的错误。"
+
+msgid "Course Administration"
+msgstr "课程管理"
+
+msgid "Added [_1] to [_2] as problem [_3]"
+msgstr "添加[_1]到[_2]作为问题[_3]"
+
+msgid "Options Information"
+msgstr "选项信息"
+
+msgid "Proctor"
+msgstr "监考员"
+
+msgid "Student Progress"
+msgstr "学生进度"
+
+msgid "Revert"
+msgstr "恢复"
+
+msgid "Statistics"
+msgstr "统计数据"
+
+msgid "Save as new independent problem"
+msgstr "保存未新的独立题目"
+
+msgid "Scoring Tools"
+msgstr "成绩编辑工具"
+
+msgid ""
+"The source file for 'set [_1] / problem [_2]' has been changed from [_3] to "
+"'[_4]'."
+msgstr "'作业 [_1] / 题目 [_2]'的源文件已从[_3] 变为 '[_4]'。"
+
+msgid "Cancel Export"
+msgstr "取消导出"
+
+msgid "View student progress by student"
+msgstr "查看学生进度"
+
+msgid "Revert to [_1]"
+msgstr "恢复到[_1]"
+
+msgid "Classlist Editor"
+msgstr "课程名单编辑"
+
+msgid "Add"
+msgstr "添加"
+
+msgid "the original path to the file is [_1]"
+msgstr "这个文件原来的路径是[_1]"
+
+msgid "The path to the original file should be absolute"
+msgstr "指向原文件的路径必须是完整的"
+
+msgid ""
+"To edit this text you must use the 'Save AS' action below to save it to "
+"another file."
+msgstr "要修改这个文本你必须使用下方的'另存为'操作将其保存到另外一个文件。"
+
+msgid "Error: The original file [_1] cannot be read."
+msgstr "错误：原文件[_1]不能读。"
+
+msgid "Unable to change the set header for set [_1]. Unknown error."
+msgstr "不能修改作业[_1]的文件名。未知的错误。"
+
+msgid "options information"
+msgstr "选项信息"
+
+msgid "The selected problem([_1]) is not a valid problem for set [_2]."
+msgstr "选中的题目([_1])不是作业[_2]有效的题目。"
+
+msgid "Unknown file type"
+msgstr "未知的文件类型"
+
+msgid "course information"
+msgstr "课程信息"
+
+msgid "Change User Options"
+msgstr "修改用户选项"
+
+msgid "Drop"
+msgstr "退课"
+
+msgid "Solutions"
+msgstr "答案"
+
+msgid "Show:"
+msgstr "显示："
+
+msgid "WeBWorK Assignment [_1] is due : [_2]."
+msgstr "WeBWorK 作业 [_1] 截至于 : [_2]。"
+
+msgid "Hardcopy Generator"
+msgstr "打印作业"
+
+msgid "This set is visible to students."
+msgstr "此作业学生是可以看到的。"
+
+msgid "View equations as"
+msgstr "公式显示为"
+
+msgid "From:"
+msgstr "来自于："
+
+msgid "Generate Hardcopy"
+msgstr "打印副本"
+
+msgid ""
+"You may choose to show any of the following data. Correct answers and "
+"solutions are only available after the answer date of the homework set."
+msgstr "您可以选择显示以下任何资料。正确的答案和解题方法只有在作业截至日期之后才可以看到。"
+
+msgid "E-mail Instructor"
+msgstr "发电子邮件给老师"
+
+msgid "Send E-mail:"
+msgstr "发送电子邮件："
+
+msgid "Cancel Email"
+msgstr "取消电子邮件"
+
+msgid "E-mail:"
+msgstr "电子邮件："
+
+msgid "Correct answers"
+msgstr "正确答案"
+
+msgid ""
+"Use this form to report to your professor a problem with the WeBWorK system "
+"or an error in a problem you are attempting. Along with your message, "
+"additional information about the state of the system will be included."
+msgstr "通过这个表格向您的老师报告您在解题过程中碰到的在WeBWorK系统或题目中的问题。连同您的消息，关于系统状态的一些额外信息也会添加。"
+
+msgid "Student answers"
+msgstr "学生答案"
+
+msgid "Hints"
+msgstr "提示"
+
+msgid "Hardcopy Format:"
+msgstr "文件格式"
