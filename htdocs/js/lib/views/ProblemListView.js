@@ -106,6 +106,10 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             }
 
         },
+        setProblemSet: function(_set) {
+            this.model = _set; 
+            return this;
+        },
         addProblemView: function (prob){
             var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
             this.$("#prob-list").append(probView.el);

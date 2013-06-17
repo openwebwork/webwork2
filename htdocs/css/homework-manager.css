@@ -80,7 +80,7 @@ label.checklist {display: inline; margin-left: 8px;}
 
 .loading {background-color: orange;}
 
-.problem-set-name {font-size: 125%;}
+#problem-set-name h2 {font-size: 18pt; line-height: 20pt;}
 
 .problem-set-header-row .btn-toolbar {margin-top: 0px;}
 

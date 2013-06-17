@@ -32,7 +32,6 @@ define(['Backbone', 'underscore','config','imagesloaded'], function(Backbone, _,
 
         render:function () {
             var self = this;
-            console.log("rendering problem with path: " + this.model.get("path"));
             if(this.model.get('data')){
                 _.extend(this.allAttrs,this.model.attributes);
                 this.$el.html(this.template(this.allAttrs));

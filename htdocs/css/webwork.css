@@ -14,3 +14,5 @@
 /* a wwdate is generally an input and we want to make it look like a span */
 
 .wwdate { width: auto; border: none;}
+
+.header {font-weight: bold;}

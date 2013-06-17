@@ -102,7 +102,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             restricted_login_proctor: "opt(yes,no)",
         },
         initialize: function(){
-            _.bindAll(this,"fetch","addProblem","update","getAssignedUsers");
+            _.bindAll(this,"fetch","addProblem","update");
             //this.on('change',this.update);
             this.problems = null;
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
@@ -159,11 +159,11 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             _.extend(requestObject, this.attributes);
             _.defaults(requestObject, config.requestObject);
 
-            //requestObject.assigned_users = JSON.stringify(requestObject.assigned_users);
+            requestObject.assigned_users = requestObject.assigned_users.join(",");
 
             $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-      	        //self.collection.trigger("change",self)
+      	        self.collection.trigger("saved",self)
             });
         },
         fetch: function()  // this fetches the problems for the ProblemSet.  
@@ -218,22 +218,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             var dueDate2 = new XDate(_set.get("due_date"));
             return (openDate1<openDate2)?(dueDate1>openDate2):(dueDate2>openDate1);
         },
-        getAssignedUsers: function ()
-        {
-            var self=this;
-            
-            var requestObject = { xml_command: "listSetUsers"};
-            _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, config.requestObject);
-
-            $.get(config.webserviceURL, requestObject, function (data) {
-
-                var response = $.parseJSON(data);
-                self.set("assigned_users", response.result_data);
-                self.trigger("usersLoaded", self);                
-
-            });        
-        },
 
         // Currently, the list of users assigned to this set (stored in this.assignedUsers) is just an array
         // of user_id's.  Perhaps, we should consider making this a UserList instead.  (Have to think about the pros and cons)
@@ -246,19 +230,16 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
 
             $.post(config.webserviceURL, requestObject, function(data) {
                 var response = $.parseJSON(data);
-
-                console.log(response);
                 self.trigger("usersAssigned", _users, self.get("set_id"));
                 
             });
 
         },
-        updateUserSet: function(_users,_openDate,_dueDate,_answerDate){
+        updateUserSet: function(_users,_props){  // used to customized dates for individual users.  
             var self = this;
             console.log("Updating the dates to users " + _users);
-            var requestObject = {xml_command: "updateUserSet", users: _users.join(","), set_id: this.get("set_id"),
-                                    open_date: _openDate, due_date: _dueDate, answer_date: _answerDate};
-            console.log(requestObject);
+            var requestObject = {xml_command: "updateUserSet", users: _users.join(","), set_id: this.get("set_id")};
+            _.extend(requestObject,_props);
             _.defaults(requestObject, config.requestObject);
             $.post(config.webserviceURL, requestObject, function (data){
                 var response = $.parseJSON(data);

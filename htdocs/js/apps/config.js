@@ -118,6 +118,33 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         }
     });
 
+    Backbone.Stickit.addHandler({
+        selector: '.select-with-disables',
+        getVal: function($el) { 
+                return $el.val(); 
+        }, 
+
+        update: function($el, val, model, options) { 
+            $el.html("");
+
+            var disabledOptions  = eval(options.selectOptions.disabledCollection);
+
+           _(eval(options.selectOptions.collection)).each(function(item){
+                $el.append("<option value='"+item.value+"' >" + item.label + "</option>");
+            });
+
+            _(disabledOptions).each(function(user){
+                $el.children("option[value='" + user + "']").prop("disabled",true);
+            })
+
+            _(val).each(function(user){
+              $el.children("option[value='" + user + "']").prop("selected",true);  
+            })
+
+
+            }
+    });
+
 
 
     return config;

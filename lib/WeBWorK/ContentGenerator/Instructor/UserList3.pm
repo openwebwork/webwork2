@@ -57,6 +57,7 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
+use JSON;
 use constant HIDE_USERS_THRESHHOLD => 200;
 
 
@@ -225,6 +226,43 @@ sub head{
 	return "";
 }
 
+## get all of the user information to send to the client via a script tag in the output_JS subroutine below
+
+sub getUsers {
+	my ($ce,$r) = @_;
+	my $db = $r->db;
+
+	my @tempArray = $db->listUsers;
+
+	debug(@tempArray);
+    my @allUsers = $db->getUsers(@tempArray);
+
+    debug(to_json($allUsers[0],{convert_blessed=>1,allow_blessed=>1}));
+    my $numGlobalSets = $db->countGlobalSets;
+
+    my %permissionsHash = reverse %{$ce->{userRoles}};
+    foreach my $u (@allUsers)
+    {
+        my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
+        $u->{'permission'} = $PermissionLevel->{'permission'};
+        #$u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+
+
+		my $studid= $u->{'student_id'};
+		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
+        $u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
+	
+		my $Key = $db->getKey($u->{'user_id'});
+		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+
+		#debug(to_json($u,{allow_blessed=>1,convert_blessed=>1}));
+		
+    }
+
+    return @allUsers;
+}
+
+
 # output_JS subroutine
 
 # prints out the necessary JS for this page
@@ -234,10 +272,18 @@ sub output_JS{
 	my $r = $self->r;
 	my $ce = $r->ce;
 
+	my @allUsers = getUsers($ce,$r);
+
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script data-main="$site_url/js/apps/ClasslistManager/classlistManager" src="$site_url/js/vendor/requirejs/require.js"></script>!;
 
+    # print qq!<script type='text/javascript'>!;
+    # print qq!define('globalVariables', function() {!;
+    # print qq!  return { !;
+    # print qq! users: ! . to_json(\@allUsers,{allow_nonref=>1}) . "}";
+    # print qq! }!;
+    # print qq!</script>!;
 	
 	return "";
 }

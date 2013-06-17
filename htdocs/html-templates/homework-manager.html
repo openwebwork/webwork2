@@ -134,8 +134,6 @@
 
 <script type="text/template" id="problem-set-header">
 <div class='row problem-set-header-row'>
-  <div class='span3 problem-set-name'>
-  </div>
   <div class="span3 btn-toolbar"> 
     <div class="btn-group">
       <a href="#" class="btn" id="undo-delete-btn">Undo</a>
@@ -156,49 +154,48 @@
 <ul id="prob-list" class='scrollable no-bullets'></ul>
 </script>
 
-<script type="text/template" id="hwset-dates-tmpl">
+<script type="text/template" id="set-properties-tab-template">
 <table class="table">
 <tbody>
-<tr><td class="header">Open Date</td><td class="open-date"></td></tr>
-<tr><td class="header">Due Date</td><td class="due-date"></td></tr>
-<tr><td class="header">Answer Date</td><td class="answer-date"></td></tr>
-<tr><td>HW Set visible to Users</td><td class='hwset-visible'></td></tr>
-<tr><td>Reduced Credit Enabled</td><td class='reduced-credit'></td></tr>
-<tr><td>Users Assigned</td><td class="users-assigned"><%=assignedUsers%>/<%=numUsers%></td>
+<tr><td class="header">Open Date</td><td class="open-date wwdatetime"></td></tr>
+<tr><td class="header">Due Date</td><td class="due-date wwdatetime"></td></tr>
+<tr><td class="header">Answer Date</td><td class="answer-date wwdatetime"></td></tr>
+<tr><td>HW Set visible to Users</td><td><select class='set-visible'> </select></td></tr>
+<tr><td>Reduced Credit Enabled</td><td><select class='reduced-credit'></select></td></tr>
+<tr><td>Users Assigned</td><td class="users-assigned"></td>
 <td><button class="assign-all-users btn">Assign to All Users</td></tr>
 
 </tbody>
 </table>
 </script>
 
-<script type="text/template" id="users-assigned-tmpl">
-<p>Assign the problem set to the selected users.  Those highlighted already are assigned.</p>
-
-
-<table class="table">
-<tr id="users-assigned-row"></tr>
-<tr>
-<td><label for="classlist-select-all"> <input type="checkbox" id="classlist-select-all">&nbsp;Select All</label></td>
-<td><button id='assign-to-selected-users-button' class='btn'>Assign to Selected Users</button></td>
-<td></td></tr>
-</table>
-
+<script type="text/template" id="assign-users-template">
+  <p>The following list of users are those currently not assigned to this Problem Set.  Select those you wish
+  to assign to the problem set.  If the user is not able to be selected, then that user is already 
+  assigned to this set. </p>
+  <table class="table">
+    <tbody>
+      <tr><td rowspan="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
+         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
+         <tr><td><button class="btn assign-button">Assign Selected Users</button></td></tr>
+    </tbody>
+  </table>
 </script>
+
 
 <script type="text/template" id="custom-assign-tmpl">
 <p>Select the users below, change the desired due dates by clicking on the date or time.  Finally 
 click the "Save Changes" button.</p>
 <table class="table">
-<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<thead>
+<tr>
+<th>Select</th><th>Student (login name)</th><th>Open Date</th><th>Due date</th><th>Answer Date</th></tr>
 <tbody>
-<tr class="due-date-row"></tr>
-<tr id="custom-user-row"></tr>
-<tr><td><label for="custom-select-all"> <input type="checkbox" id="custom-select-all">&nbsp;Select All</label></td> 
-<td><button class='btn' id="custom-save-changes">Save Changes</button></td>
-<td><button class='btn' id="unassign-users">Unassign Users from this Set</button></td>
-</tr>
+<tr><td colspan="5">Loading User Information...<img src='/webwork2_files/images/ajax-loader-small.gif'></td><th>
+
 </tbody>
 </table>
+
 
 </script>
 
@@ -261,18 +258,21 @@ click the "Save Changes" button.</p>
 
 
 <script type="text/template" id="HW-detail-template">
+<div id="problem-set-name"></div>
 <ul class="nav nav-tabs" id="problem-set-tabs">
-  <li class="active"><a href="#problem-list-tab" data-toggle="tab" data-view="problemsView">Problems</a></li>
-  <li><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
+  <li class="active"><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
+  <li><a href="#problem-list-tab" data-toggle="tab" data-view="problemListView">Problems</a></li>
   <li><a href="#user-assign-tab" data-toggle="tab" data-view="usersAssignedView">Assign to Users</a></li>
-  <li><a href="#user-customize-tab" data-toggle="tab" data-view="customizeUserAssignView">Customize Set to Users</a></li>
+  <li><a href="#user-customize-tab" data-toggle="tab" data-view="customizeUserAssignView">Customize to Users</a></li>
+  <li><a href="#user-unassign-tab" data-toggle="tab" data-view="unassignUsersView">Unassign Users</a></li>
 </ul>
  
 <div class="tab-content">
-  <div class="tab-pane active" id="problem-list-tab" data-view="problemListView"><p>Click on a Problem Set Name on the left to view the set.</p></div>
-  <div class="tab-pane" id="property-tab" data-view="propertiesView"></div>
+  <div class="tab-pane active" id="property-tab" data-view="propertiesView"></div>
+  <div class="tab-pane" id="problem-list-tab" data-view="problemListView"><p>Click on a Problem Set Name on the left to view the set.</p></div>
   <div class="tab-pane" id="user-assign-tab" data-view="usersAssignedView"></div>
   <div class="tab-pane" id="user-customize-tab" data-view="customizeUserAssignView"></div>
+  <div class="tab-pane" id="user-unassign-tab" data-view="unassignUsersView"></div>
 </div> 
 </script>
 
@@ -298,6 +298,19 @@ click the "Save Changes" button.</p>
 </tbody>
 </table>
 
+</script>
+
+<script type="text/template" id="unassign-users-template">
+  <p>The following list of users are those currently assigned to this Problem Set.  Select those you wish
+  to unassign from the problem set.  If the user is not able to be selected, then that user is not 
+  assigned to this set. </p>
+  <table class="table">
+    <tbody>
+      <tr><td rowspan="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
+         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
+         <tr><td><button class="btn unassign-button">Unassign Selected Users</button></td></tr>
+    </tbody>
+  </table>
 </script>
 
 <script type="text/template" id="library-browser-template">

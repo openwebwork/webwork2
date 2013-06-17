@@ -246,7 +246,8 @@ sub pre_header_initialize {
             path 					=> $r->param('path') || undef, 
             selfassign 			    => $r->param('selfassign') || undef, 
             pgCode					=> $r->param('pgCode') || undef,
-            sendViaJSON				=> $r->param('sendViaJSON') || undef
+            sendViaJSON				=> $r->param('sendViaJSON') || undef,
+            assigned_users	        => $r->param('assigned_users') || undef,
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",

@@ -88,6 +88,7 @@ var HomeworkEditorView = WebPage.extend({
         $(".problem-set").on('click', self.showHWdetails);
     },
     postProblemSetsFetched: function (data){
+        var self = this; 
         this.problemSets.on("add", function (set){
             self.announce.addMessage("Problem Set: " + set.get("set_id") + " has been added to the course.");
             self.probSetListView.render();
@@ -100,7 +101,7 @@ var HomeworkEditorView = WebPage.extend({
             self.setDropToEdit();
         });
         
-        this.problemSets.on("change", function (_set){
+        this.problemSets.on("saved", function (_set){
             self.views.calendar.render();
             self.setDropToEdit();
             var keys = _.keys(_set.changed);
@@ -144,7 +145,7 @@ var HomeworkEditorView = WebPage.extend({
             calendar : new AssignmentCalendarView({el: $("#calendar"), problemSets: this.problemSets, 
                     viewType: "instructor", calendarType: "month", users: this.users,
                     reducedScoringMinutes: config.settings.find(function(setting) { return setting.get("var")==="pg{ansEvalDefaults}{reducedScoringPeriod}";}).get("value")}),
-            setDetails:  new HWDetailView({el: $("#setDetails"),  hwManager: this}),
+            setDetails:  new HWDetailView({el: $("#setDetails"),  users: this.users, problemSets: this.problemSets}),
             allSets:  new SetListView({el:$("#allSets"), collection: this.problemSets, parent: self}),
             assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", parent: this}),
             importExport:  new ImportExport(),

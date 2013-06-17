@@ -15,6 +15,7 @@ use WebworkWebservice;
 use base qw(WebworkWebservice); 
 use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime parseDateTime);
 use WeBWorK::Utils::Tasks qw(renderProblems);
+use List::Compare qw(get_symmetric_difference);
 
 use strict;
 use sigtrap;
@@ -22,7 +23,7 @@ use Carp;
 use WWSafe;
 #use Apache;
 use WeBWorK::Utils;
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 use JSON;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
@@ -171,40 +172,80 @@ sub getSet {
   }
 
 sub updateSetProperties {
-  my ($self, $params) = @_;
-  my $db = $self->{db};
+	my ($self, $params) = @_;
+	my $db = $self->{db};
 
-  my $set = $db->getGlobalSet($params->{set_id});
-  $set->set_header($params->{set_header});
-  $set->hardcopy_header($params->{hardcopy_header});
-  $set->open_date(parseDateTime($params->{open_date},"local"));
-  $set->due_date(parseDateTime($params->{due_date},"local"));
-  $set->answer_date(parseDateTime($params->{answer_date},"local"));
-  $set->visible($params->{visible});
-  $set->enable_reduced_scoring($params->{enable_reduced_scoring});
-  $set->assignment_type($params->{assignment_type});
-  $set->attempts_per_version($params->{attempts_per_version});
-  $set->time_interval($params->{time_interval});
-  $set->versions_per_interval($params->{versions_per_interval});
-  $set->version_time_limit($params->{version_time_limit});
-  $set->version_creation_time($params->{version_creation_time});
-  $set->problem_randorder($params->{problem_randorder});
-  $set->version_last_attempt_time($params->{version_last_attempt_time});
-  $set->problems_per_page($params->{problems_per_page});
-  $set->hide_score($params->{hide_score});
-  $set->hide_score_by_problem($params->{hide_score_by_problem});
-  $set->hide_work($params->{hide_work});
-  $set->time_limit_cap($params->{time_limit_cap});
-  $set->restrict_ip($params->{restrict_ip});
-  $set->relax_restrict_ip($params->{relax_restrict_ip});
-  $set->restricted_login_proctor($params->{restricted_login_proctor});
-  
-  $db->putGlobalSet($set);
-  
-  my $out = {};
-  $out->{ra_out} = $set;
-  $out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
-  return $out;
+	my $set = $db->getGlobalSet($params->{set_id});
+	$set->set_header($params->{set_header});
+	$set->hardcopy_header($params->{hardcopy_header});
+	$set->open_date(parseDateTime($params->{open_date},"local"));
+	$set->due_date(parseDateTime($params->{due_date},"local"));
+	$set->answer_date(parseDateTime($params->{answer_date},"local"));
+	$set->visible($params->{visible});
+	$set->enable_reduced_scoring($params->{enable_reduced_scoring});
+	$set->assignment_type($params->{assignment_type});
+	$set->attempts_per_version($params->{attempts_per_version});
+	$set->time_interval($params->{time_interval});
+	$set->versions_per_interval($params->{versions_per_interval});
+	$set->version_time_limit($params->{version_time_limit});
+	$set->version_creation_time($params->{version_creation_time});
+	$set->problem_randorder($params->{problem_randorder});
+	$set->version_last_attempt_time($params->{version_last_attempt_time});
+	$set->problems_per_page($params->{problems_per_page});
+	$set->hide_score($params->{hide_score});
+	$set->hide_score_by_problem($params->{hide_score_by_problem});
+	$set->hide_work($params->{hide_work});
+	$set->time_limit_cap($params->{time_limit_cap});
+	$set->restrict_ip($params->{restrict_ip});
+	$set->relax_restrict_ip($params->{relax_restrict_ip});
+	$set->restricted_login_proctor($params->{restricted_login_proctor});
+
+	$db->putGlobalSet($set);
+
+	# Next update the assigned_users list
+
+	# first, get the current list of users. 
+
+	my @usersForTheSetBefore = $db->listSetUsers($params->{set_id});
+
+	debug(to_json(\@usersForTheSetBefore));
+
+	# then determine those currently in the list.
+
+	my @usersForTheSetNow = split(/,/,$params->{assigned_users});
+
+
+	# The following seems to work if there are only additions or subtractions from the assigned_users field.
+	# Perhaps a better way to do this is to check users that are new or missing and add or delete them. 
+
+	# if the number of users have grown, then add them.  
+
+	debug(to_json(\@usersForTheSetNow));
+
+	# determine users to be added
+
+	foreach my $user (@usersForTheSetNow) {
+		if (! grep( /^$user$/, @usersForTheSetBefore)) {
+			my $userSet = $db->newUserSet;
+			$userSet->user_id($user);
+			$userSet->set_id($params->{set_id});
+			$db->addUserSet($userSet);
+		}
+	}
+
+	# delete users that are in the set before but not now. 
+
+	foreach my $user (@usersForTheSetBefore){
+		if (! grep(/^$user$/,@usersForTheSetNow)){
+			$db->deleteUserSet($user, $params->{set_id});
+		}
+	}
+ 
+
+	my $out = {};
+	$out->{ra_out} = $set;
+	$out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
+	return $out;
 }
 
 sub listSetUsers {
@@ -490,13 +531,17 @@ sub updateUserSet {
   	my ($self, $params) = @_;
   	my $db = $self->{db};
   	my @users = split(',',$params->{users});
+
+  	debug($params->{open_date});
+  	debug($params->{due_date});
+  	debug($params->{answer_date});
   	
   	foreach my $userID (@users) {
 		my $set = $db->getUserSet($userID,$params->{set_id});
 		if ($set){
-		    $set->open_date($params->{open_date});
-		    $set->due_date($params->{due_date});
-		    $set->answer_date($params->{answer_date});
+		    $set->open_date(parseDateTime($params->{open_date},"local"));
+			$set->due_date(parseDateTime($params->{due_date},"local"));
+			$set->answer_date(parseDateTime($params->{answer_date},"local"));
 		  	$db->putUserSet($set);
 		} else {
 			my $newSet = $db->newUserSet;
@@ -515,6 +560,24 @@ sub updateUserSet {
   #$out->{ra_out} = $set;
   $out->{text} = encode_base64("Successfully updated set " . $params->{set_id} . " for users " . $params->{users});
   return $out;
+}
+
+=item getUserSets($setID)
+
+gets all user sets for set $setID
+
+=cut
+
+sub getUserSets {
+	my ($self,$params) = @_;
+	my $db = $self->{db};
+
+	my @setUsers = $db->listSetUsers($params->{set_id});
+
+	debug(to_json(\@setUsers));
+
+	my $out = {};
+	$out->{text} = encode_base64("Returning all users sets for set " . $params->{set_id});
 }
 
 
