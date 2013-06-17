@@ -90,7 +90,7 @@ sub process_and_log_answer{
 				# answer score *could* actually be a float, and this doesnt
 				# allow for fractional answers :(
 				$scores .= $answerHash{$_}->{score} >= 1 ? "1" : "0";
-				$isEssay = 1 if $answerHash{$_}->{type} eq 'essay';
+				$isEssay = 1 if ($answerHash{$_}->{type}//'') eq 'essay';
 
 			}
 
@@ -117,6 +117,7 @@ sub process_and_log_answer{
 			$pastAnswer->timestamp($timestamp);
 			$pastAnswer->scores($scores);
 			$pastAnswer->answer_string($answerString);
+			$pastAnswer->source_file($problem->source_file);
 
 			$db->addPastAnswer($pastAnswer);
 

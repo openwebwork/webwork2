@@ -293,7 +293,7 @@ function toMinSec(t) {
 		    <div style="position:relative; width:100%;">
 				<!--#if can="path"-->
 				<span class="Path">
-					<!--#path style="text" image="/webwork2_files/images/right_arrow.png" text=" > "-->
+					<!--#path style="text" image="<!--#url type="webwork" name="htdocs"-->/images/right_arrow.png" text=" > "-->
 				</span>
 				<!--#endif-->
 				

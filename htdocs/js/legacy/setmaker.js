@@ -58,6 +58,7 @@ function lib_update(who, what) {
   var mydefaultRequestObject = init_webservice('searchLib');
   if(mydefaultRequestObject == null) {
     // We failed
+    console.log("Could not get webservice request object");
     return false;
   }
   var subj = $('[name="library_subjects"] option:selected').val();

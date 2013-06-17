@@ -42,6 +42,7 @@ use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
+use HTML::Scrubber;
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -233,7 +234,7 @@ sub attemptResults {
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 	
-	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers};
+	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
 
 	my $header;
 	#$header .= CGI::th("Part");
@@ -251,25 +252,25 @@ sub attemptResults {
 	my $numEssay = 0;
 	my $tthPreambleCache;
 	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name};
-		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+		my $answerResult  = $pg->{answers}->{$name}//'';
+		my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
 		my $preview       = ($showAttemptPreview
 		                    	? $self->previewAnswer($answerResult, $imgGen, \$tthPreambleCache)
 		                    	: "");
-		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache);
-		my $correctAnswer = $answerResult->{correct_ans};
-		my $answerScore   = $answerResult->{score};
-		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
+		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache)//'';
+		my $correctAnswer = $answerResult->{correct_ans}//'';
+		my $answerScore   = $answerResult->{score}//0;
+		my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
-		$numEssay += $answerResult->{type} eq 'essay';
+		$numEssay += ($answerResult->{type}//'') eq 'essay';
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
 
 		my $resultString;
 		if ($answerScore >= 1) {
 		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
 		    push @correct_ids,   $name if $answerScore == 1;
-		} elsif ($answerResult->{type} eq 'essay') {
+		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded"); 
 		    $self->{essayFlag} = 1;
 		} elsif (not $answerScore) {
@@ -339,7 +340,7 @@ sub attemptResults {
 
 	return
 		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
+		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : '&nbsp;');
 }
 
 
@@ -365,7 +366,7 @@ sub previewAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
-	} elsif ($answerResult->{type} eq 'essay') {
+	} elsif (($answerResult->{type}//'') eq 'essay') {
 	    return $tex;
 	} elsif ($displayMode eq "formattedText") {
 		
@@ -683,7 +684,7 @@ sub pre_header_initialize {
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
 	);
-	
+
 	# are certain options enforced?
 	my %must = (
 		showOldAnswers     => 0,
@@ -720,6 +721,26 @@ sub pre_header_initialize {
 		# do this only if new answers are NOT being submitted
 		my %oldAnswers = decodeAnswers($problem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
+	}
+	
+	##### scrub answer fields for xss badness #####
+     	my $scrubber = HTML::Scrubber->new(
+	    default=> 1,
+	    script => 0,
+	    process => 0,
+	    comment => 0
+	    );
+	foreach my $key (keys %$formFields) {
+	    if ($key =~ /AnSwEr/) {
+		$formFields->{$key} = $scrubber->scrub(		
+			(defined $formFields->{$key})? $formFields->{$key}:'' # using // would be more elegant but breaks perl 5.8.x
+		);
+		### HTML::scrubber is a little too enthusiastic about
+		### removing > and < so we have to add them back in otherwise
+		### they confuse pg
+		$formFields->{$key} =~ s/&lt;/</g;
+		$formFields->{$key} =~ s/&gt;/>/g;
+	    }
 	}
 	
 	##### translation #####
@@ -789,9 +810,9 @@ sub warnings {
 		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
     } elsif ( $self->{pgerrors} > 0 ) {
-        my @pgdebug          = @{ $self->{pgdebug}           };
- 		my @pgwarning        = @{ $self->{pgwarning}         };
- 		my @pginternalerrors = @{ $self->{pginternalerrors}  };
+        my @pgdebug          = @{ $self->{pgdebug}           }//();
+ 		my @pgwarning        = @{ $self->{pgwarning}         }//();
+ 		my @pginternalerrors = @{ $self->{pginternalerrors}  }//();
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
 		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
@@ -830,9 +851,9 @@ sub head {
 	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery/jquery.js"></script> 
+           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script> 
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -854,7 +875,7 @@ sub options {
 	my $displayMode = $self->{displayMode};
 	my %can = %{ $self->{can} };
 	
-	my @options_to_show = "displayMode";
+	my  @options_to_show = "displayMode";
 	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
 	push @options_to_show, "showHints" if $can{showHints};
 	push @options_to_show, "showSolutions" if $can{showSolutions};
@@ -1008,6 +1029,7 @@ sub body {
 	$self ->output_checkboxes;
 	$self ->output_submit_buttons;
 	$self ->output_score_summary;
+	$self ->output_comments;
 	$self ->output_misc;
 	print "</form>";
 	# debugging stuff
@@ -1037,7 +1059,10 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
-	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
+	print $self->mathview_scripts();
+
+	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
+
 	print $self->hidden_authen_fields;
 	return "";
 }
@@ -1051,7 +1076,7 @@ sub output_problem_body{
 	my $pg = $self->{pg};
 
 	print "\n";
-	print CGI::p($pg->{body_text});
+	print CGI::div({class=>"problem-content", id=>"problem-content"},$pg->{body_text});
 	return "";
 }
 
@@ -1094,7 +1119,6 @@ sub output_editorLink{
 	my $editorLink = "";
 	my $editorLink2 = "";
 	my $editorLink3 = "";
-	my $editorLink4 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
@@ -1117,27 +1141,20 @@ sub output_editorLink{
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
 	}
-	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{simplepgeditor}) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::SimplePGEditor", $r, 
-			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
-		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink4 = CGI::span(CGI::a({href=>$editorURL,target =>'Simple_Editor'}, $r->maketext("SimpleEdit")));
-	}
-
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
+			print $editorLink, " ", $editorLink2, " ", $editorLink3;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
+		print $editorLink, " ", $editorLink2, " ", $editorLink3;
 	}
 	return "";
 }
@@ -1151,7 +1168,12 @@ sub output_checkboxes{
 	my $r = $self->r;
 	my %can = %{ $self->{can} };
 	my %will = %{ $self->{will} };
-
+	my $ce = $r->ce;
+    my $showHintCheckbox      = $ce->{pg}->{options}->{show_hint_checkbox};
+    my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
+    my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
+    my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
+    #  warn "showHintCheckbox $showHintCheckbox  showSolutionCheckbox $showSolutionCheckbox";
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
@@ -1170,8 +1192,10 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
-	if ($can{showHints}) {
-
+	#  warn "can showHints $can{showHints} can show solutions $can{showSolutions}";
+	if ($can{showHints} ) {
+	  # warn "can showHints is ", $can{showHints};
+	  if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
 		print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
@@ -1188,8 +1212,14 @@ sub output_checkboxes{
 					-value   => 1,
 				}
 		),"&nbsp;";
+	  } else {
+	  	print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
+	  
+	  }
 	}
-	if ($can{showSolutions}) {
+	
+	if ($can{showSolutions} ) {
+	  if (  $showSolutionCheckbox or not $useKnowlsForSolutions ) { # always allow checkbox to display if knowls are not used.
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
 			-id		 => "showSolutions_id",
@@ -1206,6 +1236,9 @@ sub output_checkboxes{
 				-value   => 1,
 			}
 		),"&nbsp;";
+	  } else {
+	    print CGI::hidden({id=>"showSolutions_id", name => "showSolutions", value=>1})
+	  }
 	}
 	
 	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
@@ -1390,6 +1423,77 @@ sub output_misc{
 	return "";
 }
 
+# output_comments subroutine
+
+# prints out any instructor comments present in the latest past_answer entry
+
+sub output_comments{
+	my $self = shift;
+
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+
+	my $problem = $self->{problem};
+	my $set = $self->{set};
+	my $urlpath        = $r->urlpath;
+	my $courseName     = $urlpath->arg("courseID");
+	my $setID          = $urlpath->arg("setID");
+	my $problemID      = $urlpath->arg("problemID");
+	my $key = $r->param('key');
+	my $userID           = $r->param('user');
+	my $displayMode   = $self->{displayMode};
+	my $authz = $r->authz;
+	
+	my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
+
+	#if there is a comment then render it and print it 
+	if ($userPastAnswerID) {
+		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
+		if ($userPastAnswer->comment_string) {
+
+		    my $comment = $userPastAnswer->comment_string;
+		    $comment = CGI::escapeHTML($comment);
+		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
+		    my $user = $db->getUser($userID);
+
+		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
+		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
+		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n BEGIN_TEXT\n";
+		    $source .= $comment . "\nEND_TEXT\n ENDDOCUMENT();";
+		    my $pg = WeBWorK::PG->new(
+			$ce,
+			$user,
+			$key,
+			$set,
+			$problem,
+			$set->psvn, # FIXME: this field should be removed
+			$formFields,
+			{ # translation options
+			    displayMode     => $displayMode,
+			    showHints       => 0,
+			    showSolutions   => 0,
+			    refreshMath2img => 1,
+			    processAnswers  => 0,
+			    permissionLevel => 0,
+			    effectivePermissionLevel => 0,
+			    r_source => \$source,
+			},
+			);
+		    
+		    
+		    my $htmlout = $pg->{body_text};
+		    
+		    print CGI::div({class=>"answerComments"},
+		    CGI::b("Instructor Comment:"),
+		    CGI::br(),
+		    $htmlout);
+		}
+	}
+
+	return "";
+}
+
 # output_summary subroutine
 
 # prints out the summary of the questions that the student has answered 
@@ -1424,24 +1528,17 @@ sub output_summary{
 	    # print this if user submitted answers OR requested correct answers	    
 	    my $results = $self->attemptResults($pg, 1,
 						$will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
-	    
-	    #If achievements enabled check to see if there are new ones.and print them
-	    if ($ce->{achievementsEnabled} && $will{recordAnswers}) {
-		my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
-		print $achievementMessage;
-	    }
-	    
+			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);	    
 	    print $results;
-
+	    
 	} elsif ($checkAnswers) {
-		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
-		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
-			# show attempt answers
-			# show correct answers if asked
-			# show attempt results (correctness)
-			# show attempt previews
+	    # print this if user previewed answers
+	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
+	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
+	    # show attempt answers
+	    # show correct answers if asked
+	    # show attempt results (correctness)
+	    # show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
 		print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
@@ -1451,6 +1548,38 @@ sub output_summary{
 			# show attempt previews
 	}
 	
+	return "";
+}
+
+# prints the achievement message if there is one
+
+sub output_achievement_message{
+
+    	my $self = shift;
+	
+	my $editMode = $self->{editMode};
+	my $problem = $self->{problem};
+	my $pg = $self->{pg};
+	my $submitAnswers = $self->{submitAnswers};
+	my %will = %{ $self->{will} };
+
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	
+	
+
+	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
+	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
+	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
+	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
+	    print $achievementMessage;
+	}
+	
+
 	return "";
 }
 
@@ -1522,7 +1651,7 @@ sub output_past_answer_button{
 			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
 			CGI::hidden(-name => 'problemID', -value=>$problem->problem_id), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
-			CGI::hidden(-name => 'studentUser',    -value=>$problem->user_id), "\n",
+               		CGI::hidden(-name => 'studentUser',  -value=>$problem->user_id), "\n",
 			CGI::p( {-align=>"left"},
 				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",
@@ -1594,7 +1723,7 @@ sub output_hidden_info{
 
 # output_JS subroutine
 
-# prints out the legacy/vendor/wz_tooltip.js script for the current site.
+# prints out the wz_tooltip.js script for the current site.
 
 sub output_wztooltip_JS{
 	
@@ -1604,7 +1733,7 @@ sub output_wztooltip_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
 	return "";
 }
 
@@ -1623,16 +1752,26 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# This adds the dragmath functionality
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
+	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
+	
+	# The Base64.js file, which handles base64 encoding and decoding.
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/Base64.js"}), CGI::end_script();
+	
+	
+	return "";
+}
+
+#Tells template to output stylesheet for Jquery-UI
+sub output_jquery_ui_CSS{
 	return "";
 }
 

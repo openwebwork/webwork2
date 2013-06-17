@@ -187,34 +187,6 @@ sub initialize {
 	
 }
 
-sub info {
-	my ($self) = @_;
-	my $r            = $self->r;
-	my $db           = $r->db;
-	my $ce           = $r->ce;
-	my $urlpath      = $r->urlpath;
-	my $courseName   = $urlpath->arg("courseID");
-	
-	my $evalpath = $ce->{courseDirs}{achievements};
-	$evalpath =~ s/$ce->{courseDirs}{root}/$courseName/;
-	my $iconpath = $ce->{courseURLs}{achievements};
-	$iconpath =~ s/$ce->{courseURLs}{html}/$ce->{courseDirs}{html}/;
-	$iconpath =~ s/$ce->{courseDirs}{root}/$courseName/;
-
-	print CGI::div("This is the Achievent Editor.  It is used to edit the achievements available to students.  Please keep in mind the following facts:");
-	print CGI::start_ul();
-	print CGI::li("The achievements are always sorted by category and then by name.");
-	print CGI::li("Achievments are displayed, and evaluated, in the order they are listed.");
-	print CGI::li('The "secret" category always comes first and creates achievements which are not visible to students until they are earned.');
-	print CGI::li('The "level" category is used for the achievements associated to a users level.');
-	print CGI::li("The evaluator files are stored in $evalpath");
-	print CGI::li("The icons are stored in $iconpath");
-	print CGI::end_ul();
-	
-	return "";
-}
-
-
 sub body {
 	my ($self)       = @_;
 	my $r            = $self->r;
@@ -250,10 +222,14 @@ sub body {
 	    @Achievements = sortAchievements(@Achievements);
 	}
 
-
+	########## print site identifying information
+	
+	print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
+	print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_ACHIEVEMENTS_EDITOR_DESCRIPTION")));
+	
 	########## print beginning of form
 
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"achievementlist"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"achievement-list", name=>"achievementlist"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -269,8 +245,7 @@ sub body {
 	
 	print CGI::p(CGI::b("Any changes made below will be reflected in the achievement for ALL students.")) if $editMode;
 
-	print CGI::start_table({});
-	print CGI::Tr({}, CGI::td({-colspan=>2}, "Select an action to perform:"));
+	print CGI::p($r->maketext("Select an action to perform").":");
 
 	my @formsToShow;
 	if ($editMode) {
@@ -283,6 +258,8 @@ sub body {
 		@formsToShow = @{ EXPORT_FORMS() };
 	}
 	
+	print CGI::start_div({-class=>"tabber"});
+
 	my $i = 0;
 	foreach my $actionID (@formsToShow) {
 
@@ -290,10 +267,12 @@ sub body {
 		my $onChange = "document.achievementlist.action[$i].checked=true";
 		my %actionParams = $self->getActionParams($actionID);
 		
-		print CGI::Tr({-valign=>"top"},
-			CGI::td({}, CGI::input({-type=>"radio", -name=>"action", -value=>$actionID})),
-			CGI::td({}, $self->$actionForm($onChange, %actionParams))
-		);
+		print CGI::div({-class=>"tabbertab"},
+			   CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
+			   CGI::span({-class=>"radio_span"},  WeBWorK::CGI_labeled_input(-type=>"radio", 
+			   -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), 
+                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
+			    $self->$actionForm($onChange, %actionParams));
 		
 		$i++;
 	}
@@ -316,10 +295,11 @@ sub body {
 			)
 		);
 	}
-	print CGI::Tr({}, CGI::td({-colspan=>2, -align=>"center"},
-		CGI::submit(-value=>"Take Action!"))
-	);
-	print CGI::end_table();
+
+	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
+	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
+
+	print CGI::end_div();
 	
 	########## print table
 
@@ -1276,9 +1256,9 @@ sub printTableHTML {
 	
 	# print the table
 	if ($exportMode) {
-	    print CGI::start_table({});
+	    print CGI::start_table({class=>"classlist-table", id=>"achievement-table"});
 	} else {
-	    print CGI::start_table({-border=>1, -cellpadding=>5});
+	    print CGI::start_table({-border=>1, -cellpadding=>5, class=>"classlist-table", id=>"achievement-table"});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));
@@ -1311,6 +1291,24 @@ sub getAxpList {
 	my $ce = $self->{ce};
 	my $dir = $ce->{courseDirs}->{achievements};
 	return $self->read_dir($dir, qr/.*\.axp/);
+}
+
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
+
+	return "";
+}
+
+# Just tells template to output the stylesheet for Tabber
+sub output_tabber_CSS{
+	return "";
 }
 
 1;

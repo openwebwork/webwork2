@@ -77,11 +77,11 @@ sub title {
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $type                = $self->{type};
-	my $string              = "Student Progress for ".$self->{ce}->{courseName}." ";
+	my $string              = $r->maketext("Student Progress for")." ".$self->{ce}->{courseName}." ";
 	if ($type eq 'student') {
 		$string             .= "student ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
-		$string             .= "set   ".$self->{setName};
+		$string             .= $r->maketext("set")." ".$self->{setName};
 		$string             .= ".&nbsp;&nbsp;&nbsp; Due ". $self->formatDateTime($self->{set_due_date});
 	}
 	return $string;
@@ -157,7 +157,7 @@ sub body {
 			my $act_as_student_url = $self->systemLink($courseHomePage,
 				params => {effectiveUser=>$studentName});
 			
-			print 'Act as: ', CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
+			print $r->maketext("Act as:")." ".CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
 		}
 		
 		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
@@ -248,11 +248,11 @@ sub index {
 		CGI::start_table({-border=>2, -cellpadding=>20}),
 		CGI::Tr({},
 			CGI::td({-valign=>'top'}, 
-				CGI::h3({-align=>'center'},'View student progress by set'),
+				CGI::h3({-align=>'center'},$r->maketext('View student progress by set')),
 				CGI::ul(  CGI::li( [@setLinks] ) ), 
 			),
 			CGI::td({-valign=>'top'}, 
-				CGI::h3({-align=>'center'},'View student progress by student'),
+				CGI::h3({-align=>'center'},$r->maketext('View student progress by student')),
 				CGI::ul(CGI::li( [ @studentLinks ] ) ),
 			),
 		),
@@ -825,15 +825,15 @@ sub displaySets {
 	# continue with table output
 	if ( ! $setIsVersioned ) {
 	    print
-		CGI::start_table({-border=>5,style=>'font-size:smaller'}),
+		CGI::start_table({-class=>"progress-table", -border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
-			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},'First').
-			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},'Last').CGI::br().
+			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},$r->maketext('First')).
+			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},$r->maketext('Last')).CGI::br().
 			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'email_address', %past_sort_methods })},'Email'),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %past_sort_methods})},'Score'),
-			'Out'.CGI::br().'Of',
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %past_sort_methods})},$r->maketext("Score")),
+			$r->maketext("Out Of"),
 #			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %past_sort_methods})},'Ind'),
-			'Problems'.CGI::br().$problem_header,
+			$r->maketext("Problems").CGI::br().$problem_header,
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},'Section'),
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},'Recitation'),
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %past_sort_methods})},'Login Name'),
@@ -856,15 +856,15 @@ sub displaySets {
 		);
 		my %params = (%past_sort_methods, %display_options);
 	    my @columnHdrs = ();
-	    push( @columnHdrs, 'Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %params})},'First').
-		  '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %params })},'Last') );
+	    push( @columnHdrs, 'Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %params})},$r->maketext('First')).
+		  '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %params })},$r->maketext('Last')) );
 	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %params})},'Score') );
-	    push( @columnHdrs, 'Out'.CGI::br().'Of' );
+	    push( @columnHdrs, $r->maketext('Out Of') );
 	    push( @columnHdrs, 'Date' ) if ( $showColumns{ 'date' } );
 	    push( @columnHdrs, 'TestTime' ) if ( $showColumns{ 'testtime' } );
 #	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %params})},'Ind') )
 #		if ( $showColumns{ 'index' } );
-	    push( @columnHdrs, 'Problems'.CGI::br().$problem_header )
+	    push( @columnHdrs, $r->maketext("Problems").CGI::br().$problem_header )
 		if ( $showColumns{ 'problems' } );
 	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %params})},'Section') )
 		if ( $showColumns{ 'section' } );
@@ -873,7 +873,7 @@ sub displaySets {
 	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %params})},'Login Name') )
 		if ( $showColumns{ 'login' } );
 
-	    print CGI::start_table({-border=>5,style=>'font-size:smaller'}),
+	    print CGI::start_table({-class=>"progress-table", -border=>5,style=>'font-size:smaller'}),
 	        CGI::Tr(CGI::td(  {-align=>'left'},
 		    [ @columnHdrs ] ) ),
 	    ;

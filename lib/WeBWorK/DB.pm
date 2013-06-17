@@ -1355,6 +1355,12 @@ sub deleteGlobalUserAchievement {
 	# userAchievementID can be undefined if being called from this package
 	my $U = caller eq __PACKAGE__ ? "!" : "";
 	my ($self, $userID) = shift->checkArgs(\@_, "user_id$U");
+	
+	my @achievements = $self->listUserAchievements($userID);
+	foreach my $achievement (@achievements) {
+	    $self->deleteUserAchievement($userID,$achievement);
+	}
+	
 	if ($self->{global_user_achievement}){
 		return $self->{global_user_achievement}->delete($userID);
 	} else {

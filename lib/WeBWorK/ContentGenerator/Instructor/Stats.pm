@@ -76,13 +76,13 @@ sub title {
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $type                = $self->{type};
-	my $string              = "Statistics for ".$self->{ce}->{courseName}." ";
+	my $string              = $r->maketext("Statistics for")." ".$self->{ce}->{courseName}." ";
 	
 	if ($type eq 'student') {
 		$string             .= "student ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
 		$string             .= "set   ".$self->{setName};
-		$string             .= ".&nbsp;&nbsp;&nbsp; Due ". $self->formatDateTime($self->{set_due_date});
+		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ". $self->formatDateTime($self->{set_due_date});
 	}
 	return $string;
 }
@@ -208,11 +208,11 @@ sub index {
 		CGI::start_table({-border=>2, -cellpadding=>20}),
 		CGI::Tr({},
 			CGI::td({-valign=>'top'}, 
-				CGI::h3({-align=>'center'},'View statistics by set'),
+				CGI::h3({-align=>'center'},$r->maketext('View statistics by set')),
 				CGI::ul(  CGI::li( [@setLinks] ) ), 
 			),
 			CGI::td({-valign=>'top'}, 
-				CGI::h3({-align=>'center'},'View statistics by student'),
+				CGI::h3({-align=>'center'},$r->maketext('View statistics by student')),
 				CGI::ul(CGI::li( [ @studentLinks ] ) ),
 			),
 		),
@@ -561,8 +561,8 @@ foreach my $probID (@problemIDs) {
     $barheight = sprintf("%d", $percentcorrect * $plotwindowheight / 100 );
     $barxpixel = $leftmargin + ($probID-1) * ($barwidth + 2*$barsep) + $barsep;
     $barypixel = $topmargin + $plotwindowheight - $barheight;
-    $problabelxpixel = $leftmargin + ($probID-1) * $totalbarwidth + $barsep;
-    $problabelypixel = $topmargin + $plotwindowheight - $barheight;
+    $problabelxpixel = $leftmargin + ($probID-1) * $totalbarwidth + $barsep + sprintf("%d",$totalbarwidth/2);
+    # $problabelypixel = $topmargin + $plotwindowheight - $barheight;
     $svg = $svg . "<a xlink:href=\"". $linkstring ."\" target=\"_blank\"><rect id=\"bar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,153,198)\" /><text id=\"problem". $probID ."\" x=\"". $problabelxpixel ."\" y=\"". $problabelypixel ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">". $probID ."</text></a>\n";
 }
 
@@ -580,22 +580,22 @@ print CGI::p("$svg"); # insert SVG graph inside an html paragraph
 
 print  
 
-	   CGI::p('The percentage of active students with correct answers for each problem'),
-		CGI::start_table({-border=>1}),
+	   CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
+		CGI::start_table({-border=>1, -class=>"stats-table"}),
 		CGI::Tr(CGI::td(
 			['Problem #', 
 			   map {CGI::a({ href=>$self->systemLink($problemPage{$_}) },$_)} @problemIDs
 			]
 		)),
 		CGI::Tr(CGI::td(
-			[ '% correct',map {($number_of_students_attempting_problem{$_})
+			[ $r->maketext('% correct'),map {($number_of_students_attempting_problem{$_})
 			                      ? sprintf("%0.0f",100*$correct_answers_for_problem{$_}/$number_of_students_attempting_problem{$_})
 			                      : '-'}			                   
 			                       @problemIDs 
 			]
 		)),
 		CGI::Tr(CGI::td(
-			[ 'avg attempts',map {($number_of_students_attempting_problem{$_})
+			[ $r->maketext('avg attempts'),map {($number_of_students_attempting_problem{$_})
 			                      ? sprintf("%0.1f",$number_of_attempts_for_problem{$_}/$number_of_students_attempting_problem{$_})
 			                      : '-'}			                   
 			                       @problemIDs 
@@ -627,7 +627,7 @@ print
 		if ($gradeable) {
 		    
 		    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
-		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs<br>Grading" : "Regrade")));
+		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs Grading" : "Regrade")));
 		    
 		}  else {
 		    push (@GradeableRows, CGI::td());
@@ -646,20 +646,19 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p(CGI::i('The percentage of students receiving at least these scores.<br/>
-	    	       The median score is in the 50% column. ')),
-			CGI::start_table({-border=>1}),
+	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores. The median score is in the 50% column.'))),
+			CGI::start_table({-border=>1,-class=>"stats-table"}),
 				CGI::Tr(
-					CGI::td( ['% students',
+					CGI::td( [$r->maketext('% students'),
 					          (map {  "&nbsp;".$_   } @brackets1) ,
-					          'top score ', 
+					          $r->maketext('top score'), 
 					         
 					         ]
 					)
 				),
 				CGI::Tr(
 					CGI::td( [
-						'Score',
+						$r->maketext('Score'),
 						(prevent_repeats map { sprintf("%0.0f",100*$score_percentiles{$_})   } @brackets1),
 						sprintf("%0.0f",100),
 						]
@@ -667,7 +666,7 @@ print
 				),
 				CGI::Tr(
 					CGI::td( [
-						'Success Index',
+						$r->maketext('Success Index'),
 						(prevent_repeats  map { sprintf("%0.0f",100*$index_percentiles{$_})   } @brackets1),
 						sprintf("%0.0f",100),
 						]
@@ -684,10 +683,10 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p(CGI::i('Percentile cutoffs for number of attempts. <br/> The 50% column shows the median number of attempts')),
-			CGI::start_table({-border=>1}),
+	    	CGI::p(CGI::i($r->maketext('Percentile cutoffs for number of attempts. The 50% column shows the median number of attempts.'))),
+			CGI::start_table({-border=>1,-class=>"stats-table"}),
 				CGI::Tr(
-					CGI::td( ['% students',
+					CGI::td( [$r->maketext('% students'),
 					          (map {  "&nbsp;".($_)  } @brackets2) ,
 					        
 					         ]

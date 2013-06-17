@@ -60,49 +60,59 @@ sub initialize {
 	
 }
 
-
-sub options {
-	my ($self) = @_;
+ sub if_can {
+	my ($self, $arg) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $globalUserAchievement = $self->{globalData};
 
-	#Print the facebook sidepane.  This allows users to turn facebook integration on and off.
+	if ($arg eq 'options' && (not $ce->{allowFacebooking} || not defined($globalUserAchievement))) {
+	    return 0;
+ 	} else {
+	    return $self->SUPER::if_can($arg);
+ 	}
+ }
 
-	if (defined($globalUserAchievement)) {
+sub options {
+    	my ($self) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	my $ce = $r->ce;
+	my $authz = $r->authz;
+	my $globalUserAchievement = $self->{globalData};
 
-	    my $changeFacebooking = $r->param('changeFacebooking');
-	    
-	    if ($changeFacebooking) {
-		$globalUserAchievement->facebooker(!$globalUserAchievement->facebooker);
-		$db->putGlobalUserAchievement($globalUserAchievement);
-	    }
+	return "" unless defined $globalUserAchievement;
 
-	    print CGI::start_center();
-	    print CGI::start_div({class=>'facebookbox'});
-	    print CGI::start_form(-method=>'POST', -action=>$r->uri);
-	    print $self->hidden_authen_fields;
-	    print CGI::submit('changeFacebooking', $globalUserAchievement->facebooker 
-			      ? "Disable Facebook \n  Integration" : "Enable Facebook \n Integration");
-	    print CGI::end_form();
-	    print CGI::end_div();
-	    
-	    if ($globalUserAchievement->facebooker) {
-		#Print Facebook stuff (uses WCU specific appID)
-		print CGI::start_div({class=>'facebookbox'});
-		print CGI::div({id=>'fb-root'},'');
-		print CGI::script({src=>'http://connect.facebook.net/en_US/all.js'},"");
-		print CGI::script("FB.init({appId:'193051384078348', cookie:true, status:true, xfbml:true });");
-		print "<fb:login-button perms=\"publish_stream\">";
-		print "Login to FB";
-		print "</fb:login-button>";
-		print CGI::end_div();
-	    }
-	    print CGI::end_center();
+	my $changeFacebooking = $r->param('changeFacebooking');
+	
+	if ($changeFacebooking) {
+	    $globalUserAchievement->facebooker(!$globalUserAchievement->facebooker);
+	    $db->putGlobalUserAchievement($globalUserAchievement);
 	}
 	
+	print CGI::start_center();
+	print CGI::start_div({class=>'facebookbox'});
+	print CGI::start_form(-method=>'POST', -action=>$r->uri);
+	print $self->hidden_authen_fields;
+	print CGI::submit('changeFacebooking', $globalUserAchievement->facebooker 
+			  ? "Disable Facebook \n  Integration" : "Enable Facebook \n Integration");
+	print CGI::end_form();
+	print CGI::end_div();
+	
+	if ($globalUserAchievement->facebooker) {
+	    #Print Facebook stuff (uses WCU specific appID)
+	    print CGI::start_div({class=>'facebookbox'});
+	    print CGI::div({id=>'fb-root'},'');
+	    print CGI::script({src=>'http://connect.facebook.net/en_US/all.js'},"");
+	    print CGI::script("FB.init({appId:'".$ce->{facebookAppId}."', cookie:true, status:true, xfbml:true });");
+	    print "<fb:login-button perms=\"publish_stream\">";
+	    print "Login to FB";
+	    print "</fb:login-button>";
+	    print CGI::end_div();
+	}
+	print CGI::end_center();
 	return "";
 }
 
@@ -221,8 +231,6 @@ sub body {
 		}
 
 	print CGI::br();
-
-	print CGI::end_div();
 
 	return "";
 	

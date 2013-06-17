@@ -90,6 +90,7 @@ my $dbh = DBI->connect(
 my $passwd = $ce->{database_password};
 my $user = $ce->{database_username};
 my $libraryRoot = $ce->{problemLibrary}->{root};
+$libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
 my $verbose = 0;
 my $cnt2 = 0;
@@ -715,7 +716,7 @@ print "NO SUBJECT $name\n";
 					)"
 					);
 			dbug "INSERT INTO pgfile VALUES( \"\", \"$DBsection_id\", \"$author_id\", \"$institution\", \"$path_id\", \"$pgfile\", \"\" )\n";
-			$query = "SELECT pgfile_id FROM `$tables{pgfile}` WHERE filename = \"$pgfile\" and path_id=$path_id";
+			$query = "SELECT pgfile_id FROM `$tables{pgfile}` WHERE filename = \"$pgfile\" and path_id=\"$path_id\"";
 			$pgfile_id = $dbh->selectrow_array($query);
 
 			# morelt table, and morelt_pgfile many-many table

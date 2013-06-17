@@ -317,6 +317,7 @@ line breaks with HTML "<br />" tags.
 
 sub htmlEscape($) {
 	my ($string) = @_;
+	$string = $string//'';  # make sure it's defined.
 	$string = encode_entities($string);
 	$string =~ s|\n|<br />|g;
 	return $string;

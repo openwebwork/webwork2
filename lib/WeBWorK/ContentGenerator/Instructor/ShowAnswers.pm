@@ -61,8 +61,9 @@ sub body {
 	my $key           = $r->param('key');
 	my $studentUser   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
 	
-	return CGI::em("You are not authorized to access the instructor tools") unless $authz->hasPermissions($user, "access_instructor_tools");
+	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
 	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
+
 	
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
@@ -71,27 +72,35 @@ sub body {
 	# print form
 	#####################################################################
 
-	print CGI::p(),CGI::hr();
-
-	print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
-	      $self->hidden_authen_fields;
-	print CGI::submit(-name => 'action', -value=>'Past Answers for')," &nbsp; ",
-	      CGI::textfield(-name => 'studentUser', -value => $studentUser, -size =>10 ),
-	      " &nbsp; Set: &nbsp;",
-	      CGI::textfield( -name => 'setID', -value => $setName, -size =>10  ), 
-              " &nbsp; Problem: &nbsp;",
-	      CGI::textfield(-name => 'problemID', -value => $problemNumber,-size =>10  ),  
-  	      " &nbsp; ";
-	print CGI::end_form();
-
+	#only instructors should be able to veiw other people's answers.
+	
+	if ($instructor) {
+	    print CGI::p(),CGI::hr();
+	    
+	    print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
+	    $self->hidden_authen_fields;
+	    print CGI::submit(-name => 'action', -value=>'Past Answers for')," &nbsp; ",
+	    CGI::textfield(-name => 'studentUser', -value => $studentUser, -size =>10 ),
+	    " &nbsp; Set: &nbsp;",
+	    CGI::textfield( -name => 'setID', -value => $setName, -size =>10  ), 
+	    " &nbsp; Problem: &nbsp;",
+	    CGI::textfield(-name => 'problemID', -value => $problemNumber,-size =>10  ),  
+	    " &nbsp; ";
+	    print CGI::end_form();
+	}
 
 		#####################################################################
 		# print result table of answers
 		#####################################################################
 
+	# If not instructor then force table to use current user-id
+	if (!$instructor) {
+	    $studentUser = $user;
+	}
+
 	my @pastAnswerIDs = $db->listProblemPastAnswers($courseName, $studentUser, $setName, $problemNumber);
 
-	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
+	print CGI::start_table({id=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
 	print CGI::h3("Past Answers for $studentUser, set $setName, problem $problemNumber" );
 	print "No entries for $studentUser set $setName, problem $problemNumber" unless @pastAnswerIDs;
 
@@ -112,11 +121,20 @@ sub body {
 	    my $td = {nowrap => 1};
 	    foreach my $answer (@answers) {
 		$answer = showHTML($answer);
-		my $score = shift(@scores); $td->{style} = $score? "color:#006600": "color:#660000";
+		my $score = shift(@scores); 
+		#Only color answer if its an instructor
+		if ($instructor) {
+		    $td->{style} = $score? "color:#006600": "color:#660000";
+		} 
 		delete($td->{style}) unless $answer ne "" && defined($score);
 		$answer = CGI::small(CGI::i("empty")) if ($answer eq "");
 		push(@row,CGI::td({width=>20}),CGI::td($td,$answer));
 	    }
+
+	    if ($pastAnswer->comment_string) {
+		push(@row,CGI::td({width=>20}),CGI::td("Comment: ".$pastAnswer->comment_string));
+	    }
+
 	    print CGI::Tr(@row);
 
 	    

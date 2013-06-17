@@ -29,15 +29,16 @@ use warnings;
 BEGIN {
 	__PACKAGE__->_fields(
 
-	    #answer_id not key because of autoincrement
-	    answer_id          => {   type=>"INT AUTO_INCREMENT", key=>1},
-	    course_id            => { type=>"TINYBLOB NOT NULL"},
-	    user_id            => { type=>"TINYBLOB NOT NULL"},	
-	    set_id            => { type=>"TINYBLOB NOT NULL"},
-	    problem_id            => { type=>"TINYBLOB NOT NULL"},
+	    answer_id         => {   type=>"INT AUTO_INCREMENT", key=>1},
+	    course_id         => { type=>"VARCHAR(100) NOT NULL", key=>1},
+	    user_id           => { type=>"VARCHAR(100) NOT NULL", key=>1},
+	    set_id            => { type=>"VARCHAR(100) NOT NULL", key=>1},
+	    problem_id        => { type=>"VARCHAR(100) NOT NULL", key=>1},
+	    source_file       => { type=>"TEXT"},
 	    timestamp         => { type=>"INT" }, 
 	    scores            => { type=>"TINYTEXT"}, 
-            answer_string            => { type=>"VARCHAR(1024)"}
+            answer_string     => { type=>"VARCHAR(1024)"},
+	    comment_string    => { type=>"VARCHAR(1024)"},    
 
 	);
 }

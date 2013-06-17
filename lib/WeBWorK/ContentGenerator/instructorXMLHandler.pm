@@ -409,7 +409,7 @@ sub environment {
 		numZeroLevelDefault =>0.000001,
 		numZeroLevelTolDefault =>0.000001,
 		openDate=> '3014438528',
-		PRINT_FILE_NAMES_FOR => [ 'gage'],
+		PRINT_FILE_NAMES_FOR => [ ],
 		probFileName => 'probFileName should not be used --use fileName instead',
 		problemSeed  => 1234,
 		problemValue =>1,
