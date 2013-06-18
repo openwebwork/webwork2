@@ -13,8 +13,9 @@ define(['Backbone',
     '../../lib/views/ProblemListView',
     '../../lib/models/ProblemList',
     '../../lib/models/ProblemSet',
-    '../../lib/views/UserListView','config','bootstrap'], 
-    function(Backbone, _,EditableCell,ProblemListView,ProblemList,ProblemSet,UserListView,config){
+    '../../lib/views/UserListView',
+    '../../lib/models/OverrideList', 'config','bootstrap'], 
+    function(Backbone, _,EditableCell,ProblemListView,ProblemList,ProblemSet,UserListView,PropertySetOverrideList, config){
 	var HWDetailView = Backbone.View.extend({
         className: "set-detail-view",
         tagName: "div",
@@ -31,7 +32,7 @@ define(['Backbone',
                 problemListView : new ProblemListView({headerTemplate: "#problem-set-header", viewAttrs: this.problemViewAttrs}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
                 propertiesView : new ProblemSetDetailView({users: this.users, problemSet: this.problemSet}),
-                customizeUserAssignView : new CustomizeUserAssignView({users: this.users}),
+                customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
                 unassignUsersView: new UnassignUserView({users:this.users})
             };
 
@@ -198,53 +199,79 @@ define(['Backbone',
         initialize: function () {
             _.bindAll(this,'render','selectAll','saveChanges','setProblemSet');
             this.users = this.options.users;
+            this.model = this.options.problemSet ? new ProblemSet(this.options.problemSet.attributes): null;
+            this.overrides = null;
             this.rowTemplate = $("#customize-user-row-template").html();
             this.userList = this.users.map(function(user){ 
                 return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
         },
         render: function() {
+            var self = this;
             this.$el.html($("#custom-assign-tmpl").html());
-
-            this.originalAssignedUsers = this.model.get("assigned_users");
-            this.stickit();
+            
+            if (this.overrides){
+                // render the overrides
+                var table = this.$("#customize-problem-set tbody").html("");
+                this.stickit();
+                this.overrides.each(function(override){
+                    table.append((new CustomizeUsersRowView({rowTemplate: self.rowTemplate, model: override})).render().el);
+                })
+            } else {
+                this.overrides = new PropertySetOverrideList(this.model);
+                this.overrides.fetch().on("fetchSuccess",this.render);
+            }
             return this;
         },
-         events: {  "click #custom-save-changes": "saveChanges",
+         events: {  "click .save-changes": "saveChanges",
                     "click #unassign-users": "unassignUsers",
                     "click #custom-select-all": "selectAll"
         },
+        bindings: { ".open-date" : "open_date",
+                    ".due-date": "due_date",
+                    ".answer-date": "answer_date"
+        },
         setProblemSet: function(_set) {
-            this.problemSet = _set; 
-            this.originalAssignedUsers = this.problemSet.get("assigned_users");
-            this.unassignedUsers = _(this.users.pluck("user_id")).difference(this.originalAssignedUsers);
-            this.model = new ProblemSet(_set.attributes);
-            this.model.set("assigned_users",[]);
+            this.model = new ProblemSet(_set.attributes); 
+            this.overrides = null;
             return this;
         },
         saveChanges: function (){
-            console.log(this.model.pick("open_date","due_date","answer_date"));
-            this.problemSet.updateUserSet(this.model.get("assigned_users"),
-                this.model.pick("open_date","due_date","answer_date"));
+            var self = this;
+            var models = this.$(".user-select:checked").closest("tr")
+                            .map(function(i,v) { return self.overrides.get($(v).data("cid"));}).get();
+            _(models).each(function(_model){
+                _model.set({open_date: self.model.get("open_date"), due_date: self.model.get("due_date"),
+                            answer_date: self.model.get("answer_date")});
+                console.log(_model);
+                _model.update();
+            })
         },
         selectAll: function (){
-            this.model.set("assigned_users",$("#custom-select-all").prop("checked")?
-                            this.users.pluck("user_id"): []);
+            this.$(".user-select").prop("checked",$("#custom-select-all").prop("checked"));
+
         }
     });
 
     var CustomizeUsersRowView = Backbone.View.extend({
+        tagName: "tr",
         initialize: function() {
-            _.bindAll(this,"render");
+            _.bindAll(this,"render","save");
             this.template = this.options.rowTemplate;
+            this.model.on("change",this.save);
         },
         render: function(){
             this.$el.html(this.template);
+            this.$el.data("cid",this.model.cid);
             this.stickit();
             return this;
         },
-        bindings: { ".open-date" : "open_date",
+        bindings: { ".user-id": "user_id",
+                    ".open-date" : "open_date",
                     ".due-date": "due_date",
                     ".answer-date": "answer_date",
+        },
+        save: function(){
+            this.model.update();
         }
     });
 

@@ -157,9 +157,9 @@
 <script type="text/template" id="set-properties-tab-template">
 <table class="table">
 <tbody>
-<tr><td class="header">Open Date</td><td class="open-date wwdatetime"></td></tr>
-<tr><td class="header">Due Date</td><td class="due-date wwdatetime"></td></tr>
-<tr><td class="header">Answer Date</td><td class="answer-date wwdatetime"></td></tr>
+<tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
+<tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
+<tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
 <tr><td>HW Set visible to Users</td><td><select class='set-visible'> </select></td></tr>
 <tr><td>Reduced Credit Enabled</td><td><select class='reduced-credit'></select></td></tr>
 <tr><td>Users Assigned</td><td class="users-assigned"></td>
@@ -184,9 +184,10 @@
 
 
 <script type="text/template" id="custom-assign-tmpl">
-<p>Select the users below, change the desired due dates by clicking on the date or time.  Finally 
-click the "Save Changes" button.</p>
-<table class="table">
+<p>The students listed below are only those that are assigned to this set.  To change an individual date/time, click on 
+the desired date and change it.  To make changes to two or more students, select those students, change the date/time
+at the bottom of the screen and click "Save Changes". </p>
+<table class="table" id="customize-problem-set">
 <thead>
 <tr>
 <th>Select</th><th>Student (login name)</th><th>Open Date</th><th>Due date</th><th>Answer Date</th></tr>
@@ -195,10 +196,24 @@ click the "Save Changes" button.</p>
 
 </tbody>
 </table>
-
-
+<table class="table" id="customize-problem-set-controls">
+<tr>
+<td class="header">Open Date</td><td class="header">Due Date</td><td class="header">Answer Date</td></tr>
+<tr>
+<td class="edit-datetime open-date"></td><td class="edit-datetime due-date"></td><td class="edit-datetime answer-date"></td>
+</tr>
+<tr>
+<td> <label class="checkbox inline"><input type="checkbox" id="custom-select-all">Select All</label></td>
+<td> <button class="btn save-changes">Save Changes</button></td>
+<td></td>
+</tr>
 </script>
 
+<script type="text/template" id="customize-user-row-template">
+  <td><input type="checkbox" class="user-select"></td><td class="user-id"></td>
+  <td class="open-date edit-datetime"></td>
+  <td class="due-date edit-datetime"></td><td class="answer-date edit-datetime"></td>
+</script>
 
 
 <script type="text/template" id="user-template">
@@ -429,9 +444,9 @@ click the "Save Changes" button.</p>
     <td class="set-name"></td>
     <td><select class="visible"></select></td>
     <td><select class="reduced-credit"></select></td>
-    <td class='open-date wwdatetime'></td>
-    <td class='due-date wwdatetime'></td>
-    <td class='answer-date wwdatetime'></td>
+    <td class='open-date edit-datetime'></td>
+    <td class='due-date edit-datetime'></td>
+    <td class='answer-date edit-datetime'></td>
 </script>
 
 <script type="text/template" id="all-problem-sets-template">

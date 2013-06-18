@@ -13,7 +13,7 @@
 package WebworkWebservice::SetActions;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
-use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime parseDateTime);
+use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use List::Compare qw(get_symmetric_difference);
 
@@ -104,9 +104,9 @@ sub getSets{
   
   # fix the timeDate  
  foreach my $set (@all_sets){
-	$set->{due_date} = formatDateTime($set->{due_date},'local');
-	$set->{open_date} = formatDateTime($set->{open_date},'local');
-	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+	#$set->{due_date} = formatDateTime($set->{due_date},'local');
+	#$set->{open_date} = formatDateTime($set->{open_date},'local');
+	#$set->{answer_date} = formatDateTime($set->{answer_date},'local');
 
 	my @users = $db->listSetUsers($set->{set_id});
 	$set->{assigned_users} = \@users;
@@ -133,11 +133,11 @@ sub getUserSets{
   my @userSets = $db->getGlobalSets(@userSetNames);
   
   # fix the timeDate  
- foreach my $set (@userSets){
-	$set->{due_date} = formatDateTime($set->{due_date},'local');
-	$set->{open_date} = formatDateTime($set->{open_date},'local');
-	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
-  }
+ # foreach my $set (@userSets){
+	# $set->{due_date} = formatDateTime($set->{due_date},'local');
+	# $set->{open_date} = formatDateTime($set->{open_date},'local');
+	# $set->{answer_date} = formatDateTime($set->{answer_date},'local');
+ #  }
   
   
   
@@ -176,9 +176,9 @@ sub updateSetProperties {
 	my $set = $db->getGlobalSet($params->{set_id});
 	$set->set_header($params->{set_header});
 	$set->hardcopy_header($params->{hardcopy_header});
-	$set->open_date(parseDateTime($params->{open_date},"local"));
-	$set->due_date(parseDateTime($params->{due_date},"local"));
-	$set->answer_date(parseDateTime($params->{answer_date},"local"));
+	$set->open_date($params->{open_date});
+	$set->due_date($params->{due_date});
+	$set->answer_date($params->{answer_date});
 	$set->visible($params->{visible});
 	$set->enable_reduced_scoring($params->{enable_reduced_scoring});
 	$set->assignment_type($params->{assignment_type});
@@ -287,9 +287,9 @@ sub createNewSet{
 			$newSetRecord->set_id($newSetName);
 			$newSetRecord->set_header("defaultHeader");
 			$newSetRecord->hardcopy_header("defaultHeader");
-			$newSetRecord->open_date(parseDateTime($params->{open_date},"local"));
-			$newSetRecord->due_date(parseDateTime($params->{due_date},"local"));
-			$newSetRecord->answer_date(parseDateTime($params->{answer_date},"local"));
+			$newSetRecord->open_date($params->{open_date});
+			$newSetRecord->due_date($params->{due_date});
+			$newSetRecord->answer_date($params->{answer_date});
 			$newSetRecord->visible($params->{visible});
 			$newSetRecord->enable_reduced_scoring($params->{enable_reduced_scoring});
 			$newSetRecord->assignment_type($params->{assignment_type});
@@ -462,33 +462,6 @@ sub reorderProblems {
 
 	}
 
-	# Not sure if the userProblem also need to be reordered.  
-
-	# set the userProblems as well
-
-	# foreach my $user ($db->listSetUsers($setID)) {
-	# 	@allUserProblems = $db->getAllUserProblems($user,$setID);
-
-	# 	for (my $i = 0; $i < scalar(@allUserProblems); $i++){	
-	# 		foreach my $path (@problemList) {
-	# 			$path =~ s|^$topdir/*||;
-
-	# 			if($allUserProblems[$i]->{source_file} eq $path){
-
-	# 				if ($db->existsUserProblem($user,$setID,$i+1)){
-	# 					my $prob = $db->getUserProblem($user, $setID, $i+1);
-	# 		  	  		die " problem $index for set $setID and effective user $user not found"	unless $prob;
-	# 					$prob->problem_id($i+1);
-	# 				    $db->putUserProblem($prob);
-	# 			    } else {
-	# 			    	$db->deleteUserProblem($user,$setID,$problem->{problem_id});
-	# 			    	$problem->problem_id($i+1);
-	# 			    	$db->addUserProblem($problem);
-	# 			    }
-	# 			}
-	# 		}
-	# 	}
-	# }
 	my $out;
 
 	$out->{text} = encode_base64("Successfully reordered problems");
@@ -537,9 +510,9 @@ sub updateUserSet {
   	foreach my $userID (@users) {
 		my $set = $db->getUserSet($userID,$params->{set_id});
 		if ($set){
-		    $set->open_date(parseDateTime($params->{open_date},"local"));
-			$set->due_date(parseDateTime($params->{due_date},"local"));
-			$set->answer_date(parseDateTime($params->{answer_date},"local"));
+		    $set->open_date($params->{open_date});
+			$set->due_date($params->{due_date});
+			$set->answer_date($params->{answer_date});
 		  	$db->putUserSet($set);
 		} else {
 			my $newSet = $db->newUserSet;
@@ -570,14 +543,42 @@ sub getUserSets {
 	my ($self,$params) = @_;
 	my $db = $self->{db};
 
-	my @setUsers = $db->listSetUsers($params->{set_id});
+	my @setUserIDs = $db->listSetUsers($params->{set_id});
 
-	debug(to_json(\@setUsers));
+	my @userData = ();
+
+	foreach my $user_id (@setUserIDs){
+		push(@userData,$db->getUserSet($user_id,$params->{set_id}))
+	}
 
 	my $out = {};
+	$out->{ra_out} = \@userData;
 	$out->{text} = encode_base64("Returning all users sets for set " . $params->{set_id});
+
+	return $out;
 }
 
+
+sub saveUserSets {
+	my ($self,$params) = @_;
+	my $db = $self->{db};
+	debug($params->{overrides});
+
+	my @overrides = @{from_json($params->{overrides})};
+	foreach my $override (@overrides){
+		my $set = $db->getUserSet($override->{user_id},$params->{set_id});
+		if ($override->{open_date}) {$set->{open_date} = $override->{open_date};}
+		if ($override->{due_date}) {$set->{due_date} = $override->{due_date};}
+		if ($override->{answer_date}) {$set->{answer_date} = $override->{answer_date};}
+		$db->putUserSet($set);
+	}
+
+	my $out = {};
+	$out->{ra_out} = "";
+	$out->{text} = encode_base64("Updating the overrides for set " . $params->{set_id});
+
+	return $out;
+}
 
 =item unassignSetFromUser($userID, $setID, $problemID)
 

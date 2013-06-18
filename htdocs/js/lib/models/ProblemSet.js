@@ -103,7 +103,9 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
         },
         initialize: function(){
             _.bindAll(this,"fetch","addProblem","update");
-            //this.on('change',this.update);
+            this.on('change',function(){
+                console.log("The Problem Set " + this.get("set_id") + " just changed.");
+            });
             this.problems = null;
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
@@ -117,11 +119,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
 
             _dueDate.hours(timeAssignDue.hours()).minutes(timeAssignDue.minutes());
             var _openDate = moment(_dueDate).subtract(parseInt(assignOpenPriorToDue),"minutes")
-            , _answerDate = moment(_dueDate).add(parseInt(answerAfterDueDate),"minutes")
-            , wwDueDate = _dueDate.format("MM/DD/YYYY") + " at " + _dueDate.format("hh:mmA") + " " + config.timezone
-            , wwOpenDate = _openDate.format("MM/DD/YYYY") + " at " + _openDate.format("hh:mmA")+ " " + config.timezone
-            , wwAnswerDate = _answerDate.format("MM/DD/YYYY") + " at " + _answerDate.format("hh:mmA") + " " + config.timezone;
-            this.set({due_date:wwDueDate, open_date: wwOpenDate, answer_date: wwAnswerDate});
+            , _answerDate = moment(_dueDate).add(parseInt(answerAfterDueDate),"minutes");
+            this.set({due_date: _dueDate.unix(), open_date: _openDate.unix(), answer_date: _answerDate.unix()});
             return this;
         },
         addProblem: function (prob) {  
@@ -143,11 +142,14 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
         },
         // sets the date for the field attr  in the form YYYY/MM/DD (should be more flexible)
         setDate: function(attr,_date){
-            var currentDate = moment(this.get(attr))
-                , newDate = moment(_date,"YYYY/MM/DD");
+            var currentDate = moment.unix(this.get(attr))
+                , newDate = moment.unix(_date);
 
             currentDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
-            this.set(attr,newDate.format("MM/DD/YYYY") + " at " + newDate.format("hh:mmA") + " " + config.timezone);
+            this.set(attr,currentDate.unix());
+            console.log("the date was set for " + this.get("set_id"));
+            return this;
+
         },
         update: function(){
             
@@ -163,7 +165,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
 
             $.post(config.webserviceURL, requestObject, function(data){
                 var response = $.parseJSON(data);
-      	        self.collection.trigger("saved",self)
+                console.log("saved the ProblemSet");
+      	        self.trigger("saved",self);
             });
         },
         fetch: function()  // this fetches the problems for the ProblemSet.  
@@ -182,82 +185,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
                         self.trigger("deleteProblem",self.get("set_id"),place);
                     })      
                 });       
-        },
-
-        /* This returns a boolean if the current hw set is open.  The date can be passed in either as a native 
-        * Date object, XDate object or webwork date object. The parameter reducedCredit is the number of mins of reduced 
-        * credit time available. 
-        */
-        isDueOn: function (_date,reducedCredit){
-            var date = new XDate(_date);
-            var dueDate = new XDate(this.get("due_date"));
-            var reducedDate = new XDate(dueDate.getTime()-1000*60*reducedCredit);
-            return ((date.getMonth()===reducedDate.getMonth()) && (date.getDate()===reducedDate.getDate()) && (date.getFullYear() ===reducedDate.getFullYear()));
-        },
-        isOpen: function (_date,reducedCredit){
-            var date = new XDate(_date);
-            var openDate = new XDate(this.get("open_date"));
-            var dueDate = new XDate(this.get("due_date"));
-            var reducedDate = new XDate(dueDate.getTime()-1000*60*reducedCredit);
-            return ((date >openDate) && (date < reducedDate));
-
-        },
-        isInReducedCredit: function (_date,reducedCredit){
-            if (this.get("enable_reduced_scoring")==="no") {return false;}
-            var date = new XDate(_date);
-            var openDate = new XDate(this.get("open_date"));
-            var dueDate = new XDate(this.get("due_date"));
-            var reducedDate = new XDate(dueDate.getTime()-1000*60*reducedCredit);
-            return ((date >reducedDate) && (date < dueDate));
-
-        },
-        overlaps: function (_set){
-            var openDate1 = new XDate(this.get("open_date"));
-            var dueDate1 = new XDate(this.get("due_date"));
-            var openDate2 = new XDate(_set.get("open_date"));
-            var dueDate2 = new XDate(_set.get("due_date"));
-            return (openDate1<openDate2)?(dueDate1>openDate2):(dueDate2>openDate1);
-        },
-
-        // Currently, the list of users assigned to this set (stored in this.assignedUsers) is just an array
-        // of user_id's.  Perhaps, we should consider making this a UserList instead.  (Have to think about the pros and cons)
-        assignToUsers: function (_users){  // assigns this problem set to the users that come in as an array of usernames.  
-            var self = this;
-            self.set("assigned_users",_(self.get("assigned_users")).union(_users));
-            console.log("Assigning Problem Set " + this.get("set_id") + " to " + _users.join(" ")); 
-            var requestObject = {xml_command: "assignSetToUsers", users: _users.join(","), set_id: this.get("set_id")};
-            _.defaults(requestObject,config.requestObject);
-
-            $.post(config.webserviceURL, requestObject, function(data) {
-                var response = $.parseJSON(data);
-                self.trigger("usersAssigned", _users, self.get("set_id"));
-                
-            });
-
-        },
-        updateUserSet: function(_users,_props){  // used to customized dates for individual users.  
-            var self = this;
-            console.log("Updating the dates to users " + _users);
-            var requestObject = {xml_command: "updateUserSet", users: _users.join(","), set_id: this.get("set_id")};
-            _.extend(requestObject,_props);
-            _.defaults(requestObject, config.requestObject);
-            $.post(config.webserviceURL, requestObject, function (data){
-                var response = $.parseJSON(data);
-                console.log(response);
-            });
-        },
-        unassignUsers: function(_users){
-            var self = this;
-            console.log("Unassigning users " + _users + " from set " + this.get("set_id"));
-            var requestObject = {xml_command: "unassignSetFromUsers", users: _users.join(","), set_id: this.get("set_id")};
-            _.defaults(requestObject, config.requestObject);
-            $.post(config.webserviceURL, requestObject, function (data){
-                var response = $.parseJSON(data);
-                console.log(response);
-            });  
         }
-
-
     });
      
 

@@ -645,6 +645,13 @@ sub getUserSets {
     return $self->do(WebworkWebservice::SetActions::getUserSets($self, $in));
 }
 
+sub saveUserSets {
+    my $class = shift;
+    my $in = shift;
+    my $self = $class->initiate_session($in);
+    return $self->do(WebworkWebservice::SetActions::saveUserSets($self, $in));
+}
+
 
 sub getSet {
     my $class = shift;

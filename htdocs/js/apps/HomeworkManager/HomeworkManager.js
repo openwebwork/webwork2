@@ -197,6 +197,7 @@ var HomeworkEditorView = WebPage.extend({
                 } else if ($(ui.draggable).hasClass("assign-due")){
                     self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"due_date");
                 }
+
             },
         });
 
@@ -210,15 +211,17 @@ var HomeworkEditorView = WebPage.extend({
         $("body").droppable({accept: ".problem-set", drop: function () { console.log("dropped");}});
 
     },
-    setDate: function(_setName,_date,type){
+    setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
         var HWset = this.problemSets.find(function (_set) { return _set.get("set_id") === _setName;});
-        HWset.setDate(type,_date);
+        HWset.setDate(type,moment(_date,"YYYY-MM-DD").unix()).update();
+
     },
     setDates: function(_setName,_date){
 
         var HWset = this.problemSets.find(function (_set) { return _set.get("set_id") === _setName;})
         HWset.setDefaultDates(_date);
-        console.log("Changing HW Set " + _setName + " to be due on " + wwDueDate);
+        HWset.update();
+        console.log("Changing HW Set " + _setName + " to be due on " + _date);
         this.views.calendar.render();
         this.setDropToEdit();
     

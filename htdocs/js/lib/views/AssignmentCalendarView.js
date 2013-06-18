@@ -26,13 +26,13 @@ define(['Backbone', 'underscore', 'moment','./CalendarView','config'],
     	renderDay: function (day){
     		var self = this;
     		this.problemSets.each(function(assign){
-    			if(config.parseWWDate(assign.get("due_date")).date.isSame(day.model,"day")){
+    			if(moment.unix(assign.get("due_date")).isSame(day.model,"day")){
     				day.$el.append(self.createAssignInfoBar(assign,"assign assign-due"));
     			}
-    			if(config.parseWWDate(assign.get("open_date")).date.isSame(day.model,"day")){
+    			if(moment.unix(assign.get("open_date")).isSame(day.model,"day")){
     				day.$el.append(self.createAssignInfoBar(assign,"assign assign-open"));
     			}
-    			var reducedScoreDate = config.parseWWDate(assign.get("due_date")).date.subtract("minutes",self.reducedScoringMinutes);
+    			var reducedScoreDate = moment.unix(assign.get("due_date")).subtract("minutes",self.reducedScoringMinutes);
     			if((assign.get("reduced_scoring_enabled")===1) & reducedScoreDate.isSame(day.model,"day")){
 					day.$el.append(self.createAssignInfoBar(assign,"assign assign-reduced-credit"));
     			}

@@ -92,7 +92,7 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
     // the date and time separately
 
     Backbone.Stickit.addHandler({
-      selector: '.wwdatetime',
+      selector: '.ww-datetime',
       initialize: function($el, model, options) {
         var setModel = function (evt) {
             console.log("saving the model");
@@ -116,6 +116,41 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         return '<input class="wwdate" size="12" value="' + theDate.date.format("MM/DD/YYYY") + '"> at ' +
                 '<span class="wwtime" contenteditable="true"> ' + theDate.date.format("hh:mmA") + '</span>'; 
         }
+    });
+
+    Backbone.Stickit.addHandler({
+        selector: '.edit-datetime',
+        initialize: function($el,model,options){
+            var setModel = function(evt){
+                console.log("in edit-datetime, setModel");
+                var dateTimeStr = evt.data.$el.children(".wwdate").val() + " " + evt.data.$el.children(".wwtime").text().trim();
+                var date = moment(dateTimeStr,"MM/DD/YYYY hh:mmA");
+                evt.data.model.set(evt.data.options.observe,date.unix());
+            }
+            $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, setModel);
+            $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, setModel);
+            $el.children(".wwdate").datepicker();
+
+        },
+        updateMethod: 'html',
+        
+        onGet: function(val) { // this is passed in as a moment Object
+            var theDate = moment.unix(val);
+            var tz = (theDate.toDate() + "").match(/\((.*)\)/)[1];
+            return '<input class="wwdate" size="12" value="' + theDate.format("MM/DD/YYYY") + '"> at ' +
+            '<span class="wwtime" contenteditable="true"> ' + theDate.format("hh:mmA") + '</span>';
+        }
+    });
+
+    Backbone.Stickit.addHandler({
+        selector: ".show-datetime",
+        onGet: function(val) {  // this is passed in as a moment Object
+            console.log(val);
+            var theDate = moment.unix(val);
+            var tz = (theDate.toDate() + "").match(/\((.*)\)/)[1];
+            return theDate.format("MM/DD/YYYY") + " at " + theDate.format("hh:mmA") + " " + tz;
+        }
+      
     });
 
     Backbone.Stickit.addHandler({
