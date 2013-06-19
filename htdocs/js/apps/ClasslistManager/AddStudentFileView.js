@@ -4,8 +4,8 @@ define(['Backbone',
 	'underscore',
 	'Closeable',
 	'../../lib/models/User',
-	'../../vendor/other/FileSaver', 
-	'../../vendor/other/BlobBuilder',
+	'file-saver', 
+	'blob-builder',
 	'config',
 	'../../lib/util'], function(Backbone, _,Closeable,User,saveAs,BlobBuilder,config,util){	
 	    var AddStudentFileView = Backbone.View.extend({

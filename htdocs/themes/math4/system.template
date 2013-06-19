@@ -23,12 +23,12 @@
 -->
 
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/components/bootstrap/docs/assets/css/bootstrap.css"/>
+<link href="<!--#url type="webwork" name="htdocs"-->/js/components/bootstrap/docs/assets/css/bootstrap-responsive.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/components/jquery/jquery.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/components/bootstrap/docs/assets/js/bootstrap.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 
 <!--#if can="output_achievement_CSS"-->
@@ -42,7 +42,7 @@ var tabberOptions = {manualStartup:true};
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
 <!--#if can="output_jquery_ui_CSS"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/jquery-ui.css"/>
 <!--#endif-->
 <!--#if can="output_JS"-->
 	<!--#output_JS-->

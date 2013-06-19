@@ -4,7 +4,7 @@
  * 
  */
              
-define(['XDate'], function(XDate){
+define([], function(){
 var util = {             
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
@@ -57,6 +57,7 @@ var util = {
      }
 }
 
+/*
 function parseWWDate(str) {
 	// this parses webwork dates in the form MM/DD/YYYY at HH:MM AM/PM TMZ
 	var wwDateRE = /(\d?\d)\/(\d?\d)\/(\d{4})\sat\s(\d?\d):(\d\d)([aApP][mM])\s([a-zA-Z]{3})/;
@@ -76,7 +77,7 @@ function parseWWDate(str) {
 	}
 }
 
-XDate.parsers.push(parseWWDate);
+XDate.parsers.push(parseWWDate); */
 
 return util;
 

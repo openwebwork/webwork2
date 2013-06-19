@@ -220,9 +220,9 @@ sub head{
     	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-    print "<link rel='stylesheet' href='$site_url/js/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
+    print "<link rel='stylesheet' href='$site_url/js/components/editablegrid/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
     print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
-	print "<link rel='stylesheet' href='$site_url/js/vendor/jquery/jquery-ui-1.10.0.custom/css/ui-lightness/jquery-ui-1.10.0.custom.min.css' type='text/css' media='screen'>";
+	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
 	return "";
 }
 
@@ -276,7 +276,7 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
-	print qq!<script data-main="$site_url/js/apps/ClasslistManager/classlistManager" src="$site_url/js/vendor/requirejs/require.js"></script>!;
+	print qq!<script data-main="$site_url/js/apps/ClasslistManager/classlistManager" src="$site_url/js/components/requirejs/require.js"></script>!;
 
     # print qq!<script type='text/javascript'>!;
     # print qq!define('globalVariables', function() {!;

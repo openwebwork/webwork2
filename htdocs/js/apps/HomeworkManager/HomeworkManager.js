@@ -4,6 +4,7 @@
 */
 require(['Backbone', 
     'underscore',
+    '../globals',
     '../../lib/models/UserList',
     '../../lib/models/ProblemSetList',
     '../../lib/models/Settings',   
@@ -20,50 +21,31 @@ require(['Backbone',
     'jquery-ui',
     'bootstrap'
     ], 
-function(Backbone, _,  UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
+function(Backbone, _,  globals, UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
             ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView){
 var HomeworkEditorView = WebPage.extend({
     tagName: "div",
     initialize: function(){
 	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-	    _.bindAll(this, 'render','postHWLoaded','setDropToEdit','postSettingsFetched',
-                        'postProblemSetsFetched',"showHWdetails","postUsersFetched");  // include all functions that need the this object
+	    _.bindAll(this, 'render','postHWLoaded','setDropToEdit','setMessages'
+                        ,"showHWdetails");  // include all functions that need the this object
 	    var self = this;
         this.render();
         this.dispatcher = _.clone(Backbone.Events);
 
-        config.settings = new Settings();  // need to get other settings from the server.  
-        config.settings.fetch();
-        config.settings.on("fetchSuccess",this.postSettingsFetched);
-        
-        
-        /* There's a lot of things that need to be loaded as the App starts:
-         *    1. The settings
-         *    2. The ProblemSets
-         *    3. The set of assigned Users for each Problem Set
-         *    4. All Users of the course
-         *
-         *   The tricky part is to load all of these but don't wait until everything is loaded to show the page. 
-         *
-         */ 
-
-
+        config.settings = new Settings();
+        if (globals.settings){
+            config.settings.parseSettings(globals.settings);
+        }
+        this.users = (globals.users) ? new UserList(globals.users): new UserList();
+        this.problemSets = (globals.sets) ? new ProblemSetList(globals.sets) : new ProblemSetList();
 
         this.dispatcher.on("calendar-change", self.setDropToEdit);
-        this.users = new UserList();
-        
-            
-    },
-    postUsersFetched: function(collection, response,options){
-        var self = this; 
-        this.problemSets = new ProblemSetList({type: "Instructor"});
-        this.problemSets.fetch();
-        this.problemSets.on("fetchSuccess",function() {self.postProblemSetsFetched(); self.render();});
         config.timezone = config.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
-    },
-    postSettingsFetched: function (collection, response, options){
-        this.users.fetch();
-        this.users.on("fetchSuccess", this.postUsersFetched);
+    
+        this.render();
+        this.setMessages();  
+            
     },
     setProblemSetsDragDrop: function () {
         var self = this; 
@@ -87,7 +69,7 @@ var HomeworkEditorView = WebPage.extend({
         // When the HW sets are clicked, open the HW details tab.          
         $(".problem-set").on('click', self.showHWdetails);
     },
-    postProblemSetsFetched: function (data){
+    setMessages: function (){
         var self = this; 
         this.problemSets.on("add", function (set){
             self.announce.addMessage("Problem Set: " + set.get("set_id") + " has been added to the course.");
@@ -112,6 +94,11 @@ var HomeworkEditorView = WebPage.extend({
             self.setDropToEdit();
         });
 
+        // can't figure out the best place for this.  
+        /* this.problemSet.problems.on("reordered",function () {
+                self.announce.addMessage({text: "Problem Set " + self.parent.problemSet.get("set_id") + " was reordered"});
+            });  */
+
         (this.probSetListView = new ProblemSetListView({el: $("#problem-set-list-container"), viewType: "Instructor",
                                     problemSets: this.problemSets, users: this.users})).render();
 
@@ -120,7 +107,6 @@ var HomeworkEditorView = WebPage.extend({
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
-        var self=this;
     },
     events: {"click #hw-manager-menu a.link": "changeView"},
     showHWdetails: function(evt){
@@ -212,8 +198,9 @@ var HomeworkEditorView = WebPage.extend({
 
     },
     setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
-        var HWset = this.problemSets.find(function (_set) { return _set.get("set_id") === _setName;});
-        HWset.setDate(type,moment(_date,"YYYY-MM-DD").unix()).update();
+        var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
+        console.log(problemSet);
+        problemSet.setDate(type,moment(_date,"YYYY-MM-DD").unix()).update();
 
     },
     setDates: function(_setName,_date){

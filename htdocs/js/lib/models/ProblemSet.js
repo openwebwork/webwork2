@@ -103,9 +103,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
         },
         initialize: function(){
             _.bindAll(this,"fetch","addProblem","update");
-            this.on('change',function(){
-                console.log("The Problem Set " + this.get("set_id") + " just changed.");
-            });
             this.problems = null;
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
@@ -140,7 +137,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
                 });
             }
         },
-        // sets the date for the field attr  in the form YYYY/MM/DD (should be more flexible)
         setDate: function(attr,_date){
             var currentDate = moment.unix(this.get(attr))
                 , newDate = moment.unix(_date);

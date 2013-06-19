@@ -1473,14 +1473,14 @@ sub head {
 
     print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
 
-  #print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/components/jquery/jquery-ui.js"></script>!;
+
+  print qq!<script src="$webwork_htdocs_url/js/components/jquery/ui/jquery-ui.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/components/jquery/modules/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/components/underscore/underscore.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/components/backbone/backbone.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/components/bootstrap/js/bootstrap.min.js"></script>!;
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print qq!<link href="$webwork_htdocs_url/themes/jquery-ui-themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
   print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
   print "\n";

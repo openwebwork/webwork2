@@ -98,26 +98,10 @@ sub head {
 	my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
   print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css"/>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-1.7.1.min.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery.ui.touch-punch.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
-
-
   print qq!<script data-main="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser" src="$webwork_htdocs_url/js/vendor/requirejs/require.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/problem_grid.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/form_builder.js"></script>!;
-
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
-  #my ($self) = @_;
-  #my $r = $self->r;
-  #start a timer to save people's stuff idk if people want this
-  #print "<script> setInterval('saveChanges(\"mainform\", \"".$r->uri."\")', 680000); </script>";
-  #print qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/setmaker3.css" />!;
-
   print qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/library_browser.css" />!;
-
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print qq!<link href="$webwork_htdocs_url/themes/jquery-ui-themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>!;
   #print qq!<script>window.addEventListener("load", setup, false);</script>!;
   return "";
 }

@@ -70,9 +70,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                     self.problems.trigger("num-problems-shown");
                 }
             });
-            this.problems.on("reordered",function () {
-                self.hwManager.announce.addMessage({text: "Problem Set " + self.parent.problemSet.get("set_id") + " was reordered"});
-            });
+            
             this.problems.on("add", this.addProblemView);
             this.render();
         },
@@ -96,7 +94,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 var p = self.problems.find(function(prob) { return prob.get("path")===path});
                 p.set({place: i}, {silent: true});  // set the new order of the problems.  
             });   
-            self.collection.reorder();
+            self.problems.reorder();
         },
         undoDelete: function(){
             console.log("in undoDelete");

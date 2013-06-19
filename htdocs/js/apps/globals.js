@@ -1,4 +1,4 @@
-define(['globalVariables','underscore'], function(config) {
+define(['globalVariables','underscore'], function(globalVariables) {
 
 	console.log("in globals");
 	

@@ -15,7 +15,6 @@ use WebworkWebservice;
 use base qw(WebworkWebservice); 
 use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime);
 use WeBWorK::Utils::Tasks qw(renderProblems);
-use List::Compare qw(get_symmetric_difference);
 
 use strict;
 use sigtrap;
@@ -110,9 +109,7 @@ sub getSets{
 
 	my @users = $db->listSetUsers($set->{set_id});
 	$set->{assigned_users} = \@users;
-
   }
-  
   
   my $out = {};
   $out->{ra_out} = \@all_sets;

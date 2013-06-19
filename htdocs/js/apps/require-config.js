@@ -11,16 +11,21 @@ var require = {
         "jquery":               "/webwork2_files/js/components/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/components/bootstrap/docs/assets/js/bootstrap",
         "moment":               "/webwork2_files/js/components/moment/moment",
-        "util":                 "/webwork2_files/js/lib/util",
         "stickit":              "/webwork2_files/js/components/backbone.stickit/backbone.stickit",
         "imagesloaded":         "/webwork2_files/js/components/imagesloaded/imagesloaded",
         "jquery-truncate":      "/webwork2_files/js/components/jquery-truncate/jquery.truncate",
         "eventie":              "/webwork2_files/js/components/eventie/eventie",
         "eventEmitter":         "/webwork2_files/js/components/eventEmitter/EventEmitter",
-        
+        "editablegrid":         "/webwork2_files/js/components/editablegrid/editablegrid-2.0.1/editablegrid-2.0.1",
+        "blob":                 "/webwork2_files/js/components/blob/Blob",
+        "blob-builder":         "/webwork2_files/js/components/blob/BlobBuilder",
+        "file-saver":           "/webwork2_files/js/components/file-saver/FileSaver",
+
         "WebPage":              "/webwork2_files/js/lib/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/views/Closeable",
+        "globals":              "/webwork2_files/js/apps/globals",
+        "util":                 "/webwork2_files/js/lib/util",
         
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
@@ -37,6 +42,9 @@ var require = {
         'stickit': ["Backbone","jquery"],
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],
+        'editablegrid': {exports: 'EditableGrid'},
+        'blob': {exports : 'Blob'},
+        'blob-builder': {exports: 'BlobBuilder'},
         //'jquery-tablesorter': ['jquery'],
         'imagesloaded': { deps: ['eventie','eventEmitter'], exports: 'imagesloaded'}
     }

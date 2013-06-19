@@ -40,30 +40,21 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
         {
             var self = this;
             console.log("in PSLV render");
-            if (this.viewType === "Instructor"){
-                this.$el.html(this.template({loading: true}));
+            
+            this.$el.html(this.template({loading: false}));
+            this.$el.html(this.template({loading:false}));            
+            this.problemSets.each(function (_model) {
+                self.$("#probSetList").append((new SetView({model: _model, template: self.setViewTemplate,
+                    numUsers: self.users.length})).render().el);
+            });
+            var _width = self.$el.width() - 70; 
+            self.$(".set-name").truncate({width: _width}); //if the Problem Set Names are too long.  
+           
+            if (this.problemSets.size() === 0 ) {
+                $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
             }
-            if(this.problemSets.setLoaded){
-            
-                this.$el.html(this.template({loading:false}));
-                /*this.$el.append(_.template($("#modal-template").html(), 
-                    {header: "<h3>Create a new Homework Set</h3>", saveButton: "Create New Set", id: "new-set-modal"}));
-*/
-            
-                this.problemSets.each(function (_model) {
-                    self.$("#probSetList").append((new SetView({model: _model, template: self.setViewTemplate,
-                        numUsers: self.users.length})).render().el);
-                });
-                var _width = self.$el.width() - 70; 
-                self.$(".set-name").truncate({width: _width}); //if the Problem Set Names are too long.  
-               
-                if (this.problemSets.size() === 0 ) {
-                    $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
-                }
 
-                self.$(".prob-set-container").height($(window).height()*.80);
-                self.problemSets.trigger("rendered"); // is this being used anywhere? 
-            }
+            self.$(".prob-set-container").height($(window).height()*.80);
 
 
 
@@ -86,14 +77,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
                     } else {
                         this.deleteProblemSetView.open();
                     }
-/*                    this.$("#new-set-modal .modal-body").html(_.template($("#delete-hw-set-template").html()));
-                    this.$("#new-set-modal .btn-primary").html("Delete Set");
-
-                    var sets = this.collection.map(function(set) { 
-                        return "<li><input type='checkbox' data-setid='" + set.get("set_id") + "'>" + set.get("set_id") + "</li>"})
-                    this.$("#new-set-modal .modal-body").append("<ul>" + sets.join("") + "</ul>");
-                    this.$("#new-set-modal").modal("show");
-                    this.$("#new-set-modal .btn-primary").on('click',this.deleteSet); */
                     break;
             }
 
