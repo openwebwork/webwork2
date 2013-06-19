@@ -8,16 +8,19 @@
     "components"
   ],
   "dependencies": {
-    "jquery": ">=2.0",
+    "jquery": "1.9",
     "backbone" : "1.0",
     "underscore": "1.4",
     "jquery-ui": "1.10",
-    "requirejs": "2.1.6",
+    "requirejs": "2.1",
     "moment": "2.0",
-    "bootstrap": "2.3.2",
-    "backbone.stickit": "0.6.3",
-    "backbone-validation": "0.7.1",
-    "jquery-truncate": "git://github.com/tbasse/jquery-truncate.git"
-    "imagesloaded": "3.0.1"
+    "bootstrap": "2.3",
+    "backbone.stickit": "0.6",
+    "backbone-validation": "0.7",
+    "jquery-truncate": "git://github.com/tbasse/jquery-truncate.git",
+    "imagesloaded": "3.0",
+    "editablegrid": "https://github.com/downloads/webismymind/editablegrid/editablegrid-2.0.1.tar.gz",
+    "blob": "*.*",
+    "file-saver": "*.*"
   }
 }

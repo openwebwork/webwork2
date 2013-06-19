@@ -1,0 +1,9 @@
+{
+  "name": "file-saver",
+  "version": "0.0.0",
+  "commit": "bc74b4a154d9be76bcfacc319bbad16e6060c099",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/eligrey/FileSaver.js.git"
+  }
+}
