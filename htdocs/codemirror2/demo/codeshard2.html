@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <title>CodeMirror2/CodeShard Demo</title>
+    <link rel="stylesheet" href="../lib/codemirror.css">
+    <script src="../lib/codemirror.js"></script>
+    <link rel="stylesheet" href="../mode/javascript/javascript.css">
+    <script src="../mode/javascript/javascript.js"></script>
+    <link rel="stylesheet" href="../css/docs.css">
+
+    <style type="text/css">
+      .CodeMirror {
+       height: 25px;
+       min-height: 25px;
+       background: #ffe;
+       overflow: hidden;
+       width: 100px;
+       display: -moz-inline-stack;
+       display: inline-block;
+       vertical-align: top;
+       border-top: 1px solid #333;
+       border-left: 1px solid #666;
+       border-right: 1px solid #999;
+       margin: 3px 0px 3px 0px;
+
+       zoom: 1;
+       *display: inline;
+       _height: 25px;
+       -moz-border-radius: 1px;
+       -webkit-border-radius: 1px;
+       -o-border-radius: 1px;
+       border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+   <h1>CodeMirror2 / CodeShard Demo</h1>
+    <div id="frame" style="white-space:pre; height:200px; border: 1px solid #888; background: #ddd; width: 600px;;"
+      ><form action="/test" method="POST" >
+      This is a test. Input one: <textarea id="code" class="codeshard" name="code" value="Test" rows="1" cols="20">Test</textarea>. And some more text.
+      Input two: <textarea id="code" class="codeshard" name="code2" value="Test" rows="1" cols="10">Test</textarea> Text at end.
+      <input type="submit" name="Submit" style="position:relative; top: 0px;"/>
+    </form>
+    </div>
+    <div id="debugconsole"></div>
+    <script src="codeshard2.js"></script>
+  </body>
+</html>

@@ -1,0 +1,125 @@
+.facebookbox {
+    margin-top:7px;
+    text-align:center;
+}
+
+.facebookbox form {
+    margin-bottom:0px;
+}
+
+.cheevobigbox {
+    width:700px;
+}
+
+.levelbox {
+    height:100px;
+    margin-bottom:30px;
+}
+
+.levelbox img {
+    float:left;
+    height:100px;
+    width:100px;
+}
+
+.leveldatabox {
+    margin-left:20px;
+    float:left;
+}
+
+.leveldatabox h1 {
+    font-size:35px;
+    font-weight:bold;
+}
+
+.levelouterbar {
+    height:20px;
+    border-style:solid;
+    border-width:2px;
+    width:400px;
+}
+
+.levelinnerbar {
+    height:20px;
+    background-color:#88D;
+}
+
+.cheevoouterbox {
+    height:50px;
+    margin-bottom:15px;
+}
+
+.cheevoouterbox img {
+    float:left;
+    height:50px;
+    width:50px;
+    margin-top:5px;
+    
+}
+
+.unlocked {
+    color:black;
+}
+
+.locked { 
+    color:grey;
+}
+
+.locked img {
+    opacity:0.4;
+    filter:alpha(opacity=40);
+}
+
+.locked h2 {
+    color:grey;
+}
+
+.cheevotextbox {
+    margin-left:15px;
+    float:left;
+}
+
+.cheevotextbox h2 {
+    line-height:15px;
+    font-size:15px;
+    margin-bottom:5px;
+    margin-top:2px;
+    font-weight:bold;
+}
+
+/*width of cheevo progress bar controlled by perl code*/
+.cheevoouterbar {
+    height:10px;
+    border-style:solid;
+    border-width:2px;
+    width:200px;
+}
+
+.cheevoinnerbar {
+    height:10px;
+    background-color:#88D;
+}
+
+.cheevopopupouter {
+    height:75px;
+    margin-bottom:10px;
+    margin-left:15px;
+}
+
+.cheevopopupouter img {
+    float:left;
+    height:75px;
+    width:75px;
+}
+
+.cheevopopuptext {
+    margin-left:15px;
+    float:left;
+}
+
+.cheevopopuptext h1 {
+    margin-top:0px;
+    margin-bottom:5px;
+    font-size:20px;
+    font-weight:bold;
+}

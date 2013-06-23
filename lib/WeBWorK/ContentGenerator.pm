@@ -639,9 +639,11 @@ sub links {
 		my $new_anchor;
 		if ($active) {
 			# add active class for current location
-			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, class=>"active", %target}, $text);
+#			$new_anchor = CGI::a({href=>$new_systemlink, class=>"$id active", %target}, $text);
+			$new_anchor = CGI::a({href=>$new_systemlink, class=>"active", %target}, $text);
 		} else {
-			$new_anchor = CGI::a({href=>$new_systemlink, id=>$id, %target}, "$text");
+#			$new_anchor = CGI::a({href=>$new_systemlink, class=>$id, %target}, "$text");
+			$new_anchor = CGI::a({href=>$new_systemlink, %target}, "$text");
 		}
 		
 		return $new_anchor;
@@ -681,8 +683,9 @@ sub links {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
 			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-			
+			print CGI::end_li();
 			if (defined $setID) {
+			    print CGI::start_li();
 				print CGI::start_ul();
 				print CGI::start_li(); # $setID
 				# show a link if we're displaying a homework set, or a version
@@ -695,19 +698,21 @@ sub links {
 				} elsif ($setID =~ /,v(\d)+$/) {
 					print &$makelink("${pfx}GatewayQuiz", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 				}
+			    print CGI::end_li();
 
 				if (defined $problemID) {
+				    print CGI::start_li();
 					print CGI::start_ul();
 					print CGI::start_li(); # $problemID
-					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $problemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
-					
+					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $problemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);					
 					print CGI::end_li(); # end $problemID
 					print CGI::end_ul();
+				    print CGI::end_li();
 				}
-				print CGI::end_li(); # end $setID
 				print CGI::end_ul();
+			    print CGI::end_li(); # end Homework Sets
 			}
-			print CGI::end_li(); # end Homework Sets
+
 			
 			if ($authz->hasPermissions($userID, "change_password") or $authz->hasPermissions($userID, "change_email_address")) {
 				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
@@ -717,6 +722,7 @@ sub links {
 			
 			if ($ce->{achievementsEnabled}) {
 			    print CGI::li(&$makelink("${pfx}Achievements", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)); 
+
 			}
 
 			if ($authz->hasPermissions($userID, "access_instructor_tools")) {
@@ -724,6 +730,8 @@ sub links {
 				
 				print CGI::start_li(); # Instructor Tools
 				print &$makelink("${pfx}Index", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+				print CGI::end_li();
+				print CGI::start_li();
 				print CGI::start_ul();
 				
                 #class list editor
@@ -741,42 +749,44 @@ sub links {
 
 				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor2};
-#				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-#					if $ce->{showeditors}->{homeworkseteditor3};
+				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{homeworkseteditor3};
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
-					print CGI::start_ul();
+				    print CGI::start_li();
+				    print CGI::start_ul();
 					print CGI::start_li(); # $setID
 					print &$makelink("${pfx}ProblemSetDetail", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+                     		        print CGI::end_li();
 					
 					if (defined $problemID) {
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
+					    print CGI::start_li();
+					    print CGI::start_ul();
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
-						print CGI::end_ul();
-					}
-					if (defined $problemID) {
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
-						print CGI::end_ul();
+					    
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+						if $ce->{showeditors}->{pgproblemeditor3};;
+	
+					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+						if $ce->{showeditors}->{simplepgeditor};;
+					    print CGI::end_ul();
+					    print CGI::end_li();
 					}
 					if (defined $problemID) {
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
-							if $ce->{showeditors}->{pgproblemeditor3};;
-						print CGI::end_ul();
-					}
-					if (defined $problemID) {
+					    print CGI::start_li();
 						print CGI::start_ul();
 						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 							if $ce->{showeditors}->{simplepgeditor};;
 						print CGI::end_ul();
+					    print CGI::end_li();
 					}
 					
-					print CGI::end_li(); # end $setID
 					print CGI::end_ul();
+				    print CGI::end_li();
 				}
 				
 				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
@@ -850,10 +860,12 @@ sub links {
 				if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, "edit_achievements")) {
 				    print CGI::li(&$makelink("${pfx}AchievementList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				    if (defined $achievementID ) {
+					print CGI::start_li();
 					print CGI::start_ul();
 					print CGI::start_li(); # $achievementID
 					print &$makelink("${pfx}AchievementEditor", text=>"$prettyAchievementID", urlpath_args=>{%args,achievementID=>$achievementID}, systemlink_args=>\%systemlink_args);
 					print CGI::end_ul();
+					print CGI::end_li();
 				    }
 				    
 				}
@@ -882,20 +894,17 @@ sub links {
 			
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li({class=>'divider'});
+				print CGI::li({class=>'divider'},"");
 				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
-			print CGI::end_ul();
 	
 		} # /* authentication was_verified */
-		
+				
 	} # /* defined $courseID */
-	
-	print CGI::end_ul();
-	
-	
 
-	
+	print CGI::end_ul();
+		
+
 	return "";
 }
 
@@ -1534,8 +1543,14 @@ sub optionsMacro {
 	print CGI::h2($r->maketext("Display Options"));
 	
 	my $result = CGI::start_form("POST", $self->r->uri);
-	$result .= $self->hidden_authen_fields;
-	$result .= $self->hidden_fields(@extra_params) if @extra_params;
+	my $hiddenFields = $self->hidden_authen_fields;
+	$hiddenFields =~ s/\"hidden_/\"options-hidden_/g;
+	$result .= $hiddenFields;
+	if (@extra_params) {
+	    $hiddenFields = $self->hidden_fields(@extra_params);
+	    $hiddenFields =~ s/\"hidden_/\"options-hidden_/g;
+	    $result .= $hiddenFields;
+	}
 	$result .= CGI::start_div({class=>"viewOptions"});
 	
 	if (exists $options_to_show{displayMode}) {
@@ -1618,13 +1633,17 @@ sub feedbackMacro_email {
 	my $feedbackName = $r->maketext($ce->{feedback_button_name}) || $r->maketext("Email instructor");
 	
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackURL) . "\n";
-	$result .= $self->hidden_authen_fields . "\n";
+	#This is being used on forms with hidden_authen_fields already included
+	# in many pages so we need to change the fields to be hidden
+	my $hiddenFields = $self->hidden_authen_fields;
+	$hiddenFields =~ s/\"hidden_/\"email-hidden_/g;
+	$result .=  $hiddenFields."\n";
 	
 	while (my ($key, $value) = each %params) {
 	    next if $key eq 'pg_object';    # not used in internal feedback mechanism
 		$result .= CGI::hidden($key, $value) . "\n";
 	}
-	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
+	$result .= CGI::p(CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
 	$result .= CGI::endform() . "\n";
 	
 	return $result;
@@ -1641,8 +1660,9 @@ sub feedbackMacro_form {
 	my $feedbackName = $r->maketext($ce->{feedback_button_name}) || $r->maketext("Email instructor");
 	
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackFormURL,-target=>"WW_info") . "\n";
-	$result .= $self->hidden_authen_fields . "\n";
-	
+
+	$result .= $self->hidden_authen_fields . "\n";	
+
 	while (my ($key, $value) = each %params) {
 	    if ($key eq 'pg_object') {
 	        my $tmp = $value->{body_text}; 
@@ -2034,7 +2054,7 @@ sub mathview_scripts {
 # where the organization of the js directory has been completely rearranged. -- MEG
 # Added CODE JQuery MathView
 	my @out = (
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
+#		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
 		CGI::end_script(),	"\n",	
 		#CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 

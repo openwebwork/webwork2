@@ -25,6 +25,7 @@ WeBWorK::Constants - provide constant values for other WeBWorK modules.
 use strict;
 use warnings;
 
+
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT} unless defined($WeBWorK::Constants::WEBWORK_DIRECTORY);
 
 
@@ -104,6 +105,7 @@ $WeBWorK::PG::ImageGenerator::TexPreamble = <<'EOF';
 \usepackage{amsmath,amsfonts,amssymb}
 \def\gt{>}
 \def\lt{<}
+\usepackage{color}
 \usepackage[active,textmath,displaymath]{preview}
 \begin{document}
 EOF

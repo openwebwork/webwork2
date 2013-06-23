@@ -12,6 +12,8 @@
 #Threshold for level 2
 my $newLevelThreshold = 150;
 
+$globalData->{HalfCreditProb} = 1;
+
 #Code
 
 #level 1 is earned immediately

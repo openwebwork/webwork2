@@ -176,14 +176,16 @@ sub checkForAchievements {
 			$imgSrc .= $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 	    }
 
-	    $cheevoMessage .=  CGI::start_div({class=>'cheevopopupouter'});
+	    $cheevoMessage .=  CGI::start_div({id=>"test", class=>'cheevopopupouter modal-body'});
 	    $cheevoMessage .=  CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
 	    $cheevoMessage .= CGI::start_div({class=>'cheevopopuptext'});  
 	    if ($achievement->category eq 'level') {
 		
 			$cheevoMessage = $cheevoMessage . CGI::h1("Level Up: $achievement->{name}");
-			$cheevoMessage = $cheevoMessage . CGI::div("Congratulations, you earned a new level!");
-			$cheevoMessage = $cheevoMessage . CGI::end_div();
+			#print out description as part of message if we are using items
+			
+			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled} ?  $achievement->{description} : "Congratulations, you earned a new level!");
+			$cheevoMessage .= CGI::end_div();
 
 	    } else {
 		
@@ -213,6 +215,7 @@ sub checkForAchievements {
 	    }
 	        
 	    $cheevoMessage .= CGI::end_div();
+	    
 	        
 	    my $points = $achievement->points;
 	    #just in case points is an ininitialzied variable
@@ -234,6 +237,10 @@ sub checkForAchievements {
     #nfreeze globalData and store
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
+
+    if ($cheevoMessage) {
+	$cheevoMessage = CGI::div({id=>"achievementModal", class=>"modal hide fade"},$cheevoMessage);
+    }
 
     return $cheevoMessage;
 }

@@ -19,6 +19,7 @@ package WeBWorK::Utils::ListingDB;
 use strict;
 use DBI;
 use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils::Tags;
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
@@ -62,7 +63,6 @@ my %OPLtables = (
  section => 'OPL_section',
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
- morelt_pgfile => 'OPL_morelt_pgfile',
  pgfile_problem => 'OPL_pgfile_problem',
 );
 
@@ -81,7 +81,6 @@ my %NPLtables = (
  section => 'NPL-section',
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
- morelt_pgfile => 'NPL-morelt-pgfile',
  pgfile_problem => 'NPL-pgfile-problem',
 );
 
@@ -112,6 +111,45 @@ sub getDB {
 	);
 	die "Cannot connect to problem library database" unless $dbh;
 	return($dbh);
+}
+
+=item getProblemTags($path) and setProblemTags($path, $subj, $chap, $sect)
+Get and set tags using full path and Tagging module
+                                                                                
+=cut                                                                            
+
+sub getProblemTags {
+	my $path = shift;
+	my $tags = WeBWorK::Utils::Tags->new($path);
+	my %thash = ();
+	for my $j ('DBchapter', 'DBsection', 'DBsubject', 'Level') {
+		$thash{$j} = $tags->{$j};
+	}
+	return \%thash;
+}
+
+sub setProblemTags {
+	my $path = shift;
+        if (-w $path) {
+		my $subj= shift;
+		my $chap = shift;
+		my $sect = shift;
+		my $level = shift;
+		my $tags = WeBWorK::Utils::Tags->new($path);
+		$tags->settag('DBsubject', $subj, 1);
+		$tags->settag('DBchapter', $chap, 1);
+		$tags->settag('DBsection', $sect, 1);
+		$tags->settag('Level', $level, 1);
+		eval {
+			$tags->write();
+			1;
+		} or do {
+			return [0, "Problem writing file"];
+		};
+		return [1, "Tags written"];
+        } else {
+		return [0, "Do not have permission to write to the problem file"];
+	}
 }
 
 =item kwtidy($s) and keywordcleaner($s)

@@ -1,6 +1,4 @@
-<!DOCTYPE html
-	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <!--
 ################################################################################
@@ -34,7 +32,7 @@
 <!-- Minimal bootstrap for newer features -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 <!-- Minimal bootstrap for newer features -->
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap.js"></script>
 
@@ -44,6 +42,9 @@
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/math/math.css">
 -->
 
+<!--#if can="output_achievement_CSS"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/achievements.css"/>
+<!--#endif-->
 <!--#if can="output_tabber_CSS"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
@@ -56,7 +57,7 @@
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
-<body bgcolor="white">
+<body style="background-color: white;">
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
 <!--#endif-->
@@ -131,6 +132,14 @@
 						</div>
 					<!--#endif-->
 					
+
+					<!--#if can="output_comments" "-->
+					<div>
+						  <!--#output_comments-->
+					</div>
+					<!--#endif-->
+					
+
 					<!--#if can="output_hidden_info"-->
 						<!--#output_hidden_info-->
 					<!--#endif-->
@@ -138,16 +147,12 @@
 					<!--#if can="output_form_start"-->
 						<!--#output_form_start-->
 
-						<!--#if can="output_comments" "-->
-						<div>
-						  <!--#output_comments-->
-						</div>
-						<!--#endif-->
-						
 						<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 							<div class="problem">
 								<!--#if can="output_problem_body"-->
-									<!--#output_problem_body-->
+								<div class="problem-content">
+								  <!--#output_problem_body-->
+								</div>
 								<!--#endif-->
 								<!--#if can="output_message"-->
 									<!--#output_message-->

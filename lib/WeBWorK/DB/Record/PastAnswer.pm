@@ -31,7 +31,7 @@ BEGIN {
 
 	    answer_id         => {   type=>"INT AUTO_INCREMENT", key=>1},
 	    course_id         => { type=>"VARCHAR(100) NOT NULL", key=>1},
-	    user_id           => { type=>"VARCHAR(100) NOT NULL", key=>1},
+	    user_id           => { type=>"VARCHAR(100) NOT NULL", key=>1},	
 	    set_id            => { type=>"VARCHAR(100) NOT NULL", key=>1},
 	    problem_id        => { type=>"VARCHAR(100) NOT NULL", key=>1},
 	    source_file       => { type=>"TEXT"},
