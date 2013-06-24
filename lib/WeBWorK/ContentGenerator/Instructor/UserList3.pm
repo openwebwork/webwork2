@@ -228,25 +228,27 @@ sub head{
 
 ## get all of the user information to send to the client via a script tag in the output_JS subroutine below
 
-sub getUsers {
-	my ($ce,$r) = @_;
+# get all users for the course
+
+sub getAllUsers {
+
+
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
 	my $db = $r->db;
 
-	my @tempArray = $db->listUsers;
-
-	debug(@tempArray);
-    my @allUsers = $db->getUsers(@tempArray);
-
-    debug(to_json($allUsers[0],{convert_blessed=>1,allow_blessed=>1}));
+    my @tempArray = $db->listUsers;
+    my @userInfo = $db->getUsers(@tempArray);
     my $numGlobalSets = $db->countGlobalSets;
+    
+    my @allUsers = ();
 
     my %permissionsHash = reverse %{$ce->{userRoles}};
-    foreach my $u (@allUsers)
+    foreach my $u (@userInfo)
     {
         my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
         $u->{'permission'} = $PermissionLevel->{'permission'};
-        #$u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
-
 
 		my $studid= $u->{'student_id'};
 		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
@@ -254,12 +256,18 @@ sub getUsers {
 	
 		my $Key = $db->getKey($u->{'user_id'});
 		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
-
-		#debug(to_json($u,{allow_blessed=>1,convert_blessed=>1}));
 		
+
+		# convert the user $u to a hash
+		my $s = {};
+		for my $key (keys %{$u}) {
+			$s->{$key} = $u->{$key}
+		}
+
+		push(@allUsers,$s);
     }
 
-    return @allUsers;
+    return \@allUsers;
 }
 
 
@@ -272,18 +280,19 @@ sub output_JS{
 	my $r = $self->r;
 	my $ce = $r->ce;
 
-	my @allUsers = getUsers($ce,$r);
-
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
-	print qq!<script data-main="$site_url/js/apps/ClasslistManager/classlistManager" src="$site_url/js/components/requirejs/require.js"></script>!;
+	print qq!<script src="$site_url/js/apps/require-config.js"></script>\n!;
+	print qq!<script data-main="$site_url/js/apps/ClasslistManager/ClasslistManager" src="$site_url/js/components/requirejs/require.js"></script>\n!;
+    print qq!<script type='text/javascript'>!;
+    print qq!define('globalVariables', function() {!;
+    print qq!  return { !;
+    #print qq! sets: ! . to_json(getAllSets($self)) . ",";
+    print qq! users: ! . to_json(getAllUsers($self)) . ",";
+    #print qq! settings: ! . to_json(getCourseSettings($self));
+    print qq!    }!;
+    print qq!});!;
+    print qq!</script>!;
 
-    # print qq!<script type='text/javascript'>!;
-    # print qq!define('globalVariables', function() {!;
-    # print qq!  return { !;
-    # print qq! users: ! . to_json(\@allUsers,{allow_nonref=>1}) . "}";
-    # print qq! }!;
-    # print qq!</script>!;
 	
 	return "";
 }

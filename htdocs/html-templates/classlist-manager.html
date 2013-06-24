@@ -25,53 +25,54 @@ all rows in the table.  </li>
 </script>
 
 
-<script type="text/template" id="userListTable">
+<script type="text/template" id="classlist-manager-template">
+
 <div class="row">
-<div class="span2"
-    <span id="selectalldiv"><label for="selectAll">Select All:</label><input type='checkbox' id='selectAllCB' /></span>
+    <div class="input-append span4"><input type="text" placeholder="Filter" id="filter">
+        <button id="clear-filter-text" class="btn"><i class="icon-remove"></i></button>
     </div>
-    <div class="span3">
-    <select name="actionPopup"  class="actionMenu" id="mainActionMenu">
-<option selected="selected" value="takeAction">Take Action on Selected</option>
-<option value="menuEmail">Email Selected Students</option>
-<option value="menuChangePassword">Change the Password of Selected Student</option>
-<option value="menuDelete">Delete Selected Students</option>
-</select>
-</div>
-<div class="span3">
-<select id="import-export">
-<option>Import or Export Students</option>
-<option>Add Students from a File</option>
-<option>Add Students Manually</option>
-<option>Export Students to a File</option>
-</select>
-</div>
-</div>
-<div class="row">
-
-
-    <div id="filterdiv" class="span6"><label for='filter'>Filter :</label>
-    <input type='text' id='filter' class="input-large search-query"></input>
-    <button id="clear-filter-text"><i class="icon-remove"></i></button>
+    <div class="btn-group span4">
+      <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+        Action on Selected
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a href="#" class="email-selected">Email Selected Students</a></li>
+        <li><a href="#" class="password-selected">Change the Password of Selected Student</a></li>
+        <li><a href="#" class="delete-selected">Delete Selected Students</a></li>
+      </ul>
     </div>
-<div class="span3" id="usersShownInfo">Loading Users...<img src="/webwork2_files/images/ajax-loader-small.gif"></div>    
+    <div class="btn-group span4">
+      <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+        Import or Export Students
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a href="#" class="add-students-file-option">Add Students from a File</a></li>
+        <li><a href="#" class="add-students-man-option">Add Students Manually</a></li>
+        <li><a href="#" class="export-students-option">Export Students to a File</a></li>
 
-</div>
-<div id="users_table"></div>
-<div id="belowTable" class="row">
-<div class="span2">
+      </ul>
     </div>
-    <div class="span3">
-    <select name="actionPopup"  class="actionMenu" id="mainActionMenuBottom">
-<option selected="selected" value="takeAction">Take Action on Selected</option>
-<option value="menuEmail">Email Selected Students</option>
-<option value="menuChangePassword">Change the Password of Selected Student</option>
-<option value="menuDelete">Delete Selected Students</option>
-</select>
 </div>
+<div id="users-table-container"></div>
+<div id="users-table-paginator"></div>
 
+</script>
+
+<script type="text/template" id="paginator-template">
+<div class="btn-group">
+<button class="btn goto-first"><i class="icon-step-backward"></i>
+<button class="btn go-back-one"><i class="icon-arrow-left"></i>
+<% if (page_start>0) {print ("<button class='btn'> ... </button>");} %>
+<% for(i=page_start;i<page_stop;i++){
+    print("<button class='btn page-button' data-page='" + i + "'>" + (i+1) + "</button>");
+} %>
+<% if (page_stop+1<num_pages) {print ("<button class='btn'> ... </button>");} %>
+
+<button class="btn go-forward-one"><i class="icon-arrow-right"></i>
+<button class="btn goto-end"><i class="icon-step-forward"></i>
 </div>
-
 </script>
 
 <script type="text/template" id="add_student_file_dialog_content">
@@ -102,10 +103,16 @@ all rows in the table.  </li>
         </div>
         
     <div class="span4">
-    <span>Select file:<input type="file" id="files" name="files" /></span><br>
-    <button id="importStudFromFileButton" style="display: none">Import Students</button><br>
-    <!--<span><label for="useLST">The file is a WeBWorK classlist file</label><input type="checkbox" id="useLST"></input></span><br>-->
-    <span><label for="useFirst">Use First Row for Headers</label><input type="checkbox" id="useFirst"></input></span>
+    <table>
+    <tr><td colspan="2"><label type="inline">Select file:<input class="btn" type="file" id="files" name="files" /></label></td></tr>
+    <tr><td><button class="reload-file btn">Reload File</button></td>
+    <td><button class="cancel-button btn">Cancel</button></td>
+    </tr>
+    <tr><td colspan="2">
+    <button class="btn" id="importStudFromFileButton" style="display: none">Import Students</button></td></tr>
+    <tr><td colspan="2">
+    <label class="inline checkbox">Use First Row for Headers<input type="checkbox" id="useFirst"></input></label></td></tr>
+    </table>
     </div>
         
         

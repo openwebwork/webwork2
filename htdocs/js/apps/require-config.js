@@ -25,6 +25,7 @@ var require = {
         "config":               "/webwork2_files/js/apps/config",
         "Closeable":            "/webwork2_files/js/lib/views/Closeable",
         "globals":              "/webwork2_files/js/apps/globals",
+        "globalVariables":      "/webwork2_files/js/apps/globalVariables",
         "util":                 "/webwork2_files/js/lib/util",
         
     },

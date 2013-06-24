@@ -19,7 +19,7 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
     
         initialize: function(){
             //this.on('change',this.update);
-            this.on('change',function() {console.log(this.attributes)});
+            //this.on('change',function() {console.log(this.attributes)});
         },
     
         update: function(){
