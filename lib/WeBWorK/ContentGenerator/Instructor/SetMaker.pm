@@ -815,7 +815,7 @@ sub make_top_row {
 		),
 		"  ",
 		CGI::textfield(-name=>"new_set_name", 
-					   -default=>"Name for new set here",
+					   -example=>"Name for new set here",
 					   -override=>1, -size=>30),
 	));
 
@@ -897,6 +897,7 @@ sub make_data_row {
 	my $sourceFileName = $sourceFileData->{filepath};
 	my $pg = shift;
 	my $cnt = shift;
+	my $mltnumleft = shift;
 
 	$sourceFileName =~ s|^./||; # clean up top ugliness
 
@@ -958,43 +959,48 @@ sub make_data_row {
 
 	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
 	my $path_holder = "File...";
+
 	my $mlt = '';
+	my ($mltstart, $mltend) = ('','');
 	my $noshowclass = 'NS'.$cnt;
 	$noshowclass = 'MLT'.$sourceFileData->{morelt} if $sourceFileData->{morelt};
 	if($sourceFileData->{children}) {
-		#$mlt = join(',', @{$sourceFileData->{children}});
-		#$mlt = "\"$mlt\"";
 		my $numchild = scalar(@{$sourceFileData->{children}});
-		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this'>M</span>";
+		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
+		$mltstart = "<table style='border:1px solid black' width='100%'><tr><td>\n";
 	}
+	$mltend = "</td></tr></table>\n" if($mltnumleft==0);
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
-        my $tagwidget = '';
-        my $user = scalar($r->param('user'));
-        if ($r->authz->hasPermissions($user, "modify_tags")) {
-          my $tagid = 'tagger'.$cnt;
-          $tagwidget =  CGI::div({id=>$tagid}, '');
-          my $templatedir = $r->ce->{courseDirs}->{templates};
-          my $sourceFilePath = $templatedir .'/'. $sourceFileName;
-					$sourceFilePath =~ s/'/\\'/g;
-          my $site_url = $r->ce->{webworkURLs}->{htdocs};
-          $tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}). CGI::end_script();
-          $tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
-        }
+
+	# Include tagwidget?
+	my $tagwidget = '';
+	my $user = scalar($r->param('user'));
+	if ($r->authz->hasPermissions($user, "modify_tags")) {
+		my $tagid = 'tagger'.$cnt;
+		$tagwidget =  CGI::div({id=>$tagid}, '');
+		my $templatedir = $r->ce->{courseDirs}->{templates};
+		my $sourceFilePath = $templatedir .'/'. $sourceFileName;
+		$sourceFilePath =~ s/'/\\'/g;
+		my $site_url = $r->ce->{webworkURLs}->{htdocs};
+		$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}). CGI::end_script();
+		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
+	}
+
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
+	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
+        $mltstart,
 		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
 		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
 		      -value=>"Add",
 			-title=>"Add problem to target set",
-		      -onClick=>"return addme(\'$sourceFileName\', \'one\')")),
+		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left"},CGI::span({id=>"filepath$cnt"},"Path...")),"\n",
-			#"\n",CGI::span({onclick=>qq!Tip("$sourceFileName",SHADOW, false, DELAY, 0, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, BGCOLOR, '#EEEEEE', TITLEBGCOLOR, '#EEEEEE', TITLEFONTCOLOR, '#000000')!}, 'Path...'),
-# Next line is one to keep
 			#"\n",'<script type="text/javascript">$(\'#sourcetrigger'.$cnt.'\').click(function() {toggle_content("filepath'.$cnt.'", "...", "'.$sourceFileName.'");return false;})</script>',
-                        '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Path ...", "Path '.$sourceFileName.'")</script>',
+				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Path ...", "Path '.$sourceFileName.'")</script>',
 #"\n", CGI::span({-style=>"float:left ; text-align: left"},"File..."),
 			CGI::span({-style=>"float:right ; text-align: right"}, 
 		        $inSet, $mlt, $rerand,
@@ -1008,6 +1014,7 @@ sub make_data_row {
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
 		CGI::div($problem_output),
+        $mltend
 	));
 }
 
@@ -1476,6 +1483,7 @@ sub head {
 #  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
@@ -1583,10 +1591,15 @@ sub body {
 	print CGI::hidden(-name=>'total_probs', -value=>$total_probs);
 
 	########## Now print problems
-	my $jj;
+	my ($jj,$mltnumleft)=(0,-1);
 	for ($jj=0; $jj<scalar(@pg_html); $jj++) { 
 		$pg_files[$jj+$first_index]->{filepath} =~ s|^$ce->{courseDirs}->{templates}/?||;
-		$self->make_data_row($pg_files[$jj+$first_index], $pg_html[$jj], $jj+1);
+		# For MLT boxes, need to know if we are at the end of a group
+		# make_data_row can't figure this out since it only sees one file
+		$mltnumleft--;
+		my $sourceFileData = $pg_files[$jj+$first_index];
+		$self->make_data_row($sourceFileData, $pg_html[$jj], $jj+1,$mltnumleft);
+		$mltnumleft = scalar(@{$sourceFileData->{children}}) if($sourceFileData->{children});
 	}
 
 	########## Finish things off
