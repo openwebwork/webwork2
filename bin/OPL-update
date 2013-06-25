@@ -26,6 +26,8 @@ use DBI;
 BEGIN {
         die "WEBWORK_ROOT not found in environment.\n"
                 unless exists $ENV{WEBWORK_ROOT};
+	# Unused variable, but define it to avoid an error message.
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
 }
 
 ### Data for creating the database tables
@@ -44,6 +46,8 @@ my %OPLtables = (
  chapter => 'OPL_chapter',
  section => 'OPL_section',
  problem => 'OPL_problem',
+ morelt => 'OPL_morelt',
+ morelt_pgfile => 'OPL_morelt_pgfile',
  pgfile_problem => 'OPL_pgfile_problem',
 );
 
@@ -61,6 +65,8 @@ my %NPLtables = (
  chapter => 'NPL-chapter',
  section => 'NPL-section',
  problem => 'NPL-problem',
+ morelt => 'NPL-morelt',
+ morelt_pgfile => 'NPL-morelt-pgfile',
  pgfile_problem => 'NPL-pgfile-problem',
 );
 
@@ -84,6 +90,7 @@ my $dbh = DBI->connect(
 my $passwd = $ce->{database_password};
 my $user = $ce->{database_username};
 my $libraryRoot = $ce->{problemLibrary}->{root};
+$libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
 my $verbose = 0;
 my $cnt2 = 0;
@@ -156,6 +163,7 @@ if($libraryVersion eq '2.5') {
 	institution tinyblob,
 	path_id int(15) NOT NULL,
 	filename varchar(255) NOT NULL,
+	morelt_id int(15),
 	PRIMARY KEY (pgfile_id)
 '],
 [$tables{keyword}, '
@@ -208,6 +216,19 @@ if($libraryVersion eq '2.5') {
 	#KEY (page, number),
 	KEY (section_id),
 	PRIMARY KEY (problem_id)
+'],
+[$tables{morelt}, '
+	morelt_id int(15) NOT NULL auto_increment,
+	name varchar(127) NOT NULL,
+	DBsection_id int(15),
+	leader int(15), # pgfile_id of the MLT leader
+	KEY (name),
+	PRIMARY KEY (morelt_id)
+'],
+[$tables{morelt_pgfile}, '
+	morelt_id int(15) DEFAULT 0 NOT NULL,
+	pgfile_id int(15) DEFAULT 0 NOT NULL,
+	PRIMARY KEY (morelt_id, pgfile_id)
 '],
 [$tables{pgfile_problem}, '
 	pgfile_id int(15) DEFAULT 0 NOT NULL,
@@ -414,6 +435,7 @@ sub pgfiles {
 	my $name = $File::Find::name;
 	my ($subject, $chapter, $section, $date, $institution, $author, $text);
 	my ($edition, $textauthor, $textsection, $textproblem, $tagged);
+	my ($morelt, $morelt_leader);
 	%textinfo=();
 	my @textproblems = (-1);
   if ($name =~ /swf$/) {
@@ -431,42 +453,54 @@ sub pgfiles {
 		$tagged = 0;
 		while (<IN>) {
 		SWITCH: {
-				if (/\bKEYWORDS\((.*)\)/i) {
+				if (/#.*\bKEYWORDS\((.*)\)/i) {
 					@keyword = keywordcleaner($1);
 					last SWITCH;
 				}
-				if (/\bDBsubject\s*\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bDBsubject\s*\(\s*'?(.*?)'?\s*\)/) {
 					$subject = $1;
 					$subject =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bDBchapter\s*\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bDBchapter\s*\(\s*'?(.*?)'?\s*\)/) {
 					$chapter = $1;
 					$chapter =~ s/'/\'/g;
 					$tagged = 1;
 					last SWITCH;
 				}
-				if (/\bDBsection\s*\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bDBsection\s*\(\s*'?(.*?)'?\s*\)/) {
 					$section = $1;
 					$section =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bDate\s*\(\s*'(.*?)'\s*\)/) {
+				if (/#.*\bDate\s*\(\s*'(.*?)'\s*\)/) {
 					$date = $1;
 					$date =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bInstitution\s*\(\s*'(.*?)'\s*\)/) {
+				if (/#.*\bInstitution\s*\(\s*'(.*?)'\s*\)/) {
 					$institution = $1;
 					$institution =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bAuthor\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bAuthor\(\s*'?(.*?)'?\s*\)/) {
 					$author = $1;
 					$author =~ s/'/\'/g;
 					last SWITCH;
 				}
-				if (/\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bMLTleader\(\s*'?(.*?)'?\s*\)/) {
+					$morelt_leader = $1;
+					$morelt_leader =~ s/['"]//g;
+					$morelt_leader= ($morelt_leader =~ /\S/) ? 1 : 0;
+					last SWITCH;
+				}
+				if (/#.*\bMLT\(\s*'?(.*?)'?\s*\)/) {
+					$morelt = $1;
+					$morelt =~ s/'//g;
+					$morelt = lc($morelt);
+					last SWITCH;
+				}
+				if (/#.*\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$text = $2;
 					$text =~ s/'/\'/g;
@@ -476,7 +510,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bEditionText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bEditionText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;	
 					$edition = $2;
 					$edition =~ s/'/\'/g;
@@ -486,7 +520,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bAuthorText(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bAuthorText(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$textauthor = $2;
 					$textauthor =~ s/'/\'/g;
@@ -496,7 +530,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bSection(\d+)\(\s*'?(.*?)'?\s*\)/) {
+				if (/#.*\bSection(\d+)\(\s*'?(.*?)'?\s*\)/) {
 					$textno = $1;
 					$textsection = $2;
 					$textsection =~ s/'/\'/g;
@@ -513,7 +547,7 @@ sub pgfiles {
 					}
 					last SWITCH;
 				}
-				if (/\bProblem(\d+)\(\s*(.*?)\s*\)/) {
+				if (/#.*\bProblem(\d+)\(\s*(.*?)\s*\)/) {
 					$textno = $1;
 					$textproblem = $2;
 					$textproblem =~ s/\D/ /g;
@@ -537,6 +571,7 @@ sub pgfiles {
 			#
 			# kludge to fix the omission of a subject field
 			unless($subject) {
+print "NO SUBJECT $name\n";
 				if ($text =~ /precalculus/i) {
 					$subject = "Precalculus";
 				} elsif ($text =~ /calculus/i) {
@@ -569,6 +604,10 @@ sub pgfiles {
 			#    is the file wwdb_er_graph.pdf. Insert, in order, into the tables
 			#    in that file.
 			#
+
+			# Fill in missing data with Misc. instead of blank
+			$chapter = 'Misc.' unless $chapter =~ /\S/;
+			$section = 'Misc.' unless $section =~ /\S/;
 
 			#selectrow_array returns first field of first row in scalar context or undef 
 			# undef for failure also, $dbh->{RaiseError} = 1 should catch that case.
@@ -672,12 +711,46 @@ sub pgfiles {
 						\"$author_id\",
 						\"$institution\",
 						\"$path_id\",
-						\"$pgfile\"
+						\"$pgfile\",
+						\"\" # morelt_id filled in below
 					)"
 					);
 			dbug "INSERT INTO pgfile VALUES( \"\", \"$DBsection_id\", \"$author_id\", \"$institution\", \"$path_id\", \"$pgfile\", \"\" )\n";
-			$query = "SELECT pgfile_id FROM `$tables{pgfile}` WHERE filename = \"$pgfile\" and path_id=$path_id";
+			$query = "SELECT pgfile_id FROM `$tables{pgfile}` WHERE filename = \"$pgfile\" and path_id=\"$path_id\"";
 			$pgfile_id = $dbh->selectrow_array($query);
+
+			# morelt table, and morelt_pgfile many-many table
+			if($morelt) {
+				$query = "SELECT morelt_id FROM `$tables{morelt}` WHERE name = \"$morelt\"";
+				$morelt_id = $dbh->selectrow_array($query);
+				if (!defined($morelt_id)) {
+					$dbh->do("INSERT INTO `$tables{morelt}`
+							VALUES(
+								\"\",
+								\"$morelt\",
+								\"$DBsection_id\",
+								\"\"
+					)");
+					dbug "INSERT INTO morelt VALUES( \"\", \"$morelt\", \"$pgfile_id\" )\n";
+				}
+				$morelt_id = $dbh->selectrow_array($query);
+				$dbh->do("UPDATE `$tables{pgfile}` SET
+					morelt_id = \"$morelt_id\"
+					WHERE pgfile_id = \"$pgfile_id\" "
+				);
+				dbug "UPDATE pgfile morelt_id for $pgfile_id to $morelt_id\n";
+				if($morelt_leader) {
+					$dbh->do("UPDATE `$tables{morelt}` SET
+							leader = \"$pgfile_id\"
+							WHERE morelt_id = \"$morelt_id\" "
+					);
+					dbug "UPDATE morelt leader for $morelt_id to $pgfile_id\n";
+				}
+				$dbh->do("INSERT INTO `$tables{morelt_pgfile}`
+					VALUES(\"$morelt_id\", \"$pgfile_id\")");
+				dbug "INSERT INTO `$tables{morelt_pgfile}`
+					VALUES($morelt_id, $pgfile_id)";
+			}
 
 			# keyword table, and problem_keyword many-many table
 			#

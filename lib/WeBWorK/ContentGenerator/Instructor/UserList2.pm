@@ -477,7 +477,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"userlist", class=>"edit_form"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"userlist", name=>"classlist-form", class=>"edit_form"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -520,18 +520,32 @@ sub body {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
 	
+	print CGI::start_div({-class=>"tabber"});
+
 	my $i = 0;
 	foreach my $actionID (@formsToShow) {
-		# Check permissions
-		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
-		my $actionForm = "${actionID}_form";
-		my $onChange = "document.userlist.action[$i].checked=true";
-		my %actionParams = $self->getActionParams($actionID);
-		
-		print CGI::div({-class=>"column"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"}),CGI::br(),$self->$actionForm($onChange, %actionParams),CGI::br());
+
+	    # Check permissions
+	    next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
+	    my $actionForm = "${actionID}_form";
+	    my $onChange = "document.userlist.action[$i].checked=true";
+	    my %actionParams = $self->getActionParams($actionID);
+	    
+	    print CGI::div({-class=>"tabbertab"},
+			   CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
+			   CGI::span({-class=>"radio_span"},  WeBWorK::CGI_labeled_input(-type=>"radio", 
+			   -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), 
+                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
+			    $self->$actionForm($onChange, %actionParams));
 		
 		$i++;
 	}
+
+
+	print CGI::end_div();
+
+	print CGI::start_div();
+
 	my $selectAll =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_all", -input_attr=>{-name=>'check_all', -class=>"button_input", -value=>$r->maketext('Select all users'),
 	       onClick => "for (i in document.userlist.elements)  { 
 	                       if (document.userlist.elements[i].name =='selected_users') { 
@@ -547,8 +561,10 @@ sub body {
 	unless ($editMode or $passwordMode) {
 		print $selectAll." ". $selectNone;
 	}
+
 	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
+	print CGI::end_div();
 	# print CGI::end_table();
 	
 	########## print table
@@ -1182,7 +1198,7 @@ sub export_handler {
 sub cancelEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span("-".$r->maketext("Abandon changes"));
+	return CGI::span($r->maketext("Abandon changes"));
 }
 
 sub cancelEdit_handler {
@@ -1206,7 +1222,7 @@ sub cancelEdit_handler {
 sub saveEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span("-".$r->maketext("Save changes"));
+	return CGI::span($r->maketext("Save changes"));
 }
 
 sub saveEdit_handler {
@@ -1254,7 +1270,7 @@ sub saveEdit_handler {
 sub cancelPassword_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span("-".$r->maketext("Abandon changes"));
+	return CGI::span($r->maketext("Abandon changes"));
 }
 
 sub cancelPassword_handler {
@@ -1278,7 +1294,7 @@ sub cancelPassword_handler {
 sub savePassword_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span("-".$r->maketext("Save changes"));
+	return CGI::span($r->maketext("Save changes"));
 }
 
 sub savePassword_handler {
@@ -1850,9 +1866,9 @@ sub printTableHTML {
         
 	# print the table
 	if ($editMode or $passwordMode) {
-		print CGI::start_table({-nowrap=>0, -class=>"set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });# "A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
+		print CGI::start_table({-nowrap=>0, id=>"classlist-table", -class=>"classlist-table set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });# "A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
 	} else {
-		print CGI::start_table({-border=>1, -nowrap=>1, -class=>"set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });#"A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
+		print CGI::start_table({-border=>1, -nowrap=>1, -id=>"classlist-table", -class=>"classlist-table set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });#"A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
 	}
 	
 	print CGI::caption($r->maketext("Users List"));
@@ -1894,9 +1910,19 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/classlist_handlers.js"}), CGI::end_script();
 	return "";
 }
 
+# Just tells template to output the stylesheet for Tabber
+sub output_tabber_CSS{
+	return "";
+}
+
+#Tells template to output stylesheet for Jquery-UI
+sub output_jquery_ui_CSS{
+	return "";
+}
 1;
 

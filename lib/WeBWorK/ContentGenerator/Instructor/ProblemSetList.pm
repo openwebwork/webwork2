@@ -396,7 +396,7 @@ sub initialize {
 
 	} else {
 	
-		$self->addgoodmessage("Please select action to be performed.");
+		$self->addgoodmessage($r->maketext("Please select action to be performed."));
 	}
 		
 
@@ -439,18 +439,18 @@ sub body {
 		visible
 		enable_reduced_scoring	
 	)} = (
-		"Select",
-		"Edit<br> Problems",
-		"Edit<br> Assigned Users",
-		"Set Definition Filename",
-		"Edit<br> Set Data", 
-		"Set Header", 
-		"Hardcopy Header", 
-		"Open Date", 
-		"Due Date", 
-		"Answer Date", 
-		"Visible",
-		"Reduced Credit<br> Enabled" 
+		$r->maketext("Select"),
+		$r->maketext("Edit Problems"),
+		$r->maketext("Edit Assigned Users"),
+		$r->maketext("Set Definition Filename"),
+		$r->maketext("Edit Set Data"), 
+		$r->maketext("Set Header"), 
+		$r->maketext("Hardcopy Header"), 
+		$r->maketext("Open Date"), 
+		$r->maketext("Due Date"), 
+		$r->maketext("Answer Date"), 
+		$r->maketext("Visible"),
+		$r->maketext("Reduced Credit Enabled") 
 	);
 	
 
@@ -499,7 +499,7 @@ sub body {
 
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist", id=>"problemsetlist"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -528,10 +528,10 @@ sub body {
 	
 	########## print action forms
 	
-	print CGI::p(CGI::b("Any changes made below will be reflected in the set for ALL students.")) if $editMode;
+	print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students."))) if $editMode;
 
 	print CGI::start_table({});
-	print CGI::Tr({}, CGI::td({-colspan=>2}, "Select an action to perform:"));
+	print CGI::Tr({}, CGI::td({-colspan=>2}, $r->maketext("Select an action to perform:")));
 
 	my @formsToShow;
 	if ($editMode) {
@@ -560,13 +560,13 @@ sub body {
 		$i++;
 	}
 	
-	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Select all sets',
+	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>$r->maketext('Select all sets'),
 	       onClick => "for (i in document.problemsetlist.elements)  { 
 	                       if (document.problemsetlist.elements[i].name =='selected_sets') { 
 	                           document.problemsetlist.elements[i].checked = true
 	                       }
 	                    }" });
-   	my $selectNone =CGI::input({-type=>'button', -name=>'check_none', -value=>'Unselect all sets',
+   	my $selectNone =CGI::input({-type=>'button', -name=>'check_none', -value=>$r->maketext('Unselect all sets'),
 	       onClick => "for (i in document.problemsetlist.elements)  { 
 	                       if (document.problemsetlist.elements[i].name =='selected_sets') { 
 	                          document.problemsetlist.elements[i].checked = false
@@ -579,18 +579,18 @@ sub body {
 		);
 	}
 	print CGI::Tr({}, CGI::td({-colspan=>2, -align=>"center"},
-		CGI::submit(-value=>"Take Action!"))
+		CGI::submit(-value=>$r->maketext("Take Action!")))
 	);
 	print CGI::end_table();
 	
 	########## print table
 	
 	########## first adjust heading if in editMode
-	$prettyFieldNames{set_id} = "Edit All <br> Set Data" if $editMode;
-	$prettyFieldNames{enable_reduced_scoring} = 'Enable Reduced<br>Credit' if $editMode;
+	$prettyFieldNames{set_id} = $r->maketext("Edit All Set Data") if $editMode;
+	$prettyFieldNames{enable_reduced_scoring} = $r->maketext('Enable Reduced Credit') if $editMode;
 	
 	
-	print CGI::p({},"Showing ", scalar @visibleSetIDs, " out of ", scalar @allSetIDs, " sets.");
+	print CGI::p({},$r->maketext("Showing"), " ", scalar @visibleSetIDs, " ", $r->maketext("out of"), " ", scalar @allSetIDs, $r->maketext("sets").".");
 	
 	$self->printTableHTML(\@Sets, \%prettyFieldNames,
 		editMode => $editMode,
@@ -644,21 +644,22 @@ sub getTableParams {
 
 sub filter_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
 	#return CGI::table({}, CGI::Tr({-valign=>"top"},
 	#	CGI::td({}, 
 	return join("", 
-			"Show ",
+			$r->maketext("Show")." ",
 			CGI::popup_menu(
 				-name => "action.filter.scope",
 				-values => [qw(all none selected match_ids visible unvisible)],
 				-default => $actionParams{"action.filter.scope"}->[0] || "match_ids",
 				-labels => {
-					all => "all sets",
-					none => "no sets",
-					selected => "sets checked below",
-					visible => "sets visible to students",
-					unvisible => "sets hidden from students", 
-					match_ids => "sets with matching set IDs:",
+					all => $r->maketext("all sets"),
+					none => $r->maketext("no sets"),
+					selected => $r->maketext("sets checked below"),
+					visible => $r->maketext("sets visible to students"),
+					unvisible => $r->maketext("sets hidden from students"), 
+					match_ids => $r->maketext("sets with matching set IDs:"),
 				},
 				-onchange => $onChange,
 			),
@@ -669,7 +670,7 @@ sub filter_form {
 				-width => "50",
 				-onchange => $onChange,
 			),
-			" (separate multiple IDs with commas)",
+			" (".$r->maketext("separate multiple IDs with commas").")",
 			CGI::br(),
 #			"Open dates: ",
 #			CGI::popup_menu(
@@ -748,36 +749,38 @@ sub filter_handler {
 
 sub sort_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
+
 	return join ("",
-		"Primary sort: ",
+		$r->maketext("Primary sort").": ",
 		CGI::popup_menu(
 			-name => "action.sort.primary",
 			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
 			-default => $actionParams{"action.sort.primary"}->[0] || "due_date",
 			-labels => {
-				set_id		=> "Set Name",
-				set_header 	=> "Set Header",
-				hardcopy_header	=> "Hardcopy Header",
-				open_date	=> "Open Date",
-				due_date	=> "Due Date",
-				answer_date	=> "Answer Date",
-				visible	=> "Visibility",
+				set_id		=> $r->maketext("Set Name"),
+				set_header 	=> $r->maketext("Set Header"),
+				hardcopy_header	=> $r->maketext("Hardcopy Header"),
+				open_date	=> $r->maketext("Open Date"),
+				due_date	=> $r->maketext("Due Date"),
+				answer_date	=> $r->maketext("Answer Date"),
+				visible	=> $r->maketext("Visibility"),
 			},
 			-onchange => $onChange,
 		),
-		" Secondary sort: ",
+		" ".$r->maketext("Secondary sort").": ",
 		CGI::popup_menu(
 			-name => "action.sort.secondary",
 			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
 			-default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
 			-labels => {
-				set_id		=> "Set Name",
-				set_header 	=> "Set Header",
-				hardcopy_header	=> "Hardcopy Header",
-				open_date	=> "Open Date",
-				due_date	=> "Due Date",
-				answer_date	=> "Answer Date",
-				visible	=> "Visibility",
+				set_id		=> $r->maketext("Set Name"),
+				set_header 	=> $r->maketext("Set Header"),
+				hardcopy_header	=> $r->maketext("Hardcopy Header"),
+				open_date	=> $r->maketext("Open Date"),
+				due_date	=> $r->maketext("Due Date"),
+				answer_date	=> $r->maketext("Answer Date"),
+				visible	=> $r->maketext("Visibility"),
 			},
 			-onchange => $onChange,
 		),
@@ -810,17 +813,18 @@ sub sort_handler {
 
 sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
 
 	return join("",
-		"Edit ",
+		$r->maketext("Edit")." ",
 		CGI::popup_menu(
 			-name => "action.edit.scope",
 			-values => [qw(all visible selected)],
 			-default => $actionParams{"action.edit.scope"}->[0] || "selected",
 			-labels => {
-				all => "all sets",
-				visible => "visible sets",
-				selected => "selected sets",
+				all => $r->maketext("all sets"),
+				visible => $r->maketext("visible sets"),
+				selected => $r->maketext("selected sets"),
 			},
 			-onchange => $onChange,
 		),
@@ -850,18 +854,18 @@ sub edit_handler {
 
 sub publish_form {
 	my ($self, $onChange, %actionParams) = @_;
-
+	my $r = $self->r;
 	return join ("",
-		"Make ",
+		$r->maketext("Make")." ",
 		CGI::popup_menu(
 			-name => "action.publish.scope",
 			-values => [ qw(none all selected) ],
 			-default => $actionParams{"action.publish.scope"}->[0] || "selected",
 			-labels => {
 				none => "",
-				all => "all sets",
+				all => $r->maketext("all sets"),
 #				visible => "visible sets",
-				selected => "selected sets",
+				selected => $r->maketext("selected sets"),
 			},
 			-onchange => $onChange,
 		),
@@ -870,12 +874,12 @@ sub publish_form {
 			-values => [ 0, 1 ],
 			-default => $actionParams{"action.publish.value"}->[0] || "1",
 			-labels => {
-				0 => "hidden",
-				1 => "visible",
+				0 => $r->maketext("hidden"),
+				1 => $r->maketext("visible"),
 			},
 			-onchange => $onChange,
 		),
-		" for students.",
+		" ".$r->maketext("for students").".",
 	);
 }
 
@@ -918,6 +922,7 @@ sub publish_handler {
 }
 sub enable_reduced_scoring_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
 
 	return join ("",
 		"Make ",
@@ -927,9 +932,9 @@ sub enable_reduced_scoring_form {
 			-default => $actionParams{"action.enable_reduced_scoring.scope"}->[0] || "selected",
 			-labels => {
 				none => "",
-				all => "all sets",
+				all => $r->maketext("all sets"),
 #				visible => "visible sets",
-				selected => "selected sets",
+				selected => $r->maketext("selected sets"),
 			},
 			-onchange => $onChange,
 		),
@@ -987,6 +992,7 @@ sub enable_reduced_scoring_handler {
 
 sub score_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
 
 	return join ("",
 		"Score ",
@@ -995,9 +1001,9 @@ sub score_form {
 			-values => [qw(none all selected)],
 			-default => $actionParams{"action.score.scope"}->[0] || "none",
 			-labels => {
-				none => "no sets.",
-				all => "all sets.",
-				selected => "selected sets.",
+				none => $r->maketext("no sets").".",
+				all => $r->maketext("all sets").".",
+				selected => $r->maketext("selected sets").".",
 			},
 			-onchange => $onChange,
 		),
@@ -1043,22 +1049,23 @@ sub score_handler {
 
 sub delete_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
 
 	return join("",
 		CGI::div({class=>"ResultsWithError"}, 
-			"Delete ",
+			$r->maketext("Delete")." ",
 			CGI::popup_menu(
 				-name => "action.delete.scope",
 				-values => [qw(none selected)],
 				-default => "none", #  don't make it easy to delete # $actionParams{"action.delete.scope"}->[0] || "none",
 				-labels => {
-					none => "no sets.",
+					none => $r->maketext("no sets").".",
 					#visible => "visible sets.",
-					selected => "selected sets.",
+					selected => $r->maketext("selected sets").".",
 				},
 				-onchange => $onChange,
 			),
-			CGI::em(" Deletion destroys all set-related data and is not undoable!"),
+			CGI::em(" ".$r->maketext("Deletion destroys all set-related data and is not undoable!")),
 		)
 	);
 }
@@ -1104,21 +1111,21 @@ sub create_form {
 
 	my $r      = $self->r;
 	
-	return "Create a new set named: ", 
+	return $r->maketext($r->maketext("Create a new set named:"))." ", 
 		CGI::textfield(
 			-name => "action.create.name",
 			-value => $actionParams{"action.create.name"}->[0] || "",
 			-width => "50",
 			-onchange => $onChange,
 		),
-		" as ",
+		" ".$r->maketext("as")." ",
 		CGI::popup_menu(
 			-name => "action.create.type",
 			-values => [qw(empty copy)],
 			-default => $actionParams{"action.create.type"}->[0] || "empty",
 			-labels => {
-				empty => "a new empty set.",
-				copy => "a duplicate of the first selected set.",
+				empty => $r->maketext("a new empty set").".",
+				copy => $r->maketext("a duplicate of the first selected set").".",
 			},
 			-onchange => $onChange,
 		);
@@ -1217,27 +1224,27 @@ sub import_form {
 			);
 	
 	return join(" ",
-		"Import ",
+		$r->maketext("Import")." ",
 		CGI::popup_menu(
 			-name => "action.import.number",
 			-values => [ 1, 8 ],
 			-default => $actionParams{"action.import.number"}->[0] || "1",
 			-labels => {
-				1 => "a single set",
-				8 => "multiple sets",
+				1 => $r->maketext("a single set"),
+				8 => $r->maketext("multiple sets"),
 			},
 			-onchange => "$onChange;$importScript",
 		),
-		" from ", # set definition file(s) ",
+		" ".$r->maketext("from")." ", # set definition file(s) ",
 		CGI::popup_menu(
 			-name => "action.import.source",
 			-values => [ "", $self->getDefList() ],
-			-labels => { "" => "the following file(s)" },
+			-labels => { "" => $r->maketext("the following file(s)") },
 			-default => $actionParams{"action.import.source"}->[0] || "",
 			-size => $actionParams{"action.import.number"}->[0] || "1",
 			-onchange => $onChange,
 		),
-		" with set name(s): ",
+		" ".$r->maketext("with set name(s):")." ",
 		CGI::textfield(
 			-name => "action.import.name",
 			-value => $actionParams{"action.import.name"}->[0] || "",
@@ -1246,14 +1253,14 @@ sub import_form {
 		),
 		($authz->hasPermissions($user, "assign_problem_sets")) 
 			?
-			"assigning this set to " .
+			$r->maketext("assigning this set to")." " .
 			CGI::popup_menu(
 				-name => "action.import.assign",
 				-value => [qw(user all)],
 				-default => $actionParams{"action.import.assign"}->[0] || "user",
 				-labels => {
-					all => "all current users.",
-					user => "only $user.",
+					all => $r->maketext("all current users").".",
+					user => $r->maketext("only")." ".$user.".",
 				},
 				-onchange => $onChange,
 			)
@@ -1289,6 +1296,7 @@ sub import_handler {
 
 sub export_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
 
 	return join("",
 		"Export ",
@@ -1297,9 +1305,9 @@ sub export_form {
 			-values => [qw(all visible selected)],
 			-default => $actionParams{"action.export.scope"}->[0] || "visible",
 			-labels => {
-				all => "all sets",
-				visible => "visible sets",
-				selected => "selected sets",
+				all => $r->maketext("all sets"),
+				visible => $r->maketext("visible sets"),
+				selected => $r->maketext("selected sets"),
 			},
 			-onchange => $onChange,
 		),
@@ -1394,7 +1402,8 @@ sub saveExport_handler {
 
 sub cancelEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Abandon changes";
+	my $r = $self->r;
+	return $r->maketext("Abandon changes");
 }
 
 sub cancelEdit_handler {
@@ -1417,7 +1426,8 @@ sub cancelEdit_handler {
 
 sub saveEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Save changes";
+	my $r = $self->r;
+	return $r->maketext("Save changes");
 }
 
 sub saveEdit_handler {
@@ -2169,7 +2179,7 @@ sub recordEditHTML {
 	my $setSelected = $options{setSelected};
 
 	my $visibleClass = $Set->visible ? "visible" : "hidden";
-	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? 'Reduced Credit Enabled' : 'Reduced Credit Disabled';
+	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Credit Enabled') : $r->maketext('Reduced Credit Disabled');
 
 	my $users = $db->countSetUsers($Set->set_id);
 	my $totalUsers = $self->{totalUsers};
@@ -2258,8 +2268,8 @@ sub recordEditHTML {
 		$properties{access} = "readonly" unless $editMode;
 		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
-		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /visible/ and not $editMode;
-		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /enable_reduced_scoring/ and not $editMode;
+		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
+		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
 		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
@@ -2327,9 +2337,9 @@ sub printTableHTML {
 
 	# print the table
 	if ($editMode or $exportMode) {
-		print CGI::start_table({});
+		print CGI::start_table({id=>"set_table_id", class=>"set_table"});
 	} else {
-		print CGI::start_table({-border=>1});
+		print CGI::start_table({-class=>"set_table", id=>"set_table_id"});
 	}
 	
 	print CGI::Tr({}, CGI::th({}, \@tableHeadings));

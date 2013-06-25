@@ -1,0 +1,274 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/templates/math3/system.template,v 1.2 2008/06/26 19:46:02 gage Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/jquery.js"></script>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
+
+<!--#if can="output_tabber_CSS"-->
+<script type="text/javascript">
+var tabberOptions = {manualStartup:true};
+</script>
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
+<!--#endif-->
+<!--#if can="output_jquery_ui_CSS"-->
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+<!--#endif-->
+<!--#if can="output_JS"-->
+	<!--#output_JS-->
+<!--#endif-->
+
+<!--
+    Kludge to get around the fact that some modules load jquery, which clobbers
+    bootstrap above.  
+-->
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
+
+
+<title><!--#path style="text" text=" : " textonly="1"--></title>
+<!--#head-->
+</head>
+<body>
+<!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
+	<!--#output_wztooltip_JS-->
+<!--#endif-->
+
+
+<!-- Header -->
+<ul id="masthead">
+	<li class="webwork_logo">
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+	</li>
+	<li class="maa_logo">
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+	</li>
+	<li id="loginstatus">
+		<!--#loginstatus-->
+	</li>
+</ul>
+
+
+<!-- Bootstrap Fluid Layout Scaffolding start -->
+<div class="container-fluid">
+<div class="row-fluid">
+
+
+<!-- Navigation -->
+<div id="site-navigation" class="span2">
+	<!--#if can="links"-->
+		<!--#links-->
+	<!--#endif-->
+	<!--#if can="siblings"-->
+		<!--#siblings-->
+	<!--#endif-->
+	<!--#if can="options"-->
+	<div class="info-box">
+		<!--#options-->
+	</div>
+	<!--#endif-->
+</div>
+
+
+<!-- Main Content Area -->
+<div id="content" class="span10" >
+	<!-- Breadcrumb -->
+	<ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+	</ul>
+
+	<!-- Page Title -->
+	<!--#if can="title"-->
+		<h2 class='page-title'><!--#title --></h2>
+	<!--#endif-->
+
+	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
+	<!--#if can="nav"-->
+		<div class="problem-nav">
+		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
+		</div>
+	<!--#endif-->
+
+	<!-- Message for the user -->
+	<!--#if can="message"-->
+		<div class="Message">
+			<!--#message-->
+		</div>
+	<!--#endif-->
+	
+	<!-- No clue what this is --> 
+	<!--#if can="post_header_text"-->
+		<!--#post_header_text-->
+	<!--#endif-->
+    <div class="barrier"></div>
+<!--	==============BEGIN BODY OF PROBLEM===============	-->
+
+	<!-- Indicate presence of perl warnings -->
+	<!--#if warnings="1"-->
+		<div class="alert alert-error">
+			<strong>Warning</strong> -- there may be something wrong with this question. Please inform your instructor including the warning messages below.
+		</div>
+	<!--#endif-->
+             
+	<!--#if can="output_tag_info"-->
+		<!--#output_tag_info-->
+	<!--#endif-->
+
+	 <!--#if can="output_problem_body"--> 
+		<!-- ==== in this case print body parts --ELSE-- print entire body -->
+		  <div class="Body">
+
+			<!--#if can="output_custom_edit_message"-->
+				<!--#output_custom_edit_message-->
+			<!--#endif-->
+			<!--#if can="output_summary"-->
+				<div>
+					<!--#output_summary-->
+				</div>
+			<!--#endif-->
+
+			<!--#if can="output_achievement_message"-->
+				<div>
+					<!--#output_achievement_message-->
+				</div>
+			<!--#endif-->
+			
+			<!--#if can="output_comments" "-->
+			<div>
+				  <!--#output_comments-->
+			</div>
+			<!--#endif-->
+				
+
+
+			<!--#if can="output_hidden_info"-->
+				<!--#output_hidden_info-->
+			<!--#endif-->
+
+			<!--#if can="output_form_start"-->
+				<!--#output_form_start-->
+
+				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
+					<div class="problem">
+						<!--#if can="output_problem_body"-->
+							<!--#output_problem_body-->
+						<!--#endif-->
+						<!--#if can="output_message"-->
+							<!--#output_message-->
+						<!--#endif-->
+						<!--#if can="output_editorLink"-->
+							<!--#output_editorLink-->
+						<!--#endif-->
+					</div>
+				<!--#endif-->
+				<div class="barrier"></div>
+
+				<!--#if can="output_checkboxes" can="output_submit_buttons"-->
+					<p>
+						<!--#if can="output_checkboxes"-->
+							<!--#output_checkboxes-->
+						<!--#endif-->
+						<!--#if can="output_submit_buttons"-->
+							<!--#output_submit_buttons-->
+						<!--#endif-->
+					</p>
+				<!--#endif-->
+				<!--#if can="output_score_summary"-->
+					<div class="scoreSummary">
+						<!--#output_score_summary-->
+					</div>
+				<!--#endif-->
+				<!--#if can="output_misc"-->
+					<!--#output_misc-->
+				<!--#endif-->
+				</form>
+			<!--#endif-->
+
+		<!-- inserted problem piece by piece -->
+
+		<!--#if can="info"-->
+			<p>Form2</p>
+			<!--  styles could be different for different pages so they are not set here -->
+			<div id="info-panel-right" >
+			<!--#info-->
+			</div>
+		<!--#endif-->
+         </div>	  
+	<!-- ====  end printing body parts   -->
+	<!--#else-->
+	<!-- ==== couldn't print body parts so we'll print entire body -->	
+		<div class="body <!--#if can="info"-->shrinkbody<!--#endif-->">
+			<!--#body-->
+		</div>
+		<!-- inserted body as a whole -->
+		<!--#if can="info"-->
+		<div id="info-panel-right" class="info-box">
+			<!--  styles could be different for different pages so they are not set here -->
+			<!--#info-->
+		</div>
+		<!--#endif-->
+	<!--#endif-->  
+
+<!--			      ==============END BODY OF PROBLEM===============      -->
+	<!--#if can="output_past_answer_button" can="output_email_instructor"-->
+		<div class="problemFooter">
+			<!--#if can="output_past_answer_button"-->
+				<!--#output_past_answer_button-->
+			<!--#endif-->
+			<!--#if can="output_email_instructor"-->
+				<!--#output_email_instructor-->
+			<!--#endif-->
+		</div>
+	<!--#endif-->
+
+<!--#if warnings="1"-->
+<div class="Warnings alert alert-error">
+	<!--#warnings-->
+</div>
+<!--#endif-->
+<!--#if can="message"-->
+<div class="Message">
+  <!--#message-->
+</div>
+<!--#endif-->
+		
+</div><!--content-->
+
+
+<!-- Bootstrap Fluid Layout Scaffolding stop -->
+</div> <!-- row-fluid -->
+</div> <!-- container-fluid -->
+
+
+<!-- Footer -->
+<div id="footer">
+	<!--#footer-->
+</div>
+
+</body>
+</html>

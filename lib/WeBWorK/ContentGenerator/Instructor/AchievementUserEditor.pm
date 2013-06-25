@@ -140,7 +140,7 @@ sub body {
 		
 	# DBFIXME duplicate call
 	my @users = $db->listUsers;
-	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
+	print CGI::start_form({name=>"user-achievement-form", id=>"user-achievement-form", method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
 	 
 	# Assign to everyone message
 	print CGI::p(

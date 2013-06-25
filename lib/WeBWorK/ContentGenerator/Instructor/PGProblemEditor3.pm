@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.99 2010/05/18 18:39:40 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -124,7 +124,14 @@ use Fcntl;
 # save_to_new_file
 # 
 
-use constant ACTION_FORMS => [qw(view add_problem save save_as  revert)]; 
+use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
+use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
+view        => "View",
+add_problem => "Append",
+save        => "Update",
+save_as     => "NewVersion",
+revert      => "Revert",
+};
 #[qw(view save save_as revert add_problem add_header make_local_copy)];
 
 # permissions needed to perform a given action
@@ -596,7 +603,7 @@ sub body {
 	# FIXME 
 	# Should the seed be set from some particular user instance??
 	my $rows            = 20;
-	my $columns         = 70;
+	my $columns         = 80;
 	my $mode_list       = $ce->{pg}->{displayModes};
 	my $displayMode     = $self->{displayMode};
 	my $problemSeed     = $self->{problemSeed};	
@@ -675,6 +682,7 @@ EOF
 			#print CGI::Tr({}, CGI::td({-colspan=>2}, "Select an action to perform:"));
 			
 			my @formsToShow = @{ ACTION_FORMS() };
+			my %actionFormTitles = %{ACTION_FORM_TITLES()};
 			my $default_choice = $formsToShow[0];
 			my $i = 0;
 			
@@ -733,9 +741,7 @@ EOF
 					# CGI::td({}, $line_contents)
 				# ) if $line_contents;
 				if($line_contents){
-					my @titleArr = split(" ", ucfirst(WeBWorK::underscore_to_whitespace($actionForm)));
-					pop @titleArr;
-					my $title = join(" ", @titleArr);
+					my $title = $actionFormTitles{$actionID};
 					push @divArr, join("",
 					CGI::h3($title),
 					CGI::div({-class=>"pg_editor_input_span"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionForm."_id", -label_text=>ucfirst(WeBWorK::underscore_to_whitespace($actionForm)), -input_attr=>$radio_params),CGI::br()),
@@ -760,11 +766,22 @@ EOF
 	
 	print  CGI::end_form();
 
+	print CGI::start_div({id=>"render-modal", class=>"modal hide fade"});
+	print CGI::start_div({class=>'modal-header'});
+	print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
+	print CGI::h3("Problem Viewer"); 
+	print CGI::end_div();
+	print CGI::start_div({class=>"modal-body"});
 	print CGI::script("updateTarget()");
-	
-	print CGI::h3({-id=>"pg_editor_header"}, "Problem Viewer");
-	print CGI::start_iframe({-id=>"pg_editor_frame_id", -name=>"pg_editor_frame"});
+	print CGI::start_iframe({id=>"pg_editor_frame_id", name=>"pg_editor_frame"});
 	print CGI::end_iframe();
+	print CGI::end_div();
+	print CGI::start_div({-class=>"modal-footer"});
+	print CGI::button({type=>"button", value=>"Close", "data-dismiss"=>"modal"});
+	print CGI::end_div();
+	print CGI::end_div();
+
+#	print CGI::a({href=>"#render-modal", role=>"button", class=>"btn", "data-toggle"=>"modal"},"Launch demo modal");
 	
 	return "";
 
@@ -1307,7 +1324,7 @@ sub view_handler {
 	my $displayMode     = ($actionParams->{'action.view.displayMode'}) ? 
 	                                $actionParams->{'action.view.displayMode'}->[0]  
 	                                : $self->r->ce->{pg}->{options}->{displayMode};
-						
+	                                
 	my $editFilePath        = $self->{editFilePath};
 	my $tempFilePath        = $self->{tempFilePath};
 	########################################################                               
@@ -1455,7 +1472,7 @@ sub add_problem_form {
 
 sub add_problem_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my $r=>$self->r;
+	my $r= $self->r;
 	#$self->addgoodmessage("add_problem_handler called");
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
@@ -1550,7 +1567,7 @@ sub save_form {
 		return "";  #Can't save blank problems without changing names
 	} elsif (-w $self->{editFilePath}) {
 
-		return "Save ".CGI::b($self->shortPath($self->{editFilePath}))." and View";	
+		return "Save to ".CGI::b($self->shortPath($self->{editFilePath}))." and View";	
 
 	} else {
 		return ""; #"Can't save -- No write permission";
@@ -1749,7 +1766,7 @@ sub save_as_form {  # calls the save_as_handler
 	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest a file path to save to.
    
 
-	my $probNum = ($self->{file_type} eq 'problem')? "/problem $self->{problemID}" : "";
+	my $probNum = ($self->{file_type} eq 'problem')? "$self->{problemID}" : "header";
 	my $andRelink = '';
 # 	$andRelink = CGI::br().' and '.CGI::checkbox(
 # 				-name => "action.save_as.saveMode",
@@ -1772,9 +1789,10 @@ sub save_as_form {  # calls the save_as_handler
     			 # -value     => "rename",
     			 # -label     => '',
 			 # },"and replace ".CGI::b("set $fullSetID$probNum").',') 
-			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>'action_save_as_saveMode_rename_id', -label_text=>"Replace ".CGI::b("set $fullSetID$probNum"), -input_attr=>{
-			 -name      => "action.save_as.saveMode",
-    		 -value     => "rename",
+			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>'action_save_as_saveMode_rename_id', -label_text=>"Replace current problem: ".CGI::strong("$fullSetID/$probNum"), -input_attr=>{
+			 	name      => "action.save_as.saveMode",
+    		 	value     => "rename",
+    		 	checked    =>1,
 			 }).CGI::br() : ''
     ;
     my $add_problem_to_set      = ($can_add_problem_to_set)?
@@ -1785,7 +1803,7 @@ sub save_as_form {  # calls the save_as_handler
     			 # -label     => '',
     			 # -onfocus   => $onChange,
     		 # },"and append to end of set $fullSetID",) : ''
-			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_new_problem_id", -label_text=>"Append to end of set $fullSetID", -input_attr=>{
+			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_new_problem_id", -label_text=>"Append to end of ". CGI::strong("$fullSetID")." set", -input_attr=>{
 				 -name      => "action.save_as.saveMode",
     			 -value     => 'add_to_set_as_new_problem',
 				 -onfocus   => $onChange,
@@ -1798,7 +1816,7 @@ sub save_as_form {  # calls the save_as_handler
     			 -onfocus   => $onChange,
     			 };
     $rh_new_problem_options->{checked}=1 unless $can_add_problem_to_set;
-    my $create_new_problem       =  WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_independent_problem_id", -label_text=>"Append as new independent problem", -input_attr=>$rh_new_problem_options).CGI::br(); #CGI::input($rh_new_problem_options,"as a new independent problem");
+    my $create_new_problem       =  WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_independent_problem_id", -label_text=>"Create unattached problem", -input_attr=>$rh_new_problem_options).CGI::br(); #CGI::input($rh_new_problem_options,"as a new independent problem");
     
     $andRelink = CGI::br(). $replace_problem_in_set . $add_problem_to_set . $create_new_problem;
     			 
@@ -1807,8 +1825,8 @@ sub save_as_form {  # calls the save_as_handler
 			       # -name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  
 			       # -onfocus=>$onChange
 			      # ).",".
-			WeBWorK::CGI_labeled_input(-type=>"text", -id=>"action_save_as_target_file_id", -label_text=>"Save AS [TMPL]/", -input_attr=>{
-				-name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",  
+			WeBWorK::CGI_labeled_input(-type=>"text", -id=>"action_save_as_target_file_id", -label_text=>"Save file to: [TMPL]/", -input_attr=>{
+				-name=>'action.save_as.target_file', -size=>40, -value=>"$shortFilePath",  
 			    -onfocus=>$onChange
 			}).
 			CGI::hidden(-name=>'action.save_as.source_file', -value=>$editFilePath ).
@@ -1817,7 +1835,7 @@ sub save_as_form {  # calls the save_as_handler
 }
 # suggestions for improvement
 # save as ......
-# ¥replacing foobar (rename) ¥ and add to set (add_new_problem) ¥ as an independent file (new_independent_problem)
+# â€¢replacing foobar (rename) â€¢ and add to set (add_new_problem) â€¢ as an independent file (new_independent_problem)
  
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
@@ -2027,10 +2045,12 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
+#	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/pg_editor_handlers.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
+
 	
 	return "";
 }

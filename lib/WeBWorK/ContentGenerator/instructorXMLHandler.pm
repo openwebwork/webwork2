@@ -194,6 +194,9 @@ sub pre_header_initialize {
 		     command     	 =>   $r->param("command") ||undef,
 		     subcommand		 =>   $r->param("subcommand") ||undef,
 		     maxdepth		 =>	  $r->param("maxdepth") || 0,
+		     problemSeed	 =>	  $r->param("problemSeed") || 0,
+		     displayMode	 =>	  $r->param("displayMode") || undef,
+		     noprepostambles	 =>	  $r->param("noprepostambles") || undef,
 		     library_subjects	=> 	$r->param("library_subjects") ||undef,
 		     library_chapters	=> 	$r->param("library_chapters") ||undef,
 		     library_sections	=> 	$r->param("library_sections") ||undef,
@@ -232,6 +235,8 @@ sub pre_header_initialize {
 	
 	my $std_input = standard_input();
 	$input = {%$std_input, %$input};
+	# Fix the environment display mode
+	$input->{envir}->{displayMode} = $input->{displayMode} if($input->{displayMode});
 	
 	##########################################
 	# FIXME hack to get fileName or filePath   param("set") contains the path
@@ -378,7 +383,7 @@ sub environment {
 		numZeroLevelDefault =>0.000001,
 		numZeroLevelTolDefault =>0.000001,
 		openDate=> '3014438528',
-		PRINT_FILE_NAMES_FOR => [ 'gage'],
+		PRINT_FILE_NAMES_FOR => [ ],
 		probFileName => 'probFileName should not be used --use fileName instead',
 		problemSeed  => 1234,
 		problemValue =>1,

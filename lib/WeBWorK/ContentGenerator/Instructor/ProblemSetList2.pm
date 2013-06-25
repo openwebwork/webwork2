@@ -85,6 +85,8 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
 
+use WeBWorK::Utils::DatePickerScripts;
+
 use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_VISIBILITY_STATE => 1;
 use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
@@ -94,7 +96,7 @@ use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
@@ -499,7 +501,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"problemsetlist2", -class=>"edit_form", -id=>"edit_form_id"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"problemsetlist2", name=>"problemsetlist", -class=>"edit_form", -id=>"edit_form_id"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -560,15 +562,10 @@ sub body {
 			# CGI::td({}, $self->$actionForm($onChange, %actionParams))
 		# );
 		
-		my $extraspace = (ucfirst(WeBWorK::split_cap($actionID)) eq "Filter") ? "" : CGI::br();
-		
 		push @divArr, join("",
 			CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
 			CGI::span({-class=>"radio_span"}, WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
-			CGI::br(),
 			$self->$actionForm($onChange, %actionParams),
-			CGI::br(),
-			$extraspace,
 		);
 		$i++;
 	}
@@ -600,7 +597,7 @@ sub body {
 	########## print table
 	
 	########## first adjust heading if in editMode
-	$prettyFieldNames{set_id} = $r->maketext("Edit All Set Data") if $editMode;
+	$prettyFieldNames{set_id} = $r->maketext("Edit Set") if $editMode;
 	$prettyFieldNames{enable_reduced_scoring} = $r->maketext('Enable Reduced Credit') if $editMode;
 	
 	
@@ -1321,11 +1318,11 @@ sub import_form {
 				-label_text=>$r->maketext("Assign this set to which users?").": ",
 				-input_attr=>{
 					-name => "action.import.assign",
-					-value => [qw(all none)],
+					-value => [qw(all user)],
 					-default => $actionParams{"action.import.assign"}->[0] || "none",
 					-labels => {
-						all => $r->maketext("all users"),
-						none => $r->maketext("no users"),
+						all => $r->maketext("all current users").".",
+						user => $r->maketext("only")." ".$user.".",
 					},
 					-onchange => $onChange,
 				}
@@ -2176,7 +2173,7 @@ sub fieldEditHTML {
 	
 	if ($type eq "number" or $type eq "text") {
 		my $id = $fieldName."_id";
-		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>"", size=>$size});
+		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>$value, size=>$size, class=>"table-input"});
 		my $content = "";
 		my $bareName = "";
 		my $timezone = substr($value, -3);
@@ -2185,105 +2182,23 @@ sub fieldEditHTML {
 			my @temp = split(/.open_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			$content = <<"CONTENT";
-\$('#$bareName\\\\.open_date_id').datetimepicker({
-	ampm: true,
-	timeFormat: 'hh:mmtt',
-	timeSuffix: ' $timezone',
-	separator: ' at ',
-    onClose: function(dateText, inst) {
-        var dueDateTextBox = \$('#$bareName\\\\.due_date_id');
-        if (dueDateTextBox.val() != '') {
-            var testopenDate = new Date(dateText);
-            var testdueDate = new Date(dueDateTextBox.val());
-            if (testopenDate > testdueDate)
-                dueDateTextBox.val(dateText);
-        }
-        else {
-            dueDateTextBox.val(dateText);
-        }
-    },
-    onSelect: function (selectedDateTime){
-        var open = \$(this).datetimepicker('getDate');
-		var open_obj = new Date(open.getTime());
-        \$('#$bareName\\\\.due_date_id').datetimepicker('option', 'minDate', open_obj);
-    }
-});
-CONTENT
+			#$content = WeBWorK::Utils::DatePickerScripts::open_date_script($bareName, $timezone);
 		}
 		elsif(index($fieldName, ".due_date") != -1){
 			my @temp = split(/.due_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			$content = <<"CONTENT";
-\$('#$bareName\\\\.due_date_id').datetimepicker({
-	ampm: true,
-	timeFormat: 'hh:mmtt',
-	timeSuffix: ' $timezone',
-	separator: ' at ',
-    onClose: function(dateText, inst) {
-		var openDateTextBox = \$('#$bareName\\\\.open_date_id');
-        var answersDateTextBox = \$('#$bareName\\\\.answer_date_id');
-
-        if (openDateTextBox.val() != '') {
-            var testopenDate = new Date(openDateTextBox.val());
-			var testdueDate = new Date(dateText);
-            if (testopenDate > testdueDate)
-                openDateTextBox.val(dateText);
-        }
-        else {
-            openDateTextBox.val(dateText);
-        }
-
-		if (answersDateTextBox.val() != '') {
-			var testdueDate = new Date(dateText);
-			var testanswersDate = new Date(answersDateTextBox.val());
-			if(testdueDate > testanswersDate)
-				answersDateTextBox.val(dateText);
-		}
-		else {
-			answersDateTextBox.val(dateText);
-		}
-    },
-    onSelect: function (selectedDateTime){
-        var due = \$(this).datetimepicker('getDate');
-        \$('#$bareName\\\\.open_date_id').datetimepicker('option', 'maxDate', new Date(due.getTime()));
-		\$('#$bareName\\\\.answer_date_id').datetimepicker('option', 'minDate', new Date(due.getTime()));
-    }
-});
-CONTENT
+			#$content = WeBWorK::Utils::DatePickerScripts::due_date_script($bareName, $timezone);
 		}
 		elsif(index($fieldName, ".answer_date") != -1){
 			my @temp = split(/.answer_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			$content = <<"CONTENT";
-\$('#$bareName\\\\.answer_date_id').datetimepicker({
-	ampm: true,
-	timeFormat: 'hh:mmtt',
-	timeSuffix: ' $timezone',
-	separator: ' at ',
-    onClose: function(dateText, inst) {
-        var dueDateTextBox = \$('#$bareName\\\\.due_date_id');
-        if (dueDateTextBox.val() != '') {
-            var testdueDate = new Date(dueDateTextBox.val());
-            var testanswersDate = new Date(dateText);
-            if (testdueDate > testanswersDate)
-                dueDateTextBox.val(dateText);
-        }
-        else {
-            dueDateTextBox.val(dateText);
-        }
-    },
-    onSelect: function (selectedDateTime){
-        var answers = \$(this).datetimepicker('getDate');
-        \$('#$bareName\\\\.due_date_id').datetimepicker('option', 'maxDate', new Date(answers.getTime()));
-    }
-});
-CONTENT
+			#$content = WeBWorK::Utils::DatePickerScripts::answer_date_script($bareName, $timezone);
 		}
 		
-		push @$dateTimeScripts, $content;
+		#push @$dateTimeScripts, $content;
+		push @$dateTimeScripts, WeBWorK::Utils::DatePickerScripts::date_scripts($bareName,$timezone);
 		return $out;
 	}
 	
@@ -2334,10 +2249,12 @@ CONTENT
 		# FIXME: kludge (R)
 		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		# in which case the hidden field overrides the parameter with a 0
+		# kludge 2  -- get visible and reduced scoring to have no names (might reduce accessibility)
+		# my $label_text = $properties->{label_text} || "NoLabel";
 		return WeBWorK::CGI_labeled_input(
 			-type=>"checkbox",
 			-id=>$fieldName."_id",
-			-label_text=>ucfirst($fieldName),
+			-label_text=>"", #$label_text,
 			-input_attr=>{
 				-name => $fieldName,
 				-checked => $value,
@@ -2399,17 +2316,16 @@ sub recordEditHTML {
 					
 	
 	# Select
+	my $label="";
+	my $label_text="";
 	if ($editMode) {
 		# column not there
+		$label_text = CGI::a({href=>$problemListURL}, "$set_id");
 	} else {
 		# selection checkbox
-		# Set ID
-		my $label = "";
-		if ($editMode) {
-			$label = CGI::a({href=>$problemListURL}, "$set_id");
-		} else {		
-			$label = CGI::font({class=>$visibleClass}, $set_id . $imageLink);
-		}
+		# Set ID		
+		$label = CGI::font({class=>$visibleClass}, $set_id . $imageLink);
+
 		
 		push @tableCells, WeBWorK::CGI_labeled_input(
 			-type=>"checkbox",
@@ -2434,6 +2350,7 @@ sub recordEditHTML {
 	# Problems link
 	if ($editMode) {
 		# column not there
+		push @tableCells, $label_text;
 	} else {
 		# "problem list" link
 		push @tableCells, CGI::a({href=>$problemListURL}, "$problems");
@@ -2462,7 +2379,7 @@ sub recordEditHTML {
 	
 	my @chooseDateTimeScripts = ();
 	
-	push @chooseDateTimeScripts, "addOnLoadEvent(function() {";
+	#push @chooseDateTimeScripts, "addOnLoadEvent(function() {";
 
 	# Set Fields
 	foreach my $field (@fieldsToShow) {
@@ -2478,11 +2395,7 @@ sub recordEditHTML {
 		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
-	
-	push @chooseDateTimeScripts, "});";
-	
-	#@tableCells = map { $fakeRecord{$_} } @fieldsToShow;
-	
+		
 	my $out = CGI::Tr({}, CGI::td({}, \@tableCells));
 	my $scripts = CGI::start_script({-type=>"text/javascript"}).(join("", @chooseDateTimeScripts)).CGI::end_script();
 
@@ -2541,14 +2454,12 @@ sub printTableHTML {
 
 
 	my @tableHeadings = map { $fieldNames{$_} } @realFieldNames;
-	shift @tableHeadings;
+	#shift @tableHeadings;   # removed "select" so there is no need to shift headings -- checkbox occurs in column.
 	
-	# prepend selection checkbox? only if we're NOT editing!
-#	unshift @tableHeadings, "Select", "Set", "Problems" unless $editMode;
 
 	# print the table
 	if ($editMode or $exportMode) {
-		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
+		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY"). " This is a subset of all homework sets" });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	} else {
 		print CGI::start_table({-id=>"set_table_id", -border=>1, -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") }); #"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	}
@@ -2587,16 +2498,43 @@ sub output_JS{
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-
+	my $setID   = $r->urlpath->arg("setID");
+	my $timezone = $ce->{siteDefaults}{timezone};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
+    
+    print "\n\n<!-- add to header ProblemSetList2.pm -->";
+        
+	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
+
+	print q!<style> 
+	.ui-datepicker{font-size:85%} 
+	.auto-changed{background-color: #ffffcc} 
+	.changed {background-color: #ffffcc}
+    </style>!,"\n";
+    
+	# print javaScript for dateTimePicker	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script(),"\n";
+  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
+	
+	# these scripts (for specific courses) are printed from within fieldEditHTML
+#   print CGI::start_script({-type=>"text/javascript"}),"\n";
+# 	print "addOnLoadEvent(function() {\n";
+# 	print WeBWorK::Utils::DatePickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
+# 	print WeBWorK::Utils::DatePickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
+# 	print WeBWorK::Utils::DatePickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
+# 	print "});\n";
+# 	print CGI::end_script();
+	# print other javaScript
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script(),"\n";
+	print "\n\n<!-- END add to header ProblemSetList2.pm -->";
 	return "";
 }
 
