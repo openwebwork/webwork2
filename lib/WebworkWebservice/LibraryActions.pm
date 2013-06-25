@@ -159,8 +159,8 @@ sub listLib {
 	my $dirPath2 = $dirPath . ( ($rh->{dirPath}) ?  '/'.$rh->{dirPath}  : '' ) ;
 
 
-    my @tare = $dirPath2=~m|/|g; 
-    my $tare = @tare;     # counts number of "/" in dirPath prefix
+	my @tare = $dirPath2=~m|/|g; 
+	my $tare = @tare;     # counts number of "/" in dirPath prefix
 	my @outListLib;
 	my %libDirectoryList;
 	my $depthfinder = sub {   # counts depth below the current directory
@@ -267,6 +267,9 @@ sub searchLib {    #API for searching the NPL database
 	my $out = {};
 	my $ce = $self->{ce};
 	my $subcommand = $rh->{command};
+	if($rh->{library_levels}) {
+		$self->{level} = [split(//, $rh->{library_levels})];
+	}
 	
 	'getDBTextbooks' eq $subcommand && do {
 		$self->{library_subjects} = $rh->{library_subjects};

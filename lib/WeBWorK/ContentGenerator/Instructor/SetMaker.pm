@@ -541,9 +541,9 @@ sub browse_library_panel2 {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching pg files";
+		$count_line = "There are no matching WeBWorK problems";
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problem files";
+		$count_line = "There are $count_line matching WeBWorK problems";
 	}
 
 	print CGI::Tr({},
@@ -653,10 +653,26 @@ sub browse_library_panel2adv {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching pg files";
+		$count_line = "There are no matching WeBWorK problems";
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problem files";
+		$count_line = "There are $count_line matching WeBWorK problems";
 	}
+
+	# Formatting level checkboxes by hand
+	my @selected_levels_arr = $r->param('level');
+	my %selected_levels = ();
+	for my $j (@selected_levels_arr) {
+		$selected_levels{$j} = 1;
+	}
+	my $mylevelline = '<table width="100%"><tr>';
+	for my $j (1..6) {
+		my $selected = '';
+		$selected = ' checked' if(defined($selected_levels{$j}));
+		$mylevelline .= "<td><label><input type='checkbox' name='level' value='$j' ";
+		$mylevelline .= q/onchange="lib_update('count', 'clear');return true" /;
+		$mylevelline .= "$selected />$j</label></td>";
+	}
+	$mylevelline .= '</tr></table>';
 
 	print CGI::Tr({},
 	  CGI::td({-class=>"InfoPanel", -align=>"left"},
@@ -714,6 +730,10 @@ sub browse_library_panel2adv {
 					        -default=> $selected{textsection},
 							-onchange=>"submit();return true"
 		    )]),
+		 ),
+		 CGI::Tr({},
+				 CGI::td("Level:"),
+				 "<td>$mylevelline</td>"
 		 ),
 		 CGI::Tr({},
 		     CGI::td("Keywords:"),CGI::td({-colspan=>2},
@@ -1298,7 +1318,7 @@ sub pre_header_initialize {
 		@pg_files=();
 		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
 		@pg_files = process_search($r, @dbsearch);
-		$use_previous_problems=0; 
+		$use_previous_problems=0;
 
 		##### View a set from a set*.def
 
