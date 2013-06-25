@@ -47,7 +47,7 @@ sub get_credentials {
 	my $db = $r->db;
 	
 	if ( $ce->{cosignoff} ) {
-		return $self->SUPER::get_credentials( @_ );
+		return $self->SUPER::get_credentials( );
 	} else {
 		if ( defined( $ENV{'REMOTE_USER'} ) ) {
 			$self->{'user_id'} = $ENV{'REMOTE_USER'};
@@ -66,7 +66,8 @@ sub get_credentials {
 		$self->{'session_key'} = undef;
 		$self->{'password'} = 1;
 		$self->{'credential_source'} = "params";
-
+		$self->{login_type} = "cosign";
+		
 		return 1;
 	}
 }
@@ -75,7 +76,8 @@ sub site_checkPassword {
 	my ( $self, $userID, $clearTextPassword ) = @_;
 
 	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::checkPassword( @_ );
+	    return 0;
+		#return $self->SUPER::checkPassword( $userID, $clearTextPassword );
 	} else {
 		# this is easy; if we're here at all, we've authenticated
 		# through cosign
@@ -87,7 +89,7 @@ sub site_checkPassword {
 sub maybe_send_cookie {
 	my ($self, @args) = @_;
 	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::maybe_send_cookie( @_ );
+		return $self->SUPER::maybe_send_cookie( @args );
 	} else {
 		# nothing to do here
 	}
@@ -95,7 +97,7 @@ sub maybe_send_cookie {
 sub fetchCookie {
 	my ($self, @args) = @_;
 	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::fetchCookie( @_ );
+		return $self->SUPER::fetchCookie( @args );
 	} else {
 		# nothing to do here
 	}
@@ -103,7 +105,7 @@ sub fetchCookie {
 sub sendCookie {
 	my ($self, @args) = @_;
 	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::sendCookie( @_ );
+		return $self->SUPER::sendCookie( @args);
 	} else {
 		# nothing to do here
 	}
@@ -111,7 +113,7 @@ sub sendCookie {
 sub killCookie {
 	my ($self, @args) = @_;
 	if ( $self->{r}->ce->{cosignoff} ) {
-		return $self->SUPER::killCookie( @_ );
+		return $self->SUPER::killCookie( @args );
 	} else {
 		# nothing to do here
 	}
@@ -124,7 +126,7 @@ sub forget_verification {
 	my $r = $self->{r};
 
 	if ( $r->ce->{cosignoff} ) {
-		return $self->SUPER::forget_verification( @_ );
+		return $self->SUPER::forget_verification( @args);
 	} else {
 		$self->{was_verified} = 0;
 #		$r->headers_out->{"Location"} = $r->ce->{cosign_logout_script};

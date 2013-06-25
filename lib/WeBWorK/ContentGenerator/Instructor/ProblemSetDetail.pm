@@ -33,12 +33,13 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+use WeBWorK::Utils::DatePickerScripts;
 
 # Important Note: the following two sets of constants may seem similar 
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -98,10 +99,16 @@ use constant FIELD_PROPERTIES => {
 		module    => "hardcopy_preselect_set",
 		default   => "",		
 	},
+	description => {
+		name      => "Description",
+		type      => "edit",
+		override  => "all",
+		default   => "",
+	},
 	open_date => {
 		name      => "Opens",
 		type      => "edit",
-		size      => "26",
+		size      => "30em",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -111,7 +118,7 @@ use constant FIELD_PROPERTIES => {
 	due_date => {
 		name      => "Answers Due",
 		type      => "edit",
-		size      => "26",
+		size      => "30em",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -121,7 +128,7 @@ use constant FIELD_PROPERTIES => {
 	answer_date => {
 		name      => "Answers Available",
 		type      => "edit",
-		size      => "26",
+		size      => "30em",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -530,11 +537,14 @@ sub FieldHTML {
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = "";
 	if ($edit) {
-		$inputType = CGI::input({
+		$inputType = CGI::font({class=>"visible"}, CGI::input({
+		                type => "text",
 				name => "$recordType.$recordID.$field",
+				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
-		});
+		}));
+
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
 		# but $userValue and and $globalValue are the values in the hash not the keys
@@ -560,6 +570,7 @@ sub FieldHTML {
 			
 		$inputType = CGI::popup_menu({
 				name => "$recordType.$recordID.$field",
+				id   => "$recordType.$recordID.${field}_id",
 				values => $properties{choices},
 				labels => \%labels,
 				default => $value,
@@ -948,12 +959,17 @@ sub initialize {
 			$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
+			# grab short name for timezone
+			# used to set proper timezone name in datepicker
+
+			$self->{timezone_shortname} = substr($due_date, -3); #this is fragile
 
 	}
+	
 	if ($error) {
 		$self->addbadmessage($r->maketext("No changes were saved!"));
 	}
-	
+
 	if (defined $r->param('submit_changes') && !$error) {
 
 		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
@@ -1825,11 +1841,23 @@ sub body {
 	print CGI::Tr({}, CGI::td({}, [
 		$self->FieldTable($userToShow, $setID, undef, $setRecord, $userSetRecord),
 	]));
+
 	print CGI::end_table();	
 
 	# spacing
-	print CGI::p();
+	print CGI::start_p();
 
+	####################################################################
+	# Display Field for putting in a set description
+	####################################################################
+	print CGI::h5("Set Description");
+	print CGI::textarea({name=>"set.$setID.description",
+			     id=>"set.$setID.description",
+			     value=>$setRecord->description(),
+			     rows=>5,
+			     cols=>62,});
+
+	print CGI::end_p();
 	
 	#####################################################################
 	# Display header information
@@ -2168,6 +2196,40 @@ sub body {
 	return "";
 }
 
+
+sub output_JS {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $setID   = $r->urlpath->arg("setID");
+	my $timezone = $self->{timezone_shortname};
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	    print "\n\n<!-- add to header ProblemSetDetail.pm -->";
+	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
+
+	print q!<style> 
+	.ui-datepicker{font-size:85%} 
+	.auto-changed{background-color: #ffffcc} 
+	.changed {background-color: #ffffcc}
+    </style>!,"\n";
+    
+	# print javaScript for dateTimePicker	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+
+	print CGI::start_script({-type=>"text/javascript"}),"\n";
+	print q!$(".ui-datepicker").draggable();!,"\n";
+	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
+	print CGI::end_script();
+
+	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
+	return "";
+}
 1;
 
 =head1 AUTHOR

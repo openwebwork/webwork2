@@ -2414,11 +2414,11 @@ sub do_upgrade_course {
 	#############################################################################
 	# Submit buttons -- return to beginning
 	#############################################################################
-	print CGI::h3("do_upgrade_course subroutine");
+	print CGI::h3("Upgrade process completed");
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);  #send back to this script
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"decline_upgrade_course", -value=>"Continue") );
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"decline_upgrade_course", -value=>"Done") );
 	print CGI::end_form();
 }
 	
@@ -3179,11 +3179,14 @@ Check the ownership and permissions of the course's directory, e.g $coursesDir/$
 #   registration forms added by Mike Gage 5-5-2008
 ################################################################################
 
-our $registered_file_name = "registered_$main::VERSION";
+
+our $registered_file_name = "registered_???";
 
 sub display_registration_form {
 	my $self = shift;
 	my $ce   = $self->r->ce;
+	my $ww_version = $ce->{WW_VERSION};
+	$registered_file_name = "registered_$ww_version";
 	my $registeredQ = (-e ($ce->{courseDirs}->{root})."/$registered_file_name")?1:0;
 	my $registration_subDisplay = ( defined($self->r->param('subDisplay') ) and $self->r->param('subDisplay') eq "registration") ?  1: 0;
 	my $register_site = ($self->r->param("register_site"))?1:0;
@@ -3196,8 +3199,8 @@ sub display_registration_form {
 	CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
 	CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using
 	WeBWorK.  Since WeBWorK is open source and can be freely downloaded from ".
-	CGI::a({href=>'http://webwork.maa.org'},'http://webwork.maa.org' ). " and ".
-	CGI::a({href=> 'http://www.openwebwork.org'},'http://www.openwebwork.org'). ", it is frequently 
+	CGI::a({href=>'http://webwork.maa.org'},'http://webwork.maa.org' ). " or ".
+	CGI::a({href=> 'http://webwork.maa.org/wiki'},'http://webwork.maa.org/wiki'). ", it is frequently 
 	 difficult for us to give a reasonable answer to this  question."),
 	CGI::p("You can help by registering your current version of WeBWorK -- click the button, answer a few
 	questions (the ones you can answer easily) and submit the form to the MAA.  
@@ -3275,7 +3278,7 @@ sub registration_form {
 	print $self->hidden_fields("subDisplay");
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-id => "register_site", -name=>"register_site", -label=>"Site has been registered"));
 	print CGI::end_form();
-	print q!<script type="text/javascript">
+#	print q!<script type="text/javascript">
 # 			$("#maa_content").load( alert("loaded") );
 #  	     	$("#return_to_main_page").append(
 #  	     		"<center><p>hey site is registered cool</p></center>"
