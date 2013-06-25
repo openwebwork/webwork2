@@ -47,6 +47,7 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  course_admin                        /admin/ -> logout, options, instructor_tools
  html2xml                            /html2xml/
+ pgtotex                             /pgtotex/
  instructorXMLHandler     			     /instructorXMLHandler/
  set_list                            /$courseID/
  
@@ -165,7 +166,7 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [ qw/course_admin  html2xml instructorXMLHandler set_list / ],
+		kids    => [ qw/course_admin  html2xml pgtotex instructorXMLHandler set_list / ],
 		match   => qr|^/|,
 		capture => [ qw// ],
 		produce => '/',
@@ -190,6 +191,15 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'html2xml/',
 		display => 'WeBWorK::ContentGenerator::renderViaXMLRPC',
+	},
+	pgtotex => {
+		name    => 'PG to Tex translator',
+		parent  => 'root',
+		kids    => [ qw// ],
+		match   => qr|^pgtotex.+|,
+		capture => [ qw// ],
+		produce => 'pgtotex/',
+		display => 'WeBWorK::ContentGenerator::PGtoTexRenderer',
 	},
 	instructorXMLHandler => {
 		name => 'instructorXMLHandler',

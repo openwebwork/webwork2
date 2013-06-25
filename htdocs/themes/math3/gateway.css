@@ -7,6 +7,11 @@
 #content { margin-left: .5em }
 #footer { margin-left: .5em }
 
+.problem-content {
+  border: 0px;
+}
+
+
 hr { clear: both; }
 
 div.gwMessage { background-color:#dddddd; color: black; }

@@ -33,7 +33,7 @@ our @EXPORT_OK = qw();
 #	list_set_versions
 #);
 
-use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT);
+use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level Language );
 use constant NUMBERED => qw( TitleText AuthorText EditionText Section Problem );
 
 my $basics = join('|', BASIC);
@@ -204,6 +204,7 @@ sub new {
     $self->{$tagname} = '';
   }
   $self->{keywords} = [];
+  #$self->{Language} = 'eng'; # Default to English
 
 
   while (<IN>) {
@@ -308,6 +309,12 @@ sub isplaceholder {
   return $self->{isplaceholder};
 }
 
+sub istagged {
+  my $self = shift;
+  return 1 if (defined($self->{DBchapter}) and $self->{DBchapter} and (not $self->{isplaceholder}));
+	return 0;
+}
+
 # Try to copy in the contents of another Tag object.
 # Return 1 if ok, 0 if not compatible
 sub copyin {
@@ -335,7 +342,7 @@ sub dumptags {
   my $fh = shift;
 
   for my $tagname ( BASIC ) {
-    print $fh "## $tagname('".$self->{$tagname}."')\n" if($self->{$tagname});
+    print $fh "## $tagname(".$self->{$tagname}.")\n" if($self->{$tagname});
   }
   my @textinfo = @{$self->{textinfo}};
   my $textno = 0;

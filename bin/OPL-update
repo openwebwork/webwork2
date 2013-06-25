@@ -47,7 +47,6 @@ my %OPLtables = (
  section => 'OPL_section',
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
- morelt_pgfile => 'OPL_morelt_pgfile',
  pgfile_problem => 'OPL_pgfile_problem',
 );
 
@@ -66,7 +65,6 @@ my %NPLtables = (
  section => 'NPL-section',
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
- morelt_pgfile => 'NPL-morelt-pgfile',
  pgfile_problem => 'NPL-pgfile-problem',
 );
 
@@ -75,6 +73,7 @@ my %NPLtables = (
 
 use lib "$ENV{MAA_WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
+use WeBWorK::Utils::Tags;
 
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{MAA_WEBWORK_ROOT}});
 my $dbh = DBI->connect(
@@ -87,13 +86,13 @@ my $dbh = DBI->connect(
         },
 );
 
-my $passwd = $ce->{database_password};
-my $user = $ce->{database_username};
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
 my $verbose = 0;
 my $cnt2 = 0;
+# Can force library version
+$libraryVersion = $ARGV[0] if(@ARGV);
 
 $| = 1; # autoflush output
 
@@ -163,7 +162,9 @@ if($libraryVersion eq '2.5') {
 	institution tinyblob,
 	path_id int(15) NOT NULL,
 	filename varchar(255) NOT NULL,
-	morelt_id int(15),
+	morelt_id int(127),
+	level int(15),
+	language varchar(15),
 	PRIMARY KEY (pgfile_id)
 '],
 [$tables{keyword}, '
@@ -225,11 +226,6 @@ if($libraryVersion eq '2.5') {
 	KEY (name),
 	PRIMARY KEY (morelt_id)
 '],
-[$tables{morelt_pgfile}, '
-	morelt_id int(15) DEFAULT 0 NOT NULL,
-	pgfile_id int(15) DEFAULT 0 NOT NULL,
-	PRIMARY KEY (morelt_id, pgfile_id)
-'],
 [$tables{pgfile_problem}, '
 	pgfile_id int(15) DEFAULT 0 NOT NULL,
 	problem_id int(15) DEFAULT 0 NOT NULL,
@@ -245,8 +241,8 @@ $dbh->do("DROP TABLE IF EXISTS `NPL-institution`");
 $dbh->do("DROP TABLE IF EXISTS `NPL-pgfile-institution`");
 
 for my $tableinfo (@create_tables) {
-    my $tabname = $tableinfo->[0];
-    my $tabinit = $tableinfo->[1];
+	my $tabname = $tableinfo->[0];
+	my $tabinit = $tableinfo->[1];
 	my $query = "DROP TABLE IF EXISTS `$tabname`";
 	$dbh->do($query);
 	$query = "CREATE TABLE `$tabname` ( $tabinit )";
@@ -278,6 +274,32 @@ print "Mysql database reinitialized.\n";
 # The database structure is in the file create_tables2.sql and its ER-graph is 
 #    the file wwdb_er_graph.pdf. 
 
+# Get an id, and add entry to the database if needed
+sub safe_get_id {
+	my $tablename = shift;
+	my $idname = shift;
+	my $whereclause = shift;
+	my $wherevalues = shift;
+	my @insertvalues = @_;
+#print "\nCalled with $tablename, $idname, $whereclause, [".join(',', @$wherevalues)."], (".join(',', @insertvalues).")\n";
+
+	my $query = "SELECT $idname FROM `$tablename` ".$whereclause;
+	my $sth = $dbh->prepare($query);
+	$sth->execute(@$wherevalues);
+	my $idvalue, @row;
+	unless(@row = $sth->fetchrow_array()) {
+		@insertvalues = map {'"'. $_ .'"'} @insertvalues;
+		$dbh->do("INSERT INTO `$tablename` VALUES(". join(',',@insertvalues) .")");
+		dbug "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
+		$sth = $dbh->prepare($query);
+		$sth->execute(@$wherevalues);
+		@row = $sth->fetchrow_array();
+	}
+	$idvalue = $row[0];
+	return($idvalue);
+}
+
+
 my ($name,$pgfile,$pgpath);
 
 #### First read in textbook information
@@ -296,20 +318,8 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 					my $query = "SELECT chapter_id FROM `$tables{chapter}` WHERE textbook_id = \"$bookid\" AND number = \"$1\"";
 					my $chapid = $dbh->selectrow_array($query);
 					if(defined($chapid)) {
-						$query = "SELECT section_id FROM `$tables{section}` WHERE chapter_id = \"$chapid\" AND name = \"$title\"";
-						my $sectid = $dbh->selectrow_array($query);
-						if (!defined($sectid)) {
-							$dbh->do("INSERT INTO `$tables{section}`
-					VALUES(
-						\"\",
-						\"$chapid\",
-						\"$2\",
-						\"$title\",
-						\"\"
-					)"
-								);
-							dbug "INSERT INTO section VALUES(\"\", \"$chapid\", \"$2\", \"$title\", \"\" )\n";
-						}
+						my $sectid = safe_get_id($tables{section}, 'section_id',
+							qq(WHERE chapter_id = ? and name = ?), [$chapid, $title], "", $chapid, $2, $title, "");
 					} else {
 						print "Cannot enter section $chapsec because textbook information is missing the chapter entry\n";
 					}
@@ -318,19 +328,8 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 				}
 			} else { # We have a chapter entry
 				if(defined($bookid)) {
-					my $query = "SELECT chapter_id FROM `$tables{chapter}` WHERE textbook_id = \"$bookid\" AND number = \"$chapsec\"";
-					my $chapid = $dbh->selectrow_array($query);
-					if (!defined($chapid)) {
-						$dbh->do("INSERT INTO `$tables{chapter}`
-					VALUES(
-						\"\",
-						\"$bookid\",
-						\"".$chapsec."\",
-						\"$title\",
-						\"\"
-					)"
-							);
-						$chapid = $dbh->selectrow_array($query);
+					my $chapid = safe_get_id($tables{chapter}, 'chapter_id',
+						qq(WHERE textbook_id = ? AND number = ?), [$bookid, $chapsec], "", $bookid, $chapsec, $title, "");
 
 						# Add dummy section entry for problems tagged to the chapter
 						# without a section
@@ -348,7 +347,6 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 								);
 						dbug "INSERT INTO section VALUES(\"\", \"$chapid\", \"-1\", \"\", \"\" )\n";
 						}
-					}
 				} else {
 					print "Cannot enter chapter $chapsec because textbook information is incomplete\n";
 				}
@@ -389,11 +387,44 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 		}
 	}
 	close(IN);
-} else{
+} else {
 	print "Textbooks file was not found in library $libraryRoot. If the path to the problem library doesn't seem
 	correct, make modifications in webwork2/conf/site.conf (\$problemLibrary{root}).  If that is correct then
-	updating from cvs should download the Textbooks file.\n";
+	updating from git should download the Textbooks file.\n";
 }
+#### End of textbooks
+
+#### Next read in the taxonomy
+
+if(open(IN, "$libraryRoot/Taxonomy")) {
+	print "Reading in OPL taxonomy from Taxonomy in the library $libraryRoot.\n";
+
+	my ($subj, $chap, $sect);
+	while(my $line = <IN>) {
+		$line =~ /^(\t*)/;
+		my $count = length($1);
+		$line =~ s/^\s*//;
+		chomp($line);
+		$line =~ s/\s*$//;
+		if($count == 0) { #DBsubject
+			$subj = safe_get_id($tables{dbsubject}, 'DBsubject_id',
+				qq(WHERE name = ?), [$line], "", $line);
+		} elsif($count == 1) { #DBchapter
+			$chap = safe_get_id($tables{dbchapter}, 'DBchapter_id',
+				qq(WHERE name = ? and DBsubject_id = ?), [$line, $subj], "", $line, $subj);
+		} else { #DBsection
+			$sect = safe_get_id($tables{dbsection}, 'DBsection_id',
+				qq(WHERE name = ? and DBchapter_id = ?), [$line, $chap], "", $line, $chap);
+			;
+		}
+	}
+	close(IN);
+} else {
+	print "Taxonomy file was not found in library $libraryRoot. If the path to the problem library doesn't seem
+	correct, make modifications in webwork2/conf/site.conf (\$problemLibrary{root}).  If that is correct then
+	updating from git should download the Textbooks file.\n";
+} 
+#### End of taxonomy
 
 print "Converting data from tagged pgfiles into mysql.\n";
 print "Number of files processed:\n";
@@ -433,341 +464,95 @@ sub maybenewtext {
 # process each file returned by the find command.
 sub pgfiles {
 	my $name = $File::Find::name;
-	my ($subject, $chapter, $section, $date, $institution, $author, $text);
-	my ($edition, $textauthor, $textsection, $textproblem, $tagged);
-	my ($morelt, $morelt_leader);
+	my ($text, $edition, $textauthor, $textsection, $textproblem);
 	%textinfo=();
 	my @textproblems = (-1);
-  if ($name =~ /swf$/) {
-      my $applet_file = basename($name);
-      symlink($name,$ce->{webworkDirs}->{htdocs}."/applets/".$applet_file);
-    }
+
+	if ($name =~ /swf$/) { # Found a flash applet
+		my $applet_file = basename($name);
+		symlink($name,$ce->{webworkDirs}->{htdocs}."/applets/".$applet_file);
+	}
+
 	if ($name =~ /pg$/) {
 		$pgfile = basename($name);
 		$pgpath = dirname($name);
 		$cnt2++;
 		printf("%6d", $cnt2) if(($cnt2 % 100) == 0);
 		print "\n" if(($cnt2 % 1000) == 0);
+
 		$pgpath =~ s|^$libraryRoot/||;
-		open(IN,"$name") or die "can not open $name: $!";
-		$tagged = 0;
-		while (<IN>) {
-		SWITCH: {
-				if (/#.*\bKEYWORDS\((.*)\)/i) {
-					@keyword = keywordcleaner($1);
-					last SWITCH;
-				}
-				if (/#.*\bDBsubject\s*\(\s*'?(.*?)'?\s*\)/) {
-					$subject = $1;
-					$subject =~ s/'/\'/g;
-					last SWITCH;
-				}
-				if (/#.*\bDBchapter\s*\(\s*'?(.*?)'?\s*\)/) {
-					$chapter = $1;
-					$chapter =~ s/'/\'/g;
-					$tagged = 1;
-					last SWITCH;
-				}
-				if (/#.*\bDBsection\s*\(\s*'?(.*?)'?\s*\)/) {
-					$section = $1;
-					$section =~ s/'/\'/g;
-					last SWITCH;
-				}
-				if (/#.*\bDate\s*\(\s*'(.*?)'\s*\)/) {
-					$date = $1;
-					$date =~ s/'/\'/g;
-					last SWITCH;
-				}
-				if (/#.*\bInstitution\s*\(\s*'(.*?)'\s*\)/) {
-					$institution = $1;
-					$institution =~ s/'/\'/g;
-					last SWITCH;
-				}
-				if (/#.*\bAuthor\(\s*'?(.*?)'?\s*\)/) {
-					$author = $1;
-					$author =~ s/'/\'/g;
-					last SWITCH;
-				}
-				if (/#.*\bMLTleader\(\s*'?(.*?)'?\s*\)/) {
-					$morelt_leader = $1;
-					$morelt_leader =~ s/['"]//g;
-					$morelt_leader= ($morelt_leader =~ /\S/) ? 1 : 0;
-					last SWITCH;
-				}
-				if (/#.*\bMLT\(\s*'?(.*?)'?\s*\)/) {
-					$morelt = $1;
-					$morelt =~ s/'//g;
-					$morelt = lc($morelt);
-					last SWITCH;
-				}
-				if (/#.*\bTitleText(\d+)\(\s*'?(.*?)'?\s*\)/) {
-					$textno = $1;
-					$text = $2;
-					$text =~ s/'/\'/g;
-					if ($text =~ /\S/) {
-						maybenewtext($textno);
-						$textinfo{$textno}->{title} = $text;
-					}
-					last SWITCH;
-				}
-				if (/#.*\bEditionText(\d+)\(\s*'?(.*?)'?\s*\)/) {
-					$textno = $1;	
-					$edition = $2;
-					$edition =~ s/'/\'/g;
-					if ($edition =~ /\S/) {
-						maybenewtext($textno);
-						$textinfo{$textno}->{edition} = $edition;
-					}
-					last SWITCH;
-				}
-				if (/#.*\bAuthorText(\d+)\(\s*'?(.*?)'?\s*\)/) {
-					$textno = $1;
-					$textauthor = $2;
-					$textauthor =~ s/'/\'/g;
-					if ($textauthor =~ /\S/) {
-						maybenewtext($textno);
-						$textinfo{$textno}->{author} = $textauthor;
-					}
-					last SWITCH;
-				}
-				if (/#.*\bSection(\d+)\(\s*'?(.*?)'?\s*\)/) {
-					$textno = $1;
-					$textsection = $2;
-					$textsection =~ s/'/\'/g;
-					if ($textsection =~ /\S/) {
-						maybenewtext($textno);
-						if ($textsection =~ /(\d*?)\.(\d*)/) {
-							$textinfo{$textno}->{chapter} = $1;
-							$textinfo{$textno}->{section} = $2;
-						} else {
-							$textinfo{$textno}->{chapter} = $textsection;
-							$textinfo{$textno}->{section} = -1;
-						}
+		my $tags = WeBWorK::Utils::Tags->new($name);
 
-					}
-					last SWITCH;
-				}
-				if (/#.*\bProblem(\d+)\(\s*(.*?)\s*\)/) {
-					$textno = $1;
-					$textproblem = $2;
-					$textproblem =~ s/\D/ /g;
-					@textproblems = split /\s+/, $textproblem;
-					@textproblems = grep { $_ =~ /\S/ } @textproblems;
-					if (scalar(@textproblems) or defined($textinfo{$textno})) {
-						@textproblems = (-1) unless(scalar(@textproblems));
-						maybenewtext($textno);
-						$textinfo{$textno}->{problems} = \@textproblems;
-					}
-					#print "$textproblem\n" if ($textproblem !~ /^[\s\d]+$/);
-					#		$textproblem =~ s/'/\'/g;
-					last SWITCH;
-				}
-			}
-		}						#end of SWITCH and while
-		if ($tagged and $chapter eq 'ZZZ-Inserted Text') {
-			$tagged=0;
-		}
-		if ($tagged) {
-			#
-			# kludge to fix the omission of a subject field
-			unless($subject) {
-print "NO SUBJECT $name\n";
-				if ($text =~ /precalculus/i) {
-					$subject = "Precalculus";
-				} elsif ($text =~ /calculus/i) {
-					$subject = "Calculus";
-				} elsif ($text =~ /linear/i) {
-					$subject = "Linear Algebra";
-				} elsif ($text =~ /algebra/i) {
-					$subject = "Algebra";
-				} elsif ($text =~ /statistic/i) {
-					$subject = "Statistics";
-				} elsif ($text =~ /financial/i) {
-					$subject = "Financial Mathematics";
-				} else {
-					$subject = "Misc";
-				}
-			}
-			# From the pgfile we just looked at,
-			## DBchapter('Limits and Derivatives') 		in $chapter
-			## DBsection('Calculating Limits using the Limit Laws') in $section
-			## Date('6/3/2002') 				in $date
-			## Author('Tangan Gao') 				in $author
-			## Institution('csulb') 				in $institution
-			## TitleText1('Calculus Early Transcendentals')	in $text
-			## EditionText1('4') 				in $edition
-			## AuthorText1('Stewart') 				in $textauthor
-			## Section1('2.3') 					in $textsection
-			## Problem1('7') 					in $textproblem
-			#
-			# The database structure is in the file create_tables2.sql and its ER-graph
-			#    is the file wwdb_er_graph.pdf. Insert, in order, into the tables
-			#    in that file.
-			#
-
+		if ($tags->istagged()) {
 			# Fill in missing data with Misc. instead of blank
-			$chapter = 'Misc.' unless $chapter =~ /\S/;
-			$section = 'Misc.' unless $section =~ /\S/;
+			print "\nNO SUBJECT $name\n" unless ($tags->{DBsubject} =~ /\S/);
 
-			#selectrow_array returns first field of first row in scalar context or undef 
-			# undef for failure also, $dbh->{RaiseError} = 1 should catch that case.
-			#
+			$tags->{DBchapter} = 'Misc.' unless $tags->{DBchapter} =~ /\S/;
+			$tags->{DBsection} = 'Misc.' unless $tags->{DBsection} =~ /\S/;
+
 			# DBsubject table
-			#
-			$query = "SELECT DBsubject_id FROM `$tables{dbsubject}` WHERE name = \"$subject\"";
-			my $DBsubject_id = $dbh->selectrow_array($query);
-			if (!defined($DBsubject_id)) {
-				$dbh->do(
-						 "INSERT INTO `$tables{dbsubject}`
-					VALUES(
-						\"\",
-						\"$subject\"
-					)"
-						);
-				dbug "INSERT INTO DBsubject VALUES(\"\",\"$subject\")\n";
-				$DBsubject_id = $dbh->selectrow_array($query);
-			}
+
+			my $DBsubject_id = safe_get_id($tables{dbsubject}, 'DBsubject_id',
+				qq(WHERE name = ?), [$tags->{DBsubject}], "", $tags->{DBsubject});
 
 			# DBchapter table
-			#
-			$query = "SELECT DBchapter_id FROM `$tables{dbchapter}` WHERE name = \"$chapter\" and DBsubject_id = $DBsubject_id";
-			my $DBchapter_id = $dbh->selectrow_array($query);  
-			if (!defined($DBchapter_id)) {
-				$dbh->do("INSERT INTO `$tables{dbchapter}` 
-					VALUES(
-						\"\",
-						\"$chapter\",
-						\"$DBsubject_id\"
-					)"
-						);
-				dbug "INSERT INTO DBchapter VALUES(  \"\", \"$chapter\", \"$DBsubject_id\)\n";
-				$DBchapter_id = $dbh->selectrow_array($query);
-			}
+
+			$DBchapter_id = safe_get_id($tables{dbchapter}, 'DBchapter_id',
+				qq(WHERE name = ? and DBsubject_id = ?), [$tags->{DBchapter}, $DBsubject_id], "", $tags->{DBchapter}, $DBsubject_id);
 
 			# DBsection table
-			#
-			$query = "SELECT DBsection_id FROM `$tables{dbsection}` WHERE name = \"$section\" AND DBchapter_id = $DBchapter_id";
-			my $DBsection_id = $dbh->selectrow_array($query);
-			if (!defined($DBsection_id)) {
-				$dbh->do("INSERT INTO `$tables{dbsection}`
-					VALUES(
-						\"\",
-						\"$section\",
-						\"$DBchapter_id\"
-					)"
-						);
-				dbug "INSERT INTO DBsection VALUES( \"\", \"$section\", \"$DBchapter_id\", \"$DBsubject_id\" )\n";
-				$DBsection_id = $dbh->selectrow_array($query);
-			}
+
+			$DBsection_id = safe_get_id($tables{dbsection}, 'DBsection_id',
+				qq(WHERE name = ? and DBchapter_id = ?), [$tags->{DBsection}, $DBchapter_id], "", $tags->{DBsection}, $DBchapter_id);
 
 			# author table
-			#
-			$author =~ /(.*?)\s(\w+)\s*$/;
+
+			$tags->{Author} =~ /(.*?)\s(\w+)\s*$/;
 			my $firstname = $1;
 			my $lastname = $2;
 			#remove leading and trailing spaces from firstname, which includes any middle name too.
 			$firstname =~ s/^\s*//;
 			$firstname =~ s/\s*$//;
-			$query = "SELECT author_id FROM `$tables{author}` WHERE lastname = \"$lastname\" AND firstname=\"$firstname\"";
-			my $author_id = $dbh->selectrow_array($query);
-			if (!defined($author_id)) {
-				$dbh->do("INSERT INTO `$tables{author}`
-					VALUES(
-						\"\",
-						\"$institution\",
-						\"$lastname\",
-						\"$firstname\",
-						\"\"
-					)"
-						);
-				dbug "INSERT INTO author VALUES( \"\", \"$institution\", \"$lastname\", \"$firstname\", \"\" )\n";
-				$author_id = $dbh->selectrow_array($query);
-			}
+			my $author_id = safe_get_id($tables{author}, 'author_id',
+				qq(WHERE lastname = ? AND firstname = ?), [$lastname, $firstname], "", $tags->{Institution}, $lastname, $firstname,"");
 
 			# path table
-			#
-			$query = "SELECT path_id FROM `$tables{path}` WHERE path = \"$pgpath\"";
-			my $path_id = $dbh->selectrow_array($query);
-			if (!defined($path_id)) {
-				$dbh->do("INSERT INTO `$tables{path}`
-					VALUES(
-						\"\",
-						\"$pgpath\",
-						\"\",
-						\"\"
-					)"
-						);
-				dbug "INSERT INTO path VALUES( \"\", \"$path\", \"\", \"\" )\n";
-				$path_id = $dbh->selectrow_array($query);
-			}
 
-			# pgfile table
-			#
-			my $pgfile_id;
-			$dbh->do("INSERT INTO `$tables{pgfile}`
-					VALUES(
-						\"\",
-						\"$DBsection_id\",
-						\"$author_id\",
-						\"$institution\",
-						\"$path_id\",
-						\"$pgfile\",
-						\"\" # morelt_id filled in below
-					)"
-					);
-			dbug "INSERT INTO pgfile VALUES( \"\", \"$DBsection_id\", \"$author_id\", \"$institution\", \"$path_id\", \"$pgfile\", \"\" )\n";
-			$query = "SELECT pgfile_id FROM `$tables{pgfile}` WHERE filename = \"$pgfile\" and path_id=\"$path_id\"";
-			$pgfile_id = $dbh->selectrow_array($query);
+			my $path_id = safe_get_id($tables{path}, 'path_id',
+				qq(WHERE path = ?), [$pgpath], "", $pgpath, "", "");
 
-			# morelt table, and morelt_pgfile many-many table
-			if($morelt) {
-				$query = "SELECT morelt_id FROM `$tables{morelt}` WHERE name = \"$morelt\"";
-				$morelt_id = $dbh->selectrow_array($query);
-				if (!defined($morelt_id)) {
-					$dbh->do("INSERT INTO `$tables{morelt}`
-							VALUES(
-								\"\",
-								\"$morelt\",
-								\"$DBsection_id\",
-								\"\"
-					)");
-					dbug "INSERT INTO morelt VALUES( \"\", \"$morelt\", \"$pgfile_id\" )\n";
-				}
-				$morelt_id = $dbh->selectrow_array($query);
+			# pgfile table -- set 2 defaults first
+
+			my $level = $tags->{Level} || 0;
+			my $lang = $tags->{Language} || "eng";
+
+			my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
+				qq(WHERE filename = ? AND path_id = ?), [$pgfile, $path_id], "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, "", $level, $lang);
+
+			# morelt table
+
+			my $morelt_id;
+			if($tags->{MLT}) {
+				$morelt_id = safe_get_id($tables{morelt}, 'morelt_id',
+					qq(WHERE name = ?), [$tags->{MLT}], "", $tags->{MLT}, $DBsection_id, "");
+
 				$dbh->do("UPDATE `$tables{pgfile}` SET
-					morelt_id = \"$morelt_id\"
-					WHERE pgfile_id = \"$pgfile_id\" "
-				);
+					morelt_id = \"$morelt_id\" WHERE pgfile_id = \"$pgfile_id\" ");
+
 				dbug "UPDATE pgfile morelt_id for $pgfile_id to $morelt_id\n";
-				if($morelt_leader) {
+				if($tags->{MLTleader}) {
 					$dbh->do("UPDATE `$tables{morelt}` SET
-							leader = \"$pgfile_id\"
-							WHERE morelt_id = \"$morelt_id\" "
-					);
+							leader = \"$pgfile_id\" WHERE morelt_id = \"$morelt_id\" ");
 					dbug "UPDATE morelt leader for $morelt_id to $pgfile_id\n";
 				}
-				$dbh->do("INSERT INTO `$tables{morelt_pgfile}`
-					VALUES(\"$morelt_id\", \"$pgfile_id\")");
-				dbug "INSERT INTO `$tables{morelt_pgfile}`
-					VALUES($morelt_id, $pgfile_id)";
 			}
 
 			# keyword table, and problem_keyword many-many table
-			#
-			foreach my $keyword (@keyword) {
+
+			foreach my $keyword (@{$tags->{keywords}}) {
 				$keyword =~ s/[\'\"]//g;
-				$query = "SELECT keyword_id FROM `$tables{keyword}` WHERE keyword = \"$keyword\"";
-				my $keyword_id = $dbh->selectrow_array($query);
-				if (!defined($keyword_id)) {
-					$dbh->do("INSERT INTO `$tables{keyword}`
-						VALUES(
-							\"\",
-							\"$keyword\"
-						)"
-							);
-					dbug "INSERT INTO keyword VALUES( \"\", \"$keyword\")\n";
-					$keyword_id = $dbh->selectrow_array($query);
-				}
+				my $keyword_id = safe_get_id($tables{keyword}, 'keyword_id',
+					qq(WHERE keyword = ?), [$keyword], "", $keyword);
 
 				$query = "SELECT pgfile_id FROM `$tables{pgfile_keyword}` WHERE keyword_id = \"$keyword_id\" and pgfile_id=\"$pgfile_id\"";
 				my $ok = $dbh->selectrow_array($query);
@@ -784,15 +569,14 @@ print "NO SUBJECT $name\n";
 
 			# Textbook section
 			# problem table contains textbook problems
-			#
-			for my $textno (keys %textinfo) {
-				my $texthashref = $textinfo{$textno};
+
+			for my $texthashref (@{$tags->{textinfo}}) {
 
 				# textbook table
-				#
-				$text = $texthashref->{title};
-				$edition = $texthashref->{edition};
-				$textauthor = $texthashref->{author};
+
+				$text = $texthashref->{TitleText};
+				$edition = $texthashref->{EditionText};
+				$textauthor = $texthashref->{AuthorText};
 				next unless($text and $textauthor);
 				my $chapnum = $texthashref->{chapter};
 				my $secnum = $texthashref->{section};
@@ -825,18 +609,18 @@ print "NO SUBJECT $name\n";
 						\"\",
 						\"$textbook_id\",
 						\"".$chapnum."\",
-						\"$chapter\",
+						\"$tags->{DBchapter}\",
 						\"\"
 					)"
 							);
-					dbug "\nLate add into $tables{chapter} \"$text\", \"$edition\", \"$textauthor\", $chapnum $chapter from $name\n", 1;
-					dbug "INSERT INTO chapter VALUES(\"\", \"$textbook_id\", \"".$chapnum."\", \"$chapter\", \"\" )\n";
+					dbug "\nLate add into $tables{chapter} \"$text\", \"$edition\", \"$textauthor\", $chapnum $tags->{chapter} from $name\n", 1;
+					dbug "INSERT INTO chapter VALUES(\"\", \"$textbook_id\", \"".$chapnum."\", \"$tags->{DBchapter}\", \"\" )\n";
 					$chapter_id = $dbh->selectrow_array($query);
 				}
 
 				# section weak table of textbook
 				#
-				$section = '' if ($secnum < 0);
+				$tags->{DBsection} = '' if ($secnum < 0);
 				$query = "SELECT section_id FROM `$tables{section}` WHERE chapter_id = \"$chapter_id\" AND number = \"$secnum\"";
 				my $section_id = $dbh->selectrow_array($query);
 				if (!defined($section_id)) {
@@ -845,12 +629,12 @@ print "NO SUBJECT $name\n";
 						\"\",
 						\"$chapter_id\",
 						\"$secnum\",
-						\"$section\",
+						\"$tags->{DBsection}\",
 						\"\"
 					)"
 							);
-					dbug "INSERT INTO section VALUES(\"\", \"$textbook_id\", \"$secnum\", \"$section\", \"\" )\n";
-					dbug "\nLate add into $tables{section} \"$text\", \"$edition\", \"$textauthor\", $secnum $section from $name\n", 1;
+					dbug "INSERT INTO section VALUES(\"\", \"$textbook_id\", \"$secnum\", \"$tags->{DBsection}\", \"\" )\n";
+					dbug "\nLate add into $tables{section} \"$text\", \"$edition\", \"$textauthor\", $secnum $tags->{DBsection} from $name\n", 1;
 					$section_id = $dbh->selectrow_array($query);
 				}
 
@@ -887,15 +671,104 @@ print "NO SUBJECT $name\n";
 				}
 
 				#reset tag vars, they may not match the next text/file
-				$date =""; $textauthor=""; $textsection="";
-				$chapter=""; $section="";
+				$textauthor=""; $textsection="";
 			}
 		}
-		close(IN) or die "can not close: $!";
 	}
 }
 
+# Now run the script build-library-tree
+# This is used to create the file library-tree.json which can be used to 
+# load in subject-chapter-section information for the OPL
+
+use strict;
+use warnings;
+use JSON;
+
+
+my $tree;  # the library subject tree will be stored as arrays of objects. 
+
+my $sth = $dbh->prepare("select * from OPL_DBsubject");
+$sth->execute;
+
+my @subjects = ();
+my @subject_names = ();
+while ( my @row = $sth->fetchrow_array ) {
+	push(@subjects,$row[0]);
+	push(@subject_names,$row[1]);
+}
+
+
+my @subject_tree;  # array to store the individual library tree for each subject 
+
+foreach my $i (0..$#subjects){
+
+	my $subject_row = $subjects[$i];
+	my $subject_name = $subject_names[$i];
+
+	my $sth = $dbh->prepare("select * from OPL_DBchapter where DBsubject_id = $subject_row;");
+	$sth->execute;
+
+	my @chapters = ();
+	my @chapter_names = ();
+	while ( my @row = $sth->fetchrow_array ) {
+		push(@chapters,$row[0]);
+		push(@chapter_names,$row[1]);
+	}
+
+
+	my @chapter_tree; # array to store the individual library tree for each chapter
+
+	foreach my $j (0..$#chapters) {
+		my $chapter_row = $chapters[$j];
+		my $chapter_name = $chapter_names[$j];
+		my $sth = $dbh->prepare("SELECT * FROM OPL_DBsection WHERE DBchapter_id=$chapter_row");
+		$sth->execute;
+
+		my @subfields = ();
+		while ( my @row = $sth->fetchrow_array ) {
+		    push(@subfields,$row[1]);
+		}
+
+		my $chapter_tree;
+
+		$chapter_tree->{name} = $chapter_name;
+		$chapter_tree->{subfields} = \@subfields;
+
+		my $clone = { %{ $chapter_tree } };  # need to clone it before pushing into the @chapter_tree array.
+		push(@chapter_tree,$clone);
+
+
+	}
+
+	my $subject_tree; 
+	$subject_tree->{name} = $subject_name;
+	$subject_tree->{subfields} = \@chapter_tree; 
+
+	my $clone = { % {$subject_tree}};
+	push (@subject_tree, $clone);
+}
+
+	#print to_json(\@subject_tree);
+	#print "\n\n";
 
 $dbh->disconnect;
+
+my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
+
+my $file = "$webwork_htdocs/library-tree.json";
+
+# use a variable for the file handle
+my $OUTFILE;
+
+# use the three arguments version of open
+# and check for errors
+open $OUTFILE, '>', $file  or die "Cannot open $file";
+
+# you can check for errors (e.g., if after opening the disk gets full)
+print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
+
+# check for errors
+close $OUTFILE or die "Cannot close $file";
 
 print "\nDone.\n";

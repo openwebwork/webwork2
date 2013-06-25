@@ -29,6 +29,10 @@
 	clear:both;
 	border: none; /* 1px solid grey; */
 }
+.table-input {
+	width:15em;
+    font-size:75%;
+}
 #info-panel-right {
 	float:right; 
 	padding: .2em;
@@ -98,12 +102,11 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 
 .info-box {
 	border: 1px solid #559;
-	/* FIXME: these aren't valid CSS, but they sure look nice :-P */
 	border-radius-topright: 1.5ex; border-radius-topleft: 1.5ex;
 	-moz-border-radius-topright: 1.5ex; -moz-border-radius-topleft: 1.5ex;
 	margin-bottom: 1ex; 
 	margin-top: 0;
-	width: 90%;
+	width: 100%;
 	overflow: hidden;
 }
 .info-box h2,
@@ -305,6 +308,10 @@ clear: both;
 	font-size: smaller;
 } 
 
+#mainform i.icon-random {
+    cursor: hand;
+}
+
 /*Relative Positioning -- a alternate style for the loginstatus which uses relative positioning.  Tested, but was decided that it didn't work great. Feel free to uncomment if you want to try it out.*/
 
 /*#loginstatus {
@@ -413,7 +420,7 @@ clear: both;
 	/* white-space: nowrap; */
 	clear: both;
 	/* border-top: 1px solid #559; */
-	margin: 0 .5em .2ex 10.4em;
+	margin: 0 .5em .2ex 0.5em;
 	padding: 0;
 	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
 }
@@ -451,6 +458,13 @@ clear: both;
 }
 #InfoPanel ol {
 	font-size:100%;
+}
+
+.problem-content {
+  margin-left:auto;
+  margin-right:auto;
+  border: 2px solid black;
+  padding: 10px;
 }
 
 /* tables used for laying out form fields shouldn't have a border */
@@ -563,8 +577,13 @@ div.NoFontMessage {
 }
 
 /* text colors for visible and hidden sets */
-font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; } /* black */
-font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; } /* light grey */
+
+font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; display:inline-table; visibility: visible; } /* black */
+font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; display:inline-table; visibility: visible;} /* light grey */
+table font {font-size:75%}
+table a {font-size:75%}
+table th {font-size:75%}
+
 
 /* styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #F60; background-color: inherit; }
@@ -820,6 +839,16 @@ span.gray_button{
     overflow:scroll;
 }
 
+#render-modal.modal {
+    width:1024px;
+    left:25%;
+}
+
+#render-modal .modal-body {
+    height:95%;
+    width:95%;
+}
+
 /*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
 
 .radio_span, 
@@ -872,6 +901,7 @@ table.problem_set_table th{
 }
 table.problem_set_table td{
 	padding-right: 30px;
+/*	text-align:center; */
 }
 div.problem_set_options {
 	clear: both;
@@ -880,6 +910,14 @@ div.problem_set_options {
 
 table#grades_table pre{
 	float: left;
+}
+
+table#grades_table {
+    border:1px solid black;
+}
+
+table#grades_table th {
+    text-align:center;
 }
 
 #render-modal.modal {

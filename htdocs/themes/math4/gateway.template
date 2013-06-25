@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset='utf-8'>
 
 <!--
 ################################################################################
@@ -17,53 +20,47 @@
 ################################################################################
 -->
 
-<html lang="en-US">
-<head>
-<meta charset="utf-8" />
-<meta http-equiv="Pragma" content="no-cache"/>
-<meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
-<!-- Vendors, import order is significant for dependencies -->
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
-
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
-
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
-
 <link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/other/knowl.js"></script>
-
-<!-- Theme -->
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
-
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/gateway.css"/>
-
-<!-- Gateway Specific JS -->
-<script language="javascript" type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/apps/GatewayQuiz/gateway.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
+<!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
+<!--#output_JS-->
 </head>
 <body>
 
-<!-- Banner -->
-<ul id="masthead">
-	<li class="webwork_logo">
+<div class="container-fluid">
+<!-- Header -->
+<div id = "masthead" class="row-fluid">
+	<div class="span2 webwork_logo">
 		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
-	</li>
-	<li id="loginstatus">
+	</div>
+	<div class="span4 maa_logo">
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+	</div>
+	<div id="loginstatus" class="offset3 span3">
 		<!--#loginstatus-->
-	</li>
-</ul>
-
-<!-- Main Content Area -->
-<div id="content">
+	</div>
+</div>
 	<!-- Breadcrumb -->
+	<div class="row-fluid"><div class="span12">
 	<ul class="breadcrumb">
 		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
 	</ul>
+	</div></div>
 
+<div class="row-fluid">
+
+
+  <div id="content" class="span12">
+		
 	<!--#if can="info"-->
 	<!--<div id="page-info">-->
 		<!--<div class="info-box" id="fisheye">-->
@@ -100,6 +97,8 @@
 <div id="footer">
 	<!--#footer-->
 </div>
+
+</div></div> <!-- big-wrapper -->
 
 </body>
 </html>
