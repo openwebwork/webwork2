@@ -99,12 +99,12 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 
 # The directory containing the natinal problem library files. 
 # Set the root to "" if no problem
-# library is installed. Use version 2.0 for the NPL and use the version 2.5  for the OPL. 
+# library is installed. Use version 2 for the NPL and use the version 2.5  for the OPL. 
 # When changing from the NPL to the OPL it is important to change the version number
 # because the names of the tables in the database have changed.
 #$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
 #$problemLibrary{version}     = "2";
-# uncomment these lines below and comment out the line above if using OPL instead of NPL
+# uncomment these lines above and comment out the two lines below if using NPL instead of OPL
 $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 $problemLibrary{version}    = "2.5";  
 
