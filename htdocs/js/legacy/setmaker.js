@@ -1,5 +1,11 @@
 var setmakerWebserviceURL = "/webwork2/instructorXMLHandler";
 
+// For watermark of sample text for adding set text box
+$(function() {
+ $('input[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   '  ) } )
+ $('textarea[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   ', {useNative:false}  ) } )
+});
+
 function settoggle(id, text1, text2) {
   $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
     function() {$('#'+id).html(text1)});
@@ -28,6 +34,7 @@ function init_webservice(command) {
     "library_name":"Library",
     "courseID":'change-me',
     "set_id":"set0",
+    "set":"set0",
     "new_set_name":"new set",
     "command":"buildtree"
   };
@@ -69,6 +76,11 @@ function lib_update(who, what) {
   if(lib_text == 'All Textbooks') { lib_text = '';};
   if(lib_textchap == 'All Chapters') { lib_textchap = '';};
   if(lib_textsect == 'All Sections') { lib_textsect = '';};
+	var levelstring='';
+	$('input:checkbox[name=level]:checked').each(function() {
+		levelstring = levelstring+$(this).val();
+	});
+  mydefaultRequestObject.library_levels = levelstring;
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
@@ -87,6 +99,9 @@ function lib_update(who, what) {
       var line = "There are "+ arr +" matching WeBWorK problems"
       if(arr == "1") {
         line = "There is 1 matching WeBWorK problem"
+      }
+      if(arr == "0") {
+        line = "There are no matching WeBWorK problems"
       }
       $('#library_count_line').html(line);
       return true;
