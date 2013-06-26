@@ -96,7 +96,6 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 
 # For configuration instructions, see:
 # http://webwork.maa.org/wiki/National_Problem_Library
-<<<<<<< HEAD
 
 # The directory containing the natinal problem library files. 
 # Set the root to "" if no problem
