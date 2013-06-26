@@ -104,7 +104,7 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 # because the names of the tables in the database have changed.
 #$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
 #$problemLibrary{version}     = "2";
-# uncomment these lines above and comment out the line below if using NPL instead of OPL
+# uncomment these lines above and comment out the two lines below if using NPL instead of OPL
 $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 $problemLibrary{version}    = "2.5";  
 
