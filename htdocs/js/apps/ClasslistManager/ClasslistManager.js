@@ -38,6 +38,7 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 		this.grid.load({metadata: config.userTableHeaders, data: _data});
 		this.customizeGrid();
 	    this.grid.modelChanged = this.gridChanged;
+	    this.grid.tableRendered = this.updatePaginator;
 	    this.addStudentManView = new AddStudentManView({users: this.users});
 	    this.addStudentFileView = new AddStudentFileView({users: this.users});
 	    this.render();
@@ -94,8 +95,8 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
     	this.$el.append($("#classlist-manager-template").html());
 		this.grid.renderGrid("users-table-container","table table-bordered table-condensed","users-table");
 		this.grid.setPageIndex(0);
-		this.updatePaginator(0);
-	    
+		this.updatePaginator();
+	    this.$(".num-users").html(this.grid.getRowCount() + " of " + this.users.length + " users shown.");
 	    this.$el.append(this.passwordPane = new ChangePasswordView());
 	    this.$el.append(this.emailPane = new EmailStudentsView()); 
 	    return this;
@@ -116,12 +117,20 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 	    'click button.go-forward-one': "showNextPage",
 	    'click button.goto-end': "showLastPage",
 	},
-	updatePaginator: function (page) {
+	updatePaginator: function () {
+
 		var numPages = this.grid.getPageCount()
+			, page = this.grid.getCurrentPageIndex()
 			, pageStart = page < 10 ? 0 : page-10
 			, pageEnd = numPages-page < 10 ? numPages : ((page<10) ? 20: page+10);
 		$("#users-table-paginator").empty()
 			.html(_.template($("#paginator-template").html(),{page_start: pageStart, page_stop: pageEnd, num_pages: numPages}));
+		this.$("button.page-button[data-page='" + page + "']").prop("disabled",true);
+		if (page === 0) {
+			this.$(".goto-first,.go-back-one").prop("disabled",true);
+		} else if (page === numPages-1){
+			this.$(".goto-end,.go-forward-one").prop("disabled",true);
+		}
 		this.delegateEvents();
 	},
 	addStudentsByFile: function () {
@@ -253,46 +262,32 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
     	return this.users.filter(function(user) { return (_(users).indexOf(user.get("user_id")) > -1);});
     },
     changePage: function (evt) {
-    	
 		var newPageIndex = $(evt.target).data("page");
-		this.updatePaginator(newPageIndex);
-		this.$("button.page-button[data-page='" + newPageIndex + "']").prop("disabled",true);
 		this.grid.setPageIndex(newPageIndex);
-
+		this.updatePaginator();
 	},
 	showFirstPage: function () {
 		this.grid.setPageIndex(0);
-		this.updatePaginator(0);
-		this.$(".goto-first,.go-back-one,.page-button[data-page='0']").prop("disabled",true);
+		this.updatePaginator();
 	},
 	showPreviousPage: function (){
 		var currentPage = this.grid.getCurrentPageIndex() -1 ;
-		this.updatePaginator(currentPage);
-		this.$("button.page-button[data-page='" + currentPage + "']").prop("disabled",true);
-		if (currentPage == 0){
-			this.$(".goto-first,.go-back-one").prop("disabled",true);
-		}
 		this.grid.setPageIndex(currentPage);
+		this.updatePaginator();
 	},
 	showNextPage: function (){
 		var currentPage = this.grid.getCurrentPageIndex() +1 ;
-		this.updatePaginator(currentPage);
-		this.$("button.page-button[data-page='" + currentPage + "']").prop("disabled",true);
-		if (currentPage == this.grid.getPageCount() -1){
-			this.$(".goto-end,.go-forward-one").prop("disabled",true);
-		}
-
 		this.grid.setPageIndex(currentPage);
+		this.updatePaginator();	
 	},
 	showLastPage: function () {
 		var lastIndex = this.grid.getPageCount()-1;
 		this.grid.setPageIndex(lastIndex);
-		this.updatePaginator(lastIndex);
-		this.$(".goto-end,.go-forward-one,.page-button[data-page='" + lastIndex + "']").prop("disabled",true);	
+		this.updatePaginator();
 	},
 	filterUsers: function (evt) {
 	    this.grid.filter($("#filter").val());
-	    $("#usersShownInfo").html(this.grid.getRowCount() + " of " + this.users.length + " users shown.");
+	    this.$(".num-users").html(this.grid.getRowCount() + " of " + this.users.length + " users shown.");
 	},
 	clearFilterText: function () {
 		$("input#filter").val("");
