@@ -68,6 +68,8 @@ use HTML::Scrubber;
 # 
 #     displayMode - name of display mode to use
 #     
+#     graphicsMode - name of graphics mode to use
+
 #     showOldAnswers - request that last entered answer be shown (if allowed)
 #     showCorrectAnswers - request that correct answers be shown (if allowed)
 #     showHints - request that hints be shown (if allowed)
@@ -560,6 +562,7 @@ sub pre_header_initialize {
 	$self->{set}               = $set;
 	$self->{problem}           = $problem;
 	$self->{editMode}          = $editMode;
+	$self->{graphicsMode}      = $ce -> {pg} -> {options} -> {graphicsMode};
 	
 	##### form processing #####
 	
@@ -676,6 +679,7 @@ sub pre_header_initialize {
 		$formFields,
 		{ # translation options
 			displayMode     => $displayMode,
+			graphicsMode    => $ce -> {pg} -> {options} -> {graphicsMode} // 'file',
 			showHints       => $will{showHints},
 			showSolutions   => $will{showSolutions},
 			refreshMath2img => $will{showHints} || $will{showSolutions},

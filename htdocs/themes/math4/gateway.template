@@ -30,6 +30,9 @@
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 
+<!-- New File + SVG Graphics Package -- Get Larger Graph script -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/larger_graph.js"></script>
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 <!--#output_JS-->

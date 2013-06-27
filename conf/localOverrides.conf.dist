@@ -184,7 +184,21 @@ $pg{displayModes} = [
 
 # Default display mode. Should be an uncommented item listed above.
 $pg{options}{displayMode}        = "images";
+
+# List of enabled graphics modes.
+$pg{graphicsModes}= [
+	"file",					# render graphics images as (png) files
+	"svgInteractive",		# render graphics as inline SVG (requires HTML5)
+							# for display in browsers while viewing problems;
+							# produces both the thumbnail images and the
+							# the full size images.
+#	"svgNonInteractive",	# render graphics as SVG full size
+];
  
+# Default graphics mode
+$pg{options}{graphicsMode} = "file";
+#$pg{options}{graphicsMode} = "svgInteractive";
+
 ################################################################################
 #  Adding to the macro file search path. (Check with entries in defaults.config before overriding)
 ################################################################################

@@ -6,7 +6,7 @@ package WeBWorK::Localize;
 #use base ("Locale::Maketext::Simple");
 use File::Spec;
 
-print STDERR "Localize.pm: Full path for the localization directory set to |$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize|\n";
+#print STDERR "Localize.pm: Full path for the localization directory set to |$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize|\n";
 #Locale::Maketext::Simple->import(Path => "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize");
 use Locale::Maketext;
 use Locale::Maketext::Lexicon;
