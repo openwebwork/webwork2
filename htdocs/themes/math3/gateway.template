@@ -31,6 +31,8 @@
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 <script language="javascript" type="text/javascript" 
   src="<!--#url type="webwork" name="htdocs"-->/js/apps/GatewayQuiz/gateway.js"></script>
+<!-- New File + SVG Graphics Package -- Get Larger Graph script -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/larger_graph.js"></script>
 </head>
 <body bgcolor="white">
 <div id="masthead">

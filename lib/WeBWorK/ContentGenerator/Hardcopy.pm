@@ -117,6 +117,7 @@ sub pre_header_initialize {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $authz = $r->authz;
+	$ce -> {pg} -> {options} -> {graphicsMode} = "file";
 	
 	my $userID = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
@@ -1048,6 +1049,7 @@ sub write_problem_tex {
 	my $transOpts = 
 		{ # translation options
 			displayMode     => "tex",
+			graphicsMode    => $ce -> {pg} -> {options} -> {graphicsMode},
 			showHints       => $showHints          ? 1 : 0, # insure that this value is numeric
 			showSolutions   => $showSolutions      ? 1 : 0, # (or what? -sam)
 			processAnswers  => ($showCorrectAnswers || $printStudentAnswers) ? 1 : 0,

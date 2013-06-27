@@ -85,6 +85,7 @@ my @modulesList = qw(
 	Socket
 	SQL::Abstract
 	String::ShellQuote
+	SVG
 	Text::CSV
 	Text::Wrap
 	Tie::IxHash

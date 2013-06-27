@@ -973,6 +973,8 @@ sub pre_header_initialize {
 	$self->{effectiveUser}   = $EffectiveUser;
 	$self->{permissionLevel} = $permissionLevel;
 
+	$self->{graphicsMode} = $ce -> {pg} -> {options} -> {graphicsMode};
+
 	$self->{isOpen} = $isOpen;
 	$self->{isClosed} = $isClosed;
 	$self->{versionIsOpen} = $versionIsOpen;

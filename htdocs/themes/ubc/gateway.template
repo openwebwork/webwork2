@@ -23,6 +23,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
 <head>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
+<!-- New File + SVG Graphics Package -- Get Larger Graph script -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/larger_graph.js"></script>
+
 <!--#head-->
 <style type="text/css">
 

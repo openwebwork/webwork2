@@ -36,6 +36,9 @@
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/pg/pg.css">
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/math/math.css">
 
+<!-- New File + SVG Graphics Package -- Get Larger Graph script -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/larger_graph.js"></script>
+
 <!--#if can="output_tabber_CSS"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
