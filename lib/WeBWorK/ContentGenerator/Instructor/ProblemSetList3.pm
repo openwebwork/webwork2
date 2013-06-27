@@ -591,9 +591,9 @@ sub output_JS{
     print qq!<script type='text/javascript'>!;
     print qq!define('globalVariables', function() {!;
     print qq!  return { !;
-    print qq! sets: ! . to_json(getAllSets($self)) . ",";
     print qq! users: ! . to_json(getAllUsers($self)) . ",";
-    print qq! settings: ! . to_json(getCourseSettings($self));
+    print qq! settings: ! . to_json(getCourseSettings($self)) . ",";
+    print qq! sets: ! . to_json(getAllSets($self)) ;
     print qq!    }!;
     print qq!});!;
     print qq!</script>!;

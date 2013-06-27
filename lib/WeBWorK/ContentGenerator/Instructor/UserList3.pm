@@ -228,6 +228,86 @@ sub head{
 
 ## get all of the user information to send to the client via a script tag in the output_JS subroutine below
 
+sub getAllSets {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+
+	my @found_sets = $db->listGlobalSets;
+  
+  	my @all_sets = $db->getGlobalSets(@found_sets);
+
+  	my @sets = ();
+  
+  
+	foreach my $set (@all_sets){
+		my @users = $db->listSetUsers($set->{set_id});
+		$set->{assigned_users} = \@users;
+
+		# convert the set $set to a hash
+		my $s = {};
+		for my $key (keys %{$set}) {
+			$s->{$key} = $set->{$key}
+		}
+
+		push(@sets,$s);
+	}
+
+	#debug(to_json(\@all_sets));
+
+	return \@sets;
+}
+
+# get the course settings
+
+sub getCourseSettings {
+
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $ConfigValues = $ce->{ConfigValues};
+
+	foreach my $oneConfig (@$ConfigValues) {
+		foreach my $hash (@$oneConfig) {
+			if (ref($hash) eq "HASH"){
+				my $str = '$ce->' . $hash->{hashVar};
+				$hash->{value} = eval($str);
+			} else {
+				debug($hash);
+			}
+		}
+	}
+
+	# get the list of theme folders in the theme directory and remove . and ..
+	my $themeDir = $ce->{webworkDirs}{themes};
+	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
+	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
+	
+	# insert the anonymous array of theme folder names into ConfigValues
+	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
+
+	foreach my $oneConfig (@$ConfigValues) {
+		foreach my $hash (@$oneConfig) {
+			&$modifyThemes($hash);
+		}
+	}
+
+	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
+	my $dt = DateTime->now();
+
+	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
+
+
+	#debug($tz->short_name_for_datetime($dt));
+
+	push(@$ConfigValues, \@tzabbr);
+
+	return $ConfigValues;
+}
+
+
 # get all users for the course
 
 sub getAllUsers {
@@ -286,9 +366,10 @@ sub output_JS{
     print qq!<script type='text/javascript'>!;
     print qq!define('globalVariables', function() {!;
     print qq!  return { !;
-    #print qq! sets: ! . to_json(getAllSets($self)) . ",";
+    
     print qq! users: ! . to_json(getAllUsers($self)) . ",";
-    #print qq! settings: ! . to_json(getCourseSettings($self));
+    print qq! settings: ! . to_json(getCourseSettings($self)) . ",";
+    print qq! sets: ! . to_json(getAllSets($self)) ;
     print qq!    }!;
     print qq!});!;
     print qq!</script>!;
