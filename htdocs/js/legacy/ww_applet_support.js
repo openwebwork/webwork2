@@ -40,8 +40,8 @@
 //////////////////////////////////////////////////////////
 
 function submitAction()  {    // called from the submit button defined in Problem.pm
-
-	if (jsDebugMode==1) {
+    console.log("Submit button pushed.");
+	if (jsDebugMode==0) {
 		debugText = "Call submitAction() function on each applet\n";
 	}
 
@@ -52,6 +52,7 @@ function submitAction()  {    // called from the submit button defined in Proble
 	if (jsDebugMode==1) {
 		alert("DebugText:\n"+debugText); debugText="";
 	};
+	console.log("Done calling submit action routines");
 }
 
 function initializeAction() {  // deprecated call -- removed
@@ -60,16 +61,21 @@ function initializeAction() {  // deprecated call -- removed
 }
 
 function initializeWWquestion() {    // called from <body> tag defined in the webwork2/conf/template
+    console.log("Into initializeWWquestion");
 	for (var appletName in ww_applet_list)  {	
-	    if (!ww_applet_list[appletName].onInit) {
+	    if (!ww_applet_list[appletName].onInit) { 
+	        console.log("Applet " + appletName + " has no onInit function. Initializing with safe_applet_initialize");
 	    	var maxInitializationAttempts = ww_applet_list[appletName].maxInitializationAttempts;
 	    	//alert("Initialize each applet. \nUse up to " +maxInitializationAttempts + " cycles to load" +"\n");
 	    	this.debug_add("initializing " + appletName);
 			ww_applet_list[appletName].safe_applet_initialize(maxInitializationAttempts);
+		} else {
+	        console.log("Applet " + appletName + " has  onInit function. No further initialization required.");
 		} 
 		// if onInit is defined then the onInit function will handle the initialization
 	}
     this.debug_add("end of applet initialization");
+    console.log("Out of initializeWWquestion");
 }
 
 // applet can set isReady flag by calling applet_loaded(appletName, loaded);
@@ -286,29 +292,30 @@ ww_applet.prototype.setConfig = function () {
 
 
 ww_applet.prototype.setState = function(state) { 
-   
+	
 	var appletName      = this.appletName;
 	var applet          = getApplet(appletName);
 	var setStateAlias   = this.setStateAlias;
+	console.log("Into setState for applet " + appletName);
 	this.debug_add("\n++++++++++++++++++++++++++++++++++++++++\nBegin process of setting state for applet " + appletName);
 ////////////////////////////////////////////////////////// 
 // Obtain the state which will be sent to the applet and if it is encoded place it in plain xml text
 // Communication with the applet is in plain text,not in base64 code.
 ////////////////////////////////////////////////////////// 
 	if (state) {
-		this.debug_add("Obtain state from calling parameter:\n " + state + "\n");
+		this.debug_add("Obtain state from calling parameter:\n " + state.substring(0,200) + "\n");
 	} else {
 		this.debug_add("Obtain state from " + appletName +"_state");
 	
 		var ww_preserve_applet_state = getQE(appletName + "_state"); // hidden answer box preserving applet state
 		state =   ww_preserve_applet_state.value;
 		var str = state;
-		this.debug_add("immediately on grabbing state from HTML cache state is " +state+"...");
+		this.debug_add("immediately on grabbing state from HTML cache state is " + (state.substring(0,200) ) + "...");
 	}
 	
 	if ( base64Q(state) ) { 
 		state=Base64.decode(state);
-		this.debug_add("decode from " +state);
+		this.debug_add("decodes to:  " +state.substring(0,200));
 		if (this.debugMode>=1) { //decode text for the text area box
 			ww_preserve_applet_state.value = state;
 			
@@ -334,7 +341,7 @@ ww_applet.prototype.setState = function(state) {
 	    state.match(/^\s*$/) ||
 	    state.match(/^<xml>\s*<\/xml>/ ) ) { 
 	    
-	       this.debug_add("Beginning handling exceptional cases when the state is not simply restored from the HTML cache. State is: "+state);
+	       this.debug_add("Beginning handling exceptional cases when the state is not simply restored from the HTML cache. State is: "+state.substring(0,100));
 		
 //		if (state.match(/^<xml>restart_applet<\/xml>/) ) {
 		    if (typeof(this.initialState) == "undefined") {this.initialState = "<xml></xml>";}
@@ -352,7 +359,7 @@ ww_applet.prototype.setState = function(state) {
 				if ( base64Q(state) ) { 
 					state=Base64.decode(state);
 				}
-			     debug_add("The applet " +appletName + "has been set to its virgin state value." +state);
+			     debug_add("The applet " +appletName + "has been set to its virgin state value." +state.substring(0,200));
 			     if (state.match(/^<xml>restart_applet<\/xml>/) ) {
 			     	alert(" The applet is being reset to its initialState.");
 			     }
@@ -371,8 +378,7 @@ ww_applet.prototype.setState = function(state) {
 	
 		this.debug_add("Grab data from the HTML cache and set state for " + appletName + " to the data between the lines:" 
 		               + "\n------------------------------\n" 
-		               +  state + "\n------------------------------\n");
-		
+		               +  state.substring(0,200) + "\n------------------------------\n");
 		try {
 		    
 			if ( this.methodDefined(setStateAlias)   ) {
@@ -391,16 +397,17 @@ ww_applet.prototype.setState = function(state) {
 //////////////////////////////////////////////////////////
     this.debug_add("Done setting state");
     if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
+    console.log("Out of setState for applet " + appletName);
 	return('');
 };
 	
 ww_applet.prototype.getState = function () {  
-		
+	
 	var state ="<xml>foobar</xml>";
 	var appletName      = this.appletName;
 	var applet          = getApplet(appletName);
 	var getStateAlias   = this.getStateAlias;
-	
+	console.log("Into getState for applet " + appletName);
 	this.debug_add("   Begin getState from applet " + appletName );
 
 	try {
@@ -429,11 +436,11 @@ ww_applet.prototype.getState = function () {
 		//alert("state encoded to" + state);
 	};   // replace state by encoded version unless in debug mode
 
-	this.debug_add("  state is \n    "+ state + "\n");                // state should still be in plain text
+	this.debug_add("  state is \n    "+ state.substring(0,20) + "\n");                // state should still be in plain text
 	var ww_preserve_applet_state = getQE(appletName + "_state"); // answer box preserving applet state (jsDebugMode: textarea, otherwise: hidden)
 	ww_preserve_applet_state.value = state;                      //place state in input item  (jsDebugMode: textarea, otherwise: hidden)
 	this.debug_add("State stored in answer box "+ appletName + "_state and getState is finished.");
-
+    console.log("Out of setState for applet " + appletName);
 };	
 
 ww_applet.prototype.setDebug = function(debugMode) {
@@ -474,7 +481,7 @@ ww_applet.prototype.initializeAction = function () {
 ww_applet.prototype.submitAction = function () { 
 	var appletName = this.appletName;
     // var getAnswer = this.getAnswerAlias;
-    
+    console.log("Into submitAction for " + appletName);
     // Don't do anything if the applet is hidden.
     if(!ww_applet_list[appletName].visible) {return('')};   
     this.debug_add("submitAction" );
@@ -517,7 +524,7 @@ ww_applet.prototype.submitAction = function () {
 
 	ww_preserve_applet_state = getQE(appletName + "_state"); // hidden HTML input element preserving applet state
 	saved_state =   ww_preserve_applet_state.value;
-	this.debug_add ("saved state looks like before encoding" +saved_state);
+	this.debug_add ("saved state looks like before encoding" +(saved_state.substring(0,200)));
 	if (! base64Q(saved_state) ) {
 	    // preserve html entities untranslated!  Yeah!!!!!!!
 	    // FIXME -- this is not a perfect fix -- things are confused for a while when
@@ -530,10 +537,12 @@ ww_applet.prototype.submitAction = function () {
 	ww_preserve_applet_state = getQE(appletName + "_state"); // hidden HTML input element preserving applet state
 	
 	ww_preserve_applet_state.value = saved_state;  // on submit the value of ww_preserve_applet_state.value is always in Base64.
-      this.debug_add("just before submitting saved state looks like " + ww_preserve_applet_state.value);
+      this.debug_add("just before submitting saved state looks like " + ww_preserve_applet_state.value.substring(0,200));
 	
 
 	if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
+	console.log("Out of submitAction for " + appletName);
+	debugger;
 };
 
 
@@ -601,6 +610,7 @@ ww_applet.prototype.debug_add = function(str) {
 ww_applet.prototype.safe_applet_initialize = function(i) {    
     //alert("begin safe_applet_initialize");
     var appletName = this.appletName;
+    console.log("Into safe_applet_initialize for applet " + appletName + " i= " + i);
     var failed_attempts_allowed = 3;
     
     i--;
@@ -629,6 +639,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
 		// warn about loading after failed_attempts_allowed failed attempts or if there is only one attempt left
         if (i<=1 || i< (ww_applet_list[appletName].maxInitializationAttempts-failed_attempts_allowed)) { alert("Oops, applet is not ready. " +(i-1) +" tries left")};
+     	console.log("Out of safe_applet_initialize for applet " + appletName);
         return "";
 	} else if (applet_loaded==0 && !(i> 0) ) {
 		// it's possible that the isActive() response of the applet is not working properly
@@ -636,6 +647,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 		i=1;
 		applet_loaded=1; // FIXME -- give a choice as to whether to continue or not
 		this.isReady=1;
+     	console.log("Out of safe_applet_initialize for applet " + appletName);
 		return "";
 	} 
 	
@@ -708,6 +720,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 			debugText="";
 		}
 	}
+	console.log("Out of safe_applet_initialize for applet " + appletName);
 	return "";
 }
 
@@ -718,9 +731,12 @@ function iamhere() {
 //Initialize the WWquestion.
 
 function initWW(){
+    console.log("Into initWW");
 	if (typeof(initializeWWquestion) == 'function') {
 		initializeWWquestion();
 	}
+	console.log("Out of initWW");
 }
-
-addOnLoadEvent(initWW);
+// be careful that initWW is not called from more than one place.
+console.log("do not addOnLoadEvent intWW at line 740 of ww_applet_support.js");
+//addOnLoadEvent(initWW);
