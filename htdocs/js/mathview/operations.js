@@ -241,7 +241,7 @@ var categories =
 				tooltip:"logarithmBase",
 				helpurl:"logarithmBase.html",
 				latex:"\\log_{}{}",
-				PG:"log( )"
+				PG:"log a /log b"
 			},
 			{
 				image:jqmv_basepath_images + "naturalLogarithm.jpg",
