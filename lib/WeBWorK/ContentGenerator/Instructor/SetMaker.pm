@@ -1520,6 +1520,14 @@ sub head {
   print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/legacy/Base64.js"}), CGI::end_script();
+  print "\n";
+	print qq{
+           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+  print "\n";
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print "\n";
   print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
   print "\n";
   return '';
