@@ -1018,9 +1018,9 @@ sub make_data_row {
 		      -value=>"Add",
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
-			"\n",CGI::span({-style=>"text-align: left"},CGI::span({id=>"filepath$cnt"},"Path...")),"\n",
+			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 			#"\n",'<script type="text/javascript">$(\'#sourcetrigger'.$cnt.'\').click(function() {toggle_content("filepath'.$cnt.'", "...", "'.$sourceFileName.'");return false;})</script>',
-				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Path ...", "Path '.$sourceFileName.'")</script>',
+				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
 #"\n", CGI::span({-style=>"float:left ; text-align: left"},"File..."),
 			CGI::span({-style=>"float:right ; text-align: right"}, 
 		        $inSet, $mlt, $rerand,
@@ -1508,6 +1508,14 @@ sub head {
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print "\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/legacy/Base64.js"}), CGI::end_script();
+  print "\n";
+	print qq{
+           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+  print "\n";
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
   print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
