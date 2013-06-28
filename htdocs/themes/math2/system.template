@@ -159,7 +159,7 @@
 						<!--#if can="output_misc"-->
 							<!--#output_misc-->
 						<!--#endif-->
-						</div> /* end main_body */
+						</div> <!-- end main_body -->
 						</form>
 					  	
 					
