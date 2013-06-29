@@ -218,9 +218,8 @@ sub listSetUsers {
 sub createNewSet{
 	my $self = shift;
 	my $in = shift;
-  	my $db = $self->{db};
-  	my $out;
-
+	my $db = $self->{db};
+	my $out;
 
 
 	if ($in->{new_set_name} !~ /^[\w .-]*$/) {
