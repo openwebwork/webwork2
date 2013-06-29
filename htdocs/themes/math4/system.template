@@ -105,7 +105,7 @@ var tabberOptions = {manualStartup:true};
 	<!-- Page Title -->
 	<!--#if can="title"-->
 	<div class="row-fluid"><div class="span12">
-		<h2 class='page-title'><!--#title --></h2>
+		<h1 class='page-title'><!--#title --></h1>
 	</div></div>
 	<!--#endif-->
 
