@@ -2184,7 +2184,7 @@ sub recordEditHTML {
 	my $exportMode = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
-	my $visibleClass = $Set->visible ? "visible" : "hidden";
+	my $visibleClass = $Set->visible ? "font-visible" : "font-hidden";
 	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Credit Enabled') : $r->maketext('Reduced Credit Disabled');
 
 	my $users = $db->countSetUsers($Set->set_id);
