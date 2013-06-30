@@ -34,6 +34,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
+use WeBWorK::Utils::Tags;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 
@@ -672,6 +673,7 @@ sub browse_library_panel2adv {
 		$mylevelline .= q/onchange="lib_update('count', 'clear');return true" /;
 		$mylevelline .= "$selected />$j</label></td>";
 	}
+	$mylevelline .= "<td>".$self->helpMacro("Levels")."</td>";
 	$mylevelline .= '</tr></table>';
 
 	print CGI::Tr({},
@@ -948,8 +950,11 @@ sub make_data_row {
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
-			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
-		  ), target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
+			params=>{sourceFilePath => "$sourceFileName", 
+				problemSeed=> $problem_seed}
+		  ), 
+				id=> "editit$cnt",
+				target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
@@ -971,6 +976,7 @@ sub make_data_row {
 			}
 		), target=>"WW_View", 
 			title=>"Try it",
+			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
 	my $inSet = ($self->{isInSet}{$sourceFileName})?"(in target set)" : "";
@@ -1008,6 +1014,8 @@ sub make_data_row {
 		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
 	}
 
+	my $level =0;
+
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
 	# Print the cell
@@ -1018,9 +1026,9 @@ sub make_data_row {
 		      -value=>"Add",
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
-			"\n",CGI::span({-style=>"text-align: left"},CGI::span({id=>"filepath$cnt"},"Path...")),"\n",
+			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 			#"\n",'<script type="text/javascript">$(\'#sourcetrigger'.$cnt.'\').click(function() {toggle_content("filepath'.$cnt.'", "...", "'.$sourceFileName.'");return false;})</script>',
-				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Path ...", "Path '.$sourceFileName.'")</script>',
+				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
 #"\n", CGI::span({-style=>"float:left ; text-align: left"},"File..."),
 			CGI::span({-style=>"float:right ; text-align: right"}, 
 		        $inSet, $mlt, $rerand,
@@ -1368,6 +1376,8 @@ sub pre_header_initialize {
 				$newSetRecord->open_date(time()+60*60*24*7); # in one week
 				$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
 				$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
+				$newSetRecord->visible(1);
+				$newSetRecord->enable_reduced_scoring(0);
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
@@ -1508,6 +1518,14 @@ sub head {
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print "\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/legacy/Base64.js"}), CGI::end_script();
+  print "\n";
+	print qq{
+           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+  print "\n";
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
   print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
