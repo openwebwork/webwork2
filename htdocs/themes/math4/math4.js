@@ -5,6 +5,9 @@ $(function(){
     $('.nav_button').addClass('btn btn-primary');
     $('.classlist').addClass('table table-condensed classlist-table');
     
+    // Make grey_buttons disabled buttons
+    $('.gray_button').addClass('btn disabled').removeClass('gray_button');
+
     // replace pencil gifs by something prettier
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
 
