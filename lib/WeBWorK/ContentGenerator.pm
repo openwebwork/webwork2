@@ -2055,7 +2055,7 @@ sub mathview_scripts {
 # Added CODE JQuery MathView
 	my @out = (
 #		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
-		CGI::end_script(),	"\n",	
+		#CGI::end_script(),	"\n",	
 		#CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 
 		CGI::end_script(),"\n",		
@@ -2069,8 +2069,6 @@ sub mathview_scripts {
 		CGI::end_script(),"\n",
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/operations.js"}), 
 		CGI::end_script(),"\n",
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/operations.js"}), 
-		CGI::end_script(), "\n",
 		CGI::start_script({type=>"text/javascript"}),
 		 q{  $(function(){$('.codeshard').addMathEditorButton("PGML");});  },
         CGI::end_script(), "\n",
