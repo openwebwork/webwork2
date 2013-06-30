@@ -313,12 +313,16 @@ function randomize(filepath, el) {
     ro.displayMode = displayMode;
   }
   ro.noprepostambles = 1;
-	//var elid = el;
-	//elid = el.replace(/render/,'');
-	//var tryit = $('#tryit'+elid)[0];
-	//alert("El is "+tryit);
-	//var tryithref = tryit.prop('tagName');
-	//alert("El is "+tryithref);
+	var elid = el;
+	elid = el.replace(/render/,'');
+	var tryit = $('#tryit'+elid);
+	var tryithref = tryit.attr('href');
+	tryithref = tryithref.replace(/problemSeed=\d+/, 'problemSeed='+seed);
+	tryit.attr('href', tryithref);
+	var editit = $('#editit'+elid);
+	var editithref = editit.attr('href');
+	editithref = editithref.replace(/problemSeed=\d+/, 'problemSeed='+seed);
+	editit.attr('href', editithref);
   $.post(setmakerWebserviceURL, ro, function (data) {
     var response = data;
     $('#'+el).html(data);
