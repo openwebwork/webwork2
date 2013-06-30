@@ -73,7 +73,7 @@ var categories =
 				tooltip:"racine",
 				helpurl:"racine.html",
 				latex:"\\sqrt[]{}",
-				PG:""
+				PG:"^(1/b)"
 			},
 			{
 				image:jqmv_basepath_images + "carre.jpg",
