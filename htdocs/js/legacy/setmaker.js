@@ -313,6 +313,12 @@ function randomize(filepath, el) {
     ro.displayMode = displayMode;
   }
   ro.noprepostambles = 1;
+	//var elid = el;
+	//elid = el.replace(/render/,'');
+	//var tryit = $('#tryit'+elid)[0];
+	//alert("El is "+tryit);
+	//var tryithref = tryit.prop('tagName');
+	//alert("El is "+tryithref);
   $.post(setmakerWebserviceURL, ro, function (data) {
     var response = data;
     $('#'+el).html(data);
