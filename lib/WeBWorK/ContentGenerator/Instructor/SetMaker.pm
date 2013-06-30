@@ -34,6 +34,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
+use WeBWorK::Utils::Tags;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 
@@ -672,6 +673,7 @@ sub browse_library_panel2adv {
 		$mylevelline .= q/onchange="lib_update('count', 'clear');return true" /;
 		$mylevelline .= "$selected />$j</label></td>";
 	}
+	$mylevelline .= "<td>".$self->helpMacro("Levels")."</td>";
 	$mylevelline .= '</tr></table>';
 
 	print CGI::Tr({},
@@ -831,7 +833,9 @@ sub make_top_row {
 		CGI::br(), 
 		CGI::br(), 
 		CGI::submit(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
+		#CGI::button(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
 		-onclick=>"document.mainform.selfassign.value=1"      #       $myjs
+		#-onclick=>"createNewSet()"      #       $myjs
 		),
 		"  ",
 		CGI::textfield(-name=>"new_set_name", 
@@ -940,16 +944,17 @@ sub make_data_row {
 		: CGI::div({class=>"RenderSolo", id=>"render$cnt"}, $pg->{body_text});
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
-
-	#if($self->{r}->param('browse_which') ne 'browse_npl_library') {
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
 		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
-			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
-		  ), target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
+			params=>{sourceFilePath => "$sourceFileName", 
+				problemSeed=> $problem_seed}
+		  ), 
+				id=> "editit$cnt",
+				target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
@@ -971,6 +976,7 @@ sub make_data_row {
 			}
 		), target=>"WW_View", 
 			title=>"Try it",
+			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
 	my $inSet = ($self->{isInSet}{$sourceFileName})?"(in target set)" : "";
@@ -978,7 +984,6 @@ sub make_data_row {
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
 	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
-	my $path_holder = "File...";
 
 	my $mlt = '';
 	my ($mltstart, $mltend) = ('','');
@@ -1008,6 +1013,8 @@ sub make_data_row {
 		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
 	}
 
+	my $level =0;
+
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
 	# Print the cell
@@ -1019,16 +1026,14 @@ sub make_data_row {
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
-			#"\n",'<script type="text/javascript">$(\'#sourcetrigger'.$cnt.'\').click(function() {toggle_content("filepath'.$cnt.'", "...", "'.$sourceFileName.'");return false;})</script>',
 				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
-#"\n", CGI::span({-style=>"float:left ; text-align: left"},"File..."),
 			CGI::span({-style=>"float:right ; text-align: right"}, 
 		        $inSet, $mlt, $rerand,
                         $edit_link, " ", $try_link,
-			CGI::button(-name=>"dont_show", 
-				-value=>"x",
+			CGI::span({-name=>"dont_show", 
 				-title=>"Hide this problem",
-				-onClick=>"return delrow($cnt)"),
+				-style=>"cursor: pointer",
+				-onClick=>"return delrow($cnt)"}, "X"),
 			)), 
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
@@ -1368,6 +1373,8 @@ sub pre_header_initialize {
 				$newSetRecord->open_date(time()+60*60*24*7); # in one week
 				$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
 				$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
+				$newSetRecord->visible(1);
+				$newSetRecord->enable_reduced_scoring(0);
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
