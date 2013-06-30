@@ -950,8 +950,11 @@ sub make_data_row {
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
-			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
-		  ), target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
+			params=>{sourceFilePath => "$sourceFileName", 
+				problemSeed=> $problem_seed}
+		  ), 
+				id=> "editit$cnt",
+				target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
@@ -973,6 +976,7 @@ sub make_data_row {
 			}
 		), target=>"WW_View", 
 			title=>"Try it",
+			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
 	my $inSet = ($self->{isInSet}{$sourceFileName})?"(in target set)" : "";
@@ -1369,6 +1373,8 @@ sub pre_header_initialize {
 				$newSetRecord->open_date(time()+60*60*24*7); # in one week
 				$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
 				$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
+				$newSetRecord->visible(1);
+				$newSetRecord->enable_reduced_scoring(0);
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
