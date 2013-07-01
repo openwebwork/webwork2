@@ -813,3 +813,12 @@ table#grades_table pre{
     font-size:small;
 }
 
+/* Equation editor bugfixes */
+#eqEditorDiv {
+    overflow:visible;
+}
+
+#openEqEditor {
+    min-height:35px;
+    min-width:43px;
+}

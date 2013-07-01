@@ -164,9 +164,12 @@ $(function(){
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
 
-     //GAtewayQuiz
+     //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
+
+    //Equation editor hacks
+ 
 
 })
 
