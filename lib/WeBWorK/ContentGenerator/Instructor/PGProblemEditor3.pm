@@ -646,7 +646,6 @@ sub body {
 		}
 		function setRadio(i,nw) {
 		  document.getElementById('action'+i).checked = true;
-		  alert('hithere');
 		  setTarget(nw);
 		}
 EOF
