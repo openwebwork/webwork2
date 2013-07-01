@@ -124,7 +124,9 @@ use Fcntl;
 # save_to_new_file
 # 
 
-use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
+#hiding add_problem option to see if its needed
+#use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
+use constant ACTION_FORMS => [qw(view  save save_as revert)]; 
 use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
 view        => "View",
 add_problem => "Append",
@@ -630,10 +632,21 @@ sub body {
 		}
 		function updateTarget() {
 		  var inWindow = document.getElementById("newWindow").checked;
-		  document.getElementById("editor").target = (inWindow? "WW_View": "pg_editor_frame");
+		  var target = "pg_editor_frame";
+		  if (inWindow) {
+		      target = "WW_View";
+		  } 
+		  else if (document.getElementById('save_as_form_id').checked
+		      || (document.getElementById('revert_form_id') && 
+			  document.getElementById('revert_form_id').checked ))
+		  {
+		      target = "";
+		  }
+		  document.getElementById("editor").target = (target);
 		}
 		function setRadio(i,nw) {
 		  document.getElementById('action'+i).checked = true;
+		  alert('hithere');
 		  setTarget(nw);
 		}
 EOF
@@ -1803,6 +1816,7 @@ sub save_as_form {  # calls the save_as_handler
     			 # -label     => '',
     			 # -onfocus   => $onChange,
     		 # },"and append to end of set $fullSetID",) : ''
+
 			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_new_problem_id", -label_text=>"Append to end of ". CGI::strong("$fullSetID")." set", -input_attr=>{
 				 -name      => "action.save_as.saveMode",
     			 -value     => 'add_to_set_as_new_problem',
