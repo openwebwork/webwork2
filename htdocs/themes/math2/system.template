@@ -33,7 +33,10 @@
 
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math2/math2.css"/>
+
 
 <!--
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math2/codemirror2/lib/codemirror.css">
