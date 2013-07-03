@@ -238,6 +238,7 @@ sub verify {
 				$error = $r->maketext("Your authentication failed.  Please try again."
 					. "  Please speak with your instructor if you need help.")
 			}
+
 		}
 
 		$self->maybe_kill_cookie;
