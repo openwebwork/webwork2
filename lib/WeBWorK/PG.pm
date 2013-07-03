@@ -96,7 +96,7 @@ sub defineProblemEnvir {
 	$envir{probFileName}        = $envir{fileName};		 
 	$envir{problemSeed}         = $problem->problem_seed;
 	$envir{displayMode}         = translateDisplayModeNames($options->{displayMode});
-	$envir{graphicsMode}		= $options->{graphicsMode};
+	$envir{graphicsMode}        = $options->{graphicsMode};
 	$envir{languageMode}        = $envir{displayMode};	 
 	$envir{outputMode}          = $envir{displayMode};	 
 	$envir{displayHintsQ}       = $options->{showHints};	 
