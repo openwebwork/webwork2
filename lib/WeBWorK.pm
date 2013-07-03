@@ -34,6 +34,7 @@ C<WeBWorK::ContentGenerator> to call.
 
 =cut
 
+BEGIN { $main::VERSION = "2.4.9"; }
 
 use strict;
 use warnings;

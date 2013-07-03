@@ -27,7 +27,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(before after readFile sortAchievements);
 
-use WWSafe;
+use Safe;
 use Storable qw(nfreeze thaw);
 
 sub checkForAchievements {
@@ -75,7 +75,7 @@ sub checkForAchievements {
     our $localData = {};
     our $globalData = {};
 
-    my $compartment = new WWSafe;
+    my $compartment = new Safe;
 
     #initialize things that are ""
     if (not $achievementPoints) {

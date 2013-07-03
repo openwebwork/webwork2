@@ -25,7 +25,9 @@ use base qw(WebworkWebservice);
 my $debugXmlCode=1;  # turns on the filter for debugging XMLRPC and SOAP code
 local(*DEBUGCODE);
 
-
+BEGIN { 
+	$main::VERSION = "2.5"; 
+}
 
 
 

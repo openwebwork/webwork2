@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2012-01-06 21:59-0500\n"
-"Last-Translator: Michael Gage <gage@math.rochester.edu>\n"
+"PO-Revision-Date: 2013-07-02 15:36-0500\n"
+"Last-Translator: \n"
 "Language-Team: WeBWorK language team <gage@math.rochester.edu>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -2549,4 +2549,36 @@ msgstr "Indices"
 #
 msgid "Hardcopy Format:"
 msgstr "Format :"
+
+#
+msgid "Force problems to be numbered consecutively from one (always done when reordering problems)"
+msgstr "Forcer les problèmes à être numérotées par un (toujours fait lors de la renumérotation des problèmes)"
+
+#
+msgid "Hide hints to Students"
+msgstr "Cacher les indices aux étudiants"
+
+#
+msgid "Opens"
+msgstr "Ouverture"
+
+#
+msgid "Answers Due"
+msgstr "Remise des réponses"
+
+#
+msgid "Answers Available"
+msgstr "Réponses disponible"
+
+#
+msgid "Visible to Students"
+msgstr "Visible aux étudiants"
+
+#
+msgid "Assignment type"
+msgstr "Type de devoir"
+
+#
+msgid "Refresh Display"
+msgstr "Rafraîchir la page"
 
