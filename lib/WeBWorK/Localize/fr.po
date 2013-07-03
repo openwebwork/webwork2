@@ -2520,7 +2520,7 @@ msgstr "Envoyer un courriel à l'enseignant"
 
 #
 msgid "Send E-mail:"
-msgstr "Envoyerv"
+msgstr "Envoyer"
 
 #
 msgid "Cancel Email"
@@ -2552,7 +2552,7 @@ msgstr "Format :"
 
 #
 msgid "Force problems to be numbered consecutively from one (always done when reordering problems)"
-msgstr "Problèmes de la Force pour être numérotées de un (toujours fait lorsque des problèmes de réorganisation)"
+msgstr "Forcer les problèmes à être numérotées par un (toujours fait lors de la renumérotation des problèmes)"
 
 #
 msgid "Hide hints to Students"
