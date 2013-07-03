@@ -73,9 +73,9 @@ use Getopt::Long;
 
 
 BEGIN {
-	die "MAA_WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{MAA_WEBWORK_ROOT};
-	  my $webwork_dir = $ENV{MAA_WEBWORK_ROOT};
+	die "WEBWORK_ROOT not found in environment.\n"
+		unless exists $ENV{WEBWORK_ROOT};
+	  my $webwork_dir = $ENV{WEBWORK_ROOT};
 	  print "addcourse:  WeBWorK root directory set to $webwork_dir\n";
 
 	# link to WeBWorK code libraries
@@ -85,7 +85,7 @@ BEGIN {
 		
 }
 
-our $webwork_dir = $ENV{MAA_WEBWORK_ROOT};
+our $webwork_dir = $ENV{WEBWORK_ROOT};
 
 
 BEGIN { $main::VERSION = "2.4"; }  #hack to set version
@@ -186,7 +186,7 @@ usage_error("must specify COURSEID.") unless $courseID;
 
 # bring up a minimal course environment
 $ce = WeBWorK::CourseEnvironment->new({
-	webwork_dir => $ENV{MAA_WEBWORK_ROOT},
+	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName => $courseID
 });
 
