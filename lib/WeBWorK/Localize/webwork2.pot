@@ -2592,3 +2592,35 @@ msgstr ""
 msgid "Hardcopy Format:"
 msgstr ""
 
+#
+msgid "Force problems to be numbered consecutively from one (always done when reordering problems)"
+msgstr ""
+
+#
+msgid "Hide hints to Students"
+msgstr ""
+
+#
+msgid "Opens"
+msgstr ""
+
+#
+msgid "Answers Due"
+msgstr ""
+
+#
+msgid "Answers Available"
+msgstr ""
+
+
+#
+msgid "Visible to Students"
+msgstr ""
+
+#
+msgid "Assignment type"
+msgstr ""
+
+#
+msgid "Refresh Display"
+msgstr ""
