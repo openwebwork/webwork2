@@ -1,4 +1,4 @@
-#! /usr/local/perl/5.12.5/bin/perl
+#! /usr/bin/env perl
 
 # This is the script formerly known as loadDB2, and then known as NPL-update.  
 
