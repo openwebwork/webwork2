@@ -39,7 +39,7 @@ use WeBWorK::Utils::DatePickerScripts;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status relax_restricted_release restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -57,7 +57,7 @@ use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attemp
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restrict_ip relax_restrict_ip hide_hint assignment_type)];
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restricted_release restricted_status relax_restricted_release restrict_ip relax_restrict_ip hide_hint assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 
@@ -154,6 +154,37 @@ use constant FIELD_PROPERTIES => {
 				1 => "Yes",
 				0 => "No",
 		},
+	},
+	restricted_release => {
+		name      => "Restrict release by set",
+		type      => "edit",
+		size      => "30em",
+		override  => "any",
+		labels    => {
+				#0 => "None Specified",
+				"" => "None Specified",
+		},
+	},
+	restricted_status => {
+		name      => "Status required for release",
+		type      => "edit",
+		size      => "30em",
+		override  => "any",
+		labels    => {
+				#0 => "None Specified",
+				"" => "None Specified",
+		},
+	},
+	relax_restricted_release => { 
+		name      => "Relax set restrictions when?",
+		type      => "choose",
+		override  => "any",
+		choices   => [qw( No AfterAnswerDate AfterVersionAnswerDate )],
+		labels    => {
+				No => "Never",
+				AfterAnswerDate => "After set answer date",
+		},
+		default   => 'No',
 	},
 	restrict_ip => {
 		name      => "Restrict Access by IP",
