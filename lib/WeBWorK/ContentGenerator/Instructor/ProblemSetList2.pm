@@ -96,8 +96,8 @@ use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date hide_hint) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date hide_hint) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -455,8 +455,11 @@ sub body {
 		$r->maketext("Due Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
-		$r->maketext("Reduced Credit Enabled"), 
-		$r->maketext("Hide Hint") 
+	    # Reduced Credit Enabled made the column wider than it needed
+	    # to be...
+	    #   $r->maketext("Reduced Credit Enabled"), 
+	        $r->maketext("Reduced Credit"), 
+		$r->maketext("Hide Hints") 
 	);
 	
 
@@ -1705,7 +1708,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1732,6 +1735,7 @@ sub importSetsFromDef {
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE);
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
+		$newSetRecord->description($description);
 
 	# gateway/version data.  these should are all initialized to ''
         #   by readSetDef, so for non-gateway/versioned sets they'll just 
@@ -1829,6 +1833,7 @@ sub readSetDef {
 	my ($line, $name, $value, $attemptLimit, $continueFlag);
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
+	my $description = '';
 	my ($dueDate, $openDate, $answerDate);
 	my @problemData;	
 
@@ -1900,7 +1905,10 @@ sub readSetDef {
 			} elsif ($item eq 'restrictLocation' ) { 
 				$restrictLoc = ( $value ) ? $value : '';
 			} elsif ( $item eq 'relaxRestrictIP' ) {
-				$relaxRestrictIP = ( $value ) ? $value : 'No';
+			    $relaxRestrictIP = ( $value ) ? $value : 'No';
+			} elsif ( $item eq 'description' ) {
+			    $value =~ s/<n>/\n/g;
+			    $description = $value;
 			} elsif ($item eq 'problemList') {
 				last;
 			} else {
@@ -2021,6 +2029,7 @@ sub readSetDef {
 		 $restrictIP,
 		 $restrictLoc,
 		 $relaxRestrictIP,
+		 $description
 		);
 	} else {
 		warn $r->maketext("Can't open file [_1]", $filePath)."\n";
@@ -2065,6 +2074,11 @@ SET:	foreach my $set (keys %filenames) {
 		my $openDate     = $self->formatDateTime($setRecord->open_date);
 		my $dueDate      = $self->formatDateTime($setRecord->due_date);
 		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
+		my $description = $setRecord->description;
+		if ($description) {
+		    $description =~ s/\n/<n>/g;
+		}
+		
 		my $setHeader    = $setRecord->set_header;
 		my $paperHeader  = $setRecord->hardcopy_header;
 		my @problemList = $db->listGlobalProblems($set);
@@ -2138,6 +2152,7 @@ dueDate           = $dueDate
 answerDate        = $answerDate
 paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader$gwFields
+description       = $description
 ${restrictFields}problemList       = 
 $problemList
 EOF
@@ -2269,7 +2284,9 @@ sub fieldEditHTML {
 	    return WeBWorK::CGI_labeled_input(
 		-type=>"checkbox",
 		-id=>$fieldName."_id",
-		-label_text=>ucfirst($fieldName),
+# The labeled checkboxes are making the table very wide. 
+		-label_text=>"",
+#		-label_text=>ucfirst($fieldName),
 		-input_attr=>\%attr
 		) . CGI::hidden(
 		-name => $fieldName,
@@ -2510,6 +2527,11 @@ sub printTableHTML {
 
 # outputs all of the Javascript required for this page
 
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
+	return "";
+}
+
 sub output_JS{
 	my $self = shift;
 	my $r = $self->r;
@@ -2520,7 +2542,6 @@ sub output_JS{
     
     print "\n\n<!-- add to header ProblemSetList2.pm -->";
         
-	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
@@ -2531,7 +2552,8 @@ sub output_JS{
     </style>!,"\n";
     
 	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), CGI::end_script();
+	# jquery ui printed seperately
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
@@ -2545,11 +2567,6 @@ sub output_JS{
 
 # Just tells template to output the stylesheet for Tabber
 sub output_tabber_CSS{
-	return "";
-}
-
-#Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
 	return "";
 }
 
