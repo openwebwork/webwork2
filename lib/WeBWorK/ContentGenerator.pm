@@ -492,7 +492,20 @@ sub content {
 	# this means that the {stylesheet} option in defaults.config is never used
 	my $template = $self->can("templateName") ? $self->templateName : $ce->{defaultThemeTemplate};
 	my $templateFile = "$themesDir/$theme/$template.template";
-	
+	unless (-r $templateFile) {  #hack to prevent disaster when missing theme directory
+	   if (-r "$themesDir/math4/$template.template") {
+	   		$templateFile = "$themesDir/math4/$template.template";
+	   		warn "Theme $theme is not one of the available themes. ".
+	   		"Please check the theme configuration ".
+	   		"in the files localOverrides.conf, course.conf and ".
+	   		"simple.conf and on the course configuration page.\n"
+	   	} else {
+	   		die "Neither the theme $theme nor the defaultTheme math4 are available.  ".  
+	   		"Please notify your site administrator that the structure of the ".
+	   		"themes directory needs attention.";
+	   	
+	   	}
+	}
 	template($templateFile, $self);
 }
 
@@ -1029,8 +1042,8 @@ sub footer(){
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	my $ww_version = $ce->{WW_VERSION}||"unknown -- set ww version in defaults.config";
-	my $pg_version = $ce->{PG_VERSION}||"unknown -- set pg version in defaults.config";
+	my $ww_version = $ce->{WW_VERSION}||"unknown -- set ww version VERSION";
+	my $pg_version = $ce->{PG_VERSION}||"unknown -- set pg version PG_VERSION link to ../pg/VERSION";
 	my $theme = $ce->{defaultTheme}||"unknown -- set defaultTheme in localOverides.conf";
 	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
 	print CGI::div({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
@@ -2042,7 +2055,7 @@ sub mathview_scripts {
 # Added CODE JQuery MathView
 	my @out = (
 #		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
-		CGI::end_script(),	"\n",	
+		#CGI::end_script(),	"\n",	
 		#CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 
 		CGI::end_script(),"\n",		
@@ -2056,8 +2069,6 @@ sub mathview_scripts {
 		CGI::end_script(),"\n",
 		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/operations.js"}), 
 		CGI::end_script(),"\n",
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/operations.js"}), 
-		CGI::end_script(), "\n",
 		CGI::start_script({type=>"text/javascript"}),
 		 q{  $(function(){$('.codeshard').addMathEditorButton("PGML");});  },
         CGI::end_script(), "\n",

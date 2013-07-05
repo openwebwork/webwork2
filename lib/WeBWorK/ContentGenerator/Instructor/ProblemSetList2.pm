@@ -96,8 +96,8 @@ use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date hide_hint) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date hide_hint) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -242,6 +242,11 @@ use constant  FIELD_PROPERTIES => {
 	restrict_ip => { 
 		type => "text",
 		size => 10,
+		access => "readwrite",
+	},
+	hide_hint => {
+		type => "checked",
+		size => 4,
 		access => "readwrite",
 	}
 };
@@ -437,7 +442,8 @@ sub body {
 		due_date
 		answer_date
 		visible
-		enable_reduced_scoring	
+		enable_reduced_scoring
+		hide_hint
 	)} = (
 		$r->maketext("Edit Problems"),
 		$r->maketext("Edit Assigned Users"),
@@ -449,7 +455,8 @@ sub body {
 		$r->maketext("Due Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
-		$r->maketext("Reduced Credit Enabled") 
+		$r->maketext("Reduced Credit Enabled"), 
+		$r->maketext("Hide Hint") 
 	);
 	
 
@@ -503,7 +510,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"problemsetlist2", name=>"problemsetlist2", -class=>"edit_form", -id=>"edit_form_id"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"problemsetlist2", name=>"problemsetlist", -class=>"edit_form", -id=>"edit_form_id"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -1320,7 +1327,7 @@ sub import_form {
 				-label_text=>$r->maketext("Assign this set to which users?").": ",
 				-input_attr=>{
 					-name => "action.import.assign",
-					-value => [qw(all user)],
+					-value => [qw(user all)],
 					-default => $actionParams{"action.import.assign"}->[0] || "none",
 					-labels => {
 						all => $r->maketext("all current users").".",
@@ -2286,7 +2293,7 @@ sub recordEditHTML {
 	my $exportMode = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
-	my $visibleClass = $Set->visible ? $r->maketext("visible") : $r->maketext("hidden");
+	my $visibleClass = $Set->visible ? $r->maketext("font-visible") : $r->maketext("font-hidden");
 	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Credit Enabled') : $r->maketext('Reduced Credit Disabled');
 
 	my $users = $db->countSetUsers($Set->set_id);
@@ -2393,12 +2400,14 @@ sub recordEditHTML {
 		next unless exists $nonkeyfields{$field};
 		my $fieldName = "set." . $set_id . "." . $field,		
 		my $fieldValue = $Set->$field;
+		#print $field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
 		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
+		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /hide_hint/ and not $editMode;
 		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
@@ -2510,8 +2519,9 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     
     print "\n\n<!-- add to header ProblemSetList2.pm -->";
-
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">!,"\n";
+        
+	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
 	print q!<style> 
@@ -2521,7 +2531,7 @@ sub output_JS{
     </style>!,"\n";
     
 	# print javaScript for dateTimePicker	
-	        print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();

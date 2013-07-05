@@ -73,7 +73,7 @@ var categories =
 				tooltip:"racine",
 				helpurl:"racine.html",
 				latex:"\\sqrt[]{}",
-				PG:""
+				PG:"^(1/b)"
 			},
 			{
 				image:jqmv_basepath_images + "carre.jpg",
@@ -241,7 +241,7 @@ var categories =
 				tooltip:"logarithmBase",
 				helpurl:"logarithmBase.html",
 				latex:"\\log_{}{}",
-				PG:"log( )"
+				PG:"log a /log b"
 			},
 			{
 				image:jqmv_basepath_images + "naturalLogarithm.jpg",

@@ -1,3 +1,2 @@
 This file is at htdocs/site_info.txt.  Use it to display information for the entire WeBWorK site which will be viewed at login time.
 
-

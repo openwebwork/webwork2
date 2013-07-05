@@ -1,5 +1,11 @@
 var setmakerWebserviceURL = "/webwork2/instructorXMLHandler";
 
+// For watermark of sample text for adding set text box
+$(function() {
+ $('input[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   '  ) } )
+ $('textarea[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   ', {useNative:false}  ) } )
+});
+
 function settoggle(id, text1, text2) {
   $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
     function() {$('#'+id).html(text1)});
@@ -28,6 +34,7 @@ function init_webservice(command) {
     "library_name":"Library",
     "courseID":'change-me',
     "set_id":"set0",
+    "set":"set0",
     "new_set_name":"new set",
     "command":"buildtree"
   };
@@ -54,6 +61,7 @@ function lib_update(who, what) {
   var mydefaultRequestObject = init_webservice('searchLib');
   if(mydefaultRequestObject == null) {
     // We failed
+    console.log("Could not get webservice request object");
     return false;
   }
   var subj = $('[name="library_subjects"] option:selected').val();
@@ -68,6 +76,11 @@ function lib_update(who, what) {
   if(lib_text == 'All Textbooks') { lib_text = '';};
   if(lib_textchap == 'All Chapters') { lib_textchap = '';};
   if(lib_textsect == 'All Sections') { lib_textsect = '';};
+	var levelstring='';
+	$('input:checkbox[name=level]:checked').each(function() {
+		levelstring = levelstring+$(this).val();
+	});
+  mydefaultRequestObject.library_levels = levelstring;
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
@@ -86,6 +99,9 @@ function lib_update(who, what) {
       var line = "There are "+ arr +" matching WeBWorK problems"
       if(arr == "1") {
         line = "There is 1 matching WeBWorK problem"
+      }
+      if(arr == "0") {
+        line = "There are no matching WeBWorK problems"
       }
       $('#library_count_line').html(line);
       return true;
@@ -165,6 +181,29 @@ function addemcallback(wsURL, ro, probarray, count) {
   return function (data) {
     return $.post(wsURL, ro2, addemcallback(wsURL, ro2, probarray, count+1));
   };
+}
+
+// This function needs webservice to be fixed
+// User has clicked to create a new set
+// Name is in textfield new_set_name
+function createNewSet() {
+  var ro = init_webservice('createNewSet');
+	var setname = $("[name='new_set_name']").val();
+	// if(! RegExp('/^[\w .-]+$/').test(setname)) {
+	if(! setname.match(/^[\w .-]+$/)) {
+		alert("Your name for the new problem set is not legal.  Use only letters, digits, and the characters -, _, and .");
+		return false;
+	}
+	setname = setname.replace(/\s/g, '_');
+	ro.new_set_name = setname;
+	ro.selfassign = "true";
+	console.log(ro);
+  return $.post(setmakerWebserviceURL, ro, function (data) {
+      var response = $.parseJSON(data);
+      console.log(response);
+      var arr = response.result_data;
+    });
+	return false;
 }
 
 // Reset all the messages about who is in the current set

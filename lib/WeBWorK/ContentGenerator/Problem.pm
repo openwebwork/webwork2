@@ -113,9 +113,10 @@ sub can_showCorrectAnswers {
 }
 
 sub can_showHints {
-	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
 	
-	return 1;
+	return !$Set->hide_hint;
 }
 
 sub can_showSolutions {
@@ -652,7 +653,9 @@ sub pre_header_initialize {
 	    );
 	foreach my $key (keys %$formFields) {
 	    if ($key =~ /AnSwEr/) {
-		$formFields->{$key} = $scrubber->scrub($formFields->{$key});
+		$formFields->{$key} = $scrubber->scrub(		
+			(defined $formFields->{$key})? $formFields->{$key}:'' # using // would be more elegant but breaks perl 5.8.x
+		);
 		### HTML::scrubber is a little too enthusiastic about
 		### removing > and < so we have to add them back in otherwise
 		### they confuse pg
@@ -1520,9 +1523,10 @@ sub output_tag_info{
                 print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID });
 		my $templatedir = $r->ce->{courseDirs}->{templates};
 		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
+		$sourceFilePath =~ s/'/\\'/g;
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-                print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}), CGI::end_script();
-                print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
 }

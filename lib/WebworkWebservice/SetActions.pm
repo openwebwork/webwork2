@@ -71,6 +71,7 @@ sub listLocalSetProblems{
         # If a command is passed, then we want relative paths rather than
         # absolute paths.  Do that by setting templateDir to the empty
         # string.
+
  	my $relativePaths = $params->{command};
  	$templateDir = '' if $relativePaths;
 
@@ -217,9 +218,8 @@ sub listSetUsers {
 sub createNewSet{
 	my $self = shift;
 	my $in = shift;
-  	my $db = $self->{db};
-  	my $out;
-
+	my $db = $self->{db};
+	my $out;
 
 
 	if ($in->{new_set_name} !~ /^[\w .-]*$/) {
