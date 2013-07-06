@@ -280,7 +280,7 @@ use constant FIELD_PROPERTIES => {
                 default => "1",
 	},
 	max_attempts => {
-		name      => "Max&nbsp;attempts",
+		name      => "Max attempts",
 		type      => "edit",
 		size      => 6,
 		override  => "any",
@@ -332,7 +332,7 @@ use constant FIELD_PROPERTIES => {
 		default   => "0",
 	},
 	hide_hint => {
-		name      => "Hide hints to Students",
+		name      => "Hide Hints from Students",
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( 0 1 )],
@@ -1861,7 +1861,7 @@ sub body {
 	####################################################################
 	# Display Field for putting in a set description
 	####################################################################
-	print CGI::h5("Set Description");
+	print CGI::h5($r->maketext("Set Description"));
 	print CGI::textarea({name=>"set.$setID.description",
 			     id=>"set.$setID.description",
 			     value=>$setRecord->description(),
@@ -1882,8 +1882,8 @@ sub body {
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Headers"),
-#			"Data",
-			"Display&nbsp;Mode:&nbsp;" . 
+#			$r->maketext("Data"),
+			$r->maketext("Display Mode:") . 
 			CGI::popup_menu(-name => "header.displaymode", -values => \@active_modes, -default => $default_header_mode) . '&nbsp;'. 
 			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
@@ -1945,7 +1945,7 @@ sub body {
 
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
-					CGI::Tr({}, CGI::td({}, $properties{$headerType}->{name})) . 
+					CGI::Tr({}, CGI::td({}, $r->maketext($properties{$headerType}->{name}))) . 
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, $r->maketext("Edit it")))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, $r->maketext("View it")))) .
 				CGI::end_table(),
@@ -2008,7 +2008,7 @@ sub body {
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Problems"),
 			$r->maketext("Data"),
-			"Display&nbsp;Mode:&nbsp;" . 
+			$r->maketext("Display Mode:") . 
 			CGI::popup_menu(-name => "problem.displaymode", -values => \@active_modes, -default => $default_problem_mode) . '&nbsp;'. 
 			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
@@ -2207,6 +2207,10 @@ sub body {
 	return "";
 }
 
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
+	return "";
+}
 
 sub output_JS {
 	my $self = shift;
@@ -2217,7 +2221,6 @@ sub output_JS {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	    print "\n\n<!-- add to header ProblemSetDetail.pm -->";
-	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
@@ -2228,7 +2231,6 @@ sub output_JS {
     </style>!,"\n";
     
 	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
@@ -2241,6 +2243,9 @@ sub output_JS {
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }
+
+
+
 1;
 
 =head1 AUTHOR

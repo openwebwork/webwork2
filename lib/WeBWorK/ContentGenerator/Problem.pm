@@ -731,9 +731,9 @@ sub warnings {
 		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
     } elsif ( $self->{pgerrors} > 0 ) {
-        my @pgdebug          = @{ $self->{pgdebug}           }//();
- 		my @pgwarning        = @{ $self->{pgwarning}         }//();
- 		my @pginternalerrors = @{ $self->{pginternalerrors}  }//();
+        my @pgdebug          = (defined @{ $self->{pgdebug}}) ? @{ $self->{pgdebug}} : () ; 
+ 		my @pgwarning        = (defined @{ $self->{pgwarning}}) ? @{ $self->{pgwarning}} : ();
+ 		my @pginternalerrors = (defined @{ $self->{pginternalerrors}}) ? @{ $self->{pginternalerrors}} : ();
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
 		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
@@ -1713,7 +1713,7 @@ sub output_achievement_CSS {
 }
 
 #Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
+sub output_jquery_ui{
 	return "";
 }
 

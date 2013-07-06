@@ -109,7 +109,7 @@ $(function(){
     //Homework sets editor config
     $('#problemsetlist').addClass('form-inline set-list-form');
     $('#problemsetlist2').addClass('form-inline set-list-form');
-    $('.set-id-tooltip').tooltip().click(function() {});
+    $('.set-id-tooltip').tooltip({trigger: 'hover'});
     $('.set-list-form select').addClass('input-medium');
     $('.set-list-form input:text').addClass('input-medium');
     $('.set-list-form select[name="action.filter.scope"]').addClass('input-large').removeClass('input-medium');
@@ -123,7 +123,12 @@ $(function(){
     $('#problem_set_form').addClass('form-inline');
     $('#user-set-form').addClass('form-inline user-assign-form');
     $('#set-user-form').addClass('form-inline user-assign-form');
-
+    $('.set_table input[name="selected_sets"]').each(function () {
+	var label = $(this).parent().children('label');
+	label.prepend(this);
+	label.addClass('checkbox');
+    });
+    
     //PG editor styling
     $('#editor').addClass('form-inline span9');
     $('#editor a').addClass('btn btn-small btn-info');
