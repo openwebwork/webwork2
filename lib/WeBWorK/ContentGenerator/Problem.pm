@@ -1713,7 +1713,7 @@ sub output_achievement_CSS {
 }
 
 #Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
+sub output_jquery_ui{
 	return "";
 }
 
