@@ -113,9 +113,10 @@ sub can_showCorrectAnswers {
 }
 
 sub can_showHints {
-	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
 	
-	return 1;
+	return !$Set->hide_hint;
 }
 
 sub can_showSolutions {
@@ -1712,7 +1713,7 @@ sub output_achievement_CSS {
 }
 
 #Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
+sub output_jquery_ui{
 	return "";
 }
 

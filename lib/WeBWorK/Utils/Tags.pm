@@ -38,7 +38,7 @@ use constant NUMBERED => qw( TitleText AuthorText EditionText Section Problem );
 
 my $basics = join('|', BASIC);
 my $numbered = join('|', NUMBERED);
-my $re = qr/#\s*\b($basics)\s*\(\s*'?(.*?)'?\s*\)/;
+my $re = qr/#\s*\b($basics)\s*\(\s*'?(.*?)'?\s*\)\s*$/;
 
 sub istagline {
   my $line = shift;
@@ -124,7 +124,7 @@ sub settag {
   my $newval = shift;
   my $force = shift;
 
-  if(defined($newval) and ((defined($force) and $force) or $newval) and ($newval ne $self->{$tagname})) {
+  if(defined($newval) and ((defined($force) and $force) or $newval) and ((not defined($self->{$tagname})) or ($newval ne $self->{$tagname}))) {
     $self->{modified}=1;
     $self->{$tagname} = $newval;
   }

@@ -32,9 +32,9 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/ubc.css"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/lib/codemirror.css">
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/pg/pg.css">
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/math/math.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/codemirror.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/codemirror2/mode/pg/pg.css">
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/codemirror2/mode/math/math.css">
 
 <!--#if can="output_tabber_CSS"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
@@ -118,8 +118,8 @@
 <table width="100%" cellpadding="10" cellspacing="0" border="0" height="100%">
 	<tr valign="top">
 		<td align="left" valign="top" rowspan="2" class="LeftPanel" height="100%">
-                     <a href="http://webwork.math.rochester.edu">
-			<img src="/webwork2_files/images/wwlogo04.png" alt="WeBWorK" />
+                     <a href="http://webwork.maa.org">
+			<img src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/images/wwlogo04.png" alt="WeBWorK" />
                      </a>
 			<!--
 			<hr />
@@ -156,7 +156,7 @@
 				<tr valign="top">
 					<td class="TopPanel">
 						<!--#if can="path"-->
-						<span class="Path"><!--#path style="text" image="<!--#url type="webwork" name="htdocs"-->/images/right_arrow.png" text=" > "--></span>
+						<span class="Path"><!--#path style="text" text=" > "--></span>
 						<!--#endif-->
 					</td>
 					<td class="TopPanel" align="right" nowrap>
@@ -328,11 +328,11 @@
 </table>
 
 
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/lib/codemirror.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/pg/pg.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror2/mode/math/math.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codeshard.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/codemirror2/lib/codemirror.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/codemirror2/cm_init.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/codemirror2/mode/pg/pg.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/codemirror2/mode/math/math.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/ubc/codemirror/codeshard.js"></script>
 </body>
 
 </html>

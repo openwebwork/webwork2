@@ -181,7 +181,7 @@ sub checkForAchievements {
 	    $cheevoMessage .= CGI::start_div({class=>'cheevopopuptext'});  
 	    if ($achievement->category eq 'level') {
 		
-			$cheevoMessage = $cheevoMessage . CGI::h1("Level Up: $achievement->{name}");
+			$cheevoMessage = $cheevoMessage . CGI::h2("Level Up: $achievement->{name}");
 			#print out description as part of message if we are using items
 			
 			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled} ?  $achievement->{description} : "Congratulations, you earned a new level!");
@@ -189,7 +189,7 @@ sub checkForAchievements {
 
 	    } else {
 		
-			$cheevoMessage .=  CGI::h1("Mathchievment Unlocked: $achievement->{name}");
+			$cheevoMessage .=  CGI::h2("Mathchievment Unlocked: $achievement->{name}");
 			$cheevoMessage .=  CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
 			$cheevoMessage .= CGI::end_div();
 	    }
