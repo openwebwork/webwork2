@@ -87,20 +87,20 @@ define(['Backbone',
             var timezone = this.parent.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
 
 
-            var today = XDate.today();
-            var openDate = today.clone().addDays(7);
+            var today = moment();
+            var openDate = moment().add(7,"days");
             var assignOpenPriorToDue = this.parent.settings.getSettingValue("pg{assignOpenPriorToDue}");
-            var dueDate = openDate.clone().addMinutes(assignOpenPriorToDue);
+            var dueDate = moment().add(assignOpenPriorToDue,"minutes");
             var answerAfterDueDate = this.parent.settings.getSettingValue("pg{answersOpenAfterDueDate}");
-            var answerDate = dueDate.clone().addMinutes(answerAfterDueDate);
+            var answerDate = moment().add(answerAfterDueDate,"minutes");
  
 
             // _openDate.toString("MM/dd/yyyy") + " at " + _openDate.toString("hh:mmtt")+ " " + tz[1];            
 
             this.model = new ProblemSet({set_id: "a_temporary_set_name",
-                answer_date: answerDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone,
-                open_date: openDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone,
-                due_date: dueDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone
+                answer_date: answerDate.unix(),
+                open_date: openDate.unix(),
+                due_date: dueDate.unix()
             });
 		}
 
