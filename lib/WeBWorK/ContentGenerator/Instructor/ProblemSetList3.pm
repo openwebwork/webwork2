@@ -445,8 +445,8 @@ sub head{
     my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-    	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
-        print "<link rel='stylesheet' type='text/css' href='$site_url/css/homework-manager.css' > </style>";
+	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
+    print "<link rel='stylesheet' type='text/css' href='$site_url/css/homework-manager.css' > </style>";
 	return "";
 }
 
@@ -581,9 +581,6 @@ sub output_JS{
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-
-	my @globalSets = getAllSets($self);
-
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;

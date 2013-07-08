@@ -3,9 +3,9 @@
   * 
   */
 
-define(['Backbone', 'underscore'], function(Backbone, _){
+define(['Backbone', 'underscore','XDate'], function(Backbone, _,XDate){
     var Message = Backbone.Model.extend({
-    	defaults:  { text: "", dateCreated: new Date(), expiration: 30} // in seconds},
+    	defaults:  { text: "", dateCreated: XDate.now(), expiration: 30} // in seconds},
     });
 
     return Message;

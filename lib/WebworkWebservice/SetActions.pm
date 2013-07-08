@@ -781,4 +781,3 @@ sub read_set_def {
 	return(@pg_files);
 }
 
-

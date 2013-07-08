@@ -39,10 +39,6 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 case "Library Problems":
                     var pathParts = this.path.split("/");
                     switch(pathParts[0]){
-                        case "LocalLibrary":
-                            var path = this.path.replace("LocalLibrary","templates");
-                            requestObject = {  xml_command: "getLocalProblems", library_name: path};
-                            break;
                         case "Library":
                             console.log("Fetching Library: " + this.path);
                             requestObject = {  xml_command: "listLib", command: "files",
@@ -70,7 +66,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                     if (problems[i] != "") {
                         newProblems.push(new Problem({path:problems[i],place: i}));
                     }
-                } 
+                }  
                 self.reset(newProblems);
                 self.trigger("fetchSuccess");
             });
@@ -134,7 +130,6 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         $.post(config.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
             console.log(response);
-            self.trigger("reordered");
         });
     }
 

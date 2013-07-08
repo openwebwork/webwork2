@@ -449,6 +449,7 @@ clear: both;
 #InfoPanel {
     font-size:100%;
 
+
 	float: left; /*was right*/
 	min-width: 0;
 	overflow: auto; /*was hidden*/

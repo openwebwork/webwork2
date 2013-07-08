@@ -22,6 +22,7 @@
 <html lang="en-US">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap/docs/assets/css/bootstrap.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
@@ -49,6 +50,7 @@
                      		<!--#options-->
                      	</ul>
                      <!--#endif-->
+
                   </div>
 		            
 	    		<div class="span3">
@@ -56,6 +58,7 @@
 						<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
 					</ul>
 				</div> 
+
 				<div class="span3"><!--#loginstatus--></div>
 	    		<div class="span2"><button class="btn" id="help-link">Help</button>
 	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2/issues/new">Bugs!</a>
