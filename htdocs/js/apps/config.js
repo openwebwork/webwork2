@@ -55,6 +55,16 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         }
         
                 ],
+        problemSetHeaders : [
+            {name: "set_id", label: "Name", datatype: "string", editable: false},
+            {name: "enable_reduced_scoring", label: "Reduced Scoring", datatype: "string",editable: true,
+                values: {"0": "No", "1": "Yes"}},
+            {name: "visible", label: "Visible", datatype: "string",editable: true,
+                values: {"0": "No", "1": "Yes"}},
+            {name: "open_date", label: "Open Date", datatype: "date", editable: true},
+            {name: "due_date", label: "Due Date", datatype: "date", editable: true},
+            {name: "answer_date", label: "Answer Date", datatype: "date", editable: true}
+            ],
         permissions : [{value: -5, label: "guest"},{value: 0, label: "student"},{value: 2, label: "login proctor"}, 
                         {value: 3, label: "T.A."},{value: 10, label: "professor"}, {value: 20, label: "administrator"}],
 
@@ -179,8 +189,6 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
 
             }
     });
-
-
 
     return config;
 });

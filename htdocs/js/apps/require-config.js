@@ -29,7 +29,7 @@ var require = {
         "util":                 "/webwork2_files/js/lib/util",
         
     },
-    urlArgs: "bust=" +  (new Date()).getTime(),
+    //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
      shim: {
         'jquery-ui': ['jquery'],
@@ -43,7 +43,7 @@ var require = {
         'stickit': ["Backbone","jquery"],
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],
-        'editablegrid': {exports: 'EditableGrid'},
+        'editablegrid': {deps: ['jquery'], exports: 'EditableGrid'},
         'blob': {exports : 'Blob'},
         'blob-builder': {exports: 'BlobBuilder'},
         //'jquery-tablesorter': ['jquery'],
