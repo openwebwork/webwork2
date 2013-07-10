@@ -100,8 +100,8 @@
     <span class="caret"></span>
   </a>
 <ul class="dropdown-menu">
-    <li><a class="link" data-link='add-new-hw-set'>Add a New Set</a></li>
-  <li><a class="link" data-link="delete-hw-set">Delete a Set</a></li>
+    <li><a class="link add-problem-set">Add a New Set</a></li>
+  <li><a class="link delete-problem-set">Delete a Set</a></li>
   </ul>
   </div>
 
@@ -377,7 +377,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <span class="library-tree-right"></span> 
 </script>
 
-<<<<<<< HEAD
+
 <script type="text/template" id="library-dropdown-template">
   <div class="btn-group">
     <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
@@ -398,11 +398,10 @@ at the bottom of the screen and click "Save Changes". </p>
                }); %>
     </ul>
   </div>
-=======
+</script>
+
 <script type="text/template" id="target-set-template">
   <option><%=set_id%></option>
-
->>>>>>> 48ff11825528e6f3c6c70ada974e292696fc94b1
 </script>
 
 
@@ -410,7 +409,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <script type="text/template" id="problem-template">
 <div class="span4 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
 <div class="handle row-fluid">
-<<<<<<< HEAD
+
 <%if(reorderable){%><div class="span1"><a class="reorder-handle btn btn-small" href="#"><i class="icon-resize-vertical icon-large"></i></a></div><%}%>
 <%if(draggable){%>
   <div class="span1"> <a class="drag-handle btn btn-small" href="#"><i class="icon-move"></i></a></div>
@@ -429,20 +428,6 @@ at the bottom of the screen and click "Save Changes". </p>
 <%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link"><i class="icon-remove"></i></a><%}%>
 </div>
 <%if(deletable){ %><span class="span1 remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
-=======
-<%if(showTools){%><span class="add-problem"><i class="icon-plus-sign"></i></span> <%}%>
-<%if(reorderable){%><div class="span1"><i class="icon-resize-vertical icon-large"></i></div><%}%>
-<%if(showPoints){%><div class="span2"> Problem value:<input class="prob-value" type="text" value="<%=value%>" size="5"></div><%}%>
-<div class="span2 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
-<%if(showTools){%><a target="WW_editor" href="<%=editUrl%>"><i class="icon-pencil"></i></a>
-<span class="refresh-problem"><i class="icon-refresh"></i></span>    
-<a target="WW_view" href='<%=viewUrl%>'><i class="icon-eye-open"></i></a>    
-<span class="hide-problem link">&times;</span>
-<%}%>
-<%if(deletable){ %><span class="remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
-<div class="problem" data-path="<%= path %>" data-source="<%= type %>">
->>>>>>> 48ff11825528e6f3c6c70ada974e292696fc94b1
-
 <%= data %>
 </script>
 

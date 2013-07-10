@@ -15,7 +15,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
     var ProblemSetListView = Backbone.View.extend({
 
     	initialize: function (){
-    		_.bindAll(this,"render","addDeleteSet");
+    		_.bindAll(this,"render","addSet","deleteSet");
             var self = this;
 
             this.setViewTemplate = $("#set-view-template").html();
@@ -50,38 +50,23 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 
 
         },
-        events: {"click a.link": "addDeleteSet"},
-        addDeleteSet: function (evt){
-            var self = this;
-            switch($(evt.target).data("link")){
-                case "add-new-hw-set":
-                    if (! this.addProblemSetView){
-                        (this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets})).render();
-                    } else {
-                        this.addProblemSetView.setModel(new ProblemSet()).render().open();
-                    }
-                    break;
-                case "delete-hw-set":
-                    if (! this.deleteProblemSetView){
-                        this.deleteProblemSetView = new DeleteProblemSetView({problemSets: this.problemSets});
-                        this.deleteProblemSetView.render();
-                    } else {
-                        this.deleteProblemSetView.open();
-                    }
-                    break;
+        events: {"click a.add-problem-set": "addSet",
+                 "click a.delete-problem-set": "deleteSet"},
+        addSet: function (evt){            
+            if (! this.addProblemSetView){
+                (this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets})).render();
+            } else {
+                this.addProblemSetView.setModel(new ProblemSet()).render().open();
             }
-
 
         },
         deleteSet: function () {
-            var deletedSets = _.toArray(this.$("#new-set-modal input:checkbox[checked='checked']")
-                                    .map(function(i,v){return $(v).data("setid");}));
-            console.log("deleting sets: " + deletedSets.join(","));
-
-            var sets = this.collection.filter(function (set) { return _(deletedSets).indexOf(set.get("set_id"))>-1;});
-            _(sets).each(function(set){set.destroy();});
-
-            this.$("#new-set-modal").modal("hide");
+            if (! this.deleteProblemSetView){
+                this.deleteProblemSetView = new DeleteProblemSetView({problemSets: this.problemSets});
+                this.deleteProblemSetView.render();
+            } else {
+                this.deleteProblemSetView.open();
+            }
         }
     });
 

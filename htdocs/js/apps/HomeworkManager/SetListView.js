@@ -10,22 +10,40 @@ define(['Backbone', 'underscore','editablegrid','config'],
     var SetListView = Backbone.View.extend({
         className: "set-list-view",
         initialize: function () {
-            _.bindAll(this, 'render','customizeGrid','gridChanged');  // include all functions that need the this object
+            _.bindAll(this, 'render','customizeGrid','gridChanged','updateGrid');  // include all functions that need the this object
           
             this.problemSets = this.options.problemSets;
-            this.grid = new EditableGrid("problem-set-grid",{ enableSort: true,pageSize: 10});
-            var _data = this.problemSets.map(function(_set) { return {id: _set.cid, values: _set.attributes};});
-            this.grid.load({metadata: config.problemSetHeaders, data: _data});
+
+            this.grid = new EditableGrid("problem-set-grid",{ enableSort: true,pageSize: 15});
+            
+            this.grid.load({metadata: config.problemSetHeaders});
             this.customizeGrid();
             this.grid.modelChanged = this.gridChanged;
-          
+            this.problemSets.on("change",this.updateGrid);
+            this.problemSets.on("add",this.updateGrid);
+            this.problemSets.on("remove",this.updateGrid);
+
+        },
+        updateGrid: function (){
+            var _data = this.problemSets.map(function(_set) { return {id: _set.cid, values: _set.attributes};});
+            this.grid.load({data: _data});
+            this.grid.refreshGrid();
         },
         gridChanged: function(rowIndex, columnIndex, oldValue, newValue) {
 
             if ([3,4,5].indexOf(columnIndex)>-1) {  // it's a date
-                var oldDate = moment.unix(oldDate)
-                    , newDate = moment.unix(newDate);
+                var oldDate = moment.unix(oldValue)
+                    , newDate = moment.unix(newValue);
+
+                // check if the day has actually changed. 
+                if (! oldDate.isSame(newDate,"day")){
+                    newDate.hours(oldDate.hours()).minutes(oldDate.minutes());
+                    this.problemSets.get(this.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newDate.unix()).update();
+                } 
+            } else {
+                var _set = this.problemSets.get(this.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newValue).update();
             }
+            this.grid.refreshGrid();
         },
         render: function () {
             var self = this;
@@ -33,6 +51,7 @@ define(['Backbone', 'underscore','editablegrid','config'],
           
             this.grid.renderGrid("sets-table-container","table table-bordered table-condensed","users-table");
             this.grid.setPageIndex(0);
+            this.updateGrid();
         },
         customizeGrid: function () {
             var dateRenderer = new CellRenderer({
