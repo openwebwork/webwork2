@@ -3632,7 +3632,7 @@ msgid "Rename"
 msgstr "Renommer"
 
 msgid "Copy"
-msgstr "Coier"
+msgstr "Copier"
 
 msgid "Make Archive"
 msgstr "Archiver"
@@ -3646,8 +3646,8 @@ msgstr "Nouveau dossier"
 msgid "Refresh"
 msgstr "Rafraîchir"
 
-msgid "Upload:"
-msgstr "Envoyer:"
+msgid "Upload"
+msgstr "Envoyer"
 
 msgid "Text"
 msgstr "Texte"
@@ -3672,3 +3672,33 @@ msgstr "Voir la date et la taille"
 
 msgid "Archive '%1' created successfully (%2 file$3)"
 msgstr "Archive '%1' créé avec succès (%2 fichier%3)" 
+
+msgid "Warning:"
+msgstr "Attention:"
+
+msgid " You have requested that the following items be deleted"
+msgstr "Vous avez demandé que les éléments suivants soit supprimés"
+
+msgid "Some of these files are directories. Only delete directories if you really know what you are doing. You can seriously damage your course if you delete the wrong thing."
+msgstr "Certains de ces fichiers sont des répertoires. Supprimer seulement des répertoires si vous savez vraiment ce que vous faites. Vous pouvez endommager sérieusement votre cours si vous supprimez la mauvaise chose."
+
+msgid "There is no undo for deleting files or directories!"
+msgstr "L'annulation n'es pas possibler pour la suppression de fichiers ou de répertoires!"
+
+msgid "Really delete the items listed above?"
+msgstr "Vous voulez vraiment supprimer les éléments énumérés ci-dessus?"
+
+msgid "Rename file as:"
+msgstr "Renommer le fichier en:"
+
+msgid "New file name:"
+msgstr "Nom du nouveau fichier:"
+
+msgid "New folder name:"
+msgstr "Nom du nouveau dossier:"
+
+msgid "File <b>%1</b> already exists. Overwrite it, or rename it as:"
+msgstr "Le fichier %1 existe déjà. Écraser ou renommer en:"
+
+msgid "Copy file as:"
+msgstr "Copier le fichier vers	:"

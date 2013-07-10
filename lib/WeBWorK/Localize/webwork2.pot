@@ -3552,7 +3552,7 @@ msgstr ""
 msgid "Refresh"
 msgstr ""
 
-msgid "Upload:"
+msgid "Upload"
 msgstr ""
 
 msgid "Text"
@@ -3579,14 +3579,24 @@ msgstr ""
 msgid "Archive '%1' created successfully (%2 file%3)"
 msgstr ""
 
+msgid "Warning:"
+msgstr ""
 
+msgid " You have requested that the following items be deleted"
+msgstr ""
 
+msgid "Some of these files are directories. Only delete directories if you really know what you are doing. You can seriously damage your course if you delete the wrong thing."
+msgstr ""
 
+msgid "There is no undo for deleting files or directories!"
+msgstr ""
 
+msgid "Really delete the items listed above?"
+msgstr ""
 
-
-
-
-
-
+Rename file as:
+New file name:
+New folder name:
+File %1 already exists. Overwrite it, or rename it as: %2
+Copy file as:
 
