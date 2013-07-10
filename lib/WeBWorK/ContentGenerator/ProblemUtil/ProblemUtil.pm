@@ -176,9 +176,9 @@ sub process_and_log_answer{
 				}
 
 				if ($db->putUserProblem($pureProblem)) {
-					$scoreRecordedMessage = "Your score was recorded.";
+					$scoreRecordedMessage = $r->maketext("Your score was recorded.");
 				} else {
-					$scoreRecordedMessage = "Your score was not recorded because there was a failure in storing the problem record to the database.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded because there was a failure in storing the problem record to the database.");
 				}
 				# write to the transaction log, just to make sure
 				writeLog($self->{ce}, "transaction",
@@ -197,13 +197,13 @@ sub process_and_log_answer{
 				);
 			} else {
 				if (before($set->open_date) or after($set->due_date)) {
-					$scoreRecordedMessage = "Your score was not recorded because this homework set is closed.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded because this homework set is closed.");
 				} else {
-					$scoreRecordedMessage = "Your score was not recorded.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded.");
 				}
 			}
 		} else {
-			$scoreRecordedMessage = "Your score was not recorded because this problem has not been assigned to you.";
+			$scoreRecordedMessage = $r->maketext("Your score was not recorded because this problem has not been assigned to you.");
 		}
 	}
 	

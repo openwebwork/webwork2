@@ -212,6 +212,7 @@ sub HiddenFlags {
 #
 sub Refresh {
  	my $self = shift;
+	my $r = $self->r;
 	my $pwd = shift || $self->{pwd};
 	my $isTop = $pwd eq '.' || $pwd eq '';
 
@@ -318,17 +319,17 @@ EOF
 		CGI::td({},
 			CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3}),
 			CGI::Tr([
-				CGI::td(CGI::input({%button,value=>"View",id=>"View"})),
-				CGI::td(CGI::input({%button,value=>"Edit",id=>"Edit"})),
-				CGI::td(CGI::input({%button,value=>"Download",id=>"Download"})),
-				CGI::td(CGI::input({%button,value=>"Rename",id=>"Rename"})),
-				CGI::td(CGI::input({%button,value=>"Copy",id=>"Copy"})),
-				CGI::td(CGI::input({%button,value=>"Delete",id=>"Delete"})),
-				CGI::td(CGI::input({%button,value=>"Make Archive",id=>"MakeArchive"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("View"),id=>"View"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Edit"),id=>"Edit"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Download"),id=>"Download"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Rename"),id=>"Rename"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Copy"),id=>"Copy"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Delete"),id=>"Delete"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Make Archive"),id=>"MakeArchive"})),
 				CGI::td({height=>10}),
-				CGI::td(CGI::input({%button,value=>"New File"})),
-				CGI::td(CGI::input({%button,value=>"New Folder"})),
-				CGI::td(CGI::input({%button,value=>"Refresh"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("New File")})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("New Folder")})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Refresh")})),
 			]),
 			CGI::end_table(),
 		),
@@ -340,11 +341,11 @@ EOF
 	print CGI::Tr([
 		CGI::td(),
 		CGI::td({colspan=>3},
-		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>"Upload:",id=>"Upload"}),
+		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>$r->maketext("Upload:"),id=>"Upload"}),
 		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
 		  CGI::br(),
 		  CGI::small(join(' &nbsp; ',"Format:",
-		    CGI::radio_group(-name=>'format', -value=>['Text','Binary','Automatic'],
+		    CGI::radio_group(-name=>'format', -value=>[$r->maketext('Text'),$r->maketext('Binary'),$r->maketext('Automatic')],
 				     -default=>$self->getFlag('format','Automatic')))),
 		),
 	]);
@@ -352,12 +353,12 @@ EOF
 		CGI::td(),
 		CGI::td({colspan=>3},
 		  CGI::small(CGI::checkbox(-name=>'overwrite',-checked=>$self->getFlag('overwrite'),-value=>1,
-					   -label=>'Overwrite existing files silently')),
+					   -label=>$r->maketext('Overwrite existing files silently'))),
 		  CGI::br(),
 		  CGI::small(CGI::checkbox(-name=>'unpack',-checked=>$self->getFlag('unpack'),-value=>1,
-					   -label=>'Unpack archives automatically')),
+					   -label=>$r->maketext('Unpack archives automatically'))),
 		  CGI::small(CGI::checkbox(-name=>'autodelete',-checked=>$self->getFlag('autodelete'),-value=>1,
-					   -label=>'then delete them')),
+					   -label=>$r->maketext('then delete them'))),
 		),
 	]);
 
@@ -706,6 +707,7 @@ sub Delete {
 #
 sub MakeArchive {
 	my $self = shift;
+	my $r = $self->r;
 	my @files = $self->r->param('files');
 	if (scalar(@files) == 0) {
 		$self->addbadmessage("You must select at least one file for the archive");
@@ -719,7 +721,8 @@ sub MakeArchive {
 	@files = readpipe $tar." 2>&1";
 	if ($? == 0) {
 		my $n = scalar(@files); my $s = ($n == 1? "": "s");
-		$self->addgoodmessage("Archive '$archive' created successfully ($n file$s)");
+		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([_2] file[_3])",$archive, $n, $s));
+		#$self->addgoodmessage("Archive '$archive' created successfully ($n file$s)");
 	} else {
 		$self->addbadmessage("Can't create archive '$archive': command returned ".systemError($?));
 	}
