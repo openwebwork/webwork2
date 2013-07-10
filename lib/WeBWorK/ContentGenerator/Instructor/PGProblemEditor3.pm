@@ -1217,8 +1217,8 @@ sub saveFileChanges {
     my $auxiliaryFilesExist = has_aux_files($outputFilePath);
 
     if ($auxiliaryFilesExist and not $do_not_save ) {
-        my $sourceDirectory = $sourceFilePath;
-    	my $outputDirectory = $outputFilePath;
+        my $sourceDirectory = $sourceFilePath ||'' ;
+    	my $outputDirectory = $outputFilePath ||'';
         $sourceDirectory =~ s|/[^/]+\.pg$||;
         $outputDirectory =~ s|/[^/]+\.pg$||;
 ##############
@@ -1237,8 +1237,6 @@ sub saveFileChanges {
 				#warn "files are different ",system("diff $fromPath $toPath");
         	}
         	$self->addbadmessage($writeFileErrors) if not_blank($writeFileErrors);
-        	
-
         }
         $self->addgoodmessage("Copied auxiliary files from $sourceDirectory to  new location at $outputDirectory");
  
