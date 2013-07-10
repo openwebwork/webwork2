@@ -3,8 +3,8 @@
  *
  */
 
-define(['Backbone', 'underscore','editablegrid','config'], 
-    function(Backbone, _,EditableGrid,config){
+define(['Backbone', 'underscore','../../lib/views/EditGrid','config'], 
+    function(Backbone, _,EditGrid,config){
 
     
     var SetListView = Backbone.View.extend({
@@ -14,11 +14,14 @@ define(['Backbone', 'underscore','editablegrid','config'],
           
             this.problemSets = this.options.problemSets;
 
-            this.grid = new EditableGrid("problem-set-grid",{ enableSort: true,pageSize: 15});
+            //this.grid = new EditableGrid("problem-set-grid",{ enableSort: true,pageSize: 15});
+            this.editgrid = new EditGrid({grid_name: "problem-set-grid", table_name: "sets-table-container",
+                    paginator_name: "#sets-table-paginator", template_name: "#all-problem-sets-template",
+                    enableSort: true, pageSize: 10});
             
-            this.grid.load({metadata: config.problemSetHeaders});
+            this.editgrid.grid.load({metadata: config.problemSetHeaders});
             this.customizeGrid();
-            this.grid.modelChanged = this.gridChanged;
+            this.editgrid.grid.modelChanged = this.gridChanged;
             this.problemSets.on("change",this.updateGrid);
             this.problemSets.on("add",this.updateGrid);
             this.problemSets.on("remove",this.updateGrid);
@@ -26,8 +29,9 @@ define(['Backbone', 'underscore','editablegrid','config'],
         },
         updateGrid: function (){
             var _data = this.problemSets.map(function(_set) { return {id: _set.cid, values: _set.attributes};});
-            this.grid.load({data: _data});
-            this.grid.refreshGrid();
+            this.editgrid.grid.load({data: _data});
+            this.editgrid.grid.refreshGrid();
+            this.editgrid.updatePaginator();
         },
         gridChanged: function(rowIndex, columnIndex, oldValue, newValue) {
 
@@ -47,10 +51,6 @@ define(['Backbone', 'underscore','editablegrid','config'],
         },
         render: function () {
             var self = this;
-            this.$el.html($("#all-problem-sets-template").html());
-          
-            this.grid.renderGrid("sets-table-container","table table-bordered table-condensed","users-table");
-            this.grid.setPageIndex(0);
             this.updateGrid();
         },
         customizeGrid: function () {
@@ -59,9 +59,9 @@ define(['Backbone', 'underscore','editablegrid','config'],
                     $(cell).html("<span class='date'>" + moment.unix(value).format("MM/DD/YYYY") + "</span>" + 
                                     "<i class='icon-time' style='margin-left:1ex;'></i>"); }
             });
-            this.grid.setCellRenderer("open_date", dateRenderer);
-            this.grid.setCellRenderer("due_date", dateRenderer);
-            this.grid.setCellRenderer("answer_date", dateRenderer);
+            this.editgrid.grid.setCellRenderer("open_date", dateRenderer);
+            this.editgrid.grid.setCellRenderer("due_date", dateRenderer);
+            this.editgrid.grid.setCellRenderer("answer_date", dateRenderer);
 
             
             function DateEditor(config) 
@@ -117,12 +117,12 @@ define(['Backbone', 'underscore','editablegrid','config'],
                 
             }
 
-            this.grid.setCellEditor("open_date", new DateEditor({col: "open_date"}));
-            this.grid.clearCellValidators("open_date");
-            this.grid.setCellEditor("due_date", new DateEditor({col: "due_date"}));
-            this.grid.clearCellValidators("due_date");
-            this.grid.setCellEditor("answer_date", new DateEditor({col: "answer_date"}));
-            this.grid.clearCellValidators("answer_date");
+            this.editgrid.grid.setCellEditor("open_date", new DateEditor({col: "open_date"}));
+            this.editgrid.grid.clearCellValidators("open_date");
+            this.editgrid.grid.setCellEditor("due_date", new DateEditor({col: "due_date"}));
+            this.editgrid.grid.clearCellValidators("due_date");
+            this.editgrid.grid.setCellEditor("answer_date", new DateEditor({col: "answer_date"}));
+            this.editgrid.grid.clearCellValidators("answer_date");
 
         }
 

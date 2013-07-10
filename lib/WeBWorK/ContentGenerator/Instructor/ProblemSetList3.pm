@@ -492,6 +492,7 @@ sub getCourseSettings {
 	my $ConfigValues = $ce->{ConfigValues};
 
 	foreach my $oneConfig (@$ConfigValues) {
+		#debug(to_json($oneConfig));
 		foreach my $hash (@$oneConfig) {
 			if (ref($hash) eq "HASH"){
 				my $str = '$ce->' . $hash->{hashVar};
@@ -520,9 +521,6 @@ sub getCourseSettings {
 	my $dt = DateTime->now();
 
 	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
-
-
-	#debug($tz->short_name_for_datetime($dt));
 
 	push(@$ConfigValues, \@tzabbr);
 

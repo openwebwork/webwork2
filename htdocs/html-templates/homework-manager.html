@@ -314,7 +314,6 @@ at the bottom of the screen and click "Save Changes". </p>
 </tbody>
 </table>
 
-<<<<<<< HEAD
 </script>
 
 <script type="text/template" id="unassign-users-template">
@@ -328,8 +327,6 @@ at the bottom of the screen and click "Save Changes". </p>
          <tr><td><button class="btn unassign-button">Unassign Selected Users</button></td></tr>
     </tbody>
   </table>
-=======
->>>>>>> 48ff11825528e6f3c6c70ada974e292696fc94b1
 </script>
 
 <script type="text/template" id="library-browser-template">
@@ -356,16 +353,12 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <div class="row-fluid">
 <div class="library-viewer span10"></div>
-<<<<<<< HEAD
 <div class="span2">
   <select class="target-set">
     <option>Target Set</option>
     <% _(sets).each(function(set){print('<option>' + set + ' </option> ')  });%>
   </select>
   </div> 
-=======
-<div class="span2"><select class="target-set"><option>Target Set</option></select></div> 
->>>>>>> 48ff11825528e6f3c6c70ada974e292696fc94b1
 </div>
 <div class="lib-problem-viewer"> </div>
 </script>
@@ -466,3 +459,19 @@ at the bottom of the screen and click "Save Changes". </p>
 <div id="sets-table-container"></div>
 <div id="sets-table-paginator"></div>
 </script>
+
+<script type="text/template" id="paginator-template">
+<div class="btn-group">
+<button class="btn goto-first"><i class="icon-step-backward"></i>
+<button class="btn go-back-one"><i class="icon-arrow-left"></i>
+<% if (page_start>0) {print ("<button class='btn'> ... </button>");} %>
+<% for(i=page_start;i<page_stop;i++){
+    print("<button class='btn page-button' data-page='" + i + "'>" + (i+1) + "</button>");
+} %>
+<% if (page_stop+1<num_pages) {print ("<button class='btn'> ... </button>");} %>
+
+<button class="btn go-forward-one"><i class="icon-arrow-right"></i>
+<button class="btn goto-end"><i class="icon-step-forward"></i>
+</div>
+</script>
+
