@@ -23,17 +23,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             this.problemSets = this.options.problemSets; 
             this.users = this.options.users; 
 
-            this.problemSets.on("add",function(set) {
-                    console.log("in PSLV problem-set-added");
-                    self.$("#probSetList").append((new SetView({model: set, template: self.setViewTemplate,
-                                numUsers: self.users.length})).render().el);
-                    self.$("#zeroShown").remove();  // if needed
-            });
-            this.problemSets.on("remove", function (set) {
-                self.$(".problem-set").each(function(i,v){
-                    if ($(v).data("setname")===set.get("set_id")){ $(v).remove();}
-                })
-            });
+            this.problemSets.on("add",this.render);
+            this.problemSets.on("change",this.render);
+            this.problemSets.on("remove",this.render);
 
         },
         render: function ()
@@ -42,7 +34,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             console.log("in PSLV render");
             
             this.$el.html(this.template({loading: false}));
-            this.$el.html(this.template({loading:false}));            
             this.problemSets.each(function (_model) {
                 self.$("#probSetList").append((new SetView({model: _model, template: self.setViewTemplate,
                     numUsers: self.users.length})).render().el);
@@ -67,7 +58,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
                     if (! this.addProblemSetView){
                         (this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets})).render();
                     } else {
-                        this.addProblemSetView.setModel(new ProblemSet()).open();
+                        this.addProblemSetView.setModel(new ProblemSet()).render().open();
                     }
                     break;
                 case "delete-hw-set":
@@ -144,13 +135,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
         },
         setModel: function(_model){
             this.model = _model;
+            return this;
         },
         bindings: {".problem-set-name": "set_id"},
-        events: {".btn-primary": "createSet"},
-        createSet: function(){
-            // First check if the set_id exists already
-
-        },
         addNewSet: function() {
             // need to validate here. 
             /*  

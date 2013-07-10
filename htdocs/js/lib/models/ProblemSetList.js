@@ -8,20 +8,18 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
     var ProblemSetList = Backbone.Collection.extend({
         model: ProblemSet,
 
-        initialize: function(options){
+        initialize: function(){
             var self = this;
             _.bindAll(this,"fetch","addNewSet","deleteSet");
             this.on('add', this.addNewSet);
             this.on('remove', this.deleteSet);
-            this.type = options.type; 
             this.setLoaded = false; 
             
            },
 
         fetch: function(){
             var self = this;
-            var command = (this.type === "Instructor")?'getSets':'getUserSets';
-            var requestObject = {"xml_command": command};
+            var requestObject = {"xml_command": "getSets"};
             _.defaults(requestObject, config.requestObject);
 
             $.get(config.webserviceURL, requestObject, function(data){
