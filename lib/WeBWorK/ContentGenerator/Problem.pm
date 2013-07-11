@@ -176,6 +176,13 @@ sub can_checkAnswers {
 	}
 }
 
+sub can_useMathView {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $authz = $self->r->authz;
+    
+    return $authz->hasPermissions($User->user_id, "use_math_view");
+}
+    
 # Reset the default in some cases
 sub set_showOldAnswers_default {
 	my ($self, $ce, $userName, $authz, $set) = @_;
@@ -299,7 +306,9 @@ sub attemptResults {
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                  $self->nbsp($correctAnswerPreview)) : "";
 		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
-		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
+		# I'm not sure that answerMessage should have the same css class as system messages
+#		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
+		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
 	
@@ -601,6 +610,7 @@ sub pre_header_initialize {
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}->{showHints},
 		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
+                useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -615,6 +625,7 @@ sub pre_header_initialize {
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
 		getSubmitButton    => 0,
+	        useMathView        => 0,
 	);
 	 
 	# does the user have permission to use certain options?
@@ -627,7 +638,8 @@ sub pre_header_initialize {
 		recordAnswers      => $self->can_recordAnswers(@args, 0),
 		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
 		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
-	);
+       	        useMathView           => $self->can_useMathView(@args)
+	    );
 	
 	# final values for options
 	my %will;
@@ -796,7 +808,8 @@ sub options {
 	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
 	push @options_to_show, "showHints" if $can{showHints};
 	push @options_to_show, "showSolutions" if $can{showSolutions};
-	
+	push @options_to_show, "useMathView" if $can{useMathView};
+
 	return $self->optionsMacro(
 		options_to_show => \@options_to_show,
 		extra_params => ["editMode", "sourceFilePath"],
@@ -976,7 +989,6 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
-	print $self->mathview_scripts();
 
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
 
@@ -1699,12 +1711,24 @@ sub output_JS{
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
 	
-	# The Base64.js file, which handles base64 encoding and decoding.
+	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+	
+	# This is for MathView.  
+	if ($self->{will}->{useMathView}) {
+	    
+
+	    print "<link href=\"$site_url/js/mathview/mathview.css\" rel=\"stylesheet\" />";
+	    print CGI::start_script({type=>"text/javascript"});
+	    print "mathView_basepath = \"$site_url/images/mathview/\";";
+	    print CGI::end_script();	    
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
+	}
 	
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
-	
+
 	return "";
 }
 
@@ -1712,7 +1736,7 @@ sub output_achievement_CSS {
     return "";
 }
 
-#Tells template to output stylesheet for Jquery-UI
+#Tells template to output stylesheet and js for Jquery-UI
 sub output_jquery_ui{
 	return "";
 }

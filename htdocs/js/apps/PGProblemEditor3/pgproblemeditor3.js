@@ -1,3 +1,8 @@
+$(document).keydown(function(e){
+    if (e.keyCode === 27)
+	$('#render-modal').modal('hide');
+});
+
 $(function(){
    
     $('#render-modal').modal({keyboard:true,show:false});

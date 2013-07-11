@@ -142,8 +142,8 @@ h1.page-title {
 /* Message section */
 
 .Message {
-	display: inline-block;
-	margin-bottom:1ex;
+    display: inline-block;
+    margin-bottom:1ex;
 }
 
 .Message div, .Message span {
