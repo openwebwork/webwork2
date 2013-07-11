@@ -31,6 +31,7 @@
     <div class="view-pane" id="libraryBrowser"></div>
     </div>
 
+
     </div>
   </div>
 </div>
@@ -99,8 +100,8 @@
     <span class="caret"></span>
   </a>
 <ul class="dropdown-menu">
-    <li><a class="link" data-link='add-new-hw-set'>Add a New Set</a></li>
-  <li><a class="link" data-link="delete-hw-set">Delete a Set</a></li>
+    <li><a class="link add-problem-set">Add a New Set</a></li>
+  <li><a class="link delete-problem-set">Delete a Set</a></li>
   </ul>
   </div>
 
@@ -369,6 +370,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <span class="library-tree-right"></span> 
 </script>
 
+
 <script type="text/template" id="library-dropdown-template">
   <div class="btn-group">
     <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
@@ -391,11 +393,16 @@ at the bottom of the screen and click "Save Changes". </p>
   </div>
 </script>
 
+<script type="text/template" id="target-set-template">
+  <option><%=set_id%></option>
+</script>
+
 
 
 <script type="text/template" id="problem-template">
 <div class="span4 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
 <div class="handle row-fluid">
+
 <%if(reorderable){%><div class="span1"><a class="reorder-handle btn btn-small" href="#"><i class="icon-resize-vertical icon-large"></i></a></div><%}%>
 <%if(draggable){%>
   <div class="span1"> <a class="drag-handle btn btn-small" href="#"><i class="icon-move"></i></a></div>
@@ -414,7 +421,6 @@ at the bottom of the screen and click "Save Changes". </p>
 <%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link"><i class="icon-remove"></i></a><%}%>
 </div>
 <%if(deletable){ %><span class="span1 remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
-
 <%= data %>
 </script>
 
@@ -453,3 +459,19 @@ at the bottom of the screen and click "Save Changes". </p>
 <div id="sets-table-container"></div>
 <div id="sets-table-paginator"></div>
 </script>
+
+<script type="text/template" id="paginator-template">
+<div class="btn-group">
+<button class="btn goto-first"><i class="icon-step-backward"></i>
+<button class="btn go-back-one"><i class="icon-arrow-left"></i>
+<% if (page_start>0) {print ("<button class='btn'> ... </button>");} %>
+<% for(i=page_start;i<page_stop;i++){
+    print("<button class='btn page-button' data-page='" + i + "'>" + (i+1) + "</button>");
+} %>
+<% if (page_stop+1<num_pages) {print ("<button class='btn'> ... </button>");} %>
+
+<button class="btn go-forward-one"><i class="icon-arrow-right"></i>
+<button class="btn goto-end"><i class="icon-step-forward"></i>
+</div>
+</script>
+

@@ -3,36 +3,55 @@
  *
  */
 
-define(['Backbone', 'underscore','editablegrid','config'], 
-    function(Backbone, _,EditableGrid,config){
+define(['Backbone', 'underscore','../../lib/views/EditGrid','config'], 
+    function(Backbone, _,EditGrid,config){
 
     
     var SetListView = Backbone.View.extend({
         className: "set-list-view",
         initialize: function () {
-            _.bindAll(this, 'render','customizeGrid','gridChanged');  // include all functions that need the this object
+            _.bindAll(this, 'render','customizeGrid','gridChanged','updateGrid');  // include all functions that need the this object
           
             this.problemSets = this.options.problemSets;
-            this.grid = new EditableGrid("problem-set-grid",{ enableSort: true,pageSize: 10});
-            var _data = this.problemSets.map(function(_set) { return {id: _set.cid, values: _set.attributes};});
-            this.grid.load({metadata: config.problemSetHeaders, data: _data});
+
+            //this.grid = new EditableGrid("problem-set-grid",{ enableSort: true,pageSize: 15});
+            this.editgrid = new EditGrid({grid_name: "problem-set-grid", table_name: "sets-table-container",
+                    paginator_name: "#sets-table-paginator", template_name: "#all-problem-sets-template",
+                    enableSort: true, pageSize: 10});
+            
+            this.editgrid.grid.load({metadata: config.problemSetHeaders});
             this.customizeGrid();
-            this.grid.modelChanged = this.gridChanged;
-          
+            this.editgrid.grid.modelChanged = this.gridChanged;
+            this.problemSets.on("change",this.updateGrid);
+            this.problemSets.on("add",this.updateGrid);
+            this.problemSets.on("remove",this.updateGrid);
+
+        },
+        updateGrid: function (){
+            var _data = this.problemSets.map(function(_set) { return {id: _set.cid, values: _set.attributes};});
+            this.editgrid.grid.load({data: _data});
+            this.editgrid.grid.refreshGrid();
+            this.editgrid.updatePaginator();
         },
         gridChanged: function(rowIndex, columnIndex, oldValue, newValue) {
 
             if ([3,4,5].indexOf(columnIndex)>-1) {  // it's a date
-                var oldDate = moment.unix(oldDate)
-                    , newDate = moment.unix(newDate);
+                var oldDate = moment.unix(oldValue)
+                    , newDate = moment.unix(newValue);
+
+                // check if the day has actually changed. 
+                if (! oldDate.isSame(newDate,"day")){
+                    newDate.hours(oldDate.hours()).minutes(oldDate.minutes());
+                    this.problemSets.get(this.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newDate.unix()).update();
+                } 
+            } else {
+                var _set = this.problemSets.get(this.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newValue).update();
             }
+            this.grid.refreshGrid();
         },
         render: function () {
             var self = this;
-            this.$el.html($("#all-problem-sets-template").html());
-          
-            this.grid.renderGrid("sets-table-container","table table-bordered table-condensed","users-table");
-            this.grid.setPageIndex(0);
+            this.updateGrid();
         },
         customizeGrid: function () {
             var dateRenderer = new CellRenderer({
@@ -40,9 +59,9 @@ define(['Backbone', 'underscore','editablegrid','config'],
                     $(cell).html("<span class='date'>" + moment.unix(value).format("MM/DD/YYYY") + "</span>" + 
                                     "<i class='icon-time' style='margin-left:1ex;'></i>"); }
             });
-            this.grid.setCellRenderer("open_date", dateRenderer);
-            this.grid.setCellRenderer("due_date", dateRenderer);
-            this.grid.setCellRenderer("answer_date", dateRenderer);
+            this.editgrid.grid.setCellRenderer("open_date", dateRenderer);
+            this.editgrid.grid.setCellRenderer("due_date", dateRenderer);
+            this.editgrid.grid.setCellRenderer("answer_date", dateRenderer);
 
             
             function DateEditor(config) 
@@ -98,12 +117,12 @@ define(['Backbone', 'underscore','editablegrid','config'],
                 
             }
 
-            this.grid.setCellEditor("open_date", new DateEditor({col: "open_date"}));
-            this.grid.clearCellValidators("open_date");
-            this.grid.setCellEditor("due_date", new DateEditor({col: "due_date"}));
-            this.grid.clearCellValidators("due_date");
-            this.grid.setCellEditor("answer_date", new DateEditor({col: "answer_date"}));
-            this.grid.clearCellValidators("answer_date");
+            this.editgrid.grid.setCellEditor("open_date", new DateEditor({col: "open_date"}));
+            this.editgrid.grid.clearCellValidators("open_date");
+            this.editgrid.grid.setCellEditor("due_date", new DateEditor({col: "due_date"}));
+            this.editgrid.grid.clearCellValidators("due_date");
+            this.editgrid.grid.setCellEditor("answer_date", new DateEditor({col: "answer_date"}));
+            this.editgrid.grid.clearCellValidators("answer_date");
 
         }
 

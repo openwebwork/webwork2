@@ -220,6 +220,7 @@ sub head{
     	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+
     print "<link rel='stylesheet' href='$site_url/js/components/editablegrid/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
     print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
 	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
@@ -373,7 +374,6 @@ sub output_JS{
     print qq!    }!;
     print qq!});!;
     print qq!</script>!;
-
 	
 	return "";
 }

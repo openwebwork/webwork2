@@ -622,7 +622,7 @@ sub title {
 # 	}
 # 	my $target = 'WW_View'; #"problem$edit_level"; # increasing edit_level gives you a new window with each edit.
 # 	my $site_url = $ce->{webworkURLs}->{htdocs};
-# 	print qq!<script type="text/javascript" src="$site_url/js/wz_tooltip.js"></script>!;
+# 	print qq!<script type="text/javascript" src="$site_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 # 	print CGI::script(<<EOF);
 #  		function setTarget(inWindow) {
 # 		  document.getElementById("newWindow").checked = inWindow;
