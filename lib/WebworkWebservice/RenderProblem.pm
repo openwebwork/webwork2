@@ -712,6 +712,10 @@ sub new {
 # 	return \%envir;
 # }
 
+sub renderProblem2 {
+	my ($self, $params) = @_;
+	
+}
 
 
 

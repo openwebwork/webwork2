@@ -14,8 +14,7 @@ define(['Backbone', 'underscore','../../lib/views/EditGrid','config'],
           
             this.problemSets = this.options.problemSets;
 
-            //this.grid = new EditableGrid("problem-set-grid",{ enableSort: true,pageSize: 15});
-            this.editgrid = new EditGrid({grid_name: "problem-set-grid", table_name: "sets-table-container",
+            this.editgrid = new EditGrid({el: $("#allSets"), grid_name: "problem-set-grid", table_name: "sets-table-container",
                     paginator_name: "#sets-table-paginator", template_name: "#all-problem-sets-template",
                     enableSort: true, pageSize: 10});
             
@@ -25,6 +24,7 @@ define(['Backbone', 'underscore','../../lib/views/EditGrid','config'],
             this.problemSets.on("change",this.updateGrid);
             this.problemSets.on("add",this.updateGrid);
             this.problemSets.on("remove",this.updateGrid);
+            console.log("in SetListView");
 
         },
         updateGrid: function (){
@@ -42,15 +42,16 @@ define(['Backbone', 'underscore','../../lib/views/EditGrid','config'],
                 // check if the day has actually changed. 
                 if (! oldDate.isSame(newDate,"day")){
                     newDate.hours(oldDate.hours()).minutes(oldDate.minutes());
-                    this.problemSets.get(this.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newDate.unix()).update();
+                    this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newDate.unix()).update();
                 } 
             } else {
-                var _set = this.problemSets.get(this.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newValue).update();
+                this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newValue).update();
             }
-            this.grid.refreshGrid();
+            this.editgrid.grid.refreshGrid();
         },
         render: function () {
             var self = this;
+            this.editgrid.render();
             this.updateGrid();
         },
         customizeGrid: function () {

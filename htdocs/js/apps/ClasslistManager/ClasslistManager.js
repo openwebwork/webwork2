@@ -15,30 +15,32 @@ require(['Backbone',
 	'./AddStudentFileView',
 	'./AddStudentManView',
 	'../../lib/util', 
+	'../../lib/views/EditGrid',
 	'config', /*no exports*/, 
 	'jquery-ui',
 	'backbone-validation',
 	'bootstrap',
 	'jquery-ui'], 
 function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStudentsView, 
-		ChangePasswordView, AddStudentFileView, AddStudentManView, util, config){
+		ChangePasswordView, AddStudentFileView, AddStudentManView, util, EditGrid,config){
 
 
     var UserListView = WebPage.extend({
 	tagName: "div",
         initialize: function(){
 	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-	    _.bindAll(this, 'render','deleteUsers','changePassword','gridChanged','updatePaginator');  // include all functions that need the this object
+	    _.bindAll(this, 'render','deleteUsers','changePassword','gridChanged');  // include all functions that need the this object
 	    var self = this;
 	    this.users = (globals.users) ? new UserList(globals.users): new UserList();
 	    
-	    
-	    this.grid = new EditableGrid("user-grid",{ enableSort: true,pageSize: 10});
-		var _data = this.users.map(function(user) { return {id: user.cid, values: user.attributes};});
-		this.grid.load({metadata: config.userTableHeaders, data: _data});
-		this.customizeGrid();
-	    this.grid.modelChanged = this.gridChanged;
-	    this.grid.tableRendered = this.updatePaginator;
+
+        this.editgrid = new EditGrid({grid_name: "users-table-container", table_name: "users-table",
+        paginator_name: "#users-table-paginator", template_name: "#classlist-table-template",
+        enableSort: true, pageSize: 10});
+        
+        this.editgrid.grid.load({metadata: config.userTableHeaders});
+        this.customizeGrid();
+        this.editgrid.grid.modelChanged = this.gridChanged;
 	    this.addStudentManView = new AddStudentManView({users: this.users});
 	    this.addStudentFileView = new AddStudentFileView({users: this.users});
 	    this.render();
@@ -82,10 +84,7 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 	     
 
 	    // Make sure the take Action menu item is reset
-	    $("button#help-link").click(function () {self.helpPane.open();});
-
-	    //this.postLoadingTasks();
-	    
+	    $("button#help-link").click(function () {self.helpPane.open();});	    
 	    
     },
     render: function(){
@@ -93,10 +92,11 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
     	this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
 	    
     	this.$el.append($("#classlist-manager-template").html());
-		this.grid.renderGrid("users-table-container","table table-bordered table-condensed","users-table");
-		this.grid.setPageIndex(0);
-		this.updatePaginator();
-	    this.$(".num-users").html(this.grid.getRowCount() + " of " + this.users.length + " users shown.");
+
+    	this.editgrid.setElement($("#users-table-container"));
+        this.editgrid.render();
+        this.updateGrid();
+	    this.$(".num-users").html(this.editgrid.grid.getRowCount() + " of " + this.users.length + " users shown.");
 	    this.$el.append(this.passwordPane = new ChangePasswordView());
 	    this.$el.append(this.emailPane = new EmailStudentsView()); 
 	    return this;
@@ -116,22 +116,6 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 	    'click button.go-back-one' : "showPreviousPage",
 	    'click button.go-forward-one': "showNextPage",
 	    'click button.goto-end': "showLastPage",
-	},
-	updatePaginator: function () {
-
-		var numPages = this.grid.getPageCount()
-			, page = this.grid.getCurrentPageIndex()
-			, pageStart = page < 10 ? 0 : page-10
-			, pageEnd = numPages-page < 10 ? numPages : ((page<10) ? 20: page+10);
-		$("#users-table-paginator").empty()
-			.html(_.template($("#paginator-template").html(),{page_start: pageStart, page_stop: pageEnd, num_pages: numPages}));
-		this.$("button.page-button[data-page='" + page + "']").prop("disabled",true);
-		if (page === 0) {
-			this.$(".goto-first,.go-back-one").prop("disabled",true);
-		} else if (page === numPages-1){
-			this.$(".goto-end,.go-forward-one").prop("disabled",true);
-		}
-		this.delegateEvents();
 	},
 	addStudentsByFile: function () {
 		this.addStudentFileView.openDialog();
@@ -169,7 +153,7 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 		
 	    this.loggedInUsers = [];
 	    // Display the number of users shown
-	    $("#usersShownInfo").html(this.grid.getRowCount() + " of " + this.users.length + " users shown.");
+	    $("#usersShownInfo").html(this.editgrid.grid.getRowCount() + " of " + this.users.length + " users shown.");
 		
 	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation
 	    
@@ -187,6 +171,12 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 	  */	
 
 	},
+	updateGrid: function (){
+        var _data = this.users.map(function(user) { return {id: user.cid, values: user.attributes};});
+        this.editgrid.grid.load({data: _data});
+        this.editgrid.grid.refreshGrid();
+        this.editgrid.updatePaginator();
+    },
     gridChanged: function(rowIndex, columnIndex, oldValue, newValue) {
 
     	var self = this;
@@ -233,7 +223,7 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 		// check to make sure that the updated information needs to be sent to the server
 		
 		else if (oldValue !== newValue  ){
-			var grid = this.grid;
+			var grid = this.editgrid.grid;
 		    var cid = grid.getRowId(rowIndex);
 		    var property = grid.getColumnName(columnIndex);
 		    var editedModel = this.users.get(cid);
@@ -260,38 +250,14 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
     	var users = $("td:nth-child(1) input[type='checkbox']:checked").closest("tr")
     			.children("td:nth-child(3)").map(function(i,v) {return $(v).html();}).get();
     	return this.users.filter(function(user) { return (_(users).indexOf(user.get("user_id")) > -1);});
-    },
-    changePage: function (evt) {
-		var newPageIndex = $(evt.target).data("page");
-		this.grid.setPageIndex(newPageIndex);
-		this.updatePaginator();
-	},
-	showFirstPage: function () {
-		this.grid.setPageIndex(0);
-		this.updatePaginator();
-	},
-	showPreviousPage: function (){
-		var currentPage = this.grid.getCurrentPageIndex() -1 ;
-		this.grid.setPageIndex(currentPage);
-		this.updatePaginator();
-	},
-	showNextPage: function (){
-		var currentPage = this.grid.getCurrentPageIndex() +1 ;
-		this.grid.setPageIndex(currentPage);
-		this.updatePaginator();	
-	},
-	showLastPage: function () {
-		var lastIndex = this.grid.getPageCount()-1;
-		this.grid.setPageIndex(lastIndex);
-		this.updatePaginator();
-	},
+    }, 
 	filterUsers: function (evt) {
-	    this.grid.filter($("#filter").val());
-	    this.$(".num-users").html(this.grid.getRowCount() + " of " + this.users.length + " users shown.");
+	    this.editgrid.grid.filter($("#filter").val());
+	    this.$(".num-users").html(this.editgrid.grid.getRowCount() + " of " + this.users.length + " users shown.");
 	},
 	clearFilterText: function () {
 		$("input#filter").val("");
-		this.grid.filter("");
+		this.editgrid.grid.filter("");
 	},
 	selectAll: function () {
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",this.$(".select-all-header").prop("checked"));
@@ -305,8 +271,8 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 			}
 		}
 
-		this.grid.setHeaderRenderer("Select", new SelectAllRenderer());
-		this.grid.setCellRenderer("Action", new CellRenderer({
+		this.editgrid.grid.setHeaderRenderer("Select", new SelectAllRenderer());
+		this.editgrid.grid.setCellRenderer("Action", new CellRenderer({
 			render: function(cell, value) { 
 				$(cell).html("<i class='icon-cog'></i>"); }
 		}));

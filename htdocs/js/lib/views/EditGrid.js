@@ -13,13 +13,16 @@ function(Backbone, _,EditableGrid){
 					"showNextPage","showLastPage");
 			this.grid = new EditableGrid(this.options.grid_name,this.options);
 			this.paginator = this.options.paginator_name;
+			this.grid.tableRendered = this.updatePaginator;
 
 		},
 		render: function () {
-           this.$el.html($(this.options.template_name).html());
+			console.log("in EditGrid.render()");
+            this.$el.html($(this.options.template_name).html());
           
-            this.grid.renderGrid(this.option.table_name,"table table-bordered table-condensed","the_grid");
+            this.grid.renderGrid(this.options.table_name,"table table-bordered table-condensed","the_grid");
             this.grid.setPageIndex(0);
+            return this;
  
 		},
         events: {

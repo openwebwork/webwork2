@@ -88,7 +88,12 @@ var HomeworkEditorView = WebPage.extend({
             self.setDropToEdit();
             var keys = _.keys(_set.changed);
             _(keys).each(function(key) {
-                self.announce.addMessage({text: "The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]});    
+                if (/date/.test(key)){
+                    self.announce.addMessage({text: "The value of " + key + " in problem set " + _set.get("set_id") 
+                            + " has changed to " + moment.unix(_set.changed[key]).format("MM/DD/YYYY")});    
+                } else {
+                    self.announce.addMessage({text: "The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]});    
+                }
             });
             self.views.calendar.render();
             self.setDropToEdit();
