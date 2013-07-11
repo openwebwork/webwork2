@@ -2023,6 +2023,8 @@
   , move: function (e) {
       if (!this.shown) return
 
+      if (e.type === 'keypress') return; //40 and 38 are characters in a keypress
+
       switch(e.keyCode) {
         case 9: // tab
         case 13: // enter

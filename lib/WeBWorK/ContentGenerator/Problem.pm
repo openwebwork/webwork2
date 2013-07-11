@@ -1716,14 +1716,20 @@ sub output_JS{
 	
 	# This is for MathView.  
 	if ($self->{will}->{useMathView}) {
-	    
-
-	    print "<link href=\"$site_url/js/mathview/mathview.css\" rel=\"stylesheet\" />";
-	    print CGI::start_script({type=>"text/javascript"});
-	    print "mathView_basepath = \"$site_url/images/mathview/\";";
-	    print CGI::end_script();	    
-	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
-	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
+	    if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
+		if ($self->{displayMode} ne 'MathJax') {
+		    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+		}
+		
+		print "<link href=\"$site_url/js/mathview/mathview.css\" rel=\"stylesheet\" />";
+		print CGI::start_script({type=>"text/javascript"});
+		print "mathView_basepath = \"$site_url/images/mathview/\";";
+		print CGI::end_script();	    
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
+	    } else {
+		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
+	    }
 	}
 	
 	# This is for any page specific js.  Right now its just used for achievement popups
