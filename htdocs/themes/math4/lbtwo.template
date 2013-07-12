@@ -24,7 +24,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <style>
     body{
 
@@ -45,9 +45,9 @@
         margin-right:25%;
     }
 </style>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap-responsive.css"/>
-<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/jquery-1.7.2.min.js"></script>
-<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
+<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/delete-me/jquery/jquery-1.7.2.min.js"></script><!-- FIXMEJS-->
+<script src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>

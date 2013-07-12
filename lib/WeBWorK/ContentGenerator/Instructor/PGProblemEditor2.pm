@@ -23,7 +23,7 @@ use constant DEFAULT_SEED => 123456;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::PGProblemEditor2 - Edit a pg file
+WeBWorK::ContentGenerator::Instructor::PGProblemEditor2 - Edit a pg file#
 
 =cut
 
