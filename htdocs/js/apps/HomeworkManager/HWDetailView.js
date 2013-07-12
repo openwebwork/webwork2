@@ -119,6 +119,7 @@ define(['Backbone',
         initialize: function () {
             _.bindAll(this,'render','setProblemSet');
             this.users = this.options.users;
+
         },
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
@@ -131,7 +132,10 @@ define(['Backbone',
             this.model.assignToUsers(_.difference(userNames,this.model.get("assigned_users")));
         },
         setProblemSet: function(_set) {
+            var self = this; 
             this.model = _set; 
+            this.model.on("change",function () { self.model.update();});
+
             return this;
         },
         bindings: { ".open-date" : "open_date",

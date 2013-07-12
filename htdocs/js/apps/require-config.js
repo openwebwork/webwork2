@@ -29,7 +29,7 @@ var require = {
         "util":                 "/webwork2_files/js/lib/util",
         
     },
-    //urlArgs: "bust=" +  (new Date()).getTime(),
+    urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
      shim: {
         'jquery-ui': ['jquery'],

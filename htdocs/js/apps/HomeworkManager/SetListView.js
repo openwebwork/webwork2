@@ -24,6 +24,7 @@ define(['Backbone', 'underscore','../../lib/views/EditGrid','config'],
             this.problemSets.on("change",this.updateGrid);
             this.problemSets.on("add",this.updateGrid);
             this.problemSets.on("remove",this.updateGrid);
+            this.render();
             console.log("in SetListView");
 
         },

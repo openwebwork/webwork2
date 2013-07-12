@@ -195,6 +195,7 @@ var HomeworkEditorView = WebPage.extend({
         // The following allows an assignment date (due, open) to be dropped on the calendar
 
         $(".assign-due,.assign-open").draggable({
+            revert: true,
             start: function () {$(this).popover("destroy")}
         });
 
