@@ -21,14 +21,24 @@
     margin-top:20px;
 }
 
+.problem-content .popover .tab-content .span3 {
+    width: 23.404255319148934%;
+    *width: 23.351063829787233%;
+}
+
 .problem-content .popover .tab-content .thumbnail {
     padding:11px;
     height:22px;
     cursor: pointer;
 }
 
-.problem-content .popover .thumbnails .span3:first-child {
-    margin-left: 2.564102564102564%;
+.problem-content .popover .thumbnails {
+    margin: 0;
+    padding: 0;
+}
+
+.problem-content .popover .thumbnails .span3:nth-child(3n+1) {
+    margin-left: 42px;
 }
 
 .problem-content .popover .navbar {
@@ -86,6 +96,7 @@
   display: block;
   float: left;
   margin: 0 10px 0 0;
+  padding-left: 10px;
 }
 
 .problem-content .popover .navbar .nav.pull-right {
