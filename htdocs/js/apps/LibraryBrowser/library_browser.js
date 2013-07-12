@@ -19,14 +19,14 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/lib/components/backbone/Backbone",
-        "underscore": "/webwork2_files/js/lib/components/underscore/underscore",
-        "jquery": "/webwork2_files/js/lib/components/jquery/jquery",
-        "jquery-ui": "/webwork2_files/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min",
-        "touch-pinch": "/webwork2_files/js/lib/vendor/jquery/jquery.ui.touch-punch",
-        "tabs": "/webwork2_files/js/lib/vendor/ui.tabs.closable",
+        "Backbone": "/webwork2_files/js/vendor/backbone/backbone",  //ok
+        "underscore": "/webwork2_files/js/vendor/underscore/underscore", // ok
+        "jquery": "/webwork2_files/js/vendor/jquery/jquery", // ok
+        "jquery-ui": "/webwork2_files/js/lib/delete-me/jquery/jquery-ui-1.8.16.custom.min", //FIXMEJS
+        "touch-pinch": "/webwork2_files/js/vendor/jquery/modules/jquery.ui.touch-punch", //ok
+        "tabs": "/webwork2_files/js/legacy/vendor/ui.tabs.closable", //ok
         //this is important:
-        "config":"/webwork2_files/js/apps/LibraryBrowser/config",
+        "config":"/webwork2_files/js/apps/LibraryBrowser/config", // ok
     },
     urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
