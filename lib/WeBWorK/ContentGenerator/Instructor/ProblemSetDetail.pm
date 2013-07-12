@@ -280,7 +280,7 @@ use constant FIELD_PROPERTIES => {
                 default => "1",
 	},
 	max_attempts => {
-		name      => "Max&nbsp;attempts",
+		name      => "Max attempts",
 		type      => "edit",
 		size      => 6,
 		override  => "any",
@@ -1861,7 +1861,7 @@ sub body {
 	####################################################################
 	# Display Field for putting in a set description
 	####################################################################
-	print CGI::h5("Set Description");
+	print CGI::h5($r->maketext("Set Description"));
 	print CGI::textarea({name=>"set.$setID.description",
 			     id=>"set.$setID.description",
 			     value=>$setRecord->description(),
@@ -1882,8 +1882,8 @@ sub body {
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Headers"),
-#			"Data",
-			"Display&nbsp;Mode:&nbsp;" . 
+#			$r->maketext("Data"),
+			$r->maketext("Display Mode:") . 
 			CGI::popup_menu(-name => "header.displaymode", -values => \@active_modes, -default => $default_header_mode) . '&nbsp;'. 
 			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
@@ -1945,7 +1945,7 @@ sub body {
 
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
-					CGI::Tr({}, CGI::td({}, $properties{$headerType}->{name})) . 
+					CGI::Tr({}, CGI::td({}, $r->maketext($properties{$headerType}->{name}))) . 
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, $r->maketext("Edit it")))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, $r->maketext("View it")))) .
 				CGI::end_table(),
@@ -2008,7 +2008,7 @@ sub body {
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Problems"),
 			$r->maketext("Data"),
-			"Display&nbsp;Mode:&nbsp;" . 
+			$r->maketext("Display Mode:") . 
 			CGI::popup_menu(-name => "problem.displaymode", -values => \@active_modes, -default => $default_problem_mode) . '&nbsp;'. 
 			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
