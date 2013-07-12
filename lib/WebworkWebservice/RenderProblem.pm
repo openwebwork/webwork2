@@ -714,6 +714,15 @@ sub new {
 
 sub renderProblem2 {
 	my ($self, $params) = @_;
+	my $db = $self->{db};
+	my $ce = $self->{ce};
+
+	debug("in renderProblem2");
+	
+	my $out = {};
+	$out->{ra_out} = 7; 
+    $out->{text} = encode_base64("Rendering the Problem");
+    return $out;
 	
 }
 

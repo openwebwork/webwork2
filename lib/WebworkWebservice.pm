@@ -703,6 +703,15 @@ sub updateSetting {
 	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));	
 }
 
+sub renderProblem2 {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::RenderProblem::renderProblem2($self,$in));	
+}
+
+
+
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
 # test responses
