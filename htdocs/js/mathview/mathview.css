@@ -16,6 +16,10 @@
     margin-bottom : 0px;
 }
 
+.problem-content .input-append {
+    display: inline-block;
+}
+
 .problem-content .popover .tab-content {
     height : 145px;
     margin-top:20px;
