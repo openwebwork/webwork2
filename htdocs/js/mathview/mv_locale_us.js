@@ -62,7 +62,7 @@ var mv_categories =
 		    tooltip:"absolute value",
 		    helpurl:"absolute.html",
 		    latex:"|{}|",
-		    PG:"abs"
+		    PG:"abs()"
 		}
 	    ]
 	},
