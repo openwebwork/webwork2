@@ -113,9 +113,10 @@ sub can_showCorrectAnswers {
 }
 
 sub can_showHints {
-	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
 	
-	return 1;
+	return !$Set->hide_hint;
 }
 
 sub can_showSolutions {
@@ -175,6 +176,13 @@ sub can_checkAnswers {
 	}
 }
 
+sub can_useMathView {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $authz = $self->r->authz;
+    
+    return $authz->hasPermissions($User->user_id, "use_math_view");
+}
+    
 # Reset the default in some cases
 sub set_showOldAnswers_default {
 	my ($self, $ce, $userName, $authz, $set) = @_;
@@ -255,12 +263,14 @@ sub attemptResults {
 		my $answerResult  = $pg->{answers}->{$name}//'';
 		my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
 		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen, \$tthPreambleCache)
+		                    	? $self->previewAnswer($answerResult, $imgGen)
 		                    	: "");
+
 		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache)//'';
 		my $correctAnswer = $answerResult->{correct_ans}//'';
 		my $answerScore   = $answerResult->{score}//0;
 		my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
+
 		$answerMessage =~ s/\n/<BR>/g;
 		$numCorrect += $answerScore >= 1;
 		$numEssay += ($answerResult->{type}//'') eq 'essay';
@@ -296,7 +306,9 @@ sub attemptResults {
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                  $self->nbsp($correctAnswerPreview)) : "";
 		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
-		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
+		# I'm not sure that answerMessage should have the same css class as system messages
+#		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
+		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
 	
@@ -348,7 +360,7 @@ sub attemptResults {
 
 
 sub previewAnswer {
-	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
+	my ($self, $answerResult, $imgGen) = @_;
 	my $ce            = $self->r->ce;
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
@@ -358,7 +370,7 @@ sub previewAnswer {
 	# note: right now, we have to do things completely differently when we are
 	# rendering math from INSIDE the translator and from OUTSIDE the translator.
 	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
+	# duplication that can be dealt with later by abstracting out dvipng/etc.
 	
 	my $tex = $answerResult->{preview_latex_string};
 	
@@ -368,55 +380,14 @@ sub previewAnswer {
 		return $tex;
 	} elsif (($answerResult->{type}//'') eq 'essay') {
 	    return $tex;
-	} elsif ($displayMode eq "formattedText") {
-		
-		# read the TTH preamble, or use the cached copy passed in from the caller
-		my $tthPreamble='';
-		if (defined $$tthPreambleCache) {
-			$tthPreamble = $$tthPreambleCache;
-		} else {
-			my $tthPreambleFile = $ce->{courseDirs}->{templates} . "/tthPreamble.tex";
-			if (-r $tthPreambleFile) {
-				$tthPreamble = readFile($tthPreambleFile);
-				# thanks to Jim Martino. each line in the definition file should end with
-				#a % to prevent adding supurious paragraphs to output:
-				$tthPreamble =~ s/(.)\n/$1%\n/g;
-				# solves the problem if the file doesn't end with a return:
-				$tthPreamble .="%\n";
-				# store preamble in cache:
-				$$tthPreambleCache = $tthPreamble;
-			} else {
-			}
-		}
-		
-		# construct TTH command line
-		my $tthCommand = $ce->{externalPrograms}->{tth}
-			. " -L -f5 -u -r  2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. $tthPreamble . "\\[" . $tex . "\\]\n"
-			. "END_OF_INPUT\n";
-		
-		# call tth
-		my $result = `$tthCommand`;
-		if ($?) {
-			return "<b>[tth failed: $? $@]</b>";
-		} else {
-			#  avoid border problems in tables and remove unneeded initial <br>
-			$result =~ s/(<table [^>]*)>/$1 CLASS="ArrayLayout">/gi;
-			$result =~ s!\s*<br clear="all" />!!;
-			return $result;
-		}
-		
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
 		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	} elsif ($displayMode eq "jsMath") {
-		$tex =~ s/&/&amp;/g; $tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
-		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
 	}
 }
 sub previewCorrectAnswer {
-	my ($self, $answerResult, $imgGen, $tthPreambleCache) = @_;
+	my ($self, $answerResult, $imgGen) = @_;
 	my $ce            = $self->r->ce;
 	my $effectiveUser = $self->{effectiveUser};
 	my $set           = $self->{set};
@@ -426,7 +397,7 @@ sub previewCorrectAnswer {
 	# note: right now, we have to do things completely differently when we are
 	# rendering math from INSIDE the translator and from OUTSIDE the translator.
 	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
+	# duplication that can be dealt with later by abstracting out dvipng/etc.
 	
 	my $tex = $answerResult->{correct_ans_latex_string};
 	return $answerResult->{correct_ans} unless defined $tex and $tex=~/\S/;   # some answers don't have latex strings defined
@@ -434,51 +405,10 @@ sub previewCorrectAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
-	} elsif ($displayMode eq "formattedText") {
-		
-		# read the TTH preamble, or use the cached copy passed in from the caller
-		my $tthPreamble='';
-		if (defined $$tthPreambleCache) {
-			$tthPreamble = $$tthPreambleCache;
-		} else {
-			my $tthPreambleFile = $ce->{courseDirs}->{templates} . "/tthPreamble.tex";
-			if (-r $tthPreambleFile) {
-				$tthPreamble = readFile($tthPreambleFile);
-				# thanks to Jim Martino. each line in the definition file should end with
-				#a % to prevent adding supurious paragraphs to output:
-				$tthPreamble =~ s/(.)\n/$1%\n/g;
-				# solves the problem if the file doesn't end with a return:
-				$tthPreamble .="%\n";
-				# store preamble in cache:
-				$$tthPreambleCache = $tthPreamble;
-			} else {
-			}
-		}
-		
-		# construct TTH command line
-		my $tthCommand = $ce->{externalPrograms}->{tth}
-			. " -L -f5 -u -r  2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. $tthPreamble . "\\[" . $tex . "\\]\n"
-			. "END_OF_INPUT\n";
-		
-		# call tth
-		my $result = `$tthCommand`;
-		if ($?) {
-			return "<b>[tth failed: $? $@]</b>";
-		} else {
-			#  avoid border problems in tables and remove unneeded initial <br>
-			$result =~ s/(<table [^>]*)>/$1 CLASS="ArrayLayout">/gi;
-			$result =~ s!\s*<br clear="all" />!!;
-			return $result;
-		}
-		
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
 		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	} elsif ($displayMode eq "jsMath") {
-		$tex =~ s/&/&amp;/g; $tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
-		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
 	}
 }
 
@@ -622,9 +552,9 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
 		}
 
-		my $visiblityStateClass = ($set->visible) ? $r->maketext("visible") : $r->maketext("hidden");
+		my $visiblityStateClass = ($set->visible) ? $r->maketext("font-visible") : $r->maketext("font-hidden");
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
-		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::font({class=>$visiblityStateClass}, $visiblityStateText))));
+		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText))));
 
   # test for additional problem validity if it's not already invalid
         } else {
@@ -680,6 +610,7 @@ sub pre_header_initialize {
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}->{showHints},
 		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
+                useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -694,6 +625,7 @@ sub pre_header_initialize {
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
 		getSubmitButton    => 0,
+	        useMathView        => 0,
 	);
 	 
 	# does the user have permission to use certain options?
@@ -706,7 +638,8 @@ sub pre_header_initialize {
 		recordAnswers      => $self->can_recordAnswers(@args, 0),
 		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
 		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
-	);
+       	        useMathView           => $self->can_useMathView(@args)
+	    );
 	
 	# final values for options
 	my %will;
@@ -810,9 +743,9 @@ sub warnings {
 		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
     } elsif ( $self->{pgerrors} > 0 ) {
-        my @pgdebug          = @{ $self->{pgdebug}           }//();
- 		my @pgwarning        = @{ $self->{pgwarning}         }//();
- 		my @pginternalerrors = @{ $self->{pginternalerrors}  }//();
+        my @pgdebug          = (defined @{ $self->{pgdebug}}) ? @{ $self->{pgdebug}} : () ; 
+ 		my @pgwarning        = (defined @{ $self->{pgwarning}}) ? @{ $self->{pgwarning}} : ();
+ 		my @pginternalerrors = (defined @{ $self->{pginternalerrors}}) ? @{ $self->{pginternalerrors}} : ();
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
 		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
@@ -842,18 +775,14 @@ sub head {
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
 	print qq{
-		<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/keys/keys.css">
-		<script src="$webwork_htdocs_url/js/lib/vendor/keys/keys.js"></script>
+		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
+		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
 	};
-	#If we are using achievements then print the achievement css file
-	if ($ce->{achievementsEnabled}) {
-	    print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$ce->{webworkURLs}->{htdocs}/css/achievements.css\"/>";	
-	}
         # Javascript and style for knowls
         print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script> 
+           <script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -879,7 +808,8 @@ sub options {
 	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
 	push @options_to_show, "showHints" if $can{showHints};
 	push @options_to_show, "showSolutions" if $can{showSolutions};
-	
+	push @options_to_show, "useMathView" if $can{useMathView};
+
 	return $self->optionsMacro(
 		options_to_show => \@options_to_show,
 		extra_params => ["editMode", "sourceFilePath"],
@@ -1059,7 +989,6 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
-	print $self->mathview_scripts();
 
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
 
@@ -1076,7 +1005,7 @@ sub output_problem_body{
 	my $pg = $self->{pg};
 
 	print "\n";
-	print CGI::div({class=>"problem-content", id=>"problem-content"},$pg->{body_text});
+	print CGI::div($pg->{body_text});
 	return "";
 }
 
@@ -1119,6 +1048,7 @@ sub output_editorLink{
 	my $editorLink = "";
 	my $editorLink2 = "";
 	my $editorLink3 = "";
+	my $editorLink4 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
@@ -1141,20 +1071,27 @@ sub output_editorLink{
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
 	}
+	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{simplepgeditor}) {
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::SimplePGEditor", $r, 
+			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
+		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
+		$editorLink4 = CGI::span(CGI::a({href=>$editorURL,target =>'Simple_Editor'}, $r->maketext("SimpleEdit")));
+	}
+
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink, " ", $editorLink2, " ", $editorLink3;
+			print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink, " ", $editorLink2, " ", $editorLink3;
+		print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
 	}
 	return "";
 }
@@ -1400,7 +1337,7 @@ sub output_misc{
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
 	#HACK FIXME
 	print q{
-		<script language="javascript"> 
+		<script> 
 			var new_keyboard = new Keys([
 			{value: 'sqrt()',
 			 display: '$ \\\\sqrt{} $',
@@ -1592,7 +1529,16 @@ sub output_tag_info{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	if ($authz->hasPermissions($user, "modify_tags")) {
-		print CGI::p(CGI::div("Tags go here"));
+		print CGI::p(CGI::div({id=>'tagger'}, ''));
+                print $self->hidden_authen_fields;
+                my $courseID = $self->r->urlpath->arg("courseID");
+                print CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID });
+		my $templatedir = $r->ce->{courseDirs}->{templates};
+		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
+		$sourceFilePath =~ s/'/\\'/g;
+		my $site_url = $r->ce->{webworkURLs}->{htdocs};
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
 }
@@ -1645,14 +1591,16 @@ sub output_past_answer_button{
 		
 	# print answer inspection button
 	if ($authz->hasPermissions($user, "view_answers")) {
+	        my $hiddenFields = $self->hidden_authen_fields;
+		$hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		print "\n",
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
-			$self->hidden_authen_fields,"\n",
+			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
 			CGI::hidden(-name => 'problemID', -value=>$problem->problem_id), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
                		CGI::hidden(-name => 'studentUser',  -value=>$problem->user_id), "\n",
-			CGI::p( {-align=>"left"},
+			CGI::p(
 				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",
 			CGI::endform();
@@ -1733,7 +1681,7 @@ sub output_wztooltip_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
 	return "";
 }
 
@@ -1752,26 +1700,50 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# This adds the dragmath functionality
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/dragmath.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/java_init.js"}), CGI::end_script();
+	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
 	
-	# The Base64.js file, which handles base64 encoding and decoding.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/Base64.js"}), CGI::end_script();
+	# The Base64.js file, which handles base64 encoding and decoding
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
 	
+	# This is for MathView.  
+	if ($self->{will}->{useMathView}) {
+	    if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
+		if ($self->{displayMode} ne 'MathJax') {
+		    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+		}
+		
+		print "<link href=\"$site_url/js/mathview/mathview.css\" rel=\"stylesheet\" />";
+		print CGI::start_script({type=>"text/javascript"});
+		print "mathView_basepath = \"$site_url/images/mathview/\";";
+		print CGI::end_script();	    
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
+	    } else {
+		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
+	    }
+	}
 	
+	# This is for any page specific js.  Right now its just used for achievement popups
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
+
 	return "";
 }
 
-#Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
+sub output_achievement_CSS {
+    return "";
+}
+
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
 	return "";
 }
 

@@ -1,10 +1,12 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset='utf-8'>
+
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/templates/math3/gateway.template,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -17,84 +19,88 @@
 # Artistic License for more details.
 ################################################################################
 -->
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<meta http-equiv="Pragma" content="no-cache"/>
-<meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
+
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/gateway.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/gateway.css"/>
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
-<script language="javascript" type="text/javascript" 
-  src="<!--#url type="webwork" name="htdocs"-->/js/gateway.js"></script>
+<!--#output_JS-->
 </head>
-<body bgcolor="white">
-<div id="masthead">
-	<div id="loginstatus">
+<body>
+
+<div class="container-fluid">
+<!-- Header -->
+<div id = "masthead" class="row-fluid">
+	<div class="span2 webwork_logo">
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+	</div>
+	<div class="span4 maa_logo">
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+	</div>
+	<div id="loginstatus" class="offset3 span3">
 		<!--#loginstatus-->
 	</div>
-	<div id="logo">
-		<img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_rectangle.png" alt="WeBWorK" height="51" width="267" />
-	</div>
 </div>
-<hr class="for-broken-browsers"/>
-<div id="big-wrapper">
-	<div id="breadcrumbs">
-		<!--#path style="text" text=" &#x2192; "-->
-	</div>
-	<div id="content">
-		
-		<!--#if can="info"-->
-		<!--<div id="page-info">-->
-			<!--<div class="info-box" id="fisheye">-->
-				<!--#info-->
-			<!--</div>-->
-		<!--</div>-->
-		<!--#endif-->
-		
-		<!-- [gateway] removed nav button to go up -->
-		
-		<!--#if can="title"-->
-		<h1><!--#title--></h1>
-		<!--#endif-->
-		
-		<!--#if can="message"-->
-			<div class="Message">
-				<!--#message-->
-			</div>
-		<!--#endif-->
+	<!-- Breadcrumb -->
+	<div class="row-fluid"><div class="span12">
+	<ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+	</ul>
+	</div></div>
 
-		<!--#if can="body"-->
-		<div class="Body">
-			<!--#body-->
-		</div>
-		<!--#endif-->
+<div class="row-fluid">
+
+
+  <div id="content" class="span12">
 		
-		<!--#if warnings="1"-->
-		<hr>
-		<div class="Warnings">
-			<!--#warnings-->
-		</div>
-		<!--#endif-->
-		
-		<!--#if can="message"-->
-			<div class="Message">
-				<!--#message-->
-			</div>
-		<!--#endif-->
-		
-	</div> <!-- content -->
-	<hr class="for-broken-browsers"/>
-	<div id="footer">
-		<p id="last-modified">Page generated at <!--#timestamp--></p>
-		<div id="copyright">
-			WeBWorK &#169; 2000-2007 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a>
-		</div>
+	<!--#if can="info"-->
+	<!--<div id="page-info">-->
+		<!--<div class="info-box" id="fisheye">-->
+			<!--#info-->
+		<!--</div>-->
+	<!--</div>-->
+	<!--#endif-->
+	
+	<!-- [gateway] removed nav button to go up -->
+	
+	<!--#if can="title"-->
+	<h1><!--#title--></h1>
+	<!--#endif-->
+	
+	<!--#if can="message"-->
+		<div class="Message"><!--#message--></div>
+	<!--#endif-->
+
+	<!--#if can="body"-->
+	<div class="Body">
+		<!--#body-->
 	</div>
-	<!-- [gateway] removed left sidebar -->
-</div> <!-- big-wrapper -->
+	<!--#endif-->
+	
+	<!--#if warnings="1"-->
+	<div class="Warnings">
+		<!--#warnings-->
+	</div>
+	<!--#endif-->
+	
+</div> <!-- content -->
+
+<!-- Footer -->
+<div id="footer">
+	<!--#footer-->
+</div>
+
+</div></div> <!-- big-wrapper -->
 
 </body>
 </html>
+
+

@@ -1,6 +1,4 @@
-<!DOCTYPE html
-	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <!--
 ################################################################################
@@ -21,51 +19,25 @@
 -->
 
 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<html lang="en-US">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap.css"/>
-<style>
-    body{
-
-    }
-    input{
-        height:auto;
-    }
-    .navbar {
-        margin-bottom: 0px;
-    }
-    .breadcrumb{
-        margin:0px;
-    }
-    #messages{
-        position:absolute;
-        width:50%;
-        margin-left:25%;
-        margin-right:25%;
-    }
-</style>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap-responsive.css"/>
-<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/jquery-1.7.2.min.js"></script>
-<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
 
 
-<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">
-    <div id="messages"></div>
-    <div class="navbar">
+<!--<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">-->
+<body>
+
+    <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
-            <!--#if can="title"-->
-            <a class="brand" href="#"><!--#title--></a>
-            <!--#endif-->
-            <div class="nav-collapse">
-              <ul class="nav pull-right">
-                <li class="dropdown" id="webwork_navigation">
-                  <a href="#webwork_navigation" class="dropdown-toggle" data-toggle="dropdown">Main Menu <b class="caret"></b></a>
-                  <ul class="dropdown-menu">
+         	<div class="container">
+         		<div class="dropdown span2" id="webwork_navigation" style="display: none">
+	                  <a href="#webwork_navigation" class="dropdown-toggle btn hidden" data-toggle="dropdown">Menu <b class="caret"></b>
+	                  	</a>
+			     		<!--<ul class="dropdown-menu" id="navigation-menu"> -->
                     <!--#if can="links"-->
                         <!--#links-->
                     <!--#endif-->
@@ -78,22 +50,24 @@
                      		<!--#options-->
                      	</ul>
                      <!--#endif-->
-                  </ul>
-                </li>
-              </ul>
-            </div><!-- /.nav-collapse -->
-          </div>
+	            	  <!-- </ul> -->
+                  </div>
+		            
+	    		<div class="span4">
+            		<ul class="breadcrumb"> 
+						<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
+					</ul>
+				</div> 
+				<div class="span2"><!--#loginstatus--></div>
+	    		<div class="span2"><button class="btn" id="help-link">Help</button>
+	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2-dev/issues/new">Bugs!</a>
+    			</div>
+   				
+				            
+          	</div>
         </div><!-- /navbar-inner -->
     </div>
-    <div class="row">
-	<div class="span8">
-	<ul class="breadcrumb">
-		<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
-	</ul>
-	</div>
-	<div class="span4"><button class="btn pull-right" id="help-link">Help</button></div>
-    </div>
-	
+		
 	    <!--#if can="body"-->
 				<!--#if warnings="1"-->
 				  <div class="Body" style="background-color:#ffcccc">
@@ -115,24 +89,21 @@
 		    </div>
 		<!--#endif-->
 		
-		<!--#if can="message"-->
-			<div class="Message">
-				<!--#message-->
-			</div>
-		<!--#endif-->
+		<!--#if can="info"-->
+			  		<!--  styles could be different for different pages so they are not set here -->
+					<!--#info-->
+		    	<!--#endif-->
+		
 
 	<footer class="footer">
-        <p class="pull-right"><!--#loginstatus--></p>
-        <p id="last-modified">Page generated at <!--#timestamp--></p>
-        <p>styled using twitter bootstrap</p>
-        <div id="copyright">
-            WeBWorK &#169; 2000-2007 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a>
+	    <div class="row-fluid"><span class="span4">Page generated at <!--#timestamp--></span>
+	    <span class="span4">Styled using twitter bootstrap</span>
+	    <span id="copyright" class="span4 pull-right">WeBWorK &#169; 2000-2012 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a></span>
+	    </div>
         </div>
     </footer>
-
-    <!--#if can="output_JS"-->
-    	<!--#output_JS-->
-    <!--#endif-->
-
+	<!--#if can="output_JS"-->
+<!--#output_JS-->
+<!--#endif-->
 </body>
 </html>

@@ -62,6 +62,7 @@ sub body {
 	my $studentUser   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
 	
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
+
 	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
 
 	

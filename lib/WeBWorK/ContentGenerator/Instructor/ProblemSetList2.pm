@@ -96,8 +96,8 @@ use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -243,6 +243,11 @@ use constant  FIELD_PROPERTIES => {
 		type => "text",
 		size => 10,
 		access => "readwrite",
+	},
+	hide_hint => {
+		type => "checked",
+		size => 4,
+		access => "readwrite",
 	}
 };
 
@@ -267,7 +272,9 @@ sub pre_header_initialize {
 		if ($scope eq "none") { 
 			return $r->maketext("No sets selected for scoring".".");
 		} elsif ($scope eq "all") {
-			@setsToScore = @{ $r->param("allSetIDs") };
+#			@setsToScore = @{ $r->param("allSetIDs") };
+		    @setsToScore = $db->listGlobalSets;
+
 		} elsif ($scope eq "visible") {
 			@setsToScore = @{ $r->param("visibleSetIDs") };
 		} elsif ($scope eq "selected") {
@@ -435,7 +442,8 @@ sub body {
 		due_date
 		answer_date
 		visible
-		enable_reduced_scoring	
+		enable_reduced_scoring
+		hide_hint
 	)} = (
 		$r->maketext("Edit Problems"),
 		$r->maketext("Edit Assigned Users"),
@@ -447,7 +455,11 @@ sub body {
 		$r->maketext("Due Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
-		$r->maketext("Reduced Credit Enabled") 
+	    # Reduced Credit Enabled made the column wider than it needed
+	    # to be...
+	    #   $r->maketext("Reduced Credit Enabled"), 
+	        $r->maketext("Reduced Credit"), 
+		$r->maketext("Hide Hints") 
 	);
 	
 
@@ -970,7 +982,7 @@ sub enable_reduced_scoring_form {
 			-input_attr=>{
 				-name => "action.enable_reduced_scoring.value",
 				-values => [ 0, 1 ],
-				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "1",
+				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "0",
 				-labels => {
 					0 => $r->maketext("Disable"),
 					1 => $r->maketext("Enable"),
@@ -1318,7 +1330,7 @@ sub import_form {
 				-label_text=>$r->maketext("Assign this set to which users?").": ",
 				-input_attr=>{
 					-name => "action.import.assign",
-					-value => [qw(all user)],
+					-value => [qw(user all)],
 					-default => $actionParams{"action.import.assign"}->[0] || "none",
 					-labels => {
 						all => $r->maketext("all current users").".",
@@ -1696,7 +1708,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1723,6 +1735,7 @@ sub importSetsFromDef {
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE);
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
+		$newSetRecord->description($description);
 
 	# gateway/version data.  these should are all initialized to ''
         #   by readSetDef, so for non-gateway/versioned sets they'll just 
@@ -1820,6 +1833,7 @@ sub readSetDef {
 	my ($line, $name, $value, $attemptLimit, $continueFlag);
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
+	my $description = '';
 	my ($dueDate, $openDate, $answerDate);
 	my @problemData;	
 
@@ -1891,7 +1905,10 @@ sub readSetDef {
 			} elsif ($item eq 'restrictLocation' ) { 
 				$restrictLoc = ( $value ) ? $value : '';
 			} elsif ( $item eq 'relaxRestrictIP' ) {
-				$relaxRestrictIP = ( $value ) ? $value : 'No';
+			    $relaxRestrictIP = ( $value ) ? $value : 'No';
+			} elsif ( $item eq 'description' ) {
+			    $value =~ s/<n>/\n/g;
+			    $description = $value;
 			} elsif ($item eq 'problemList') {
 				last;
 			} else {
@@ -2012,6 +2029,7 @@ sub readSetDef {
 		 $restrictIP,
 		 $restrictLoc,
 		 $relaxRestrictIP,
+		 $description
 		);
 	} else {
 		warn $r->maketext("Can't open file [_1]", $filePath)."\n";
@@ -2056,6 +2074,11 @@ SET:	foreach my $set (keys %filenames) {
 		my $openDate     = $self->formatDateTime($setRecord->open_date);
 		my $dueDate      = $self->formatDateTime($setRecord->due_date);
 		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
+		my $description = $setRecord->description;
+		if ($description) {
+		    $description =~ s/\n/<n>/g;
+		}
+		
 		my $setHeader    = $setRecord->set_header;
 		my $paperHeader  = $setRecord->hardcopy_header;
 		my @problemList = $db->listGlobalProblems($set);
@@ -2129,6 +2152,7 @@ dueDate           = $dueDate
 answerDate        = $answerDate
 paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader$gwFields
+description       = $description
 ${restrictFields}problemList       = 
 $problemList
 EOF
@@ -2245,25 +2269,28 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "checked") {
-		
+
 		# FIXME: kludge (R)
 		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		# in which case the hidden field overrides the parameter with a 0
-		# kludge 2  -- get visible and reduced scoring to have no names (might reduce accessibility)
-		# my $label_text = $properties->{label_text} || "NoLabel";
-		return WeBWorK::CGI_labeled_input(
-			-type=>"checkbox",
-			-id=>$fieldName."_id",
-			-label_text=>"", #$label_text,
-			-input_attr=>{
-				-name => $fieldName,
-				-checked => $value,
-				-label => "",
-				-value => 1
-			}
+	    my %attr = ( name => $fieldName,
+			 label => "",
+			 value => 1
+	    );
+
+	    $attr{'checked'} = 1 if ($value);
+
+
+	    return WeBWorK::CGI_labeled_input(
+		-type=>"checkbox",
+		-id=>$fieldName."_id",
+# The labeled checkboxes are making the table very wide. 
+		-label_text=>"",
+#		-label_text=>ucfirst($fieldName),
+		-input_attr=>\%attr
 		) . CGI::hidden(
-			-name => $fieldName,
-			-value => 0
+		-name => $fieldName,
+		-value => 0
 		);
 	}
 }
@@ -2283,7 +2310,7 @@ sub recordEditHTML {
 	my $exportMode = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
-	my $visibleClass = $Set->visible ? $r->maketext("visible") : $r->maketext("hidden");
+	my $visibleClass = $Set->visible ? $r->maketext("font-visible") : $r->maketext("font-hidden");
 	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Credit Enabled') : $r->maketext('Reduced Credit Disabled');
 
 	my $users = $db->countSetUsers($Set->set_id);
@@ -2323,9 +2350,13 @@ sub recordEditHTML {
 		$label_text = CGI::a({href=>$problemListURL}, "$set_id");
 	} else {
 		# selection checkbox
-		# Set ID		
-		$label = CGI::font({class=>$visibleClass}, $set_id . $imageLink);
-
+		# Set ID
+		my $label = "";
+		if ($editMode) {
+			$label = CGI::a({href=>$problemListURL}, "$set_id");
+		} else {		
+			$label = CGI::a({class=>"$visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $set_id) . $imageLink;
+		}
 		
 		push @tableCells, WeBWorK::CGI_labeled_input(
 			-type=>"checkbox",
@@ -2386,12 +2417,14 @@ sub recordEditHTML {
 		next unless exists $nonkeyfields{$field};
 		my $fieldName = "set." . $set_id . "." . $field,		
 		my $fieldValue = $Set->$field;
+		#print $field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
 		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
+		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /hide_hint/ and not $editMode;
 		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
@@ -2494,6 +2527,11 @@ sub printTableHTML {
 
 # outputs all of the Javascript required for this page
 
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
+	return "";
+}
+
 sub output_JS{
 	my $self = shift;
 	my $r = $self->r;
@@ -2504,7 +2542,6 @@ sub output_JS{
     
     print "\n\n<!-- add to header ProblemSetList2.pm -->";
         
-	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
@@ -2515,36 +2552,21 @@ sub output_JS{
     </style>!,"\n";
     
 	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
-	
-	# these scripts (for specific courses) are printed from within fieldEditHTML
-#   print CGI::start_script({-type=>"text/javascript"}),"\n";
-# 	print "addOnLoadEvent(function() {\n";
-# 	print WeBWorK::Utils::DatePickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
-# 	print WeBWorK::Utils::DatePickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
-# 	print WeBWorK::Utils::DatePickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
-# 	print "});\n";
-# 	print CGI::end_script();
-	# print other javaScript
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script(),"\n";
+	# jquery ui printed seperately
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+
 	print "\n\n<!-- END add to header ProblemSetList2.pm -->";
 	return "";
 }
 
 # Just tells template to output the stylesheet for Tabber
 sub output_tabber_CSS{
-	return "";
-}
-
-#Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
 	return "";
 }
 

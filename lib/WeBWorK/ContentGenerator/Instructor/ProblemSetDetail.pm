@@ -33,12 +33,13 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
+use WeBWorK::Utils::DatePickerScripts;
 
 # Important Note: the following two sets of constants may seem similar 
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -56,7 +57,7 @@ use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attemp
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type)];
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restrict_ip relax_restrict_ip hide_hint assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 
@@ -97,6 +98,12 @@ use constant FIELD_PROPERTIES => {
 		override  => "all",
 		module    => "hardcopy_preselect_set",
 		default   => "",		
+	},
+	description => {
+		name      => "Description",
+		type      => "edit",
+		override  => "all",
+		default   => "",
 	},
 	open_date => {
 		name      => "Opens",
@@ -323,7 +330,18 @@ use constant FIELD_PROPERTIES => {
 		type      => "hidden",
 		override  => "none",
 		default   => "0",
-	},	
+	},
+	hide_hint => {
+		name      => "Hide Hints from Students",
+		type      => "choose",
+		override  => "all",
+		choices   => [qw( 0 1 )],
+		labels    => {
+				1 => "Yes",
+				0 => "No",
+		},
+	},
+	
 };
 
 use constant FIELD_PROPERTIES_GWQUIZ => {
@@ -407,7 +425,7 @@ sub FieldTable {
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
-	}
+		}
 
 		# finally, put in extra fields that are exceptions to the 
 		#    usual display mechanism
@@ -531,11 +549,13 @@ sub FieldHTML {
 	my $inputType = "";
 	if ($edit) {
 		$inputType = CGI::font({class=>"visible"}, CGI::input({
+		                type => "text",
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
 		}));
+
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
 		# but $userValue and and $globalValue are the values in the hash not the keys
@@ -1756,7 +1776,7 @@ sub body {
 	}
 	
 	# handle renumbering of problems if necessary
- 	print CGI::a({name=>"problems"});
+	print CGI::a({name=>"problems"}, "");
 
 	my %newProblemNumbers = ();
 	my $maxProblemNumber = -1;
@@ -1836,8 +1856,19 @@ sub body {
 	print CGI::end_table();	
 
 	# spacing
-	print CGI::p();
+	print CGI::start_p();
 
+	####################################################################
+	# Display Field for putting in a set description
+	####################################################################
+	print CGI::h5("Set Description");
+	print CGI::textarea({name=>"set.$setID.description",
+			     id=>"set.$setID.description",
+			     value=>$setRecord->description(),
+			     rows=>5,
+			     cols=>62,});
+
+	print CGI::end_p();
 	
 	#####################################################################
 	# Display header information
@@ -2152,7 +2183,7 @@ sub body {
 	}
 	# always allow one to add a new problem, unless we're editing a set version
 	if ( ! $editingSetVersion ) {
-		print 	CGI::checkbox({ label=> "Add",
+		print 	CGI::checkbox({ label=> $r->maketext("Add"),
 					name=>"add_blank_problem", value=>"1"}
 			),CGI::input({
 					name=>"add_n_problems",
@@ -2162,8 +2193,8 @@ sub body {
 			);
 	}
 	print CGI::br(),CGI::br(),
-		CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"}),
-		CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}),
+		CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")}),
+		CGI::input({type=>"submit", name=>"handle_numbers", value=>$r->maketext("Reorder problems only")}),
 			$r->maketext("(Any unsaved changes will be lost.)");
 
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
@@ -2176,6 +2207,10 @@ sub body {
 	return "";
 }
 
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
+	return "";
+}
 
 sub output_JS {
 	my $self = shift;
@@ -2184,39 +2219,33 @@ sub output_JS {
 	my $setID   = $r->urlpath->arg("setID");
 	my $timezone = $self->{timezone_shortname};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	
-	
-	# print javaScript for dateTimePicker	
-    print "\n\n<!-- add to header ProblemSetDetail-->\n\n";
-        
-	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
+
+	    print "\n\n<!-- add to header ProblemSetDetail.pm -->";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
 	print q!<style> 
 	.ui-datepicker{font-size:85%} 
-	.ui-datepicker{font-size:85%} 
-	.auto-changed{background-color: #ffffcc}
+	.auto-changed{background-color: #ffffcc} 
 	.changed {background-color: #ffffcc}
-    
     </style>!,"\n";
     
-    # jquery 1.7.1 loaded second to keep compatibility with timepicker.
-    # FIXME? replace timepicker with twitter bootstrap time picker?
 	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
-    	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+
 	print CGI::start_script({-type=>"text/javascript"}),"\n";
 	print q!$(".ui-datepicker").draggable();!,"\n";
 	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
 	print CGI::end_script();
+
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }
+
+
+
 1;
 
 =head1 AUTHOR
