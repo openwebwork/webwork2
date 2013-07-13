@@ -271,8 +271,6 @@ print "Mysql database reinitialized.\n";
 ## Section1('2.3')
 ## Problem1('7')
 #
-# The database structure is in the file create_tables2.sql and its ER-graph is 
-#    the file wwdb_er_graph.pdf. 
 
 # Get an id, and add entry to the database if needed
 sub safe_get_id {
@@ -280,6 +278,7 @@ sub safe_get_id {
 	my $idname = shift;
 	my $whereclause = shift;
 	my $wherevalues = shift;
+	my $addifnew = shift;
 	my @insertvalues = @_;
 #print "\nCalled with $tablename, $idname, $whereclause, [".join(',', @$wherevalues)."], (".join(',', @insertvalues).")\n";
 
@@ -288,6 +287,7 @@ sub safe_get_id {
 	$sth->execute(@$wherevalues);
 	my $idvalue, @row;
 	unless(@row = $sth->fetchrow_array()) {
+		return 0 unless $addifnew;
 		@insertvalues = map {'"'. $_ .'"'} @insertvalues;
 		$dbh->do("INSERT INTO `$tablename` VALUES(". join(',',@insertvalues) .")");
 		dbug "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
@@ -319,7 +319,7 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 					my $chapid = $dbh->selectrow_array($query);
 					if(defined($chapid)) {
 						my $sectid = safe_get_id($tables{section}, 'section_id',
-							qq(WHERE chapter_id = ? and name = ?), [$chapid, $title], "", $chapid, $2, $title, "");
+							qq(WHERE chapter_id = ? and name = ?), [$chapid, $title], 1, "", $chapid, $2, $title, "");
 					} else {
 						print "Cannot enter section $chapsec because textbook information is missing the chapter entry\n";
 					}
@@ -329,7 +329,7 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 			} else { # We have a chapter entry
 				if(defined($bookid)) {
 					my $chapid = safe_get_id($tables{chapter}, 'chapter_id',
-						qq(WHERE textbook_id = ? AND number = ?), [$bookid, $chapsec], "", $bookid, $chapsec, $title, "");
+						qq(WHERE textbook_id = ? AND number = ?), [$bookid, $chapsec], 1, "", $bookid, $chapsec, $title, "");
 
 						# Add dummy section entry for problems tagged to the chapter
 						# without a section
@@ -408,13 +408,13 @@ if(open(IN, "$libraryRoot/Taxonomy")) {
 		$line =~ s/\s*$//;
 		if($count == 0) { #DBsubject
 			$subj = safe_get_id($tables{dbsubject}, 'DBsubject_id',
-				qq(WHERE name = ?), [$line], "", $line);
+				qq(WHERE name = ?), [$line], 1, "", $line);
 		} elsif($count == 1) { #DBchapter
 			$chap = safe_get_id($tables{dbchapter}, 'DBchapter_id',
-				qq(WHERE name = ? and DBsubject_id = ?), [$line, $subj], "", $line, $subj);
+				qq(WHERE name = ? and DBsubject_id = ?), [$line, $subj], 1, "", $line, $subj);
 		} else { #DBsection
 			$sect = safe_get_id($tables{dbsection}, 'DBsection_id',
-				qq(WHERE name = ? and DBchapter_id = ?), [$line, $chap], "", $line, $chap);
+				qq(WHERE name = ? and DBchapter_id = ?), [$line, $chap], 1, "", $line, $chap);
 			;
 		}
 	}
@@ -473,7 +473,7 @@ sub pgfiles {
 		symlink($name,$ce->{webworkDirs}->{htdocs}."/applets/".$applet_file);
 	}
 
-	if ($name =~ /pg$/) {
+	if ($name =~ /\.pg$/) {
 		$pgfile = basename($name);
 		$pgpath = dirname($name);
 		$cnt2++;
@@ -492,18 +492,33 @@ sub pgfiles {
 
 			# DBsubject table
 
+			my $addifnew = 0;
 			my $DBsubject_id = safe_get_id($tables{dbsubject}, 'DBsubject_id',
-				qq(WHERE name = ?), [$tags->{DBsubject}], "", $tags->{DBsubject});
+				qq(WHERE name = ?), [$tags->{DBsubject}], $addifnew, "", $tags->{DBsubject});
+			if(not $DBsubject_id) {
+				print "\nInvalid subject '$tags->{DBsubject}' in $name\n";
+				next;
+			}
 
 			# DBchapter table
 
+			$addifnew = 1 if($tags->{DBchapter} eq 'Misc.');
 			$DBchapter_id = safe_get_id($tables{dbchapter}, 'DBchapter_id',
-				qq(WHERE name = ? and DBsubject_id = ?), [$tags->{DBchapter}, $DBsubject_id], "", $tags->{DBchapter}, $DBsubject_id);
+				qq(WHERE name = ? and DBsubject_id = ?), [$tags->{DBchapter}, $DBsubject_id], $addifnew, "", $tags->{DBchapter}, $DBsubject_id);
+			if(not $DBchapter_id) {
+				print "\nInvalid chapter '$tags->{DBchapter}' in $name\n";
+				next;
+			}
 
 			# DBsection table
 
+			$addifnew = ($tags->{DBsection} eq 'Misc.') ? 1 : 0;
 			$DBsection_id = safe_get_id($tables{dbsection}, 'DBsection_id',
-				qq(WHERE name = ? and DBchapter_id = ?), [$tags->{DBsection}, $DBchapter_id], "", $tags->{DBsection}, $DBchapter_id);
+				qq(WHERE name = ? and DBchapter_id = ?), [$tags->{DBsection}, $DBchapter_id], $addifnew, "", $tags->{DBsection}, $DBchapter_id);
+			if(not $DBsection_id) {
+				print "\nInvalid section '$tags->{DBsection}' in $name\n";
+				next;
+			}
 
 			# author table
 
@@ -514,12 +529,12 @@ sub pgfiles {
 			$firstname =~ s/^\s*//;
 			$firstname =~ s/\s*$//;
 			my $author_id = safe_get_id($tables{author}, 'author_id',
-				qq(WHERE lastname = ? AND firstname = ?), [$lastname, $firstname], "", $tags->{Institution}, $lastname, $firstname,"");
+				qq(WHERE lastname = ? AND firstname = ?), [$lastname, $firstname], 1, "", $tags->{Institution}, $lastname, $firstname,"");
 
 			# path table
 
 			my $path_id = safe_get_id($tables{path}, 'path_id',
-				qq(WHERE path = ?), [$pgpath], "", $pgpath, "", "");
+				qq(WHERE path = ?), [$pgpath], 1, "", $pgpath, "", "");
 
 			# pgfile table -- set 2 defaults first
 
@@ -527,14 +542,14 @@ sub pgfiles {
 			my $lang = $tags->{Language} || "eng";
 
 			my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
-				qq(WHERE filename = ? AND path_id = ?), [$pgfile, $path_id], "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, "", $level, $lang);
+				qq(WHERE filename = ? AND path_id = ?), [$pgfile, $path_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, "", $level, $lang);
 
 			# morelt table
 
 			my $morelt_id;
 			if($tags->{MLT}) {
 				$morelt_id = safe_get_id($tables{morelt}, 'morelt_id',
-					qq(WHERE name = ?), [$tags->{MLT}], "", $tags->{MLT}, $DBsection_id, "");
+					qq(WHERE name = ?), [$tags->{MLT}], 1, "", $tags->{MLT}, $DBsection_id, "");
 
 				$dbh->do("UPDATE `$tables{pgfile}` SET
 					morelt_id = \"$morelt_id\" WHERE pgfile_id = \"$pgfile_id\" ");
@@ -552,7 +567,7 @@ sub pgfiles {
 			foreach my $keyword (@{$tags->{keywords}}) {
 				$keyword =~ s/[\'\"]//g;
 				my $keyword_id = safe_get_id($tables{keyword}, 'keyword_id',
-					qq(WHERE keyword = ?), [$keyword], "", $keyword);
+					qq(WHERE keyword = ?), [$keyword], 1, "", $keyword);
 
 				$query = "SELECT pgfile_id FROM `$tables{pgfile_keyword}` WHERE keyword_id = \"$keyword_id\" and pgfile_id=\"$pgfile_id\"";
 				my $ok = $dbh->selectrow_array($query);
@@ -673,6 +688,10 @@ sub pgfiles {
 				#reset tag vars, they may not match the next text/file
 				$textauthor=""; $textsection="";
 			}
+		} else { # This file was not tagged
+			# Message if not a pointer
+			# print STDERR "File $name is not tagged\n" if not $tags->isplaceholder();
+			;
 		}
 	}
 }
