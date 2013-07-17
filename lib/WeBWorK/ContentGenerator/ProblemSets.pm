@@ -467,7 +467,6 @@ sub setListRow {
 					$control = "";
 					$interactive = $r->maketext("[_1] test", $display_name);
 				}
->>>>>>> Updates to conditional release. Removed relax_restricted_release. Added feature to warn and ignore nonexistent set names in the restricted release list. Now gives message about restricted release instead of toggling visibility.
 			} else {
 				$status = $r->maketext("Closed");
 
