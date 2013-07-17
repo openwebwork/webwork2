@@ -42,7 +42,6 @@ BEGIN {
 	        description               => { type=>"TEXT" },
 		restricted_release	  => { type=>"TEXT" },
 		restricted_status	  => { type=>"FLOAT" },
-		relax_restricted_release         => { type=>"ENUM('No','AfterAnswerDate','AfterVersionAnswerDate') DEFAULT 'No'" },
 		attempts_per_version      => { type=>"INT" },
 		time_interval             => { type=>"INT" },
 		versions_per_interval     => { type=>"INT" },
