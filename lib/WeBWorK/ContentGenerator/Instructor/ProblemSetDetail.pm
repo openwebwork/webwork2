@@ -156,7 +156,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	restricted_release => {
-		name      => "Restrict release by set",
+		name      => "Restrict release by set(s)",
 		type      => "edit",
 		size      => "30em",
 		override  => "any",
