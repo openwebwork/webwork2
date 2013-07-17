@@ -3594,9 +3594,185 @@ msgstr ""
 msgid "Really delete the items listed above?"
 msgstr ""
 
-Rename file as:
-New file name:
-New folder name:
-File %1 already exists. Overwrite it, or rename it as: %2
-Copy file as:
+msgid "Rename file as:"
+msgstr ""
 
+msgid "New file name:"
+msgstr ""
+
+msgid "New folder name:"
+msgstr ""
+
+msgid "File <b>%1</b> already exists. Overwrite it, or rename it as:"
+msgstr ""
+
+msgid "Copy file as:"
+msgstr ""
+
+
+#/home/francois/ExtractStrings/SetMaker.pm
+msgid "%1 Problems: "
+msgstr ""
+
+msgid "Browse from: "
+msgstr ""
+
+msgid "There are no matching WeBWorK problems"
+msgstr ""
+
+msgid "There are %1 matching WeBWorK problems"
+msgstr ""
+
+msgid "Update Menus"
+msgstr ""
+
+msgid "Reset"
+msgstr ""
+
+msgid "Basic Search"
+msgstr ""
+
+msgid "Textbook:"
+msgstr ""
+
+msgid "Text chapter:"
+msgstr ""
+
+msgid "Text section:"
+msgstr ""
+
+msgid "Level:"
+msgstr ""
+
+msgid "Keywords:"
+msgstr ""
+
+msgid "Previous page"
+msgstr ""
+
+msgid "Next page"
+msgstr ""
+
+msgid "Add All"
+msgstr ""
+
+msgid "Clear Problem Display"
+msgstr ""
+
+msgid "Create a New Set in This Course:"
+msgstr ""
+
+msgid "Name for new set here"
+msgstr ""
+
+msgid "National Problem Library"
+msgstr ""
+
+msgid "Local Problems"
+msgstr ""
+
+msgid "From This Course"
+msgstr ""
+
+msgid "Set Definition Files"
+msgstr ""
+
+msgid " Display Mode: "
+msgstr ""
+
+msgid " Max. Shown: "
+msgstr ""
+
+msgid "Edit Target Set"
+msgstr ""
+
+msgid "Add problems to "
+msgstr ""
+
+msgid "Target Set: "
+msgstr ""
+
+msgid "Advanced Search"
+msgstr ""
+
+msgid "Browse "
+msgstr ""
+
+msgid "Subject:"
+msgstr ""
+
+msgid "Chapter:"
+msgstr ""
+
+msgid "Section:"
+msgstr ""
+
+msgid "Local"
+msgstr ""
+
+msgid "All Chapters"
+msgstr ""
+
+msgid "All Subjects"
+msgstr ""
+
+msgid "All Sections"
+msgstr ""
+
+msgid "All Textbooks"
+msgstr ""
+
+msgid "View Problems"
+msgstr ""
+
+#/home/francois/ExtractStrings/SendMail.pm
+msgid "Message file: "
+msgstr ""
+
+msgid "Save file to: "
+msgstr ""
+
+msgid "Editor rows: "
+msgstr ""
+
+msgid " columns: "
+msgstr ""
+
+msgid "Send to:"
+msgstr ""
+
+msgid "Preview set to: "
+msgstr ""
+
+msgid "Update settings and refresh page"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Merge file: "
+msgstr ""
+
+msgid "Reply-To: "
+msgstr ""
+
+msgid "Subject:  "
+msgstr ""
+
+msgid "All students in course"
+msgstr ""
+
+msgid "Selected students"
+msgstr ""
+
+msgid "Preview message"
+msgstr ""
+
+msgid "Send Email"
+msgstr ""
+
+msgid "Save as:"
+msgstr ""
+
+msgid "Save as Default"
+msgstr ""
