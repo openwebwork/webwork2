@@ -3702,3 +3702,171 @@ msgstr "Le fichier %1 existe déjà. Écraser ou renommer en:"
 
 msgid "Copy file as:"
 msgstr "Copier le fichier vers	:"
+
+
+#/home/francois/ExtractStrings/SetMaker.pm
+msgid "%1 Problems: "
+msgstr "Problèmes %1 : "
+
+msgid "Browse from: "
+msgstr "Naviguer de: "
+
+msgid "There are no matching WeBWorK problems"
+msgstr "Il n'y a pas de problèmes de Webwork correspondant"
+
+msgid "There are %1 matching WeBWorK problems"
+msgstr "Il y a %1 problèmes de Webwork correspondants"
+
+msgid "Update Menus"
+msgstr "MAJ des menus"
+
+msgid "Reset"
+msgstr "Réinitialiser"
+
+msgid "Basic Search"
+msgstr "Recherche de base"
+
+msgid "Textbook:"
+msgstr "Livre:"
+
+msgid "Text chapter:"
+msgstr "Chapitre du texte:"
+
+msgid "Text section:"
+msgstr "Section du texte:"
+
+msgid "Level:"
+msgstr "Niveau:"
+
+msgid "Keywords:"
+msgstr "Mots clés:"
+
+msgid "Previous page"
+msgstr "Page précédente"
+
+msgid "Next page"
+msgstr "Page suivante"
+
+msgid "Add All"
+msgstr "Ajouter tous"
+
+msgid "Clear Problem Display"
+msgstr "Effacer l'affichage du problème"
+
+msgid "Create a New Set in This Course:"
+msgstr "Créer un nouveau devoir dans ce cours"
+
+msgid "Name for new set here"
+msgstr "Nom du nouveau cours ici"
+
+msgid "National Problem Library"
+msgstr "Librairie de problèmes nationale"
+
+msgid "Local Problems"
+msgstr "Problèmes locaux"
+
+msgid "From This Course"
+msgstr "De ce cours"
+
+msgid "Set Definition Files"
+msgstr "Fichier de définition devoirs"
+
+msgid " Display Mode: "
+msgstr " Mode d'affichage: "
+
+msgid " Max. Shown: "
+msgstr " Max. affiché:"
+
+msgid "Edit Target Set"
+msgstr "Modifier ce devoir"
+
+msgid "Add problems to "
+msgstr "Additionner des problèmes à "
+
+msgid "Target Set: "
+msgstr "ce devoir: "
+
+msgid "Advanced Search"
+msgstr "Recherche avancée"
+
+msgid "Browse "
+msgstr "Naviguer "
+
+msgid "Subject:"
+msgstr "Sujet:"
+
+msgid "Chapter:"
+msgstr "Chapitre:"
+
+msgid "Section:"
+msgstr "Section:"
+
+msgid "Local"
+msgstr "locaux"
+
+msgid "All Chapters"
+msgstr "Tous les chapitres"
+
+msgid "All Subjects"
+msgstr "Tous les sujets"
+
+msgid "All Sections"
+msgstr "Tous les sections"
+
+msgid "All Textbooks"
+msgstr "Tous les livres"
+
+msgid "View Problems"
+msgstr "Voir les problèmes"
+
+#/home/francois/ExtractStrings/SendMail.pm
+msgid "Message file: "
+msgstr "Fichier de message: "
+
+msgid "Save file to: "
+msgstr "Enregistrer vers: "
+
+msgid "Editor rows: "
+msgstr "Lignes de l'éditeur"
+
+msgid " columns: "
+msgstr " colonnes: "
+
+msgid "Send to:"
+msgstr "Envoyer à:"
+
+msgid "Preview set to: "
+msgstr "Aperçu du devoir à: "
+
+msgid "Update settings and refresh page"
+msgstr "Mise à jour des paramètres et rafraîchir la page"
+
+msgid "Open"
+msgstr "Ouvrir"
+
+msgid "Merge file: "
+msgstr "Fichier de fusion"
+
+msgid "Reply-To: "
+msgstr "Répondre à: "
+
+msgid "Subject:  "
+msgstr "Sujet:  "
+
+msgid "All students in course"
+msgstr "Tous les étudiants dans le cours"
+
+msgid "Selected students"
+msgstr "Étudiants sélectionnés"
+
+msgid "Preview message"
+msgstr "Prévisualiser le message"
+
+msgid "Send Email"
+msgstr "Envoyer"
+
+msgid "Save as:"
+msgstr "Enregistrer sous:"
+
+msgid "Save as Default"
+msgstr "Enregistrer par défaut"
