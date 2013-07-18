@@ -1,6 +1,6 @@
 /* Blob.js
  * A Blob implementation.
- * 2013-01-23
+ * 2013-06-20
  * 
  * By Eli Grey, http://eligrey.com
  * By Devin Samarin, https://github.com/eboyjr
@@ -15,7 +15,8 @@
 /*! @source http://purl.eligrey.com/github/Blob.js/blob/master/Blob.js */
 
 if (typeof Blob !== "function" || typeof URL === "undefined")
-var Blob = (function (view) {
+if (typeof Blob === "function" && typeof webkitURL !== "undefined") var URL = webkitURL;
+else var Blob = (function (view) {
 	"use strict";
 
 	var BlobBuilder = view.BlobBuilder || view.WebKitBlobBuilder || view.MozBlobBuilder || view.MSBlobBuilder || (function(view) {

@@ -1,7 +1,7 @@
 {
   "name": "blob",
   "version": "0.0.0",
-  "commit": "1994f1af9d3b2e9a0476299578ec627411bfc662",
+  "commit": "7246d68f23046debbe632260e5064e00db6c14eb",
   "repository": {
     "type": "git",
     "url": "git://github.com/eligrey/Blob.js.git"

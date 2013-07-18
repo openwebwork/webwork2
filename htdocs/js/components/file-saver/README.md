@@ -5,24 +5,30 @@ FileSaver.js implements the W3C `saveAs()` [FileSaver][1] interface in browsers 
 not natively support it. There is a [FileSaver.js demo][2] that demonstrates saving
 various media types.
 
-FileSaver.js is the solution to saving files on the client side, and is perfect for
-webapps that need to generate files or for saving sensitive information that shouldn't be
+FileSaver.js is the solution to saving files on the client-side, and is perfect for
+webapps that need to generate files, or for saving sensitive information that shouldn't be
 sent to an external server.
+
 
 Supported Browsers
 ------------------
 
-* Internet Explorer 10+
-  * Up to 600 MiB per blob
-* Firefox 4+
-  * Up to 800 MiB per blob
-* Google Chrome
-  * Up to 345 MiB per blob
-* Opera 11+
-* Safari 5
+| Browser        | Constructs as | Filenames    | Size       | Dependancies |
+| -------------- | ------------- | ------------ | ---------- | ------------ |
+| Firefox 20+    | Blob          | Yes          | 800MiB/per | None         |
+| Firefox ≤ 19   | data: URI     | No           |            | [Blob.js](https://github.com/eligrey/Blob.js) |
+| Chrome         | Blob          | Yes          | 345MiB/per | None         |
+| Chrome for Android v28+ | Blob      | Yes          |            | None         |
+| IE 10+         | Blob          | Yes          | 600MiB/per | None         |
+| Opera Next     | Blob          | Yes          |            | None         |
+| Opera < 15     | data: URI     | No           |            | [Blob.js](https://github.com/eligrey/Blob.js) |
+| Safari ≤ 6     | data: URI     | No           |            | [Blob.js](https://github.com/eligrey/Blob.js) |
 
-Unlisted future versions of browsers will probably work too; I just haven't
-tested them.
+Note: Unlisted versions or browsers will probably work too; however only the ones listed above have been tested.
+
+Feature detection is possible:
+
+    try { var isFileSaverSupported = !!new Blob(); } catch(e){}
 
 Syntax
 ------
@@ -49,8 +55,7 @@ The standard W3C File API [`Blob`][3] interface is not available in all browsers
     });
 
 Note: The standard HTML5 `canvas.toBlob()` method is not available in all browsers.
-[canvas-toBlob.js][5] is a cross-browser `canvas.toBlob()` implementation that solves
-this.
+[canvas-toBlob.js][5] is a cross-browser `canvas.toBlob()` that polyfills this.
 
 ### Aborting a save
 
