@@ -1,4 +1,5 @@
-define(['Backbone', 'underscore', './LibraryListView', './SetListView', 'LibraryList', 'SetList'], function(Backbone, _, LibraryListView, SetListView, LibraryList, SetList){
+define(['Backbone', 'underscore','config', './LibraryListView', './SetListView', 'LibraryList', 'SetList'], 
+    function(Backbone, _, config, LibraryListView, SetListView, LibraryList, SetList){
 	//Since many of the views we'll define will all want to post alerts and messages to the same place
     //we define a global template and alert function for them.
     var alert_template = _.template('<div class="alert <%= classes %> fade in"><a class="close" data-dismiss="alert" href="#">×</a><%= message %></div>');
