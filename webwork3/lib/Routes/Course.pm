@@ -13,6 +13,13 @@ use Routes qw/convertObjectToHash/;
 
 prefix '/course';
 
+###
+#  return all users for course :course
+#
+#  User user_id must have at least permissions>=10
+#
+##
+
 get '/:course/users' => sub {
 
 	if( ! session 'logged_in'){
@@ -61,6 +68,27 @@ get '/:course/sets' => sub {
 	return Routes::convertObjectToHash(\@globalSets);
 };
 
+##
+#
+#  Returns all users for course course_id and set set_id
+#
+#  return:  array of user_id's.
+##
+
+
+get '/:course_id/:set_id/users' => sub {
+	if( ! session 'logged_in'){
+		return { error=>"You need to login in again."};
+	}
+
+	if (0+(session 'permission') < 10) {
+		return {error=>"You don't have the necessary permission"};
+	}
+
+	my @sets = vars->{db}->listSetUsers(param('set_id'));
+	return \@sets;
+};
+
 put '/:course/users/:new_user' => sub {
 	if( ! session 'logged_in'){
 		return { error=>"You need to login in again."};
@@ -70,9 +98,9 @@ put '/:course/users/:new_user' => sub {
 		return {error=>"You don't have the necessary permission"};
 	}
 
-	debug("addings a new user with user_id: " . param('new_user'));
+	debug("adding a new user with user_id: " . param('new_user'));
 
-	return "Hi";
+	return "Hi\n";
 
 };
 
