@@ -18,6 +18,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             var self = this;
             _.bindAll(this,"fetch","addProblem","removeProblem");
             _.extend(this,options);
+            this.defaultRequestObject = {};
             this.on("remove",this.removeProblem);
             if (this.type){   // this prevents the fetch if the ProblemList comes from the Browse object. 
                 this.fetch(); 
@@ -30,7 +31,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         fetch: function()
         {
             var self = this;
-            var requestObject = null;
+            var requestObject = {};
             switch(this.type){
                 case "Problem Set":
                     console.log("fetching problems for Problem Set " + this.setName);

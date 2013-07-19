@@ -97,26 +97,17 @@ sub head {
 	my ($self) = @_;
 	my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
- print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css"/>!;
-   
-  print qq!<script src="$webwork_htdocs_url/js/legacy/jquery-ui-1.8.16.custom.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/ui.tabs.closable.js"></script>!;
+  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css"/>!;
+  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-1.7.1.min.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery.ui.touch-punch.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
 
-  print qq!<script src="$webwork_htdocs_url/js/legacy/json2.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-  
-  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/WeBWorK.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/models/teacher.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/models/Problem.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/models/Set.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/models/Library.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/models/Browse.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser.js"></script>!;
- 
 
   print qq!<script data-main="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser" src="$webwork_htdocs_url/js/vendor/requirejs/require.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/problem_grid.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/form_builder.js"></script>!;
+
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
   #my ($self) = @_;
   #my $r = $self->r;
