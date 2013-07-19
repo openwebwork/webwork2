@@ -1,5 +1,5 @@
 /* WeBWorK Online Homework Delivery System
- * Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+ * Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
  * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
@@ -527,7 +527,6 @@ div.NoFontMessage {
 }
 
 .set_table th{
-	text-align: center;
 	padding-right: 5px;
 	padding-left: 5px;
 }
