@@ -17,6 +17,7 @@ function(Backbone, _,LibraryView){
 
             this.elements = {allLibSubjects: "library-subjects-tab",
                              allLibraries: "library-directories-tab",
+                             localLibrary: "library-local-tab",
                              searchLibraries: "library-search-tab"};
 
             this.views = {
@@ -24,16 +25,11 @@ function(Backbone, _,LibraryView){
                                             problemSets: this.hwManager.problemSets}),
                 allLibraries    :  new LibraryView({libBrowserType: "allLibraries", errorPane: this.hwManager.errorPane, 
                                             problemSets: this.hwManager.problemSets}),
+                localLibrary: new LibraryView({libBrowserType: "localLibrary", errorPane: this.hwManager.errorPane,
+                                            problemSets: this.hwManager.problemSets}),
                 searchLibraries :  new LibraryView({libBrowserType: "searchLibraries", errorPane: this.hwManager.errorPane, 
                                             problemSets: this.hwManager.problemSets})
-            }
-
-/*            this.hwManager.problemSets.each(function(set){
-                set.on('add',function(model){
-                    console.log(model);
-                });
-            });*/
-            
+            }            
     	},
     	render: function (){
             var self = this; 

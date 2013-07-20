@@ -30,7 +30,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         fetch: function()
         {
             var self = this;
-            var requestObject = null;
+            var requestObject = {};
             switch(this.type){
                 case "Problem Set":
                     console.log("fetching problems for Problem Set " + this.setName);
@@ -54,6 +54,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                         }
                     break;
             }
+
             _.defaults(requestObject, config.requestObject);
             $.get(config.webserviceURL, requestObject,function (data) {
                 var response = $.parseJSON(data);

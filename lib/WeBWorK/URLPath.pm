@@ -121,15 +121,13 @@ PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
  
  instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
  instructor_problem_editor3_withset   /$courseID/instructor/pgProblemEditor3/$setID/
- instructor_problem_editor3_withset_withproblem
-                                     /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
-
+ instructor_problem_editor3_withset_withproblem /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
+ 
  instructor_simple_editor           /$courseID/instructor/SimplePGEditor/
  instructor_simple_editor_withset   /$courseID/instructor/SimplePGEditor/$setID/
- instructor_simple_editor_withset_withproblem
-                                     /$courseID/instructor/SimplePGEditor/$setID/$problemID/
-
+ instructor_simple_editor_withset_withproblem /$courseID/instructor/SimplePGEditor/$setID/$problemID/
  
+
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
@@ -397,14 +395,14 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
 	instructor_user_list3 => {
-		name    => 'Classlist Manager',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_user_detail/ ],
-		match   => qr|^users3/|,
-		capture => [ qw// ],
-		produce => 'users3/',
-		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
-	},
+    		name    => 'Classlist Manager',
+    		parent  => 'instructor_tools',
+    		kids    => [ qw/instructor_user_detail/ ],
+    		match   => qr|^users3/|,
+    		capture => [ qw// ],
+    		produce => 'users3/',
+    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
+    	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',

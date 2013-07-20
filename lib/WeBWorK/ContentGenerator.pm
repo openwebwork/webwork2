@@ -746,11 +746,11 @@ sub links {
 				# Homework Set Editor
 				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor1};
-
 				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor2};
 				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor3};
+
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
@@ -779,6 +779,13 @@ sub links {
 					if (defined $problemID) {
 					    print CGI::start_li();
 						print CGI::start_ul();
+						print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+							if $ce->{showeditors}->{pgproblemeditor3};;
+						print CGI::end_ul();
+					}
+					if (defined $problemID) {
+						print CGI::start_ul();
+
 						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 							if $ce->{showeditors}->{simplepgeditor};;
 						print CGI::end_ul();
@@ -2057,7 +2064,7 @@ sub mathview_scripts {
 #		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
 		#CGI::end_script(),	"\n",	
 		#CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 
+		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/components/jquery-ui/ui/jquery-ui.js"}), 
 		CGI::end_script(),"\n",		
 #		CGI::start_script({type=>"text/javascript", src=>"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"}), 
 #		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS_HTML-full"}), 

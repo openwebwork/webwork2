@@ -11,8 +11,11 @@ define(['Backbone', 'underscore', 'config', './ProblemList'], function(Backbone,
     
         initialize:function () {
             this.set('problems', new ProblemList);
+            this.webserviceURL = config.webserviceURL;
+            this.defaultRequestObject = {};
+            _.defaults(this.defaultRequestObject, config.requestObject);
             //this.get('problems').url = this.get('name');
-            _.extend(this.get('problems').defaultRequestObject, {
+            _.extend(this.defaultRequestObject, {
                 set: this.get('name'),
                 xml_command: "listSetProblems"
             });

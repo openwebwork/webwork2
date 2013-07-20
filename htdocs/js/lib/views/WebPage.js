@@ -35,20 +35,14 @@ define(['Backbone','Closeable'], function(Backbone,Closeable){
 
     setUpNavMenu: function ()
     {
-        $("#webwork_navigation h2").remove() //  Remove the "Main Menu" in the menu. 
-
         var allCourses = $("#webwork_navigation ul:eq(0)").addClass("dropdown-menu");
-
         var InstructorTools = $("#webwork_navigation ul:eq(0) ul:eq(0) ul:eq(0)");
-
         var StudentTools = $("#webwork_navigation ul:eq(0) ul:eq(0)");
 
 
 
         InstructorTools.children("ul").remove();  // remove any links under the instructor tools
-
         StudentTools.children("ul").remove(); // remove 
-
         allCourses.children("ul").remove();
 
         allCourses.append("<li class='divider'>").append(StudentTools.children("li"))

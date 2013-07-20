@@ -14,25 +14,48 @@ define(['Backbone', 'underscore','config'], function(Backbone, _,config){
         fetch: function (){
             var self = this
               , requestObject = null;
-            if (this.get("type") === "allLibraries"){
+            switch(this.get("type")){
+            case "allLibraries":
                 requestObject = {xml_command: "getProblemDirectories"};
                 this.header = "Library/";
-            } else if (this.get("type") === "allLibSubjects"){
-                requestObject = {xml_command: "buildBrowseTree"};
+                break;
+            case "allLibSubjects":
+                //requestObject = {xml_command: "buildBrowseTree"};
+                requestObject = {xml_command: "loadBrowseTree"};
                 this.header = "Subjects/";
-            } else if (this.get("type") === "searchLibraries"){
-                requestObject = {xml_command: "buildBrowseTree"};  // This is just a temporary spot for searching. 
-                this.header = "Subjects/";
+                break;
+            case "localLibrary":
+                requestObject = {xml_command: "loadLocalLibraryTree"};
+                this.header = "LocalLibrary/";
+                break;
+            case "searchLibraries":
+                
+                break;
             }
             _.defaults(requestObject, config.requestObject);
             $.get(config.webserviceURL,requestObject,function(data){
                 console.log("fetching the Library Tree");
                 var response = $.parseJSON(data);
-                self.libs = response.result_data;
-                self.tree = self.parsePathsToTree(self.header);
-                delete self.libs;
-             	self.trigger("fetchSuccess");
+                switch(self.get("type")){
+                case "allLibraries":
+                    self.libs = response.result_data;
+                    self.tree = self.parsePathsToTree(self.header);
+                    delete self.libs;
+                    break;
+                case "allLibSubjects":
+                    self.tree = response.result_data;
+                    break;
+                case "localLibrary":
+                    self.libs = response.result_data.files;
+                    self.tree = self.parsePathsToTree(self.header);
+                    delete self.libs;
+                    break;
+                case "searchLibraries":
+                    break;
+                }
                 self.fetched = true; 
+             	self.trigger("fetchSuccess");
+                
             });
 
         },
@@ -55,9 +78,9 @@ define(['Backbone', 'underscore','config'], function(Backbone, _,config){
                 
                 var ppp = self.parsePathsToTree(start+sp+"/");
                 if (ppp && (ppp.length >0 )){
-                    tree.push([sp, ppp]);
+                    tree.push({name: sp, subfields: ppp});
                 } else {
-                    tree.push(sp);
+                    tree.push({name: sp});
                 }
             });
 

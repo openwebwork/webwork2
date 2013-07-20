@@ -1,33 +1,35 @@
-define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstrap'], 
-    function(Backbone, _, XDate,Closeable) {
+/**
+ * This is a base class for a calendar view.  This should be extended (subclassed) to use. 
+ *
+ *  options:
+ *     calendarType: "month" or "week"  to display a full month or week (which is two weeks)
+ */ 
+
+define(['Backbone', 'underscore', 'moment','Closeable','jquery-truncate','bootstrap'], 
+    function(Backbone, _, moment,Closeable) {
 	
     var CalendarView = Backbone.View.extend({
-        tagName: "div",
         className: "calendar",
         initialize: function (){
-            _.bindAll(this, 'render','updateAssignments','showWeekView','showMonthView','viewPreviousWeek',
-                        'viewNextWeek');  // include all functions that need the this object
-    	    _.extend(this, this.options);
+            _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');  // include all functions that need the this object
+    	    this.dispatcher = _.clone(Backbone.Events);  // include a dispatch to manage calendar changes. 
         
+            this.calendarType = this.options.calendarType;
+
             if (! this.date){
-                this.date = XDate.today();
+                this.date = moment();
             }
         
-            this.updateAssignments();
-            this.reducedScoringMinutes = this.parent.settings.find(function(setting) { return setting.get("var")==="pg{ansEvalDefaults}{reducedScoringPeriod}";}).get("value");
-
-            if ((this.timeSlot.length>5) && (this.viewType === "month")) {
-                this.parent.errorPane.addMessage({ text: $("#too-many-assignments-error").html()});
-                this.viewType = "week";
-            }
-
+ 
             // build up the initial calendar.  
 
-            var firstOfMonth = new XDate(this.date.getFullYear(),this.date.getMonth(),1);
-            var firstDayOfCalendar = (this.viewType==="month")?firstOfMonth.clone().addDays(-1*firstOfMonth.getDay()):
-                    this.date.clone().addDays(-1*this.date.getDay());
 
-            this.createCalendar(firstDayOfCalendar,(this.viewType==="month")?6:2);
+            var firstOfMonth = moment(this.date).date(1);
+            var firstDayOfCalendar = (this.calendarType==="month")?
+                    moment(firstOfMonth).date(1).add("days",-1*firstOfMonth.date(1).day()):
+                    moment(this.date).add("days",-1*firstOfMonth.day());
+
+            this.createCalendar(firstDayOfCalendar,(this.calendarType==="month")?6:2);  // instead of hard coding this make these parameters. 
             
             return this;
         },
@@ -38,11 +40,10 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
             for(var i = 0; i<numberOfWeeks; i++){
                 theWeek = [];
                 for(var j = 0; j < 7; j++){
-                 theWeek.push(firstDayOfCalendar.clone().addDays(j+7*i));
+                 theWeek.push(moment(firstDayOfCalendar).add("days",j+7*i));
                 }
                 this.weeks.push(theWeek);
             }
-
         },
         render: function () {
             var self = this;
@@ -50,7 +51,14 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
             
 
             this.$el.html(_.template($("#calendar-template").html()));
-            var calendarTable = this.$('#calendar-table');
+            var calendarHead = this.$("#calendar-table thead");
+            for(var i = 0; i<7; i++){
+                var day = moment().day(i);
+                calendarHead.append("<th>" + day.format("dddd") + "</th>");
+            }
+            var calendarTable = this.$('#calendar-table tbody');
+
+
 
             _(this.weeks).each(function(_week){
                 calendarTable.append((new CalendarRowView({week: _week, calendar: self})).el);
@@ -58,15 +66,7 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
         
             this.$el.append(calendarTable.el);
 
-            var dayWidth = parseInt($("#calendar-table").width()/7)-20;
-            $(".assign-open").truncate({width: dayWidth});
-            $(".assign-reduced-credit").truncate({width: dayWidth});
-
-            if (this.view === "student"){
-                $(".assign-open,.assign-reduced-credit,.assign-not-visible").attr("data-content","");
-            } 
-            $(".assign-open,.assign-reduced-credit,.assign-not-visible").popover({placement: "top", html: true});
-
+            this.dispatcher.trigger("calendar-change");
             return this;   
         },
         events: {"click .previous-week": "viewPreviousWeek",
@@ -74,81 +74,45 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
             "click .view-week": "showWeekView",
             "click .view-month": "showMonthView"},
         viewPreviousWeek: function (){
-            var firstDate = this.weeks[0][0].clone().addDays(-7)
+            var firstDate = moment(this.weeks[0][0]).subtract("days",7)
               , theWeek = [];
             for(var i=0;i<7;i++){
-                theWeek.push(firstDate.clone().addDays(i));
+                theWeek.push(moment(firstDate).add("days",i));
             }
             this.weeks.splice(0,0,theWeek);
             this.weeks.pop();
             this.render();
-            this.parent.dispatcher.trigger("calendar-change");
+            this.dispatcher.trigger("calendar-change");
         },
         viewNextWeek: function() {
-            var lastDate = this.weeks[this.weeks.length-1][0].clone().addDays(7)
+            var lastDate = moment(this.weeks[this.weeks.length-1][0]).add("days",7)
               , theWeek = [];
             for(var i=0;i<7;i++){
-                theWeek.push(lastDate.clone().addDays(i));
+                theWeek.push(moment(lastDate).add("days",i));
             }
             this.weeks.splice(0,1);
             this.weeks.push(theWeek);
             this.render();
-            this.parent.dispatcher.trigger("calendar-change");
+            this.dispatcher.trigger("calendar-change");
         },
         showWeekView: function () {
-            this.viewType="week";
+            this.calendarType="week";
             if (this.weeks.length===2) {return;}
-            var today = XDate.today();
-            this.createCalendar(today.addDays(-1*today.getDay()),2);
+            var today = moment();
+            this.createCalendar(today.subtract("days",today.day()),2);
             this.render();
-            this.parent.dispatcher.trigger("calendar-change");
+            this.dispatcher.trigger("calendar-change");
         },
         showMonthView: function () {
             if(this.weeks.length===6){return;}
-            this.viewType = "month";
-            this.createCalendar(this.weeks[0][0].clone().addDays(-14),6);            
+            this.calendarType = "month";
+            this.createCalendar(moment(this.weeks[0][0]).subtract("days",14),6);            
             this.render();
-            this.parent.dispatcher.trigger("calendar-change");
-        },              // This needs to determine the visual bars on the calendar. 
-        updateAssignments: function() 
-        {
-            //console.log("in updateAssignments");
-            var sets = this.collection.sortBy(function (_set) { return new XDate(_set.get("open_date"))});
-            
-
-            var n = 0; 
-            var slot = [];
-            slot[0]=[];
-            while (sets.length>0){
-                var s = sets.pop();
-                var k = 0; 
-                var foundSlot = false; 
-                while(slot[k].length > 0){
-                    if (!(_(slot[k]).any(function (_set) { return s.overlaps(_set)}))) {
-                        foundSlot = true;
-                        slot[k].push(s);
-                        break;
-                    } 
-                    k++;
-                }
-                if (!foundSlot){
-                   slot[k].push(s);
-                   slot[k+1] = [];
-                    n++;
-                }
-                /* _(slot).each(function(set,i){
-                    console.log(i + " " + _(set).map(function(s){return s.get("set_id")}));
-                }); */
-
-            }    
-            slot.pop();  // there's always an empty array at the end. 
-
-            this.timeSlot = slot;
-
-
-            
+            this.dispatcher.trigger("calendar-change");
+        }, 
+        renderDay: function(){
+            // this is called from the CalendarDayView.render() to be useful, this should be overridden in the subclass
         }
-
     });
 
     var CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
@@ -175,82 +139,42 @@ define(['Backbone', 'underscore', 'XDate','Closeable','jquery-truncate','bootstr
     var CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
         tagName: "td",
         className: "calendar-day",
-        template: _.template($("#calendar-date-bar").html()),
         initialize: function (){
-            _.bindAll(this, 'render','showAssignments');  // include all functions that need the this object
-        var self = this;
+            _.bindAll(this, 'render');  // include all functions that need the this object
+            var self = this;
+            this.calendar = this.options.calendar;
 
-        this.today = XDate.today();
-        _.extend(this,this.options);
+            this.today = moment();
             this.render();
             return this;
         },
         render: function () {
             var self = this;
             var str = "";
-            if (this.calendar.viewType==="month"){
-                str = (this.model.getDate()==1)? this.model.toString("MMM dd") : this.model.toString("dd");
+            if (this.calendar.calendarType==="month"){
+                str = (this.model.date()==1)? this.model.format("MMM D") : this.model.format("D");
             } else {
-                str = this.model.toString("MMM dd");
+                str = this.model.format("MMM D");
             }
             this.$el.html(str);
-            this.$el.attr("id","date-" + this.model.toString("yyyy-MM-dd"));
-            if (this.calendar.date.getMonth()===this.model.getMonth()){this.$el.addClass("this-month");}
-            if (this.today.diffDays(this.model)===0){this.$el.addClass("today");}
-            if (this.calendar.viewType==="week") {this.$el.addClass("week-view");} else {this.$el.addClass("month-view");}
-        
+            this.$el.attr("data-date",this.model.format("YYYY-MM-DD"));
+            if (this.calendar.date.month()===this.model.month()){
+                this.$el.addClass("this-month");
+            }
+            if (this.today.isSame(this.model,"day")){
+                this.$el.addClass("today");
+            }
+            if (this.calendar.calendarType==="week") {
+                this.$el.addClass("week-view");
+            } else {
+                this.$el.addClass("month-view");
+            }
 
-            self.showAssignments();
+            this.calendar.renderDay(this);
 
             return this;
-        },
-        showAssignments: function () {
-
-            var self = this;
-
-            // pstaabp:  This is a mess.  Let's try to find a better way to do this.              
-
-            if ((this.calendar.viewType === "week") || (this.calendar.timeSlot.length<6)) {
-                _(this.calendar.timeSlot).each(function (slot){
-                    var slotFilled = false; 
-                    _(slot).each(function(problemSet){
-                        var props = (self.calendar.view==="student")? 
-                            {setname: problemSet.get("set_id"),assignedUsers:"",totalUsers:"", openToStudents:""}:
-                            {setname: problemSet.get("set_id"), assignedUsers: problemSet.assignedUsers.length, 
-                            totalUsers: self.calendar.parent.users.size(), 
-                            openToStudents: problemSet.get("visible"), showName: false};
-                        if (problemSet.get("visible")==="no"){
-                            if (problemSet.isDueOn(self.model,0)){
-                                self.$el.append(self.template(_.extend(props, 
-                                    {classes : "assign assign-set-name assign-not-visible", showName: true}))); 
-                                slotFilled = true; 
-                            } else if (problemSet.isOpen(self.model,0)){
-                                self.$el.append(self.template(_.extend(props, 
-                                    {classes : "assign assign-not-visible", showName: false}))); 
-                                slotFilled = true; 
-                            }
-                        }
-                        else if (problemSet.isDueOn(self.model,self.calendar.reducedScoringMinutes)){
-                            self.$el.append(self.template(_.extend(props,{classes : "assign assign-set-name assign-open", showName: true}))); 
-                            slotFilled = true; 
-                        }
-                        else if (problemSet.isOpen(self.model,self.calendar.reducedScoringMinutes))  {
-                            self.$el.append(self.template(_.extend(props, {classes : "assign assign-open", showName: false}))); 
-                            slotFilled = true;  
-                        } else if (problemSet.isInReducedCredit(self.model,self.calendar.reducedScoringMinutes)) {
-                            self.$el.append(self.template(_.extend(props,  {classes : "assign assign-reduced-credit", showName: false}))); 
-                            slotFilled = true; 
-                        } 
-                    });
-                    if (!slotFilled) {self.$el.append("<div class='assign empty'></div>");}
-                });
-            } else {
-                self.$el.append("<div class='assign assign-filled'></div>");
-                // denote that more than five assignments overlap. 
-            }
         }
     });
-
 
 	return CalendarView;
 });

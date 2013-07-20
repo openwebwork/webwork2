@@ -57,6 +57,7 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
+use JSON;
 use constant HIDE_USERS_THRESHHOLD => 200;
 
 
@@ -219,11 +220,137 @@ sub head{
     	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-    print "<link rel='stylesheet' href='$site_url/js/vendor/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
+
+    print "<link rel='stylesheet' href='$site_url/js/components/editablegrid/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
     print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
-	print "<link rel='stylesheet' href='$site_url/js/vendor/jquery/jquery-ui-1.10.0.custom/css/ui-lightness/jquery-ui-1.10.0.custom.min.css' type='text/css' media='screen'>";
+	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
 	return "";
 }
+
+## get all of the user information to send to the client via a script tag in the output_JS subroutine below
+
+sub getAllSets {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+
+	my @found_sets = $db->listGlobalSets;
+  
+  	my @all_sets = $db->getGlobalSets(@found_sets);
+
+  	my @sets = ();
+  
+  
+	foreach my $set (@all_sets){
+		my @users = $db->listSetUsers($set->{set_id});
+		$set->{assigned_users} = \@users;
+
+		# convert the set $set to a hash
+		my $s = {};
+		for my $key (keys %{$set}) {
+			$s->{$key} = $set->{$key}
+		}
+
+		push(@sets,$s);
+	}
+
+	#debug(to_json(\@all_sets));
+
+	return \@sets;
+}
+
+# get the course settings
+
+sub getCourseSettings {
+
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $ConfigValues = $ce->{ConfigValues};
+
+	foreach my $oneConfig (@$ConfigValues) {
+		foreach my $hash (@$oneConfig) {
+			if (ref($hash) eq "HASH"){
+				my $str = '$ce->' . $hash->{hashVar};
+				$hash->{value} = eval($str);
+			} else {
+				debug($hash);
+			}
+		}
+	}
+
+	# get the list of theme folders in the theme directory and remove . and ..
+	my $themeDir = $ce->{webworkDirs}{themes};
+	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
+	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
+	
+	# insert the anonymous array of theme folder names into ConfigValues
+	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
+
+	foreach my $oneConfig (@$ConfigValues) {
+		foreach my $hash (@$oneConfig) {
+			&$modifyThemes($hash);
+		}
+	}
+
+	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
+	my $dt = DateTime->now();
+
+	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
+
+
+	#debug($tz->short_name_for_datetime($dt));
+
+	push(@$ConfigValues, \@tzabbr);
+
+	return $ConfigValues;
+}
+
+
+# get all users for the course
+
+sub getAllUsers {
+
+
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+
+    my @tempArray = $db->listUsers;
+    my @userInfo = $db->getUsers(@tempArray);
+    my $numGlobalSets = $db->countGlobalSets;
+    
+    my @allUsers = ();
+
+    my %permissionsHash = reverse %{$ce->{userRoles}};
+    foreach my $u (@userInfo)
+    {
+        my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
+        $u->{'permission'} = $PermissionLevel->{'permission'};
+
+		my $studid= $u->{'student_id'};
+		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
+        $u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
+	
+		my $Key = $db->getKey($u->{'user_id'});
+		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		
+
+		# convert the user $u to a hash
+		my $s = {};
+		for my $key (keys %{$u}) {
+			$s->{$key} = $u->{$key}
+		}
+
+		push(@allUsers,$s);
+    }
+
+    return \@allUsers;
+}
+
 
 # output_JS subroutine
 
@@ -235,8 +362,18 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script data-main="$site_url/js/apps/ClasslistManager/classlistManager" src="$site_url/js/vendor/requirejs/require.js"></script>!;
-
+	print qq!<script src="$site_url/js/apps/require-config.js"></script>\n!;
+	print qq!<script data-main="$site_url/js/apps/ClasslistManager/ClasslistManager" src="$site_url/js/components/requirejs/require.js"></script>\n!;
+    print qq!<script type='text/javascript'>!;
+    print qq!define('globalVariables', function() {!;
+    print qq!  return { !;
+    
+    print qq! users: ! . to_json(getAllUsers($self)) . ",";
+    print qq! settings: ! . to_json(getCourseSettings($self)) . ",";
+    print qq! sets: ! . to_json(getAllSets($self)) ;
+    print qq!    }!;
+    print qq!});!;
+    print qq!</script>!;
 	
 	return "";
 }

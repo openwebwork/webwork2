@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backbone, _,config){
+define(['Backbone', 'underscore','config','imagesloaded'], function(Backbone, _,config){
 	//##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
@@ -40,14 +40,12 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
                 this.$(".prob-value").on("change",this.updateProblem);
                 this.model.collection.trigger("problemRendered",this.model.get("place"));
                 
-                // if images  mode is used
-                var dfd = this.$el.imagesLoaded();
-                dfd.done( function( $images ){
-
+                this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
                     self.$(".problem").removeAttr("style");
                     self.$(".loading").remove();
                 });
+
 
                 if (this.options.viewAttrs.draggable) {
                     this.$el.draggable({

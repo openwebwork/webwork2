@@ -46,6 +46,7 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
 
     		this.$(".lib-problem-viewer").height(0.8*screen.height);
 
+
             var targetSetSelect = self.$(".target-set")
     		
 /*            this.allProblemSets.each(function(set){
@@ -80,8 +81,7 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
             $(".lib-problem-viewer").html("");
 
     	},
-    	loadProblems: function (_path)
-    	{
+    	loadProblems: function (_path){    	
     		console.log(_path);
 			this.problemList = new ProblemList({path:  _path, type: "Library Problems"});
             this.problemList.on("fetchSuccess",this.showProblems,this);

@@ -21,6 +21,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             var self = this;
             var requestObject = {
                 problemSource: this.get('path'),
+                set: this.get("path"),  // not sure why the webservice needs this.  
                 xml_command: "renderProblem",
                 displayMode: this.get("displayMode"),
                 problemSeed: this.get("problemSeed")

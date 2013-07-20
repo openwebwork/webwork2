@@ -1,9 +1,5 @@
 
-define(['Backbone', 
-	'underscore',
-	//'Closeable',
-	//'../../lib/models/User',
-	'config'
+define(['Backbone', 'underscore','config'
 	], function(Backbone, _,config){
     
 	var UserListView = Backbone.View.extend({

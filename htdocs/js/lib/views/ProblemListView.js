@@ -33,7 +33,9 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
         render: function() {
             var self = this;
             this.lastProblemShown = -1; 
-            this.$el.html(_.template($(this.headerTemplate).html(),{displayModes: this.displayModes}));
+            var openEditorURL = "/webwork2/" + $("#hidden_courseID").val() + "/instructor/SimplePGEditor/" 
+                                    + this.problems.setName + "/" + (this.problems.length +1);
+            this.$el.html(_.template($(this.headerTemplate).html(),{displayModes: this.displayModes, editorURL: openEditorURL}));
             this.loadNextGroup();  
             if(this.viewAttrs.reorderable){
                 this.$("#prob-list").sortable({update: this.reorder, handle: ".reorder-handle", //placeholder: ".sortable-placeholder",
@@ -42,7 +44,8 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
           
         },
         events: {"click #undo-delete-btn": "undoDelete",
-            "click .display-mode-options a": "changeDisplayMode"},
+            "click .display-mode-options a": "changeDisplayMode",
+            "click #create-new-problem": "openSimpleEditor"},
         setProblems: function(_problems){  // _problems should be a ProblemList
             var self = this; 
 
@@ -67,9 +70,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                     self.problems.trigger("num-problems-shown");
                 }
             });
-            this.problems.on("reordered",function () {
-                self.hwManager.announce.addMessage({text: "Problem Set " + self.parent.problemSet.get("set_id") + " was reordered"});
-            });
+            
             this.problems.on("add", this.addProblemView);
             this.render();
         },
@@ -81,6 +82,10 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 problemView.render();
             });
         },
+        /* when the "new" button is clicked open up the simple editor. */
+        openSimpleEditor: function(){  
+            console.log(); 
+        },
         reorder: function (event,ui) {
             var self = this;
             console.log("I was reordered!");
@@ -89,7 +94,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 var p = self.problems.find(function(prob) { return prob.get("path")===path});
                 p.set({place: i}, {silent: true});  // set the new order of the problems.  
             });   
-            self.collection.reorder();
+            self.problems.reorder();
         },
         undoDelete: function(){
             console.log("in undoDelete");
@@ -98,6 +103,10 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
                 this.problems.addProblem(prob);
             }
 
+        },
+        setProblemSet: function(_set) {
+            this.model = _set; 
+            return this;
         },
         addProblemView: function (prob){
             var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
