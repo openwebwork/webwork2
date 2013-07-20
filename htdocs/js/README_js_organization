@@ -16,3 +16,6 @@ lib:	 Common files for the web apps.
 vendor:  This is the directory for all 3rd party javascript files. 
          If it is a single file, then it should just go in the vendor directory
          All bundles should go in a directory (i.e. Jquery and plugins.)
+         
+legacy: Files that may still be in use for earlier incarnations, such as LibraryBrowser2 and LibraryBrowser3
+        or some of the other editor files.
