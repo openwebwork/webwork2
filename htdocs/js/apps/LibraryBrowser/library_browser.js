@@ -27,8 +27,11 @@ require.config({
         "tabs": "/webwork2_files/js/legacy/vendor/ui.tabs.closable", //ok
         //this is important:
         "config":"/webwork2_files/js/apps/LibraryBrowser/config", // ok
+        "Closeable":  "/webwork2_files/js/lib/views/Closeable",
+        "bootstrap":            "/webwork2_files/js/components/bootstrap/docs/assets/js/bootstrap",
+         "moment":               "/webwork2_files/js/components/moment/moment",
     },
-    urlArgs: "bust=" +  (new Date()).getTime(),
+    //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
     shim: {
         //ui specific shims:
@@ -47,14 +50,15 @@ require.config({
             //Once loaded, use the global 'Backbone' as the
             //module value.
             exports: 'Backbone'
-        }
+        },
+        'bootstrap' : {deps: ['jquery']}
 
         
     }
 });
 
 //Start things off by wrapping everything in requirejs
-require(['LibraryBrowser','underscore', 'jquery-ui', //'touch-pinch', 
+require(['LibraryBrowser','underscore', 'jquery-ui','bootstrap', //'touch-pinch', 
     'tabs'], function(LibraryBrowser){    
 
     //instantiate an instance of our app.

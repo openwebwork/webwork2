@@ -16,6 +16,7 @@ define(['Backbone', 'underscore', 'ProblemList', 'config'], function(Backbone, _
             this.set({problems:new ProblemList()});
 
             this.webserviceURL = config.webserviceURL;
+            this.defaultRequestObject = {};
             _.defaults(this.defaultRequestObject, config.requestObject);
     
             _.extend(this.defaultRequestObject, {
