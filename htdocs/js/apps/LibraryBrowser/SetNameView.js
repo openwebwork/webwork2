@@ -39,9 +39,7 @@ define(['Backbone', 'underscore', './SetView'], function(Backbone, _, SetView){
             if ($('#problems_container #' + this.model.get('name')).length > 0) {
                 $('#problems_container').tabs('select', this.model.get('name'));
             } else {
-                console.log("rendering the set");
                 var view = new SetView({model:this.model});
-                //$('#problems_container').append(view.render().el);
                 view.render();
             }
             //render the full tab thing, or switch to it
