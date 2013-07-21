@@ -102,9 +102,25 @@ sub head {
   #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery.ui.touch-punch.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
+  
+  #print qq!<script data-main="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser" src="$webwork_htdocs_url/js/vendor/requirejs/require.js"></script>!;
+
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/ui.tabs.closable.js"></script>!;
+
+  print qq!<script src="$webwork_htdocs_url/js/legacy/json2.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
 
 
-  print qq!<script data-main="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser" src="$webwork_htdocs_url/js/vendor/requirejs/require.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/WeBWorK.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/teacher/teacher.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/teacher/Problem.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/teacher/Set.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/teacher/Library.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/webwork/teacher/Browse.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/library_browser.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/problem_grid.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/form_builder.js"></script>!;
 

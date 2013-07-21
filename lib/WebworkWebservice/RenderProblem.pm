@@ -117,6 +117,7 @@ use constant DISPLAY_MODE_FAILOVER => {
 sub renderProblem {
 	my $self = shift;
     my $rh = shift;
+    
 
 ###########################################
 # Grab the course name, if this request is going to depend on 
@@ -128,7 +129,6 @@ sub renderProblem {
 	my $user;
 	my $beginTime = new Benchmark;
 
-	debug("in RenderProblem::renderProblem");
 # 	if (defined($self->{courseName}) and $self->{courseName} ) {
 # 		$courseName = $self->{courseName};
 # 	} elsif (defined($rh->{course}) and $rh->{course}=~/\S/ ) {
@@ -189,7 +189,6 @@ sub renderProblem {
     local $SIG{__WARN__} = $warning_handler;
 
 
-
 ###########################################
 # Determine the method for accessing data   ???? what was this
 ###########################################
@@ -203,7 +202,6 @@ sub renderProblem {
 	# One of 
 	#   data_from_course
 	#   data_from_request
-
 ###########################################
 # Determine an effective user for this interaction
 # or create one if it is not given
@@ -325,15 +323,22 @@ sub renderProblem {
 		$problemRecord->num_incorrect($num_incorrect);
 	}
 	# initialize problem source
+	
+
+	$rh->{sourceFilePath} = $rh->{path} unless defined $rh->{sourceFilePath};
 	my $problem_source;
 	my $r_problem_source =undef;
-  	if (defined($rh->{source})) {
+ 	if (defined($rh->{source}) and $rh->{source}) {
   		$problem_source = decode_base64($rh->{source});
   		$problem_source =~ tr /\r/\n/;
 		$r_problem_source =\$problem_source;
 		$problemRecord->source_file($rh->{envir}->{fileName}) if defined $rh->{envir}->{fileName};
   	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =/\S/)  {
   	    $problemRecord->source_file($rh->{sourceFilePath});
+  	    #warn "reading from ", $rh->{sourceFilePath};
+  	    $problem_source = WeBWorK::IO::read_whole_file($rh->{sourceFilePath});
+  	    #warn "source is ", $problem_source;
+  	    $r_problem_source = \$problem_source;
   	}
 	$problemRecord->source_file('foobar') unless defined($problemRecord->source_file);
 	if ($UNIT_TESTS_ON){
