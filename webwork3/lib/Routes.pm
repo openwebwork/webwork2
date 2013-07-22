@@ -5,7 +5,7 @@ package Routes;
 
 ##  This converts an array of objects to an array of Hashes
 
-sub convertObjectToHash {
+sub convertArrayOfObjectsToHash {
 	my $arr = shift;
 
 	
@@ -20,6 +20,16 @@ sub convertObjectToHash {
 
 	return \@newArray; 
 
+}
+
+sub convertObjectToHash {
+	my $obj = shift;
+	my $s = {};
+	for my $key (keys %{$obj}){
+		$s->{$key} = $obj->{$key};
+	}
+	
+	return $s;
 }
 
 return 1;

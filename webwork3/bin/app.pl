@@ -5,6 +5,7 @@ use webwork3;
 use WeBWorK::DB;
 use WeBWorK::CourseEnvironment;
 use Routes::Course;
+use Routes::User;
 
 set serializer => 'JSON';
 
