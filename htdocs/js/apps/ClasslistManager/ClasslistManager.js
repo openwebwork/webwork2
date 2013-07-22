@@ -48,11 +48,8 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 
             
 	    this.users.on('add',function(user){
-	    	self.grid.append(user.cid, user.toJSON());
+	    	self.editgrid.grid.append(user.cid, user.toJSON());
 	    	self.updatePaginator();
-		    //if (userInfo.login_status==1){
-			//	self.loggedInUsers.push(user.cid);
-		    //}
 	    });
 
 	    // This handles all of the messages posted at the top of the page when updates are made to the user list.  
@@ -246,11 +243,6 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
         }
 		
     },
-    getSelectedUsers: function() {
-    	var users = $("td:nth-child(1) input[type='checkbox']:checked").closest("tr")
-    			.children("td:nth-child(3)").map(function(i,v) {return $(v).html();}).get();
-    	return this.users.filter(function(user) { return (_(users).indexOf(user.get("user_id")) > -1);});
-    }, 
 	filterUsers: function (evt) {
 	    this.editgrid.grid.filter($("#filter").val());
 	    this.$(".num-users").html(this.editgrid.grid.getRowCount() + " of " + this.users.length + " users shown.");
@@ -277,22 +269,28 @@ function(Backbone, _, globals, User, UserList, EditableGrid, WebPage, EmailStude
 				$(cell).html("<i class='icon-cog'></i>"); }
 		}));
 	},
-
-	deleteUsers: function(rows){
-		var rows = $("td:nth-child(1) input[type='checkbox']:checked").closest("tr")
-						.map(function(i,v) {return $(v).index();}).get();
-
-	    rowsBackwards = _(rows).sortBy(function (num) { return -1*num;});  // the rows need to be sorted in decreasing order so the rows in the table are
+	getSelectedRows: function () {
+		return $("td:nth-child(1) input[type='checkbox']:checked").closest("tr")
+					.map(function(i,v) {return $(v).index();}).get();
+	}, 
+	getUsersByRows: function(rows){
+		var self = this; 
+		return _(rows).map(function(_row) {
+			return self.users.get($("#users-table table tr:nth-child(" +(_row+1) + ")").attr("id").split("users-table-container_")[1]);
+		});
+	},
+	deleteUsers: function(_rows){
+		var self = this
+			, rows = _.isArray(_rows) ? _rows: this.getSelectedRows()
+		    , rowsBackwards = _(rows).sortBy(function (num) { return -1*num;})  // the rows need to be sorted in decreasing order so the rows in the table are
 									// removed correctly. 
-
-		var users = this.getSelectedUsers();							
-	    var self = this;
-	    var str = "Do you wish to delete the following students: " + 
-	    _(users).map(function (user) {return user.get("first_name") + " "+ user.get("last_name")}).join(", ");
-	    var del = confirm(str);
+			, users = this.getUsersByRows(rows)						
+	    	, str = "Do you wish to delete the following students: " + 
+	    			_(users).map(function (user) {return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
+		    , del = confirm(str);
 		    
 	    if (del){
-			_(rowsBackwards).each(function (row){self.grid.remove(row);});
+			_(rowsBackwards).each(function (row){self.editgrid.grid.remove(row);});
 			_(users).each(function(user){self.users.remove(user);});
 
 			this.render();
