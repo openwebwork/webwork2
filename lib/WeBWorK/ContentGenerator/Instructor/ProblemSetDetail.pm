@@ -39,7 +39,7 @@ use WeBWorK::Utils::DatePickerScripts;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -57,7 +57,7 @@ use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attemp
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restrict_ip relax_restrict_ip hide_hint assignment_type)];
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 
@@ -153,6 +153,26 @@ use constant FIELD_PROPERTIES => {
 		labels    => {
 				1 => "Yes",
 				0 => "No",
+		},
+	},
+	restricted_release => {
+		name      => "Restrict release by set(s)",
+		type      => "edit",
+		size      => "30em",
+		override  => "any",
+		labels    => {
+				#0 => "None Specified",
+				"" => "None Specified",
+		},
+	},
+	restricted_status => {
+		name      => "Status required for release",
+		type      => "edit",
+		size      => "30em",
+		override  => "any",
+		labels    => {
+				#0 => "None Specified",
+				"" => "None Specified",
 		},
 	},
 	restrict_ip => {
@@ -280,7 +300,7 @@ use constant FIELD_PROPERTIES => {
                 default => "1",
 	},
 	max_attempts => {
-		name      => "Max&nbsp;attempts",
+		name      => "Max attempts",
 		type      => "edit",
 		size      => 6,
 		override  => "any",
@@ -1132,6 +1152,9 @@ sub initialize {
 				if ($field =~ /_date/) {
 					$param = $self->parseDateTime($param) unless defined $unlabel;
 				}
+				if ($field =~ /restricted_release/) {
+				  $self->check_sets($db,$param) if $param;
+				}
 				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby} && $param) {
 					$param = $param*$properties{$field}->{convertby};
 				}
@@ -1612,6 +1635,15 @@ sub options {
 	return "";
 }
 
+#Make sure restrictor sets exist
+sub check_sets {
+	my ($self,$db,$sets_string) = @_;
+	my @proposed_sets = split(/\s*,\s*/,$sets_string);
+	foreach(@proposed_sets) {
+	  $self->addbadmessage("Error: $_ is not a valid set name in restricted release list!") unless $db->existsGlobalSet($_);
+	}
+}
+
 # Creates two separate tables, first of the headers, and the of the problems in a given set
 # If one or more users are specified in the "editForUser" param, only the data for those users
 # becomes editable, not all the data
@@ -1861,7 +1893,7 @@ sub body {
 	####################################################################
 	# Display Field for putting in a set description
 	####################################################################
-	print CGI::h5("Set Description");
+	print CGI::h5($r->maketext("Set Description"));
 	print CGI::textarea({name=>"set.$setID.description",
 			     id=>"set.$setID.description",
 			     value=>$setRecord->description(),
@@ -1882,8 +1914,8 @@ sub body {
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Headers"),
-#			"Data",
-			"Display&nbsp;Mode:&nbsp;" . 
+#			$r->maketext("Data"),
+			$r->maketext("Display Mode:") . 
 			CGI::popup_menu(-name => "header.displaymode", -values => \@active_modes, -default => $default_header_mode) . '&nbsp;'. 
 			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
@@ -1945,7 +1977,7 @@ sub body {
 
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
-					CGI::Tr({}, CGI::td({}, $properties{$headerType}->{name})) . 
+					CGI::Tr({}, CGI::td({}, $r->maketext($properties{$headerType}->{name}))) . 
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, $r->maketext("Edit it")))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, $r->maketext("View it")))) .
 				CGI::end_table(),
@@ -2008,7 +2040,7 @@ sub body {
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Problems"),
 			$r->maketext("Data"),
-			"Display&nbsp;Mode:&nbsp;" . 
+			$r->maketext("Display Mode:") . 
 			CGI::popup_menu(-name => "problem.displaymode", -values => \@active_modes, -default => $default_problem_mode) . '&nbsp;'. 
 			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));

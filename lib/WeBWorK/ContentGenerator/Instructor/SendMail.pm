@@ -308,8 +308,8 @@ sub initialize {
 	my $script_action     = '';
 	
 	
-	if(not defined($action) or $action eq 'Open'  
-	   or $action eq $UPDATE_SETTINGS_BUTTON ){  
+	if(not defined($action) or $action eq $r->maketext('Open')  
+	   or $action eq $r->maketext($UPDATE_SETTINGS_BUTTON )){  
 
 		return '';
 	}
@@ -558,7 +558,7 @@ sub print_form {
 		default_filters => ["all"],
 		size => 5,
 		multiple => 1,
-		refresh_button_name =>'Update settings and refresh page',
+		refresh_button_name =>$r->maketext('Update settings and refresh page'),
 	}, @{$ra_user_records});
 
 	##############################################################################################################
@@ -598,16 +598,16 @@ sub print_form {
 	#############################################################################################	
 
 			 CGI::td({},
-			     CGI::strong("Message file: "), $input_file,"\n",CGI::br(),
-				 CGI::submit(-name=>'action', -value=>'Open'), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
+			     CGI::strong($r->maketext("Message file: ")), $input_file,"\n",CGI::br(),
+				 CGI::submit(-name=>'action', -value=>$r->maketext('Open')), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
 				 CGI::popup_menu(-name=>'openfilename', 
 				                 -values=>\@sorted_messages, 
 				                 -default=>$input_file
 				 ), 
 				 "\n",CGI::br(),
-				 CGI::strong("Save file to: "), $output_file,
+				 CGI::strong($r->maketext("Save file to: ")), $output_file,
 				 "\n",CGI::br(),
-				 CGI::strong('Merge file: '), $merge_file, 
+				 CGI::strong($r->maketext('Merge file: ')), $merge_file, 
 				 CGI::br(),
 				 CGI::popup_menu(-name=>'merge_file', 
 				                 -values=>\@sorted_merge_files, 
@@ -616,15 +616,15 @@ sub print_form {
 				 "\n",
 				 #CGI::hr(),
 				 CGI::div(
-					 "\n", 'From:','&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
-					 "\n", CGI::br(),'Reply-To: ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
-					 "\n", CGI::br(),'Subject:  ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
+					 "\n", $r->maketext('From:'),'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
+					 "\n", CGI::br(),$r->maketext('Reply-To: '), CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
+					 "\n", CGI::br(),$r->maketext('Subject:  '), CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
 				),
 				#CGI::hr(),
-				"Editor rows: ", CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
-				" columns: ", CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
+				$r->maketext("Editor rows: "), CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
+				$r->maketext(" columns: "), CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
 				CGI::br(),
-				CGI::submit(-name=>'action', -value=>$UPDATE_SETTINGS_BUTTON),
+				CGI::submit(-name=>'action', -value=>$r->maketext($UPDATE_SETTINGS_BUTTON)),
 				 
 			),
 	#############################################################################################
@@ -633,14 +633,14 @@ sub print_form {
 
 	## Edit by Mark to insert scrolling list
 					CGI::td({-style=>"width:33%"},
-					     CGI::strong("Send to:"),
+					     CGI::strong($r->maketext("Send to:")),
 		                  CGI::radio_group(-name=>'radio', 
 		                                   -values=>['all_students','studentID'],
-		                                   -labels=>{all_students=>'All students in course',studentID => 'Selected students'},
+		                                   -labels=>{all_students=>$r->maketext('All students in course'),studentID => $r->maketext('Selected students')},
 		                                   -default=>'studentID', -linebreak=>0), 
 							CGI::br(),$scrolling_user_list,
-							CGI::i("Preview set to: "), $preview_record->last_name,'(', $preview_record->user_id,')',
-							CGI::submit(-name=>'action', -value=>'preview',-label=>'Preview message'),'&nbsp;&nbsp;',
+							CGI::i($r->maketext("Preview set to: ")), $preview_record->last_name,'(', $preview_record->user_id,')',
+							CGI::submit(-name=>'action', -value=>'preview',-label=>$r->maketext('Preview message')),'&nbsp;&nbsp;',
 					),
 	); # end Tr
 	
@@ -696,12 +696,12 @@ sub print_form {
 	#############################################################################################	
 	print    CGI::table( { -border=>2,-cellpadding=>4},
 				 CGI::Tr( {},
-					 CGI::td({}, CGI::submit(-name=>'action', -value=>'Send Email') ), "\n",
-					 CGI::td({}, CGI::submit(-name=>'action', -value=>'Save')," to $output_file"), " \n",
-					 CGI::td({}, CGI::submit(-name=>'action', -value=>'Save as:'),
+					 CGI::td({}, CGI::submit(-name=>'action', -value=>$r->maketext('Send Email')) ), "\n",
+					 CGI::td({}, CGI::submit(-name=>'action', -value=>$r->maketext('Save'))," to $output_file"), " \n",
+					 CGI::td({}, CGI::submit(-name=>'action', -value=>$r->maketext('Save as:')),
 					         CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$output_file", -override=>1)
 					 ), "\n",
-					 CGI::td(CGI::submit(-name=>'action', -value=>'Save as Default')),
+					 CGI::td(CGI::submit(-name=>'action', -value=>$r->maketext('Save as Default'))),
 				) 
 	);
 			   

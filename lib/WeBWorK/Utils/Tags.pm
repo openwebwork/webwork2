@@ -219,7 +219,9 @@ sub new {
       if (/$re/) { # Checks all other un-numbered tags
         my $tmp1 = $1;
         my $tmp = $2;
-        $tmp =~ s/'/\'/g;
+        #$tmp =~ s/'/\'/g;
+        $tmp =~ s/\s+$//;
+        $tmp =~ s/^\s+//;
         $self->{$tmp1} = $tmp;
         $lasttag = $lineno;
         last SWITCH;

@@ -306,8 +306,8 @@ sub attemptResults {
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                  $self->nbsp($correctAnswerPreview)) : "";
 		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
-		# I'm not sure that answerMessage should have the same css class as system messages
-#		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
+		#I'm pretty sure this message shouldn't have the message class
+		#$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
 		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}

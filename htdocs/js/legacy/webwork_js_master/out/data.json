@@ -1,0 +1,222 @@
+{
+    "project": {},
+    "files": {
+        "teacher/Library.js": {
+            "name": "teacher/Library.js",
+            "modules": {},
+            "classes": {},
+            "fors": {},
+            "namespaces": {}
+        },
+        "teacher/Problem.js": {
+            "name": "teacher/Problem.js",
+            "modules": {},
+            "classes": {},
+            "fors": {},
+            "namespaces": {}
+        },
+        "teacher/Set.js": {
+            "name": "teacher/Set.js",
+            "modules": {},
+            "classes": {},
+            "fors": {},
+            "namespaces": {}
+        },
+        "WeBWorK.js": {
+            "name": "WeBWorK.js",
+            "modules": {
+                "WeBWorK": 1
+            },
+            "classes": {
+                "webwork": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        }
+    },
+    "modules": {
+        "WeBWorK": {
+            "name": "WeBWorK",
+            "submodules": {},
+            "classes": {
+                "webwork": 1
+            },
+            "fors": {},
+            "namespaces": {},
+            "tag": "module",
+            "file": "WeBWorK.js",
+            "line": 25,
+            "description": "The WeBWorK javascript framework",
+            "itemtype": "main"
+        }
+    },
+    "classes": {
+        "webwork": {
+            "name": "webwork",
+            "shortname": "webwork",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "module": "WeBWorK",
+            "namespace": "",
+            "file": "WeBWorK.js",
+            "line": 25,
+            "type": "Object",
+            "static": 1
+        }
+    },
+    "classitems": [
+        {
+            "file": "teacher/Library.js",
+            "line": 1,
+            "type": "{*}",
+            "class": "webwork"
+        },
+        {
+            "file": "teacher/Library.js",
+            "line": 30,
+            "type": "{*}",
+            "class": "webwork"
+        },
+        {
+            "file": "teacher/Problem.js",
+            "line": 3,
+            "params": [
+                {
+                    "name": "problem",
+                    "description": ""
+                }
+            ],
+            "class": "webwork"
+        },
+        {
+            "file": "teacher/Problem.js",
+            "line": 36,
+            "params": [
+                {
+                    "name": "problem",
+                    "description": ""
+                }
+            ],
+            "class": "webwork"
+        },
+        {
+            "file": "teacher/Problem.js",
+            "line": 70,
+            "class": "webwork"
+        },
+        {
+            "file": "teacher/Set.js",
+            "line": 2,
+            "params": [
+                {
+                    "name": "model",
+                    "description": ""
+                }
+            ],
+            "class": "webwork"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 16,
+            "description": "Global stuff\nshould do something better with this",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 33,
+            "description": "The current logged in user",
+            "itemtype": "property",
+            "name": "USER",
+            "type": "String",
+            "default": "\"user-needs-to-be-defined-in-hidden-variable-id=hidden_user\"",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 41,
+            "description": "The current course",
+            "itemtype": "property",
+            "name": "COURSE",
+            "type": "String",
+            "default": "\"course-needs-to-be-defined-in-hidden-variable-id=hidden_courseID\"",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 49,
+            "description": "The session key regestered with the webwork server",
+            "itemtype": "property",
+            "name": "SESSIONKEY",
+            "type": "String",
+            "default": "\"session-key-needs-to-be-defined-in-hidden-variable-id=hidden_key\"",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 57,
+            "description": "The password, I don't think this is actually used at the moment",
+            "itemtype": "property",
+            "name": "PASSWORD",
+            "type": "String",
+            "default": "\"who-cares-what-the-password-is\"",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 66,
+            "itemtype": "property",
+            "name": "requestObject",
+            "type": "{Object}",
+            "default": "{\n\"xml_command\":\"\",\n\"pw\":\"\",\n\"password\":webwork.PASSWORD,\n\"session_key\":webwork.SESSIONKEY,\n\"user\":\"user-needs-to-be-defined\",\n\"library_name\":\"Library\",\n\"courseID\":webwork.COURSE,\n\"set\":\"set0\",\n\"new_set_name\":\"new set\",\n\"command\":\"\"\n}",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 95,
+            "description": "The url for requests to be sent, a local version is usually used instead.",
+            "itemtype": "property",
+            "name": "webserviceURL",
+            "type": "{String}",
+            "default": "\"\"",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 104,
+            "type": "{*}",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 143,
+            "type": "{*}",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 199,
+            "type": "{*}",
+            "class": "webwork",
+            "module": "WeBWorK"
+        },
+        {
+            "file": "WeBWorK.js",
+            "line": 221,
+            "type": "{*}",
+            "class": "webwork",
+            "module": "WeBWorK"
+        }
+    ]
+}

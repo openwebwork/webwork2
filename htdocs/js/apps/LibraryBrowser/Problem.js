@@ -21,6 +21,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             var requestObject = {
                 set: this.get('path'),
                 problemSource: this.get('path'),
+                path: this.get('path'),
                 xml_command: "renderProblem"
             };
             _.defaults(requestObject, config.requestObject);
