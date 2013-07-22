@@ -115,7 +115,7 @@ sub readFile {
 		$out->{error} = "Could not find library:".$rh->{library_name}.":";
 		return($out);
 	}
-	
+	warn "searching for file at $filePath";
 	if (-r $filePath) {
 		open IN, "<$filePath";
 		local($/)=undef;
@@ -128,6 +128,7 @@ sub readFile {
 		$out->{modTime}=scalar localtime $sb->mtime;
 		close(IN);
 	} else {
+	    warn "Could not read file at |$filePath|";
 		$out->{error} = "Could not read file at |$filePath|";
 	}
 	return($out);
@@ -136,6 +137,7 @@ sub readFile {
 use File::Find;	
 #idea from http://www.perlmonks.org/index.pl?node=How%20to%20map%20a%20directory%20tree%20to%20a%20perl%20hash%20tree
 sub build_tree {
+    warn "entering build_tree with ",join(" ", @_);
     my $node = $_[0] = {};
     my @s;
     find({wanted=>sub {
@@ -154,7 +156,11 @@ sub listLib {
 	my $self = shift;
 	my $rh = shift;
 	my $out = {};
-	my $dirPath = $self->{ce}->{courseDirs}{templates}."/".$rh->{library_name};
+	if ($rh->{library_name}=~ m|^/|) {
+		warn "double slash in library_name ", $rh->{library_name};
+		$rh->{library_name} =~ s|^/||;
+	}
+	my $dirPath = $self->{ce}->{courseDirs}{templates}."/".$rh->{library_name};	
 	my $maxdepth= $rh->{maxdepth};
 	my $dirPath2 = $dirPath . ( ($rh->{dirPath}) ?  '/'.$rh->{dirPath}  : '' ) ;
 
@@ -206,17 +212,23 @@ sub listLib {
 									return($out);
 		};
 		$command eq 'dirOnly' &&   do {
-									if ( -e $dirPath2) {
+									if ( -e $dirPath2 and $dirPath2 !~ m|//|) {
+									    # it turns out that when // occur in path -e will work
+									    # but find will not :-( 
+									    warn "begin find for $dirPath2";
 										find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath2);
 										#@outListLib = grep {/\S/} sort keys %libDirectoryList; #omit blanks
 										#foreach my $key (grep {/\S/} sort keys %libDirectoryList) {
 										#	push @outListLib, "$key"; # number of subnodes
 										#}
+										warn "find completed ";
+										warn "result: ", join(" ", %libDirectoryList);
 										delete $libDirectoryList{""};
 										$out->{ra_out} = \%libDirectoryList;
 										$out->{text} = encode_base64("Loaded libraries");
 										return($out);
 									} else {
+									   warn "Can't open directory  $dirPath2";
 									   $out->{error} = "Can't open directory  $dirPath2";
 									}
 		};
@@ -231,9 +243,11 @@ sub listLib {
 # 			};
 		$command eq 'buildtree' &&   do {
 									#find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath);
+									warn "using build_tree with dirPath $dirPath";
 									build_tree(my $tree, $dirPath);
 									#@outListLib = sort keys %libDirectoryList;
 									$out->{ra_out} = $tree;
+									warn "output of build_tree is ", %$tree;
 									$out->{text} = encode_base64("Loaded libraries");
 									return($out);
 		};
@@ -242,14 +256,15 @@ sub listLib {
 									 #my $separator = ($dirPath =~m|/$|) ?'' : '/';
 									 #my $dirPath2 = $dirPath . $separator . $rh->{dirPath};
 
-									 debug($dirPath2);
-									 if ( -e $dirPath2) {
+									 warn( "dirPath2 in files is: ", $dirPath2);
+									 if ( -e $dirPath2 and $dirPath2 !~ m|//| ) {
 										 find($wanted, $dirPath2);
 										 @outListLib = sort @outListLib;
 										 #$out ->{text} = encode_base64( join("", @outListLib ) );
 										 $out ->{text} = encode_base64( "Problems loaded" );
 										 $out->{ra_out} = \@outListLib;
 									 } else {
+									   warn "Can't open directory  $dirPath2 in listLib files";
 									   $out->{error} = "Can't open directory  $dirPath2";
 									 }
 									 return($out);
