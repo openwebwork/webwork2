@@ -1,6 +1,6 @@
 {
   "name": "WeBWorK",
-  "version": "2.7.0",
+  "version": "develop",
   "main": "/stylesheets/style.css",
   "ignore": [
     "**/.*",

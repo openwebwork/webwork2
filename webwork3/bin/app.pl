@@ -6,6 +6,7 @@ use WeBWorK::DB;
 use WeBWorK::CourseEnvironment;
 use Routes::Course;
 use Routes::User;
+use Routes::ProblemRender;
 
 set serializer => 'JSON';
 
