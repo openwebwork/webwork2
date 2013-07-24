@@ -1507,7 +1507,7 @@ sub head {
 
     print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
 
-#  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
