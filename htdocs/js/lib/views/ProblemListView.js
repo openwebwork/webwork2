@@ -20,15 +20,17 @@ define(['Backbone', 'underscore', 'views/ProblemView','config'], function(Backbo
 
         initialize: function(_problems){
             var self = this;
-            _.bindAll(this,"render","loadNextGroup","deleteProblem","undoDelete","reorder","addProblemView");
+            _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
             this.viewAttrs = this.options.viewAttrs;
             this.type = this.options.type;
             this.headerTemplate = this.options.headerTemplate;
+            this.problemTemplate = this.options.problemTemplate;
             this.displayModes = this.options.displayModes; 
             
             this.group_size = 25;  // this should be a setting
+            this.lastProblemVisible = 25; // Again, a settings
            
-            if (_problems) { this.setProblems(_problems);}
+            if (this.options.problems) { this.setProblems(this.options.problems);}
         },
         render: function() {
             var self = this;
@@ -36,12 +38,16 @@ define(['Backbone', 'underscore', 'views/ProblemView','config'], function(Backbo
             var openEditorURL = "/webwork2/" + $("#hidden_courseID").val() + "/instructor/SimplePGEditor/" 
                                     + this.problems.setName + "/" + (this.problems.length +1);
             this.$el.html(_.template($(this.headerTemplate).html(),{displayModes: this.displayModes, editorURL: openEditorURL}));
-            this.loadNextGroup();  
+            this.visibleProblems = _.range(0,this.lastProblemVisible);
+            var ul = this.$("#prob-list");  
+            _(this.visibleProblems).each(function(i) {
+                ul.append((new ProblemView({model: self.problems.at(i), type: self.type, viewAttrs: self.viewAttrs})).render().el);
+            });
+
             if(this.viewAttrs.reorderable){
                 this.$("#prob-list").sortable({update: this.reorder, handle: ".reorder-handle", 
                                                 placeholder: ".sortable-placeholder",axis: "y"});
             }
-          
         },
         events: {"click #undo-delete-btn": "undoDelete",
             "click .display-mode-options a": "changeDisplayMode",
@@ -63,14 +69,23 @@ define(['Backbone', 'underscore', 'views/ProblemView','config'], function(Backbo
             // and showing the number of problems shown
 
 
-            this.problems.on("problemRendered", function (probNumber) {  
-                self.problemsRendered.push(probNumber);
+            this.problems.on("rendered", function (probNumber) {  
+                if (_(self.problemsRendered).indexOf(probNumber)<0){
+                    self.problemsRendered.push(probNumber);
+                }
                 if (self.problemsRendered.length === self.problems.size()){
-                    self.$el.height(0.8*$(window).height());
+                    $("#prob-list").height($(window).height()-$("#prob-list").position().top);
+                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,"prob-list"]);
                     self.problems.trigger("num-problems-shown");
                 }
             });
-            
+
+            if (this.problems>25) {
+                this.lastProblemVisible = 25;
+            } else {
+                this.lastProblemVisible = this.problems.length;
+            }
+
             this.problems.on("add", this.addProblemView);
             this.render();
         },
@@ -116,44 +131,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config'], function(Backbo
         },
         deleteProblem: function (prob){
             this.undoStack.push(prob);
-        },
-
-
-        //Define a new function loadNextGroup so that we can just load a few problems at once,
-        //otherwise things get unwieldy :P
-        loadNextGroup: function(){
-            console.log("in loadNextGroup");
-            var self = this; 
-            var start = this.lastProblemShown+1; 
-            var allProblemsShown = false; 
-            self.$(".load-more-problems-btn").remove();
-
-            
-            var lastProblem = start + this.group_size; 
-            if (lastProblem > self.problems.size()){
-                lastProblem = self.problems.size();
-                allProblemsShown = true;
-            }
-            var problemsToView = _.range(start,lastProblem);
-            var ul = this.$("#prob-list");  
-            _(problemsToView).each(function(i) {
-                self.problemViews[i] =new ProblemView({model: self.problems.at(i), type: self.type, viewAttrs: self.viewAttrs});
-                ul.append(self.problemViews[i].render().el);
-                self.problems.trigger("problemRendered",i);
-            });
-
-            this.lastProblemShown = _(problemsToView).last();
-            
-
-            if (!allProblemsShown){                
-                this.$el.append("<button class='btn load-more-problems-btn'>Load " + this.group_size + " More Problems</button>");
-                this.$(".load-more-problems-btn").on("click",this.loadNextGroup);
-            }
-
-            this.$el.height(0.8*$(window).height());
         }
-
-
     });
 	return ProblemListView;
 });

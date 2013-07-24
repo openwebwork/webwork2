@@ -56,18 +56,8 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             }
             _.defaults(requestObject, config.requestObject);
             $.get(config.webserviceURL, requestObject,function (data) {
-                var response = $.parseJSON(data);
-                var problems = response.result_data;
                 console.log('Loading Problems');
-                console.log(response);
-    
-                var newProblems = new Array();
-                for (var i = 0; i < problems.length; i++) {
-                    if (problems[i] != "") {
-                        newProblems.push(new Problem({path:problems[i],place: i}));
-                    }
-                }  
-                self.reset(newProblems);
+                self.reset($.parseJSON(data).result_data);
                 self.trigger("fetchSuccess");
             });
 

@@ -56,6 +56,11 @@ sub listLocalSets{
   return $out;
 }
 
+###
+#
+#  This returns an array of problems (path,value,problem_id, which is weight)
+
+
 sub listLocalSetProblems{
 	my ($self, $params) = @_;
 
@@ -77,17 +82,20 @@ sub listLocalSetProblems{
 
   	@found_problems = $db->listGlobalProblems($setName);
 
-  	my @pg_files=();
+  	my @problems=();
   	for my $problem (@found_problems) {
 		my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
-		die "global $problem for set $setName not found." unless
-		$problemRecord;
-		push @pg_files, $templateDir.$problemRecord->source_file;
+		die "global $problem for set $setName not found." unless $problemRecord;
+		my $problem = {};
+		$problem->{path} = $templateDir.$problemRecord->source_file;
+		$problem->{problem_id} = $problemRecord->{problem_id};
+		$problem->{value} = $problemRecord->{value};
+		push @problems, $problem;
 
 	}
 	
   	my $out = {};
-  	$out->{ra_out} = \@pg_files;
+  	$out->{ra_out} = \@problems;
   	$out->{text} = encode_base64("Loaded Problems for set: " . $setName);
   	return $out;
 }

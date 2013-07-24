@@ -22,10 +22,12 @@ define(['Backbone', 'underscore','config','imagesloaded'
             this.allAttrs = {};
             _.extend(this.allAttrs,this.options.viewAttrs,{type: this.options.type});
 
-            var thePath = this.model.get("path").split("templates/")[1];
+
+            // the variable thePath is not working correctly right now. 
+            var thePath = this.model.get("path"); // .split("templates/")[1];
             var probURL = "?effectiveUser=" + config.requestObject.user + "&editMode=SetMaker&displayMode=images&key=" 
                 + config.requestObject.session_key 
-                + "&sourceFilePath=" + thePath + "&user=" + config.requestObject.user + "&problemSeed=1234";
+                + "&sourceFilePath=" + thePath + "&user=" + config.requestObject.user + "&problemSeed=1234"; 
             _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
             this.model.on('change:data', this.render, this);
             this.model.on('destroy', this.remove, this);
@@ -39,7 +41,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
                 this.$el.css("background-color","lightgray");
                 this.$(".problem").css("opacity","0.5");
                 this.$(".prob-value").on("change",this.updateProblem);
-                this.model.collection.trigger("problemRendered",this.model.get("place"));
+                this.model.trigger("rendered",this.model.get("problem_id"));
                 
                 this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
@@ -60,10 +62,12 @@ define(['Backbone', 'underscore','config','imagesloaded'
 
                 } 
 
+                /*  Putting this else to try to speed up loading of problems. 
                 if(this.model.get("displayMode")==="MathJax"){
                     MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
-                }
+                } */
                 
+
             } else {
                 this.$el.html("<i class='icon-spinner'></i>");
                 this.model.fetch();

@@ -176,6 +176,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
                     console.log("fetching problem set " + self.get("set_id"));
                     var response = $.parseJSON(data);
                     self.problems = new ProblemList({setName: self.get("set_id"), type: "Problem Set"}); 
+                    console.log(self.problems);
 
                     self.problems.on("deleteProblem",function(place) {
                         self.trigger("deleteProblem",self.get("set_id"),place);
