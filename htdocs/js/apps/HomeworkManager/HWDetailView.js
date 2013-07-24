@@ -9,12 +9,12 @@
 
 define(['Backbone', 
     'underscore',
-    '../../lib/views/EditableCell',
-    '../../lib/views/ProblemListView',
-    '../../lib/models/ProblemList',
-    '../../lib/models/ProblemSet',
-    '../../lib/views/UserListView',
-    '../../lib/models/OverrideList', 'config','bootstrap'], 
+    'views/EditableCell',
+    'views/ProblemListView',
+    'models/ProblemList',
+    'models/ProblemSet',
+    'views/UserListView',
+    'models/OverrideList', 'config','bootstrap'], 
     function(Backbone, _,EditableCell,ProblemListView,ProblemList,ProblemSet,UserListView,PropertySetOverrideList, config){
 	var HWDetailView = Backbone.View.extend({
         className: "set-detail-view",
@@ -56,19 +56,18 @@ define(['Backbone',
         },
         changeHWSet: function (setName)
         {
-            var self = this;
-            
             $("#problem-set-tabs a:first").tab("show");  // shows the properties tab
-        	this.problemSet = this.allProblemSets.find(function(set) {return set.get("set_id")===setName;});
+        	this.problemSet = this.allProblemSets.findWhere({set_id: setName});
             this.$("#problem-set-name").html("<h2>Problem Set: "+setName+"</h2>");
             this.views.propertiesView.setProblemSet(this.problemSet).render();
-            
-
+            this.loadProblems();
+        },
+        loadProblems: function () {
+            var self = this;
             if(this.problemSet.problems){ // have the problems been fetched yet? 
-                console.log("changing the HW Set to " + setName);
+                console.log("Loading the problems for set " + this.problemSet.get("set_id"));
                 this.views.problemListView.setProblems(this.problemSet.problems);
                 this.views.problemListView.render();
-                //this.$(".problem-set-name").html("Problem Set "+ setName);
                 this.updateNumProblems();
 
 
@@ -104,14 +103,15 @@ define(['Backbone',
                 }); */
             
             } else {
-                this.problemSet.problems = new ProblemList({type: "Problem Set", setName: setName});
-                this.problemSet.problems.on("fetchSuccess",function() {self.changeHWSet(setName)});
+                this.problemSet.problems = new ProblemList({type: "Problem Set", setName: this.problemSet.get("set_id")});
+                this.problemSet.problems.on("fetchSuccess",function() {self.loadProblems()});
             }
+
+
         },
         updateNumProblems: function () {
             console.log("firing num-problems-shown");
-            var num = this.$("li.problem").size();
-            this.$("div.num-probs").html(num + " of " + this.problemSet.problems.size() + " shown");
+            $("#number-of-problems").html("# of Probs:" + this.problemSet.problems.length);
         }
     });
 

@@ -2,9 +2,9 @@
 
 define(['Backbone', 
 	'underscore',
-	'Closeable',
-	'../../lib/models/User',
-	'../../lib/models/UserList',
+	'views/Closeable',
+	'models/User',
+	'models/UserList',
 	'file-saver', 
 	'blob-builder',
 	'config',

@@ -3,7 +3,7 @@
  *
  */
 
-define(['Backbone', 'underscore','../../lib/views/EditGrid','config'], 
+define(['Backbone', 'underscore','views/EditGrid','config'], 
     function(Backbone, _,EditGrid,config){
 
     

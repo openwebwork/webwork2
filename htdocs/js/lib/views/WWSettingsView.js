@@ -2,9 +2,7 @@
     setting the "settings" field and providing it an array of WeBWorKProperty models. 
     */
 
-define(['Backbone', 
-    'underscore',
-    '../../lib/views/EditableCell','config'], 
+define(['Backbone', 'underscore','views/EditableCell','config'], 
 function(Backbone, _,EditableCell,config){
     var WWSettingsView = Backbone.View.extend({
 

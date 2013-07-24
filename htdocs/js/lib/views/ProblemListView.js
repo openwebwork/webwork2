@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, _, ProblemView,config){
+define(['Backbone', 'underscore', 'views/ProblemView','config'], function(Backbone, _, ProblemView,config){
 
     /******
       * 
@@ -18,7 +18,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
 
     var ProblemListView = Backbone.View.extend({
 
-        initialize: function(){
+        initialize: function(_problems){
             var self = this;
             _.bindAll(this,"render","loadNextGroup","deleteProblem","undoDelete","reorder","addProblemView");
             this.viewAttrs = this.options.viewAttrs;
@@ -28,7 +28,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             
             this.group_size = 25;  // this should be a setting
            
-           
+            if (_problems) { this.setProblems(_problems);}
         },
         render: function() {
             var self = this;
@@ -38,8 +38,8 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
             this.$el.html(_.template($(this.headerTemplate).html(),{displayModes: this.displayModes, editorURL: openEditorURL}));
             this.loadNextGroup();  
             if(this.viewAttrs.reorderable){
-                this.$("#prob-list").sortable({update: this.reorder, handle: ".reorder-handle", //placeholder: ".sortable-placeholder",
-                                                axis: "y"});
+                this.$("#prob-list").sortable({update: this.reorder, handle: ".reorder-handle", 
+                                                placeholder: ".sortable-placeholder",axis: "y"});
             }
           
         },
@@ -84,7 +84,7 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
         },
         /* when the "new" button is clicked open up the simple editor. */
         openSimpleEditor: function(){  
-            console.log(); 
+            console.log("opening the simple editor."); 
         },
         reorder: function (event,ui) {
             var self = this;

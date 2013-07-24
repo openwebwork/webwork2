@@ -8,8 +8,8 @@
 *
 */
 
-define(['Backbone', 'underscore','../models/ProblemSetList','../models/ProblemSet','config',
-            '../views/ModalView', 'jquery-truncate'], 
+define(['Backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config',
+            'views/ModalView', 'jquery-truncate'], 
 function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 	
     var ProblemSetListView = Backbone.View.extend({
@@ -24,7 +24,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             this.users = this.options.users; 
 
             this.problemSets.on("add",this.render);
-            this.problemSets.on("change",this.render);
             this.problemSets.on("remove",this.render);
 
         },

@@ -1,4 +1,4 @@
-define(['globalVariables','underscore'], function(globalVariables) {
+define(['globalVariables','underscore'], function(globalVariables,_) {
 
 	var globals = { };
 	_.extend(globals, globalVariables);

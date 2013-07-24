@@ -9,7 +9,7 @@
 *
 */
 
-define(['Backbone', 'underscore','../models/LibraryTree'], function(Backbone, _,LibraryTree){
+define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
     	initialize: function (){

@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','../../lib/models/MessageList','../../lib/models/Message'], 
+define(['Backbone', 'underscore','models/MessageList','models/Message'], 
     function(Backbone, _,MessageList,Message){
     var Closeable = Backbone.View.extend({
         className: "closeablePane",

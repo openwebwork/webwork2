@@ -1,4 +1,4 @@
-define(['Backbone','Closeable'], function(Backbone,Closeable){
+define(['Backbone','views/Closeable'], function(Backbone,Closeable){
 	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",

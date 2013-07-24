@@ -14,24 +14,21 @@ var require = {
         "stickit":              "/webwork2_files/js/components/backbone.stickit/backbone.stickit",
         "imagesloaded":         "/webwork2_files/js/components/imagesloaded/imagesloaded",
         "jquery-truncate":      "/webwork2_files/js/components/jquery-truncate/jquery.truncate",
-        "eventie":              "/webwork2_files/js/components/eventie/eventie",
-        "eventEmitter":         "/webwork2_files/js/components/eventEmitter/EventEmitter",
         "editablegrid":         "/webwork2_files/js/components/editablegrid/editablegrid-2.0.1/editablegrid-2.0.1",
         "blob":                 "/webwork2_files/js/components/blob/Blob",
         "blob-builder":         "/webwork2_files/js/components/blob/BlobBuilder",
         "file-saver":           "/webwork2_files/js/components/file-saver/FileSaver",
+        "eventie":              "/webwork2_files/js/components/eventie",
+        "eventEmitter":         "/webwork2_files/js/components/eventEmitter",
 
-        "WebPage":              "/webwork2_files/js/lib/views/WebPage",
+        "views":                "/webwork2_files/js/lib/views",
+        "models":               "/webwork2_files/js/lib/models",
+        "apps":                 "/webwork2_files/js/apps",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/views/Closeable",
-        "globals":              "/webwork2_files/js/apps/globals",
-        "globalVariables":      "/webwork2_files/js/apps/globalVariables",
-        "util":                 "/webwork2_files/js/lib/util",
-        
     },
-    urlArgs: "bust=" +  (new Date()).getTime(),
-    waitSeconds: 15,
-     shim: {
+    //urlArgs: "bust=" +  (new Date()).getTime(),
+    waitSeconds: 10,
+    shim: {
         'jquery-ui': ['jquery'],
         'jquery-ui-custom': ['jquery'],
         'underscore': { exports: '_' },
@@ -47,6 +44,8 @@ var require = {
         'blob': {exports : 'Blob'},
         'blob-builder': {exports: 'BlobBuilder'},
         //'jquery-tablesorter': ['jquery'],
-        'imagesloaded': { deps: ['eventie','eventEmitter'], exports: 'imagesloaded'}
+        //'eventie' : {exports :'eventie'},
+        //'eventEmitter': {exports: 'eventEmitter'},
+        //'imagesloaded': { deps: ['eventie','eventEmitter'], exports: 'imagesloaded'}
     }
 };

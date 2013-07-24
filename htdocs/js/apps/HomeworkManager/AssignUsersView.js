@@ -6,7 +6,7 @@
 
 
 define(['Backbone', 
-    'underscore','../../lib/models/ProblemSet','../../lib/views/EditableCell'], 
+    'underscore','models/ProblemSet','views/EditableCell'], 
     function(Backbone, _,ProblemSet,EditableCell) {
 
     var AssignUsersView = Backbone.View.extend({

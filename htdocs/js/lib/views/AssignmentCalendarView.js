@@ -4,7 +4,7 @@
   */
 
 
-define(['Backbone', 'underscore', 'moment','./CalendarView','config'], 
+define(['Backbone', 'underscore', 'moment','views/CalendarView','config'], 
     function(Backbone, _, moment,CalendarView,config) {
 	
     var AssignmentCalendarView = CalendarView.extend({
@@ -22,6 +22,7 @@ define(['Backbone', 'underscore', 'moment','./CalendarView','config'],
     		this.constructor.__super__.render.apply(this);
 
     		this.$(".assign").popover({html: true});
+            this.$(".assign").truncate({width: 100});
     	},
     	renderDay: function (day){
     		var self = this;

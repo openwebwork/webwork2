@@ -1,4 +1,5 @@
-define(['Backbone', 'underscore','config','imagesloaded'], function(Backbone, _,config){
+define(['Backbone', 'underscore','config','imagesloaded'
+    ], function(Backbone, _,config){
 	//##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
@@ -64,7 +65,7 @@ define(['Backbone', 'underscore','config','imagesloaded'], function(Backbone, _,
                 }
                 
             } else {
-                this.$el.html("<img src='/webwork2_files/images/ajax-loader-small.gif' alt='loading'/>");
+                this.$el.html("<i class='icon-spinner'></i>");
                 this.model.fetch();
             }
 

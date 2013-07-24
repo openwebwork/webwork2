@@ -5,7 +5,7 @@
 */ 
 
 
-define(['Backbone', 'underscore','./ProblemListView','../models/ProblemList','./LibraryTreeView'], 
+define(['Backbone', 'underscore','views/ProblemListView','models/ProblemList','views/LibraryTreeView'], 
 function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
     var LibraryView = Backbone.View.extend({
         className: "lib-browser",

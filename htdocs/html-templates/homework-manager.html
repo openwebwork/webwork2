@@ -2,7 +2,7 @@
 <div class="row">  
   <div id='left-column' class='span3'>
     <div id="hw-manager-menu" class="btn-group">
-      <button class="btn btn-large disabled" id="viewHeader">Calendar</button>
+      <button class="btn btn-large" id="viewHeader">Calendar</button>
       <button class="btn dropdown-toggle btn-large disabled" data-toggle="dropdown">
         <span class="caret"></span>
       </button>
@@ -274,7 +274,10 @@ at the bottom of the screen and click "Save Changes". </p>
 
 
 <script type="text/template" id="HW-detail-template">
-<div id="problem-set-name"></div>
+<div class="row">
+<div class="span6" id="problem-set-name"></div>
+<div class="span2 pull-right" id="number-of-problems"></div>
+</div>
 <ul class="nav nav-tabs" id="problem-set-tabs">
   <li class="active"><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
   <li><a href="#problem-list-tab" data-toggle="tab" data-view="problemListView">Problems</a></li>
