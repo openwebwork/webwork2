@@ -11,6 +11,7 @@ use warnings;
 use Dancer ':syntax';
 use Routes qw/convertObjectToHash/;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
+use WeBWorK::PG::TestLocal;
 
 
 prefix '/problems';
@@ -59,7 +60,7 @@ get '/:problem_id' => sub {
 	$problem->problem_id($problemNumber++);
 	$problem->source_file('');
 	
-	my $pg = new WeBWorK::PG(
+	my $pg = WeBWorK::PG::TestLocal->new(
 		vars->{ce},
 		$user,
 		$key,
@@ -68,16 +69,14 @@ get '/:problem_id' => sub {
 		123, # PSVN (practically unused in PG)
 		0,
 		$translationOptions,
-    );
-
-	
+    );	
 };
 
 
 1;
 
 
-# $ce,
+# vars->{ce},
 # 		$user,
 # 		$key,
 # 		$set,
