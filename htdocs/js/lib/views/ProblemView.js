@@ -41,8 +41,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
                 this.$el.css("background-color","lightgray");
                 this.$(".problem").css("opacity","0.5");
                 this.$(".prob-value").on("change",this.updateProblem);
-                this.model.trigger("rendered",this.model.get("problem_id"));
-                
+
                 this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
                     self.$(".problem").removeAttr("style");
@@ -62,20 +61,16 @@ define(['Backbone', 'underscore','config','imagesloaded'
 
                 } 
 
-                /*  Putting this else to try to speed up loading of problems. 
-                if(this.model.get("displayMode")==="MathJax"){
-                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
-                } */
+                this.el.id = this.model.cid;
+                this.$el.attr('data-path', this.model.get('path'));
+                this.$el.attr('data-source', this.allAttrs.type);
+                this.model.trigger("rendered",this.model);
                 
-
             } else {
-                this.$el.html("<i class='icon-spinner'></i>");
+                this.$el.html("<span style='font: italic 120%'>Loading Problem</span><i class='icon-spinner icon-spin icon-2x'></i>");
                 this.model.fetch();
             }
 
-            this.el.id = this.model.cid;
-            this.$el.attr('data-path', this.model.get('path'));
-            this.$el.attr('data-source', this.allAttrs.type);
 
             return this;
         },

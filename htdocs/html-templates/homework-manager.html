@@ -129,7 +129,7 @@
 </script>
 
 <script type="text/template" id="library-problems-header">
-<ul id="prob-list" class="scrollable no-bullets">
+<ul class="prob-list scrollable no-bullets">
 </ul>
 </script>
 
@@ -139,6 +139,7 @@
     <div class="btn-group">
       <a href="#" class="btn" id="undo-delete-btn">Undo</a>
       <a href="<%=editorURL%>" target="Simple_Editor" class="btn" id="create-new-problem">New</a>
+      <a href="#" class="btn load-more-btn hidden">Load More Problems</a>
       <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
         Display Mode
         <span class="caret"></span>
@@ -151,7 +152,7 @@
 </div>
 
 
-<ul id="prob-list" class='scrollable no-bullets'></ul>
+<ul class='prob-list scrollable no-bullets'></ul>
 </script>
 
 <script type="text/template" id="set-properties-tab-template">
@@ -275,7 +276,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <script type="text/template" id="HW-detail-template">
 <div class="row">
 <div class="span6" id="problem-set-name"></div>
-<div class="span2 pull-right" id="number-of-problems"></div>
+<div class="span3 pull-right" id="number-of-problems"></div>
 </div>
 <ul class="nav nav-tabs" id="problem-set-tabs">
   <li class="active"><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
@@ -354,13 +355,12 @@ at the bottom of the screen and click "Save Changes". </p>
 
 
 <div class="row-fluid">
-<div class="library-viewer span10"></div>
-<div class="span2">
-  <select class="target-set">
+<div class="library-viewer span6"></div>
+<button class="btn load-more-btn">Load More Problems</button>
+  <select class="target-set span2">
     <option>Target Set</option>
     <% _(sets).each(function(set){print('<option>' + set + ' </option> ')  });%>
   </select>
-  </div> 
 </div>
 <div class="lib-problem-viewer"> </div>
 </script>
@@ -368,7 +368,7 @@ at the bottom of the screen and click "Save Changes". </p>
 
 
 <script type="text/template" id="library-tree-template">
-<span class='library-tree-left'><span class='throbber'>Loading the Library...<img src='/webwork2_files/images/ajax-loader-small.gif'></span></span>
+<span class='library-tree-left'></span></div><span class="problems-shown"><span class="throbber">Loading the Library...<i class="icon-spinner icon-spin"></i></span>
 <span class="library-tree-right"></span> 
 </script>
 

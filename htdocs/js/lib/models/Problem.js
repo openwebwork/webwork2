@@ -8,7 +8,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
     var Problem = Backbone.Model.extend({
         defaults:{  path:"",
                 data: null,
-                place: 0,
+                problem_id: 0,
                 value: 1,
                 displayMode: "MathJax"
         },

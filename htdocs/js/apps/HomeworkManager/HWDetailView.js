@@ -69,6 +69,7 @@ define(['Backbone',
                 this.views.problemListView.setProblems(this.problemSet.problems);
                 this.views.problemListView.render();
                 this.updateNumProblems();
+                this.problemSet.problems.on("num-problems-updated", self.updateNumProblems);
 
 
                 // This sets messages  pstaab: move this to HW Manager. 
@@ -97,7 +98,7 @@ define(['Backbone',
                 });
 
 
-                this.problemSet.problems.on("num-problems-shown", self.updateNumProblems);
+                
                 this.problemSet.on("problem-set-changed", function (set){
                     //self.hwManager.announce.addMessage({text: "Something changed. "});
                 }); */
@@ -110,8 +111,9 @@ define(['Backbone',
 
         },
         updateNumProblems: function () {
-            console.log("firing num-problems-shown");
-            $("#number-of-problems").html("# of Probs:" + this.problemSet.problems.length);
+            console.log("in updateNumProblems");
+            $("#number-of-problems").html("# of Probs Shown:" + $("#prob-list li").length + " of "
+                    + this.problemSet.problems.length);
         }
     });
 

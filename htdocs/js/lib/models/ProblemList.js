@@ -57,7 +57,15 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             _.defaults(requestObject, config.requestObject);
             $.get(config.webserviceURL, requestObject,function (data) {
                 console.log('Loading Problems');
-                self.reset($.parseJSON(data).result_data);
+                switch(self.type){
+                    case "Library Problems":
+                    self.reset(_($.parseJSON(data).result_data).map(function(file) { return {path: file};}) );
+                    break;
+                    case "Problem Set":
+                    self.reset($.parseJSON(data).result_data);
+                    break;
+                }
+
                 self.trigger("fetchSuccess");
             });
 

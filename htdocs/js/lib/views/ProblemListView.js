@@ -20,38 +20,57 @@ define(['Backbone', 'underscore', 'views/ProblemView','config'], function(Backbo
 
         initialize: function(_problems){
             var self = this;
-            _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
+            _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView","loadMore");
             this.viewAttrs = this.options.viewAttrs;
             this.type = this.options.type;
             this.headerTemplate = this.options.headerTemplate;
             this.problemTemplate = this.options.problemTemplate;
             this.displayModes = this.options.displayModes; 
+            this.problemViews=[];
             
-            this.group_size = 25;  // this should be a setting
-            this.lastProblemVisible = 25; // Again, a settings
-           
+            this.numProblemsPerGroup = 10;
+            
             if (this.options.problems) { this.setProblems(this.options.problems);}
         },
         render: function() {
             var self = this;
-            this.lastProblemShown = -1; 
             var openEditorURL = "/webwork2/" + $("#hidden_courseID").val() + "/instructor/SimplePGEditor/" 
                                     + this.problems.setName + "/" + (this.problems.length +1);
             this.$el.html(_.template($(this.headerTemplate).html(),{displayModes: this.displayModes, editorURL: openEditorURL}));
-            this.visibleProblems = _.range(0,this.lastProblemVisible);
-            var ul = this.$("#prob-list");  
-            _(this.visibleProblems).each(function(i) {
-                ul.append((new ProblemView({model: self.problems.at(i), type: self.type, viewAttrs: self.viewAttrs})).render().el);
-            });
+            
+            this.visibleProblems = [];
+            this.loadMore();
 
             if(this.viewAttrs.reorderable){
-                this.$("#prob-list").sortable({update: this.reorder, handle: ".reorder-handle", 
+                this.$(".prob-list").sortable({update: this.reorder, handle: ".reorder-handle", 
                                                 placeholder: ".sortable-placeholder",axis: "y"});
             }
         },
+        loadMore: function () {
+            var lastProblemVisible = this.visibleProblems.length==0 ? -1 : this.visibleProblems[this.visibleProblems.length-1];
+            var newVisibleProblems = _.range(lastProblemVisible+1,
+                lastProblemVisible+1+this.numProblemsPerGroup>this.problems.length ? this.problems.length 
+                    : lastProblemVisible+this.numProblemsPerGroup+1);
+            var self = this;
+            var ul = this.$(".prob-list");  
+            _(newVisibleProblems).each(function(i) {
+                ul.append(self.problemViews[i] = (new ProblemView({model: self.problems.at(i), 
+                    type: self.type, viewAttrs: self.viewAttrs})).render().el);
+                self.problems.at(i).on('rendered',function(model){
+                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,model.cid]);
+                });
+            });
+
+            this.visibleProblems = _.union(this.visibleProblems,newVisibleProblems);
+
+
+        },
+
         events: {"click #undo-delete-btn": "undoDelete",
             "click .display-mode-options a": "changeDisplayMode",
-            "click #create-new-problem": "openSimpleEditor"},
+            "click #create-new-problem": "openSimpleEditor",
+            "click .load-more-btn": "loadMore"
+        },
         setProblems: function(_problems){  // _problems should be a ProblemList
             var self = this; 
 
@@ -69,22 +88,17 @@ define(['Backbone', 'underscore', 'views/ProblemView','config'], function(Backbo
             // and showing the number of problems shown
 
 
-            this.problems.on("rendered", function (probNumber) {  
+            this.problems.on("rendered", function (probNumber) { 
                 if (_(self.problemsRendered).indexOf(probNumber)<0){
                     self.problemsRendered.push(probNumber);
                 }
-                if (self.problemsRendered.length === self.problems.size()){
-                    $("#prob-list").height($(window).height()-$("#prob-list").position().top);
-                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,"prob-list"]);
-                    self.problems.trigger("num-problems-shown");
+                if (self.problemsRendered.length === self.visibleProblems.length){
+                    self.$(".prob-list").height($(window).height()-self.$(".prob-list").position().top);
+                    self.problems.trigger("num-problems-updated");
                 }
-            });
+            }); 
 
-            if (this.problems>25) {
-                this.lastProblemVisible = 25;
-            } else {
-                this.lastProblemVisible = this.problems.length;
-            }
+
 
             this.problems.on("add", this.addProblemView);
             this.render();
@@ -93,7 +107,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config'], function(Backbo
             var _displayMode = $(evt.target).text().trim();
             console.log("Changing the display mode to " + _displayMode);
             _(this.problemViews).each(function(problemView) {
-                problemView.model.set({data: "", displayMode: _displayMode}, {silent: true});
+                problemView.model.set({data: null, displayMode: _displayMode}, {silent: true});
                 problemView.render();
             });
         },

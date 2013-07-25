@@ -478,11 +478,11 @@ sub loadBrowseTree {
 	my ($self,$params) = @_; 
 	my $ce = $self->{ce};
 	my $out = {};
-	my $libraryRoot = $ce->{problemLibrary}->{root};
-	my $file = "$libraryRoot/../library-tree.json";
+	my $htdocsDir = $ce->{webworkDirs}->{htdocs};
+	my $file = "$htdocsDir/library-tree.json";
 
 	my $json_text = do {
-   		open(my $json_fh, "<:encoding(UTF-8)", $file)  or die("Can't open \$filename\": $!\n");
+   		open(my $json_fh, "<:encoding(UTF-8)", $file)  or die("Can't open $file: $!\n Perhaps you need to rerun OPL-update");
 	    local $/;
 	    <$json_fh>
 	};
