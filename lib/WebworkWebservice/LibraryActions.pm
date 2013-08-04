@@ -465,7 +465,7 @@ sub setProblemTags {
 	my $dbsubj = $rh->{library_subjects};
 	my $dbchap = $rh->{library_chapters};
 	my $dbsect = $rh->{library_sections};
-	my $level = $rh->{library_level};
+	my $level = $rh->{library_levels};
 	# result is [success, message] with success = 0 or 1
 	my $result = WeBWorK::Utils::ListingDB::setProblemTags($path, $dbsubj, $dbchap, $dbsect, $level);
 	my $out = {};
