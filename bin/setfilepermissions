@@ -41,18 +41,45 @@ use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 
-my $serverid =  $ce->{server_userID};
+# who is really running this script (even if sudo'ed)
+# We set relevant directories so that script runner owns them
+# and the web server can write to them
+my $me = `logname`;
+chomp($me);
 
+#my $serverid =  $ce->{server_userID};
+my $servergroup =  $ce->{server_groupID};
 
 my $wwroot = $ENV{WEBWORK_ROOT};
-system("chgrp -R $serverid ".$ce->{webwork_courses_dir});
+
+# Course directories
+system("chown -R $me ".$ce->{webwork_courses_dir});
+system("chgrp -R $servergroup ".$ce->{webwork_courses_dir});
 system("chmod -R g+w ".$ce->{webwork_courses_dir});
 system("chmod g+s ".$ce->{webwork_courses_dir});
+
+# Other special directories under webwork2
 for my $dir ( "DATA", "htdocs/tmp", "logs", "tmp" ) {
-	system("chgrp -R $serverid $wwroot/$dir");
+  system("chown -R $me $wwroot/$dir");
+	system("chgrp -R $servergroup $wwroot/$dir");
 	system("chmod -R g+w $wwroot/$dir");
 	system("chmod g+s $wwroot/$dir");
 }
-system("chgrp $serverid ".$ce->{pg_dir}."/lib/chromatic");
+
+# A special directory under pg (so the server can compile the chromatic program)
+system("chgrp $servergroup ".$ce->{pg_dir}."/lib/chromatic");
 system("chmod g+w ".$ce->{pg_dir}."/lib/chromatic");
 
+# The server should not be able to write to the OPL (for most sites)
+
+my $libroot = $ce->{problemLibrary}->{root};
+
+system("chown -R $me $libroot");
+system("chmod -R 755 $libroot");
+
+# OPL-update needs to be able to write to these directories
+# Let's hope the same user does it
+# This will need adjusting if the admin course starts running this script
+for my $dir ( "htdocs/DATA", "htdocs/applets" ) {
+	system("chown -R $me $wwroot/$dir");
+}

@@ -313,7 +313,8 @@ sub isplaceholder {
 
 sub istagged {
   my $self = shift;
-  return 1 if (defined($self->{DBchapter}) and $self->{DBchapter} and (not $self->{isplaceholder}));
+  #return 1 if (defined($self->{DBchapter}) and $self->{DBchapter} and (not $self->{isplaceholder}));
+  return 1 if (defined($self->{DBsubject}) and $self->{DBsubject} and (not $self->{isplaceholder}));
 	return 0;
 }
 
