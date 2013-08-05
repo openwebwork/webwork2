@@ -102,7 +102,7 @@ tag_widget_savetags = function(id, path) {
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
-  mydefaultRequestObject.library_level = level;
+  mydefaultRequestObject.library_levels = level;
   mydefaultRequestObject.command = path;
   console.log(mydefaultRequestObject);
   return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
