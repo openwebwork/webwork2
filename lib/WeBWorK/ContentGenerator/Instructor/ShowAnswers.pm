@@ -163,6 +163,7 @@ sub showHTML {
     $string =~ s/&/\&amp;/g;
     $string =~ s/</\&lt;/g;
     $string =~ s/>/\&gt;/g;
+    $string =~ s/\n/<br>/g;
     $string =~ s/\000/,/g;  # anyone know why this is here?  (I didn't add it -- dpvc)
     $string;
 }

@@ -139,7 +139,8 @@ sub initialize {
 			default=> 1,
 			script => 0,
 			process => 0,
-			comment => 0
+			comment => 0,
+			allow => [ qw[ p br ] ]
 			);
 		    
 		    my $comment = $scrubber->scrub( ( defined $r->param("$userID.comment") )?$r->param("$userID.comment"):'' );
@@ -307,6 +308,8 @@ sub body {
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
 			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"contextTypeset.pl\");\n Context(\"Typeset\");\n BEGIN_TEXT\n";
+			# change newlines into BR's
+			$answer =~ s/\n/\$BR /g;
 			$source .= $answer . "\nEND_TEXT\n ENDDOCUMENT();";
 			my $pg = WeBWorK::PG->new(
 			    $ce,
