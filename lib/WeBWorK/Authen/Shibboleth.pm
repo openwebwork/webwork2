@@ -119,7 +119,7 @@ sub get_credentials {
 sub site_checkPassword { 
 	my ( $self, $userID, $clearTextPassword ) = @_;
 
-	if ( $self->{r}->ce->{shiboff} ) {
+	if ( $self->{r}->ce->{shiboff}  || $self->{r}->param('bypassShib') ) {
 		return $self->SUPER::checkPassword( @_ );
 	} else {
 		# this is easy; if we're here at all, we've authenticated
