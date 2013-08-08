@@ -142,8 +142,8 @@ h1.page-title {
 /* Message section */
 
 .Message {
-	display: inline-block;
-	margin-bottom:1ex;
+    display: inline-block;
+    margin-bottom:1ex;
 }
 
 .Message div, .Message span {
@@ -830,3 +830,12 @@ table#grades_table pre{
     font-size:small;
 }
 
+/* Equation editor bugfixes */
+#eqEditorDiv {
+    overflow:visible;
+}
+
+#openEqEditor {
+    min-height:35px;
+    min-width:43px;
+}

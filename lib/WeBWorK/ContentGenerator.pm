@@ -1584,6 +1584,22 @@ sub optionsMacro {
 		);
 		$result .= CGI::br();
 	}
+
+	if (exists $options_to_show{showOldAnswers}) {
+		# Note, 0 is a legal value, so we can't use || in setting this
+		my $curr_useMathView = defined($self->r->param("useMathView")) ?
+		    $self->r->param("useMathView") : $self->r->ce->{pg}->{options}->{useMathView};
+		$result .= $r->maketext("Use MathView?");
+		$result .= CGI::br();
+		$result .= CGI::radio_group(
+			-name => "useMathView",
+			-values => [1,0],
+			-default => $curr_useMathView,
+			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+		);
+		$result .= CGI::br();
+	}
+
 	
 	$result .= CGI::submit(-name=>"redisplay", -label=>$r->maketext("Apply Options"));
 	$result .= CGI::end_div();
@@ -2036,46 +2052,6 @@ Used by Problem, ProblemSet, and Hardcopy to report errors encountered during
 problem rendering.
 
 =cut
-
-=item mathview_scripts()
-
-Prints javascript calls needed to run mathview.
-
-=cut
-
-sub mathview_scripts {
-	my $self = shift;
-	my $ce = $self->r->ce;
-	my $enable_mathview = $ce->{pg}{specialPGEnvironmentVars}{MathView}//0; # initialize to zero if undefined.
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	my $MathJax = $ce->{webworkURLs}->{MathJax};
-# FIXME -- this gives the correct locations for release/2.7 but is 
-# definitely not correct for the develop (and probably the next release ) version
-# where the organization of the js directory has been completely rearranged. -- MEG
-# Added CODE JQuery MathView
-	my @out = (
-#		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
-		#CGI::end_script(),	"\n",	
-		#CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), 
-		CGI::end_script(),"\n",		
-#		CGI::start_script({type=>"text/javascript", src=>"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"}), 
-#		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS_HTML-full"}), 
-#		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML-full"}), #better accessibility
-		CGI::start_script({type=>"text/javascript", src=>$MathJax}), #best 
-
-		CGI::end_script(),	"\n",			
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-mathview-1.1.0.js"}), 
-		CGI::end_script(),"\n",
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/operations.js"}), 
-		CGI::end_script(),"\n",
-		CGI::start_script({type=>"text/javascript"}),
-		 q{  $(function(){$('.codeshard').addMathEditorButton("PGML");});  },
-        CGI::end_script(), "\n",
-	);
-	($enable_mathview)? @out:(); 
-}
-# End CODE JQuery MathView
 
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
