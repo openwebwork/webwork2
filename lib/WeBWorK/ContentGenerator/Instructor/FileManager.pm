@@ -167,7 +167,7 @@ sub body {
 	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
 	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
 	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
-	elsif($action eq $r->maketext("\\")) {$self->ParentDir;} 
+	elsif($action eq "^"            || $action eq $r->maketext("\\")) {$self->ParentDir;} 
 	else {
 	  $self->addbadmessage("Unknown action: ".$action);
 	  $self->Refresh;
