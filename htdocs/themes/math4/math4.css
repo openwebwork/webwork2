@@ -747,11 +747,6 @@ table#grades_table pre{
 	float: left;
 }
 
-
-.btn-primary {
-    margin-top:.25em;
-}
-
 #config-form input[type="checkbox"] {
     margin-right:1.5ex;
 }
