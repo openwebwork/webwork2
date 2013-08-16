@@ -18,6 +18,10 @@
     min-height:0px;
 }
 
+input[type="checkbox"] {
+    margin-right:.25em;
+}
+
 /* Banner */
 #masthead {
 	background-color: #038;
