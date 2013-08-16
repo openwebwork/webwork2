@@ -18,6 +18,10 @@
     min-height:0px;
 }
 
+input[type="checkbox"] {
+    margin-right:.25em;
+}
+
 /* Banner */
 #masthead {
 	background-color: #038;
@@ -741,6 +745,11 @@ div.problem_sets_options {
 
 table#grades_table pre{
 	float: left;
+}
+
+
+.btn-primary {
+    margin-top:.25em;
 }
 
 #config-form input[type="checkbox"] {
