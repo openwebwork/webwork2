@@ -32,18 +32,21 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         {
             var self = this;
             var requestObject = {};
+            console.log("type here");
+            console.log(this.type);
             switch(this.type){
                 case "Problem Set":
-                    console.log("fetching problems for Problem Set " + this.setName);
-                    requestObject = {xml_command: "listSetProblems", set_id: this.setName};
+                    console.log("fetching problems for Problem Set " + this.defaultRequestObject.set);
+                    requestObject = {xml_command: "listSetProblems", set_id: this.defaultRequestObject.set};
                     break;
                 case "Library Problems":
-                    var pathParts = this.path.split("/");
-                    switch(pathParts[0]){
+                    var pathParts = this.defaultRequestObject.library_name.split('/');
+                    console.log(pathParts);
+                    switch(pathParts[1]){
                         case "Library":
-                            console.log("Fetching Library: " + this.path);
+                            console.log("Fetching Library: " + this.defaultRequestObject.library_name);
                             requestObject = {  xml_command: "listLib", command: "files",
-                                    maxdepth: 0, library_name: this.path + "/"};
+                                    maxdepth: 0, library_name: this.defaultRequestObject.library_name};
                             break;
                         case "Subjects":
                             console.log("fetching subjects");

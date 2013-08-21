@@ -1,7 +1,17 @@
+$(document).keydown(function(e){
+    if (e.keyCode === 27)
+	$('#render-modal').modal('hide');
+});
+
 $(function(){
    
     $('#render-modal').modal({keyboard:true,show:false});
     
+    $('#pg_editor_frame_id').on('load', function () {
+	$('#pg_editor_frame_id').contents().find('#site-navigation')
+	    .addClass('hidden-desktop hidden-tablet');
+    });
+
     $('#submit_button_id').click(function() {
 	/* NOTE:  This makes a lot of the updateTarget()/setTarget() JS
 	   in the main pgeditor3 code superfluous.  Since we are doing a 

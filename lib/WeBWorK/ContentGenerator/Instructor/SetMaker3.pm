@@ -97,7 +97,7 @@ sub head {
 	my ($self) = @_;
 	my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css"/>!;
+  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css"/>!;
   #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-1.7.1.min.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min.js"></script>!;
   #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery.ui.touch-punch.js"></script>!;

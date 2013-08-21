@@ -11,6 +11,7 @@ define(['Backbone', 'underscore', 'config', './ProblemList'], function(Backbone,
     
         initialize:function () {
             this.set('problems', new ProblemList);
+            this.get('problems').type = "Problem Set";
             //this.get('problems').url = this.get('name');
             _.extend(this.get('problems').defaultRequestObject, {
                 set: this.get('name'),

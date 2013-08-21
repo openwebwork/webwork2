@@ -73,8 +73,8 @@ use constant SUCCESS => (1 << 2);
 ##	for additional problib buttons
 my %problib;	## This is configured in defaults.config
 my %ignoredir = (
-	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1,
+	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
+	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, 'achievements' => 1,
 );
 
 sub prepare_activity_entry {
@@ -113,7 +113,7 @@ sub get_library_sets {
 	}
 	return (0) if grep /^=library-ignore$/, @lis;
 
-	my @pgfiles = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$dir/$_"} @lis;
+	my @pgfiles = grep { m/\.pg$/ and (not m/(Header|-text)(File)?\.pg$/) and -f "$dir/$_"} @lis;
 	my $pgcount = scalar(@pgfiles);
 	my $pgname = $dir; $pgname =~ s!.*/!!; $pgname .= '.pg';
 	my $combineUp = ($pgcount == 1 && $pgname eq $pgfiles[0] && !(grep /^=library-no-combine$/, @lis));
@@ -121,6 +121,8 @@ sub get_library_sets {
 	my @pgdirs;
 	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
 	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
+	# Never include Library at the top level
+	if ($top == 1) {@dirs = grep {$_ ne 'Library'} @dirs} 
 	foreach my $subdir (@dirs) {
 		my @results = get_library_sets(0, "$dir/$subdir");
 		$pgcount += shift @results; push(@pgdirs,@results);

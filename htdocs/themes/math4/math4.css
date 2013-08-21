@@ -18,6 +18,10 @@
     min-height:0px;
 }
 
+input[type="checkbox"] {
+    margin-right:.25em;
+}
+
 /* Banner */
 #masthead {
 	background-color: #038;
@@ -142,8 +146,8 @@ h1.page-title {
 /* Message section */
 
 .Message {
-	display: inline-block;
-	margin-bottom:1ex;
+    display: inline-block;
+    margin-bottom:1ex;
 }
 
 .Message div, .Message span {
@@ -413,6 +417,16 @@ table.attemptResults th {
     padding: 2px 5px 2px 5px;
     margin-bottom:1em;
     background-color: #E8E8E8;
+}
+
+/* Make hr a black line for problem render areas so that
+ * it can be used for fractions
+ */
+.RenderSolo hr,
+.problem-content hr {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-top-color: rgb(22,22,22);
 }
 
 /* override above settings in tables used to display ans_array results */
@@ -820,3 +834,12 @@ table#grades_table pre{
     font-size:small;
 }
 
+/* Equation editor bugfixes */
+#eqEditorDiv {
+    overflow:visible;
+}
+
+#openEqEditor {
+    min-height:35px;
+    min-width:43px;
+}

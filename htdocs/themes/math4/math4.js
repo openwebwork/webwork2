@@ -64,9 +64,9 @@ $(function(){
 	$(this).attr('onmouseover','');
 	if (data) {
 	    $(this).wrapInner('<div class="results-popover" />');
-	    var titlestr ='<i class=" answer-popover icon-remove" onclick="$($($(this).parents()[2]).children()[0]).popover(\'hide\');"></i>';
+
 	    var popdiv = $('div', this);
-	    popdiv.popover({placement:'bottom', html:'true', trigger:'click',title: titlestr ,content:data});	
+	    popdiv.popover({placement:'bottom', html:'true', trigger:'click',content:data});	
 	} 
 	    
     });
@@ -175,9 +175,12 @@ $(function(){
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
 
-     //GAtewayQuiz
+     //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
+
+    //Equation editor hacks
+ 
 
 })
 
