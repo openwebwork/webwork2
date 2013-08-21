@@ -147,10 +147,10 @@ sub body {
 	#replaced by a list of if/elsif because the translation didn't recognize the translated actions.
 	#
 	my $action = $r->param('action') || $r->param('formAction') || $r->param("confirmed") || 'Init';
-	#$self->addgoodmessage($action);
+	#$self->addgoodmessage("|$action|");
 	if($action eq "Refresh" 	|| $action eq $r->maketext("Refresh")) {$self->Refresh;}
 	elsif($action eq "Cancel" 	|| $action eq $r->maketext("Cancel")) {$self->Refresh;} 
-	elsif($action eq "Directory" 	|| $action eq $r->maketext("Directory")) {$self->Go;} 
+	elsif($action eq "Directory"|| $action eq $r->maketext("Directory")) {$self->Go;} 
 	elsif($action eq "Go" 		|| $action eq $r->maketext("Go")) {$self->Go;} 
 	elsif($action eq "View" 	|| $action eq $r->maketext("View")) {$self->View;} 
 	elsif($action eq "Edit" 	|| $action eq $r->maketext("Edit")) {$self->Edit;} 
@@ -167,9 +167,9 @@ sub body {
 	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
 	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
 	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
-	elsif($action eq "^"            || $action eq $r->maketext("\\")) {$self->ParentDir;} 
+	elsif($action eq "^"        || $action eq $r->maketext("\\")) {$self->ParentDir;} 
 	else {
-	  $self->addbadmessage("Unknown action: ".$action);
+	  $self->addbadmessage("Unknown action: |$action|");
 	  $self->Refresh;
 	}
 	#for ($action) {
@@ -553,7 +553,6 @@ sub RefreshEdit {
 	my $name = "$pwd/$file"; $name =~ s!^\./?!!;
 
 	my %button = (type=>"submit",name=>"action",style=>"width:6em");
-	print $self->mathview_scripts();
 
 	print CGI::p();
 	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});
@@ -565,7 +564,7 @@ sub RefreshEdit {
 			CGI::input({%button,value=>"Cancel"}),"&nbsp;",
 			CGI::input({%button,value=>"Revert"}),"&nbsp;",
 			CGI::input({%button,value=>"Save"}),,"&nbsp;",
-			CGI::input({%button,value=>"Save As:"}),
+			CGI::input({%button,value=>"Save As"}),
 			CGI::input({type=>"text",name=>"name",size=>20,style=>"width:50%"}),
 		),
 	]);
