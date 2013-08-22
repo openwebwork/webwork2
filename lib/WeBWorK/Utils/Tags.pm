@@ -330,7 +330,7 @@ sub copyin {
 #    }
 #  }
   # Just copy in all basic tags
-  for my $j (qw( DBsubject DBchapter DBsection Date Institution Author )) {
+  for my $j (qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level )) {
     $self->settag($j, $ob->{$j}) if(defined($ob->{$j}));
   }
   # Now copy in keywords
