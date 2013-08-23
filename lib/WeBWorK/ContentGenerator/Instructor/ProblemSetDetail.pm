@@ -1828,8 +1828,10 @@ sub body {
 
 	print CGI::end_table();	
 
-	warn($userSetRecord->open_date);
-	
+	#datepicker scripts.  
+	# we try to provide the date picker scripts with the global set
+	# if we aren't looking at a specific students set and the merged
+	# one otherwise. 
 	my $tempSet; 
 	if ($forUsers) {
 	    $tempSet = $db->getMergedSet($userToShow, $setID); 
@@ -1837,7 +1839,6 @@ sub body {
 	    $tempSet = $setRecord;
 	}
 
-	#datepicker scripts
 	print CGI::start_script({-type=>"text/javascript"}),"\n";
 	print q!$(".ui-datepicker").draggable();!,"\n";
 	print WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $tempSet),"\n";	
