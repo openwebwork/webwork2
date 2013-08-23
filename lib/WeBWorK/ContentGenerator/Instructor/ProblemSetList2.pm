@@ -2159,7 +2159,7 @@ EOF
 ################################################################################
 
 sub fieldEditHTML {
-	my ($self, $fieldName, $value, $properties, $dateTimeScripts) = @_;
+	my ($self, $fieldName, $value, $properties) = @_;
 	my $size = $properties->{size};
 	my $type = $properties->{type};
 	my $access = $properties->{access};
@@ -2182,23 +2182,19 @@ sub fieldEditHTML {
 			my @temp = split(/.open_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			#$content = WeBWorK::Utils::DatePickerScripts::open_date_script($bareName, $timezone);
 		}
 		elsif(index($fieldName, ".due_date") != -1){
 			my @temp = split(/.due_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			#$content = WeBWorK::Utils::DatePickerScripts::due_date_script($bareName, $timezone);
 		}
 		elsif(index($fieldName, ".answer_date") != -1){
 			my @temp = split(/.answer_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			#$content = WeBWorK::Utils::DatePickerScripts::answer_date_script($bareName, $timezone);
 		}
 		
-		#push @$dateTimeScripts, $content;
-		push @$dateTimeScripts, WeBWorK::Utils::DatePickerScripts::date_scripts($bareName,$timezone);
+
 		return $out;
 	}
 	
@@ -2377,10 +2373,6 @@ sub recordEditHTML {
 	# make a hash out of this so we can test membership easily
 	my %nonkeyfields; @nonkeyfields{$Set->NONKEYFIELDS} = ();
 	
-	my @chooseDateTimeScripts = ();
-	
-	#push @chooseDateTimeScripts, "addOnLoadEvent(function() {";
-
 	# Set Fields
 	foreach my $field (@fieldsToShow) {
 		next unless exists $nonkeyfields{$field};
@@ -2392,12 +2384,12 @@ sub recordEditHTML {
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
-		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
+		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 		
 	my $out = CGI::Tr({}, CGI::td({}, \@tableCells));
-	my $scripts = CGI::start_script({-type=>"text/javascript"}).(join("", @chooseDateTimeScripts)).CGI::end_script();
+	my $scripts = CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $Set).CGI::end_script();
 
 	return $out.$scripts;
 }

@@ -16,10 +16,17 @@
 
 package WeBWorK::Utils::DatePickerScripts;
 use base qw(Exporter);
+use WeBWorK::Utils qw(formatDateTime);
 
 sub date_scripts {
-	my $bareName = shift;
-	my $timezone = shift;
+        my $ce = shift;
+	my $set = shift;
+	my $display_tz ||= $ce->{siteDefaults}{timezone};
+	my $bareName = 'set\\\\.'.$set->set_id;
+	my $open_timezone = substr(formatDateTime($set->open_date, $display_tz), -3); 
+	my $due_timezone = substr(formatDateTime($set->due_date, $display_tz), -3); 
+	my $answer_timezone = substr(formatDateTime($set->answer_date, $display_tz), -3); 
+
 	my $out = <<EOF;
 addOnLoadEvent(function() {
 var name = "$bareName";
@@ -27,7 +34,7 @@ var open_rule = \$('#' + name + '\\\\.open_date_id');
 var due_rule = \$('#' + name + '\\\\.due_date_id');
 var answer_rule = \$('#' + name + '\\\\.answer_date_id');
 var dueDateOffset = 7; // 7 days after open date
-var answerDateOffset = 5 //5 hours after due date
+var answerDateOffset = 5; //5 hours after due date
 
 var update = function() {
 	var openDate = open_rule.datetimepicker('getDate');
@@ -60,23 +67,23 @@ var update = function() {
 open_rule.datetimepicker({
 	ampm: true,
 	timeFormat: 'hh:mmtt',
-	timeSuffix: ' EDT',
+	timeSuffix: ' $open_timezone',
 	separator: ' at ',
     onClose: function(dateText, inst) {
         update();
     },
-    onSelect: function (selectedDateTime){
+/*    onSelect: function (selectedDateTime){
         var open = \$(this).datetimepicker('getDate');
 		var open_obj = new Date(open.getTime());
 		open_rule.addClass("auto-changed");
         due_rule.datetimepicker('option', 'minDate', open_obj);
         answer_rule.datetimepicker('option', 'minDate', open_obj);
-    }
+    }*/
  });
 due_rule.datetimepicker({
 	ampm: true,
 	timeFormat: 'hh:mmtt',
-	timeSuffix: ' EDT',
+	timeSuffix: ' $due_timezone',
 	separator: ' at ',
     onClose: function(dateText, inst) {
         var open_changed=0;
@@ -86,17 +93,17 @@ due_rule.datetimepicker({
     		open_rule.datetimepicker('setDate',openDate);
     	}
     	update();
-	},
-    onSelect: function (selectedDateTime){
+	}
+/*    onSelect: function (selectedDateTime){
         var due = \$(this).datetimepicker('getDate');
 		answer_rule.datetimepicker('option', 'minDate', new Date(due.getTime()));
-    }
+    }*/
 });
 
 answer_rule.datetimepicker({
 	ampm: true,
 	timeFormat: 'hh:mmtt',
-	timeSuffix: ' EDT',
+	timeSuffix: ' $answer_timezone',
 	separator: ' at ',
     onClose: function(dateText, inst) {
         var open_changed=0;    
@@ -114,7 +121,7 @@ answer_rule.datetimepicker({
 
 });	
 EOF
-	$out;
+	return $out;
 }
 
 

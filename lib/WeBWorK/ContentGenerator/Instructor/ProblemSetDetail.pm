@@ -950,10 +950,6 @@ sub initialize {
 			$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
-			# grab short name for timezone
-			# used to set proper timezone name in datepicker
-
-			$self->{timezone_shortname} = substr($due_date, -3); #this is fragile
 
 	}
 	
@@ -1498,9 +1494,6 @@ sub initialize {
 		}
 	}	
 	
-
-
-
 	# This erases any sticky fields if the user saves changes, resets the form, or reorders problems
 	# It may not be obvious why this is necessary when saving changes or reordering problems
 	# 	but when the problems are reorder the param problem.1.source_file needs to be the source
@@ -1834,6 +1827,22 @@ sub body {
 	]));
 
 	print CGI::end_table();	
+
+	warn($userSetRecord->open_date);
+	
+	my $tempSet; 
+	if ($forUsers) {
+	    $tempSet = $db->getMergedSet($userToShow, $setID); 
+	} else {
+	    $tempSet = $setRecord;
+	}
+
+	#datepicker scripts
+	print CGI::start_script({-type=>"text/javascript"}),"\n";
+	print q!$(".ui-datepicker").draggable();!,"\n";
+	print WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $tempSet),"\n";	
+	print CGI::end_script();
+
 
 	# spacing
 	print CGI::p();
@@ -2210,10 +2219,6 @@ sub output_JS {
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
     	
-	print CGI::start_script({-type=>"text/javascript"}),"\n";
-	print q!$(".ui-datepicker").draggable();!,"\n";
-	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
-	print CGI::end_script();
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }
