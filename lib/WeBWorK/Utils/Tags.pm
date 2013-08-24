@@ -187,7 +187,6 @@ sub new {
   my ($text, $edition, $textauthor, $textsection, $textproblem);
   my $textno;
   my $textinfo=[];
-  my @textproblems = (-1);
 
   open(IN,"$name") or die "can not open $name: $!";
   if ($name !~ /pg$/) {
@@ -281,6 +280,7 @@ sub new {
         $textno = $1;
         $textproblem = $2;
         $textproblem =~ s/\D/ /g;
+				my @textproblems = (-1);
         @textproblems = split /\s+/, $textproblem;
         @textproblems = grep { $_ =~ /\S/ } @textproblems;
         if (scalar(@textproblems) or defined($textinfo->[$textno])) {
