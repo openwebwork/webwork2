@@ -1585,7 +1585,7 @@ sub optionsMacro {
 		$result .= CGI::br();
 	}
 
-	if (exists $options_to_show{showOldAnswers}) {
+	if (exists $options_to_show{useMathView}) {
 		# Note, 0 is a legal value, so we can't use || in setting this
 		my $curr_useMathView = defined($self->r->param("useMathView")) ?
 		    $self->r->param("useMathView") : $self->r->ce->{pg}->{options}->{useMathView};
