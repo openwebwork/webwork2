@@ -68,7 +68,7 @@ sub initializeUserProblem {
 	$userProblem->num_incorrect(0);
 	$userProblem->problem_seed($seed);
 	$userProblem->sub_status(0.0);
-
+	
 	return $userProblem;
 }
 

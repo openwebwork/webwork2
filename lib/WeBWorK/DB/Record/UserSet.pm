@@ -58,6 +58,7 @@ BEGIN {
 		relax_restrict_ip         => { type=>"ENUM('No','AfterAnswerDate','AfterVersionAnswerDate')" },
 		restricted_login_proctor  => { type=>"ENUM('No','Yes')" },
 		hide_hint                 => { type=>"INT" },
+		enable_problems_reset     => { type=>"INT" },		
 	);
 }
 

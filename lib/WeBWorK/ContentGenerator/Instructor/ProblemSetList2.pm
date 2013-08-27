@@ -96,8 +96,8 @@ use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible hide_hint enable_problems_reset enable_reduced_scoring open_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible hide_hint enable_problems_reset enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -245,6 +245,11 @@ use constant  FIELD_PROPERTIES => {
 		access => "readwrite",
 	},
 	hide_hint => {
+		type => "checked",
+		size => 4,
+		access => "readwrite",
+	},
+	enable_problems_reset => {
 		type => "checked",
 		size => 4,
 		access => "readwrite",
@@ -444,6 +449,7 @@ sub body {
 		visible
 		enable_reduced_scoring
 		hide_hint
+		enable_problems_reset
 	)} = (
 		$r->maketext("Edit Problems"),
 		$r->maketext("Edit Assigned Users"),
@@ -459,7 +465,8 @@ sub body {
 	    # to be...
 	    #   $r->maketext("Reduced Credit Enabled"), 
 	        $r->maketext("Reduced Credit"), 
-		$r->maketext("Hide Hints") 
+		$r->maketext("Hide Hints"),
+		$r->maketext("Enable Problems Reset") 
 	);
 	
 
@@ -2425,6 +2432,7 @@ sub recordEditHTML {
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /hide_hint/ and not $editMode;
+		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_problems_reset/ and not $editMode;		
 		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}

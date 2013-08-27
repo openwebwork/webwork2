@@ -33,6 +33,7 @@ use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(sortByName path_is_subdir);
 use WeBWorK::Localize;
+use WeBWorK::DB::Utils qw(initializeUserProblem);
 
 sub initialize {
 	my ($self) = @_;
@@ -42,7 +43,8 @@ sub initialize {
 	my $authz = $r->authz;
 	
 	my $setName = $urlpath->arg("setID");
-	my $userName = $r->param("user");
+	my $courseID = $urlpath->arg("courseID");
+	my $userName = $r->param("user");	
 	my $effectiveUserName = $r->param("effectiveUser");
 	$self->{displayMode}  = $r->param('displayMode') || $r->ce->{pg}->{options}->{displayMode};
 	
@@ -50,7 +52,30 @@ sub initialize {
 	my $user            = $db->getUser($userName); # checked
 	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
 	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
+	my $setID	    = $r->urlpath->arg("setID");
 	
+	my $resetProblems = $r->param('resetProblems');
+	my $applyReset = $r->param('applyReset');
+	
+
+	# Problems reset
+	if(defined $applyReset){	
+		# Reset each problems
+		foreach my $problemID ($db->listUserProblems($userName, $setID)) {
+			my $userProblem = $db->getUserProblem($userName,$setID, $problemID);
+			initializeUserProblem($userProblem);
+			$userProblem->last_answer(""); 
+			$db->putUserProblem($userProblem);
+			# Delete past answers for each problem
+			foreach my $pastAnswerId ($db->listProblemPastAnswers($courseID, $userName, $setID, $problemID)){
+				$db->deletePastAnswer($pastAnswerId);
+			}
+		}
+	  
+		$self->addgoodmessage("Set has been reseted.");
+	}
+
+
 	die "user $user (real user) not found."  unless $user;
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
 
@@ -83,10 +108,12 @@ sub initialize {
 		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
 	}
 
-	my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
-	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
-	$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText)))) if $authz->hasPermissions($userName, "view_hidden_sets");
-
+	# if resetProblems is defined, we are in the accept/cancel dialog so, skip 
+	if (!defined $resetProblems) {
+		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
+		my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
+		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText)))) if $authz->hasPermissions($userName, "view_hidden_sets");
+	}
 
 	$self->{userName}        = $userName;
 	$self->{user}            = $user;
@@ -208,7 +235,7 @@ sub info {
 	
 	my $effectiveUser = $db->getUser($eUserID); # checked 
 	my $set  = $db->getMergedSet($eUserID, $setID); # checked
-	
+		
 	die "effective user $eUserID not found. One 'acts as' the effective user." unless $effectiveUser;
 	# FIXME: this was already caught in initialize()
 	die "set $setID for effectiveUser $eUserID not found." unless $set;
@@ -313,6 +340,26 @@ sub body {
 				CGI::p($r->maketext("The selected problem set ([_1]) is not a valid set for [_2]",$setName,$effectiveUser).":"),
 				CGI::p($self->{invalidSet}));
 	}
+
+	my $resetProblems = $r->param('resetProblems');
+	
+	if (defined $resetProblems ) {
+		print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"confirmResetForm", -name=>"confirmResetForm");
+		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
+		print CGI::Tr(
+			CGI::td(
+			  CGI::b($r->maketext("Warning:")),$r->maketext(" Problems in this set will be reseted"),
+			  CGI::p($r->maketext("This will get you fresh list of problems with new equations and reset all answers.")),
+			  CGI::p($r->maketext("Really want to reset all problems ?")),
+			  CGI::div({style=>"float:left; padding-left:3ex"},
+			    CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
+			  CGI::div({style=>"float:right; padding-right:3ex"},
+			    CGI::input({type=>"submit",name=>"applyReset",value=>"Reset"})),
+			),
+		);
+		print CGI::end_table();	
+		print CGI::endform();  
+	} else {
 	
 	#my $hardcopyURL =
 	#	$ce->{webworkURLs}->{root} . "/"
@@ -428,7 +475,16 @@ sub body {
 	print CGI::end_div();
 	
 	print CGI::div({-class=>"problem_set_options"}, CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set"))).CGI::br();
-	
+
+	my $mergedSet = $db->getMergedSet($user, $setName);
+	if($mergedSet->enable_problems_reset){
+		print CGI::start_div({-class=>"problem_set_options"});
+		print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"resetForm", -name=>"resetForm");
+		print CGI::input({type=>'submit',value=>'Reset all problems ',name=>'resetProblems'});
+		print CGI::endform();  
+		print CGI::end_div(),"\n";
+		}
+	}
 	return "";
 }
 
