@@ -69,6 +69,7 @@ open_rule.datetimepicker({
 	timeFormat: 'hh:mmtt',
 	timeSuffix: ' $open_timezone',
 	separator: ' at ',
+	constrainInput: false, 
     onClose: function(dateText, inst) {
         update();
     },
@@ -85,6 +86,7 @@ due_rule.datetimepicker({
 	timeFormat: 'hh:mmtt',
 	timeSuffix: ' $due_timezone',
 	separator: ' at ',
+	constrainInput: false, 
     onClose: function(dateText, inst) {
         var open_changed=0;
     	if (open_rule.val() == "") {
@@ -105,6 +107,7 @@ answer_rule.datetimepicker({
 	timeFormat: 'hh:mmtt',
 	timeSuffix: ' $answer_timezone',
 	separator: ' at ',
+	constrainInput: false, 
     onClose: function(dateText, inst) {
         var open_changed=0;    
          if (open_rule.val() == "") {
