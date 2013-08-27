@@ -93,7 +93,7 @@ sub print_form {
 
     #Find all of the closed sets and put them in form
 
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if (after($$sets[$i]->due_date()) & $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	}
@@ -183,7 +183,7 @@ sub print_form {
     my $maxProblems=0;
 
     #find all currently open sets and print to a form
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->answer_date)  && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	}
@@ -269,7 +269,7 @@ sub print_form {
 
 
     #print names of open sets
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->answer_date)  && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	}
@@ -359,7 +359,7 @@ sub print_form {
 
     #print open sets
 
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if ($$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	}
@@ -447,7 +447,7 @@ sub print_form {
     #print open sets in a drop down and some javascript which will cause the 
     #second drop down to have the correct number of problems for each set
 
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	    push(@openSetCount,$$setProblemCount[$i]);
@@ -466,7 +466,7 @@ sub print_form {
     }
 	
     my $problem_id_script = "var setid = \$('\#ria_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<$#openSets; $i++) {
+    foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
     $problem_id_script .= "default: max = $openSetCount[0];} ";
@@ -556,7 +556,7 @@ sub print_form {
     #print open sets and javascript to mach second dropdown to number of
     #problems in each set
 
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	    push(@openSetCount,$$setProblemCount[$i]);
@@ -575,7 +575,7 @@ sub print_form {
     }
 	
     my $problem_id_script = "var setid = \$('\#dbp_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<$#openSets; $i++) {
+    foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
     $problem_id_script .= "default: max = $openSetCount[0];} ";
@@ -667,7 +667,7 @@ sub print_form {
     #print form with open sets and javasscript to have appropriate number 
     # of items in second drop down
 
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	    push(@openSetCount,$$setProblemCount[$i]);
@@ -684,9 +684,9 @@ sub print_form {
 	    $attributes{$i}{style} = 'display:none;';
 	}
     }
-	
+
     my $problem_id_script = "var setid = \$('\#hcp_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<$#openSets; $i++) {
+    foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
     $problem_id_script .= "default: max = $openSetCount[0];} ";
@@ -776,7 +776,7 @@ sub print_form {
 
     #print form getting set and problem number
 
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	    push(@openSetCount,$$setProblemCount[$i]);
@@ -795,7 +795,7 @@ sub print_form {
     }
 	
     my $problem_id_script = "var setid = \$('\#fcp_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<$#openSets; $i++) {
+    foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
     $problem_id_script .= "default: max = $openSetCount[0];} ";
@@ -885,7 +885,7 @@ sub print_form {
 
     # print open sets and allow for a choice of two problems from the set
 
-    for (my $i=0; $i<$#$sets; $i++) {
+    for (my $i=0; $i<=$#$sets; $i++) {
 	if (between($$sets[$i]->open_date, $$sets[$i]->due_date) && $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
 	    push(@openSetCount,$$setProblemCount[$i]);
@@ -904,7 +904,7 @@ sub print_form {
     }
 	
     my $problem_id_script = "var setid = \$('\#tran_set_id').val(); var max = null; switch(setid) {";
-    foreach (my $i=0; $i<$#openSets; $i++) {
+    foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
     $problem_id_script .= "default: max = $openSetCount[0];} ";
