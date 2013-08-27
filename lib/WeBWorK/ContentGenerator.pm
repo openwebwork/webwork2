@@ -1585,11 +1585,11 @@ sub optionsMacro {
 		$result .= CGI::br();
 	}
 
-	if (exists $options_to_show{showOldAnswers}) {
+	if (exists $options_to_show{useMathView}) {
 		# Note, 0 is a legal value, so we can't use || in setting this
 		my $curr_useMathView = defined($self->r->param("useMathView")) ?
 		    $self->r->param("useMathView") : $self->r->ce->{pg}->{options}->{useMathView};
-		$result .= $r->maketext("Use MathView?");
+		$result .= $r->maketext("Use Equation Editor?");
 		$result .= CGI::br();
 		$result .= CGI::radio_group(
 			-name => "useMathView",
@@ -1600,7 +1600,6 @@ sub optionsMacro {
 		$result .= CGI::br();
 	}
 
-	
 	$result .= CGI::submit(-name=>"redisplay", -label=>$r->maketext("Apply Options"));
 	$result .= CGI::end_div();
 	$result .= CGI::end_form();

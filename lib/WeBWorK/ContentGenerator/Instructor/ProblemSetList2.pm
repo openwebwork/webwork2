@@ -2423,7 +2423,10 @@ sub recordEditHTML {
 	}
 		
 	my $out = CGI::Tr({}, CGI::td({}, \@tableCells));
-	my $scripts = CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $Set).CGI::end_script();
+	my $scripts = '';
+	if ($ce->{options}->{useDateTimePicker}) {
+	    $scripts = CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $Set).CGI::end_script();
+	}
 
 	return $out.$scripts;
 }
