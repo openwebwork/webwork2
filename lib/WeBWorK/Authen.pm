@@ -232,9 +232,7 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
-
 		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character. 
-
 
 			if (defined($r->param("user")) or defined($r->param("user_id"))) {
 				$error = $r->maketext("Your authentication failed.  Please try again."

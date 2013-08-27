@@ -11,6 +11,8 @@ $(function(){
     // replace pencil gifs by something prettier
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
 
+    // Turn summaries into popovers
+    $('a.table-summary').popover();
 
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');
@@ -52,10 +54,23 @@ $(function(){
     // Problem formatting
     $('#problemMainForm').addClass('problem-main-form form-inline');
     $('.attemptResults').addClass('table table-condensed table-bordered');
+    $('.problem .problem-content').addClass('well well-small');
 
+    $("table.attemptResults td[onmouseover*='Tip']").each(function () {
+	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/)[1];
+	$(this).attr('onmouseover','');
+	if (data) {
+	    $(this).wrapInner('<div class="results-popover" />');
+	    var titlestr ='<i class=" answer-popover icon-remove" onclick="$($($(this).parents()[2]).children()[0]).popover(\'hide\');"></i>';
+	    var popdiv = $('div', this);
+	    popdiv.popover({placement:'bottom', html:'true', trigger:'click',title: titlestr ,content:data});	
+	} 
+	    
+    });
+    
     // Past answers formatting
     $('#past-answer-table').addClass('table');
-
+    
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
     $('#grades_table a').addClass('btn btn-primary');
@@ -83,12 +98,15 @@ $(function(){
     $('.user-list-form input:button').addClass('btn btn-info');
     $('.user-list-form input:reset').addClass('btn btn-info');
     $('.user-list-form').wrapInner('<div />');
-    $('.classlist-table').addClass('small-table-text table table-condensed');
+    $('.classlist-table').addClass('table table-condensed table-bordered');
+    $('.classlist-table').attr('border',0);
+    $('.classlist-table').attr('cellpadding',0);
     $('#show_hide').addClass('btn btn-info');
 
     //Homework sets editor config
     $('#problemsetlist').addClass('form-inline set-list-form');
     $('#problemsetlist2').addClass('form-inline set-list-form');
+    $('.set-id-tooltip').tooltip().click(function() {});
     $('.set-list-form select').addClass('input-medium');
     $('.set-list-form input:text').addClass('input-medium');
     $('.set-list-form select[name="action.filter.scope"]').addClass('input-large').removeClass('input-medium');
@@ -149,4 +167,9 @@ $(function(){
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
 
+     //GAtewayQuiz
+    $('.gwPrintMe a').addClass('btn btn-info');
+    $('.gwPreview a').addClass('btn');
+
 })
+

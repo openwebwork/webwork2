@@ -34,6 +34,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
+use WeBWorK::Utils::Tags;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 
@@ -541,9 +542,9 @@ sub browse_library_panel2 {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching pg files";
+		$count_line = "There are no matching WeBWorK problems";
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problem files";
+		$count_line = "There are $count_line matching WeBWorK problems";
 	}
 
 	print CGI::Tr({},
@@ -653,10 +654,27 @@ sub browse_library_panel2adv {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching pg files";
+		$count_line = "There are no matching WeBWorK problems";
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problem files";
+		$count_line = "There are $count_line matching WeBWorK problems";
 	}
+
+	# Formatting level checkboxes by hand
+	my @selected_levels_arr = $r->param('level');
+	my %selected_levels = ();
+	for my $j (@selected_levels_arr) {
+		$selected_levels{$j} = 1;
+	}
+	my $mylevelline = '<table width="100%"><tr>';
+	for my $j (1..6) {
+		my $selected = '';
+		$selected = ' checked' if(defined($selected_levels{$j}));
+		$mylevelline .= "<td><label><input type='checkbox' name='level' value='$j' ";
+		$mylevelline .= q/onchange="lib_update('count', 'clear');return true" /;
+		$mylevelline .= "$selected />$j</label></td>";
+	}
+	$mylevelline .= "<td>".$self->helpMacro("Levels")."</td>";
+	$mylevelline .= '</tr></table>';
 
 	print CGI::Tr({},
 	  CGI::td({-class=>"InfoPanel", -align=>"left"},
@@ -714,6 +732,10 @@ sub browse_library_panel2adv {
 					        -default=> $selected{textsection},
 							-onchange=>"submit();return true"
 		    )]),
+		 ),
+		 CGI::Tr({},
+				 CGI::td("Level:"),
+				 "<td>$mylevelline</td>"
 		 ),
 		 CGI::Tr({},
 		     CGI::td("Keywords:"),CGI::td({-colspan=>2},
@@ -815,7 +837,7 @@ sub make_top_row {
 		),
 		"  ",
 		CGI::textfield(-name=>"new_set_name", 
-					   -default=>"Name for new set here",
+					   -example=>"Name for new set here",
 					   -override=>1, -size=>30),
 	));
 
@@ -897,6 +919,7 @@ sub make_data_row {
 	my $sourceFileName = $sourceFileData->{filepath};
 	my $pg = shift;
 	my $cnt = shift;
+	my $mltnumleft = shift;
 
 	$sourceFileName =~ s|^./||; # clean up top ugliness
 
@@ -927,8 +950,11 @@ sub make_data_row {
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
-			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
-		  ), target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
+			params=>{sourceFilePath => "$sourceFileName", 
+				problemSeed=> $problem_seed}
+		  ), 
+				id=> "editit$cnt",
+				target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
@@ -950,6 +976,7 @@ sub make_data_row {
 			}
 		), target=>"WW_View", 
 			title=>"Try it",
+			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
 	my $inSet = ($self->{isInSet}{$sourceFileName})?"(in target set)" : "";
@@ -958,42 +985,50 @@ sub make_data_row {
 
 	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
 	my $path_holder = "File...";
+
 	my $mlt = '';
+	my ($mltstart, $mltend) = ('','');
 	my $noshowclass = 'NS'.$cnt;
 	$noshowclass = 'MLT'.$sourceFileData->{morelt} if $sourceFileData->{morelt};
 	if($sourceFileData->{children}) {
-		#$mlt = join(',', @{$sourceFileData->{children}});
-		#$mlt = "\"$mlt\"";
 		my $numchild = scalar(@{$sourceFileData->{children}});
-		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this'>M</span>";
+		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
+		$mltstart = "<table style='border:1px solid black' width='100%'><tr><td>\n";
 	}
+	$mltend = "</td></tr></table>\n" if($mltnumleft==0);
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
-        my $tagwidget = '';
-        my $user = scalar($r->param('user'));
-        if ($r->authz->hasPermissions($user, "modify_tags")) {
-          my $tagid = 'tagger'.$cnt;
-          $tagwidget =  CGI::div({id=>$tagid}, '');
-          my $templatedir = $r->ce->{courseDirs}->{templates};
-          my $sourceFilePath = $templatedir .'/'. $sourceFileName;
-          my $site_url = $r->ce->{webworkURLs}->{htdocs};
-          $tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tagwidget.js"}). CGI::end_script();
-          $tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
-        }
+
+	# Include tagwidget?
+	my $tagwidget = '';
+	my $user = scalar($r->param('user'));
+	if ($r->authz->hasPermissions($user, "modify_tags")) {
+		my $tagid = 'tagger'.$cnt;
+		$tagwidget =  CGI::div({id=>$tagid}, '');
+		my $templatedir = $r->ce->{courseDirs}->{templates};
+		my $sourceFilePath = $templatedir .'/'. $sourceFileName;
+		$sourceFilePath =~ s/'/\\'/g;
+		my $site_url = $r->ce->{webworkURLs}->{htdocs};
+		$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}). CGI::end_script();
+		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
+	}
+
+	my $level =0;
+
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
+	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
+        $mltstart,
 		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
 		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
 		      -value=>"Add",
 			-title=>"Add problem to target set",
-		      -onClick=>"return addme(\'$sourceFileName\', \'one\')")),
-			"\n",CGI::span({-style=>"text-align: left"},'Path',CGI::span({id=>"filepath$cnt"},"...")),"\n",
-			#"\n",CGI::span({onclick=>qq!Tip("$sourceFileName",SHADOW, false, DELAY, 0, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, BGCOLOR, '#EEEEEE', TITLEBGCOLOR, '#EEEEEE', TITLEFONTCOLOR, '#000000')!}, 'Path...'),
-# Next line is one to keep
+		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
+			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 			#"\n",'<script type="text/javascript">$(\'#sourcetrigger'.$cnt.'\').click(function() {toggle_content("filepath'.$cnt.'", "...", "'.$sourceFileName.'");return false;})</script>',
-                        '<script type="text/javascript">settoggle("filepath'.$cnt.'", "...", "'.$sourceFileName.'")</script>',
+				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
 #"\n", CGI::span({-style=>"float:left ; text-align: left"},"File..."),
 			CGI::span({-style=>"float:right ; text-align: right"}, 
 		        $inSet, $mlt, $rerand,
@@ -1007,6 +1042,7 @@ sub make_data_row {
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
 		CGI::div($problem_output),
+        $mltend
 	));
 }
 
@@ -1290,7 +1326,7 @@ sub pre_header_initialize {
 		@pg_files=();
 		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
 		@pg_files = process_search($r, @dbsearch);
-		$use_previous_problems=0; 
+		$use_previous_problems=0;
 
 		##### View a set from a set*.def
 
@@ -1340,6 +1376,8 @@ sub pre_header_initialize {
 				$newSetRecord->open_date(time()+60*60*24*7); # in one week
 				$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
 				$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
+				$newSetRecord->visible(1);
+				$newSetRecord->enable_reduced_scoring(0);
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
@@ -1469,43 +1507,28 @@ sub head {
   my ($self) = @_;
   my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-  print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/lib/vendor/FontAwesome/css/font-awesome.css">!;
 
-#   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
-#   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
-  
-#   print qq!<script src="$webwork_htdocs_url/js/jquery.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-ui.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery.ui.touch-punch.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/backbone.js"></script>!;
-#   print qq!<script src="$webwork_htdocs_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"></script>!;
-#   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
-# 
-#   print "\n";
-#   print qq!<script src="$webwork_htdocs_url/js/setmaker.js"></script>!;
-#   print "\n";
-  
-  print qq!<script src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/jquery-ui-1.8.18.custom.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/modernizr-2.0.6.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/underscore.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/backbone.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/WeBWorK.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/webwork/teacher/teacher.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/lib/vendor/bootstrap/js/bootstrap.min.js"></script>!;
+    print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/FontAwesome/css/font-awesome.css">!;
+
+#  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
-  print qq!<script src="$webwork_htdocs_url/js/setmaker.js"></script>!;
+	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/legacy/Base64.js"}), CGI::end_script();
+  print "\n";
+	print qq{
+           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+  print "\n";
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print "\n";
+  print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
   print "\n";
   return '';
 }
@@ -1581,7 +1604,7 @@ sub body {
 	##########	Top part
         my $courseID = $self->r->urlpath->arg("courseID");
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-	print qq!<script src="$webwork_htdocs_url/js/wz_tooltip.js"></script>!;
+	print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
@@ -1606,10 +1629,15 @@ sub body {
 	print CGI::hidden(-name=>'total_probs', -value=>$total_probs);
 
 	########## Now print problems
-	my $jj;
+	my ($jj,$mltnumleft)=(0,-1);
 	for ($jj=0; $jj<scalar(@pg_html); $jj++) { 
 		$pg_files[$jj+$first_index]->{filepath} =~ s|^$ce->{courseDirs}->{templates}/?||;
-		$self->make_data_row($pg_files[$jj+$first_index], $pg_html[$jj], $jj+1);
+		# For MLT boxes, need to know if we are at the end of a group
+		# make_data_row can't figure this out since it only sees one file
+		$mltnumleft--;
+		my $sourceFileData = $pg_files[$jj+$first_index];
+		$self->make_data_row($sourceFileData, $pg_html[$jj], $jj+1,$mltnumleft);
+		$mltnumleft = scalar(@{$sourceFileData->{children}}) if($sourceFileData->{children});
 	}
 
 	########## Finish things off

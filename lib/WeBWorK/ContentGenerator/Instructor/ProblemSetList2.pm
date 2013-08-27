@@ -267,7 +267,9 @@ sub pre_header_initialize {
 		if ($scope eq "none") { 
 			return $r->maketext("No sets selected for scoring".".");
 		} elsif ($scope eq "all") {
-			@setsToScore = @{ $r->param("allSetIDs") };
+#			@setsToScore = @{ $r->param("allSetIDs") };
+		    @setsToScore = $db->listGlobalSets;
+
 		} elsif ($scope eq "visible") {
 			@setsToScore = @{ $r->param("visibleSetIDs") };
 		} elsif ($scope eq "selected") {
@@ -970,7 +972,7 @@ sub enable_reduced_scoring_form {
 			-input_attr=>{
 				-name => "action.enable_reduced_scoring.value",
 				-values => [ 0, 1 ],
-				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "1",
+				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "0",
 				-labels => {
 					0 => $r->maketext("Disable"),
 					1 => $r->maketext("Enable"),
@@ -1318,7 +1320,7 @@ sub import_form {
 				-label_text=>$r->maketext("Assign this set to which users?").": ",
 				-input_attr=>{
 					-name => "action.import.assign",
-					-value => [qw(all user)],
+					-value => [qw(user all)],
 					-default => $actionParams{"action.import.assign"}->[0] || "none",
 					-labels => {
 						all => $r->maketext("all current users").".",
@@ -2245,25 +2247,26 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "checked") {
-		
+
 		# FIXME: kludge (R)
 		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		# in which case the hidden field overrides the parameter with a 0
-		# kludge 2  -- get visible and reduced scoring to have no names (might reduce accessibility)
-		# my $label_text = $properties->{label_text} || "NoLabel";
-		return WeBWorK::CGI_labeled_input(
-			-type=>"checkbox",
-			-id=>$fieldName."_id",
-			-label_text=>"", #$label_text,
-			-input_attr=>{
-				-name => $fieldName,
-				-checked => $value,
-				-label => "",
-				-value => 1
-			}
+	    my %attr = ( name => $fieldName,
+			 label => "",
+			 value => 1
+	    );
+
+	    $attr{'checked'} = 1 if ($value);
+
+
+	    return WeBWorK::CGI_labeled_input(
+		-type=>"checkbox",
+		-id=>$fieldName."_id",
+		-label_text=>ucfirst($fieldName),
+		-input_attr=>\%attr
 		) . CGI::hidden(
-			-name => $fieldName,
-			-value => 0
+		-name => $fieldName,
+		-value => 0
 		);
 	}
 }
@@ -2283,7 +2286,7 @@ sub recordEditHTML {
 	my $exportMode = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
-	my $visibleClass = $Set->visible ? $r->maketext("visible") : $r->maketext("hidden");
+	my $visibleClass = $Set->visible ? $r->maketext("font-visible") : $r->maketext("font-hidden");
 	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Credit Enabled') : $r->maketext('Reduced Credit Disabled');
 
 	my $users = $db->countSetUsers($Set->set_id);
@@ -2323,9 +2326,13 @@ sub recordEditHTML {
 		$label_text = CGI::a({href=>$problemListURL}, "$set_id");
 	} else {
 		# selection checkbox
-		# Set ID		
-		$label = CGI::font({class=>$visibleClass}, $set_id . $imageLink);
-
+		# Set ID
+		my $label = "";
+		if ($editMode) {
+			$label = CGI::a({href=>$problemListURL}, "$set_id");
+		} else {		
+			$label = CGI::a({class=>"$visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $set_id) . $imageLink;
+		}
 		
 		push @tableCells, WeBWorK::CGI_labeled_input(
 			-type=>"checkbox",
@@ -2515,25 +2522,14 @@ sub output_JS{
     </style>!,"\n";
     
 	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script(),"\n";
-  	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-1.7.1.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.8.18.custom.min.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-timepicker-addon.js"}), CGI::end_script(),"\n";
-	
-	# these scripts (for specific courses) are printed from within fieldEditHTML
-#   print CGI::start_script({-type=>"text/javascript"}),"\n";
-# 	print "addOnLoadEvent(function() {\n";
-# 	print WeBWorK::Utils::DatePickerScripts::open_date_script("set\\\\.$setID",$timezone),"\n";
-# 	print WeBWorK::Utils::DatePickerScripts::due_date_script("set\\\\.$setID",$timezone),"\n";
-# 	print WeBWorK::Utils::DatePickerScripts::answer_date_script("set\\\\.$setID",$timezone),"\n";		
-# 	print "});\n";
-# 	print CGI::end_script();
-	# print other javaScript
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/form_checker_hmwksets.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/hmwksets_handlers.js"}), CGI::end_script(),"\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script(),"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+
 	print "\n\n<!-- END add to header ProblemSetList2.pm -->";
 	return "";
 }

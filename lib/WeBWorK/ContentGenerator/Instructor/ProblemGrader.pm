@@ -61,13 +61,14 @@ sub head {
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+#	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/bootstrap/css/bootstrap.popover.css\">";
+
+	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
 	my $MathJax = $ce->{webworkURLs}->{MathJax};
 	
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/lib/vendor/bootstrap/css/bootstrap.popover.css\">";
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>$MathJax}), CGI::end_script();
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
 	
 	return "";
