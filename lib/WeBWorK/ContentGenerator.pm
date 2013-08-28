@@ -922,15 +922,18 @@ sub loginstatus {
 	my $r = $self->r;
 	my $authen = $r->authen;
 	my $urlpath = $r->urlpath;
-	
+	#This will contain any extra parameters which are needed to make
+	# the page function properly.  This will normally be empty.  
+	my $extraStopActingParams = $r->{extraStopActingParams};
+
 	if ($authen and $authen->was_verified) {
 		my $courseID = $urlpath->arg("courseID");
 		my $userID = $r->param("user");
 		my $eUserID = $r->param("effectiveUser");
 		
+		$extraStopActingParams->{effectiveUser} = $userID;
 		my $stopActingURL = $self->systemLink($urlpath, # current path
-			params => { effectiveUser => $userID },
-		);
+			params=>$extraStopActingParams);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 		
 		if ($eUserID eq $userID) {
