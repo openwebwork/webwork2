@@ -990,10 +990,6 @@ sub initialize {
 			$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
-			# grab short name for timezone
-			# used to set proper timezone name in datepicker
-
-			$self->{timezone_shortname} = substr($due_date, -3); #this is fragile
 
 	}
 	
@@ -1541,9 +1537,6 @@ sub initialize {
 		}
 	}	
 	
-
-
-
 	# This erases any sticky fields if the user saves changes, resets the form, or reorders problems
 	# It may not be obvious why this is necessary when saving changes or reordering problems
 	# 	but when the problems are reorder the param problem.1.source_file needs to be the source
@@ -1632,7 +1625,7 @@ sub checkFile ($) {
 
 # don't show view options -- we provide display mode controls for headers/problems separately
 sub options {
-	return "";
+    return "";
 }
 
 #Make sure restrictor sets exist
@@ -1886,6 +1879,24 @@ sub body {
 	]));
 
 	print CGI::end_table();	
+
+	#datepicker scripts.  
+	# we try to provide the date picker scripts with the global set
+	# if we aren't looking at a specific students set and the merged
+	# one otherwise. 
+	if ($ce->{options}->{useDateTimePicker}) {
+	    my $tempSet; 
+	    if ($forUsers) {
+		$tempSet = $db->getMergedSet($userToShow, $setID); 
+	    } else {
+		$tempSet = $setRecord;
+	    }
+	    
+	    print CGI::start_script({-type=>"text/javascript"}),"\n";
+	    print q!$(".ui-datepicker").draggable();!,"\n";
+	    print WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $tempSet),"\n";	
+	    print CGI::end_script();
+	}
 
 	# spacing
 	print CGI::start_p();
@@ -2262,16 +2273,11 @@ sub output_JS {
 	.changed {background-color: #ffffcc}
     </style>!,"\n";
     
-	# print javaScript for dateTimePicker	
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 
-	print CGI::start_script({-type=>"text/javascript"}),"\n";
-	print q!$(".ui-datepicker").draggable();!,"\n";
-	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
-	print CGI::end_script();
-
+    	
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }

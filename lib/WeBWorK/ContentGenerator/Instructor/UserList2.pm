@@ -74,8 +74,8 @@ use WeBWorK::File::Classlist;
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
 use constant HIDE_USERS_THRESHHOLD => 200;
-use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant PASSWORD_FORMS => [qw(cancelPassword savePassword)];
+use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
+use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
 use constant VIEW_FORMS => [qw(filter sort edit password import export add delete)];
 
 # permissions needed to perform a given action
