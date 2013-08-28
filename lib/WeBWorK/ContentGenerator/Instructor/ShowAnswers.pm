@@ -99,6 +99,11 @@ sub body {
 	    $studentUser = $user;
 	}
 
+	return CGI::span({class=>'ResultsWithError'}, 'You must provide
+			    a student ID, a set ID, and a problem number.')
+	    unless defined($courseName) && defined($studentUser)  &&
+	    defined($setName) && defined($problemNumber);
+	    
 	my @pastAnswerIDs = $db->listProblemPastAnswers($courseName, $studentUser, $setName, $problemNumber);
 
 	print CGI::start_table({id=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});

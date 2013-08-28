@@ -937,6 +937,7 @@ sub loginstatus {
 			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 		} else {
 			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print CGI::br();
 			print $r->maketext("Acting as [_1]. ", $eUserID) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
 		}
 	} else {
