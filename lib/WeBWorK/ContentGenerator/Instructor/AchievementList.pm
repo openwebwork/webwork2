@@ -58,9 +58,9 @@ use DateTime;
 use constant BLANK_ACHIEVEMENT => "blankachievement.at";
 use constant DEFAULT_ENABLED_STATE => 0;
 
-use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
+use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(edit assign import export score create delete)];
-use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
+use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
 use constant VIEW_FIELD_ORDER => [ qw( select enabled achievement_id category name users ) ];
 use constant EDIT_FIELD_ORDER => [ qw( icon achievement_id name category enabled points max_counter description icon_file test_file) ];

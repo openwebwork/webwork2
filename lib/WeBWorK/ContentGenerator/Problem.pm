@@ -178,9 +178,9 @@ sub can_checkAnswers {
 
 sub can_useMathView {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
-    my $authz = $self->r->authz;
-    
-    return $authz->hasPermissions($User->user_id, "use_math_view");
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
 }
     
 # Reset the default in some cases

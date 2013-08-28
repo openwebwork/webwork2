@@ -3416,6 +3416,9 @@ msgstr ""
 msgid "Enable Course Achievements"
 msgstr ""
 
+msgid "Use Date Picker"
+msgstr ""
+
 msgid "<span style=\"color:red\">NOT READY for achievements: fix database.conf</span>"
 msgstr ""
 

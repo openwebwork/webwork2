@@ -92,9 +92,9 @@ use constant DEFAULT_VISIBILITY_STATE => 1;
 use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
 use constant ONE_WEEK => 60*60*24*7;  
 
-use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
+use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
-use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
+use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
 use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
@@ -2183,7 +2183,7 @@ EOF
 ################################################################################
 
 sub fieldEditHTML {
-	my ($self, $fieldName, $value, $properties, $dateTimeScripts) = @_;
+	my ($self, $fieldName, $value, $properties) = @_;
 	my $size = $properties->{size};
 	my $type = $properties->{type};
 	my $access = $properties->{access};
@@ -2206,23 +2206,19 @@ sub fieldEditHTML {
 			my @temp = split(/.open_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			#$content = WeBWorK::Utils::DatePickerScripts::open_date_script($bareName, $timezone);
 		}
 		elsif(index($fieldName, ".due_date") != -1){
 			my @temp = split(/.due_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			#$content = WeBWorK::Utils::DatePickerScripts::due_date_script($bareName, $timezone);
 		}
 		elsif(index($fieldName, ".answer_date") != -1){
 			my @temp = split(/.answer_date/, $fieldName);
 			$bareName = $temp[0];
 			$bareName =~ s/\./\\\\\./g;
-			#$content = WeBWorK::Utils::DatePickerScripts::answer_date_script($bareName, $timezone);
 		}
 		
-		#push @$dateTimeScripts, $content;
-		push @$dateTimeScripts, WeBWorK::Utils::DatePickerScripts::date_scripts($bareName,$timezone);
+
 		return $out;
 	}
 	
@@ -2408,10 +2404,6 @@ sub recordEditHTML {
 	# make a hash out of this so we can test membership easily
 	my %nonkeyfields; @nonkeyfields{$Set->NONKEYFIELDS} = ();
 	
-	my @chooseDateTimeScripts = ();
-	
-	#push @chooseDateTimeScripts, "addOnLoadEvent(function() {";
-
 	# Set Fields
 	foreach my $field (@fieldsToShow) {
 		next unless exists $nonkeyfields{$field};
@@ -2425,12 +2417,16 @@ sub recordEditHTML {
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /hide_hint/ and not $editMode;
-		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties, \@chooseDateTimeScripts));
+		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+
 		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 		
 	my $out = CGI::Tr({}, CGI::td({}, \@tableCells));
-	my $scripts = CGI::start_script({-type=>"text/javascript"}).(join("", @chooseDateTimeScripts)).CGI::end_script();
+	my $scripts = '';
+	if ($ce->{options}->{useDateTimePicker}) {
+	    $scripts = CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $Set).CGI::end_script();
+	}
 
 	return $out.$scripts;
 }
