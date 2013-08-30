@@ -2245,25 +2245,28 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "checked") {
-		
+
 		# FIXME: kludge (R)
 		# if the checkbox is checked it returns a 1, if it is unchecked it returns nothing
 		# in which case the hidden field overrides the parameter with a 0
-		# kludge 2  -- get visible and reduced scoring to have no names (might reduce accessibility)
-		# my $label_text = $properties->{label_text} || "NoLabel";
-		return WeBWorK::CGI_labeled_input(
-			-type=>"checkbox",
-			-id=>$fieldName."_id",
-			-label_text=>"", #$label_text,
-			-input_attr=>{
-				-name => $fieldName,
-				-checked => $value,
-				-label => "",
-				-value => 1
-			}
+	    my %attr = ( name => $fieldName,
+			 label => "",
+			 value => 1
+	    );
+
+	    $attr{'checked'} = 1 if ($value);
+
+
+	    return WeBWorK::CGI_labeled_input(
+		-type=>"checkbox",
+		-id=>$fieldName."_id",
+# The labeled checkboxes are making the table very wide. 
+		-label_text=>"",
+#		-label_text=>ucfirst($fieldName),
+		-input_attr=>\%attr
 		) . CGI::hidden(
-			-name => $fieldName,
-			-value => 0
+		-name => $fieldName,
+		-value => 0
 		);
 	}
 }
