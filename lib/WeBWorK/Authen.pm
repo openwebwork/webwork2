@@ -533,6 +533,7 @@ sub verify_normal_user {
 			return 0;
 		} else { # ($auth_result < 0) => required data was not present
 			if ($keyMatches and not $timestampValid) {
+				$self->{log_error} = "inactivity timeout";
 				$self->{error} .= $r->maketext("Your session has timed out due to inactivity. Please log in again.");
 			}
 			return 0;
