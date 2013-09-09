@@ -1,6 +1,6 @@
 ### Course routes
 ##
-#  These are the routes for all /course URLs in the RESTful webservice
+#  These are the routes for all course related URLs in the RESTful webservice
 #
 ##
 
@@ -10,204 +10,259 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Routes qw/convertObjectToHash/;
-use WeBWorK::Utils qw(cryptPassword);
+use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
+use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
+###
+#
+#  list the names of all courses.  
+#
+#  returns an array of course names.
+#
+###
+ 
 
-prefix '/courses';
+get '/courses' => sub {
+
+	my @courses = listCourses(vars->{ce});
+
+	return \@courses;
+
+};
 
 ###
-#  return all users for course :course
 #
-#  User user_id must have at least permissions>=10
+#  Get the properties of the course *course_id*
 #
-##
+#  Permission >= Instructor
+#
+#  set checkCourseTables to 1 to check the course database and directory status
+#
+#  Returns properties of the course including the status of the course directory and databases.
+#
+###
 
-get '/:course/users' => sub {
 
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
+get '/courses/:course_id' => sub {
+
+
+
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		webwork_url         => vars->{ce}->{webwork_url},
+	 	webwork_dir         => vars->{ce}->{webwork_dir},
+	 	pg_dir              => vars->{ce}->{pg_dir},
+	 	webwork_htdocs_url  => vars->{ce}->{webwork_htdocs_url},
+	 	webwork_htdocs_dir  => vars->{ce}->{webwork_htdocs_dir},
+	 	webwork_courses_url => vars->{ce}->{webwork_courses_url},
+	 	webwork_courses_dir => vars->{ce}->{webwork_courses_dir},
+		courseName => params->{course_id},
+	});
+
+
+	my ($tables_ok,$dbStatus);
+    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
+    if (params->{checkCourseTables}){
+		($tables_ok,$dbStatus) = $CIchecker->checkCourseTables(params->{course_id});
 	}
+	
+	debug 'after checker';
+	debug $tables_ok;
+	debug $dbStatus;
+	
 
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
+	return {
+		coursePath => vars->{ce}->{webworkDirs}->{courses} . "/" . params->{course_id},
+		tables_ok => $tables_ok,
+		dbStatus => $dbStatus
 
-    my $ce = vars->{ce};
-    my $db = vars->{db};
+	};
 
 
-    my @allUsers = $db->getUsers($db->listUsers);
-    my %permissionsHash =  reverse %{$ce->{userRoles}};
-    foreach my $u (@allUsers)
-    {
-        my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
-        $u->{'permission'} = $PermissionLevel->{'permission'};
+};
 
-		my $studid= $u->{'student_id'};
-		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
-		
+###
+#
+#  create a new course
+#
+#  returns the properties of the course
+#
+###
+
+post '/courses/:new_course_id' => sub {
+
+
+    if (0+(session 'permission') <10) {
+        return {error=>"You don't have the necessary permission"};
     }
-    return Routes::convertArrayOfObjectsToHash(\@allUsers);
+
+    my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
+	my $courseDir = "$coursesDir/" . params->{new_course_id};
+
+	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
+
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		webwork_url         => vars->{ce}->{webwork_url},
+	 	webwork_dir         => vars->{ce}->{webwork_dir},
+	 	pg_dir              => vars->{ce}->{pg_dir},
+	 	webwork_htdocs_url  => vars->{ce}->{webwork_htdocs_url},
+	 	webwork_htdocs_dir  => vars->{ce}->{webwork_htdocs_dir},
+	 	webwork_courses_url => vars->{ce}->{webwork_courses_url},
+	 	webwork_courses_dir => vars->{ce}->{webwork_courses_dir},
+		courseName => params->{new_course_id},
+	});
+
+
+	# return an error if the course already exists
+
+	if (-e $courseDir) {
+		return {error=>"The course " . params->{new_course_id} . " already exists."};
+	}
+
+	# fail if the course ID contains invalid characters
+
+	return {error=> "Invalid characters in course ID: " . params->{new_course_id} . " (valid characters are [-A-Za-z0-9_])"}
+		unless params->{new_course_id} =~ m/^[-A-Za-z0-9_]*$/;
+
+	# create a new user to be added as an instructor
+
+	return {error=>"The parameter new_userID must be defined as an instructor ID for the course"} 
+		unless params->{new_userID};
+
+	my $instrFirstName = params->{new_user_firstName} ? params->{new_user_firstName} : "First";
+	my $instrLastName = params->{new_user_lastName} ? params->{new_user_lastName} : "Last";
+	my $instrEmail = params->{new_user_email} ? params->{new_user_email} : "email\@localhost";
+	my $add_initial_password = params->{initial_password} ? params->{initial_password} : params->{new_userID};
+
+	my @users = ();
+
+	my $User = vars->{db}->newUser(
+		user_id       => params->{new_userID},
+		first_name    => $instrFirstName,
+		last_name     => $instrLastName,
+		student_id    => params->{new_userID},
+		email_address => $instrEmail,
+		status        => "C",
+	);
+	my $Password = vars->{db}->newPassword(
+		user_id  => params->{new_userID},
+		password => cryptPassword($add_initial_password),
+	);
+	my $PermissionLevel = vars->{db}->newPermissionLevel(
+		user_id    => params->{new_userID},
+		permission => "10",
+	);
+	push @users, [ $User, $Password, $PermissionLevel ];
+
+	my %courseOptions = ( dbLayoutName => "sql_single" );
+
+	my $options = { courseID => params->{new_course_id}, ce=>$ce2, courseOptions=>\%courseOptions,
+					dbOptions=> params->{db_options}, users=>\@users};
+
+
+	my $addCourse = addCourse(%{$options});
+
+	return $addCourse;
+
 };
 
-get '/:course/sets' => sub {
+### update the course course_id
+###
+### currently just renames the course
 
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
+put '/courses/:course_id' => sub {
 
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
+    if (0+(session 'permission') <10) {
+        return {error=>"You don't have the necessary permission"};
+    }
 
-	my $db = vars->{db};
- 	my @globalSets = $db->getGlobalSets($db->listGlobalSets);
-  	foreach my $set (@globalSets){
-		my @users = $db->listSetUsers($set->{set_id});
-		$set->{assigned_users} = \@users;
-	}
+	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
 
-	return Routes::convertArrayOfObjectsToHash(\@globalSets);
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		webwork_url         => vars->{ce}->{webwork_url},
+	 	webwork_dir         => vars->{ce}->{webwork_dir},
+	 	pg_dir              => vars->{ce}->{pg_dir},
+	 	webwork_htdocs_url  => vars->{ce}->{webwork_htdocs_url},
+	 	webwork_htdocs_dir  => vars->{ce}->{webwork_htdocs_dir},
+	 	webwork_courses_url => vars->{ce}->{webwork_courses_url},
+	 	webwork_courses_dir => vars->{ce}->{webwork_courses_dir},
+		courseName => params->{new_course_id},
+	});
+
+	my %courseOptions = ( dbLayoutName => "sql_single" );
+
+
+	my $options = { courseID => params->{course_id}, newCourseID => params->{new_course_id},
+					ce=>$ce2, courseOptions=>\%courseOptions, skipDBRename=> params->{skipDBRename},
+					dbOptions=> params->{db_options}};
+
+
+	my $renameCourse = renameCourse(%{$options});
+
+	return $renameCourse;
 };
 
-##
-#
-#  Returns all users for course course_id and set set_id
-#
-#  return:  array of user_id's.
-##
 
+### delete the course course_id
 
-get '/:course_id/sets/:set_id/users' => sub {
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
+del '/courses/:course_id' => sub {
 
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
+    if (0+(session 'permission') <10) {
+        return {error=>"You don't have the necessary permission"};
+    }
 
-	my @sets = vars->{db}->listSetUsers(param('set_id'));
-	return \@sets;
+ #    my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
+	# my $courseDir = "$coursesDir/" . params->{course_id};
+
+	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
+
+	my $ce2 = new WeBWorK::CourseEnvironment({
+		webwork_url         => vars->{ce}->{webwork_url},
+	 	webwork_dir         => vars->{ce}->{webwork_dir},
+	 	pg_dir              => vars->{ce}->{pg_dir},
+	 	webwork_htdocs_url  => vars->{ce}->{webwork_htdocs_url},
+	 	webwork_htdocs_dir  => vars->{ce}->{webwork_htdocs_dir},
+	 	webwork_courses_url => vars->{ce}->{webwork_courses_url},
+	 	webwork_courses_dir => vars->{ce}->{webwork_courses_dir},
+		courseName => params->{course_id},
+	});
+
+	my %courseOptions = ( dbLayoutName => "sql_single" );
+
+	my $options = { courseID => params->{course_id}, ce=>$ce2, courseOptions=>\%courseOptions,
+					dbOptions=> params->{db_options}};
+
+	my $delCourse = deleteCourse(%{$options});
+
+	return $delCourse;
+
 };
+ 
+
 
 ###
 #
-#  create a new user user_id in course *course_id*
+#  list the names of all archived courses.  
+#
+#  returns an array of course names.
 #
 ###
+ 
 
+get '/courses/archives' => sub {
 
-post '/:course_id/users/:user_id' => sub {
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
+	my @courses = listArchivedCourses(vars->{ce});
 
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
-
-	debug("adding a new user with user_id: " . param('user_id'));
-
-
-	my $user = vars->{db}->getUser(param('user_id'));
-	return {error=>"The user with login " . param('user_id') . " already exists"} if $user;
-
-	my $new_student = vars->{db}->{user}->{record}->new();
-	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
-	$new_student->user_id(param('user_id'));
-	$new_student->first_name(param('first_name'));
-	$new_student->last_name(param('last_name'));
-	$new_student->status($enrolled);
-	$new_student->student_id(param('student_id'));
-	$new_student->email_address(param('email_address'));
-	$new_student->recitation(param('recitation'));
-	$new_student->section(param('section'));
-	$new_student->comment(param('comment'));
-	
-	# password record
-	my $cryptedpassword = "";
-	if (param('password')) {
-		$cryptedpassword = cryptPassword(param('password'));
-	}
-	elsif ($new_student->student_id()) {
-		$cryptedpassword = cryptPassword($new_student->student_id());
-	}
-	my $password = vars->{db}->newPassword(user_id => param('user_id'));
-	$password->password($cryptedpassword);
-	
-	# permission record
-	my $permission = param('permission') || "";
-	if (defined(vars->{ce}->{userRoles}{$permission})) {
-		$permission = vars->{ce}->newPermissionLevel(
-			user_id => param('user_id'), 
-			permission => vars->{ce}->{userRoles}{$permission});
-	}
-	else {
-		$permission = vars->{db}->newPermissionLevel(user_id => param('user_id'), 
-			permission => vars->{ce}->{userRoles}{student});
-	}
-
-	my @messages = ();
-	eval{ vars->{db}->addUser($new_student); };
-	if ($@) {
-		push(@messages,"Add user for " . param('user_id') . " failed!");
-	}
-	
-	eval { vars->{db}->addPassword($password); };
-	if ($@) {
-		push(@messages,"Add password for " . param('user_id') . " failed!");
-	}
-	
-	eval { vars->{db}->addPermissionLevel($permission); };
-	if ($@) {
-		push(@messages,"Add permission for " . param('user_id') . " failed!");
-	}
-
-	if (scalar(@messages)>0) {
-		return {error=>"Attempt to add user failed", message=>\@messages};
-	} else {
-		return Routes::convertObjectToHash($new_student);
-	}
+	return \@courses;
 };
 
 
 
-###
-#
-#  create a new user user_id in course *course_id*
-#
-###
+sub cryptPassword($) {
+	my ($clearPassword) = @_;
+	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
+	my $cryptPassword = crypt($clearPassword, $salt);
+	return $cryptPassword;
+}
 
 
-del '/:course_id/users/:user_id' => sub {
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
-
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
-
-	debug("Deleting user with user_id: " . param('user_id'));
-
-	# check to see if the user exists
-
-	my $user = vars->{db}->getUser(param('user_id')); # checked
-	return {error=>"Record for visible user " . param('user_id') . ' not found.'} unless $user;
-
-	if (param('user_id') eq param('user') )
-	{
-		return {error=>"You can't delete yourself from the course."};
-	} 
-
-	my $del = vars->{db}->deleteUser(param('user_id'));
-		
-	if($del) {
-		return {success=>"User with login " . param('user_id') . ' successfully deleted.'};
-	} else {
-		return {error=>"User with login " . param('user_id') . ' could not be deleted.'};
-	}
-
-};
 
 return 1;

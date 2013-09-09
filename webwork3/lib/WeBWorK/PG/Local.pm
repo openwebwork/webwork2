@@ -14,7 +14,7 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::PG::TestLocal;
+package WeBWorK::PG::Local;
 use base qw(WeBWorK::PG);
 
 =head1 NAME
@@ -41,6 +41,7 @@ use WeBWorK::Constants;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
+use WeBWorK::Debug;
 
 
 # Problem processing will time out after this number of seconds.
@@ -86,6 +87,8 @@ sub new_helper {
 		                     # translator, such as whether to show
 		                     # hints and the display mode to use
 	) = @_;
+
+	
 	
 	# write timing log entry
 # 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
@@ -116,7 +119,7 @@ sub new_helper {
 	
 	#warn "PG: evaluating modules and \"extra packages\"\n";
 	my @modules = @{ $ce->{pg}->{modules} };
-	push @modules, ["Apache::Log"];
+	#push @modules, ["Apache::Log"];
 
 
 	foreach my $module_packages_ref (@modules) {
@@ -164,7 +167,6 @@ sub new_helper {
 		$translationOptions,
 		{ #extras (this is kind of a hack, but not a serious one)
 			image_generator => $image_generator,
-			mailer => $mailer,
 		},
 	);
 	$translator->environment($envir);
@@ -257,19 +259,18 @@ sub new_helper {
 	    # from a file defined by the problem
 	    
 		# we  grab the sourceFilePath from the problem
-		$sourceFilePath = $problem->source_file;
-	    	
+		$sourceFilePath = $problem->{source_file};
+
 	    # the path to the source file is usually given relative to the 
 	    # the templates directory. Unless the path starts with / assume
 	    # that it is relative to the templates directory
 	    
-	    $sourceFilePath = $ce->{courseDirs}->{templates}."/"
-	    	         .$sourceFilePath unless ($sourceFilePath =~ /^\//);
+	    $sourceFilePath = $ce->{courseDirs}->{templates}. "/" .$sourceFilePath unless ($sourceFilePath =~ /^\//);
 	    #now grab the source
 		eval {$source = readFile($sourceFilePath) };
 		$readErrors = $@ if $@;
 	 }
-	 
+
 	############################################################################
     # put the source into the translator object
     ############################################################################
@@ -296,6 +297,8 @@ EOF
 		}, $class;
 	}
 	
+
+
 	############################################################################
 	# install a safety filter
 	# FIXME -- I believe that since MathObjects this is no longer operational
@@ -317,7 +320,8 @@ EOF
 	
 	#warn "PG: translating the PG source into text\n";
 	$translator->translate();
-	
+
+
 	############################################################################
 	# !!!!!!!! IMPORTANT: $envir shouldn't be trusted after problem code runs!
 	############################################################################
@@ -363,14 +367,10 @@ EOF
 		############################################################################
 		#warn "PG: installing a grader\n";
 		
-		my $grader = $translator->rh_flags->{PROBLEM_GRADER_TO_USE}
-			|| $ce->{pg}->{options}->{grader};
-		$grader = $translator->rf_std_problem_grader
-			if $grader eq "std_problem_grader";
-		$grader = $translator->rf_avg_problem_grader
-			if $grader eq "avg_problem_grader";
-		die "Problem grader $grader is not a CODE reference."
-			unless ref $grader eq "CODE";
+		my $grader = $translator->rh_flags->{PROBLEM_GRADER_TO_USE} || $ce->{pg}->{options}->{grader};
+		$grader = $translator->rf_std_problem_grader if $grader eq "std_problem_grader";
+		$grader = $translator->rf_avg_problem_grader if $grader eq "avg_problem_grader";
+		die "Problem grader $grader is not a CODE reference." unless ref $grader eq "CODE";
 		$translator->rf_problem_grader($grader);
 
         ############################################################################
@@ -405,15 +405,7 @@ EOF
 			body_text => $body_text_ref,
 		);
 	}
-	
-	############################################################################
-	# send any queued mail messages
-	############################################################################
-	
-	if ($mailer) {
-		$mailer->send_messages;
-	}
-	
+		
 	############################################################################
 	# end of cleanup phase
 	############################################################################
@@ -428,6 +420,8 @@ EOF
 	# the translation process. 
 	############################################################################
 	
+
+
 	return bless {
 		translator => $translator,
 		head_text  => ${ $translator->r_header },
@@ -442,6 +436,7 @@ EOF
 		pgcore     => $translator->{rh_pgcore},
 	}, $class;
 }
+
 
 1;
 

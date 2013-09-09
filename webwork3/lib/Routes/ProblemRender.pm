@@ -11,7 +11,7 @@ use warnings;
 use Dancer ':syntax';
 use Routes qw/convertObjectToHash/;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
-use WeBWorK::PG::TestLocal;
+use WeBWorK::PG::Local;
 
 
 prefix '/problems';
@@ -45,8 +45,15 @@ get '/:problem_id' => sub {
 	# remove any pretty garbage around the problem
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
+	
 	my $problem = fake_problem(vars->{db}, 'problem_seed'=>$problem_seed);
-	$problem->{value} = 1;
+	$problem->{value} = 0.5;
+	$problem->problem_id($problemNumber++);
+	$problem->source_file('test');
+	
+	#$problem->{source_file} = 'test';
+
+	
 
 
 	my $translationOptions = {
@@ -57,10 +64,8 @@ get '/:problem_id' => sub {
 		processAnswers  => 0,
 	};
 	
-	$problem->problem_id($problemNumber++);
-	$problem->source_file('');
 	
-	my $pg = WeBWorK::PG::TestLocal->new(
+	my $pg = WeBWorK::PG::Local->new(
 		vars->{ce},
 		$user,
 		$key,
@@ -74,15 +79,3 @@ get '/:problem_id' => sub {
 
 
 1;
-
-
-# vars->{ce},
-# 		$user,
-# 		$key,
-# 		$set,
-# 		$problem,
-# 		$psvn, #FIXME -- not used
-# 		$formFields, # in CGI::Vars format
-# 		$translationOptions, # hashref containing options for the
-# 		                     # translator, such as whether to show
-		                     # hints and the display mode to use

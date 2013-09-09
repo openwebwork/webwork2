@@ -5,14 +5,23 @@ use webwork3;
 use WeBWorK::DB;
 use WeBWorK::CourseEnvironment;
 use Routes::Course;
+use Routes::Library;
+use Routes::ProblemSets;
 use Routes::User;
 use Routes::ProblemRender;
+
 
 set serializer => 'JSON';
 
 hook 'before' => sub {
 
-	my @session_key = database->quick_select(param('course').'_key', { user_id => param('user') });
+    for my $key (keys(%{request->params})){
+    	my $value = defined(params->{$key}) ? params->{$key} : ''; 
+    	debug($key . " : " . $value);
+    }
+
+
+	my @session_key = database->quick_select(params->{course}.'_key', { user_id => params->{user} });
 
 	if ($session_key[0]->{key_not_a_keyword} eq param('session_key')) {
 		session 'logged_in' => true;
@@ -20,39 +29,15 @@ hook 'before' => sub {
 		debug "Wrong session_key";
 	}
 
-	debug localtime;
-
 	## need to check that the session hasn't expired. 
 
-	my @permission = database->quick_select(param('course').'_permission', {user_id => param('user')});
+	my @permission = database->quick_select(params->{course}.'_permission', { user_id => params->{user} });
 
 	session 'permission' => $permission[0]->{permission};
 
 	var ce => getCourseEnvironment(params->{course});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
-
-
 };
-
-
-
-post '/hello/:name' => sub {
-    # do something
- 
-    debug "in /hello/:name";
-    debug session 'logged_in';
-    debug session 'permission';
-
- 	my $out = {
- 		text =>    "Hello ".param('name'),
- 		other => param('user')
- 	};
-
-    return $out;
-
-};
-
-
 
 sub getCourseEnvironment {
 	my $courseID = shift;
