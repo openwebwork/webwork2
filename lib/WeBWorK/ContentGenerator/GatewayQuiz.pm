@@ -1015,7 +1015,7 @@ sub pre_header_initialize {
 	    default=> 1,
 	    script => 0,
 	    process => 0,
-	    comment => 0
+	    comment => 1
 	    );
 	foreach my $key (keys %$formFields) {
 	    if ($key =~ /AnSwEr/) {

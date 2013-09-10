@@ -139,7 +139,7 @@ sub initialize {
 			default=> 1,
 			script => 0,
 			process => 0,
-			comment => 0,
+			comment => 1,
 			allow => [ qw[ p br ] ]
 			);
 		    

@@ -661,8 +661,9 @@ sub pre_header_initialize {
 	    default=> 1,
 	    script => 0,
 	    process => 0,
-	    comment => 0
+	    comment => 1,
 	    );
+
 	foreach my $key (keys %$formFields) {
 	    if ($key =~ /AnSwEr/) {
 		$formFields->{$key} = $scrubber->scrub(		
@@ -1724,7 +1725,10 @@ sub output_JS{
 		print "<link href=\"$site_url/js/mathview/mathview.css\" rel=\"stylesheet\" />";
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
-		print CGI::end_script();	    
+		print CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.selection.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.caret.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
 	    } else {
