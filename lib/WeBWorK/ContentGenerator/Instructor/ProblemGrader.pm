@@ -138,7 +138,7 @@ sub initialize {
 			default=> 1,
 			script => 0,
 			process => 0,
-			comment => 0
+			comment => 1
 			);
 		    
 		    my $comment = $scrubber->scrub( ( defined $r->param("$userID.comment") )?$r->param("$userID.comment"):'' );
