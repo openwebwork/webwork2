@@ -1,7 +1,6 @@
 #!/usr/bin/env perl
 use Dancer;
 use Dancer::Plugin::Database;
-use webwork3;
 use WeBWorK::DB;
 use WeBWorK::CourseEnvironment;
 use Routes::Course;
@@ -32,6 +31,8 @@ hook 'before' => sub {
 	## need to check that the session hasn't expired. 
 
 	my @permission = database->quick_select(params->{course}.'_permission', { user_id => params->{user} });
+
+	debug \@permission;
 
 	session 'permission' => $permission[0]->{permission};
 

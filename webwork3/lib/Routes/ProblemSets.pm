@@ -63,6 +63,8 @@ get '/courses/:course_id/sets/:set_id' => sub {
 ####
 #  create a new problem set *set_id* for course *course_id*
 #
+#  any property can be set by assigning that property a value
+#
 #  returns the new problem set
 #
 #  permission > Student

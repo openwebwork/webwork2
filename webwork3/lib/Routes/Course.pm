@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Routes qw/convertObjectToHash/;
+use Dancer::Plugin::Database;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 ###
@@ -57,6 +58,12 @@ get '/courses/:course_id' => sub {
 		courseName => params->{course_id},
 	});
 
+	my $coursePath = vars->{ce}->{webworkDirs}->{courses} . "/" . params->{course_id};
+
+	if (! -e $coursePath) {
+		return {};
+	}
+
 
 	my ($tables_ok,$dbStatus);
     my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
@@ -64,13 +71,8 @@ get '/courses/:course_id' => sub {
 		($tables_ok,$dbStatus) = $CIchecker->checkCourseTables(params->{course_id});
 	}
 	
-	debug 'after checker';
-	debug $tables_ok;
-	debug $dbStatus;
-	
-
 	return {
-		coursePath => vars->{ce}->{webworkDirs}->{courses} . "/" . params->{course_id},
+		coursePath => $coursePath,
 		tables_ok => $tables_ok,
 		dbStatus => $dbStatus
 
@@ -82,6 +84,8 @@ get '/courses/:course_id' => sub {
 ###
 #
 #  create a new course
+#
+#  the parameter new_userID must be sent to be an instructor for the course. 
 #
 #  returns the properties of the course
 #
@@ -114,8 +118,27 @@ post '/courses/:new_course_id' => sub {
 	# return an error if the course already exists
 
 	if (-e $courseDir) {
-		return {error=>"The course " . params->{new_course_id} . " already exists."};
+		return {error=>"The course " . params->{new_course_id} . " directory already exists."};
 	}
+
+	# check if the databases exist
+
+	my $dbLayoutName = $ce2->{dbLayoutName};
+	my $db2 = new WeBWorK::DB($ce2->{dbLayouts}->{$dbLayoutName});
+
+	# for my $table (keys %$db2)
+	# {
+	# 	my $tableName = $db2->{$table};
+	# 	debug "$table : $tableName \n";
+	# } 
+
+	## what's a good way to tell if the database already exists?
+
+	 # if ($num_users > 0){
+	 #  	return {error=>"The databases for " . params->{new_course_id} . " already exists"};
+	 # }
+
+
 
 	# fail if the course ID contains invalid characters
 

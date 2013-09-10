@@ -4,6 +4,7 @@ use Furl;
 use strict;
 
 
+
     my $furl = Furl->new(
         agent   => 'MyGreatUA/2.0',
         timeout => 10,
@@ -26,76 +27,112 @@ my $user='profa';
 my $key='xJuvxYyETp5y8K1YxHsZX5lMFAfJYFad';
 my $course_id='maa101';
 
+my $params = {user=>$user, course=>$course_id,session_key=>$key};
+my ($res,$url);
+
+## test #1  
+
 # get all sets for the course
 
 
+if ("1" ~~ @ARGV){
 
+	print "Testing GET /courses  \n";
 
-print "Testing GET /courses  \n";
+	$url = $url_head . 'courses';
 
-my $url = $url_head . 'courses';
+	$res = $furl->request(method=>'GET',url=>$url,content=>$params);
 
-my $params = {user=>$user, course=>$course_id,session_key=>$key};
-my $res = $furl->request(method=>'GET',url=>$url,content=>$params);
-
-die $res->status_line unless $res->is_success;
-print $res->content;
-
-
-print "Testing GET /courses/:course_id without checking the course database\n";
-
-$url = $url_head . 'courses/maa101';
-
-$res = $furl->request(method=>'GET',url=>$url,content=>$params);
-
-die $res->status_line unless $res->is_success;
-print $res->content;
-
-
-print "Testing GET /courses/:course_id with checking the course database\n";
-
-$url = $url_head . 'courses/maa101';
-my $params2 = {%$params};
-$params2->{checkCourseTables}=1;
-
-$res = $furl->request(method=>'GET',url=>$url,content=>$params2);
-
-die $res->status_line unless $res->is_success;
-print $res->content;
-
-
-## check if the course test exists
-
-my $params3 = {%$params};
-$url = $url_head . 'courses/test';
-
-# for my $key (keys(%{$params3})){
-# 	my $value = $params3->{$key} if defined($params3->{$key});
-# 	print "$key : $value \n";
-# }
-
-$res = $furl->request(method=>'GET',url=>$url,content=>$params3);
-
-die $res->status_line unless $res->is_success;
-print $res->content;
-
-if (!{$res->content}) {  # delete the test course
-	$url = $url_head . 'courses/test';	
-	$res = $furl->request(method=>'DELETE',url=>$url,content=>$params3);
+	die $res->status_line unless $res->is_success;
+	print $res->content;
 
 }
 
+## test #2
+
+if ("2" ~~ @ARGV){
+
+	print "Testing GET /courses/:course_id without checking the course database\n";
+
+	$url = $url_head . 'courses/maa101';
+
+	$res = $furl->request(method=>'GET',url=>$url,content=>$params);
+
+	die $res->status_line unless $res->is_success;
+	print $res->content;
+
+}
+
+## test #3
+
+if ("3" ~~ @ARGV) {
+	print "Testing GET /courses/:course_id with checking the course database\n";
+
+	$url = $url_head . 'courses/maa101';
+	my $params2 = {%$params};
+	$params2->{checkCourseTables}=1;
+
+	$res = $furl->request(method=>'GET',url=>$url,content=>$params2);
+
+	die $res->status_line unless $res->is_success;
+	print $res->content;
+}
 
 
-# Create a new problem set called xyz123 with some standard values
+## test #4
 
-# SET=xyz123
+## check if the course test exists
 
-# echo "Testing POST /courses/$COURSE/sets/$SET"
+if ("4" ~~ @ARGV) {
 
-#OPEN_DATE='date -j -f "%a %b %d %T %Z %Y" "`date`" "+%s"'  # set it to right now
-# OPEN_DATE=1375075134
+	print "Seeing if the course \"test\" exists.\n ";
 
-# echo $OPEN_DATE
+	my $params3 = {%$params};
+	$url = $url_head . 'courses/test';
 
-# curl -X POST -d "user=$INSTR&course=$COURSE&session_key=$KEY&open_date=$OPEN_DATE" http://localhost/test/courses/$COURSE/sets/$SET
+	# for my $key (keys(%{$params3})){
+	# 	my $value = $params3->{$key} if defined($params3->{$key});
+	# 	print "$key : $value \n";
+	# }
+
+	$res = $furl->request(method=>'GET',url=>$url,content=>$params3);
+	die $res->status_line unless $res->is_success;
+	print $res->content;
+
+	if (!{$res->content}) {  # delete the test course
+
+		print "Deleting the course \"test\"\n";
+		$url = $url_head . 'courses/test';	
+		$res = $furl->request(method=>'DELETE',url=>$url,content=>$params3);
+		die $res->status_line unless $res->is_success;
+		print $res->content;
+
+
+	} else {
+		print "Creating the course \"test\" \n";
+		my $params4 = {%$params};
+		$params4->{new_userID} = "profa";
+		$url = $url_head . 'courses/test';
+		$res = $furl->request(method=>'POST',url=>$url,content=>$params4);
+		die $res->status_line unless $res->is_success;
+		print $res->content;
+
+	}
+
+}
+
+## test #5
+
+## delete the course "test"
+
+if ("5" ~~ @ARGV){
+	print "Deleting the course \"test\" \n";
+
+	my $params5 = {%$params};
+	$url = $url_head . 'courses/test';
+
+	$res = $furl->request(method=>'DELETE',url=>$url,content=>$params5);
+	die $res->status_line unless $res->is_success;
+	print $res->content;
+
+}
