@@ -2,6 +2,7 @@
 
 use Furl;
 use strict;
+use JSON;
 
 
 
@@ -140,6 +141,93 @@ if ("5" ~~ @ARGV){
 
 	die $res->status_line unless $res->is_success;
 	print $res->content;
+
+}
+
+## test #6
+
+# add a new problem to set xyz123
+
+if ("6" ~~ @ARGV){
+
+	my $routeName = "courses/maa101/sets/xyz123/problems/1234";
+
+	print "Testing POST /$routeName  \n";
+
+	$url = $url_head . "$routeName";
+
+	
+	$res = $furl->request(method=>'POST',url=>$url,content=>$params);
+
+	die $res->status_line unless $res->is_success;
+	print $res->content;	
+}
+
+## test #7
+
+# get all problems for set xyz123
+
+if ("7" ~~ @ARGV){
+
+	my $routeName = "courses/maa101/sets/xyz123/problems";
+
+	print "Testing GET /$routeName  \n";
+
+	$url = $url_head . "$routeName";
+
+	
+	$res = $furl->request(method=>'GET',url=>$url,content=>$params);
+
+	die $res->status_line unless $res->is_success;
+	print $res->content;	
+}
+
+## test #8
+
+# change the order of the problems
+
+if ("8" ~~ @ARGV) {
+	my $routeName = "courses/maa101/sets/xyz123/problems";
+
+	print "First we get all of the problems \n";
+	print "Testing GET /$routeName  \n";
+
+	$url = $url_head . "$routeName";
+	$res = $furl->request(method=>'GET',url=>$url,content=>$params);
+	die $res->status_line unless $res->is_success;
+
+	print $res->content;
+	my $problems = decode_json($res->content);
+
+	my @problemPaths = ();
+	my @problemIndices = ();
+
+
+
+	$problems->[0]->{problem_id} = 6;
+	$problems->[1]->{problem_id} = 4;
+
+	for my $prob (@$problems) {
+		print $prob->{source_file} . "\n";
+		push(@problemPaths,$prob->{source_file});
+		push(@problemIndices,$prob->{problem_id});
+	}
+
+	$routeName = "courses/maa101/sets/xyz123/order"; 
+	print "Then we send the problems back with a different order \n";
+	print "Testing PUT /$routeName  \n";
+
+	my $params8 = {%$params};
+
+	$params8->{problem_paths} = join(",",@problemPaths);
+	$params8->{problem_indices} = join(",",@problemIndices);
+
+	$url = $url_head . "$routeName";
+	$res = $furl->request(method=>'PUT',url=>$url,content=>$params8);
+	die $res->status_line unless $res->is_success;
+
+	print $res->content;
+
 
 }
 

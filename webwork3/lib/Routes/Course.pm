@@ -129,14 +129,18 @@ post '/courses/:new_course_id' => sub {
 	# for my $table (keys %$db2)
 	# {
 	# 	my $tableName = $db2->{$table};
-	# 	debug "$table : $tableName \n";
+	# 	my $database_table_exists = ($db2->{$table}->tableExists) ? 1:0;
+	# 	debug "$table : $database_table_exists \n";
 	# } 
 
 	## what's a good way to tell if the database already exists?
 
-	 # if ($num_users > 0){
-	 #  	return {error=>"The databases for " . params->{new_course_id} . " already exists"};
-	 # }
+	my $userTableExists = ($db2->{user}->tableExists) ? 1: 0;
+
+	if ($userTableExists){
+	  	return {error=>"The databases for " . params->{new_course_id} . " already exists"};
+	}
+	
 
 
 

@@ -85,39 +85,23 @@ if ("3" ~~ @ARGV) {
 
 if ("4" ~~ @ARGV) {
 
-	print "Seeing if the course \"test\" exists.\n ";
-
+	my $routeName = 'courses/test'
 	my $params3 = {%$params};
-	$url = $url_head . 'courses/test';
+	$url = $url_head . "$routeName";
 
 	# for my $key (keys(%{$params3})){
 	# 	my $value = $params3->{$key} if defined($params3->{$key});
 	# 	print "$key : $value \n";
 	# }
 
-	$res = $furl->request(method=>'GET',url=>$url,content=>$params3);
+	print "Creating the course \"test\" \n";
+	my $params4 = {%$params};
+	$params4->{new_userID} = "profa";
+	$url = $url_head . 'courses/test';
+	$res = $furl->request(method=>'POST',url=>$url,content=>$params4);
 	die $res->status_line unless $res->is_success;
 	print $res->content;
 
-	if (!{$res->content}) {  # delete the test course
-
-		print "Deleting the course \"test\"\n";
-		$url = $url_head . 'courses/test';	
-		$res = $furl->request(method=>'DELETE',url=>$url,content=>$params3);
-		die $res->status_line unless $res->is_success;
-		print $res->content;
-
-
-	} else {
-		print "Creating the course \"test\" \n";
-		my $params4 = {%$params};
-		$params4->{new_userID} = "profa";
-		$url = $url_head . 'courses/test';
-		$res = $furl->request(method=>'POST',url=>$url,content=>$params4);
-		die $res->status_line unless $res->is_success;
-		print $res->content;
-
-	}
 
 }
 

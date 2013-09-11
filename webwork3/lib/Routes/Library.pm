@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
+use Digest::MD5 qw(md5_hex);
 use Routes qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
@@ -91,13 +92,11 @@ get '/renderer/problems/:problem_id' => sub {
     	$showAnswers = 0; 
 
     } else {
-    	debug ("show_answers: " . param('show_answers'));
 		$showHints = defined(param('show_hints'))? param('show_hints') : 0;
 		$showSolutions = defined(param('show_solutions'))? param('show_solutions') : 0;
 		$showAnswers = defined(param('show_answers'))? param('show_answers') : 0;
     }
 
-    debug $showAnswers;
 
 	# remove any pretty garbage around the problem
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
@@ -137,6 +136,9 @@ get '/renderer/problems/:problem_id' => sub {
 			$problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
 		}
 	}
+
+	debug $problem->{source_file};
+	debug md5_hex($problem->{source_file});
 
 	# for my $key (keys(%{$problem})){
 	# 	my $value = '####UNDEF###';

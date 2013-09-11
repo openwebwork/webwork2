@@ -2,6 +2,10 @@
 
 
 package Routes;
+use base qw(Exporter);
+our @EXPORT    = ();
+our @EXPORT_OK = qw(convertObjectToHash convertArrayOfObjectsToHash);
+
 
 ##  This converts an array of objects to an array of Hashes
 
