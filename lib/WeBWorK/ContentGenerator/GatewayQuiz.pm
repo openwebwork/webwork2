@@ -1009,7 +1009,7 @@ sub pre_header_initialize {
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
-x	$self->{displayMode}    = $displayMode;
+	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
 	$self->{checkAnswers}   = $checkAnswers;
