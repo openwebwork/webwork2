@@ -27,6 +27,7 @@ use strict;
 use warnings;
 use Carp;
 use DBI;
+use WeBWorK::Debug;
 use File::Path qw(rmtree);
 use File::Spec;
 use String::ShellQuote;
@@ -148,12 +149,21 @@ templates directory will be copied to the new course.
 sub addCourse {
 	my (%options) = @_;
 	
+	for my $key (keys(%options)){
+		  	my $value = '####UNDEF###';
+		  	$value = $options{$key} if (defined($options{$key}));
+		  	debug("$key  : $value");
+		  }
+
+
 	my $courseID = $options{courseID};
 	my $ce = $options{ce};
 	my %courseOptions = %{ $options{courseOptions} };
 	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
 	my @users = exists $options{users} ? @{ $options{users} } : ();
 	
+	debug \@users;
+
 	# get the database layout out of the options hash
 	my $dbLayoutName = $courseOptions{dbLayoutName};
 	
