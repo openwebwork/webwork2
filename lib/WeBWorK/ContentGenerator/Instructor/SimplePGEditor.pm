@@ -2001,6 +2001,7 @@ sub head{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     	
     print "<link rel='stylesheet' type='text/css' href='$site_url/css/simple-pg-editor.css' > </style>";
+	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
 	print qq!<script data-main="$site_url/js/apps/PGEditor/SimpleEditor" src="$site_url/js/vendor/requirejs/require.js"></script>!;
 	return "";
 }

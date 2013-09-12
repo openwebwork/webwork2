@@ -14,8 +14,12 @@ define(['Backbone', 'underscore', 'ProblemList', 'config'], function(Backbone, _
         initialize:function () {
             var self = this;
             this.set({problems:new ProblemList()});
-    		this.get('problems').type = "Library Problems";
-            _.extend(this.get('problems').defaultRequestObject, {
+
+            this.webserviceURL = config.webserviceURL;
+            this.defaultRequestObject = {};
+            _.defaults(this.defaultRequestObject, config.requestObject);
+    
+            _.extend(this.defaultRequestObject, {
                 xml_command: "listLib",
                 command: "files",
                 maxdepth: 0,

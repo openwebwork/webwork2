@@ -2,26 +2,86 @@
     setting the "settings" field and providing it an array of WeBWorKProperty models. 
     */
 
-define(['Backbone', 
-    'underscore',
-    '../../lib/views/EditableCell','config'], 
+define(['Backbone', 'underscore','views/EditableCell','config'], 
 function(Backbone, _,EditableCell,config){
     var WWSettingsView = Backbone.View.extend({
 
         initialize: function () {
-            _.bindAll(this,'render');
+            _.bindAll(this,'render','saveSettings');
+            this.rowTemplate = $("#ww-setting-row-template").html();
         },
         render: function ()
         {
-            var self = this;
+            var self = this; 
+            var table = this.$(".settings-table tbody");
             _(this.settings).each(function(setting){
-                var settingView =new WWSettingRowView({property: setting}); 
-                self.$el.append(settingView.el);
+                // var settingView =new WWSettingRowView({property: setting}); 
+                var settingView =new NewSettingRowView({model: setting, rowTemplate: self.rowTemplate}); 
+                table.append(settingView.render().el);
             });
-
-            //this.$(".help-button").popover();
+        },
+        events: {"click .save-settings-button": "saveSettings"},
+        saveSettings: function () {
+            console.log(this.settings);
         }
 
+
+    });
+
+    /* The default display mode depends on the display mode and this is not working currently.  This will probably
+    * need to be hacked a bit. */
+
+
+
+    var NewSettingRowView = Backbone.View.extend({
+        tagName: "tr",
+        initialize: function () {
+            _.bindAll(this,'render');
+            this.rowTemplate = this.options.rowTemplate; 
+            this.bindings= { ".doc": { observe: 'doc', updateMethod: 'html'},
+                    ".doc2": {observe: "doc2", updateMethod: "html"}
+            };
+
+        },
+        /*  
+        * The HTML below should be put into a template.  
+        */ 
+        render: function () {
+            this.$el.html(this.rowTemplate);
+              switch(this.model.get("type")){
+                case "text":
+                case "number": 
+                    this.$(".col2").html("<input type='text' class='property'>");
+                    _.extend(this.bindings,{".property": "value"});
+                break;
+                case "checkboxlist": 
+                   this.$(".col2").html("<select multiple='true' class='property'></select>");
+                   this.theOptions = _(this.model.get('values')).map(function(opt){ return {label: opt, value: opt}});
+                   _.extend(this.bindings,{ ".property" : {observe: "value", selectOptions: { collection: "this.theOptions"}}});
+                break;
+                case "popuplist": 
+                    this.$(".col2").html("<select class='property'></select>");
+                    this.theOptions = _(this.model.get('values')).map(function(opt){ return {label: opt, value: opt}});
+                    _.extend(this.bindings,{ ".property" : {observe: "value", selectOptions: { collection: "this.theOptions"}}});
+                break;
+                case "boolean": 
+                 this.$(".col2").html("<select class='property'></select>");
+                 this.theOptions = [{label: "true", value: true}, {label: "false", value: false}];
+                    _.extend(this.bindings,{ ".property" : {observe: "value", selectOptions: { collection: "this.theOptions"}}});
+            }
+            this.stickit(this.model,this.bindings);
+            return this; 
+        },
+        events: {
+            "click .help-button": "openHelp",
+            "click .close": "closeHelp"
+        },
+        openHelp: function (evt){
+            $(evt.target).siblings(".help-hidden").css("display","block");
+        },
+        closeHelp: function (evt){
+            $(evt.target).parent().css("display","none");
+        },
 
     });
 

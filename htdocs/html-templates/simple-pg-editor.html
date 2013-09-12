@@ -5,6 +5,7 @@
       <li class="active"><a href="#editor-tab" data-toggle="tab">Problem Editor</a></li>
       <li><a href="#code-tab" data-toggle="tab">Problem Code</a></li>
       <li><a href="#viewer-tab" data-toggle="tab">Problem Viewer</a></li>
+      <li><a href="#settings-tab" data-toggle="tab">Editor Settings</a></li>
    </ul>
     
    <div class="tab-content">
@@ -59,6 +60,9 @@
                   <div class="controls">          
                      <button id="build-script" class="btn">Build Script</button>
                   </div>
+                  <div class="controls">
+                     <button id="testSave" class="btn">Save the File</button>
+                  </div>
                </div>
 
             </div>
@@ -66,10 +70,25 @@
          </div>
       </div>
       
-      <div class="tab-pane" id="viewer-tab"><p>Here&apos;s where the problem will appear.</p></div>
+      <div class="tab-pane" id="viewer-tab"><p>Here&apos;s where the problem will appear.</p>
+         <ul class='problemList no-bullets'>
+         </ul>
+      </div>
       <div class="tab-pane" id="code-tab"><h4>Code for the Problem</h4>
          <pre id="problem-code"></pre>
       </div> 
+      <div class="tab-pane" id="settings-tab">
+         <h4>Settings for the Editor</h4>
+         <table id="settings-table" class="table table-bordered">
+            <thead>
+               <tr>
+                  <th>Setting</th>
+                  <th>Value</th>
+               <tr>
+            </thead>
+            <tbody>
+         </table>
+      </div>
    </div>
 </div>
 
@@ -210,7 +229,7 @@ ENDDOCUMENT();
 
 <script id="string-option-pg-setup" type="text/template">
       Context("Numeric");
-      Context()->strings->add("<%=answer%>"=>{})
+      Context()->strings->add("<%=answer%>"=>{});
 
       $answer = Compute("<%=answer%>");
 
@@ -302,6 +321,31 @@ ENDDOCUMENT();
    </div>
 </script>
 
+<script id="interval-or-inequality-option-pg-setup" type="text/template">
+      <% if (allowInterval && !allowInequality) { print('Context("Interval");')
+      } else if (!allowInterval && allowInequality) { print('Context("Inequalities-Only");')
+      } else {print('Context("Inequalities");')} %>
+
+      $answer = Compute("<%=answer%>");
+</script>
+
+
+<script id="interval-or-inequality-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=problemStatement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp(<% (allowInterval && !allowInequality) ? print('"interval"') : print('"inequalities"')%>)\}\
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="interval-or-inequality-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
+<!-- The comma-separated list of values option -->
+
 <script id="comma-separated-list-option-template" type="text/template">
    <div class="control-group">
       <div class="controls">          
@@ -309,6 +353,29 @@ ENDDOCUMENT();
       </div>
    </div>
 </script>
+
+<script id="comma-separated-list-option-pg-setup" type="text/template">
+      Context("Numeric");
+
+      $answer = List("<%=answer%>");
+</script>
+
+
+<script id="comma-separated-list-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=problemStatement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}\
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="comma-separated-list-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
+<!-- The multiple choice option -->
 
 <script id="multiple-choice-option-template" type="text/template">
 <div class="control-group">
@@ -323,7 +390,7 @@ ENDDOCUMENT();
    </div>
    <div class="control-group">
       <div class="controls">          
-         <input id="LastChoice-input-input" class="answer-option" type="text" placeholder="Last Choice">
+         <input id="LastChoice-input" class="answer-option" type="text" placeholder="Last Choice">
       </div>
    </div>   
    <div class="control-group">
@@ -334,6 +401,30 @@ ENDDOCUMENT();
    </div>
 
 </script>
+
+
+<script id="multiple-choice-option-pg-setup" type="text/template">
+      $mc = new_multiple_choice();
+      $mc->qa("<%=problemStatement%>","<%=answer%>");
+      $mc->extra("<%=extraChoiceString%>");
+      <% if(lastChoiceOption) {print('$mc->makeLast("'+ lastChoice +'"); ')} %>
+</script>
+         
+<script id="multiple-choice-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   \{$mc->print_q()\}
+   $BR
+   \{$mc->print_a()\}
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="multiple-choice-option-pg-answer" type="text/template">
+   ANS(radio_cmp($mc->correct_ans()));
+</script>
+
+<!-- Other information -->
 
 <script type="text/template" id="author-info-template">
    <div class="control-group">Author Information</div>
@@ -383,4 +474,40 @@ ENDDOCUMENT();
 <script type="text/template" id="library-tree-template">
 <span class='library-tree-left'><span class='throbber'>Loading the Library...<img src='/webwork2_files/images/ajax-loader-small.gif'></span></span>
 <span class="library-tree-right"></span> 
+</script>
+
+
+<script type="text/template" id="problem-template">
+<div class="span4 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
+<div class="handle row-fluid">
+<%if(reorderable){%><div class="span1"><a class="reorder-handle btn btn-small" href="#"><i class="icon-resize-vertical icon-large"></i></a></div><%}%>
+<%if(draggable){%>
+  <div class="span1"> <a class="drag-handle btn btn-small" href="#"><i class="icon-move"></i></a></div>
+<%}%>
+<%if(showPoints){%>
+<div class="span3 form-">
+    <label class="control-label">Value: 
+      <input type="text" class="prob-value input-small"></label>
+  </div>
+<%}%>
+<div class="span4 btn-group">
+<%if(showAddTool){%><a class="btn btn-small add-problem" href="#"><i class="icon-plus-sign"></i></a><%}%>
+<%if(showEditTool){%><a class="btn btn-small" target="WW_editor" href="<%=editUrl%>"><i class="icon-pencil"></i></a><%}%>
+<%if(showRefreshTool){%><a href="#"  class="btn btn-small refresh-problem"><i class="icon-refresh"></i></a><%}%>    
+<%if(showViewTool){%><a class="btn btn-small" target="WW_view" href='<%=viewUrl%>'><i class="icon-eye-open"></i></a><%}%>    
+<%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link"><i class="icon-remove"></i></a><%}%>
+</div>
+<%if(deletable){ %><span class="span1 remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
+
+<%= data %>
+</script>
+
+<script type="text/template" id="setting-row-template">
+<td> <%= doc %> <button class='btn btn-small help-button' style='margin-left: 25px'>
+  <i class='icon-question-sign'></i></button>
+  <div class="help-hidden">
+  <button class="close">&times;</button>
+  <%=doc2%></div>
+
+  </td>
 </script>

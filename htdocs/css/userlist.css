@@ -40,5 +40,7 @@ div.inner {overflow-y: auto;  height: 400px;}
 
 table#sTable select {width: 150px;}
 
+.error {background-color: pink;}
+
 
 	    

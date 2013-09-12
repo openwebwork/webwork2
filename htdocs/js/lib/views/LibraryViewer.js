@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','LibraryList'], function(Backbone, _,LibraryList){
+define(['Backbone', 'underscore','models/LibraryList'], function(Backbone, _,LibraryList){
 	//,function(Backbone,_){
     var LibraryTreeView = Backbone.View.extend({
     	initialize: function (){

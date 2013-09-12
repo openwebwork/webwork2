@@ -1,4 +1,3 @@
-$WW_VERSION  ='development';
+$WW_VERSION  ='2.7';
 $WW_COPYRIGHT_YEARS = '1996-2013';
-
 1;

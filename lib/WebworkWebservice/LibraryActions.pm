@@ -17,13 +17,16 @@ use WeBWorK::Utils::ListingDB;
 use base qw(WebworkWebservice); 
 use WeBWorK::Debug;
 use JSON;
+use File::stat;
+use File::Find;	
+use File::Find::Rule;
 
 use strict;
 use sigtrap;
 use Carp;
 use WWSafe;
 #use Apache;
-use WeBWorK::Utils qw(readDirectory sortByName);
+use WeBWorK::Utils qw(readDirectory sortByName path_is_subdir);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::IO;
@@ -91,7 +94,7 @@ sub listLibraries {  # list the problem libraries that are available.
 	return $out;
 }
 
-use File::stat;
+
 sub readFile {
     my $self = shift;
 	my $rh   = shift;
@@ -115,7 +118,7 @@ sub readFile {
 		$out->{error} = "Could not find library:".$rh->{library_name}.":";
 		return($out);
 	}
-	warn "searching for file at $filePath";
+	
 	if (-r $filePath) {
 		open IN, "<$filePath";
 		local($/)=undef;
@@ -128,16 +131,14 @@ sub readFile {
 		$out->{modTime}=scalar localtime $sb->mtime;
 		close(IN);
 	} else {
-	    warn "Could not read file at |$filePath|";
 		$out->{error} = "Could not read file at |$filePath|";
 	}
 	return($out);
 }
 
-use File::Find;	
+
 #idea from http://www.perlmonks.org/index.pl?node=How%20to%20map%20a%20directory%20tree%20to%20a%20perl%20hash%20tree
 sub build_tree {
-    warn "entering build_tree with ",join(" ", @_);
     my $node = $_[0] = {};
     my @s;
     find({wanted=>sub {
@@ -153,16 +154,11 @@ sub build_tree {
 }
 
 sub listLib {
-	my $self = shift;
-	my $rh = shift;
+	my ($self,$params) = @_;
 	my $out = {};
-	if ($rh->{library_name}=~ m|^/|) {
-		warn "double slash in library_name ", $rh->{library_name};
-		$rh->{library_name} =~ s|^/||;
-	}
-	my $dirPath = $self->{ce}->{courseDirs}{templates}."/".$rh->{library_name};	
-	my $maxdepth= $rh->{maxdepth};
-	my $dirPath2 = $dirPath . ( ($rh->{dirPath}) ?  '/'.$rh->{dirPath}  : '' ) ;
+	my $dirPath = $self->{ce}->{courseDirs}{templates}."/".$params->{library_name};
+	my $maxdepth= $params->{maxdepth};
+	my $dirPath2 = $dirPath . ( ($params->{dirPath}) ?  '/'.$params->{dirPath}  : '' ) ;
 
 
 	my @tare = $dirPath2=~m|/|g; 
@@ -198,7 +194,7 @@ sub listLib {
 		}
 	};
 	 
-	my $command = $rh->{command};
+	my $command = $params->{command};
 
 	#warn "the command being executed is ' $command '";
 	$command = 'all' unless defined($command);
@@ -212,23 +208,17 @@ sub listLib {
 									return($out);
 		};
 		$command eq 'dirOnly' &&   do {
-									if ( -e $dirPath2 and $dirPath2 !~ m|//|) {
-									    # it turns out that when // occur in path -e will work
-									    # but find will not :-( 
-									    warn "begin find for $dirPath2";
+									if ( -e $dirPath2) {
 										find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath2);
 										#@outListLib = grep {/\S/} sort keys %libDirectoryList; #omit blanks
 										#foreach my $key (grep {/\S/} sort keys %libDirectoryList) {
 										#	push @outListLib, "$key"; # number of subnodes
 										#}
-										warn "find completed ";
-										warn "result: ", join(" ", %libDirectoryList);
 										delete $libDirectoryList{""};
 										$out->{ra_out} = \%libDirectoryList;
 										$out->{text} = encode_base64("Loaded libraries");
 										return($out);
 									} else {
-									   warn "Can't open directory  $dirPath2";
 									   $out->{error} = "Can't open directory  $dirPath2";
 									}
 		};
@@ -243,11 +233,9 @@ sub listLib {
 # 			};
 		$command eq 'buildtree' &&   do {
 									#find({wanted=>$wanted_directory,follow_fast=>1 }, $dirPath);
-									warn "using build_tree with dirPath $dirPath";
 									build_tree(my $tree, $dirPath);
 									#@outListLib = sort keys %libDirectoryList;
 									$out->{ra_out} = $tree;
-									warn "output of build_tree is ", %$tree;
 									$out->{text} = encode_base64("Loaded libraries");
 									return($out);
 		};
@@ -256,15 +244,14 @@ sub listLib {
 									 #my $separator = ($dirPath =~m|/$|) ?'' : '/';
 									 #my $dirPath2 = $dirPath . $separator . $rh->{dirPath};
 
-									 warn( "dirPath2 in files is: ", $dirPath2);
-									 if ( -e $dirPath2 and $dirPath2 !~ m|//| ) {
+									 debug($dirPath2);
+									 if ( -e $dirPath2) {
 										 find($wanted, $dirPath2);
 										 @outListLib = sort @outListLib;
 										 #$out ->{text} = encode_base64( join("", @outListLib ) );
 										 $out ->{text} = encode_base64( "Problems loaded" );
 										 $out->{ra_out} = \@outListLib;
 									 } else {
-									   warn "Can't open directory  $dirPath2 in listLib files";
 									   $out->{error} = "Can't open directory  $dirPath2";
 									 }
 									 return($out);
@@ -305,7 +292,7 @@ sub searchLib {    #API for searching the NPL database
 		$self->{library_subjects} = $rh->{library_subjects};
 		my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
 		$out->{ra_out} = \@chaps;
-        $out->{text} = encode_base64("Chapters loaded.");
+		$out->{text} = encode_base64("Chapters loaded.");
 
 		return($out);		
 	};
@@ -387,8 +374,7 @@ sub get_library_sets {
 
 sub getProblemDirectories {
 
-	my $self = shift;
-	my $rh = shift;
+	my ($self,$params) = @_;
 	my $out = {};
 	my $ce = $self->{ce};
 
@@ -412,6 +398,49 @@ sub getProblemDirectories {
     $out->{text} = encode_base64("Problem Directories loaded.");
 
 	return($out);
+}
+
+sub saveProblem {
+	my ($self,$params) = @_; 
+	my $ce = $self->{ce};
+
+	# the templates directory
+	my $filePath = $self->{ce}->{courseDirs}{templates} . "/" . $params->{'path'};
+	
+
+
+	debug($filePath);
+
+	my $writeFileErrors;
+
+	# let's just try to save any file.
+
+	# make sure any missing directories are created
+	WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},$filePath);
+	die "outputFilePath is unsafe!" unless path_is_subdir($filePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
+
+	my $code = $params->{pgCode};
+	debug('code: ' . $code);
+
+	eval {
+		local *OUTPUTFILE;
+		open OUTPUTFILE,  ">$filePath" or die "Failed to open $filePath";
+		print OUTPUTFILE $code;
+		close OUTPUTFILE;		
+	  # any errors are caught in the next block
+	};
+
+	$writeFileErrors = $@ if $@;
+
+	debug($writeFileErrors);
+
+	debug("Saving the problem");
+	my $out = {};
+	$out->{ra_out}->{msg} = "The Problem was saved.";	
+	$out->{ra_out}->{path} = $filePath;
+	$out->{text} = encode_base64("The Problem was saved.");	
+
+	return $out;
 }
 
 ##
@@ -445,6 +474,74 @@ sub buildBrowseTree {
 	return($out);
 }
 
+sub loadBrowseTree {
+	my ($self,$params) = @_; 
+	my $ce = $self->{ce};
+	my $out = {};
+	my $htdocsDir = $ce->{webworkDirs}->{htdocs};
+	my $file = "$htdocsDir/library-tree.json";
+
+	my $json_text = do {
+   		open(my $json_fh, "<:encoding(UTF-8)", $file)  or die("Can't open $file: $!\n Perhaps you need to rerun OPL-update");
+	    local $/;
+	    <$json_fh>
+	};
+
+	my $json = JSON->new;
+	my $data = $json->decode($json_text);
+
+	$out->{ra_out} = $data;
+	$out->{text} = encode_base64("Entire Browse Tree.");
+	return $out;
+}
+
+sub loadLocalLibraryTree {
+	my ($self,$params) = @_;
+	my $ce = $self->{ce};
+
+	my $templateDirectory = $ce->{courseDirs}->{templates};
+	my $courseDirectory = $ce->{webwork_courses_dir} . "/" . $ce->{courseName};
+
+	my $library = {}; 
+
+	# first, find all of the pg files in the templates directory and add their directories. 
+
+	my @pgFiles = File::Find::Rule->extras({follow=>0})->name('*.pg')->in($templateDirectory);
+	my @localDirs = ();
+	foreach my $file (@pgFiles) {
+		$file =~ s/^$templateDirectory(.*)\/\w+.pg$/LocalLibrary$1/;
+		#print "$file \n";
+		if ( ! grep( /^$file$/, @localDirs ) ) {
+				push(@localDirs, $file);
+		}
+	}
+
+	$library->{files} = \@localDirs;					
+
+	my $out = {};
+	$out->{ra_out} = $library;
+	$out->{text} = encode_base64("Problem Directories");
+
+
+
+	return $out;
+
+}
+
+sub getLocalProblems {
+	my ($self,$params) = @_;
+	my $ce = $self->{ce};
+
+	my $dir = $ce->{webwork_courses_dir} . "/" . $ce->{courseName} . "/" . $params->{library_name};
+	my @files = File::Find::Rule->name("*.pg")->in($dir);
+	my $out = {};
+
+	$out->{ra_out} = \@files;
+	$out->{text} = encode_base64("Successfully found files in directory " . $params->{library_name});
+	return $out;
+}
+
+
 sub getProblemTags {
 	my $self = shift;
 	my $rh = shift;
@@ -465,7 +562,7 @@ sub setProblemTags {
 	my $dbsubj = $rh->{library_subjects};
 	my $dbchap = $rh->{library_chapters};
 	my $dbsect = $rh->{library_sections};
-	my $level = $rh->{library_levels};
+	my $level = $rh->{library_level};
 	# result is [success, message] with success = 0 or 1
 	my $result = WeBWorK::Utils::ListingDB::setProblemTags($path, $dbsubj, $dbchap, $dbsect, $level);
 	my $out = {};

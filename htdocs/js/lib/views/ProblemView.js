@@ -1,4 +1,5 @@
-define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backbone, _,config){
+define(['Backbone', 'underscore','config','imagesloaded'
+    ], function(Backbone, _,config){
 	//##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
@@ -21,10 +22,12 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
             this.allAttrs = {};
             _.extend(this.allAttrs,this.options.viewAttrs,{type: this.options.type});
 
-            var thePath = this.model.get("path").split("templates/")[1];
+
+            // the variable thePath is not working correctly right now. 
+            var thePath = this.model.get("path"); // .split("templates/")[1];
             var probURL = "?effectiveUser=" + config.requestObject.user + "&editMode=SetMaker&displayMode=images&key=" 
                 + config.requestObject.session_key 
-                + "&sourceFilePath=" + thePath + "&user=" + config.requestObject.user + "&problemSeed=1234";
+                + "&sourceFilePath=" + thePath + "&user=" + config.requestObject.user + "&problemSeed=1234"; 
             _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
             this.model.on('change:data', this.render, this);
             this.model.on('destroy', this.remove, this);
@@ -38,16 +41,13 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
                 this.$el.css("background-color","lightgray");
                 this.$(".problem").css("opacity","0.5");
                 this.$(".prob-value").on("change",this.updateProblem);
-                this.model.collection.trigger("problemRendered",this.model.get("place"));
-                
-                // if images  mode is used
-                var dfd = this.$el.imagesLoaded();
-                dfd.done( function( $images ){
 
+                this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
                     self.$(".problem").removeAttr("style");
                     self.$(".loading").remove();
                 });
+
 
                 if (this.options.viewAttrs.draggable) {
                     this.$el.draggable({
@@ -61,18 +61,16 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
 
                 } 
 
-                if(this.model.get("displayMode")==="MathJax"){
-                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
-                }
+                this.el.id = this.model.cid;
+                this.$el.attr('data-path', this.model.get('path'));
+                this.$el.attr('data-source', this.allAttrs.type);
+                this.model.trigger("rendered",this.model);
                 
             } else {
-                this.$el.html("<img src='/webwork2_files/images/ajax-loader-small.gif' alt='loading'/>");
+                this.$el.html("<span style='font: italic 120%'>Loading Problem</span><i class='icon-spinner icon-spin icon-2x'></i>");
                 this.model.fetch();
             }
 
-            this.el.id = this.model.cid;
-            this.$el.attr('data-path', this.model.get('path'));
-            this.$el.attr('data-source', this.allAttrs.type);
 
             return this;
         },

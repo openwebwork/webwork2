@@ -8,7 +8,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
     var Problem = Backbone.Model.extend({
         defaults:{  path:"",
                 data: null,
-                place: 0,
+                problem_id: 0,
                 value: 1,
                 displayMode: "MathJax"
         },
@@ -21,6 +21,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             var self = this;
             var requestObject = {
                 problemSource: this.get('path'),
+                set: this.get("path"),  // not sure why the webservice needs this.  
                 xml_command: "renderProblem",
                 displayMode: this.get("displayMode"),
                 problemSeed: this.get("problemSeed")

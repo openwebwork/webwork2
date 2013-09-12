@@ -6,16 +6,20 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             student_id: "",
             user_id: "",
             email_address: "",
-            permission: {name: "student", value: 0}, //student
+            permission: 0, //student
             status: "C", //enrolled
             section: "",
             recitation: "",
             comment: "",
             userpassword: ""
         },
+        validation: { user_id: {pattern: "loginname"},
+                        email_address: {pattern: "email"}
+                    }, 
     
         initialize: function(){
-            this.on('change',this.update);
+            //this.on('change',this.update);
+            //this.on('change',function() {console.log(this.attributes)});
         },
     
         update: function(){
@@ -36,9 +40,6 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             {
                 this.oldAttributes[prop] = this.previous(prop);
             }
-
-            requestObject.permission = requestObject.permission.value;
-            console.log(requestObject.permission);
     
             $.post(config.webserviceURL, requestObject, function(data){
                 console.log(data);

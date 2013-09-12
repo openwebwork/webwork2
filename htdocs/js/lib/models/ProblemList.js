@@ -56,19 +56,16 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             }
             _.defaults(requestObject, config.requestObject);
             $.get(config.webserviceURL, requestObject,function (data) {
-                var response = $.parseJSON(data);
-                var problems = response.result_data;
                 console.log('Loading Problems');
-                console.log(response);
-    
-                var newProblems = new Array();
-                for (var i = 0; i < problems.length; i++) {
-                    if (problems[i] != "") {
-                        newProblems.push(new Problem({path:problems[i],place: i}));
-                    }
-                } 
-                console.log(self);
-                self.reset(newProblems);
+                switch(self.type){
+                    case "Library Problems":
+                    self.reset(_($.parseJSON(data).result_data).map(function(file) { return {path: file};}) );
+                    break;
+                    case "Problem Set":
+                    self.reset($.parseJSON(data).result_data);
+                    break;
+                }
+
                 self.trigger("fetchSuccess");
             });
 
@@ -131,7 +128,6 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         $.post(config.webserviceURL, requestObject, function (data) {
             var response = $.parseJSON(data);
             console.log(response);
-            self.trigger("reordered");
         });
     }
 

@@ -22,7 +22,8 @@
 <html lang="en-US">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap/docs/assets/css/bootstrap.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
@@ -34,10 +35,9 @@
     <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
          	<div class="container">
-         		<div class="dropdown span2" id="webwork_navigation" style="display: none">
-	                  <a href="#webwork_navigation" class="dropdown-toggle btn hidden" data-toggle="dropdown">Menu <b class="caret"></b>
+         		<div class="btn-group dropdown span2" id="webwork_navigation" style="display: none">
+	                  <a href="#webwork_navigation" class="dropdown-toggle btn" data-toggle="dropdown">Menu <b class="caret"></b>
 	                  	</a>
-			     		<!--<ul class="dropdown-menu" id="navigation-menu"> -->
                     <!--#if can="links"-->
                         <!--#links-->
                     <!--#endif-->
@@ -50,17 +50,18 @@
                      		<!--#options-->
                      	</ul>
                      <!--#endif-->
-	            	  <!-- </ul> -->
+
                   </div>
 		            
-	    		<div class="span4">
+	    		<div class="span3">
             		<ul class="breadcrumb"> 
 						<!--#path style="bootstrap" text="<span class='divider'>&#x2192;</span>"-->
 					</ul>
 				</div> 
-				<div class="span2"><!--#loginstatus--></div>
+
+				<div class="span3"><!--#loginstatus--></div>
 	    		<div class="span2"><button class="btn" id="help-link">Help</button>
-	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2-dev/issues/new">Bugs!</a>
+	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2/issues/new">Bugs!</a>
     			</div>
    				
 				            
@@ -98,7 +99,7 @@
 	<footer class="footer">
 	    <div class="row-fluid"><span class="span4">Page generated at <!--#timestamp--></span>
 	    <span class="span4">Styled using twitter bootstrap</span>
-	    <span id="copyright" class="span4 pull-right">WeBWorK &#169; 2000-2012 <a href="http://openwebwork.sf.net/">The WeBWorK Project</a></span>
+	    <span id="copyright" class="span4 pull-right">WeBWorK &#169; 2000-2013 <a href="http://github.com/openwebwork/webwork2/">The WeBWorK Project</a></span>
 	    </div>
         </div>
     </footer>

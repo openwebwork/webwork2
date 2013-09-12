@@ -1,18 +1,15 @@
 /**
-*  This view is the interface to the Library Tree and allows the user to easier navigate the Library. 
+*  This view is the interface to the Library Tree and allows the user to more easier navigate the Library. 
 *
 *  To use the LibraryTreeView the following parameters are needed:
-*  dispatcher:  A backbone Event dispatcher to send a event when a library is accessed.  // can be null
-*  orientation: either "pulldown" or "horiztonal" as two layouts of the library
+*  dispatcher:  A backbone Event dispatcher to send a event when a library is accessed.  
+*  orientation: either "pulldown" (which produces a tree view) "horiztonal" or "vertical" (with selects) 
 *  type:  the type of library needed which is passed to the Library Tree
 *  
 *
 */
 
-define(['Backbone', 
-    'underscore',
-    '../models/LibraryTree'], 
-function(Backbone, _,LibraryTree){
+define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
     	initialize: function (){
@@ -25,16 +22,18 @@ function(Backbone, _,LibraryTree){
 
     	},
     	render: function(){
-            this.$el.html(_.template($("#library-tree-template").html()));
+            console.log("in LibraryTreeView.render()");
+            this.$el.html($("#library-tree-template").html());
             if (!this.libraryTree.fetched) {
                 this.libraryTree.fetch();
             } else {
                 this.$(".throbber").remove();
-                //this.buildTreeView(this.libraryTree.tree,0);
                 this.$(".library-tree-left").html(_.template($("#library-dropdown-template").html(),{subjects: this.libraryTree.tree}));
+                //this.$(".dropdown-submenu a").truncate({width: 200});  // make sure the width of the library columns are too wide.
+                this.delegateEvents();
             }
     	},
-        events: { "click .library-tree-left a": "selectLibrary"},
+        events: {  "click .dropdown-submenu a": "selectLibrary"},
         selectLibrary: function(evt){
             var leaf = $(evt.target);
             if (leaf.text().trim() === "Library"){ return; }
