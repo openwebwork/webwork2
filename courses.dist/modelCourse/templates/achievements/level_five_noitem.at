@@ -9,16 +9,13 @@
 #  These variables are used to construct the users level progress bar
 
 #Constants:
-#Level 10 is the last level so dont set a threshhold to remove the progress bar
-my $newLevelThreshold = '';
+#Threshold for level 6
+my $newLevelThreshold = 750;
 
 #Code
-#Note:  The mysterious package item will print out the message contained in templates/achievements/surprise_message.txt
-#  This can be used to give students access to webpages with certificates/gifts/whatever.
 
 if ($achievementPoints >= $nextLevelPoints) {
     #set new threshold and return 1 
-    $globalData->{Surprise} = 1;
     $nextLevelPoints = $newLevelThreshold;
     return 1;
 } else {
