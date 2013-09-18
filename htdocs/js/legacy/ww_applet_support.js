@@ -50,7 +50,7 @@ function submitAction()  {    // called from the submit button defined in Proble
 	}
 	if (jsDebugMode==1) { debug_add("\n Done calling submitAction() on each applet.\n");}
 	if (jsDebugMode==1) {
-		alert("DebugText:\n"+debugText); debugText="";
+		console.log("DebugText:\n"+debugText); debugText="";
 	};
 }
 
@@ -76,6 +76,7 @@ function initializeWWquestion() {    // called from <body> tag defined in the we
 function applet_loaded(appletName,ready) {
 	debug_add("applet reporting that it has been loaded = " + ready );
 	ww_applet_list[appletName].reportsLoaded = ready; // 0 means not loaded
+	ww_applet_list[appletName].isReady = ready;
 }
 
 
@@ -390,7 +391,7 @@ ww_applet.prototype.setState = function(state) {
 // Nothing is returned from this subroutine.  There are only side-effects.
 //////////////////////////////////////////////////////////
     this.debug_add("Done setting state");
-    if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
+    if (this.debugMode>=2){console.log("DebugText:\n"+debugText); debugText="";}
 	return('');
 };
 	
@@ -486,7 +487,7 @@ ww_applet.prototype.submitAction = function () {
 	if (saved_state.match(/^<xml>restart_applet<\/xml>/) )  {
 		this.debug_add("Restarting the applet "+appletName);
 		setHTMLAppletStateToRestart(appletName);   // replace the saved state with <xml>restart_applet</xml>
-		if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
+		if (this.debugMode>=2){console.log("DebugText:\n"+debugText); debugText="";}
 		return('');      
 	}
 	this.debug_add("not restarting");
@@ -533,7 +534,7 @@ ww_applet.prototype.submitAction = function () {
       this.debug_add("just before submitting saved state looks like " + ww_preserve_applet_state.value);
 	
 
-	if (this.debugMode>=2){alert("DebugText:\n"+debugText); debugText="";}
+	if (this.debugMode>=2){console.log("DebugText:\n"+debugText); debugText="";}
 };
 
 
@@ -623,7 +624,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 	if ( applet_loaded==0 && (i> 0) ) { // wait until applet is loaded
 		this.debug_add("*Applet " + appletName + " is not yet ready try again\n");
 		if (this.debugMode>=2) {
-			alert("DebugText:\n"+debugText ); 
+			console.log("DebugText:\n"+debugText ); 
 			debugText="";
 		}
 		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
@@ -652,7 +653,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 		               +  " possible attempts remaining. \n" +
 		               "------------------------------\n");  
 		if (this.debugMode>=2) {
-			alert("DebugText:\n"+debugText ); 
+			console.log("DebugText:\n"+debugText ); 
 			debugText="";
 		}
 		// in-line handler -- configure and initialize
@@ -695,16 +696,13 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 				alert(msg);
 			}
 		}
-	// 	if (this.debugMode>=2) {
-// 			alert("\n*Begin debugmode\n " + debugText ); 
-// 			debugText="";
-// 		};
+
 	} else {
 	    alert("Error: applet "+ appletName + " has not been loaded");
 		this.debug_add("*Error: timed out waiting for applet " +appletName + " to load");
 		//alert("4 jsDebugMode " + jsDebugMode + " applet debugMode " +ww_applet.debugMode + " local debugMode " +debugMode);
 		if (this.debugMode>=2) {
-			alert(" in safe applet initialize: " + debugText ); 
+			console.log(" in safe applet initialize: " + debugText ); 
 			debugText="";
 		}
 	}
