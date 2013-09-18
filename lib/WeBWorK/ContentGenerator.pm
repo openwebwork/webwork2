@@ -57,6 +57,7 @@ use WeBWorK::Localize;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Scalar::Util qw(weaken);
+use HTML::Entities;
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -604,7 +605,7 @@ sub links {
 		
 		my $urlpath_args = $options{urlpath_args} || {};
 		my $systemlink_args = $options{systemlink_args} || {};
-		my $text = $options{text};
+		my $text = HTML::Entities::encode_entities($options{text});
 		my $active = $options{active};
 		my %target = ($options{target} ? (target => $options{target}) : ());
 		
@@ -934,11 +935,11 @@ sub loginstatus {
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 		
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1]. ", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 		} else {
-			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1]. ", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 			print CGI::br();
-			print $r->maketext("Acting as [_1]. ", $eUserID) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
+			print $r->maketext("Acting as [_1]. ", HTML::Entities::encode_entities($eUserID)) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
 		}
 	} else {
 		print $r->maketext("Not logged in.");
@@ -1732,7 +1733,7 @@ sub hidden_fields {
 # 		my @values = $r->param($param);
 # 		$html .= CGI::hidden($param, @values);  #MEG
 # 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
-		my $value  = $r->param($param);
+		my $value  = HTML::Entities::encode_entities($r->param($param));
 #		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
 
@@ -1999,7 +2000,7 @@ sub systemLink {
 			} else {
 				$url .= "&";
 			}
-			$url .= join "&", map { "$name=$_" } @values;
+			$url .= join "&", map { "$name=".HTML::Entities::encode_entities($_) } @values;
 		}
 	}
 	
