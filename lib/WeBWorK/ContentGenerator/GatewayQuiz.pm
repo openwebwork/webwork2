@@ -41,7 +41,6 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
 use PGrandom;
-use HTML::Scrubber;
 
 # template method
 sub templateName {
@@ -1010,27 +1009,6 @@ sub pre_header_initialize {
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
-	##### scrub answer fields for xss badness #####
-	my $scrubber = HTML::Scrubber->new(
-	    default=> 1,
-	    script => 0,
-	    process => 0,
-	    comment => 0
-	    );
-	foreach my $key (keys %$formFields) {
-	    if ($key =~ /AnSwEr/) {
-		$formFields->{$key} = $scrubber->scrub(		
-			(defined $formFields->{$key})? $formFields->{$key}:'' # using // would be more elegant but breaks perl 5.8.x
-		);
-		### HTML::scrubber is a little too enthusiastic about
-		### removing > and < so we have to add them back in otherwise
-		### they confuse pg
-		$formFields->{$key} =~ s/&lt;/</g;
-		$formFields->{$key} =~ s/&gt;/>/g;
-	    }
-	}
-	
-	
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
@@ -2399,6 +2377,9 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	# The Base64.js file, which handles base64 encoding and decoding
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
 	#This is for page specfific js
