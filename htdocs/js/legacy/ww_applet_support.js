@@ -542,13 +542,10 @@ ww_applet.prototype.submitAction = function () {
       this.debug_add("just before submitting saved state looks like " + ww_preserve_applet_state.value.substring(0,200));
 	
 
-
-	if (this.debugMode>=2){
-	   console.log("DebugText:\n"+debugText); debugText="";
-	   console.log("End of submitAction for " + appletName);
-	};
+	if (this.debugMode>=2){console.log("DebugText:\n"+debugText); debugText="";}
 
 
+}
 ww_applet.prototype.checkLoaded = function() {  // this function returns 0 unless:
 									  // applet has already been flagged as ready in applet_isReady_list
 									  // applet.config is defined  (or alias for .config)
