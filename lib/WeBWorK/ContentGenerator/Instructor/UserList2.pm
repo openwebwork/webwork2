@@ -156,12 +156,12 @@ use constant  FIELD_PROPERTIES => {
 	},
 	section => {
 		type => "text",
-		size => 4,
+		size => 3,
 		access => "readwrite",
 	},
 	recitation => {
 		type => "text",
-		size => 4,
+		size => 3,
 		access => "readwrite",
 	},
 	comment => {
@@ -173,6 +173,7 @@ use constant  FIELD_PROPERTIES => {
 # this really should be read from $r->ce, but that's not available here
 		type => "permission",
 		access => "readwrite",
+		size => 4,
 #		type => "number",
 #		size => 2,
 #		access => "readwrite",
@@ -1527,7 +1528,7 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "number" or $type eq "text") {
-		return WeBWorK::CGI_labeled_input(-type=>"text", -id=>$fieldName."_id", -label_text=>$r->maketext("Edit").":", -input_attr=>{name=>$fieldName, value=>$value, size=>$size});
+		return CGI::input({-type=>"text", -id=>$fieldName."_id", name=>$fieldName, value=>$value, size=>$size});
 	}
 		
 	if ($type eq "enumerable") {
@@ -1575,17 +1576,14 @@ sub fieldEditHTML {
 			}
 		}
 		
-		return WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>$fieldName."_id",
-			-label_text=>$r->maketext("Edit").":",
-			-input_attr=>{
-				name => $fieldName, 
-				values => \@values,
-				default => $value,
-				labels => \%labels,
-			}
-		),
+		return CGI::popup_menu({
+		    -id=>$fieldName."_id",
+		    -name => $fieldName, 
+		    -values => \@values,
+		    -default => $value,
+		    -labels => \%labels,
+				  }
+		    ),
 	}
 
 	if ($type eq "permission") {
@@ -1599,19 +1597,16 @@ sub fieldEditHTML {
 			$default = $val if ( $value eq $role );
 		}
 		
-		return WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>$fieldName."_id",
-			-label_text=>$r->maketext("Edit").":",
-			-input_attr=>{
-				-name => $fieldName,
-				-values => \@values,
-				-default => [$default], # force default of 0 to be a selector value (instead of 
-			                        # being considered as a null -- now works with CGI 3.42
-				#-default => $default,   # works with CGI 3.49 (but the above does not, go figure
-				-labels => \%labels,
-				-override => 1,    # force default value to be selected. (corrects bug on newer CGI
-			}
+		return CGI::popup_menu({
+		    -id=>$fieldName."_id",
+		    -name => $fieldName,
+		    -values => \@values,
+		    -default => [$default], # force default of 0 to be a selector value (instead of 
+		    # being considered as a null -- now works with CGI 3.42
+		    #-default => $default,   # works with CGI 3.49 (but the above does not, go figure
+		    -labels => \%labels,
+		    -override => 1,    # force default value to be selected. (corrects bug on newer CGI
+		    }
 		),
 	}
 }

@@ -731,9 +731,13 @@ sub use_item {
 
     return "There was an error accessing that problem." unless $problem;
 
-    #set status (grade) to .5 if that makes it larger. 
+    #Add .5 to grade with max of 1
 
-    $problem->status(.5) if ($problem->status < .5);
+    if ($problem->status < .5) {
+	$problem->status($problem->status + .5); 
+    } else {
+	$problem->status(1);
+    }
 
     $db->putUserProblem($problem);
 	
