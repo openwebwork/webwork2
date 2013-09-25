@@ -131,7 +131,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
         },
         addProblem: function (prob) {  
             var self = this; 
-            var newProblem = new Problem(prob.attributes)
+            var newProblem = new Problem(prob.attributes);
             if (this.problems) {
                 this.problems.add(newProblem);
                 newProblem.save();
@@ -160,7 +160,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
 
         },
         saveAssignedUsers: function(success){
-            $.ajax({url: "/test/courses/" + config.requestObject.courseID + "/sets/" + this.get("set_id") + "/users", 
+            $.ajax({url: "/test/courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") + "/users", 
                     data: JSON.stringify({assigned_users: this.get("assigned_users"), set_id: this.get("set_id")}),
                     success: success,
                     type: "PUT",

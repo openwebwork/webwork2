@@ -44,6 +44,12 @@ var ClasslistManager = WebPage.extend({
 	    	self.messages.splice(index,1);
 	    	self.announce.addMessage({text: "The property " + msg.property + " of user " + model.get("user_id") + 
 	    		" changed from " + msg.oldValue + " to " + msg.newValue});
+
+	    	var rowIndex = _(self.editgrid.grid.data).indexOf(_(self.editgrid.grid.data)
+				    						.find(function(row) { return row.columns[2]===model.get("user_id");}));
+	    	$("#users-table tbody tr:nth-child(" + (rowIndex+1) + ") td").css("background-color","transparent"); 
+
+
 	    });	   
 
 	    	    
@@ -68,12 +74,26 @@ var ClasslistManager = WebPage.extend({
 	    	model.bind('validated:invalid', function(_model, errors) {
 			    console.log("running invalid");
 			    console.log(errors);
-			    console.log(_model);
+			    
 			    _(_.keys(errors)).each(function(key){
 				    self.errorPane.addMessage({text: errors[key]});
+				    var columnIndex = _(self.editgrid.grid.columns).indexOf(_(self.editgrid.grid.columns)
+				    						.findWhere({name: key}));
+				    var rowIndex = _(self.editgrid.grid.data).indexOf(_(self.editgrid.grid.data)
+				    						.find(function(row) { return row.columns[2]===_model.get("user_id");}));
+				    $("#users-table tbody tr:nth-child(" + (rowIndex+1) + ") td:nth-child(" + (columnIndex+1) + ")")
+				    	.css("background-color","rgba(255,0,0,0.25");
 				});
 	        });
 	    }); 
+
+	    // this is needed for the handshaking of session information between the old and new
+	    // webservice
+
+	    $.get("/test/login?user=" + config.courseSettings.user+"&session_key="+config.courseSettings.session_key
+	    	+"&course="+config.courseSettings.courseID ,function(response){
+	    	console.log(response);
+	    });
 
     },
 

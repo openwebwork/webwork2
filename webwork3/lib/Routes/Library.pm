@@ -535,7 +535,7 @@ sub getFilePaths {
 
 	for my $file (@$allfiles){
 		my $path_header = database->quick_select('OPL_path',{path_id=>$file->{path_id}});
-		push(@problems,{path=>"Library/" . $path_header->{path} . "/" . $file->{filename}});
+		push(@problems,{source_file=>"Library/" . $path_header->{path} . "/" . $file->{filename}});
 	}
 
 	return \@problems;

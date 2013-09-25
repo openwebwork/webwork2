@@ -3,7 +3,7 @@
   
 */
 define(['module','Backbone', 'underscore','views/WebPage','models/Problem','views/ProblemView','models/UserProblemList',
-        'bootstrap'],
+        'bootstrap','imagesloaded'],
 function(module, Backbone, _, WebPage,Problem,ProblemView,UserProblemList){
 var ProblemViewer = WebPage.extend({
 

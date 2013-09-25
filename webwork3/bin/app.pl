@@ -22,22 +22,20 @@ hook 'before' => sub {
     	debug($key . " : " . $value);
     }
 
-    # debug "Checking if session->{user} is defined";
-    # debug session->{user};
+    debug "Checking if session->{user} is defined";
+    debug session->{user};
 	    
 
     if (! defined(session->{user})) {
-	    if (! defined(session->{user})){
-	    	if (! params->{user}){
-				session->{error} = "The user is not defined.  You may need to log in again.";
-				return;
-			}
+    	if (! params->{user}){
+			session->{error} = "The user is not defined.  You may need to log in again.";
+			return;
+		}
 	    	session->{user} = params->{user};
-		} 	
 	}
 
-	# debug "Checking if session->{course} is defined";
-	# debug session->{course};
+	debug "Checking if session->{course} is defined";
+	debug session->{course};
 
 	if (! defined(session->{course})) {
 		if (! defined(params->{course})){
@@ -47,8 +45,8 @@ hook 'before' => sub {
 		session->{course} = params->{course};
 	}
 
-	# debug "Checking if session->{session_key} is defined";
-	# debug session->{session_key};
+	debug "Checking if session->{session_key} is defined";
+	debug session->{session_key};
 
 	if (! defined(session->{session_key})){
 		
@@ -75,6 +73,16 @@ hook 'before' => sub {
 	
 	var ce => getCourseEnvironment(session->{course});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
+};
+
+## right now, this is to help handshaking between the original webservice and dancer.  
+## it does nothing except sets the session using the hook 'before' above. 
+
+get '/login' => sub {
+
+	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+	
+	return "If you get this message all should have worked";
 };
 
 get '/app-info' => sub {

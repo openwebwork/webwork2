@@ -44,7 +44,7 @@ var require = {
         //'eventie' : {exports :'Eventie'},
         //'eventEmitter': {exports: 'EventEmitter'},
         //'jquery-tablesorter': ['jquery'],
-        //'imagesloaded': ['jquery','eventie','eventEmitter']
+        'imagesloaded': ['jquery']
         
     }
 };

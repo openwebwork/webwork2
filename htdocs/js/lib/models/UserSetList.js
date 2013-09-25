@@ -6,11 +6,11 @@ define(['Backbone', 'underscore','./UserSet','config','moment'], function(Backbo
             console.log("in UserSetList initialize");
         },
         url: function () {
-            return "/test/courses/" + config.requestObject.courseID + "/sets/" + this.problemSet.get("set_id") + 
+            return "/test/courses/" + config.courseSettings.courseID + "/sets/" + this.problemSet.get("set_id") + 
             '/users';
         },
         parse: function(response){
-            config.checkForErrors(response);
+            config.checkForError(response);
             return response;
         }
     });

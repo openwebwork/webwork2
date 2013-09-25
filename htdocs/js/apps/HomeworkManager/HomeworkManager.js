@@ -65,6 +65,15 @@ var HomeworkEditorView = WebPage.extend({
 
         this.updateProblemSetList();
         this.updateCalendar();
+
+        // this is needed for the handshaking of session information between the old and new
+        // webservice
+
+        $.get("/test/login?user=" + config.courseSettings.user+"&session_key="+config.courseSettings.session_key
+            +"&course="+config.courseSettings.courseID ,function(response){
+            console.log(response);
+        });
+
             
     },
     setMessages: function (){
