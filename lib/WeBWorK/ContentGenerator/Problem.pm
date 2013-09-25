@@ -1705,7 +1705,6 @@ sub output_JS{
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
 	    } else {
 		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");

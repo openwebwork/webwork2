@@ -5,5 +5,7 @@ function initWW(){
 		initializeWWquestion();
 	}
 }
+console.log("addOnLoadEvent intWW at line 8 of java_init.js");
 
+// this addOnLoad event is in ww_applet_support.js line 740.
 addOnLoadEvent(initWW);
