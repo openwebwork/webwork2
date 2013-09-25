@@ -1704,9 +1704,6 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.selection.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
-print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.caret.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
 	    } else {
