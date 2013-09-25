@@ -136,6 +136,10 @@ h1.page-title {
 	clear: both;
 }
 
+.Warnings code {
+    	white-space: normal;
+}
+
 /* Question nav section */
 .problem-nav {
 	margin-bottom:1ex;

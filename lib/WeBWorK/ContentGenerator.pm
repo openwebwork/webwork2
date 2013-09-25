@@ -58,6 +58,7 @@ use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Scalar::Util qw(weaken);
 use HTML::Entities;
+use HTML::Scrubber;
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -364,6 +365,12 @@ Must be called before the message() template escape is invoked.
 
 sub addmessage {
 	my ($self, $message) = @_;
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$message = $scrubber->scrub($message);
 	$self->{status_message} .= $message;
 }
 
@@ -1147,7 +1154,7 @@ sub warnings {
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
-	print $self->warningOutput($warnings) if $warnings;
+	print $self->warningOutput(HTML::Entities::encode_entities($warnings)) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
 	
 	return "";
