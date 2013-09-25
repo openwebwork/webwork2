@@ -3,7 +3,8 @@
  * of problems.  More specifially, it also contains a Problem List of type "Problem Set".  
  *
  * */
-define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Backbone, _, config,moment,ProblemList){
+define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'], 
+        function(Backbone, _, config,moment,ProblemList,Problem){
 
 
     var ProblemSet = Backbone.Model.extend({
@@ -35,7 +36,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             assigned_users: []
         },
         validation: {
-            open_date: {
+           /* open_date: {
                 pattern: "wwdate",
                 msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
             },
@@ -46,8 +47,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             answer_date: {
                 pattern: "wwdate",
                 msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            set_id: {pattern: "setname"}
+            }, */
+            set_id: {pattern: "setname", msg: "A name must only contain letters, numbers, _ and ."}
         },
         descriptions:  {
             set_id: "Homework Set Name",
@@ -102,9 +103,17 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             restricted_login_proctor: "opt(yes,no)",
         },
         initialize: function(){
-            _.bindAll(this,"fetch","addProblem","update");
+            _.bindAll(this,"addProblem");
             this.problems = null;
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
+        },
+        url: function () {
+            return "/test/courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") ;
+        },
+        parse: function (response) {
+            config.checkForError(response);
+            this.id = this.get("set_id");
+            return response;
         },
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
                                                 // as a moment object and defined settings.
@@ -122,66 +131,41 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
         },
         addProblem: function (prob) {  
             var self = this; 
+            var newProblem = new Problem(prob.attributes)
             if (this.problems) {
-                this.problems.addProblem(prob);
+                this.problems.add(newProblem);
+                newProblem.save();
             }  else {  // the problems haven't loaded.
                 console.log("Problem Set " + this.get("set_id") + " not loaded. ");
                 console.log(prob);
-                this.saveProblems.push(prob);
+                this.saveProblems.push(newProblem);
                 this.problems = new ProblemList({setName: self.get("set_id"),   type: "Problem Set"});
-                this.problems.on("fetchSuccess",function () {
-                    _(self.saveProblems).each(function (_prob) {
-                        self.problems.addProblem(_prob);
-                    });
-                    this.saveProblems = new Array(); 
-                });
+                this.problems.fetch({success: function () {
+                    self.problems.add(self.saveProblems);
+                    _(self.saveProblems).each(function(_prob){  _prob.save(); });
+                    self.saveProblems = []; 
+                } });
             }
         },
         setDate: function(attr,_date){
             var currentDate = moment.unix(this.get(attr))
                 , newDate = moment.unix(_date);
 
+            this.changedAttributes = [{attribute: attr, old_value: currentDate.format("MM/DD/YYYY [at] h:mmA"), 
+                                    new_value: newDate.format("MM/DD/YYYY [at] h:mmA")}];
             currentDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
             this.set(attr,currentDate.unix());
             console.log("the date was set for " + this.get("set_id"));
             return this;
 
         },
-        update: function(){
-            
-            console.log("in ProblemSet update");
-            var self = this;
-            var requestObject = {
-                "xml_command": 'updateSetProperties'
-            };
-            _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, config.requestObject);
-
-            requestObject.assigned_users = requestObject.assigned_users.join(",");
-
-            $.post(config.webserviceURL, requestObject, function(data){
-                var response = $.parseJSON(data);
-                console.log("saved the ProblemSet");
-      	        self.trigger("saved",self);
-            });
-        },
-        fetch: function()  // this fetches the problems for the ProblemSet.  
-        {
-            var self=this;
-            var requestObject = { xml_command: "getSet"};
-            _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, config.requestObject);
-
-            $.get(config.webserviceURL, requestObject, function (data) {
-                    console.log("fetching problem set " + self.get("set_id"));
-                    var response = $.parseJSON(data);
-                    self.problems = new ProblemList({setName: self.get("set_id"), type: "Problem Set"}); 
-                    console.log(self.problems);
-
-                    self.problems.on("deleteProblem",function(place) {
-                        self.trigger("deleteProblem",self.get("set_id"),place);
-                    })      
-                });       
+        saveAssignedUsers: function(success){
+            $.ajax({url: "/test/courses/" + config.requestObject.courseID + "/sets/" + this.get("set_id") + "/users", 
+                    data: JSON.stringify({assigned_users: this.get("assigned_users"), set_id: this.get("set_id")}),
+                    success: success,
+                    type: "PUT",
+                    processData: false,
+                    contentType: "application/json"});
         }
     });
      

@@ -52,16 +52,24 @@ define(['Backbone', 'underscore','views/Closeable','models/User','models/UserLis
 		},
 		importStudents: function(){  // validate each student data then if successful upload to the server.
 		    var self = this;
-
-		    //this.errorPane.setHTML("");
-		    
 		    var usersValid = _(this.tableRows).map(function(row){ return row.isValid();});
 		    
 		    console.log(usersValid);
 		    
 		    if (_.all(usersValid, _.identity)) { 
 		    	this.closeDialog();
-		    	this.collection.each(function(_user) {self.courseUsers.add(_user);});
+		    	this.collection.each(function(_user) {
+		    		_user.save(
+		    			{ error: function(model, xhr, options){ 
+		    				console.log(model);
+		    				console.log(xhr);
+		    				console.log(options);}, 
+		    			success: function(model, response, options){
+	    					console.log(model);
+		    				console.log(response);
+		    				console.log(options);
+		    				}});
+		    		self.courseUsers.add(_user);});
 		    }
 		},
 		addStudent: function (){ 

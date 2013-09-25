@@ -14,13 +14,12 @@ var require = {
         "stickit":              "/webwork2_files/js/components/backbone.stickit/backbone.stickit",
         "imagesloaded":         "/webwork2_files/js/components/imagesloaded/imagesloaded",
         "jquery-truncate":      "/webwork2_files/js/components/jquery-truncate/jquery.truncate",
-        "editablegrid":         "/webwork2_files/js/components/editablegrid/editablegrid-2.0.1/editablegrid-2.0.1",
+        "editablegrid":         "/webwork2_files/js/components/editablegrid/editablegrid-2.0.1",
         "blob":                 "/webwork2_files/js/components/blob/Blob",
-        "blob-builder":         "/webwork2_files/js/components/blob/BlobBuilder",
         "file-saver":           "/webwork2_files/js/components/file-saver/FileSaver",
         "eventie":              "/webwork2_files/js/components/eventie",
         "eventEmitter":         "/webwork2_files/js/components/eventEmitter",
-
+        
         "views":                "/webwork2_files/js/lib/views",
         "models":               "/webwork2_files/js/lib/models",
         "apps":                 "/webwork2_files/js/apps",
@@ -42,10 +41,17 @@ var require = {
         'jquery-truncate': ['jquery'],
         'editablegrid': {deps: ['jquery'], exports: 'EditableGrid'},
         'blob': {exports : 'Blob'},
-        'blob-builder': {exports: 'BlobBuilder'},
+        //'eventie' : {exports :'Eventie'},
+        //'eventEmitter': {exports: 'EventEmitter'},
         //'jquery-tablesorter': ['jquery'],
-        //'eventie' : {exports :'eventie'},
-        //'eventEmitter': {exports: 'eventEmitter'},
-        //'imagesloaded': { deps: ['eventie','eventEmitter'], exports: 'imagesloaded'}
+        //'imagesloaded': ['jquery','eventie','eventEmitter']
+        
     }
 };
+
+
+
+
+//'eventie' : {exports :'eventie'},
+        //'eventEmitter': {exports: 'eventEmitter'},
+        //'

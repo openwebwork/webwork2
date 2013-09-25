@@ -17,6 +17,17 @@ warnings: 1
 # should Dancer show a stacktrace when an error is caught?
 show_errors: 1
 
+# use the simple session
+session: "Simple"
+
+# templating parameters
+
+template: template_toolkit
+engines:
+    template_toolkit:
+        start_tag: "[%"
+        stop_tag: "%]"
+
 # auto_reload is a development and experimental feature
 # you should enable it by yourself if you want it
 # Module::Refresh is needed 

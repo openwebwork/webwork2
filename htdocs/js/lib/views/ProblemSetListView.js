@@ -100,7 +100,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             this.model = new ProblemSet();
 
 
-            _.extend(this.options, {template: $("#add-hw-set-template").html(), templateOptions: {name: config.requestObject},
+            _.extend(this.options, {template: $("#add-hw-set-template").html(), 
+                templateOptions: {name: config.requestObject.user},
                 buttons: {text: "Add New Set", click: this.addNewSet}});
             this.constructor.__super__.initialize.apply(this); 
 
@@ -122,6 +123,18 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             return this;
         },
         bindings: {".problem-set-name": "set_id"},
+        events: {"keyup .problem-set-name": "validateName"},
+        validateName: function(ev){
+            // this.model.preValidate("set_id"),$(ev.target).val())
+            var errorMsg = this.model.preValidate("set_id",$(ev.target).val());
+            if(errorMsg){
+                this.$(".problem-set-name").css("background","rgba(255,0,0,0.5)");
+                this.$(".problem-set-name-error").html(errorMsg);
+            } else {
+                this.$(".problem-set-name").css("background","none");
+                this.$(".problem-set-name-error").html("");
+            }
+        },
         addNewSet: function() {
             // need to validate here. 
             /*  
@@ -145,13 +158,14 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             _.bindAll(this,"render","deleteSets");
 
             //var TempModel = new Backbone.Model.extend({defaults: {"deletedSets": ""}});
-            var DeletedSets = Backbone.Model.extend({
+             var DeletedSets = Backbone.Model.extend({
               defaults: {
                 "deletedSets": []
               }
             });
 
             this.model = new DeletedSets();
+
             this.allSets = this.options.problemSets; 
 
             _.extend(this.options, {template: $("#delete-hw-set-template").html(), title: "Select Sets to Delete",
@@ -161,6 +175,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 
 
         },
+
+        // this doesn't look necessary.  Is it? 
         render: function () {
             this.constructor.__super__.render.apply(this); 
 
@@ -170,11 +186,13 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             var self = this;
             console.log("deleting sets");
             console.log(this.model.attributes);
+
+            // Why do this?  can't we just delete the selected sets from the this.allSets ?
             var setsToDelete = [];
             _(this.model.get("deletedSets")).each(function(set_name){
-                setsToDelete = _(setsToDelete).union(self.allSets.where({set_id: set_name}));
+                setsToDelete = _(setsToDelete).union(self.allSets.findWhere({set_id: set_name}).cid);
             });
-
+            console.log(setsToDelete);
             this.allSets.remove(setsToDelete);
             this.close();
         }, 

@@ -117,6 +117,7 @@
     <td>Homework Set Name:</td>
     <td><input type='text' size='20' class='problem-set-name'></td>
     </tr>
+    <tr><td  colspan="2" class="problem-set-name-error" style="color: red"></td></tr>
     </table>
     </div>
 
@@ -193,7 +194,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <tr>
 <th>Select</th><th>Student (login name)</th><th>Open Date</th><th>Due date</th><th>Answer Date</th></tr>
 <tbody>
-<tr><td colspan="5">Loading User Information...<img src='/webwork2_files/images/ajax-loader-small.gif'></td><th>
+<tr><td colspan="5">Loading User Information...<i class="icon-spinner icon-spin"></i></td><th>
 
 </tbody>
 </table>
@@ -255,7 +256,7 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <script type="text/template" id="calendar-date-bar">
 <div class="<%= classes %>" data-setname="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Visible To Students: <% if(visibleToStudents==1){ print('yes'); } else { print('no');}%>">
- <span class="assign-calendar-name"><%if(showName){%><%=setname %><%}%></span><span class="assign-info"><i class="icon-info-sign"></i></span></div>
+ <span class="assign-calendar-name"><%if(showName){%><%=setname %><%}%></span><span class="assign-info"><i class="icon-info-sign pull-right"></i></span></div>
 
 </script>
 

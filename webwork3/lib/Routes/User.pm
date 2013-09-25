@@ -9,7 +9,9 @@ package Routes::User;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Routes qw/convertObjectToHash/;
+use Routes qw/convertObjectToHash convertArrayOfObjectsToHash/;
+
+our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;
 
 
 
@@ -22,9 +24,7 @@ use Routes qw/convertObjectToHash/;
 
 get '/courses/:course/users' => sub {
 
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
+	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
 	if (0+(session 'permission') < 10) {
 		return {error=>"You don't have the necessary permission"};
@@ -58,31 +58,27 @@ get '/courses/:course/users' => sub {
 
 
 post '/courses/:course_id/users/:user_id' => sub {
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
+	
+	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
 	if (0+(session 'permission') < 10) {
 		return {error=>"You don't have the necessary permission"};
 	}
 
-	debug("adding a new user with user_id: " . param('user_id'));
+	
 
 
 	my $user = vars->{db}->getUser(param('user_id'));
 	return {error=>"The user with login " . param('user_id') . " already exists"} if $user;
 
+
+	debug("adding a new user with user_id: " . param('user_id'));
+	
 	my $new_student = vars->{db}->{user}->{record}->new();
 	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
-	$new_student->user_id(param('user_id'));
-	$new_student->first_name(param('first_name'));
-	$new_student->last_name(param('last_name'));
-	$new_student->status($enrolled);
-	$new_student->student_id(param('student_id'));
-	$new_student->email_address(param('email_address'));
-	$new_student->recitation(param('recitation'));
-	$new_student->section(param('section'));
-	$new_student->comment(param('comment'));
+	for my $key (@user_props) {
+        $new_student->{$key} = param($key);
+    }
 	
 	# password record
 	my $cryptedpassword = "";
@@ -126,9 +122,45 @@ post '/courses/:course_id/users/:user_id' => sub {
 	if (scalar(@messages)>0) {
 		return {error=>"Attempt to add user failed", message=>\@messages};
 	} else {
-		return Routes::convertObjectToHash($new_student);
+		return convertObjectToHash($new_student);
 	}
 };
+
+
+###
+#
+#  update a new user *user_id* in course *course_id*
+#
+###
+
+
+put '/courses/:course_id/users/:user_id' => sub {
+	
+	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
+	if (0+(session 'permission') < 10) {
+		return {error=>"You don't have the necessary permission"};
+	}
+
+	debug("updating the user with user_id: " . param('user_id'));
+
+
+	my $user = vars->{db}->getUser(param('user_id'));
+	return {error=>"The user with login " . param('user_id') . " does not exist"} unless $user;
+
+	for my $key (@user_props) {
+        $user->{$key} = param($key);
+    }
+
+    my $result = vars->{db}->putUser($user);
+
+    debug $result;
+	
+	return convertObjectToHash($user);
+
+};
+
+
 
 
 
@@ -140,9 +172,8 @@ post '/courses/:course_id/users/:user_id' => sub {
 
 
 del '/courses/:course_id/users/:user_id' => sub {
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
+	
+	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
 	if (0+(session 'permission') < 10) {
 		return {error=>"You don't have the necessary permission"};
@@ -172,15 +203,57 @@ del '/courses/:course_id/users/:user_id' => sub {
 
 ####
 #
+#  Get problems in set set_id for user user_id for course course_id
+#
+#  returns a UserSet
+#
+####
+
+get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
+
+	debug 'in /courses/sets/users/problems';
+
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
+    if (0+(session 'permission') <10 && param('user') ne param('user_id')) {
+        return {error=>"You don't have the necessary permission", type=>"permission"};
+    }
+
+    if (! vars->{db}->existsGlobalSet(params->{set_id})){
+    	return {error=>"The set " . params->{set_id} . " does not exist in course " . params->{course_id}};	
+    }
+
+    if (! vars->{db}->existsUserSet(params->{user_id}, params->{set_id})){
+    	return {error=>"The user " . params->{user_id} . " has not been assigned to the set " . params->{set_id} 
+    				. " in course " . params->{course_id}};
+    }
+
+    my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
+
+    if(request->is_ajax){
+        return convertArrayOfObjectsToHash(\@problems);
+    } else {  # a webpage has requested this
+        template 'problem.tt', {course_id=> params->{course_id}, set_id=>params->{set_id},
+                                    problem_id=>params->{problem_id}, pagename=>"Problem Viewer",
+                                     problems => to_json(convertArrayOfObjectsToHash(\@problems)) }; 
+    }
+
+    
+
+
+
+};
+
+
+####
+#
 #  Get/update problem problem_id in set set_id for user user_id for course course_id
 #
 ####
 
 get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') <10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};
@@ -194,9 +267,7 @@ get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => su
 
 put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') <10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};

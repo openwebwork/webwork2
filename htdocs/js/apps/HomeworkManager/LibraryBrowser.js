@@ -15,15 +15,15 @@ function(Backbone, _,LibraryView){
             _.bindAll(this,'render');
             _.extend(this,this.options);
 
-            this.elements = {allLibSubjects: "library-subjects-tab",
-                             allLibraries: "library-directories-tab",
+            this.elements = {subjects: "library-subjects-tab",
+                             directories: "library-directories-tab",
                              localLibrary: "library-local-tab",
                              searchLibraries: "library-search-tab"};
 
             this.views = {
-                allLibSubjects  :  new LibraryView({libBrowserType: "allLibSubjects", errorPane: this.hwManager.errorPane, 
+                subjects  :  new LibraryView({libBrowserType: "subjects", errorPane: this.hwManager.errorPane, 
                                             problemSets: this.hwManager.problemSets}),
-                allLibraries    :  new LibraryView({libBrowserType: "allLibraries", errorPane: this.hwManager.errorPane, 
+                directories    :  new LibraryView({libBrowserType: "directories", errorPane: this.hwManager.errorPane, 
                                             problemSets: this.hwManager.problemSets}),
                 localLibrary: new LibraryView({libBrowserType: "localLibrary", errorPane: this.hwManager.errorPane,
                                             problemSets: this.hwManager.problemSets}),
@@ -37,7 +37,7 @@ function(Backbone, _,LibraryView){
             _.chain(this.elements).keys().each(function(key){
                 self.views[key].setElement(self.$("#"+self.elements[key]));
             });
-            this.views.allLibSubjects.render();
+            this.views.subjects.render();
     	},
         events: {"shown a[data-toggle='tab']": "changeView"},
         changeView: function(evt){

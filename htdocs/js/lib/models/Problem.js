@@ -6,58 +6,42 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
      * @type {*}
      */
     var Problem = Backbone.Model.extend({
-        defaults:{  path:"",
+        defaults:{  source_file:"",
                 data: null,
                 problem_id: 0,
                 value: 1,
                 displayMode: "MathJax"
         },
-    
-        initialize:function () {
-            _.bindAll(this,"fetch","update");
+        url: function () {
+            // need to determine if this is a problem in a problem set or a problem from a library browser
+            if(this.collection.setName) { // the problem comes from a problem set
+                return "/test/courses/" + config.courseSettings.courseID + "/sets/" + this.collection.setName 
+                + "/problems/" + this.get("problem_id");
+            } else {
+                return "/test/";
+            }
+
         },
-        //this is a server render, different from a view render
-        fetch: function () {
-            var self = this;
-            var requestObject = {
-                problemSource: this.get('path'),
-                set: this.get("path"),  // not sure why the webservice needs this.  
-                xml_command: "renderProblem",
-                displayMode: this.get("displayMode"),
-                problemSeed: this.get("problemSeed")
-            };
-            _.defaults(requestObject, config.requestObject);
-    
-    
-            if (!this.get('data')) {
-                //if we haven't gotten this problem yet, ask for it
-                $.post(config.webserviceURL, requestObject, function (data) {
-                    self.set('data', data);
-                });
+        parse: function(response){
+            config.checkForError(response);
+            return response;
+        },
+        loadHTML: function (success) {
+            if (this.collection.setName){  // the problem is part of a set
+                $.get( "/test/renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
+                    + this.collection.setName 
+                    + "/problems/" + this.get("problem_id"),this.attributes, success);
+            } else {  // it is being rendered from the library
+                $.get("/test/renderer/problems/0",this.attributes,success);
             }
         },
-        clear: function() {
-            this.destroy();
-        },
-        update: function(props)
-        {
-            console.log("in Problem Update");
-            var self = this; 
-            var requestObject = {
-                xml_command: "updateProblem",
-                set_id: this.collection.setName,
-                path: this.get("path"),
-                place: this.get("place"),
-                value: this.get("value")
-            };
-            _.defaults(props,requestObject);
-            _.defaults(props, config.requestObject);
-            console.log(props);
-             $.post(config.webserviceURL, props, function (data) {
-                    console.log("updated problem");
-                    self.set(props);
-                });
-
+        checkAnswers: function(answers, success){
+            console.log("in checkAnswers");
+            var allAttributes = {};
+            _.extend(allAttributes,answers);
+             $.get( "/test/renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
+                    + this.collection.setName 
+                    + "/problems/" + this.get("problem_id"),allAttributes, success);
         }
     });
     

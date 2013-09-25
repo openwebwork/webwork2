@@ -1,5 +1,5 @@
 /*
-*  This is the main view for the Library Browser within the the Homework Manager.  
+*  This is the a view of a library (subject, directories, or local) typically within a LibraryBrowser view. 
 *
 *  
 */ 
@@ -9,7 +9,6 @@ define(['Backbone', 'underscore','views/ProblemListView','models/ProblemList','v
 function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
     var LibraryView = Backbone.View.extend({
         className: "lib-browser",
-    	tagName: "td",
     	initialize: function (){
     		var self = this; 
             _.bindAll(this,'render','changeView','showProblems','addProblem');
@@ -24,7 +23,8 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
             // The following needs to be changed it's being called when the problem set list is shown.  
 
             
-            this.libraryTreeView = new LibraryTreeView({dispatcher: this.dispatcher, orientation: "dropdown", type: this.libBrowserType});
+            this.libraryTreeView = new LibraryTreeView({dispatcher: this.dispatcher, orientation: "dropdown", 
+                                            type: this.libBrowserType});
 
             this.problemViewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true,
                     showRefreshTool: true, showViewTool: true, showHideTool: true, deletable: false, draggable: true};
@@ -59,9 +59,12 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
         showProblems: function (){
             console.log("in showProblems");
             console.log(this.problemList);
-            this.problemListView = new ProblemListView({el: this.$(".lib-problem-viewer"), type: this.libBrowserType,  
+            (this.problemListView = new ProblemListView({el: this.$(".lib-problem-viewer"), 
+                                            type: this.libBrowserType,  
                                             problems: this.problemList,
-                                            viewAttrs: this.problemViewAttrs, headerTemplate: "#library-problems-header"});
+                                            viewAttrs: this.problemViewAttrs, 
+                                            headerTemplate: "#library-problems-header"})).render();
+
             this.problemList.on("add-to-target",this.addProblem);
 
         },
@@ -89,12 +92,13 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
     		console.log(_path);
             var self = this;
 			this.problemList = new ProblemList({path:  _path, type: "Library Problems"});
-            this.problemList.on("fetchSuccess",this.showProblems,this);
+            this.problemList.fetch({success: this.showProblems});
+            /* this.problemList.on("fetchSuccess",this.showProblems,this);
             this.problemList.on("num-problems-updated", function(num){
                     console.log("in num-problems-updated");
                     self.$("span.problems-shown").html(self.$(".prob-list li").length + " of " + self.problemList.size() + " shown");
             });
-            
+            */
     	}, 
         resetDisplayModes: function(){
             this.$('.target-set').css('background-color','white');

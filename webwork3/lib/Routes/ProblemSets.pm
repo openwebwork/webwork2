@@ -11,6 +11,7 @@ use warnings;
 use Dancer ':syntax';
 use Routes qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Dancer::Plugin::Database;
+use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
 
 our @set_props = qw/set_id set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
@@ -25,9 +26,7 @@ our @problem_props = qw/problem_id flags value max_attempts source_file/;
 
 get '/courses/:course_id/sets' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -49,9 +48,8 @@ get '/courses/:course_id/sets' => sub {
 
 get '/courses/:course_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -75,9 +73,8 @@ get '/courses/:course_id/sets/:set_id' => sub {
 
 post '/courses/:course_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -121,9 +118,8 @@ post '/courses/:course_id/sets/:set_id' => sub {
 
 put '/courses/:course_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -137,12 +133,12 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
    
     for my $key (@set_props) {
-        if (param($key)){
-            $set->{$key} = param($key);
-        }
+        $set->{$key} = param($key) if defined(param($key));
     }
 
-    vars->{db}->putGlobalSet($set);
+    my $result = vars->{db}->putGlobalSet($set);
+
+    ## test for an error? 
 
     return convertObjectToHash($set);
 };  
@@ -158,9 +154,8 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
 del '/courses/:course_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -195,9 +190,7 @@ del '/courses/:course_id/sets/:set_id' => sub {
 
 put '/courses/:course_id/sets/:set_id/order' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -208,6 +201,8 @@ put '/courses/:course_id/sets/:set_id/order' => sub {
     }
 
     my @problems_from_db = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+
     my @problem_paths = split(",",params->{problem_paths});
     my @problem_indices = split(",",params->{problem_indices});
 
@@ -243,21 +238,29 @@ put '/courses/:course_id/sets/:set_id/order' => sub {
 #
 #  Get a list of all user_id's assigned to set *set_id* in course *course_id* 
 #
-#  return:  array of user_id's.
+#  return:  array of properties.
 ##
 
 
 get '/courses/:course_id/sets/:set_id/users' => sub {
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+   
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
     }
 
-    my @sets = vars->{db}->listSetUsers(param('set_id'));
-    return \@sets;
+    my @userIDs = vars->{db}->listSetUsers(params->{set_id});
+
+    debug @userIDs;
+
+    my @sets = ();
+
+    foreach my $user_id (@userIDs){
+        push(@sets,vars->{db}->getMergedSet($user_id,params->{set_id}))
+    }
+
+    return convertArrayOfObjectsToHash(\@sets);
 };
 
 
@@ -272,9 +275,9 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
 #####
 
 post '/courses/:course_id/sets/:set_id/users' => sub {
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -321,9 +324,9 @@ post '/courses/:course_id/sets/:set_id/users' => sub {
 #####
 
 del '/courses/:course_id/sets/:set_id/users' => sub {
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -352,7 +355,7 @@ del '/courses/:course_id/sets/:set_id/users' => sub {
 
 ###
 #
-#  Update properties of set *set_id* of course *course_id* for a subset of users
+#  Update properties of set *set_id* of course *course_id* for a subset of users  (updates the userSets)
 #
 #  permission > Student
 #
@@ -361,36 +364,54 @@ del '/courses/:course_id/sets/:set_id/users' => sub {
 #####
 
 put '/courses/:course_id/sets/:set_id/users' => sub {
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
     }
 
+    return {error=>"The parameter: assigned_users has not been declared"} unless param('assigned_users');
 
+    ## remember which users were assigned
 
-    return {error=>"The parameter: assigned_user has not been declared"} unless param('assigned_users');
+    my @usersForTheSetBefore = vars->{db}->listSetUsers(params->{set_id});
 
-    for my $userID (split(",",param('assigned_users'))){
+    ## thenfor all users that were passed in, update or create a new userSet
 
+    for my $userID (@{params->{assigned_users}}) {
+        
         # check to make sure that the user is assigned to the course
         return {error=>"The user " . $userID . " is not enrolled in the course " . param("course_id")} 
             unless vars->{db}->getUser($userID);
 
-        my $set = vars->{db}->getUserSet($userID,param('set_id'));
-
-        if ($set){
+        if (vars->{db}->existsUserSet($userID,params->{set_id})) { 
+            my $set = vars->{db}->getUserSet($userID,params->{set_id});
             for my $key (@set_props) {
-                if (param($key)){
-                    $set->{$key} = param($key);
-                }
+                $set->{$key} = params->{$key} if defined(params->{$key});
             }
-
             vars->{db}->putUserSet($set);
+        } else {
+            my $set = vars->{db}->newUserSet($userID,params->{set_id});
+            $set->{user_id} = $userID;
+            for my $key (@set_props) {
+                $set->{$key} = params->{$key} if defined(params->{$key});
+            }
+            vars->{db}->addUserSet($set);   
         }
     }
+
+    ## then delete all users that were in the set originally, but aren't now. 
+
+    for my $userID (@usersForTheSetBefore){
+        if (! grep(/^$userID$/,@{params->{assigned_users}})){
+            vars->{db}->deleteUserSet($userID, params->{set_id});
+        }
+    }
+
+
+    # return all passed in parameters and the current list of assigned users. 
 
     my $out = {};
     for my $key (@set_props){
@@ -402,8 +423,6 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 
     return $out; 
 
-
-    return split(",",param('assigned_users'));
 };
 
 
@@ -419,9 +438,7 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 
 get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};
@@ -443,9 +460,7 @@ get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -479,9 +494,7 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -513,9 +526,7 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10) {
         return {error=>"You don't have the necessary permission"};
@@ -555,9 +566,7 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 get '/users/:user_id/courses/:course_id/sets' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};
@@ -581,9 +590,7 @@ get '/users/:user_id/courses/:course_id/sets' => sub {
 
 get '/courses/:course_id/users/:user_id/sets' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};
@@ -605,9 +612,7 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
 
 get '/courses/:course_id/sets/:set_id/problems' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};
@@ -638,10 +643,7 @@ get '/courses/:course_id/sets/:set_id/problems' => sub {
 
 get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};
@@ -656,8 +658,12 @@ get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
     }
 
     my $problem = vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
-
-    return convertObjectToHash($problem);
+    if(request->is_ajax){
+        return convertObjectToHash($problem);
+    } else {  # a webpage has requested this
+        my $theProblem = convertObjectToHash($problem);
+        template 'problem.tt', { problem => to_json($theProblem) }; 
+    }
 };
 
 ###
@@ -672,10 +678,7 @@ get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};
@@ -716,12 +719,9 @@ put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
+    if (0+(session 'permission') < 10 && session->{user} ne session->{user_id}) {
         return {error=>"You don't have the necessary permission"};
     }
 
@@ -738,10 +738,11 @@ post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
     my $problem = vars->{db}->newGlobalProblem;
 
-    my $problem_info = database->quick_select('OPL_pgfile', {pgfile_id => param('problem_id')});
-    my $path_id = $problem_info->{path_id};
-    my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
-    $problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
+    # my $problem_info = database->quick_select('OPL_pgfile', {pgfile_id => param('problem_id')});
+    # my $path_id = $problem_info->{path_id};
+    # my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
+    # $problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
+    $problem->{source_file} = params->{path};
     $problem->{max_attempts} = $maxAttempts;
     $problem->{value} = $value; 
 
@@ -776,10 +777,7 @@ post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
     if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
         return {error=>"You don't have the necessary permission"};
@@ -795,7 +793,7 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
     my $problem_to_delete = vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
 
-    my $result = vars->{db}->deleteGlobalProblem(params->{set_id},params->{problem_id});
+    my $result = vars->{db}->getAllUserProblems(params->{set_id},params->{problem_id});
 
     if ($result == 1) {
         return convertObjectToHash($problem_to_delete);
@@ -804,6 +802,8 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
     }
 
 };
+
+
 
 
 

@@ -2,9 +2,8 @@
    This is the base javascript code for the Homework Manager.  This sets up the View and ....
   
 */
-require(['Backbone', 
+define(['module','Backbone', 
     'underscore',
-    'apps/globals',
     'models/UserList',
     'models/ProblemSetList',
     'models/Settings',   
@@ -21,7 +20,7 @@ require(['Backbone',
     'jquery-ui',
     'bootstrap'
     ], 
-function(Backbone, _,  globals, UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
+function(module, Backbone, _, UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
             ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView){
 var HomeworkEditorView = WebPage.extend({
     tagName: "div",
@@ -33,13 +32,16 @@ var HomeworkEditorView = WebPage.extend({
         this.dispatcher = _.clone(Backbone.Events);
 
         config.settings = new Settings();
-        if (globals.settings){
-            config.settings.parseSettings(globals.settings);
+        if (module.config().settings){
+            config.settings.parseSettings(module.config().settings);
         }
-        this.users = (globals.users) ? new UserList(globals.users): new UserList();
-        this.problemSets = (globals.sets) ? new ProblemSetList(globals.sets) : new ProblemSetList();
+        this.users = (module.config().users) ? new UserList(module.config().users) : new UserList();
+        this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets) : new ProblemSetList();
 
-        this.dispatcher.on("calendar-change", self.setDropToEdit);
+        // call parse to set the .id attribute of each set so that backbone's set.isNew()  is false
+        this.problemSets.each(function(set){set.parse()});
+
+        this.dispatcher.on("calendar-change", self.updateProblemSetList);
         config.timezone = config.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
         this.render();
@@ -68,29 +70,27 @@ var HomeworkEditorView = WebPage.extend({
     setMessages: function (){
         var self = this; 
         this.problemSets.on("add", function (set){
-            self.announce.addMessage("Problem Set: " + set.get("set_id") + " has been added to the course.");
-            self.probSetListView.render();
-            self.setProblemSetsDragDrop();
+            if (set.save()){
+                self.announce.addMessage({text: "Problem Set: " + set.get("set_id") + " has been added to the course."});
+                self.probSetListView.render();
+                self.updateProblemSetList();
+            }
+
         });
 
         this.problemSets.on("remove", function(set){
-            self.announce.addMessage("Problem Set: " + set.get("set_id") + " has been removed from the course.");
+            self.announce.addMessage({text: "Problem Set: " + set.get("set_id") + " has been removed from the course."});
+            set.destroy();
             self.views.calendar.render();
-            self.setDropToEdit();
+            self.updateProblemSetList();
         });
         
-        this.problemSets.on("saved", function (_set){
-            var keys = _.keys(_set.changed);
-            _(keys).each(function(key) {
-                if (/date/.test(key)){
-                    self.announce.addMessage({text: "The value of " + key + " in problem set " + _set.get("set_id") 
-                            + " has changed to " + moment.unix(_set.changed[key]).format("MM/DD/YYYY")});    
-                } else {
-                    self.announce.addMessage({text: "The value of " + key + " in problem set " + _set.get("set_id") + " has changed to " + _set.changed[key]});    
-                }
-            });
-
-            self.updateCalendar();
+        this.problemSets.on("sync", function (_set){
+            _(_set.changedAttributes).each(function(attr){
+                    self.announce.addMessage({text: "The value of " + attr.attribute + " in problem set " 
+                        + _set.get("set_id") + " has changed from " + attr.old_value + " to " + attr.new_value});
+                });
+            //self.updateCalendar();
             self.updateProblemSetList();
 
         });
@@ -129,10 +129,13 @@ var HomeworkEditorView = WebPage.extend({
             helper: "clone",
             appendTo: "body",
             cursorAt: {left: 10, top: 10},
-            start: function (event,ui) { self.objectDragging=true;},
-            stop: function(event, ui) {
+            stop: function(evt,ui){
                 console.log("in stop");
-                self.objectDragging=false;
+                console.log(ui)
+            },
+            start: function(evt,ui){
+                console.log(ui);
+                console.log(this);
             }
         });
 
@@ -170,8 +173,9 @@ var HomeworkEditorView = WebPage.extend({
             accept: ".problem-set, .assign",
             greedy: true,
             drop: function(ev,ui) {
-                console.log("in drop");
+                console.log("changing the date of a problem set");
                 ev.stopPropagation();
+
                 if($(ui.draggable).hasClass("problem-set")){
                     self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"all");
                 } else if ($(ui.draggable).hasClass("assign-open")){
@@ -194,9 +198,14 @@ var HomeworkEditorView = WebPage.extend({
         var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
         console.log(problemSet);
         if(type==="all") {
-            problemSet.setDefaultDates(_date).update();
+            problemSet.setDefaultDates(_date).save({success: this.updateCalendar()});
         } else {
-            problemSet.setDate(type,moment(_date,"YYYY-MM-DD").unix()).update();
+            // check first to see if a valid date has been selected. 
+            /*if(!moment.unix(problemSet.get("open_date")).isBefore(moment.unix(problemSet.get("due_date")))){
+                this.errorPane.addMessage({text: "Oops!!"});
+            } */
+
+            problemSet.setDate(type,moment(_date,"YYYY-MM-DD").unix()).save({success: this.updateCalendar()});
         }
 
     }

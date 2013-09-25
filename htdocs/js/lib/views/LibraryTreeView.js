@@ -13,22 +13,23 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
 	
     var LibraryTreeView = Backbone.View.extend({
     	initialize: function (){
-    		_.bindAll(this,"render","buildTreeView","updateLibraryTree","loadProblems");
+    		_.bindAll(this,"render","loadProblems");
             var self = this;
             this.dispatcher = this.options.dispatcher; 
             this.orientation = this.options.orientation;
             this.libraryTree = new LibraryTree({type: this.options.type});
-            this.libraryTree.on("fetchSuccess", this.render);
+            this.libraryTree.set("header","Library/");
 
     	},
     	render: function(){
             console.log("in LibraryTreeView.render()");
             this.$el.html($("#library-tree-template").html());
-            if (!this.libraryTree.fetched) {
-                this.libraryTree.fetch();
+            if (!this.libraryTree.get("tree")) {
+                this.libraryTree.fetch({success: this.render});
             } else {
                 this.$(".throbber").remove();
-                this.$(".library-tree-left").html(_.template($("#library-dropdown-template").html(),{subjects: this.libraryTree.tree}));
+                this.$(".library-tree-left").html(_.template($("#library-dropdown-template").html(),
+                    {subjects: this.libraryTree.get("tree")}));
                 //this.$(".dropdown-submenu a").truncate({width: 200});  // make sure the width of the library columns are too wide.
                 this.delegateEvents();
             }
@@ -48,12 +49,12 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                 level--;
             }
 
-            this.dispatcher.trigger("load-problems",this.libraryTree.header+path);
+            this.dispatcher.trigger("load-problems",this.libraryTree.get("header")+ path);
 
 
             
         },
-        buildTreeView: function (libs,index){
+       /*  buildTreeView: function (libs,index){
             var self = this;
             var i;
             self.$(".throbber").remove();
@@ -76,6 +77,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
             this.$(".lib-select").on("change",this.updateLibraryTree);
             this.$(".load-problems").on("click",self.loadProblems);
 
+
         },
         updateLibraryTree: function (evt) {
             var level = parseInt($(evt.target).attr("id").split("-")[1],10);  // the library level that was changed.  
@@ -97,7 +99,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                     this.buildTreeView(_tree,level+1);            
             }
             
-        },
+        }, */
         loadProblems: function (evt) {
             var path = _(this.$(".lib-select")).map(function(item){ return $(item).val()});
             if (this.$(".lib-select").last().val()==="Choose A Library") {path.pop();}

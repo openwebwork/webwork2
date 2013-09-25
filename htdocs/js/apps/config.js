@@ -2,12 +2,29 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
 
     
     var config = {
-        requestObject: {
-            "session_key":document.getElementById("hidden_key").value,
-            "user":document.getElementById("hidden_user").value,
-            "courseID":document.getElementById("hidden_courseID").value,
+        courseSettings: {
+            "session_key": $("#hidden_key").val(),
+            "user": $("#hidden_user").val(),
+            "courseID": $("#hidden_courseID").val(),
+        },
+        /*requestObject: {
+            "session_key": $("#hidden_key").val(),
+            "user": $("#hidden_user").val(),
+            "courseID": $("#hidden_courseID").val(),
         },
         webserviceURL: "/webwork2/instructorXMLHandler",
+        printOtherParams: function () {
+            return "?course=" + this.requestObject.courseID + "&user=" + this.requestObject.user 
+                + "&session_key=" + this.requestObject.session_key;
+
+        },*/
+        checkForError: function(response){
+            if (response && response.error){
+                console.log("need to handle this somehow");
+                console.log(response);
+            }
+        },
+            
     
     // Note: these are in the order given in the classlist format for LST files.  
     
@@ -89,6 +106,7 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         }
     }
 
+    // These are additional validation patterns to be available to Backbone Validation
 
     _.extend(Backbone.Validation.patterns, { "wwdate": config.regexp.wwDate}); 
     _.extend(Backbone.Validation.patterns, { "setname": /^[\w\d\_\.]+$/});
@@ -128,17 +146,38 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         }
     });
 
+    // pstaab:  clean this up a bit.  Try to put the html into a template. 
+
     Backbone.Stickit.addHandler({
         selector: '.edit-datetime',
         initialize: function($el,model,options){
-            var setModel = function(evt){
+            var setModel = function(evt,timeStr){
                 console.log("in edit-datetime, setModel");
-                var dateTimeStr = evt.data.$el.children(".wwdate").val() + " " + evt.data.$el.children(".wwtime").text().trim();
+                var dateTimeStr = evt.data.$el.children(".wwdate").val() + " " + 
+                        (timeStr ? timeStr : evt.data.$el.children(".wwtime").text().trim());
                 var date = moment(dateTimeStr,"MM/DD/YYYY hh:mmA");
-                evt.data.model.set(evt.data.options.observe,date.unix());
-            }
+
+                // not sure what's going on here.  
+                evt.data.model.set(evt.data.options.observe,""+date.unix()); 
+                //console.log(evt.data.model.attributes);
+            };
+            var popoverHTML = "<div><input class='wwtime' value='" + 
+                moment.unix(model.get(options.observe)).format("h:mm a") + "'>" + 
+                "<br><button class='btn'>Save</button></div>";
+            console.log(popoverHTML);
+            var timeIcon = $el.children(".open-time-editor");
+            timeIcon.popover({title: "Change Time:", html: true, content: popoverHTML,
+                trigger: "manual"});
+            timeIcon.parent().delegate(".btn","click",{$el:$el.closest(".edit-datetime"), model: model, options: options},
+                function (evt) {
+                    timeIcon.popover("hide");
+                    setModel(evt,$(this).siblings(".wwtime").val());
+            })
             $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, setModel);
             $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, setModel);
+            timeIcon.parent().on("click",".open-time-editor", function() {
+                timeIcon.popover("toggle");
+            });
             $el.children(".wwdate").datepicker();
 
         },
@@ -147,8 +186,9 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         onGet: function(val) { // this is passed in as a moment Object
             var theDate = moment.unix(val);
             var tz = (theDate.toDate() + "").match(/\((.*)\)/)[1];
-            return '<input class="wwdate" size="12" value="' + theDate.format("MM/DD/YYYY") + '"> at ' +
-            '<span class="wwtime" contenteditable="true"> ' + theDate.format("hh:mmA") + '</span>';
+            return "<input class='wwdate' size='12' value='" + theDate.format("MM/DD/YYYY") + "''>" +
+            "<span class='open-time-editor'><i class='icon-time'></i></span>";
+            //'<span class="wwtime" contenteditable="true"> ' + theDate.format("hh:mmA") + '</span>';
         }
     });
 

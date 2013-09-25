@@ -89,6 +89,7 @@ sub new_helper {
 	) = @_;
 
 	
+	debug("in local.pm");
 	
 	# write timing log entry
 # 	writeTimingLogEntry($ce, "WeBWorK::PG::new",

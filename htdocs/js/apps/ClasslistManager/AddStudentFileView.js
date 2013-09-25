@@ -5,10 +5,9 @@ define(['Backbone',
 	'views/Closeable',
 	'models/User',
 	'models/UserList',
-	'file-saver', 
-	'blob-builder',
+	//'file-saver', 
 	'config',
-	'../../lib/util'], function(Backbone, _,Closeable,User,UserList,saveAs,BlobBuilder,config,util){	
+	'../../lib/util'], function(Backbone, _,Closeable,User,UserList,config,util){	
 	    var AddStudentFileView = Backbone.View.extend({
 		tagName: "div",
 		id: "addStudFileDialog",
@@ -62,7 +61,13 @@ define(['Backbone',
 	    
 		    // Need to test if the browser can handle this new object.  If not, find alternative route.
 		
+
+		    if (!(this.file.type.match(/csv/))){
+		    	this.errorPane.setMessage({text: "You must upload a csv file"});
+		    	return;
+		    }
 		    this.reader = new FileReader();
+
 		    this.reader.readAsText(this.file);
 		    this.reader.onload = function (evt) {			
 				var content = evt.target.result

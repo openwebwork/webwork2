@@ -451,6 +451,8 @@ sub head{
 	return "";
 }
 
+## get all of the user information to send to the client via a script tag in the output_JS subroutine below
+
 sub getAllSets {
 	my $self = shift;
 	my $r = $self->r;
@@ -493,7 +495,6 @@ sub getCourseSettings {
 	my $ConfigValues = $ce->{ConfigValues};
 
 	foreach my $oneConfig (@$ConfigValues) {
-		#debug(to_json($oneConfig));
 		foreach my $hash (@$oneConfig) {
 			if (ref($hash) eq "HASH"){
 				my $str = '$ce->' . $hash->{hashVar};
@@ -522,6 +523,9 @@ sub getCourseSettings {
 	my $dt = DateTime->now();
 
 	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
+
+
+	#debug($tz->short_name_for_datetime($dt));
 
 	push(@$ConfigValues, \@tzabbr);
 
@@ -578,24 +582,26 @@ sub getAllUsers {
 
 sub output_JS{
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $site_url = $ce->{webworkURLs}->{htdocs};
+	# my $r = $self->r;
+	# my $ce = $r->ce;
+
+	my $site_url = $self->r->ce->{webworkURLs}->{htdocs};
 	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
-	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/components/requirejs/require.js"></script>!;
-    print qq!<script type='text/javascript'>!;
-    print qq!define('globalVariables', function() {!;
-    print qq!  return { !;
+	print qq!<script type='text/javascript'>!;
+    print qq! require.config = { 'HomeworkManager': {!;
     print qq! users: ! . to_json(getAllUsers($self)) . ",";
     print qq! settings: ! . to_json(getCourseSettings($self)) . ",";
     print qq! sets: ! . to_json(getAllSets($self)) ;
-    print qq!    }!;
-    print qq!});!;
+    print qq!    }};!;
     print qq!</script>!;
-	
+	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/components/requirejs/require.js"></script>\n!;
+
 	return "";
 }
+
+1;
+
 
 1;
 =head1 AUTHOR

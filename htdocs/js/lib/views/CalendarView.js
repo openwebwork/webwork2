@@ -17,12 +17,10 @@ define(['Backbone', 'underscore', 'moment','views/Closeable','jquery-truncate','
             this.calendarType = this.options.calendarType;
 
             if (! this.date){
-                this.date = moment();
+                this.date = moment();  // today!
             }
-        
- 
-            // build up the initial calendar.  
 
+            // build up the initial calendar.  
 
             var firstOfMonth = moment(this.date).date(1);
             var firstDayOfCalendar = (this.calendarType==="month")?

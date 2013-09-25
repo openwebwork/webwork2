@@ -221,7 +221,7 @@ sub head{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
-    print "<link rel='stylesheet' href='$site_url/js/components/editablegrid/editablegrid-2.0.1/editablegrid-2.0.1.css' type='text/css' media='screen'>";
+    print "<link rel='stylesheet' href='$site_url/js/components/editablegrid/editablegrid-2.0.1.css' type='text/css' media='screen'>";
     print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
 	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
 	return "";
@@ -358,23 +358,21 @@ sub getAllUsers {
 
 sub output_JS{
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	# my $r = $self->r;
+	# my $ce = $r->ce;
 
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script src="$site_url/js/apps/require-config.js"></script>\n!;
-	print qq!<script data-main="$site_url/js/apps/ClasslistManager/ClasslistManager" src="$site_url/js/components/requirejs/require.js"></script>\n!;
-    print qq!<script type='text/javascript'>!;
-    print qq!define('globalVariables', function() {!;
-    print qq!  return { !;
-    
+	my $site_url = $self->r->ce->{webworkURLs}->{htdocs};
+	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
+	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
+	print qq!<script type='text/javascript'>!;
+    print qq! require.config = { 'ClasslistManager': {!;
     print qq! users: ! . to_json(getAllUsers($self)) . ",";
     print qq! settings: ! . to_json(getCourseSettings($self)) . ",";
     print qq! sets: ! . to_json(getAllSets($self)) ;
-    print qq!    }!;
-    print qq!});!;
+    print qq!    }};!;
     print qq!</script>!;
-	
+	print qq!<script data-main="$site_url/js/apps/ClasslistManager/ClasslistManager" src="$site_url/js/components/requirejs/require.js"></script>\n!;
+
 	return "";
 }
 

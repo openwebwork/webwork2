@@ -22,19 +22,17 @@ define(['Backbone', 'underscore','config','imagesloaded'
             this.allAttrs = {};
             _.extend(this.allAttrs,this.options.viewAttrs,{type: this.options.type});
 
-
-            // the variable thePath is not working correctly right now. 
-            var thePath = this.model.get("path"); // .split("templates/")[1];
-            var probURL = "?effectiveUser=" + config.requestObject.user + "&editMode=SetMaker&displayMode=images&key=" 
-                + config.requestObject.session_key 
-                + "&sourceFilePath=" + thePath + "&user=" + config.requestObject.user + "&problemSeed=1234"; 
+            var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=images&key=" 
+                + config.courseSettings.session_key 
+                + "&sourceFilePath=" + this.model.get("path") + "&user=" + config.courseSettings.user + "&problemSeed=1234"; 
             _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
-            this.model.on('change:data', this.render, this);
+            //this.model.on('change:data', this.render, this);
             this.model.on('destroy', this.remove, this);
         },
 
         render:function () {
             var self = this;
+            console.log("in ProblemView.render()");
             if(this.model.get('data')){
                 _.extend(this.allAttrs,this.model.attributes);
                 this.$el.html(this.template(this.allAttrs));
@@ -62,13 +60,24 @@ define(['Backbone', 'underscore','config','imagesloaded'
                 } 
 
                 this.el.id = this.model.cid;
-                this.$el.attr('data-path', this.model.get('path'));
+                this.$el.attr('data-path', this.model.get('source_file'));
                 this.$el.attr('data-source', this.allAttrs.type);
-                this.model.trigger("rendered",this.model);
+                if (this.model.get("displayMode")==="MathJax"){
+                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
+                }
                 
             } else {
+                console.log("calling loadHTML");
                 this.$el.html("<span style='font: italic 120%'>Loading Problem</span><i class='icon-spinner icon-spin icon-2x'></i>");
-                this.model.fetch();
+                this.model.loadHTML(function (data) {
+                    if (data.text){
+                        self.model.set("data",data.text);
+                        console.log("rendered!!!")
+                        self.render();
+                    } else {
+                        console.log(data);
+                    }
+                });
             }
 
 

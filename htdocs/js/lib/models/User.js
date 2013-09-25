@@ -10,8 +10,7 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             status: "C", //enrolled
             section: "",
             recitation: "",
-            comment: "",
-            userpassword: ""
+            comment: ""
         },
         validation: { user_id: {pattern: "loginname"},
                         email_address: {pattern: "email"}
@@ -21,41 +20,19 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             //this.on('change',this.update);
             //this.on('change',function() {console.log(this.attributes)});
         },
-    
-        update: function(){
-            
-            console.log("in config.User update");
-            var self = this;
-            var requestObject = {
-                "xml_command": 'editUser'
-            };
-            _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, config.requestObject);
-    
-            // store the changed attribute. 
-
-            this.oldAttributes = _.clone(this.changedAttributes());
-
-            for(prop in this.changedAttributes())
-            {
-                this.oldAttributes[prop] = this.previous(prop);
-            }
-    
-            $.post(config.webserviceURL, requestObject, function(data){
-                console.log(data);
-                var response = $.parseJSON(data);
-                var user = response.result_data;
-                
-                
-                // if this is successful, then report back by triggering a updateSuccess event
-                // Somehow it would be nice to deliver whether a general update of user information was made
-                // or a password change.  
-                self.trigger("success","property_changed", self);
-            });
+        url: function () {
+            return "/test/courses/" + config.requestObject.courseID + "/users/" + this.get("user_id") + "?course=" 
+                + config.requestObject.courseID + "&user=" + config.requestObject.user + "&session_key=" +
+                config.requestObject.session_key;
         },
         toCSVString: function (){
             var self = this;
             return (config.userProps.map(function(prop){return self.get(prop.shortName);})).join(",") + "\n";
+        },
+        parse: function(response) {
+            config.checkForError(response);
+            this.id=this.get("user_id");
+            return response;
         }
     });
     return User;

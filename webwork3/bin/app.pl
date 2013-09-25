@@ -14,30 +14,86 @@ set serializer => 'JSON';
 
 hook 'before' => sub {
 
+	## need to check that the session hasn't expired. 
+
+
     for my $key (keys(%{request->params})){
     	my $value = defined(params->{$key}) ? params->{$key} : ''; 
     	debug($key . " : " . $value);
     }
 
+    # debug "Checking if session->{user} is defined";
+    # debug session->{user};
+	    
 
-	my @session_key = database->quick_select(params->{course}.'_key', { user_id => params->{user} });
-
-	if ($session_key[0]->{key_not_a_keyword} eq param('session_key')) {
-		session 'logged_in' => true;
-	} else {
-		debug "Wrong session_key";
+    if (! defined(session->{user})) {
+	    if (! defined(session->{user})){
+	    	if (! params->{user}){
+				session->{error} = "The user is not defined.  You may need to log in again.";
+				return;
+			}
+	    	session->{user} = params->{user};
+		} 	
 	}
 
-	## need to check that the session hasn't expired. 
+	# debug "Checking if session->{course} is defined";
+	# debug session->{course};
 
-	my @permission = database->quick_select(params->{course}.'_permission', { user_id => params->{user} });
+	if (! defined(session->{course})) {
+		if (! defined(params->{course})){
+			session->{error}="The course must be defined.";				
+			return;
+		} 
+		session->{course} = params->{course};
+	}
 
-	debug \@permission;
+	# debug "Checking if session->{session_key} is defined";
+	# debug session->{session_key};
 
-	session 'permission' => $permission[0]->{permission};
+	if (! defined(session->{session_key})){
+		
+		debug session->{course}.'_key';		
+		my $session_key = database->quick_select(session->{course}.'_key', { user_id => session->{user} });
+		if ($session_key->{key_not_a_keyword} eq param('session_key')) {
+			session->{session_key} = params->{session_key};
+		} else {
+			session->{error} = "Wrong session_key.  You need to log in again.";
+			return;
+		} 
+	}
 
-	var ce => getCourseEnvironment(params->{course});
+	if (! defined(session->{permission})){
+		my $permission = database->quick_select(session->{course}.'_permission', { user_id => session->{user} });
+		session->{permission} = $permission->{permission};		
+	}
+
+	# debug session->{user};
+	# debug session->{permission};
+	# debug session->{course};    
+
+	undef session->{error};
+	
+	var ce => getCourseEnvironment(session->{course});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
+};
+
+get '/app-info' => sub {
+	return {
+		environment=>config->{environment},
+		port=>config->{port},
+		content_type=>config->{content_type},
+		startup_info=>config->{startup_info},
+		server=>config->{server},
+		appdir=>config->{appdir},
+		template=>config->{template},
+		logger=>config->{logger},
+		session=>config->{session},
+		session_expires=>config->{session_expires},
+		session_name=>config->{session_name},
+		session_secure=>config->{session_secure},
+		session_is_http_only=>config->{session_is_http_only},
+		
+	};
 };
 
 sub getCourseEnvironment {

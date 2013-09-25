@@ -13,17 +13,13 @@ use Routes qw/convertObjectToHash/;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use WeBWorK::PG::Local;
 
-
-prefix '/problems';
-
-
 ###
 #
 #  General problem renderer.  (Adapted from WeBWorK::Utils::Tasks::RenderProblem)
 #
 ###
 
-get '/:problem_id' => sub {
+get '/problems/:problem_id' => sub {
 
 	if( ! session 'logged_in'){
 		return { error=>"You need to login in again."};

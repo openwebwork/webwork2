@@ -14,13 +14,14 @@ define(['Backbone',
     'models/ProblemList',
     'models/ProblemSet',
     'views/UserListView',
-    'models/OverrideList', 'config','bootstrap'], 
-    function(Backbone, _,EditableCell,ProblemListView,ProblemList,ProblemSet,UserListView,PropertySetOverrideList, config){
+    'models/UserSetList', 'config','bootstrap'], 
+    function(Backbone, _,EditableCell,ProblemListView,ProblemList,ProblemSet,UserListView,
+        UserSetList, config){
 	var HWDetailView = Backbone.View.extend({
         className: "set-detail-view",
         tagName: "div",
         initialize: function () {
-            _.bindAll(this,'render','changeHWSet','updateNumProblems');
+            _.bindAll(this,'render','changeHWSet','updateNumProblems','loadProblems');
             this.users = this.options.users; 
             this.allProblemSets = this.options.problemSets;
             this.problemSet = this.model;
@@ -29,7 +30,8 @@ define(['Backbone',
                     showRefreshTool: true, showViewTool: true, showHideTool: false, deletable: true, draggable: false};
 
             this.views = {
-                problemListView : new ProblemListView({headerTemplate: "#problem-set-header", viewAttrs: this.problemViewAttrs}),
+                problemListView : new ProblemListView({headerTemplate: "#problem-set-header", 
+                    viewAttrs: this.problemViewAttrs}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
                 propertiesView : new ProblemSetDetailView({users: this.users, problemSet: this.problemSet}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
@@ -66,10 +68,9 @@ define(['Backbone',
             var self = this;
             if(this.problemSet.problems){ // have the problems been fetched yet? 
                 console.log("Loading the problems for set " + this.problemSet.get("set_id"));
-                this.views.problemListView.setProblems(this.problemSet.problems);
-                this.views.problemListView.render();
-                this.updateNumProblems();
-                this.problemSet.problems.on("num-problems-updated", self.updateNumProblems);
+                this.views.problemListView.setProblems(this.problemSet.problems).render();
+                //this.updateNumProblems();
+                //this.problemSet.problems.on("num-problems-updated", self.updateNumProblems);
 
 
                 // This sets messages  pstaab: move this to HW Manager. 
@@ -105,7 +106,8 @@ define(['Backbone',
             
             } else {
                 this.problemSet.problems = new ProblemList({type: "Problem Set", setName: this.problemSet.get("set_id")});
-                this.problemSet.problems.on("fetchSuccess",function() {self.loadProblems()});
+                this.problemSet.problems.fetch({success: this.loadProblems});
+                //this.problemSet.problems.on("fetchSuccess",function() {self.loadProblems()});
             }
 
 
@@ -136,7 +138,7 @@ define(['Backbone',
         setProblemSet: function(_set) {
             var self = this; 
             this.model = _set; 
-            this.model.on("change",function () { self.model.update();});
+            this.model.on("change",function () { self.model.save();});
 
             return this;
         },
@@ -144,10 +146,10 @@ define(['Backbone',
                     ".due-date" : "due_date",
                     ".answer-date": "answer_date",
                     ".set-visible": {observe: "visible", selectOptions: {
-                        collection : [{value: 0, label: "No"},{value: 1, label: "Yes"}]
+                        collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
                     }},
                     ".reduced-credit": {observe: "reduced_credit_enabled", selectOptions: {
-                        collection : [{value: 0, label: "No"},{value: 1, label: "Yes"}]
+                        collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
                     }},
                     ".users-assigned": {
                         observe: "assigned_users",
@@ -193,7 +195,7 @@ define(['Backbone',
         },
         assignUsers: function(){
             this.problemSet.set("assigned_users",_(this.originalAssignedUsers).union(this.model.get("assigned_users")));
-            this.problemSet.update();
+            this.problemSet.saveAssignedUsers();
             this.setProblemSet(this.problemSet);
             this.render();
             
@@ -206,7 +208,7 @@ define(['Backbone',
             _.bindAll(this,'render','selectAll','saveChanges','setProblemSet');
             this.users = this.options.users;
             this.model = this.options.problemSet ? new ProblemSet(this.options.problemSet.attributes): null;
-            this.overrides = null;
+            this.userSetList = null;
             this.rowTemplate = $("#customize-user-row-template").html();
             this.userList = this.users.map(function(user){ 
                 return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
@@ -215,16 +217,15 @@ define(['Backbone',
             var self = this;
             this.$el.html($("#custom-assign-tmpl").html());
             
-            if (this.overrides){
+            if (this.userSetList){
                 // render the overrides
                 var table = this.$("#customize-problem-set tbody").html("");
                 this.stickit();
-                this.overrides.each(function(override){
-                    table.append((new CustomizeUsersRowView({rowTemplate: self.rowTemplate, model: override})).render().el);
+                this.userSetList.each(function(userSet){
+                    table.append((new CustomizeUsersRowView({rowTemplate: self.rowTemplate, model: userSet})).render().el);
                 })
             } else {
-                this.overrides = new PropertySetOverrideList(this.model);
-                this.overrides.fetch().on("fetchSuccess",this.render);
+                (this.userSetList = new UserSetList([],{problemSet: this.model})).fetch({success: this.render});
             }
             return this;
         },
@@ -238,18 +239,18 @@ define(['Backbone',
         },
         setProblemSet: function(_set) {
             this.model = new ProblemSet(_set.attributes); 
-            this.overrides = null;
+            this.userSetList = null;
             return this;
         },
         saveChanges: function (){
             var self = this;
             var models = this.$(".user-select:checked").closest("tr")
-                            .map(function(i,v) { return self.overrides.get($(v).data("cid"));}).get();
+                            .map(function(i,v) { return self.userSetList.get($(v).data("cid"));}).get();
             _(models).each(function(_model){
                 _model.set({open_date: self.model.get("open_date"), due_date: self.model.get("due_date"),
                             answer_date: self.model.get("answer_date")});
                 console.log(_model);
-                _model.update();
+                _model.save();
             })
         },
         selectAll: function (){
@@ -261,9 +262,10 @@ define(['Backbone',
     var CustomizeUsersRowView = Backbone.View.extend({
         tagName: "tr",
         initialize: function() {
-            _.bindAll(this,"render","save");
+            var self = this;
+            _.bindAll(this,"render");
             this.template = this.options.rowTemplate;
-            this.model.on("change",this.save);
+            this.model.on("change",function () {self.model.save()});
         },
         render: function(){
             this.$el.html(this.template);
@@ -275,9 +277,6 @@ define(['Backbone',
                     ".open-date" : "open_date",
                     ".due-date": "due_date",
                     ".answer-date": "answer_date",
-        },
-        save: function(){
-            this.model.update();
         }
     });
 
@@ -321,7 +320,7 @@ define(['Backbone',
                     + "will remove all data associated with the user and this problem set.");
             if (confirmDelete){
                 this.problemSet.set("assigned_users",currentUsers);
-                this.problemSet.update();
+                this.problemSet.saveAssignedUsers();
                 this.model.set("assigned_users",[]);
                 this.render();
             }
