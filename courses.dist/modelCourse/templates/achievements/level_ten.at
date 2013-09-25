@@ -18,7 +18,7 @@ my $newLevelThreshold = '';
 
 if ($achievementPoints >= $nextLevelPoints) {
     #set new threshold and return 1 
-    $globalData->{Surprise} = 1;
+    $globalData->{FullCreditSet} = 1;
     $nextLevelPoints = $newLevelThreshold;
     return 1;
 } else {
