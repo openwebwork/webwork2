@@ -60,7 +60,7 @@ var tabberOptions = {manualStartup:true};
 <!-- The body has display none until all of the js is done rendering, at which
      point it gets displayed -->
 <script type="text/javascript">
-  $(window).load(function () {
+  $(document).ready(function () {
   $('body').css('display','block');
   });
 </script>
