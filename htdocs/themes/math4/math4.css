@@ -152,12 +152,7 @@ h1.page-title {
 .Message {
     display: inline-block;
     margin-bottom:1ex;
-}
-
-.Message div, .Message span {
-	background-color:#eee;
-	padding: 0.5em;
-}
+}   
 
 .font-visible   { font-weight: bold; }
 .font-hidden { font-style: italic; } 
@@ -347,7 +342,7 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /* background styles for success and failure messages */
 div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+div.ResultsWithError { background-color: #FF9494; color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */

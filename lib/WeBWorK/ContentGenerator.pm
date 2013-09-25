@@ -370,6 +370,13 @@ sub addmessage {
 	    script => 0,
 	    comment => 0
 	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+	
 	$message = $scrubber->scrub($message);
 	$self->{status_message} .= $message;
 }
@@ -1105,7 +1112,8 @@ sub message {
 	my ($self) = @_;
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::message -->\n";
-	print $self->{status_message} if exists $self->{status_message};
+	print $self->{status_message}
+	    if exists $self->{status_message};
 	
 	print "<!-- END " . __PACKAGE__ . "::message -->\n";
 	
@@ -1154,7 +1162,7 @@ sub warnings {
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
-	print $self->warningOutput(HTML::Entities::encode_entities($warnings)) if $warnings;
+	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
 	
 	return "";
@@ -2128,8 +2136,11 @@ sub warningOutput($$) {
 	print "Entering ContentGenerator::warningOutput subroutine</br>" if $TRACE_WARNINGS;
 	my @warnings = split m/\n+/, $warnings;
 	foreach my $warning (@warnings) {
-		#$warning = escapeHTML($warning);  # this would prevent using tables in output from answer evaluators
-		$warning = CGI::li(CGI::code($warning));
+	    # This used to be commented out because it interfered with warnings
+	    # from PG.  But now PG has a seperate warning channel thats not
+	    # encoded.  
+	    $warning = HTML::Entities::encode_entities($warning);  
+	    $warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);
 	
