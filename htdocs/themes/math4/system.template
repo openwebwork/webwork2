@@ -57,18 +57,10 @@ var tabberOptions = {manualStartup:true};
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 
-<!-- The body has display none until all of the js is done rendering, at which
-     point it gets displayed -->
-<script type="text/javascript">
-  $(document).ready(function () {
-  $('body').css('display','block');
-  });
-</script>
-
 <!--#head-->
 </head>
 
-<body style="display:none">
+<body>
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
 <!--#endif-->
