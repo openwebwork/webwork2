@@ -154,14 +154,14 @@ var HomeworkEditorView = WebPage.extend({
             hoverClass: "btn-info",
             accept: ".problem",
             tolerance: "pointer",
-            drop: function( event, ui ) { 
-                console.log("Adding a Problem to HW set " + $(event.target).data("setname"));
+            drop: function( evt, ui ) { 
+                console.log("Adding a Problem to HW set " + $(evt.target).data("setname"));
                 console.log($(ui.draggable).data("path"));
                 var source = $(ui.draggable).data("source");
                 console.log(source);
-                var set = self.problemSets.find(function (set) { return set.get("set_id")===""+$(event.target).data("setname");});
-                var prob = self.views.libraryBrowser.views[source].problemList.find(function(prob) 
-                        { return prob.get("path")===$(ui.draggable).data("path");});
+                var set = self.problemSets.findWhere({set_id: $(evt.target).data("setname")})
+                var prob = self.views.libraryBrowser.views[source].problemList
+                                    .findWhere({source_file: $(ui.draggable).data("path")});
                 set.addProblem(prob);
             }
         });

@@ -22,8 +22,8 @@ hook 'before' => sub {
     	debug($key . " : " . $value);
     }
 
-    debug "Checking if session->{user} is defined";
-    debug session->{user};
+    # debug "Checking if session->{user} is defined";
+    # debug session->{user};
 	    
 
     if (! defined(session->{user})) {
@@ -34,8 +34,8 @@ hook 'before' => sub {
 	    	session->{user} = params->{user};
 	}
 
-	debug "Checking if session->{course} is defined";
-	debug session->{course};
+	# debug "Checking if session->{course} is defined";
+	# debug session->{course};
 
 	if (! defined(session->{course})) {
 		if (! defined(params->{course})){
@@ -45,8 +45,8 @@ hook 'before' => sub {
 		session->{course} = params->{course};
 	}
 
-	debug "Checking if session->{session_key} is defined";
-	debug session->{session_key};
+	# debug "Checking if session->{session_key} is defined";
+	# debug session->{session_key};
 
 	if (! defined(session->{session_key})){
 		

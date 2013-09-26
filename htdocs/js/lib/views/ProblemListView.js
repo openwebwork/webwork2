@@ -10,7 +10,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
       *  type: the type of problemList (library or problemset)
       *  viewAttrs:  an object of viewing attributes that are passed to the ProblemView to determine how it is decorated.  
       *  headerTemplate: a string of the jquery selector for the template used to render the header.
-      *                     The template needs to contain a <div id="prob-list"></div> where the problems will be shown.  
+      *                     The template needs to contain a <div class="prob-list"></div> where the problems will be shown.  
       *  displayModes: an array of strings of the possible display modes for problem rendering. 
       *  
       *  The set name and list of problems are passed in the setProblems function.  
@@ -22,14 +22,13 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         initialize: function(){
             var self = this;
             _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
-            this.viewAttrs = this.options.viewAttrs;
-            this.type = this.options.type;
-            this.headerTemplate = this.options.headerTemplate;
-            this.problemTemplate = this.options.problemTemplate;
-            this.displayModes = this.options.displayModes; 
+            _(["viewAttrs","type","headerTemplate","problemTemplate","displayModes"]).
+                each(function(key){
+                    self[key] = self.options[key];
+                });
             this.problemViews=[];
             
-            this.numProblemsPerGroup = 10;
+            this.numProblemsPerGroup = 10; // this should be a parameter.
             
             this.problems = this.options.problems ? this.options.problems : new ProblemList();
         },
@@ -38,6 +37,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             return this;
         },
         render: function() {
+            console.log("in ProblemListView.render()");
             var self = this;
             var openEditorURL = "/webwork2/" + $("#hidden_courseID").val() + "/instructor/SimplePGEditor/" 
                                     + this.problems.setName + "/" + (this.problems.length +1);
@@ -57,7 +57,16 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                                                 placeholder: ".sortable-placeholder",axis: "y",
                                                 stop: this.reorder});
             }
-        }, /*
+            this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
+            this.problems.on("remove",this.deleteProblem); 
+            this.updateNumberOfProblems();
+            return this;
+        }, 
+        updateNumberOfProblems: function () {
+            $("#number-of-problems").html(this.$(".prob-list li").length + " of " 
+                + this.problems.size() + " problems shown.");
+        },
+        /*
         loadMore: function () {
             var lastProblemVisible = this.visibleProblems.length==0 ? -1 : this.visibleProblems[this.visibleProblems.length-1];
             var newVisibleProblems = _.range(lastProblemVisible+1,
@@ -87,13 +96,13 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var self = this; 
 
 
-            this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
+
         
             this.problemViews = [];  // an array of ProblemViews to render the problems. 
             this.problemsRendered = [];  // this is used to determine when all of the problems have been rendered.  
 
             this.problems = _problems;
-            this.problems.on("remove",this.deleteProblem);
+
 
             // run this after all of the problems have been rendered. 
             // this will set the size of the window (although we should do this will CSS)
@@ -140,9 +149,11 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             console.log("in undoDelete");
             if (this.undoStack.length>0){
                 var prob = this.undoStack.pop();
-                this.problems.addProblem(prob);
+                prob.set("problem_id",parseInt(this.problems.last().get("problem_id"))+1,{silent: true});
+                this.problems.add(prob);
+                prob.id=null;
+                prob.save();
             }
-
         },
         setProblemSet: function(_set) {
             this.model = _set; 
@@ -154,8 +165,12 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             probView.render();
             this.problems.trigger("num-problems-shown");
         },
-        deleteProblem: function (prob){
-            this.undoStack.push(prob);
+        deleteProblem: function (problem){
+            var self = this; 
+            problem.destroy({success: function (model) {
+                console.log(model);
+                self.undoStack.push(model);
+            }});
         }
     });
 	return ProblemListView;

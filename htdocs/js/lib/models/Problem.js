@@ -24,6 +24,10 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         },
         parse: function(response){
             config.checkForError(response);
+            if (response){
+                this.id = response.problem_id;
+            }
+            
             return response;
         },
         loadHTML: function (success) {

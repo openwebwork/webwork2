@@ -208,6 +208,7 @@ get '/renderer/problems/:problem_id' => sub {
 	my $user =  vars->{db}->getUser(session->{user});
     my ($set, $showHints, $showSolutions,$showAnswers,$problem);
 	
+	my $problemSeed = defined(params->{problemSeed}) ? params->{problemSeed} : 1; 
 
     ### The user is not a professor
 
@@ -261,8 +262,8 @@ get '/renderer/problems/:problem_id' => sub {
 
 		if (defined(params->{problem_path})){
 			$problem->{source_file} = "Library/" . params->{problem_path};
-		} elsif (defined(params->{path})){
-			$problem->{source_file} = params->{path};
+		} elsif (defined(params->{source_file})){
+			$problem->{source_file} = params->{source_file};
 		} else {  # try to look up the problem_id in the global database;
 
 			my $problem_info = database->quick_select('OPL_pgfile', {pgfile_id => param('problem_id')});
@@ -272,8 +273,9 @@ get '/renderer/problems/:problem_id' => sub {
 		}
 	}
 
-	debug $problem->{source_file};
-	debug md5_hex($problem->{source_file});
+
+	# debug $problem->{source_file};
+	# debug md5_hex($problem->{source_file});
 
 	# for my $key (keys(%{$problem})){
 	# 	my $value = '####UNDEF###';

@@ -422,8 +422,9 @@ at the bottom of the screen and click "Save Changes". </p>
 <%if(showRefreshTool){%><a href="#"  class="btn btn-small refresh-problem"><i class="icon-refresh"></i></a><%}%>    
 <%if(showViewTool){%><a class="btn btn-small" target="WW_view" href='<%=viewUrl%>'><i class="icon-eye-open"></i></a><%}%>    
 <%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link"><i class="icon-remove"></i></a><%}%>
+<%if(deletable){ %><span class="remove-problem btn btn-small"><i class="icon-trash"></i></span><%}%>
 </div>
-<%if(deletable){ %><span class="span1 remove pull-right btn"><i class="icon-trash"></i></span><%}%></div>    
+</div>    
 <%= data %>
 </script>
 

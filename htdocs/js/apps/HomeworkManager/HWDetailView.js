@@ -68,7 +68,7 @@ define(['Backbone',
             var self = this;
             if(this.problemSet.problems){ // have the problems been fetched yet? 
                 console.log("Loading the problems for set " + this.problemSet.get("set_id"));
-                this.views.problemListView.setProblems(this.problemSet.problems).render();
+                this.views.problemListView.setProblems(this.problemSet.problems);
                 //this.updateNumProblems();
                 //this.problemSet.problems.on("num-problems-updated", self.updateNumProblems);
 

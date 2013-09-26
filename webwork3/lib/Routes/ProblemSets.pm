@@ -742,7 +742,7 @@ post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
     # my $path_id = $problem_info->{path_id};
     # my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
     # $problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
-    $problem->{source_file} = params->{path};
+    $problem->{source_file} = params->{source_file};
     $problem->{max_attempts} = $maxAttempts;
     $problem->{value} = $value; 
 
@@ -793,9 +793,11 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
     my $problem_to_delete = vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
 
-    my $result = vars->{db}->getAllUserProblems(params->{set_id},params->{problem_id});
+    my $result = vars->{db}->deleteGlobalProblem(params->{set_id},params->{problem_id});
 
-    if ($result == 1) {
+    debug $result;
+
+    if ($result) {
         return convertObjectToHash($problem_to_delete);
     } else {
         return $result;

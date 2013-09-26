@@ -142,7 +142,11 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
                 this.problems = new ProblemList({setName: self.get("set_id"),   type: "Problem Set"});
                 this.problems.fetch({success: function () {
                     self.problems.add(self.saveProblems);
-                    _(self.saveProblems).each(function(_prob){  _prob.save(); });
+                    var lastIndex = parseInt(self.problems.last().get("problem_id"));
+                    _(self.saveProblems).each(function(_prob,i){  
+                        _prob.set("problem_id",lastIndex+i+1,{silent: true});
+                        _prob.save(); 
+                    });
                     self.saveProblems = []; 
                 } });
             }

@@ -164,7 +164,6 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
             var popoverHTML = "<div><input class='wwtime' value='" + 
                 moment.unix(model.get(options.observe)).format("h:mm a") + "'>" + 
                 "<br><button class='btn'>Save</button></div>";
-            console.log(popoverHTML);
             var timeIcon = $el.children(".open-time-editor");
             timeIcon.popover({title: "Change Time:", html: true, content: popoverHTML,
                 trigger: "manual"});
