@@ -80,6 +80,14 @@ sub body {
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
 	
+	my $renderAnswers = 0;
+	# Figure out if MathJax is available
+	if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
+	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+	    $renderAnswers = 1;
+	}
+
+
 	#####################################################################
 	# print form
 	#####################################################################
@@ -159,6 +167,14 @@ sub body {
 
 	print CGI::end_table();
 	    
+	if ($renderAnswers) {
+	    print <<EOS;
+	    <script type="text/javascript">
+		MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "past-answer-table"]);
+	    </script>
+EOS
+	}
+	
 	return "";
 }
 
