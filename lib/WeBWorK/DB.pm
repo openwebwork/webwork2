@@ -269,7 +269,7 @@ sub init_table {
 	
 	runtime_use($schema);
 	my $schemaObject = eval { $schema->new(
-		$self, $driverObject, $table, $record, $params) };
+		$self, $driverObject, $table, $record, $params, $engine) };
 	croak "error instantiating DB schema $schema for table $table: $@"
 		if $@;
 	
