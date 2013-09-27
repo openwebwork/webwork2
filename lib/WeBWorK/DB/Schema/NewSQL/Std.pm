@@ -126,6 +126,7 @@ sub _create_table_stmt {
 	my ($self) = @_;
 	
 	my $sql_table_name = $self->sql_table_name;
+  my $engine = $self->engine;
 	
 	my @field_list;
 	
@@ -161,7 +162,7 @@ sub _create_table_stmt {
 	}
 	
 	my $field_string = join(", ", @field_list);
-	return "CREATE TABLE `$sql_table_name` ( $field_string )";
+	return "CREATE TABLE `$sql_table_name` ( $field_string ) ENGINE=$engine";
 }
 
 ################################################################################
@@ -772,6 +773,13 @@ sub sql_table_name {
 	return defined $self->{params}{tableOverride}
 		? $self->{params}{tableOverride}
 		: $self->table;
+}
+
+sub engine {
+  my ($self) = @_;
+  return defined $self->{engine}
+    ? $self->{engine}
+    : 'MYISAM';
 }
 
 # returns non-quoted SQL name of given field
