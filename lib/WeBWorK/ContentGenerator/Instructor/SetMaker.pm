@@ -138,6 +138,7 @@ sub get_library_pgs {
 	return () if grep /^=library-ignore$/, @lis;
 	return () if !$top && grep /^=library-no-combine$/, @lis;
 
+#print STDERR "top = $top, base = $base, dir = $dir\n";
 	my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$base/$dir/$_"} @lis;
 	my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
 	                            !m/(\.(tmp|bak)|~)$/ && -f "$base/$dir/$_" } @lis);
