@@ -777,14 +777,14 @@ $dbh->disconnect;
 
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
 
-my $file = "$webwork_htdocs/library-tree.json";
+my $file = "$webwork_htdocs/DATA/library-tree.json";
 
 # use a variable for the file handle
 my $OUTFILE;
 
 # use the three arguments version of open
 # and check for errors
-open $OUTFILE, '>', $file  or die "Cannot open $file";
+open $OUTFILE, '>', $file  or die "Cannot open $file .  Please check the file permissions for $webwork_htdocs/DATA .  You may need to run this script with \"sudo -E\"";
 
 # you can check for errors (e.g., if after opening the disk gets full)
 print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
