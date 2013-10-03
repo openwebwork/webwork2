@@ -145,6 +145,7 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # The format is dbi:mysql:[databasename] for databases on the local machine
 # For a remote database the format is dbi:mysql:[databasename]:[hostname]:[port]
 $database_dsn ="dbi:mysql:webwork";
+$database_storage_engine = 'myisam';
 
 # The following two variables must match the GRANT statement run on the mysql server as described above.
 $database_username ="webworkWrite";
