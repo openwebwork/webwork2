@@ -1,3 +1,5 @@
+
+
 /* WeBWorK Online Homework Delivery System
  * Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
  * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
@@ -342,7 +344,7 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /* background styles for success and failure messages */
 div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-div.ResultsWithError { background-color: #FF9494; color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
