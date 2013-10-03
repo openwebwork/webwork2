@@ -288,8 +288,10 @@ sub body {
 		    
 		    } elsif ($answerTypes[$i] eq 'essay') {
 			
+			$answer = HTML::Entities::encode_entities($answer);
+			$answer =~ s/\n/<br>/g;
 			$userAnswerString .= CGI::p({class=>'essay-answer'},
-						    HTML::Entities::encode_entities($answer));
+						    $answer);
 			
 		    } elsif ($answerTypes[$i] eq 'Value (Formula)') {
 			#if its a formula then render it and color it
