@@ -1,6 +1,6 @@
 $(function() {    
 $(window).load(function() { $('#achievementModal').modal('show');
-			    setTimeout(function(){$('#achievementModal').modal('hide');},5000);
+			    setTimeout(function(){$('#achievementModal').modal('show');},5000);
 			  });
 })
 
