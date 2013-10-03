@@ -222,8 +222,9 @@ sub body {
 		}
 	    }	    
 
+	    print CGI::h2("Items");
+
 	    if (@items) {
-		print CGI::h2("Items");
 			    
 		my $itemnumber = 0;
 		foreach my $item (@items) {
@@ -256,7 +257,9 @@ sub body {
 		    
 		    $itemnumber++;
 		}
-	    } 
+	    } else {
+		print CGI::p("You don't have any items!");
+	    }
 	    print CGI::br();
 	    print CGI::h2("Achievements");
 	}
