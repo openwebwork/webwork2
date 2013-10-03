@@ -364,6 +364,10 @@ Must be called before the message() template escape is invoked.
 
 
 sub addmessage {
+    #addmessages takes html so we use htmlscrubber to get rid of 
+    # any scripts or html comments.  However, we leave everything else
+    # by default. 
+
 	my ($self, $message) = @_;
 	my $scrubber = HTML::Scrubber->new(
 	    default => 1,
