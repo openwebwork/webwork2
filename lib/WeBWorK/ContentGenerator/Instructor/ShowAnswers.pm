@@ -1,3 +1,4 @@
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -27,7 +28,8 @@ use strict;
 use warnings;
 #use CGI;
 use WeBWorK::CGI;
-
+use WeBWorK::Utils qw(sortByName ); 
+use HTML::Entities;
 
 sub initialize {
 	my $self       = shift;
@@ -79,7 +81,7 @@ sub body {
 	
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
-	
+	my @answerTypes;
 	my $renderAnswers = 0;
 	# Figure out if MathJax is available
 	if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
@@ -130,9 +132,40 @@ sub body {
 	print "No entries for $studentUser set $setName, problem $problemNumber" unless @pastAnswerIDs;
 
 	# changed this to use the db for the past answers.  
-        # The code is better but the actual html out put is considerably less pretty
-	# Todo: prettify
 
+	#set up a silly problem to figure out what type the answers are
+	#(why isn't this stored somewhere)
+	my $displayMode   = $self->{displayMode};
+	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars }; 
+	my $set = $db->getMergedSet($studentUser, $setName); # checked
+	my $problem = $db->getMergedProblem($studentUser, $setName, $problemNumber); # checked
+	my $userobj = $db->getUser($studentUser);
+	my $pg = WeBWorK::PG->new(
+	    $ce,
+	    $userobj,
+	    $key,
+	    $set,
+	    $problem,
+	    $set->psvn, # FIXME: this field should be removed
+	    $formFields,
+	    { # translation options
+		displayMode     => 'plainText',
+		showHints       => 0,
+		showSolutions   => 0,
+		refreshMath2img => 0,
+		processAnswers  => 1,
+		permissionLevel => $db->getPermissionLevel($studentUser)->permission,
+		effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
+	    },
+	    );
+	
+	# check to see what type the answers are.  right now it only checks for essay but could do more
+	my %answerHash = %{ $pg->{answers} };
+	
+	foreach (sortByName(undef, keys %answerHash)) {
+	    push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
+	}
+		
 	foreach my $answerID (@pastAnswerIDs) {
 	    my $pastAnswer = $db->getPastAnswer($answerID);
 	    my $answers = $pastAnswer->answer_string;
@@ -144,20 +177,32 @@ sub body {
 	    
 	    my @row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
 	    my $td = {nowrap => 1};
-	    foreach my $answer (@answers) {
-		$answer = showHTML($answer);
+	    my $num_ans = $#answers;
+	    for (my $i = 0; $i <= $num_ans; $i++) {
+		my $answer = $answers[$i];
 		my $score = shift(@scores); 
 		#Only color answer if its an instructor
 		if ($instructor) {
 		    $td->{style} = $score? "color:#006600": "color:#660000";
 		} 
-		delete($td->{style}) unless $answer ne "" && defined($score);
-		$answer = CGI::small(CGI::i("empty")) if ($answer eq "");
-		push(@row,CGI::td({width=>20}),CGI::td($td,$answer));
+		delete($td->{style}) unless $answer ne "" && defined($score) && $answerTypes[$i] ne 'essay';
+
+		my $answerstring;
+		if ($answer eq '') {		    
+		    $answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
+		} elsif (!$renderAnswers) {
+		    $answerstring = HTML::Entities::encode_entities($answer);
+		} elsif ($answerTypes[$i] eq 'Value (Formula)') {
+		    $answerstring = '`'.HTML::Entities::encode_entities($answer).'`';
+		} else {
+		    $answerstring = HTML::Entities::encode_entities($answer);
+		}
+
+		push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
 	    }
 
 	    if ($pastAnswer->comment_string) {
-		push(@row,CGI::td({width=>20}),CGI::td("Comment: ".$pastAnswer->comment_string));
+		push(@row,CGI::td({width=>20}),CGI::td("Comment: ".HTML::Entities::encode_entities($pastAnswer->comment_string)));
 	    }
 
 	    print CGI::Tr(@row);
@@ -183,21 +228,6 @@ sub byData {
   $A =~ s/\|[01]*\t([^\t]+)\t.*/|$1/; # remove answers and correct/incorrect status
   $B =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;
   return $A cmp $B;
-}
-
-##################################################
-#
-#  Make HTML symbols printable
-#
-sub showHTML {
-    my $string = shift;
-    return '' unless defined $string;
-    $string =~ s/&/\&amp;/g;
-    $string =~ s/</\&lt;/g;
-    $string =~ s/>/\&gt;/g;
-    $string =~ s/\n/<br>/g;
-    $string =~ s/\000/,/g;  # anyone know why this is here?  (I didn't add it -- dpvc)
-    $string;
 }
 
 1;

@@ -20,7 +20,7 @@ package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
 use base qw(WeBWorK::ContentGenerator);
 use WeBWorK::Utils qw(sortByName ); 
 use WeBWorK::PG;
-
+use HTML::Entities;
 =head1 NAME
 
 =cut
@@ -63,7 +63,6 @@ sub head {
 
 #	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/bootstrap/css/bootstrap.popover.css\">";
 
-	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
 	my $MathJax = $ce->{webworkURLs}->{MathJax};
 	
 	print CGI::start_script({type=>"text/javascript", src=>$MathJax}), CGI::end_script();
@@ -200,19 +199,19 @@ sub body {
 	    $set,
 	    $problem,
 	    $set->psvn, # FIXME: this field should be removed
-		$formFields,
-		{ # translation options
-			displayMode     => $displayMode,
-			showHints       => 0,
-			showSolutions   => 0,
-			refreshMath2img => 0,
-			processAnswers  => 1,
-			permissionLevel => $db->getPermissionLevel($userID)->permission,
-			effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
-		},
-	);
-
-
+	    $formFields,
+	    { # translation options
+		displayMode     => $displayMode,
+		showHints       => 0,
+		showSolutions   => 0,
+		refreshMath2img => 0,
+		processAnswers  => 1,
+		permissionLevel => $db->getPermissionLevel($userID)->permission,
+		effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
+	    },
+	    );
+	
+	
 	# check to see what type the answers are.  right now it only checks for essay but could do more
 	my %answerHash = %{ $pg->{answers} };
 	my @answerTypes;
@@ -285,7 +284,7 @@ sub body {
 		    # if the answwer Type is undefined then just print the result and hope for the best. 
 
 		    if (!defined($answerTypes[$i])) {
-			$userAnswerString .= CGI::p($answer);
+			$userAnswerString .= CGI::p(HTML::Entities::encode_entities($answer));
 		    
 		    } elsif ($answerTypes[$i] eq 'essay') {
 			
@@ -323,11 +322,17 @@ sub body {
 
 			$userAnswerString .= CGI::p($htmlout);
 			
-		    } else {
-			# if itsn ot an essay then don't render it but color it based off if 
-			# webwork thinks its right or not
-			$userAnswerString .= CGI::p(CGI::div({style => $scores[$i] ? 
-				       "color:#006600": "color:#660000" }, $answer));
+		    } elsif ($answerTypes[$i] eq 'Value (Formula)') {
+			#if its a formula then render it and color it
+				$userAnswerString .= CGI::p(CGI::div({class => 'graded-answer', style => $scores[$i] ? 
+				       "color:#006600": "color:#660000" }, 
+				'`'.HTML::Entities::encode_entities($answer).'`'));
+
+		    }else {
+			# if it isnt an essay then don't render it but color it 
+			$userAnswerString .= CGI::p(CGI::div({class => 'graded-answer', style => $scores[$i] ? 
+				       "color:#006600": "color:#660000" }, 
+							     HTML::Entities::encode_entities($answer)));
 		    }
 		}
 		
@@ -405,6 +410,13 @@ sub body {
 
 	print CGI::end_form();
 	
+	print <<EOS;
+	    <script type="text/javascript">
+	        MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'graded-answer']);
+	    </script>
+EOS
+	
+
 	return "";
 }
 
