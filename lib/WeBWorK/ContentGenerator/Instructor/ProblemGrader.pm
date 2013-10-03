@@ -288,51 +288,8 @@ sub body {
 		    
 		    } elsif ($answerTypes[$i] eq 'essay') {
 			
-			#if its an essay type answer then set up a silly problem to render the text 
-			# provided by the student.  There *has* to be a better way to do this.  
-
-			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-			my $source = <<EOS;
-DOCUMENT();
-loadMacros("PG.pl",
-           "PGbasicmacros.pl",
-	   "contextTypeset.pl",
-	   "text2PG.pl"); 
-	    Context("Typeset");
-            \$string = <<TEXT2PG;
-$answer
-TEXT2PG
-	    TEXT(EV3P({processCommands=>0,processVariables=>0},
-		  text2PG(\$string,'doubleSlashes',0)));
-
-	    ENDDOCUMENT();
-EOS
-			    
-			    my $pg = WeBWorK::PG->new(
-				$ce,
-			    $user,
-			    $key,
-			    $set,
-			    $problem,
-			    $set->psvn, # FIXME: this field should be removed
-			    $formFields,
-			    { # translation options
-				displayMode     => $displayMode,
-				showHints       => 0,
-				showSolutions   => 0,
-				refreshMath2img => 1,
-				processAnswers  => 0,
-				permissionLevel => 0,
-				effectivePermissionLevel => 0,
-				r_source => \$source,
-			    },
-			    );
-			
-
-			my $htmlout = $pg->{body_text};
-
-			$userAnswerString .= CGI::p($htmlout);
+			$userAnswerString .= CGI::p({class=>'essay-answer'},
+						    HTML::Entities::encode_entities($answer));
 			
 		    } elsif ($answerTypes[$i] eq 'Value (Formula)') {
 			#if its a formula then render it and color it
@@ -425,6 +382,7 @@ EOS
 	print <<EOS;
 	    <script type="text/javascript">
 	        MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'graded-answer']);
+        	MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'essay-answer']);
 	    </script>
 EOS
 	
