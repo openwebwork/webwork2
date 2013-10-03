@@ -232,9 +232,7 @@ sub verify {
 		if (defined $log_error) {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
-
 		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character. 
-
 
 			if (defined($r->param("user")) or defined($r->param("user_id"))) {
 				$error = $r->maketext("Your authentication failed.  Please try again."
@@ -535,6 +533,7 @@ sub verify_normal_user {
 			return 0;
 		} else { # ($auth_result < 0) => required data was not present
 			if ($keyMatches and not $timestampValid) {
+				$self->{log_error} = "inactivity timeout";
 				$self->{error} .= $r->maketext("Your session has timed out due to inactivity. Please log in again.");
 			}
 			return 0;

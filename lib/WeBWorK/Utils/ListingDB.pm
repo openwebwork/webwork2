@@ -19,6 +19,7 @@ package WeBWorK::Utils::ListingDB;
 use strict;
 use DBI;
 use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils::Tags;
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
@@ -62,7 +63,6 @@ my %OPLtables = (
  section => 'OPL_section',
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
- morelt_pgfile => 'OPL_morelt_pgfile',
  pgfile_problem => 'OPL_pgfile_problem',
 );
 
@@ -81,7 +81,6 @@ my %NPLtables = (
  section => 'NPL-section',
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
- morelt_pgfile => 'NPL-morelt-pgfile',
  pgfile_problem => 'NPL-pgfile-problem',
 );
 
@@ -112,6 +111,45 @@ sub getDB {
 	);
 	die "Cannot connect to problem library database" unless $dbh;
 	return($dbh);
+}
+
+=item getProblemTags($path) and setProblemTags($path, $subj, $chap, $sect)
+Get and set tags using full path and Tagging module
+                                                                                
+=cut
+
+sub getProblemTags {
+	my $path = shift;
+	my $tags = WeBWorK::Utils::Tags->new($path);
+	my %thash = ();
+	for my $j ('DBchapter', 'DBsection', 'DBsubject', 'Level') {
+		$thash{$j} = $tags->{$j};
+	}
+	return \%thash;
+}
+
+sub setProblemTags {
+	my $path = shift;
+        if (-w $path) {
+		my $subj= shift;
+		my $chap = shift;
+		my $sect = shift;
+		my $level = shift;
+		my $tags = WeBWorK::Utils::Tags->new($path);
+		$tags->settag('DBsubject', $subj, 1);
+		$tags->settag('DBchapter', $chap, 1);
+		$tags->settag('DBsection', $sect, 1);
+		$tags->settag('Level', $level, 1);
+		eval {
+			$tags->write();
+			1;
+		} or do {
+			return [0, "Problem writing file"];
+		};
+		return [1, "Tags written"];
+        } else {
+		return [0, "Do not have permission to write to the problem file"];
+	}
 }
 
 =item kwtidy($s) and keywordcleaner($s)
@@ -155,7 +193,7 @@ specify what to return.
 If we are to return textbooks, then return an array of textbook names
 consistent with the DB subject, chapter, section selected.
 
-=cut                                                                            
+=cut
 
 sub getDBTextbooks {
 	my $r = shift;
@@ -241,14 +279,14 @@ sub getAllDBsubjects {
 	my %tables = getTables($r->ce);
 	my @results=();
 	my $row;
-	my $query = "SELECT DISTINCT name FROM `$tables{dbsubject}`";
+	my $query = "SELECT DISTINCT name FROM `$tables{dbsubject}` ORDER BY DBsubject_id";
 	my $dbh = getDB($r->ce);
 	my $sth = $dbh->prepare($query);
 	$sth->execute();
 	while ($row = $sth->fetchrow_array()) {
 		push @results, $row;
 	}
-	@results = sortByName(undef, @results);
+	# @results = sortByName(undef, @results);
 	return @results;
 }
 
@@ -269,10 +307,10 @@ sub getAllDBchapters {
 	my $query = "SELECT DISTINCT c.name FROM `$tables{dbchapter}` c, 
 				`$tables{dbsubject}` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
-                 t.name = \"$subject\"";
+                 t.name = \"$subject\" ORDER BY c.DBchapter_id";
 	my $all_chaps_ref = $dbh->selectall_arrayref($query);
 	my @results = map { $_->[0] } @{$all_chaps_ref};
-	@results = sortByName(undef, @results);
+	#@results = sortByName(undef, @results);
 	return @results;
 }
 
@@ -295,10 +333,10 @@ sub getAllDBsections {
                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
                  c.DBsubject_id = t.DBsubject_id AND
-                 t.name = \"$subject\" AND c.name = \"$chapter\"";
+                 t.name = \"$subject\" AND c.name = \"$chapter\" ORDER BY s.DBsection_id";
 	my $all_sections_ref = $dbh->selectall_arrayref($query);
 	my @results = map { $_->[0] } @{$all_sections_ref};
-	@results = sortByName(undef, @results);
+	#@results = sortByName(undef, @results);
 	return @results;
 }
 
@@ -309,7 +347,11 @@ $r is an Apache request object that has all needed data inside of it
 
 Here, we search on all known fields out of r
                                                                                 
-=cut                                                                            
+=cut
+
+=item 
+
+=cut
 
 sub getDBListings {
 	my $r = shift;
@@ -320,6 +362,12 @@ sub getDBListings {
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
 	my $keywords = $r->param('library_keywords') || "";
+	# Next could be an array, an array reference, or nothing
+	my @levels = $r->param('level');
+	if(scalar(@levels) == 1 and ref($levels[0]) eq 'ARRAY') {
+		@levels = @{$levels[0]};
+	}
+	@levels = grep { defined($_) && m/\S/ } @levels;
 	my ($kw1, $kw2) = ('','');
 	if($keywords) {
 		$kw1 = ", `$tables{keyword}` kw, `$tables{pgfile_keyword}` pgkey";
@@ -342,6 +390,9 @@ sub getDBListings {
 	if($sec) {
 		$sec =~ s/'/\\'/g;
 		$extrawhere .= " AND dbsc.name=\"$sec\" ";
+	}
+	if(scalar(@levels)) {
+		$extrawhere .= " AND pgf.level IN (".join(',', @levels).") ";
 	}
 	my $textextrawhere = '';
     my $haveTextInfo=0;

@@ -349,7 +349,8 @@ sub updateCourseDirectories {
     		my $courseHtmlDir = $ce->{courseDirs}{html};
     		unless  (-e $modelCourseAchievementsDir and -e $modelCourseAchievementsHtmlDir ) {
     			print CGI::p( {style=>"color:red"},"Your modelCourse in the 'courses' directory is out of date or missing.
-    			 Please update it from webwork/webwork2/courses.dist directory before upgrading the other courses.");
+    			 Please update it from webwork/webwork2/courses.dist directory before upgrading the other courses. Cannot find
+    			 MathAchievements directory $modelCourseAchievementsDir nor MathAchievements picture directory $modelCourseAchievementsHtmlDir");
 			} else {
 				unless (-e $courseAchievementsDir and -e $courseAchievementsHtmlDir ) {
 					print CGI::p( {style=>"color:green"},"we'll try to update the achievements 

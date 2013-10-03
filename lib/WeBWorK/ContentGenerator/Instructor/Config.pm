@@ -108,7 +108,7 @@ sub what_string {
 				border=>"0", alt=>"$self->{var}", 
 				style=>"float: right; padding-left: 0.1em;"})
 		) .
-		$self->{doc} 
+		$r->maketext($self->{doc}) 
 	));
 }
 
@@ -492,6 +492,7 @@ sub getConfigValues {
 	my $languages =[ grep {!$seen{$_} ++}        # remove duplicate items
 			     map {$_=~s/\...$//; $_}        # get rid of suffix 
                  grep {/\.mo$|\.po$/; } sort readdir($dh2) #look at only .mo and .po files
+
                 ]; 
 
 	# insert the anonymous array of theme folder names into ConfigValues
@@ -594,7 +595,7 @@ sub body {
 			$authz->hasPermissions($user, "modify_problem_sets") .
 			" for permission";
 		return(CGI::div({class=>'ResultsWithError'},
-		  CGI::em("You are not authorized to access the Instructor tools.")));
+		  CGI::em($r->maketext("You are not authorized to access the Instructor tools."))));
 	}
 
 	if ($r->param('show_long_doc')) {
@@ -607,9 +608,9 @@ sub body {
 					if($con->{var} eq $r->param('var_name'));
 			}
 		}
-		print CGI::h2("Variable Documentation: ". CGI::code('$'.$r->param('var_name'))),
+		print CGI::h2($r->maketext("Variable Documentation: "). CGI::code('$'.$r->param('var_name'))),
 			CGI::p(),
-			CGI::blockquote( $docstring );
+			CGI::blockquote( $r->maketext($docstring) );
 		return "";
 	}
 
@@ -624,9 +625,7 @@ sub body {
 
 	my $widget_count = 0;
 	if(scalar(@$ConfigValues) == 0) {
-		print CGI::p("The configuration module did not find the data
-it needs to function.  Have your site administrator check that Constants.pm
-is up to date.");
+		print CGI::p($r->maketext("The configuration module did not find the data it needs to function.  Have your site administrator check that Constants.pm is up to date."));
 		return "";
 	}
 

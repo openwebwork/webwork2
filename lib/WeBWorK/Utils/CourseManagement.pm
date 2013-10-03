@@ -1224,7 +1224,7 @@ EOF
 	}
 	
 	print $fh <<'EOF';
-# By default, feeback is sent to all users who have permission to
+# By default, feedback is sent to all users who have permission to
 # receive_feedback. If this list is non-empty, feedback is also sent to the
 # addresses specified here.
 # 
