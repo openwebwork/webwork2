@@ -294,12 +294,24 @@ sub body {
 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"contextTypeset.pl\");\n Context(\"Typeset\");\n BEGIN_TEXT\n";
-			# change newlines into BR's
-			$answer =~ s/\n/\$BR /g;
-			$source .= $answer . "\nEND_TEXT\n ENDDOCUMENT();";
-			my $pg = WeBWorK::PG->new(
-			    $ce,
+			my $source = <<EOS;
+DOCUMENT();
+loadMacros("PG.pl",
+           "PGbasicmacros.pl",
+	   "contextTypeset.pl",
+	   "text2PG.pl"); 
+	    Context("Typeset");
+            \$string = <<TEXT2PG;
+$answer
+TEXT2PG
+	    TEXT(EV3P({processCommands=>0,processVariables=>0},
+		  text2PG(\$string,'doubleSlashes',0)));
+
+	    ENDDOCUMENT();
+EOS
+			    
+			    my $pg = WeBWorK::PG->new(
+				$ce,
 			    $user,
 			    $key,
 			    $set,
