@@ -77,9 +77,9 @@ use WeBWorK::Utils::Tags;
 
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 my $dbh = DBI->connect(
-        $ce->{database_dsn},
-        $ce->{database_username},
-        $ce->{database_password},
+        $ce->{problemLibrary_db}->{dbsource},
+        $ce->{problemLibrary_db}->{user},
+        $ce->{problemLibrary_db}->{passwd},
         {
                 PrintError => 0,
                 RaiseError => 1,
@@ -89,6 +89,8 @@ my $dbh = DBI->connect(
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
+my $db_storage_engine = $ce->{problemLibrary_db}->{storage_engine};
+
 my $verbose = 0;
 my $cnt2 = 0;
 # Can force library version
@@ -245,7 +247,7 @@ for my $tableinfo (@create_tables) {
 	my $tabinit = $tableinfo->[1];
 	my $query = "DROP TABLE IF EXISTS `$tabname`";
 	$dbh->do($query);
-	$query = "CREATE TABLE `$tabname` ( $tabinit )";
+	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine";
 	$dbh->do($query);
 	if($lib eq 'OPL') {
 		$old_tabname = $tabname;
