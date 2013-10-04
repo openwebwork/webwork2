@@ -37,7 +37,10 @@ function(Backbone, _,EditableGrid){
 		},
 		updateGrid: function () {
 			var self = this;
-			this.grid.refreshGrid();
+			if(this.grid.currentContainerid){
+				this.grid.refreshGrid();
+			}
+			 // if it hasn't been rendered yet. 
 			            // (pstaab)experiment here:
             // make a View for each row as a wrapper for Backbone.stickit
 

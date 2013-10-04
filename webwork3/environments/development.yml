@@ -1,5 +1,10 @@
 # configuration file for development environment
 
+#
+#  The webwork directory needs to be set
+
+webwork_dir: "/Volumes/WW_test/opt/webwork/webwork2"
+
 # the logger engine to use
 # console: log messages to STDOUT (your console where you started the
 #          application server)

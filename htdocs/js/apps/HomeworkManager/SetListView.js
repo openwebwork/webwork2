@@ -97,7 +97,9 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
         customizeGrid: function () {
             var dateRenderer = new CellRenderer({
                 render: function(cell, value) { 
-                    $(cell).html("<span class='edit-datetime open_date'>" + value + "</span>"); }
+                    console.log(value);
+                    $(cell).html(moment.unix(value)); 
+                }
             });
             this.editgrid.grid.setCellRenderer("open_date", dateRenderer);
             //this.editgrid.grid.setCellRenderer("due_date", dateRenderer);

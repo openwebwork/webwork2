@@ -17,8 +17,6 @@ set serializer => 'JSON';
 
 hook 'before' => sub {
 
-
-
 	## need to check that the session hasn't expired. 
 
 
@@ -76,7 +74,11 @@ hook 'before' => sub {
 
 	undef session->{error};
 	
-	var ce => getCourseEnvironment(session->{course});
+	if(! defined(vars->{ce})){
+		var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
+	}
+
+	
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
 };
 
