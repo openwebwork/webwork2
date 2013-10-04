@@ -26,7 +26,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             // need to determine if this is a problem in a problem set or a problem from a library browser
 
             if(this.setName) { // the problem comes from a problem set
-                return "/test/courses/" + config.courseSettings.courseID + "/sets/" + this.setName 
+                return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.setName 
                 + "/problems"; 
             } else if (this.path) { // this is a set of problems from a library. 
                 var dirs = this.path.split("/");
@@ -52,7 +52,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                     return {source_file: prob.get("source_file"), problem_id: prob.get("problem_id")};});
 
             $.ajax({  contentType: "application/json", type: "PUT",
-                url: "/test/courses/"+ config.courseSettings.courseID + "/sets/" + this.setName + "/order",
+                url: config.urlPrefix + "courses/"+ config.courseSettings.courseID + "/sets/" + this.setName + "/order",
                 //data: {problem_paths: problemPaths, problem_indices: problemIndices},
                 success: success,
                 data: JSON.stringify({problems: problems}),

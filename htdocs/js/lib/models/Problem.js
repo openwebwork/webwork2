@@ -15,10 +15,10 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         url: function () {
             // need to determine if this is a problem in a problem set or a problem from a library browser
             if(this.collection.setName) { // the problem comes from a problem set
-                return "/test/courses/" + config.courseSettings.courseID + "/sets/" + this.collection.setName 
+                return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.collection.setName 
                 + "/problems/" + this.get("problem_id");
             } else {
-                return "/test/";
+                return config.urlPrefix;
             }
 
         },
@@ -32,18 +32,18 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         },
         loadHTML: function (success) {
             if (this.collection.setName){  // the problem is part of a set
-                $.get( "/test/renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
+                $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
                     + this.collection.setName 
                     + "/problems/" + this.get("problem_id"),this.attributes, success);
             } else {  // it is being rendered from the library
-                $.get("/test/renderer/problems/0",this.attributes,success);
+                $.get(config.urlPrefix + "renderer/problems/0",this.attributes,success);
             }
         },
         checkAnswers: function(answers, success){
             console.log("in checkAnswers");
             var allAttributes = {};
             _.extend(allAttributes,answers);
-             $.get( "/test/renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
+             $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
                     + this.collection.setName 
                     + "/problems/" + this.get("problem_id"),allAttributes, success);
         }

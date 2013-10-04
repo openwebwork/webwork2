@@ -266,7 +266,7 @@ var ClasslistManager = WebPage.extend({
 	    }
 	},
 	changePassword: function(rows){
-		this.passwordPane.users=this.getSelectedUsers();
+		this.passwordPane.users=this.getUsersByRows(rows);
 	    this.passwordPane.render();
 	    this.passwordPane.$el.dialog("open"); 
 	    },

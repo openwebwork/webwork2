@@ -16,7 +16,8 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
 
             this.editgrid = new EditGrid({el: $("#allSets"), grid_name: "problem-set-grid", table_name: "sets-table-container",
                     paginator_name: "#sets-table-paginator", template_name: "#all-problem-sets-template",
-                    enableSort: true, pageSize: 10});
+                    enableSort: true, pageSize: 10,collection: this.problemSets,
+                    bindings: {".open_date" : "open_date"}});
             
             this.editgrid.grid.load({metadata: config.problemSetHeaders});
             this.customizeGrid();
@@ -24,7 +25,6 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
             this.problemSets.on("change",this.updateGrid);
             this.problemSets.on("add",this.updateGrid);
             this.problemSets.on("remove",this.updateGrid);
-            this.render();
             console.log("in SetListView");
 
             this.headerInfo = { template: "#allSets-header", 
@@ -44,7 +44,7 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
 
                 return {id: _set.cid, values: _values};});
             this.editgrid.grid.load({data: _data});
-            this.editgrid.grid.refreshGrid();
+            this.editgrid.updateGrid();
             this.editgrid.updatePaginator();
         },
         gridChanged: function(rowIndex, columnIndex, oldValue, newValue) {
@@ -53,7 +53,7 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
                 return;
             }
 
-            if ([4,5,6].indexOf(columnIndex)>-1) {  // it's a date
+            if (this.editgrid.grid.getColumnName(columnIndex).match(/date/)) { 
                 var oldDate = moment.unix(oldValue)
                     , newDate = moment.unix(newValue);
 
@@ -63,7 +63,8 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
                     this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newDate.unix()).update();
                 } 
             } else {
-                this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)).set(this.editgrid.getColumnName(columnIndex),newValue).update();
+                this.problemSets.get(this.editgrid.grid.getRowId(rowIndex))
+                    .set(this.editgrid.grid.getColumnName(columnIndex),newValue).save();
             }
             this.editgrid.grid.refreshGrid();
         },
@@ -96,12 +97,11 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
         customizeGrid: function () {
             var dateRenderer = new CellRenderer({
                 render: function(cell, value) { 
-                    $(cell).html("<span class='date'>" + moment.unix(value).format("MM/DD/YYYY") + "</span>" + 
-                                    "<i class='icon-time' style='margin-left:1ex;'></i>"); }
+                    $(cell).html("<span class='edit-datetime open_date'>" + value + "</span>"); }
             });
             this.editgrid.grid.setCellRenderer("open_date", dateRenderer);
-            this.editgrid.grid.setCellRenderer("due_date", dateRenderer);
-            this.editgrid.grid.setCellRenderer("answer_date", dateRenderer);
+            //this.editgrid.grid.setCellRenderer("due_date", dateRenderer);
+            //this.editgrid.grid.setCellRenderer("answer_date", dateRenderer);
 
             this.editgrid.grid.setCellRenderer("delete_set",config.deleteCellRenderer,{action: "delete"});
 

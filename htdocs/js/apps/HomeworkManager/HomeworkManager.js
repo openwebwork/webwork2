@@ -139,7 +139,6 @@ var HomeworkEditorView = WebPage.extend({
     // This rerenders the problem set list on the left and sets the drag and drop properties.
     updateProblemSetList: function () {
         var self = this;
-        this.probSetListView.render();
 
         // The following allows a problem set (on the left column to be dragged onto the Calendar)
         $(".problem-set").draggable({   
@@ -175,7 +174,8 @@ var HomeworkEditorView = WebPage.extend({
                 set.addProblem(prob);
             }
         });
-        // When the HW sets are clicked, open the HW details tab.          
+        // When the HW sets are clicked, open the HW details tab.   
+        // pstaab: can we include this in the ProblemSetListView?       
         $(".problem-set").on('click', self.showHWdetails);
 
 

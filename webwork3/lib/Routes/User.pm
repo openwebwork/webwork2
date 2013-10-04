@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use WeBWorK::Utils qw/cryptPassword/;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;
 
@@ -152,10 +153,14 @@ put '/courses/:course_id/users/:user_id' => sub {
         $user->{$key} = param($key);
     }
 
+    if (defined(params->{new_password})){
+    	my $password = vars->{db}->getPassword(params->{user_id});
+    	$password->{password} = cryptPassword(params->{new_password});
+    	vars->{db}->putPassword($password);
+    }
+
     my $result = vars->{db}->putUser($user);
 
-    debug $result;
-	
 	return convertObjectToHash($user);
 
 };

@@ -8,6 +8,8 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
 
     
     var config = {
+        //urlPrefix: "http://localhost:3000/",  // what is the path to the dancer webservice
+        urlPrefix: "/test/",
         courseSettings: {
             "session_key": $("#hidden_key").val(),
             "user": $("#hidden_user").val(),
@@ -67,7 +69,7 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         }
         
     ],
-    // the following is needed for the editable grid in the "all Sets View"
+    // the following is needed for the editable grid in the "Manage Problem Sets View"
         problemSetHeaders : [
             {name: "delete_set", label: "Delete"},
             {name: "set_id", label: "Name", datatype: "string", editable: false},
@@ -77,9 +79,9 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
                 values: {"0": "No", "1": "Yes"}},
             {name: "visible", label: "Visible", datatype: "string",editable: true,
                 values: {"0": "No", "1": "Yes"}},
-            {name: "open_date", label: "Open Date", datatype: "date", editable: true},
-            {name: "due_date", label: "Due Date", datatype: "date", editable: true},
-            {name: "answer_date", label: "Answer Date", datatype: "date", editable: true}
+            {name: "open_date", label: "Open Date", datatype: "integer", editable: false},
+            {name: "due_date", label: "Due Date", datatype: "integer", editable: true},
+            {name: "answer_date", label: "Answer Date", datatype: "integer", editable: true}
             ],
         permissions : [{value: -5, label: "guest"},{value: 0, label: "student"},{value: 2, label: "login proctor"}, 
                         {value: 3, label: "T.A."},{value: 10, label: "professor"}, {value: 20, label: "administrator"}],
@@ -195,7 +197,6 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
             var tz = (theDate.toDate() + "").match(/\((.*)\)/)[1];
             return "<input class='wwdate' size='12' value='" + theDate.format("MM/DD/YYYY") + "''>" +
             "<span class='open-time-editor'><i class='icon-time'></i></span>";
-            //'<span class="wwtime" contenteditable="true"> ' + theDate.format("hh:mmA") + '</span>';
         }
     });
 

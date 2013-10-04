@@ -17,7 +17,7 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
             
            },
         url: function () {
-            return "/test/" + config.requestObject.courseID + "/sets";
+            return config.urlPrefix+ config.courseSettings.courseID + "/sets";
         },
         parse: function(response){
             config.checkForError(response);

@@ -104,15 +104,16 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
         },
         initialize: function(_set){
             _.bindAll(this,"addProblem");
-            this.problems = null;
-            if (_set.problems){
+            if (_set && _set.problems){
                 this.problems = new ProblemList(_set.problems);
                 this.problems.setName = _set.set_id;
-            } 
+            } else {
+                this.problems = new ProblemList();
+            }
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {
-            return "/test/courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") ;
+            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") ;
         },
         parse: function (response) {
             config.checkForError(response);

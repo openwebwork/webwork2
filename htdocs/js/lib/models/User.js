@@ -21,7 +21,7 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             //this.on('change',function() {console.log(this.attributes)});
         },
         url: function () {
-            return "/test/courses/" + config.courseSettings.courseID + "/users/" + this.get("user_id");
+            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/users/" + this.get("user_id");
         },
         toCSVString: function (){
             var self = this;

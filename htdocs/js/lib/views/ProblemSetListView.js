@@ -35,7 +35,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             
             this.$el.html(this.template({loading: false}));
             this.problemSets.each(function (_model) {
-                self.$("#probSetList").append((new SetView({model: _model, template: self.setViewTemplate,
+                self.$("#probSetList").append((new ProblemSetView({model: _model, template: self.setViewTemplate,
                     numUsers: self.users.length})).render().el);
             });
             var _width = self.$el.width() - 70; 
@@ -70,7 +70,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
         }
     });
 
-    var SetView = Backbone.View.extend({
+    var ProblemSetView = Backbone.View.extend({
         tagName: "li",
         initialize: function() {
             _.bindAll(this,"render");

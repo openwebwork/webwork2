@@ -12,7 +12,7 @@ define(['Backbone','config'], function(Backbone,config){
 		}
 
 		url: function () {
-            return "/test/library/" + this.type;
+            return config.urlPrefix + "library/" + this.type;
         },
         parse: function(response){
         	config.checkForError(response);

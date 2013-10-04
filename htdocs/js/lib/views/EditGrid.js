@@ -17,11 +17,14 @@ function(Backbone, _,EditableGrid){
 
 		},
 		render: function () {
+			var self = this;
 			console.log("in EditGrid.render()");
             this.$el.html($(this.options.template_name).html());
           
             this.grid.renderGrid(this.options.table_name,"table table-bordered table-condensed","the_grid");
             this.grid.setPageIndex(0);
+
+
             return this;
  
 		},
@@ -31,6 +34,19 @@ function(Backbone, _,EditableGrid){
 	    'click button.go-back-one' : "showPreviousPage",
 	    'click button.go-forward-one': "showNextPage",
 	    'click button.goto-end': "showLastPage",
+		},
+		updateGrid: function () {
+			var self = this;
+			this.grid.refreshGrid();
+			            // (pstaab)experiment here:
+            // make a View for each row as a wrapper for Backbone.stickit
+
+            
+           /* this.rowViews = this.$("#the_grid tbody tr").map(function(i,_el){
+            	return new EditGridRowView({el: null, bindings: self.options.bindings,
+            			model: self.collection.get($(_el).attr("id").match(/(c\d+)/)[0])});
+            }); */
+
 		},
 		updatePaginator: function () {
 
@@ -75,6 +91,12 @@ function(Backbone, _,EditableGrid){
 
 
 
+	});
+
+	var EditGridRowView = Backbone.View.extend({
+		initialize: function () {
+			this.stickit(this.model,this.options.bindings);
+		}
 	});
 
 	return EditGrid;
