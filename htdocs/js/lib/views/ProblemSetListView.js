@@ -4,7 +4,7 @@
 *  The this.collection object is a ProblemSetList
 *  The following must be passed on initialization
 *       users:  A UserList Backbone.Collection
-*       settings:  A Settings Backbone.Collection
+*       problemSets: A ProblemSet Backbone.Colleciton
 *
 */
 
@@ -25,6 +25,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 
             this.problemSets.on("add",this.render);
             this.problemSets.on("remove",this.render);
+            this.problemSets.on("change",this.render);
 
         },
         render: function ()
@@ -88,12 +89,13 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             return this;
         },
         bindings: {".set-name": "set_id", 
-            ".num-users": { observe: "assigned_users",  
-                onGet: function(value,options) { return "(" +value.length + "/" + this.numUsers + ")"; }}
+            ".num-users": { observe: ["assigned_users", "problems"],  
+                onGet: function(vals) { return "(" +vals[0].length + "/" + this.numUsers 
+                        + ";" + vals[1].length + ")"; }}  // prints the assigned users and the number of problems.
         }
 
     });
-
+/*
     var AddProblemSetView = ModalView.extend({
         initialize: function () {
             _.bindAll(this,"render","addNewSet");
@@ -111,7 +113,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
               this.constructor.__super__.initialize.apply(this,
                 {template: $("#modal-template").html(), templateOptions: {header: "<h3>Create a New Problem Set</h3>", 
                                 saveButton: "Create New Set"}, modalBodyTemplate: $("#add-hw-set-template").html(),
-                                modalBodyTemplateOptions: {name: config.requestObject.user}}); */
+                                modalBodyTemplateOptions: {name: config.requestObject.user}}); 
         },
         render: function () {
             this.constructor.__super__.render.apply(this); 
@@ -142,7 +144,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             if (errorMessage){
                 this.$("#new-set-modal .modal-body").append("<div style='color:red'>The name of the set must contain only letters numbers, '.', _ and no spaces are allowed.");
                 return;
-            } */
+            } 
  
             this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",[$("#hidden_user").val()]);
             console.log(this.model.attributes);
@@ -198,7 +200,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
         }, 
         bindings: { ".delete-problem-sets-list": { observe: "deletedSets", 
             selectOptions: {labelPath: "set_id", valuePath: "set_id", collection: "this.allSets" }}}
-    })
+    }); */
 
     
 

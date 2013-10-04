@@ -10,43 +10,45 @@
 define(['Backbone', 
     'underscore',
     'views/EditableCell',
-    'views/ProblemListView',
+    'views/ProblemSetView',
     'models/ProblemList',
     'models/ProblemSet',
     'views/UserListView',
     'models/UserSetList', 'config','bootstrap'], 
-    function(Backbone, _,EditableCell,ProblemListView,ProblemList,ProblemSet,UserListView,
+    function(Backbone, _,EditableCell,ProblemSetView,ProblemList,ProblemSet,UserListView,
         UserSetList, config){
 	var HWDetailView = Backbone.View.extend({
         className: "set-detail-view",
         tagName: "div",
         initialize: function () {
             _.bindAll(this,'render','changeHWSet','updateNumProblems','loadProblems');
+            var self = this;
             this.users = this.options.users; 
             this.allProblemSets = this.options.problemSets;
             this.problemSet = this.model;
 
-            this.problemViewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showEditTool: true,
-                    showRefreshTool: true, showViewTool: true, showHideTool: false, deletable: true, draggable: false};
-
+            
             this.views = {
-                problemListView : new ProblemListView({headerTemplate: "#problem-set-header", 
-                    viewAttrs: this.problemViewAttrs}),
+                problemSetView : new ProblemSetView({problemSet: this.problemSet}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
                 propertiesView : new ProblemSetDetailView({users: this.users, problemSet: this.problemSet}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
                 unassignUsersView: new UnassignUserView({users:this.users})
             };
 
-
+            this.headerInfo={ template: "#setDetails-header", 
+                options: function () { 
+                    return self.problemSet ? self.problemSet.attributes :  {set_id: ""};
+                }
+            };
+ 
             
         },
         render: function () {
             var self = this;
-            this.$el.html(_.template($("#HW-detail-template").html()));
+            this.$el.html($("#HW-detail-template").html());
             
-            this.views.problemListView.displayModes = config.settings.getSettingValue("pg{displayModes}");
-            this.views.problemListView.setElement($("#problem-list-tab"));
+            this.views.problemSetView.setElement($("#problem-list-tab"));
             this.views.usersAssignedView.setElement($("#user-assign-tab"));
             this.views.propertiesView.setElement($("#property-tab"));
             this.views.customizeUserAssignView.setElement($("#user-customize-tab")); 
@@ -68,42 +70,7 @@ define(['Backbone',
             var self = this;
             if(this.problemSet.problems){ // have the problems been fetched yet? 
                 console.log("Loading the problems for set " + this.problemSet.get("set_id"));
-                this.views.problemListView.setProblems(this.problemSet.problems);
-                //this.updateNumProblems();
-                //this.problemSet.problems.on("num-problems-updated", self.updateNumProblems);
-
-
-                // This sets messages  pstaab: move this to HW Manager. 
-                /*
-                this.problemSet.problems.on("deleteProblem",function (setName,place) {
-                    var str = "Problem #" + (place +1) + " deleted from set: " + setName + " <br> "
-                            + "To undo this, click the Undo button above the problem list. "; 
-                    self.hwManager.announce.addMessage({text: str});
-                });
-
-                this.problemSet.problems.on("remove",self.updateNumProblems);
-                this.problemSet.on("change",function(model)
-                {
-                    _.chain(model.changed).pairs().each(function(p){
-                        self.hwManager.announce.addMessage({text: "The value of " + p[0] + " has changed to " + p[1]});
-
-                    });
-                    // need a announcement here.  
-                    
-                })
-
-                this.problemSet.on("usersAssigned",function(_users,setName){
-                    self.hwManager.announce.addMessage({text: "The following users are a assigned to set " + setName + " : " + _users.join(", ")});
-                    var view = $("#setDetails .tab-content .active").data("view");
-                    self.views[view].render(); 
-                });
-
-
-                
-                this.problemSet.on("problem-set-changed", function (set){
-                    //self.hwManager.announce.addMessage({text: "Something changed. "});
-                }); */
-            
+                this.views.problemSetView.setProblems(this.problemSet.problems);
             } else {
                 this.problemSet.problems = new ProblemList({type: "Problem Set", setName: this.problemSet.get("set_id")});
                 this.problemSet.problems.fetch({success: this.loadProblems});

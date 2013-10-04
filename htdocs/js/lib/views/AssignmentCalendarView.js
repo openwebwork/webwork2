@@ -9,6 +9,7 @@ define(['Backbone', 'underscore', 'moment','views/CalendarView','config'],
 	
     var AssignmentCalendarView = CalendarView.extend({
     	template: _.template($("#calendar-date-bar").html()),
+        headerInfo: { template: "#calendar-header"}, 
     	initialize: function () {
     		this.constructor.__super__.initialize.apply(this, {el: this.el});
     		_.bindAll(this,"render","renderDay","createAssignInfoBar");

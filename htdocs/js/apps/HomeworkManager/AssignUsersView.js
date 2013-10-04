@@ -6,28 +6,30 @@
 
 
 define(['Backbone', 
-    'underscore','models/ProblemSet','views/EditableCell'], 
-    function(Backbone, _,ProblemSet,EditableCell) {
+    'underscore','models/ProblemSet','views/EditableCell','config'], 
+    function(Backbone, _,ProblemSet,EditableCell,config) {
 
     var AssignUsersView = Backbone.View.extend({
     	template: _.template($("#user-template").html()),
+        headerInfo: {template: "#assignSets-header"},
     	initialize: function () {
     		_.bindAll(this,"render","initializeModel");
-    		_.extend(this,this.options);
+            this.users = this.options.users;
+            this.problemSets = this.options.problemSets;
     	},
     	render: function ()
     	{
     		var self = this;
             this.initializeModel();
     		this.$el.html(_.template($("#assign-users-template").html()));
-    		var userList = this.$("#assign-users-list");
-    		this.parent.users.each(function(user){
+    		var userList = this.$(".assign-users-list");
+    		this.users.each(function(user){
     			userList.append(self.template({user: user.get("user_id"), cid: user.cid, firstname: user.get("first_name"), 
                                             lastname: user.get("last_name")}));
     		});
 
     		var hwList = this.$("#assign-sets-list");
-    		this.parent.problemSets.each(function(set){
+    		this.problemSets.each(function(set){
     			hwList.append("<li><input class='classlist-li' type='checkbox' data-setname='" + set.get("set_id") + "' id=set-'" + set.get("set_id") +"'>" 
     				+ "<label class='checklist' for=set-'" + set.get("set_id") + "'>" + set.get("set_id") + "</label>");
     		})
@@ -35,9 +37,9 @@ define(['Backbone',
     		userList.height(0.6*$(window).height());
     		hwList.height(0.6*$(window).height());
 
-    		this.$("#due-date-row").html( (new EditableCell({model : this.model, type: "datetime", property: "open_date"})).render().el);
-            this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "due_date"})).render().el);
-            this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "answer_date"})).render().el);
+    		// this.$("#due-date-row").html( (new EditableCell({model : this.model, type: "datetime", property: "open_date"})).render().el);
+      //       this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "due_date"})).render().el);
+      //       this.$("#due-date-row").append( (new EditableCell({model : this.model, type: "datetime", property: "answer_date"})).render().el);
 
             this.updateDates();
 			return this;
@@ -52,46 +54,44 @@ define(['Backbone',
     	},
     	assign: function ()
     	{	
-    		var allUserNames = this.parent.users.pluck("user_id");
+    		var allUserNames = this.users.pluck("user_id");
 			var userNames = [];
 			$("#assign-users-list input").each(function(i,v) { 
 				if ($(v).prop("checked")) {userNames.push($(v).data("username"));}
 			});
-			var _users = this.parent.users.filter(function(_user) { return (_(userNames).indexOf(_user.get("user_id")) >-1);});
+			var _users = this.users.filter(function(_user) { return (_(userNames).indexOf(_user.get("user_id")) >-1);});
 
 			var setNames = [];
 			$("#assign-sets-list input").each(function(i,v) { 
 				if ($(v).prop("checked")) {setNames.push($(v).data("setname"));}
 			});
-			var _sets = this.parent.problemSets.filter(function(_set) { return (_(setNames).indexOf(_set.get("set_id")) >-1);});
+			var _sets = this.problemSets.filter(function(_set) { return (_(setNames).indexOf(_set.get("set_id")) >-1);});
 
             console.log(_users);
             console.log(_sets);
 
             _(_sets).each(function(set) {set.assignToUsers(userNames)});
 		},
-		updateDates: function ()
-		{
-			this.$("#assign-users-due-date-row").html( (new EditableCell({model : this.model, type: "datetime", 
+		updateDates: function (){
+			/*this.$("#assign-users-due-date-row").html( (new EditableCell({model : this.model, type: "datetime", 
 							property: "open_date"})).render().el);
             this.$("#assign-users-due-date-row").append( (new EditableCell({model : this.model, type: "datetime", 
             				property: "due_date"})).render().el);
             this.$("#assign-users-due-date-row").append( (new EditableCell({model : this.model, type: "datetime", 
             				property: "answer_date"})).render().el);
-
+*/
 		},
-		initializeModel: function()
-		{
+		initializeModel: function(){
 			 // set up the standard open and due dates first. 
-            var timeAssignDue = this.parent.settings.getSettingValue("pg{timeAssignDue}");
-            var timezone = this.parent.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
+            var timeAssignDue = config.settings.getSettingValue("pg{timeAssignDue}");
+            var timezone = config.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
 
 
             var today = moment();
             var openDate = moment().add(7,"days");
-            var assignOpenPriorToDue = this.parent.settings.getSettingValue("pg{assignOpenPriorToDue}");
+            var assignOpenPriorToDue = config.settings.getSettingValue("pg{assignOpenPriorToDue}");
             var dueDate = moment().add(assignOpenPriorToDue,"minutes");
-            var answerAfterDueDate = this.parent.settings.getSettingValue("pg{answersOpenAfterDueDate}");
+            var answerAfterDueDate = config.settings.getSettingValue("pg{answersOpenAfterDueDate}");
             var answerDate = moment().add(answerAfterDueDate,"minutes");
  
 

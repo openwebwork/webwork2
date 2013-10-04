@@ -5,11 +5,10 @@
 */ 
 
 
-define(['Backbone', 'underscore','views/LibraryView'], 
-function(Backbone, _,LibraryView){
+define(['Backbone', 'underscore','views/LibraryView','views/LibrarySearchView'], 
+function(Backbone, _,LibraryView,LibrarySearchView){
     var LibraryBrowser = Backbone.View.extend({
-        className: "lib-browser",
-    	tagName: "td",
+        headerInfo: { template: "#libraryBrowser-header"}, 
     	initialize: function (){
     		var self = this; 
             _.bindAll(this,'render');
@@ -18,7 +17,7 @@ function(Backbone, _,LibraryView){
             this.elements = {subjects: "library-subjects-tab",
                              directories: "library-directories-tab",
                              localLibrary: "library-local-tab",
-                             searchLibraries: "library-search-tab"};
+                             search: "library-search-tab"};
 
             this.views = {
                 subjects  :  new LibraryView({libBrowserType: "subjects", errorPane: this.hwManager.errorPane, 
@@ -27,7 +26,7 @@ function(Backbone, _,LibraryView){
                                             problemSets: this.hwManager.problemSets}),
                 localLibrary: new LibraryView({libBrowserType: "localLibrary", errorPane: this.hwManager.errorPane,
                                             problemSets: this.hwManager.problemSets}),
-                searchLibraries :  new LibraryView({libBrowserType: "searchLibraries", errorPane: this.hwManager.errorPane, 
+                search :  new LibrarySearchView({libBrowserType: "search", errorPane: this.hwManager.errorPane, 
                                             problemSets: this.hwManager.problemSets})
             }            
     	},

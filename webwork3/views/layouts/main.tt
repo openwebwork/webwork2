@@ -11,21 +11,21 @@
 <div class="navbar navbar-fixed-top">
   <div class="navbar-inner">
     <div class="container">
-      <div class="span2 btn-group dropdown">
-        <a href="#" class="dropdown-toggle btn" data-toggle="dropdown">
-          Menu
-          <b class="caret"></b>
-        </a>
-      </div>
-      <ul class="dropdown-menu">
-        <li class="nav-header">Main Menu</li>
-        <li>item 1</li>
-        <li>item 2</li>
-        <li>item 3</li>
-        <li>item 4</li>
-      </ul>
-    </li>
-    </ul>
+        <div class="span2 btn-group dropdown">
+          <a href="#" class="dropdown-toggle btn" data-toggle="dropdown">
+            Menu
+            <b class="caret"></b>
+          </a>
+          <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+            <li class="nav-header">Main Menu</li>
+            <li>item 1</li>
+            <li>item 2</li>
+            <li>item 3</li>
+            <li>item 4</li>
+          </ul>
+        </div>
+        
+    
     <a class="brand" href="#">[% pagename %]</a>
     </div>
   </div>

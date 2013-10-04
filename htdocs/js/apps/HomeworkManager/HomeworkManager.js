@@ -2,32 +2,21 @@
    This is the base javascript code for the Homework Manager.  This sets up the View and ....
   
 */
-define(['module','Backbone', 
-    'underscore',
-    'models/UserList',
-    'models/ProblemSetList',
-    'models/Settings',   
-    'views/AssignmentCalendarView',
-    'HWDetailView',
-    'views/ProblemSetListView',
-    'SetListView',
-    'LibraryBrowser',
-    'AssignUsersView',
-    'views/WebPage',
-    'config',
-    'views/WWSettingsView',
-    'backbone-validation',
-    'jquery-ui',
-    'bootstrap'
+define(['module','Backbone', 'underscore','models/UserList','models/ProblemSetList','models/Settings',   
+    'views/AssignmentCalendarView','HWDetailView','views/ProblemSetListView','SetListView','LibraryBrowser',
+    'AssignUsersView','views/WebPage','config','views/WWSettingsView','views/HeaderView', 'backbone-validation',
+    'jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
-            ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView){
+            ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView,HeaderView){
 var HomeworkEditorView = WebPage.extend({
     tagName: "div",
     initialize: function(){
 	    this.constructor.__super__.initialize.apply(this, {el: this.el});
 	    _.bindAll(this, 'render','updateCalendar','updateProblemSetList', 'setMessages',"showHWdetails");  // include all functions that need the this object
 	    var self = this;
+
+        (this.headerView = new HeaderView({el: $("#page-header")})).setTemplate({template: "#calendar-header"});
         this.render();
         this.dispatcher = _.clone(Backbone.Events);
 
@@ -39,12 +28,13 @@ var HomeworkEditorView = WebPage.extend({
         this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets) : new ProblemSetList();
 
         // call parse to set the .id attribute of each set so that backbone's set.isNew()  is false
-        this.problemSets.each(function(set){set.parse()});
+        this.problemSets.each(function(set){set.parse();});
+        config.settings.each(function(setting){setting.parse();});
+        this.users.each(function(user){user.parse();});
 
         this.dispatcher.on("calendar-change", self.updateProblemSetList);
         config.timezone = config.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
-        this.render();
                 // Define all of the views that are visible with the Pulldown menu
 
         this.views = {
@@ -52,8 +42,9 @@ var HomeworkEditorView = WebPage.extend({
                     viewType: "instructor", calendarType: "month", users: this.users,
                     reducedScoringMinutes: config.settings.find(function(setting) { return setting.get("var")==="pg{ansEvalDefaults}{reducedScoringPeriod}";}).get("value")}),
             setDetails:  new HWDetailView({el: $("#setDetails"),  users: this.users, problemSets: this.problemSets}),
-            allSets:  new SetListView({el:$("#allSets"), problemSets: this.problemSets}),
-            assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", parent: this}),
+            allSets:  new SetListView({el:$("#allSets"), problemSets: this.problemSets, users: this.users}),
+            assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", 
+                                users: this.users, problemSets: this.problemSets}),
             importExport:  new ImportExport(),
             libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), parent: this, hwManager: this}),
             settings      :  new HWSettingsView({parent: this, el: $("#settings")})
@@ -62,6 +53,9 @@ var HomeworkEditorView = WebPage.extend({
         this.setMessages();  
         (this.probSetListView = new ProblemSetListView({el: $("#problem-set-list-container"), viewType: "Instructor",
                             problemSets: this.problemSets, users: this.users})).render();
+
+        
+
 
         this.updateProblemSetList();
         this.updateCalendar();
@@ -88,14 +82,15 @@ var HomeworkEditorView = WebPage.extend({
         });
 
         this.problemSets.on("remove", function(set){
-            self.announce.addMessage({text: "Problem Set: " + set.get("set_id") + " has been removed from the course."});
-            set.destroy();
-            self.views.calendar.render();
-            self.updateProblemSetList();
+            if(set.destroy()){
+                self.announce.addMessage({text: "Problem Set: " + set.get("set_id") + " has been removed from the course."});
+                self.views.calendar.render();
+                self.updateProblemSetList();
+            }
         });
         
         this.problemSets.on("sync", function (_set){
-            _(_set.changedAttributes).each(function(attr){
+            _(_set.alteredAttributes).each(function(attr){
                     self.announce.addMessage({text: "The value of " + attr.attribute + " in problem set " 
                         + _set.get("set_id") + " has changed from " + attr.old_value + " to " + attr.new_value});
                 });
@@ -111,13 +106,27 @@ var HomeworkEditorView = WebPage.extend({
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
+        this.headerView.render();
+
     },
-    events: {"click #hw-manager-menu a.link": "changeView"},
+    events: {"click #hw-manager-menu a.link": "changeView",
+            "click #show-hide-sets-button": "showHideSets"},
+    showHideSets: function () {
+        if ($("#problem-set-list-container").css("display")=="none"){
+            $("#problem-set-list-container").show("slide",{direction: "up"});
+            $("#show-hide-sets-button i").removeClass("icon-chevron-down").addClass("icon-chevron-up");            
+        } else {
+            $("#problem-set-list-container").hide("slide", { direction: "up" });
+            $("#show-hide-sets-button i").removeClass("icon-chevron-up").addClass("icon-chevron-down");            
+        }
+
+    },
     showHWdetails: function(evt){
         if (this.objectDragging) return;
         this.changeView(null,"setDetails", "Set Details");
-        this.views.setDetails.render();
         this.views.setDetails.changeHWSet($(evt.target).closest(".problem-set").data("setname")); 
+        this.headerView.setTemplate(this.views.setDetails.headerInfo).render();
+
     },
     changeView: function (evt,link,header){
         var linkname = (link)?link:$(evt.target).data("link");
@@ -125,6 +134,7 @@ var HomeworkEditorView = WebPage.extend({
         $("#"+linkname).addClass("active");
         $("#viewHeader").html((header)?header:$(evt.target).data("name"));
         this.views[linkname].render();
+        this.headerView.setTemplate(this.views[linkname].headerInfo).render();
     },
     // This rerenders the problem set list on the left and sets the drag and drop properties.
     updateProblemSetList: function () {
@@ -220,23 +230,41 @@ var HomeworkEditorView = WebPage.extend({
     }
 });
 
-var HWSettingsView = WWSettingsView.extend({
+var HWSettingsView = Backbone.View.extend({
+    headerInfo: {template: "#settings-header"},
     initialize: function () {
         _.bindAll(this,'render');
+
 
         this.settings = config.settings.filter(function (setting) {return setting.get("category")==='PG - Problem Display/Answer Checking'});
         this.constructor.__super__.initialize.apply(this,{settings: this.settings});
      }, 
      render: function () {
-        $("#settings").html(_.template($("#settings-template").html()));
+        // get all of the categories except for timezone (include it somewhere?)
+        var categories = config.settings.chain().pluck("attributes").pluck("category")
+            .unique().difference("timezone").value();
+        $("#settings").html(_.template($("#settings-template").html(),{categories: categories}));
         this.constructor.__super__.render.apply(this);
 
-    
-     }
+        // set up the general settings tab
 
+        $("#setting-tab0").addClass("active");  // show the first settings pane.
+        $("a[href='#setting-tab0']").parent().addClass("active");
+
+        var settings = config.settings.where({category: categories[0]});
+        this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
+
+     },
+     events: {"shown a[data-toggle='tab']": "changeSettingTab"},
+     changeSettingTab: function(evt){
+        var settings = config.settings.where({category: $(evt.target).text()});
+        this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
+
+     }
 });
 
 var ImportExport = Backbone.View.extend({
+    headerInfo: {template: "#importExport-header"},
     initialize: function (){
         _.bindAll(this,"render");
     },

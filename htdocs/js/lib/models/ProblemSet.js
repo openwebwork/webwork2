@@ -102,9 +102,13 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             relax_restrict_ip: "opt(yes,no)",
             restricted_login_proctor: "opt(yes,no)",
         },
-        initialize: function(){
+        initialize: function(_set){
             _.bindAll(this,"addProblem");
             this.problems = null;
+            if (_set.problems){
+                this.problems = new ProblemList(_set.problems);
+                this.problems.setName = _set.set_id;
+            } 
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {
@@ -155,7 +159,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             var currentDate = moment.unix(this.get(attr))
                 , newDate = moment.unix(_date);
 
-            this.changedAttributes = [{attribute: attr, old_value: currentDate.format("MM/DD/YYYY [at] h:mmA"), 
+            this.alteredAttributes = [{attribute: attr, old_value: currentDate.format("MM/DD/YYYY [at] h:mmA"), 
                                     new_value: newDate.format("MM/DD/YYYY [at] h:mmA")}];
             currentDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
             this.set(attr,currentDate.unix());

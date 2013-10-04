@@ -5,8 +5,8 @@
 */ 
 
 
-define(['Backbone', 'underscore','views/ProblemListView','models/ProblemList','views/LibraryTreeView'], 
-function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
+define(['Backbone', 'underscore','views/LibraryProblemsView','models/ProblemList','views/LibraryTreeView'], 
+function(Backbone, _,LibraryProblemsView, ProblemList,LibraryTreeView){
     var LibraryView = Backbone.View.extend({
         className: "lib-browser",
     	initialize: function (){
@@ -14,58 +14,45 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
             _.bindAll(this,'render','changeView','showProblems','addProblem');
             this.allProblemSets = this.options.problemSets;
             this.errorPane = this.options.errorPane;
-            this.libBrowserType = this.options.libBrowserType;
-            this.dispatcher = {};
-            _.extend(this.dispatcher, Backbone.Events);
-
-    		this.dispatcher.on("load-problems", function(path) { self.loadProblems(path);});
+            
+    		//this.dispatcher.on("load-problems", function(path) { self.loadProblems(path);});
 
             // The following needs to be changed it's being called when the problem set list is shown.  
 
             
             this.libraryTreeView = new LibraryTreeView({dispatcher: this.dispatcher, orientation: "dropdown", 
-                                            type: this.libBrowserType});
-
-            this.problemViewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true,
-                    showRefreshTool: true, showViewTool: true, showHideTool: true, deletable: false, draggable: true};
+                                            type: this.options.libBrowserType});
+            this.libraryTreeView.libraryTree.on("library-selected", function(path) { self.loadProblems(path);});            
 
             
     	},
     	events: {"change #library-selector": "changeView",
                     "change .target-set": "resetDisplayModes",
-                    "click .load-more-btn": "loadMore"},
+                    "click .load-more-btn": "loadMore", 
+                    "click .test-me": "test"},
     	render: function (){
             var self = this;
 
     		this.$el.html(_.template($("#library-view-template").html(), {sets: this.allProblemSets.pluck("set_id")}));
             this.libraryTreeView.render();
             this.$(".library-viewer").append(this.libraryTreeView.el);
-
-
-
     		this.$(".lib-problem-viewer").height(0.8*screen.height);
-
-
-            var targetSetSelect = self.$(".target-set")
-    		
-/*            this.allProblemSets.each(function(set){
-                    targetSetSelect.append(_.template($("#target-set-template").html(),set.attributes)) 
-                }); */
-
+    		//this.showProblems();
     	},
+        test: function () {
+            console.log("testing");
+        },
         loadMore: function () {
-            this.problemListView.loadMore();
+            this.libraryProblemsView.loadMore();
         },
         showProblems: function (){
             console.log("in showProblems");
             console.log(this.problemList);
-            (this.problemListView = new ProblemListView({el: this.$(".lib-problem-viewer"), 
-                                            type: this.libBrowserType,  
-                                            problems: this.problemList,
-                                            viewAttrs: this.problemViewAttrs, 
-                                            headerTemplate: "#library-problems-header"})).render();
+            (this.libraryProblemsView = new LibraryProblemsView({el: this.$(".lib-problem-viewer"), 
+                                            problems: this.problemList,type: this.options.libBrowserType})).render();
 
-            this.problemList.on("add-to-target",this.addProblem);
+            //this.problemList.on("add-to-target",this.addProblem);
+            this.libraryProblemsView.renderProblems();
 
         },
         addProblem: function(model){
@@ -93,12 +80,6 @@ function(Backbone, _,ProblemListView, ProblemList,LibraryTreeView){
             var self = this;
 			this.problemList = new ProblemList({path:  _path, type: "Library Problems"});
             this.problemList.fetch({success: this.showProblems});
-            /* this.problemList.on("fetchSuccess",this.showProblems,this);
-            this.problemList.on("num-problems-updated", function(num){
-                    console.log("in num-problems-updated");
-                    self.$("span.problems-shown").html(self.$(".prob-list li").length + " of " + self.problemList.size() + " shown");
-            });
-            */
     	}, 
         resetDisplayModes: function(){
             this.$('.target-set').css('background-color','white');

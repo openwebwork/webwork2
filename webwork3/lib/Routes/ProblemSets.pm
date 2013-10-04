@@ -9,7 +9,7 @@ package ProblemSets;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Routes qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
@@ -80,7 +80,7 @@ post '/courses/:course_id/sets/:set_id' => sub {
         return {error=>"You don't have the necessary permission"};
     }
 
-    if (param('set_id') !~ /^[\w .-]*$/) {
+    if (param('set_id') !~ /^[\w\_.-]+$/) {
         return {error=>"The set name must only contain A-Za-z0-9_-."};
     } 
     if (vars->{db}->existsGlobalSet(param('set_id'))){
@@ -95,9 +95,9 @@ post '/courses/:course_id/sets/:set_id' => sub {
             
     vars->{db}->addGlobalSet($set);
 
-    if(param('users_assigned')){
-        my @users = split(',',param('users_assigned'));
-        for my $user (@users){
+    if(param('assigned_users')){
+        my $users = param('assigned_users');
+        for my $user (@{$users}){
             my $userSet = vars->{db}->newUserSet;
             $userSet->set_id($set->{set_id});
             $userSet->user_id($user);
@@ -179,10 +179,7 @@ del '/courses/:course_id/sets/:set_id' => sub {
 #
 # returns an array of problem_id's in the new order.
 #
-# Note: there needs to be two parameters that are set
-#    1) problem_path is a comma-separated list of paths
-#    2) problem_indices is a comma-separated list of indices (problem_id) of the new order corresponding to the problems 
-#       in the problem_path
+# Note: the parameter problems must contain an array (in the desired order) of problems
 #
 #  permission > Student
 #
@@ -202,31 +199,35 @@ put '/courses/:course_id/sets/:set_id/order' => sub {
 
     my @problems_from_db = vars->{db}->getAllGlobalProblems(params->{set_id});
 
+    my $problems_in_new_order = params->{problems};
 
-    my @problem_paths = split(",",params->{problem_paths});
-    my @problem_indices = split(",",params->{problem_indices});
+    # debug @problems_in_new_order;
+    # debug scalar(@problems_in_new_order);
 
-    if (scalar(@problem_paths) != scalar(@problem_indices)){
-        return {error=>"The parameters problem_paths and problem_indices must have the same number of elements separated by commas."};
-    }
+    #for my $i (0 .. $#problems_in_new_order) {
+    #     debug $i;
+    #}
 
-    for my $i (0 .. $#problem_paths) {
-        my $problem = first { $_->{source_file} eq $problem_paths[$i] } @problems_from_db;
-        debug $problem_indices[$i];
-        if (vars->{db}->existsGlobalProblem(params->{set_id},$problem_indices[$i])){
-            $problem->problem_id($problem_indices[$i]);                 
+    for my $p (@{$problems_in_new_order}){
+        #debug $problems_in_new_order[$i]->{problem_id} . " " . $problems_in_new_order[$i]->{source_file};
+        my $problem = first { $_->{source_file} eq $p->{source_file} } @problems_from_db;
+        debug $problem;
+        if (vars->{db}->existsGlobalProblem(params->{set_id},$p->{problem_id})){
+            $problem->problem_id($p->{problem_id});                 
             vars->{db}->putGlobalProblem($problem);
-            debug("updating problem $problem_paths[$i] and setting the index to $problem_indices[$i]");
+            #debug("updating problem $problem_paths[$i] and setting the index to $problem_indices[$i]");
 
         } else {
             # delete the problem with the old problem_id and create a new one
             vars->{db}->deleteGlobalProblem(params->{set_id},$problem->{problem_id});
-            $problem->problem_id($problem_indices[$i]);
+            $problem->problem_id($p->{problem_id});
             vars->{db}->addGlobalProblem($problem);
 
-            debug("adding new problem $problem_paths[$i] and setting the index to $problem_indices[$i]");
+            #debug("adding new problem $problem_paths[$i] and setting the index to $problem_indices[$i]");
         }
     }
+
+    return "yeah! reordered!";
 
 };
 

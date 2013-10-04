@@ -35,7 +35,7 @@ var require = {
         'bootstrap':['jquery'],
         'backbone-validation': ['Backbone'],
         'moment': {exports: 'moment'},
-        'config': {deps: ['moment'], exports: 'config'},
+        'config': {deps: ['moment','editablegrid'], exports: 'config'},
         'stickit': ["Backbone","jquery"],
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],

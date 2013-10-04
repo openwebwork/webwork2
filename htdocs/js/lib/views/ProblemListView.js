@@ -3,14 +3,14 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
 
     /******
       * 
-      *  The ProblemListView is a View of the ProblemList Collection.  In short, it displays the problems in the ProblemList
+      *  The ProblemListView is a View of the ProblemList Collection and designed to be a super class of
+      *  a ProblemSetView or a LibraryProblemListView.  In short, it displays the problems in the ProblemList
       *   This is used for both a list of problems from the library (global or local) as well as a problem set. 
       * 
-      *  One must pass the following:
-      *  type: the type of problemList (library or problemset)
+      *  The inherited class must define the following:
       *  viewAttrs:  an object of viewing attributes that are passed to the ProblemView to determine how it is decorated.  
       *  headerTemplate: a string of the jquery selector for the template used to render the header.
-      *                     The template needs to contain a <div class="prob-list"></div> where the problems will be shown.  
+      *                     The template needs to contain a <div class="prob-list"></div> where the problems will be shown  
       *  displayModes: an array of strings of the possible display modes for problem rendering. 
       *  
       *  The set name and list of problems are passed in the setProblems function.  
@@ -22,115 +22,83 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         initialize: function(){
             var self = this;
             _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
-            _(["viewAttrs","type","headerTemplate","problemTemplate","displayModes"]).
-                each(function(key){
-                    self[key] = self.options[key];
-                });
-            this.problemViews=[];
             
             this.numProblemsPerGroup = 10; // this should be a parameter.
             
             this.problems = this.options.problems ? this.options.problems : new ProblemList();
+            this.problems.on("remove",this.deleteProblem);
+            this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
+
+            // start with showing 10 (numProblemsPerGroup) problems
+            this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
+                    this.numProblemsPerGroup : this.problems.length;
         },
         setProblems: function(_problems){
             this.problems = _problems; 
+
+            // start with showing 10 (numProblemsPerGroup) problems
+            this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
+                    this.numProblemsPerGroup : this.problems.length;
+
             return this;
         },
         render: function() {
-            console.log("in ProblemListView.render()");
             var self = this;
-            var openEditorURL = "/webwork2/" + $("#hidden_courseID").val() + "/instructor/SimplePGEditor/" 
-                                    + this.problems.setName + "/" + (this.problems.length +1);
-            this.$el.html(_.template($(this.headerTemplate).html(),{displayModes: this.displayModes, 
-                                        editorURL: openEditorURL}));
-            var ul = this.$(".prob-list");  
+            var openEditorURL = this.problems ? "/webwork2/" + $("#hidden_courseID").val() 
+                                    + "/instructor/SimplePGEditor/" 
+                                    + this.problems.setName + "/" + (this.problems.length +1): "";
+            this.$el.html(_.template($(this.headerTemplate).html(),
+                                {displayModes: config.settings.getSettingValue("pg{displayModes}"), 
+                                editorURL: openEditorURL}));
+            
+            
+            this.renderProblems();
+            
+            return this;
+        }, 
+        renderProblems: function () {
+            var self = this;
+            var ul = this.$(".prob-list").empty(); 
             this.problems.each(function(problem,i){
-                if (!self.problemViews[i]){
-                    self.problemViews[i] = new ProblemView({model: problem,type: self.type,
-                        viewAttrs: self.viewAttrs});
-                } 
-                ul.append(self.problemViews[i].render().el);
+                if(i<self.maxProblemIndex) {
+                    ul.append((new ProblemView({model: problem,viewAttrs: self.viewAttrs})).render().el); 
+                }
             });
 
             if(this.viewAttrs.reorderable){
-                this.$(".prob-list").sortable({update: this.reorder, handle: ".reorder-handle", 
-                                                placeholder: ".sortable-placeholder",axis: "y",
+                this.$(".prob-list").sortable({handle: ".reorder-handle", forcePlaceholderSize: true,
+                                                placeholder: "sortable-placeholder",axis: "y",
                                                 stop: this.reorder});
             }
-            this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
-            this.problems.on("remove",this.deleteProblem); 
             this.updateNumberOfProblems();
-            return this;
-        }, 
+        },
         updateNumberOfProblems: function () {
             $("#number-of-problems").html(this.$(".prob-list li").length + " of " 
                 + this.problems.size() + " problems shown.");
+            if(this.$(".prob-list li").length == this.problems.size()){
+                this.$(".load-more-btn").addClass("disabled");
+            } else {
+                this.$(".load-more-btn").removeClass("disabled");
+            }
         },
-        /*
+        
         loadMore: function () {
-            var lastProblemVisible = this.visibleProblems.length==0 ? -1 : this.visibleProblems[this.visibleProblems.length-1];
-            var newVisibleProblems = _.range(lastProblemVisible+1,
-                lastProblemVisible+1+this.numProblemsPerGroup>this.problems.length ? this.problems.length 
-                    : lastProblemVisible+this.numProblemsPerGroup+1);
-            var self = this;
-            var ul = this.$(".prob-list");  
-            _(newVisibleProblems).each(function(i) {
-                ul.append(self.problemViews[i] = (new ProblemView({model: self.problems.at(i), 
-                    type: self.type, viewAttrs: self.viewAttrs})).render().el);
-                self.problems.at(i).on('rendered',function(model){
-                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,model.cid]);
-                });
-            });
-
-            this.visibleProblems = _.union(this.visibleProblems,newVisibleProblems);
-
-
-        }, */
+            this.maxProblemIndex+=10;
+            this.renderProblems();
+        },
 
         events: {"click #undo-delete-btn": "undoDelete",
             "click .display-mode-options a": "changeDisplayMode",
             "click #create-new-problem": "openSimpleEditor",
             "click .load-more-btn": "loadMore"
         },
-  /*        setProblems: function(_problems){  // _problems should be a ProblemList
-            var self = this; 
-
-
-
-        
-            this.problemViews = [];  // an array of ProblemViews to render the problems. 
-            this.problemsRendered = [];  // this is used to determine when all of the problems have been rendered.  
-
-            this.problems = _problems;
-
-
-            // run this after all of the problems have been rendered. 
-            // this will set the size of the window (although we should do this will CSS)
-            // and showing the number of problems shown
-
-
-            this.problems.on("rendered", function (probNumber) { 
-                if (_(self.problemsRendered).indexOf(probNumber)<0){
-                    self.problemsRendered.push(probNumber);
-                }
-                if (self.problemsRendered.length === self.visibleProblems.length){
-                    self.$(".prob-list").height($(window).height()-self.$(".prob-list").position().top);
-                    self.problems.trigger("num-problems-updated");
-                }
-            }); 
-
-
-
-            this.problems.on("add", this.addProblemView);
-            this.render();
-        }, */
         changeDisplayMode: function (evt) {
             var _displayMode = $(evt.target).text().trim();
-            console.log("Changing the display mode to " + _displayMode);
-            _(this.problemViews).each(function(problemView) {
-                problemView.model.set({data: null, displayMode: _displayMode}, {silent: true});
-                problemView.render();
+            
+            this.problems.each(function(prob){
+                prob.set({data: null, displayMode: _displayMode},{silent:true});
             });
+            this.render();
         },
         /* when the "new" button is clicked open up the simple editor. */
         openSimpleEditor: function(){  
@@ -141,7 +109,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             console.log("I was reordered!");
             this.$(".problem").each(function (i) { 
                 self.problems.findWhere({source_file: $(this).data("path")})
-                        .set({problem_id: i}, {silent: true});  // set the new order of the problems.  
+                        .set({problem_id: i+1}, {silent: true});  // set the new order of the problems.  
             });   
             this.problems.reorder();
         },
@@ -156,6 +124,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
         },
         setProblemSet: function(_set) {
+
             this.model = _set; 
             return this;
         },

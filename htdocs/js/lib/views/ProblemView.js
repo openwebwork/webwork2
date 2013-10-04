@@ -22,7 +22,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
             _.bindAll(this,"render","removeProblem");
             // this.options.viewAttrs will determine which tools are shown on the problem
             this.allAttrs = {};
-            _.extend(this.allAttrs,this.options.viewAttrs,{type: this.options.type});
+            _.extend(this.allAttrs,this.options.viewAttrs);
 
             var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=images&key=" 
                 + config.courseSettings.session_key 

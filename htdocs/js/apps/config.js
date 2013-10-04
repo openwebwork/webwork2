@@ -1,3 +1,9 @@
+/***
+ *  This object contains many common things needed by all other objects
+ *
+ **/
+
+
 define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], function(Backbone,moment){
 
     
@@ -7,17 +13,6 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
             "user": $("#hidden_user").val(),
             "courseID": $("#hidden_courseID").val(),
         },
-        /*requestObject: {
-            "session_key": $("#hidden_key").val(),
-            "user": $("#hidden_user").val(),
-            "courseID": $("#hidden_courseID").val(),
-        },
-        webserviceURL: "/webwork2/instructorXMLHandler",
-        printOtherParams: function () {
-            return "?course=" + this.requestObject.courseID + "&user=" + this.requestObject.user 
-                + "&session_key=" + this.requestObject.session_key;
-
-        },*/
         checkForError: function(response){
             if (response && response.error){
                 console.log("need to handle this somehow");
@@ -48,32 +43,36 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
                             "action2":"Delete User","action3":"Act as User",
                             "action4":"Student Progess","action5":"Email Student"}
                     },
-                { label: "Login Name", name: "user_id", datatype: "string", editable: false },
-                { label: "Assigned Sets", name: "num_user_sets", datatype: "string", editable: false },
-                { label: "First Name", name: "first_name", datatype: "string", editable: true },
-                { label: "Last Name", name:"last_name", datatype: "string", editable: true },
-                { label: "Email", name: "email_address", datatype: "string", editable: true },
-                { label: "Student ID", name: "student_id", datatype: "string", editable: true },
-                { label: "Status", name: "status", datatype: "string", editable: true,
-                    values : {
-                        "en":"Enrolled",
-                        "noten":"Not Enrolled"
-                    }
-                },
-                { label: "Section", name: "section", datatype: "integer", editable: true },
-                { label: "Recitation", name: "recitation", datatype: "integer", editable: true },
-                { label: "Comment", name: "comment", datatype: "string", editable: true },
-                { label: "Permission", name: "permission", datatype: "integer", editable: true,
-                    values : {
-                        "-5":"guest","0":"Student","2":"login proctor",
-                        "3":"grade proctor","5":"T.A.", "10": "Professor",
-                        "20":"Admininistrator"
+            { label: "Login Name", name: "user_id", datatype: "string", editable: false },
+            { label: "Assigned Sets", name: "num_user_sets", datatype: "string", editable: false },
+            { label: "First Name", name: "first_name", datatype: "string", editable: true },
+            { label: "Last Name", name:"last_name", datatype: "string", editable: true },
+            { label: "Email", name: "email_address", datatype: "string", editable: true },
+            { label: "Student ID", name: "student_id", datatype: "string", editable: true },
+            { label: "Status", name: "status", datatype: "string", editable: true,
+                values : {
+                    "en":"Enrolled",
+                    "noten":"Not Enrolled"
+                }
+            },
+            { label: "Section", name: "section", datatype: "integer", editable: true },
+            { label: "Recitation", name: "recitation", datatype: "integer", editable: true },
+            { label: "Comment", name: "comment", datatype: "string", editable: true },
+            { label: "Permission", name: "permission", datatype: "integer", editable: true,
+                values : {
+                    "-5":"guest","0":"Student","2":"login proctor",
+                    "3":"grade proctor","5":"T.A.", "10": "Professor",
+                    "20":"Admininistrator"
             }
         }
         
-                ],
+    ],
+    // the following is needed for the editable grid in the "all Sets View"
         problemSetHeaders : [
+            {name: "delete_set", label: "Delete"},
             {name: "set_id", label: "Name", datatype: "string", editable: false},
+            {name: "users_assigned", label: "Num. of Users Assigned", datatype: "string", editable: false},
+            {name: "num_problems", label: "Num. of Problems", datatype: "string", editable: false},
             {name: "enable_reduced_scoring", label: "Reduced Scoring", datatype: "string",editable: true,
                 values: {"0": "No", "1": "Yes"}},
             {name: "visible", label: "Visible", datatype: "string",editable: true,
@@ -118,6 +117,8 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
     //
     // This takes a webwork date-time (for open_date, due-date, etc.) and creates a pair of html spans to handle 
     // the date and time separately
+    //
+    // note, pstaab: I think the Handler ".edit-datetime" is better.  Need to check where .ww-datetime is used
 
     Backbone.Stickit.addHandler({
       selector: '.ww-datetime',
@@ -145,6 +146,13 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
                 '<span class="wwtime" contenteditable="true"> ' + theDate.date.format("hh:mmA") + '</span>'; 
         }
     });
+
+    Backbone.Stickit.addHandler({
+        selector: '.show-datetime',
+        onGet: function(val){
+            return moment(val).format("MM/DD/YYYY [at] hh:mmA");
+        }
+    })
 
     // pstaab:  clean this up a bit.  Try to put the html into a template. 
 
@@ -228,6 +236,22 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
 
             }
     });
+
+    function DeleteCellRenderer(config) {
+      this.init(config);
+    }
+
+    DeleteCellRenderer.prototype = new CellRenderer();
+    DeleteCellRenderer.prototype.render  = function(_cell,_value){
+              $(_cell).html("<button class='btn btn-small'><i class='icon-trash'></i></button>")
+                  .on("click", {obj: this, cell: _cell, value: _value}, this.deleteRow); };
+
+    DeleteCellRenderer.prototype.deleteRow = function(evt) {
+      var row =  evt.data.obj.editablegrid.getRowIndex($(evt.data.cell).parent().attr("id").split("_")[1]);
+      evt.data.obj.editablegrid.modelChanged.call(evt.data.obj.editablegrid,row,0,"","delete")
+
+                  };
+    config.deleteCellRenderer = new DeleteCellRenderer();
 
     return config;
 });

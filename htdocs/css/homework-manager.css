@@ -3,6 +3,8 @@
 #hw-set-list-container {margin: 20px 15px;  padding:10px;}
 
 
+/* Calendar related styles: */
+
 #calendar-table {border: 1px solid black; border-collapse: collapse; background: lightgray;}
 #calendar-table td {border: 1px solid black; width: 13%;  vertical-align: top;}
 
@@ -26,17 +28,28 @@
 
 .assign-info {cursor: pointer;}
 
+.assign {text-align: center;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	cursor: move;
+	border: 1px gray solid;
+	margin: 1px;}
+
+#calendar-table th {border: 1px solid black;}
+
+.calendar-button-row {margin: 20px;}
+
+/* Help with the spacing in the top row */
+
+#page-header h2 {font-size: 24px; line-height: 28px; margin: 0px; display: inline-block;}
+
+
+
 .help-hidden {display: none;}
 
 .empty {background-color: none;}
 
-.assign {text-align: center;
--moz-border-radius: 5px;
--webkit-border-radius: 5px;
-border-radius: 5px;
-cursor: move;
-border: 1px gray solid;
-margin: 1px;}
 
 .dropdown-submenu a {width: 180px; overflow: hidden;}
 
@@ -50,8 +63,6 @@ margin: 1px;}
 
 .assign-filled {height: 30px; background-color: rgb(250,100,100)}
 
-
-.calendar-button-row {margin: 20px;}
 
 //.list {list-style: none;}
 
@@ -83,5 +94,19 @@ label.checklist {display: inline; margin-left: 8px;}
 #problem-set-name h2 {font-size: 18pt; line-height: 20pt;}
 
 .problem-set-header-row .btn-toolbar {margin-top: 0px;}
+
+/* Styles for problem viewing */
+
+.problem {border: 1px black solid;
+padding: 5px;
+border-radius: 5px;}
+
+.filename {font-style: italic; font-weight:  bold;}
+
+/* class for reordering problem sets */
+
+.sortable-placeholder {
+	border: 1px dashed black; background: lightgray;
+}
 
 

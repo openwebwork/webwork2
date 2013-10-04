@@ -8,13 +8,13 @@
     "components"
   ],
   "dependencies": {
-    "jquery": "1.8",
+    "jquery": "1.8.*",
     "backbone" : "1.0",
     "underscore": "1.4",
     "jquery-ui": "1.10",
     "requirejs": "2.1",
     "moment": "2.*",
-    "bootstrap": "2.3",
+    "bootstrap": "2.*",
     "backbone.stickit": "0.6",
     "backbone-validation": "0.7",
     "jquery-truncate": "git://github.com/tbasse/jquery-truncate.git",

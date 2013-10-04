@@ -1,40 +1,84 @@
-<div id="mainDiv" class="container">
-<div class="row">  
-  <div id='left-column' class='span3'>
-    <div id="hw-manager-menu" class="btn-group">
-      <button class="btn btn-large" id="viewHeader">Calendar</button>
-      <button class="btn dropdown-toggle btn-large" data-toggle="dropdown">
-        <span class="caret"></span>
-      </button>
-      <ul class="dropdown-menu">
-        <li><a class="link" data-link="calendar" data-name="Calendar">View Calendar</a></li>
-        <li><a class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
-        <li><a class="link" data-link='libraryBrowser' data-name="Library Browser">Library Browser</a></li>
-        <li><a class="link" data-link="allSets" data-name="All Sets">View All Sets</a></li>
-        <li><a class="link" data-link="assignSets" data-name="Assign Sets">Assign Sets to Users</a></li>
-        <li><a class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>
-        <li><a class="link" data-link="settings" data-name="Settings">View HW Settings</a></li>
-        
-      </ul>
+<div id="mainDiv" class="container-fluid">
+  <div class="row-fluid">
+    <div class="span3">
+      <div style="display: inline"><button type="button" class="btn" id="show-hide-sets-button">
+        <i class="icon-chevron-up icon-large"></i></button></div>
+      <div id="hw-manager-menu" class="btn-group pull-right">
+        <button class="btn" id="viewHeader">Calendar</button>
+        <button class="btn dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="link" data-link="calendar" data-name="Calendar">View Calendar</a></li>
+          <li><a class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
+          <li><a class="link" data-link='libraryBrowser' data-name="Library Browser">Library Browser</a></li>
+          <li><a class="link" data-link="allSets" data-name="All Sets">Manage Problem Sets</a></li>
+          <li><a class="link" data-link="assignSets" data-name="Assign Sets">Assign Sets to Users</a></li>
+          <li><a class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>
+          <li><a class="link" data-link="settings" data-name="Settings">View HW Settings</a></li>
+          
+        </ul>
+      </div>
     </div>
-    <div id="problem-set-list-container" class="well"></div>
+    <div class="span9" id="page-header"></div>
   </div>
-  <div class="span9" id="main-view">
-    <div class="view-pane active" id="calendar">
-      <div id="progressbar"><div class="progress-label">Homework Manager Loading...</div></div>
-    </div>
-    <div class="view-pane" id="allSets"></div>
-    <div class="view-pane" id="setDetails"></div>
-    <div class="view-pane" id="assignSets"></div>
-    <div class="view-pane" id="importExport"><p>The Importing and Exporting of homework sets is not implemented yet.</p> </div>
-    <div class="view-pane" id="settings"></div>
-    <div class="view-pane" id="libraryBrowser"></div>
-    </div>
-
-
+  <div class="row-fluid">  
+    <div id="problem-set-list-container" class="well span3"></div>
+    <div class="span9" id="main-view">
+      <div class="view-pane active" id="calendar"></div>
+      <div class="view-pane" id="allSets"></div>
+      <div class="view-pane" id="setDetails"></div>
+      <div class="view-pane" id="assignSets"></div>
+      <div class="view-pane" id="importExport">
+        <p>The Importing and Exporting of homework sets is not implemented yet.</p> </div>
+      <div class="view-pane" id="settings"></div>
+      <div class="view-pane" id="libraryBrowser"></div>
     </div>
   </div>
 </div>
+
+<!-- Here are the templates for the headers for each view. 
+
+They need to be named as XXX-header where XXX is the id tag of the view pane (see above).  -->
+
+<script type="text/template" id="calendar-header">
+ <h2>Calendar</h2>
+</script>
+
+<script type="text/template" id="allSets-header">
+
+  <h2>Manager Problem Sets</h2>
+  <button class="btn add-problem-set-button pull-right" type="button">Add Problem Set</button>
+</script>
+
+<script type="text/template" id="setDetails-header">
+ <h2>Problem Set: <%=set_id%></h2>
+ <div class="span3 number-of-problems"></div>
+</script>
+
+<script type="text/template" id="assignSets-header">
+ <h2>Assign Sets to Users</h2>
+</script>
+
+<script type="text/template" id="importExport-header">
+ <h2>Import/Export Problem Sets</h2>
+</script>
+
+<script type="text/template" id="settings-header">
+ <h2>Settings</h2>
+</script>
+
+<script type="text/template" id="libraryBrowser-header">
+ <h2>Library Browser</h2>
+</script>
+
+
+
+
+
+
+
+<!-- The following is the help for the page -->
 
 
 <script type="text/template" id="help-text">
@@ -84,29 +128,10 @@
 </script>
 
 <script type="text/template" id="problem-set-list-template">
-<%if(loading){%>
-<div id="set-list">Loading Homework Sets...
-<img src='/webwork2_files/images/ajax-loader-small.gif'></div>
-<%} else {%>
-<div style='font-size:110%; font-weight:bold'>Homework Sets</div>
+<div style='font-size:110%; font-weight:bold'>Problem Sets</div>
 <div class="prob-set-container">
   <ul id='probSetList' class='btn-group btn-group-vertical'></ul>
 </div>
-
-<div class="btn-group dropup">
-
-  <a class="btn dropdown-toggle btn-small" data-toggle="dropdown" href="#">
-    Add or Delete a Set
-    <span class="caret"></span>
-  </a>
-<ul class="dropdown-menu">
-    <li><a class="link add-problem-set">Add a New Set</a></li>
-  <li><a class="link delete-problem-set">Delete a Set</a></li>
-  </ul>
-  </div>
-
-<%}%>
-
 </script>
 
 <script type="text/template" id="add-hw-set-template">
@@ -123,11 +148,6 @@
 
 </script>
 
-<script type="text/template" id="delete-hw-set-template">
- <p>Select the following sets that you wish to delete.  Note: this process is final and <b>cannot</b> 
- be undone.  Using the Shift, Command or Control keys to select more than one.  </p>
- <select multiple="multiple" class="delete-problem-sets-list"></select>
-</script>
 
 <script type="text/template" id="library-problems-header">
 <ul class="prob-list scrollable no-bullets">
@@ -135,13 +155,13 @@
 </script>
 
 <script type="text/template" id="problem-set-header">
-<div class='row problem-set-header-row'>
-  <div class="span3 btn-toolbar"> 
+<div class='row-fluid problem-set-header-row'>
+  <div class="span5 btn-toolbar"> 
     <div class="btn-group">
-      <a href="#" class="btn" id="undo-delete-btn">Undo</a>
-      <a href="<%=editorURL%>" target="Simple_Editor" class="btn" id="create-new-problem">New</a>
-      <a href="#" class="btn load-more-btn hidden">Load More Problems</a>
-      <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+      <a href="#" class="btn btn-small" id="undo-delete-btn">Undo Delete</a>
+      <a href="<%=editorURL%>" target="Simple_Editor" class="btn btn-small" id="create-new-problem">New</a>
+      <a href="#" class="btn btn-small load-more-btn hidden">Load More Problems</a>
+      <a class="btn btn-small dropdown-toggle" data-toggle="dropdown" href="#">
         Display Mode
         <span class="caret"></span>
       </a>
@@ -262,26 +282,30 @@ at the bottom of the screen and click "Save Changes". </p>
 
 
 <script type="text/template" id="settings-template">
-    <p>The following are homework settings relevant to the the Homework Manager.</p>
+<ul class="nav nav-tabs">
+  <% _(categories).each(function(cat,i){
+    print("<li><a href='#setting-tab"+i+"' data-toggle='tab'>"+cat+"</a></li>");
+  });%>
+</ul>
+<div class="tab-content">
+    <% _(categories).each(function(cat,i){
+    print("<div class='tab-pane' id='setting-tab"+i+"'></div>");
+  });%>
+</div>
 
-    <!--
-    <p><button class="btn save-settings-button">Save the Settings</button></p>-->
-    
-    <table class="table table-bordered settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
-      <tbody></tbody>
-</table>
-    
+</script>
+
+<script type="text/template" id="settings-table-template">
+  <table class="table table-bordered settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody></tbody>
+  </table>
 </script>
 
 
 <script type="text/template" id="HW-detail-template">
-<div class="row">
-<div class="span6" id="problem-set-name"></div>
-<div class="span3 pull-right" id="number-of-problems"></div>
-</div>
 <ul class="nav nav-tabs" id="problem-set-tabs">
   <li class="active"><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
-  <li><a href="#problem-list-tab" data-toggle="tab" data-view="problemListView">Problems</a></li>
+  <li><a href="#problem-list-tab" data-toggle="tab" data-view="problemSetView">Problems</a></li>
   <li><a href="#user-assign-tab" data-toggle="tab" data-view="usersAssignedView">Assign to Users</a></li>
   <li><a href="#user-customize-tab" data-toggle="tab" data-view="customizeUserAssignView">Customize to Users</a></li>
   <li><a href="#user-unassign-tab" data-toggle="tab" data-view="unassignUsersView">Unassign Users</a></li>
@@ -313,7 +337,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <th>Sets</th><th><input type="checkbox" id="select-sets-checkbox" class="select-all">&nbsp;Select All</th></tr>
 </thead>
 <tbody>
-<tr><td colspan="2"><ul id='assign-users-list' class="no-bullets scrollable"></ul></td>
+<tr><td colspan="2"><ul class="no-bullets scrollable assign-users-list"></ul></td>
 <td colspan="2"><ul id='assign-sets-list' class="no-bullets scrollable"></ul></td></tr>
 </tbody>
 </table>
@@ -354,9 +378,42 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <script type="text/template" id="library-view-template">
 
+<div class="row-fluid">
+<div class="span5" id="library-view-header">Testing</div>
+<div class="span4 pull-right" id="number-of-problems"></div>
+</div>
+<div class="row-fluid">
+<div class="library-viewer span2"></div>
+<div class="btn-group">
+<button class="btn test-me">Click Here</button>
+<button class="btn load-more-btn">Load More Problems</button>
+  <select class="target-set span2">
+    <option>Target Set</option>
+    <% _(sets).each(function(set){print('<option>' + set + ' </option> ')  });%>
+  </select>
+  </div>
+</div>
+<div class="lib-problem-viewer"> </div>
+</script>
+
+<script type="text/template" id="library-search-template">
 
 <div class="row-fluid">
-<div class="library-viewer span6"></div>
+<div class="span5" id="library-view-header">Testing</div>
+<div class="span4 pull-right" id="number-of-problems"></div>
+</div>
+
+<div class="row-fluid">
+<div class="input-append">
+<input type="text" class="search-text span3">
+<button class="search-button btn" type="button">
+Search by</button>
+<select class='search-option span4'>
+<option value='keyword'>Keyword</option>
+<option value='textbook'>Textbook</option>
+</select>
+
+</div>
 <button class="btn load-more-btn">Load More Problems</button>
   <select class="target-set span2">
     <option>Target Set</option>
@@ -424,30 +481,21 @@ at the bottom of the screen and click "Save Changes". </p>
 <%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link"><i class="icon-remove"></i></a><%}%>
 <%if(deletable){ %><span class="remove-problem btn btn-small"><i class="icon-trash"></i></span><%}%>
 </div>
-</div>    
+</div>
+<div class="filename"><%=source_file%></div>    
 <%= data %>
 </script>
 
-<script type="text/template" id="ww-setting-row-template">
+<script type="text/template" id="row-setting-template">
 <td><span class="doc"></span>
 <button class='btn btn-small help-button' style='margin-left: 25px'>
   <i class='icon-question-sign'></i></button>
-  <div class="help-hidden">
+  <div class="help-hidden alert">
   <button class="close">&times;</button>
   <span class="doc2"></span></div>
 
   </td>
-  <td class="col2"></td>
-</script>
-
-<script type="text/template" id="setting-row-template">
-<td> <%= doc %> <button class='btn btn-small help-button' style='margin-left: 25px'>
-  <i class='icon-question-sign'></i></button>
-  <div class="help-hidden">
-  <button class="close">&times;</button>
-  <%=doc2%></div>
-
-  </td>
+  <td class="col2"><%=prop_html%></td>
 </script>
 
 <script type="text/template" id='problem-set-row-template'>

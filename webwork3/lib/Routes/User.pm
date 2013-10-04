@@ -9,7 +9,7 @@ package Routes::User;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Routes qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils qw/convertObjectToHash convertArrayOfObjectsToHash/;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;
 
@@ -228,6 +228,8 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
     				. " in course " . params->{course_id}};
     }
 
+    my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
+
     my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
 
     if(request->is_ajax){
@@ -235,7 +237,8 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
     } else {  # a webpage has requested this
         template 'problem.tt', {course_id=> params->{course_id}, set_id=>params->{set_id},
                                     problem_id=>params->{problem_id}, pagename=>"Problem Viewer",
-                                     problems => to_json(convertArrayOfObjectsToHash(\@problems)) }; 
+                                    problems => to_json(convertArrayOfObjectsToHash(\@problems)),
+                                 	user_set => to_json(convertObjectToHash($userSet))}; 
     }
 
     

@@ -7,12 +7,17 @@ use Routes::Course;
 use Routes::Library;
 use Routes::ProblemSets;
 use Routes::User;
-use Routes::ProblemRender;
+use Routes::Settings;
+use Routes::PastAnswers;
+#use Routes::ProblemRender;
+
 
 
 set serializer => 'JSON';
 
 hook 'before' => sub {
+
+
 
 	## need to check that the session hasn't expired. 
 

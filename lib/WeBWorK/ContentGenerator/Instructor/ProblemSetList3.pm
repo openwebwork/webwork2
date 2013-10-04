@@ -451,6 +451,33 @@ sub head{
 	return "";
 }
 
+sub convertObjectToHash {
+    my $obj = shift;
+    my $s = {};
+    for my $key (keys %{$obj}){
+        $s->{$key} = $obj->{$key};
+    }
+    
+    return $s;
+}
+
+sub convertArrayOfObjectsToHash {
+    my $arr = shift;
+
+    
+    my @newArray = ();
+    foreach my $element (@{$arr}){
+        my $s = {};
+        for my $key (keys %{$element}){
+            $s->{$key} = $element->{$key};
+        }
+        push(@newArray,$s);
+    }
+
+    return \@newArray; 
+
+}
+
 ## get all of the user information to send to the client via a script tag in the output_JS subroutine below
 
 sub getAllSets {
@@ -470,13 +497,10 @@ sub getAllSets {
 		my @users = $db->listSetUsers($set->{set_id});
 		$set->{assigned_users} = \@users;
 
-		# convert the set $set to a hash
-		my $s = {};
-		for my $key (keys %{$set}) {
-			$s->{$key} = $set->{$key}
-		}
+		my @problems = $db->getAllGlobalProblems($set->{set_id});
+		$set->{problems} = convertArrayOfObjectsToHash(\@problems);
 
-		push(@sets,$s);
+		push(@sets,convertObjectToHash($set));
 	}
 
 	#debug(to_json(\@all_sets));
@@ -494,30 +518,30 @@ sub getCourseSettings {
 
 	my $ConfigValues = $ce->{ConfigValues};
 
-	foreach my $oneConfig (@$ConfigValues) {
-		foreach my $hash (@$oneConfig) {
-			if (ref($hash) eq "HASH"){
-				my $str = '$ce->' . $hash->{hashVar};
-				$hash->{value} = eval($str);
-			} else {
-				debug($hash);
-			}
-		}
-	}
-
 	# get the list of theme folders in the theme directory and remove . and ..
 	my $themeDir = $ce->{webworkDirs}{themes};
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
 	
-	# insert the anonymous array of theme folder names into ConfigValues
-	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
 
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
-			&$modifyThemes($hash);
+			if (ref($hash) eq "HASH") {
+				my $string = $hash->{var};
+				if ($string =~ m/^\w+$/) {
+					$string =~ s/^(\w+)$/\{$1\}/;
+				} else {
+					$string =~ s/^(\w+)/\{$1\}->/;
+				}
+				$hash->{value} = eval('$ce->' . $string);
+				
+				if ($hash->{var} eq 'defaultTheme'){
+					$hash->{values} = $themes;	
+				}
+			}
 		}
 	}
+
 
 	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
 	my $dt = DateTime->now();

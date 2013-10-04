@@ -2,15 +2,23 @@
 define(['Backbone','underscore','config'], function(Backbone,_,config){
 	var WeBWorkProperty = Backbone.Model.extend({
 		defaults: {
-			property: "",
 			value: "",
 			type: "",
-			category: ""
+			category: "",
+            "var": ""
 		},
          initialize: function(){
-            this.on('change',this.update);
+            //this.on('change',this.update);
         },
-    
+        url: function () {
+            return "/test/courses/" + config.courseSettings.courseID + "/settings/" + this.get("var");
+        },
+        parse: function(response) {
+            config.checkForError(response);
+            this.id=this.get("var");
+            return response;
+        }
+/*    
         update: function(){
            
             var self = this;
@@ -35,7 +43,7 @@ define(['Backbone','underscore','config'], function(Backbone,_,config){
                 console.log(response);
 
             });
-        }
+        } */
 
 	}); 
 

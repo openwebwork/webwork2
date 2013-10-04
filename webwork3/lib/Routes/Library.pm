@@ -11,7 +11,7 @@ use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use Digest::MD5 qw(md5_hex);
-use Routes qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use WeBWorK::PG::Local;
@@ -170,6 +170,14 @@ get '/Library/subjects/:subject_id/chapters/:chapter_id/sections/:section_id/pro
 	return getFilePaths(\@allfiles);
 };
 
+#######
+#
+#  get '/library/directories'
+#
+#  return the directory tree of the library
+#
+####
+
 get '/library/directories' => sub {
 
 	my $webwork_htdocs = vars->{ce}->{webwork_dir}."/htdocs";
@@ -186,6 +194,35 @@ get '/library/directories' => sub {
 	return $json_text;
 
 }; 
+
+####
+#
+##  get '/library/problems'
+#
+#  search the library.  Any of the problem metadata can be called as a parameter to this
+#
+#  return an array of problems that fit the criteria
+#  
+# ###
+
+get '/library/problems' => sub {
+
+	## first check if the keyword is set.
+
+	my $keywordID = database->quick_select('OPL_keyword', {keyword => params->{keyword}});
+	my @problemIDs = database->quick_select('OPL_pgfile_keyword',{keyword_id => $keywordID->{keyword_id}});
+
+	my @problems = ();
+	for my $probID (@problemIDs){
+		my $problem_info = database->quick_select('OPL_pgfile',{pgfile_id => $probID->{pgfile_id}});
+		my $path_id = $problem_info->{path_id};
+		my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
+		push(@problems, {source_file => "Library/" . $path_header . "/" . $problem_info->{filename}});
+
+	}
+	return \@problems;
+
+};
 
 ###
 #
@@ -238,16 +275,16 @@ get '/renderer/problems/:problem_id' => sub {
 	# the problem comes from a set
 
 	if (defined(params->{set_id})) {  
-		if (!vars->{db}->existsUserSet(params->{user_id},params->{set_id})){
-			return {error=>"The user " . params->{user_id} . " has not been assigned to set " . params->{set_id}};
+		if (!vars->{db}->existsUserSet($user->{user_id},params->{set_id})){
+			return {error=>"The user " . $user->{user_id} . " has not been assigned to set " . params->{set_id}};
 		}
-		if (!vars->{db}->existsUserProblem(params->{user_id},params->{set_id},params->{problem_id})){
-			return {error=>"The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id} . " for user " . params->{user_id}};
+		if (!vars->{db}->existsUserProblem($user->{user_id},params->{set_id},params->{problem_id})){
+			return {error=>"The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id} . " for user " . $user->{user_id}};
 		}
 
-		$problem =  vars->{db}->getMergedProblem(params->{user_id},params->{set_id},params->{problem_id});
+		$problem =  vars->{db}->getMergedProblem($user->{user_id},params->{set_id},params->{problem_id});
 
-		$set = vars->{db}->getUserSet(params->{user_id},params->{set_id});		
+		$set = vars->{db}->getUserSet($user->{user_id},params->{set_id});		
 
 	}  else {
     	$set =  fake_set(vars->{db});
@@ -434,7 +471,7 @@ get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 	my $user = fake_user(vars->{db});
 
-	$problem->{problem_seed}=1;
+	$problem->{problem_seed}= defined(params->{problem_seed})? params->{problem_seed} : 1;
 
 	debug $problem;
 

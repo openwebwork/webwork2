@@ -15,8 +15,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
     	initialize: function (){
     		_.bindAll(this,"render","loadProblems");
             var self = this;
-            this.dispatcher = this.options.dispatcher; 
-            this.orientation = this.options.orientation;
+            this.orientation = this.options.orientation; // type of LibraryTreeView 
             this.libraryTree = new LibraryTree({type: this.options.type});
             this.libraryTree.set("header","Library/");
 
@@ -49,7 +48,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                 level--;
             }
 
-            this.dispatcher.trigger("load-problems",this.libraryTree.get("header")+ path);
+            this.libraryTree.trigger("library-selected",this.libraryTree.get("header")+ path);
 
 
             

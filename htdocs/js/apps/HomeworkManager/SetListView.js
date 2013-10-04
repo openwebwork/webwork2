@@ -3,16 +3,16 @@
  *
  */
 
-define(['Backbone', 'underscore','views/EditGrid','config'], 
-    function(Backbone, _,EditGrid,config){
+define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','models/ProblemSet'], 
+    function(Backbone, _,EditGrid,config,ModalView,ProblemSet){
 
     
     var SetListView = Backbone.View.extend({
-        className: "set-list-view",
         initialize: function () {
             _.bindAll(this, 'render','customizeGrid','gridChanged','updateGrid');  // include all functions that need the this object
-          
+            var self = this;
             this.problemSets = this.options.problemSets;
+            this.users = this.options.users;
 
             this.editgrid = new EditGrid({el: $("#allSets"), grid_name: "problem-set-grid", table_name: "sets-table-container",
                     paginator_name: "#sets-table-paginator", template_name: "#all-problem-sets-template",
@@ -27,16 +27,33 @@ define(['Backbone', 'underscore','views/EditGrid','config'],
             this.render();
             console.log("in SetListView");
 
+            this.headerInfo = { template: "#allSets-header", 
+                events: {"click .add-problem-set-button": function () {
+                                  self.addProblemSet();  
+                                }}
+            };
+
         },
+        events: {"click .add-problem-set-button": "addProblemSet"},
         updateGrid: function (){
-            var _data = this.problemSets.map(function(_set) { return {id: _set.cid, values: _set.attributes};});
+            var self = this; 
+            var _data = this.problemSets.map(function(_set) { 
+                var _values = _set.attributes;
+                _.extend(_values,{num_problems: _set.problems.size(), 
+                    users_assigned: _set.get("assigned_users").length + "/" + self.users.size()});
+
+                return {id: _set.cid, values: _values};});
             this.editgrid.grid.load({data: _data});
             this.editgrid.grid.refreshGrid();
             this.editgrid.updatePaginator();
         },
         gridChanged: function(rowIndex, columnIndex, oldValue, newValue) {
+            if(columnIndex==0){
+                this.deleteProblemSet(this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)),rowIndex);
+                return;
+            }
 
-            if ([3,4,5].indexOf(columnIndex)>-1) {  // it's a date
+            if ([4,5,6].indexOf(columnIndex)>-1) {  // it's a date
                 var oldDate = moment.unix(oldValue)
                     , newDate = moment.unix(newValue);
 
@@ -46,15 +63,36 @@ define(['Backbone', 'underscore','views/EditGrid','config'],
                     this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newDate.unix()).update();
                 } 
             } else {
-                this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newValue).update();
+                this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)).set(this.editgrid.getColumnName(columnIndex),newValue).update();
             }
             this.editgrid.grid.refreshGrid();
         },
         render: function () {
             var self = this;
             this.editgrid.render();
+
             this.updateGrid();
         },
+        deleteProblemSet: function (set,row){
+            var del = confirm("Are you sure you want to delete the set " + set.get("set_id") + "?");
+            if(del){
+                this.editgrid.grid.remove(row);
+                set.collection.remove(set);
+            }
+        },
+        addProblemSet: function (){
+            if (! this.addProblemSetView){
+                (this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets})).render();
+            } else {
+                this.addProblemSetView.setModel(new ProblemSet()).render().open();
+            }
+        },
+
+        /**
+        *  pstaab: perhaps put a lot of this code in the config.js file
+        *
+        */
+
         customizeGrid: function () {
             var dateRenderer = new CellRenderer({
                 render: function(cell, value) { 
@@ -64,6 +102,8 @@ define(['Backbone', 'underscore','views/EditGrid','config'],
             this.editgrid.grid.setCellRenderer("open_date", dateRenderer);
             this.editgrid.grid.setCellRenderer("due_date", dateRenderer);
             this.editgrid.grid.setCellRenderer("answer_date", dateRenderer);
+
+            this.editgrid.grid.setCellRenderer("delete_set",config.deleteCellRenderer,{action: "delete"});
 
             
             function DateEditor(config) 
@@ -128,6 +168,65 @@ define(['Backbone', 'underscore','views/EditGrid','config'],
 
         }
 
+
+    });
+
+    var AddProblemSetView = ModalView.extend({
+        initialize: function () {
+            _.bindAll(this,"render","addNewSet");
+            this.model = new ProblemSet();
+
+
+            _.extend(this.options, {template: $("#add-hw-set-template").html(), 
+                templateOptions: {name: config.courseSettings.user},
+                buttons: {text: "Add New Set", click: this.addNewSet}});
+            this.constructor.__super__.initialize.apply(this); 
+
+            this.problemSets = this.options.problemSets; 
+
+              /*  Not sure why the following doesn't pass the options along. 
+              this.constructor.__super__.initialize.apply(this,
+                {template: $("#modal-template").html(), templateOptions: {header: "<h3>Create a New Problem Set</h3>", 
+                                saveButton: "Create New Set"}, modalBodyTemplate: $("#add-hw-set-template").html(),
+                                modalBodyTemplateOptions: {name: config.requestObject.user}});  */
+        },
+        render: function () {
+            this.constructor.__super__.render.apply(this); 
+
+            return this;
+        },
+        setModel: function(_model){
+            this.model = _model;
+            return this;
+        },
+        bindings: {".problem-set-name": "set_id"},
+        events: {"keyup .problem-set-name": "validateName"},
+        validateName: function(ev){
+            // this.model.preValidate("set_id"),$(ev.target).val())
+            var errorMsg = this.model.preValidate("set_id",$(ev.target).val());
+            if(errorMsg){
+                this.$(".problem-set-name").css("background","rgba(255,0,0,0.5)");
+                this.$(".problem-set-name-error").html(errorMsg);
+            } else {
+                this.$(".problem-set-name").css("background","none");
+                this.$(".problem-set-name-error").html("");
+            }
+        },
+        addNewSet: function() {
+            // need to validate here. 
+            /*
+            var errorMessage = this.model.preValidate('set_id', setname);
+            if (errorMessage){
+                this.$("#new-set-modal .modal-body").append("<div style='color:red'>The name of the set must contain only letters numbers, '.', _ and no spaces are allowed.");
+                return;
+            }  */
+ 
+            this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
+            console.log(this.model.attributes);
+            console.log("adding new set");
+            this.problemSets.add(this.model);
+            this.close();
+        }
 
     });
     return SetListView;
