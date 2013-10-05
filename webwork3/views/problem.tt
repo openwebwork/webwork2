@@ -6,7 +6,7 @@
 <script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 <script type='text/javascript'> 
 	require.config = { 'ProblemViewer': {problems: [% problems %], userSet: [% user_set %],
-	course_id: "[%course_id%]", set_id: "[%set_id%]" }};
+	course_id: "[%course_id%]", set_id: "[%set_id%]", user: "[% user%]" }};
 </script>
 <script data-main="/webwork2_files/js/apps/ProblemViewer/ProblemViewer" src="/webwork2_files/js/components/requirejs/require.js">
 </script>

@@ -28,6 +28,9 @@ use WeBWorK::CourseEnvironment;
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
+
+print $libraryRoot . "\n";
+
 my $libraryVersion = $ce->{problemLibrary}->{version};
 
 my($filename, $directories) = fileparse($libraryRoot);

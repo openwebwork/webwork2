@@ -73,7 +73,8 @@ hook 'before' => sub {
 	# debug session->{course};    
 
 	undef session->{error};
-	
+
+	debug vars->{ce};	
 	if(! defined(vars->{ce})){
 		var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 	}

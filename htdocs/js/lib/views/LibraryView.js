@@ -14,6 +14,7 @@ function(Backbone, _,LibraryProblemsView, ProblemList,LibraryTreeView){
             _.bindAll(this,'render','changeView','showProblems','addProblem');
             this.allProblemSets = this.options.problemSets;
             this.errorPane = this.options.errorPane;
+            this.libraryProblemsView = this.options.libraryProblemsView;
             
     		//this.dispatcher.on("load-problems", function(path) { self.loadProblems(path);});
 
@@ -28,32 +29,26 @@ function(Backbone, _,LibraryProblemsView, ProblemList,LibraryTreeView){
     	},
     	events: {"change #library-selector": "changeView",
                     "change .target-set": "resetDisplayModes",
-                    "click .load-more-btn": "loadMore", 
-                    "click .test-me": "test"},
+                    "click .load-more-btn": "loadMore"
+        },
     	render: function (){
             var self = this;
 
     		this.$el.html(_.template($("#library-view-template").html(), {sets: this.allProblemSets.pluck("set_id")}));
+            this.libraryProblemsView.setElement(this.$(".lib-problem-viewer"));
             this.libraryTreeView.render();
             this.$(".library-viewer").append(this.libraryTreeView.el);
     		this.$(".lib-problem-viewer").height(0.8*screen.height);
     		//this.showProblems();
     	},
-        test: function () {
-            console.log("testing");
-        },
         loadMore: function () {
             this.libraryProblemsView.loadMore();
         },
         showProblems: function (){
             console.log("in showProblems");
             console.log(this.problemList);
-            (this.libraryProblemsView = new LibraryProblemsView({el: this.$(".lib-problem-viewer"), 
-                                            problems: this.problemList,type: this.options.libBrowserType})).render();
-
-            //this.problemList.on("add-to-target",this.addProblem);
-            this.libraryProblemsView.renderProblems();
-
+            this.libraryProblemsView.setProblems(this.problemList,this.options.libBrowserType);
+            this.libraryProblemsView.render();
         },
         addProblem: function(model){
             var targetSet = this.$(".target-set option:selected").val();

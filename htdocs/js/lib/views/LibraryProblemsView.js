@@ -7,11 +7,9 @@ define(['Backbone', 'views/ProblemListView'],
                     showRefreshTool: true, showViewTool: true, showHideTool: true, deletable: false, draggable: true};
 
                 this.problemSet = this.options.problemSet;
+                this.options.type = "library";
                 this.constructor.__super__.initialize.apply(this); 
-    		},
-            /*render: function (){
-                this.constructor.__super__.render.apply(this);   
-            }*/
+    		}
     	});
 
 

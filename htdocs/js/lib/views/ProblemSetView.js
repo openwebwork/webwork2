@@ -6,6 +6,7 @@ define(['Backbone', 'views/ProblemListView'],
     			this.viewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showEditTool: true,
                     showRefreshTool: true, showViewTool: true, showHideTool: false, deletable: true, draggable: false};
                 this.problemSet = this.options.problemSet;
+                this.options.type = "problem_set";
                 this.constructor.__super__.initialize.apply(this);
     		}
     	});

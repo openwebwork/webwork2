@@ -26,7 +26,7 @@ define(['Backbone','views/Closeable'], function(Backbone,Closeable){
                 self.helpPane.open();});
 
 
-         this.setUpNavMenu();  
+         //this.setUpNavMenu();  
 
     },
 

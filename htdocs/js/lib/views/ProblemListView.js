@@ -32,9 +32,13 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             // start with showing 10 (numProblemsPerGroup) problems
             this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
                     this.numProblemsPerGroup : this.problems.length;
+            _.extend(this.viewAttrs,{type: this.options.type});
+
+            _.extend(this,Backbone.Events);
         },
-        setProblems: function(_problems){
+        setProblems: function(_problems,_type){
             this.problems = _problems; 
+            this.viewAttrs.type = _type;
 
             // start with showing 10 (numProblemsPerGroup) problems
             this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
@@ -71,18 +75,9 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                                                 placeholder: "sortable-placeholder",axis: "y",
                                                 stop: this.reorder});
             }
-            this.updateNumberOfProblems();
-        },
-        updateNumberOfProblems: function () {
-            $("#number-of-problems").html(this.$(".prob-list li").length + " of " 
-                + this.problems.size() + " problems shown.");
-            if(this.$(".prob-list li").length == this.problems.size()){
-                this.$(".load-more-btn").addClass("disabled");
-            } else {
-                this.$(".load-more-btn").removeClass("disabled");
-            }
-        },
-        
+            this.trigger("update-num-problems",
+                {number_shown: this.$(".prob-list li").length, total: this.problems.size()});
+        },        
         loadMore: function () {
             this.maxProblemIndex+=10;
             this.renderProblems();

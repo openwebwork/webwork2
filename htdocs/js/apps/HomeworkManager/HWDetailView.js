@@ -21,11 +21,12 @@ define(['Backbone',
         className: "set-detail-view",
         tagName: "div",
         initialize: function () {
-            _.bindAll(this,'render','changeHWSet','updateNumProblems','loadProblems');
+            _.bindAll(this,'render','changeHWSet','updateNumberOfProblems','loadProblems');
             var self = this;
             this.users = this.options.users; 
             this.allProblemSets = this.options.problemSets;
             this.problemSet = this.model;
+            this.headerView = this.options.headerView;
 
             
             this.views = {
@@ -41,7 +42,10 @@ define(['Backbone',
                     return self.problemSet ? self.problemSet.attributes :  {set_id: ""};
                 }
             };
- 
+
+            
+            this.views.problemSetView.on("update-num-problems",this.updateNumberOfProblems);
+
             
         },
         render: function () {
@@ -79,10 +83,8 @@ define(['Backbone',
 
 
         },
-        updateNumProblems: function () {
-            console.log("in updateNumProblems");
-            $("#number-of-problems").html("# of Probs Shown:" + $("#prob-list li").length + " of "
-                    + this.problemSet.problems.length);
+        updateNumberOfProblems: function (opts) {
+            this.headerView.$(".number-of-problems").html(opts.number_shown + " of " +opts.total + " problems shown.");
         }
     });
 
@@ -282,9 +284,8 @@ define(['Backbone',
         },
         unassignUsers: function(){
             var currentUsers = _(this.originalAssignedUsers).difference(this.model.get("assigned_users"));
-            var confirmDelete = confirm("You have selected to delete the following users: " 
-                    + this.model.get("assigned_users").join(", ")+". Click OK to confirm this.  Removing a user " 
-                    + "will remove all data associated with the user and this problem set.");
+            var confirmDelete = confirm("You have selected to remove the following users: " 
+                    + this.model.get("assigned_users").join(", ")+". Click OK to confirm this.");
             if (confirmDelete){
                 this.problemSet.set("assigned_users",currentUsers);
                 this.problemSet.saveAssignedUsers();

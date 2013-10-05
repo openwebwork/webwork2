@@ -178,7 +178,7 @@ get '/Library/subjects/:subject_id/chapters/:chapter_id/sections/:section_id/pro
 #
 ####
 
-get '/library/directories' => sub {
+get '/Library/directories' => sub {
 
 	my $webwork_htdocs = vars->{ce}->{webwork_dir}."/htdocs";
 	my $file = "$webwork_htdocs/library-directory-tree.json";
@@ -453,10 +453,10 @@ get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 
 	if (!vars->{db}->existsGlobalSet(params->{set_id})){
-		send_error("The set " . params->{set_id} . " does not exist.");
+		return {error=>"The set " . params->{set_id} . " does not exist."};
 	}
 	if (!vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id})){
-		send_error("The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id})
+		return {error=>"The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id}};
 	}
 
 	my $globalProblem =  vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});

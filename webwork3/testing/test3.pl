@@ -6,28 +6,28 @@ use Data::Dumper;
 use JSON;
 
 my $i =0; 
-	open (LOG, "/Volumes/WW_test/opt/webwork/courses/Math2300_Spring2013/logs/answer_log");
-	while (<LOG>) {
- 		chomp;
-	 	my @line = split(/\|/,$_);
-	 	print $i;
-	 	my $userID = $line[1];
-	 	my $setID = $line[2];
-	 	my $problemID = $line[3];
-	 	my @tmp = split(/\t/,$line[4]); 
-	 	my $scores = shift(@tmp);
-	 	my $timestamp = shift(@tmp);
-	 	my $answerString = join("\t",@tmp);
+open (LOG, "/Volumes/WW_test/opt/webwork/courses/Math2300_Spring2013/logs/answer_log");
+while (<LOG>) {
+		chomp;
+ 	my @line = split(/\|/,$_);
+ 	print $i;
+ 	my $userID = $line[1];
+ 	my $setID = $line[2];
+ 	my $problemID = $line[3];
+ 	my @tmp = split(/\t/,$line[4]); 
+ 	my $scores = shift(@tmp);
+ 	my $timestamp = shift(@tmp);
+ 	my $answerString = join("\t",@tmp);
 
 
-	 	my $problem = {user_id =>$userID, set_id=>$setID, problem_id=>$problemID, 
-	 			scores=>$scores,timestamp=>$timestamp,answer_string=>$answerString};
+ 	my $problem = {user_id =>$userID, set_id=>$setID, problem_id=>$problemID, 
+ 			scores=>$scores,timestamp=>$timestamp,answer_string=>$answerString};
 
-	 	print Dumper($problem); 
+ 	print Dumper($problem); 
 
-	 	if ($i++ > 13) {last;}
-	}
-	close (LOG);
+ 	if ($i++ > 13) {last;}
+}
+close (LOG);
 
 exit;
 

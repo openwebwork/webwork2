@@ -41,12 +41,14 @@ var HomeworkEditorView = WebPage.extend({
             calendar : new AssignmentCalendarView({el: $("#calendar"), problemSets: this.problemSets, 
                     viewType: "instructor", calendarType: "month", users: this.users,
                     reducedScoringMinutes: config.settings.find(function(setting) { return setting.get("var")==="pg{ansEvalDefaults}{reducedScoringPeriod}";}).get("value")}),
-            setDetails:  new HWDetailView({el: $("#setDetails"),  users: this.users, problemSets: this.problemSets}),
+            setDetails:  new HWDetailView({el: $("#setDetails"),  users: this.users, problemSets: this.problemSets,
+                    headerView: this.headerView}),
             allSets:  new SetListView({el:$("#allSets"), problemSets: this.problemSets, users: this.users}),
             assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", 
                                 users: this.users, problemSets: this.problemSets}),
             importExport:  new ImportExport(),
-            libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), parent: this, hwManager: this}),
+            libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), headerView: this.headerView,
+                errorPane: this.errorPane, problemSets: this.problemSets}),
             settings      :  new HWSettingsView({parent: this, el: $("#settings")})
         };
 
