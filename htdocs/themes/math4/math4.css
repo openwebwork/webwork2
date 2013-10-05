@@ -405,6 +405,10 @@ table.attemptResults th {
 	background-color: #DDDDDD;
 }
 
+.attemptResults .popover {
+    max-width: 100%;
+}
+
 /*styles for the instructor comment box */
 
 .answerComments {
