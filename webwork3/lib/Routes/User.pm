@@ -233,7 +233,6 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
     				. " in course " . params->{course_id}};
     }
 
-
     my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
 
     my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
@@ -246,11 +245,6 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
                                     problems => to_json(convertArrayOfObjectsToHash(\@problems)),
                                  	user_set => to_json(convertObjectToHash($userSet))}; 
     }
-
-    
-
-
-
 };
 
 

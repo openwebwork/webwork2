@@ -31,8 +31,7 @@ hook 'before' => sub {
 
     if (! defined(session->{user})) {
     	if (! params->{user}){
-			session->{error} = "The user is not defined.  You may need to log in again.";
-			return;
+			return send_error({type => "login", msg => "The user is not defined.  You may need to login again."}, 403);
 		}
 	    	session->{user} = params->{user};
 	}
@@ -42,7 +41,7 @@ hook 'before' => sub {
 
 	if (! defined(session->{course})) {
 		if (! defined(params->{course})){
-			session->{error}="The course must be defined.";				
+			send_error("The course must be defined.");				
 			return;
 		} 
 		session->{course} = params->{course};
@@ -58,8 +57,7 @@ hook 'before' => sub {
 		if ($session_key->{key_not_a_keyword} eq param('session_key')) {
 			session->{session_key} = params->{session_key};
 		} else {
-			session->{error} = "Wrong session_key.  You need to log in again.";
-			return;
+			return send_error({type => "login", msg => "Your session has expired"}, 403);
 		} 
 	}
 
@@ -72,14 +70,7 @@ hook 'before' => sub {
 	# debug session->{permission};
 	# debug session->{course};    
 
-	undef session->{error};
-
-	debug vars->{ce};	
-	if(! defined(vars->{ce})){
-		var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
-	}
-
-	
+	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
 };
 
@@ -87,10 +78,7 @@ hook 'before' => sub {
 ## it does nothing except sets the session using the hook 'before' above. 
 
 get '/login' => sub {
-
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-	
-	return "If you get this message all should have worked";
+	return {msg => "If you get this message all should have worked"};
 };
 
 get '/app-info' => sub {

@@ -53,6 +53,8 @@ define(['Backbone','views/Closeable'], function(Backbone,Closeable){
         strongElem.children().remove();
         strongElem.addClass("active").append(activeLink);
 
+        $("#webwork_navigation").removeAttr("style")
+
     }
 
 

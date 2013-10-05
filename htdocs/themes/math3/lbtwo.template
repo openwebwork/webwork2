@@ -44,13 +44,6 @@
                      <!--#if can="siblings"-->
                         <!--#siblings-->
                      <!--#endif-->
-                     <!--#if can="options"-->
-                        <ul>
-                     	    <h2>Display Options</h2>
-                     		<!--#options-->
-                     	</ul>
-                     <!--#endif-->
-
                   </div>
 		            
 	    		<div class="span3">
@@ -63,6 +56,7 @@
 	    		<div class="span2"><button class="btn" id="help-link">Help</button>
 	    			<a class='btn btn-warning' target="_blank" href="https://github.com/pstaabp/webwork2/issues/new">Bugs!</a>
     			</div>
+    			
    				
 				            
           	</div>

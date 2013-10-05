@@ -6,6 +6,17 @@
 
 define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], function(Backbone,moment){
 
+    $(document).ajaxError(function (e, xhr, options, error) {
+      console.log({e: e, xhr: xhr, options: options, error: error});
+      console.log(xhr.responseText);
+      if(xhr.responseText){
+        var response = JSON.parse(xhr.responseText);
+        if(response && response.type=="login"){
+            console.log(response.msg);
+        }
+      }
+
+    });
     
     var config = {
         //urlPrefix: "http://localhost:3000/",  // what is the path to the dancer webservice
