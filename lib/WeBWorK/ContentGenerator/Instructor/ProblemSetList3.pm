@@ -250,7 +250,11 @@ use constant  FIELD_PROPERTIES => {
 
 # template method
 sub templateName {
-	return "lbtwo";
+	return "hwkMgr";
+}
+
+sub name { 
+	return "Homework Manager";
 }
 
 sub pre_header_initialize {

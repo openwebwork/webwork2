@@ -157,8 +157,8 @@ if ($webwork_url eq "") {
 ####################################################################
 
 
-ProxyPass /webwork3 http://localhost:3000
-ProxyPassReverse /webwork3 http://localhost:3000
+#ProxyPass /webwork3 http://localhost:3000
+#ProxyPassReverse /webwork3 http://localhost:3000
 
 
 ####################################################################

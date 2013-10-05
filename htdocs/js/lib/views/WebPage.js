@@ -26,7 +26,7 @@ define(['Backbone','views/Closeable'], function(Backbone,Closeable){
                 self.helpPane.open();});
 
 
-         //this.setUpNavMenu();  
+         this.setUpNavMenu();  
 
     },
 
@@ -52,14 +52,6 @@ define(['Backbone','views/Closeable'], function(Backbone,Closeable){
         var strongElem = $("#webwork_navigation strong").parent();
         strongElem.children().remove();
         strongElem.addClass("active").append(activeLink);
-
-        $("#webwork_navigation").attr("style","");
-
-        var toolName = $(".navbar .breadcrumb li:last").text();
-
-        var toolSpan = $(".navbar .breadcrumb").parent();
-        toolSpan.html(toolName);
-        toolSpan.addClass("brand");
 
     }
 
