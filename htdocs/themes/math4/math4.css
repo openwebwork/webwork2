@@ -181,7 +181,7 @@ ul.courses-list a:hover {
 }
 
 /* past answers page */
-#past-answer-table td {
+.past-answer-table td {
     white-space: normal;
 }
 
