@@ -211,6 +211,7 @@ sub new {
   SWITCH: {
       if (/#\s*\bKEYWORDS\((.*)\)/i) {
         my @keyword = keywordcleaner($1);
+		@keyword = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
         $self->{keywords} = [@keyword];
         $lasttag = $lineno;
         last SWITCH;
@@ -263,6 +264,8 @@ sub new {
         $textno = $1;
         $textsection = $2;
         $textsection =~ s/'/\'/g;
+		$textsection =~ s/[^\d\.]//g;
+		#print "|$textsection|\n";
         if ($textsection =~ /\S/) {
           $textinfo = maybenewtext($textno, $textinfo);
           if ($textsection =~ /(\d*?)\.(\d*)/) {

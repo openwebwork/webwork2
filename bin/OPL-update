@@ -290,7 +290,15 @@ sub safe_get_id {
 	my $idvalue, @row;
 	unless(@row = $sth->fetchrow_array()) {
 		return 0 unless $addifnew;
-		@insertvalues = map {'"'. $_ .'"'} @insertvalues;
+		for my $j (0..$#insertvalues) {
+			#print "Looking at ".$insertvalues[$j]."\n";
+			if ($insertvalues[$j] ne "") {
+				$insertvalues[$j] = '"'.$insertvalues[$j].'"';
+			} else {
+				$insertvalues[$j] = NULL;
+			}
+		}
+		#print "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
 		$dbh->do("INSERT INTO `$tablename` VALUES(". join(',',@insertvalues) .")");
 		dbug "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
 		$sth = $dbh->prepare($query);
@@ -340,11 +348,11 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 						if (!defined($sectid)) {
 							$dbh->do("INSERT INTO `$tables{section}`
 						VALUES(
-							\"\",
+							NULL,
 							\"$chapid\",
 							\"-1\",
 							\"\",
-							\"\"
+							NULL
 						)"
 								);
 						dbug "INSERT INTO section VALUES(\"\", \"$chapid\", \"-1\", \"\", \"\" )\n";
@@ -372,13 +380,13 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 					if (!defined($bookid)) {
 						$dbh->do("INSERT INTO `$tables{textbook}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$textinfo{TitleText}\",
 						\"$textinfo{EditionText}\",
 						\"$textinfo{AuthorText}\",
-						\"\",
-						\"\",
-						\"\"
+						NULL,
+						NULL,
+						NULL
 					)"
 							);
 						dbug "INSERT INTO textbook VALUES( \"\", \"$textinfo{TitleText}\", \"$textinfo{EditionText}\", \"$textinfo{AuthorText}\", \"\", \"\", \"\" )\n";
@@ -530,8 +538,13 @@ sub pgfiles {
 			#remove leading and trailing spaces from firstname, which includes any middle name too.
 			$firstname =~ s/^\s*//;
 			$firstname =~ s/\s*$//;
-			my $author_id = safe_get_id($tables{author}, 'author_id',
-				qq(WHERE lastname = ? AND firstname = ?), [$lastname, $firstname], 1, "", $tags->{Institution}, $lastname, $firstname,"");
+			$lastname =~ s/^\s*//;
+			$lastname =~ s/\s*$//;
+			my $author_id = 0;
+			if($lastname) {
+				$author_id = safe_get_id($tables{author}, 'author_id',
+					qq(WHERE lastname = ? AND firstname = ?), [$lastname, $firstname], 1, "", $tags->{Institution}, $lastname, $firstname,"");
+			}
 
 			# path table
 
@@ -568,6 +581,7 @@ sub pgfiles {
 
 			foreach my $keyword (@{$tags->{keywords}}) {
 				$keyword =~ s/[\'\"]//g;
+				$keyword = kwtidy($keyword);
 				my $keyword_id = safe_get_id($tables{keyword}, 'keyword_id',
 					qq(WHERE keyword = ?), [$keyword], 1, "", $keyword);
 
@@ -592,23 +606,24 @@ sub pgfiles {
 				# textbook table
 
 				$text = $texthashref->{TitleText};
-				$edition = $texthashref->{EditionText};
+				$edition = $texthashref->{EditionText} || 0;
+				$edition =~ s/[^\d\.]//g;
 				$textauthor = $texthashref->{AuthorText};
 				next unless($text and $textauthor);
-				my $chapnum = $texthashref->{chapter};
-				my $secnum = $texthashref->{section};
+				my $chapnum = $texthashref->{chapter} || -1;
+				my $secnum = $texthashref->{section} || -1;
 				$query = "SELECT textbook_id FROM `$tables{textbook}` WHERE title = \"$text\" AND edition = \"$edition\" AND author=\"$textauthor\"";
 				my $textbook_id = $dbh->selectrow_array($query);
 				if (!defined($textbook_id)) {
 					$dbh->do("INSERT INTO `$tables{textbook}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$text\",
 						\"$edition\",
 						\"$textauthor\",
-						\"\",
-						\"\",
-						\"\"
+						NULL,
+						NULL,
+						NULL
 					)"
 							);
 					dbug "INSERT INTO textbook VALUES( \"\", \"$text\", \"$edition\", \"$textauthor\", \"\", \"\", \"\" )\n";
@@ -623,11 +638,11 @@ sub pgfiles {
 				if (!defined($chapter_id)) {
 					$dbh->do("INSERT INTO `$tables{chapter}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$textbook_id\",
 						\"".$chapnum."\",
 						\"$tags->{DBchapter}\",
-						\"\"
+						NULL
 					)"
 							);
 					dbug "\nLate add into $tables{chapter} \"$text\", \"$edition\", \"$textauthor\", $chapnum $tags->{chapter} from $name\n", 1;
@@ -643,11 +658,11 @@ sub pgfiles {
 				if (!defined($section_id)) {
 					$dbh->do("INSERT INTO `$tables{section}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$chapter_id\",
 						\"$secnum\",
 						\"$tags->{DBsection}\",
-						\"\"
+						NULL
 					)"
 							);
 					dbug "INSERT INTO section VALUES(\"\", \"$textbook_id\", \"$secnum\", \"$tags->{DBsection}\", \"\" )\n";
@@ -662,10 +677,10 @@ sub pgfiles {
 					if (!defined($problem_id)) {
 						$dbh->do("INSERT INTO `$tables{problem}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$section_id\",
 						\"$tp\",
-						\"\"
+						NULL
 					)"
 								);
 						dbug "INSERT INTO problem VALUES( \"\", \"$section_id\", \"$tp\", \"\" )\n";
