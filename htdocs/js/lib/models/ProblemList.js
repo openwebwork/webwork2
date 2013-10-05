@@ -30,7 +30,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 + "/problems"; 
             } else if (this.path) { // this is a set of problems from a library. 
                 var dirs = this.path.split("/");
-                var path = "/test/" + dirs[0];
+                var path = config.urlPrefix + dirs[0];
                 if (dirs[1]) {path += "/subjects/" + dirs[1];}
                 if (dirs[2]) {path += "/chapters/" + dirs[2];}
                 if (dirs[3]) {path += "/sections/" + dirs[3];}

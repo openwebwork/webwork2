@@ -29,7 +29,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList){
             var params = {};
             params[searchType] = text;
 
-            $.get("/test/library/problems", params, this.showResults);
+            $.get(config.urlPrefix + "library/problems", params, this.showResults);
         },
         showResults: function (data) {
             this.problemList = new ProblemList(data);
