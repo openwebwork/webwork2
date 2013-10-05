@@ -97,15 +97,21 @@ sub body {
 	#only instructors should be able to veiw other people's answers.
 	
 	if ($instructor) {
+	    ########## print site identifying information
+	    
+	    print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
+	    print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_ANSWER_LOG_DESCRIPTION")));
+	    
 	    print CGI::p(),CGI::hr();
 	    
 	    print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
 	    $self->hidden_authen_fields;
 	    print CGI::submit(-name => 'action', -value=>'Past Answers for')," &nbsp; ",
+	    " &nbsp;".$r->maketext('User:')." &nbsp;",
 	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 ),
-	    " &nbsp; Set: &nbsp;",
+	    " &nbsp;".$r->maketext('Set:')." &nbsp;",
 	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  ), 
-	    " &nbsp; Problem: &nbsp;",
+	    " &nbsp;".$r->maketext('Problem:')."&nbsp;",
 	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  ),  
 	    " &nbsp; ";
 	    print CGI::end_form();
@@ -306,6 +312,16 @@ sub byData {
   $A =~ s/\|[01]*\t([^\t]+)\t.*/|$1/; # remove answers and correct/incorrect status
   $B =~ s/\|[01]*\t([^\t]+)\t.*/|$1/;
   return $A cmp $B;
+}
+
+sub output_JS {
+    my $self = shift;
+    my $r = $self->r;
+    my $ce = $r->ce;
+
+    my $site_url = $ce->{webworkURLs}->{htdocs};
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
 }
 
 1;
