@@ -211,11 +211,21 @@ sub body {
 	    }
 	    
 	    my @userSetIDs = map {[$userID, $_]} @setIDs;
-	    my @sets = $db->getMergedSets(@userSetIDs);
+	    my @unfilteredsets = $db->getMergedSets(@userSetIDs);
+	    my @sets;
 	    
+	    # achievement items only make sense for regular homeworks
+	    # so filter gateways out
+	    foreach my $set (@unfilteredsets) {
+		if ($set->assignment_type() eq 'default') {
+		    push @sets, $set;
+		}
+	    }	    
+
 	    print CGI::h2("Items");
 
 	    if (@items) {
+			    
 		my $itemnumber = 0;
 		foreach my $item (@items) {
 		    # Print each items name and description 
