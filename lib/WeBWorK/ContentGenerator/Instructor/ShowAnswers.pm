@@ -254,18 +254,32 @@ sub body {
 			push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
 		    }
 		    
+		    my $previousTime = -1;
+		    
 		    foreach my $answerID (@pastAnswerIDs) {
 			my $pastAnswer = $db->getPastAnswer($answerID);
 			my $answers = $pastAnswer->answer_string;
 			my $scores = $pastAnswer->scores;
 			my $time = $self->formatDateTime($pastAnswer->timestamp);
-			
+			my @row;
+			my $rowOptions = {};
+
+			if ($previousTime < 0) {
+			    $previousTime = $pastAnswer->timestamp;
+			}
+
 			my @scores = split(//, $scores);
 			my @answers = split(/\t/,$answers);
 			
-			my @row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
-			my $td = {nowrap => 1};
 			my $num_ans = $#answers;
+			
+			if ($pastAnswer->timestamp - $previousTime > $ce->{sessionKeyTimeout}) {
+			    $rowOptions->{'class'} = 'table-rule';
+			}
+
+			@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
+
+			my $td = {nowrap => 1};
 			
 			for (my $i = 0; $i <= $num_ans; $i++) {
 			    my $answer = $answers[$i];
@@ -295,8 +309,9 @@ sub body {
 			    push(@row,CGI::td({width=>20}),CGI::td("Comment: ".HTML::Entities::encode_entities($pastAnswer->comment_string)));
 			}
 			
-			print CGI::Tr(@row);
+			print CGI::Tr($rowOptions,@row);
 			
+			$previousTime = $pastAnswer->timestamp;
 			
 		    }
 		    
