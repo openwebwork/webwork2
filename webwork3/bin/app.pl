@@ -72,6 +72,25 @@ hook 'before' => sub {
 
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
+
+#allow .format in url string
+    # my $format = params->{'format'};
+    # return unless defined $format;
+
+    # my $serializer = $serializers->{$format};
+    # unless (defined $serializer) {
+    #     return halt(
+    #         Dancer::Error->new(
+    #             code    => 404,
+    #             message => "unsupported format requested: " . $format
+    #         )
+    #     );
+    # }
+
+    # set serializer => $serializer;
+    # my $ct = $content_types->{$format} || setting('content_type');
+    # content_type $ct;
+
 };
 
 ## right now, this is to help handshaking between the original webservice and dancer.  
