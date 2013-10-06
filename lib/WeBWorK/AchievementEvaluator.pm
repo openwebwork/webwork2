@@ -75,6 +75,7 @@ sub checkForAchievements {
     our $nextLevelPoints = $globalUserAchievement->next_level_points;
     our $localData = {};
     our $globalData = {};
+    our $tags;
 
     my $compartment = new WWSafe;
 
@@ -124,7 +125,7 @@ sub checkForAchievements {
 
     # get the problem tags
     my $templateDir = $ce->{courseDirs}->{templates};
-    my $tags = WeBWorK::Utils::Tags->new($templateDir.'/'.$problem->source_file());
+    $tags = WeBWorK::Utils::Tags->new($templateDir.'/'.$problem->source_file());
 
     #These variables are shared with the safe compartment.  The achievement evaulators
     # have access too 
