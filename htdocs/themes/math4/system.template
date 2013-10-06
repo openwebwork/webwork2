@@ -56,9 +56,12 @@ var tabberOptions = {manualStartup:true};
 <!--#endif-->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
+
 <!--#head-->
 </head>
-<body>
+
+<!-- We hide the body initially because we do a lot of css stuff via js-->
+<body style="display:none">
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
 <!--#endif-->
@@ -301,6 +304,11 @@ var tabberOptions = {manualStartup:true};
 <div id="footer">
 	<!--#footer-->
 </div>
+
+<!-- show the body after everything has been loaded and rendered -->
+<script type="text/javascript">
+  $('body').css('display','block');
+</script>
 
 </body>
 </html>
