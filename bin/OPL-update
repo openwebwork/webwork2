@@ -16,6 +16,7 @@
 
 #use strict;
 use File::Find;
+use File::Find::Rule;
 use File::Basename;
 use Cwd;
 use DBI;
@@ -442,7 +443,7 @@ print "Number of files processed:\n";
 #### Now search for tagged problems
 #recursive search for all pg files
 
-find({ wanted => \&pgfiles, follow_fast=> 1}, $libraryRoot);
+File::Find::find({ wanted => \&pgfiles, follow_fast=> 1}, $libraryRoot);
 
 sub kwtidy {
 	my $s = shift;
@@ -788,11 +789,6 @@ foreach my $i (0..$#subjects){
 	push (@subject_tree, $clone);
 }
 
-	#print to_json(\@subject_tree);
-	#print "\n\n";
-
-
-
 
 $dbh->disconnect;
 
@@ -812,7 +808,51 @@ print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
 # check for errors
 close $OUTFILE or die "Cannot close $file";
 
-
 print "\n\nWrote Library Tree to $file\n";
+
+my $dirs = buildTree($libraryRoot);
+
+$file = "$webwork_htdocs/DATA/library-directory-tree.json";
+
+# use the three arguments version of open
+# and check for errors
+open $OUTFILE, '>', $file  or die "Cannot open $file";
+
+# you can check for errors (e.g., if after opening the disk gets full)
+print { $OUTFILE } to_json([$dirs]) or die "Cannot write to $file";
+
+# check for errors
+close $OUTFILE or die "Cannot close $file";
+
+
+print "Wrote Library Tree to $file\n";
+
+sub buildTree {
+	my $absoluteDir = shift;
+	my $branch = {};
+	my ($name,$dir) = fileparse($absoluteDir);
+	$branch->{name} = $name;
+	my @dirs = File::Find::Rule->maxdepth(1)->relative(1)->extras({ follow => 1 })->directory->in($absoluteDir);
+	if (scalar(@dirs)==0){
+		return undef;
+	}
+
+	my @branches = ();
+
+	for my $dir (@dirs){
+		my $theBranch = buildTree($absoluteDir . "/" . $dir);
+		if ($theBranch) {
+			push(@branches,$theBranch)
+		} else {
+			$b = {};
+			$b->{name} = $dir;
+			push(@branches,$b);
+		}
+	}
+
+	$branch->{subfields} = \@branches;
+
+	return $branch;
+}
 
 print "\nDone.\n";
