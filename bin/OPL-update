@@ -732,7 +732,7 @@ my @subject_names = ();
 while ( my @row = $sth->fetchrow_array ) {
 	push(@subjects,$row[0]);
 	push(@subject_names,$row[1]);
-}
+  }
 
 
 my @subject_tree;  # array to store the individual library tree for each subject 
@@ -750,7 +750,7 @@ foreach my $i (0..$#subjects){
 	while ( my @row = $sth->fetchrow_array ) {
 		push(@chapters,$row[0]);
 		push(@chapter_names,$row[1]);
-	}
+	  }
 
 
 	my @chapter_tree; # array to store the individual library tree for each chapter
@@ -763,16 +763,19 @@ foreach my $i (0..$#subjects){
 
 		my @subfields = ();
 		while ( my @row = $sth->fetchrow_array ) {
-		    push(@subfields,$row[1]);
-		}
+			my $section_name;
+			$section_name->{name} = $row[1];
+			my $clone = { %{ $section_name } };  # need to clone it before pushing into the @subfields array.
+		    push(@subfields,$clone);
+	    }
 
 		my $chapter_tree;
-
 		$chapter_tree->{name} = $chapter_name;
 		$chapter_tree->{subfields} = \@subfields;
 
 		my $clone = { %{ $chapter_tree } };  # need to clone it before pushing into the @chapter_tree array.
 		push(@chapter_tree,$clone);
+
 
 
 	}
@@ -788,10 +791,12 @@ foreach my $i (0..$#subjects){
 	#print to_json(\@subject_tree);
 	#print "\n\n";
 
+
+
+
 $dbh->disconnect;
 
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-
 my $file = "$webwork_htdocs/DATA/library-tree.json";
 
 # use a variable for the file handle
@@ -799,12 +804,15 @@ my $OUTFILE;
 
 # use the three arguments version of open
 # and check for errors
-open $OUTFILE, '>', $file  or die "Cannot open $file .  Please check the file permissions for $webwork_htdocs/DATA .  You may need to run this script with \"sudo -E\"";
+open $OUTFILE, '>', $file  or die "Cannot open $file";
 
 # you can check for errors (e.g., if after opening the disk gets full)
 print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
 
 # check for errors
 close $OUTFILE or die "Cannot close $file";
+
+
+print "\n\nWrote Library Tree to $file\n";
 
 print "\nDone.\n";
