@@ -341,24 +341,25 @@ sub output_summary{
 
 # output_CSS subroutine
 
-# prints the CSS scripts to page.  Does some PERL trickery to form the styles for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
+# prints the CSS scripts to page.  Does some PERL trickery to form the styles 
+# for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
 
-sub output_CSS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $pg = $self->{pg};
-
-	# always show colors for checkAnswers
-	# show colors for submit answer if 
-	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
-		print CGI::start_style({type=>"text/css"});
-		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
-		print	CGI::end_style();
-	}
-}
+# sub output_CSS{
+# 
+# 	my $self = shift;
+# 	my $r = $self->r;
+# 	my $ce = $r->ce;
+# 	my $pg = $self->{pg};
+# 
+# 	# always show colors for checkAnswers
+# 	# show colors for submit answer if 
+# 	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
+# 		print CGI::start_style({type=>"text/css"});
+# 		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
+# 		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
+# 		print	CGI::end_style();
+# 	}
+# }
 
 # output_main_form subroutine.
 
