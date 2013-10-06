@@ -2,7 +2,7 @@
 <html>
 <head>
 <title>WeBWorK</title>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap/docs/assets/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap-2/docs/assets/css/bootstrap.css"/>
 <link rel='stylesheet' href='/webwork2_files/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
 <link rel='stylesheet' type="text/css" href="/test/css/style.css">
 

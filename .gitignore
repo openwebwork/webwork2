@@ -1,0 +1,7 @@
+*.conf
+*-config
+applets
+tmp
+logs
+courses.dist
+library-tree.json
