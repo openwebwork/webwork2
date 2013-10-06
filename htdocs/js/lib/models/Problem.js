@@ -40,7 +40,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             }
         },
         problemURL: function(){
-            console.log(this.attributes);
+            // console.log(this.attributes);
             if (this.collection.setName){  // the problem is part of a set
                 return config.urlPrefix + "renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
                     + this.collection.setName 

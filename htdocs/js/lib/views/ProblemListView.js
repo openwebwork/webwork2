@@ -54,8 +54,6 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.$el.html(_.template($(this.headerTemplate).html(),
                                 {displayModes: config.settings.getSettingValue("pg{displayModes}"), 
                                 editorURL: openEditorURL}));
-            
-            
             this.renderProblems();
             
             return this;
@@ -65,7 +63,6 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var ul = this.$(".prob-list").empty(); 
             this.problems.each(function(problem,i){
                 if(i<self.maxProblemIndex) {
-                    console.log("here");
                     ul.append((new ProblemView({model: problem, problemSets: self.problemSets,
                         viewAttrs: self.viewAttrs})).render().el); 
                     
