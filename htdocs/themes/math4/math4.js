@@ -71,9 +71,6 @@ $(function(){
 	    
     });
     
-    // Past answers formatting
-    $('#past-answer-table').addClass('table');
-    
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
     $('#grades_table a').addClass('btn btn-primary');

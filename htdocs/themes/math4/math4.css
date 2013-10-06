@@ -181,6 +181,16 @@ ul.courses-list a:hover {
 	color: white;
 }
 
+/* past answers page */
+.past-answer-table td {
+    white-space: normal;
+}
+.past-answer-table .table-rule {
+    border-bottom: 1px solid #d5d5d5;
+    padding-bottom: 5px;
+}
+
+
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you
  * to scroll if you don't have that width, don't know how to fix it */

@@ -1,3 +1,4 @@
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -27,7 +28,8 @@ use strict;
 use warnings;
 #use CGI;
 use WeBWorK::CGI;
-
+use WeBWorK::Utils qw(sortByName ); 
+use HTML::Entities;
 
 sub initialize {
 	my $self       = shift;
@@ -66,11 +68,11 @@ sub body {
 	my $authz         = $r->authz;
 	my $root          = $ce->{webworkURLs}->{root};
 	my $courseName    = $urlpath->arg('courseID');  
-	my $setName       = $r->param('setID');     # these are passed in the search args in this case
-	my $problemNumber = $r->param('problemID');
+	my $setNameRegExp       = $r->param('setID');     # these are passed in the search args in this case
+	my $problemNumberRegExp = $r->param('problemID');
 	my $user          = $r->param('user');
 	my $key           = $r->param('key');
-	my $studentUser   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
+	my $studentUserRegExp   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
 	
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
 
@@ -79,7 +81,15 @@ sub body {
 	
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
-	
+	my @answerTypes;
+	my $renderAnswers = 0;
+	# Figure out if MathJax is available
+	if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
+	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+	    $renderAnswers = 1;
+	}
+
+
 	#####################################################################
 	# print form
 	#####################################################################
@@ -87,16 +97,22 @@ sub body {
 	#only instructors should be able to veiw other people's answers.
 	
 	if ($instructor) {
+	    ########## print site identifying information
+	    
+	    print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
+	    print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_ANSWER_LOG_DESCRIPTION")));
+	    
 	    print CGI::p(),CGI::hr();
 	    
 	    print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
 	    $self->hidden_authen_fields;
 	    print CGI::submit(-name => 'action', -value=>'Past Answers for')," &nbsp; ",
-	    CGI::textfield(-name => 'studentUser', -value => $studentUser, -size =>10 ),
-	    " &nbsp; Set: &nbsp;",
-	    CGI::textfield( -name => 'setID', -value => $setName, -size =>10  ), 
-	    " &nbsp; Problem: &nbsp;",
-	    CGI::textfield(-name => 'problemID', -value => $problemNumber,-size =>10  ),  
+	    " &nbsp;".$r->maketext('User:')." &nbsp;",
+	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 ),
+	    " &nbsp;".$r->maketext('Set:')." &nbsp;",
+	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  ), 
+	    " &nbsp;".$r->maketext('Problem:')."&nbsp;",
+	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  ),  
 	    " &nbsp; ";
 	    print CGI::end_form();
 	}
@@ -107,59 +123,223 @@ sub body {
 
 	# If not instructor then force table to use current user-id
 	if (!$instructor) {
-	    $studentUser = $user;
+	    $studentUserRegExp = $user;
 	}
 
-	return CGI::span({class=>'ResultsWithError'}, 'You must provide
-			    a student ID, a set ID, and a problem number.')
-	    unless defined($studentUser)  && defined($setName) 
-	    && defined($problemNumber);
-	    
-	my @pastAnswerIDs = $db->listProblemPastAnswers($courseName, $studentUser, $setName, $problemNumber);
+	return CGI::span({class=>'ResultsWithError'}, $r->maketext('You must provide
+			    a student ID, a set ID, and a problem number.'))
+	    unless defined($studentUserRegExp)  && defined($setNameRegExp) 
+	    && defined($problemNumberRegExp);
 
-	print CGI::start_table({id=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
-	print CGI::h3("Past Answers for $studentUser, set $setName, problem $problemNumber" );
-	print "No entries for $studentUser set $setName, problem $problemNumber" unless @pastAnswerIDs;
+	#our student name, set name and problem name might actually have wildcards
+	# so go through all of the possible things and trying to figure out which 
+	# we should display
+	
+	my @studentUsers;
 
-	# changed this to use the db for the past answers.  
-        # The code is better but the actual html out put is considerably less pretty
-	# Todo: prettify
+	# Set up * as a wildcard for the student user regexp
+	$studentUserRegExp = generateRegExp($studentUserRegExp);
+	$setNameRegExp = generateRegExp($setNameRegExp);
+	my @numberRanges = split(/,/,$problemNumberRegExp);
+	
 
-	foreach my $answerID (@pastAnswerIDs) {
-	    my $pastAnswer = $db->getPastAnswer($answerID);
-	    my $answers = $pastAnswer->answer_string;
-	    my $scores = $pastAnswer->scores;
-	    my $time = $self->formatDateTime($pastAnswer->timestamp);
-
-	    my @scores = split(//, $scores);
-	    my @answers = split(/\t/,$answers);
-	    
-	    my @row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
-	    my $td = {nowrap => 1};
-	    foreach my $answer (@answers) {
-		$answer = showHTML($answer);
-		my $score = shift(@scores); 
-		#Only color answer if its an instructor
-		if ($instructor) {
-		    $td->{style} = $score? "color:#006600": "color:#660000";
-		} 
-		delete($td->{style}) unless $answer ne "" && defined($score);
-		$answer = CGI::small(CGI::i("empty")) if ($answer eq "");
-		push(@row,CGI::td({width=>20}),CGI::td($td,$answer));
+	# search for matching students
+	my @allUsers = $db->listUsers();
+	foreach my $user (@allUsers) {
+	    if ($user =~ /^${studentUserRegExp}$/) {
+		push (@studentUsers, $user);
 	    }
-
-	    if ($pastAnswer->comment_string) {
-		push(@row,CGI::td({width=>20}),CGI::td("Comment: ".$pastAnswer->comment_string));
-	    }
-
-	    print CGI::Tr(@row);
-
-	    
 	}
 
-	print CGI::end_table();
-	    
+	return CGI::span({class=>'ResultsWithError'}, $r->maketext('No students matched the given student id.'))
+	    unless @studentUsers;
+
+  	foreach my $studentUser (@studentUsers) {
+
+	    my @setNames;
+
+	    # search for matching sets
+	    my @allSets = $db->listUserSets($studentUser);
+	    foreach my $set (@allSets) {
+		if ($db->countSetVersions($studentUser, $set)) {
+		    my @versions = $db->listSetVersions($studentUser, $set);
+		    my $versionedSetRegExp = $setNameRegExp;
+		    $versionedSetRegExp = $versionedSetRegExp.',v[0-9]*' unless
+			$versionedSetRegExp =~ /,v[0-9]*/;
+		    foreach my $version (@versions) {
+			my $versionedSet = "$set,v$version";
+			if ($versionedSet =~ /^${versionedSetRegExp}$/) {
+			    push(@setNames, $versionedSet);
+			}
+		    }
+		} elsif ($set =~ /^${setNameRegExp}$/) {
+		    push (@setNames, $set);
+		}
+		
+	    }
+
+	    return CGI::span({class=>'ResultsWithError'}, $r->maketext('No users have sets matching the given set id.'))
+	    unless @setNames;
+
+	    foreach my $setName (@setNames) {
+	
+		my @problemNumbers;
+
+		# search for matching problems
+		my @allProblems = $db->listUserProblems($studentUser, $setName);
+
+		foreach my $problem (@allProblems) {
+
+		    foreach my $numberRange (@numberRanges) {
+			if ($numberRange =~ /-/) {
+			    (my $low, my $high) = split(/-/,$numberRange);
+			    if ($low <= $problem && $problem <= $high) {
+				push (@problemNumbers, $problem);
+			    }
+			    # in this case the number is a singlton
+			} elsif ($numberRange == $problem) {
+			    push (@problemNumbers, $problem);
+			}
+		    }
+		}
+		
+		return CGI::span({class=>'ResultsWithError'}, $r->maketext('No problems matched the problem range.'))
+		    unless @problemNumbers;
+		
+		foreach my $problemNumber (@problemNumbers) {
+    
+		    my @pastAnswerIDs = $db->listProblemPastAnswers($courseName, $studentUser, $setName, $problemNumber);
+		    
+		    print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
+		    print CGI::h3("Past Answers for $studentUser, set $setName, problem $problemNumber" );
+		    print "No entries for $studentUser set $setName, problem $problemNumber" unless @pastAnswerIDs;
+		    
+		    # changed this to use the db for the past answers.  
+		    
+		    #set up a silly problem to figure out what type the answers are
+		    #(why isn't this stored somewhere)
+		    my $unversionedSetName = $setName;
+		    $unversionedSetName =~ s/,v[0-9]*$//;
+		    my $displayMode   = $self->{displayMode};
+		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars }; 
+		    my $set = $db->getMergedSet($studentUser, $unversionedSetName);
+		    my $problem = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
+		    my $userobj = $db->getUser($studentUser);
+		    #if these things dont exist then the problem doesnt exist and past answers dont make sense
+		    next unless defined($set) && defined($problem) && defined($userobj); 
+		    
+		    my $pg = WeBWorK::PG->new(
+			$ce,
+			$userobj,
+			$key,
+			$set,
+			$problem,
+			$set->psvn, # FIXME: this field should be removed
+			$formFields,
+			{ # translation options
+			    displayMode     => 'plainText',
+			    showHints       => 0,
+			    showSolutions   => 0,
+			    refreshMath2img => 0,
+			    processAnswers  => 1,
+			    permissionLevel => $db->getPermissionLevel($studentUser)->permission,
+			    effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
+			},
+			);
+		    
+		    # check to see what type the answers are.  right now it only checks for essay but could do more
+		    my %answerHash = %{ $pg->{answers} };
+		    
+		    foreach (sortByName(undef, keys %answerHash)) {
+			push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
+		    }
+		    
+		    my $previousTime = -1;
+		    
+		    foreach my $answerID (@pastAnswerIDs) {
+			my $pastAnswer = $db->getPastAnswer($answerID);
+			my $answers = $pastAnswer->answer_string;
+			my $scores = $pastAnswer->scores;
+			my $time = $self->formatDateTime($pastAnswer->timestamp);
+			my @row;
+			my $rowOptions = {};
+
+			if ($previousTime < 0) {
+			    $previousTime = $pastAnswer->timestamp;
+			}
+
+			my @scores = split(//, $scores);
+			my @answers = split(/\t/,$answers);
+			
+			my $num_ans = $#answers;
+			
+			if ($pastAnswer->timestamp - $previousTime > $ce->{sessionKeyTimeout}) {
+			    $rowOptions->{'class'} = 'table-rule';
+			}
+
+			@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
+
+			my $td = {nowrap => 1};
+			
+			for (my $i = 0; $i <= $num_ans; $i++) {
+			    my $answer = $answers[$i];
+			    my $answerType = defined($answerTypes[$i]) ? $answerTypes[$i] : '';
+			    my $score = shift(@scores); 
+			    #Only color answer if its an instructor
+			    if ($instructor) {
+				$td->{style} = $score? "color:#006600": "color:#660000";
+			    } 
+			    delete($td->{style}) unless $answer ne "" && defined($score) && $answerType ne 'essay';
+			    
+			    my $answerstring;
+			    if ($answer eq '') {		    
+				$answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
+			    } elsif (!$renderAnswers) {
+				$answerstring = HTML::Entities::encode_entities($answer);
+			    } elsif ($answerType eq 'Value (Formula)') {
+				$answerstring = '`'.HTML::Entities::encode_entities($answer).'`';
+			    } else {
+				$answerstring = HTML::Entities::encode_entities($answer);
+			    }
+			    
+			    push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
+			}
+			
+			if ($pastAnswer->comment_string) {
+			    push(@row,CGI::td({width=>20}),CGI::td("Comment: ".HTML::Entities::encode_entities($pastAnswer->comment_string)));
+			}
+			
+			print CGI::Tr($rowOptions,@row);
+			
+			$previousTime = $pastAnswer->timestamp;
+			
+		    }
+		    
+		    print CGI::end_table();
+		}
+	    }
+	}
+
+	if ($renderAnswers) {
+	    print <<EOS;
+	    <script type="text/javascript">
+		MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "past-answer-table"]);
+	    </script>
+EOS
+	}
+	
 	return "";
+}
+
+sub generateRegExp {
+    my $regExp = shift;
+
+    $regExp =~ s/([\\\[\]\{\}\(\)\+\.\$\^])/\\$1/g;
+    $regExp =~ s/\*/\.\*/g;
+    $regExp =~ s/\?/\./g;
+
+    return $regExp;
+
 }
 
 sub byData {
@@ -169,19 +349,14 @@ sub byData {
   return $A cmp $B;
 }
 
-##################################################
-#
-#  Make HTML symbols printable
-#
-sub showHTML {
-    my $string = shift;
-    return '' unless defined $string;
-    $string =~ s/&/\&amp;/g;
-    $string =~ s/</\&lt;/g;
-    $string =~ s/>/\&gt;/g;
-    $string =~ s/\n/<br>/g;
-    $string =~ s/\000/,/g;  # anyone know why this is here?  (I didn't add it -- dpvc)
-    $string;
+sub output_JS {
+    my $self = shift;
+    my $r = $self->r;
+    my $ce = $r->ce;
+
+    my $site_url = $ce->{webworkURLs}->{htdocs};
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
 }
 
 1;

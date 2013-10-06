@@ -632,6 +632,16 @@ table th {font-size:75%}
 	display: none;
 }
 
+/*styles for the past answer page */
+.past-answer-table td {
+    white-space: normal;
+}
+.past-answer-table .table-rule {
+    border-bottom: 1px solid #d5d55;
+    padding-bottom: 5px;
+}
+
+
 /*Styles for the classlist editor page*/
 
 /*The styles here correctly align the table elements in the set table*/
