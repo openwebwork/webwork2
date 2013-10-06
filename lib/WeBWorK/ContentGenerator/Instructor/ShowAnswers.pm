@@ -136,11 +136,13 @@ sub body {
 	# we should display
 	
 	my @studentUsers;
-	my @setNames;
-	my @problemNumbers;
 
 	# Set up * as a wildcard for the student user regexp
-	$studentUserRegExp =~ s/\*/\.\*/g;
+	$studentUserRegExp = generateRegExp($studentUserRegExp);
+	$setNameRegExp = generateRegExp($setNameRegExp);
+	my @numberRanges = split(/,/,$problemNumberRegExp);
+	
+
 	# search for matching students
 	my @allUsers = $db->listUsers();
 	foreach my $user (@allUsers) {
@@ -154,16 +156,19 @@ sub body {
 
   	foreach my $studentUser (@studentUsers) {
 
-	    # Set up * as a wildcard for the set name regexp
-	    $setNameRegExp =~ s/\*/\.\*/g;
+	    my @setNames;
+
 	    # search for matching sets
 	    my @allSets = $db->listUserSets($studentUser);
 	    foreach my $set (@allSets) {
 		if ($db->countSetVersions($studentUser, $set)) {
 		    my @versions = $db->listSetVersions($studentUser, $set);
+		    my $versionedSetRegExp = $setNameRegExp;
+		    $versionedSetRegExp = $versionedSetRegExp.',v[0-9]*' unless
+			$versionedSetRegExp =~ /,v[0-9]*/;
 		    foreach my $version (@versions) {
 			my $versionedSet = "$set,v$version";
-			if ($versionedSet =~ /^${setNameRegExp}$/) {
+			if ($versionedSet =~ /^${versionedSetRegExp}$/) {
 			    push(@setNames, $versionedSet);
 			}
 		    }
@@ -172,25 +177,29 @@ sub body {
 		}
 		
 	    }
-	    
+
 	    return CGI::span({class=>'ResultsWithError'}, $r->maketext('No users have sets matching the given set id.'))
 	    unless @setNames;
 
 	    foreach my $setName (@setNames) {
 	
-		
-		my @numberRange = split(/-/,$problemNumberRegExp);
-
-		if ($#numberRange == 0) {
-		    $numberRange[1] = $numberRange[0];
-		}
+		my @problemNumbers;
 
 		# search for matching problems
 		my @allProblems = $db->listUserProblems($studentUser, $setName);
 
 		foreach my $problem (@allProblems) {
-		    if ($numberRange[0] <= $problem && $numberRange[1] >= $problem) {
-			push (@problemNumbers, $problem);
+
+		    foreach my $numberRange (@numberRanges) {
+			if ($numberRange =~ /-/) {
+			    (my $low, my $high) = split(/-/,$numberRange);
+			    if ($low <= $problem && $problem <= $high) {
+				push (@problemNumbers, $problem);
+			    }
+			    # in this case the number is a singlton
+			} elsif ($numberRange == $problem) {
+			    push (@problemNumbers, $problem);
+			}
 		    }
 		}
 		
@@ -206,7 +215,7 @@ sub body {
 		    print "No entries for $studentUser set $setName, problem $problemNumber" unless @pastAnswerIDs;
 		    
 		    # changed this to use the db for the past answers.  
-
+		    
 		    #set up a silly problem to figure out what type the answers are
 		    #(why isn't this stored somewhere)
 		    my $unversionedSetName = $setName;
@@ -305,6 +314,17 @@ EOS
 	}
 	
 	return "";
+}
+
+sub generateRegExp {
+    my $regExp = shift;
+
+    $regExp =~ s/([\\\[\]\{\}\(\)\+\.\$\^])/\\$1/g;
+    $regExp =~ s/\*/\.\*/g;
+    $regExp =~ s/\?/\./g;
+
+    return $regExp;
+
 }
 
 sub byData {
