@@ -34,7 +34,9 @@ print $libraryRoot . "\n";
 my $libraryVersion = $ce->{problemLibrary}->{version};
 
 my($filename, $directories) = fileparse($libraryRoot);
-my $dirs = buildTree($libraryRoot);
+
+my @dirArray = ();
+push(@dirArray,buildTree($libraryRoot));
 
 
 #$dbh->disconnect;
@@ -50,7 +52,7 @@ my $OUTFILE;
 open $OUTFILE, '>', $file  or die "Cannot open $file";
 
 # you can check for errors (e.g., if after opening the disk gets full)
-print { $OUTFILE } to_json($dirs) or die "Cannot write to $file";
+print { $OUTFILE } to_json(\@dirArray) or die "Cannot write to $file";
 
 # check for errors
 close $OUTFILE or die "Cannot close $file";
