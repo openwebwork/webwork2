@@ -383,7 +383,7 @@ sub initialize {
 			}
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
-			$self->addmessage( CGI::div({class=>"Message"}, "Results of last action performed: "));
+			$self->addmessage( CGI::div("Results of last action performed: "));
 			$self->addmessage(
 			                     $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams), 
 			                     CGI::hr()
