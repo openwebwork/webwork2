@@ -47,7 +47,7 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
 
 <script type="text/template" id="allSets-header">
 
-  <h2 class="span3">Manager Problem Sets</h2>
+  <h2 class="span4">Manager Problem Sets</h2>
   <button class="btn add-problem-set-button pull-right" type="button">Add Problem Set</button>
 </script>
 
@@ -359,9 +359,10 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <script type="text/template" id="library-browser-template">
 <ul class="nav nav-tabs" id="library-browser-tabs">
-  <li class="active"><a href="#library-subjects-tab" data-toggle="tab">Browse By Subject</a></li>
-  <li><a href="#library-directories-tab" data-toggle="tab">Browse By Filename</a></li>
-  <li><a href="#library-local-tab" data-toggle="tab">Browse Local Library</a></li>
+  <li class="active"><a href="#library-subjects-tab" data-toggle="tab">OPL Subjects</a></li>
+  <li><a href="#library-directories-tab" data-toggle="tab">OPL Directory</a></li>
+  <li><a href="#library-local-tab" data-toggle="tab">Local Problems</a></li>
+  <li><a href="#library-set-defintion" data-toggle="tab">Set Defn. files</a></li>
   <li><a href="#library-search-tab" data-toggle="tab">Search the Library</a></li>
 </ul>
  
@@ -369,6 +370,7 @@ at the bottom of the screen and click "Save Changes". </p>
   <div class="tab-pane active" id="library-subjects-tab"></div>
   <div class="tab-pane" id="library-directories-tab"></div>
   <div class="tab-pane" id="library-local-tab"></div>
+  <div class="tab-pane" id="library-set-defintion"></div>
   <div class="tab-pane" id="library-search-tab"></div>
 </div> 
 
@@ -380,7 +382,6 @@ at the bottom of the screen and click "Save Changes". </p>
 <div class="row-fluid">
 <div class="library-viewer span2"></div>
 <div class="btn-group">
-<button class="btn test-me">Click Here</button>
 <button class="btn load-more-btn">Load More Problems</button>
   <select class="target-set span2">
     <option>Target Set</option>

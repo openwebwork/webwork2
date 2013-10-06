@@ -11,7 +11,9 @@ use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use Digest::MD5 qw(md5_hex);
-use Utils qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use File::Find::Rule;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::LibraryUtils qw/list_pg_files/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use WeBWorK::PG::Local;
@@ -194,6 +196,57 @@ get '/Library/directories' => sub {
 	return $json_text;
 
 }; 
+
+#######
+#
+#  get '/library/directories'
+#
+#  return all the problems for a given directory in the library.
+#
+####
+
+get '/Library/directories/**' => sub {
+
+	my ($dirs) = splat;
+	my @dirs = @{$dirs};
+	splice(@dirs,1,1); # strip the "OpenProblemLibrary" from the path
+
+	my $path = vars->{ce}->{courseDirs}{templates} ."/". join("/",@dirs);
+	my @files = File::Find::Rule->file()->name('*.pg')->in($path);
+
+	my @allFiles =  map { {source_file=>$_} }@files;
+	return \@allFiles;
+};
+
+
+#######
+#
+#  get '/library/local'
+#
+#  return all the problems in the course/templates directory
+#
+####
+
+get '/Library/local' => sub {
+
+	debug "in /Library/local";
+
+	my $path = vars->{ce}->{courseDirs}{templates};
+	my $probLibs = vars->{ce}->{courseFiles}{problibs};
+
+	debug $probLibs;
+
+	my @pg_files = list_pg_files($path,".",$probLibs);
+
+	debug @pg_files;
+
+	return \@pg_files;
+
+};
+
+
+
+
 
 ####
 #
@@ -583,4 +636,5 @@ sub getFilePaths {
 
 
 1;
+
 

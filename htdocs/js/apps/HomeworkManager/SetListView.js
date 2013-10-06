@@ -60,7 +60,8 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
                 // check if the day has actually changed. 
                 if (! oldDate.isSame(newDate,"day")){
                     newDate.hours(oldDate.hours()).minutes(oldDate.minutes());
-                    this.problemSets.get(this.editgrid.grid.getRowId(rowIndex)).set(this.grid.getColumnName(columnIndex),newDate.unix()).update();
+                    this.problemSets.get(this.editgrid.grid.getRowId(rowIndex))
+                        .set(this.editgrid.grid.getColumnName(columnIndex),newDate.unix()).update();
                 } 
             } else {
                 this.problemSets.get(this.editgrid.grid.getRowId(rowIndex))
@@ -97,13 +98,12 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
         customizeGrid: function () {
             var dateRenderer = new CellRenderer({
                 render: function(cell, value) { 
-                    console.log(value);
-                    $(cell).html(moment.unix(value)); 
+                    $(cell).html(moment.unix(value).format("MM/DD/YYYY")); 
                 }
             });
             this.editgrid.grid.setCellRenderer("open_date", dateRenderer);
-            //this.editgrid.grid.setCellRenderer("due_date", dateRenderer);
-            //this.editgrid.grid.setCellRenderer("answer_date", dateRenderer);
+            this.editgrid.grid.setCellRenderer("due_date", dateRenderer);
+            this.editgrid.grid.setCellRenderer("answer_date", dateRenderer);
 
             this.editgrid.grid.setCellRenderer("delete_set",config.deleteCellRenderer,{action: "delete"});
 
@@ -140,8 +140,8 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
                     break;
                 }
 
-                $(htmlInput).val(moment.unix($(htmlInput).val()).format("MM/DD/YYYY"))
-                    .datepicker({beforeShow: function() {
+                $(htmlInput).datepicker({dateFormat: "mm/dd/yy",
+                            beforeShow: function() {
                             // the field cannot be blurred until the datepicker has gone away
                             // otherwise we get the "missing instance data" exception
                             this.onblur_backup = this.onblur;
@@ -152,9 +152,8 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
                             // apply date if any, otherwise call original onblur event
                             if (dateText != '') this.celleditor.applyEditing(htmlInput.element, moment(dateText,"MM/DD/YYYY").unix());
                             else if (this.onblur_backup != null) this.onblur_backup();
-
                         }
-                    }).datepicker("show");
+                    }).datepicker("setDate","07/25/2012").datepicker("show");
 
                 $(".ui-datepicker").position({my: "right", at: "left", of: $(htmlInput), collision: "flipfit", 
                                                 within: $("#main-view")});

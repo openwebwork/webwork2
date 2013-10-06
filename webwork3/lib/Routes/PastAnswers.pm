@@ -9,7 +9,7 @@ package PastAnswers;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 
 ##
 #  use this to fill the _past_answer database from answer_log

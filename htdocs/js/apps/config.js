@@ -7,12 +7,15 @@
 define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], function(Backbone,moment){
 
     $(document).ajaxError(function (e, xhr, options, error) {
-      console.log({e: e, xhr: xhr, options: options, error: error});
-      console.log(xhr.responseText);
       if(xhr.responseText){
-        var response = JSON.parse(xhr.responseText);
-        if(response && response.type=="login"){
-            console.log(response.msg);
+        try {
+            var response = JSON.parse(xhr.responseText);
+
+            if(response && response.type=="login"){
+                console.log(response.msg);
+            }
+        } catch (error){
+            console.log(xhr.responseText);
         }
       }
 
@@ -90,7 +93,7 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
                 values: {"0": "No", "1": "Yes"}},
             {name: "visible", label: "Visible", datatype: "string",editable: true,
                 values: {"0": "No", "1": "Yes"}},
-            {name: "open_date", label: "Open Date", datatype: "integer", editable: false},
+            {name: "open_date", label: "Open Date", datatype: "integer", editable: true},
             {name: "due_date", label: "Due Date", datatype: "integer", editable: true},
             {name: "answer_date", label: "Answer Date", datatype: "integer", editable: true}
             ],

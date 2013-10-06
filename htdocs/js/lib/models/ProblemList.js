@@ -28,7 +28,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             if(this.setName) { // the problem comes from a problem set
                 return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.setName 
                 + "/problems"; 
-            } else if (this.path) { // this is a set of problems from a library. 
+            } else if (this.type=="subjects") { // this is a set of problems from a library. 
                 var dirs = this.path.split("/");
                 var path = config.urlPrefix + dirs[0];
                 if (dirs[1]) {path += "/subjects/" + dirs[1];}
@@ -36,7 +36,9 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 if (dirs[3]) {path += "/sections/" + dirs[3];}
                 path+= "/problems";
                 return path;
-            }  
+            }  else if (this.type=="directories"){
+                return config.urlPrefix+"Library/directories/"+this.path;
+            }
         },
         parse: function(response){
             config.checkForError(response);

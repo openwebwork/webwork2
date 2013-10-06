@@ -9,7 +9,7 @@ package Routes::User;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils qw/cryptPassword/;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;

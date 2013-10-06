@@ -9,7 +9,7 @@ package ProblemSets;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );

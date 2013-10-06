@@ -9,7 +9,7 @@ package Routes::Course;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils qw/convertObjectToHash/;
+use Utils::Convert qw/convertObjectToHash/;
 use Dancer::Plugin::Database;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);

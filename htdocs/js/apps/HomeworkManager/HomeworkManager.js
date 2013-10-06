@@ -109,7 +109,6 @@ var HomeworkEditorView = WebPage.extend({
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
         this.headerView.render();
-
     },
     events: {"click #hw-manager-menu a.link": "changeView",
             "click #show-hide-sets-button": "showHideSets"},

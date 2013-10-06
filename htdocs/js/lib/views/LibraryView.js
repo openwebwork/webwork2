@@ -11,7 +11,7 @@ function(Backbone, _,LibraryProblemsView, ProblemList,LibraryTreeView){
         className: "lib-browser",
     	initialize: function (){
     		var self = this; 
-            _.bindAll(this,'render','changeView','showProblems','addProblem');
+            _.bindAll(this,'render','showProblems','addProblem');
             this.allProblemSets = this.options.problemSets;
             this.errorPane = this.options.errorPane;
             this.libraryProblemsView = this.options.libraryProblemsView;
@@ -27,7 +27,7 @@ function(Backbone, _,LibraryProblemsView, ProblemList,LibraryTreeView){
 
             
     	},
-    	events: {"change #library-selector": "changeView",
+    	events: {//"change #library-selector": "changeView",
                     "change .target-set": "resetDisplayModes",
                     "click .load-more-btn": "loadMore"
         },
@@ -38,7 +38,7 @@ function(Backbone, _,LibraryProblemsView, ProblemList,LibraryTreeView){
             this.libraryProblemsView.setElement(this.$(".lib-problem-viewer"));
             this.libraryTreeView.render();
             this.$(".library-viewer").append(this.libraryTreeView.el);
-    		this.$(".lib-problem-viewer").height(0.8*screen.height);
+    		this.$(".lib-problem-viewer").height(0.8*screen.height);  // make sure that the view is tall enough to view the library
     		//this.showProblems();
     	},
         loadMore: function () {
@@ -65,15 +65,15 @@ function(Backbone, _,LibraryProblemsView, ProblemList,LibraryTreeView){
             problemSet.problems.add(model);
 
         },
-    	changeView: function (evt) {
+    	/*changeView: function (evt) {
     		var self = this;
             $(".lib-problem-viewer").html("");
 
-    	},
+    	}, */
     	loadProblems: function (_path){    	
     		console.log(_path);
             var self = this;
-			this.problemList = new ProblemList({path:  _path, type: "Library Problems"});
+			this.problemList = new ProblemList({path:  _path, type: this.options.libBrowserType});
             this.problemList.fetch({success: this.showProblems});
     	}, 
         resetDisplayModes: function(){

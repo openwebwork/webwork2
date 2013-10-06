@@ -31,7 +31,7 @@ hook 'before' => sub {
 
     if (! defined(session->{user})) {
     	if (! params->{user}){
-			return send_error({type => "login", msg => "The user is not defined.  You may need to login again."}, 403);
+			send_error({type => "login", msg => "The user is not defined.  You may need to login again."}, 403);
 		}
 	    	session->{user} = params->{user};
 	}
@@ -57,7 +57,7 @@ hook 'before' => sub {
 		if ($session_key->{key_not_a_keyword} eq param('session_key')) {
 			session->{session_key} = params->{session_key};
 		} else {
-			return send_error({type => "login", msg => "Your session has expired"}, 403);
+			send_error({type => "login", msg => "Your session has expired"}, 403);
 		} 
 	}
 
@@ -78,6 +78,7 @@ hook 'before' => sub {
 ## it does nothing except sets the session using the hook 'before' above. 
 
 get '/login' => sub {
+	
 	return {msg => "If you get this message all should have worked"};
 };
 
