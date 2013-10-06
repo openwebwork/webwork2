@@ -1,4 +1,4 @@
-var setmakerWebserviceURL = "/webwork2/instructorXMLHandler";
+var setmakerWebserviceURL = "http://"+window.location.hostname+"/webwork2/instructorXMLHandler";
 
 // For watermark of sample text for adding set text box
 $(function() {
