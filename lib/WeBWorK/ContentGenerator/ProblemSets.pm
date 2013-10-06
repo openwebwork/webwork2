@@ -399,7 +399,8 @@ sub setListRow {
 		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $display_name"; return()}
 			if ( $problemRecords[0]->num_correct() + 
 			     $problemRecords[0]->num_incorrect() >= 
-			     ( ( !($set->attempts_per_version()) ) ? 0 : $set->attempts_per_version() ) ) {
+			     $set->attempts_per_version() &&
+			     $set->attempts_per_version) {
 				$status = $r->maketext("completed.");
 			} elsif ( time() > $set->due_date() + 
 				  $self->r->ce->{gatewayGracePeriod} ) {
