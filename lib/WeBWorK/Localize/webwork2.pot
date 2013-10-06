@@ -3419,6 +3419,9 @@ msgstr ""
 msgid "Enable Course Achievements"
 msgstr ""
 
+msgid "Enable Achievement Items"
+msgstr ""
+
 msgid "Use Date Picker"
 msgstr ""
 
@@ -3447,10 +3450,13 @@ msgstr ""
 msgid "Some servers handle courses taking place in different timezones.  If this course is not showing the correct timezone, enter the correct value here.  The format consists of unix times, such as \"America/New_York\",\"America/Chicago\", \"America/Denver\", \"America/Phoenix\" or \"America/Los_Angeles\". Complete list: <a href="http://en.wikipedia.org/wiki/List_of_zoneinfo_time_zones">TimeZoneFiles</a>"
 msgstr ""
 
-msgid "Activiating this will enable Mathchievements for webwork.  Mathchievements can be managed by using the Achievement Editor link."
+msgid "Activiating this will enable achievements for webwork.  Achievements can be managed by using the Achievement Editor link."
 msgstr ""
 
 msgid "This is the number of achievement points given to each user for completing a problem."
+msgstr ""
+
+msgid "Activiating this will enable achievement items. This features rewards students who earn achievements with items that allow them to affect their homework in a limited way."
 msgstr ""
 
 msgid "Users at this level and higher are allowed to change their password. Normally guest users are not allowed to change their password."

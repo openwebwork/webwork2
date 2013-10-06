@@ -391,7 +391,7 @@ sub initialize {
 			}
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
-			$self->addmessage(CGI::div({class=>"Message"}, $r->maketext("Results of last action performed").": "));
+			$self->addmessage(CGI::div($r->maketext("Results of last action performed").": "));
 			$self->addmessage($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams));
 		} else {
 			return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to perform this action.")));

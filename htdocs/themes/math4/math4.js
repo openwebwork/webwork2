@@ -172,8 +172,5 @@ $(function(){
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
 
-    //Equation editor hacks
- 
-
 })
 

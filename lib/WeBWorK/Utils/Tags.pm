@@ -187,7 +187,6 @@ sub new {
   my ($text, $edition, $textauthor, $textsection, $textproblem);
   my $textno;
   my $textinfo=[];
-  my @textproblems = (-1);
 
   open(IN,"$name") or die "can not open $name: $!";
   if ($name !~ /pg$/) {
@@ -212,6 +211,7 @@ sub new {
   SWITCH: {
       if (/#\s*\bKEYWORDS\((.*)\)/i) {
         my @keyword = keywordcleaner($1);
+		@keyword = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
         $self->{keywords} = [@keyword];
         $lasttag = $lineno;
         last SWITCH;
@@ -264,6 +264,8 @@ sub new {
         $textno = $1;
         $textsection = $2;
         $textsection =~ s/'/\'/g;
+		$textsection =~ s/[^\d\.]//g;
+		#print "|$textsection|\n";
         if ($textsection =~ /\S/) {
           $textinfo = maybenewtext($textno, $textinfo);
           if ($textsection =~ /(\d*?)\.(\d*)/) {
@@ -281,6 +283,7 @@ sub new {
         $textno = $1;
         $textproblem = $2;
         $textproblem =~ s/\D/ /g;
+				my @textproblems = (-1);
         @textproblems = split /\s+/, $textproblem;
         @textproblems = grep { $_ =~ /\S/ } @textproblems;
         if (scalar(@textproblems) or defined($textinfo->[$textno])) {
@@ -330,7 +333,7 @@ sub copyin {
 #    }
 #  }
   # Just copy in all basic tags
-  for my $j (qw( DBsubject DBchapter DBsection Date Institution Author )) {
+  for my $j (qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level )) {
     $self->settag($j, $ob->{$j}) if(defined($ob->{$j}));
   }
   # Now copy in keywords
