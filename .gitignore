@@ -5,3 +5,4 @@ tmp
 logs
 courses.dist
 library-tree.json
+bower_components
