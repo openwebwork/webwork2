@@ -80,20 +80,26 @@ function MathViewer(field) {
     var me = this;
     this.decoratedTextBox = $(field);
 
+    MathJax.Hub.Config({
+	showProcessingMessages : false,
+	TeX : {MultLineWidth : "50%"},
+    });
+    
     /* start setting up html elements */
-    var popupdiv = $('<div>', {class : 'popupdiv'});
-    var popupttl = $('<div>', {class : 'navbar'});
-    var dropdown = $('<ul>', {class : 'dropdown-menu'});
-    var tabContent = $('<div>', {class : 'tab-content'});
+    var popupdiv;
+    var popupttl;
+    var dropdown;
+    var tabContent;
 
     /* initialization function does heavy lifting of generating html */
     this.initialize = function() {
-	MathJax.Hub.Config({
-	    showProcessingMessages : false,
-	    TeX : {MultLineWidth : "50%"},
-	});
-	
-	
+		
+	/* start setting up html elements */
+	popupdiv = $('<div>', {class : 'popupdiv'});
+	popupttl = $('<div>', {class : 'navbar'});
+	dropdown = $('<ul>', {class : 'dropdown-menu'});
+	tabContent = $('<div>', {class : 'tab-content'});
+
 	/* generate html for each of the categories in the locale file */
 	$.each(mv_categories, this.createCat);
 
@@ -108,7 +114,7 @@ function MathViewer(field) {
 			.append($('<ul>', {class : "nav pull-right"})
 				.append($('<li>')
 					.append('<a href="#" onclick="$(' + "'.codeshard-btn').popover('hide')" + 
-						';"><i class="icon-remove"></i></a>'))));
+						'; return false;"><i class="icon-remove"></i></a>'))));
 	/* put the categories content into the main popop div, 
 	   activate the tabs, 
 	   and put the preview div in place 
@@ -174,6 +180,7 @@ function MathViewer(field) {
     /* this function returns the html for the body of the math viewer */
 
     this.popoverContent = function() {
+	me.initialize();
 	return popupdiv;
 	
     };
