@@ -26,6 +26,7 @@ use strict;
 use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(before after readFile sortAchievements);
+use WeBWorK::Utils::Tags;
 
 use WWSafe;
 use Storable qw(nfreeze thaw);
@@ -121,6 +122,10 @@ sub checkForAchievements {
 	$globalData->{'completeSets'}++;
     }
 
+    # get the problem tags
+    my $templateDir = $ce->{courseDirs}->{templates};
+    my $tags = WeBWorK::Utils::Tags->new($templateDir.'/'.$problem->source_file());
+
     #These variables are shared with the safe compartment.  The achievement evaulators
     # have access too 
     # $problem - the problem data;
@@ -132,9 +137,10 @@ sub checkForAchievements {
     # $nextLevelPoints - only should be used by 'level' achievements
     # $set - the set data
     # $achievementPoints - the number of achievmeent points
+    # $tags -this is the tag data associated to the problem from the problem library
 
     $compartment->share(qw($problem @setProblems $localData $maxCounter 
-             $globalData $counter $nextLevelPoints $set $achievementPoints));
+             $globalData $counter $nextLevelPoints $set $achievementPoints $tags));
 
     #loop through the various achievements, see if they have been obtained, 
     foreach my $achievement (@achievements) {
