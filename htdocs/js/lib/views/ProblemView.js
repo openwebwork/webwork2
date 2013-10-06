@@ -8,8 +8,6 @@ define(['Backbone', 'underscore','config','imagesloaded'
         //We want the problem to render in a `li` since it will be included in a list
         tagName:"li",
         className: "problem",
-        //Add the 'problem' class to every problem
-        //className: "problem",
         //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
 
@@ -38,52 +36,54 @@ define(['Backbone', 'underscore','config','imagesloaded'
 
         render:function () {
             var self = this;
-            if(this.model.get('data')){
-                _.extend(this.allAttrs,this.model.attributes);
-                this.$el.html(this.template(this.allAttrs));
-                //this.$el.css("background-color","lightgray");
-                //this.$(".problem").css("opacity","0.5");
-                //this.$(".prob-value").on("change",this.updateProblem);
-
-                this.$el.imagesLoaded(function() {
-                    self.$el.removeAttr("style");
-                    self.$(".problem").removeAttr("style");
-                    self.$(".loading").remove();
-                });
+        
+            _.extend(this.allAttrs,this.model.attributes);
+            this.$el.html(this.template(this.allAttrs));
+            this.$el.css("background-color","lightgray");
 
 
-                if (this.options.viewAttrs.draggable) {
-                    this.$el.draggable({
-                        helper:'clone',
-                        revert:true,
-                        handle:'.drag-handle',
-                        appendTo:'body',
-                        //cursorAt:{top:0,left:0}, 
-                        //opacity:0.65
-                    }); 
+            this.$(".data").attr('src', this.model.problemURL());
+            this.$(".data").on('load', autoResize);
+            function autoResize(e){
 
-                } 
+                var newheight = this.contentWindow.document.body.scrollHeight;
+                // var newwidth = this.contentWindow.document.body.scrollWidth;
 
-                this.el.id = this.model.cid;
-                this.$el.attr('data-path', this.model.get('source_file'));
-                this.$el.attr('data-source', this.allAttrs.type);
-                if (this.model.get("displayMode")==="MathJax"){
-                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
-                }
-
-                this.stickit();
-                
-            } else {
-                this.$el.html("<span style='font: italic 120%'>Loading Problem</span><i class='icon-spinner icon-spin icon-2x'></i>");
-                this.model.loadHTML(function (data) {
-                    if (data.text){
-                        self.model.set("data",data.text);
-                        self.render();
-                    } else {
-                        console.log(data);
-                    }
-                });
+                this.height= (newheight) + "px";
+                // this.width= (newwidth) + "px";
             }
+
+            this.$(".problem").css("opacity","0.5");
+            this.$(".prob-value").on("change",this.updateProblem);
+
+            this.$el.imagesLoaded(function() {
+                self.$el.removeAttr("style");
+                self.$(".problem").removeAttr("style");
+                self.$(".loading").remove();
+            });
+
+
+            if (this.options.viewAttrs.draggable) {
+                this.$el.draggable({
+                    helper:'clone',
+                    revert:true,
+                    handle:'.drag-handle',
+                    appendTo:'body',
+                    //cursorAt:{top:0,left:0}, 
+                    //opacity:0.65
+                }); 
+
+            } 
+
+            this.el.id = this.model.cid;
+            this.$el.attr('data-path', this.model.get('source_file'));
+            this.$el.attr('data-source', this.allAttrs.type);
+            if (this.model.get("displayMode")==="MathJax"){
+                MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
+            }
+
+            this.stickit();
+                
 
 
             return this;

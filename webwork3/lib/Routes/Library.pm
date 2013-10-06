@@ -387,7 +387,7 @@ get '/renderer/problems/:problem_id' => sub {
      	$flags->{$key}=$pg->{flags}->{$key};}
      }
 
-    return {
+    my $problem_hash {
 		text 						=> $pg->{body_text},
 		header_text 				=> $pg->{head_text},
 		answers 					=> $answers,
@@ -400,6 +400,8 @@ get '/renderer/problems/:problem_id' => sub {
 		debug_messages              => \@pgdebug_messages,
 		internal_debug_messages     => \@internal_debug_messages,
 	};
+
+	return $pg->{body_text};
 
 		 # for my $key (keys(%{$out2})){
 		 #  	my $value = '####UNDEF###';

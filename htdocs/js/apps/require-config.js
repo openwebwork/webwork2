@@ -9,7 +9,7 @@ var require = {
         "jquery-ui":            "/webwork2_files/js/components/jquery-ui/ui/jquery-ui",
         "underscore":           "/webwork2_files/js/components/underscore/underscore",
         "jquery":               "/webwork2_files/js/components/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/components/bootstrap/docs/assets/js/bootstrap",
+        "bootstrap":            "/webwork2_files/js/components/bootstrap/dist/js/bootstrap",
         "moment":               "/webwork2_files/js/components/moment/moment",
         "stickit":              "/webwork2_files/js/components/backbone.stickit/backbone.stickit",
         "imagesloaded":         "/webwork2_files/js/components/imagesloaded/imagesloaded",
