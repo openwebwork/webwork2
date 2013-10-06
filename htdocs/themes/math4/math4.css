@@ -836,6 +836,13 @@ table#grades_table pre{
     width:60px;
 }
 
+#problem-grader-form .graded-answer,
+#problem-grader-form .essay-answer {
+    border-bottom: 1px solid #d5d5d5;
+    margin-bottom:2px;
+    padding-bottom:5px;
+}
+
 .tab-pane {
     margin-bottom:10px;
 }
