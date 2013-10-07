@@ -70,8 +70,8 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
 
             for(i=0;i<3;i++){
                 var sel = $("#library-level-"+i);
-                var opt = $("#library-level-"+i + ":selected");
-                if( sel.val()&& opt.index() !=0){ dirs.push(sel.val());}
+                var opt = $("#library-level-"+i + " option:selected");
+                if( sel.val()&& opt.index()>0){ dirs.push(sel.val());}
             }
 
             this.libraryTree.trigger("library-selected",this.libraryTree.get("header")+ dirs.join("/"));

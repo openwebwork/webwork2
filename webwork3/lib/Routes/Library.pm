@@ -344,7 +344,7 @@ get '/renderer/problems/:problem_id' => sub {
 		$problem = fake_problem(vars->{db});
 		$problem->{problem_seed} = params->{problem_seed} || 0;
 		$problem->{problem_id} = params->{problem_id} || 1;
-		$problem->{value} = 1; 
+		undef $problem->{value}; 
 
 		debug $problem;
 
@@ -453,8 +453,12 @@ get '/renderer/problems/:problem_id' => sub {
 		debug_messages              => \@pgdebug_messages,
 		internal_debug_messages     => \@internal_debug_messages,
 	};
+	return $problem_hash;
 
-	template 'library_problem', $problem_hash, { layout => 0 };
+	# this was used to get the problem rendering in a ifram
+	#
+
+	#template 'library_problem', $problem_hash, { layout => 0 };
 
 		 # for my $key (keys(%{$out2})){
 		 #  	my $value = '####UNDEF###';
@@ -613,7 +617,11 @@ get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 		internal_debug_messages     => \@internal_debug_messages,
 	};
 
-	template 'library_problem', $problem_hash, { layout => 0 };
+	return $problem_hash;
+
+	# this was used to get the problem rendering in a ifram
+	#
+	# template 'library_problem', $problem_hash, { layout => 0 }; 
 
 		 # for my $key (keys(%{$out2})){
 		 #  	my $value = '####UNDEF###';
