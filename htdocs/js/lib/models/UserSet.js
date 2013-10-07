@@ -20,6 +20,9 @@ define(['Backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,
             this.id = response.user_id;
             return response;
         },
+        save: function(opts){
+            UserSet.__super__.save.apply(this,opts);
+        }
 
     });
 

@@ -39,7 +39,7 @@ define(['Backbone', 'underscore','views/EditGrid','config','views/ModalView','mo
             var self = this; 
             var _data = this.problemSets.map(function(_set) { 
                 var _values = _set.attributes;
-                _.extend(_values,{num_problems: _set.problems.size(), 
+                _.extend(_values,{num_problems: _set.get("problems").size(), 
                     users_assigned: _set.get("assigned_users").length + "/" + self.users.size()});
 
                 return {id: _set.cid, values: _values};});

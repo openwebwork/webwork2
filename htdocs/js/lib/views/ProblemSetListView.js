@@ -36,7 +36,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             this.$el.html(this.template({loading: false}));
             this.problemSets.each(function (_model) {
                 self.$("#probSetList").append((new ProblemSetView({model: _model, template: self.setViewTemplate,
-                    numUsers: self.users.length})).render().el);
+                        numUsers: self.users.length})).render().el);
             });
             var _width = self.$el.width() - 70; 
             self.$(".set-name").truncate({width: _width}); //if the Problem Set Names are too long.  

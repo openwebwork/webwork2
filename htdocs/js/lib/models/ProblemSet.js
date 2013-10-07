@@ -102,23 +102,46 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             relax_restrict_ip: "opt(yes,no)",
             restricted_login_proctor: "opt(yes,no)",
         },
-        initialize: function(_set){
+        initialize: function(_set,_assigned_users){
             _.bindAll(this,"addProblem");
-            if (_set && _set.problems){
-                this.problems = new ProblemList(_set.problems);
-                this.problems.setName = _set.set_id;
+            /*if (_set && _set.problems){
+                var problems = new ProblemList(_set.problems);
+                problems.setName = _set.set_id;
+                this.set("problems",problems,{silent: true});
             } else {
-                this.problems = new ProblemList();
+                this.set("problems",new ProblemList(),{silent: true});
             }
+
+            if(_assigned_users){
+                this.set("assigned_users",_assigned_users);
+            }*/
+
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") ;
         },
         parse: function (response) {
-            config.checkForError(response);
+            var self = this;
+            _(_.keys(response)).each(function(key){
+                if(key==="problems"){
+                    self.attributes.problems = new ProblemList(response.problems);
+                    self.attributes.problems.setName = response.set_id;
+                } else {
+                    self.attributes[key]=response[key];
+                }
+            });
             this.id = this.get("set_id");
-            return response;
+        },
+        save: function(opts){
+            var self = this;
+            var attrs = this.changedAttributes();
+            if(attrs){
+                this.alteredAttributes = _(_(attrs).keys()).map(function(key){
+                    return {attr: key, new_value: attrs[key], old_value: self._previousAttributes[key]};
+                });
+            }
+            ProblemSet.__super__.save.apply(this,opts);
         },
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
                                                 // as a moment object and defined settings.
@@ -168,14 +191,14 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             return this;
 
         },
-        saveAssignedUsers: function(success){
-            $.ajax({url: "/test/courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") + "/users", 
+/*        saveAssignedUsers: function(success){
+            $.ajax({url: config.urlPrefix+"courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") + "/users", 
                     data: JSON.stringify({assigned_users: this.get("assigned_users"), set_id: this.get("set_id")}),
                     success: success,
                     type: "PUT",
                     processData: false,
                     contentType: "application/json"});
-        }
+        }*/
     });
      
 

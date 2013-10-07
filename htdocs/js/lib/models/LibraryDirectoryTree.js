@@ -5,7 +5,9 @@ define(['Backbone','config'], function(Backbone,config){
 	 *   The tree consists of nested arrays.  
 	 **/
 
-	var LibrarySubjectTree = Backbone.Model.extend({
+	 //not sure this is used anymore.  Commenting it out to test.
+
+	/* var LibraryDirectoryTree = Backbone.Model.extend({
 
 		initialize: function(options){
 			this.type = options.type;
@@ -18,4 +20,6 @@ define(['Backbone','config'], function(Backbone,config){
         	config.checkForError(response);
         	return response;
         }
-	});
+
+        return LibraryDirectoryTree; */
+	}); 

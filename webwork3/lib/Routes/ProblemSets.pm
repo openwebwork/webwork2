@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Array::Utils qw(array_minus);
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
@@ -71,41 +72,83 @@ get '/courses/:course_id/sets/:set_id' => sub {
 #  permission > Student
 ##
 
-post '/courses/:course_id/sets/:set_id' => sub {
-
-    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
+any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
     if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
+        send_error("You don't have the necessary permission");
     }
 
     if (param('set_id') !~ /^[\w\_.-]+$/) {
         return {error=>"The set name must only contain A-Za-z0-9_-."};
     } 
-    if (vars->{db}->existsGlobalSet(param('set_id'))){
+
+    if (request->is_post() && vars->{db}->existsGlobalSet(param('set_id'))){
         return {error=>"The set name: " . param('set_id'). " already exists."};  
+    } elsif (request->is_put() && ! vars->{db}->existsGlobalSet(params->{set_id})){
+        return {error=>"The set name: " . param('set_id'). " does not exist."};  
     }
 
-    my $set = vars->{db}->newGlobalSet;
+    ####
+    #
+    # Set up the global set for either a add (if new) or put (if old)
+    #
+    ##
+
+    my $set = (request->is_post()) ? vars->{db}->newGlobalSet : vars->{db}->getGlobalSet(params->{set_id}); 
 
     for my $key (@set_props) {
         $set->{$key} = param($key);
     }
-            
-    vars->{db}->addGlobalSet($set);
+    
+    if(request->is_post()){     
+        vars->{db}->addGlobalSet($set);
+    } else {
+        vars->{db}->putGlobalSet($set);
+    }
 
-    if(param('assigned_users')){
-        my $users = param('assigned_users');
-        for my $user (@{$users}){
-            my $userSet = vars->{db}->newUserSet;
-            $userSet->set_id($set->{set_id});
-            $userSet->user_id($user);
-            vars->{db}->addUserSet($userSet);
+    ##
+    #
+    #  Take care of the assigned users
+    #
+    ###
+
+    my $userNames = params->{assigned_users};
+    debug $userNames;
+
+    my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
+    debug \@userNamesFromDB;
+
+    my @usersToAdd = array_minus(@{$userNames},@userNamesFromDB);
+    debug \@usersToAdd;
+
+    my @usersToDelete = array_minus(@userNamesFromDB,@{$userNames});
+    debug \@usersToDelete;
+
+
+    for my $user (@usersToAdd){
+         my $userSet = vars->{db}->newUserSet;
+         $userSet->set_id($set->{set_id});
+         $userSet->user_id($user);
+         vars->{db}->addUserSet($userSet);
+     }
+
+    if(request->is_put){
+        for my $user (@usersToDelete){
+            vars->{db}->deleteUserSet($user,params->{set_id});
         }
     }
 
-    return convertObjectToHash($set);
+    my $returnSet = convertObjectToHash($set);
+
+    # fetch the problems to return as it is expected in a ProblemSet
+
+    my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+    $returnSet->{assigned_users} = $userNames;
+    $returnSet->{problems} = convertArrayOfObjectsToHash(\@problems);
+
+    return $returnSet;
+
 };
 
 ####
@@ -116,32 +159,39 @@ post '/courses/:course_id/sets/:set_id' => sub {
 #  permission > Student
 ##
 
-put '/courses/:course_id/sets/:set_id' => sub {
+#  put '/courses/:course_id/sets/:set_id' => sub {
 
-    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+#     return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
 
 
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+#     if (0+(session 'permission') < 10) {
+#         return {error=>"You don't have the necessary permission"};
+#     }
 
-    if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The problem set with name: " . param('set_id'). " does not exist."};  
-    }
+#     if (!vars->{db}->existsGlobalSet(param('set_id'))){
+#         return {error=>"The problem set with name: " . param('set_id'). " does not exist."};  
+#     }
 
-    my $set = vars->{db}->getGlobalSet(param('set_id'));
+#     my $set = vars->{db}->getGlobalSet(param('set_id'));
 
    
-    for my $key (@set_props) {
-        $set->{$key} = param($key) if defined(param($key));
-    }
+#     for my $key (@set_props) {
+#         $set->{$key} = param($key) if defined(param($key));
+#     }
 
-    my $result = vars->{db}->putGlobalSet($set);
+#     my $returnSet = convertObjectToHash($set);
 
-    ## test for an error? 
 
-    return convertObjectToHash($set);
-};  
+#     my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
+#     my @assignedUsers = vars->{db}->listSetUsers(params->{set_id});
+#     debug @assignedUsers;
+    
+
+#     $returnSet->{assigned_users} = \@assignedUsers;
+#     $returnSet->{problems} = convertArrayOfObjectsToHash(\@problems);
+
+#     return $returnSet;
+# };  
 
 
 ####
@@ -547,6 +597,8 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
                 $set->{$key} = param($key);
             }
         }
+
+
 
         vars->{db}->putUserSet($set);
 

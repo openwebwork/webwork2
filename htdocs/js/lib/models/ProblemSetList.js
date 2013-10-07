@@ -10,18 +10,19 @@ define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _
 
         initialize: function(){
             var self = this;
-            //_.bindAll(this,"fetch","addNewSet","deleteSet");
-            //this.on('add', this.addNewSet);
-            //this.on('remove', this.deleteSet);
-            this.setLoaded = false; 
-            
+            _.bindAll(this,"parse");
            },
         url: function () {
             return config.urlPrefix+ config.courseSettings.courseID + "/sets";
         },
         parse: function(response){
-            config.checkForError(response);
-            return response;
+            var self = this;
+            _(response).each(function(_set){
+                var theSet = new ProblemSet();
+                theSet.parse(_set);
+                self.add(theSet);
+//                self.add((new ProblemSet()).parse(_set));
+            });
         }
     });
     return ProblemSetList;

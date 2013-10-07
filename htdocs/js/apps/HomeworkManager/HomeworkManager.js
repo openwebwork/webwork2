@@ -25,10 +25,12 @@ var HomeworkEditorView = WebPage.extend({
             config.settings.parseSettings(module.config().settings);
         }
         this.users = (module.config().users) ? new UserList(module.config().users) : new UserList();
-        this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets) : new ProblemSetList();
+        this.problemSets = new ProblemSetList();
+        if (module.config().sets) {
+            this.problemSets.parse(module.config().sets);
+        }
 
         // call parse to set the .id attribute of each set so that backbone's set.isNew()  is false
-        this.problemSets.each(function(set){set.parse();});
         config.settings.each(function(setting){setting.parse();});
         this.users.each(function(user){user.parse();});
 
@@ -90,11 +92,18 @@ var HomeworkEditorView = WebPage.extend({
                 self.updateProblemSetList();
             }
         });
+
+        this.problemSets.on("change_assigned_users", function(_set){
+            console.log("the set "+ _set.get("set_id")+ " has changed.");
+        })
         
         this.problemSets.on("sync", function (_set){
+            console.log("Synched!!!");
             _(_set.alteredAttributes).each(function(attr){
-                    self.announce.addMessage({text: "The value of " + attr.attribute + " in problem set " 
-                        + _set.get("set_id") + " has changed from " + attr.old_value + " to " + attr.new_value});
+                    var _old = attr.attr.match(/date$/) ? moment.unix(attr.old_value).format("MM/DD/YYYY") : attr.old_value;
+                    var _new = attr.attr.match(/date$/) ? moment.unix(attr.new_value).format("MM/DD/YYYY") : attr.new_value;
+                    self.announce.addMessage({text: "The value of " + attr.attr + " in problem set " 
+                        + _set.get("set_id") + " has changed from " + _old + " to " + _new});
                 });
             //self.updateCalendar();
             self.updateProblemSetList();

@@ -9,6 +9,11 @@ define(['Backbone','views/Closeable'], function(Backbone,Closeable){
     render: function () {
     	var self = this; 
 
+        // pstaab:  this is new version of the alert system
+
+        //$("#msg-toggle").popover({placement: "bottom"});
+
+
 
         // Create an announcement pane for successful messages.
         this.announce = new Closeable({classes: ["alert-success"], id: "announce-pane"});

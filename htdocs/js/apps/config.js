@@ -22,7 +22,6 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
     });
     
     var config = {
-        //urlPrefix: "http://localhost:3000/",  // what is the path to the dancer webservice
         urlPrefix: "/webwork3/",
         courseSettings: {
             "session_key": $("#hidden_key").val(),
