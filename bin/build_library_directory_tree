@@ -42,7 +42,7 @@ push(@dirArray,buildTree($libraryRoot));
 #$dbh->disconnect;
 
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-my $file = "$webwork_htdocs/library-directory-tree.json";
+my $file = "$webwork_htdocs/DATA/library-directory-tree.json";
 
 # use a variable for the file handle
 my $OUTFILE;

@@ -27,7 +27,7 @@ use WeBWorK::PG::Local;
 get '/Library/subjects' => sub {
 
 	my $webwork_htdocs = vars->{ce}->{webwork_dir}."/htdocs";
-	my $file = "$webwork_htdocs/library-subject-tree.json";
+	my $file = "$webwork_htdocs/DATA/library-subject-tree.json";
 
 	my $json_text = do {
    		open(my $json_fh, "<:encoding(UTF-8)", $file)  or return {error=>"The file $file does not exist."};
@@ -183,7 +183,7 @@ get '/Library/subjects/:subject_id/chapters/:chapter_id/sections/:section_id/pro
 get '/Library/directories' => sub {
 
 	my $webwork_htdocs = vars->{ce}->{webwork_dir}."/htdocs";
-	my $file = "$webwork_htdocs/library-directory-tree.json";
+	my $file = "$webwork_htdocs/DATA/library-directory-tree.json";
 
 	my $json_text = do {
    		open(my $json_fh, "<:encoding(UTF-8)", $file)  or return {error=>"The file $file does not exist."};

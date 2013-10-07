@@ -43,14 +43,18 @@ define(['Backbone', 'underscore','config','imagesloaded'
 
 
             this.$(".data").attr('src', this.model.problemURL());
-            this.$(".data").on('load', autoResize);
-            function autoResize(e){
+            this.$(".data").on('load', postProblemLoad);
+            function postProblemLoad(e){
 
                 var newheight = this.contentWindow.document.body.scrollHeight;
                 // var newwidth = this.contentWindow.document.body.scrollWidth;
 
                 this.height= (newheight) + "px";
                 // this.width= (newwidth) + "px";
+                if (self.model.get("displayMode")==="MathJax"){
+                    MathJax.Hub.Queue(["Typeset",MathJax.Hub,self.$(".data")[0]]);
+                }
+
             }
 
             this.$(".problem").css("opacity","0.5");
@@ -78,9 +82,6 @@ define(['Backbone', 'underscore','config','imagesloaded'
             this.el.id = this.model.cid;
             this.$el.attr('data-path', this.model.get('source_file'));
             this.$el.attr('data-source', this.allAttrs.type);
-            if (this.model.get("displayMode")==="MathJax"){
-                MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
-            }
 
             this.stickit();
                 

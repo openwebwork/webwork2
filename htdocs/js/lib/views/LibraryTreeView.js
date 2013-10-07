@@ -27,15 +27,56 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                 this.libraryTree.fetch({success: this.render});
             } else {
                 this.$(".throbber").remove();
-                this.$(".library-tree-left").html(_.template($("#library-dropdown-template").html(),
-                    {subjects: this.libraryTree.get("tree")}));
+                this.$(".library-tree-left").html(_.template($("#library-select-template").html(),
+                        {subjects: this.libraryTree.get("tree")}));
                 //this.$(".dropdown-submenu a").truncate({width: 200});  // make sure the width of the library columns are too wide.
-                this.delegateEvents();
+                //this.delegateEvents();
+                /*var sel = this.$(".library-level-0").append("<option>Select</option>");
+
+                _(this.libraryTree.get("tree")).each(function(leaf){
+                    sel.append("<option>"+leaf.name+"</option>");
+                }); */
             }
     	},
-        events: {  "click .dropdown-submenu a": "selectLibrary"},
-        selectLibrary: function(evt){
+        events: {  "change .library-selector": "changeLibrary",
+                "click .load-library-button": "selectLibrary"},
+        changeLibrary: function(evt){
             var leaf = $(evt.target);
+            switch(leaf.attr("id").split("-")[2]){
+                case "0":
+                    $("#library-level-1").removeClass("hidden");
+                    $("#library-level-2").addClass("hidden");
+                    var subfields = _(this.libraryTree.get("tree")).findWhere({name: leaf.val()}).subfields;
+                    $("#library-level-1").html("<option>Select</option>" + 
+                            _(subfields).map(function(sf) {return "<option>" + sf.name + "</option>";}).join(""));
+                    break;
+                case "1":
+                    var subject = $("#library-level-0").val();
+                    var chapter = $("#library-level-1").val();
+                    $("#library-level-2").removeClass("hidden");
+                    var allChapters = _(this.libraryTree.get("tree")).findWhere({name: subject}).subfields;
+                    var allSections = _(allChapters).findWhere({name: chapter}).subfields;
+                    $("#library-level-2").html("<option>Select</option>"+
+                        _(allSections).map(function(sect){return "<option>" + sect.name + "</option>";}));
+                break;
+
+            }
+        },
+        selectLibrary: function(evt){
+            var dirs = [];
+            var subject = $("#library-level-0").val();
+            var chapter = $("#library-level-1").val();
+            var section = $("#library-level-2").val();
+
+            for(i=0;i<3;i++){
+                var sel = $("#library-level-"+i);
+                var opt = $("#library-level-"+i + ":selected");
+                if( sel.val()&& opt.index() !=0){ dirs.push(sel.val());}
+            }
+
+            this.libraryTree.trigger("library-selected",this.libraryTree.get("header")+ dirs.join("/"));
+            
+/*            return;
             if (leaf.text().trim() === "Library"){ return; }
 
 
@@ -48,9 +89,9 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                 level--;
             }
 
-            this.libraryTree.trigger("library-selected",this.libraryTree.get("header")+ path);
+            
 
-
+*/
             
         },
        /*  buildTreeView: function (libs,index){

@@ -44,7 +44,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             if (this.collection.setName){  // the problem is part of a set
                 return config.urlPrefix + "renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
                     + this.collection.setName 
-                    + "/problems/" + this.get("problem_id");
+                    + "/problems/" + this.get("problem_id") + "?" + $.param(this.attributes);
             } else {  // it is being rendered from the library
                 return config.urlPrefix + "renderer/problems/0?" + $.param(this.attributes);
             }

@@ -380,8 +380,8 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <script type="text/template" id="library-view-template">
 <div class="row-fluid">
-<div class="library-viewer span2"></div>
-<div class="btn-group">
+<div class="library-viewer span6"></div>
+<div class="btn-group pull-right">
 <button class="btn load-more-btn">Load More Problems</button>
   <select class="target-set span2">
     <option>Target Set</option>
@@ -422,10 +422,21 @@ Search by</button>
 
 
 <script type="text/template" id="library-tree-template">
-<span class='library-tree-left'></span></div><span class="problems-shown"><span class="throbber">Loading the Library...<i class="icon-spinner icon-spin"></i></span>
-<span class="library-tree-right"></span> 
+<span class='library-tree-left'>
+  <span class="throbber">Loading the Library...<i class="icon-spinner icon-spin"></i></span>
 </script>
 
+<script type="text/template" id="library-select-template">
+<div>
+<span><select id="library-level-0"  class="library-selector input-small">
+  <option>Select</option>
+  <% _(subjects).each(function(subj){print('<option>' + subj.name + '</option>')}); %>
+</select></span>
+<span><select id="library-level-1" class="library-selector input-small hidden"></select></span>
+<span><select id="library-level-2" class="library-selector input-small hidden"></select></span>
+<button class="btn load-library-button">Load</button>
+</div>
+</script>
 
 <script type="text/template" id="library-dropdown-template">
   <div class="btn-group">

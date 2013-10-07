@@ -121,7 +121,7 @@ foreach my $i (0..$#subjects){
 $dbh->disconnect;
 
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-my $file = "$webwork_htdocs/library-tree.json";
+my $file = "$webwork_htdocs/DATA/library-subject-tree.json";
 
 # use a variable for the file handle
 my $OUTFILE;

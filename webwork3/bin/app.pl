@@ -9,7 +9,7 @@ use Routes::ProblemSets;
 use Routes::User;
 use Routes::Settings;
 use Routes::PastAnswers;
-#use Routes::ProblemRender;
+
 
 
 
@@ -66,9 +66,10 @@ hook 'before' => sub {
 		session->{permission} = $permission->{permission};		
 	}
 
-	# debug session->{user};
-	# debug session->{permission};
-	# debug session->{course};    
+	debug session->{user};
+	debug session->{permission};
+	debug session->{course};    
+	debug config->{webwork_dir};
 
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
