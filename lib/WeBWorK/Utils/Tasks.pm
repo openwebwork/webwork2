@@ -271,7 +271,7 @@ sub renderProblems {
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 	my $problem = fake_problem($db, 'problem_seed'=>$problem_seed);
-	$problem->{value} = 1;
+	$problem->{value} = -1;
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
 	my @output;
