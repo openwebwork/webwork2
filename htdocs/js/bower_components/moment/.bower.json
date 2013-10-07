@@ -25,6 +25,6 @@
     "commit": "90d361b364bdbf2265c517423c8e1fbd421f7239"
   },
   "_source": "git://github.com/timrwood/moment.git",
-  "_target": "2.*",
+  "_target": "*",
   "_originalSource": "moment"
 }

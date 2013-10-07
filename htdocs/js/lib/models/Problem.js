@@ -39,6 +39,16 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
                 $.get(config.urlPrefix + "renderer/problems/0",this.attributes,success);
             }
         },
+        problemURL: function(){
+            // console.log(this.attributes);
+            if (this.collection.setName){  // the problem is part of a set
+                return config.urlPrefix + "renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
+                    + this.collection.setName 
+                    + "/problems/" + this.get("problem_id");
+            } else {  // it is being rendered from the library
+                return config.urlPrefix + "renderer/problems/0?" + $.param(this.attributes);
+            }
+        },
         checkAnswers: function(answers, success){
             console.log("in checkAnswers");
             var allAttributes = {};

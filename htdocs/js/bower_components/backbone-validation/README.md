@@ -1,4 +1,4 @@
-# Backbone.Validation v0.7.1
+# Backbone.Validation v0.8.1
 
 A validation plugin for [Backbone.js](http://documentcloud.github.com/backbone) that validates both your model as well as form input.
 
@@ -18,12 +18,12 @@ You can download the raw source from [GitHub](http://github.com/thedersen/backbo
 
 #### Standard builds
 
-* Development: [backbone-validation.js](https://raw.github.com/thedersen/backbone.validation/master/dist/backbone-validation.js) *22.6kb*
+* Development: [backbone-validation.js](https://raw.github.com/thedersen/backbone.validation/master/dist/backbone-validation.js) *22.7kb*
 * Production:  [backbone-validation-min.js](https://raw.github.com/thedersen/backbone.validation/master/dist/backbone-validation-min.js) *2.7kb gzipped*
 
 #### AMD builds
 
-* Development: [backbone-validation-amd.js](https://raw.github.com/thedersen/backbone.validation/master/dist/backbone-validation-amd.js) *24.1kb*
+* Development: [backbone-validation-amd.js](https://raw.github.com/thedersen/backbone.validation/master/dist/backbone-validation-amd.js) *24.2kb*
 * Production:  [backbone-validation-amd-min.js](https://raw.github.com/thedersen/backbone.validation/master/dist/backbone-validation-amd-min.js) *2.8kb gzipped*
 
 #### Node.js builds
@@ -36,9 +36,7 @@ It's easy to get up and running. You only need to have Backbone (including under
 
 The plugin is tested with, and should work with the following versions of Backbone:
 
-* 0.9.1
-* 0.9.2
-* 0.9.9
+* 1.0
 
 ### Configure validation rules on the Model
 
@@ -115,7 +113,7 @@ MyModel = Backbone.Model.extend({
 
 The philosophy behind this way of using the plugin, is that you should be able to reuse your validation rules both to validate your model and to validate form input, as well as providing a simple way of notifying users about errors when they are populating forms.
 
-Note that Backbone.Validation does not provide any automatic/two-way binding between your model and the view, that's up you to implement (you can for instance use [Backbone.stickit](http://nytimes.github.com/backbone.stickit/).
+Note that Backbone.Validation does not provide any automatic/two-way binding between your model and the view, that's up you to implement (you can for instance use [Backbone.stickit](http://nytimes.github.com/backbone.stickit/)).
 
 Before you can start using form validation, you need to bind your view.
 
@@ -775,6 +773,18 @@ Basic behaviour:
 * You may use &lt;input .... data-error-style="inline"&gt; in your form to force rendering of a &lt;span class="help-inline"&gt;
 
 ## Release notes
+
+#### v0.8.1 [commits](https://github.com/thedersen/backbone.validation/compare/v0.8.0...v0.8.1)
+
+* No longer flattens arrays
+* Added required validator test for empty and non-empty arrays
+* Replaces all the underscores in sentenceCase formatter
+
+#### v0.8.0 [commits](https://github.com/thedersen/backbone.validation/compare/v0.7.1...v0.8.0)
+
+* All tests pass Backbone v1.0
+* Fixes recursive loop if model attributes contain nested models. Fixes #97 (Thanks to [Adam George](https://github.com/asgeo1))
+* Handling id selectors better. Fixes #127 (Thanks to [BigBlueHat](https://github.com/BigBlueHat))
 
 #### v0.7.1 [commits](https://github.com/thedersen/backbone.validation/compare/v0.7.0...v0.7.1)
 

@@ -36,54 +36,6 @@ buster.testCase("Backbone.Validation", {
         this.view.remove();
     },
 
-    "when binding": {
-        setUp: function() {
-            Backbone.Validation.bind(this.view);
-        },
-
-        "the model's validate function is defined": function() {
-            assert.defined(this.model.validate);
-        },
-
-        "the model's isValid function is overridden": function() {
-            refute.same(this.model.isValid, Backbone.Model.prototype.isValid);
-        },
-
-        "and passing custom callbacks with the options": {
-            setUp: function(){
-                this.valid = this.spy();
-                this.invalid = this.spy();
-
-                Backbone.Validation.bind(this.view, {
-                    valid: this.valid,
-                    invalid: this.invalid
-                });
-            },
-
-            "should call valid callback passed with options": function() {
-                this.model.set({
-                    age: 1
-                });
-
-                assert.called(this.valid);
-            },
-
-            "should call invalid callback passed with options": function() {
-                this.model.set({
-                    age: 0
-                });
-
-                assert.called(this.invalid);
-            }
-        }
-    },
-
-    "when binding to view without model or collection": function(){
-      assert.exception(function(){
-        Backbone.Validation.bind(new Backbone.View());
-      });
-    },
-
     "when unbinding":{
         setUp: function(){
             Backbone.Validation.bind(this.view);
@@ -127,7 +79,7 @@ buster.testCase("Backbone.Validation", {
         "attribute without validator should be set sucessfully": function() {
             assert(this.model.set({
                 someProperty: true
-            }));
+            }, {validate: true}));
         },
 
         "and setting": {
@@ -136,7 +88,7 @@ buster.testCase("Backbone.Validation", {
                 setUp: function() {
                     this.model.set({
                         age: 1
-                    });
+                    }, {validate: true});
                 },
 
                 "element should not have invalid class": function() {
@@ -150,7 +102,7 @@ buster.testCase("Backbone.Validation", {
                 "should return the model": function() {
                     assert.same(this.model.set({
                         age: 1
-                    }), this.model);
+                    }, {validate: true}), this.model);
                 },
 
                 "should update the model": function() {
@@ -166,7 +118,7 @@ buster.testCase("Backbone.Validation", {
                 setUp: function() {
                     this.model.set({
                         age: 0
-                    });
+                    }, {validate: true});
                 },
 
                 "element should have invalid class": function() {
@@ -180,7 +132,7 @@ buster.testCase("Backbone.Validation", {
                 "should return false": function() {
                     refute(this.model.set({
                         age: 0
-                    }));
+                    }, {validate: true}));
                 },
 
                 "should not update the model": function() {
@@ -197,7 +149,7 @@ buster.testCase("Backbone.Validation", {
                     this.model.set({
                         age: 1,
                         name: 'hello'
-                    });
+                    }, {validate: true});
                 },
 
                 "elements should not have invalid class": function() {
@@ -215,7 +167,7 @@ buster.testCase("Backbone.Validation", {
                     this.model.set({
                         age: 0,
                         name: ''
-                    });
+                    }, {validate: true});
                 },
 
 
@@ -234,7 +186,7 @@ buster.testCase("Backbone.Validation", {
                     this.result = this.model.set({
                         age: 1,
                         name: ''
-                    });
+                    }, {validate: true});
                 },
 
                 "model is not updated": function() {
@@ -259,7 +211,7 @@ buster.testCase("Backbone.Validation", {
                     this.result = this.model.set({
                         age: 0,
                         name: 'name'
-                    });
+                    }, {validate: true});
                 },
 
                 "model is not updated": function() {
@@ -284,22 +236,22 @@ buster.testCase("Backbone.Validation", {
 
                 this.model.set({
                     age: 0
-                });
+                }, {validate: true});
                 refute(this.model.isValid());
 
                 this.model.set({
                     age: 1
-                });
+                }, {validate: true});
                 refute(this.model.isValid());
 
                 this.model.set({
                     name: 'hello'
-                });
+                }, {validate: true});
                 assert(this.model.isValid());
 
                 this.model.set({
                     age: 0
-                });
+                }, {validate: true});
                 refute(this.model.isValid());
             }
         },
@@ -331,8 +283,8 @@ buster.testCase("Backbone.Validation", {
                 assert.calledWith(this.invalid, this.view, 'name', 'error');
             },
 
-            "all attributes on the model is validated when one property has been set silently": function(){
-                this.model.set({age: 1}, {silent:true});
+            "all attributes on the model is validated when one property has been set without validating": function(){
+                this.model.set({age: 1});
 
                 this.model.validate();
 
@@ -340,8 +292,8 @@ buster.testCase("Backbone.Validation", {
                 assert.calledWith(this.invalid, this.view, 'name', 'error');
             },
 
-            "all attributes on the model is validated when two properties has been set silently": function(){
-                this.model.set({age: 1, name: 'name'}, {silent:true});
+            "all attributes on the model is validated when two properties has been set without validating": function(){
+                this.model.set({age: 1, name: 'name'});
 
                 this.model.validate();
 
@@ -351,7 +303,7 @@ buster.testCase("Backbone.Validation", {
 
             "callbacks are not called for unvalidated attributes": function(){
 
-                this.model.set({age: 1, name: 'name', someProp: 'some value'}, {silent:true});
+                this.model.set({age: 1, name: 'name', someProp: 'some value'});
 
                 this.model.validate();
 
@@ -381,25 +333,25 @@ buster.testCase("Backbone.Validation", {
         },
 
         "and violating the first validator the model is invalid": function (){
-            this.model.set({postalCode: '1'});
+            this.model.set({postalCode: '1'}, {validate: true});
 
             refute(this.model.isValid());
         },
 
         "and violating the second validator the model is invalid": function (){
-            this.model.set({postalCode: 'ab'});
+            this.model.set({postalCode: 'ab'}, {validate: true});
 
             refute(this.model.isValid());
         },
 
        "and violating the last validator the model is invalid": function (){
-           this.model.set({postalCode: '12345'});
+           this.model.set({postalCode: '12345'}, {validate: true});
 
            refute(this.model.isValid());
        },
 
         "and conforming to all validators the model is valid": function (){
-            this.model.set({postalCode: '123'});
+            this.model.set({postalCode: '123'}, {validate: true});
 
             assert(this.model.isValid());
         }
@@ -447,8 +399,8 @@ buster.testCase("Backbone.Validation", {
 
         "when setting invalid value on second input": {
             setUp: function() {
-                this.model.set({one:1});
-                this.model.set({two:2});
+                this.model.set({one:1}, {validate: true});
+                this.model.set({two:2}, {validate: true});
             },
 
             "first input is valid": function() {
@@ -462,9 +414,9 @@ buster.testCase("Backbone.Validation", {
 
         "when setting invalid value on second input and changing first": {
             setUp: function() {
-                this.model.set({one:1});
-                this.model.set({two:2});
-                this.model.set({one:2});
+                this.model.set({one:1}, {validate: true});
+                this.model.set({two:2}, {validate: true});
+                this.model.set({one:2}, {validate: true});
             },
 
             "first input is valid": function() {
@@ -492,8 +444,8 @@ buster.testCase("Backbone.Validation", {
         },
 
         "and conforming to all validators the model is valid": function (){
-            this.model.set({age: 12});
-            this.model.set({name: 'Jack'});
+            this.model.set({age: 12}, {validate: true});
+            this.model.set({name: 'Jack'}, {validate: true});
 
             this.model.validate();
             assert(this.model.isValid());

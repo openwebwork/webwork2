@@ -26,7 +26,7 @@
 -->
 
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" href="/webwork2_files/js/components/bootstrap/dist/css/bootstrap.css"/>
+<link rel="stylesheet" href="/webwork2_files/js/components/bootstrap-2/docs/assets/css/bootstrap.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>

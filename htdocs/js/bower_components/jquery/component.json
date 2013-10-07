@@ -1,11 +1,13 @@
 {
   "name": "jquery",
-  "version": "1.8.3",
+  "repo": "components/jquery",
+  "version": "2.0.3",
   "description": "jQuery component",
   "keywords": [
     "jquery",
     "component"
   ],
+  "main": "jquery.js",
   "scripts": [
     "jquery.js"
   ],

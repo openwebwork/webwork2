@@ -26,7 +26,7 @@
 -->
 
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" href="/webwork2_files/js/components/bootstrap/dist/css/bootstrap.css"/>
+<link rel="stylesheet" href="/webwork2_files/js/components/bootstrap-2/docs/assets/css/bootstrap.css"/>
 <link rel='stylesheet' href='$site_url/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
 <link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>
 <title><!--#path style="text" text=" : " textonly="1"--></title>

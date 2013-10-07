@@ -440,7 +440,7 @@ get '/renderer/problems/:problem_id' => sub {
      	$flags->{$key}=$pg->{flags}->{$key};}
      }
 
-    return {
+    my $problem_hash = {
 		text 						=> $pg->{body_text},
 		header_text 				=> $pg->{head_text},
 		answers 					=> $answers,
@@ -453,6 +453,8 @@ get '/renderer/problems/:problem_id' => sub {
 		debug_messages              => \@pgdebug_messages,
 		internal_debug_messages     => \@internal_debug_messages,
 	};
+
+	template 'library_problem', $problem_hash, { layout => 0 };
 
 		 # for my $key (keys(%{$out2})){
 		 #  	my $value = '####UNDEF###';
@@ -597,7 +599,7 @@ get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
      	$flags->{$key}=$pg->{flags}->{$key};}
      }
 
-    return {
+    my $problem_hash = {
 		text 						=> $pg->{body_text},
 		header_text 				=> $pg->{head_text},
 		answers 					=> $answers,
@@ -610,6 +612,8 @@ get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 		debug_messages              => \@pgdebug_messages,
 		internal_debug_messages     => \@internal_debug_messages,
 	};
+
+	template 'library_problem', $problem_hash, { layout => 0 };
 
 		 # for my $key (keys(%{$out2})){
 		 #  	my $value = '####UNDEF###';

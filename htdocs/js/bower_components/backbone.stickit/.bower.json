@@ -9,6 +9,6 @@
     "commit": "6503f4d96615ef576bab9cb7ab11a03ca1fa4865"
   },
   "_source": "git://github.com/NYTimes/backbone.stickit.git",
-  "_target": "0.6",
+  "_target": "*",
   "_originalSource": "backbone.stickit"
 }

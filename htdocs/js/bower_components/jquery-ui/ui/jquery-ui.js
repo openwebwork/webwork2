@@ -1716,7 +1716,6 @@ $.ui.plugin.add("draggable", "cursor", {
 		t.css("cursor", o.cursor);
 	},
 	stop: function() {
-		if(! $(this).data("ui-draggable")) {return;}
 		var o = $(this).data("ui-draggable").options;
 		if (o._cursor) {
 			$("body").css("cursor", o._cursor);

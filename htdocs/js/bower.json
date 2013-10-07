@@ -18,6 +18,7 @@
     "bootstrap-2": "bootstrap#2.*",
     "bootstrap": "latest",
 
+    "backbone": "latest",
     "backbone-validation-0.7.1": "backbone-validation#0.7",
     "backbone-validation": "latest",
     
