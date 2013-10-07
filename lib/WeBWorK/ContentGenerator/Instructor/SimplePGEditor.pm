@@ -1809,11 +1809,11 @@ sub save_as_handler {
 	if (defined $outputFilePath and -e $outputFilePath) {
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;
-		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
+		$self->addbadmessage("File '".$self->shortPath($outputFilePath)."' exists.  
 		File not saved. No changes have been made.
-		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"));
-		$self->addgoodmessage(CGI::p("The text box now contains the source of the original problem.".
-		" You can recover lost edits by using the Back button on your browser."));
+		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page");
+		$self->addgoodmessage("The text box now contains the source of the original problem.".
+		" You can recover lost edits by using the Back button on your browser.");
 	} else {
 		$self->{editFilePath} = $outputFilePath;
 		$self->{tempFilePath} = ''; # nothing needs to be unlinked.

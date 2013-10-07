@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -56,8 +55,10 @@ var tabberOptions = {manualStartup:true};
 <!--#endif-->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
+
 <!--#head-->
 </head>
+
 <body>
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
@@ -186,14 +187,14 @@ var tabberOptions = {manualStartup:true};
 				
 
 
-			<!--#if can="output_hidden_info"-->
-				<!--#output_hidden_info-->
-			<!--#endif-->
 
 			<!--#if can="output_form_start"-->
 			<div class="row-fluid">
 			  <div class="span10">
 				<!--#output_form_start-->
+			    <!--#if can="output_hidden_info"-->
+				     <!--#output_hidden_info-->
+			    <!--#endif-->
 
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">

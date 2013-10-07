@@ -58,6 +58,7 @@ use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Scalar::Util qw(weaken);
 use HTML::Entities;
+use HTML::Scrubber;
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -363,7 +364,24 @@ Must be called before the message() template escape is invoked.
 
 
 sub addmessage {
+    #addmessages takes html so we use htmlscrubber to get rid of 
+    # any scripts or html comments.  However, we leave everything else
+    # by default. 
+
 	my ($self, $message) = @_;
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+	
+	$message = $scrubber->scrub($message);
 	$self->{status_message} .= $message;
 }
 
@@ -1098,7 +1116,8 @@ sub message {
 	my ($self) = @_;
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::message -->\n";
-	print $self->{status_message} if exists $self->{status_message};
+	print $self->{status_message}
+	    if exists $self->{status_message};
 	
 	print "<!-- END " . __PACKAGE__ . "::message -->\n";
 	
@@ -2121,8 +2140,11 @@ sub warningOutput($$) {
 	print "Entering ContentGenerator::warningOutput subroutine</br>" if $TRACE_WARNINGS;
 	my @warnings = split m/\n+/, $warnings;
 	foreach my $warning (@warnings) {
-		#$warning = escapeHTML($warning);  # this would prevent using tables in output from answer evaluators
-		$warning = CGI::li(CGI::code($warning));
+	    # This used to be commented out because it interfered with warnings
+	    # from PG.  But now PG has a seperate warning channel thats not
+	    # encoded.  
+	    $warning = HTML::Entities::encode_entities($warning);  
+	    $warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);
 	

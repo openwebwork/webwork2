@@ -282,7 +282,7 @@ sub attemptResults {
 		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded"); 
 		    $self->{essayFlag} = 1;
-		} elsif (not $answerScore) {
+		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
 		    push @incorrect_ids, $name if $answerScore < 1;
 		    $resultString = CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
 		} else {
