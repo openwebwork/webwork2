@@ -262,7 +262,7 @@ sub info {
 	
 	my $editorURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {  
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
 		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
