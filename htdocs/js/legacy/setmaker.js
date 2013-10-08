@@ -183,6 +183,29 @@ function addemcallback(wsURL, ro, probarray, count) {
   };
 }
 
+// This function needs webservice to be fixed
+// User has clicked to create a new set
+// Name is in textfield new_set_name
+function createNewSet() {
+  var ro = init_webservice('createNewSet');
+	var setname = $("[name='new_set_name']").val();
+	// if(! RegExp('/^[\w .-]+$/').test(setname)) {
+	if(! setname.match(/^[\w .-]+$/)) {
+		alert("Your name for the new problem set is not legal.  Use only letters, digits, and the characters -, _, and .");
+		return false;
+	}
+	setname = setname.replace(/\s/g, '_');
+	ro.new_set_name = setname;
+	ro.selfassign = "true";
+	console.log(ro);
+  return $.post(setmakerWebserviceURL, ro, function (data) {
+      var response = $.parseJSON(data);
+      console.log(response);
+      var arr = response.result_data;
+    });
+	return false;
+}
+
 // Reset all the messages about who is in the current set
 function markinset() {
   var ro = init_webservice('listSetProblems');
@@ -290,6 +313,16 @@ function randomize(filepath, el) {
     ro.displayMode = displayMode;
   }
   ro.noprepostambles = 1;
+	var elid = el;
+	elid = el.replace(/render/,'');
+	var tryit = $('#tryit'+elid);
+	var tryithref = tryit.attr('href');
+	tryithref = tryithref.replace(/problemSeed=\d+/, 'problemSeed='+seed);
+	tryit.attr('href', tryithref);
+	var editit = $('#editit'+elid);
+	var editithref = editit.attr('href');
+	editithref = editithref.replace(/problemSeed=\d+/, 'problemSeed='+seed);
+	editit.attr('href', editithref);
   $.post(setmakerWebserviceURL, ro, function (data) {
     var response = data;
     $('#'+el).html(data);

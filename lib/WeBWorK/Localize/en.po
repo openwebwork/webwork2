@@ -45,7 +45,7 @@ msgstr "Prev"
 
 #
 msgid "navProbListGrey"
-msgstr "tr: Up"
+msgstr "Up"
 
 #
 msgid "navNextGrey"

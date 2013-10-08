@@ -62,7 +62,8 @@ our $HC_DEFAULT_FORMAT = "pdf"; # problems if this is not an allowed format for 
 our %HC_FORMATS = (
 	tex => { name => "TeX Source", subr => "generate_hardcopy_tex" },
 	pdf => { name => "Adobe PDF",  subr => "generate_hardcopy_pdf" },
-	tikz =>{ name => "TikZ PDF file", subr => "generate_hardcopy_tigz"},
+# Not ready for prime time
+#	tikz =>{ name => "TikZ PDF file", subr => "generate_hardcopy_tigz"},
 );
 
 # custom fields used in $self hash
@@ -1086,7 +1087,7 @@ sub write_problem_tex {
 	my $problem_desc;
 	if ($pg->{warnings} ne "" or $pg->{flags}->{error_flag}) {
 		my $edit_urlpath = $r->urlpath->newFromModule(
-			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r,
 			courseID  => $r->urlpath->arg("courseID"),
 			setID     => $MergedProblem->set_id,
 			problemID => $MergedProblem->problem_id,

@@ -1,5 +1,7 @@
+
+
 /* WeBWorK Online Homework Delivery System
- * Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+ * Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
  * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
@@ -16,6 +18,10 @@
 /* Bootstrap overrides */
 .row-fluid [class*="span"] {
     min-height:0px;
+}
+
+input[type="checkbox"] {
+    margin-right:.25em;
 }
 
 /* Banner */
@@ -111,6 +117,10 @@ h2.page-title {
 	border-bottom: 1px solid #ccc;
 }
 
+h1.page-title {
+    font-size: 31.5px;
+}
+
 #info-panel-right {
 	margin-bottom: 0.5em;
 /*	width: 25%; 8*/
@@ -128,6 +138,10 @@ h2.page-title {
 	clear: both;
 }
 
+.Warnings code {
+    	white-space: normal;
+}
+
 /* Question nav section */
 .problem-nav {
 	margin-bottom:1ex;
@@ -138,14 +152,9 @@ h2.page-title {
 /* Message section */
 
 .Message {
-	display: inline-block;
-	margin-bottom:1ex;
-}
-
-.Message div, .Message span {
-	background-color:#eee;
-	padding: 0.5em;
-}
+    display: inline-block;
+    margin-bottom:1ex;
+}   
 
 .font-visible   { font-weight: bold; }
 .font-hidden { font-style: italic; } 
@@ -397,6 +406,10 @@ table.attemptResults th {
 	background-color: #DDDDDD;
 }
 
+.attemptResults .popover {
+    max-width: 100%;
+}
+
 /*styles for the instructor comment box */
 
 .answerComments {
@@ -409,6 +422,16 @@ table.attemptResults th {
     padding: 2px 5px 2px 5px;
     margin-bottom:1em;
     background-color: #E8E8E8;
+}
+
+/* Make hr a black line for problem render areas so that
+ * it can be used for fractions
+ */
+.RenderSolo hr,
+.problem-content hr {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-top-color: rgb(22,22,22);
 }
 
 /* override above settings in tables used to display ans_array results */
@@ -513,7 +536,6 @@ div.NoFontMessage {
 }
 
 .set_table th{
-	text-align: center;
 	padding-right: 5px;
 	padding-left: 5px;
 }
@@ -817,3 +839,12 @@ table#grades_table pre{
     font-size:small;
 }
 
+/* Equation editor bugfixes */
+#eqEditorDiv {
+    overflow:visible;
+}
+
+#openEqEditor {
+    min-height:35px;
+    min-width:43px;
+}

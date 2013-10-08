@@ -124,7 +124,9 @@ use Fcntl;
 # save_to_new_file
 # 
 
-use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
+#hiding add_problem option to see if its needed
+#use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
+use constant ACTION_FORMS => [qw(view  save save_as revert)]; 
 use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
 view        => "View",
 add_problem => "Append",
@@ -630,7 +632,17 @@ sub body {
 		}
 		function updateTarget() {
 		  var inWindow = document.getElementById("newWindow").checked;
-		  document.getElementById("editor").target = (inWindow? "WW_View": "pg_editor_frame");
+		  var target = "pg_editor_frame";
+		  if (inWindow) {
+		      target = "WW_View";
+		  } 
+		  else if (document.getElementById('save_as_form_id').checked
+		      || (document.getElementById('revert_form_id') && 
+			  document.getElementById('revert_form_id').checked ))
+		  {
+		      target = "";
+		  }
+		  document.getElementById("editor").target = (target);
 		}
 		function setRadio(i,nw) {
 		  document.getElementById('action'+i).checked = true;
@@ -1205,8 +1217,8 @@ sub saveFileChanges {
     my $auxiliaryFilesExist = has_aux_files($outputFilePath);
 
     if ($auxiliaryFilesExist and not $do_not_save ) {
-        my $sourceDirectory = $sourceFilePath;
-    	my $outputDirectory = $outputFilePath;
+        my $sourceDirectory = $sourceFilePath ||'' ;
+    	my $outputDirectory = $outputFilePath ||'';
         $sourceDirectory =~ s|/[^/]+\.pg$||;
         $outputDirectory =~ s|/[^/]+\.pg$||;
 ##############
@@ -1225,8 +1237,6 @@ sub saveFileChanges {
 				#warn "files are different ",system("diff $fromPath $toPath");
         	}
         	$self->addbadmessage($writeFileErrors) if not_blank($writeFileErrors);
-        	
-
         }
         $self->addgoodmessage("Copied auxiliary files from $sourceDirectory to  new location at $outputDirectory");
  
@@ -1803,6 +1813,7 @@ sub save_as_form {  # calls the save_as_handler
     			 # -label     => '',
     			 # -onfocus   => $onChange,
     		 # },"and append to end of set $fullSetID",) : ''
+
 			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_new_problem_id", -label_text=>"Append to end of ". CGI::strong("$fullSetID")." set", -input_attr=>{
 				 -name      => "action.save_as.saveMode",
     			 -value     => 'add_to_set_as_new_problem',
@@ -1890,11 +1901,11 @@ sub save_as_handler {
 	if (defined $outputFilePath and -e $outputFilePath) {
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;
-		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
+		$self->addbadmessage("File '".$self->shortPath($outputFilePath)."' exists.  
 		File not saved. No changes have been made.
-		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"));
-		$self->addgoodmessage(CGI::p("The text box now contains the source of the original problem.".
-		" You can recover lost edits by using the Back button on your browser."));
+		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page");
+		$self->addgoodmessage("The text box now contains the source of the original problem.".
+		" You can recover lost edits by using the Back button on your browser.");
 	} else {
 		$self->{editFilePath} = $outputFilePath;
 		$self->{tempFilePath} = ''; # nothing needs to be unlinked.

@@ -42,7 +42,6 @@ use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
-use HTML::Scrubber;
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -113,9 +112,10 @@ sub can_showCorrectAnswers {
 }
 
 sub can_showHints {
-	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
 	
-	return 1;
+	return !$Set->hide_hint;
 }
 
 sub can_showSolutions {
@@ -175,6 +175,13 @@ sub can_checkAnswers {
 	}
 }
 
+sub can_useMathView {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
+}
+    
 # Reset the default in some cases
 sub set_showOldAnswers_default {
 	my ($self, $ce, $userName, $authz, $set) = @_;
@@ -275,7 +282,7 @@ sub attemptResults {
 		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded"); 
 		    $self->{essayFlag} = 1;
-		} elsif (not $answerScore) {
+		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
 		    push @incorrect_ids, $name if $answerScore < 1;
 		    $resultString = CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
 		} else {
@@ -298,7 +305,9 @@ sub attemptResults {
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                  $self->nbsp($correctAnswerPreview)) : "";
 		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
-		$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
+		#I'm pretty sure this message shouldn't have the message class
+		#$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
+		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
 	
@@ -600,6 +609,7 @@ sub pre_header_initialize {
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}->{showHints},
 		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
+                useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -614,6 +624,7 @@ sub pre_header_initialize {
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
 		getSubmitButton    => 0,
+	        useMathView        => 0,
 	);
 	 
 	# does the user have permission to use certain options?
@@ -626,7 +637,8 @@ sub pre_header_initialize {
 		recordAnswers      => $self->can_recordAnswers(@args, 0),
 		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
 		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
-	);
+       	        useMathView           => $self->can_useMathView(@args)
+	    );
 	
 	# final values for options
 	my %will;
@@ -641,26 +653,6 @@ sub pre_header_initialize {
 		# do this only if new answers are NOT being submitted
 		my %oldAnswers = decodeAnswers($problem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
-	}
-	
-	##### scrub answer fields for xss badness #####
-     	my $scrubber = HTML::Scrubber->new(
-	    default=> 1,
-	    script => 0,
-	    process => 0,
-	    comment => 0
-	    );
-	foreach my $key (keys %$formFields) {
-	    if ($key =~ /AnSwEr/) {
-		$formFields->{$key} = $scrubber->scrub(		
-			(defined $formFields->{$key})? $formFields->{$key}:'' # using // would be more elegant but breaks perl 5.8.x
-		);
-		### HTML::scrubber is a little too enthusiastic about
-		### removing > and < so we have to add them back in otherwise
-		### they confuse pg
-		$formFields->{$key} =~ s/&lt;/</g;
-		$formFields->{$key} =~ s/&gt;/>/g;
-	    }
 	}
 	
 	##### translation #####
@@ -730,9 +722,9 @@ sub warnings {
 		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
     } elsif ( $self->{pgerrors} > 0 ) {
-        my @pgdebug          = @{ $self->{pgdebug}           }//();
- 		my @pgwarning        = @{ $self->{pgwarning}         }//();
- 		my @pginternalerrors = @{ $self->{pginternalerrors}  }//();
+        my @pgdebug          = (defined @{ $self->{pgdebug}}) ? @{ $self->{pgdebug}} : () ; 
+ 		my @pgwarning        = (defined @{ $self->{pgwarning}}) ? @{ $self->{pgwarning}} : ();
+ 		my @pginternalerrors = (defined @{ $self->{pginternalerrors}}) ? @{ $self->{pginternalerrors}} : ();
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
 		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
@@ -795,7 +787,8 @@ sub options {
 	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
 	push @options_to_show, "showHints" if $can{showHints};
 	push @options_to_show, "showSolutions" if $can{showSolutions};
-	
+	push @options_to_show, "useMathView" if $can{useMathView};
+
 	return $self->optionsMacro(
 		options_to_show => \@options_to_show,
 		extra_params => ["editMode", "sourceFilePath"],
@@ -975,7 +968,6 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
-	print $self->mathview_scripts();
 
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
 
@@ -1698,12 +1690,30 @@ sub output_JS{
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
 	
-	# The Base64.js file, which handles base64 encoding and decoding.
+	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+	
+	# This is for MathView.  
+	if ($self->{will}->{useMathView}) {
+	    if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
+		if ($self->{displayMode} ne 'MathJax') {
+		    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+		}
+		
+		print "<link href=\"$site_url/js/mathview/mathview.css\" rel=\"stylesheet\" />";
+		print CGI::start_script({type=>"text/javascript"});
+		print "mathView_basepath = \"$site_url/images/mathview/\";";
+		print CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
+	    } else {
+		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
+	    }
+	}
 	
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
-	
+
 	return "";
 }
 
@@ -1711,8 +1721,8 @@ sub output_achievement_CSS {
     return "";
 }
 
-#Tells template to output stylesheet for Jquery-UI
-sub output_jquery_ui_CSS{
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
 	return "";
 }
 

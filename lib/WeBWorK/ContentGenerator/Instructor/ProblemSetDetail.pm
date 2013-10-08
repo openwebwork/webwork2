@@ -39,7 +39,7 @@ use WeBWorK::Utils::DatePickerScripts;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -57,7 +57,7 @@ use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attemp
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restrict_ip relax_restrict_ip assignment_type)];
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 
@@ -153,6 +153,26 @@ use constant FIELD_PROPERTIES => {
 		labels    => {
 				1 => "Yes",
 				0 => "No",
+		},
+	},
+	restricted_release => {
+		name      => "Restrict release by set(s)",
+		type      => "edit",
+		size      => "30em",
+		override  => "any",
+		labels    => {
+				#0 => "None Specified",
+				"" => "None Specified",
+		},
+	},
+	restricted_status => {
+		name      => "Status required for release",
+		type      => "edit",
+		size      => "30em",
+		override  => "any",
+		labels    => {
+				#0 => "None Specified",
+				"" => "None Specified",
 		},
 	},
 	restrict_ip => {
@@ -280,7 +300,7 @@ use constant FIELD_PROPERTIES => {
                 default => "1",
 	},
 	max_attempts => {
-		name      => "Max&nbsp;attempts",
+		name      => "Max attempts",
 		type      => "edit",
 		size      => 6,
 		override  => "any",
@@ -330,7 +350,18 @@ use constant FIELD_PROPERTIES => {
 		type      => "hidden",
 		override  => "none",
 		default   => "0",
-	},	
+	},
+	hide_hint => {
+		name      => "Hide Hints from Students",
+		type      => "choose",
+		override  => "all",
+		choices   => [qw( 0 1 )],
+		labels    => {
+				1 => "Yes",
+				0 => "No",
+		},
+	},
+	
 };
 
 use constant FIELD_PROPERTIES_GWQUIZ => {
@@ -414,7 +445,7 @@ sub FieldTable {
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
-	}
+		}
 
 		# finally, put in extra fields that are exceptions to the 
 		#    usual display mechanism
@@ -959,10 +990,6 @@ sub initialize {
 			$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
-			# grab short name for timezone
-			# used to set proper timezone name in datepicker
-
-			$self->{timezone_shortname} = substr($due_date, -3); #this is fragile
 
 	}
 	
@@ -1120,6 +1147,9 @@ sub initialize {
 				$param = $unlabel if defined $unlabel;
 				if ($field =~ /_date/) {
 					$param = $self->parseDateTime($param) unless defined $unlabel;
+				}
+				if ($field =~ /restricted_release/) {
+				  $self->check_sets($db,$param) if $param;
 				}
 				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby} && $param) {
 					$param = $param*$properties{$field}->{convertby};
@@ -1507,9 +1537,6 @@ sub initialize {
 		}
 	}	
 	
-
-
-
 	# This erases any sticky fields if the user saves changes, resets the form, or reorders problems
 	# It may not be obvious why this is necessary when saving changes or reordering problems
 	# 	but when the problems are reorder the param problem.1.source_file needs to be the source
@@ -1598,7 +1625,16 @@ sub checkFile ($) {
 
 # don't show view options -- we provide display mode controls for headers/problems separately
 sub options {
-	return "";
+    return "";
+}
+
+#Make sure restrictor sets exist
+sub check_sets {
+	my ($self,$db,$sets_string) = @_;
+	my @proposed_sets = split(/\s*,\s*/,$sets_string);
+	foreach(@proposed_sets) {
+	  $self->addbadmessage("Error: $_ is not a valid set name in restricted release list!") unless $db->existsGlobalSet($_);
+	}
 }
 
 # Creates two separate tables, first of the headers, and the of the problems in a given set
@@ -1844,13 +1880,31 @@ sub body {
 
 	print CGI::end_table();	
 
+	#datepicker scripts.  
+	# we try to provide the date picker scripts with the global set
+	# if we aren't looking at a specific students set and the merged
+	# one otherwise. 
+	if ($ce->{options}->{useDateTimePicker}) {
+	    my $tempSet; 
+	    if ($forUsers) {
+		$tempSet = $db->getMergedSet($userToShow, $setID); 
+	    } else {
+		$tempSet = $setRecord;
+	    }
+	    
+	    print CGI::start_script({-type=>"text/javascript"}),"\n";
+	    print q!$(".ui-datepicker").draggable();!,"\n";
+	    print WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $tempSet),"\n";	
+	    print CGI::end_script();
+	}
+
 	# spacing
 	print CGI::start_p();
 
 	####################################################################
 	# Display Field for putting in a set description
 	####################################################################
-	print CGI::h5("Set Description");
+	print CGI::h5($r->maketext("Set Description"));
 	print CGI::textarea({name=>"set.$setID.description",
 			     id=>"set.$setID.description",
 			     value=>$setRecord->description(),
@@ -1871,8 +1925,8 @@ sub body {
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Headers"),
-#			"Data",
-			"Display&nbsp;Mode:&nbsp;" . 
+#			$r->maketext("Data"),
+			$r->maketext("Display Mode:") . 
 			CGI::popup_menu(-name => "header.displaymode", -values => \@active_modes, -default => $default_header_mode) . '&nbsp;'. 
 			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
@@ -1914,7 +1968,7 @@ sub body {
 		
 		foreach my $headerType (@headers) {
 	
-			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
+			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
 			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
 
 			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });	
@@ -1934,7 +1988,7 @@ sub body {
 
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
-					CGI::Tr({}, CGI::td({}, $properties{$headerType}->{name})) . 
+					CGI::Tr({}, CGI::td({}, $r->maketext($properties{$headerType}->{name}))) . 
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, $r->maketext("Edit it")))) .
 					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, $r->maketext("View it")))) .
 				CGI::end_table(),
@@ -1997,7 +2051,7 @@ sub body {
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Problems"),
 			$r->maketext("Data"),
-			"Display&nbsp;Mode:&nbsp;" . 
+			$r->maketext("Display Mode:") . 
 			CGI::popup_menu(-name => "problem.displaymode", -values => \@active_modes, -default => $default_problem_mode) . '&nbsp;'. 
 			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
 		]));
@@ -2029,7 +2083,7 @@ sub body {
 			my ( $editProblemPage, $editProblemLink, $viewProblemPage,
 			     $viewProblemLink );
 			if ( $isGatewaySet ) {
-				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 				$viewProblemPage =
 					$urlpath->new(type =>'gateway_quiz',
@@ -2048,7 +2102,7 @@ sub body {
 							    problemSeed => $seed,
 							    sourceFilePath => $file });
 			} else {
-				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 			# FIXME: should we have an "act as" type link here when editing for multiple users?		
 				$viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
@@ -2172,7 +2226,7 @@ sub body {
 	}
 	# always allow one to add a new problem, unless we're editing a set version
 	if ( ! $editingSetVersion ) {
-		print 	CGI::checkbox({ label=> "Add",
+		print 	CGI::checkbox({ label=> $r->maketext("Add"),
 					name=>"add_blank_problem", value=>"1"}
 			),CGI::input({
 					name=>"add_n_problems",
@@ -2182,8 +2236,8 @@ sub body {
 			);
 	}
 	print CGI::br(),CGI::br(),
-		CGI::input({type=>"submit", name=>"submit_changes", value=>"Save Changes"}),
-		CGI::input({type=>"submit", name=>"handle_numbers", value=>"Reorder problems only"}),
+		CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")}),
+		CGI::input({type=>"submit", name=>"handle_numbers", value=>$r->maketext("Reorder problems only")}),
 			$r->maketext("(Any unsaved changes will be lost.)");
 
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
@@ -2196,6 +2250,10 @@ sub body {
 	return "";
 }
 
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
+	return "";
+}
 
 sub output_JS {
 	my $self = shift;
@@ -2206,7 +2264,6 @@ sub output_JS {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	    print "\n\n<!-- add to header ProblemSetDetail.pm -->";
-	print qq!<link rel="stylesheet" type="text/css" href="$site_url/css/jquery-ui-1.8.18.custom.css"/>!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
@@ -2216,20 +2273,17 @@ sub output_JS {
 	.changed {background-color: #ffffcc}
     </style>!,"\n";
     
-	# print javaScript for dateTimePicker	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/jquery-ui-1.9.0.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 
-	print CGI::start_script({-type=>"text/javascript"}),"\n";
-	print q!$(".ui-datepicker").draggable();!,"\n";
-	print WeBWorK::Utils::DatePickerScripts::date_scripts("set\\\\.$setID",$timezone),"\n";		
-	print CGI::end_script();
-
+    	
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }
+
+
+
 1;
 
 =head1 AUTHOR

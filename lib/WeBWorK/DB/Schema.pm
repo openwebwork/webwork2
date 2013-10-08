@@ -70,7 +70,7 @@ use warnings;
 
 =over
 
-=item new($db, $driver, $table, $record, $params)
+=item new($db, $driver, $table, $record, $params, $engine)
 
 Creates a schema interface for C<$table>, using the driver interface provided
 by C<$driver> and using the record class named in C<$record>. If the C<$driver>
@@ -83,7 +83,7 @@ dependent. C<$db> is provided so that schemas can query other schemas.
 =cut
 
 sub new {
-	my ($proto, $db, $driver, $table, $record, $params) = @_;
+	my ($proto, $db, $driver, $table, $record, $params, $engine) = @_;
 	my $class = ref($proto) || $proto;
 	
 	my @supportedTables = $proto->TABLES();
@@ -100,6 +100,7 @@ sub new {
 		table  => $table,
 		record => $record,
 		params => $params,
+    engine => $engine,
 	};
 	bless $self, $class;
 	return $self;

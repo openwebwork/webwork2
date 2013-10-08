@@ -391,7 +391,7 @@ sub initialize {
 			}
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
-			$self->addmessage(CGI::div({class=>"Message"}, $r->maketext("Results of last action performed").": "));
+			$self->addmessage(CGI::div($r->maketext("Results of last action performed").": "));
 			$self->addmessage($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams));
 		} else {
 			return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to perform this action.")));
@@ -446,7 +446,6 @@ sub head{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
     	print "<link rel='stylesheet' href='$site_url/js/vendor/jquery/jquery-ui-1.10.0.custom/css/ui-lightness/jquery-ui-1.10.0.custom.min.css' type='text/css' media='screen'>";
         print "<link rel='stylesheet' type='text/css' href='$site_url/css/problemsetlist.css' > </style>";
-	#print "<link rel='stylesheet' type='text/css' href='$site_url/js/lib/vendor/jquery-ui-for-classlist3/css/ui-lightness/jquery-ui-1.8.21.custom.css' > </style>";
 	return "";
 }
 
