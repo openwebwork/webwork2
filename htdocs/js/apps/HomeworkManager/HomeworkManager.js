@@ -4,8 +4,8 @@
 */
 define(['module','Backbone', 'underscore','models/UserList','models/ProblemSetList','models/Settings',   
     'views/AssignmentCalendarView','HWDetailView','views/ProblemSetListView','SetListView','LibraryBrowser',
-    'AssignUsersView','views/WebPage','config','views/WWSettingsView','views/HeaderView', 'backbone-validation',
-    'jquery-ui','bootstrap'
+    'AssignUsersView','views/WebPage','config','views/WWSettingsView','views/HeaderView', 
+    'backbone-validation','jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
             ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView,HeaderView){
@@ -67,8 +67,7 @@ var HomeworkEditorView = WebPage.extend({
         // this is needed for the handshaking of session information between the old and new
         // webservice
 
-        $.get(config.urlPrefix + "login?user=" + config.courseSettings.user+"&session_key="+config.courseSettings.session_key
-            +"&course="+config.courseSettings.courseID ,function(response){
+        $.get(config.urlPrefix + "login?"+$.param(config.courseSettings),function(response){
             console.log(response);
         });
 

@@ -28,8 +28,7 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             return (config.userProps.map(function(prop){return self.get(prop.shortName);})).join(",") + "\n";
         },
         parse: function(response) {
-            config.checkForError(response);
-            this.id=this.get("user_id");
+            this.id=response? response.user_id : this.get("user_id");
             return response;
         }
     });

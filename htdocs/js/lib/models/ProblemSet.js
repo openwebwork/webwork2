@@ -126,6 +126,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             _(_.keys(response)).each(function(key){
                 if(key==="problems"){
                     self.attributes.problems = new ProblemList(response.problems);
+                    self.attributes.problems.each(function(_prob){ _prob.parse();})
                     self.attributes.problems.setName = response.set_id;
                 } else {
                     self.attributes[key]=response[key];

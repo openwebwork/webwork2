@@ -33,11 +33,12 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
                     this.numProblemsPerGroup : this.problems.length;
             _.extend(this.viewAttrs,{type: this.options.type});
-
             _.extend(this,Backbone.Events);
         },
         setProblems: function(_problems,_type){
             this.problems = _problems; 
+            this.problems.on("remove",this.deleteProblem);
+            //this.listenTo(this.problems,"remove",this.deleteProblem);
             this.viewAttrs.type = _type;
 
             // start with showing 10 (numProblemsPerGroup) problems
@@ -119,10 +120,10 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
         },
         setProblemSet: function(_set) {
-
             this.model = _set; 
+            this.setProblems(this.model.get("problems"));
             return this;
-        },
+        }, 
         addProblemView: function (prob){
             var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
             this.$("#prob-list").append(probView.el);

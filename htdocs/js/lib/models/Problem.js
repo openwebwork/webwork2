@@ -23,11 +23,8 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
 
         },
         parse: function(response){
-            config.checkForError(response);
-            if (response){
-                this.id = response.problem_id;
-            }
-            
+            this.id = response? response.source_file : this.get("source_file");
+            //this.id = md5(response? response.source_file : this.get("source_file"));
             return response;
         },
         loadHTML: function (success) {

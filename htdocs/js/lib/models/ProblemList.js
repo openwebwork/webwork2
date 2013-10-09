@@ -14,9 +14,6 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
     var ProblemList = Backbone.Collection.extend({
         model:Problem,
     
-        initialize: function(options){
-            _.extend(this,options);
-        }, 
         // This keeps the problem set sorted by place in the set.  
         comparator: function(problem) {
             return parseInt(problem.get("problem_id"));
@@ -40,28 +37,25 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 return config.urlPrefix+"Library/directories/"+this.path;
             }
         },
-        parse: function(response){
-            config.checkForError(response);
-            return response;
-        }, 
+/*        parse: function(response){
+            var self = this;
+            return _(response).map(function(_prob){ return (new Problem()).parse(_prob);})
+        }, */
         reorder: function(success){
             var self = this;
-            self.sort();
-
             //var problemPaths = this.pluck("source_file");
             //var problemIndices = this.pluck("problem_id");
-            var problems = this.map(function(prob) { 
-                    return {source_file: prob.get("source_file"), problem_id: prob.get("problem_id")};});
+            //var problems = this.map(function(prob) { 
+            //        return {source_file: prob.get("source_file"), problem_id: prob.get("problem_id")};});
 
             $.ajax({  contentType: "application/json", type: "PUT",
-                url: config.urlPrefix + "courses/"+ config.courseSettings.courseID + "/sets/" + this.setName + "/order",
-                //data: {problem_paths: problemPaths, problem_indices: problemIndices},
+                url: config.urlPrefix + "courses/"+ config.courseSettings.courseID + "/sets/" + this.setName + "/problems",
                 success: success,
-                data: JSON.stringify({problems: problems}),
+                data: JSON.stringify({problems: self.models}),
                 success: success,
                 processData: false,
             });
-        }
+        } 
 
     });
     
