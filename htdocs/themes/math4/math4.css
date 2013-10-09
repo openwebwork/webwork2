@@ -377,6 +377,7 @@ div.ScrollingRecordList select.ScrollingRecordList { width: 99%; }
 
 .viewOptions label {
     font-size:small;
+    display:block;
 }
 
 /* messages, attempt results, answer previews, etc. go in this DIV */
