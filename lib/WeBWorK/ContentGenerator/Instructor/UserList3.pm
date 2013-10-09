@@ -365,13 +365,13 @@ sub output_JS{
 	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
 	print qq!<script type='text/javascript'>!;
-    print qq! require.config = { 'ClasslistManager': {!;
+    print qq! require.config = { 'CM2': {!;
     print qq! users: ! . to_json(getAllUsers($self)) . ",";
     print qq! settings: ! . to_json(getCourseSettings($self)) . ",";
     print qq! sets: ! . to_json(getAllSets($self)) ;
     print qq!    }};!;
     print qq!</script>!;
-	print qq!<script data-main="$site_url/js/apps/ClasslistManager/ClasslistManager" src="$site_url/js/components/requirejs/require.js"></script>\n!;
+	print qq!<script data-main="$site_url/js/apps-dev/CM2/CM2" src="$site_url/js/components/requirejs/require.js"></script>\n!;
 
 	return "";
 }

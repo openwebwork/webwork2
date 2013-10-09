@@ -133,8 +133,6 @@ get '/Library/subjects/:subject_id/chapters/:chapter_id/problems' => sub {
 
 get '/Library/subjects/:subject_id/chapters/:chapter_id/sections/:section_id/problems' => sub {
 
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
 	my $subject = database->quick_select('OPL_DBsubject', {name => params->{subject_id}});
 
 	if(!defined($subject)){
@@ -287,12 +285,6 @@ get '/library/problems' => sub {
 ###
 
 get '/renderer/problems/:problem_id' => sub {
-
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
-    if (0+(session 'permission') < 10 && session->{user} ne session->{user_id}) {
-        return {error=>"You don't have the necessary permission"};
-    }
 
     my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
 	my $user =  vars->{db}->getUser(session->{user});
@@ -478,22 +470,21 @@ get '/renderer/problems/:problem_id' => sub {
 
 get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
     my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
     my ($showHints, $showSolutions,$showAnswers);
 	
 
     ### The user is not a professor
 
+    debug session->{permission};
+
+    # the next line is a hack until the permissions is worked out better.
+    #session->{permission} = 10; 
+
     if(0+(session 'permission') < 10) {  ### check that the user belongs to the course and set. 
 
     	if (! (vars->{db}->existsUser(param('user_id')) &&  vars->{db}->existsUserSet(param('user_id'), params->{set_id})))  { 
-    		return {error=>"You are a student and must be assigned to the set " . params->{set_id}};
+    		send_error("You are a student and must be assigned to the set " . params->{set_id},404);
     	}
 
     	# these should vary depending on number of attempts or due_date or ???

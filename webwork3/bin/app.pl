@@ -17,80 +17,13 @@ set serializer => 'JSON';
 
 hook 'before' => sub {
 
-	## need to check that the session hasn't expired. 
-
-
     for my $key (keys(%{request->params})){
     	my $value = defined(params->{$key}) ? params->{$key} : ''; 
     	debug($key . " : " . $value);
     }
 
-    # debug "Checking if session->{user} is defined";
-    # debug session->{user};
-	    
-
-    if (! defined(session->{user})) {
-    	if (! params->{user}){
-			send_error({type => "login", msg => "The user is not defined.  You may need to login again."}, 403);
-		}
-	    	session->{user} = params->{user};
-	}
-
-	# debug "Checking if session->{course} is defined";
-	# debug session->{course};
-
-	if (! defined(session->{course})) {
-		if (! defined(params->{course})){
-			send_error("The course must be defined.");				
-			return;
-		} 
-		session->{course} = params->{course};
-	}
-
-	# debug "Checking if session->{session_key} is defined";
-	# debug session->{session_key};
-
-	if (! defined(session->{session_key})){
-		
-		debug session->{course}.'_key';		
-		my $session_key = database->quick_select(session->{course}.'_key', { user_id => session->{user} });
-		if ($session_key->{key_not_a_keyword} eq param('session_key')) {
-			session->{session_key} = params->{session_key};
-		} else {
-			send_error({type => "login", msg => "Your session has expired"}, 403);
-		} 
-	}
-
-	if (! defined(session->{permission})){
-		my $permission = database->quick_select(session->{course}.'_permission', { user_id => session->{user} });
-		session->{permission} = $permission->{permission};		
-	}
-
-	debug session->{user};
-	debug session->{permission};
-	debug session->{course};    
-	debug config->{webwork_dir};
-
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
-
-#allow .format in url string
-    # my $format = params->{'format'};
-    # return unless defined $format;
-
-    # my $serializer = $serializers->{$format};
-    # unless (defined $serializer) {
-    #     return halt(
-    #         Dancer::Error->new(
-    #             code    => 404,
-    #             message => "unsupported format requested: " . $format
-    #         )
-    #     );
-    # }
-
-    # set serializer => $serializer;
-    # my $ct = $content_types->{$format} || setting('content_type');
-    # content_type $ct;
 
 };
 
@@ -101,6 +34,19 @@ get '/login' => sub {
 	
 	return {msg => "If you get this message all should have worked"};
 };
+
+any ['get','put','post','del'] => '/**' => sub {
+	
+	debug "In uber route";
+
+	checkRoutePermissions();
+	authenticate();
+
+	pass;
+};
+
+
+
 
 get '/app-info' => sub {
 	return {
@@ -135,6 +81,70 @@ sub getCourseEnvironment {
 	 	courseName          => $courseID,
 	 });
 }
+
+sub authenticate {
+		## need to check that the session hasn't expired. 
+
+    debug "Checking if session->{user} is defined";
+    debug session->{user};
+
+    if (! defined(session->{user})) {
+    	if (defined(params->{user})){
+	    	session->{user} = params->{user};
+    	} else {
+    		send_error("The user is not defined. You may need to authenticate again",401);	
+    	}
+	}
+
+	if (! defined(session->{course})) {
+		if (defined(params->{course})) {
+			session->{course} = params->{course};
+		} else {
+			send_error("The course has not been defined.  You may need to authenticate again",401);	
+		}
+
+	}
+
+	# debug "Checking if session->{session_key} is defined";
+	# debug session->{session_key};
+
+
+	if(! defined(session->{session_key})){
+		if (defined(session->{course})){
+			debug session->{course}.'_key';		
+			my $session_key = database->quick_select(session->{course}.'_key', { user_id => session->{user} });
+			if ($session_key->{key_not_a_keyword} eq param('session_key')) {
+				session->{session_key} = params->{session_key};
+			} 
+		}
+	}
+
+	if(! defined(session->{session_key})){
+		send_error("The session_key has not been defined or is not correct.  You may need to authenticate again",401);	
+	}
+
+	debug "Checking if session->{permission} is defined";
+	debug session->{permission};
+
+
+	if (defined(session->{course}) && ! defined(session->{permission})){
+		my $permission = database->quick_select(session->{course}.'_permission', { user_id => session->{user} });
+		session->{permission} = $permission->{permission};		
+	}
+
+}
+
+sub checkRoutePermissions {
+
+	debug "Checking Route Permissions";
+
+	debug request->path;
+
+}
+
+# my $permissions = {
+# 	"get|/Library/subjects" => 
+# }
 
 
 Dancer->dance;
