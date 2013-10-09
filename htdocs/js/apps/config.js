@@ -169,24 +169,22 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         }
     })
 
-    // pstaab:  clean this up a bit.  Try to put the html into a template. 
+    // The main stickit handler for any editable date-time class.
 
     Backbone.Stickit.addHandler({
         selector: '.edit-datetime',
-        initialize: function($el,model,options){
-            var setModel = function(evt,timeStr){
+        update: function($el, val, model, options){
+           var theDate = moment.unix(val);
+            $el.html(_.template($("#edit-date-time-template").html(),{date: theDate.format("MM/DD/YYYY")}));
+                        var setModel = function(evt,timeStr){
                 console.log("in edit-datetime, setModel");
                 var dateTimeStr = evt.data.$el.children(".wwdate").val() + " " + 
                         (timeStr ? timeStr : evt.data.$el.children(".wwtime").text().trim());
                 var date = moment(dateTimeStr,"MM/DD/YYYY hh:mmA");
-
-                // not sure what's going on here.  
                 evt.data.model.set(evt.data.options.observe,""+date.unix()); 
-                //console.log(evt.data.model.attributes);
             };
-            var popoverHTML = "<div><input class='wwtime' value='" + 
-                moment.unix(model.get(options.observe)).format("h:mm a") + "'>" + 
-                "<br><button class='btn'>Save</button></div>";
+            var popoverHTML = _.template($("#time-popover-template").html(),
+                        {time : moment.unix(model.get(options.observe)).format("h:mm a")});
             var timeIcon = $el.children(".open-time-editor");
             timeIcon.popover({title: "Change Time:", html: true, content: popoverHTML,
                 trigger: "manual"});
@@ -194,7 +192,7 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
                 function (evt) {
                     timeIcon.popover("hide");
                     setModel(evt,$(this).siblings(".wwtime").val());
-            })
+            });
             $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, setModel);
             $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, setModel);
             timeIcon.parent().on("click",".open-time-editor", function() {
@@ -203,14 +201,7 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
             $el.children(".wwdate").datepicker();
 
         },
-        updateMethod: 'html',
-        
-        onGet: function(val) { // this is passed in as a moment Object
-            var theDate = moment.unix(val);
-            var tz = (theDate.toDate() + "").match(/\((.*)\)/)[1];
-            return "<input class='wwdate' size='12' value='" + theDate.format("MM/DD/YYYY") + "''>" +
-            "<span class='open-time-editor'><i class='icon-time'></i></span>";
-        }
+        updateMethod: 'html'
     });
 
     Backbone.Stickit.addHandler({

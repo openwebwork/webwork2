@@ -25,12 +25,6 @@ our @user_props = qw/first_name last_name student_id user_id email_address permi
 
 get '/courses/:course/users' => sub {
 
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
-
     my $ce = vars->{ce};
     my $db = vars->{db};
 
@@ -60,20 +54,8 @@ get '/courses/:course/users' => sub {
 
 post '/courses/:course_id/users/:user_id' => sub {
 	
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
-
-	
-
-
 	my $user = vars->{db}->getUser(param('user_id'));
-	return {error=>"The user with login " . param('user_id') . " already exists"} if $user;
-
-
-	debug("adding a new user with user_id: " . param('user_id'));
+	send_error("The user with login " . param('user_id') . " already exists",404) if $user;
 	
 	my $new_student = vars->{db}->{user}->{record}->new();
 	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
@@ -121,7 +103,7 @@ post '/courses/:course_id/users/:user_id' => sub {
 	}
 
 	if (scalar(@messages)>0) {
-		return {error=>"Attempt to add user failed", message=>\@messages};
+		send_error("Attempt to add user failed.  MESSAGE: " . join(", ",@messages), 400);
 	} else {
 		return convertObjectToHash($new_student);
 	}
@@ -137,21 +119,22 @@ post '/courses/:course_id/users/:user_id' => sub {
 
 put '/courses/:course_id/users/:user_id' => sub {
 	
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+	debug "in /courses/:course_id/users/:user_id";
 
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
+	debug session->{course};
+	debug session->{user};
 
-	debug("updating the user with user_id: " . param('user_id'));
-
+	debug vars->{db}->getUser(params->{user_id});
 
 	my $user = vars->{db}->getUser(param('user_id'));
-	return {error=>"The user with login " . param('user_id') . " does not exist"} unless $user;
+	
+	send_error("The user with login " . param('user_id') . " does not exist",404) unless $user;
 
 	for my $key (@user_props) {
         $user->{$key} = param($key);
     }
+
+    debug $user;
 
     if (defined(params->{new_password})){
     	my $password = vars->{db}->getPassword(params->{user_id});
@@ -178,30 +161,22 @@ put '/courses/:course_id/users/:user_id' => sub {
 
 del '/courses/:course_id/users/:user_id' => sub {
 	
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
-
-	debug("Deleting user with user_id: " . param('user_id'));
-
 	# check to see if the user exists
 
 	my $user = vars->{db}->getUser(param('user_id')); # checked
-	return {error=>"Record for visible user " . param('user_id') . ' not found.'} unless $user;
+	send_error("Record for visible user " . param('user_id') . ' not found.',404) unless $user;
 
 	if (param('user_id') eq param('user') )
 	{
-		return {error=>"You can't delete yourself from the course."};
+		send_error("You can't delete yourself from the course.",404);
 	} 
 
 	my $del = vars->{db}->deleteUser(param('user_id'));
 		
 	if($del) {
-		return {success=>"User with login " . param('user_id') . ' successfully deleted.'};
+		return convertObjectToHash($user);
 	} else {
-		return {error=>"User with login " . param('user_id') . ' could not be deleted.'};
+		send_error("User with login " . param('user_id') . ' could not be deleted.',400);
 	}
 
 };
@@ -218,19 +193,13 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
 
 	debug 'in /courses/sets/users/problems';
 
-    return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
-    if (0+(session 'permission') <10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission", type=>"permission"};
-    }
-
     if (! vars->{db}->existsGlobalSet(params->{set_id})){
-    	return {error=>"The set " . params->{set_id} . " does not exist in course " . params->{course_id}};	
+    	send_error("The set " . params->{set_id} . " does not exist in course " . params->{course_id},404);
     }
 
     if (! vars->{db}->existsUserSet(params->{user_id}, params->{set_id})){
-    	return {error=>"The user " . params->{user_id} . " has not been assigned to the set " . params->{set_id} 
-    				. " in course " . params->{course_id}};
+    	send_error("The user " . params->{user_id} . " has not been assigned to the set " . params->{set_id} 
+    				. " in course " . params->{course_id},404);
     }
 
     my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
@@ -256,28 +225,14 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
 
 get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
+  	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 
-    if (0+(session 'permission') <10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-   
-    my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
-
-    return Routes::convertObjectToHash($problem);
+    return convertObjectToHash($problem);
 };
 
 put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	return {error=>session->{error}, type=>"login"} if (defined(session->{error}));
-
-    if (0+(session 'permission') <10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-   
-    my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
+	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 
     for my $key (keys (%{$problem})){
     	if(param($key)){
@@ -287,7 +242,7 @@ put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => su
 
     vars->{db}->putUserProblem($problem);
 
-    return Routes::convertObjectToHash($problem);
+    return convertObjectToHash($problem);
 };
 
 

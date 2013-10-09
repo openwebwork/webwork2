@@ -17,3 +17,11 @@
 .wwdate { width: auto; border: none;}
 
 .header {font-weight: bold;}
+
+.collection-table th {font-color: darkblue; cursor: pointer;}
+
+.paginator-row td {text-align: "center";}
+
+.current-page {font-weight: bold;}
+
+
