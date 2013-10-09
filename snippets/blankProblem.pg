@@ -1,0 +1,25 @@
+DOCUMENT();
+
+# Load whatever macros you need for the problem
+loadMacros("PG.pl",
+           "PGbasicmacros.pl",
+           "PGchoicemacros.pl",
+           "PGanswermacros.pl",
+           "PGauxiliaryFunctions.pl",
+           "PGgraphmacros.pl",
+          );
+ 
+## Do NOT show partial correct answers
+$showPartialCorrectAnswers = 0;
+TEXT(beginproblem());
+
+BEGIN_TEXT
+
+Enter a value for \(\pi\)
+
+\{ans_rule()\}
+END_TEXT
+
+ANS(num_cmp(3.14159));
+
+ENDDOCUMENT();

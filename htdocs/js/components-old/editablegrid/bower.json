@@ -1,0 +1,9 @@
+{
+  "name": "editablegrid",
+  "main": "index.gz",
+  "version": "0.0.0",
+  "repository": {
+    "type": "asset",
+    "url": "https://github.com/downloads/webismymind/editablegrid/editablegrid-2.0.1.tar.gz"
+  }
+}

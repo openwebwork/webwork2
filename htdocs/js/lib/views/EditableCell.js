@@ -14,7 +14,9 @@ var EditableCell = Backbone.View.extend({
             } else if (optsRe.test(this.model.types[this.property])) 
             {
                 var opts = optsRe.exec(this.model.types[this.property])[1].split(",");
-                this.$el.html("<select class='edit-opt'>" + _(opts).map(function(v){return "<option>" + v + "</option>";}) + "</select>");
+                var values = (this.model.types[this.property]==="opt(yes,no)")?[1,0]:opts;
+                this.$el.html("<select class='edit-opt'>" + _(opts).map(function(v,i){
+                        return "<option value=" + values[i] + ">" + v + "</option>";}).join("") + "</select>");
                 this.$(".edit-opt").val(this.model.get(this.property));
             } else {
                 this.$el.html("<span class='srv-value'> " + this.model.get(this.property) + "</span>");

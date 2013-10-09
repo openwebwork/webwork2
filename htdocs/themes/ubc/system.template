@@ -27,7 +27,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
 <head>
 <!-- Begin Jquery MathView CODE add -->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/jquery-ui.css"/>
 <!-- End Jquery MathView CODE add -->
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
@@ -40,7 +40,7 @@
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
 <!--#if can="output_jquery_ui_CSS"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/jquery-ui.css"/>
 <!--#endif-->
 <!--#if can="output_JS"-->
 	<!--#output_JS-->

@@ -1,0 +1,9 @@
+{
+  "name": "jquery-truncate",
+  "version": "0.0.0",
+  "commit": "ed59e7c5995a92a75e5991692924ad5312f4131b",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/tbasse/jquery-truncate.git"
+  }
+}

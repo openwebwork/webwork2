@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>WeBWorK</title>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap-2/docs/assets/css/bootstrap.css"/>
+<link rel='stylesheet' href='/webwork2_files/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
+<link rel='stylesheet' type="text/css" href="/test/css/style.css">
+
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+        <div class="span2 btn-group dropdown">
+          <a href="#" class="dropdown-toggle btn" data-toggle="dropdown">
+            Menu
+            <b class="caret"></b>
+          </a>
+          <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+            <li class="nav-header">Main Menu</li>
+            <li>item 1</li>
+            <li>item 2</li>
+            <li>item 3</li>
+            <li>item 4</li>
+          </ul>
+        </div>
+        
+    
+    <a class="brand" href="#">[% pagename %]</a>
+    </div>
+  </div>
+</div>
+[% content %]
+<div id="footer">
+Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
+</div>
+</body>
+</html>

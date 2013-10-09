@@ -7,8 +7,21 @@
 #navigation-menu { width: 250px;}
 
 
-.breadcrumb {padding: 2px 15px ;}  //overrides the bootstrap css
 
-
+.breadcrumb {padding: 2px 15px ;} 
 
 .sortable-placeholder {border: 1px solid black; background-color: lightyellow;}
+
+/* a wwdate is generally an input and we want to make it look like a span */
+
+.wwdate { width: auto; border: none;}
+
+.header {font-weight: bold;}
+
+.collection-table th {font-color: darkblue; cursor: pointer;}
+
+.paginator-row td {text-align: "center";}
+
+.current-page {font-weight: bold;}
+
+
