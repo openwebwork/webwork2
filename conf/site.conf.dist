@@ -47,6 +47,7 @@
 # that using "" may not work so we suggest sticking with "/webwork2".
 $webwork_url       = '/webwork2';
 $server_root_url   = '';   # e.g.  'http://webwork.yourschool.edu' or 'http://localhost'
+                           # Note, if running a secure (ssl) server, you probably need 'https://...'
 
 # The following two variables must match the user ID and group ID respectively
 # under which apache is running.
@@ -82,7 +83,6 @@ $externalPrograms{gzip}  = "/bin/gzip";
 $externalPrograms{latex}    ="/usr/bin/latex";
 $externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
 $externalPrograms{dvipng}   ="/usr/bin//dvipng";
-$externalPrograms{tth}      ="/usr/bin/tth";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
@@ -145,6 +145,7 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # The format is dbi:mysql:[databasename] for databases on the local machine
 # For a remote database the format is dbi:mysql:[databasename]:[hostname]:[port]
 $database_dsn ="dbi:mysql:webwork";
+$database_storage_engine = 'myisam';
 
 # The following two variables must match the GRANT statement run on the mysql server as described above.
 $database_username ="webworkWrite";
@@ -189,6 +190,26 @@ $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 # Seconds to wait before timing out when connecting to the SMTP server.
 $mail{smtpTimeout}           = 30;
 
+
+################################################################################
+# Problem library options
+################################################################################
+# 
+# The problemLibrary configuration data should now be set in localOverrides.conf
+
+# For configuration instructions, see:
+# http://webwork.maa.org/wiki/National_Problem_Library
+# The directory containing the natinal problem library files. 
+# Set the root to "" if no problem
+# library is installed. Use version 2.0 for the NPL and use the version 2.5  for the OPL. 
+# When changing from the NPL to the OPL it is important to change the version number
+# because the names of the tables in the database have changed.
+
+#CONFIGURE problemLibrary values in this file. These settings override defaults in default.config
+#################################################
+$problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
+$problemLibrary{version}     ="2.0"; # 2.0 for NPL, 2.5 for OPL
+###########################################################
 
 ################################################################################
 #Time Zone

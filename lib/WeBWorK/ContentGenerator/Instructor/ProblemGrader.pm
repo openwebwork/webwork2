@@ -60,13 +60,14 @@ sub head {
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+#	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/bootstrap/css/bootstrap.popover.css\">";
+
+	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
 	my $MathJax = $ce->{webworkURLs}->{MathJax};
 	
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/lib/vendor/bootstrap/css/bootstrap.popover.css\">";
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>$MathJax}), CGI::end_script();
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
 	
 	return "";
@@ -128,6 +129,7 @@ sub initialize {
 
 		#if the instructor added a comment we should save that to the latest answer
 		if ($r->param("$userID.comment")) {
+		    my $comment = $r->param("$userID.comment");
 
 		    my $comment = $r->param("$userID.comment");
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
@@ -294,6 +296,8 @@ sub body {
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
 			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"contextTypeset.pl\");\n Context(\"Typeset\");\n BEGIN_TEXT\n";
+			# change newlines into BR's
+			$answer =~ s/\n/\$BR /g;
 			$source .= $answer . "\nEND_TEXT\n ENDDOCUMENT();";
 			my $pg = WeBWorK::PG->new(
 			    $ce,

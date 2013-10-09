@@ -1,0 +1,85 @@
+#!/usr/bin/env perl
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/bin/newpassword,v 1.3 2006/01/25 23:13:45 sh002i Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+=head1 NAME
+
+setfilepermissions - set the file permissions for webwork
+
+=head1 SYNOPSIS
+
+ sudo -E setfilepermissions 
+
+=head1 DESCRIPTION
+
+Set the file permissions for webwork
+
+=cut
+
+use strict;
+use warnings;
+
+BEGIN {
+	die "WEBWORK_ROOT not found in environment.\n"
+		unless exists $ENV{WEBWORK_ROOT};
+}
+
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
+
+# who is really running this script (even if sudo'ed)
+# We set relevant directories so that script runner owns them
+# and the web server can write to them
+my $me = `logname`;
+chomp($me);
+
+#my $serverid =  $ce->{server_userID};
+my $servergroup =  $ce->{server_groupID};
+
+my $wwroot = $ENV{WEBWORK_ROOT};
+
+# Course directories
+system("chown -R $me ".$ce->{webwork_courses_dir});
+system("chgrp -R $servergroup ".$ce->{webwork_courses_dir});
+system("chmod -R g+w ".$ce->{webwork_courses_dir});
+system("chmod g+s ".$ce->{webwork_courses_dir});
+
+# Other special directories under webwork2
+for my $dir ( "DATA", "htdocs/tmp", "logs", "tmp" ) {
+  system("chown -R $me $wwroot/$dir");
+	system("chgrp -R $servergroup $wwroot/$dir");
+	system("chmod -R g+w $wwroot/$dir");
+	system("chmod g+s $wwroot/$dir");
+}
+
+# A special directory under pg (so the server can compile the chromatic program)
+system("chgrp $servergroup ".$ce->{pg_dir}."/lib/chromatic");
+system("chmod g+w ".$ce->{pg_dir}."/lib/chromatic");
+
+# The server should not be able to write to the OPL (for most sites)
+
+my $libroot = $ce->{problemLibrary}->{root};
+
+system("chown -R $me $libroot");
+system("chmod -R 755 $libroot");
+
+# OPL-update needs to be able to write to these directories
+# Let's hope the same user does it
+# This will need adjusting if the admin course starts running this script
+for my $dir ( "htdocs/DATA", "htdocs/applets" ) {
+	system("chown -R $me $wwroot/$dir");
+}

@@ -43,6 +43,17 @@ sub initialize {
 		$self->addbadmessage("You aren't authorized to view past answers");
 		return;
 	}
+	
+	# The stop acting button doesn't perform a submit action and so
+	# these extra parameters are passed so that if an instructor stops
+	# acting the current studentID, setID and problemID will be maintained
+
+	my $extraStopActingParams;
+	$extraStopActingParams->{studentUser} = $r->param('studentUser');
+	$extraStopActingParams->{setID} = $r->param('setID');
+	$extraStopActingParams->{problemID} = $r->param('problemID');
+	$r->{extraStopActingParams} = $extraStopActingParams;
+
 }
 
 
@@ -62,6 +73,7 @@ sub body {
 	my $studentUser   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
 	
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
+
 	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
 
 	
@@ -98,6 +110,11 @@ sub body {
 	    $studentUser = $user;
 	}
 
+	return CGI::span({class=>'ResultsWithError'}, 'You must provide
+			    a student ID, a set ID, and a problem number.')
+	    unless defined($studentUser)  && defined($setName) 
+	    && defined($problemNumber);
+	    
 	my @pastAnswerIDs = $db->listProblemPastAnswers($courseName, $studentUser, $setName, $problemNumber);
 
 	print CGI::start_table({id=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
@@ -162,6 +179,7 @@ sub showHTML {
     $string =~ s/&/\&amp;/g;
     $string =~ s/</\&lt;/g;
     $string =~ s/>/\&gt;/g;
+    $string =~ s/\n/<br>/g;
     $string =~ s/\000/,/g;  # anyone know why this is here?  (I didn't add it -- dpvc)
     $string;
 }

@@ -12,7 +12,6 @@ my @applicationsList = qw(
 	latex
 	pdflatex
 	dvipng
-	tth
 	giftopnm
 	ppmtopgm
 	pnmtops

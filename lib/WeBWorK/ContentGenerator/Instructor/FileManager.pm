@@ -66,7 +66,7 @@ sub pre_header_initialize {
 	return unless $authz->hasPermissions($user, "manage_course_files");
 	
 	my $action = $r->param('action');
-	$self->Download if ($action && $action eq 'Download');
+	$self->Download if ($action && ($action eq 'Download' || $action eq $r->maketext("Download")));
 	my $file = $r->param('download');
 	$self->downloadFile($file) if (defined $file);
 	my $ce = $r->ce;
@@ -143,32 +143,57 @@ sub body {
 	$self->{courseRoot} = $courseRoot;
 	$self->{courseName} = $courseName;
 
+	#
+	#replaced by a list of if/elsif because the translation didn't recognize the translated actions.
+	#
 	my $action = $r->param('action') || $r->param('formAction') || $r->param("confirmed") || 'Init';
-
-	for ($action) {
-		/^Refresh/i    and do {$self->Refresh; last};
-		/^Cancel/i     and do {$self->Refresh; last};
-		/^\^/i         and do {$self->ParentDir; last};
-		/^Directory/i  and do {$self->Go; last};
-		/^Go/i         and do {$self->Go; last};
-		/^View/i       and do {$self->View; last};
-		/^Edit/i       and do {$self->Edit; last};
-		/^Download/i   and do {$self->Refresh; last};
-		/^Copy/i       and do {$self->Copy; last};
-		/^Rename/i     and do {$self->Rename; last};
-		/^Delete/i     and do {$self->Delete; last};
-		/^Make/i       and do {$self->MakeArchive; last};
-		/^Unpack/i     and do {$self->UnpackArchive; last};
-		/^New Folder/i and do {$self->NewFolder; last};
-		/^New File/i   and do {$self->NewFile; last};
-		/^Upload/i     and do {$self->Upload; last};
-		/^Revert/i     and do {$self->Edit; last};
-		/^Save As/i    and do {$self->SaveAs; last};
-		/^Save/i       and do {$self->Save; last};
-		/^Init/i       and do {$self->Init; last};
-		$self->addbadmessage("Unknown action.");
-		$self->Refresh;
+	#$self->addgoodmessage("|$action|");
+	if($action eq "Refresh" 	|| $action eq $r->maketext("Refresh")) {$self->Refresh;}
+	elsif($action eq "Cancel" 	|| $action eq $r->maketext("Cancel")) {$self->Refresh;} 
+	elsif($action eq "Directory"|| $action eq $r->maketext("Directory")) {$self->Go;} 
+	elsif($action eq "Go" 		|| $action eq $r->maketext("Go")) {$self->Go;} 
+	elsif($action eq "View" 	|| $action eq $r->maketext("View")) {$self->View;} 
+	elsif($action eq "Edit" 	|| $action eq $r->maketext("Edit")) {$self->Edit;} 
+	elsif($action eq "Download" 	|| $action eq $r->maketext("Download")) {$self->Refresh;} 
+	elsif($action eq "Copy" 	|| $action eq $r->maketext("Copy")) {$self->Copy;} 
+	elsif($action eq "Rename" 	|| $action eq $r->maketext("Rename")) {$self->Rename;} 
+	elsif($action eq "Delete" 	|| $action eq $r->maketext("Delete")) {$self->Delete;} 
+	elsif($action eq "Make Archive" || $action eq $r->maketext("Make Archive")) {$self->MakeArchive;} 
+	elsif($action eq "Unpack" 	|| $action eq $r->maketext("Unpack")) {$self->UnpackArchive;} 
+	elsif($action eq "New Folder"	|| $action eq $r->maketext("New Folder")) {$self->NewFolder;} 
+	elsif($action eq "New File" 	|| $action eq $r->maketext("New File")) {$self->NewFile;} 
+	elsif($action eq "Upload" 	|| $action eq $r->maketext("Upload")) {$self->Upload;} 
+	elsif($action eq "Revert" 	|| $action eq $r->maketext("Revert")) {$self->Edit;} 
+	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
+	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
+	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
+	elsif($action eq "^"        || $action eq $r->maketext("\\")) {$self->ParentDir;} 
+	else {
+	  $self->addbadmessage("Unknown action");
+	  $self->Refresh;
 	}
+	#for ($action) {
+#		/^Refresh/i    and do {$self->Refresh; last};
+#		/^Cancel/i     and do {$self->Refresh; last};
+#		/^\^/i         and do {$self->ParentDir; last};
+#		/^Directory/i  and do {$self->Go; last};
+#		/^Go/i         and do {$self->Go; last};
+#		/^View/i       and do {$self->View; last};
+#		/^Edit/i       and do {$self->Edit; last};
+#		/^Download/i   and do {$self->Refresh; last};
+#		/^Copy/i       and do {$self->Copy; last};
+#		/^Rename/i     and do {$self->Rename; last};
+#		/^Delete/i     and do {$self->Delete; last};
+#		/^Make/i       and do {$self->MakeArchive; last};
+#		/^Unpack/i     and do {$self->UnpackArchive; last};
+#		/^New Folder/i and do {$self->NewFolder; last};
+#		/^New File/i   and do {$self->NewFile; last};
+#		/^Upload/i     and do {$self->Upload; last};
+#		/^Revert/i     and do {$self->Edit; last};
+#		/^Save As/i    and do {$self->SaveAs; last};
+#		/^Save/i       and do {$self->Save; last};
+#		/^Init/i       and do {$self->Init; last};
+	#}
     if ($r->param('archiveCourse') ) {
          my %options = %{$self->{archive_options}};
         my $courseID = $options{courseID};
@@ -212,6 +237,7 @@ sub HiddenFlags {
 #
 sub Refresh {
  	my $self = shift;
+	my $r = $self->r;
 	my $pwd = shift || $self->{pwd};
 	my $isTop = $pwd eq '.' || $pwd eq '';
 
@@ -260,7 +286,7 @@ sub Refresh {
 		}
 		function checkArchive(files,disabled) {
 			var button = document.getElementById('MakeArchive');
-			button.value = 'Make Archive';
+			//button.value = 'Make Archive';
 			if (disabled) return;
 			if (!files.childNodes[files.selectedIndex].value.match(/\\.(tar|tar\\.gz|tgz)\$/)) return;
 			for (var i = files.selectedIndex+1; i < files.length; i++)
@@ -293,7 +319,7 @@ EOF
 			-name => 'dates',
 			-checked => $self->getFlag('dates'),
 			-value => 1,
-			-label => 'Show Date & Size',
+			-label => $r->maketext('Show Date & Size'),
 			-onClick => 'doForm("Refresh")',
 		))),
 	);
@@ -318,17 +344,17 @@ EOF
 		CGI::td({},
 			CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3}),
 			CGI::Tr([
-				CGI::td(CGI::input({%button,value=>"View",id=>"View"})),
-				CGI::td(CGI::input({%button,value=>"Edit",id=>"Edit"})),
-				CGI::td(CGI::input({%button,value=>"Download",id=>"Download"})),
-				CGI::td(CGI::input({%button,value=>"Rename",id=>"Rename"})),
-				CGI::td(CGI::input({%button,value=>"Copy",id=>"Copy"})),
-				CGI::td(CGI::input({%button,value=>"Delete",id=>"Delete"})),
-				CGI::td(CGI::input({%button,value=>"Make Archive",id=>"MakeArchive"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("View"),id=>"View"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Edit"),id=>"Edit"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Download"),id=>"Download"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Rename"),id=>"Rename"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Copy"),id=>"Copy"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Delete"),id=>"Delete"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Make Archive"),id=>"MakeArchive"})),
 				CGI::td({height=>10}),
-				CGI::td(CGI::input({%button,value=>"New File"})),
-				CGI::td(CGI::input({%button,value=>"New Folder"})),
-				CGI::td(CGI::input({%button,value=>"Refresh"})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("New File")})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("New Folder")})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Refresh")})),
 			]),
 			CGI::end_table(),
 		),
@@ -340,11 +366,11 @@ EOF
 	print CGI::Tr([
 		CGI::td(),
 		CGI::td({colspan=>3},
-		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>"Upload:",id=>"Upload"}),
+		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>$r->maketext("Upload"),id=>"Upload"}),
 		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
 		  CGI::br(),
 		  CGI::small(join(' &nbsp; ',"Format:",
-		    CGI::radio_group(-name=>'format', -value=>['Text','Binary','Automatic'],
+		    CGI::radio_group(-name=>'format', -value=>[$r->maketext('Text'),$r->maketext('Binary'),$r->maketext('Automatic')],
 				     -default=>$self->getFlag('format','Automatic')))),
 		),
 	]);
@@ -352,12 +378,12 @@ EOF
 		CGI::td(),
 		CGI::td({colspan=>3},
 		  CGI::small(CGI::checkbox(-name=>'overwrite',-checked=>$self->getFlag('overwrite'),-value=>1,
-					   -label=>'Overwrite existing files silently')),
+					   -label=>$r->maketext('Overwrite existing files silently'))),
 		  CGI::br(),
 		  CGI::small(CGI::checkbox(-name=>'unpack',-checked=>$self->getFlag('unpack'),-value=>1,
-					   -label=>'Unpack archives automatically')),
+					   -label=>$r->maketext('Unpack archives automatically'))),
 		  CGI::small(CGI::checkbox(-name=>'autodelete',-checked=>$self->getFlag('autodelete'),-value=>1,
-					   -label=>'then delete them')),
+					   -label=>$r->maketext('then delete them'))),
 		),
 	]);
 
@@ -527,7 +553,6 @@ sub RefreshEdit {
 	my $name = "$pwd/$file"; $name =~ s!^\./?!!;
 
 	my %button = (type=>"submit",name=>"action",style=>"width:6em");
-	print $self->mathview_scripts();
 
 	print CGI::p();
 	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});
@@ -539,7 +564,7 @@ sub RefreshEdit {
 			CGI::input({%button,value=>"Cancel"}),"&nbsp;",
 			CGI::input({%button,value=>"Revert"}),"&nbsp;",
 			CGI::input({%button,value=>"Save"}),,"&nbsp;",
-			CGI::input({%button,value=>"Save As:"}),
+			CGI::input({%button,value=>"Save As"}),
 			CGI::input({type=>"text",name=>"name",size=>20,style=>"width:50%"}),
 		),
 	]);
@@ -554,6 +579,7 @@ sub RefreshEdit {
 #
 sub Copy {
 	my $self = shift;
+	my $r = $self->r;	
         my $dir = "$self->{courseRoot}/$self->{pwd}";
 	my $original = $self->getFile('copy'); return unless $original;
 	my $oldfile = "$dir/$original";
@@ -575,7 +601,7 @@ sub Copy {
 		}
 	}
 
-	$self->Confirm("Copy file as:",$original,"Copy");
+	$self->Confirm($r->maketext("Copy file as:"),$original,"Copy");
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -585,6 +611,7 @@ sub Copy {
 #
 sub Rename {
 	my $self = shift;
+	my $r = $self->r;	
         my $dir = "$self->{courseRoot}/$self->{pwd}";
 	my $original = $self->getFile('rename'); return unless $original;
 	my $oldfile = "$dir/$original";
@@ -599,7 +626,7 @@ sub Rename {
 		}
 	}
 
-	$self->Confirm("Rename file as:",uniqueName($dir,$original),"Rename");
+	$self->Confirm($r->maketext("Rename file as:"),uniqueName($dir,$original),"Rename");
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -609,6 +636,7 @@ sub Rename {
 #
 sub Delete {
 	my $self = shift;
+	my $r = $self->r;	
 	my @files = $self->r->param('files');
 	if (scalar(@files) == 0) {
 		$self->addbadmessage("You must select at least one file to delete");
@@ -678,14 +706,14 @@ sub Delete {
 		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
 		print CGI::Tr(
 			CGI::td(
-			  CGI::b("Warning:")," You have requested that the following items be deleted\n",
+			  CGI::b($r->maketext("Warning:")),$r->maketext(" You have requested that the following items be deleted"),
 			  CGI::ul(CGI::li(\@filelist)),
 			    ((grep { -d "$dir/$_" } @files)?
-					 CGI::p({style=>"width:500"},"Some of these files are directories. ",
+					 CGI::p({style=>"width:500"},$r->maketext("Some of these files are directories. ",
 									"Only delete directories if you really know what you are doing. ",
-									"You can seriously damage your course if you delete the wrong thing."): ""),
-			  CGI::p({style=>"color:red"},"There is no undo for deleting files or directories!"),
-			  CGI::p("Really delete the items listed above?"),
+									"You can seriously damage your course if you delete the wrong thing.")): ""),
+			  CGI::p({style=>"color:red"},$r->maketext("There is no undo for deleting files or directories!")),
+			  CGI::p($r->maketext("Really delete the items listed above?")),
 			  CGI::div({style=>"float:left; padding-left:3ex"},
 			    CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
 			  CGI::div({style=>"float:right; padding-right:3ex"},
@@ -706,6 +734,7 @@ sub Delete {
 #
 sub MakeArchive {
 	my $self = shift;
+	my $r = $self->r;
 	my @files = $self->r->param('files');
 	if (scalar(@files) == 0) {
 		$self->addbadmessage("You must select at least one file for the archive");
@@ -719,7 +748,8 @@ sub MakeArchive {
 	@files = readpipe $tar." 2>&1";
 	if ($? == 0) {
 		my $n = scalar(@files); my $s = ($n == 1? "": "s");
-		$self->addgoodmessage("Archive '$archive' created successfully ($n file$s)");
+		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([_2] file[_3])",$archive, $n, $s));
+		#$self->addgoodmessage("Archive '$archive' created successfully ($n file$s)");
 	} else {
 		$self->addbadmessage("Can't create archive '$archive': command returned ".systemError($?));
 	}
@@ -763,6 +793,7 @@ sub unpack {
 #
 sub NewFile {
 	my $self = shift;
+	my $r = $self->r;
 
 	if ($self->r->param('confirmed')) {
 		my $name = $self->r->param('name');
@@ -776,7 +807,7 @@ sub NewFile {
 		}
 	}
 
-	$self->Confirm("New file name:","","New File");
+	$self->Confirm($r->maketext("New file name:"),"","New File");
 }
 
 ##################################################
@@ -785,6 +816,7 @@ sub NewFile {
 #
 sub NewFolder {
 	my $self = shift;
+	my $r = $self->r;
 
 	if ($self->r->param('confirmed')) {
 		my $name = $self->r->param('name');
@@ -796,7 +828,7 @@ sub NewFolder {
 		}
 	}
 
-	$self->Confirm("New folder name:","","New Folder");
+	$self->Confirm($r->maketext("New folder name:"),"","New Folder");
 }
 
 ##################################################
@@ -805,6 +837,7 @@ sub NewFolder {
 #
 sub Download {
 	my $self = shift;
+	my $r = $self->r;	
 	my $pwd = $self->checkPWD($self->r->param('pwd') || HOME);
 	return unless $pwd;
 	my $filename = $self->getFile("download"); return unless $filename;
@@ -822,6 +855,7 @@ sub Download {
 #
 sub Upload {
 	my $self = shift;
+	my $r = $self->r;
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
 	my $fileIDhash = $self->r->param('file');
 	unless ($fileIDhash) {
@@ -846,8 +880,9 @@ sub Upload {
 
 	if (-e "$dir/$name") {
 		unless ($self->r->param('overwrite') || $action eq "Overwrite") {
-			$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".
-				       CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			
+			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
 			print CGI::hidden({name=>"action",value=>"Upload"});
 			print CGI::hidden({name=>"file",value=>$fileIDhash});
 			return;

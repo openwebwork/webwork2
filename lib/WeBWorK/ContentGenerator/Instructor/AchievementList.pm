@@ -58,9 +58,9 @@ use DateTime;
 use constant BLANK_ACHIEVEMENT => "blankachievement.at";
 use constant DEFAULT_ENABLED_STATE => 0;
 
-use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
+use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(edit assign import export score create delete)];
-use constant EXPORT_FORMS => [qw(cancelExport saveExport)];
+use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
 use constant VIEW_FIELD_ORDER => [ qw( select enabled achievement_id category name users ) ];
 use constant EDIT_FIELD_ORDER => [ qw( icon achievement_id name category enabled points max_counter description icon_file test_file) ];
@@ -173,7 +173,7 @@ sub initialize {
 		}
 		my %actionParams = $self->getActionParams($actionID);
 		my %tableParams = $self->getTableParams();
-		$self->addmessage( CGI::div({class=>"Message"}, "Results of last action performed: "));
+		$self->addmessage( CGI::div("Results of last action performed: "));
 		$self->addmessage(
 		       $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams), 
 			       CGI::hr()
@@ -271,8 +271,9 @@ sub body {
 			   CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
 			   CGI::span({-class=>"radio_span"},  WeBWorK::CGI_labeled_input(-type=>"radio", 
 			   -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), 
-                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
-			    $self->$actionForm($onChange, %actionParams));
+                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),			       
+			       $self->$actionForm($onChange, %actionParams)
+		    );
 		
 		$i++;
 	}
@@ -506,7 +507,8 @@ sub score_form {
 			-onchange => $onChange,
 		),
 	);
-	
+
+
 }
 
 #handler for scoring
@@ -986,7 +988,7 @@ sub saveEdit_handler {
 	
 	$self->{editMode} = 0;
 	
-	return CGI::div({class=>"ResultsWithError"}, "changes saved" );
+	return CGI::div({class=>"ResultsWithoutError"}, "changes saved" );
 }
 
 ################################################################################
@@ -1299,9 +1301,9 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 
 	return "";
 }

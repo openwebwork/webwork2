@@ -417,7 +417,6 @@ sub environment {
 		dueDate=> '4014438528',
 		externalGif2EpsPath=>'not defined',
 		externalPng2EpsPath=>'not defined',
-		externalTTHPath=>'/usr/local/bin/tth',
 		fileName=>'set0/prob1a.pg',
 		formattedAnswerDate=>'6/19/00',
 		formattedDueDate=>'6/19/00',
