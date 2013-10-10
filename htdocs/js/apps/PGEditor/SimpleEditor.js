@@ -3,58 +3,33 @@
   
 */
 
-require.config({
-    paths: {
-        "Backbone":             "/webwork2_files/js/vendor/backbone/backbone",
-        "backbone-validation":  "/webwork2_files/js/vendor/backbone/modules/backbone-validation",
-        "jquery-ui":            "/webwork2_files/js/vendor/jquery/jquery-ui",
-        "underscore":           "/webwork2_files/js/vendor/underscore/underscore",
-        "jquery":               "/webwork2_files/js/vendor/jquery/jquery",
-        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
-        "WebPage":              "/webwork2_files/js/lib/views/WebPage",
-        "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/views/Closeable",
-        "XDate":                "/webwork2_files/js/vendor/other/xdate"        
-    },
-
- //paths: {
- //       "Backbone":             "../../../js/lib/vendor/backbone",
- //       "backbone-validation":  "../../../js/lib/vendor/backbone-validation",
- //       "jquery-ui":            "../../../js/lib/vendor/jquery-ui",
- //       "underscore":           "../../../js/lib/vendor/underscore/underscore",
- //       "jquery":               "../../../js/lib/vendor/jquery/jquery",
- //       "bootstrap":            "../../../js/lib/vendor/bootstrap/js/bootstrap",
- //       "util":                 "../../../js/lib/webwork/util",
- //       "XDate":                "../../../js/lib/vendor/xdate",
- //       "WebPage":              "../../../js/lib/webwork/views/WebPage",
- //       "config":               "../../../js/apps/config",
- //       "Closeable":            "../../../js/lib/webwork/views/Closeable"
- //   },
-
-urlArgs: "bust=" +  (new Date()).getTime(),
-    waitSeconds: 15,
-    shim: {
-        'jquery-ui': ['jquery'],
-        'underscore': { exports: '_' },
-        'Backbone': { deps: ['underscore', 'jquery'], exports: 'Backbone'},
-        'bootstrap':['jquery'],
-        'backbone-validation': ['Backbone'],
-        'XDate':{ exports: 'XDate'},
-        'config': ['XDate']
-        }
-});
 
 require(['Backbone', 
     'underscore',
     'WebPage',
     '../../lib/views/LibraryTreeView',
+    '../../lib/models/PGProblem',
+    '../../lib/models/Problem',
+    '../../lib/models/ProblemList',
+    '../../lib/views/ProblemView',
+    '../../lib/views/WWSettingsView',
+    '../../lib/models/Settings',
     'bootstrap'
     ], 
-function(Backbone, _,WebPage,LibraryTreeView){
+function(Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemList,ProblemView,WWSettingsView,Settings){
     var SimpleEditorView = WebPage.extend({
         initialize: function() {
             this.constructor.__super__.initialize.apply(this, {el: this.el});
-            this.render();
+            _.bindAll(this,"render","renderProblem","postSettingsFetched");
+            this.problem = new PGProblem();
+            this.model = new Problem();
+            var urlSplit = location.href.split("/");
+            var index = _(urlSplit).indexOf("SimplePGEditor");
+            this.setInfo = {name: urlSplit[index+1], number: urlSplit[index+2] };
+            this.problem.on("saveSuccess",this.renderProblem);
+            this.settings = new Settings();  // need to get other settings from the server.  
+            this.settings.fetch();
+            this.settings.on("fetchSuccess",this.postSettingsFetched);
 
         },
         render: function (){
@@ -63,10 +38,24 @@ function(Backbone, _,WebPage,LibraryTreeView){
             this.libraryTreeView.render();
             this.$("#author-info-container").html($("#author-info-template").html());
             this.$("#textbook-info-container").html($("#textbook-info-template").html());
+            this.editorSettingsView.render();
         },
         events: {"click #build-script": "buildScript",
-            "change #answerType-select": "changeAnswerType"},
-            
+            "change #answerType-select": "changeAnswerType",
+            "click #testSave": "saveFile"},
+        renderProblem: function(){
+          console.log("rendering the problem");
+          this.model.set("path",this.problem.get("path"));
+          this.showProblemView = new ShowProblemView({model: this.model, el: $("#viewer-tab")});
+          this.showProblemView.render();
+          this.$("a[href='#viewer-tab']").tab("show");
+
+        },
+        postSettingsFetched: function(){
+            this.editorSettingsView = new EditorSettingsView({el: $("#settings-tab"), settings: this.settings});
+            console.log(this.settings);
+            this.render();
+        },
         changeAnswerType: function(evt){
 
             var type = $(evt.target).find("option:selected").data("type");
@@ -74,6 +63,12 @@ function(Backbone, _,WebPage,LibraryTreeView){
             this.answerType = new AnswerChoiceView({template: $(type+"-template"), el: $("#answerArea")});
             this.answerType.render(); 
         },        
+        saveFile: function(){
+            console.log("Saving the file");
+            this.problem.set("path","set"+this.setInfo.name+"/Problem" + this.setInfo.number + ".pg");
+            this.problem.save(this.buildScript());
+
+        },
         buildScript: function (){           
             var pgTemplate = _.template($("#pg-template").text())
               , inputProblemDescription = $("#ProblemDescription-input").val()
@@ -92,84 +87,37 @@ function(Backbone, _,WebPage,LibraryTreeView){
 
               , _type = $("#answerType-select option:selected").data("type")
               , _withUnits = $("#requireUnitsCheckBox").prop("checked")
-              , _variableList = $("#VariableList-input").val();
-
+              , _allowInterval = $("#allowIntervalCheckBox").prop("checked")
+              , _allowInequality = $("#allowInequalityCheckBox").prop("checked")
+              , _variableList = $("#VariableList-input").val()
+              , _inputExtraMultipleChoice = $("#ExtraMultipleChoice-input").val()
+              , _lastChoice = $("#LastChoice-input").val()
+              , _lastChoiceOption = $("#LastChoiceCheckBox").prop("checked")
+              , _extraChoiceString;
+            if(_inputExtraMultipleChoice){
+              var _extraChoiceString = _inputExtraMultipleChoice.split(",").join('","');
+            };
             if(_variableList){
                var _variables = _variableList.split(",").join("=>Real,")+"=>Real"; 
-            }
+            };
 
 
-            var _setupSection = _.template($(_type + "-pg-setup").text(),{answer: inputAnswer, withUnits: _withUnits, 
-                        variables: _variables})
-              , _textSection = _.template($(_type + "-pg-text").text(),{problemStatement: inputProblemStatement})
+            var _setupSection = _.template($(_type + "-pg-setup").text(),{
+                        answer: inputAnswer
+                        , withUnits: _withUnits
+                        , problemStatement: inputProblemStatement
+                        , allowInterval: _allowInterval
+                        , allowInequality: _allowInequality
+                        , variables: _variables
+                        , extraChoiceString: _extraChoiceString
+                        , lastChoice: _lastChoice
+                        , lastChoiceOption: _lastChoiceOption})
+              , _textSection = _.template($(_type + "-pg-text").text(),{
+                        problemStatement: inputProblemStatement
+                        , allowInterval: _allowInterval
+                        , allowInequality: _allowInequality})
               , _answerSection = _.template($(_type + "-pg-answer").text(),{});            
 
-
-            /* if (answer_type == "Number") {
-                if ($("#requireUnitsCheckBox").prop("checked")){
-                    _setupSection = "Context(\"Numeric\");\n \n$answer = NumberWithUnits(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"numbers\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-     
-                } else {
-                    _setupSection = "Context(\"Numeric\");\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"numbers\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-                }
-            } else if (answer_type == "String") {
-                _setupSection = "Context(\"Numeric\");\nContext()->strings->add(\""+inputAnswer+"\"=>{});\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"numbers\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                _answerSection = "ANS($answer->cmp);";
-            } else if (answer_type == "Formula") {
-                if ($("#requireUnitsCheckBox").prop("checked")){
-                    var inputVariableList = $("#VariableList-input").val();
-                    var VariableListArray = inputVariableList.split(",");
-                    var VariableListString = "Context()->variables->are(";
-                    VariableListString = VariableListArray.join('=>\"Real\",\n');
-                    _setupSection = "Context(\"Numeric\");\nContext()->variables->are("+VariableListString+"=>\"Real\");"+" \n$answer = FormulaWithUnits(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"formulas\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-                } else {
-                    var inputVariableList = $("#VariableList-input").val();
-                    var VariableListArray = inputVariableList.split(",");
-                    var VariableListString = "Context()->variables->are(";
-                    VariableListString = VariableListArray.join('=>\"Real\",\n');
-                    _setupSection = "Context(\"Numeric\");\nContext()->variables->are("+VariableListString+"=>\"Real\");"+" \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"formulas\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-                }
-            } else if (answer_type == "Interval or Inequality") {
-                if ($("#allowIntervalCheckBox").prop("checked") && !$("#allowInequalityCheckBox").prop("checked")){
-                    _setupSection = "Context(\"Interval\");\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"interval\")\\}\n\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";                    
-                } else if (!$("#allowIntervalCheckBox").prop("checked") && $("#allowInequalityCheckBox").prop("checked")){
-                    _setupSection = "Context(\"Inequalities-Only\");\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"inequalities\")\\}$BR\n\nNote:  Use NONE for the empty set.\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-                } else {
-                    _setupSection = "Context(\"Inequalities\");\n \n$answer = Compute(\" ".concat(inputAnswer).concat("\");");
-                    _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"inequalities\")\\}$BR\n\nNote:  Use NONE or {} for the empty set.\nEND_TEXT\nContext()->normalStrings;");
-                    _answerSection = "ANS($answer->cmp);";
-
-                }
-            } else if (answer_type == "Comma Separated List of Values") {
-                _setupSection = "Context(\"Numeric\");\n \n$answer = List(\" ".concat(inputAnswer).concat("\");");
-                _textSection = "Context()->texStrings;\nBEGIN_TEXT \n ".concat(inputProblemStatement).concat("$BR $BR\nAnswer:\\{ans_rule(55)\\} \\{AnswerFormatHelp(\"numbers\")\\}\n$BR\nEnter answers as a comma separated list.\nEND_TEXT\nContext()->normalStrings;");
-                _answerSection = "ANS($answer->cmp);";
-            } else if (answer_type == "Multiple Choice") {
-                var inputExtraMultipleChoice = $("#ExtraMultipleChoice-input").val();
-                var ExtraChoiceArray = inputExtraMultipleChoice.split(",");
-                var inputLastChoice = $("#LastChoice-input").val();
-                var LastChoiceString = "";
-                if ($("#LastChoiceCheckBox").prop("checked")){
-                LastChoiceString = "$mc->makeLast(\""+inputLastChoice+"\");"
-                };
-                ExtraChoiceString = ExtraChoiceArray.join('","');         
-                _setupSection = "$mc = new_multiple_choice();\n$mc->qa(\"".concat(inputProblemStatement).concat("\",\"").concat(inputAnswer).concat("\");\n$mc->extra(\"").concat(ExtraChoiceString).concat("\");\n").concat(LastChoiceString);
-                _textSection = "Context()->texStrings;\nBEGIN_TEXT \n\\{$mc->print_q()\\}\n$BR\n\\{$mc->print_a()\\}\nEND_TEXT\nContext()->normalStrings;";
-                _answerSection = "ANS(radio_cmp($mc->correct_ans()));";
-            } */
 
             var fields = {ProblemDescription:inputProblemDescription,
                                   DBsubject:$("#DBsubject-select option:selected").val(),
@@ -192,8 +140,37 @@ function(Backbone, _,WebPage,LibraryTreeView){
                
             $("#problem-code").text(pgTemplate(fields));
             
+            return pgTemplate(fields);
           
         }
+    });
+
+    var ShowProblemView = Backbone.View.extend({
+        initialize: function() {
+          _.bindAll(this,'render');
+          this.model.set("data","");
+          this.collection = new ProblemList();  // this is done as a hack b/c Problem View assumes that all problems 
+                                                // are in a ProblemList. 
+          this.collection.add(this.model);
+          problemViewAttrs = {reorderable: false, showPoints: false, showAddTool: false, showEditTool: false,
+                    showRefreshTool: false, showViewTool: false, showHideTool: false, deletable: false, draggable: false};
+          this.problemView = new ProblemView({model: this.model, viewAttrs: problemViewAttrs});
+        },
+        render: function (){
+            this.$(".problemList").html("").append(this.problemView.render().el);
+        }
+    });
+
+    var EditorSettingsView = WWSettingsView.extend({
+        initialize: function () {
+            _.bindAll(this,'render');
+            this.settings = this.options.settings.filter(function (setting) {return setting.get("category")==='Editor'});
+            this.constructor.__super__.initialize.apply(this,{settings: this.settings});
+         }, 
+         render: function () {
+            //$("#settings").html(_.template($("#settings-template").html()));
+            this.constructor.__super__.render.apply(this);
+         }
     });
 
     var AnswerChoiceView = Backbone.View.extend({

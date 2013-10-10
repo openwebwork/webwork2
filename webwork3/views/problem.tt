@@ -1,0 +1,46 @@
+<h4>Course: [% course_id %], Set: [% set_id %]</h4>
+
+<div id="problem-viewer"></div>
+
+<script src="/webwork2_files/js/apps/require-config.js"></script>
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type='text/javascript'> 
+	require.config = { 'ProblemViewer': {problems: [% problems %], userSet: [% user_set %],
+	course_id: "[%course_id%]", set_id: "[%set_id%]", user: "[% user%]" }};
+</script>
+<script data-main="/webwork2_files/js/apps/ProblemViewer/ProblemViewer" src="/webwork2_files/js/components/requirejs/require.js">
+</script>
+
+
+<script type="text/template" id="problem-template">
+<%= data %>
+
+</script>
+
+<script type="text/template" id="problem-list-template">
+<div class="btn-group problem-button-list">
+<% problems.each(function(problem){
+	print("<button class='btn problem-button'>" + problem.get("problem_id") + "</button>");
+}); %>
+</div>
+<ul style="list-style: none"></ul>
+<div class="btn-group">
+<button class="btn show-past-answers-btn">Show Past Answers</button>
+</div>
+<div id="show-past-answers"></div>
+</script>
+
+<script type="text/template" id="past-answer-list-template">
+<table class='table table-bordered past-answer-table'>
+<thead>
+<th>Date/Time</th><th>Answers</th>
+</thead>
+<tbody></tbody>
+</table>
+
+</script>
+
+<script type="text/template" id="past-answer-template">
+<td class="answer_date show-datetime"></td><td class="answer"></td>
+</script>
+

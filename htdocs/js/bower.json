@@ -1,0 +1,36 @@
+{
+  "name": "WeBWorK",
+  "version": "develop",
+  "main": "/stylesheets/style.css",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components"
+  ],
+  "dependencies": {
+    
+    "jquery-1.8": "jquery#1.8.*",
+    "jquery": "latest",
+
+    "jquery-ui": "latest",
+    "requirejs": "latest",
+
+    "bootstrap-2": "bootstrap#2.*",
+    "bootstrap": "latest",
+
+    "backbone": "latest",
+    "backbone-validation-0.7.1": "backbone-validation#0.7",
+    "backbone-validation": "latest",
+    
+    "moment": "latest",
+    
+    "backbone.stickit": "latest",
+    
+    "jquery-truncate": "git://github.com/tbasse/jquery-truncate.git",
+    "font-awesome": "latest",
+    "imagesloaded": "latest",
+    "editablegrid": "https://github.com/downloads/webismymind/editablegrid/editablegrid-2.0.1.tar.gz",
+    "underscore-1.4.4": "underscore#1.4.4",
+    "underscore": "latest"
+  }
+}

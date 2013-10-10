@@ -1,0 +1,25 @@
+#!/bin/bash
+
+
+# This is a test of the Webwork RESTful webservice
+#
+# This document tests the User routes. 
+#
+# First, make sure that you have a user with instructor priviledges and a valid session key for a course
+
+INSTR=profa
+KEY=u2yz2WWv51VF8PKyZRb6tUV5QUoIRg4x
+COURSE=maa101
+
+echo "Testing GET /users/$INSTR/courses/$COURSE/sets"
+
+curl -X GET -d "user=$INSTR&course=$COURSE&session_key=$KEY" http://localhost/test/users/$INSTR/courses/$COURSE/sets
+
+echo "TESTING POST /courses/:course_id/users/:user_id"
+
+NEW_USER_FIRSTNAME=Fred
+NEW_USER_LASTNAME=Flintstone
+NEW_USER_STUDENTID=123456
+NEW_USER_EMAIL=fred@msn.com
+
+curl -X POST -d "user=$INSTR&course=$COURSE&session_key=$KEY&first_name=$NEW_USER_FIRSTNAME&last_name=$NEW_USER_LASTNAME&student_id=$NEW_USER_STUDENTID&email_address=$NEW_USER_EMAIL" http://localhost/test/courses/$COURSE/users/fred

@@ -69,7 +69,7 @@ define(['Backbone', 'underscore', './LibraryView'], function(Backbone, _, Librar
         lib_selected:function (event) {
             var self = this;
             self.$el.removeClass("syncing white");
-            var selectedLib = this.model.getByCid(event.target.value);
+            var selectedLib = this.model.get(event.target.value);
             if(selectedLib){
                 var view = new LibraryListView({model:selectedLib.get('children'), name: selectedLib.cid});
                 this.$('.'+this.options.name+".children").html(view.render().el);

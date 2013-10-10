@@ -1,0 +1,33 @@
+DOCUMENT();
+
+# Load whatever macros you need for the problem
+loadMacros("PG.pl",
+           "PGbasicmacros.pl",
+           "PGchoicemacros.pl",
+           "PGanswermacros.pl",
+           "PGauxiliaryFunctions.pl",
+           "PGgraphmacros.pl",
+          );
+ 
+## Do NOT show partial correct answers
+$showPartialCorrectAnswers = 0;
+
+BEGIN_TEXT
+$BR
+
+
+Give 4 or 5  significant digits for (floating point) numerical answers.
+For most problems when entering numerical answers, you can if you wish
+enter elementary expressions such as \( 2\wedge3 \) instead of 8, \( sin(3*pi/2)
+\)instead
+of -1, \( e\wedge (ln(2)) \) instead of 2,
+\( (2+tan(3))*(4-sin(5))\wedge6-7/8 \) instead of 27620.3413, etc.
+
+Here's the 
+\{
+htmlLink(qq!http://webwork.math.rochester.edu/webwork_system_html/docs/docs/pglanguage/availablefunctions.html!,"list of the functions") \}
+which WeBWorK understands.
+$PAR
+END_TEXT
+
+ENDDOCUMENT();
