@@ -11,12 +11,16 @@ use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 
+our $PERMISSION_ERROR = "You don't have the necessary permissions.";
+
 ##
 #  use this to fill the _past_answer database from answer_log
 #
 #  pstaab: this isn't robust right now.  
 
 get '/courses/:course_id/pastanswers/database' => sub {
+
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
 	my $answerLog = vars->{ce}->{webworkDirs}{courses} ."/" . params->{course_id} . "/logs/answer_log";
 
@@ -60,7 +64,10 @@ get '/courses/:course_id/pastanswers/database' => sub {
 
 get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers' => sub {
 
-	my @answerIDs = vars->{db}->listProblemPastAnswers(params->{course_id},params->{user_id},params->{set_id},params->{problem_id});
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+
+	my @answerIDs = vars->{db}->listProblemPastAnswers(params->{course_id},params->{user_id},
+									params->{set_id},params->{problem_id});
 
 	my @pastAnswers = vars->{db}->getPastAnswers(\@answerIDs);
 

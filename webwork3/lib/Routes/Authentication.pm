@@ -16,7 +16,6 @@ any ['get','put','post','del'] => '/**' => sub {
 	
 	debug "In uber route";
 
-	checkRoutePermissions();
 	authenticate();
 
 	pass;
@@ -39,8 +38,8 @@ sub authenticate {
 	}
 
 	if (! defined(session->{course})) {
-		if (defined(params->{course})) {
-			session->{course} = params->{course};
+		if (defined(params->{course_id})) {
+			session->{course} = params->{course_id};
 		} else {
 			send_error("The course has not been defined.  You may need to authenticate again",401);	
 		}
@@ -73,13 +72,5 @@ sub authenticate {
 		my $permission = database->quick_select(session->{course}.'_permission', { user_id => session->{user} });
 		session->{permission} = $permission->{permission};		
 	}
-
-}
-
-sub checkRoutePermissions {
-
-	debug "Checking Route Permissions";
-
-	debug request->path;
 
 }

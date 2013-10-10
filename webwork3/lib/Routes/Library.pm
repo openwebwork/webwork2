@@ -30,7 +30,7 @@ get '/Library/subjects' => sub {
 	my $file = "$webwork_htdocs/DATA/library-subject-tree.json";
 
 	my $json_text = do {
-   		open(my $json_fh, "<:encoding(UTF-8)", $file)  or return {error=>"The file $file does not exist."};
+   		open(my $json_fh, "<:encoding(UTF-8)", $file)  or send_error("The file $file does not exist.",404);
 	    local $/;
 	    <$json_fh>
 	};
@@ -184,7 +184,7 @@ get '/Library/directories' => sub {
 	my $file = "$webwork_htdocs/DATA/library-directory-tree.json";
 
 	my $json_text = do {
-   		open(my $json_fh, "<:encoding(UTF-8)", $file)  or return {error=>"The file $file does not exist."};
+   		open(my $json_fh, "<:encoding(UTF-8)", $file)  or send_error("The file $file does not exist.",404);
 	    local $/;
 	    <$json_fh>
 	};
@@ -297,7 +297,7 @@ get '/renderer/problems/:problem_id' => sub {
     if(0+(session 'permission') < 10) {  ### check that the user belongs to the course and set. 
 
     	if (! (vars->{db}->existsUser(session->{user_id}) &&  vars->{db}->existsUserSet(session->{user_id}, params->{set_id})))  { 
-    		return {error=>"You are a student and must be assigned to the set " . params->{set_id}};
+    		send_error("You are a student and must be assigned to the set " . params->{set_id},424);
     	}
 
     	# these should vary depending on number of attempts or due_date or ???
@@ -321,10 +321,11 @@ get '/renderer/problems/:problem_id' => sub {
 
 	if (defined(params->{set_id})) {  
 		if (!vars->{db}->existsUserSet($user->{user_id},params->{set_id})){
-			return {error=>"The user " . $user->{user_id} . " has not been assigned to set " . params->{set_id}};
+			send_error("The user " . $user->{user_id} . " has not been assigned to set " . params->{set_id},404);
 		}
 		if (!vars->{db}->existsUserProblem($user->{user_id},params->{set_id},params->{problem_id})){
-			return {error=>"The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id} . " for user " . $user->{user_id}};
+			send_error("The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id} 
+				. " for user " . $user->{user_id},404);
 		}
 
 		$problem =  vars->{db}->getMergedProblem($user->{user_id},params->{set_id},params->{problem_id});
@@ -476,12 +477,7 @@ get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
     ### The user is not a professor
 
-    debug session->{permission};
-
-    # the next line is a hack until the permissions is worked out better.
-    #session->{permission} = 10; 
-
-    if(0+(session 'permission') < 10) {  ### check that the user belongs to the course and set. 
+    if(session->{permission} < 10){  ### check that the user belongs to the course and set. 
 
     	if (! (vars->{db}->existsUser(param('user_id')) &&  vars->{db}->existsUserSet(param('user_id'), params->{set_id})))  { 
     		send_error("You are a student and must be assigned to the set " . params->{set_id},404);
@@ -503,10 +499,10 @@ get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 
 	if (!vars->{db}->existsGlobalSet(params->{set_id})){
-		return {error=>"The set " . params->{set_id} . " does not exist."};
+		send_error("The set " . params->{set_id} . " does not exist.",404);
 	}
 	if (!vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id})){
-		return {error=>"The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id}};
+		send_error("The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id},404);
 	}
 
 	my $globalProblem =  vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
