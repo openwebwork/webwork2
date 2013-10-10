@@ -15,7 +15,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         url: function () {
             // need to determine if this is a problem in a problem set or a problem from a library browser
             if(this.collection.setName) { // the problem comes from a problem set
-                return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.collection.setName 
+                return config.urlPrefix + "courses/" + config.courseSettings.course + "/sets/" + this.collection.setName 
                 + "/problems/" + this.get("problem_id");
             } else {
                 return config.urlPrefix;
@@ -29,7 +29,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         },
         loadHTML: function (success) {
             if (this.collection.setName){  // the problem is part of a set
-                $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
+                $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course + "/sets/" 
                     + this.collection.setName 
                     + "/problems/" + this.get("problem_id"),this.attributes, success);
             } else {  // it is being rendered from the library
@@ -39,7 +39,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         problemURL: function(){
             // console.log(this.attributes);
             if (this.collection.setName){  // the problem is part of a set
-                return config.urlPrefix + "renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
+                return config.urlPrefix + "renderer/courses/"+ config.courseSettings.course + "/sets/" 
                     + this.collection.setName 
                     + "/problems/" + this.get("problem_id") + "?" + $.param(this.attributes);
             } else {  // it is being rendered from the library
@@ -50,7 +50,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             console.log("in checkAnswers");
             var allAttributes = {};
             _.extend(allAttributes,answers);
-             $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.courseID + "/sets/" 
+             $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course + "/sets/" 
                     + this.collection.setName 
                     + "/problems/" + this.get("problem_id"),allAttributes, success);
         }

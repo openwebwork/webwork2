@@ -23,10 +23,13 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
     
     var config = {
         urlPrefix: "/webwork3/",
+
+        // This is temporary to get the handshaking set up to dancer. 
+        // in the future this should be taken care of with dancer
         courseSettings: {
             "session_key": $("#hidden_key").val(),
             "user": $("#hidden_user").val(),
-            "courseID": $("#hidden_courseID").val(),
+            "course_id": $("#hidden_courseID").val()
         },
         checkForError: function(response){
             if (response && response.error){

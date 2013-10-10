@@ -119,7 +119,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") ;
+            return config.urlPrefix + "courses/" + config.courseSettings.course + "/sets/" + this.get("set_id") ;
         },
         parse: function (response) {
             var self = this;
@@ -193,7 +193,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
 
         },
 /*        saveAssignedUsers: function(success){
-            $.ajax({url: config.urlPrefix+"courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") + "/users", 
+            $.ajax({url: config.urlPrefix+"courses/" + config.courseSettings.course + "/sets/" + this.get("set_id") + "/users", 
                     data: JSON.stringify({assigned_users: this.get("assigned_users"), set_id: this.get("set_id")}),
                     success: success,
                     type: "PUT",
