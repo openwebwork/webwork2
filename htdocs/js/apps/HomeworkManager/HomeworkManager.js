@@ -77,7 +77,8 @@ var HomeworkEditorView = WebPage.extend({
         var self = this; 
         this.problemSets.on("add", function (set){
             if (set.save()){
-                self.announce.addMessage({text: "Problem Set: " + set.get("set_id") + " has been added to the course."});
+                self.messagePane.addMessage({type: "success", short: "Set " + set.get("set_id") + " added.",
+                    text: "Problem Set: " + set.get("set_id") + " has been added to the course."});
                 self.probSetListView.render();
                 self.updateProblemSetList();
             }
@@ -86,7 +87,8 @@ var HomeworkEditorView = WebPage.extend({
 
         this.problemSets.on("remove", function(set){
             if(set.destroy()){
-                self.announce.addMessage({text: "Problem Set: " + set.get("set_id") + " has been removed from the course."});
+                self.messagePane.addMessage({type: "success", short: "Set " + set.get("set_id") + " removed.",
+                    text: "Problem Set: " + set.get("set_id") + " has been removed from the course."});
                 self.views.calendar.render();
                 self.updateProblemSetList();
             }
@@ -101,7 +103,8 @@ var HomeworkEditorView = WebPage.extend({
             _(_set.alteredAttributes).each(function(attr){
                     var _old = attr.attr.match(/date$/) ? moment.unix(attr.old_value).format("MM/DD/YYYY") : attr.old_value;
                     var _new = attr.attr.match(/date$/) ? moment.unix(attr.new_value).format("MM/DD/YYYY") : attr.new_value;
-                    self.announce.addMessage({text: "The value of " + attr.attr + " in problem set " 
+                    self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                        text: "The value of " + attr.attr + " in problem set " 
                         + _set.get("set_id") + " has changed from " + _old + " to " + _new});
                 });
             //self.updateCalendar();

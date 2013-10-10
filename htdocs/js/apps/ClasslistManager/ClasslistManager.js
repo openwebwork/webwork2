@@ -35,15 +35,17 @@ var ClasslistManager = WebPage.extend({
 	    this.collection.on('add',function(user){
 	    	self.editgrid.grid.append(user.cid, user.toJSON());
 	    	self.editgrid.updatePaginator();
-	    	self.announce.addMessage({text: "The user with id " + user.get("user_id") + " has been added."});
+	    	self.messagePane.addMessage({text: "The user with id " + user.get("user_id") + " has been added.",
+	    			type: "success", short: "User " + user.get("user_id") + " added."});
 	    });
 
 	    this.collection.on('sync',function(model, resp, options){
 	    	var msg = _(self.messages).findWhere({user_id: model.get("user_id")});
 	    	var index = _(self.messages).indexOf(msg);
 	    	self.messages.splice(index,1);
-	    	self.announce.addMessage({text: "The property " + msg.property + " of user " + model.get("user_id") + 
-	    		" changed from " + msg.oldValue + " to " + msg.newValue});
+	    	self.messagePane.addMessage({ short: "User " + model.get("user_id") + " changed",
+	    		text: "The property " + msg.property + " of user " + model.get("user_id") + 
+	    		" changed from " + msg.oldValue + " to " + msg.newValue, type: "success"});
 
 	    	var rowIndex = _(self.editgrid.grid.data).indexOf(_(self.editgrid.grid.data)
 				    						.find(function(row) { return row.columns[2]===model.get("user_id");}));
@@ -76,7 +78,7 @@ var ClasslistManager = WebPage.extend({
 			    console.log(errors);
 			    
 			    _(_.keys(errors)).each(function(key){
-				    self.errorPane.addMessage({text: errors[key]});
+				    self.messagePane.addMessage({text: errors[key],type: "error", short: "Validation Error"});
 				    var columnIndex = _(self.editgrid.grid.columns).indexOf(_(self.editgrid.grid.columns)
 				    						.findWhere({name: key}));
 				    var rowIndex = _(self.editgrid.grid.data).indexOf(_(self.editgrid.grid.data)
@@ -90,8 +92,7 @@ var ClasslistManager = WebPage.extend({
 	    // this is needed for the handshaking of session information between the old and new
 	    // webservice
 
-	    $.get(config.urlPrefix + "login?user=" + config.courseSettings.user+"&session_key="+config.courseSettings.session_key
-	    	+"&course="+config.courseSettings.courseID ,function(response){
+	    $.get(config.urlPrefix + "login?" + $.param(config.courseSettings) ,function(response){
 	    	console.log(response);
 	    });
 

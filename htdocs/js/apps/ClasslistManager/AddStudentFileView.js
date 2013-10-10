@@ -2,12 +2,11 @@
 
 define(['Backbone', 
 	'underscore',
-	'views/Closeable',
 	'models/User',
 	'models/UserList',
 	//'file-saver', 
 	'config',
-	'../../lib/util'], function(Backbone, _,Closeable,User,UserList,config,util){	
+	'../../lib/util'], function(Backbone, _,User,UserList,config,util){	
 	    var AddStudentFileView = Backbone.View.extend({
 		tagName: "div",
 		id: "addStudFileDialog",
@@ -36,7 +35,7 @@ define(['Backbone',
 		closeDialog: function () {this.$el.dialog("close");},
 		render: function(){
 		    var self = this;
-		    this.errorPane = new Closeable({id: "error-bar"});
+		    //this.errorPane = new Closeable({id: "error-bar"});
 		    this.errorPane.$el.addClass("alert-error");
 		    this.$el.html(this.errorPane.el);
 		    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.error is not working  this is a hack.

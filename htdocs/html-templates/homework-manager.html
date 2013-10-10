@@ -535,6 +535,9 @@ Search by</button>
 </div>
 </script>
 
+<!-- The templates to the bottom of this file should go in a general template that is
+        loaded by all files -->
+
 <!-- templates for the Backbone.Stickit handlers -->
 
 <script type="text/template" id="time-popover-template">
@@ -543,5 +546,14 @@ Search by</button>
 
 <script type="text/template" id="edit-date-time-template">
 <input class='wwdate' size='12' value='<%=date%>'><span class='open-time-editor'><i class='icon-time'></i></span>
+</script>
+
+
+<script type="text/template" id="message-pane-template">
+<div class='row-fluid'>
+    <div class='pull-right'><button type='button' class='close'>&times;</button></div>
+    <ul class='main-message-pane'></ul>
+</div>
+
 </script>
 

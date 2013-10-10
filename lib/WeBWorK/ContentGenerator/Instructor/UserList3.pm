@@ -116,6 +116,8 @@ sub initialize {
 	
 }
 
+sub name { return "Classlist Manager";}
+
 
 
 sub body {

@@ -24,4 +24,20 @@
 
 .current-page {font-weight: bold;}
 
+/* styling for the message box */
+
+#short-message {padding-top: 4px; padding-bottom: 4px; margin-top: 5px; line-height: 16px; display: none;}
+
+#message-pane {
+	position: absolute; 
+	width: 600px; 
+	height:	300px; 
+	top: 50px; 
+	right: 5px;
+	z-index: 100;
+	display: none;
+	opacity: 0.92;
+	background-color: white;
+	}
+
 
