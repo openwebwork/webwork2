@@ -126,7 +126,7 @@ function MathViewer(field) {
 	tabContent.find('.tab-pane:first').addClass('active');
 
 	popupdiv.append($('<div>', {class : 'well well-small mviewerouter'})
-			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer text-center'})
+			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer'})
 				.html('`'+me.decoratedTextBox.val()+'`')));
 	
 	/* set up the autocomplete feature */

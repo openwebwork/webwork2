@@ -7,6 +7,7 @@
 .problem-content .popover .mviewer {
     height : 60px;
     margin-bottom : 0px;
+    text-align : center;
 }
 
 .problem-content .popover .mviewerouter {
