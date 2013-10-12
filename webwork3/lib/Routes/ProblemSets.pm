@@ -11,13 +11,13 @@ use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Array::Utils qw(array_minus);
+use Routes::Authentication qw/checkPermissions/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
 
 our @set_props = qw/set_id set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
 our @problem_props = qw/problem_id flags value max_attempts source_file/;
-our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 ###
 #  return all problem sets (as objects) for course *course_id* 
@@ -28,7 +28,8 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 get '/courses/:course_id/sets' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
+
 
     my @globalSetNames = vars->{db}->listGlobalSets;
     my @globalSets = vars->{db}->getGlobalSets(@globalSetNames);
@@ -46,7 +47,7 @@ get '/courses/:course_id/sets' => sub {
 
 get '/courses/:course_id/sets/:set_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
 
     my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
 
@@ -65,7 +66,7 @@ get '/courses/:course_id/sets/:set_id' => sub {
 
 any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10);
 
     # call validator directly instead
 
@@ -104,17 +105,12 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
     ###
 
     my $userNames = params->{assigned_users};
-    debug $userNames;
 
     my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
-    debug \@userNamesFromDB;
 
     my @usersToAdd = array_minus(@{$userNames},@userNamesFromDB);
-    debug \@usersToAdd;
 
     my @usersToDelete = array_minus(@userNamesFromDB,@{$userNames});
-    debug \@usersToDelete;
-
 
     for my $user (@usersToAdd){
          my $userSet = vars->{db}->newUserSet;
@@ -153,7 +149,7 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
 del '/courses/:course_id/sets/:set_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404);
@@ -187,7 +183,7 @@ del '/courses/:course_id/sets/:set_id' => sub {
 
 get '/courses/:course_id/sets/:set_id/users' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
    
     my @userIDs = vars->{db}->listSetUsers(params->{set_id});
 
@@ -213,7 +209,7 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
 
 post '/courses/:course_id/sets/:set_id/users' => sub {
     
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
     my @usersAdded = ();
@@ -254,6 +250,8 @@ post '/courses/:course_id/sets/:set_id/users' => sub {
 #####
 
 del '/courses/:course_id/sets/:set_id/users' => sub {
+
+    checkPermissions(10,session->{user});
     
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
@@ -288,7 +286,8 @@ del '/courses/:course_id/sets/:set_id/users' => sub {
 
 put '/courses/:course_id/sets/:set_id/users' => sub {
     
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
+
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
     ## remember which users were assigned
@@ -355,7 +354,7 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 
 get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
 
     my $userSet = vars->{db}->getUserSet(param('user_id'),param('set_id'));
 
@@ -373,7 +372,8 @@ get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
+
     my $userID = param('user_id');
 
     # check to make sure that the user is assigned to the course
@@ -401,7 +401,9 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    
+
+    checkPermissions(10,session->{user});
 
     my $userID = param('user_id');
 
@@ -429,7 +431,8 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    
+    checkPermissions(10,session->{user});
 
     my $userID = param('user_id');
 
@@ -468,7 +471,8 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 get '/courses/:course_id/users/:user_id/sets' => sub {
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    
+    checkPermissions(10,session->{user});
 
     my @userSetNames = vars->{db}->listUserSets(param('user'));
     my @userSets = vars->{db}->getGlobalSets(@userSetNames);
@@ -486,7 +490,7 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
 
 get '/courses/:course_id/sets/:set_id/problems' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
 
     my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -511,7 +515,7 @@ get '/courses/:course_id/sets/:set_id/problems' => sub {
 
 put '/courses/:course_id/sets/:set_id/problems' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404);
@@ -562,7 +566,7 @@ put '/courses/:course_id/sets/:set_id/problems' => sub {
 
 get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
   
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);  
@@ -593,7 +597,7 @@ get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
@@ -630,7 +634,7 @@ put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
@@ -680,7 +684,7 @@ post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-    if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
