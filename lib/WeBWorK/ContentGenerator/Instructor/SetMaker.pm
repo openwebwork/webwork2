@@ -199,15 +199,15 @@ sub munge_pg_file_path {
 
 ## With MLT, problems come in groups, so we need to find next/prev
 ## problems.  Return index, or -1 if there are no more.
-
+our $cntbug = 4;
 sub next_prob_group {
 	my $ind = shift;
 	my @pgfiles = @_;
 	my $len = scalar(@pgfiles);
 	return -1 if($ind >= $len-1);
-	my $mlt = $pgfiles[$ind]->{morelt} || 0;
+	my $mlt= $pgfiles[$ind]->{morelt} || 0;
 	return $ind+1 if($mlt == 0);
-	while($ind<$len and $pgfiles[$ind]->{morelt} == $mlt) {
+	while($ind<$len and ($pgfiles[$ind]->{morelt} || 0) == $mlt) {
 		$ind++;
 	}
 	return -1 if($ind==$len);
@@ -881,6 +881,7 @@ sub make_top_row {
 
     # For next/previous buttons
 	my ($next_button, $prev_button) = ("", "");
+	my $show_hide_path_button = "";
 	my $first_shown = $self->{first_shown};
 	my $last_shown = $self->{last_shown}; 
 	my $first_index = $self->{first_index};
@@ -895,6 +896,15 @@ sub make_top_row {
 		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
 						 -value=>$r->maketext("Next page"));
 	}
+	if (scalar(@pg_files)) {
+		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:16ex",
+		                         -value=>$r->maketext("Show all paths"),
+								 -id =>"toggle_paths",
+								 -onClick=>'return togglepaths()');
+		$show_hide_path_button .= " ".CGI::hidden(-name=>"toggle_path_current", -id=>"toggle_path_current", -default=>'show');
+		$show_hide_path_button .= " ".CGI::hidden(-name=>"hidetext", -id=>"hidetext", -default=>$r->maketext("Hide all paths"));
+		$show_hide_path_button .= " ".CGI::hidden(-name=>"showtext", -id=>"showtext", -default=>$r->maketext("Show all paths"));
+	}
 
 	print CGI::Tr({},
 	        CGI::td({-class=>"InfoPanel", -align=>"center"},
@@ -906,7 +916,7 @@ sub make_top_row {
 		           CGI::submit(-name=>"cleardisplay", 
 		                -style=>$these_widths,
 		                -value=>$r->maketext("Clear Problem Display")),
-			$prev_button, " ", $next_button,
+			$prev_button, " ", $next_button, " ", $show_hide_path_button
 		     )), 
 	#	CGI::Tr({}, 
 	#	 CGI::td({},
@@ -1083,7 +1093,7 @@ $dbsearch[$indx]->{oindex} = $indx;
 	for my $mltid (keys %mlt) {
 		my @idlist = @{$mlt{$mltid}};
 		if(scalar(@idlist)>1) {
-			my $leader = WeBWorK::Utils::ListingDB::getMLTleader($r, $mltid);
+			my $leader = WeBWorK::Utils::ListingDB::getMLTleader($r, $mltid) || 0;
 			my $hold = undef;
 			for my $subindx (@idlist) {
 				if($dbsearch[$subindx]->{pgid} == $leader) {
