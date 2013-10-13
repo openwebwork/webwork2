@@ -131,7 +131,6 @@ sub initialize {
 		if ($r->param("$userID.comment")) {
 		    my $comment = $r->param("$userID.comment");
 
-		    my $comment = $r->param("$userID.comment");
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 		    
 		    if ($userPastAnswerID) {
