@@ -199,7 +199,6 @@ sub munge_pg_file_path {
 
 ## With MLT, problems come in groups, so we need to find next/prev
 ## problems.  Return index, or -1 if there are no more.
-our $cntbug = 4;
 sub next_prob_group {
 	my $ind = shift;
 	my @pgfiles = @_;
