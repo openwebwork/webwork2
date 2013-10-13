@@ -60,7 +60,9 @@ $(function(){
     $('.problem .problem-content').addClass('well well-small');
 
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
-	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/)[1];
+	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
+	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
+	//on the presentation of a matrix  and then causes errors throughout the rest of the script
 	$(this).attr('onmouseover','');
 	if (data) {
 	    $(this).wrapInner('<div class="results-popover" />');
