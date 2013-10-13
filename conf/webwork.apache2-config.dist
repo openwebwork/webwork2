@@ -152,6 +152,16 @@ if ($webwork_url eq "") {
 </Perl>
 
 ####################################################################
+# The RESTful webservice is to be running on port 3000 and this allows 
+# proper connection to it. 
+####################################################################
+
+
+#ProxyPass /webwork3 http://localhost:3000
+#ProxyPassReverse /webwork3 http://localhost:3000
+
+
+####################################################################
 # WebworkSOAP handlers (for integration with moodle)
 ####################################################################
  PerlModule WebworkSOAP

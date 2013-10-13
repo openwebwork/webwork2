@@ -25,6 +25,7 @@ API.
 
 use strict;
 use warnings;
+use WeBWorK::Debug;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
 use WeBWorK::Utils::RestrictedClosureClass;
@@ -77,6 +78,8 @@ sub defineProblemEnvir {
 	) = @_;
 	
 	my %envir;
+
+	debug("in WEBWORK::PG");
 	
 	# ----------------------------------------------------------------------
 	
@@ -87,8 +90,12 @@ sub defineProblemEnvir {
 	# Vital state information
 	# ADDED: displayModeFailover, displayHintsQ, displaySolutionsQ,
 	#        refreshMath2img, texDisposition
+
+	# pstaab: changed the next line from
 	
-	$envir{psvn}                = $set->psvn;
+	#$envir{psvn}                = $set->psvn;
+	# to
+	$envir{psvn}                = $psvn;
 	$envir{psvnNumber}          = "psvnNumber-is-deprecated-Please-use-psvn-Instead"; #FIXME
 	$envir{probNum}             = $problem->problem_id;
 	$envir{questionNumber}      = $envir{probNum};

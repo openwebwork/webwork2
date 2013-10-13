@@ -1,10 +1,18 @@
-var setmakerWebserviceURL = "/webwork2/instructorXMLHandler";
+var basicRequestObject = {
+    "xml_command":"listLib",
+    "pw":"",
+    "password":'change-me',
+    "session_key":'change-me',
+    "user":"user-needs-to-be-defined",
+    "library_name":"Library",
+    "courseID":'change-me',
+    "set":"set0",
+    "new_set_name":"new set",
+    "command":"buildtree"
+};
 
-// For watermark of sample text for adding set text box
-$(function() {
- $('input[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   '  ) } )
- $('textarea[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   ', {useNative:false}  ) } )
-});
+var basicWebserviceURL = "/webwork2/instructorXMLHandler";
+
 
 function settoggle(id, text1, text2) {
   $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
@@ -51,32 +59,21 @@ function init_webservice(command) {
   var myUser = $('#hidden_user').val();
   var myCourseID = $('#hidden_courseID').val();
   var mySessionKey = $('#hidden_key').val();
-  var requestObject = {
-    "xml_command":"listLib",
-    "pw":"",
-    "password":'change-me',
-    "session_key":'change-me',
-    "user":"user-needs-to-be-defined",
-    "library_name":"Library",
-    "courseID":'change-me',
-    "set_id":"set0",
-    "set":"set0",
-    "new_set_name":"new set",
-    "command":"buildtree"
-  };
-
+  var mydefaultRequestObject = {
+        };
+  _.defaults(mydefaultRequestObject, basicRequestObject);
   if (myUser && mySessionKey && myCourseID) {
-    requestObject.user = myUser;
-    requestObject.session_key = mySessionKey;
-    requestObject.courseID = myCourseID;
+    mydefaultRequestObject.user = myUser;
+    mydefaultRequestObject.session_key = mySessionKey;
+    mydefaultRequestObject.courseID = myCourseID;
   } else {
     alert("missing hidden credentials: user "
       + myUser + " session_key " + mySessionKey+ " courseID "
       + myCourseID, "alert-error");
     return null;
   }
-  requestObject.xml_command = command;
-  return requestObject;
+  mydefaultRequestObject.xml_command = command;
+  return mydefaultRequestObject;
 }
 
 function lib_update(who, what) {
@@ -102,11 +99,6 @@ function lib_update(who, what) {
   if(lib_text == 'All Textbooks') { lib_text = '';};
   if(lib_textchap == 'All Chapters') { lib_textchap = '';};
   if(lib_textsect == 'All Sections') { lib_textsect = '';};
-	var levelstring='';
-	$('input:checkbox[name=level]:checked').each(function() {
-		levelstring = levelstring+$(this).val();
-	});
-  mydefaultRequestObject.library_levels = levelstring;
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
@@ -116,8 +108,7 @@ function lib_update(who, what) {
   if(who == 'count') {
     mydefaultRequestObject.command = 'countDBListings';
     console.log(mydefaultRequestObject);
-
-    return $.post(setmakerWebserviceURL, mydefaultRequestObject, function (data) {
+    return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
       console.log(response);
       var arr = response.result_data;
@@ -125,9 +116,6 @@ function lib_update(who, what) {
       var line = "There are "+ arr +" matching WeBWorK problems"
       if(arr == "1") {
         line = "There is 1 matching WeBWorK problem"
-      }
-      if(arr == "0") {
-        line = "There are no matching WeBWorK problems"
       }
       $('#library_count_line').html(line);
       return true;
@@ -143,7 +131,7 @@ function lib_update(who, what) {
   if(who=='sections') { subcommand = "getSectionListings";}
   mydefaultRequestObject.command = subcommand;
   console.log(mydefaultRequestObject);
-  return $.post(setmakerWebserviceURL, mydefaultRequestObject, function (data) {
+  return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
       console.log(response);
       var arr = response.result_data;
@@ -175,10 +163,9 @@ function addme(path, who) {
   var mydefaultRequestObject = init_webservice('addProblem');
   if(mydefaultRequestObject == null) {
     // We failed
-    console.log("Could not get webservice request object");
     return false;
   }
-  
+  mydefaultRequestObject.set_id = target;
   var pathlist = new Array();
   if(who=='one') {
     pathlist.push(path);
@@ -188,8 +175,8 @@ function addme(path, who) {
       pathlist.push(allprobs[i].value);
     }
   }
-  mydefaultRequestObject.set_id = target;
-  addemcallback(setmakerWebserviceURL, mydefaultRequestObject, pathlist, 0)(true);
+  mydefaultRequestObject.set = target;
+  addemcallback(basicWebserviceURL, mydefaultRequestObject, pathlist, 0)(true);
 }
 
 function addemcallback(wsURL, ro, probarray, count) {
@@ -199,7 +186,8 @@ function addemcallback(wsURL, ro, probarray, count) {
       if(count!=1) { phrase += "s";}
      // alert("Added "+phrase+" to "+ro.set);
       markinset();
-      return true;};
+      return true;
+    };
   }
   // Need to clone the object so the recursion works
   var ro2 = jQuery.extend(true, {}, ro);
@@ -207,29 +195,6 @@ function addemcallback(wsURL, ro, probarray, count) {
   return function (data) {
     return $.post(wsURL, ro2, addemcallback(wsURL, ro2, probarray, count+1));
   };
-}
-
-// This function needs webservice to be fixed
-// User has clicked to create a new set
-// Name is in textfield new_set_name
-function createNewSet() {
-  var ro = init_webservice('createNewSet');
-	var setname = $("[name='new_set_name']").val();
-	// if(! RegExp('/^[\w .-]+$/').test(setname)) {
-	if(! setname.match(/^[\w .-]+$/)) {
-		alert("Your name for the new problem set is not legal.  Use only letters, digits, and the characters -, _, and .");
-		return false;
-	}
-	setname = setname.replace(/\s/g, '_');
-	ro.new_set_name = setname;
-	ro.selfassign = "true";
-	console.log(ro);
-  return $.post(setmakerWebserviceURL, ro, function (data) {
-      var response = $.parseJSON(data);
-      console.log(response);
-      var arr = response.result_data;
-    });
-	return false;
 }
 
 // Reset all the messages about who is in the current set
@@ -242,12 +207,13 @@ function markinset() {
   var shownprobs = $('[name^="filetrial"]'); // shownprobs.value
   ro.set_id = target;
   ro.command = 'true';
-  return $.post(setmakerWebserviceURL, ro, function (data) {
+  return $.post(basicWebserviceURL, ro, function (data) {
     var response = $.parseJSON(data);
     console.log(response);
     var arr = response.result_data;
     var pathhash = {};
     for(var i=0; i<arr.length; i++) {
+      arr[i] = arr[i].replace(/^\//,'');
       pathhash[arr[i]] = 1;
     }
     for(var i=0; i< shownprobs.length; i++) {
@@ -339,22 +305,21 @@ function randomize(filepath, el) {
     ro.displayMode = displayMode;
   }
   ro.noprepostambles = 1;
-	var elid = el;
-	elid = el.replace(/render/,'');
-	var tryit = $('#tryit'+elid);
-	var tryithref = tryit.attr('href');
-	tryithref = tryithref.replace(/problemSeed=\d+/, 'problemSeed='+seed);
-	tryit.attr('href', tryithref);
-	var editit = $('#editit'+elid);
-	var editithref = editit.attr('href');
-	editithref = editithref.replace(/problemSeed=\d+/, 'problemSeed='+seed);
-	editit.attr('href', editithref);
-  $.post(setmakerWebserviceURL, ro, function (data) {
+  $.post(basicWebserviceURL, ro, function (data) {
     var response = data;
     $('#'+el).html(data);
     // run typesetter depending on the displaymode
     if(displayMode=='MathJax')
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
+    if(displayMode=='jsMath')
+      jsMath.ProcessBeforeShowing(el);
+    if(displayMode=='asciimath') {
+      //processNode(el);
+      translate();
+    }
+    if(displayMode=='LaTeXMathML') {
+      AMprocessNode(document.getElementsByTagName("body")[0], false);
+    }
     //console.log(data);
   });
   return false;

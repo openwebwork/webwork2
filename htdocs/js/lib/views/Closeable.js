@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','../../lib/models/MessageList','../../lib/models/Message'], 
+define(['Backbone', 'underscore','models/MessageList','models/Message'], 
     function(Backbone, _,MessageList,Message){
     var Closeable = Backbone.View.extend({
         className: "closeablePane",
@@ -51,9 +51,9 @@ define(['Backbone', 'underscore','../../lib/models/MessageList','../../lib/model
             var self = this;
             this.$el.fadeIn("slow", function () { self.$el.css("display","block"); });
 
-            if (this.$el.height()>0.3*screen.height) {
+            if (this.$el.height()>30) {
                 this.$el.css("overflow","scroll");
-                this.$el.height(0.3*screen.height);
+                this.$el.height(30);
             }
         },
         addMessage: function (props){

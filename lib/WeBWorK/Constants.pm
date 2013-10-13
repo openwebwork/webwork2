@@ -25,7 +25,6 @@ WeBWorK::Constants - provide constant values for other WeBWorK modules.
 use strict;
 use warnings;
 
-
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT} unless defined($WeBWorK::Constants::WEBWORK_DIRECTORY);
 
 
@@ -35,7 +34,7 @@ $WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT} unless defined($WeBW
 
 # If true, WeBWorK::Debug will print debugging output.
 #
-$WeBWorK::Debug::Enabled = 0;
+$WeBWorK::Debug::Enabled = 1;
 
 # If non-empty, debugging output will be sent to the file named rather than STDERR.
 #
@@ -105,7 +104,6 @@ $WeBWorK::PG::ImageGenerator::TexPreamble = <<'EOF';
 \usepackage{amsmath,amsfonts,amssymb}
 \def\gt{>}
 \def\lt{<}
-\usepackage{color}
 \usepackage[active,textmath,displaymath]{preview}
 \begin{document}
 EOF

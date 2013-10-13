@@ -19,16 +19,19 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/vendor/backbone/backbone",  //ok
-        "underscore": "/webwork2_files/js/vendor/underscore/underscore", // ok
-        "jquery": "/webwork2_files/js/vendor/jquery/jquery", // ok
-        "jquery-ui": "/webwork2_files/js/legacy/jquery-ui-1.8.16.custom.min", //FIXMEJS
-        "touch-pinch": "/webwork2_files/js/vendor/jquery/modules/jquery.ui.touch-punch", //ok
-        "tabs": "/webwork2_files/js/vendor/jquery/modules/ui.tabs.closable", //ok
+        "Backbone": "/webwork2_files/js/components/backbone/backbone",  //ok
+        "underscore": "/webwork2_files/js/components/underscore/underscore", // ok
+        "jquery": "/webwork2_files/js/components/jquery/jquery", // ok
+        "jquery-ui": "/webwork2_files/js/components/jquery-ui/ui/jquery-ui", //FIXMEJS
+        //"touch-pinch": "/webwork2_files/js/vendor/jquery/modules/jquery.ui.touch-punch", //ok
+        "tabs": "/webwork2_files/js/legacy/vendor/ui.tabs.closable", //ok
         //this is important:
         "config":"/webwork2_files/js/apps/LibraryBrowser/config", // ok
+        "Closeable":  "/webwork2_files/js/lib/views/Closeable",
+        "bootstrap":            "/webwork2_files/js/components/bootstrap/docs/assets/js/bootstrap",
+         "moment":               "/webwork2_files/js/components/moment/moment",
     },
-    urlArgs: "bust=" +  (new Date()).getTime(),
+    //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
     shim: {
         //ui specific shims:
@@ -40,21 +43,23 @@ require.config({
         'underscore': {
             exports: '_'
         },
-        'backbone': {
+        'Backbone': {
             //These script dependencies should be loaded before loading
             //backbone.js
             deps: ['underscore', 'jquery'],
             //Once loaded, use the global 'Backbone' as the
             //module value.
             exports: 'Backbone'
-        }
+        },
+        'bootstrap' : {deps: ['jquery']}
 
         
     }
 });
 
 //Start things off by wrapping everything in requirejs
-require(['LibraryBrowser', 'jquery-ui', 'touch-pinch', 'tabs'], function(LibraryBrowser){    
+require(['LibraryBrowser','underscore', 'jquery-ui','bootstrap', //'touch-pinch', 
+    'tabs'], function(LibraryBrowser){    
 
     //instantiate an instance of our app.
     var App = new LibraryBrowser({el: "#app_box"});

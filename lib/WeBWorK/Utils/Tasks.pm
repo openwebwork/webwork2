@@ -46,6 +46,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator; 
 use WeBWorK::DB::Utils qw(global2user); 
 use WeBWorK::Form;
+use WeBWorK::Debug;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -127,6 +128,9 @@ sub fake_problem {
 	my $db = shift; 
 	my %options = @_;
 	my $problem = $db->newGlobalProblem(); 
+
+	debug("In fake_problem");
+
 	$problem = global2user($db->{problem_user}->{record}, $problem); 
 	$problem->set_id(fakeSetName); 
 	$problem->value(""); 
@@ -142,6 +146,17 @@ sub fake_problem {
 	$problem->last_answer(""); 
 	$problem->num_correct(0); 
 	$problem->num_incorrect(0); 
+
+	for my $key (keys(%{$problem})){
+		my $value = '####UNDEF###';
+		if ($problem->{$key}) {
+			$value = $problem->{$key};
+		}
+		debug($key . " : " . $value);
+	}
+
+
+
 	return($problem); 
 }
 
