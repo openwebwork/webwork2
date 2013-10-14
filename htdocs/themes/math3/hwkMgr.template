@@ -85,17 +85,14 @@
 			  		<!--  styles could be different for different pages so they are not set here -->
 					<!--#info-->
 		    	<!--#endif-->
-		
-	<div id="footer">
+	
+	<div class="container">	
+	<div class="navbar-fixed-bottom navbar" id="footer">
+	<div class="navbar-inner">
 		<!--#footer-->
+		</div>
 	</div>
-<!--	<footer class="footer">
-	    <div class="row-fluid"><span class="span4">Page generated at <!--#timestamp--></span>
-	    <span class="span4">Styled using twitter bootstrap</span>
-	    <span id="copyright" class="span4 pull-right">WeBWorK &#169; 2000-2013 <a href="http://github.com/openwebwork/webwork2/">The WeBWorK Project</a></span>
-	    </div>
-        </div>
-    </footer>-->
+	</div>
 	<!--#if can="output_JS"-->
 <!--#output_JS-->
 <!--#endif-->
