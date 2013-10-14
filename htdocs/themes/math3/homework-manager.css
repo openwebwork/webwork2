@@ -57,7 +57,9 @@
 
 .num-users { margin-left: 2ex;}
 
-.not-visible {font-style: italic;}
+.set-not-visible {font-style: italic;}
+.set-visible {font-weight: bold;}
+.set-reduced-credit {color: rgb(217,115,52);}
 
 .assign-set-name {cursor: pointer;}
 
@@ -109,4 +111,7 @@ border-radius: 5px;}
 	border: 1px dashed black; background: lightgray;
 }
 
+#main-row {position: absolute; top: 85px; bottom: 25px;}
+
+#main-view {height: 100%; overflow: scroll;}
 
