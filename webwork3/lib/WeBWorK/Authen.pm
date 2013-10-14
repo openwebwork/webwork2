@@ -227,7 +227,7 @@ sub verify {
 
 		}
 
-		#$self->maybe_kill_cookie;
+		$self->maybe_kill_cookie;
 		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character. 
 			return $error;
 			# MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);

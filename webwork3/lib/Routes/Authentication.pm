@@ -50,6 +50,12 @@ any ['get','put','post','del'] => '/courses/*/**' => sub {
 
 };
 
+get '/renderer/courses/*/**' => sub {
+	my ($courseID) = splat;
+	setCourseEnvironment($courseID);
+	pass;
+};
+
 sub setCourseEnvironment {
 
 	my $courseID = shift;
