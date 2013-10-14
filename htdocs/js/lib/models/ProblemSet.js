@@ -119,7 +119,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.course + "/sets/" + this.get("set_id") ;
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.get("set_id") ;
         },
         parse: function (response) {
             var self = this;
@@ -135,6 +135,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             this.id = this.get("set_id");
         },
         save: function(opts){
+            console.log("in ProblemSet.save()");
+            console.log(opts);
             var self = this;
             var attrs = this.changedAttributes();
             if(attrs){
@@ -142,6 +144,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
                     return {attr: key, new_value: attrs[key], old_value: self._previousAttributes[key]};
                 });
             }
+
+            // I think this is causing this to save a ProblemSet twice.  Maybe a check before doing this.
             ProblemSet.__super__.save.apply(this,opts);
         },
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
