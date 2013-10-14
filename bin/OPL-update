@@ -165,7 +165,7 @@ if($libraryVersion eq '2.5') {
 	institution tinyblob,
 	path_id int(15) NOT NULL,
 	filename varchar(255) NOT NULL,
-	morelt_id int(127),
+	morelt_id int(127) DEFAULT 0,
 	level int(15),
 	language varchar(15),
 	PRIMARY KEY (pgfile_id)

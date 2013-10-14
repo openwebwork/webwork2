@@ -29,6 +29,32 @@ function toggle_content(id, text1, text2) {
   return true;
 }
 
+function togglepaths() {
+  var toggle_from = $('#toggle_path_current')[0].value;
+  var new_text = $('#showtext');
+  if(toggle_from == 'show') {
+    new_text = $('#hidetext')[0].value;
+    $('#toggle_path_current').val('hide');
+	$("[id*=filepath]").each(function() {
+		// If showing, trigger
+		if(this.textContent.match('^Show')) {
+		  this.click();
+	    }
+	});
+  } else {
+    new_text = $('#showtext')[0].value;
+    $('#toggle_path_current').val('show');
+	$("[id*=filepath]").each(function() {
+		// If hidden, trigger
+		if(! this.textContent.match('^Show')) {
+		  this.click();
+		}
+	});
+  }
+  $('#toggle_paths').prop('value',new_text);
+  return false;
+}
+
 function init_webservice(command) {
   var myUser = $('#hidden_user').val();
   var myCourseID = $('#hidden_courseID').val();
@@ -287,13 +313,6 @@ function randomize(filepath, el) {
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
     if(displayMode=='jsMath')
       jsMath.ProcessBeforeShowing(el);
-    if(displayMode=='asciimath') {
-      //processNode(el);
-      translate();
-    }
-    if(displayMode=='LaTeXMathML') {
-      AMprocessNode(document.getElementsByTagName("body")[0], false);
-    }
     //console.log(data);
   });
   return false;
