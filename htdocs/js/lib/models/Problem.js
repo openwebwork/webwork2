@@ -29,7 +29,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         },
         loadHTML: function (success) {
             if (this.collection.setName){  // the problem is part of a set
-                $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course + "/sets/" 
+                $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
                     + this.collection.setName 
                     + "/problems/" + this.get("problem_id"),this.attributes, success);
             } else {  // it is being rendered from the library
@@ -39,7 +39,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         problemURL: function(){
             // console.log(this.attributes);
             if (this.collection.setName){  // the problem is part of a set
-                return config.urlPrefix + "renderer/courses/"+ config.courseSettings.course + "/sets/" 
+                return config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
                     + this.collection.setName 
                     + "/problems/" + this.get("problem_id") + "?" + $.param(this.attributes);
             } else {  // it is being rendered from the library
