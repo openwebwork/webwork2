@@ -418,7 +418,7 @@ sub environment {
 		PRINT_FILE_NAMES_FOR => [ ],
 		probFileName => 'probFileName should not be used --use fileName instead',
 		problemSeed  => 1234,
-		problemValue =>1,
+		problemValue => -1,
 		probNum => 13,
 		psvn => 54321,
 		psvn=> 54321,
