@@ -29,7 +29,7 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         courseSettings: {
             "session_key": $("#hidden_key").val(),
             "user": $("#hidden_user").val(),
-            "course_id": $("#hidden_courseID").val()
+            //"course_id": $("#hidden_courseID").val()
         },
         checkForError: function(response){
             if (response && response.error){

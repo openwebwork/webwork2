@@ -82,8 +82,15 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
         render: function(){
             this.$el.html(this.template);
             this.$el.data("setname",this.model.get("set_id"));
-            if(this.model.get("visible")==0){
-                this.$el.addClass("not-visible");
+            if(this.model.get("visible")==1){
+                this.$el.addClass("set-visible");
+            } else {
+                this.$el.removeClass("set-visible");
+            }
+            if(this.model.get("enable_reduced_scoring")==1){
+                this.$el.addClass("set-reduced-credit");
+            } else {
+                this.$el.removeClass("set-reduced-credit");
             }
             this.stickit();
             return this;
