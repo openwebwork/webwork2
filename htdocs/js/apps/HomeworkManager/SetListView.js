@@ -22,9 +22,9 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                                 }}
             };
 
-            this.problemSets.on("change",function (model) {
+            /*this.problemSets.on("change",function (model) {
                 model.save();
-            })
+            })*/
 
         },
         //events: {"click .add-problem-set-button": "addProblemSet"},

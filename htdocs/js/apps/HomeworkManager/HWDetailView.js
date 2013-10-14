@@ -104,8 +104,8 @@ define(['Backbone',
         setProblemSet: function(_set) {
             var self = this; 
             this.model = _set; 
-            this.model.on("change",function () { 
-                self.model.save();});
+            // this.model.on("change",function () { 
+            //     self.model.save();});
 
             return this;
         },
@@ -275,7 +275,7 @@ define(['Backbone',
             _(models).each(function(_model){
                 _model.set({open_date: self.model.get("open_date"), due_date: self.model.get("due_date"),
                             answer_date: self.model.get("answer_date")});
-                _model.save();
+                //_model.save();
             });
         },
         selectAll: function (){

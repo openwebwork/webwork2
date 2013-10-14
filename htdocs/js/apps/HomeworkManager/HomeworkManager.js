@@ -58,7 +58,11 @@ var HomeworkEditorView = WebPage.extend({
         (this.probSetListView = new ProblemSetListView({el: $("#problem-set-list-container"), viewType: "Instructor",
                             problemSets: this.problemSets, users: this.users})).render();
 
-        
+
+        // this will automatically save (sync) any change made to a problem set.
+        this.problemSets.on("change",function(_set){
+            _set.save();
+        })        
 
 
         this.updateProblemSetList();
@@ -67,9 +71,14 @@ var HomeworkEditorView = WebPage.extend({
         // this is needed for the handshaking of session information between the old and new
         // webservice
 
-        $.get(config.urlPrefix + "login?"+$.param(config.courseSettings),function(response){
-            console.log(response);
-        });
+        // this pulls the course_id from the URL and we need to have a more general way to get this from either 
+        // ww2 or ww3 
+
+        _.extend(config.courseSettings,{course_id: location.href.match(/\/webwork2\/(\w+)\//)[1]});
+        $.post(config.urlPrefix + "handshake?"+$.param(config.courseSettings),
+                function(response){
+                    console.log(response);
+                });
 
             
     },
@@ -107,7 +116,7 @@ var HomeworkEditorView = WebPage.extend({
                         text: "The value of " + attr.attr + " in problem set " 
                         + _set.get("set_id") + " has changed from " + _old + " to " + _new});
                 });
-            //self.updateCalendar();
+            self.updateCalendar();
             self.updateProblemSetList();
 
         });
@@ -236,7 +245,7 @@ var HomeworkEditorView = WebPage.extend({
                 this.errorPane.addMessage({text: "Oops!!"});
             } */
 
-            problemSet.setDate(type,moment(_date,"YYYY-MM-DD").unix()).save({success: this.updateCalendar()});
+            problemSet.setDate(type,moment(_date,"YYYY-MM-DD").unix());
         }
 
     }
