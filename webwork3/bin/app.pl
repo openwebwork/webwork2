@@ -81,6 +81,19 @@ get '/app-info' => sub {
 	};
 };
 
+get '/courses/:course_id/info' => sub {
+
+	setCourseEnvironment(params->{course_id});
+
+	return {
+		course_id => params->{course_id},
+		webwork_dir => vars->{ce}->{webwork_dir},
+		webworkURLs => vars->{ce}->{webworkURLs},
+		webworkDirs => vars->{ce}->{webworkDirs}
+	};
+
+};
+
 
 sub checkCourse {
 	if (! defined(session->{course})) {
