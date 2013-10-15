@@ -39,7 +39,7 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 #  Note: for this to match before others, make sure this package is loaded before others.
 #
 
-any ['get','put','post','del'] => '/courses/*/**' => sub {
+any ['get','put','post','delete'] => '/courses/*/**' => sub {
 
 	my ($courseID) = splat;
 	debug "In the uber /courses/:course_id route";

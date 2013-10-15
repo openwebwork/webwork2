@@ -29,21 +29,14 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
         },
         //events: {"click .add-problem-set-button": "addProblemSet"},
         render: function () {
-            this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
-                                paginator: {page_size: 10, button_class: "btn", row_class: "btn-group"}});
-            this.userTable.render().$el.addClass("table table-bordered table-condensed");
-            this.$el.html(this.userTable.el);
+            this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
+                                paginator: {page_size: 5, button_class: "btn", row_class: "btn-group"}});
+            this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
+            this.$el.html(this.problemSetTable.el);
 
             // set up some styling
-            this.userTable.$(".paginator-row td").css("text-align","center");
-            this.userTable.$(".paginator-page").addClass("btn");
-        },
-        deleteProblemSet: function (set,row){
-            var del = confirm("Are you sure you want to delete the set " + set.get("set_id") + "?");
-            if(del){
-            //    this.editgrid.grid.remove(row);
-            //    set.collection.remove(set);
-            }
+            this.problemSetTable.$(".paginator-row td").css("text-align","center");
+            this.problemSetTable.$(".paginator-page").addClass("btn");
         },
         addProblemSet: function (){
             if (! this.addProblemSetView){
@@ -52,10 +45,24 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                 this.addProblemSetView.setModel(new ProblemSet()).render().open();
             }
         },
-
+        deleteSet: function(set){
+             var del = confirm("Are you sure you want to delete the set " + set.get("set_id") + "?");
+            if(del){
+                this.problemSets.remove(set);
+                this.problemSetTable.updateTable();
+                this.problemSetTable.updatePaginator();
+                
+            }
+           
+        },
         tableSetup: function () {
             var self = this;
-            this.cols = [{name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string"},
+            this.cols = [{name: "Delete", key: "delete", classname: "delete-set", 
+                stickit_options: {update: function($el, val, model, options) {
+                    $el.html($("#delete-button-template").html());
+                    $el.children(".btn").on("click",function() {self.deleteSet(model);});
+                }}},
+            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string"},
             {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
                 stickit_options: {onGet: function(val){
                     return val.length + "/" + self.problemSets.length;
