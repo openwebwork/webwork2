@@ -98,8 +98,7 @@ define(['Backbone',
         },
         events: {"click .assign-all-users": "assignAllUsers"},
         assignAllUsers: function(){
-            var userNames = this.users.pluck("user_id");
-            this.model.assignToUsers(_.difference(userNames,this.model.get("assigned_users")));
+            this.model.set({assigned_users: this.users.pluck("user_id")});
         },
         setProblemSet: function(_set) {
             var self = this; 
@@ -115,7 +114,7 @@ define(['Backbone',
                     ".set-visible": {observe: "visible", selectOptions: {
                         collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
                     }},
-                    ".reduced-credit": {observe: "reduced_credit_enabled", selectOptions: {
+                    ".reduced-credit": {observe: "enable_reduced_scoring", selectOptions: {
                         collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
                     }},
                     ".users-assigned": {

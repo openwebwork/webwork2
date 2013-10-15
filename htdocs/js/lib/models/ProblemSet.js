@@ -36,18 +36,9 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             assigned_users: []
         },
         validation: {
-           /* open_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            due_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            answer_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            }, */
+           open_date: "checkDates",
+            due_date: "checkDates",
+            answer_date: "checkDates",
             set_id: {pattern: "setname", msg: "A name must only contain letters, numbers, _ and ."}
         },
         descriptions:  {
@@ -196,14 +187,18 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             return this;
 
         },
-/*        saveAssignedUsers: function(success){
-            $.ajax({url: config.urlPrefix+"courses/" + config.courseSettings.course + "/sets/" + this.get("set_id") + "/users", 
-                    data: JSON.stringify({assigned_users: this.get("assigned_users"), set_id: this.get("set_id")}),
-                    success: success,
-                    type: "PUT",
-                    processData: false,
-                    contentType: "application/json"});
-        }*/
+        checkDates: function(value, attr, computedState){
+            var openDate = moment.unix(computedState.open_date)
+                , dueDate = moment.unix(computedState.due_date)
+                , answerDate = moment.unix(computedState.answer_date);
+
+            if(openDate.isAfter(dueDate)){ 
+                return "The open date must come before the due date";
+            }
+            if (dueDate.isAfter(answerDate)){
+                return "The due date must come before the answer date.";
+            }
+        }
     });
      
 

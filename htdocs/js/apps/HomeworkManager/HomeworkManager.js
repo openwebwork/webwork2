@@ -121,6 +121,24 @@ var HomeworkEditorView = WebPage.extend({
 
         });
 
+        // this handles the validation of the problem sets, mainly validating the dates.  
+
+
+
+        this.problemSets.bind('validated:invalid', function(model, errors) {
+            var uniqueErrors = _.unique(_.values(errors));
+            _(uniqueErrors).each(function(error){
+                self.messagePane.addMessage({type: "error", short: "Error saving problem set " + model.get("set_id"),
+                    text: error});
+
+            });
+            // change the attributes back to before.
+           /* _(_.keys(model.changed)).each(function(key){
+                model.set(key,model._previousAttributes[key]);
+            })*/
+        });
+
+
         // can't figure out the best place for this.  
         /* this.problemSet.problems.on("reordered",function () {
                 self.announce.addMessage({text: "Problem Set " + self.parent.problemSet.get("set_id") + " was reordered"});
