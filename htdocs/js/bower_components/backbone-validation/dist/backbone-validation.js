@@ -1,4 +1,4 @@
-// Backbone.Validation v0.8.1
+// Backbone.Validation v0.8.2
 //
 // Copyright (c) 2011-2013 Thomas Pedersen
 // Distributed under MIT License
@@ -91,7 +91,7 @@ Backbone.Validation = (function(_){
     // attributes on the model that has defined one or more
     // validation rules.
     var getValidatedAttrs = function(model) {
-      return _.reduce(_.keys(model.validation || {}), function(memo, key) {
+      return _.reduce(_.keys(_.result(model, 'validation') || {}), function(memo, key) {
         memo[key] = void 0;
         return memo;
       }, {});
@@ -101,7 +101,7 @@ Backbone.Validation = (function(_){
     // attribute. Returns an array of any validators defined,
     // or an empty array if none is defined.
     var getValidators = function(model, attr) {
-      var attrValidationSet = model.validation ? model.validation[attr] || {} : {};
+      var attrValidationSet = model.validation ? _.result(model, 'validation')[attr] || {} : {};
 
       // If the validator is a function or a string, wrap it in a function validator
       if (_.isFunction(attrValidationSet) || _.isString(attrValidationSet)) {
@@ -148,7 +148,7 @@ Backbone.Validation = (function(_){
           return false;
         }
         if (result && !memo) {
-          return validator.msg || result;
+          return _.result(validator, 'msg') || result;
         }
         return memo;
       }, '');
@@ -182,10 +182,26 @@ Backbone.Validation = (function(_){
     var mixin = function(view, options) {
       return {
 
-        // Check whether or not a value passes validation
-        // without updating the model
+        // Check whether or not a value, or a hash of values
+        // passes validation without updating the model
         preValidate: function(attr, value) {
-          return validateAttr(this, attr, value, _.extend({}, this.attributes));
+          var self = this,
+              result = {},
+              error;
+
+          if(_.isObject(attr)){
+            _.each(attr, function(value, key) {
+              error = self.preValidate(key, value);
+              if(error){
+                result[key] = error;
+              }
+            });
+
+            return _.isEmpty(result) ? undefined : result;
+          }
+          else {
+            return validateAttr(this, attr, value, _.extend({}, this.attributes));
+          }
         },
 
         // Check to see if an attribute, an array of attributes or the
@@ -289,7 +305,7 @@ Backbone.Validation = (function(_){
     return {
 
       // Current version of the library
-      version: '0.8.1',
+      version: '0.8.2',
 
       // Called to configure the default options
       configure: function(options) {
@@ -299,10 +315,10 @@ Backbone.Validation = (function(_){
       // Hooks up validation on a view with a model
       // or collection
       bind: function(view, options) {
-        var model = view.model,
-            collection = view.collection;
-
         options = _.extend({}, defaultOptions, defaultCallbacks, options);
+
+        var model = options.model || view.model,
+            collection = options.collection || view.collection;
 
         if(typeof model === 'undefined' && typeof collection === 'undefined'){
           throw 'Before you execute the binding your view must have a model or a collection.\n' +
@@ -323,12 +339,13 @@ Backbone.Validation = (function(_){
 
       // Removes validation from a view with a model
       // or collection
-      unbind: function(view) {
-        var model = view.model,
-            collection = view.collection;
+      unbind: function(view, options) {
+        options = _.extend({}, options);
+        var model = options.model || view.model,
+            collection = options.collection || view.collection;
 
         if(model) {
-          unbindModel(view.model);
+          unbindModel(model);
         }
         if(collection) {
           collection.each(function(model){

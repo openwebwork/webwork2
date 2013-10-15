@@ -1,4 +1,4 @@
-# Backbone.Validation v0.8.1
+# Backbone.Validation v0.8.2
 
 A validation plugin for [Backbone.js](http://documentcloud.github.com/backbone) that validates both your model as well as form input.
 
@@ -71,6 +71,17 @@ var SomeModel = Backbone.Model.extend({
     }
   }
 });
+
+// validation attribute can also be defined as a function returning a hash
+var SomeModel = Backbone.Model.extend({
+  validation: function() {
+    return {
+      name: {
+        required: true
+      };
+    }
+  }
+});
 ```
 
 See the **[built-in validators](#built-in-validators)** section for a list of the validators and patterns that you can use.
@@ -109,6 +120,8 @@ MyModel = Backbone.Model.extend({
 });
 ```
 
+The `msg` property can also be a function returning a string.
+
 ## Using form+model validation
 
 The philosophy behind this way of using the plugin, is that you should be able to reuse your validation rules both to validate your model and to validate form input, as well as providing a simple way of notifying users about errors when they are populating forms.
@@ -141,17 +154,37 @@ var SomeView = Backbone.View.extend({
 });
 var someView = new SomeView({model: new SomeModel()});
 Backbone.Validation.bind(someView);
+
+// Binding to a view with an optional model
+var myModel = new Backbone.Model();
+var SomeView = Backbone.View.extend({
+  initialize: function(){
+    Backbone.Validation.bind(this, {
+      model: myModel
+    });
+  }
+});
+
+// Binding to a view with an optional collection
+var myCollection = new Backbone.Collection();
+var SomeView = Backbone.View.extend({
+  initialize: function(){
+    Backbone.Validation.bind(this, {
+      collection: myCollection
+    });
+  }
+});
 ```
 
 ### Binding to view with a model
 
-For this to work, your view must have an instance property named *model* that holds your model before you perform the binding.
+For this to work, your view must have an instance property named *model* that holds your model before you perform the binding, or you can pass an optional model in the options as shown in the example above.
 
 When binding to a view with a model, Backbone's [validate](http://documentcloud.github.com/backbone/#Model-validate) method on the model is overridden to perform the validation. In addition, the model's [isValid](http://backbonejs.org/#Model-isValid) method is also overridden to provide some extra functionality.
 
 ### Binding to view with a collection
 
-For this to work, your view must have an instance property named *collection* that holds your collection before you perform the binding.
+For this to work, your view must have an instance property named *collection* that holds your collection before you perform the binding, or you can pass an optional collection in the options as shown in the example above.
 
 When binding to a view with a collection, all models in the collection are bound as described previously. When you are adding or removing models from your collection, they are bound/unbound accordingly.
 
@@ -160,6 +193,8 @@ Note that if you add/remove models with the silent flag, they will not be bound/
 ### Unbinding
 
 If you want to remove the validation binding, this is done with a call to `Backbone.Validation.unbind(view)`. This removes the validation binding on the model, or all models if you view contains a collection, as well as removing all events hooked up on the collection.
+
+Note that if you are binding to an optional model or collection, you must also specify this when unbinding: `Backbone.Validation.unbind(view, {model: boundModel})`.
 
 ## Using model validation
 
@@ -215,12 +250,22 @@ var isValid = model.isValid(['name', 'age']);
 
 ### preValidate
 
-Sometimes it can be useful to check (on each key press) if the input is valid - without changing the model - to perform some sort of live validation. You can execute the set of validators for an attribute by calling the `preValidate` method and pass it the name of the attribute and the value to validate.
+Sometimes it can be useful to check (for instance on each key press) if the input is valid - without changing the model - to perform some sort of live validation. You can execute the set of validators for an attribute, or a hash of attributes, by calling the `preValidate` method and pass it the name of the attribute and the value to validate, or a hash of attributes.
 
 If the value is not valid, the error message is returned (truthy), otherwise it returns a falsy value.
 
 ```js
+// Validate one attribute
+// The `errorsMessage` returned is a string
 var errorMessage = model.preValidate('attributeName', 'Value');
+
+// Validate a hash of attributes
+// The errors object returned is a key/value pair of attribute name/error, e.g
+// {
+//   name: 'Name is required',
+//   email: 'Email must be a valid email'
+// }
+var errors = model.preValidate({name: 'value', email: 'foo@example.com');
 ```
 
 ## Configuration
@@ -773,6 +818,13 @@ Basic behaviour:
 * You may use &lt;input .... data-error-style="inline"&gt; in your form to force rendering of a &lt;span class="help-inline"&gt;
 
 ## Release notes
+
+#### v0.8.2 [commits](https://github.com/thedersen/backbone.validation/compare/v0.8.1...v0.8.2)
+
+* `preValidate` now accepts a hash of attributes in addition to a key/value
+* `msg` attribute can be defined as both a function or a string
+* `validation` attribute can be defined as both a function or a hash
+* You can pass an optional model/collectionto bind to use instead of view.model/view.collection
 
 #### v0.8.1 [commits](https://github.com/thedersen/backbone.validation/compare/v0.8.0...v0.8.1)
 
