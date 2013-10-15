@@ -14,6 +14,7 @@ use Digest::MD5 qw(md5_hex);
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::LibraryUtils qw/list_pg_files/;
+use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use WeBWorK::PG::Local;
@@ -26,9 +27,8 @@ use WeBWorK::PG::Local;
 
 get '/Library/subjects' => sub {
 
-	my $webwork_htdocs = vars->{ce}->{webwork_dir}."/htdocs";
-	my $file = "$webwork_htdocs/DATA/library-subject-tree.json";
-
+	my $webwork_dir = config->{webwork_dir};
+	my $file = "$webwork_dir/htdocs/DATA/library-subject-tree.json";
 	my $json_text = do {
    		open(my $json_fh, "<:encoding(UTF-8)", $file)  or send_error("The file $file does not exist.",404);
 	    local $/;
@@ -180,8 +180,8 @@ get '/Library/subjects/:subject_id/chapters/:chapter_id/sections/:section_id/pro
 
 get '/Library/directories' => sub {
 
-	my $webwork_htdocs = vars->{ce}->{webwork_dir}."/htdocs";
-	my $file = "$webwork_htdocs/DATA/library-directory-tree.json";
+	my $webwork_dir = config->{webwork_dir};
+	my $file = "$webwork_dir/htdocs/DATA/library-directory-tree.json";
 
 	my $json_text = do {
    		open(my $json_fh, "<:encoding(UTF-8)", $file)  or send_error("The file $file does not exist.",404);
@@ -282,89 +282,46 @@ get '/library/problems' => sub {
 #
 #  The displayMode parameter will determine the exact HTML code that is returned (images, MathJax, plain, PDF) 
 #
+#  The intention of this route is for rendering a particular problem (i.e. for the library browser)
+#
 ###
 
 get '/renderer/problems/:problem_id' => sub {
 
-    my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
-	my $user =  vars->{db}->getUser(session->{user});
-    my ($set, $showHints, $showSolutions,$showAnswers,$problem);
+	##  need to change this later.  Why do we need a course_id for a general renderer? 
+	setCourseEnvironment("_fake_course");
 	
+    my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
 	my $problemSeed = defined(params->{problemSeed}) ? params->{problemSeed} : 1; 
-
-    ### The user is not a professor
-
-    if(0+(session 'permission') < 10) {  ### check that the user belongs to the course and set. 
-
-    	if (! (vars->{db}->existsUser(session->{user_id}) &&  vars->{db}->existsUserSet(session->{user_id}, params->{set_id})))  { 
-    		send_error("You are a student and must be assigned to the set " . params->{set_id},424);
-    	}
-
-    	# these should vary depending on number of attempts or due_date or ???
-    	$showHints = 0;
-    	$showSolutions = 0;
-    	$showAnswers = 0; 
-
-    } else {
-		$showHints = defined(param('show_hints'))? param('show_hints') : 0;
-		$showSolutions = defined(param('show_solutions'))? param('show_solutions') : 0;
-		$showAnswers = defined(param('show_answers'))? param('show_answers') : 0;
-    }
+	my $showHints = 0;
+	my $showSolutions = 0;
+	my $showAnswers = 0;
 
 
 	# remove any pretty garbage around the problem
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 
-	# determine where the problem is coming from
-	# the problem comes from a set
+	my $user = fake_user(vars->{db});
+	my $set =  fake_set(vars->{db});
+	my $problem = fake_problem(vars->{db});
+	$problem->{problem_seed} = params->{problem_seed} || 0;
+	$problem->{problem_id} = params->{problem_id} || 1;
 
-	if (defined(params->{set_id})) {  
-		if (!vars->{db}->existsUserSet($user->{user_id},params->{set_id})){
-			send_error("The user " . $user->{user_id} . " has not been assigned to set " . params->{set_id},404);
-		}
-		if (!vars->{db}->existsUserProblem($user->{user_id},params->{set_id},params->{problem_id})){
-			send_error("The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id} 
-				. " for user " . $user->{user_id},404);
-		}
+	# check to see if the problem_path is defined
 
-		$problem =  vars->{db}->getMergedProblem($user->{user_id},params->{set_id},params->{problem_id});
+	if (defined(params->{problem_path})){
+		$problem->{source_file} = "Library/" . params->{problem_path};
+	} elsif (defined(params->{source_file})){
+		$problem->{source_file} = params->{source_file};
+	} else {  # try to look up the problem_id in the global database;
 
-		$set = vars->{db}->getUserSet($user->{user_id},params->{set_id});		
-
-	}  else {
-    	$set =  fake_set(vars->{db});
-		$problem = fake_problem(vars->{db});
-		$problem->{problem_seed} = params->{problem_seed} || 0;
-		$problem->{problem_id} = params->{problem_id} || 1;
-		undef $problem->{value}; 
-
-		debug $problem;
-
-		# check to see if the problem_path is defined
-
-		if (defined(params->{problem_path})){
-			$problem->{source_file} = "Library/" . params->{problem_path};
-		} elsif (defined(params->{source_file})){
-			$problem->{source_file} = params->{source_file};
-		} else {  # try to look up the problem_id in the global database;
-
-			my $problem_info = database->quick_select('OPL_pgfile', {pgfile_id => param('problem_id')});
-			my $path_id = $problem_info->{path_id};
-			my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
-			$problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
-		}
+		my $problem_info = database->quick_select('OPL_pgfile', {pgfile_id => param('problem_id')});
+		my $path_id = $problem_info->{path_id};
+		my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
+		$problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
 	}
 
-
-	# debug $problem->{source_file};
-	# debug md5_hex($problem->{source_file});
-
-	# for my $key (keys(%{$problem})){
-	# 	my $value = '####UNDEF###';
-	# 	$value = $problem->{$key} if(defined($problem->{$key}));
-	#  	debug($key . " : " . $value);
-	# }
 
 	# get all parameters in the form AnSwErXXXX 
 

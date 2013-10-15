@@ -156,24 +156,29 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
         addProblem: function (prob) {  
             var self = this; 
             var newProblem = new Problem(prob.attributes);
-            if (this.problems) {
-                this.problems.add(newProblem);
-                newProblem.save();
+            this.get("problems").add(newProblem);
+            newProblem.save();
+            this.trigger("change:problems",this);
+            
+            // pstaab: I don't think the rest is necessary now that problems are loaded from the beginning. 
+/*            if (this.problems) {
             }  else {  // the problems haven't loaded.
                 console.log("Problem Set " + this.get("set_id") + " not loaded. ");
                 console.log(prob);
                 this.saveProblems.push(newProblem);
-                this.problems = new ProblemList({setName: self.get("set_id"),   type: "Problem Set"});
+                this.problems = new ProblemList();
+                this.problems.setName = this.get("set_id");
+                this.problems.type = "problem set";
                 this.problems.fetch({success: function () {
                     self.problems.add(self.saveProblems);
                     var lastIndex = parseInt(self.problems.last().get("problem_id"));
                     _(self.saveProblems).each(function(_prob,i){  
-                        _prob.set("problem_id",lastIndex+i+1,{silent: true});
+                        _prob.set("problem_id",lastIndex+i+1);
                         _prob.save(); 
                     });
                     self.saveProblems = []; 
                 } });
-            }
+            }*/
         },
         setDate: function(attr,_date){
             var currentDate = moment.unix(this.get(attr))

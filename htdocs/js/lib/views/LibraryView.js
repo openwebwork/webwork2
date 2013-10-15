@@ -73,7 +73,9 @@ function(Backbone, _,LibraryProblemsView, ProblemList,LibraryTreeView){
     	loadProblems: function (_path){    	
     		console.log(_path);
             var self = this;
-			this.problemList = new ProblemList({path:  _path, type: this.options.libBrowserType});
+			this.problemList = new ProblemList();
+            this.problemList.path=_path;
+            this.problemList.type = this.options.libBrowserType;
             this.problemList.fetch({success: this.showProblems});
     	}, 
         resetDisplayModes: function(){
