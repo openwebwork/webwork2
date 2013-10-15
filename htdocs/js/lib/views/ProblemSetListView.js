@@ -15,7 +15,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
     var ProblemSetListView = Backbone.View.extend({
 
     	initialize: function (){
-    		_.bindAll(this,"render","addSet","deleteSet");
+    		_.bindAll(this,"render");
             var self = this;
 
             this.setViewTemplate = $("#set-view-template").html();
@@ -25,7 +25,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 
             this.problemSets.on("add",this.render);
             this.problemSets.on("remove",this.render);
-            this.problemSets.on("change",this.render);
+            //this.problemSets.on("change",this.render);
 
         },
         render: function ()
@@ -49,24 +49,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 
 
 
-        },
-        events: {"click a.add-problem-set": "addSet",
-                 "click a.delete-problem-set": "deleteSet"},
-        addSet: function (evt){            
-            if (! this.addProblemSetView){
-                (this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets})).render();
-            } else {
-                this.addProblemSetView.setModel(new ProblemSet()).render().open();
-            }
-
-        },
-        deleteSet: function () {
-            if (! this.deleteProblemSetView){
-                this.deleteProblemSetView = new DeleteProblemSetView({problemSets: this.problemSets});
-                this.deleteProblemSetView.render();
-            } else {
-                this.deleteProblemSetView.open();
-            }
         }
     });
 
@@ -82,7 +64,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
         render: function(){
             this.$el.html(this.template);
             this.$el.data("setname",this.model.get("set_id"));
-            if(this.model.get("visible")==1){
+            /*if(this.model.get("visible")==1){
                 this.$el.addClass("set-visible");
             } else {
                 this.$el.removeClass("set-visible");
@@ -91,14 +73,28 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
                 this.$el.addClass("set-reduced-credit");
             } else {
                 this.$el.removeClass("set-reduced-credit");
-            }
+            }*/
             this.stickit();
             return this;
         },
         bindings: {".set-name": "set_id", 
             ".num-users": { observe: ["assigned_users", "problems"],  
                 onGet: function(vals) { return "(" +vals[0].length + "/" + this.numUsers 
-                        + ";" + vals[1].length + ")"; }}  // prints the assigned users and the number of problems.
+                        + ";" + vals[1].length + ")"; }},  // prints the assigned users and the number of problems.
+            ":el": { observe: ["enable_reduced_scoring","visible"],
+                update: function($el, vals, model, options) { 
+                    if(vals[0]==0){
+                        $el.removeClass("set-reduced-credit");
+                    } else {
+                        $el.addClass("set-reduced-credit");
+                    }
+                    if(vals[1]==0){
+                        $el.removeClass("set-visible");
+                    } else {
+                        $el.addClass("set-visible");
+                    }
+                }}
+
         }
 
     });

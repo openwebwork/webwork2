@@ -8,10 +8,13 @@ define(['Backbone','underscore','models/MessageList','models/Message'], function
 		id: "message-pane",
 		isOpen: false,
 		initialize: function () {
+			_.bindAll(this,"open");
             this.messages = new MessageList();
 		},
 		render: function() {
 			this.$el.html($("#message-pane-template").html());
+			$("#short-message").on("click",this.open);
+
 			return this;
 		},
 		events: {"click .close": "close"},
@@ -41,9 +44,9 @@ define(['Backbone','underscore','models/MessageList','models/Message'], function
 			}
 		},
 		addMessage: function(msg){
-			console.log("adding a message");
-			$("#short-message").text(msg.short).show("slide", 1000 ).truncate();
-			setTimeout(function () {$("#short-message").hide("slide",1000).text("")}, 5000);
+			$("#short-message").removeClass("alert-success").removeClass("alert-error").addClass("alert-" + msg.type)
+				.text(msg.short).show("slide", 1000 ).truncate()
+			setTimeout(function () {$("#short-message").hide("slide",1000).text("")}, 15000);
 			this.messages.add(new Message(msg));
 			
 		}

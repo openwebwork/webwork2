@@ -13,7 +13,7 @@ var HomeworkEditorView = WebPage.extend({
     tagName: "div",
     initialize: function(){
 	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-	    _.bindAll(this, 'render','updateCalendar','updateProblemSetList', 'setMessages',"showHWdetails");  // include all functions that need the this object
+	    _.bindAll(this, 'render','updateCalendar','setProblemSetUI', 'setMessages',"showHWdetails");  // include all functions that need the this object
 	    var self = this;
 
         (this.headerView = new HeaderView({el: $("#page-header")})).setTemplate({template: "#calendar-header"});
@@ -35,6 +35,7 @@ var HomeworkEditorView = WebPage.extend({
         this.users.each(function(user){user.parse();});
 
         this.dispatcher.on("calendar-change", self.updateProblemSetList);
+
         config.timezone = config.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
                 // Define all of the views that are visible with the Pulldown menu
@@ -46,8 +47,8 @@ var HomeworkEditorView = WebPage.extend({
             setDetails:  new HWDetailView({el: $("#setDetails"),  users: this.users, problemSets: this.problemSets,
                     headerView: this.headerView}),
             allSets:  new SetListView({el:$("#allSets"), problemSets: this.problemSets, users: this.users}),
-            assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", 
-                                users: this.users, problemSets: this.problemSets}),
+            /*assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", 
+                                users: this.users, problemSets: this.problemSets}), */
             importExport:  new ImportExport(),
             libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), headerView: this.headerView,
                 errorPane: this.errorPane, problemSets: this.problemSets}),
@@ -65,8 +66,12 @@ var HomeworkEditorView = WebPage.extend({
         })        
 
 
-        this.updateProblemSetList();
+        // set the initial view to be the Calendar. 
+        this.changeView(null,"calendar","Calendar");
         this.updateCalendar();
+
+        //this.updateProblemSetList();
+        //this.updateCalendar();
 
         // this is needed for the handshaking of session information between the old and new
         // webservice
@@ -88,8 +93,6 @@ var HomeworkEditorView = WebPage.extend({
             if (set.save()){
                 self.messagePane.addMessage({type: "success", short: "Set " + set.get("set_id") + " added.",
                     text: "Problem Set: " + set.get("set_id") + " has been added to the course."});
-                self.probSetListView.render();
-                self.updateProblemSetList();
             }
 
         });
@@ -98,8 +101,6 @@ var HomeworkEditorView = WebPage.extend({
             if(set.destroy()){
                 self.messagePane.addMessage({type: "success", short: "Set " + set.get("set_id") + " removed.",
                     text: "Problem Set: " + set.get("set_id") + " has been removed from the course."});
-                self.views.calendar.render();
-                self.updateProblemSetList();
             }
         });
 
@@ -117,8 +118,6 @@ var HomeworkEditorView = WebPage.extend({
                         + _set.get("set_id") + " has changed from " + _old + " to " + _new});
                 });
             self.updateCalendar();
-            self.updateProblemSetList();
-
         });
 
         // this handles the validation of the problem sets, mainly validating the dates.  
@@ -171,54 +170,67 @@ var HomeworkEditorView = WebPage.extend({
         var linkname = (link)?link:$(evt.target).data("link");
         $(".view-pane").removeClass("active");
         $("#"+linkname).addClass("active");
-        $("#viewHeader").html((header)?header:$(evt.target).data("name"));
+        $("#viewHeader").html((header)?header:$(evt.target).data("name"))
+            .data("linkname",linkname);
         this.views[linkname].render();
         this.headerView.setTemplate(this.views[linkname].headerInfo).render();
+        this.updateProblemSetList(linkname);
     },
-    // This rerenders the problem set list on the left and sets the drag and drop properties.
-    updateProblemSetList: function () {
+    updateProblemSetList: function(viewname) {
+    switch(viewname){            // set up the problem sets to be draggable or not
+            case "calendar":
+            this.setProblemSetUI({droppable:true,draggable: true});
+            break;
+            case "libraryBrowser":
+            this.setProblemSetUI({droppable:true,draggable: false});
+            break;
+            default:
+            this.setProblemSetUI({droppable: false, draggable:false});
+        }
+    },
+    // call this to set the problems to be draggable or not or droppable or not: 
+    setProblemSetUI: function (opts) {
         var self = this;
 
         // The following allows a problem set (on the left column to be dragged onto the Calendar)
-        $(".problem-set").draggable({   
-            revert: true, 
-            scroll: false, 
-            helper: "clone",
-            appendTo: "body",
-            cursorAt: {left: 10, top: 10},
-            stop: function(evt,ui){
-                console.log("in stop");
-                console.log(ui)
-            },
-            start: function(evt,ui){
-                console.log(ui);
-                console.log(this);
-            }
-        });
+        if(opts.draggable){
+            $(".problem-set").draggable({ 
+                disabled: false,  
+                revert: true, 
+                scroll: false, 
+                helper: "clone",
+                appendTo: "body",
+                cursorAt: {left: 10, top: 10}
+            });
+        } else {
+            $(".problem-set.ui-draggable").draggable("destroy");
+        }
+        if(opts.droppable){
+            $(".problem-set").droppable({
+                disabled: false,
+                hoverClass: "btn-info",
+                accept: ".problem",
+                tolerance: "pointer",
+                drop: function( evt, ui ) { 
+                    console.log("Adding a Problem to HW set " + $(evt.target).data("setname"));
+                    console.log($(ui.draggable).data("path"));
+                    var source = $(ui.draggable).data("source");
+                    console.log(source);
+                    var set = self.problemSets.findWhere({set_id: $(evt.target).data("setname")})
+                    var prob = self.views.libraryBrowser.views[source].problemList
+                                        .findWhere({source_file: $(ui.draggable).data("path")});
+                    set.addProblem(prob);
+                }
+            });
+        } else {
+            $(".problem-set.ui-droppable").droppable("destroy");
+        }
 
-        // allows the problem sets on the left column to accept problems dropped on them. 
-
-        $(".problem-set").droppable({
-            hoverClass: "btn-info",
-            accept: ".problem",
-            tolerance: "pointer",
-            drop: function( evt, ui ) { 
-                console.log("Adding a Problem to HW set " + $(evt.target).data("setname"));
-                console.log($(ui.draggable).data("path"));
-                var source = $(ui.draggable).data("source");
-                console.log(source);
-                var set = self.problemSets.findWhere({set_id: $(evt.target).data("setname")})
-                var prob = self.views.libraryBrowser.views[source].problemList
-                                    .findWhere({source_file: $(ui.draggable).data("path")});
-                set.addProblem(prob);
-            }
-        });
         // When the HW sets are clicked, open the HW details tab.   
         // pstaab: can we include this in the ProblemSetListView?       
         $(".problem-set").on('click', self.showHWdetails);
 
-
-    },
+    }, 
     // This rerenders the calendar and updates the drag-drop features of it.
     updateCalendar: function ()
     {
