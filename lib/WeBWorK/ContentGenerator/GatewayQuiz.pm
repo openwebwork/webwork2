@@ -1304,6 +1304,7 @@ sub body {
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
+	my $courseID = $urlpath->arg("courseID");
 
 	# report everything with the same time that we started with
 	my $timeNow = $self->{timeNow};
@@ -1643,7 +1644,22 @@ sub body {
 						     '|', ($i+1), '|', $scores, 
 						     "\t$timeNow\t",
 						     "$answerString"), 
-						);
+				    );
+				
+				#add to PastAnswer db
+				my $pastAnswer = $db->newPastAnswer();
+				$pastAnswer->course_id($courseID);
+				$pastAnswer->user_id($problems[$i]->user_id);
+				$pastAnswer->set_id($setVName);
+				$pastAnswer->problem_id($problems[$i]->problem_id);
+				$pastAnswer->timestamp($timeNow);
+				$pastAnswer->scores($scores);
+				$pastAnswer->answer_string($answerString);
+				$pastAnswer->source_file($problems[$i]->source_file);
+				
+				$db->addPastAnswer($pastAnswer);
+
+
 			}
 		}
 	}
