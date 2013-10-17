@@ -15,7 +15,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         url: function () {
             // need to determine if this is a problem in a problem set or a problem from a library browser
             if(this.collection.setName) { // the problem comes from a problem set
-                return config.urlPrefix + "courses/" + config.courseSettings.course + "/sets/" + this.collection.setName 
+                return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.collection.setName 
                 + "/problems/" + this.get("problem_id");
             } else {
                 return config.urlPrefix;

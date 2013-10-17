@@ -156,8 +156,10 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
         addProblem: function (prob) {  
             var self = this; 
             var newProblem = new Problem(prob.attributes);
+            var lastProblem = this.get("problems").last();
+            newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
             this.get("problems").add(newProblem);
-            newProblem.save();
+            this.save();
             this.trigger("change:problems",this);
             
             // pstaab: I don't think the rest is necessary now that problems are loaded from the beginning. 

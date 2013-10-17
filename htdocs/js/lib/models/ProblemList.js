@@ -49,7 +49,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             //        return {source_file: prob.get("source_file"), problem_id: prob.get("problem_id")};});
 
             $.ajax({  contentType: "application/json", type: "PUT",
-                url: config.urlPrefix + "courses/"+ config.courseSettings.course + "/sets/" + this.setName + "/problems",
+                url: config.urlPrefix + "courses/"+ config.courseSettings.course_id + "/sets/" + this.setName + "/problems",
                 success: success,
                 data: JSON.stringify({problems: self.models}),
                 success: success,

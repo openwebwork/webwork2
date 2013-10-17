@@ -14,7 +14,7 @@ logger: "console"
 # the log level for this environment
 # core is the lowest, it shows Dancer's core log messages as well as yours
 # (debug, info, warning and error)
-log: "debug"
+log: "core"
 
 # should Dancer consider warnings as critical errors?
 warnings: 1

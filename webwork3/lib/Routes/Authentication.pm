@@ -86,8 +86,8 @@ sub authenticate {
 
 
 
-	debug "Checking to see if the user is defined.";
-	debug session->{user};
+	# debug "Checking to see if the user is defined.";
+	# debug session->{user};
 
     if (! defined(session->{user})) {
     	if (defined(params->{user})){
@@ -100,7 +100,7 @@ sub authenticate {
 	if(! defined(session->{session_key})){
 		my $key = vars->{db}->getKey(session->{user});
 
-		debug $key;
+		# debug $key;
 		if ($key->{key} eq params->{session_key}) {
 			session->{session_key} = params->{session_key};
 		} 
@@ -110,8 +110,8 @@ sub authenticate {
 		send_error("The session_key has not been defined or is not correct.  You may need to authenticate again",401);	
 	}
 
-	debug "Checking if session->{permission} is defined";
-	debug session->{permission};
+	# debug "Checking if session->{permission} is defined";
+	# debug session->{permission};
 
 
 	if (! defined(session->{permission})){
