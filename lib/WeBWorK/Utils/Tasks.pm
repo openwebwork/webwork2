@@ -129,7 +129,7 @@ sub fake_problem {
 	my %options = @_;
 	my $problem = $db->newGlobalProblem(); 
 
-	debug("In fake_problem");
+	#debug("In fake_problem");
 
 	$problem = global2user($db->{problem_user}->{record}, $problem); 
 	$problem->set_id(fakeSetName); 
@@ -147,13 +147,13 @@ sub fake_problem {
 	$problem->num_correct(0); 
 	$problem->num_incorrect(0); 
 
-	for my $key (keys(%{$problem})){
-		my $value = '####UNDEF###';
-		if ($problem->{$key}) {
-			$value = $problem->{$key};
-		}
-		debug($key . " : " . $value);
-	}
+	#for my $key (keys(%{$problem})){
+	#	my $value = '####UNDEF###';
+	#	if ($problem->{$key}) {
+	#		$value = $problem->{$key};
+	#	}
+	#	debug($key . " : " . $value);
+	#}
 
 
 
