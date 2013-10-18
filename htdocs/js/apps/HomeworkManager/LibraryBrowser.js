@@ -19,22 +19,14 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView){
                              localLibrary: "library-local-tab",
                              search: "library-search-tab"};
 
-            this.libraryProblemsView = new LibraryProblemsView();
-            this.libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
+
+            //this.libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
 
             this.views = {
-                subjects  :  new LibraryView({libBrowserType: "subjects", errorPane: this.options.errorPane, 
-                                            problemSets: this.options.problemSets,
-                                            libraryProblemsView: this.libraryProblemsView}),
-                directories    :  new LibraryView({libBrowserType: "directories", errorPane: this.options.errorPane, 
-                                            problemSets: this.options.problemSets,
-                                            libraryProblemsView: this.libraryProblemsView}),
-                localLibrary: new LibraryView({libBrowserType: "localLibrary", errorPane: this.options.errorPane, 
-                                            problemSets: this.options.problemSets,
-                                            libraryProblemsView: this.libraryProblemsView}),
-                search :  new LibrarySearchView({libBrowserType: "search", errorPane: this.options.errorPane, 
-                                            problemSets: this.options.problemSets,
-                                            libraryProblemsView: this.libraryProblemsView})
+                subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: this.options.problemSets}),
+                directories    :  new LibraryView({libBrowserType: "directories", problemSets: this.options.problemSets}),
+                localLibrary: new LibraryView({libBrowserType: "localLibrary", problemSets: this.options.problemSets}),
+                search :  new LibrarySearchView({libBrowserType: "search", problemSets: this.options.problemSets})
             }
     	},
     	render: function (){
@@ -44,24 +36,22 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView){
                 self.views[key].setElement(self.$("#"+self.elements[key]));
             });
             this.views.subjects.render();
+            this.views.subjects.libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
     	},
         events: {"shown a[data-toggle='tab']": "changeView"},
         changeView: function(evt){
-
+            var viewType = _(tabType).values()[0];
+            _(_.keys(this.views)).each(function(view){
+                this.views[view].libraryProblemsView.off("update-num-problems");
+            })
+            this.views[viewType].libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
             var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab
-            this.views[_(tabType).values()[0]].render();
+            this.views[viewType].render();
         },
         updateNumberOfProblems: function (opts) {
+            console.log("in updateNumberOfProblems");
             this.headerView.$(".number-of-problems").html(opts.number_shown + " of " +opts.total + " problems shown.");
-            /*if(this.$(".prob-list li").length == this.problems.size()){
-                this.$(".load-more-btn").addClass("disabled");
-            } else {
-                this.$(".load-more-btn").removeClass("disabled");
-            }*/
-        }, 
-
-
-
+        }
     });
 
     return LibraryBrowser;

@@ -24,6 +24,8 @@
 
 .current-page {font-weight: bold;}
 
+.hidden, .form-horizontal .hidden {display: none;}	
+
 /* styling for the message box */
 
 #short-message {padding-top: 4px; padding-bottom: 4px; margin-top: 5px; line-height: 16px; display: none;}

@@ -381,10 +381,10 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <script type="text/template" id="library-view-template">
 <div class="row-fluid">
-<div class="library-viewer span6"></div>
-<div class="btn-group pull-right">
+<div class="library-tree-container span5"></div>
+<div class="btn-group form-horizontal">
 <button class="btn load-more-btn">Load More Problems</button>
-  <select class="target-set span2">
+  <select class="target-set input-medium">
     <option>Target Set</option>
     <% _(sets).each(function(set){print('<option>' + set + ' </option> ')  });%>
   </select>
@@ -428,7 +428,7 @@ Search by</button>
 </script>
 
 <script type="text/template" id="library-select-template">
-<div>
+<div class="form-horizontal">
 <span><select id="library-level-0"  class="library-selector input-small">
   <option>Select</option>
   <% _(subjects).each(function(subj){print('<option>' + subj.name + '</option>')}); %>
@@ -437,28 +437,6 @@ Search by</button>
 <span><select id="library-level-2" class="library-selector input-small hidden"></select></span>
 <button class="btn load-library-button">Load</button>
 </div>
-</script>
-
-<script type="text/template" id="library-dropdown-template">
-  <div class="btn-group">
-    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-      Library
-      <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu" role="menu">
-      <% _(subjects).each(function(subj){print('<li class="dropdown-submenu" data-level="0"> <a href="#">' + subj.name +'</a>');
-            if(subj.subfields){
-              print('<ul class="dropdown-menu">');
-               _(subj.subfields).each(function(subsubj){ print('<li class="dropdown-submenu" data-level="1"><a href="#">' + subsubj.name + '</a>');
-                    if(subsubj.subfields) {
-                      print("<ul class='dropdown-menu'>")
-                      _(subsubj.subfields).each(function(s) { print('<li data-level="2"><a href="#">' + s.name + '</a></li>') });
-                  print('</ul></li>'); }
-                });
-               print('</ul></li>');}
-               }); %>
-    </ul>
-  </div>
 </script>
 
 <script type="text/template" id="target-set-template">

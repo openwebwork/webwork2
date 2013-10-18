@@ -128,7 +128,9 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
             this.$("#prob-list").append(probView.el);
             probView.render();
-            this.problems.trigger("num-problems-shown");
+            this.trigger("update-num-problems",
+                {number_shown: this.$(".prob-list li").length, total: this.problems.size()});
+
         },
         deleteProblem: function (problem){
             var self = this; 
