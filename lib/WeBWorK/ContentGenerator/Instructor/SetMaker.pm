@@ -199,15 +199,14 @@ sub munge_pg_file_path {
 
 ## With MLT, problems come in groups, so we need to find next/prev
 ## problems.  Return index, or -1 if there are no more.
-
 sub next_prob_group {
 	my $ind = shift;
 	my @pgfiles = @_;
 	my $len = scalar(@pgfiles);
 	return -1 if($ind >= $len-1);
-	my $mlt = $pgfiles[$ind]->{morelt} || 0;
+	my $mlt= $pgfiles[$ind]->{morelt} || 0;
 	return $ind+1 if($mlt == 0);
-	while($ind<$len and $pgfiles[$ind]->{morelt} == $mlt) {
+	while($ind<$len and ($pgfiles[$ind]->{morelt} || 0) == $mlt) {
 		$ind++;
 	}
 	return -1 if($ind==$len);
@@ -881,6 +880,7 @@ sub make_top_row {
 
     # For next/previous buttons
 	my ($next_button, $prev_button) = ("", "");
+	my $show_hide_path_button = "";
 	my $first_shown = $self->{first_shown};
 	my $last_shown = $self->{last_shown}; 
 	my $first_index = $self->{first_index};
@@ -895,6 +895,15 @@ sub make_top_row {
 		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
 						 -value=>$r->maketext("Next page"));
 	}
+	if (scalar(@pg_files)) {
+		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:16ex",
+		                         -value=>$r->maketext("Show all paths"),
+								 -id =>"toggle_paths",
+								 -onClick=>'return togglepaths()');
+		$show_hide_path_button .= " ".CGI::hidden(-name=>"toggle_path_current", -id=>"toggle_path_current", -default=>'show');
+		$show_hide_path_button .= " ".CGI::hidden(-name=>"hidetext", -id=>"hidetext", -default=>$r->maketext("Hide all paths"));
+		$show_hide_path_button .= " ".CGI::hidden(-name=>"showtext", -id=>"showtext", -default=>$r->maketext("Show all paths"));
+	}
 
 	print CGI::Tr({},
 	        CGI::td({-class=>"InfoPanel", -align=>"center"},
@@ -906,7 +915,7 @@ sub make_top_row {
 		           CGI::submit(-name=>"cleardisplay", 
 		                -style=>$these_widths,
 		                -value=>$r->maketext("Clear Problem Display")),
-			$prev_button, " ", $next_button,
+			$prev_button, " ", $next_button, " ", $show_hide_path_button
 		     )), 
 	#	CGI::Tr({}, 
 	#	 CGI::td({},
@@ -950,7 +959,7 @@ sub make_data_row {
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
@@ -1083,7 +1092,7 @@ $dbsearch[$indx]->{oindex} = $indx;
 	for my $mltid (keys %mlt) {
 		my @idlist = @{$mlt{$mltid}};
 		if(scalar(@idlist)>1) {
-			my $leader = WeBWorK::Utils::ListingDB::getMLTleader($r, $mltid);
+			my $leader = WeBWorK::Utils::ListingDB::getMLTleader($r, $mltid) || 0;
 			my $hold = undef;
 			for my $subindx (@idlist) {
 				if($dbsearch[$subindx]->{pgid} == $leader) {
@@ -1511,7 +1520,7 @@ sub head {
 
     print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
 
-#  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
