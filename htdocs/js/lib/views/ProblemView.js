@@ -105,7 +105,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
         },
         hideProblem: function(evt){
             console.log("hiding a problem ");
-            $(evt.target).parent().parent().css("display","none")
+            this.$el.css("display","none")
         },
         removeProblem: function(){
             console.log("removing problem");
