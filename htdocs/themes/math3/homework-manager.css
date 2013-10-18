@@ -70,6 +70,8 @@
 
 .lib-problem-viewer { overflow: scroll;}
 
+
+
 .scrollable {overflow: scroll;}
 
 .num-problems {margin-left: 10px;}
@@ -102,6 +104,7 @@ padding: 5px;
 border-radius: 5px;}
 
 .filename {font-style: italic; font-weight:  bold;}
+.problem-seed {margin-right: 2ex;}
 
 /* class for reordering problem sets */
 

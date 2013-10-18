@@ -459,6 +459,7 @@ Search by</button>
       <input type="text" class="prob-value input-small"></label>
   </div>
 <%}%>
+
 <div class="span4 btn-group">
 <%if(showAddTool){%><a class="btn btn-small add-problem" href="#"><i class="icon-plus-sign"></i></a><%}%>
 <%if(showEditTool){%><a class="btn btn-small" target="WW_editor" href="<%=editUrl%>"><i class="icon-pencil"></i></a><%}%>
@@ -468,6 +469,7 @@ Search by</button>
 <%if(deletable){ %><span class="remove-problem btn btn-small"><i class="icon-trash"></i></span><%}%>
 </div>
 </div>
+<div><span class="problem-seed">Problem Seed: <%=problem_seed%></span><span class="filename"><%=source_file%></span></div>
 <div><%=data%></div>
 <!--<div class="filename"><%=source_file%></div>    
 <iframe class="data" style="width:100%" seamless="seamless"><%= data %></iframe>-->

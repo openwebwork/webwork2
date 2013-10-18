@@ -10,7 +10,8 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
                 data: null,
                 problem_id: 0,
                 value: 1,
-                displayMode: "MathJax"
+                displayMode: "MathJax",
+                problem_seed: 1
         },
         url: function () {
             // need to determine if this is a problem in a problem set or a problem from a library browser
