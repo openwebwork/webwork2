@@ -13,6 +13,11 @@ var basicRequestObject = {
 
 var basicWebserviceURL = "/webwork2/instructorXMLHandler";
 
+// For watermark of sample text for adding set text box
+$(function() {
+ $('input[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   '  ) } )
+ $('textarea[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   ', {useNative:false}  ) } )
+});
 
 function settoggle(id, text1, text2) {
   $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
