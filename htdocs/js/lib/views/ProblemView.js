@@ -24,15 +24,12 @@ define(['Backbone', 'underscore','config','imagesloaded'
             this.allAttrs = {};
             _.extend(this.allAttrs,this.options.viewAttrs);
 
-            var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=images&key=" 
-                + config.courseSettings.session_key 
+            var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=" 
+                + this.model.get("displayMode") + "&key=" + config.courseSettings.session_key 
                 + "&sourceFilePath=" + this.model.get("source_file") + "&user=" + config.courseSettings.user + "&problemSeed=1234"; 
             _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
-            //this.model.on('change:data', this.render, this);
-            //this.model.on('destroy', this.remove);
             this.model.on('change:value', function () {
                 self.model.save();
-                //console.log(self.model.attributes);
             });
         },
 

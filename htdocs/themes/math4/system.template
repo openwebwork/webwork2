@@ -31,6 +31,7 @@
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 <!--#if can="output_jquery_ui"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
 	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
@@ -54,7 +55,9 @@ var tabberOptions = {manualStartup:true};
 	<!--#output_JS-->
 <!--#endif-->
 
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
+
 
 <!--#head-->
 </head>
