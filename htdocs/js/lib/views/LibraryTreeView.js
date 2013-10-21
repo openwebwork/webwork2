@@ -46,18 +46,28 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                     var subject = this.$(".library-level-0").val() || this.subject;
                     this.$(".library-level-1").removeClass("hidden");
                     this.$(".library-level-2").addClass("hidden");
-                    var subfields = _(this.libraryTree.get("tree")).findWhere({name: subject}).subfields;
+                    var allChapters = _(this.libraryTree.get("tree")).findWhere({name: subject});
                     this.$(".library-level-1").html("<option>Select</option>" + 
-                            _(subfields).map(function(sf) {return "<option>" + sf.name + "</option>";}).join(""));
+                            _(allChapters.subfields).map(function(sf) {return "<option>" + sf.name + "</option>";}).join(""));
+                    this.$(".num-files").text(allChapters.num_files + " problems");
                     break;
                 case 1:
                     var subject = this.$(".library-level-0").val() || this.subject;
                     var chapter = this.$(".library-level-1").val() || this.chapter;
                     this.$(".library-level-2").removeClass("hidden");
-                    var allChapters = _(this.libraryTree.get("tree")).findWhere({name: subject}).subfields;
-                    var allSections = _(allChapters).findWhere({name: chapter}).subfields;
+                    var allChapters = _(this.libraryTree.get("tree")).findWhere({name: subject});
+                    var allSections = _(allChapters.subfields).findWhere({name: chapter});
                     this.$(".library-level-2").html("<option>Select</option>"+
-                        _(allSections).map(function(sect){return "<option>" + sect.name + "</option>";}));
+                        _(allSections.subfields).map(function(sect){return "<option>" + sect.name + "</option>";}));
+                    this.$(".num-files").text(allSections.num_files + " problems");
+                case 2:
+                    var subject = this.$(".library-level-0").val() || this.subject;
+                    var chapter = this.$(".library-level-1").val() || this.chapter;
+                    var section = this.$(".library-level-2").val() || this.section;
+                    var allChapters = _(this.libraryTree.get("tree")).findWhere({name: subject});
+                    var allSections = _(allChapters.subfields).findWhere({name: chapter});
+                    var selectedSection = _(allSections.subfields).findWhere({name: section});
+                    this.$(".num-files").text(selectedSection.num_files + " problems");
                 break;
 
             }

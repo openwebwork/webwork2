@@ -12,6 +12,7 @@ use File::Basename;
 use Cwd;
 use DBI;
 use JSON;
+use IO::Handle;
 
  #(maximum varchar length is 255 for mysql version < 5.0.3.  
  #You can increase path length to  4096 for mysql > 5.0.3)
@@ -39,8 +40,6 @@ my $dbh = DBI->connect(
         },
 );
 
-my $passwd = $ce->{database_password};
-my $user = $ce->{database_username};
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
@@ -59,12 +58,17 @@ while ( my @row = $sth->fetchrow_array ) {
   }
 
 
+STDOUT->printflush("Building the subject-tree.  There are " . scalar(@subjects) . " subjects\n");
+
 my @subject_tree;  # array to store the individual library tree for each subject 
 
 foreach my $i (0..$#subjects){
 
 	my $subject_row = $subjects[$i];
 	my $subject_name = $subject_names[$i];
+	my $subj = $subject_name;
+	$subj =~ s/'/\'/g;
+
 
 	my $sth = $dbh->prepare("select * from OPL_DBchapter where DBsubject_id = $subject_row;");
 	$sth->execute;
@@ -82,20 +86,57 @@ foreach my $i (0..$#subjects){
 	foreach my $j (0..$#chapters) {
 		my $chapter_row = $chapters[$j];
 		my $chapter_name = $chapter_names[$j];
+
+		my $ch = $chapter_name;
+		$ch =~ s/'/\'/g;
+
 		my $sth = $dbh->prepare("SELECT * FROM OPL_DBsection WHERE DBchapter_id=$chapter_row");
 		$sth->execute;
 
 		my @subfields = ();
 		while ( my @row = $sth->fetchrow_array ) {
-			my $section_name;
-			$section_name->{name} = $row[1];
-			my $clone = { %{ $section_name } };  # need to clone it before pushing into the @subfields array.
+			my $section_tree = {};
+			$section_tree->{name} = $row[1];
+			## Determine the number of files that falls into each
+
+			my $sect = $section_tree->{name};
+			$sect =~ s/'/\\'/g;
+
+			my $queryString = "select path.path,pg.filename from OPL_DBsection AS sect "
+					. "INNER JOIN OPL_DBchapter AS ch INNER JOIN OPL_DBsubject AS sub "
+					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "WHERE sect.name='" . $sect . "' AND ch.name='" . $ch . "'"
+					. "and sub.name='" . $subj . "';";
+
+			my $sth = $dbh->prepare($queryString);
+			$sth->execute;
+			my $numFiles= $sth->rows;
+			$section_tree->{num_files} = $numFiles;
+
+			my $clone = { %{ $section_tree } };  # need to clone it before pushing into the @subfield array.
+
 		    push(@subfields,$clone);
 	    }
 
 		my $chapter_tree;
 		$chapter_tree->{name} = $chapter_name;
 		$chapter_tree->{subfields} = \@subfields;
+
+		## determine the number of files in each section
+
+		my $queryString = "select path.path,pg.filename from OPL_DBsection AS sect "
+					. "INNER JOIN OPL_DBsubject AS sub "
+					. "INNER JOIN OPL_DBchapter AS ch ON ch.DBchapter_id = sect.DBchapter_id "
+					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "WHERE ch.name='" . $ch . "' and sub.name='" . $subj . "';";
+
+		$sth = $dbh->prepare($queryString);
+		$sth->execute;
+		my $numFiles = $sth->rows;
+		# my $allFiles = $sth->fetchall_arrayref;
+		 $chapter_tree->{num_files} = $numFiles;
 
 		my $clone = { %{ $chapter_tree } };  # need to clone it before pushing into the @chapter_tree array.
 		push(@chapter_tree,$clone);
@@ -108,13 +149,29 @@ foreach my $i (0..$#subjects){
 	$subject_tree->{name} = $subject_name;
 	$subject_tree->{subfields} = \@chapter_tree; 
 
+	## find the number of files on the subject level
+
+	my $queryString = "select path.path,pg.filename "
+					. "from OPL_DBsubject AS sub "
+					. "INNER JOIN OPL_DBchapter AS ch ON sub.DBsubject_id = ch.DBsubject_id " 
+					. "INNER JOIN OPL_DBsection AS sect ON sect.DBchapter_id = ch.DBchapter_id "
+					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "WHERE sub.name='" . $subj . "';";
+
+	$sth = $dbh->prepare($queryString);
+	$sth->execute;
+	my $numFiles = $sth->rows;
+	$subject_tree->{num_files} = $numFiles;
+
+	STDOUT->printflush(($i+1) . " ");
+
+
 	my $clone = { % {$subject_tree}};
 	push (@subject_tree, $clone);
 }
 
-	#print to_json(\@subject_tree);
-	#print "\n\n";
-
+print "\n";
 
 
 
