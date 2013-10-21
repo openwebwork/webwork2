@@ -13,7 +13,7 @@ use Dancer::Plugin::Database;
 use Digest::MD5 qw(md5_hex);
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::LibraryUtils qw/list_pg_files/;
+use Utils::LibraryUtils qw/list_pg_files get_section_problems get_chapter_problems get_subject_problems/;
 use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
@@ -50,30 +50,13 @@ get '/Library/subjects' => sub {
 ####
 
 
-get '/Library/subjects/:subject_id/problems' => sub {
-	my $subject = database->quick_select('OPL_DBsubject', {name => param('subject_id')});
+get '/Library/subjects/:subject/problems' => sub {
 
-	if(!defined($subject)){
-		send_error("The subject name " . params->{subject_id} . " is not in the database.");
-	}
+	my $files = get_subject_problems(params->{subject});
 
-	my @chapters = database->quick_select('OPL_DBchapter',{DBsubject_id => $subject->{DBsubject_id}});
+	my @problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$files};
 
-	my $chapter_id =  join " , " ,  (map {$_->{DBchapter_id}} @chapters); 
-
-	my $sth = database->prepare("select * from OPL_DBsection where DBchapter_id in (" . $chapter_id . ");");
-	$sth->execute;
-	my $sections = $sth->fetchall_arrayref({DBsection_id=>1}); 
-
-	my $section_id = join " , " , map { $_->{DBsection_id} } @$sections;  # array of sections_id with the given subject_id;
-
-	$sth = database->prepare("select pgfile_id from OPL_pgfile where DBsection_id in (" . $section_id . ")");
-	$sth->execute;
-	my $files = $sth->fetchall_arrayref({});
-
-	my @allfiles = map { {path_id=>$_->{path_id}, filename=>$_->{filename}} } @$files;
-
-	return getFilePaths(\@allfiles);  # return an array of filepaths.  
+	return \@problems;
 };
 
 
@@ -88,36 +71,13 @@ get '/Library/subjects/:subject_id/problems' => sub {
 ####
 
 
-get '/Library/subjects/:subject_id/chapters/:chapter_id/problems' => sub {
-	my $subject = database->quick_select('OPL_DBsubject', {name => params->{subject_id}});
+get '/Library/subjects/:subject/chapters/:chapter/problems' => sub {
 
-	if(!defined($subject)){
-		send_error("The subject name " . params->{subject_id} . " is not in the OPL database.");
-	}
+	my $files = get_chapter_problems(params->{subject},params->{chapter});
 
+	my @problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$files};
 
-	my $chapter = database->quick_select('OPL_DBchapter',{name => params->{chapter_id}});
-
-	if(!defined($chapter)){
-		send_error("The chapter name " . params->{chapter_id} . " is not in the OPL database");
-	}
-
-	if($chapter->{DBsubject_id} ne $subject->{DBsubject_id}){
-		send_error("The chapter with name " . params->{chapter_id} . " is not a subset of the subject with name " 
-						. params->{subject_id} . " in the OPL database.");
-	}
-
-	my @sections = database->quick_select('OPL_DBsection',{DBchapter_id=>$chapter->{DBchapter_id}});
-
-	my $section_id = join " , " , map { $_->{DBsection_id} } @sections;  # array of sections_id with the given subject_id;
-
-	my $sth = database->prepare("select path_id, filename from OPL_pgfile where DBsection_id in (" . $section_id . ")");
-	$sth->execute;
-	my $files = $sth->fetchall_arrayref({});
-
-	my @allfiles = map { {path_id=>$_->{path_id}, filename=>$_->{filename}} } @$files;
-
-	return getFilePaths(\@allfiles);
+	return \@problems;
 };
 
 ####
@@ -131,43 +91,14 @@ get '/Library/subjects/:subject_id/chapters/:chapter_id/problems' => sub {
 ####
 
 
-get '/Library/subjects/:subject_id/chapters/:chapter_id/sections/:section_id/problems' => sub {
+get '/Library/subjects/:subject/chapters/:chapter/sections/:section/problems' => sub {
 
-	my $subject = database->quick_select('OPL_DBsubject', {name => params->{subject_id}});
+	my $files = get_section_problems(params->{subject},params->{chapter},params->{section});
 
-	if(!defined($subject)){
-		send_error("The subject name " . params->{subject_id} . " is not in the OPL database.");
-	}
+	my @problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$files};
 
+	return \@problems;
 
-	my $chapter = database->quick_select('OPL_DBchapter',{name => params->{chapter_id}});
-
-	if(!defined($chapter)){
-		send_error("The chapter name " . params->{chapter_id} . " is not in the OPL database");
-	}
-
-	if($chapter->{DBsubject_id} ne $subject->{DBsubject_id}){
-		send_error("The chapter with name " . params->{chapter_id} . " is not a subset of the subject with name " 
-						. params->{subject_id} . " in the OPL database.");
-	} 
-
-	my $section = database->quick_select('OPL_DBsection',{name=> params->{section_id}});
-
-	if(!defined($section)){
-		send_error("The section name " . params->{section_id} . " is not in the OPL database");
-	}	
-
-	if($section->{DBchapter_id} ne $chapter->{DBchapter_id}){
-		send_error("The section with name " . params->{section_id} . " is not a subset of the chapter with name " 
-						. params->{chapter_id} . " in the OPL database.");
-	} 
-
-
-	my @files = database->quick_select('OPL_pgfile',{DBsection_id=>$section->{DBsection_id}});
-	
-	my @allfiles = map { {path_id=>$_->{path_id}, filename=>$_->{filename}} } @files;
-
-	return getFilePaths(\@allfiles);
 };
 
 #######
@@ -205,6 +136,10 @@ get '/Library/directories' => sub {
 
 get '/Library/directories/**' => sub {
 
+	## pstaab: trying to figure out the best way to pass the course_id.  It needs to be passed in as a parameter for this
+	##         to work.
+
+	setCourseEnvironment(params->{course_id});
 	my ($dirs) = splat;
 	my @dirs = @{$dirs};
 	splice(@dirs,1,1); # strip the "OpenProblemLibrary" from the path

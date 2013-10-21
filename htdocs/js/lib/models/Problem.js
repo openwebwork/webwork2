@@ -10,7 +10,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
                 data: null,
                 problem_id: 0,
                 value: 1,
-                displayMode: "MathJax",
+                //displayMode: "MathJax",  //this has been commented out.  it should be a property of the problem view, not the problem.
                 problem_seed: 1
         },
         url: function () {
@@ -28,13 +28,15 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             //this.id = md5(response? response.source_file : this.get("source_file"));
             return response;
         },
-        loadHTML: function (success) {
+        loadHTML: function (opts) {
+            var attrs = {displayMode: opts.displayMode};
+            _.extend(attrs,this.attributes);
             if (this.collection.setName){  // the problem is part of a set
                 $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
                     + this.collection.setName 
-                    + "/problems/" + this.get("problem_id"),this.attributes, success);
+                    + "/problems/" + this.get("problem_id"),attrs, opts.success);
             } else {  // it is being rendered from the library
-                $.get(config.urlPrefix + "renderer/problems/0",this.attributes,success);
+                $.get(config.urlPrefix + "renderer/problems/0",attrs,opts.success);
             }
         },
         problemURL: function(){

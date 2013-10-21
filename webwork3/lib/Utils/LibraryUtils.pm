@@ -3,16 +3,83 @@
 
 package Utils::LibraryUtils;
 use base qw(Exporter);
-use WeBWorK::Debug;
+use Dancer;
+use Dancer::Plugin::Database;
 use Data::Dumper;
 use WeBWorK::Utils qw(readDirectory sortByName);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(list_pg_files);
+our @EXPORT_OK = qw(list_pg_files get_section_problems get_chapter_problems get_subject_problems);
 
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
 	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, 'achievements' => 1,
 );
+
+## this returns all problems in the library that matches the given subject
+
+
+sub get_subject_problems {
+	my ($subject) = @_;
+
+	my $queryString = "select path.path,pg.filename "
+					. "from OPL_DBsubject AS sub "
+					. "INNER JOIN OPL_DBchapter AS ch ON sub.DBsubject_id = ch.DBsubject_id " 
+					. "INNER JOIN OPL_DBsection AS sect ON sect.DBchapter_id = ch.DBchapter_id "
+					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "WHERE sub.name='" . $subject . "';";
+
+	my $sth = database->prepare($queryString);
+	$sth->execute;
+	my $results = $sth->fetchall_arrayref;
+	
+	return $results;
+
+}
+
+## this returns all problems in the library that matches the given subject/chapter
+
+
+sub get_chapter_problems {
+	my ($subject,$chapter) = @_;
+
+	my $queryString = "select path.path,pg.filename "
+					. "from OPL_DBsection AS sect "
+					. "INNER JOIN OPL_DBsubject AS sub "
+					. "INNER JOIN OPL_DBchapter AS ch ON ch.DBchapter_id = sect.DBchapter_id "
+					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "WHERE ch.name='" . $chapter . "' and sub.name='" . $subject . "';";
+
+	my $sth = database->prepare($queryString);
+	$sth->execute;
+	my $results = $sth->fetchall_arrayref;
+	
+	return $results;
+}
+
+
+
+## this returns all problems in the library that matches the given subject/chapter/section
+
+
+sub get_section_problems {
+	my ($subject,$chapter,$section) = @_;
+
+	my $queryString = "select path.path,pg.filename "
+					. "from OPL_DBsection AS sect "
+					. "INNER JOIN OPL_DBchapter AS ch INNER JOIN OPL_DBsubject AS sub "
+					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "WHERE sect.name='" . $section . "' AND ch.name='" . $chapter . "'"
+					. "and sub.name='" . $subject . "';";
+
+	my $sth = database->prepare($queryString);
+	$sth->execute;
+	my $results = $sth->fetchall_arrayref;
+	
+	return $results;
+}
 
 
 ## This is for searching the disk for directories containing pg files.
@@ -34,62 +101,63 @@ my %ignoredir = (
 ## always listed as a separate directory even if it contains only one
 ## pg file.
 
-sub get_library_sets {
-	my $top = shift; my $dir = shift;
-	# ignore directories that give us an error
-	my @lis = eval { readDirectory($dir) };
-	if ($@) {
-		warn $@;
-		return (0);
-	}
-	return (0) if grep /^=library-ignore$/, @lis;
+# sub get_library_sets {
+	
+# 	my ($top,$base,$dir,$probLib) = @_;
+# 	# ignore directories that give us an error
+# 	my @lis = eval { readDirectory($dir) };
+# 	if ($@) {
+# 		warn $@;
+# 		return (0);
+# 	}
+# 	return (0) if grep /^=library-ignore$/, @lis;
 
-	my @pgfiles = grep { m/\.pg$/ and (not m/(Header|-text)(File)?\.pg$/) and -f "$dir/$_"} @lis;
-	my $pgcount = scalar(@pgfiles);
-	my $pgname = $dir; $pgname =~ s!.*/!!; $pgname .= '.pg';
-	my $combineUp = ($pgcount == 1 && $pgname eq $pgfiles[0] && !(grep /^=library-no-combine$/, @lis));
+# 	my @pgfiles = grep { m/\.pg$/ and (not m/(Header|-text)(File)?\.pg$/) and -f "$dir/$_"} @lis;
+# 	my $pgcount = scalar(@pgfiles);
+# 	my $pgname = $dir; $pgname =~ s!.*/!!; $pgname .= '.pg';
+# 	my $combineUp = ($pgcount == 1 && $pgname eq $pgfiles[0] && !(grep /^=library-no-combine$/, @lis));
 
-	my @pgdirs;
-	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
-	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
-	# Never include Library at the top level
-	if ($top == 1) {@dirs = grep {$_ ne 'Library'} @dirs} 
-	foreach my $subdir (@dirs) {
-		my @results = get_library_sets(0, "$dir/$subdir");
-		$pgcount += shift @results; push(@pgdirs,@results);
-	}
+# 	my @pgdirs;
+# 	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
+# 	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
+# 	# Never include Library at the top level
+# 	if ($top == 1) {@dirs = grep {$_ ne 'Library'} @dirs} 
+# 	foreach my $subdir (@dirs) {
+# 		my @results = get_library_sets(0, "$dir/$subdir");
+# 		$pgcount += shift @results; push(@pgdirs,@results);
+# 	}
 
-	return ($pgcount, @pgdirs) if $top || $combineUp || grep /^=library-combine-up$/, @lis;
-	return (0,@pgdirs,$dir);
-}
+# 	return ($pgcount, @pgdirs) if $top || $combineUp || grep /^=library-combine-up$/, @lis;
+# 	return (0,@pgdirs,$dir);
+# }
 
 
-sub get_library_pgs {
+# sub get_library_pgs {
 
-	#print join(",",@_) . "\n";
+# 	#print join(",",@_) . "\n";
 
-	my ($top,$base,$dir,$probLib) = @_;
+# 	my ($top,$base,$dir,$probLib) = @_;
 
-	debug "top: $top  base: $base dir:  $dir probLib: $probLib \n";
-	debug Dumper($probLib);
-	my @lis = readDirectory("$base/$dir");
-	return () if grep /^=library-ignore$/, @lis;
-	return () if !$top && grep /^=library-no-combine$/, @lis;
+# 	debug "top: $top  base: $base dir:  $dir probLib: $probLib \n";
+# 	debug Dumper($probLib);
+# 	my @lis = readDirectory("$base/$dir");
+# 	return () if grep /^=library-ignore$/, @lis;
+# 	return () if !$top && grep /^=library-no-combine$/, @lis;
 
-	my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$base/$dir/$_"} @lis;
-	my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
-	                            !m/(\.(tmp|bak)|~)$/ && -f "$base/$dir/$_" } @lis);
+# 	my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$base/$dir/$_"} @lis;
+# 	my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
+# 	                            !m/(\.(tmp|bak)|~)$/ && -f "$base/$dir/$_" } @lis);
 
-	my @dirs = grep {!$ignoredir{$_} and -d "$base/$dir/$_"} @lis;
-	if ($top == 1) {@dirs = grep {!$problib->{$_}} @dirs}
+# 	my @dirs = grep {!$ignoredir{$_} and -d "$base/$dir/$_"} @lis;
+# 	if ($top == 1) {@dirs = grep {!$problib->{$_}} @dirs}
 
-	debug Dumper(@dirs);
+# 	debug Dumper(@dirs);
 
-	foreach my $subdir (@dirs) {push(@pgs, get_library_pgs(0,"$base/$dir",$subdir,$probLib))}
+# 	foreach my $subdir (@dirs) {push(@pgs, get_library_pgs(0,"$base/$dir",$subdir,$probLib))}
 
-	return () unless $top || (scalar(@pgs) == 1 && $others) || grep /^=library-combine-up$/, @lis;
-	return (map {"$dir/$_"} @pgs);
-} 
+# 	return () unless $top || (scalar(@pgs) == 1 && $others) || grep /^=library-combine-up$/, @lis;
+# 	return (map {"$dir/$_"} @pgs);
+# } 
 
 sub list_pg_files {
 	my ($templates,$dir,$probLib) = @_;

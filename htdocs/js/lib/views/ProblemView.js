@@ -8,8 +8,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
         //We want the problem to render in a `li` since it will be included in a list
         tagName:"li",
         className: "problem",
-        //Add the 'problem' class to every problem
-        //className: "problem",
+
         //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
 
@@ -25,7 +24,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
             _.extend(this.allAttrs,this.options.viewAttrs);
 
             var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=" 
-                + this.model.get("displayMode") + "&key=" + config.courseSettings.session_key 
+                + this.allAttrs.displayMode + "&key=" + config.courseSettings.session_key 
                 + "&sourceFilePath=" + this.model.get("source_file") + "&user=" + config.courseSettings.user + "&problemSeed=1234"; 
             _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
             this.model.on('change:value', function () {
@@ -35,13 +34,12 @@ define(['Backbone', 'underscore','config','imagesloaded'
 
         render:function () {
             var self = this;
-            if(this.model.get('data')){
+            if(this.model.get('data') || this.allAttrs.displayMode=="None"){
                 _.extend(this.allAttrs,this.model.attributes);
+                if(this.allAttrs.displayMode=="None"){
+                    this.model.attributes.data="";
+                }
                 this.$el.html(this.template(this.allAttrs));
-                //this.$el.css("background-color","lightgray");
-                //this.$(".problem").css("opacity","0.5");
-                //this.$(".prob-value").on("change",this.updateProblem);
-
                 this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
                     self.$(".problem").removeAttr("style");
@@ -64,7 +62,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
                 this.el.id = this.model.cid;
                 this.$el.attr('data-path', this.model.get('source_file'));
                 this.$el.attr('data-source', this.allAttrs.type);
-                if (this.model.get("displayMode")==="MathJax"){
+                if (this.allAttrs.displayMode==="MathJax"){
                     MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
                 }
 
@@ -72,14 +70,14 @@ define(['Backbone', 'underscore','config','imagesloaded'
                 
             } else {
                 this.$el.html("<span style='font: italic 120%'>Loading Problem</span><i class='icon-spinner icon-spin icon-2x'></i>");
-                this.model.loadHTML(function (data) {
+                this.model.loadHTML({displayMode: this.allAttrs.displayMode, success: function (data) {
                     if (data.text){
                         self.model.set("data",data.text);
                         self.render();
                     } else {
                         console.log(data);
                     }
-                });
+                }});
             }
 
 
@@ -88,7 +86,9 @@ define(['Backbone', 'underscore','config','imagesloaded'
         events: {"click .hide-problem": "hideProblem",
             "click .remove-problem": "removeProblem",
             "click .refresh-problem": 'reloadWithRandomSeed',
-            "click .add-problem": "addProblem"},
+            "click .add-problem": "addProblem",
+            "click .seed-button": "toggleSeed",
+            "click .path-button": "togglePath"},
         bindings: {".prob-value": "value"},
         reloadWithRandomSeed: function (){
             var seed = Math.floor((Math.random()*10000));
@@ -96,9 +96,15 @@ define(['Backbone', 'underscore','config','imagesloaded'
             this.model.set({data:"", problem_seed: seed},{silent: true});
             this.render();
         },
+        toggleSeed: function () {
+            this.$(".problem-seed").toggleClass("hidden");
+        },
+        togglePath: function () {
+            this.$(".filename").toggleClass("hidden");
+        },
         addProblem: function (evt){
-            console.log("adding a problem. ")
-            //this.model.collection.trigger("add-to-target",this.model);
+            console.log("adding a problem.");
+            this.options.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
         },
         hideProblem: function(evt){
             console.log("hiding a problem ");

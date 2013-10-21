@@ -40,12 +40,13 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView){
     	},
         events: {"shown a[data-toggle='tab']": "changeView"},
         changeView: function(evt){
+            var self = this;
+            var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab
             var viewType = _(tabType).values()[0];
             _(_.keys(this.views)).each(function(view){
-                this.views[view].libraryProblemsView.off("update-num-problems");
+                self.views[view].libraryProblemsView.off("update-num-problems");
             })
             this.views[viewType].libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
-            var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab
             this.views[viewType].render();
         },
         updateNumberOfProblems: function (opts) {

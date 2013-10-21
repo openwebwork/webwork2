@@ -24,7 +24,6 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
             
             this.numProblemsPerGroup = 10; // this should be a parameter.
-            
             this.problems = this.options.problems ? this.options.problems : new ProblemList();
             this.problems.on("remove",this.deleteProblem);
             this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
@@ -35,11 +34,12 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             _.extend(this.viewAttrs,{type: this.options.type});
             _.extend(this,Backbone.Events);
         },
-        setProblems: function(_problems,_type){
-            this.problems = _problems; 
+        set: function(opts){
+            this.problems = opts.problems; 
             this.problems.on("remove",this.deleteProblem);
             //this.listenTo(this.problems,"remove",this.deleteProblem);
-            this.viewAttrs.type = _type;
+            this.viewAttrs.type = opts.type || "set";
+            this.viewAttrs.displayMode = opts.displayMode || config.settings.getSettingValue("pg{options}{displayMode}");
 
             // start with showing 10 (numProblemsPerGroup) problems
             this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
@@ -64,7 +64,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var ul = this.$(".prob-list").empty(); 
             this.problems.each(function(problem,i){
                 if(i<self.maxProblemIndex) {
-                    ul.append((new ProblemView({model: problem, problemSets: self.problemSets,
+                    ul.append((new ProblemView({model: problem, libraryView: self.libraryView,
                         viewAttrs: self.viewAttrs})).render().el); 
                     
                 }
@@ -121,7 +121,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         setProblemSet: function(_set) {
             this.model = _set; 
-            this.setProblems(this.model.get("problems"));
+            this.set({problems: this.model.get("problems")});
             return this;
         }, 
         addProblemView: function (prob){

@@ -26,6 +26,10 @@
 
 .hidden, .form-horizontal .hidden {display: none;}	
 
+/* the following is needed to get pop-up boxes to display correctly.*/
+
+/*.view-pane, .view-pane .tab-content {height: 100%;}*/
+
 /* styling for the message box */
 
 #short-message {padding-top: 4px; padding-bottom: 4px; margin-top: 5px; line-height: 16px; display: none;}

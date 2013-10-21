@@ -2,8 +2,6 @@
 *  This view is the interface to the Library Tree and allows the user to more easier navigate the Library. 
 *
 *  To use the LibraryTreeView the following parameters are needed:
-*  dispatcher:  A backbone Event dispatcher to send a event when a library is accessed.  
-*  orientation: either "pulldown" (which produces a tree view) "horiztonal" or "vertical" (with selects) 
 *  type:  the type of library needed which is passed to the Library Tree
 *  
 *
@@ -31,34 +29,34 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                 if(this.subject) {$("#library-level-0").val(this.subject);}
                 if(this.chapter) {
                     this.changeLibrary("0",this.chapter);
-                    $("#library-level-1").val(this.chapter);}
+                    this.$(".library-level-1").val(this.chapter);}
                 if(this.section) {
                     this.changeLibrary("1",this.section);
-                    $("#library-level-2").removeClass("hidden").val(this.section);}
+                    this.$(".library-level-2").removeClass("hidden").val(this.section);}
             }
             return this; 
     	},
         events: {  "change .library-selector": "changeLibrary",
                 "click .load-library-button": "selectLibrary"},
         changeLibrary: function(arg1,arg2){
-            var level = (typeof(arg1)=="string")? arg1 : $(arg1.target).attr("id").split("-")[2];
+            var level = (typeof(arg1)=="string")? parseInt(arg1) : parseInt($(arg1.target).data("level"));
             var name = (typeof(arg2)=="string")? arg2: $(arg1.target).val();
             switch(level){
-                case "0":
-                    var subject = $("#library-level-0").val() || this.subject;
-                    $("#library-level-1").removeClass("hidden");
-                    $("#library-level-2").addClass("hidden");
+                case 0:
+                    var subject = this.$(".library-level-0").val() || this.subject;
+                    this.$(".library-level-1").removeClass("hidden");
+                    this.$(".library-level-2").addClass("hidden");
                     var subfields = _(this.libraryTree.get("tree")).findWhere({name: subject}).subfields;
-                    $("#library-level-1").html("<option>Select</option>" + 
+                    this.$(".library-level-1").html("<option>Select</option>" + 
                             _(subfields).map(function(sf) {return "<option>" + sf.name + "</option>";}).join(""));
                     break;
-                case "1":
-                    var subject = $("#library-level-0").val() || this.subject;
-                    var chapter = $("#library-level-1").val() || this.chapter;
-                    $("#library-level-2").removeClass("hidden");
+                case 1:
+                    var subject = this.$(".library-level-0").val() || this.subject;
+                    var chapter = this.$(".library-level-1").val() || this.chapter;
+                    this.$(".library-level-2").removeClass("hidden");
                     var allChapters = _(this.libraryTree.get("tree")).findWhere({name: subject}).subfields;
                     var allSections = _(allChapters).findWhere({name: chapter}).subfields;
-                    $("#library-level-2").html("<option>Select</option>"+
+                    this.$(".library-level-2").html("<option>Select</option>"+
                         _(allSections).map(function(sect){return "<option>" + sect.name + "</option>";}));
                 break;
 
@@ -67,82 +65,18 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
         selectLibrary: function(evt){
             console.log("in LibraryTreeView.selectLibrary")
             var dirs = [];
-            this.subject = $("#library-level-0").val();
-            this.chapter = $("#library-level-1").val();
-            this.section = $("#library-level-2").val();
+            this.subject = this.$(".library-level-0").val();
+            this.chapter = this.$(".library-level-1").val();
+            this.section = this.$(".library-level-2").val();
 
             for(i=0;i<3;i++){
-                var sel = $("#library-level-"+i);
-                var opt = $("#library-level-"+i + " option:selected");
+                var sel = this.$(".library-level-"+i);
+                var opt = this.$(".library-level-"+i + " option:selected");
                 if( sel.val()&& opt.index()>0){ dirs.push(sel.val());}
             }
 
             this.libraryTree.trigger("library-selected",this.libraryTree.get("header")+ dirs.join("/"));
-            
-/*            return;
-            if (leaf.text().trim() === "Library"){ return; }
-
-
-            var path = leaf.text().trim();
-            var level = parseInt(leaf.closest("li").data('level'));
-
-            while(level>0){
-                leaf = leaf.closest("li").parent().parent().children("a");
-                path = leaf.text().trim() + "/" + path;
-                level--;
-            }
-
-            
-
-*/
-            
         },
-       /*  buildTreeView: function (libs,index){
-            var self = this;
-            var i;
-            self.$(".throbber").remove();
-
-            // remove other input item to the right of the selected one. 
-
-            _(self.$(".lib-select")).each(function(item){
-                var level = parseInt($(item).attr("id").split("-")[1],10);
-                if (level >= index) {$(item).remove();}
-            });
-
-            self.$(".load-problems").remove();
-            self.$(".load-problems").off("click");
-
-
-            var opts = _(libs).map(function(lib){return "<option>" + (_.isArray(lib)?lib[0]:lib) + "</option>";});
-            this.$(".library-tree-left").append("<select class='lib-select input-medium' id='ls-" + index + "'><option>Choose A Library</option>" 
-                + opts.join("") + "</select>" + "<button class='load-problems btn btn-small'>Load Problems</button>");
-
-            this.$(".lib-select").on("change",this.updateLibraryTree);
-            this.$(".load-problems").on("click",self.loadProblems);
-
-
-        },
-        updateLibraryTree: function (evt) {
-            var level = parseInt($(evt.target).attr("id").split("-")[1],10);  // the library level that was changed.  
-            var i=0;
-            var _tree = this.libraryTree.tree; 
-            var buildTree = false; 
-            while(i<=level){
-                var selectedName = this.$("#ls-"+i).val();
-                var index = _(_tree).map(function(item) { return (_.isArray(item)?item[0]:item);}).indexOf(selectedName);
-                if (_.isArray(_tree[index])) {
-                    buildTree = true;
-                    _tree = _tree[index][1];
-                } else { buildTree = false;}
-                i++;
-
-            }
-
-            if (buildTree) {
-                    this.buildTreeView(_tree,level+1);            
-            }
-            
-        }, */
         loadProblems: function (evt) {
             var path = _(this.$(".lib-select")).map(function(item){ return $(item).val()});
             if (this.$(".lib-select").last().val()==="Choose A Library") {path.pop();}

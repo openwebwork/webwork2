@@ -74,7 +74,7 @@ define(['Backbone',
             var self = this;
             if(this.problemSet.get("problems")){ // have the problems been fetched yet? 
                 console.log("Loading the problems for set " + this.problemSet.get("set_id"));
-                this.views.problemSetView.setProblems(this.problemSet.get("problems"));
+                this.views.problemSetView.set({problems: this.problemSet.get("problems")});
             } else {
                 this.problemSet.set("problems",ProblemList({setName: this.problemSet.get("set_id")}))
                     .get("problems").fetch({success: this.loadProblems});

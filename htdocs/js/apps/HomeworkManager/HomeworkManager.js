@@ -111,12 +111,17 @@ var HomeworkEditorView = WebPage.extend({
         this.problemSets.on("sync", function (_set){
             console.log("Synched!!!");
             _(_set.alteredAttributes).each(function(attr){
+                if(attr.attr=="problems"){
+                    self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                        text: attr.msg});
+                } else {
                     var _old = attr.attr.match(/date$/) ? moment.unix(attr.old_value).format("MM/DD/YYYY") : attr.old_value;
                     var _new = attr.attr.match(/date$/) ? moment.unix(attr.new_value).format("MM/DD/YYYY") : attr.new_value;
                     self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
                         text: "The value of " + attr.attr + " in problem set " 
                         + _set.get("set_id") + " has changed from " + _old + " to " + _new});
-                });
+                }
+            });
             self.updateCalendar();
         });
 
