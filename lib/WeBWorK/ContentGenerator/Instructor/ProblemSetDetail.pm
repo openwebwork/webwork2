@@ -210,7 +210,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	version_time_limit => {
-		name      => "Test Time Limit (min)",
+		name      => "Test Time Limit (min; 0=Due Date)",
 		type      => "edit",
 		size      => "4",
 		override  => "any",
@@ -225,7 +225,7 @@ use constant FIELD_PROPERTIES => {
 		labels    => { '0' => 'No', '1' => 'Yes' },
 	},
 	attempts_per_version => {
-		name      => "Number of Graded Submissions per Test",
+		name      => "Number of Graded Submissions per Test (0=infty)",
 		type      => "edit",
 		size      => "3",
 		override  => "any",
