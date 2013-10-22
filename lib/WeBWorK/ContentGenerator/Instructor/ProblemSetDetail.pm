@@ -210,7 +210,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	version_time_limit => {
-		name      => "Test Time Limit (min)",
+		name      => "Test Time Limit (min; 0=Due Date)",
 		type      => "edit",
 		size      => "4",
 		override  => "any",
@@ -225,7 +225,7 @@ use constant FIELD_PROPERTIES => {
 		labels    => { '0' => 'No', '1' => 'Yes' },
 	},
 	attempts_per_version => {
-		name      => "Number of Graded Submissions per Test",
+		name      => "Number of Graded Submissions per Test (0=infty)",
 		type      => "edit",
 		size      => "3",
 		override  => "any",
@@ -1968,7 +1968,7 @@ sub body {
 		
 		foreach my $headerType (@headers) {
 	
-			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
+			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
 			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
 
 			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });	
@@ -2083,7 +2083,7 @@ sub body {
 			my ( $editProblemPage, $editProblemLink, $viewProblemPage,
 			     $viewProblemLink );
 			if ( $isGatewaySet ) {
-				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 				$viewProblemPage =
 					$urlpath->new(type =>'gateway_quiz',
@@ -2102,7 +2102,7 @@ sub body {
 							    problemSeed => $seed,
 							    sourceFilePath => $file });
 			} else {
-				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 			# FIXME: should we have an "act as" type link here when editing for multiple users?		
 				$viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });

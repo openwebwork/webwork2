@@ -138,7 +138,6 @@ sub get_library_pgs {
 	return () if grep /^=library-ignore$/, @lis;
 	return () if !$top && grep /^=library-no-combine$/, @lis;
 
-#print STDERR "top = $top, base = $base, dir = $dir\n";
 	my @pgs = grep { m/\.pg$/ and (not m/(Header|-text)\.pg$/) and -f "$base/$dir/$_"} @lis;
 	my $others = scalar(grep { (!m/\.pg$/ || m/(Header|-text)\.pg$/) &&
 	                            !m/(\.(tmp|bak)|~)$/ && -f "$base/$dir/$_" } @lis);
@@ -951,7 +950,7 @@ sub make_data_row {
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
