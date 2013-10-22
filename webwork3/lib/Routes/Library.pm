@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
-use Digest::MD5 qw(md5_hex);
+use Path::Class;
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::LibraryUtils qw/list_pg_files get_section_problems get_chapter_problems get_subject_problems/;
@@ -160,22 +160,105 @@ get '/Library/directories/**' => sub {
 #
 ####
 
-get '/Library/local' => sub {
+get '/courses/:course_id/Library/local' => sub {
 
 	debug "in /Library/local";
 
-	my $path = vars->{ce}->{courseDirs}{templates};
+	## still need to search for directory with single files and others with ignoreDirectives.
+
+	setCourseEnvironment(params->{course_id});
+	my $path = dir(vars->{ce}->{courseDirs}{templates});
 	my $probLibs = vars->{ce}->{courseFiles}{problibs};
 
-	debug $probLibs;
+	my $libPath = $path . "/" . "Library";  # hack to get this to work.  Need to make this more robust.
+	#my $parentPath =  $path->parent;
 
-	my @pg_files = list_pg_files($path,".",$probLibs);
+	my @files = ();
 
-	debug @pg_files;
-
-	return \@pg_files;
+	$path->recurse( preorder=>1,callback=>sub {
+		my ($dir) = @_;
+		if ($dir =~ /^$libPath/){
+			return Path::Class::Entity::PRUNE(); # don't follow into the Library directory
+		} else {
+			my $relDir = $dir;
+			$relDir =~ s/^$path\/(.*)/$1/;
+			if(($dir =~ /.*\.pg$/) && not($dir =~ /Header/)){  ## ignore any file with Header in it. 
+				push(@files,$relDir);	
+			}
+		}
+	});
+	my @allFiles =  map { {source_file=>$_} }@files;
+	return \@allFiles;
 
 };
+
+
+#######
+#
+#  get '/courses/:course_id/library/setDefinition'
+#
+#  return all the problems in any setDefinition file in the local library.
+#
+####
+
+get '/courses/:course_id/Library/setDefinition' => sub {
+
+	debug "in /Library/setDefinition";
+
+	## still need to search for directory with single files and others with ignoreDirectives.
+
+	setCourseEnvironment(params->{course_id});
+	my $path = dir(vars->{ce}->{courseDirs}{templates});
+	my $probLibs = vars->{ce}->{courseFiles}{problibs};
+
+	my $libPath = $path . "/" . "Library";  # hack to get this to work.  Need to make this more robust.
+	#my $parentPath =  $path->parent;
+
+	my @setDefnFiles = ();
+
+	$path->recurse( preorder=>1,callback=>sub {
+		my ($dir) = @_;
+		if ($dir =~ /^$libPath/){
+			return Path::Class::Entity::PRUNE(); # don't follow into the Library directory
+		} else {
+			my $relDir = $dir;
+			$relDir =~ s/^$path\/(.*)/$1/;
+			if($dir =~ m|/set[^/]*\.def$|) {  
+				push(@setDefnFiles,$relDir);	
+			}
+		}
+	});
+
+	## read the set definition files for pg files
+
+	my @pg_files = ();
+
+	for my $filePath (@setDefnFiles){
+		my ($line, $got_to_pgs, $name, @rest) = ("", 0, "");
+		debug "$path/$filePath";
+		if ( open (SETFILENAME, "$path/$filePath") )    {
+			while($line = <SETFILENAME>) {
+				chomp($line);
+				$line =~ s|(#.*)||; # don't read past comments
+				if($got_to_pgs) {
+					unless ($line =~ /\S/) {next;} # skip blank lines
+					($name,@rest) = split (/\s*,\s*/,$line);
+					$name =~ s/\s*//g;
+					push @pg_files, $name;
+				} else {
+					$got_to_pgs = 1 if ($line =~ /problemList\s*=/);
+				}
+			}
+		} else {
+			debug("oops");
+		}
+	}
+
+	my @allFiles =  map { {source_file=>$_} } @pg_files;
+	return \@allFiles;
+
+};
+
 
 
 

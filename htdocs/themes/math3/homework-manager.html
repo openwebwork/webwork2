@@ -363,7 +363,7 @@ at the bottom of the screen and click "Save Changes". </p>
   <li class="active"><a href="#library-subjects-tab" data-toggle="tab">OPL Subjects</a></li>
   <li><a href="#library-directories-tab" data-toggle="tab">OPL Directory</a></li>
   <li><a href="#library-local-tab" data-toggle="tab">Local Problems</a></li>
-  <li><a href="#library-set-defintion" data-toggle="tab">Set Defn. files</a></li>
+  <li><a href="#set-definition-tab" data-toggle="tab">Set Defn. files</a></li>
   <li><a href="#library-search-tab" data-toggle="tab">Search the Library</a></li>
 </ul>
  
@@ -371,7 +371,7 @@ at the bottom of the screen and click "Save Changes". </p>
   <div class="tab-pane active" id="library-subjects-tab"></div>
   <div class="tab-pane" id="library-directories-tab"></div>
   <div class="tab-pane" id="library-local-tab"></div>
-  <div class="tab-pane" id="library-set-defintion"></div>
+  <div class="tab-pane" id="set-definition-tab"></div>
   <div class="tab-pane" id="library-search-tab"></div>
 </div> 
 
@@ -395,6 +395,15 @@ at the bottom of the screen and click "Save Changes". </p>
   </select>
 </div>
 <div class="lib-problem-viewer"> </div>
+</script>
+
+<script type="text/template" id="local-library-tree-template">
+<div class="row-fluid form-horizontal">
+Local Problem Directory:&nbsp;
+<select class="local-library-tree input-medium">
+<% _(menu).each(function(m){ print("<option>" + m + "</option>")}) %>
+</select><button class="btn load-problems-button">Load</button>
+</div>
 </script>
 
 <script type="text/template" id="library-search-template">
