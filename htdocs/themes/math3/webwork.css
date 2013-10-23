@@ -46,4 +46,5 @@
 	background-color: white;
 	}
 
-
+#footer .navbar-text {line-height: 20px}
+#footer .navbar-inner {min-height: 20px;}
