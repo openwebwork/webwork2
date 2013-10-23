@@ -52,7 +52,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var openEditorURL = this.problems ? "/webwork2/" + $("#hidden_courseID").val() 
                                     + "/instructor/SimplePGEditor/" 
                                     + this.problems.setName + "/" + (this.problems.length +1): "";
-            this.$el.html(_.template($(this.headerTemplate).html(),
+            this.$el.html(_.template($("#problem-list-template").html(),
                                 {displayModes: config.settings.getSettingValue("pg{displayModes}"), 
                                 editorURL: openEditorURL}));
             this.renderProblems();
@@ -86,7 +86,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         events: {"click #undo-delete-btn": "undoDelete",
             "click .display-mode-options a": "changeDisplayMode",
             "click #create-new-problem": "openSimpleEditor",
-            "click .load-more-btn": "loadMore"
+            "click .load-more-btn": "loadMore" 
         },
         changeDisplayMode: function (evt) {
             var _displayMode = $(evt.target).text().trim();

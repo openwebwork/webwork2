@@ -14,23 +14,28 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             _.bindAll(this,'render','showProblems','addProblem');
             this.allProblemSets = this.options.problemSets;
             this.errorPane = this.options.errorPane;
-            this.libraryProblemsView = new LibraryProblemsView({libraryView: this});
-            this.libraryTreeView = new LibraryTreeView({type: this.options.libBrowserType});
+            this.libraryProblemsView = new LibraryProblemsView({libraryView: this,
+                 allProblemSets: this.allProblemSets});
+            this.libraryTreeView = new LibraryTreeView({type: this.options.libBrowserType, 
+                                        allProblemSets: this.options.problemSets});
             this.libraryTreeView.libraryTree.on("library-selected", function(path) { self.loadProblems(path);});            
 
             
     	},
-    	events: {"change .target-set": "resetDisplayModes",
+    	events: {   "change .target-set": "resetDisplayModes",
                     "click .load-more-btn": "loadMore",
                     "change .display-mode-options": "changeDisplayMode"
         },
     	render: function (){
-            var modes = config.settings.getSettingValue("pg{displayModes}");
+            var modes = config.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
     		this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
             this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
-            this.libraryProblemsView.setElement(this.$(".lib-problem-viewer")).render();
+            this.libraryProblemsView.setElement(this.$(".problems-container")).render();
+            if (this.libraryProblemsView.problems){
+                this.libraryProblemsView.renderProblems();
+            }
     	},
         loadMore: function () {
             this.libraryProblemsView.loadMore();
@@ -39,12 +44,13 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             console.log("in showProblems");
             this.libraryProblemsView.set({problems: this.problemList,type: this.options.libBrowserType,
                 displayMode: this.$(".display-mode-options").val()});
-            this.libraryProblemsView.render();
+            this.libraryProblemsView.renderProblems();
         },
         changeDisplayMode: function () {
             this.problemList.each(function(problem){
-                problem.set({data: null, displayMode: self.$(".display-mode-options").val()},{silent:true});
+                problem.set({data: null},{silent:true});
             });
+            this.libraryProblemsView.set({problems: this.problemList,displayMode: this.$(".display-mode-options").val()});
             this.showProblems();
         },
         addProblem: function(model){

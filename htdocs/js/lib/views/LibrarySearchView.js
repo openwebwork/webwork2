@@ -5,44 +5,58 @@
 */ 
 
 
-define(['Backbone', 'underscore','views/LibraryView','views/LibraryProblemsView','models/ProblemList'], 
-function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList){
+define(['Backbone', 'underscore','views/LibraryView','views/LibraryProblemsView','models/ProblemList','config'], 
+function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
     var LibrarySearchView = LibraryView.extend({
         className: "lib-browser",
     	initialize: function (){
-            _.bindAll(this,"search","showResults","showProblems");
-    		this.constructor.__super__.initialize.apply(this);
+            this.constructor.__super__.initialize.apply(this);
+            _.bindAll(this,"search","showResults","checkForEnter");
+            this.libraryProblemsView = new LibraryProblemsView({type: "search", libraryView: this, 
+                                            allProblemSets: this.allProblemSets});
     	},
-    	events: {"click .search-button": "search",
-                    "change .target-set": "resetDisplayModes",
-                    "click .load-more-btn": "loadMore"},
+        events: function(){
+            return _.extend({},LibraryView.prototype.events,{
+                "click .search-button": "search",      
+                "keyup .search-query": "checkForEnter"
+            });
+        },
     	render: function (){
             var self = this;
-
-    		this.$el.html(_.template($("#library-search-template").html(), {sets: this.allProblemSets.pluck("set_id")}));
-
+            var modes = config.settings.getSettingValue("pg{displayModes}");
+            modes.push("None");
+            this.$el.html($("#library-search-template").html());
+            this.libraryProblemsView.setElement(this.$(".problems-container")).render();
+            if(this.searchString){
+                this.$(".search-query").val(this.searchString);
+            }
+            if(this.libraryProblemsView.problems){
+                this.libraryProblemsView.renderProblems();
+            }
     	},
         search: function () {
-            var text = this.$(".search-text").val();
-            var searchType = this.$(".search-option").val();
-            console.log("I'm doing a " + searchType + " search for " + text + " in the library");
+            this.searchString = this.$(".search-query").val();
             var params = {};
-            params[searchType] = text;
+            var searchTerms = this.searchString.split(/\s+and\s+/);
+            _(searchTerms).each(function(term){
+                var comps = term.split(":");
+                params[comps[0]]=comps[1];
+            });
 
             $.get(config.urlPrefix + "library/problems", params, this.showResults);
         },
         showResults: function (data) {
             this.problemList = new ProblemList(data);
+            this.$(".num-problems").text(this.problemList.length + " problems");
             this.showProblems();
         },
-        showProblems: function (){
-            (this.libraryProblemsView = new LibraryProblemsView({el: this.$(".lib-problem-viewer"), 
-                                            type: "search",  
-                                            problems: this.problemList})).render();
-
-            this.problemList.on("add-to-target",this.addProblem);
-
+        checkForEnter: function(evt){
+            if (evt.keyCode==13){
+                this.search();
+                $(evt.target).blur();
+            }
         }
+
     });
 
     return LibrarySearchView;

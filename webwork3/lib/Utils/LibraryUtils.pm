@@ -8,7 +8,7 @@ use Dancer::Plugin::Database;
 use Data::Dumper;
 use WeBWorK::Utils qw(readDirectory sortByName);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(list_pg_files get_section_problems get_chapter_problems get_subject_problems);
+our @EXPORT_OK = qw(list_pg_files get_section_problems get_chapter_problems get_subject_problems searchLibrary);
 
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
@@ -79,6 +79,120 @@ sub get_section_problems {
 	my $results = $sth->fetchall_arrayref;
 	
 	return $results;
+}
+
+## search the library
+#
+#  The search criteria is passed in as a hash with the following possible keys:
+#
+#		keywords
+#		subject
+#		chapter
+#		section
+#		textbook
+#		textbook_chapter
+#		textbook_section
+#		level
+#
+#		(currently not all of these are implemented)
+#
+###
+
+sub searchLibrary {
+	my ($param,$includeTags) = @_;
+
+	debug $param;
+
+	my $selectClause; 
+	if($includeTags){
+		$selectClause = "SELECT path.path,pg.filename, author.firstname, author.lastname, kw.keyword, "
+					. "pg.level, pg.institution, subj.name, ch.name, sect.name "
+					. "FROM OPL_path AS path INNER JOIN OPL_pgfile AS pg ON pg.path_id = path.path_id "
+					. "INNER JOIN OPL_pgfile_keyword AS pgkey ON pgkey.pgfile_id =pg.pgfile_id "
+					. "INNER JOIN OPL_keyword AS kw ON pgkey.keyword_id = kw.keyword_id "
+					. "INNER JOIN OPL_author AS author ON author.author_id = pg.author_id "
+					. "INNER JOIN OPL_DBsection AS sect ON sect.DBsection_id = pg.DBsection_id "
+					. "INNER JOIN OPL_DBchapter AS ch ON sect.DBchapter_id = ch.DBchapter_id " 
+					. "INNER JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id ";
+	} else {
+		$selectClause = "select path.path, pg.filename from OPL_path AS path "
+				. "INNER JOIN OPL_pgfile AS pg ON pg.path_id = path.path_id ";
+
+	}
+	 my $whereClause = "WHERE ";
+
+	## keyword search.  Note: only a single keyword works right now.
+	if(defined($param->{keyword})){
+		my $kw = $param->{keyword};
+		$kw =~ s/\s//g; #remove all spaces and make it lower case (see below)
+
+		$selectClause .= "INNER JOIN OPL_pgfile_keyword AS pgkey ON pgkey.pgfile_id =pg.pgfile_id "
+						. "INNER JOIN OPL_keyword AS kw ON pgkey.keyword_id = kw.keyword_id " if(not($includeTags));
+		$whereClause .= "kw.keyword LIKE '" . $kw . "' ";
+	} 
+	## level search as a range of numbers like 2-4 
+	if (defined($param->{level}) && $param->{level} =~ /^[1-6]-[1-6]$/) {
+		if($param->{level} =~ /^(\d)-(\d)$/){
+			$whereClause .="AND " if(length($whereClause)>6); 
+			$whereClause .= "pg.level BETWEEN $1 AND $2 ";
+		}
+	}
+	## level search as a set of numbers like 1,3,5 (works as a single number too)
+	if (defined($param->{level}) && $param->{level} =~ /^[1-6](,[1-6])*$/) {
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="pg.level IN (" . $param->{level} . ") ";
+	}
+	## problem author search    note: only searches by last name right now
+	if (defined($param->{author})){
+		$selectClause .= "INNER JOIN OPL_author AS author ON author.author_id = pg.author_id " if(not($includeTags));
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="(author.lastname LIKE '" . $param->{author} . "' OR author.firstname LIKE '" . $param->{author} . "') ";
+	}
+	## institution search
+	## level search as a set of numbers like 1,3,5 (works as a single number too)
+	if (defined($param->{institution})) {
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="pg.institution LIKE '" . $param->{institution} . "'  ";
+	}
+	## DBsubject search
+	if(defined($param->{subject})){
+		$selectClause .= "INNER JOIN OPL_DBsection AS sect ON sect.DBsection_id = pg.DBsection_id "
+						. "INNER JOIN OPL_DBchapter AS ch ON sect.DBchapter_id = ch.DBchapter_id " 
+						. "INNER JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id " if(not($includeTags));
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="subj.name LIKE '" . $param->{subject} . "'  ";
+	} 
+	## DBchapter search
+	if(defined($param->{chapter})){
+		$selectClause .= "INNER JOIN OPL_DBsection AS sect ON sect.DBsection_id = pg.DBsection_id "
+						. "INNER JOIN OPL_DBchapter AS ch ON sect.DBchapter_id = ch.DBchapter_id " 
+						. "INNER JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id " if(not($includeTags));
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="ch.name LIKE '" . $param->{chapter} . "'  ";
+	} 
+
+
+	debug $selectClause;
+	debug $whereClause;
+
+	my $sth = database->prepare($selectClause . $whereClause . ";");
+	$sth->execute;
+	my $results = $sth->fetchall_arrayref;
+
+	my @problems;
+	if($includeTags){
+		@problems = map {
+			{source_file => "Library/" . $_->[0] . "/" . $_->[1],
+			 author => $_->[2] . " " . $_->[3],
+			 keyword => $_->[4], level=>$_->[5], institution=>$_->[6],
+			 subject=> $_->[7], chapter=>$_->[8], section=>$_->[9]
+			 }
+			} @{$results};
+	} else {
+		@problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$results};	
+	}
+	
+	return \@problems;
 }
 
 

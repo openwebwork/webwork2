@@ -13,7 +13,7 @@ use Dancer::Plugin::Database;
 use Path::Class;
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::LibraryUtils qw/list_pg_files get_section_problems get_chapter_problems get_subject_problems/;
+use Utils::LibraryUtils qw/list_pg_files get_section_problems get_chapter_problems get_subject_problems searchLibrary/;
 use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
@@ -98,6 +98,8 @@ get '/Library/subjects/:subject/chapters/:chapter/sections/:section/problems' =>
 	my @problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$files};
 
 	return \@problems;
+
+
 
 };
 
@@ -276,20 +278,12 @@ get '/courses/:course_id/Library/setDefinition' => sub {
 
 get '/library/problems' => sub {
 
-	## first check if the keyword is set.
-
-	my $keywordID = database->quick_select('OPL_keyword', {keyword => params->{keyword}});
-	my @problemIDs = database->quick_select('OPL_pgfile_keyword',{keyword_id => $keywordID->{keyword_id}});
-
-	my @problems = ();
-	for my $probID (@problemIDs){
-		my $problem_info = database->quick_select('OPL_pgfile',{pgfile_id => $probID->{pgfile_id}});
-		my $path_id = $problem_info->{path_id};
-		my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
-		push(@problems, {source_file => "Library/" . $path_header . "/" . $problem_info->{filename}});
-
+	my $searchParams = {};
+	for my $key (qw/keyword level author institution subject chapter section/){
+		$searchParams->{$key} = params->{$key} if defined(params->{$key});
 	}
-	return \@problems;
+
+	return searchLibrary($searchParams,1);
 
 };
 
