@@ -298,6 +298,9 @@ sub body {
 				$answerstring = HTML::Entities::encode_entities($answer);
 			    } elsif ($answerType eq 'Value (Formula)') {
 				$answerstring = '`'.HTML::Entities::encode_entities($answer).'`';
+			    } elsif ($answerType eq 'essay') {
+				$answerstring = HTML::Entities::encode_entities($answer);
+				$td->{class} = 'essay';
 			    } else {
 				$answerstring = HTML::Entities::encode_entities($answer);
 			    }
@@ -306,7 +309,7 @@ sub body {
 			}
 			
 			if ($pastAnswer->comment_string) {
-			    push(@row,CGI::td({width=>20}),CGI::td("Comment: ".HTML::Entities::encode_entities($pastAnswer->comment_string)));
+			    push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".HTML::Entities::encode_entities($pastAnswer->comment_string)));
 			}
 			
 			print CGI::Tr($rowOptions,@row);

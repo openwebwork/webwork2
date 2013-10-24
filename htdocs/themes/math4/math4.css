@@ -184,11 +184,17 @@ ul.courses-list a:hover {
 /* past answers page */
 .past-answer-table td {
     white-space: normal;
+    min-width: 20px;
 }
 .past-answer-table .table-rule {
     border-bottom: 1px solid #d5d5d5;
     padding-bottom: 5px;
 }
+.past-answer-table .essay,
+.past-answer-table .comment {
+    min-width: 400px;
+}
+
 
 
 /* Classlist Editor */
