@@ -279,9 +279,9 @@ sub body {
 
 			@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
 
-			my $td = {nowrap => 1};
 			
 			for (my $i = 0; $i <= $num_ans; $i++) {
+			    my $td;
 			    my $answer = $answers[$i];
 			    my $answerType = defined($answerTypes[$i]) ? $answerTypes[$i] : '';
 			    my $score = shift(@scores); 

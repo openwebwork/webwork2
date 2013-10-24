@@ -188,7 +188,7 @@ ul.courses-list a:hover {
 }
 
 .past-answer-table .table-rule {
-    border-bottom: 1px solid #d5d5d5;
+    border-bottom: 3px solid #d5d5d5;
     padding-bottom: 5px;
 }
 .past-answer-table .essay,

@@ -166,6 +166,9 @@ $(function(){
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
 
+    //past answer table
+    $('.past-answer-table').addClass("table table-striped");
+
      //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
