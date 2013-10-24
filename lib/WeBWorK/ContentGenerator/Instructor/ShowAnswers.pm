@@ -298,6 +298,7 @@ sub body {
 				$answerstring = HTML::Entities::encode_entities($answer);
 			    } elsif ($answerType eq 'Value (Formula)') {
 				$answerstring = '`'.HTML::Entities::encode_entities($answer).'`';
+				$td->{class} = 'formula';
 			    } elsif ($answerType eq 'essay') {
 				$answerstring = HTML::Entities::encode_entities($answer);
 				$td->{class} = 'essay';

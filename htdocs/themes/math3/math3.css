@@ -634,13 +634,19 @@ table th {font-size:75%}
 
 /*styles for the past answer page */
 .past-answer-table td {
-    white-space: normal;
-}
-.past-answer-table .table-rule {
-    border-bottom: 1px solid #d5d55;
-    padding-bottom: 5px;
+    white-space: nowrap;
+    min-width: 20px;
 }
 
+.past-answer-table .table-rule {
+    border-bottom: 1px solid #d5d5d5;
+    padding-bottom: 5px;
+}
+.past-answer-table .essay,
+.past-answer-table .comment {
+    min-width: 400px;
+    white-space: normal;
+}
 
 /*Styles for the classlist editor page*/
 
