@@ -188,8 +188,8 @@ ul.courses-list a:hover {
 }
 
 .past-answer-table .table-rule {
-    border-bottom: 3px solid #d5d5d5;
-    padding-bottom: 5px;
+    border-top: 3px solid #d5d5d5;
+    padding-top: 5px;
 }
 .past-answer-table .essay,
 .past-answer-table .comment {
