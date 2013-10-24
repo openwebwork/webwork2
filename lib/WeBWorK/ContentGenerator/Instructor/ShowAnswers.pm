@@ -81,7 +81,6 @@ sub body {
 	
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
-	my @answerTypes;
 	my $renderAnswers = 0;
 	# Figure out if MathJax is available
 	if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
@@ -249,7 +248,8 @@ sub body {
 		    
 		    # check to see what type the answers are.  right now it only checks for essay but could do more
 		    my %answerHash = %{ $pg->{answers} };
-		    
+		    my @answerTypes;
+
 		    foreach (sortByName(undef, keys %answerHash)) {
 			push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
 		    }
