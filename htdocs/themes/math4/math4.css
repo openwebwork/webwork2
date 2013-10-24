@@ -181,6 +181,16 @@ ul.courses-list a:hover {
 	color: white;
 }
 
+/* past answers page */
+.past-answer-table td {
+    white-space: normal;
+}
+.past-answer-table .table-rule {
+    border-bottom: 1px solid #d5d5d5;
+    padding-bottom: 5px;
+}
+
+
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you
  * to scroll if you don't have that width, don't know how to fix it */
@@ -788,6 +798,7 @@ table#grades_table pre{
 #send-mail-form select,
 .set-list-form input,
 .set-list-form select,
+.set-list-form button,
 .user-list-form input,
 .user-list-form select {
     margin-top: .15em;
@@ -806,12 +817,16 @@ table#grades_table pre{
 #problem_set_form .btn {
     margin-left:.5ex;
     margin-right:.5ex;
-}
+} 
 
 #mainform .btn,
 #problem_set_form .btn {
     margin-bottom:.25ex;
     margin-top:.25ex;
+}
+
+#problem_set_form .ui-datepicker-trigger {
+    margin: 0;
 }
 
 #problem_set_form input[type="checkbox"] {
@@ -825,6 +840,13 @@ table#grades_table pre{
 
 #problem-grader-form select {
     width:60px;
+}
+
+#problem-grader-form .graded-answer,
+#problem-grader-form .essay-answer {
+    border-bottom: 1px solid #d5d5d5;
+    margin-bottom:2px;
+    padding-bottom:5px;
 }
 
 .tab-pane {
