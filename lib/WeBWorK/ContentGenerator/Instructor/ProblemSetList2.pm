@@ -1267,6 +1267,8 @@ sub import_form {
 	my $r = $self->r;
 	my $authz = $r->authz;
 	my $user = $r->param('user');
+	my $ce = $r->ce;
+	my $display_tz ||= $ce->{siteDefaults}{timezone};
 
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
@@ -1277,7 +1279,18 @@ sub import_form {
 				"document.getElementsByName('action.import.source')[0].multiple = (number > 1 ? true : false);",
 				"document.getElementsByName('action.import.name')[0].value = (number > 1 ? '(taken from filenames)' : '');",
 			);
-	
+	my $datescript = <<EOS;
+\$('#import_date_shift').datetimepicker({
+  showOn: "button",
+  buttonText: "<i class='icon-calendar'></i>",
+  ampm: true,
+  timeFormat: 'hh:mmtt',
+  timeSuffix: ' $display_tz',
+  separator: ' at ',
+  constrainInput: false, 
+ });
+EOS
+
 	return join(" ",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1321,6 +1334,15 @@ sub import_form {
 				-onchange => $onChange,
 			}
 		),
+		    CGI::br(),
+		    CGI::div(WeBWorK::CGI_labeled_input(
+		      -type=>"text",
+		      -id=>"import_date_shift",
+		      -label_text=>$r->maketext("Shift dates so that the earliest is").": ",
+		      -input_attr=>{
+			  -name => "action.import.shift.date",
+			  -size => "27",
+			  -onchange => $onChange,})),
 		CGI::br(),
 		($authz->hasPermissions($user, "assign_problem_sets")) 
 			?
@@ -1340,7 +1362,9 @@ sub import_form {
 				}
 			)
 			:
-			""	#user does not have permissions to assign problem sets
+			"",	#user does not have permissions to assign problem sets
+		    CGI::script({-type=>"text/javascript"},$datescript),
+
 	);
 }
 

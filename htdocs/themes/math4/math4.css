@@ -832,6 +832,10 @@ table#grades_table pre{
     margin-top:.25ex;
 }
 
+#problem_set_form .ui-datepicker-trigger {
+    margin: 0;
+}
+
 #problem_set_form input[type="checkbox"] {
     margin-bottom:.5ex;
 }
