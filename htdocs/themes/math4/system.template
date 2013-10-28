@@ -37,7 +37,6 @@
 <!--#endif-->
 
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.custom.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 
 <!--#if can="output_achievement_CSS"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/achievements.css"/>
@@ -302,6 +301,8 @@ var tabberOptions = {manualStartup:true};
 <div id="footer">
 	<!--#footer-->
 </div>
+
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 
 </body>
 </html>

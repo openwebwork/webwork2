@@ -197,8 +197,6 @@ ul.courses-list a:hover {
     white-space: normal;
 }
 
-
-
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you
  * to scroll if you don't have that width, don't know how to fix it */
@@ -806,6 +804,7 @@ table#grades_table pre{
 #send-mail-form select,
 .set-list-form input,
 .set-list-form select,
+.set-list-form button,
 .user-list-form input,
 .user-list-form select {
     margin-top: .15em;
@@ -824,7 +823,7 @@ table#grades_table pre{
 #problem_set_form .btn {
     margin-left:.5ex;
     margin-right:.5ex;
-}
+} 
 
 #mainform .btn,
 #problem_set_form .btn {

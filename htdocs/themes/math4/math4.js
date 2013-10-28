@@ -180,3 +180,9 @@ $(function(){
     });
 })
 
+addOnLoadEvent(function () {
+
+        $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
+
+});
+
