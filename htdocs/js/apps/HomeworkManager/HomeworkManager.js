@@ -68,7 +68,6 @@ var HomeworkEditorView = WebPage.extend({
 
         // set the initial view to be the Calendar. 
         this.changeView(null,"calendar","Calendar");
-        this.updateCalendar();
 
         //this.updateProblemSetList();
         //this.updateCalendar();
@@ -106,22 +105,52 @@ var HomeworkEditorView = WebPage.extend({
 
         this.problemSets.on("change_assigned_users", function(_set){
             console.log("the set "+ _set.get("set_id")+ " has changed.");
-        })
+        });
+
+        this.problemSets.each(function(_set) {
+            _set.get("problems").on("change:value",function(prob){
+                prob.changingAttributes=_.pick(prob._previousAttributes,_.keys(prob.changed));
+            });
+            _set. get("problems").on("sync",function(prob){
+                _(_.keys(prob.changingAttributes)).each(function(key){
+                    self.messagePane.addMessage({type: "success", short: "Set " + prob.collection.setName + " saved.",
+                        text: "Problem Set " + prob.collection.setName + " and problem " + prob.get("problem_id") 
+                            + " has changed. The value of property " + key 
+                            + " has changed from " + prob.changingAttributes[key] + " to " 
+                            + prob.get(key) });
+                });
+            });
+        });
+
+        this.problemSets.on("change",function(_set){
+           _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
+        });
+
         
         this.problemSets.on("sync", function (_set){
-            _(_set.alteredAttributes).each(function(attr){
-                if(attr.attr=="problems"){
+            _(_.keys(_set.changingAttributes)).each(function(key){
+                if(_set.changingAttributes[key]=="problems"){
                     self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
                         text: attr.msg});
-                } else {
-                    var _old = attr.attr.match(/date$/) ? moment.unix(attr.old_value).format("MM/DD/YYYY") : attr.old_value;
-                    var _new = attr.attr.match(/date$/) ? moment.unix(attr.new_value).format("MM/DD/YYYY") : attr.new_value;
+                } else if (_set.changingAttributes[key]=="assigned_users"){
                     self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
-                        text: "The value of " + attr.attr + " in problem set " 
+                        text: "The assigned users for set " + _set.get("set_id") + "    was updated."});
+                } else {
+                    var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY")
+                                 : _set.changingAttributes[key];
+                    var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY") : _set.get(key);
+                    self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                        text: "The value of " + key + " in problem set " 
                         + _set.get("set_id") + " has changed from " + _old + " to " + _new});
                 }
             });
             self.updateCalendar();
+        });
+
+        // this will show the given Problem Set sent from "Manage Problem Sets (HWDetailView) or ProblemSetListView"
+
+        this.problemSets.on("show",function(_set){
+            self.showHWdetails(_set.get("set_id"));
         });
 
         // this handles the validation of the problem sets, mainly validating the dates.  
@@ -134,18 +163,25 @@ var HomeworkEditorView = WebPage.extend({
                 self.messagePane.addMessage({type: "error", short: "Error saving problem set " + model.get("set_id"),
                     text: error});
 
-            });
+            }); 
             // change the attributes back to before.
            /* _(_.keys(model.changed)).each(function(key){
                 model.set(key,model._previousAttributes[key]);
             })*/
         });
 
+        config.settings.on("change",function(setting){
+            setting.changingAttributes=_.pick(setting._previousAttributes,_.keys(setting.changed));
+        });
 
-        // can't figure out the best place for this.  
-        /* this.problemSet.problems.on("reordered",function () {
-                self.announce.addMessage({text: "Problem Set " + self.parent.problemSet.get("set_id") + " was reordered"});
-            });  */
+        config.settings.on("sync",function(setting){
+            _(_.keys(setting.changingAttributes)).each(function(key){
+                    self.messagePane.addMessage({type: "success", short: "Setting " + setting.get("var") + " saved.",
+                        text: "The setting " + setting.get("var") + " has changed from " +
+                                setting.changingAttributes[key] + " to " + setting.get("value") + "."});
+            });
+        });
+
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
@@ -156,17 +192,17 @@ var HomeworkEditorView = WebPage.extend({
     showHideSets: function () {
         if ($("#problem-set-list-container").css("display")=="none"){
             $("#problem-set-list-container").show("slide",{direction: "up"});
-            $("#show-hide-sets-button i").removeClass("icon-chevron-down").addClass("icon-chevron-up");            
+            $("#show-hide-sets-button i").removeClass("fa fa-chevron-down").addClass("fa fa-chevron-up");            
         } else {
             $("#problem-set-list-container").hide("slide", { direction: "up" });
-            $("#show-hide-sets-button i").removeClass("icon-chevron-up").addClass("icon-chevron-down");            
+            $("#show-hide-sets-button i").removeClass("fa fa-chevron-up").addClass("fa fa-chevron-down");            
         }
 
     },
-    showHWdetails: function(evt){
+    showHWdetails: function(setName){
         if (this.objectDragging) return;
         this.changeView(null,"setDetails", "Set Details");
-        this.views.setDetails.changeHWSet($(evt.target).closest(".problem-set").data("setname")); 
+        this.views.setDetails.changeHWSet(setName); 
         this.headerView.setTemplate(this.views.setDetails.headerInfo).render();
 
     },
@@ -181,9 +217,10 @@ var HomeworkEditorView = WebPage.extend({
         this.updateProblemSetList(linkname);
     },
     updateProblemSetList: function(viewname) {
-    switch(viewname){            // set up the problem sets to be draggable or not
+        switch(viewname){            // set up the problem sets to be draggable or not
             case "calendar":
             this.setProblemSetUI({droppable:true,draggable: true});
+            this.updateCalendar();
             break;
             case "libraryBrowser":
             this.setProblemSetUI({droppable:true,draggable: false});
@@ -229,11 +266,6 @@ var HomeworkEditorView = WebPage.extend({
         } else {
             $(".problem-set.ui-droppable").droppable("destroy");
         }
-
-        // When the HW sets are clicked, open the HW details tab.   
-        // pstaab: can we include this in the ProblemSetListView?       
-        $(".problem-set").on('click', self.showHWdetails);
-
     }, 
     // This rerenders the calendar and updates the drag-drop features of it.
     updateCalendar: function ()
@@ -256,6 +288,8 @@ var HomeworkEditorView = WebPage.extend({
                     self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"open_date");
                 } else if ($(ui.draggable).hasClass("assign-due")){
                     self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"due_date");
+                } else if ($(ui.draggable).hasClass("assign-answer")){
+                    self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"answer_date");
                 }
 
             }
@@ -263,7 +297,7 @@ var HomeworkEditorView = WebPage.extend({
 
         // The following allows an assignment date (due, open) to be dropped on the calendar
 
-        $(".assign-due,.assign-open").draggable({
+        $(".assign-due,.assign-open,.assign-answer").draggable({
             revert: true,
             start: function () {$(this).popover("destroy")}
         });

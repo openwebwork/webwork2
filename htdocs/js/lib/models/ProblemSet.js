@@ -113,20 +113,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             });
             this.id = this.get("set_id");
         },
-        save: function(opts){
-            console.log("in ProblemSet.save()");
-            console.log(opts);
-            var self = this;
-            var attrs = this.changedAttributes();
-            if(attrs){
-                this.alteredAttributes = _(_(attrs).keys()).map(function(key){
-                    return {attr: key, new_value: attrs[key], old_value: self._previousAttributes[key]};
-                });
-            }
-
-            // I think this is causing this to save a ProblemSet twice.  Maybe a check before doing this.
-            ProblemSet.__super__.save.apply(this,opts);
-        },
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
                                                 // as a moment object and defined settings.
 
@@ -147,9 +133,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             var lastProblem = this.get("problems").last();
             newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
             this.get("problems").add(newProblem);
-            this.save();
-            this.alteredAttributes=[{attr: "problems", msg: "A problem was added to set " + this.get("set_id")}];
             this.trigger("change:problems",this);
+            this.save();
         },
         setDate: function(attr,_date){
             var currentDate = moment.unix(this.get(attr))

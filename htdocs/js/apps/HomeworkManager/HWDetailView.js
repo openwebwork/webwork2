@@ -287,6 +287,9 @@ define(['Backbone',
             var self = this;
             _.bindAll(this,"render");
             this.template = this.options.rowTemplate;
+            this.model.on("change",function(model){
+                model.save();
+            })
         },
         render: function(){
             this.$el.html(this.template);
