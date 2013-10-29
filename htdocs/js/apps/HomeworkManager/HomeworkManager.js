@@ -109,7 +109,6 @@ var HomeworkEditorView = WebPage.extend({
         })
         
         this.problemSets.on("sync", function (_set){
-            console.log("Synched!!!");
             _(_set.alteredAttributes).each(function(attr){
                 if(attr.attr=="problems"){
                     self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",

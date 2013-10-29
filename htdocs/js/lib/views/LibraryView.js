@@ -11,7 +11,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
         className: "lib-browser",
     	initialize: function (){
     		var self = this;
-            _.bindAll(this,'render','showProblems','addProblem');
+            _.bindAll(this,'addProblem','loadProblems','showProblems');
             this.allProblemSets = this.options.problemSets;
             this.errorPane = this.options.errorPane;
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this,
@@ -22,10 +22,8 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
 
             
     	},
-    	events: {   "change .target-set": "resetDisplayModes",
-                    "click .load-more-btn": "loadMore",
-                    "change .display-mode-options": "changeDisplayMode"
-        },
+    	events: {   "change .target-set": "resetDisplayModes"
+        }, 
     	render: function (){
             var modes = config.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
@@ -37,21 +35,9 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
                 this.libraryProblemsView.renderProblems();
             }
     	},
-        loadMore: function () {
-            this.libraryProblemsView.loadMore();
-        },
-        showProblems: function (){
-            console.log("in showProblems");
-            this.libraryProblemsView.set({problems: this.problemList,type: this.options.libBrowserType,
-                displayMode: this.$(".display-mode-options").val()});
-            this.libraryProblemsView.renderProblems();
-        },
-        changeDisplayMode: function () {
-            this.problemList.each(function(problem){
-                problem.set({data: null},{silent:true});
-            });
-            this.libraryProblemsView.set({problems: this.problemList,displayMode: this.$(".display-mode-options").val()});
-            this.showProblems();
+        resetDisplayModes: function(){  // needed if there no target set was selected. 
+            this.$('.target-set').css('background-color','white');
+            this.$('.target-set').popover("hide");
         },
         addProblem: function(model){
             var targetSet = this.$(".target-set option:selected").val();
@@ -59,10 +45,14 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             console.log(problemSet);
             if(!problemSet){
                 this.$(".target-set").css("background-color","rgba(255,0,0,0.4)")
-                    .popover({placement: "top",content: "You need to select a target set"}).popover("show");
+                    .popover({placement: "bottom",content: "You need to select a target set"}).popover("show");
                 return;
             }
             problemSet.addProblem(model);
+        },
+        showProblems: function () {
+            this.libraryProblemsView.set({problems: this.problemList, type:this.options.libBrowserType});
+            this.libraryProblemsView.renderProblems();
         },
     	loadProblems: function (_path){    	
     		console.log(_path);
@@ -71,11 +61,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             this.problemList.path=_path;
             this.problemList.type = this.options.libBrowserType;
             this.problemList.fetch({success: this.showProblems});
-    	}, 
-        resetDisplayModes: function(){
-            this.$('.target-set').css('background-color','white');
-        }
-
+    	}
     });
 
     return LibraryView;

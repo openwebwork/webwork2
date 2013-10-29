@@ -25,6 +25,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
             this.model.on('change:value', function () {
                 self.model.save();
             });
+            this.tagsLoaded=false;
         },
 
         render:function () {
@@ -86,7 +87,19 @@ define(['Backbone', 'underscore','config','imagesloaded'
             "click .path-button": "togglePath",
             "click .tags-button": "toggleTags"
         },
-        bindings: {".prob-value": "value"},
+        bindings: {".prob-value": "value",
+            ".mlt-tag": "morelt",
+            ".level-tag": "level",
+            ".keyword-tag": "keyword",
+            ".problem-author-tag": "author",
+            ".institution-tag": "institution",
+            ".tb-title-tag": "textbook_title",
+            ".tb-chapter-tag": "textbook_chapter",
+            ".tb-section-tag": "textbook_section",
+            ".DBsubject-tag": "subject",
+            ".DBchapter-tag": "chapter",
+            ".DBsection-tag": "section",
+        },
         reloadWithRandomSeed: function (){
             var seed = Math.floor((Math.random()*10000));
             console.log("reloading with new seed " + seed);

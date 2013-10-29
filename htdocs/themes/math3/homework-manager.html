@@ -149,29 +149,21 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
 </script>
 
 
+
 <script type="text/template" id="problem-list-template">
-<ul class="prob-list scrollable no-bullets">
-</ul>
-</script>
+<div class="row-fluid form-horizontal">
+<span>Display Mode</span>
+  <div class="btn-group">
 
-<script type="text/template" id="problem-set-header">
-<div class='row-fluid problem-set-header-row'>
-  <div class="span5 btn-toolbar"> 
-    <div class="btn-group">
-      <a href="#" class="btn btn-small" id="undo-delete-btn">Undo Delete</a>
-      <a href="<%=editorURL%>" target="Simple_Editor" class="btn btn-small" id="create-new-problem">New</a>
-      <a href="#" class="btn btn-small load-more-btn hidden">Load More Problems</a>
-      <a class="btn btn-small dropdown-toggle" data-toggle="dropdown" href="#">
-        Display Mode
-        <span class="caret"></span>
-      </a>
-      <ul class="dropdown-menu display-mode-options">
-      <% _(displayModes).map(function(mode) { %>  <li><a href='#'> <%=mode%>  </a></li> <%}).join("") %>
-      </ul>
-    </div>
+    <select class="input-medium display-mode-options">
+      <% _(displayModes).each(function(mode) {print("<option>"+mode+"</option>");}) %>
+    </select>
+    <a href="<%=editorURL%>" target="Simple_Editor" class="btn" id="create-new-problem">New</a>
+    <button class="btn load-more-btn" disabled="disabled">Load More Problems</button>
+    <button class="btn show-hide-tags-btn" data-hide-text="Hide Tags">Show Tags</button>
   </div>
-</div>
 
+</div>
 
 <ul class='prob-list scrollable no-bullets'></ul>
 </script>
@@ -182,7 +174,7 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
 <tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
 <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
 <tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
-<tr><td>Problem Set visible to Users</td><td><select class='set-visible input-small'> </select></td></tr>
+<tr><td>Problem Set visible to Users</td><td><select class='prob-set-visible input-small'> </select></td></tr>
 <tr><td>Reduced Credit Enabled</td><td><select class='reduced-credit input-small'></select></td></tr>
 <tr><td>Users Assigned</td><td class="users-assigned"></td>
 <td><button class="assign-all-users btn">Assign to All Users</td></tr>
@@ -362,6 +354,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <ul class="nav nav-tabs" id="library-browser-tabs">
   <li class="active"><a href="#library-subjects-tab" data-toggle="tab">OPL Subjects</a></li>
   <li><a href="#library-directories-tab" data-toggle="tab">OPL Directory</a></li>
+  <li><a href="#library-textbooks-tab" data-toggle="tab">Textbooks</a></li>
   <li><a href="#library-local-tab" data-toggle="tab">Local Problems</a></li>
   <li><a href="#set-definition-tab" data-toggle="tab">Set Defn. files</a></li>
   <li><a href="#library-search-tab" data-toggle="tab">Search the Library</a></li>
@@ -370,6 +363,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <div class="tab-content">
   <div class="tab-pane active" id="library-subjects-tab"></div>
   <div class="tab-pane" id="library-directories-tab"></div>
+  <div class="tab-pane" id="library-textbooks-tab"></div>
   <div class="tab-pane" id="library-local-tab"></div>
   <div class="tab-pane" id="set-definition-tab"></div>
   <div class="tab-pane" id="library-search-tab"></div>
@@ -378,6 +372,25 @@ at the bottom of the screen and click "Save Changes". </p>
 
 </script>
 
+<script type="text/template" id="library-textbooks-template">
+<span>Title:&nbsp;</span>
+<select class="textbook-title input-medium">
+ <option>Select Textbook</option>
+ <%_(textbooks).each(function(book){
+    print("<option value='" + book.textbook_id + "'>" + book.author + ": " + book.title + "(" + book.edition + "e) </option>");
+ }) %>
+</select>
+<select class="textbook-chapter input-medium hidden"></select>
+<select class="textbook-section input-medium hidden"></select>
+<button type="button" class="btn load-problems-button">Load</button>
+</script>
+
+<script type="text/template" id="library-textbook-sections-template">
+<option>Select <%=type%></option>
+<% _(sections).each(function(sect) { print("<option value='" 
+    + (type=='Section'?sect.section_id:sect.chapter_id) + "'>" + sect.number + ": "+ sect.name + "</option>");});
+%>
+</script>
 
 <script type="text/template" id="library-view-template">
 <div class="row-fluid">
@@ -423,8 +436,8 @@ Local Problem Directory:&nbsp;
       <option>Select Target Set</option>
       <% _(sets).each(function(set){print('<option>' + set + ' </option> ')  });%>
     </select>
-    <button class="btn load-more-btn">Load More Problems</button>
-
+    <button class="btn load-more-btn" disabled="disabled">Load More Problems</button>
+    <button class="btn show-hide-tags-btn" data-hide-text="Hide Tags">Show Tags</button>
   </div>
 
 </div>
@@ -453,7 +466,7 @@ level of 2. </p>
 </div>
 <div class="row-fluid form-horizontal">
   <input type="text" class="input-xxlarge search-query">
-  <button class="search-button btn" type="button">Search</button>
+  <button class="search-button btn" type="button" data-loading-text="Loading Problems..." >Search</button>
   <span class="num-problems"></span>
 </div>
 <div class="problems-container">
@@ -503,27 +516,38 @@ level of 2. </p>
 <%}%>
 
 <div class="span4 btn-group">
-<%if(showAddTool){%><a class="btn btn-small add-problem" href="#"><i class="fa fa-plus"></i></a><%}%>
-<%if(showEditTool){%><a class="btn btn-small" target="WW_editor" href="<%=editUrl%>"><i class="fa fa-pencil"></i></a><%}%>
-<%if(showRefreshTool){%><a href="#"  class="btn btn-small refresh-problem"><i class="fa fa-refresh"></i></a><%}%>    
-<%if(showViewTool){%><a class="btn btn-small" target="WW_view" href='<%=viewUrl%>'><i class="fa fa-eye"></i></a><%}%>    
-<%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link"><i class="fa fa-times"></i></a><%}%>
-<%if(deletable){ %><span class="remove-problem btn btn-small"><i class="fa fa-trash-o"></i></span><%}%>
-<span class="btn btn-small tags-button"><i class="fa fa-tags"></i></span>
+<%if(showAddTool){%><a class="btn btn-small add-problem" href="#" title="add to target set">
+  <i class="fa fa-plus"></i></a><%}%>
+<%if(showEditTool){%><a class="btn btn-small" target="WW_editor" href="<%=editUrl%>" title="edit">
+    <i class="fa fa-pencil"></i></a><%}%>
+<%if(showRefreshTool){%><a href="#"  class="btn btn-small refresh-problem" title="randomize">
+      <i class="fa fa-refresh"></i></a><%}%>    
+<%if(showViewTool){%><a class="btn btn-small" target="WW_view" href='<%=viewUrl%>' title="view problem">
+    <i class="fa fa-eye"></i></a><%}%>    
+<%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link" title="hide problem">
+    <i class="fa fa-times"></i></a><%}%>
+<%if(deletable){ %><a  href="#" class="remove-problem btn btn-small" title="delete problem">
+    <i class="fa fa-trash-o"></i></span><%}%>
+<a href="#" class="btn btn-small tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
 </div>
 </div>
 <div class="problem-tags">
 <table class="table table-condensed table-bordered"><tbody>
-<tr><td>Problem Path:</td><td colspan=5><%if(source_file){ print(source_file);} %></td> </tr>
-<tr><td>Problem Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td>
-<td>Level:</td><td><%if(level){ print(level);} %></td><td></td></tr>
-<tr><td>Problem Author:</td><td><%if(author){ print(author);} %></td>
-<td>Institution:</td><td><%if(institution){ print(institution);} %></td>
-<td>Keyword:</td><td><%if(keyword){ print(keyword);} %></td></tr>
-<tr><td>Subject:</td><td><%if(subject){ print(subject);} %></td>
-<td>Chapter:</td><td><%if(chapter){ print(chapter);} %></td>
-<td>Section:</td><td><%if(section){ print(section);} %></td></tr>
-
+<tr><td>Problem Path:</td><td colspan=3><%if(source_file){ print(source_file);} %></td>
+<td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
+<tr class="loading-row hidden"><td colspan="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
+<tr class="tag-row hidden"><td>Level:</td><td class="level-tag"></td>
+<td>Keyword:</td><td colspan="3" class="keyword-tag"></td></tr>
+<tr class="tag-row hidden"><td>Problem Author:</td><td class="problem-author-tag"></td>
+<td>Institution:</td><td class="institution-tag"></td>
+<td>More LT:</td><td class="mlt-tag"></td>
+</tr>
+<tr class="tag-row hidden"><td>DB Subject:</td><td class="DBsubject-tag"></td>
+<td>DB Chapter:</td><td class="DBchapter-tag"></td>
+<td>DB Section:</td><td class="DBsection-tag"></td></tr>
+<tr class="tag-row hidden"><td>Textbook Title:</td><td class="tb-title-tag"></td>
+<td>Textbook Chapter:</td><td class="tb-chapter-tag"></td>
+<td>Textbook Section:</td><td class="tb-section-tag"></td></tr>
 </tbody>
 </table>
 </div>
@@ -550,7 +574,7 @@ level of 2. </p>
 
 <script type="text/template" id='problem-set-row-template'>
     <td class="set-name"></td>
-    <td><select class="visible span1"></select></td>
+    <td><select class="set-visible span1"></select></td>
     <td><select class="reduced-credit span1"></select></td>
     <td class='open-date edit-datetime'></td>
     <td class='due-date edit-datetime'></td>

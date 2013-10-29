@@ -8,7 +8,10 @@ define(['Backbone', 'views/ProblemListView'],
                 this.problemSet = this.options.problemSet;
                 this.options.type = "problem_set";
                 this.constructor.__super__.initialize.apply(this);
-    		}
+    		},
+            // setProblemSet: function(_set){
+            //     this.problemSet = _set;
+            // }
     	});
 
 

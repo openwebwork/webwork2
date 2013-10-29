@@ -39,6 +39,17 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
                 $.get(config.urlPrefix + "renderer/problems/0",attrs,opts.success);
             }
         },
+        loadTags: function (opts) {
+            var self = this;
+            if(! this.get("tags")){
+                var fileID = (this.get("pgfile_id") || -1)
+                    , params = (fileID<0)? {source_file: this.get("source_file")} : {};
+                $.get(config.urlPrefix + "Library/problems/" + fileID +"/tags",params,function (data) {
+                    self.set(data);
+                    opts.success(data);
+                });
+            }
+        },
         problemURL: function(){
             // console.log(this.attributes);
             if (this.collection.setName){  // the problem is part of a set

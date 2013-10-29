@@ -6,8 +6,8 @@
 
 
 define(['Backbone', 'underscore','views/LibraryView','views/LibrarySearchView','views/LibraryProblemsView',
-            'views/LocalLibraryView'], 
-function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView){
+            'views/LocalLibraryView','views/LibraryTextbookView'], 
+function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,LibraryTextbookView){
     var LibraryBrowser = Backbone.View.extend({
         headerInfo: { template: "#libraryBrowser-header"}, 
     	initialize: function (){
@@ -17,6 +17,7 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
 
             this.elements = {subjects: "library-subjects-tab",
                              directories: "library-directories-tab",
+                             textbooks: "library-textbooks-tab",
                              localLibrary: "library-local-tab",
                              setDefinition: "set-definition-tab",
                              search: "library-search-tab"};
@@ -27,6 +28,7 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
             this.views = {
                 subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: this.options.problemSets}),
                 directories    :  new LibraryView({libBrowserType: "directories", problemSets: this.options.problemSets}),
+                textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: this.options.problemSets}),
                 localLibrary: new LocalLibraryView({libBrowserType: "local", problemSets: this.options.problemSets}),
                 setDefinition: new LocalLibraryView({libBrowserType: "setDefinition", problemSets: this.options.problemSets}),
                 search :  new LibrarySearchView({libBrowserType: "search", problemSets: this.options.problemSets})
@@ -53,7 +55,6 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
             this.views[viewType].render();
         },
         updateNumberOfProblems: function (opts) {
-            console.log("in updateNumberOfProblems");
             this.headerView.$(".number-of-problems").html(opts.number_shown + " of " +opts.total + " problems shown.");
         }
     });

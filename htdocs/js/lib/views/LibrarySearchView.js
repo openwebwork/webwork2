@@ -22,9 +22,9 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             });
         },
     	render: function (){
-            var self = this;
-            var modes = config.settings.getSettingValue("pg{displayModes}");
-            modes.push("None");
+            // var self = this;
+            // var modes = config.settings.getSettingValue("pg{displayModes}").splice(0);
+            // modes.push("None");
             this.$el.html($("#library-search-template").html());
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
             if(this.searchString){
@@ -33,6 +33,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             if(this.libraryProblemsView.problems){
                 this.libraryProblemsView.renderProblems();
             }
+            return this;
     	},
         search: function () {
             this.searchString = this.$(".search-query").val();
@@ -42,10 +43,12 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
                 var comps = term.split(":");
                 params[comps[0]]=comps[1];
             });
+            this.$(".search-button").button("loading");
 
             $.get(config.urlPrefix + "library/problems", params, this.showResults);
         },
         showResults: function (data) {
+            this.$(".search-button").button("reset");
             this.problemList = new ProblemList(data);
             this.$(".num-problems").text(this.problemList.length + " problems");
             this.showProblems();

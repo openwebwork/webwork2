@@ -13,7 +13,8 @@ use Dancer::Plugin::Database;
 use Path::Class;
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::LibraryUtils qw/list_pg_files get_section_problems get_chapter_problems get_subject_problems searchLibrary/;
+use Utils::LibraryUtils qw/list_pg_files get_section_problems get_chapter_problems get_subject_problems 
+	searchLibrary getProblemTags/;
 use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
@@ -52,11 +53,8 @@ get '/Library/subjects' => sub {
 
 get '/Library/subjects/:subject/problems' => sub {
 
-	my $files = get_subject_problems(params->{subject});
+	return get_subject_problems(params->{subject});
 
-	my @problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$files};
-
-	return \@problems;
 };
 
 
@@ -73,11 +71,7 @@ get '/Library/subjects/:subject/problems' => sub {
 
 get '/Library/subjects/:subject/chapters/:chapter/problems' => sub {
 
-	my $files = get_chapter_problems(params->{subject},params->{chapter});
-
-	my @problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$files};
-
-	return \@problems;
+	return get_chapter_problems(params->{subject},params->{chapter});
 };
 
 ####
@@ -93,14 +87,7 @@ get '/Library/subjects/:subject/chapters/:chapter/problems' => sub {
 
 get '/Library/subjects/:subject/chapters/:chapter/sections/:section/problems' => sub {
 
-	my $files = get_section_problems(params->{subject},params->{chapter},params->{section});
-
-	my @problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$files};
-
-	return \@problems;
-
-
-
+	return get_section_problems(params->{subject},params->{chapter},params->{section});
 };
 
 #######
@@ -262,7 +249,41 @@ get '/courses/:course_id/Library/setDefinition' => sub {
 };
 
 
+####
+#
+#   get '/Library/textbooks'
+#
+#   returns a JSON file that contains all of the textbook information
+#
+####
 
+get '/Library/textbooks' => sub {
+
+	my $webwork_dir = config->{webwork_dir};
+	my $file = "$webwork_dir/htdocs/DATA/textbook-tree.json";
+	my $json_text = do {
+   		open(my $json_fh, "<:encoding(UTF-8)", $file)  or send_error("The file $file does not exist.",404);
+	    local $/;
+	    <$json_fh>
+	};
+
+	return $json_text;
+
+};
+
+####
+#
+#  get '/Library/textbooks/:textbook_id/chapters/:chapter_id/sections/:section_id'
+#
+#  returns all problems in the given textbook/chapter/section
+#
+##
+
+get '/Library/textbooks/:textbook_id/chapters/:chapter_id/sections/:section_id/problems' => sub {
+
+	return searchLibrary({section_id=>params->{section_id},textbook_id=>params->{textbook_id},chapter_id=>params->{chapter_id}});
+
+};
 
 
 
@@ -279,12 +300,25 @@ get '/courses/:course_id/Library/setDefinition' => sub {
 get '/library/problems' => sub {
 
 	my $searchParams = {};
-	for my $key (qw/keyword level author institution subject chapter section/){
+	for my $key (qw/keyword level author institution subject chapter section section_id textbook_id chapter_id/){
 		$searchParams->{$key} = params->{$key} if defined(params->{$key});
 	}
 
-	return searchLibrary($searchParams,1);
+	return searchLibrary($searchParams);
 
+};
+
+###
+#
+#  get '/Library/problems/:problem_id/tags'
+#
+#  This returns all of the tags from the DB for a problem
+#
+## 
+
+get '/Library/problems/:problem_id/tags' => sub {
+
+	return getProblemTags(params->{problem_id});
 };
 
 ###

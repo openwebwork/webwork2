@@ -66,6 +66,7 @@ define(['Backbone',
         {
             $("#problem-set-tabs a:first").tab("show");  // shows the properties tab
         	this.problemSet = this.allProblemSets.findWhere({set_id: setName});
+            this.views.problemSetView.setProblemSet(this.problemSet);
             this.$("#problem-set-name").html("<h2>Problem Set: "+setName+"</h2>");
             this.views.propertiesView.setProblemSet(this.problemSet).render();
             this.loadProblems();
@@ -103,15 +104,12 @@ define(['Backbone',
         setProblemSet: function(_set) {
             var self = this; 
             this.model = _set; 
-            // this.model.on("change",function () { 
-            //     self.model.save();});
-
             return this;
         },
         bindings: { ".open-date" : "open_date",
                     ".due-date" : "due_date",
                     ".answer-date": "answer_date",
-                    ".set-visible": {observe: "visible", selectOptions: {
+                    ".prob-set-visible": {observe: "visible", selectOptions: {
                         collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
                     }},
                     ".reduced-credit": {observe: "enable_reduced_scoring", selectOptions: {

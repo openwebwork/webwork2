@@ -10,11 +10,12 @@ define(['Backbone', 'views/ProblemListView','config'],
                 this.constructor.__super__.initialize.apply(this); 
     		},
             render: function () {
-                var modes = config.settings.getSettingValue("pg{displayModes}");
+                var modes = config.settings.getSettingValue("pg{displayModes}").slice(0);
                 modes.push("None");
                 this.$el.html(_.template($("#library-problems-view-template").html(),
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
                 this.$(".display-mode-options").val(config.settings.getSettingValue("pg{options}{displayMode}")); 
+                return this;
             },
     	});
 

@@ -95,18 +95,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
         },
         initialize: function(_set,_assigned_users){
             _.bindAll(this,"addProblem");
-            /*if (_set && _set.problems){
-                var problems = new ProblemList(_set.problems);
-                problems.setName = _set.set_id;
-                this.set("problems",problems,{silent: true});
-            } else {
-                this.set("problems",new ProblemList(),{silent: true});
-            }
-
-            if(_assigned_users){
-                this.set("assigned_users",_assigned_users);
-            }*/
-
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {

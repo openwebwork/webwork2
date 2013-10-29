@@ -3,12 +3,14 @@
 
 package Utils::LibraryUtils;
 use base qw(Exporter);
+use Path::Class qw/file dir/;
 use Dancer;
 use Dancer::Plugin::Database;
 use Data::Dumper;
 use WeBWorK::Utils qw(readDirectory sortByName);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(list_pg_files get_section_problems get_chapter_problems get_subject_problems searchLibrary);
+our @EXPORT_OK = qw(list_pg_files get_section_problems get_chapter_problems get_subject_problems 
+			searchLibrary getProblemTags);
 
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
@@ -21,19 +23,20 @@ my %ignoredir = (
 sub get_subject_problems {
 	my ($subject) = @_;
 
-	my $queryString = "select path.path,pg.filename "
+	my $queryString = "select CONCAT(path.path,'/',pg.filename) AS fullpath,pg.morelt_id "
 					. "from OPL_DBsubject AS sub "
-					. "INNER JOIN OPL_DBchapter AS ch ON sub.DBsubject_id = ch.DBsubject_id " 
-					. "INNER JOIN OPL_DBsection AS sect ON sect.DBchapter_id = ch.DBchapter_id "
-					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
-					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "JOIN OPL_DBchapter AS ch ON sub.DBsubject_id = ch.DBsubject_id " 
+					. "JOIN OPL_DBsection AS sect ON sect.DBchapter_id = ch.DBchapter_id "
+					. "JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "JOIN OPL_path AS path ON pg.path_id = path.path_id "
 					. "WHERE sub.name='" . $subject . "';";
 
-	my $sth = database->prepare($queryString);
-	$sth->execute;
-	my $results = $sth->fetchall_arrayref;
-	
-	return $results;
+	my $results = database->selectall_arrayref($queryString);
+
+	my @problems=  map {{source_file=>"Library/" .$_->[0], morelt=>$_[1]} } @{$results};
+
+	return \@problems;
+
 
 }
 
@@ -43,19 +46,20 @@ sub get_subject_problems {
 sub get_chapter_problems {
 	my ($subject,$chapter) = @_;
 
-	my $queryString = "select path.path,pg.filename "
+	my $queryString = "select CONCAT(path.path,'/',pg.filename) AS fullpath,pg.morelt_id "
 					. "from OPL_DBsection AS sect "
-					. "INNER JOIN OPL_DBsubject AS sub "
-					. "INNER JOIN OPL_DBchapter AS ch ON ch.DBchapter_id = sect.DBchapter_id "
-					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
-					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "JOIN OPL_DBsubject AS sub "
+					. "JOIN OPL_DBchapter AS ch ON ch.DBchapter_id = sect.DBchapter_id "
+					. "JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "JOIN OPL_path AS path ON pg.path_id = path.path_id "
 					. "WHERE ch.name='" . $chapter . "' and sub.name='" . $subject . "';";
 
-	my $sth = database->prepare($queryString);
-	$sth->execute;
-	my $results = $sth->fetchall_arrayref;
-	
-	return $results;
+	my $results = database->selectall_arrayref($queryString);
+
+		my @problems=  map {{source_file=>"Library/" .$_->[0], morelt=>$_[1]} } @{$results};
+
+	return \@problems;
+
 }
 
 
@@ -66,19 +70,19 @@ sub get_chapter_problems {
 sub get_section_problems {
 	my ($subject,$chapter,$section) = @_;
 
-	my $queryString = "select path.path,pg.filename "
+	my $queryString = "select CONCAT(path.path,'/',pg.filename) AS fullpath,pg.morelt_id "
 					. "from OPL_DBsection AS sect "
-					. "INNER JOIN OPL_DBchapter AS ch INNER JOIN OPL_DBsubject AS sub "
-					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
-					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
+					. "JOIN OPL_DBchapter AS ch JOIN OPL_DBsubject AS sub "
+					. "JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+					. "JOIN OPL_path AS path ON pg.path_id = path.path_id "
 					. "WHERE sect.name='" . $section . "' AND ch.name='" . $chapter . "'"
 					. "and sub.name='" . $subject . "';";
 
-	my $sth = database->prepare($queryString);
-	$sth->execute;
-	my $results = $sth->fetchall_arrayref;
-	
-	return $results;
+	my $results = database->selectall_arrayref($queryString);
+
+	my @problems=  map {{source_file=>"Library/" .$_->[0], morelt=>$_[1]} } @{$results};
+
+	return \@problems;
 }
 
 ## search the library
@@ -99,36 +103,27 @@ sub get_section_problems {
 ###
 
 sub searchLibrary {
-	my ($param,$includeTags) = @_;
+	my ($param) = @_;
 
 	debug $param;
 
-	my $selectClause; 
-	if($includeTags){
-		$selectClause = "SELECT path.path,pg.filename, author.firstname, author.lastname, kw.keyword, "
-					. "pg.level, pg.institution, subj.name, ch.name, sect.name "
-					. "FROM OPL_path AS path INNER JOIN OPL_pgfile AS pg ON pg.path_id = path.path_id "
-					. "INNER JOIN OPL_pgfile_keyword AS pgkey ON pgkey.pgfile_id =pg.pgfile_id "
-					. "INNER JOIN OPL_keyword AS kw ON pgkey.keyword_id = kw.keyword_id "
-					. "INNER JOIN OPL_author AS author ON author.author_id = pg.author_id "
-					. "INNER JOIN OPL_DBsection AS sect ON sect.DBsection_id = pg.DBsection_id "
-					. "INNER JOIN OPL_DBchapter AS ch ON sect.DBchapter_id = ch.DBchapter_id " 
-					. "INNER JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id ";
-	} else {
-		$selectClause = "select path.path, pg.filename from OPL_path AS path "
-				. "INNER JOIN OPL_pgfile AS pg ON pg.path_id = path.path_id ";
+	my $selectClause = "SELECT CONCAT(path.path,'/',pg.filename),pg.pgfile_id "
+					. "FROM OPL_path AS path "
+					. "JOIN OPL_pgfile AS pg ON path.path_id=pg.path_id ";
 
-	}
-	 my $whereClause = "WHERE ";
+	my $groupClause = ""; 
+	my $whereClause = "WHERE ";
 
 	## keyword search.  Note: only a single keyword works right now.
 	if(defined($param->{keyword})){
 		my $kw = $param->{keyword};
-		$kw =~ s/\s//g; #remove all spaces and make it lower case (see below)
+		$kw =~ s/\s//g; #remove all spaces
 
-		$selectClause .= "INNER JOIN OPL_pgfile_keyword AS pgkey ON pgkey.pgfile_id =pg.pgfile_id "
-						. "INNER JOIN OPL_keyword AS kw ON pgkey.keyword_id = kw.keyword_id " if(not($includeTags));
+		$selectClause .= "LEFT JOIN OPL_pgfile_keyword AS pgkey ON pgkey.pgfile_id=pg.pgfile_id "
+						. "LEFT JOIN OPL_keyword AS kw ON kw.keyword_id=pgkey.keyword_id ";
 		$whereClause .= "kw.keyword LIKE '" . $kw . "' ";
+		$groupClause = "GROUP BY pg.pgfile_id";
+
 	} 
 	## level search as a range of numbers like 2-4 
 	if (defined($param->{level}) && $param->{level} =~ /^[1-6]-[1-6]$/) {
@@ -144,7 +139,7 @@ sub searchLibrary {
 	}
 	## problem author search    note: only searches by last name right now
 	if (defined($param->{author})){
-		$selectClause .= "INNER JOIN OPL_author AS author ON author.author_id = pg.author_id " if(not($includeTags));
+		$selectClause .= "JOIN OPL_author AS author ON author.author_id = pg.author_id ";
 		$whereClause .="AND " if(length($whereClause)>6); 
 		$whereClause .="(author.lastname LIKE '" . $param->{author} . "' OR author.firstname LIKE '" . $param->{author} . "') ";
 	}
@@ -154,45 +149,106 @@ sub searchLibrary {
 		$whereClause .="AND " if(length($whereClause)>6); 
 		$whereClause .="pg.institution LIKE '" . $param->{institution} . "'  ";
 	}
-	## DBsubject search
+	## DBsubject/DBchapter/DBsection search
+	if(defined($param->{subject}) || defined($param->{chapter}) || defined($param->{section})){
+		$selectClause .= "JOIN OPL_DBsection AS sect ON sect.DBsection_id = pg.DBsection_id "
+						. "JOIN OPL_DBchapter AS ch ON sect.DBchapter_id = ch.DBchapter_id " 
+						. "JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id ";
+	}
+	##DBsubject searach
 	if(defined($param->{subject})){
-		$selectClause .= "INNER JOIN OPL_DBsection AS sect ON sect.DBsection_id = pg.DBsection_id "
-						. "INNER JOIN OPL_DBchapter AS ch ON sect.DBchapter_id = ch.DBchapter_id " 
-						. "INNER JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id " if(not($includeTags));
 		$whereClause .="AND " if(length($whereClause)>6); 
-		$whereClause .="subj.name LIKE '" . $param->{subject} . "'  ";
+		$whereClause .="DBsubj.name LIKE '" . $param->{subject} . "'  ";
 	} 
 	## DBchapter search
 	if(defined($param->{chapter})){
-		$selectClause .= "INNER JOIN OPL_DBsection AS sect ON sect.DBsection_id = pg.DBsection_id "
-						. "INNER JOIN OPL_DBchapter AS ch ON sect.DBchapter_id = ch.DBchapter_id " 
-						. "INNER JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id " if(not($includeTags));
 		$whereClause .="AND " if(length($whereClause)>6); 
-		$whereClause .="ch.name LIKE '" . $param->{chapter} . "'  ";
-	} 
-
-
-	debug $selectClause;
-	debug $whereClause;
-
-	my $sth = database->prepare($selectClause . $whereClause . ";");
-	$sth->execute;
-	my $results = $sth->fetchall_arrayref;
-
-	my @problems;
-	if($includeTags){
-		@problems = map {
-			{source_file => "Library/" . $_->[0] . "/" . $_->[1],
-			 author => $_->[2] . " " . $_->[3],
-			 keyword => $_->[4], level=>$_->[5], institution=>$_->[6],
-			 subject=> $_->[7], chapter=>$_->[8], section=>$_->[9]
-			 }
-			} @{$results};
-	} else {
-		@problems = map { {source_file => "Library/" . $_->[0] . "/" . $_->[1] }  } @{$results};	
+		$whereClause .="DBch.name LIKE '" . $param->{chapter} . "'  ";
 	}
+	## DBsection search
+	if(defined($param->{section})){
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="DBsect.name LIKE '" . $param->{section} . "'  ";
+	}
+	##Textbook search 
+	if(defined($param->{section_id})||defined($param->{textbook_id})||defined($param->{chapter_id})){
+		$selectClause .= "LEFT JOIN OPL_pgfile_problem AS pgprob ON pgprob.pgfile_id=pg.pgfile_id "
+				. "LEFT JOIN OPL_problem AS prob ON pgprob.problem_id=prob.problem_id "
+				. "LEFT JOIN OPL_section AS sect ON prob.section_id=sect.section_id "
+				. "LEFT JOIN OPL_chapter AS ch ON ch.chapter_id = sect.chapter_id "
+				. "LEFT JOIN OPL_textbook AS textbook ON textbook.textbook_id = ch.textbook_id ";
+	}
+	##Textbook textbook_id search
+	if(defined($param->{textbook_id})){
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="textbook.textbook_id='".$param->{textbook_id} ."' ";
+	}
+	##Textbook chapter_id search
+	if(defined($param->{chapter_id})){
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="ch.chapter_id='".$param->{chapter_id} ."' ";
+	}
+	##Textbook section_id search
+	if(defined($param->{section_id})){
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="sect.section_id='".$param->{section_id} ."' ";
+	}
+
+	debug $selectClause,$whereClause.$groupClause;
+
+	my $results = database->selectall_arrayref($selectClause . $whereClause . $groupClause . ";");
+
+	my @problems = map { {source_file => "Library/" . $_->[0], pgfile_id=>$_->[1] } } @{$results};
 	
 	return \@problems;
+}
+
+
+sub getProblemTags {
+	my $fileID = shift;
+	if ($fileID < 0){  ## then the pgfile_id is not defined.  Use the source_file to look up the information. 
+
+		my $file = file(params->{source_file});
+		my @fileDirs = $file->parent->components; 
+		@fileDirs = @fileDirs[1..$#fileDirs];
+
+		my $path = dir(@fileDirs);
+		my $filename = $file->basename;
+		my $queryString = "SELECT pg.pgfile_id FROM OPL_path AS path "
+							." JOIN OPL_pgfile AS pg ON path.path_id = pg.path_id "
+							." WHERE path.path='" . $path->stringify .  "' and pg.filename='" . $filename . "';";
+       my $pathID = database->selectrow_arrayref($queryString);							
+       $fileID = $pathID->[0];
+
+	}
+
+
+	my	$selectClause = "SELECT CONCAT(author.firstname,' ',author.lastname), group_concat(DISTINCT kw.keyword), "
+						. "pg.level, pg.institution, DBsubj.name, DBch.name, DBsect.name, mlt.name, "
+						. "textbook.title,ch.name,sect.name "
+						. "FROM OPL_path AS path JOIN OPL_pgfile AS pg ON path.path_id=pg.path_id "
+						. "LEFT JOIN OPL_pgfile_keyword AS pgkey ON pgkey.pgfile_id=pg.pgfile_id "
+						. "LEFT JOIN OPL_keyword AS kw ON kw.keyword_id=pgkey.keyword_id "
+						. "LEFT JOIN OPL_author AS author ON author.author_id = pg.author_id "
+						. "LEFT JOIN OPL_DBsection AS DBsect ON DBsect.DBsection_id = pg.DBsection_id "
+						. "LEFT JOIN OPL_DBchapter AS DBch ON DBsect.DBchapter_id = DBch.DBchapter_id " 
+						. "LEFT JOIN OPL_DBsubject AS DBsubj ON DBsubj.DBsubject_id = DBch.DBsubject_id "
+						. "LEFT JOIN OPL_morelt AS mlt ON mlt.morelt_id = pg.morelt_id "
+						. "LEFT JOIN OPL_pgfile_problem AS pgprob ON pgprob.pgfile_id=pg.pgfile_id "
+						. "LEFT JOIN OPL_problem AS prob ON pgprob.problem_id=prob.problem_id "
+						. "LEFT JOIN OPL_section AS sect ON prob.section_id=sect.section_id "
+						. "LEFT JOIN OPL_chapter AS ch ON ch.chapter_id = sect.chapter_id "
+						. "LEFT JOIN OPL_textbook AS textbook ON textbook.textbook_id = ch.textbook_id ";
+	my $whereClause ="WHERE pg.pgfile_id='". $fileID ."'";
+	
+	debug $selectClause. $whereClause;
+
+	my $results = database->selectrow_arrayref($selectClause . $whereClause . ";");
+
+	return { author => $results->[0], keyword => $results->[1] , level=>$results->[2], institution=>$results->[3],
+				  subject=> $results->[4], chapter=>$results->[5], section=>$results->[6], morelt=>$results->[7],
+				  textbook_title=> $results->[8], textbook_chapter=>$results->[9], textbook_section=>$results->[10]};
+
 }
 
 
