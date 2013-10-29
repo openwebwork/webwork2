@@ -210,7 +210,7 @@ var HomeworkEditorView = WebPage.extend({
         var linkname = (link)?link:$(evt.target).data("link");
         $(".view-pane").removeClass("active");
         $("#"+linkname).addClass("active");
-        $("#viewHeader").html((header)?header:$(evt.target).data("name"))
+        $("#viewHeader").html(((header)?header:$(evt.target).data("name"))+"<i class='fa fa-chevron-down'></i>")
             .data("linkname",linkname);
         this.views[linkname].render();
         this.headerView.setTemplate(this.views[linkname].headerInfo).render();
