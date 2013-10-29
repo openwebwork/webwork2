@@ -17,6 +17,7 @@
 .today {background-color: pink}
 .highlight-day { border: 2px solid black; background-color: lightblue;}
 
+.assign-answer {background-color: lightblue;}
 .assign-open {background-color: lightgreen;}
 .assign-due {background-color: red;}
 

@@ -34,6 +34,10 @@ define(['Backbone', 'underscore', 'moment','views/CalendarView','config'],
     			if(moment.unix(assign.get("open_date")).isSame(day.model,"day")){
     				day.$el.append(self.createAssignInfoBar(assign,"assign assign-open"));
     			}
+                if(moment.unix(assign.get("answer_date")).isSame(day.model,"day")){
+                    day.$el.append(self.createAssignInfoBar(assign,"assign assign-answer"));
+                }
+
     			var reducedScoreDate = moment.unix(assign.get("due_date")).subtract("minutes",self.reducedScoringMinutes);
     			if((assign.get("reduced_scoring_enabled")===1) & reducedScoreDate.isSame(day.model,"day")){
 					day.$el.append(self.createAssignInfoBar(assign,"assign assign-reduced-credit"));
