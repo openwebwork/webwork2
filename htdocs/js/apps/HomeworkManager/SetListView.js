@@ -62,7 +62,15 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                     $el.html($("#delete-button-template").html());
                     $el.children(".btn").on("click",function() {self.deleteSet(model);});
                 }}},
-            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string"},
+            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
+                stickit_options: {update: function($el, val, model, options) {
+                    $el.html("<a href='#' class='goto-set'>" + val + "</a>");
+                    $el.children("a").on("click",function() {
+                        var set = self.problemSets.findWhere({set_id: $(this).text()})
+                        set.trigger("show",set);
+                    });}
+                }
+            },
             {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
                 stickit_options: {onGet: function(val){
                     return val.length + "/" + self.problemSets.length;
