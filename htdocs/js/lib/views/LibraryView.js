@@ -34,6 +34,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             if (this.libraryProblemsView.problems){
                 this.libraryProblemsView.renderProblems();
             }
+            return this;
     	},
         resetDisplayModes: function(){  // needed if there no target set was selected. 
             this.$('.target-set').css('background-color','white');

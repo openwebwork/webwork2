@@ -33,7 +33,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             restrict_ip: "No",
             relax_restrict_ip: "No",
             restricted_login_proctor: "No",
-            assigned_users: []
+            assigned_users: [],
+            problems: []
         },
         validation: {
            open_date: "checkDates",

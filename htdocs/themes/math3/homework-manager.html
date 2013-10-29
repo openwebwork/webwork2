@@ -4,7 +4,7 @@
       <div style="display: inline"><button type="button" class="btn" id="show-hide-sets-button">
         <i class="fa fa-chevron-up fa fa-lg"></i></button></div>
       <div id="hw-manager-menu" class="btn-group pull-right">
-         <a class="btn dropdown-toggle" data-toggle="dropdown" id="view-header" href="#">Calendar
+         <a class="btn dropdown-toggle" data-toggle="dropdown" id="view-header" href="#">Change View
           <i class="fa fa-chevron-down"></i>
         </a>
         <ul class="dropdown-menu">
@@ -267,8 +267,8 @@ at the bottom of the screen and click "Save Changes". </p>
 
 
 <script type="text/template" id="calendar-date-bar">
-<div class="<%= classes %>" data-setname="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Visible To Students: <% if(visibleToStudents==1){ print('yes'); } else { print('no');}%>">
- <span class="assign-calendar-name"><%if(showName){%><%=setname %><%}%></span><span class="assign-info"><i class="fa fa-info-sign pull-right"></i></span></div>
+<div class="<%= classes %>" data-setname="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Visible To Students: <% print((visibleToStudents==1)?'yes':'no');%>">
+ <span class="assign-calendar-name"><%if(showName){%><%=setname %><%}%></span><span class="assign-info"><i class="fa fa-info-circle pull-right"></i></span></div>
 
 </script>
 
@@ -304,7 +304,8 @@ at the bottom of the screen and click "Save Changes". </p>
 </ul>
  
 <div class="tab-content">
-  <div class="tab-pane active" id="property-tab" data-view="propertiesView"></div>
+  <div class="tab-pane active" id="property-tab" data-view="propertiesView">
+  To select a problem set, click on the desired one from the list on the left.</div>
   <div class="tab-pane" id="problem-list-tab" data-view="problemListView"><p>Click on a Problem Set Name on the left to view the set.</p></div>
   <div class="tab-pane" id="user-assign-tab" data-view="usersAssignedView"></div>
   <div class="tab-pane" id="user-customize-tab" data-view="customizeUserAssignView"></div>

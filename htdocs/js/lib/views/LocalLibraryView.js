@@ -37,6 +37,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
                 this.problemList.type = this.options.libBrowserType;
                 this.problemList.fetch({success: this.buildMenu});
             }
+            return this;
     	},
         showResults: function (data) {
             this.problemList = new ProblemList(data);

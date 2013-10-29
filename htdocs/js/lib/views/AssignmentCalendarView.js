@@ -12,9 +12,9 @@ define(['Backbone', 'underscore', 'moment','views/CalendarView','config'],
         headerInfo: { template: "#calendar-header"}, 
     	initialize: function () {
     		this.constructor.__super__.initialize.apply(this, {el: this.el});
-    		_.bindAll(this,"render","renderDay","createAssignInfoBar");
+    		_.bindAll(this,"render","renderDay");
 
-    		this.problemSets = this.options.problemSets; 
+    		this.assignmentDates = this.options.assignmentDates;
             this.users = this.options.users; 
 
     		this.reducedScoringMinutes = this.options.reducedScoringMinutes;
@@ -27,36 +27,16 @@ define(['Backbone', 'underscore', 'moment','views/CalendarView','config'],
     	},
     	renderDay: function (day){
     		var self = this;
-    		this.problemSets.each(function(assign){
-    			if(moment.unix(assign.get("due_date")).isSame(day.model,"day")){
-    				day.$el.append(self.createAssignInfoBar(assign,"assign assign-due"));
-    			}
-    			if(moment.unix(assign.get("open_date")).isSame(day.model,"day")){
-    				day.$el.append(self.createAssignInfoBar(assign,"assign assign-open"));
-    			}
-                if(moment.unix(assign.get("answer_date")).isSame(day.model,"day")){
-                    day.$el.append(self.createAssignInfoBar(assign,"assign assign-answer"));
-                }
-
-    			var reducedScoreDate = moment.unix(assign.get("due_date")).subtract("minutes",self.reducedScoringMinutes);
-    			if((assign.get("reduced_scoring_enabled")===1) & reducedScoreDate.isSame(day.model,"day")){
-					day.$el.append(self.createAssignInfoBar(assign,"assign assign-reduced-credit"));
-    			}
-    		});
-    	},
-    	createAssignInfoBar: function(assign,_classes){
-    		return this.template({classes: _classes, setname: assign.get("set_id"), 
-    				assignedUsers: assign.get("assigned_users").length, totalUsers: this.users.length, visibleToStudents: assign.get("visible"),
-    				showName: true});
+            var assignments = this.assignmentDates.where({date: day.model.format("YYYY-MM-DD")});
+            _(assignments).each(function(assign){
+                day.$el.append(self.template({classes: "assign assign-" + assign.get("type"), 
+                    setname: assign.get("problemSet").get("set_id"), 
+                    assignedUsers: assign.get("problemSet").get("assigned_users").length, 
+                    totalUsers: self.users.length, visibleToStudents: assign.get("problemSet").get("visible"),
+                    showName: true}));
+            });
     	}
     });
-
-	var AssignmentInfoView = Backbone.View.extend({
-
-		render: function(){
-
-		}
-	});
 
 	return AssignmentCalendarView;
 });

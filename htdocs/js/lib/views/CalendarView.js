@@ -63,8 +63,6 @@ define(['Backbone', 'underscore', 'moment','jquery-truncate','bootstrap'],
             });                        
         
             this.$el.append(calendarTable.el);
-
-            this.dispatcher.trigger("calendar-change");
             return this;   
         },
         events: {"click .previous-week": "viewPreviousWeek",
