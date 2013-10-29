@@ -130,9 +130,11 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
         },
         bindings: {".problem-set-name": "set_id"},
         events: {"keyup .problem-set-name": "validateName"},
-        validateName: function(ev){
-            // this.model.preValidate("set_id"),$(ev.target).val())
-            var errorMsg = this.model.preValidate("set_id",$(ev.target).val());
+        validateName: function(evt){
+            if (evt.keyCode==13){
+                this.addNewSet();
+            }
+            var errorMsg = this.model.preValidate("set_id",$(evt.target).val());
             if(errorMsg){
                 this.$(".problem-set-name").css("background","rgba(255,0,0,0.5)");
                 this.$(".problem-set-name-error").html(errorMsg);
