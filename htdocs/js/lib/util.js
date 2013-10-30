@@ -4,7 +4,7 @@
  * 
  */
              
-define([], function(){
+define(['underscore','config'], function(_,config){
 var util = {             
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
@@ -54,7 +54,52 @@ var util = {
         }
         str += "</tbody></table></div></td></tr></tbody></table>";
         return str;
-     }
+     },
+     readSetDefinitionFile: function(file){
+        var self = this;
+        var problemSet = {}
+            , problems = []
+            , lines = file.split("\n")
+            , varRegExp = /^(\w+)\s*=\s*([\w\/\s:]*)$/
+            , i, result;
+        _(lines).each(function(line,lineNum){
+            var matches = varRegExp.exec(line);
+            if(line.match(/^\s*$/)){return;} // skip any blank lines
+            if(matches){
+                if(matches[1]==="problemList"){
+                    for(i=lineNum+1;i<lines.length;i++){
+                        if(! lines[i].match(/^\s*$/)){
+                            result = lines[i].split(",");
+                            problems.push({source_file: result[0], value: result[1],max_attempts: result[2]});
+                        }
+                    }
+                    problemSet.problems=problems;
+                } else {
+                    switch(matches[1]){
+                        case "openDate":
+                            problemSet.open_date = matches[2];
+                            break;
+                        case "dueDate": 
+                            problemSet.due_date = matches[2];
+                            break;
+                        case "answerDate": 
+                            problemSet.answer_date = matches[2];
+                            break;
+                        case "paperHeaderFile":
+                            problemSet.hardcopy_header = matches[2];
+                            break;
+                        case "screenHeaderFile":
+                            problemSet.set_header = matches[2];
+                            break;
+                    }
+                }
+            }
+        });
+
+        return problemSet;
+
+        // now process the problemList
+    }
 }
 
 

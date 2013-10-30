@@ -10,6 +10,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
                 data: null,
                 problem_id: 0,
                 value: 1,
+                max_attempts: -1,
                 //displayMode: "MathJax",  //this has been commented out.  it should be a property of the problem view, not the problem.
                 problem_seed: 1
         },

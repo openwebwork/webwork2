@@ -12,7 +12,6 @@
           <li><a class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
           <li><a class="link" data-link='libraryBrowser' data-name="Library Browser">Library Browser</a></li>
           <li><a class="link" data-link="allSets" data-name="All Sets">Manage Problem Sets</a></li>
-          <!--<li><a class="link" data-link="assignSets" data-name="Assign Sets">Assign Sets to Users</a></li>-->
           <li><a class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>
           <li><a class="link" data-link="settings" data-name="Settings">Settings</a></li>
           
@@ -27,9 +26,7 @@
       <div class="view-pane active" id="calendar"></div>
       <div class="view-pane" id="allSets"></div>
       <div class="view-pane" id="setDetails"></div>
-      <!--<div class="view-pane" id="assignSets"></div>-->
-      <div class="view-pane" id="importExport">
-        <p>The Importing and Exporting of homework sets is not implemented yet.</p> </div>
+      <div class="view-pane" id="importExport"></div>
       <div class="view-pane" id="settings"></div>
       <div class="view-pane" id="libraryBrowser"></div>
     </div>
@@ -600,6 +597,52 @@ level of 2. </p>
 <button class="btn goto-end"><i class="fa fa-step-forward"></i>
 </div>
 </script>
+
+<script type="text/template" id="import-export-template">
+<ul class="nav nav-tabs" id="import-export-tabs">
+  <li class="active"><a href="#import-tab" data-toggle="tab">Import Problem Sets</a></li>
+  <li><a href="#export-tab" data-toggle="tab">Export Problem Sets</a></li>
+</ul>
+ 
+<div class="tab-content">
+  <div class="tab-pane active" id="import-tab">
+  <div class="row-fluid">
+   <div class="span5 form-horizontal"> Select Files: <input type="file" id="import-from-file" multiple></div>
+   <div class="span4 form-horizontal">
+     <label class="checkbox inline">Upload set definition files to server <input type="checkbox" class="upload-selected-files"></label></div>
+   </div>
+   <div class="import-table hidden">
+    <div class="row-fluid form-horizontal">
+    <div class="span2"><label class="checkbox inline">Select All<input class="select-all-checkbox" type="checkbox"></label></div>
+    <div class="span2"><label class="checkbox inline">Shift Input Dates<input class="date-shift-checkbox" type="checkbox"></label></div>
+    <div class="span5 hidden date-shift-container">Shift first Open Date to <input class="date-shift-input input-medium"></div>
+    </div>
+     <table class="table table-bordered table-condensed">
+     <thead><tr><th>Select</th><th>Set Name</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+     <tbody>
+     </tbody>
+     </table>
+    <div class="row-fluid form-horizontal">
+    <div class="span3"><button type="button" class="btn import-button">Import Selected Sets</button></div>
+    <div class="span5 import-message"></div>
+
+    </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="export-tab"></div>
+  </div> 
+</script>
+
+<script type="text/template" id='import-problem-set-row-template'>
+  <td><input type="checkbox" class="import-checkbox"></td>
+  <td><span class="set-name" contenteditable='true'></span></td> <!-- these are wrapped in a span due to a error with bootstrap popovers -->
+  <td class='open-date edit-datetime'></td>
+  <td class='due-date edit-datetime'></td>
+  <td class='answer-date edit-datetime'></td>
+</script>
+
+
 
 <!-- The templates to the bottom of this file should go in a general template that is
         loaded by all files -->

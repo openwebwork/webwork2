@@ -111,8 +111,10 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 _(this.problemViews).each(function(pv){
                     if(!pv.tagsLoaded){
                         pv.$(".loading-row").removeClass("hidden");
+                        pv.$(".tag-row").addClass("hidden");
                         pv.model.loadTags({success: function (data){
                             pv.$(".loading-row").addClass("hidden");
+                            pv.$(".tag-row").removeClass("hidden");
                             pv.stickit();
                             pv.tagsLoaded=true;
                         }});

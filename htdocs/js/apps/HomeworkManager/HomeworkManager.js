@@ -4,13 +4,13 @@
 */
 define(['module','Backbone', 'underscore','models/UserList','models/ProblemSetList','models/Settings',   
     'views/AssignmentCalendarView','HWDetailView','views/ProblemSetListView','SetListView','LibraryBrowser',
-    'views/WebPage','config','views/WWSettingsView','views/HeaderView', 
-    'models/AssignmentDate','models/AssignmentDateList',
+    'views/WebPage','config','views/WWSettingsView','views/HeaderView','models/ProblemSet',
+    'models/AssignmentDate','models/AssignmentDateList','ImportExportView',
     'backbone-validation','jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
             ProblemSetListView,SetListView,LibraryBrowser,WebPage,config,WWSettingsView,HeaderView,
-            AssignmentDate,AssignmentDateList){
+            ProblemSet, AssignmentDate,AssignmentDateList,ImportExportView){
 var HomeworkEditorView = WebPage.extend({
     tagName: "div",
     initialize: function(){
@@ -48,15 +48,14 @@ var HomeworkEditorView = WebPage.extend({
             setDetails:  new HWDetailView({el: $("#setDetails"),  users: this.users, problemSets: this.problemSets,
                     headerView: this.headerView}),
             allSets:  new SetListView({el:$("#allSets"), problemSets: this.problemSets, users: this.users}),
-            /*assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", 
-                                users: this.users, problemSets: this.problemSets}), */
-            importExport:  new ImportExport(),
+            importExport:  new ImportExportView({el: $("#importExport"), headerView: this.headerView,
+                    problemSets: this.problemSets}),
             libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), headerView: this.headerView,
                 errorPane: this.errorPane, problemSets: this.problemSets}),
-            settings      :  new HWSettingsView({parent: this, el: $("#settings")})
+            settings      :  new SettingsView({parent: this, el: $("#settings")})
         };
 
-            this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
+        this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
 
         this.setMessages();  
         (this.probSetListView = new ProblemSetListView({el: $("#problem-set-list-container"), viewType: "Instructor",
@@ -68,12 +67,8 @@ var HomeworkEditorView = WebPage.extend({
             _set.save();
         })        
 
-
         // set the initial view to be the Calendar. 
         this.changeView(null,"calendar","Calendar");
-
-        //this.updateProblemSetList();
-        //this.updateCalendar();
 
         // this is needed for the handshaking of session information between the old and new
         // webservice
@@ -363,7 +358,7 @@ var HomeworkEditorView = WebPage.extend({
     }
 });
 
-var HWSettingsView = Backbone.View.extend({
+var SettingsView = Backbone.View.extend({
     headerInfo: {template: "#settings-header"},
     initialize: function () {
         _.bindAll(this,'render');
@@ -394,16 +389,6 @@ var HWSettingsView = Backbone.View.extend({
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
 
      }
-});
-
-var ImportExport = Backbone.View.extend({
-    headerInfo: {template: "#importExport-header"},
-    initialize: function (){
-        _.bindAll(this,"render");
-    },
-    render: function () {
-
-    }
 });
 
     
