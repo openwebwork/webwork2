@@ -183,13 +183,19 @@ ul.courses-list a:hover {
 
 /* past answers page */
 .past-answer-table td {
-    white-space: normal;
-}
-.past-answer-table .table-rule {
-    border-bottom: 1px solid #d5d5d5;
-    padding-bottom: 5px;
+    white-space: nowrap;
+    min-width: 20px;
 }
 
+.past-answer-table .table-rule {
+    border-top: 3px solid #d5d5d5;
+    padding-top: 5px;
+}
+.past-answer-table .essay,
+.past-answer-table .comment {
+    min-width: 400px;
+    white-space: normal;
+}
 
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you

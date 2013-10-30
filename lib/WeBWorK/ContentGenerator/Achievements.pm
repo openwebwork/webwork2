@@ -247,6 +247,7 @@ sub body {
 		    #the current sets to help set up the form fields. 
 		    print $item->print_form(\@sets,\@setProblemCount,$r);
 		    print CGI::hidden({name=>"useditem", value=>"$itemnumber"});
+		    print $self->hidden_authen_fields;
 		    print CGI::end_div();
 		    print CGI::start_div({-class=>"modal-footer"});
 		    print CGI::submit({value=>"Submit"});

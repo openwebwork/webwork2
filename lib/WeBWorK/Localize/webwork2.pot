@@ -1460,6 +1460,9 @@ msgstr ""
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
 msgstr ""
 
+msgid "_ANSWER_LOG_DESCRIPTION"
+msgstr ""
+
 #
 #. (CGI::strong($r->maketext($course)
 #: ContentGenerator/Login.pm:151
