@@ -118,7 +118,6 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
     for my $user (@usersToAdd){
         addUserSet(vars->{db},params->{set_id},$user);
-        addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
     }
 
     if(request->is_put){
@@ -126,8 +125,6 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
             vars->{db}->deleteUserSet($user,params->{set_id});
         }
     }
-
-    my $returnSet = convertObjectToHash($set);
 
     # handle the global problems. 
 
@@ -141,7 +138,21 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
         deleteProblems(vars->{db},params->{set_id},params->{problems});
     }
 
+    ## handle the user Problems
+
+    # for my $user (@usersToAdd){
+    #     addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
+    # }
+
+    
+
     my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+
+
+
+    my $returnSet = convertObjectToHash($set);
+
 
     $returnSet->{assigned_users} = $userNames;
     $returnSet->{problems} = convertArrayOfObjectsToHash(\@problems);

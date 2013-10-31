@@ -4,11 +4,16 @@ define(['Backbone', 'underscore', '../../lib/util','models/ProblemSetList','mode
 var ImportExportView = Backbone.View.extend({
     headerInfo: {template: "#importExport-header"},
     initialize: function (){
+    	var self = this;
         _.bindAll(this,"render");
         this.problemSetsToImport = new ProblemSetList();
-        this.problemSetsToImport.on("add",function(set){
-        	console.log("adding " + set.get("set_id"));
-        })
+        this.rowViews=[];
+        this.problemSetsToImport.on("change:set_id",function (_set) {
+    		self.checkSetNames();
+    		_set.id=_set.get("set_id");
+    	})
+
+
     },
     render: function () {
         this.$el.html($("#import-export-template").html());
@@ -18,11 +23,11 @@ var ImportExportView = Backbone.View.extend({
     	self = this;
         this.$(".import-table").removeClass("hidden");
         var table = this.$(".import-table table tbody").empty();
-        this.problemSetsToImport.each(function(_set){
-        	var rowView = (new ProblemSetRowView({model: _set,problemSets: self.options.problemSets})).render(); 
-            table.append(rowView.el);
-            rowView.checkSetName();
+        this.problemSetsToImport.each(function(_set,i){
+        	self.rowViews[i] = (new ProblemSetRowView({model: _set,problemSets: self.options.problemSets})).render(); 
+            table.append(self.rowViews[i].el);
         });
+        this.checkSetNames();
     },
     events: {"change #import-from-file": "loadSetDefinition",
 			"change .date-shift-checkbox": "toggleDateShift",
@@ -36,11 +41,26 @@ var ImportExportView = Backbone.View.extend({
 			this.shiftDates();
 		}
 	},
+	checkSetNames: function () {
+		var self = this
+			, valid =[];
+		this.problemSetsToImport.each(function(_set,i){
+			valid[i]=self.rowViews[i].setNameValid();
+		});
+        if(_.every(valid)){
+        	this.$(".import-error").addClass("hidden");
+        } else {
+        	this.$(".import-error").removeClass("hidden");
+        	this.$(".import-error").text("The set names in red below already exist. It will not be imported unless" +
+        			" the name is changed.");
+        }
+
+	},
 	shiftDates: function () {
-		var theDate = moment(this.$(".date-shift-input").val(),"MM/DD/YYYY");
+		var shiftDate = moment(this.$(".date-shift-input").val(),"MM/DD/YYYY");
 		var sets = this.getSelectedSets();
-		if(sets.length>0 && theDate){
-			var shift = theDate.diff(moment.unix(sets[0].get("open_date")),"days");
+		if(sets.length>0 && shiftDate){
+			var shift = this.getDateShift(moment.unix(sets[0].get("open_date")));
 			this.$(".import-message").text("The dates of the selected sets will be shifted by " + shift + " days.");
 		}
 	},
@@ -52,9 +72,43 @@ var ImportExportView = Backbone.View.extend({
 	 			return $(v).closest("tr").find(".set-name").text();}).toArray();
 		return this.problemSetsToImport.filter(function(_set) {return _(setNames).contains(_set.get("set_id"));});
 	},
+	getDateShift: function(firstDate){
+		
+		if(typeof(firstDate)=="undefined"){
+			return 0;
+		}
+
+		// shift all of the dates if selected.
+		if(this.$(".date-shift-checkbox").prop("checked")){
+			var shiftDate = moment(this.$(".date-shift-input").val(),"MM/DD/YYYY");
+			shiftDate.hour(firstDate.hour());
+			shiftDate.minute(firstDate.minute());
+			return shiftDate.diff(firstDate,"days");
+		} else {
+			return 0;
+		}		
+	},
 	importSets: function () {
+		var self = this;
 		var sets = this.getSelectedSets();
-		console.log(sets);
+
+		// shift all of the dates if selected.
+		if(sets.length>0){
+			var shift = this.getDateShift(moment.unix(sets[0].get("open_date")));
+			_(sets).each(function(_set){
+				_set.set({open_date: moment.unix(_set.get("open_date")).add(shift,"days").unix(),
+					due_date: moment.unix(_set.get("due_date")).add(shift,"days").unix(),
+					answer_date: moment.unix(_set.get("answer_date")).add(shift,"days").unix(),
+					assigned_users: [config.courseSettings.user]});
+				if(! self.options.problemSets.findWhere({set_id: _set.get("set_id")})){
+					delete _set.id; // ensures that backbone sends a post request.
+					self.options.problemSets.add(_set);
+					var view = _(self.rowViews).find(function(view){ return view.model.get("set_id")===_set.get("set_id");});
+					view.remove();
+				}
+
+			});
+		}
 	},
     loadSetDefinition: function(evt){
         var self = this;
@@ -90,12 +144,6 @@ var ImportExportView = Backbone.View.extend({
 
 var ProblemSetRowView = Backbone.View.extend({
     tagName: "tr",
-    initialize: function () {
-    	var self = this;
-    	this.model.on("change:set_id",function () {
-    		self.checkSetName();
-    	})
-    },
     render: function(){
         this.$el.html($("#import-problem-set-row-template").html());
         this.stickit();
@@ -103,18 +151,18 @@ var ProblemSetRowView = Backbone.View.extend({
     },
     bindings: {
         ".set-name": "set_id",
+        ".num-probs": {observe: "problems", onGet: function(val) { return val.length;}},
         ".open-date": "open_date",
         ".due-date": "due_date",
         ".answer-date": "answer_date",
     },
-    checkSetName: function () {
+    setNameValid: function () {
     	if(self.options.problemSets.findWhere({set_id: this.model.get("set_id")})){
-    		this.$(".set-name").addClass("alert alert-error")
-	    			.popover({content: "This set name already exists."
-	    				,placement: "left"}).popover("show");
+    		this.$(".set-name").addClass("alert alert-error");
+    		return false;
     	} else {
     		this.$(".set-name").removeClass("alert alert-error");
-    		this.$(".set-name").popover("hide");
+    		return true;
     	}
     }
  });

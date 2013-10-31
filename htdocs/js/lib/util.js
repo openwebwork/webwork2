@@ -61,16 +61,17 @@ var util = {
             , problems = []
             , lines = file.split("\n")
             , varRegExp = /^(\w+)\s*=\s*([\w\/\s:]*)$/
-            , i, result;
+            , i,j, result;
         _(lines).each(function(line,lineNum){
             var matches = varRegExp.exec(line);
             if(line.match(/^\s*$/)){return;} // skip any blank lines
             if(matches){
                 if(matches[1]==="problemList"){
-                    for(i=lineNum+1;i<lines.length;i++){
+                    for(i=lineNum+1,j=1;i<lines.length;i++,j++){
                         if(! lines[i].match(/^\s*$/)){
                             result = lines[i].split(",");
-                            problems.push({source_file: result[0], value: result[1],max_attempts: result[2]});
+                            problems.push({source_file: result[0], value: result[1],max_attempts: result[2],
+                                problem_id: j});
                         }
                     }
                     problemSet.problems=problems;

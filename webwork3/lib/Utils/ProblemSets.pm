@@ -3,7 +3,7 @@
 
 package Utils::ProblemSets;
 use base qw(Exporter);
-use WeBWorK::Debug;
+use Dancer ':syntax';
 use Data::Dumper;
 use List::Util qw(first);
 
@@ -55,8 +55,9 @@ sub addProblems {
         	my $prob = $db->newGlobalProblem();
         	$prob->{problem_id} = $p->{problem_id};
         	$prob->{source_file} = $p->{source_file};
+            $prob->{value} = $p->{value};
+            $prob->{max_attempts} = $p->{max_attempts};
         	$prob->{set_id} = $setID;
-        	debug Dumper($prob);
         	$db->addGlobalProblem($prob);
 
         	for my $u (@{$users}){
@@ -65,7 +66,6 @@ sub addProblems {
 				$userProblem->{set_id}=$setID;
 				$userProblem->{problem_id}=$p->{problem_id};
 				$db->addUserProblem($userProblem);
-				debug Dumper($userProblem);
         	}
         }
 	}

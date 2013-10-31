@@ -613,12 +613,14 @@ level of 2. </p>
    </div>
    <div class="import-table hidden">
     <div class="row-fluid form-horizontal">
-    <div class="span2"><label class="checkbox inline">Select All<input class="select-all-checkbox" type="checkbox"></label></div>
+    <div class="span2"><label class="checkbox inline">Select All<input class="select-all-checkbox" type="checkbox" checked="checked">
+    </label></div>
     <div class="span2"><label class="checkbox inline">Shift Input Dates<input class="date-shift-checkbox" type="checkbox"></label></div>
     <div class="span5 hidden date-shift-container">Shift first Open Date to <input class="date-shift-input input-medium"></div>
     </div>
+    <div class="row-fluid import-error alert alert-error"></div>
      <table class="table table-bordered table-condensed">
-     <thead><tr><th>Select</th><th>Set Name</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+     <thead><tr><th>Select</th><th>Set Name</th><th>Num. Probs.</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
      <tbody>
      </tbody>
      </table>
@@ -635,8 +637,9 @@ level of 2. </p>
 </script>
 
 <script type="text/template" id='import-problem-set-row-template'>
-  <td><input type="checkbox" class="import-checkbox"></td>
-  <td><span class="set-name" contenteditable='true'></span></td> <!-- these are wrapped in a span due to a error with bootstrap popovers -->
+  <td><input type="checkbox" class="import-checkbox" checked="checked"></td>
+  <td class="set-name" contenteditable='true'></td> 
+  <td class="num-probs"></td>
   <td class='open-date edit-datetime'></td>
   <td class='due-date edit-datetime'></td>
   <td class='answer-date edit-datetime'></td>

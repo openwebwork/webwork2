@@ -87,21 +87,8 @@ var HomeworkEditorView = WebPage.extend({
     setMessages: function (){
         var self = this; 
         this.problemSets.on("add", function (_set){
-            if (_set.save()){
-                self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " added.",
-                    text: "Problem Set: " + _set.get("set_id") + " has been added to the course."});
-
-                // update the assignmentDateList to add the assignments
-
-                self.assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
-                    date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
-                self.assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
-                    date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
-                self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
-                    date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-
-            }
-
+            _set.save();
+            _set.changingAttributes={add: "Set Added"};
         });
 
         this.problemSets.on("remove", function(_set){
@@ -150,19 +137,33 @@ var HomeworkEditorView = WebPage.extend({
         
         this.problemSets.on("sync", function (_set){
             _(_.keys(_set.changingAttributes||{})).each(function(key){
-                if(_set.changingAttributes[key]=="problems"){
-                    self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
-                        text: attr.msg});
-                } else if (_set.changingAttributes[key]=="assigned_users"){
-                    self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
-                        text: "The assigned users for set " + _set.get("set_id") + "    was updated."});
-                } else {
-                    var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY")
-                                 : _set.changingAttributes[key];
-                    var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY") : _set.get(key);
-                    self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
-                        text: "The value of " + key + " in problem set " 
-                        + _set.get("set_id") + " has changed from " + _old + " to " + _new});
+                switch(key){
+                    case "problems":
+                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                            text: attr.msg});
+                        break;
+                    case "assigned_users":
+                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                            text: "The assigned users for set " + _set.get("set_id") + " was updated."});
+                        break;
+                    case "add":
+                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " added.",
+                        text: "The set " + _set.get("set_id") + " was added to the course."});
+                        self.assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
+                            date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+                        self.assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
+                            date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+                        self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
+                            date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+
+                        break;
+                    default:
+                        var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY")
+                                     : _set.changingAttributes[key];
+                        var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY") : _set.get(key);
+                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                            text: "The value of " + key + " in problem set " 
+                            + _set.get("set_id") + " has changed from " + _old + " to " + _new});
                 }
             });
             self.updateCalendar();
