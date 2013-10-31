@@ -63,12 +63,13 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
         changeTextbook: function(){
             this.$(".textbook-chapter").removeClass("hidden");
             this.$(".textbook-section").addClass("hidden");
+            var textbookIndex = this.$(".textbook-title").val();
             this.$(".textbook-chapter").html(_.template($("#library-textbook-sections-template").html(),
-                {sections: this.textbooks[this.$(".textbook-title").index()].chapters, type: "Chapter"}));
+                {sections: this.textbooks[textbookIndex].chapters, type: "Chapter"}));
         },
         changeChapter: function () {
-            var textbookIndex = this.$(".textbook-title").index();
-            var chapterIndex = this.$(".textbook-chapter").index();
+            var textbookIndex = this.$(".textbook-title").val();
+            var chapterIndex = this.$(".textbook-chapter").val();
             if(this.textbooks[textbookIndex].chapters[chapterIndex].sections){
                 this.$(".textbook-section").removeClass("hidden");
                 this.$(".textbook-section").html(_.template($("#library-textbook-sections-template").html(),
@@ -76,9 +77,9 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             }
         },
         loadProblems: function () {
-            var textbookID = this.$(".textbook-title").val();
-            var chapterID = this.$(".textbook-chapter").val();
-            var sectionID = this.$(".textbook-section").val();
+            var textbookID = this.$(".textbook-title option:selected").data("id");
+            var chapterID = this.$(".textbook-chapter option:selected").data("id");
+            var sectionID = this.$(".textbook-section option:selected").data("id");
             $.get(config.urlPrefix + "Library/textbooks/"+textbookID +"/chapters/" + chapterID 
                 + "/sections/" + sectionID + "/problems",this.showResults);
         }

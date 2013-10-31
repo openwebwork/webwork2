@@ -56,7 +56,7 @@ sub get_chapter_problems {
 
 	my $results = database->selectall_arrayref($queryString);
 
-		my @problems=  map {{source_file=>"Library/" .$_->[0], morelt=>$_[1]} } @{$results};
+	my @problems=  map {{source_file=>"Library/" .$_->[0], morelt=>$_[1]} } @{$results};
 
 	return \@problems;
 
@@ -151,9 +151,9 @@ sub searchLibrary {
 	}
 	## DBsubject/DBchapter/DBsection search
 	if(defined($param->{subject}) || defined($param->{chapter}) || defined($param->{section})){
-		$selectClause .= "JOIN OPL_DBsection AS sect ON sect.DBsection_id = pg.DBsection_id "
-						. "JOIN OPL_DBchapter AS ch ON sect.DBchapter_id = ch.DBchapter_id " 
-						. "JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id ";
+		$selectClause .= "JOIN OPL_DBsection AS DBsect ON DBsect.DBsection_id = pg.DBsection_id "
+						. "JOIN OPL_DBchapter AS DBch ON DBsect.DBchapter_id = DBch.DBchapter_id " 
+						. "JOIN OPL_DBsubject AS DBsubj ON DBsubj.DBsubject_id = DBch.DBsubject_id ";
 	}
 	##DBsubject searach
 	if(defined($param->{subject})){

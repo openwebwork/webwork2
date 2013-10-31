@@ -373,8 +373,9 @@ at the bottom of the screen and click "Save Changes". </p>
 <span>Title:&nbsp;</span>
 <select class="textbook-title input-medium">
  <option>Select Textbook</option>
- <%_(textbooks).each(function(book){
-    print("<option value='" + book.textbook_id + "'>" + book.author + ": " + book.title + "(" + book.edition + "e) </option>");
+ <%_(textbooks).each(function(book,i){
+    print("<option data-id='" + book.textbook_id + "' value='"+ i + "'>" + book.author + ": " 
+        + book.title + "(" + book.edition + "e) </option>");
  }) %>
 </select>
 <select class="textbook-chapter input-medium hidden"></select>
@@ -384,8 +385,8 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <script type="text/template" id="library-textbook-sections-template">
 <option>Select <%=type%></option>
-<% _(sections).each(function(sect) { print("<option value='" 
-    + (type=='Section'?sect.section_id:sect.chapter_id) + "'>" + sect.number + ": "+ sect.name + "</option>");});
+<% _(sections).each(function(sect,i) { print("<option data-id='" 
+    + (type=='Section'?sect.section_id:sect.chapter_id) + "' value='"+ i + "'>" + sect.number + ": "+ sect.name + "</option>");});
 %>
 </script>
 

@@ -71,7 +71,7 @@ get '/Library/subjects/:subject/problems' => sub {
 
 get '/Library/subjects/:subject/chapters/:chapter/problems' => sub {
 
-	return get_chapter_problems(params->{subject},params->{chapter});
+	return searchLibrary({subject=>params->{subject},chapter=>params->{chapter}});
 };
 
 ####
@@ -281,7 +281,8 @@ get '/Library/textbooks' => sub {
 
 get '/Library/textbooks/:textbook_id/chapters/:chapter_id/sections/:section_id/problems' => sub {
 
-	return searchLibrary({section_id=>params->{section_id},textbook_id=>params->{textbook_id},chapter_id=>params->{chapter_id}});
+	return searchLibrary({section_id=>params->{section_id},textbook_id=>params->{textbook_id},
+			chapter_id=>params->{chapter_id}});
 
 };
 

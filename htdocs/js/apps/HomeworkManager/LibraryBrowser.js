@@ -53,7 +53,7 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
             var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab
             var viewType = _(tabType).values()[0];
             this.activeView = viewType;
-            this.$("#library-browser-tabs li:eq(3) a").tab("show")
+            //this.$("#library-browser-tabs li:eq(3) a").tab("show")
             _(_.keys(this.views)).each(function(view){
                 self.views[view].libraryProblemsView.off("update-num-problems");
             })

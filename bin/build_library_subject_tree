@@ -10,7 +10,9 @@ use warnings;
 use File::Find;
 use File::Basename;
 use Cwd;
+use open qw/:std :utf8/;
 use DBI;
+use Data::Dumper;
 use JSON;
 use IO::Handle;
 
@@ -44,72 +46,63 @@ my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
 
+my $selectClause = "select subj.name, ch.name, sect.name, path.path,pg.filename from OPL_DBsection AS sect "
+	."JOIN OPL_DBchapter AS ch ON ch.DBchapter_id = sect.DBchapter_id "
+	."JOIN OPL_DBsubject AS subj ON subj.DBsubject_id = ch.DBsubject_id "
+	."JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
+	."JOIN OPL_path AS path ON pg.path_id = path.path_id ";
 
 my $tree;  # the library subject tree will be stored as arrays of objects. 
 
-my $sth = $dbh->prepare("select * from OPL_DBsubject");
-$sth->execute;
+my $results = $dbh->selectall_arrayref("select subj.name from OPL_DBsubject AS subj");
 
-my @subjects = ();
-my @subject_names = ();
-while ( my @row = $sth->fetchrow_array ) {
-	push(@subjects,$row[0]);
-	push(@subject_names,$row[1]);
-  }
+my @subject_names = map { $_->[0]} @{$results};
 
+my $i=0; # counter to print to the screen.
 
-STDOUT->printflush("Building the subject-tree.  There are " . scalar(@subjects) . " subjects\n");
+STDOUT->printflush("Building the subject-tree.  There are " . scalar(@subject_names) . " subjects\n");
 
 my @subject_tree;  # array to store the individual library tree for each subject 
 
-foreach my $i (0..$#subjects){
-
-	my $subject_row = $subjects[$i];
-	my $subject_name = $subject_names[$i];
-	my $subj = $subject_name;
+for my $subj_name (@subject_names){
+	$i++;
+	my $subj = $subj_name;
 	$subj =~ s/'/\'/g;
 
 
-	my $sth = $dbh->prepare("select * from OPL_DBchapter where DBsubject_id = $subject_row;");
-	$sth->execute;
-
-	my @chapters = ();
-	my @chapter_names = ();
-	while ( my @row = $sth->fetchrow_array ) {
-		push(@chapters,$row[0]);
-		push(@chapter_names,$row[1]);
-	  }
-
+	my $results = $dbh->selectall_arrayref("select ch.name from OPL_DBsubject AS subj JOIN OPL_DBchapter AS ch "
+			. " ON subj.DBsubject_id = ch.DBsubject_id WHERE subj.name='$subj';");
+	my @chapter_names = map {$_->[0]} @{$results};
 
 	my @chapter_tree; # array to store the individual library tree for each chapter
 
-	foreach my $j (0..$#chapters) {
-		my $chapter_row = $chapters[$j];
-		my $chapter_name = $chapter_names[$j];
+	print Dumper(\@chapter_names);
 
-		my $ch = $chapter_name;
+	for my  $ch_name (@chapter_names){
+	
+		my $ch = $ch_name;
 		$ch =~ s/'/\'/g;
 
-		my $sth = $dbh->prepare("SELECT * FROM OPL_DBsection WHERE DBchapter_id=$chapter_row");
-		$sth->execute;
+		my $results = $dbh->selectall_arrayref("SELECT sect.name from OPL_DBsubject AS subj "
+				."JOIN OPL_DBchapter AS ch ON subj.DBsubject_id = ch.DBsubject_id "
+				."JOIN OPL_DBsection AS sect ON sect.DBchapter_id = ch.DBchapter_id "
+				."WHERE subj.name='$subj' AND ch.name='$ch';");
+
+		my @section_names = map { $_->[0]} @{$results};
 
 		my @subfields = ();
-		while ( my @row = $sth->fetchrow_array ) {
+		
+		for my $sect_name (@section_names){
 			my $section_tree = {};
-			$section_tree->{name} = $row[1];
+			$section_tree->{name} = $sect_name;
 			## Determine the number of files that falls into each
 
 			my $sect = $section_tree->{name};
 			$sect =~ s/'/\\'/g;
 
-			my $queryString = "select path.path,pg.filename from OPL_DBsection AS sect "
-					. "INNER JOIN OPL_DBchapter AS ch INNER JOIN OPL_DBsubject AS sub "
-					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
-					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
-					. "WHERE sect.name='" . $sect . "' AND ch.name='" . $ch . "'"
-					. "and sub.name='" . $subj . "';";
+			my $whereClause ="WHERE sect.name='$sect' AND ch.name='$ch' AND subj.name='$subj'";
 
-			my $sth = $dbh->prepare($queryString);
+			my $sth = $dbh->prepare($selectClause.$whereClause);
 			$sth->execute;
 			my $numFiles= $sth->rows;
 			$section_tree->{num_files} = $numFiles;
@@ -120,19 +113,15 @@ foreach my $i (0..$#subjects){
 	    }
 
 		my $chapter_tree;
-		$chapter_tree->{name} = $chapter_name;
+		$chapter_tree->{name} = $ch_name;
 		$chapter_tree->{subfields} = \@subfields;
 
-		## determine the number of files in each section
+		## determine the number of files in each chapter
 
-		my $queryString = "select path.path,pg.filename from OPL_DBsection AS sect "
-					. "INNER JOIN OPL_DBsubject AS sub "
-					. "INNER JOIN OPL_DBchapter AS ch ON ch.DBchapter_id = sect.DBchapter_id "
-					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
-					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
-					. "WHERE ch.name='" . $ch . "' and sub.name='" . $subj . "';";
+		my $whereClause ="WHERE subj.name='$subj' AND ch.name='$ch'";
 
-		$sth = $dbh->prepare($queryString);
+
+		my $sth = $dbh->prepare($selectClause.$whereClause);
 		$sth->execute;
 		my $numFiles = $sth->rows;
 		# my $allFiles = $sth->fetchall_arrayref;
@@ -146,20 +135,15 @@ foreach my $i (0..$#subjects){
 	}
 
 	my $subject_tree; 
-	$subject_tree->{name} = $subject_name;
+	$subject_tree->{name} = $subj_name;
 	$subject_tree->{subfields} = \@chapter_tree; 
 
 	## find the number of files on the subject level
 
-	my $queryString = "select path.path,pg.filename "
-					. "from OPL_DBsubject AS sub "
-					. "INNER JOIN OPL_DBchapter AS ch ON sub.DBsubject_id = ch.DBsubject_id " 
-					. "INNER JOIN OPL_DBsection AS sect ON sect.DBchapter_id = ch.DBchapter_id "
-					. "INNER JOIN OPL_pgfile AS pg ON sect.DBsection_id = pg.DBsection_id "
-					. "INNER JOIN OPL_path AS path ON pg.path_id = path.path_id "
-					. "WHERE sub.name='" . $subj . "';";
+	my $whereClause ="WHERE subj.name='$subj'";
 
-	$sth = $dbh->prepare($queryString);
+
+	my $sth = $dbh->prepare($selectClause.$whereClause);
 	$sth->execute;
 	my $numFiles = $sth->rows;
 	$subject_tree->{num_files} = $numFiles;
@@ -188,7 +172,7 @@ my $OUTFILE;
 open $OUTFILE, '>', $file  or die "Cannot open $file";
 
 # you can check for errors (e.g., if after opening the disk gets full)
-print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
+print { $OUTFILE } to_json(\@subject_tree,{pretty=>1}) or die "Cannot write to $file";
 
 # check for errors
 close $OUTFILE or die "Cannot close $file";

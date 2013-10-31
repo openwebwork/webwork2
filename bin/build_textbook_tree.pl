@@ -47,18 +47,29 @@ my $libraryVersion = $ce->{problemLibrary}->{version};
 
 my @textbooks = ();
 
+my $selectString = "";
+
 my $sth = $dbh->prepare("select * from OPL_textbook");
 $sth->execute;
 
 while ( my ($textbook_id,$title,$edition,$author,$publisher,$isbn,$pubdate) = $sth->fetchrow_array ) {
 
-	my $sth2 = $dbh->prepare("select * from OPL_chapter WHERE textbook_id='" . $textbook_id . "' ORDER BY number;");
+	my $sth2 = $dbh->prepare("select ch.chapter_id,ch.textbook_id,ch.number,ch.name,ch.page "
+		. " from OPL_chapter AS ch JOIN OPL_textbook AS text ON ch.textbook_id=text.textbook_id "
+		. " WHERE text.textbook_id='" . $textbook_id . "' ORDER BY ch.number;");
 	$sth2->execute;
 	my @chapters = ();
 
    	while ( my ($chapter_id,$textbook_id,$chapterNumber,$chapterName,$chapterPage) = $sth2->fetchrow_array ) {
 	   	
-		my $sth3 = $dbh->prepare("select * from OPL_section WHERE chapter_id='" . $chapter_id . "' ORDER BY number;");
+
+
+		my $sth3 = $dbh->prepare("select sect.section_id,sect.chapter_id,sect.number,sect.name,sect.page "
+			. "FROM OPL_chapter AS ch "
+			. "LEFT JOIN OPL_textbook AS text ON ch.textbook_id=text.textbook_id "
+			. "LEFT JOIN OPL_section AS sect ON sect.chapter_id = ch.chapter_id "
+			. "WHERE text.textbook_id='$textbook_id' AND ch.chapter_id='$chapter_id' ORDER BY sect.number;");
+
 		$sth3->execute;
 		my @sections = ();
 
@@ -86,7 +97,7 @@ my $OUTFILE;
 open $OUTFILE, '>', $file  or die "Cannot open $file";
 
 # you can check for errors (e.g., if after opening the disk gets full)
-print { $OUTFILE } to_json(\@textbooks,{pretty=>0}) or die "Cannot write to $file";
+print { $OUTFILE } to_json(\@textbooks,{pretty=>1}) or die "Cannot write to $file";
 
 # check for errors
 close $OUTFILE or die "Cannot close $file";
