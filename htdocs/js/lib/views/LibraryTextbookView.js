@@ -29,7 +29,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             modes.push("None");
             this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
-            //this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
+            this.$(".library-tree-container").html("Loading...<i class='fa fa-spinner fa-spin'></i>");
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
             if(this.textbooks){  // build the textbook tree
                 this.buildTree();
@@ -66,22 +66,40 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             var textbookIndex = this.$(".textbook-title").val();
             this.$(".textbook-chapter").html(_.template($("#library-textbook-sections-template").html(),
                 {sections: this.textbooks[textbookIndex].chapters, type: "Chapter"}));
+            this.$(".textbook-message").html(this.textbooks[textbookIndex].num_probs + " problems available");
         },
         changeChapter: function () {
             var textbookIndex = this.$(".textbook-title").val();
             var chapterIndex = this.$(".textbook-chapter").val();
-            if(this.textbooks[textbookIndex].chapters[chapterIndex].sections){
-                this.$(".textbook-section").removeClass("hidden");
-                this.$(".textbook-section").html(_.template($("#library-textbook-sections-template").html(),
-                    {sections: this.textbooks[textbookIndex].chapters[chapterIndex].sections, type: "Section"}));
-            }
+            this.$(".textbook-section").removeClass("hidden");
+            this.$(".textbook-section").html(_.template($("#library-textbook-sections-template").html(),
+                {sections: this.textbooks[textbookIndex].chapters[chapterIndex].sections, type: "Section"}));
+            this.$(".textbook-message").html(this.textbooks[textbookIndex].chapters[chapterIndex].num_probs 
+                    + " problems available");
+        },
+        changeSection: function () {
+            var textbookIndex = this.$(".textbook-title").val();
+            var chapterIndex = this.$(".textbook-chapter").val();
+            var sectionIndex = this.$(".textbook-section").val();
+            this.$(".textbook-message").html(this.textbooks[textbookIndex].chapters[chapterIndex].sections[sectionIndex].num_probs 
+                    + " problems available");  
         },
         loadProblems: function () {
             var textbookID = this.$(".textbook-title option:selected").data("id");
             var chapterID = this.$(".textbook-chapter option:selected").data("id");
             var sectionID = this.$(".textbook-section option:selected").data("id");
-            $.get(config.urlPrefix + "Library/textbooks/"+textbookID +"/chapters/" + chapterID 
-                + "/sections/" + sectionID + "/problems",this.showResults);
+            var path = [];
+            if(typeof(textbookID)=="undefined"){ // send an error
+
+            } else if(typeof(chapterID)=="undefined"){
+                $.get(config.urlPrefix + "Library/textbooks/"+textbookID + "/problems",this.showResults);
+            } else if(typeof(sectionID)=="undefined"){
+                $.get(config.urlPrefix + "Library/textbooks/"+textbookID+"/chapters/" + chapterID  + "/problems"
+                    ,this.showResults);
+            } else {
+                $.get(config.urlPrefix + "Library/textbooks/"+textbookID +"/chapters/" + chapterID 
+                    + "/sections/" + sectionID + "/problems",this.showResults);
+            }
         }
 
 

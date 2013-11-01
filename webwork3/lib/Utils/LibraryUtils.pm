@@ -9,8 +9,7 @@ use Dancer::Plugin::Database;
 use Data::Dumper;
 use WeBWorK::Utils qw(readDirectory sortByName);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(list_pg_files get_section_problems get_chapter_problems get_subject_problems 
-			searchLibrary getProblemTags);
+our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags);
 
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,

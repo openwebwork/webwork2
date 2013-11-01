@@ -45,44 +45,76 @@ my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
 
-my @textbooks = ();
 
-my $selectString = "";
+my $selectClause = "SELECT pg.pgfile_id from OPL_path as path "
+	."LEFT JOIN OPL_pgfile AS pg ON pg.path_id=path.path_id "
+	."LEFT JOIN OPL_pgfile_problem AS pgprob ON pgprob.pgfile_id=pg.pgfile_id "
+	."LEFT JOIN OPL_problem AS prob ON prob.problem_id=pgprob.problem_id "
+	."LEFT JOIN OPL_section AS sect ON sect.section_id=prob.section_id "
+	."LEFT JOIN OPL_chapter AS ch ON ch.chapter_id=sect.chapter_id "
+	."LEFT JOIN OPL_textbook AS text ON text.textbook_id=ch.textbook_id ";
 
-my $sth = $dbh->prepare("select * from OPL_textbook");
-$sth->execute;
+my $results = $dbh->selectall_arrayref("select * from OPL_textbook ORDER BY title;");
 
-while ( my ($textbook_id,$title,$edition,$author,$publisher,$isbn,$pubdate) = $sth->fetchrow_array ) {
+my @textbooks=map { {textbook_id=>$_->[0],title=>$_->[1],edition=>$_->[2],
+		author=>$_->[3],publisher=>$_->[4],isbn=>$_->[5],pubdate=>$_->[6]}} @{$results};
 
-	my $sth2 = $dbh->prepare("select ch.chapter_id,ch.textbook_id,ch.number,ch.name,ch.page "
+my $i =0; ## index to alert user the length of the build
+
+print "Building the Textbook Library Tree\n";
+STDOUT->printflush( "There are ". $#textbooks ." textbooks to process.\n");
+
+for my $textbook (@textbooks){
+	$i++;
+	STDOUT->printflush(($i) . " ");
+	STDOUT->printflush("\n") if ($i %10==0);
+
+	my $results = $dbh->selectall_arrayref("select ch.chapter_id,ch.name,ch.number "
 		. " from OPL_chapter AS ch JOIN OPL_textbook AS text ON ch.textbook_id=text.textbook_id "
-		. " WHERE text.textbook_id='" . $textbook_id . "' ORDER BY ch.number;");
-	$sth2->execute;
-	my @chapters = ();
+		. " WHERE text.textbook_id='" . $textbook->{textbook_id} . "' ORDER BY ch.number;");
 
-   	while ( my ($chapter_id,$textbook_id,$chapterNumber,$chapterName,$chapterPage) = $sth2->fetchrow_array ) {
-	   	
+	my @chapters=map { {chapter_id=>$_->[0],name=>$_->[1],number=>$_->[2]}} @{$results};
 
+	for my $chapter (@chapters){
 
-		my $sth3 = $dbh->prepare("select sect.section_id,sect.chapter_id,sect.number,sect.name,sect.page "
+		my $results = $dbh->selectall_arrayref("select sect.section_id,sect.chapter_id,sect.number,sect.name,sect.page "
 			. "FROM OPL_chapter AS ch "
 			. "LEFT JOIN OPL_textbook AS text ON ch.textbook_id=text.textbook_id "
 			. "LEFT JOIN OPL_section AS sect ON sect.chapter_id = ch.chapter_id "
-			. "WHERE text.textbook_id='$textbook_id' AND ch.chapter_id='$chapter_id' ORDER BY sect.number;");
+			. "WHERE text.textbook_id='" .$textbook->{textbook_id}. "' AND "
+			. "ch.chapter_id='".$chapter->{chapter_id}."' ORDER BY sect.number;");
 
-		$sth3->execute;
-		my @sections = ();
 
-	   	while ( my ($section_id,$chapter_id,$sectionNumber,$sectionName,$sectionPage) = $sth3->fetchrow_array ) {
-	   		push(@sections,{section_id=>$section_id,name=>$sectionName,number=>$sectionNumber});
+		my @sections = map { {section_id=>$_->[0],name=>$_->[1],number=>$_->[2]}} @{$results};
+
+		for my $section (@sections){
+
+	   		my $whereClause ="WHERE sect.section_id='". $section->{section_id} 
+	   			."' AND ch.chapter_id='". $chapter->{chapter_id}."' AND "
+	   				."text.textbook_id='".$textbook->{textbook_id}."'";
+
+			my $sth = $dbh->prepare($selectClause.$whereClause);
+			$sth->execute;
+			$section->{num_probs}=$sth->rows;
+
 		}
-	   	push(@chapters,{chapter_id=>$chapter_id,name=>$chapterName,number=>$chapterNumber,sections=>\@sections});
+		my $whereClause ="WHERE ch.chapter_id='". $chapter->{chapter_id}."' AND "
+   				."text.textbook_id='".$textbook->{textbook_id}."'";
+
+		my $sth = $dbh->prepare($selectClause.$whereClause);
+		$sth->execute;
+		$chapter->{num_probs}=$sth->rows;
+
+		$chapter->{sections}=\@sections;
+	
 	}
+	my $whereClause ="WHERE text.textbook_id='".$textbook->{textbook_id}."'";
 
-	push(@textbooks,{textbook_id=>$textbook_id,title=>$title,edition=>$edition,author=>$author,
-					publisher=>$publisher,ISBN=>$isbn,pubdate=>$pubdate,chapters=>\@chapters});
+	my $sth = $dbh->prepare($selectClause.$whereClause);
+	$sth->execute;
+	$textbook->{num_probs}=$sth->rows;
 
-
+	$textbook->{chapters}=\@chapters;
 }
 $dbh->disconnect;
 

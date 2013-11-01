@@ -13,7 +13,7 @@ use Dancer::Plugin::Database;
 use Path::Class;
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::LibraryUtils qw/list_pg_files get_section_problems get_chapter_problems get_subject_problems 
+use Utils::LibraryUtils qw/list_pg_files 
 	searchLibrary getProblemTags/;
 use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment/;
 use WeBWorK::DB::Utils qw(global2user);
@@ -53,7 +53,7 @@ get '/Library/subjects' => sub {
 
 get '/Library/subjects/:subject/problems' => sub {
 
-	return get_subject_problems(params->{subject});
+	return searchLibrary({subject=>params->{subject}});
 
 };
 
@@ -87,7 +87,7 @@ get '/Library/subjects/:subject/chapters/:chapter/problems' => sub {
 
 get '/Library/subjects/:subject/chapters/:chapter/sections/:section/problems' => sub {
 
-	return get_section_problems(params->{subject},params->{chapter},params->{section});
+	return searchLibrary({subject=>params->{subject},chapter=>params->{chapter},section=>params->{section}});
 };
 
 #######
@@ -273,7 +273,7 @@ get '/Library/textbooks' => sub {
 
 ####
 #
-#  get '/Library/textbooks/:textbook_id/chapters/:chapter_id/sections/:section_id'
+#  get '/Library/textbooks/:textbook_id/chapters/:chapter_id/sections/:section_id/problems'
 #
 #  returns all problems in the given textbook/chapter/section
 #
@@ -283,6 +283,34 @@ get '/Library/textbooks/:textbook_id/chapters/:chapter_id/sections/:section_id/p
 
 	return searchLibrary({section_id=>params->{section_id},textbook_id=>params->{textbook_id},
 			chapter_id=>params->{chapter_id}});
+
+};
+
+####
+#
+#  get '/Library/textbooks/:textbook_id/chapters/:chapter_id/problems'
+#
+#  returns all problems in the given textbook/chapter
+#
+##
+
+get '/Library/textbooks/:textbook_id/chapters/:chapter_id/problems' => sub {
+
+	return searchLibrary({textbook_id=>params->{textbook_id},chapter_id=>params->{chapter_id}});
+
+};
+
+####
+#
+#  get '/Library/textbooks/:textbook_id/problems'
+#
+#  returns all problems in the given textbook
+#
+##
+
+get '/Library/textbooks/:textbook_id/problems' => sub {
+
+	return searchLibrary({textbook_id=>params->{textbook_id}});
 
 };
 
