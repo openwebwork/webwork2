@@ -808,7 +808,7 @@ sub displaySets {
 #		'or 0 if there are no attempts.'
 		),
 		CGI::br(),
-		"Click on student's name to see the student's version of the homework set. &nbsp; &nbsp;&nbsp;
+		"Click on a student's name to see the student's version of the homework set. &nbsp; &nbsp;&nbsp;
 		Click heading to sort table. ",
 		CGI::br(),
 		CGI::br(),
@@ -1020,6 +1020,7 @@ sub grade_set {
 
 		my $status = 0;
 		my $longStatus = '';
+		my $class     = '';
 		my $string     = '';
 		my $twoString  = '';
 		my $totalRight = 0;
@@ -1129,7 +1130,8 @@ sub grade_set {
 				$longStatus 	= 'X';
 			}
 		
-			$string         .= threeSpaceFill($longStatus);
+                        $class = ($longStatus eq 'C')?"correct": (($longStatus eq '.')?'unattempted':'');
+                        $string      .= '<span class="'.$class.'">'.threeSpaceFill($longStatus).'</span>';
 			$twoString      .= threeSpaceFill($num_incorrect);
 			my $probValue   =  $problemRecord->value;
 			$probValue      =  1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
