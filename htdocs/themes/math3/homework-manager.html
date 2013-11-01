@@ -387,7 +387,8 @@ at the bottom of the screen and click "Save Changes". </p>
 <script type="text/template" id="library-textbook-sections-template">
 <option>Select <%=type%></option>
 <% _(sections).each(function(sect,i) { print("<option data-id='" 
-    + (type=='Section'?sect.section_id:sect.chapter_id) + "' value='"+ i + "'>" + sect.number + ": "+ sect.name + "</option>");});
+    + (type=='Section'?sect.section_id:sect.chapter_id) + "' value='"+ i + "' "+
+    "data-numprobs='"+ sect.num_probs+"'>" + sect.number + ": "+ sect.name + "</option>");});
 %>
 </script>
 

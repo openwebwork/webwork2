@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 
-# This is the script build-library-tree
+# This is the script build-textbook-tree
 
-# This is used to create the file library-tree.json which can be used to load in 
-# subject-chapter-section information for the OPL
+# This is used to create the file textbook-tree.json which can be used to load in 
+# textbook information for the OPL
 
 use strict;
 use warnings;
@@ -17,6 +17,8 @@ use IO::Handle;
 
  #(maximum varchar length is 255 for mysql version < 5.0.3.  
  #You can increase path length to  4096 for mysql > 5.0.3)
+
+$| = 1; # autoflush output
 
 BEGIN {
         die "WEBWORK_ROOT not found in environment.\n"
@@ -62,12 +64,12 @@ my @textbooks=map { {textbook_id=>$_->[0],title=>$_->[1],edition=>$_->[2],
 my $i =0; ## index to alert user the length of the build
 
 print "Building the Textbook Library Tree\n";
-STDOUT->printflush( "There are ". $#textbooks ." textbooks to process.\n");
+print "There are ". $#textbooks ." textbooks to process.\n";
 
 for my $textbook (@textbooks){
 	$i++;
-	STDOUT->printflush(($i) . " ");
-	STDOUT->printflush("\n") if ($i %10==0);
+	printf("%3d",$i);
+	print("\n") if ($i %10==0);
 
 	my $results = $dbh->selectall_arrayref("select ch.chapter_id,ch.name,ch.number "
 		. " from OPL_chapter AS ch JOIN OPL_textbook AS text ON ch.textbook_id=text.textbook_id "
@@ -77,7 +79,7 @@ for my $textbook (@textbooks){
 
 	for my $chapter (@chapters){
 
-		my $results = $dbh->selectall_arrayref("select sect.section_id,sect.chapter_id,sect.number,sect.name,sect.page "
+		my $results = $dbh->selectall_arrayref("select sect.section_id,sect.name,sect.number "
 			. "FROM OPL_chapter AS ch "
 			. "LEFT JOIN OPL_textbook AS text ON ch.textbook_id=text.textbook_id "
 			. "LEFT JOIN OPL_section AS sect ON sect.chapter_id = ch.chapter_id "
