@@ -61,7 +61,7 @@ var tabberOptions = {manualStartup:true};
 
 
 <!-- Header -->
-<ul id="masthead">
+<ul id="masthead" role="banner">
 	<li class="webwork_logo">
 		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
 	</li>
@@ -80,7 +80,7 @@ var tabberOptions = {manualStartup:true};
 
 
 <!-- Navigation -->
-<div id="site-navigation" class="span2">
+<div id="site-navigation" class="span2" role="navigation" aria-label="main navigation">
 	<!--#if can="links"-->
 		<!--#links-->
 	<!--#endif-->
@@ -98,10 +98,11 @@ var tabberOptions = {manualStartup:true};
 <!-- Main Content Area -->
 <div id="content" class="span10" >
 	<!-- Breadcrumb -->
+	<div role="navigation" aria-label="breadcrumb navigation">
 	<ul class="breadcrumb">
 		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
 	</ul>
-
+	</div>
 	<!-- Page Title -->
 	<!--#if can="title"-->
 		<h2 class='page-title'><!--#title --></h2>
@@ -266,7 +267,7 @@ var tabberOptions = {manualStartup:true};
 
 
 <!-- Footer -->
-<div id="footer">
+<div id="footer" role="contentinfo">
 	<!--#footer-->
 </div>
 
