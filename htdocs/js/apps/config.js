@@ -162,9 +162,9 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
     Backbone.Stickit.addHandler({
         selector: '.edit-datetime',
         update: function($el, val, model, options){
-           var theDate = moment.unix(val);
+            var theDate = moment.unix(val);
             $el.html(_.template($("#edit-date-time-template").html(),{date: theDate.format("MM/DD/YYYY")}));
-                        var setModel = function(evt,timeStr){
+            var setModel = function(evt,timeStr){
                 console.log("in edit-datetime, setModel");
                 var dateTimeStr = evt.data.$el.children(".wwdate").val() + " " + 
                         (timeStr ? timeStr : evt.data.$el.children(".wwtime").text().trim());
@@ -176,11 +176,13 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
             var timeIcon = $el.children(".open-time-editor");
             timeIcon.popover({title: "Change Time:", html: true, content: popoverHTML,
                 trigger: "manual"});
-            timeIcon.parent().delegate(".btn","click",{$el:$el.closest(".edit-datetime"), model: model, options: options},
+            timeIcon.parent().delegate(".save-time-button","click",{$el:$el.closest(".edit-datetime"),
+                             model: model, options: options},
                 function (evt) {
                     timeIcon.popover("hide");
                     setModel(evt,$(this).siblings(".wwtime").val());
             });
+            timeIcon.parent().delegate(".cancel-time-button","click",{},function(){timeIcon.popover("hide");});
             $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, setModel);
             $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, setModel);
             timeIcon.parent().on("click",".open-time-editor", function() {

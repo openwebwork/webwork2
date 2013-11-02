@@ -81,8 +81,8 @@ define(['Backbone',
                     .get("problems").fetch({success: this.loadProblems});
             }
         },       
-        updateNumberOfProblems: function (opts) {
-            this.headerView.$(".number-of-problems").html(opts.number_shown + " of " +opts.total + " problems shown.");
+        updateNumberOfProblems: function (text) {
+            this.headerView.$(".number-of-problems").html(text);
         }
     });
 

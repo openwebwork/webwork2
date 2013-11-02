@@ -158,9 +158,9 @@ var HomeworkEditorView = WebPage.extend({
 
                         break;
                     default:
-                        var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY")
+                        var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
                                      : _set.changingAttributes[key];
-                        var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY") : _set.get(key);
+                        var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
                         self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
                             text: "The value of " + key + " in problem set " 
                             + _set.get("set_id") + " has changed from " + _old + " to " + _new});
