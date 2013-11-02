@@ -23,15 +23,14 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var self = this;
             _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
             
-            this.numProblemsPerGroup = 10; // this should be a parameter.
+
             this.problems = this.options.problems ? this.options.problems : new ProblemList();
             this.problemSet = this.options.problemSet; 
             this.problems.on("remove",this.deleteProblem);
             this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
-
-            // start with showing 10 (numProblemsPerGroup) problems
-            this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
-                    this.numProblemsPerGroup : this.problems.length;
+            this.pageSize = 10; // this should be a parameter.
+            this.pageRange = _.range(this.pageSize);
+            this.currentPage = 1;
             _.extend(this.viewAttrs,{type: this.options.type});
             _.extend(this,Backbone.Events);
         },
@@ -43,9 +42,9 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
             this.viewAttrs.type = opts.type || "set";
             this.viewAttrs.displayMode = opts.displayMode || config.settings.getSettingValue("pg{options}{displayMode}").slice(0);
-            // start with showing 10 (numProblemsPerGroup) problems
-            this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
-                    this.numProblemsPerGroup : this.problems.length;
+            // start with showing 10 (pageSize) problems
+            this.maxProblemIndex = (this.problems.length > this.pageSize)?
+                    this.pageSize : this.problems.length;
 
             this.problemViews = [];
             return this;
@@ -59,19 +58,19 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             modes.push("None");
             this.$el.html(_.template($("#problem-list-template").html(),
                                 {displayModes: modes, editorURL: openEditorURL}));
-            this.renderProblems();
+            this.updatePaginator();
+            this.gotoPage(0);
+
             
             return this;
         }, 
         renderProblems: function () {
             var self = this;
             var ul = this.$(".prob-list").empty(); 
-            this.problems.each(function(problem,i){
-                if(i<self.maxProblemIndex) {
-                    ul.append((self.problemViews[i] = new ProblemView({model: problem, libraryView: self.libraryView,
-                        viewAttrs: self.viewAttrs})).render().el); 
+            _(this.pageRange).each(function(i){
+                ul.append((self.problemViews[i] = new ProblemView({model: self.problems.at(i), 
+                    libraryView: self.libraryView, viewAttrs: self.viewAttrs})).render().el); 
                     
-                }
             });
 
             if(this.viewAttrs.reorderable){
@@ -80,13 +79,22 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                                                 stop: this.reorder});
             }
             this.trigger("update-num-problems",
-                {number_shown: this.$(".prob-list li").length, total: this.problems.size()});
-            if(this.$(".prob-list li").length < this.problems.size()){
-                this.$(".load-more-btn").removeAttr("disabled");
-            } else {
-                this.$(".load-more-btn").attr("disabled","disabled");
+                "Problems " + (this.pageRange[0]+1) + " to " + (_(this.pageRange).last() + 1) + " of " +
+                this.problems.size());
+        }, 
+        updatePaginator: function() {
+            // render the paginator
+
+            this.maxPages = Math.ceil(this.problems.length / this.pageSize);
+            var start =0,
+                stop = this.maxPages;
+            if(this.maxPages>15){
+                start = (this.currentPage-7 <0)?0:this.currentPage-7;
+                stop = start+15<this.maxPages?start+15 : this.maxPages;
             }
-        },        
+            this.$(".problem-paginator").html(_.template($("#paginator-template").html(),
+                    {page_start:start,page_stop:stop,num_pages:this.maxPages}));
+        },       
         loadMore: function () {
             this.maxProblemIndex+=10;
             this.renderProblems();
@@ -95,7 +103,12 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             "change .display-mode-options": "changeDisplayMode",
             "click #create-new-problem": "openSimpleEditor",
             "click .load-more-btn": "loadMore",
-            "click .show-hide-tags-btn": "toggleTags"
+            "click .show-hide-tags-btn": "toggleTags",
+            "click .goto-first": "firstPage",
+            "click .go-back-one": "prevPage",
+            "click .page-button": "gotoPage",
+            "click .go-forward-one": "nextPage",
+            "click .goto-end": "lastPage"
         },
         changeDisplayMode: function (evt) {
             this.problems.each(function(problem){
@@ -125,6 +138,22 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 this.$(".tag-row").addClass("hidden");
             }
             
+        },
+        firstPage: function() { this.gotoPage(0);},
+        prevPage: function() {if(this.currentPage>0) {this.gotoPage(this.currentPage-1);}},
+        nextPage: function() {if(this.currentPage<this.maxPages){this.gotoPage(this.currentPage+1);}},
+        lastPage: function() {this.gotoPage(this.maxPages-1);},
+        gotoPage: function(arg){
+            this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
+            this.pageRange = _.range(this.currentPage*this.pageSize,
+                (this.currentPage+1)*this.pageSize>this.problems.size()? this.problems.size():(this.currentPage+1)*this.pageSize);
+            if(this.maxPages>15){
+                this.updatePaginator();
+            }
+            this.renderProblems();
+            this.$(".problem-paginator button").removeClass("current-page");
+            this.$(".problem-paginator button[data-page='" + this.currentPage + "']").addClass("current-page");
+
         },
         /* when the "new" button is clicked open up the simple editor. */
         openSimpleEditor: function(){  

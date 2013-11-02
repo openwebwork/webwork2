@@ -31,7 +31,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
             this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
-            if (this.libraryProblemsView.problems){
+            if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size() >0){
                 this.libraryProblemsView.renderProblems();
             }
             return this;
@@ -53,7 +53,8 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
         },
         showProblems: function () {
             this.libraryProblemsView.set({problems: this.problemList, type:this.options.libBrowserType});
-            this.libraryProblemsView.renderProblems();
+            this.libraryProblemsView.updatePaginator();
+            this.libraryProblemsView.gotoPage(0);
         },
     	loadProblems: function (_path){    	
     		console.log(_path);

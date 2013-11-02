@@ -60,8 +60,8 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
             this.views[viewType].libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
             this.views[viewType].render();
         },
-        updateNumberOfProblems: function (opts) {
-            this.headerView.$(".number-of-problems").html(opts.number_shown + " of " +opts.total + " problems shown.");
+        updateNumberOfProblems: function (text) {
+            this.headerView.$(".number-of-problems").html(text);
         }
     });
 

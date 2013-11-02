@@ -30,9 +30,9 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             if(this.searchString){
                 this.$(".search-query").val(this.searchString);
             }
-            if(this.libraryProblemsView.problems){
-                this.libraryProblemsView.renderProblems();
-            }
+
+            this.libraryProblemsView.render();
+
             return this;
     	},
         search: function () {

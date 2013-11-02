@@ -155,14 +155,15 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
       <% _(displayModes).each(function(mode) {print("<option>"+mode+"</option>");}) %>
     </select>
     <a href="<%=editorURL%>" target="Simple_Editor" class="btn" id="create-new-problem">New</a>
-    <button class="btn load-more-btn" disabled="disabled">Load More Problems</button>
     <button class="btn show-hide-tags-btn" data-hide-text="Hide Tags">Show Tags</button>
   </div>
 
 </div>
-
+<div class="row-fluid btn-group problem-paginator"></div>
 <ul class='prob-list scrollable no-bullets'></ul>
 </script>
+
+
 
 <script type="text/template" id="set-properties-tab-template">
 <table class="table">
@@ -436,12 +437,12 @@ Local Problem Directory:&nbsp;
       <option>Select Target Set</option>
       <% _(sets).each(function(set){print('<option>' + set + ' </option> ')  });%>
     </select>
-    <button class="btn load-more-btn" disabled="disabled">Load More Problems</button>
     <button class="btn show-hide-tags-btn" data-hide-text="Hide Tags">Show Tags</button>
   </div>
 
 </div>
 <div class="lib-problem-viewer">
+<div class="row-fluid btn-group problem-paginator"></div>
 <ul class="prob-list no-bullets"> </ul> 
 </div>
 </script>
@@ -588,16 +589,16 @@ level of 2. </p>
 
 <script type="text/template" id="paginator-template">
 <div class="btn-group">
-<button class="btn goto-first"><i class="fa fa-step-backward"></i>
-<button class="btn go-back-one"><i class="fa fa-arrow-left"></i>
-<% if (page_start>0) {print ("<button class='btn'> ... </button>");} %>
+<button class="btn btn-small goto-first"><i class="fa fa-step-backward"></i>
+<button class="btn btn-small go-back-one"><i class="fa fa-arrow-left"></i>
+<% if (page_start>0) {print ("<button class='btn btn-small'> ... </button>");} %>
 <% for(i=page_start;i<page_stop;i++){
-    print("<button class='btn page-button' data-page='" + i + "'>" + (i+1) + "</button>");
+    print("<button class='btn btn-small page-button' data-page='" + i + "'>" + (i+1) + "</button>");
 } %>
-<% if (page_stop+1<num_pages) {print ("<button class='btn'> ... </button>");} %>
+<% if (page_stop+1<num_pages) {print ("<button class='btn btn-small'> ... </button>");} %>
 
-<button class="btn go-forward-one"><i class="fa fa-arrow-right"></i>
-<button class="btn goto-end"><i class="fa fa-step-forward"></i>
+<button class="btn btn-small go-forward-one"><i class="fa fa-arrow-right"></i>
+<button class="btn btn-small goto-end"><i class="fa fa-step-forward"></i>
 </div>
 </script>
 

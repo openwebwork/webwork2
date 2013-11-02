@@ -67,12 +67,11 @@ define(['Backbone', 'underscore','config','imagesloaded'
             } else {
                 this.$el.html($("#problem-loading-template").html());
                 this.model.loadHTML({displayMode: this.allAttrs.displayMode, success: function (data) {
-                    if (data.text){
-                        self.model.set("data",data.text);
-                        self.render();
-                    } else {
-                        console.log(data);
-                    }
+                    self.model.set("data",data.text);
+                    self.render();
+                }, error:function(data){
+                    self.model.set("data",data.responseText);
+                    self.render();
                 }});
             }
 

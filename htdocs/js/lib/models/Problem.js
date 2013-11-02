@@ -33,11 +33,11 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             var attrs = {displayMode: opts.displayMode};
             _.extend(attrs,this.attributes);
             if (this.collection.setName){  // the problem is part of a set
-                $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
-                    + this.collection.setName 
-                    + "/problems/" + this.get("problem_id"),attrs, opts.success);
+                $.ajax({url: config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
+                    + this.collection.setName + "/problems/" + this.get("problem_id"),
+                    data: attrs, success: opts.success,error:opts.error});
             } else {  // it is being rendered from the library
-                $.get(config.urlPrefix + "renderer/problems/0",attrs,opts.success);
+                $.ajax({url:config.urlPrefix + "renderer/problems/0",data:attrs,success:opts.success,error:opts.error});
             }
         },
         loadTags: function (opts) {
