@@ -9,7 +9,7 @@ define(['Backbone', 'underscore','views/LibraryView','views/LibrarySearchView','
             'views/LocalLibraryView','views/LibraryTextbookView'], 
 function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,LibraryTextbookView){
     var LibraryBrowser = Backbone.View.extend({
-        headerInfo: { template: "#libraryBrowser-header"}, 
+        
     	initialize: function (){
     		var self = this; 
             _.bindAll(this,'render','updateNumberOfProblems');
@@ -34,7 +34,10 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
                 localLibrary: new LocalLibraryView({libBrowserType: "local", problemSets: this.options.problemSets}),
                 setDefinition: new LocalLibraryView({libBrowserType: "setDefinition", problemSets: this.options.problemSets}),
                 search :  new LibrarySearchView({libBrowserType: "search", problemSets: this.options.problemSets})
-            }
+            };
+
+            this.headerInfo = { template: "#libraryBrowser-header",
+                events: {"shown a[data-toggle='tab']": function(evt) { self.changeView(evt);} }};    
     	},
     	render: function (){
             var self = this; 
@@ -47,7 +50,7 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
             this.views[this.activeView].render()
                 .libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
     	},
-        events: {"shown a[data-toggle='tab']": "changeView"},
+        //events: {"shown a[data-toggle='tab']": "changeView"},
         changeView: function(evt){
             var self = this;
             var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab

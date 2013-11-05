@@ -4,7 +4,7 @@
  **/
 
 
-define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], function(Backbone,moment){
+define(['Backbone','underscore','moment','backbone-validation','stickit','jquery-ui'], function(Backbone,_,moment){
 
     $(document).ajaxError(function (e, xhr, options, error) {
       if(xhr.responseText){
@@ -29,15 +29,7 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         courseSettings: {
             "session_key": $("#hidden_key").val(),
             "user": $("#hidden_user").val(),
-            //"course_id": $("#hidden_courseID").val()
-        },
-        checkForError: function(response){
-            if (response && response.error){
-                console.log("need to handle this somehow");
-                console.log(response);
-            }
-        },
-            
+        },   
     
     // Note: these are in the order given in the classlist format for LST files.  
     
@@ -108,11 +100,20 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         }
     }
 
+    config.msgTemplate= _.template($("#all-messages").html());
+
     // These are additional validation patterns to be available to Backbone Validation
 
     _.extend(Backbone.Validation.patterns, { "wwdate": config.regexp.wwDate}); 
     _.extend(Backbone.Validation.patterns, { "setname": /^[\w\d\_\.]+$/});
     _.extend(Backbone.Validation.patterns, { "loginname": /^[\w\d\_]+$/});
+    _.extend(Backbone.Validation.validators, {
+        setNameValidator: function(value, attr, customValue, model) {
+            if(!Backbone.Validation.patterns["setname"].test(value))
+                return config.msgTemplate({type:"set_name_error"});
+            }
+    });
+
     _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);  
 
     // This implements a stickit handler for elements of type wwdate

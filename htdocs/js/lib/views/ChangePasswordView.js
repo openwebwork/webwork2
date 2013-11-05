@@ -17,7 +17,7 @@ define(['Backbone', 'underscore'],
               $("table tbody",self.$el).append(tableRow.el);
           });
           
-          this.$el.dialog({autoOpen: false, modal: true, title: "Password Changes",
+          this.$el.dialog({autoOpen: false, modal: true, title: config.msgTemplate({type: "password_changes"}),
   			                    width: (0.5*window.innerWidth), height: (0.5*window.innerHeight),
                             buttons: {"Save New Passwords": function () {self.savePasswords(); self.$el.dialog("close")},
                                     "Cancel": function () {self.$el.dialog("close");}}

@@ -15,6 +15,7 @@ define(['Backbone', 'views/ProblemListView','config'],
                 this.$el.html(_.template($("#library-problems-view-template").html(),
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
                 this.$(".display-mode-options").val(config.settings.getSettingValue("pg{options}{displayMode}")); 
+                this.$(".prob-list-container").height($(window).height()-270);
                 return this;
             },
     	});

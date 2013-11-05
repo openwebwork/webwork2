@@ -26,10 +26,10 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
             
 
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
-            if (this.libraryProblemsView.problems){
+            if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size() >0){
                 this.libraryProblemsView.renderProblems();
             }
-            this.$(".library-tree-container").html("Loading Library...<i class='fa fa-spinner fa-spin'></i>");
+            this.$(".library-tree-container").html($("#loading-library-template").html());
             if(this.problemList){
                 this.buildMenu();
             } else {
@@ -57,7 +57,8 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
                 }
             });
             this.libraryProblemsView.set({problems: localProblems, type:this.options.libBrowserType});
-            this.libraryProblemsView.renderProblems();
+            this.libraryProblemsView.updatePaginator();
+            this.libraryProblemsView.gotoPage(0);
 
 
         },

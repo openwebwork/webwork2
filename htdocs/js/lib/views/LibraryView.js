@@ -18,7 +18,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
                  allProblemSets: this.allProblemSets});
             this.libraryTreeView = new LibraryTreeView({type: this.options.libBrowserType, 
                                         allProblemSets: this.options.problemSets});
-            this.libraryTreeView.libraryTree.on("library-selected", function(path) { self.loadProblems(path);});            
+            this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
 
             
     	},
@@ -46,17 +46,19 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             console.log(problemSet);
             if(!problemSet){
                 this.$(".target-set").css("background-color","rgba(255,0,0,0.4)")
-                    .popover({placement: "bottom",content: "You need to select a target set"}).popover("show");
+                    .popover({placement: "bottom",content: config.msgTemplate({type:"select_target_set"})}).popover("show");
                 return;
             }
             problemSet.addProblem(model);
         },
         showProblems: function () {
+            this.$(".load-library-button").button("reset");  
             this.libraryProblemsView.set({problems: this.problemList, type:this.options.libBrowserType});
             this.libraryProblemsView.updatePaginator();
             this.libraryProblemsView.gotoPage(0);
         },
-    	loadProblems: function (_path){    	
+    	loadProblems: function (_path){   
+            this.$(".load-library-button").button("loading"); 	
     		console.log(_path);
             var self = this;
 			this.problemList = new ProblemList();

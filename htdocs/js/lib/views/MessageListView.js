@@ -44,7 +44,7 @@ define(['Backbone','underscore','models/MessageList','models/Message'], function
 		},
 		addMessage: function(msg){
 			$("#short-message").removeClass("alert-success").removeClass("alert-error").addClass("alert-" + msg.type)
-				.text(msg.short).show("slide", 1000 ).truncate()
+				.text(msg.short).show("slide", 1000 );
 			setTimeout(function () {$("#short-message").hide("slide",1000).text("")}, 15000);
 			this.messages.add(new Message(msg));
 			

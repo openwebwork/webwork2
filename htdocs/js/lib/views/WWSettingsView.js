@@ -2,8 +2,8 @@
     setting the "settings" field and providing it an array of WeBWorKProperty models. 
     */
 
-define(['Backbone', 'underscore','views/EditableCell','config'], 
-function(Backbone, _,EditableCell,config){
+define(['Backbone', 'underscore','config'], 
+function(Backbone, _,config){
     var WWSettingsView = Backbone.View.extend({
 
         initialize: function () {
@@ -72,7 +72,7 @@ function(Backbone, _,EditableCell,config){
             ".doc2": { observe: "doc2", updateMethod: "html"}
         },
         events: {
-            "click .help-button": "openHelp",
+                "click .help-button": "openHelp",
             "click .close": "closeHelp"
         },
         openHelp: function (evt){
@@ -97,7 +97,14 @@ function(Backbone, _,EditableCell,config){
         initialize: function () {
             _.bindAll(this,'render');
             _.extend(this.bindings,{ ".property": {observe: "value", events: ['blur']}});
+        },
+        events: {"keyup": "checkForEnter"},
+        checkForEnter: function(evt){
+            if(evt.keyCode == 13){
+                $(evt.target).blur();
+            }
         }
+
     });
 
     return WWSettingsView;

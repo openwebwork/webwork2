@@ -22,9 +22,6 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             });
         },
     	render: function (){
-            // var self = this;
-            // var modes = config.settings.getSettingValue("pg{displayModes}").splice(0);
-            // modes.push("None");
             this.$el.html($("#library-search-template").html());
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
             if(this.searchString){

@@ -3,8 +3,8 @@
  * of problems.  More specifially, it also contains a Problem List of type "Problem Set".  
  *
  * */
-define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'], 
-        function(Backbone, _, config,moment,ProblemList,Problem){
+define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem','config'], 
+        function(Backbone, _, config,moment,ProblemList,Problem,config){
 
 
     var ProblemSet = Backbone.Model.extend({
@@ -40,7 +40,9 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
            open_date: "checkDates",
             due_date: "checkDates",
             answer_date: "checkDates",
-            set_id: {pattern: "setname", msg: "A name must only contain letters, numbers, _ and ."}
+            set_id: {  
+                setNameValidator: 1 // uses your custom validator
+            }
         },
         descriptions:  {
             set_id: "Homework Set Name",
@@ -108,7 +110,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             var lastProblem = this.get("problems").last();
             newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
             this.get("problems").add(newProblem);
-            this.trigger("change:problems",this);
             this.save();
         },
         setDate: function(attr,_date){
@@ -129,10 +130,10 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
                 , answerDate = moment.unix(computedState.answer_date);
 
             if(openDate.isAfter(dueDate)){ 
-                return "The open date must come before the due date";
+                return config.msgTemplate({type: "openDate_after_dueDate"});
             }
             if (dueDate.isAfter(answerDate)){
-                return "The due date must come before the answer date.";
+                return config.msgTemplate({type: "dueDate_after_answerDate"});
             }
         }
     });

@@ -57,7 +57,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var modes = config.settings.getSettingValue("pg{displayModes}").slice();
             modes.push("None");
             this.$el.html(_.template($("#problem-list-template").html(),
-                                {displayModes: modes, editorURL: openEditorURL}));
+                                {setname: this.problems.setName, displayModes: modes, editorURL: openEditorURL}));
             this.updatePaginator();
             this.gotoPage(0);
 

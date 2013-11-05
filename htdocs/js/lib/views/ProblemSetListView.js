@@ -36,14 +36,18 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
                 self.$("#probSetList").append((new ProblemSetView({model: _model, template: self.setViewTemplate,
                         numUsers: self.users.length, problemSets: self.options.problemSets})).render().el);
             });
-            var _width = self.$el.width() - 70; 
-            self.$(".set-name").truncate({width: _width}); //if the Problem Set Names are too long.  
+            
+            self.$(".set-name").truncate({width: "150"}); //if the Problem Set Names are too long.  
            
+
+           // move the HTML below to the template file.
             if (this.problemSets.size() === 0 ) {
                 $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
             }
 
-            //self.$(".prob-set-container").height($(window).height()*.80);
+            console.log($(window).height())
+            $("#problem-set-list-container").height($(window).height()-200);
+            this.$(".prob-set-container").height($(window).height()-260);
         }
     });
 
@@ -51,7 +55,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
         tagName: "li",
         initialize: function() {
             _.bindAll(this,"render","showProblemSet");
-            this.$el.addClass("problem-set").addClass("btn").addClass("btn-small");
+            this.$el.addClass("problem-set").addClass("btn btn-default btn-sm");
             this.template = this.options.template; 
             this.numUsers = this.options.numUsers;
         },

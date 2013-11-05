@@ -7,7 +7,7 @@
 *
 */
 
-define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,LibraryTree){
+define(['Backbone', 'underscore','models/LibraryTree','jquery-selectboxit'], function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
     	initialize: function (){
@@ -34,6 +34,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                     this.changeLibrary("1",this.section);
                     this.$(".library-level-2").removeClass("hidden").val(this.section);}
             }
+            //this.$("select.library-selector").selectBoxIt();
             return this; 
     	},
         events: {  "change .library-selector": "changeLibrary",

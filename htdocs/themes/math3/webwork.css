@@ -1,7 +1,6 @@
-.Body{
-    padding: 10px;
-    padding-top: 50px;
-    padding-bottom: 50px;
+body {  /* needed for the navigation bars top and bottom*/
+    padding-top: 70px;
+    padding-bottom: 35px;
 }
 
 #navigation-menu { width: 250px;}
@@ -46,5 +45,12 @@
 	background-color: white;
 	}
 
-#footer .navbar-text {line-height: 20px}
-#footer .navbar-inner {min-height: 20px;}
+#footer {min-height: 20px;}
+#footer .navbar-text {margin: 0; line-height: 20px}
+#footer .container {min-height: 20px;}
+
+
+.navbar-other {background-color: #f8f8f8;
+border-top: solid 1px rgb(220, 220, 220);}
+
+#short-message {padding: 10px;}

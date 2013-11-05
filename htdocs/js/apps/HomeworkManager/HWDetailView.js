@@ -7,15 +7,9 @@
  **/
 
 
-define(['Backbone', 
-    'underscore',
-    'views/EditableCell',
-    'views/ProblemSetView',
-    'models/ProblemList',
-    'models/ProblemSet',
-    'views/UserListView',
-    'models/UserSetList', 'config','bootstrap'], 
-    function(Backbone, _,EditableCell,ProblemSetView,ProblemList,ProblemSet,UserListView,
+define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
+    'models/ProblemSet','views/UserListView','models/UserSetList', 'config','bootstrap'], 
+    function(Backbone, _,ProblemSetView,ProblemList,ProblemSet,UserListView,
         UserSetList, config){
 	var HWDetailView = Backbone.View.extend({
         className: "set-detail-view",
@@ -38,10 +32,7 @@ define(['Backbone',
             };
 
             this.headerInfo={ template: "#setDetails-header", 
-                options: function () { 
-                    return self.problemSet ? self.problemSet.attributes :  {set_id: ""};
-                }
-            };
+                events: {"shown a[data-toggle='tab']": function(evt) { self.changeView(evt);} }};    
 
             
             this.views.problemSetView.on("update-num-problems",this.updateNumberOfProblems);
@@ -106,7 +97,8 @@ define(['Backbone',
             this.model = _set; 
             return this;
         },
-        bindings: { ".open-date" : "open_date",
+        bindings: { ".set-name" : "set_id",
+                    ".open-date" : "open_date",
                     ".due-date" : "due_date",
                     ".answer-date": "answer_date",
                     ".prob-set-visible": {observe: "visible", selectOptions: {

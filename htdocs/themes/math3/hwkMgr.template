@@ -23,7 +23,7 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap-2/docs/assets/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap/dist/css/bootstrap.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
@@ -31,34 +31,43 @@
 
 <!--<body bgcolor="white" onload="if (typeof(initializeWWquestion) == 'function') {initializeWWquestion()}">-->
 <body>
-
-    <div class="navbar navbar-fixed-top">
-        <div class="navbar-inner">
-         	<div class="container-fluid">
-         		<div class="btn-group dropdown span1" id="webwork_navigation" style="display: none">
-	                  <a href="#webwork_navigation" class="dropdown-toggle btn" data-toggle="dropdown">Menu <b class="caret"></b>
-	                  	</a>
-                    <!--#if can="links"-->
-                        <!--#links-->
-                    <!--#endif-->
-                  </div>
-
-				<div class="span3">
-            		<a href="#" class="brand"> <!--#name--><a>
-				</div> 
-				<div class="span3"><!--#loginstatus--></div>
-	    		<div class="span2 btn-group">
-	    			<button class="btn" id="help-link">Help</button>
-	    			<a class='btn btn-warning' target="_blank" href="https://github.com/openwebwork/webwork2/issues/new">Bugs!</a>
-	    			<button class='btn' href="#" id="msg-toggle"><i class="fa fa-comment-o fa-lg"></i></button>
-	    			
+	<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+		<!-- Brand and toggle get grouped for better mobile display -->
+	  <div class="navbar-header">
+	    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+	      <span class="sr-only">Toggle navigation</span>
+	      <span class="icon-bar"></span>
+	      <span class="icon-bar"></span>
+	      <span class="icon-bar"></span>
+	    </button>
+	    <a class="navbar-brand" href="#"><!--#name--></a>
+	  </div>
+	  <!-- Collect the nav links, forms, and other content for toggling -->
+	  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    	<ul class="nav navbar-nav">
+    		<li class="dropdown">
+     		<div class="btn-group dropdown col-md-1" id="webwork_navigation" style="display: none">
+		      <a href="#webwork_navigation" class="dropdown-toggle btn btn-default navbar-btn" data-toggle="dropdown">Menu <b class="caret"></b></a>
+            <!--#if can="links"-->
+                <!--#links-->
+            <!--#endif-->
+        </div>
+        </li>
+    		<li>
+    			<div class="btn-group">
+	    			<button class="btn btn-default navbar-btn" id="help-link">Help</button>
+	    			<a class="btn btn-warning navbar-btn" target="_blank" href="https://github.com/openwebwork/webwork2/issues/new">Bugs!</a>
+	    			<button class='btn btn-default navbar-btn' href="#" id="msg-toggle"><i class="fa fa-comment-o fa-lg"></i></button>
     			</div>
-    			<div class="navbar-text span3 alert alert-success well"id="short-message"></div>
-    			
-				            
-          	</div>
-        </div><!-- /navbar-inner -->
+    		</li>
+    		<li>
+    			<p class="nav-text" id="short-message">
+    			</p>
+    		</li>  			            
+    	</ul>
+    	<p class="navbar-text pull-right"><!--#loginstatus--></p>
     </div>
+  </nav>
 		
 	    <!--#if can="body"-->
 				<!--#if warnings="1"-->
@@ -86,12 +95,11 @@
 					<!--#info-->
 		    	<!--#endif-->
 	
+	
+	<div class="navbar-fixed-bottom navbar navbar-other" id="footer">
 	<div class="container">	
-	<div class="navbar-fixed-bottom navbar" id="footer">
-	<div class="navbar-inner">
 		<!--#footer-->
 		</div>
-	</div>
 	</div>
 	<!--#if can="output_JS"-->
 <!--#output_JS-->

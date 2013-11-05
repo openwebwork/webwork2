@@ -25,6 +25,8 @@ var require = {
         "models":               "/webwork2_files/js/lib/models",
         "apps":                 "/webwork2_files/js/apps",
         "config":               "/webwork2_files/js/apps/config",
+       // "bootstrap-select":      "/webwork2_files/js/components/bootstrap-select/bootstrap-select"
+        "jquery-selectboxit":   "/webwork2_files/js/components/jquery-selectboxit/src/javascripts/jquery.selectBoxIt"
     },
     //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 10,
@@ -45,7 +47,9 @@ var require = {
         //'eventie' : {exports :'Eventie'},
         //'eventEmitter': {exports: 'EventEmitter'},
         //'jquery-tablesorter': ['jquery'],
-        'imagesloaded': ['jquery']
+        'imagesloaded': ['jquery'],
+        //'bootstrap-select': ['jquery']
+        'jquery-selectboxit': ['jquery']
         
     }
 };

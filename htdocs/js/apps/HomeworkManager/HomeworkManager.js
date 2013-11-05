@@ -18,10 +18,10 @@ var HomeworkEditorView = WebPage.extend({
 	    _.bindAll(this, 'render','updateCalendar','setProblemSetUI', 'setMessages',"showHWdetails");  // include all functions that need the this object
 	    var self = this;
 
-        (this.headerView = new HeaderView({el: $("#page-header")})).setTemplate({template: "#calendar-header"});
+        (this.headerView = new HeaderView({el: $("#page-header")}));
         this.render();
         this.dispatcher = _.clone(Backbone.Events);
-
+        
         config.settings = new Settings();
         if (module.config().settings){
             config.settings.parseSettings(module.config().settings);
@@ -52,7 +52,7 @@ var HomeworkEditorView = WebPage.extend({
                     problemSets: this.problemSets}),
             libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), headerView: this.headerView,
                 errorPane: this.errorPane, problemSets: this.problemSets}),
-            settings      :  new SettingsView({parent: this, el: $("#settings")})
+            settings      :  new SettingsView({headerView: this.headerView, el: $("#settings")})
         };
 
         this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
@@ -88,20 +88,23 @@ var HomeworkEditorView = WebPage.extend({
         var self = this; 
         this.problemSets.on("add", function (_set){
             _set.save();
-            _set.changingAttributes={add: "Set Added"};
+            _set.changingAttributes={add: ""};
         });
 
         this.problemSets.on("remove", function(_set){
-            if(_set.destroy()){
-                self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " removed.",
-                    text: "Problem Set: " + _set.get("set_id") + " has been removed from the course."});
-
-            // update the assignmentDateList to delete the proper assignments
+            _set.destroy({success: function() {
+                self.messagePane.addMessage({type:"success",
+                    short: config.msgTemplate({type:"set_removed",opts:{setname: _set.get("set_id")}}),
+                    text: config.msgTemplate({type: "set_removed_details",opts:{setname: _set.get("set_id")}})});
+                       
+               // update the assignmentDateList to delete the proper assignments
 
                 self.assignmentDateList.remove(self.assignmentDateList.filter(function(assign) { 
                     return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
-            }
+
+            }});
         });
+        
 
         this.problemSets.on("change:due_date change:open_date change:answer_date",function(_set){
             var assignments = self.assignmentDateList.filter(function(assign) { 
@@ -111,23 +114,13 @@ var HomeworkEditorView = WebPage.extend({
             });
         });
 
-        this.problemSets.on("change_assigned_users", function(_set){
-            console.log("the set "+ _set.get("set_id")+ " has changed.");
-        });
-
         this.problemSets.each(function(_set) {
             _set.get("problems").on("change:value",function(prob){
+                // not sure this is actually working.
                 prob.changingAttributes=_.pick(prob._previousAttributes,_.keys(prob.changed));
-            });
-            _set. get("problems").on("sync",function(prob){
-                _(_.keys(prob.changingAttributes)).each(function(key){
-                    self.messagePane.addMessage({type: "success", short: "Set " + prob.collection.setName + " saved.",
-                        text: "Problem Set " + prob.collection.setName + " and problem " + prob.get("problem_id") 
-                            + " has changed. The value of property " + key 
-                            + " has changed from " + prob.changingAttributes[key] + " to " 
-                            + prob.get(key) });
-                });
-            });
+            }).on("add",function(prob){
+                _set.changingAttributes={"problem_added": ""};
+            })
         });
 
         this.problemSets.on("change",function(_set){
@@ -139,16 +132,24 @@ var HomeworkEditorView = WebPage.extend({
             _(_.keys(_set.changingAttributes||{})).each(function(key){
                 switch(key){
                     case "problems":
-                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                        self.messagePane.addMessage({type: "success", 
+                            short: config.msgTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
                             text: attr.msg});
                         break;
+                    case "problem_added": 
+                        self.messagePane.addMessage({type: "success", 
+                            short: config.msgTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
+                            text: config.msgTemplate({type:"problem_added_details",opts:{setname: _set.get("set_id")}})});
+                        break;
                     case "assigned_users":
-                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
-                            text: "The assigned users for set " + _set.get("set_id") + " was updated."});
+                        self.messagePane.addMessage({type: "success",
+                            short: config.msgTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}), 
+                            text: config.msgTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})}); 
                         break;
                     case "add":
-                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " added.",
-                        text: "The set " + _set.get("set_id") + " was added to the course."});
+                        self.messagePane.addMessage({type: "success", 
+                            short: config.msgTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
+                            text: config.msgTemplate({type: "set_added_details",opts:{setname: _set.get("set_id")}})});
                         self.assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
                             date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
                         self.assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
@@ -156,14 +157,15 @@ var HomeworkEditorView = WebPage.extend({
                         self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
                             date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
 
-                        break;
+                        break;    
                     default:
                         var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
                                      : _set.changingAttributes[key];
                         var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
-                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
-                            text: "The value of " + key + " in problem set " 
-                            + _set.get("set_id") + " has changed from " + _old + " to " + _new});
+                        self.messagePane.addMessage({type: "success", 
+                            short: config.msgTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
+                            text: config.msgTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),key: key,
+                                oldValue: _old, newValue: _new}})});
                 }
             });
             self.updateCalendar();
@@ -182,8 +184,8 @@ var HomeworkEditorView = WebPage.extend({
         this.problemSets.bind('validated:invalid', function(model, errors) {
             var uniqueErrors = _.unique(_.values(errors));
             _(uniqueErrors).each(function(error){
-                self.messagePane.addMessage({type: "error", short: "Error saving problem set " + model.get("set_id"),
-                    text: error});
+                self.messagePane.addMessage({type: "error", text: error,
+                        short: config.msgTemplate({type:"set_error",opts:{setname: model.get("set_id")}})});
 
             }); 
             // change the attributes back to before.
@@ -198,6 +200,12 @@ var HomeworkEditorView = WebPage.extend({
 
         config.settings.on("sync",function(setting){
             _(_.keys(setting.changingAttributes)).each(function(key){
+                    self.messagePane.addMessage({type: "success",
+                        short: config.msgTemplate({type:"setting_saved",opts:{varname:setting.get("var")}}), 
+                        text: config.msgTemplate({type:"setting_saved_details"
+                                ,opts:{varname:setting.get("var"), oldValue: setting.changingAttributes[key],
+                                    newValue: setting.get("value") }})}); 
+ 
                     self.messagePane.addMessage({type: "success", short: "Setting " + setting.get("var") + " saved.",
                         text: "The setting " + setting.get("var") + " has changed from " +
                                 setting.changingAttributes[key] + " to " + setting.get("value") + "."});
@@ -213,11 +221,17 @@ var HomeworkEditorView = WebPage.extend({
             "click #show-hide-sets-button": "showHideSets"},
     showHideSets: function () {
         if ($("#problem-set-list-container").css("display")=="none"){
+            $("#main-view").removeClass("col-md-12").addClass("col-md-9");
             $("#problem-set-list-container").show("slide",{direction: "up"});
             $("#show-hide-sets-button i").removeClass("fa fa-chevron-down").addClass("fa fa-chevron-up");            
+            
+            $("#show-hide-sets-button span").text(config.msgTemplate({type: "hide_prob_set"}))
         } else {
+            $("#main-view").removeClass("col-md-9").addClass("col-md-12");
             $("#problem-set-list-container").hide("slide", { direction: "up" });
             $("#show-hide-sets-button i").removeClass("fa fa-chevron-up").addClass("fa fa-chevron-down");            
+            
+            $("#show-hide-sets-button span").text(config.msgTemplate({type: "show_prob_set"}))
         }
 
     },
@@ -225,18 +239,18 @@ var HomeworkEditorView = WebPage.extend({
         if (this.objectDragging) return;
         this.changeView(null,"setDetails", "Set Details");
         this.views.setDetails.changeHWSet(setName); 
-        this.headerView.setTemplate(this.views.setDetails.headerInfo).render();
+        this.headerView.setOptions(this.views.setDetails.headerInfo).render();
 
     },
     changeView: function (evt,link,header){
-        var linkname = (link)?link:$(evt.target).data("link");
+        var linkname = (link)?link:$(evt.target).data("link")
+            , viewName = $("#hw-manager-menu .dropdown-menu li a[data-link='"+linkname +"']").data("name");
         $(".view-pane").removeClass("active");
         $("#"+linkname).addClass("active");
-        $("#viewHeader").html(((header)?header:$(evt.target).data("name"))+"<i class='fa fa-chevron-down'></i>")
-            .data("linkname",linkname);
+        this.headerView.setOptions(this.views[linkname].headerInfo).render();
         this.views[linkname].render();
-        this.headerView.setTemplate(this.views[linkname].headerInfo).render();
         this.updateProblemSetList(linkname);
+        $("#hw-manager-menu span").html(viewName);
     },
     updateProblemSetList: function(viewname) {
         switch(viewname){            // set up the problem sets to be draggable or not
@@ -360,31 +374,30 @@ var HomeworkEditorView = WebPage.extend({
 });
 
 var SettingsView = Backbone.View.extend({
-    headerInfo: {template: "#settings-header"},
+    
     initialize: function () {
+        var self = this;
         _.bindAll(this,'render');
 
-
-        this.settings = config.settings.filter(function (setting) {return setting.get("category")==='PG - Problem Display/Answer Checking'});
-        this.constructor.__super__.initialize.apply(this,{settings: this.settings});
+        this.categories = config.settings.chain().pluck("attributes").pluck("category")
+            .unique().difference("timezone").value();
+        this.headerInfo = {template: "#settings-header",options: {categories: this.categories},
+            events: {"shown a[data-toggle='tab']": function(evt) { self.changeSettingTab(evt);} }};
      }, 
      render: function () {
         // get all of the categories except for timezone (include it somewhere?)
-        var categories = config.settings.chain().pluck("attributes").pluck("category")
-            .unique().difference("timezone").value();
-        $("#settings").html(_.template($("#settings-template").html(),{categories: categories}));
-        this.constructor.__super__.render.apply(this);
+        
+        $("#settings").html(_.template($("#settings-template").html(),{categories: this.categories}));
 
         // set up the general settings tab
 
         $("#setting-tab0").addClass("active");  // show the first settings pane.
-        $("a[href='#setting-tab0']").parent().addClass("active");
+        this.options.headerView.$("a[href='#setting-tab0']").parent().addClass("active");
 
-        var settings = config.settings.where({category: categories[0]});
+        var settings = config.settings.where({category: this.categories[0]});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
 
      },
-     events: {"shown a[data-toggle='tab']": "changeSettingTab"},
      changeSettingTab: function(evt){
         var settings = config.settings.where({category: $(evt.target).text()});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);

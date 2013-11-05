@@ -29,14 +29,14 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             modes.push("None");
             this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
-            this.$(".library-tree-container").html("Loading...<i class='fa fa-spinner fa-spin'></i>");
+            this.$(".library-tree-container").html($("#library-loading-template"));
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
             if(this.textbooks){  // build the textbook tree
                 this.buildTree();
             } else {
                 this.fetchTextbooks();
             }
-            if (this.libraryProblemsView.problems){
+            if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size()>0){
                 this.libraryProblemsView.renderProblems();
             }
     	},
@@ -45,10 +45,12 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
                                 ,{textbooks: this.textbooks}));
         },
         showResults: function (data) {
-            //this.$(".search-button").button("reset");
+            this.$(".load-problems-button").button("reset");
             this.problemList = new ProblemList(data);
             this.$(".num-problems").text(this.problemList.length + " problems");
-            this.showProblems();
+            this.libraryProblemsView.set({problems: this.problemList, type:this.options.libBrowserType});
+            this.libraryProblemsView.updatePaginator();
+            this.libraryProblemsView.gotoPage(0);
         },
         fetchTextbooks: function () {
             var self = this;
@@ -85,6 +87,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
                     + " problems available");  
         },
         loadProblems: function () {
+            this.$(".load-problems-button").button("loading");
             var textbookID = this.$(".textbook-title option:selected").data("id");
             var chapterID = this.$(".textbook-chapter option:selected").data("id");
             var sectionID = this.$(".textbook-section option:selected").data("id");

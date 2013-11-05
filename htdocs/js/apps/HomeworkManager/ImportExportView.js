@@ -158,10 +158,10 @@ var ProblemSetRowView = Backbone.View.extend({
     },
     setNameValid: function () {
     	if(self.options.problemSets.findWhere({set_id: this.model.get("set_id")})){
-    		this.$(".set-name").addClass("alert alert-error");
+    		this.$(".set-name").addClass("alert alert-danger");
     		return false;
     	} else {
-    		this.$(".set-name").removeClass("alert alert-error");
+    		this.$(".set-name").removeClass("alert alert-danger");
     		return true;
     	}
     }

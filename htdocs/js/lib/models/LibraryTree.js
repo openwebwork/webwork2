@@ -15,7 +15,6 @@ define(['Backbone','config'], function(Backbone,config){
             return config.urlPrefix + "Library/" + this.type;
         },
         parse: function(response){
-        	config.checkForError(response);
         	var obj = {tree: response};
         	return obj;
         }

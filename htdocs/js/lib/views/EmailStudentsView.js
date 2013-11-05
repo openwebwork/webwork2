@@ -15,7 +15,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
           });
     
     
-          this.$el.dialog({autoOpen: false, modal: true, title: "Password Changes",
+          this.$el.dialog({autoOpen: false, modal: true, title: config.msgTemplate({type: "password_changes"}),
                           width: (0.75*window.innerWidth), height: (0.75*window.innerHeight),
                           buttons: {"Send Email": function () {self.sendEmail(); self.$el.dialog("close")},
                                     "Cancel": function () {self.$el.dialog("close");}}

@@ -30,7 +30,7 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
         //events: {"click .add-problem-set-button": "addProblemSet"},
         render: function () {
             this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
-                                paginator: {page_size: 5, button_class: "btn", row_class: "btn-group"}});
+                                paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.html(this.problemSetTable.el);
 

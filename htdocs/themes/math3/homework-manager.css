@@ -1,4 +1,5 @@
 @import "webwork.css";
+@import "/webwork2_files/js/components/jquery-selectboxit/src/stylesheets/jquery.selectBoxIt.css";
 
 #hw-set-list-container {margin: 20px 15px;  padding:10px;}
 
@@ -7,13 +8,16 @@ a#view-header i {margin-left:1ex;}
 
 /* Calendar related styles: */
 
-#calendar-table {border: 1px solid black; border-collapse: collapse; background: lightgray;}
+.calendar-view {height: 100%; overflow: auto;}
+
+#calendar-table {background: lightgray; min-width: 90%;}
+
 #calendar-table td {border: 1px solid black; width: 13%;  vertical-align: top;}
 
-.calendar-day {z-index: 5;}
+.calendar-day {z-index: 5; height: 100px;}
 
-.month-view {height: 100px;}
-.week-view {height: 200px;}
+.month-view {min-height: 100px;}
+.week-view {min-height: 200px;}
 
 .this-month {background-color: lightyellow}
 .today {background-color: pink}
@@ -69,13 +73,15 @@ a#view-header i {margin-left:1ex;}
 .assign-filled {height: 30px; background-color: rgb(250,100,100)}
 
 
-/*.list {list-style: none;} */
-
-.lib-problem-viewer { overflow: scroll;}
-
+.problem-paginator {text-align: center;}
+.problem-paginator .pagination {margin-top: 5px;}
 
 
-.scrollable {overflow: scroll;}
+/*.lib-problem-viewer { overflow: scroll;}*/
+
+
+
+.scrollable {height: 100%; overflow: scroll;}
 
 .num-problems {margin-left: 10px;}
 
@@ -84,14 +90,16 @@ a#view-header i {margin-left:1ex;}
 
 .active {display: block;}
 
-.no-bullets {list-style-type: none; margin: 0;}
+.no-bullets {list-style-type: none; padding-left: 0}
+
+h3.setname {margin-top:5px;}
 
 label.checklist {display: inline; margin-left: 8px;}
 
 .hw-assigned {color: blue;}
 
-#probSetList {margin:0}
-.prob-set-container {overflow-y: scroll; width: 100%;}
+#probSetList {margin:0;padding:0px; height:100%; overflow-y: auto;}
+/*.prob-set-container {overflow-y: scroll; width: 100%;}*/
 .prob-value {width: 20px;}
 
 .loading {background-color: orange;}
@@ -115,7 +123,9 @@ border-radius: 5px;}
 	border: 1px dashed black; background: lightgray;
 }
 
-#main-row {position: absolute; top: 85px; bottom: 25px;}
+/* #main-row {position: absolute; top: 105px; bottom: 25px;}*/
 
-#main-view {height: 100%; overflow: scroll;}
+#main-view-container {position: relative;}
+
+/*#main-view {position: absolute; height: 100%; overflow: scroll;}*/
 

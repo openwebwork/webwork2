@@ -9,11 +9,11 @@ define(['Backbone', 'views/ProblemListView'],
                 this.options.type = "problem_set";
                 this.constructor.__super__.initialize.apply(this);
     		},
-            // setProblemSet: function(_set){
-            //     this.problemSet = _set;
-            // }
+            render: function () {
+              this.constructor.__super__.render.apply(this);  
+              this.$(".prob-list-container").height($(window).height()-250);
+            }
     	});
-
 
     	return ProblemSetView;
 });
