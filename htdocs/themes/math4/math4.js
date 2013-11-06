@@ -73,9 +73,6 @@ $(function(){
 	    
     });
     
-    // Past answers formatting
-    $('#past-answer-table').addClass('table');
-    
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
     $('#grades_table a').addClass('btn btn-primary');
@@ -83,6 +80,7 @@ $(function(){
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small btn-info');
+    $('#problem-grader-form td').find('p:last').removeClass('essay-answer graded-answer');
 
     //Instructor Tools formatting
     $('.ButtonRow .btn').addClass('btn-mini');
@@ -170,9 +168,18 @@ $(function(){
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
 
+    //past answer table
+    $('.past-answer-table').addClass("table table-striped");
+
      //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
 
 })
+
+addOnLoadEvent(function () {
+
+        $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
+
+});
 

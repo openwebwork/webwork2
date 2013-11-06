@@ -20,7 +20,7 @@ package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
 use base qw(WeBWorK::ContentGenerator);
 use WeBWorK::Utils qw(sortByName ); 
 use WeBWorK::PG;
-
+use HTML::Entities;
 =head1 NAME
 
 =cut
@@ -63,7 +63,6 @@ sub head {
 
 #	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/bootstrap/css/bootstrap.popover.css\">";
 
-	print CGI::start_script({type=>"text/javascript", src=>$site_url.'/mathjax/MathJax.js?config=TeX-AMS_HTML-full'}), CGI::end_script();
 	my $MathJax = $ce->{webworkURLs}->{MathJax};
 	
 	print CGI::start_script({type=>"text/javascript", src=>$MathJax}), CGI::end_script();
@@ -200,19 +199,19 @@ sub body {
 	    $set,
 	    $problem,
 	    $set->psvn, # FIXME: this field should be removed
-		$formFields,
-		{ # translation options
-			displayMode     => $displayMode,
-			showHints       => 0,
-			showSolutions   => 0,
-			refreshMath2img => 0,
-			processAnswers  => 1,
-			permissionLevel => $db->getPermissionLevel($userID)->permission,
-			effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
-		},
-	);
-
-
+	    $formFields,
+	    { # translation options
+		displayMode     => $displayMode,
+		showHints       => 0,
+		showSolutions   => 0,
+		refreshMath2img => 0,
+		processAnswers  => 1,
+		permissionLevel => $db->getPermissionLevel($userID)->permission,
+		effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
+	    },
+	    );
+	
+	
 	# check to see what type the answers are.  right now it only checks for essay but could do more
 	my %answerHash = %{ $pg->{answers} };
 	my @answerTypes;
@@ -226,9 +225,9 @@ sub body {
 	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), id=>"problem-grader-form", name=>"problem-grader-form" });
 	 
 	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All',
-				   onClick => "for (i in document.classlist.elements)  { 
-	                       if (document.classlist.elements[i].className == 'mark_correct') { 
-	                           document.classlist.elements[i].checked = true
+				   onClick => "for (i in document.forms['problem-grader-form'].elements)  { 
+	                       if (document.forms['problem-grader-form'].elements[i].className == 'mark_correct') { 
+	                           document.forms['problem-grader-form'].elements[i].checked = true
 	                       }
 	                    }" });
 
@@ -285,49 +284,26 @@ sub body {
 		    # if the answwer Type is undefined then just print the result and hope for the best. 
 
 		    if (!defined($answerTypes[$i])) {
-			$userAnswerString .= CGI::p($answer);
+			$userAnswerString .= CGI::p(HTML::Entities::encode_entities($answer));
 		    
 		    } elsif ($answerTypes[$i] eq 'essay') {
 			
-			#if its an essay type answer then set up a silly problem to render the text 
-			# provided by the student.  There *has* to be a better way to do this.  
-
-			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"contextTypeset.pl\");\n Context(\"Typeset\");\n BEGIN_TEXT\n";
-			# change newlines into BR's
-			$answer =~ s/\n/\$BR /g;
-			$source .= $answer . "\nEND_TEXT\n ENDDOCUMENT();";
-			my $pg = WeBWorK::PG->new(
-			    $ce,
-			    $user,
-			    $key,
-			    $set,
-			    $problem,
-			    $set->psvn, # FIXME: this field should be removed
-			    $formFields,
-			    { # translation options
-				displayMode     => $displayMode,
-				showHints       => 0,
-				showSolutions   => 0,
-				refreshMath2img => 1,
-				processAnswers  => 0,
-				permissionLevel => 0,
-				effectivePermissionLevel => 0,
-				r_source => \$source,
-			    },
-			    );
+			$answer = HTML::Entities::encode_entities($answer);
+			$answer =~ s/\n/<br>/g;
+			$userAnswerString .= CGI::p({class=>'essay-answer'},
+						    $answer);
 			
+		    } elsif ($answerTypes[$i] eq 'Value (Formula)') {
+			#if its a formula then render it and color it
+				$userAnswerString .= CGI::p(CGI::div({class => 'graded-answer', style => $scores[$i] ? 
+				       "color:#006600": "color:#660000" }, 
+				'`'.HTML::Entities::encode_entities($answer).'`'));
 
-			my $htmlout = $pg->{body_text};
-
-			$userAnswerString .= CGI::p($htmlout);
-			
-		    } else {
-			# if itsn ot an essay then don't render it but color it based off if 
-			# webwork thinks its right or not
-			$userAnswerString .= CGI::p(CGI::div({style => $scores[$i] ? 
-				       "color:#006600": "color:#660000" }, $answer));
+		    }else {
+			# if it isnt an essay then don't render it but color it 
+			$userAnswerString .= CGI::p(CGI::div({class => 'graded-answer', style => $scores[$i] ? 
+				       "color:#006600": "color:#660000" }, 
+							     HTML::Entities::encode_entities($answer)));
 		    }
 		}
 		
@@ -405,6 +381,14 @@ sub body {
 
 	print CGI::end_form();
 	
+	print <<EOS;
+	    <script type="text/javascript">
+	        MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'graded-answer']);
+        	MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'essay-answer']);
+	    </script>
+EOS
+	
+
 	return "";
 }
 

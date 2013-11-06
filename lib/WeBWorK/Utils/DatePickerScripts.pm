@@ -65,6 +65,8 @@ var update = function() {
 	answer_rule.addClass("changed");
 }
 open_rule.datetimepicker({
+              showOn: "button",
+      buttonText: "<i class='icon-calendar'></i>",
 	ampm: true,
 	timeFormat: 'hh:mmtt',
 	timeSuffix: ' $open_timezone',
@@ -87,6 +89,8 @@ open_rule.datetimepicker({
     }*/
  });
 due_rule.datetimepicker({
+              showOn: "button",
+      buttonText: "<i class='icon-calendar'></i>",
 	ampm: true,
 	timeFormat: 'hh:mmtt',
 	timeSuffix: ' $due_timezone',
@@ -108,6 +112,8 @@ due_rule.datetimepicker({
 });
 
 answer_rule.datetimepicker({
+              showOn: "button",
+      buttonText: "<i class='icon-calendar'></i>",
 	ampm: true,
 	timeFormat: 'hh:mmtt',
 	timeSuffix: ' $answer_timezone',
