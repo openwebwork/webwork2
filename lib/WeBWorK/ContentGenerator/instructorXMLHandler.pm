@@ -305,7 +305,8 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$self->{output}->{problem_out} = $xmlrpc_client->xmlrpcCall('renderProblem', $input);
-			
+		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
+		# FIXME  -- figure out why commmenting out the line above means that $envir->{fileName} is not defined. 
 		#$self->{output}->{text} = "Rendered problem";
 	} else {	
 		$self->{output} = $xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
@@ -387,7 +388,7 @@ sub environment {
 		dueDate=> '4014438528',
 		externalGif2EpsPath=>'not defined',
 		externalPng2EpsPath=>'not defined',
-		fileName=>'the XMLHandlerenvironment->{fileName} should be set',
+		fileName=>'the XMLHandler environment->{fileName} should be set',
 		formattedAnswerDate=>'6/19/00',
 		formattedDueDate=>'6/19/00',
 		formattedOpenDate=>'6/19/00',
