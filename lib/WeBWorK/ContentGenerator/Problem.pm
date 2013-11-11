@@ -607,9 +607,11 @@ sub pre_header_initialize {
 	my %want = (
 		showOldAnswers     => (defined($r->param("showOldAnswers")) and $r->param("showOldAnswers") ne '') ? $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers},
 		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
-		showHints          => $r->param("showHints")          || $ce->{pg}->{options}->{showHints},
-		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
-                useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
+		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
+		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
+		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
+							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
+        useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -624,7 +626,7 @@ sub pre_header_initialize {
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
 		getSubmitButton    => 0,
-	        useMathView        => 0,
+	    useMathView        => 0,
 	);
 	 
 	# does the user have permission to use certain options?
