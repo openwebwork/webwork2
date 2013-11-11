@@ -15,15 +15,15 @@ define(['Backbone', 'underscore', 'moment','views/CalendarView','config'],
                     "click .view-week": "showWeekView",
                     "click .view-month": "showMonthView"}
         },
-    	initialize: function () {
+    	initialize: function (options) {
             var self = this;
-    		this.constructor.__super__.initialize.apply(this, {el: this.el});
+    		this.constructor.__super__.initialize.apply(this, [_.extend({el: this.el},options)]);
     		_.bindAll(this,"render","renderDay");
 
-    		this.assignmentDates = this.options.assignmentDates;
-            this.users = this.options.users; 
+    		this.assignmentDates = options.assignmentDates;
+            this.users = options.users; 
 
-    		this.reducedScoringMinutes = this.options.reducedScoringMinutes;
+    		this.reducedScoringMinutes = options.reducedScoringMinutes;
             this.headerInfo = {template: "#calendar-header", events: 
                 { "click .previous-week": function () { self.viewPreviousWeek();},
                     "click .next-week": function () { self.viewNextWeek();},

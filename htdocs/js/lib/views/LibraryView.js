@@ -9,15 +9,16 @@ define(['Backbone', 'underscore','config', 'views/LibraryProblemsView','models/P
 function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
     var LibraryView = Backbone.View.extend({
         className: "lib-browser",
-    	initialize: function (){
+    	initialize: function (options){
     		var self = this;
             _.bindAll(this,'addProblem','loadProblems','showProblems');
-            this.allProblemSets = this.options.problemSets;
-            this.errorPane = this.options.errorPane;
+            this.allProblemSets = options.problemSets;
+            this.errorPane = options.errorPane;
+            this.libBrowserType = options.libBrowserType;
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this,
                  allProblemSets: this.allProblemSets});
-            this.libraryTreeView = new LibraryTreeView({type: this.options.libBrowserType, 
-                                        allProblemSets: this.options.problemSets});
+            this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType, 
+                                        allProblemSets: options.problemSets});
             this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
 
             
@@ -53,7 +54,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
         },
         showProblems: function () {
             this.$(".load-library-button").button("reset");  
-            this.libraryProblemsView.set({problems: this.problemList, type:this.options.libBrowserType});
+            this.libraryProblemsView.set({problems: this.problemList, type:this.libBrowserType});
             this.libraryProblemsView.updatePaginator();
             this.libraryProblemsView.gotoPage(0);
         },
@@ -63,7 +64,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             var self = this;
 			this.problemList = new ProblemList();
             this.problemList.path=_path;
-            this.problemList.type = this.options.libBrowserType;
+            this.problemList.type = this.libBrowserType;
             this.problemList.fetch({success: this.showProblems});
     	}
     });

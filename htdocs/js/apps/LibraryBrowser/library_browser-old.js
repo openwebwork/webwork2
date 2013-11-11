@@ -69,8 +69,8 @@ $(function () {
         //on the views model.
         initialize:function () {
             this.model.on('change:data', this.render, this);
-            if(!this.options.remove_display){
-                this.options.remove_display = false;
+            if(!options.remove_display){
+                options.remove_display = false;
             }
             this.model.on('destroy', this.remove, this);
         },
@@ -226,8 +226,8 @@ $(function () {
             if(self.model.syncing){
                 self.$el.addClass("syncing white");
             }
-            this.$el.html(this.template({name: this.options.name}));
-            self.$("."+this.options.name+".list").on('change', function(event){self.lib_selected(event)});
+            this.$el.html(this.template({name: options.name}));
+            self.$("."+options.name+".list").on('change', function(event){self.lib_selected(event)});
             this.addAll();
             return this;
         },
@@ -237,7 +237,7 @@ $(function () {
             var option = document.createElement("option")
             option.value = lib.cid;
             option.innerHTML = lib.get('name');
-            this.$('.'+this.options.name + '.list').append(option);//what's the null?
+            this.$('.'+options.name + '.list').append(option);//what's the null?
         },
 
         addAll: function(){
@@ -246,7 +246,7 @@ $(function () {
                 //should show number of problems in the bar
                 this.model.each(function(lib){self.addOne(lib)});
             } else {
-                this.$('.'+this.options.name+".list").css("display", "none");
+                this.$('.'+options.name+".list").css("display", "none");
             }
         },
 
@@ -256,7 +256,7 @@ $(function () {
             var selectedLib = this.model.getByCid(event.target.value);
             if(selectedLib){
                 var view = new LibraryListView({model:selectedLib.get('children'), name: selectedLib.cid});
-                this.$('.'+this.options.name+".children").html(view.render().el);
+                this.$('.'+options.name+".children").html(view.render().el);
                 libToLoad = selectedLib;
             }
         }

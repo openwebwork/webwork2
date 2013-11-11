@@ -6,7 +6,7 @@ define(['Backbone', 'underscore'],
       className: "passwordDialog",
       initialize: function() {
          _.bindAll(this,"render");  return this;
-         this.users = this.options.users;
+         this.users = options.users;
       },
        render: function ()
        {

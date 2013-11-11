@@ -1,5 +1,5 @@
 /**
- *  This is the HWDetailView, which is part of the HomeworkManagmentView.  The view contains the interface to all of the
+ *  This is the ProblemSetDetailView.  The view contains the interface to all of the
  *  details of a given homework set including the changing of HWSet properties and assigning of users. 
  *
  *  One must pass a ProblemSet as a model to this.  
@@ -11,28 +11,28 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
     'models/ProblemSet','views/UserListView','models/UserSetList', 'config','bootstrap'], 
     function(Backbone, _,ProblemSetView,ProblemList,ProblemSet,UserListView,
         UserSetList, config){
-	var HWDetailView = Backbone.View.extend({
+	var ProblemSetDetailsView = Backbone.View.extend({
         className: "set-detail-view",
         tagName: "div",
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,'render','changeHWSet','updateNumberOfProblems','loadProblems');
             var self = this;
-            this.users = this.options.users; 
-            this.allProblemSets = this.options.problemSets;
+            this.users = options.users; 
+            this.allProblemSets = options.problemSets;
             this.problemSet = this.model;
-            this.headerView = this.options.headerView;
+            this.headerView = options.headerView;
 
             
             this.views = {
                 problemSetView : new ProblemSetView({problemSet: this.problemSet}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
-                propertiesView : new ProblemSetDetailView({users: this.users, problemSet: this.problemSet}),
+                propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
                 unassignUsersView: new UnassignUserView({users:this.users})
             };
 
             this.headerInfo={ template: "#setDetails-header", 
-                events: {"shown a[data-toggle='tab']": function(evt) { self.changeView(evt);} }};    
+                events: {"show.bs.tab a[data-toggle='tab']": function(evt) { self.changeView(evt);} }};    
 
             
             this.views.problemSetView.on("update-num-problems",this.updateNumberOfProblems);
@@ -57,7 +57,6 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
         {
             $("#problem-set-tabs a:first").tab("show");  // shows the properties tab
         	this.problemSet = this.allProblemSets.findWhere({set_id: setName});
-            this.views.problemSetView.setProblemSet(this.problemSet);
             this.$("#problem-set-name").html("<h2>Problem Set: "+setName+"</h2>");
             this.views.propertiesView.setProblemSet(this.problemSet).render();
             this.loadProblems();
@@ -65,8 +64,8 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
         loadProblems: function () {
             var self = this;
             if(this.problemSet.get("problems")){ // have the problems been fetched yet? 
-                console.log("Loading the problems for set " + this.problemSet.get("set_id"));
-                this.views.problemSetView.set({problems: this.problemSet.get("problems")});
+                this.views.problemSetView.set({problems: this.problemSet.get("problems"),
+                    problemSet: this.problemSet});
             } else {
                 this.problemSet.set("problems",ProblemList({setName: this.problemSet.get("set_id")}))
                     .get("problems").fetch({success: this.loadProblems});
@@ -77,10 +76,10 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
         }
     });
 
-    var ProblemSetDetailView = Backbone.View.extend({
-        initialize: function () {
+    var DetailsView = Backbone.View.extend({
+        initialize: function (options) {
             _.bindAll(this,'render','setProblemSet');
-            this.users = this.options.users;
+            this.users = options.users;
 
         },
         render: function () {
@@ -116,16 +115,16 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
     });
 
 	var AssignUsersView = Backbone.View.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,'render','selectAll','assignUsers','setProblemSet');
-            this.users = this.options.users;
+            this.users = options.users;
             this.userList = this.users.map(function(user){ 
                 return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
         },
 
 
         render: function() {
-            this.$el.html($("#assign-users-template").html());
+            this.$el.html(_.template($("#assign-users-template").html(),{setname: this.model.get("set_id")}));
             this.stickit();
             return this;
         },
@@ -166,16 +165,16 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
    
 
     var UnassignUserView = Backbone.View.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,'render','selectAll','unassignUsers','setProblemSet');
-            this.users = this.options.users;
+            this.users = options.users;
             this.userList = this.users.map(function(user){ 
                 return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
         },
 
 
         render: function() {
-            this.$el.html($("#unassign-users-template").html());
+            this.$el.html(_.template($("#unassign-users-template").html(),{setname: this.model.get("set_id")}))
             this.stickit();
             return this;
         },
@@ -210,19 +209,21 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
         unassignUsers: function(){
             var self = this;
             var currentUsers = _(this.originalAssignedUsers).difference(this.model.get("assigned_users"));
-            var confirmDelete = confirm("You have selected to unassign the following users: " 
-                    + this.model.get("assigned_users").join(", ")+". Click OK to confirm this.");
+            var confirmDelete = confirm(config.msgTemplate({type: "unassign_users", 
+                    opts: {users: this.model.get("assigned_users").join(", ")}}));
             if (confirmDelete){
                 this.problemSet.set("assigned_users",currentUsers);
+                this.problemSet.save();
             }
         }
     });
 
  var CustomizeUserAssignView = Backbone.View.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,'render','selectAll','saveChanges','setProblemSet');
-            this.users = this.options.users;
-            this.model = this.options.problemSet ? new ProblemSet(this.options.problemSet.attributes): null;
+            this.users = options.users;
+            this.problemSet = options.problemSet;
+            this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             this.userSetList = null;
             this.rowTemplate = $("#customize-user-row-template").html();
             this.userList = this.users.map(function(user){ 
@@ -230,17 +231,21 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
         },
         render: function() {
             var self = this;
-            this.$el.html($("#custom-assign-tmpl").html());
+            this.$el.html(_.template($("#custom-assign-template").html(),{setname: this.model.get("set_id")}))
+
             
             if (this.userSetList){
-                // render the overrides
-                var table = this.$("#customize-problem-set tbody").html("");
+
+                var table = this.$("#customize-problem-set tbody").empty();
                 this.stickit();
                 this.userSetList.each(function(userSet){
                     table.append((new CustomizeUsersRowView({rowTemplate: self.rowTemplate, model: userSet})).render().el);
                 })
+                this.problemSet.trigger("user_sets_added",this.userSetList);
+                
             } else {
-                (this.userSetList = new UserSetList([],{problemSet: this.model})).fetch({success: this.render});
+                (this.userSetList = new UserSetList([],{problemSet: this.model}));
+                this.userSetList.fetch({success: this.render});
             }
             return this;
         },
@@ -253,6 +258,7 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
                     ".answer-date": "answer_date"
         },
         setProblemSet: function(_set) {
+            this.problemSet = _set;
             this.model = new ProblemSet(_set.attributes); 
             this.userSetList = null;
             return this;
@@ -264,7 +270,6 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
             _(models).each(function(_model){
                 _model.set({open_date: self.model.get("open_date"), due_date: self.model.get("due_date"),
                             answer_date: self.model.get("answer_date")});
-                //_model.save();
             });
         },
         selectAll: function (){
@@ -275,13 +280,10 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
 
     var CustomizeUsersRowView = Backbone.View.extend({
         tagName: "tr",
-        initialize: function() {
+        initialize: function(options) {
             var self = this;
             _.bindAll(this,"render");
-            this.template = this.options.rowTemplate;
-            this.model.on("change",function(model){
-                model.save();
-            })
+            this.template = options.rowTemplate;
         },
         render: function(){
             this.$el.html(this.template);
@@ -296,5 +298,5 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
         }
     });
         
-	return HWDetailView;
+	return ProblemSetDetailsView;
 });

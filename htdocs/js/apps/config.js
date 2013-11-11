@@ -7,18 +7,9 @@
 define(['Backbone','underscore','moment','backbone-validation','stickit','jquery-ui'], function(Backbone,_,moment){
 
     $(document).ajaxError(function (e, xhr, options, error) {
-      if(xhr.responseText){
-        try {
-            var response = JSON.parse(xhr.responseText);
-
-            if(response && response.type=="login"){
-                console.log(response.msg);
-            }
-        } catch (error){
-            console.log(xhr.responseText);
+        if(xhr.status==503){
+            alert("It doesn't appear that Dancer is running. See the installation guide at http://webwork.maa.org to fix this.");
         }
-      }
-
     });
     
     var config = {

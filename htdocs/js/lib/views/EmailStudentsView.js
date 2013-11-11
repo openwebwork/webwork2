@@ -4,7 +4,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
     className: "emailDialog",
     initialize: function() {
        _.bindAll(this,"render"); 
-       this.users = this.options.users;
+       this.users = options.users;
      },
      render: function ()
      {

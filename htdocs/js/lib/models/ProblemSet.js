@@ -34,7 +34,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem','
             relax_restrict_ip: "No",
             restricted_login_proctor: "No",
             assigned_users: [],
-            problems: []
+            problems: null
         },
         validation: {
            open_date: "checkDates",
@@ -70,15 +70,37 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem','
             relax_restrict_ip: "Relax Restrict IP???",
             restricted_login_proctor: "Restricted to Login Proctor"
         },
-        initialize: function(_set,_assigned_users){
+        idAttribute: "set_id",
+        initialize: function (opts) {
             _.bindAll(this,"addProblem");
+            var pbs = (opts && opts.problems) ? opts.problems : [];
+            this.problems = new ProblemList(pbs);
+            this.attributes.problems = this.problems;
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
+        },
+        parse: function (response) {
+            if (response.problems){
+                this.problems.set(response.problems);
+                this.attributes.problems = this.problems;
+            }
+            return _.omit(response, 'problems');
         },
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.get("set_id") ;
         },
-        parse: function (response) {
-            var self = this;
+        /*parse: function (response) {
+            response.name = response.set_id;
+            if(this.attributes && this.attributes.problems &&
+                    _.isEqual(_(this.attributes.problems.models).pluck("attributes"),response.problems)){
+                response.problems = this.attributes.problems;
+            } else {
+                response.problems = new ProblemList(response.problems);
+            }
+
+            response.problems.problemSet = this;
+            return response; 
+             /*var self = this;
+             this.attributes.name = response.set_id;
             _(_.keys(response)).each(function(key){
                 if(key==="problems"){
                     self.attributes.problems = new ProblemList(response.problems);
@@ -88,8 +110,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem','
                     self.attributes[key]=response[key];
                 }
             });
-            this.id = this.get("set_id");
-        },
+        },*/
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
                                                 // as a moment object and defined settings.
 
@@ -110,17 +131,14 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem','
             var lastProblem = this.get("problems").last();
             newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
             this.get("problems").add(newProblem);
+            this.trigger("change:problems",this); // 
             this.save();
         },
-        setDate: function(attr,_date){
+        setDate: function(attr,_date){ // sets the date of open_date, answer_date or due_date without changing the time
             var currentDate = moment.unix(this.get(attr))
                 , newDate = moment.unix(_date);
-
-            this.alteredAttributes = [{attribute: attr, old_value: currentDate.format("MM/DD/YYYY [at] h:mmA"), 
-                                    new_value: newDate.format("MM/DD/YYYY [at] h:mmA")}];
             currentDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
             this.set(attr,currentDate.unix());
-            console.log("the date was set for " + this.get("set_id"));
             return this;
 
         },

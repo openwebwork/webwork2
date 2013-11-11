@@ -2,9 +2,8 @@ define(['Backbone','views/MessageListView', 'jquery-truncate'], function(Backbon
 	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
-    initialize: function () {
+    initialize: function (options) {
     	_.bindAll(this,"render","toggleMessageWindow");
-    	_.extend(this,this.options);
     },
     render: function () {
     	var self = this; 

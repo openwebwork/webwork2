@@ -7,13 +7,13 @@
 *
 */
 
-define(['Backbone', 'underscore','models/LibraryTree','jquery-selectboxit'], function(Backbone, _,LibraryTree){
+define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
-    	initialize: function (){
+    	initialize: function (options){
     		_.bindAll(this,"render","loadProblems");
             var self = this;
-            this.libraryTree = new LibraryTree({type: this.options.type});
+            this.libraryTree = new LibraryTree({type: options.type});
             this.libraryTree.set("header","Library/");
     	},
     	render: function(){

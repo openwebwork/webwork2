@@ -9,8 +9,8 @@ define(['Backbone', 'underscore','views/LibraryView','views/LibraryProblemsView'
 function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
     var LibrarySearchView = LibraryView.extend({
         className: "lib-browser",
-    	initialize: function (){
-            this.constructor.__super__.initialize.apply(this);
+    	initialize: function (options){
+            this.constructor.__super__.initialize.apply(this,[options]);
             _.bindAll(this,"search","showResults","checkForEnter");
             this.libraryProblemsView = new LibraryProblemsView({type: "search", libraryView: this, 
                                             allProblemSets: this.allProblemSets});

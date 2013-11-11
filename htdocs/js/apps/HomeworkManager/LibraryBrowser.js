@@ -10,10 +10,10 @@ define(['Backbone', 'underscore','views/LibraryView','views/LibrarySearchView','
 function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,LibraryTextbookView){
     var LibraryBrowser = Backbone.View.extend({
         
-    	initialize: function (){
+    	initialize: function (options){
     		var self = this; 
             _.bindAll(this,'render','updateNumberOfProblems');
-            _.extend(this,this.options);
+            _.extend(this,options);
 
             this.activeView = "subjects";
 
@@ -28,16 +28,16 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
             //this.libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
 
             this.views = {
-                subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: this.options.problemSets}),
-                directories    :  new LibraryView({libBrowserType: "directories", problemSets: this.options.problemSets}),
-                textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: this.options.problemSets}),
-                localLibrary: new LocalLibraryView({libBrowserType: "local", problemSets: this.options.problemSets}),
-                setDefinition: new LocalLibraryView({libBrowserType: "setDefinition", problemSets: this.options.problemSets}),
-                search :  new LibrarySearchView({libBrowserType: "search", problemSets: this.options.problemSets})
+                subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: options.problemSets}),
+                directories    :  new LibraryView({libBrowserType: "directories", problemSets: options.problemSets}),
+                textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: options.problemSets}),
+                localLibrary: new LocalLibraryView({libBrowserType: "local", problemSets: options.problemSets}),
+                setDefinition: new LocalLibraryView({libBrowserType: "setDefinition", problemSets: options.problemSets}),
+                search :  new LibrarySearchView({libBrowserType: "search", problemSets: options.problemSets})
             };
 
             this.headerInfo = { template: "#libraryBrowser-header",
-                events: {"shown a[data-toggle='tab']": function(evt) { self.changeView(evt);} }};    
+                events: {"show.bs.tab a[data-toggle='tab']": function(evt) { self.changeView(evt);} }};    
     	},
     	render: function (){
             var self = this; 

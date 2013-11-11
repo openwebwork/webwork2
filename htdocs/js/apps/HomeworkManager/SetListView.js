@@ -8,11 +8,11 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
 
     
     var SetListView = Backbone.View.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this, 'render','addProblemSet');  // include all functions that need the this object
             var self = this;
-            this.problemSets = this.options.problemSets;
-            this.users = this.options.users;
+            this.problemSets = options.problemSets;
+            this.users = options.users;
 
             this.tableSetup();
 
@@ -101,17 +101,17 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
     });
 
     var AddProblemSetView = ModalView.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,"render","addNewSet");
             this.model = new ProblemSet();
 
 
-            _.extend(this.options, {template: $("#add-hw-set-template").html(), 
+            _.extend(options, {template: $("#add-hw-set-template").html(), 
                 templateOptions: {name: config.courseSettings.user},
                 buttons: {text: "Add New Set", click: this.addNewSet}});
             this.constructor.__super__.initialize.apply(this); 
 
-            this.problemSets = this.options.problemSets; 
+            this.problemSets = options.problemSets; 
 
               /*  Not sure why the following doesn't pass the options along. 
               this.constructor.__super__.initialize.apply(this,

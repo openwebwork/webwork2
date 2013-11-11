@@ -9,8 +9,8 @@ define(['Backbone', 'underscore','views/LibraryView','views/LibraryProblemsView'
 function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
     var LibraryTextbookView = LibraryView.extend({
         className: "lib-browser",
-    	initialize: function (){
-            this.constructor.__super__.initialize.apply(this);
+    	initialize: function (options){
+            this.constructor.__super__.initialize.apply(this,[options]);
             _.bindAll(this,"showResults","loadProblems");
             this.libraryProblemsView = new LibraryProblemsView({type: "textbooks", libraryView: this, 
                                             allProblemSets: this.allProblemSets});
@@ -48,7 +48,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             this.$(".load-problems-button").button("reset");
             this.problemList = new ProblemList(data);
             this.$(".num-problems").text(this.problemList.length + " problems");
-            this.libraryProblemsView.set({problems: this.problemList, type:this.options.libBrowserType});
+            this.libraryProblemsView.set({problems: this.problemList, type:options.libBrowserType});
             this.libraryProblemsView.updatePaginator();
             this.libraryProblemsView.gotoPage(0);
         },

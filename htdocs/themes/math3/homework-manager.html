@@ -189,7 +189,8 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
     <a href="<%=editorURL%>" target="Simple_Editor" class="btn btn-default" id="create-new-problem">New</a>
     <button class="btn btn-default show-hide-tags-btn" data-hide-text="Hide Tags">Show Tags</button>
   </div>
-
+  <div class="col-md-3 pull-right num-problems">
+  </div>
 </div>
 <div class="problem-paginator"></div>
 <div class="prob-list-container">
@@ -216,6 +217,7 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
 </script>
 
 <script type="text/template" id="assign-users-template">
+  <h4>Problem Set: <%=setname%></h4>
   <p>The following list of users are those currently not assigned to this Problem Set.  Select those you wish
   to assign to the problem set.  If the user is not able to be selected, then that user is already 
   assigned to this set. </p>
@@ -223,13 +225,14 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
     <tbody>
       <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
          <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
-         <tr><td><button class="btn assign-button">Assign Selected Users</button></td></tr>
-    </tbody>
+         <tr><td><button class="btn btn-default assign-button">Assign Selected Users</button></td></tr>
+    </tbody> 
   </table>
 </script>
 
 
-<script type="text/template" id="custom-assign-tmpl">
+<script type="text/template" id="custom-assign-template">
+<h4>Problem Set: <%=setname%></h4>
 <p>The students listed below are only those that are assigned to this set.  To change an individual date/time, click on 
 the desired date and change it.  To make changes to two or more students, select those students, change the date/time
 at the bottom of the screen and click "Save Changes". </p>
@@ -345,6 +348,7 @@ at the bottom of the screen and click "Save Changes". </p>
 </script>
 
 <script type="text/template" id="unassign-users-template">
+<h4>Problem Set: <%=setname%></h4>
   <p>The following list of users are those currently assigned to this Problem Set.  Select those you wish
   to unassign from the problem set.  If the user is not able to be selected, then that user is not 
   assigned to this set. </p>
@@ -352,7 +356,7 @@ at the bottom of the screen and click "Save Changes". </p>
     <tbody>
       <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
          <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
-         <tr><td><button class="btn unassign-button">Unassign Selected Users</button></td></tr>
+         <tr><td><button class="btn btn-default unassign-button">Unassign Selected Users</button></td></tr>
     </tbody>
   </table>
 </script>
@@ -409,10 +413,11 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <script type="text/template" id="local-library-tree-template">
 <div class="row form-horizontal">
-Local Problem Directory:&nbsp;
-<select class="local-library-tree input-medium">
+<div class="col-md-4">Local Problem Directory:</div>
+<div class="col-md-4"><select class="local-library-tree form-control">
 <% _(menu).each(function(m){ print("<option>" + m + "</option>")}) %>
-</select><button class="btn load-problems-button">Load</button>
+</select></div>
+<button class="btn btn-default load-problems-button">Load</button>
 </div>
 </script>
 
@@ -445,37 +450,32 @@ Local Problem Directory:&nbsp;
 <script type="text/template" id="library-search-template">
 <div class="panel-group" id="accordion">
   <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4 class="panel-title">
-        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-          Help for the Library Search
-        </a>
-      </h4>
+    <div id="collapseOne" class="panel-collapse collapse">
+      <div class="panel-body">
+        <p>To search the library, type in the search string in pairs separated by a colon (:).  
+          For example, "keyword:quadratic" will search the library for the single keyword "quadratic" whereas a search
+          "keyword:quadratic and author:rogness" will result in problems that contain both the keyword quadratic and the problem
+            author of Rogness. </p>
+        <p>You can also search via the % wildcard for most fields. For example, typing author:P% will match Arnie Pizer and Paul Pearson.  Also typing author:%er will match Arnie Pizer, Christopher Sira and Joseph Neisendorfer. </p>
+        <p>Here&apos;s a listing of all searchable fields:</p>
+        <ul>
+          <li>author: the problem author.  It will match either the first or last name.</li>
+          <li>level: the level of the problem.  Currently the values are 1-6 (or 0 if no level is given)</li>
+          <li>keyword: a stated keyword of the problem.  </li>
+          <li>institution: the author institution.  Note: this is generally not accurately tagged in a problem.</li>
+          <li>subject: the database subject.</li>
+          <li>chapter: the database chapter.</li>
+          <li>section: the database section.</li>
+        </ul>
+      </div>
     </div>
-  </div>
-  <div id="collapseOne" class="panel-collapse collapse in">
-    <div class="panel-body">
-      <p>To search the library, type in the search string in pairs separated by a colon (:).  
-        For example, "keyword:quadratic" will search the library for the single keyword "quadratic" whereas a search
-        "keyword:quadratic and author:rogness" will result in problems that contain both the keyword quadratic and the problem
-          author of Rogness. </p>
-      <p>You can also search via the % wildcard for most fields. For example, typing author:P% will match Arnie Pizer and Paul Pearson.  Also typing author:%er will match Arnie Pizer, Christopher Sira and Joseph Neisendorfer. </p>
-      <p>Here&apos;s a listing of all searchable fields:</p>
-      <ul>
-        <li>author: the problem author.  It will match either the first or last name.</li>
-        <li>level: the level of the problem.  Currently the values are 1-6 (or 0 if no level is given)</li>
-        <li>keyword: a stated keyword of the problem.  </li>
-        <li>institution: the author institution.  Note: this is generally not accurately tagged in a problem.</li>
-        <li>subject: the database subject.</li>
-        <li>chapter: the database chapter.</li>
-        <li>section: the database section.</li>
-      </ul>
-    </div>
+
   </div>
 </div>
 <div class="row form-horizontal">
-  <input type="text" class="input-xxlarge search-query">
+  <div class="col-md-5"><input type="text" class="form-control search-query" placeholder="Enter search terms"></div>
   <button class="search-button btn btn-default" type="button" data-loading-text="Loading Problems..." >Search</button>
+  <button class="search-help-button btn btn-default" type="button" data-toggle="collapse" data-target="#collapseOne">Help</button>
   <span class="num-problems"></span>
 </div>
 <div class="problems-container">
@@ -548,11 +548,11 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 </div>
 <div class="problem-tags">
 <table class="table table-condensed table-bordered"><tbody>
-<tr><td>Problem Path:</td><td colcol-md-=3><%if(source_file){ print(source_file);} %></td>
+<tr><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
 <td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
 <tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
-<tr class="tag-row hidden"><td>Level:</td><td class="level-tag"></td>
-<td>Keyword:</td><td colcol-md-="3" class="keyword-tag"></td></tr>
+<tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
+<td>Level:</td><td class="level-tag"></td></tr>
 <tr class="tag-row hidden"><td>Problem Author:</td><td class="problem-author-tag"></td>
 <td>Institution:</td><td class="institution-tag"></td>
 <td>More LT:</td><td class="mlt-tag"></td>
@@ -681,6 +681,10 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
       return "The assigned users for set " + opt.setname + " was updated."},
     problem_added: function(opt){ return "A problem was added to " + opt.setname},
     problem_added_details: function(opt){ return "A problem was added to " + opt.setname},
+    problems_reordered: function(opt){ return "The problems were reordered in " + opt.setname},
+    problems_reordered_details: function(opt){ return "The problems were reordered in " + opt.setname},
+    problems_values_details: function(opt) { return "The value for problem " + opt.problem_id + " of set " + opt.set_id +
+      " was changed from "+ opt.oldValue + " to " + opt.newValue + "."},
     setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
     setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
                                 opt.oldValue + " to " + opt.newValue + "."},
@@ -690,6 +694,9 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
     select_target_set: function() { return "You need to select a target set";},
     show_prob_set: function() { return "Show Problem Sets";},
     hide_prob_set: function() { return "Hide Problem Sets";},
+    problems_shown: function(opt) {return "Problems " + opt.probFrom + " to " + opt.probTo + " of " + opt.total;},
+    unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
+                  ". Click OK to confirm this."}
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
   
@@ -707,8 +714,8 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 
 <script type="text/template" id="time-popover-template">
 <div><input class='wwtime' value='<%=time%>'><br>
-<button class='btn save-time-button'>Save</button>
-<button class='btn cancel-time-button'>Cancel</button>
+<button class='btn btn-default save-time-button'>Save</button>
+<button class='btn btn-default cancel-time-button'>Cancel</button>
 </div> 
 </script>
 

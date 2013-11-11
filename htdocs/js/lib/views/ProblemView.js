@@ -10,20 +10,23 @@ define(['Backbone', 'underscore','config','imagesloaded'
         className: "problem",
         //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
-        initialize:function () {
+        initialize:function (options) {
             var self = this;
             _.bindAll(this,"render","removeProblem");
             
-            // this.options.viewAttrs will determine which tools are shown on the problem
+            // options.viewAttrs will determine which tools are shown on the problem
             this.allAttrs = {};
-            _.extend(this.allAttrs,this.options.viewAttrs);
+            _.extend(this.allAttrs,options.viewAttrs);
 
             var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=" 
                 + this.allAttrs.displayMode + "&key=" + config.courseSettings.session_key 
                 + "&sourceFilePath=" + this.model.get("source_file") + "&user=" + config.courseSettings.user + "&problemSeed=1234"; 
             _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
+            
             this.model.on('change:value', function () {
-                self.model.save();
+                if(self.model.get("value").match(/^\d+$/)) {
+                    self.model.save();
+                }
             });
             this.tagsLoaded=false;
         },
@@ -43,7 +46,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
                 });
 
 
-                if (this.options.viewAttrs.draggable) {
+                if (this.allAttrs.draggable) {
                     this.$el.draggable({
                         helper:'clone',
                         revert:true,
@@ -116,7 +119,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
         },
         addProblem: function (evt){
             console.log("adding a problem.");
-            this.options.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
+            options.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
         },
         hideProblem: function(evt){
             console.log("hiding a problem ");

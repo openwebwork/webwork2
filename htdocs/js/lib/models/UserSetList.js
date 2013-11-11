@@ -8,10 +8,6 @@ define(['Backbone', 'underscore','./UserSet','config','moment'], function(Backbo
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.problemSet.get("set_id") + 
             '/users';
-        },
-        parse: function(response){
-            config.checkForError(response);
-            return response;
         }
     });
 

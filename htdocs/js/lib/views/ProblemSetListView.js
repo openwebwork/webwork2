@@ -14,14 +14,14 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 	
     var ProblemSetListView = Backbone.View.extend({
 
-    	initialize: function (){
+    	initialize: function (options){
     		_.bindAll(this,"render");
             var self = this;
 
             this.setViewTemplate = $("#set-view-template").html();
             this.template = _.template($("#problem-set-list-template").html());
-            this.problemSets = this.options.problemSets; 
-            this.users = this.options.users; 
+            this.problemSets = options.problemSets; 
+            this.users = options.users; 
 
             this.problemSets.on("add",this.render);
             this.problemSets.on("remove",this.render);
@@ -34,7 +34,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             this.$el.html(this.template({loading: false}));
             this.problemSets.each(function (_model) {
                 self.$("#probSetList").append((new ProblemSetView({model: _model, template: self.setViewTemplate,
-                        numUsers: self.users.length, problemSets: self.options.problemSets})).render().el);
+                        numUsers: self.users.length, problemSets: self.problemSets})).render().el);
             });
             
             self.$(".set-name").truncate({width: "150"}); //if the Problem Set Names are too long.  
@@ -44,8 +44,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             if (this.problemSets.size() === 0 ) {
                 $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
             }
-
-            console.log($(window).height())
             $("#problem-set-list-container").height($(window).height()-200);
             this.$(".prob-set-container").height($(window).height()-260);
         }
@@ -53,11 +51,12 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 
     var ProblemSetView = Backbone.View.extend({
         tagName: "li",
-        initialize: function() {
+        initialize: function(options) {
             _.bindAll(this,"render","showProblemSet");
             this.$el.addClass("problem-set").addClass("btn btn-default btn-sm");
-            this.template = this.options.template; 
-            this.numUsers = this.options.numUsers;
+            this.template = options.template; 
+            this.numUsers = options.numUsers;
+            this.problemSets = options.problemSets;
         },
         render: function(){
             this.$el.html(this.template);
@@ -86,7 +85,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 
         },
         showProblemSet: function (evt) {
-            var set = this.options.problemSets.findWhere({set_id: this.model.get("set_id")})
+            var set = this.problemSets.findWhere({set_id: this.model.get("set_id")})
             set.trigger("show",set);
         }
 

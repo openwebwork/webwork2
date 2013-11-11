@@ -1,33 +1,31 @@
 define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
     /**
      *
-     * This defines a single webwork Problem.
+     * This defines a single webwork Problem (Global Problem)
      * 
      * @type {*}
      */
     var Problem = Backbone.Model.extend({
         defaults:{  source_file:"",
-                data: null,
+                //data: "",
                 problem_id: 0,
                 value: 1,
                 max_attempts: -1,
+                set_id: "",
+                flags: ""
                 //displayMode: "MathJax",  //this has been commented out.  it should be a property of the problem view, not the problem.
-                problem_seed: 1
+                //problem_seed: 1
         },
+        idAttribute: "source_file",
         url: function () {
             // need to determine if this is a problem in a problem set or a problem from a library browser
-            if(this.collection.setName) { // the problem comes from a problem set
-                return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.collection.setName 
-                + "/problems/" + this.get("problem_id");
+            if(typeof(this.collection.problemSet)!=="undefined") { // the problem comes from a problem set
+                return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" 
+                + this.collection.problemSet.get("set_id") + "/problems/" + this.get("problem_id");
             } else {
                 return config.urlPrefix;
             }
 
-        },
-        parse: function(response){
-            this.id = response? response.source_file : this.get("source_file");
-            //this.id = md5(response? response.source_file : this.get("source_file"));
-            return response;
         },
         loadHTML: function (opts) {
             var attrs = {displayMode: opts.displayMode};

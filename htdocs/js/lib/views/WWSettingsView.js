@@ -8,7 +8,7 @@ function(Backbone, _,config){
 
         initialize: function () {
             _.bindAll(this,'render');
-            this.settings = this.options.settings;
+            this.settings = options.settings;
             _(this.settings).each(function(setting){
                 setting.on("change", function (model) {
                     console.log("saving the setting");
@@ -63,7 +63,7 @@ function(Backbone, _,config){
     var SettingView = Backbone.View.extend({
         tagName: "tr",
         render: function () {
-            this.$el.html(_.template($("#row-setting-template").html(),this.options));
+            this.$el.html(_.template($("#row-setting-template").html(),options));
             this.stickit();
             return this;
         },
@@ -89,7 +89,7 @@ function(Backbone, _,config){
         initialize: function () {
             _.bindAll(this,'render');
             _.extend(this.bindings,
-                { ".select-list" : {observe: "value", selectOptions: { collection: "this.options.theOptions"}}});
+                { ".select-list" : {observe: "value", selectOptions: { collection: "options.theOptions"}}});
         }
     });
 

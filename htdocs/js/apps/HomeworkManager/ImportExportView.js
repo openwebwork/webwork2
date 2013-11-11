@@ -8,7 +8,7 @@ var ImportExportView = Backbone.View.extend({
         _.bindAll(this,"render");
         this.problemSetsToImport = new ProblemSetList();
         this.rowViews=[];
-        this.problemSetsToImport.on("change:set_id",function (_set) {
+        this.problemSetsToImport.on("change:name",function (_set) {
     		self.checkSetNames();
     		_set.id=_set.get("set_id");
     	})
@@ -100,7 +100,7 @@ var ImportExportView = Backbone.View.extend({
 					due_date: moment.unix(_set.get("due_date")).add(shift,"days").unix(),
 					answer_date: moment.unix(_set.get("answer_date")).add(shift,"days").unix(),
 					assigned_users: [config.courseSettings.user]});
-				if(! self.options.problemSets.findWhere({set_id: _set.get("set_id")})){
+				if(! self.options.problemSets.findWhere({name: _set.get("set_id")})){
 					delete _set.id; // ensures that backbone sends a post request.
 					self.options.problemSets.add(_set);
 					var view = _(self.rowViews).find(function(view){ return view.model.get("set_id")===_set.get("set_id");});
@@ -122,7 +122,7 @@ var ImportExportView = Backbone.View.extend({
 	            var probSet = new ProblemSet()
 	            	, setName = /^set(.*).def$/.exec(file.name)
 	            	, attrs = util.readSetDefinitionFile(blob.target.result);
-	            _.extend(attrs,{set_id: setName[1]});
+	            _.extend(attrs,{name: setName[1]});
 	            probSet.parse(attrs);
 
 	            // convert the webwork date-time to unix epoch
@@ -157,7 +157,7 @@ var ProblemSetRowView = Backbone.View.extend({
         ".answer-date": "answer_date",
     },
     setNameValid: function () {
-    	if(self.options.problemSets.findWhere({set_id: this.model.get("set_id")})){
+    	if(self.options.problemSets.findWhere({name: this.model.get("set_id")})){
     		this.$(".set-name").addClass("alert alert-danger");
     		return false;
     	} else {

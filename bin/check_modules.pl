@@ -35,6 +35,7 @@ my @apache2ModulesList = qw(
 );
 
 my @modulesList = qw(
+	Array::Utils
 	Benchmark
 	Carp
 	CGI

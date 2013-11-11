@@ -21,8 +21,6 @@
     "backbone": "*",
     "backbone-validation-0.7.1": "backbone-validation#0.7",
     "backbone-validation": "*",
-    
-    "jquery-selectboxit": "*",
 
     "moment": "*",
     

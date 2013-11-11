@@ -11,7 +11,7 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
 
 		    this.rowTemplate = $("#user-row-template").html();
 		    this.collection.bind('add', this.render);
-		    this.courseUsers = this.options.users; 
+		    this.courseUsers = options.users; 
 		    this.render();
 		    
 		    this.$el.dialog({autoOpen: false, modal: true, title: "Add Students by Hand",
@@ -82,7 +82,7 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
         initialize: function () {
             _.bindAll(this,'render','isValid');
         	this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),{"user_id": ".login-name", "email_address": ".email"});
-		    this.rowTemplate = this.options.rowTemplate;
+		    this.rowTemplate = options.rowTemplate;
 		    this.permissions = config.permissions;
 		
         },

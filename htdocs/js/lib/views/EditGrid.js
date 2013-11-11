@@ -11,17 +11,17 @@ function(Backbone, _,EditableGrid){
 		initialize: function () {
 			_.bindAll(this,"render","updatePaginator","changePage","showFirstPage","showPreviousPage",
 					"showNextPage","showLastPage");
-			this.grid = new EditableGrid(this.options.grid_name,this.options);
-			this.paginator = this.options.paginator_name;
+			this.grid = new EditableGrid(options.grid_name,options);
+			this.paginator = options.paginator_name;
 			this.grid.tableRendered = this.updatePaginator;
 
 		},
 		render: function () {
 			var self = this;
 			console.log("in EditGrid.render()");
-            this.$el.html($(this.options.template_name).html());
+            this.$el.html($(options.template_name).html());
           
-            this.grid.renderGrid(this.options.table_name,"table table-bordered table-condensed","the_grid");
+            this.grid.renderGrid(options.table_name,"table table-bordered table-condensed","the_grid");
             this.grid.setPageIndex(0);
 
 
@@ -98,7 +98,7 @@ function(Backbone, _,EditableGrid){
 
 	var EditGridRowView = Backbone.View.extend({
 		initialize: function () {
-			this.stickit(this.model,this.options.bindings);
+			this.stickit(this.model,options.bindings);
 		}
 	});
 

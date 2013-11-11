@@ -19,19 +19,19 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
 
     var ProblemListView = Backbone.View.extend({
 
-        initialize: function(){
+        initialize: function(options){
             var self = this;
             _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
             
 
-            this.problems = this.options.problems ? this.options.problems : new ProblemList();
-            this.problemSet = this.options.problemSet; 
+            this.problems = options.problems ? options.problems : new ProblemList();
+            this.problemSet = options.problemSet; 
             this.problems.on("remove",this.deleteProblem);
             this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
             this.pageSize = 10; // this should be a parameter.
             this.pageRange = _.range(this.pageSize);
             this.currentPage = 1;
-            _.extend(this.viewAttrs,{type: this.options.type});
+            _.extend(this.viewAttrs,{type: options.type});
             _.extend(this,Backbone.Events);
         },
         set: function(opts){
@@ -39,6 +39,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.problems.on("remove",this.deleteProblem);
             if(opts.problemSet){
                 this.problemSet = opts.problemSet;
+                this.problems.problemSet = opts.problemSet;
             }
             this.viewAttrs.type = opts.type || "set";
             this.viewAttrs.displayMode = opts.displayMode || config.settings.getSettingValue("pg{options}{displayMode}").slice(0);
@@ -56,8 +57,9 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                                     + this.problems.setName + "/" + (this.problems.length +1): "";
             var modes = config.settings.getSettingValue("pg{displayModes}").slice();
             modes.push("None");
+            var setName = (typeof(this.problems.problemSet)!="undefined")?this.problems.problemSet.get("set_id"): void 0;
             this.$el.html(_.template($("#problem-list-template").html(),
-                                {setname: this.problems.setName, displayModes: modes, editorURL: openEditorURL}));
+                                {setname: setName, displayModes: modes, editorURL: openEditorURL}));
             this.updatePaginator();
             this.gotoPage(0);
 
@@ -78,9 +80,10 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                                                 placeholder: "sortable-placeholder",axis: "y",
                                                 stop: this.reorder});
             }
-            this.trigger("update-num-problems",
-                "Problems " + (this.pageRange[0]+1) + " to " + (_(this.pageRange).last() + 1) + " of " +
-                this.problems.size());
+
+            this.$(".num-problems").html(config.msgTemplate({type: "problems_shown", 
+                    opts: {probFrom: (this.pageRange[0]+1), probTo:(_(this.pageRange).last() + 1),
+                         total: this.problems.size() }}));
         }, 
         updatePaginator: function() {
             // render the paginator
@@ -92,8 +95,10 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 start = (this.currentPage-7 <0)?0:this.currentPage-7;
                 stop = start+15<this.maxPages?start+15 : this.maxPages;
             }
-            this.$(".problem-paginator").html(_.template($("#paginator-template").html(),
-                    {page_start:start,page_stop:stop,num_pages:this.maxPages}));
+            if(this.maxPages>1){
+                this.$(".problem-paginator").html(_.template($("#paginator-template").html(),
+                        {page_start:start,page_stop:stop,num_pages:this.maxPages}));
+            }
         },       
         loadMore: function () {
             this.maxProblemIndex+=10;
@@ -161,22 +166,17 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         reorder: function (event,ui) {
             var self = this;
-            console.log("I was reordered!");
+            if(typeof(self.problems.problemSet) == "undefined"){
+                return;
+            }
+            this.problems.problemSet.changingAttributes = {"problems_reordered":""};
             this.$(".problem").each(function (i) { 
                 self.problems.findWhere({source_file: $(this).data("path")})
                         .set({problem_id: i+1}, {silent: true});  // set the new order of the problems.  
             });   
-            this.problems.reorder(function() {
-                if(self.model) {
-                    self.model.alteredAttributes=[{attr: "problems",
-                         msg: "The problems have been reordered for Problem Set " + self.model.get("set_id")}];
-                    self.model.trigger("sync",self.model);
-                }    
-            });
-            
+            this.problems.problemSet.save();
         },
         undoDelete: function(){
-            console.log("in undoDelete");
             if (this.undoStack.length>0){
                 var prob = this.undoStack.pop();
                 prob.set("problem_id",parseInt(this.problems.last().get("problem_id"))+1,{silent: true});
@@ -189,7 +189,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.model = _set; 
             this.set({problems: this.model.get("problems")});
             return this;
-        }, 
+        },
         addProblemView: function (prob){
             var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
             this.$("#prob-list").append(probView.el);
@@ -201,7 +201,6 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         deleteProblem: function (problem){
             var self = this; 
             problem.destroy({success: function (model) {
-                console.log(model);
                 self.undoStack.push(model);
             }});
         }
