@@ -80,11 +80,6 @@ $(function(){
     $('#problem-grader-form input:button').addClass('btn btn-small btn-info');
     $('#problem-grader-form td').find('p:last').removeClass('essay-answer graded-answer');
 
-    //Instructor Tools formatting
-    $('.ButtonRow .btn').addClass('btn-mini');
-    $('.ButtonRowCenter .btn').addClass('btn-mini');
-    $('.ScrollingRecordList .btn').addClass('btn-small');
-
     //CourseConfiguration
     $('#config-form').addClass('form-inline');
     $('#config-form table').addClass('table table-bordered');
