@@ -640,7 +640,7 @@ sub pre_header_initialize {
 		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
 		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
        	        useMathView           => $self->can_useMathView(@args)
-	    );
+	);
 	
 	# final values for options
 	my %will;
@@ -681,7 +681,7 @@ sub pre_header_initialize {
 
 	debug("end pg processing");
 	
-	##### fix hint/solution options #####
+	##### update and fix hint/solution options after PG processing #####
 	
 	$can{showHints}     &&= $pg->{flags}->{hintExists}  
 	                    &&= $pg->{flags}->{showHintLimit}<=$pg->{state}->{num_of_incorrect_ans};
