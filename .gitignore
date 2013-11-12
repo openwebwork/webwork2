@@ -1,0 +1,7 @@
+conf/database.conf
+conf/global.conf
+conf/localOverrides.conf
+conf/site.conf
+conf/webwork.apache2-config
+htdocs/DATA
+htdocs/applets
