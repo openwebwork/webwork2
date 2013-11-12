@@ -186,6 +186,7 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
   </div>
 
   <div class="btn-group">
+    <button class="btn btn-default undo-delete-button disabled">Undo Delete</button>
     <a href="<%=editorURL%>" target="Simple_Editor" class="btn btn-default" id="create-new-problem">New</a>
     <button class="btn btn-default show-hide-tags-btn" data-hide-text="Hide Tags">Show Tags</button>
   </div>
@@ -696,7 +697,10 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
     hide_prob_set: function() { return "Hide Problem Sets";},
     problems_shown: function(opt) {return "Problems " + opt.probFrom + " to " + opt.probTo + " of " + opt.total;},
     unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
-                  ". Click OK to confirm this."}
+                  ". Click OK to confirm this."},
+    problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
+    problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id 
+        + " was deleted from set " + opt.setname},
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
   

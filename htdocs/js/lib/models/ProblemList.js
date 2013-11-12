@@ -40,19 +40,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             } else if (this.type=="setDefinition"){
                 return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/setDefinition";
             }
-        }, /*
-        reorder: function(success){
-            var self = this;
-            $.ajax({  contentType: "application/json", type: "PUT",
-                url: config.urlPrefix + "courses/"+ config.courseSettings.course_id + "/sets/" 
-                    + this.problemSet.get("set_id") + "/problems",
-                success: success,
-                data: JSON.stringify({problems: self.models}),
-                success: success,
-                processData: false,
-            });
-        }  */
-
+        }
     });
     
     return ProblemList;

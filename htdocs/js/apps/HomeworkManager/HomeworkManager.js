@@ -113,6 +113,8 @@ var HomeworkEditorView = WebPage.extend({
             });
         }).on("change",function(_set){
            _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
+        }).on("change:problems",function(_set){
+            _set.save();
         }).on("user_sets_added",function(_userSetList){
             console.log("Yippee!!");
 
@@ -148,6 +150,11 @@ var HomeworkEditorView = WebPage.extend({
                         self.messagePane.addMessage({type: "success", 
                             short: config.msgTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
                             text: config.msgTemplate({type:"problems_reordered_details",opts:{setname: _set.get("set_id")}})});
+                        break;
+                    case "problem_deleted": 
+                        self.messagePane.addMessage({type: "success", 
+                            short: config.msgTemplate({type:"problem_deleted",opts:{setname: _set.get("set_id")}}),
+                            text: config.msgTemplate({type: "problem_deleted_details", opts: _set.changingAttributes[key]})});
                         break;
                     case "assigned_users":
                         self.messagePane.addMessage({type: "success",
@@ -190,8 +197,6 @@ var HomeworkEditorView = WebPage.extend({
                         newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}}
             }).on("add",function(problems){
                 _set.changingAttributes={"problem_added": ""};
-            }).on("delete",function(problems){
-                _set.changingAttributes={"problem_deleted":""};
             }).on("sync",function(problems){
                 _(_.keys(problems.changingAttributes)).each(function(key){
                     switch(key){
@@ -200,6 +205,7 @@ var HomeworkEditorView = WebPage.extend({
                                 short: config.msgTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
                                 text: config.msgTemplate({type: "problems_values_details", opts: problems.changingAttributes[key]})});
                             break;
+                        
                     }
                 });
             })

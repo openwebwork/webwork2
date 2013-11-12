@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems/;
+use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems deleteProblems/;
 use WeBWorK::Utils qw/parseDateTime/;
 use Array::Utils qw(array_minus); 
 use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
@@ -19,13 +19,7 @@ use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
 
 our @set_props = qw/set_id set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
-our @user_set_props = "user_id set_id psvn set_header hardcopy_header open_date due_date answer_date "
-                        . "visible enable_reduced_scoring assignment_type description restricted_release "
-                        . "restricted_status attempts_per_version time_interval versions_per_interval "
-                        . "version_time_limit version_creation_time problem_randorder "
-                        . "version_last_attempt_time problems_per_page hide_score "
-                        . "hide_score_by_problem hide_work time_limit_cap restrict_ip "
-                        . "relax_restrict_ip restricted_login_proctor hide_hint";
+our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts source_file/;
 
 ###
@@ -149,8 +143,6 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
     # handle the global problems. 
 
-    debug "Testing in put problem set";
-
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
     if(scalar(@problemsFromDB) == scalar(@{params->{problems}})){  # then perhaps the problems need to be reordered.
@@ -208,8 +200,6 @@ del '/courses/:course_id/sets/:set_id' => sub {
     } else {
         send_error("There was an error while trying to delete set " . param('set_id'),424);
     }
-
-    ## pstaab: the user sets should also be deleted here.
 
 };
 
