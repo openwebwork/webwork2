@@ -70,7 +70,7 @@ var tabberOptions = {manualStartup:true};
 <!-- Bootstrap Fluid Layout Scaffolding start -->
 <div class="container-fluid">
 <!-- Header -->
-<div id = "masthead" class="row-fluid">
+<div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
 		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
 	</div>
@@ -85,7 +85,7 @@ var tabberOptions = {manualStartup:true};
 <div class="row-fluid">
 
 <!-- Navigation -->
-<div id="site-navigation" class="span2 hidden-phone">
+<div id="site-navigation" class="span2 hidden-phone" role="navigation" aria-label="main navigation">
   <!--#if can="links"-->
         <div id="site-links">
 	  <!--#links-->
@@ -108,9 +108,11 @@ var tabberOptions = {manualStartup:true};
 <div id="content" class="span10" >
 	<!-- Breadcrumb -->
 	<div class="row-fluid"><div class="span12">
+	<div role="navigation" aria-label="breadcrumb navigation">
 	<ul class="breadcrumb">
 		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
 	</ul>
+	</div>
 	</div></div>
 
 	<!-- Page Title -->
@@ -302,7 +304,7 @@ var tabberOptions = {manualStartup:true};
 
 
 <!-- Footer -->
-<div id="footer">
+<div id="footer" role="contentinfo">
 	<!--#footer-->
 </div>
 
