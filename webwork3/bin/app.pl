@@ -3,42 +3,111 @@ use Dancer;
 use Dancer::Plugin::Database;
 use WeBWorK::DB;
 use WeBWorK::CourseEnvironment;
+use WeBWorK::Authen;
+
+## note: Routes::Authenication must be passed first
+use Routes::Authentication qw/authenticate setCourseEnvironment/; 
 use Routes::Course;
 use Routes::Library;
 use Routes::ProblemSets;
 use Routes::User;
-use Routes::ProblemRender;
+use Routes::Settings;
+use Routes::PastAnswers;
+
+
+
 
 
 set serializer => 'JSON';
 
 hook 'before' => sub {
 
-    for my $key (keys(%{request->params})){
-    	my $value = defined(params->{$key}) ? params->{$key} : ''; 
-    	debug($key . " : " . $value);
-    }
+    # for my $key (keys(%{request->params})){
+    # 	my $value = defined(params->{$key}) ? params->{$key} : ''; 
+    # 	debug($key . " : " . $value);
+    # } 
+
+};
+
+## right now, this is to help handshaking between the original webservice and dancer.  
+## it does nothing except sets the session using the hook 'before' above. 
+
+post '/handshake' => sub {
+
+	setCourseEnvironment(params->{course_id});
+	authenticate();
+
+	return {msg => "If you get this message the handshaking between Dancer and WW2 worked."};
+};
 
 
-	my @session_key = database->quick_select(params->{course}.'_key', { user_id => params->{user} });
+post '/login' => sub {
+	debug "in /login";
 
-	if ($session_key[0]->{key_not_a_keyword} eq param('session_key')) {
-		session 'logged_in' => true;
-	} else {
-		debug "Wrong session_key";
+	my $authen = new WeBWorK::Authen(vars->{ce});
+	$authen->set_params({
+		user => params->{user},
+		password => params->{password},
+		key => params->{session_key}
+		});
+
+	debug $authen->{params};
+	
+	my $result = $authen->verify();
+
+	debug $result;
+
+	return {result=> $result};
+};
+
+
+
+get '/app-info' => sub {
+	return {
+		environment=>config->{environment},
+		port=>config->{port},
+		content_type=>config->{content_type},
+		startup_info=>config->{startup_info},
+		server=>config->{server},
+		appdir=>config->{appdir},
+		template=>config->{template},
+		logger=>config->{logger},
+		session=>config->{session},
+		session_expires=>config->{session_expires},
+		session_name=>config->{session_name},
+		session_secure=>config->{session_secure},
+		session_is_http_only=>config->{session_is_http_only},
+		
+	};
+};
+
+get '/courses/:course_id/info' => sub {
+
+	setCourseEnvironment(params->{course_id});
+
+	return {
+		course_id => params->{course_id},
+		webwork_dir => vars->{ce}->{webwork_dir},
+		webworkURLs => vars->{ce}->{webworkURLs},
+		webworkDirs => vars->{ce}->{webworkDirs}
+	};
+
+};
+
+
+sub checkCourse {
+	if (! defined(session->{course})) {
+		if (defined(params->{course_id})) {
+			session->{course} = params->{course_id};
+		} else {
+			send_error("The course has not been defined.  You may need to authenticate again",401);	
+		}
+
 	}
 
-	## need to check that the session hasn't expired. 
+	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 
-	my @permission = database->quick_select(params->{course}.'_permission', { user_id => params->{user} });
-
-	debug \@permission;
-
-	session 'permission' => $permission[0]->{permission};
-
-	var ce => getCourseEnvironment(params->{course});
-	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
-};
+}
 
 sub getCourseEnvironment {
 	my $courseID = shift;

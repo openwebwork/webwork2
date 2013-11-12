@@ -5,24 +5,22 @@
  *     calendarType: "month" or "week"  to display a full month or week (which is two weeks)
  */ 
 
-define(['Backbone', 'underscore', 'moment','views/Closeable','jquery-truncate','bootstrap'], 
-    function(Backbone, _, moment,Closeable) {
+define(['Backbone', 'underscore', 'moment','jquery-truncate','bootstrap'], 
+    function(Backbone, _, moment) {
 	
     var CalendarView = Backbone.View.extend({
         className: "calendar",
-        initialize: function (){
+        initialize: function (options){
             _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');  // include all functions that need the this object
     	    this.dispatcher = _.clone(Backbone.Events);  // include a dispatch to manage calendar changes. 
         
-            this.calendarType = this.options.calendarType;
+            this.calendarType = options.calendarType;
 
             if (! this.date){
-                this.date = moment();
+                this.date = moment();  // today!
             }
-        
- 
-            // build up the initial calendar.  
 
+            // build up the initial calendar.  
 
             var firstOfMonth = moment(this.date).date(1);
             var firstDayOfCalendar = (this.calendarType==="month")?
@@ -58,15 +56,11 @@ define(['Backbone', 'underscore', 'moment','views/Closeable','jquery-truncate','
             }
             var calendarTable = this.$('#calendar-table tbody');
 
-
-
             _(this.weeks).each(function(_week){
-                calendarTable.append((new CalendarRowView({week: _week, calendar: self})).el);
+                calendarTable.append((new CalendarRowView({week: _week, calendar: self})).render().el);
             });                        
         
             this.$el.append(calendarTable.el);
-
-            this.dispatcher.trigger("calendar-change");
             return this;   
         },
         events: {"click .previous-week": "viewPreviousWeek",
@@ -118,18 +112,16 @@ define(['Backbone', 'underscore', 'moment','views/Closeable','jquery-truncate','
     var CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
         tagName: "tr",
         className: "calendar-row",
-        initialize: function (){
+        initialize: function (options){
             _.bindAll(this, 'render');  // include all functions that need the this object
-            _.extend(this,this.options);
-
-            this.render();
-            return this; 
+            this.week = options.week;
+            this.calendar = options.calendar;
         },
         render: function () {
             var self = this;
             _(this.week).each(function(date) {
                 var calendarDay = new CalendarDayView({model: date, calendar: self.calendar});
-                self.$el.append(calendarDay.el);
+                self.$el.append(calendarDay.render().el);
             });
 
             return this;
@@ -139,13 +131,11 @@ define(['Backbone', 'underscore', 'moment','views/Closeable','jquery-truncate','
     var CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
         tagName: "td",
         className: "calendar-day",
-        initialize: function (){
+        initialize: function (options){
             _.bindAll(this, 'render');  // include all functions that need the this object
             var self = this;
-            this.calendar = this.options.calendar;
-
+            this.calendar = options.calendar;
             this.today = moment();
-            this.render();
             return this;
         },
         render: function () {

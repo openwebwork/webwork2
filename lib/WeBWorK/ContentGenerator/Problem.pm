@@ -42,7 +42,6 @@ use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
-use HTML::Scrubber;
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -283,7 +282,7 @@ sub attemptResults {
 		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded"); 
 		    $self->{essayFlag} = 1;
-		} elsif (not $answerScore) {
+		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
 		    push @incorrect_ids, $name if $answerScore < 1;
 		    $resultString = CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
 		} else {
@@ -654,26 +653,6 @@ sub pre_header_initialize {
 		# do this only if new answers are NOT being submitted
 		my %oldAnswers = decodeAnswers($problem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
-	}
-	
-	##### scrub answer fields for xss badness #####
-     	my $scrubber = HTML::Scrubber->new(
-	    default=> 1,
-	    script => 0,
-	    process => 0,
-	    comment => 0
-	    );
-	foreach my $key (keys %$formFields) {
-	    if ($key =~ /AnSwEr/) {
-		$formFields->{$key} = $scrubber->scrub(		
-			(defined $formFields->{$key})? $formFields->{$key}:'' # using // would be more elegant but breaks perl 5.8.x
-		);
-		### HTML::scrubber is a little too enthusiastic about
-		### removing > and < so we have to add them back in otherwise
-		### they confuse pg
-		$formFields->{$key} =~ s/&lt;/</g;
-		$formFields->{$key} =~ s/&gt;/>/g;
-	    }
 	}
 	
 	##### translation #####
@@ -1717,7 +1696,7 @@ sub output_JS{
 		print "<link href=\"$site_url/js/mathview/mathview.css\" rel=\"stylesheet\" />";
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
-		print CGI::end_script();	    
+		print CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/mathview.js"}), CGI::end_script();
 	    } else {

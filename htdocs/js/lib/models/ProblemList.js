@@ -14,123 +14,33 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
     var ProblemList = Backbone.Collection.extend({
         model:Problem,
     
-        initialize: function(options){
-            var self = this;
-            _.bindAll(this,"fetch","addProblem","removeProblem");
-            _.extend(this,options);
-            this.on("remove",this.removeProblem);
-            if (this.type){   // this prevents the fetch if the ProblemList comes from the Browse object. 
-                this.fetch(); 
-            }
-        },
         // This keeps the problem set sorted by place in the set.  
         comparator: function(problem) {
-            return parseInt(problem.get("place"));
-        },  
-        fetch: function()
-        {
-            var self = this;
-            var requestObject = null;
-            switch(this.type){
-                case "Problem Set":
-                    console.log("fetching problems for Problem Set " + this.setName);
-                    requestObject = {xml_command: "listSetProblems", set_id: this.setName};
-                    break;
-                case "Library Problems":
-                    var pathParts = this.path.split("/");
-                    switch(pathParts[0]){
-                        case "Library":
-                            console.log("Fetching Library: " + this.path);
-                            requestObject = {  xml_command: "listLib", command: "files",
-                                    maxdepth: 0, library_name: this.path + "/"};
-                            break;
-                        case "Subjects":
-                            console.log("fetching subjects");
-                            requestObject = { xml_command: "searchLib", command: "getDBListings",
-                                    library_subjects: pathParts[1],
-                                    library_chapters: pathParts[2],
-                                    library_sections: pathParts[3] }
-                            break;
-                        }
-                    break;
-            }
-            _.defaults(requestObject, config.requestObject);
-            $.get(config.webserviceURL, requestObject,function (data) {
-                console.log('Loading Problems');
-                switch(self.type){
-                    case "Library Problems":
-                    self.reset(_($.parseJSON(data).result_data).map(function(file) { return {path: file};}) );
-                    break;
-                    case "Problem Set":
-                    self.reset($.parseJSON(data).result_data);
-                    break;
-                }
-
-                self.trigger("fetchSuccess");
-            });
-
+            return parseInt(problem.get("problem_id"));
         },
+        url: function () {
 
-       
-    addProblem: function (problem) {
-        var self = this;
-        console.log("in ProblemList addProblem");
-        var requestObject = {
-            xml_command: "addProblem",
-            set_id: self.setName,
-            problemPath: problem.get('path'),
-            place: self.size(),
-            value: problem.get("value")
-        };
-        _.defaults(requestObject, config.requestObject);
-        $.post(config.webserviceURL, requestObject, function (data) {
-            var response = $.parseJSON(data);  // check if there is an error.
+            // need to determine if this is a problem in a problem set or a problem from a library browser
 
-            problem.set("place",self.size(),{silent:true});  // put the problem in the last slot of the Problem List
-            self.add(problem);
-        });
-    },
-    removeProblem: function (problem) {
-        console.log("in ProblemList removeProblem");
-        var self = this;
-    
-        var requestObject = {
-            xml_command: "deleteProblem",
-            set_id: self.setName,
-            problemPath: problem.get("path") //notice the difference from create
-        };
-        _.defaults(requestObject, config.requestObject);
-    
-        $.post(config.webserviceURL, requestObject, function (data) {
-            var response = $.parseJSON(data);
-            console.log("in removeProblem");
-            console.log(response);
-            self.trigger("deleteProblem",self.setName, parseInt(self.lastProblemRemoved));
-        });
-        this.lastProblemRemoved = problem.get("place"); // This is a way to save the Problem # deleted. 
-        problem.destroy();
-    },
-    reorder: function(){
-        var self = this;
-        self.sort();
-    
-        var probList = self.pluck("path");
-        var probListString = probList.join(",");
-        console.log(probListString);
-        var requestObject = {
-            set_id: self.setName,
-            probList: probListString,
-            xml_command: "reorderProblems"
-        };
-    
-        _.defaults(requestObject, config.requestObject);
-    
-        $.post(config.webserviceURL, requestObject, function (data) {
-            var response = $.parseJSON(data);
-            console.log(response);
-        });
-    }
-
+            if(this.problemSet) { // the problem comes from a problem set
+                return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.setName 
+                + "/problems"; 
+            } else if (this.type=="subjects") { // this is a set of problems from a library. 
+                var dirs = this.path.split("/");
+                var path = config.urlPrefix + dirs[0];
+                if (dirs[1]) {path += "/subjects/" + dirs[1];}
+                if (dirs[2]) {path += "/chapters/" + dirs[2];}
+                if (dirs[3]) {path += "/sections/" + dirs[3];}
+                path+= "/problems";
+                return path;
+            }  else if (this.type=="directories"){
+                return config.urlPrefix+"Library/directories/"+this.path +"?course_id=" + config.courseSettings.course_id;
+            } else if (this.type=="local"){
+                return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/local";
+            } else if (this.type=="setDefinition"){
+                return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/setDefinition";
+            }
+        }
     });
     
     return ProblemList;

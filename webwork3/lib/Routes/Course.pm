@@ -9,10 +9,14 @@ package Routes::Course;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Routes qw/convertObjectToHash/;
+use Utils::Convert qw/convertObjectToHash/;
 use Dancer::Plugin::Database;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
+
+our $PERMISSION_ERROR = "You don't have the necessary permissions.";
+
+
 ###
 #
 #  list the names of all courses.  
@@ -45,16 +49,8 @@ get '/courses' => sub {
 
 get '/courses/:course_id' => sub {
 
-
-
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		webwork_url         => vars->{ce}->{webwork_url},
 	 	webwork_dir         => vars->{ce}->{webwork_dir},
-	 	pg_dir              => vars->{ce}->{pg_dir},
-	 	webwork_htdocs_url  => vars->{ce}->{webwork_htdocs_url},
-	 	webwork_htdocs_dir  => vars->{ce}->{webwork_htdocs_dir},
-	 	webwork_courses_url => vars->{ce}->{webwork_courses_url},
-	 	webwork_courses_dir => vars->{ce}->{webwork_courses_dir},
 		courseName => params->{course_id},
 	});
 
@@ -93,10 +89,8 @@ get '/courses/:course_id' => sub {
 
 post '/courses/:new_course_id' => sub {
 
+	if(session->{permission} < 15){send_error($PERMISSION_ERROR,403)}
 
-    if (0+(session 'permission') <10) {
-        return {error=>"You don't have the necessary permission"};
-    }
 
     my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
 	my $courseDir = "$coursesDir/" . params->{new_course_id};
@@ -104,14 +98,8 @@ post '/courses/:new_course_id' => sub {
 	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-		webwork_url         => vars->{ce}->{webwork_url},
 	 	webwork_dir         => vars->{ce}->{webwork_dir},
-	 	pg_dir              => vars->{ce}->{pg_dir},
-	 	webwork_htdocs_url  => vars->{ce}->{webwork_htdocs_url},
-	 	webwork_htdocs_dir  => vars->{ce}->{webwork_htdocs_dir},
-	 	webwork_courses_url => vars->{ce}->{webwork_courses_url},
-	 	webwork_courses_dir => vars->{ce}->{webwork_courses_dir},
-		courseName => params->{new_course_id},
+		courseName => params->{course_id},
 	});
 
 
@@ -146,12 +134,12 @@ post '/courses/:new_course_id' => sub {
 
 	# fail if the course ID contains invalid characters
 
-	return {error=> "Invalid characters in course ID: " . params->{new_course_id} . " (valid characters are [-A-Za-z0-9_])"}
+	send_error("Invalid characters in course ID: " . params->{new_course_id} . " (valid characters are [-A-Za-z0-9_])",424)
 		unless params->{new_course_id} =~ m/^[-A-Za-z0-9_]*$/;
 
 	# create a new user to be added as an instructor
 
-	return {error=>"The parameter new_userID must be defined as an instructor ID for the course"} 
+	send_error("The parameter new_userID must be defined as an instructor ID for the course",424)
 		unless params->{new_userID};
 
 	my $instrFirstName = params->{new_user_firstName} ? params->{new_user_firstName} : "First";
@@ -197,9 +185,7 @@ post '/courses/:new_course_id' => sub {
 
 put '/courses/:course_id' => sub {
 
-    if (0+(session 'permission') <10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+	if(session->{permission} < 15){send_error($PERMISSION_ERROR,403)}
 
 	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
 
@@ -232,9 +218,7 @@ put '/courses/:course_id' => sub {
 
 del '/courses/:course_id' => sub {
 
-    if (0+(session 'permission') <10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+	if(session->{permission} < 15){send_error($PERMISSION_ERROR,403)}
 
  #    my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
 	# my $courseDir = "$coursesDir/" . params->{course_id};

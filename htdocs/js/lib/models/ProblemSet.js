@@ -3,7 +3,8 @@
  * of problems.  More specifially, it also contains a Problem List of type "Problem Set".  
  *
  * */
-define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Backbone, _, config,moment,ProblemList){
+define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem','config'], 
+        function(Backbone, _, config,moment,ProblemList,Problem,config){
 
 
     var ProblemSet = Backbone.Model.extend({
@@ -32,22 +33,16 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             restrict_ip: "No",
             relax_restrict_ip: "No",
             restricted_login_proctor: "No",
-            assigned_users: []
+            assigned_users: [],
+            problems: null
         },
         validation: {
-            open_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            due_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            answer_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            set_id: {pattern: "setname"}
+           open_date: "checkDates",
+            due_date: "checkDates",
+            answer_date: "checkDates",
+            set_id: {  
+                setNameValidator: 1 // uses your custom validator
+            }
         },
         descriptions:  {
             set_id: "Homework Set Name",
@@ -75,37 +70,47 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
             relax_restrict_ip: "Relax Restrict IP???",
             restricted_login_proctor: "Restricted to Login Proctor"
         },
-        types: {
-            set_id: "string",
-            set_header: "filepath",
-            hardcopy_header: "filepath",
-            open_date: "datetime",
-            due_date: "datetime",
-            answer_date: "datetime",
-            visible: "opt(yes,no)",
-            enable_reduced_scoring: "opt(yes,no)",
-            assignment_type: "opt(homework,gateway/quiz,proctored gateway/quiz)",
-            attempts_per_version: "int(0+)",
-            time_interval: "time(0+)",
-            versions_per_interval: "int(0+)",
-            version_time_limit: "time(0+)",
-            version_creation_time: "time(0+)",
-            problem_randorder: "opt(yes,no)",
-            version_last_attempt_time: "time(0+)",
-            problems_per_page: "int(1+)",
-            hide_score: "opt(yes,no)",
-            hide_score_by_problem: "opt(yes,no)",
-            hide_work: "opt(yes,no)",
-            time_limit_cap: "opt(yes,no)",
-            restrict_ip: "opt(yes,no)",
-            relax_restrict_ip: "opt(yes,no)",
-            restricted_login_proctor: "opt(yes,no)",
-        },
-        initialize: function(){
-            _.bindAll(this,"fetch","addProblem","update");
-            this.problems = null;
+        idAttribute: "set_id",
+        initialize: function (opts) {
+            _.bindAll(this,"addProblem");
+            var pbs = (opts && opts.problems) ? opts.problems : [];
+            this.problems = new ProblemList(pbs);
+            this.attributes.problems = this.problems;
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
+        parse: function (response) {
+            if (response.problems){
+                this.problems.set(response.problems);
+                this.attributes.problems = this.problems;
+            }
+            return _.omit(response, 'problems');
+        },
+        url: function () {
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.get("set_id") ;
+        },
+        /*parse: function (response) {
+            response.name = response.set_id;
+            if(this.attributes && this.attributes.problems &&
+                    _.isEqual(_(this.attributes.problems.models).pluck("attributes"),response.problems)){
+                response.problems = this.attributes.problems;
+            } else {
+                response.problems = new ProblemList(response.problems);
+            }
+
+            response.problems.problemSet = this;
+            return response; 
+             /*var self = this;
+             this.attributes.name = response.set_id;
+            _(_.keys(response)).each(function(key){
+                if(key==="problems"){
+                    self.attributes.problems = new ProblemList(response.problems);
+                    self.attributes.problems.each(function(_prob){ _prob.parse();})
+                    self.attributes.problems.setName = response.set_id;
+                } else {
+                    self.attributes[key]=response[key];
+                }
+            });
+        },*/
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
                                                 // as a moment object and defined settings.
 
@@ -122,66 +127,32 @@ define(['Backbone', 'underscore','config','moment','./ProblemList'], function(Ba
         },
         addProblem: function (prob) {  
             var self = this; 
-            if (this.problems) {
-                this.problems.addProblem(prob);
-            }  else {  // the problems haven't loaded.
-                console.log("Problem Set " + this.get("set_id") + " not loaded. ");
-                console.log(prob);
-                this.saveProblems.push(prob);
-                this.problems = new ProblemList({setName: self.get("set_id"),   type: "Problem Set"});
-                this.problems.on("fetchSuccess",function () {
-                    _(self.saveProblems).each(function (_prob) {
-                        self.problems.addProblem(_prob);
-                    });
-                    this.saveProblems = new Array(); 
-                });
-            }
+            var newProblem = new Problem(prob.attributes);
+            var lastProblem = this.get("problems").last();
+            newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
+            this.get("problems").add(newProblem);
+            this.trigger("change:problems",this); // 
+            this.save();
         },
-        setDate: function(attr,_date){
+        setDate: function(attr,_date){ // sets the date of open_date, answer_date or due_date without changing the time
             var currentDate = moment.unix(this.get(attr))
                 , newDate = moment.unix(_date);
-
             currentDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
             this.set(attr,currentDate.unix());
-            console.log("the date was set for " + this.get("set_id"));
             return this;
 
         },
-        update: function(){
-            
-            console.log("in ProblemSet update");
-            var self = this;
-            var requestObject = {
-                "xml_command": 'updateSetProperties'
-            };
-            _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, config.requestObject);
+        checkDates: function(value, attr, computedState){
+            var openDate = moment.unix(computedState.open_date)
+                , dueDate = moment.unix(computedState.due_date)
+                , answerDate = moment.unix(computedState.answer_date);
 
-            requestObject.assigned_users = requestObject.assigned_users.join(",");
-
-            $.post(config.webserviceURL, requestObject, function(data){
-                var response = $.parseJSON(data);
-                console.log("saved the ProblemSet");
-      	        self.trigger("saved",self);
-            });
-        },
-        fetch: function()  // this fetches the problems for the ProblemSet.  
-        {
-            var self=this;
-            var requestObject = { xml_command: "getSet"};
-            _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, config.requestObject);
-
-            $.get(config.webserviceURL, requestObject, function (data) {
-                    console.log("fetching problem set " + self.get("set_id"));
-                    var response = $.parseJSON(data);
-                    self.problems = new ProblemList({setName: self.get("set_id"), type: "Problem Set"}); 
-                    console.log(self.problems);
-
-                    self.problems.on("deleteProblem",function(place) {
-                        self.trigger("deleteProblem",self.get("set_id"),place);
-                    })      
-                });       
+            if(openDate.isAfter(dueDate)){ 
+                return config.msgTemplate({type: "openDate_after_dueDate"});
+            }
+            if (dueDate.isAfter(answerDate)){
+                return config.msgTemplate({type: "dueDate_after_answerDate"});
+            }
         }
     });
      

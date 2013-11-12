@@ -1,3 +1,5 @@
+
+
 /* WeBWorK Online Homework Delivery System
  * Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
  * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
@@ -12,7 +14,7 @@
  * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
  * Artistic License for more details.
  */
-
+ 
 /* Bootstrap overrides */
 .row-fluid [class*="span"] {
     min-height:0px;
@@ -136,6 +138,10 @@ h1.page-title {
 	clear: both;
 }
 
+.Warnings code {
+    	white-space: normal;
+}
+
 /* Question nav section */
 .problem-nav {
 	margin-bottom:1ex;
@@ -148,12 +154,7 @@ h1.page-title {
 .Message {
     display: inline-block;
     margin-bottom:1ex;
-}
-
-.Message div, .Message span {
-	background-color:#eee;
-	padding: 0.5em;
-}
+}   
 
 .font-visible   { font-weight: bold; }
 .font-hidden { font-style: italic; } 
@@ -403,6 +404,10 @@ table.attemptResults th {
 	padding: 2px 5px 2px 5px;
 	color: inherit;
 	background-color: #DDDDDD;
+}
+
+.attemptResults .popover {
+    max-width: 100%;
 }
 
 /*styles for the instructor comment box */

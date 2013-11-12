@@ -20,7 +20,6 @@ package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
 use base qw(WeBWorK::ContentGenerator);
 use WeBWorK::Utils qw(sortByName ); 
 use WeBWorK::PG;
-use HTML::Scrubber;
 
 =head1 NAME
 
@@ -130,20 +129,9 @@ sub initialize {
 
 		#if the instructor added a comment we should save that to the latest answer
 		if ($r->param("$userID.comment")) {
+		    my $comment = $r->param("$userID.comment");
 
-		    ### $comment needs to be sanitized.  It could currently contain badness written 
-		    ### into the comment by the instructor 
-		    
-
-		    my $scrubber = HTML::Scrubber->new(
-			default=> 1,
-			script => 0,
-			process => 0,
-			comment => 0,
-			allow => [ qw[ p br ] ]
-			);
-		    
-		    my $comment = $scrubber->scrub( ( defined $r->param("$userID.comment") )?$r->param("$userID.comment"):'' );
+		    my $comment = $r->param("$userID.comment");
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 		    
 		    if ($userPastAnswerID) {

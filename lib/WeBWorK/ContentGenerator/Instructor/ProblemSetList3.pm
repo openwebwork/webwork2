@@ -250,8 +250,26 @@ use constant  FIELD_PROPERTIES => {
 
 # template method
 sub templateName {
-	return "lbtwo";
+	return "hwkMgr";
 }
+
+sub name { 
+	return "Homework Manager";
+}
+
+sub footer(){
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $ww_version = $ce->{WW_VERSION}||"unknown -- set ww version VERSION";
+	my $pg_version = $ce->{PG_VERSION}||"unknown -- set pg version PG_VERSION link to ../pg/VERSION";
+	my $theme = $ce->{defaultTheme}||"unknown -- set defaultTheme in localOverides.conf";
+	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
+	# print CGI::div({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
+	print CGI::div({-id=>"copyright",class=>"nav navbar-text"}, "WeBWorK &#169; $copyright_years", "| theme: $theme | ww_version: $ww_version | pg_version: $pg_version|", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
+	return ""
+}
+
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -392,7 +410,7 @@ sub initialize {
 			}
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
-			$self->addmessage(CGI::div({class=>"Message"}, $r->maketext("Results of last action performed").": "));
+			$self->addmessage(CGI::div($r->maketext("Results of last action performed").": "));
 			$self->addmessage($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams));
 		} else {
 			return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to perform this action.")));
@@ -427,8 +445,12 @@ sub body {
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
-	
-	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/homework-manager.html');  
+
+	my $theme_dir = $ce->{webworkDirs}->{themes};
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
+	my $template = HTML::Template->new(filename => "$theme_dir/$theme/homework-manager.html");  
+
 	print $template->output();
 	
 	print $self->hidden_authen_fields;
@@ -443,13 +465,46 @@ sub head{
 	my $self = shift;
 	my $r = $self->r;
     my $ce = $r->ce;
-
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+    my $theme_dir = "$site_url/themes";
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
+
+	
 	print "<link rel='stylesheet' href='$site_url/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>";
 	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
-    print "<link rel='stylesheet' type='text/css' href='$site_url/css/homework-manager.css' > </style>";
+    print "<link rel='stylesheet' type='text/css' href='$theme_dir/$theme/homework-manager.css' > </style>";
 	return "";
 }
+
+sub convertObjectToHash {
+    my $obj = shift;
+    my $s = {};
+    for my $key (keys %{$obj}){
+        $s->{$key} = $obj->{$key};
+    }
+    
+    return $s;
+}
+
+sub convertArrayOfObjectsToHash {
+    my $arr = shift;
+
+    
+    my @newArray = ();
+    foreach my $element (@{$arr}){
+        my $s = {};
+        for my $key (keys %{$element}){
+            $s->{$key} = $element->{$key};
+        }
+        push(@newArray,$s);
+    }
+
+    return \@newArray; 
+
+}
+
+## get all of the user information to send to the client via a script tag in the output_JS subroutine below
 
 sub getAllSets {
 	my $self = shift;
@@ -468,17 +523,11 @@ sub getAllSets {
 		my @users = $db->listSetUsers($set->{set_id});
 		$set->{assigned_users} = \@users;
 
-		# convert the set $set to a hash
-		my $s = {};
-		for my $key (keys %{$set}) {
-			$s->{$key} = $set->{$key}
-		}
+		my @problems = $db->getAllGlobalProblems($set->{set_id});
+		$set->{problems} = convertArrayOfObjectsToHash(\@problems);
 
-		push(@sets,$s);
+		push(@sets,convertObjectToHash($set));
 	}
-
-	#debug(to_json(\@all_sets));
-
 	return \@sets;
 }
 
@@ -492,36 +541,38 @@ sub getCourseSettings {
 
 	my $ConfigValues = $ce->{ConfigValues};
 
-	foreach my $oneConfig (@$ConfigValues) {
-		#debug(to_json($oneConfig));
-		foreach my $hash (@$oneConfig) {
-			if (ref($hash) eq "HASH"){
-				my $str = '$ce->' . $hash->{hashVar};
-				$hash->{value} = eval($str);
-			} else {
-				debug($hash);
-			}
-		}
-	}
-
 	# get the list of theme folders in the theme directory and remove . and ..
 	my $themeDir = $ce->{webworkDirs}{themes};
 	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
 	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
 	
-	# insert the anonymous array of theme folder names into ConfigValues
-	my $modifyThemes = sub { my $item=shift; if (ref($item)=~/HASH/ and $item->{var} eq 'defaultTheme' ) { $item->{values} =$themes } };
 
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
-			&$modifyThemes($hash);
+			if (ref($hash) eq "HASH") {
+				my $string = $hash->{var};
+				if ($string =~ m/^\w+$/) {
+					$string =~ s/^(\w+)$/\{$1\}/;
+				} else {
+					$string =~ s/^(\w+)/\{$1\}->/;
+				}
+				$hash->{value} = eval('$ce->' . $string);
+				
+				if ($hash->{var} eq 'defaultTheme'){
+					$hash->{values} = $themes;	
+				}
+			}
 		}
 	}
+
 
 	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
 	my $dt = DateTime->now();
 
 	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
+
+
+	#debug($tz->short_name_for_datetime($dt));
 
 	push(@$ConfigValues, \@tzabbr);
 
@@ -578,24 +629,26 @@ sub getAllUsers {
 
 sub output_JS{
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $site_url = $ce->{webworkURLs}->{htdocs};
+	# my $r = $self->r;
+	# my $ce = $r->ce;
+
+	my $site_url = $self->r->ce->{webworkURLs}->{htdocs};
 	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
-	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/components/requirejs/require.js"></script>!;
-    print qq!<script type='text/javascript'>!;
-    print qq!define('globalVariables', function() {!;
-    print qq!  return { !;
+	print qq!<script type='text/javascript'>!;
+    print qq! require.config = { 'HomeworkManager': {!;
     print qq! users: ! . to_json(getAllUsers($self)) . ",";
     print qq! settings: ! . to_json(getCourseSettings($self)) . ",";
     print qq! sets: ! . to_json(getAllSets($self)) ;
-    print qq!    }!;
-    print qq!});!;
+    print qq!    }};!;
     print qq!</script>!;
-	
+	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/components/requirejs/require.js"></script>\n!;
+
 	return "";
 }
+
+1;
+
 
 1;
 =head1 AUTHOR

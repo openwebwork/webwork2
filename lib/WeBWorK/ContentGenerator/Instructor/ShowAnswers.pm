@@ -43,6 +43,17 @@ sub initialize {
 		$self->addbadmessage("You aren't authorized to view past answers");
 		return;
 	}
+	
+	# The stop acting button doesn't perform a submit action and so
+	# these extra parameters are passed so that if an instructor stops
+	# acting the current studentID, setID and problemID will be maintained
+
+	my $extraStopActingParams;
+	$extraStopActingParams->{studentUser} = $r->param('studentUser');
+	$extraStopActingParams->{setID} = $r->param('setID');
+	$extraStopActingParams->{problemID} = $r->param('problemID');
+	$r->{extraStopActingParams} = $extraStopActingParams;
+
 }
 
 
@@ -101,8 +112,8 @@ sub body {
 
 	return CGI::span({class=>'ResultsWithError'}, 'You must provide
 			    a student ID, a set ID, and a problem number.')
-	    unless defined($courseName) && defined($studentUser)  &&
-	    defined($setName) && defined($problemNumber);
+	    unless defined($studentUser)  && defined($setName) 
+	    && defined($problemNumber);
 	    
 	my @pastAnswerIDs = $db->listProblemPastAnswers($courseName, $studentUser, $setName, $problemNumber);
 

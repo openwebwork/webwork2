@@ -6,7 +6,7 @@ define(['Backbone', 'underscore'],
       className: "passwordDialog",
       initialize: function() {
          _.bindAll(this,"render");  return this;
-         this.users = this.options.users;
+         this.users = options.users;
       },
        render: function ()
        {
@@ -17,14 +17,14 @@ define(['Backbone', 'underscore'],
               $("table tbody",self.$el).append(tableRow.el);
           });
           
-          this.$el.dialog({autoOpen: false, modal: true, title: "Password Changes",
+          this.$el.dialog({autoOpen: false, modal: true, title: config.msgTemplate({type: "password_changes"}),
   			                    width: (0.5*window.innerWidth), height: (0.5*window.innerHeight),
                             buttons: {"Save New Passwords": function () {self.savePasswords(); self.$el.dialog("close")},
                                     "Cancel": function () {self.$el.dialog("close");}}
                           });
      },
      savePasswords: function () {
-          _(this.users).each(function(user) {user.update();});
+          _(this.users).each(function(user) {user.save();});
      }
      
      
@@ -41,13 +41,16 @@ define(['Backbone', 'underscore'],
     events: {
         'change input': 'updatePassword'
     },
+    bindings: {".first-name": "first_name",
+                ".last-name": "last_name",
+                ".user-id": "user_id",
+                ".new-password": "new_password"},
     render: function(){
-              this.$el.html("<td> " + this.model.attributes.first_name + "</td><td>" + this.model.attributes.last_name + "</td><td>"
-                            + this.model.attributes.user_id +" </td><td><input type='text' size='10' class='newPass'></input></td>");
-
+        this.$el.html($("#change-password-row-template").html());
+        this.stickit();
         return this; // for chainable calls, like .render().el
     },
-         updatePassword: function(evt){  
+    updatePassword: function(evt){  
         var changedAttr = evt.target.className.split("for-")[1];
         this.model.set("new_password",evt.target.value, {silent: true}); // so a server hit is not made at this moment.  
         console.log("new password: " + evt.target.value);

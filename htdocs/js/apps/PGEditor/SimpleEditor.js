@@ -164,7 +164,7 @@ function(Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemList,Probl
     var EditorSettingsView = WWSettingsView.extend({
         initialize: function () {
             _.bindAll(this,'render');
-            this.settings = this.options.settings.filter(function (setting) {return setting.get("category")==='Editor'});
+            this.settings = options.settings.filter(function (setting) {return setting.get("category")==='Editor'});
             this.constructor.__super__.initialize.apply(this,{settings: this.settings});
          }, 
          render: function () {
@@ -176,7 +176,7 @@ function(Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemList,Probl
     var AnswerChoiceView = Backbone.View.extend({
         initialize: function(){
             _.bindAll(this,'render');
-            this.theTemplate = this.options.template.html()
+            this.theTemplate = options.template.html()
         },
         render: function(){
             this.$el.html(_.template(this.theTemplate));

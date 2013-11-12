@@ -169,7 +169,7 @@ sub body {
 	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
 	elsif($action eq "^"        || $action eq $r->maketext("\\")) {$self->ParentDir;} 
 	else {
-	  $self->addbadmessage("Unknown action: |$action|");
+	  $self->addbadmessage("Unknown action");
 	  $self->Refresh;
 	}
 	#for ($action) {

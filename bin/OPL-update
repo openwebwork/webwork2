@@ -16,6 +16,7 @@
 
 #use strict;
 use File::Find;
+use File::Find::Rule;
 use File::Basename;
 use Cwd;
 use DBI;
@@ -77,9 +78,9 @@ use WeBWorK::Utils::Tags;
 
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 my $dbh = DBI->connect(
-        $ce->{database_dsn},
-        $ce->{database_username},
-        $ce->{database_password},
+        $ce->{problemLibrary_db}->{dbsource},
+        $ce->{problemLibrary_db}->{user},
+        $ce->{problemLibrary_db}->{passwd},
         {
                 PrintError => 0,
                 RaiseError => 1,
@@ -89,6 +90,8 @@ my $dbh = DBI->connect(
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
 my $libraryVersion = $ce->{problemLibrary}->{version};
+my $db_storage_engine = $ce->{problemLibrary_db}->{storage_engine};
+
 my $verbose = 0;
 my $cnt2 = 0;
 # Can force library version
@@ -245,7 +248,7 @@ for my $tableinfo (@create_tables) {
 	my $tabinit = $tableinfo->[1];
 	my $query = "DROP TABLE IF EXISTS `$tabname`";
 	$dbh->do($query);
-	$query = "CREATE TABLE `$tabname` ( $tabinit )";
+	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine";
 	$dbh->do($query);
 	if($lib eq 'OPL') {
 		$old_tabname = $tabname;
@@ -288,7 +291,15 @@ sub safe_get_id {
 	my $idvalue, @row;
 	unless(@row = $sth->fetchrow_array()) {
 		return 0 unless $addifnew;
-		@insertvalues = map {'"'. $_ .'"'} @insertvalues;
+		for my $j (0..$#insertvalues) {
+			#print "Looking at ".$insertvalues[$j]."\n";
+			if ($insertvalues[$j] ne "") {
+				$insertvalues[$j] = '"'.$insertvalues[$j].'"';
+			} else {
+				$insertvalues[$j] = NULL;
+			}
+		}
+		#print "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
 		$dbh->do("INSERT INTO `$tablename` VALUES(". join(',',@insertvalues) .")");
 		dbug "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
 		$sth = $dbh->prepare($query);
@@ -338,11 +349,11 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 						if (!defined($sectid)) {
 							$dbh->do("INSERT INTO `$tables{section}`
 						VALUES(
-							\"\",
+							NULL,
 							\"$chapid\",
 							\"-1\",
 							\"\",
-							\"\"
+							NULL
 						)"
 								);
 						dbug "INSERT INTO section VALUES(\"\", \"$chapid\", \"-1\", \"\", \"\" )\n";
@@ -370,13 +381,13 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 					if (!defined($bookid)) {
 						$dbh->do("INSERT INTO `$tables{textbook}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$textinfo{TitleText}\",
 						\"$textinfo{EditionText}\",
 						\"$textinfo{AuthorText}\",
-						\"\",
-						\"\",
-						\"\"
+						NULL,
+						NULL,
+						NULL
 					)"
 							);
 						dbug "INSERT INTO textbook VALUES( \"\", \"$textinfo{TitleText}\", \"$textinfo{EditionText}\", \"$textinfo{AuthorText}\", \"\", \"\", \"\" )\n";
@@ -432,7 +443,7 @@ print "Number of files processed:\n";
 #### Now search for tagged problems
 #recursive search for all pg files
 
-find({ wanted => \&pgfiles, follow_fast=> 1}, $libraryRoot);
+File::Find::find({ wanted => \&pgfiles, follow_fast=> 1}, $libraryRoot);
 
 sub kwtidy {
 	my $s = shift;
@@ -528,8 +539,13 @@ sub pgfiles {
 			#remove leading and trailing spaces from firstname, which includes any middle name too.
 			$firstname =~ s/^\s*//;
 			$firstname =~ s/\s*$//;
-			my $author_id = safe_get_id($tables{author}, 'author_id',
-				qq(WHERE lastname = ? AND firstname = ?), [$lastname, $firstname], 1, "", $tags->{Institution}, $lastname, $firstname,"");
+			$lastname =~ s/^\s*//;
+			$lastname =~ s/\s*$//;
+			my $author_id = 0;
+			if($lastname) {
+				$author_id = safe_get_id($tables{author}, 'author_id',
+					qq(WHERE lastname = ? AND firstname = ?), [$lastname, $firstname], 1, "", $tags->{Institution}, $lastname, $firstname,"");
+			}
 
 			# path table
 
@@ -566,6 +582,7 @@ sub pgfiles {
 
 			foreach my $keyword (@{$tags->{keywords}}) {
 				$keyword =~ s/[\'\"]//g;
+				$keyword = kwtidy($keyword);
 				my $keyword_id = safe_get_id($tables{keyword}, 'keyword_id',
 					qq(WHERE keyword = ?), [$keyword], 1, "", $keyword);
 
@@ -590,23 +607,24 @@ sub pgfiles {
 				# textbook table
 
 				$text = $texthashref->{TitleText};
-				$edition = $texthashref->{EditionText};
+				$edition = $texthashref->{EditionText} || 0;
+				$edition =~ s/[^\d\.]//g;
 				$textauthor = $texthashref->{AuthorText};
 				next unless($text and $textauthor);
-				my $chapnum = $texthashref->{chapter};
-				my $secnum = $texthashref->{section};
+				my $chapnum = $texthashref->{chapter} || -1;
+				my $secnum = $texthashref->{section} || -1;
 				$query = "SELECT textbook_id FROM `$tables{textbook}` WHERE title = \"$text\" AND edition = \"$edition\" AND author=\"$textauthor\"";
 				my $textbook_id = $dbh->selectrow_array($query);
 				if (!defined($textbook_id)) {
 					$dbh->do("INSERT INTO `$tables{textbook}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$text\",
 						\"$edition\",
 						\"$textauthor\",
-						\"\",
-						\"\",
-						\"\"
+						NULL,
+						NULL,
+						NULL
 					)"
 							);
 					dbug "INSERT INTO textbook VALUES( \"\", \"$text\", \"$edition\", \"$textauthor\", \"\", \"\", \"\" )\n";
@@ -621,11 +639,11 @@ sub pgfiles {
 				if (!defined($chapter_id)) {
 					$dbh->do("INSERT INTO `$tables{chapter}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$textbook_id\",
 						\"".$chapnum."\",
 						\"$tags->{DBchapter}\",
-						\"\"
+						NULL
 					)"
 							);
 					dbug "\nLate add into $tables{chapter} \"$text\", \"$edition\", \"$textauthor\", $chapnum $tags->{chapter} from $name\n", 1;
@@ -641,11 +659,11 @@ sub pgfiles {
 				if (!defined($section_id)) {
 					$dbh->do("INSERT INTO `$tables{section}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$chapter_id\",
 						\"$secnum\",
 						\"$tags->{DBsection}\",
-						\"\"
+						NULL
 					)"
 							);
 					dbug "INSERT INTO section VALUES(\"\", \"$textbook_id\", \"$secnum\", \"$tags->{DBsection}\", \"\" )\n";
@@ -660,10 +678,10 @@ sub pgfiles {
 					if (!defined($problem_id)) {
 						$dbh->do("INSERT INTO `$tables{problem}`
 					VALUES(
-						\"\",
+						NULL,
 						\"$section_id\",
 						\"$tp\",
-						\"\"
+						NULL
 					)"
 								);
 						dbug "INSERT INTO problem VALUES( \"\", \"$section_id\", \"$tp\", \"\" )\n";
@@ -715,7 +733,7 @@ my @subject_names = ();
 while ( my @row = $sth->fetchrow_array ) {
 	push(@subjects,$row[0]);
 	push(@subject_names,$row[1]);
-}
+  }
 
 
 my @subject_tree;  # array to store the individual library tree for each subject 
@@ -733,7 +751,7 @@ foreach my $i (0..$#subjects){
 	while ( my @row = $sth->fetchrow_array ) {
 		push(@chapters,$row[0]);
 		push(@chapter_names,$row[1]);
-	}
+	  }
 
 
 	my @chapter_tree; # array to store the individual library tree for each chapter
@@ -746,16 +764,19 @@ foreach my $i (0..$#subjects){
 
 		my @subfields = ();
 		while ( my @row = $sth->fetchrow_array ) {
-		    push(@subfields,$row[1]);
-		}
+			my $section_name;
+			$section_name->{name} = $row[1];
+			my $clone = { %{ $section_name } };  # need to clone it before pushing into the @subfields array.
+		    push(@subfields,$clone);
+	    }
 
 		my $chapter_tree;
-
 		$chapter_tree->{name} = $chapter_name;
 		$chapter_tree->{subfields} = \@subfields;
 
 		my $clone = { %{ $chapter_tree } };  # need to clone it before pushing into the @chapter_tree array.
 		push(@chapter_tree,$clone);
+
 
 
 	}
@@ -768,14 +789,11 @@ foreach my $i (0..$#subjects){
 	push (@subject_tree, $clone);
 }
 
-	#print to_json(\@subject_tree);
-	#print "\n\n";
 
 $dbh->disconnect;
 
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-
-my $file = "$webwork_htdocs/library-tree.json";
+my $file = "$webwork_htdocs/DATA/library-tree.json";
 
 # use a variable for the file handle
 my $OUTFILE;
@@ -789,5 +807,52 @@ print { $OUTFILE } to_json(\@subject_tree) or die "Cannot write to $file";
 
 # check for errors
 close $OUTFILE or die "Cannot close $file";
+
+print "\n\nWrote Library Tree to $file\n";
+
+my $dirs = buildTree($libraryRoot);
+
+$file = "$webwork_htdocs/DATA/library-directory-tree.json";
+
+# use the three arguments version of open
+# and check for errors
+open $OUTFILE, '>', $file  or die "Cannot open $file";
+
+# you can check for errors (e.g., if after opening the disk gets full)
+print { $OUTFILE } to_json([$dirs]) or die "Cannot write to $file";
+
+# check for errors
+close $OUTFILE or die "Cannot close $file";
+
+
+print "Wrote Library Tree to $file\n";
+
+sub buildTree {
+	my $absoluteDir = shift;
+	my $branch = {};
+	my ($name,$dir) = fileparse($absoluteDir);
+	$branch->{name} = $name;
+	my @dirs = File::Find::Rule->maxdepth(1)->relative(1)->extras({ follow => 1 })->directory->in($absoluteDir);
+	if (scalar(@dirs)==0){
+		return undef;
+	}
+
+	my @branches = ();
+
+	for my $dir (@dirs){
+		my $theBranch = buildTree($absoluteDir . "/" . $dir);
+		if ($theBranch) {
+			push(@branches,$theBranch)
+		} else {
+			$b = {};
+			$b->{name} = $dir;
+			push(@branches,$b);
+		}
+	}
+
+	$branch->{subfields} = \@branches;
+
+	return $branch;
+}
 
 print "\nDone.\n";

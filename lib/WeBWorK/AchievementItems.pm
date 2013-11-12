@@ -20,6 +20,9 @@ ExtendDueDate
 DoubleSet
 RessurectHW
 Surprise
+SuperExtendDueDate
+HalfCreditSet
+FullCreditSet
 )];
 
 =head2 NAME
@@ -222,6 +225,87 @@ sub use_item {
     #add time to the due date and answer datae and remove item from inventory
     $set->due_date($set->due_date()+86400);
     $set->answer_date($set->answer_date()+86400);
+
+    $db->putUserSet($set);
+	
+    $globalData->{$self->{id}} = 0;
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $db->putGlobalUserAchievement($globalUserAchievement);
+
+    return;
+}
+
+#Item to extend a due date by 48 hours. 
+
+package WeBWorK::AchievementItems::SuperExtendDueDate;
+our @ISA = qw(WeBWorK::AchievementItems);
+use Storable qw(nfreeze thaw);
+use WeBWorK::Utils qw(sortByName before after between);
+
+sub new {
+    my $class = shift;
+    my %options = @_;
+
+    my $self = {
+	id => "SuperExtendDueDate",
+	name => "Robe of Longevity",
+	description => "Adds 48 hours to the due date of a homework.",
+	%options,
+    };
+    
+    bless($self, $class);
+    return $self;
+}
+    
+sub print_form {
+    my $self = shift;
+    my $sets = shift;
+    my $setProblemCount = shift;
+
+    my @openSets;
+    my @openSetCount;
+    my $maxProblems=0;
+
+    #find all currently open sets and print to a form
+    for (my $i=0; $i<=$#$sets; $i++) {
+	if (between($$sets[$i]->open_date, $$sets[$i]->answer_date)  && $$sets[$i]->assignment_type eq "default") {
+	    push(@openSets,$$sets[$i]->set_id);
+	}
+    }
+
+    return join("",
+	CGI::p("Choose the set whose due date you would like to extend."),
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"}));
+}
+
+sub use_item {
+    my $self = shift;
+    my $userName = shift;
+    my $r = shift;
+    my $db = $r->db;
+    my $ce = $r->ce;
+
+    #check and see if the student has the achievement and if the data is valid
+    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
+    return "No achievement data?!?!?!" 
+	unless ($globalUserAchievement->frozen_hash);
+    my $globalData = thaw($globalUserAchievement->frozen_hash);
+
+    return "You are $self->{id} trying to use an item you don't have" unless
+	($globalData->{$self->{id}});
+
+    my $setID = $r->param('ext_set_id');
+    return "You need to input a Set Name" unless
+	(defined $setID);
+
+    my $set = $db->getMergedSet($userName,$setID);
+    return "Couldn't find that set!" unless
+	($set);
+
+    #add time to the due date and answer datae and remove item from inventory
+    $set->due_date($set->due_date()+172800);
+    $set->answer_date($set->answer_date()+172800);
 
     $db->putUserSet($set);
 	
@@ -731,12 +815,105 @@ sub use_item {
 
     return "There was an error accessing that problem." unless $problem;
 
-    #set status (grade) to .5 if that makes it larger. 
+    #Add .5 to grade with max of 1
 
-    $problem->status(.5) if ($problem->status < .5);
+    if ($problem->status < .5) {
+	$problem->status($problem->status + .5); 
+    } else {
+	$problem->status(1);
+    }
 
     $db->putUserProblem($problem);
 	
+    $globalData->{$self->{id}} = 0;
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $db->putGlobalUserAchievement($globalUserAchievement);
+
+    return;
+}
+
+#Item to give half credit on all problems in a homework set.
+package WeBWorK::AchievementItems::HalfCreditSet;
+our @ISA = qw(WeBWorK::AchievementItems);
+use Storable qw(nfreeze thaw);
+use WeBWorK::Utils qw(sortByName before after between);
+
+sub new {
+    my $class = shift;
+    my %options = @_;
+
+    my $self = {
+	id => "HalfCreditSet",
+	name => "Lesser Tome of Enlightenment",
+	description => "Gives half credit on every problem in a set.",
+	%options,
+    };
+    
+    bless($self, $class);
+    return $self;
+}
+    
+sub print_form {
+    my $self = shift;
+    my $sets = shift;
+    my $setProblemCount = shift;
+
+    my @openSets;
+    my @openSetCount;
+    my $maxProblems=0;
+
+    for (my $i=0; $i<=$#$sets; $i++) {
+	push(@openSets,$$sets[$i]->set_id);
+    }
+    
+    
+    #print form with sets 
+    return join("",
+		CGI::p("Choose the set which you would like to ressurect."),
+		"Set Name ",
+		CGI::popup_menu({values=>\@openSets,id=>"hcs_set_id", name=>"hcs_set_id"}));
+}
+
+sub use_item {
+    my $self = shift;
+    my $userName = shift;
+    my $r = shift;
+    my $db = $r->db;
+    my $ce = $r->ce;
+
+    #validate data
+
+    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
+    return "No achievement data?!?!?!" 
+	unless ($globalUserAchievement->frozen_hash);
+    my $globalData = thaw($globalUserAchievement->frozen_hash);
+
+    return "You are $self->{id} trying to use an item you don't have" unless
+	($globalData->{$self->{id}});
+
+    my $setID = $r->param('hcs_set_id');
+    return "You need to input a Set Name" unless
+	(defined $setID);
+
+    # go through the problems in the set
+    my @probIDs = $db->listUserProblems($userName,$setID);
+
+    foreach my $probID (@probIDs) {
+	my $problem = $db->getUserProblem($userName, $setID, $probID);
+	
+	return "There was an error accessing that problem." unless $problem;
+
+	#Add .5 to grade with max of 1
+	
+	if ($problem->status < .5) {
+	    $problem->status($problem->status + .5); 
+	} else {
+	    $problem->status(1);
+	}
+	
+	$db->putUserProblem($problem);
+    }
+    
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
@@ -846,6 +1023,90 @@ sub use_item {
 
     $db->putUserProblem($problem);
 	
+    $globalData->{$self->{id}} = 0;
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $db->putGlobalUserAchievement($globalUserAchievement);
+
+    return;
+}
+
+#Item to give half credit on all problems in a homework set.
+package WeBWorK::AchievementItems::FullCreditSet;
+our @ISA = qw(WeBWorK::AchievementItems);
+use Storable qw(nfreeze thaw);
+use WeBWorK::Utils qw(sortByName before after between);
+
+sub new {
+    my $class = shift;
+    my %options = @_;
+
+    my $self = {
+	id => "FullCreditSet",
+	name => "Greater Tome of Enlightenment",
+	description => "Gives full credit on every problem in a set.",
+	%options,
+    };
+    
+    bless($self, $class);
+    return $self;
+}
+    
+sub print_form {
+    my $self = shift;
+    my $sets = shift;
+    my $setProblemCount = shift;
+
+    my @openSets;
+    my @openSetCount;
+    my $maxProblems=0;
+
+    for (my $i=0; $i<=$#$sets; $i++) {
+	push(@openSets,$$sets[$i]->set_id);
+    }
+    
+    
+    #print form with sets 
+    return join("",
+		CGI::p("Choose the set which you would like to ressurect."),
+		"Set Name ",
+		CGI::popup_menu({values=>\@openSets,id=>"fcs_set_id", name=>"fcs_set_id"}));
+}
+
+sub use_item {
+    my $self = shift;
+    my $userName = shift;
+    my $r = shift;
+    my $db = $r->db;
+    my $ce = $r->ce;
+
+    #validate data
+
+    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
+    return "No achievement data?!?!?!" 
+	unless ($globalUserAchievement->frozen_hash);
+    my $globalData = thaw($globalUserAchievement->frozen_hash);
+
+    return "You are $self->{id} trying to use an item you don't have" unless
+	($globalData->{$self->{id}});
+
+    my $setID = $r->param('fcs_set_id');
+    return "You need to input a Set Name" unless
+	(defined $setID);
+
+    # go through the problems in the set
+    my @probIDs = $db->listUserProblems($userName,$setID);
+
+    foreach my $probID (@probIDs) {
+	my $problem = $db->getUserProblem($userName, $setID, $probID);
+	
+	return "There was an error accessing that problem." unless $problem;
+
+	# set status to 1
+	$problem->status(1);
+
+	$db->putUserProblem($problem);
+    }
+    
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);

@@ -57,6 +57,8 @@ use WeBWorK::Localize;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Scalar::Util qw(weaken);
+use HTML::Entities;
+use HTML::Scrubber;
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -362,7 +364,24 @@ Must be called before the message() template escape is invoked.
 
 
 sub addmessage {
+    #addmessages takes html so we use htmlscrubber to get rid of 
+    # any scripts or html comments.  However, we leave everything else
+    # by default. 
+
 	my ($self, $message) = @_;
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+	
+	$message = $scrubber->scrub($message);
 	$self->{status_message} .= $message;
 }
 
@@ -604,7 +623,7 @@ sub links {
 		
 		my $urlpath_args = $options{urlpath_args} || {};
 		my $systemlink_args = $options{systemlink_args} || {};
-		my $text = $options{text};
+		my $text = HTML::Entities::encode_entities($options{text});
 		my $active = $options{active};
 		my %target = ($options{target} ? (target => $options{target}) : ());
 		
@@ -746,11 +765,11 @@ sub links {
 				# Homework Set Editor
 				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor1};
+
 				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor2};
 				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor3};
-
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
@@ -779,13 +798,6 @@ sub links {
 					if (defined $problemID) {
 					    print CGI::start_li();
 						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
-							if $ce->{showeditors}->{pgproblemeditor3};;
-						print CGI::end_ul();
-					}
-					if (defined $problemID) {
-						print CGI::start_ul();
-
 						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 							if $ce->{showeditors}->{simplepgeditor};;
 						print CGI::end_ul();
@@ -929,22 +941,26 @@ sub loginstatus {
 	my $r = $self->r;
 	my $authen = $r->authen;
 	my $urlpath = $r->urlpath;
-	
+	#This will contain any extra parameters which are needed to make
+	# the page function properly.  This will normally be empty.  
+	my $extraStopActingParams = $r->{extraStopActingParams};
+
 	if ($authen and $authen->was_verified) {
 		my $courseID = $urlpath->arg("courseID");
 		my $userID = $r->param("user");
 		my $eUserID = $r->param("effectiveUser");
 		
+		$extraStopActingParams->{effectiveUser} = $userID;
 		my $stopActingURL = $self->systemLink($urlpath, # current path
-			params => { effectiveUser => $userID },
-		);
+			params=>$extraStopActingParams);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 		
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1]. ", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 		} else {
-			print $r->maketext("Logged in as [_1]. ", $userID) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
-			print $r->maketext("Acting as [_1]. ", $eUserID) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
+			print $r->maketext("Logged in as [_1]. ", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print CGI::br();
+			print $r->maketext("Acting as [_1]. ", HTML::Entities::encode_entities($eUserID)) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
 		}
 	} else {
 		print $r->maketext("Not logged in.");
@@ -1100,7 +1116,8 @@ sub message {
 	my ($self) = @_;
 	
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::message -->\n";
-	print $self->{status_message} if exists $self->{status_message};
+	print $self->{status_message}
+	    if exists $self->{status_message};
 	
 	print "<!-- END " . __PACKAGE__ . "::message -->\n";
 	
@@ -1591,7 +1608,22 @@ sub optionsMacro {
 		);
 		$result .= CGI::br();
 	}
-	
+
+	if (exists $options_to_show{useMathView}) {
+		# Note, 0 is a legal value, so we can't use || in setting this
+		my $curr_useMathView = defined($self->r->param("useMathView")) ?
+		    $self->r->param("useMathView") : $self->r->ce->{pg}->{options}->{useMathView};
+		$result .= $r->maketext("Use Equation Editor?");
+		$result .= CGI::br();
+		$result .= CGI::radio_group(
+			-name => "useMathView",
+			-values => [1,0],
+			-default => $curr_useMathView,
+			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+		);
+		$result .= CGI::br();
+	}
+
 	$result .= CGI::submit(-name=>"redisplay", -label=>$r->maketext("Apply Options"));
 	$result .= CGI::end_div();
 	$result .= CGI::end_form();
@@ -1723,7 +1755,7 @@ sub hidden_fields {
 # 		my @values = $r->param($param);
 # 		$html .= CGI::hidden($param, @values);  #MEG
 # 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
-		my $value  = $r->param($param);
+		my $value  = HTML::Entities::encode_entities($r->param($param));
 #		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
 
@@ -1990,7 +2022,7 @@ sub systemLink {
 			} else {
 				$url .= "&";
 			}
-			$url .= join "&", map { "$name=$_" } @values;
+			$url .= join "&", map { "$name=".HTML::Entities::encode_entities($_) } @values;
 		}
 	}
 	
@@ -2043,46 +2075,6 @@ Used by Problem, ProblemSet, and Hardcopy to report errors encountered during
 problem rendering.
 
 =cut
-
-=item mathview_scripts()
-
-Prints javascript calls needed to run mathview.
-
-=cut
-
-sub mathview_scripts {
-	my $self = shift;
-	my $ce = $self->r->ce;
-	my $enable_mathview = $ce->{pg}{specialPGEnvironmentVars}{MathView}//0; # initialize to zero if undefined.
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	my $MathJax = $ce->{webworkURLs}->{MathJax};
-# FIXME -- this gives the correct locations for release/2.7 but is 
-# definitely not correct for the develop (and probably the next release ) version
-# where the organization of the js directory has been completely rearranged. -- MEG
-# Added CODE JQuery MathView
-	my @out = (
-#		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-1.8.2.min.js"}), 
-		#CGI::end_script(),	"\n",	
-		#CGI::start_script({type=>"text/javascript", src=>"http://code.jquery.com/ui/1.9.0/jquery-ui.js"}), 
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/components/jquery-ui/ui/jquery-ui.js"}), 
-		CGI::end_script(),"\n",		
-#		CGI::start_script({type=>"text/javascript", src=>"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"}), 
-#		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS_HTML-full"}), 
-#		CGI::start_script({type=>"text/javascript", src=>"$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML-full"}), #better accessibility
-		CGI::start_script({type=>"text/javascript", src=>$MathJax}), #best 
-
-		CGI::end_script(),	"\n",			
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/jquery-mathview-1.1.0.js"}), 
-		CGI::end_script(),"\n",
-		CGI::start_script({type=>"text/javascript", src=>"$site_url/js/mathview/operations.js"}), 
-		CGI::end_script(),"\n",
-		CGI::start_script({type=>"text/javascript"}),
-		 q{  $(function(){$('.codeshard').addMathEditorButton("PGML");});  },
-        CGI::end_script(), "\n",
-	);
-	($enable_mathview)? @out:(); 
-}
-# End CODE JQuery MathView
 
 sub errorOutput($$$) {
 	my ($self, $error, $details) = @_;
@@ -2148,8 +2140,11 @@ sub warningOutput($$) {
 	print "Entering ContentGenerator::warningOutput subroutine</br>" if $TRACE_WARNINGS;
 	my @warnings = split m/\n+/, $warnings;
 	foreach my $warning (@warnings) {
-		#$warning = escapeHTML($warning);  # this would prevent using tables in output from answer evaluators
-		$warning = CGI::li(CGI::code($warning));
+	    # This used to be commented out because it interfered with warnings
+	    # from PG.  But now PG has a seperate warning channel thats not
+	    # encoded.  
+	    $warning = HTML::Entities::encode_entities($warning);  
+	    $warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);
 	

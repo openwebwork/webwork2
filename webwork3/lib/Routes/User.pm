@@ -9,8 +9,11 @@ package Routes::User;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Routes qw/convertObjectToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use WeBWorK::Utils qw/cryptPassword/;
 
+our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;
+our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 
 ###
@@ -22,23 +25,13 @@ use Routes qw/convertObjectToHash/;
 
 get '/courses/:course/users' => sub {
 
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
-
-    my $ce = vars->{ce};
-    my $db = vars->{db};
-
-
-    my @allUsers = $db->getUsers($db->listUsers);
-    my %permissionsHash =  reverse %{$ce->{userRoles}};
+    my @allUsers = vars->{db}->getUsers(vars->{db}->listUsers);
+    my %permissionsHash =  reverse %{vars->{ce}->{userRoles}};
     foreach my $u (@allUsers)
     {
-        my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
+        my $PermissionLevel = vars->{ce}->getPermissionLevel($u->{'user_id'});
         $u->{'permission'} = $PermissionLevel->{'permission'};
 
 		my $studid= $u->{'student_id'};
@@ -58,31 +51,17 @@ get '/courses/:course/users' => sub {
 
 
 post '/courses/:course_id/users/:user_id' => sub {
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
 
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
-
-	debug("adding a new user with user_id: " . param('user_id'));
-
-
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	
 	my $user = vars->{db}->getUser(param('user_id'));
-	return {error=>"The user with login " . param('user_id') . " already exists"} if $user;
-
+	send_error("The user with login " . param('user_id') . " already exists",404) if $user;
+	
 	my $new_student = vars->{db}->{user}->{record}->new();
 	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
-	$new_student->user_id(param('user_id'));
-	$new_student->first_name(param('first_name'));
-	$new_student->last_name(param('last_name'));
-	$new_student->status($enrolled);
-	$new_student->student_id(param('student_id'));
-	$new_student->email_address(param('email_address'));
-	$new_student->recitation(param('recitation'));
-	$new_student->section(param('section'));
-	$new_student->comment(param('comment'));
+	for my $key (@user_props) {
+        $new_student->{$key} = param($key);
+    }
 	
 	# password record
 	my $cryptedpassword = "";
@@ -124,11 +103,45 @@ post '/courses/:course_id/users/:user_id' => sub {
 	}
 
 	if (scalar(@messages)>0) {
-		return {error=>"Attempt to add user failed", message=>\@messages};
+		send_error("Attempt to add user failed.  MESSAGE: " . join(", ",@messages), 400);
 	} else {
-		return Routes::convertObjectToHash($new_student);
+		return convertObjectToHash($new_student);
 	}
 };
+
+
+###
+#
+#  update a new user *user_id* in course *course_id*
+#
+###
+
+
+put '/courses/:course_id/users/:user_id' => sub {
+	
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+
+	my $user = vars->{db}->getUser(param('user_id'));
+	
+	send_error("The user with login " . param('user_id') . " does not exist",404) unless $user;
+
+	for my $key (@user_props) {
+        $user->{$key} = param($key);
+    }
+
+    if (defined(params->{new_password})){
+    	my $password = vars->{db}->getPassword(params->{user_id});
+    	$password->{password} = cryptPassword(params->{new_password});
+    	vars->{db}->putPassword($password);
+    }
+
+    my $result = vars->{db}->putUser($user);
+
+	return convertObjectToHash($user);
+
+};
+
+
 
 
 
@@ -140,35 +153,66 @@ post '/courses/:course_id/users/:user_id' => sub {
 
 
 del '/courses/:course_id/users/:user_id' => sub {
-	if( ! session 'logged_in'){
-		return { error=>"You need to login in again."};
-	}
 
-	if (0+(session 'permission') < 10) {
-		return {error=>"You don't have the necessary permission"};
-	}
-
-	debug("Deleting user with user_id: " . param('user_id'));
-
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	
 	# check to see if the user exists
 
 	my $user = vars->{db}->getUser(param('user_id')); # checked
-	return {error=>"Record for visible user " . param('user_id') . ' not found.'} unless $user;
+	send_error("Record for visible user " . param('user_id') . ' not found.',404) unless $user;
 
 	if (param('user_id') eq param('user') )
 	{
-		return {error=>"You can't delete yourself from the course."};
+		send_error("You can't delete yourself from the course.",404);
 	} 
 
 	my $del = vars->{db}->deleteUser(param('user_id'));
 		
 	if($del) {
-		return {success=>"User with login " . param('user_id') . ' successfully deleted.'};
+		return convertObjectToHash($user);
 	} else {
-		return {error=>"User with login " . param('user_id') . ' could not be deleted.'};
+		send_error("User with login " . param('user_id') . ' could not be deleted.',400);
 	}
 
 };
+
+####
+#
+#  Get problems in set set_id for user user_id for course course_id
+#
+#  returns a UserSet
+#
+####
+
+get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
+
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+
+	debug 'in /courses/sets/users/problems';
+
+    if (! vars->{db}->existsGlobalSet(params->{set_id})){
+    	send_error("The set " . params->{set_id} . " does not exist in course " . params->{course_id},404);
+    }
+
+    if (! vars->{db}->existsUserSet(params->{user_id}, params->{set_id})){
+    	send_error("The user " . params->{user_id} . " has not been assigned to the set " . params->{set_id} 
+    				. " in course " . params->{course_id},404);
+    }
+
+    my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
+
+    my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
+
+    if(request->is_ajax){
+        return convertArrayOfObjectsToHash(\@problems);
+    } else {  # a webpage has requested this
+        template 'problem.tt', {course_id=> params->{course_id}, set_id=>params->{set_id}, user=>params->{user_id},
+                                    problem_id=>params->{problem_id}, pagename=>"Problem Viewer",
+                                    problems => to_json(convertArrayOfObjectsToHash(\@problems)),
+                                 	user_set => to_json(convertObjectToHash($userSet))}; 
+    }
+};
+
 
 ####
 #
@@ -178,32 +222,18 @@ del '/courses/:course_id/users/:user_id' => sub {
 
 get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
-    if (0+(session 'permission') <10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
+  	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 
-   
-    my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
-
-    return Routes::convertObjectToHash($problem);
+    return convertObjectToHash($problem);
 };
 
 put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
-    if (0+(session 'permission') <10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-   
-    my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
+	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 
     for my $key (keys (%{$problem})){
     	if(param($key)){
@@ -213,7 +243,7 @@ put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => su
 
     vars->{db}->putUserProblem($problem);
 
-    return Routes::convertObjectToHash($problem);
+    return convertObjectToHash($problem);
 };
 
 

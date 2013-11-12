@@ -28,16 +28,23 @@ use WeBWorK::CourseEnvironment;
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
+
+print $libraryRoot . "\n";
+
 my $libraryVersion = $ce->{problemLibrary}->{version};
 
 my($filename, $directories) = fileparse($libraryRoot);
-my $dirs = buildTree($libraryRoot);
 
+my @dirArray = ();
+push(@dirArray,buildTree($libraryRoot));
+
+
+print "Creating the Directory Tree\n"
 
 #$dbh->disconnect;
 
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-my $file = "$webwork_htdocs/library-directory-tree.json";
+my $file = "$webwork_htdocs/DATA/library-directory-tree.json";
 
 # use a variable for the file handle
 my $OUTFILE;
@@ -47,7 +54,7 @@ my $OUTFILE;
 open $OUTFILE, '>', $file  or die "Cannot open $file";
 
 # you can check for errors (e.g., if after opening the disk gets full)
-print { $OUTFILE } to_json($dirs) or die "Cannot write to $file";
+print { $OUTFILE } to_json(\@dirArray) or die "Cannot write to $file";
 
 # check for errors
 close $OUTFILE or die "Cannot close $file";
@@ -70,15 +77,27 @@ sub buildTree {
 	for my $dir (@dirs){
 		my $theBranch = buildTree($absoluteDir . "/" . $dir);
 		if ($theBranch) {
+			my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir . "/" . $dir);
+			$theBranch->{num_files} = scalar(@files);
 			push(@branches,$theBranch)
 		} else {
 			$b = {};
 			$b->{name} = $dir;
-			push(@branches,$b);
+			
+			my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir . "/" . $dir);
+			
+			#print $absoluteDir . "/" . $dir . "   " . $b->{num_files} . "\n";
+			if (scalar(@files)>0){
+				$b->{num_files} = scalar(@files);
+				push(@branches,$b);
+			}
 		}
 	}
 
 	$branch->{subfields} = \@branches;
+	my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir);
+	$branch->{num_files} = scalar(@files);
+
 
 	return $branch;
 }

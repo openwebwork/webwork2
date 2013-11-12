@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -32,6 +31,7 @@
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 <!--#if can="output_jquery_ui"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
 	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
@@ -55,9 +55,13 @@ var tabberOptions = {manualStartup:true};
 	<!--#output_JS-->
 <!--#endif-->
 
+
 <title><!--#path style="text" text=" : " textonly="1"--></title>
+
+
 <!--#head-->
 </head>
+
 <body>
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
@@ -66,7 +70,7 @@ var tabberOptions = {manualStartup:true};
 <!-- Bootstrap Fluid Layout Scaffolding start -->
 <div class="container-fluid">
 <!-- Header -->
-<div id = "masthead" class="row-fluid">
+<div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
 		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
 	</div>
@@ -81,7 +85,7 @@ var tabberOptions = {manualStartup:true};
 <div class="row-fluid">
 
 <!-- Navigation -->
-<div id="site-navigation" class="span2 hidden-phone">
+<div id="site-navigation" class="span2 hidden-phone" role="navigation" aria-label="main navigation">
   <!--#if can="links"-->
         <div id="site-links">
 	  <!--#links-->
@@ -104,9 +108,11 @@ var tabberOptions = {manualStartup:true};
 <div id="content" class="span10" >
 	<!-- Breadcrumb -->
 	<div class="row-fluid"><div class="span12">
+	<div role="navigation" aria-label="breadcrumb navigation">
 	<ul class="breadcrumb">
 		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
 	</ul>
+	</div>
 	</div></div>
 
 	<!-- Page Title -->
@@ -186,14 +192,14 @@ var tabberOptions = {manualStartup:true};
 				
 
 
-			<!--#if can="output_hidden_info"-->
-				<!--#output_hidden_info-->
-			<!--#endif-->
 
 			<!--#if can="output_form_start"-->
 			<div class="row-fluid">
 			  <div class="span10">
 				<!--#output_form_start-->
+			    <!--#if can="output_hidden_info"-->
+				     <!--#output_hidden_info-->
+			    <!--#endif-->
 
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">
@@ -298,7 +304,7 @@ var tabberOptions = {manualStartup:true};
 
 
 <!-- Footer -->
-<div id="footer">
+<div id="footer" role="contentinfo">
 	<!--#footer-->
 </div>
 

@@ -9,11 +9,17 @@ package ProblemSets;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Routes qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems deleteProblems/;
+use WeBWorK::Utils qw/parseDateTime/;
+use Array::Utils qw(array_minus); 
+use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 use Dancer::Plugin::Database;
+use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
 
 our @set_props = qw/set_id set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
+our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts source_file/;
 
 ###
@@ -25,13 +31,8 @@ our @problem_props = qw/problem_id flags value max_attempts source_file/;
 
 get '/courses/:course_id/sets' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    checkPermissions(10,session->{user});
 
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
 
     my @globalSetNames = vars->{db}->listGlobalSets;
     my @globalSets = vars->{db}->getGlobalSets(@globalSetNames);
@@ -49,22 +50,29 @@ get '/courses/:course_id/sets' => sub {
 
 get '/courses/:course_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
 
-    return convertObjectToHash($globalSet);
+    my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
 
+    my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+
+    my $setResults = convertObjectToHash($globalSet);
+
+    $setResults->{assigned_users} = \@userNamesFromDB;
+
+    $setResults->{problems} = convertArrayOfObjectsToHash(\@problemsFromDB);
+
+
+
+
+    return $setResults;
 };
 
 ####
-#  create a new problem set *set_id* for course *course_id*
+#  create a new (update an old) problem set *set_id* for course *course_id*
 #
 #  any property can be set by assigning that property a value
 #
@@ -73,79 +81,100 @@ get '/courses/:course_id/sets/:set_id' => sub {
 #  permission > Student
 ##
 
-post '/courses/:course_id/sets/:set_id' => sub {
+any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    debug 'in /courses/:course_id/sets/:set_id';
 
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10);
 
-    if (param('set_id') !~ /^[\w .-]*$/) {
-        return {error=>"The set name must only contain A-Za-z0-9_-."};
+    # call validator directly instead
+
+    if (param('set_id') !~ /^[\w\_.-]+$/) {
+        send_error("The set name must only contain A-Za-z0-9_-.",403);
     } 
-    if (vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The set name: " . param('set_id'). " already exists."};  
+
+    if (request->is_post() && vars->{db}->existsGlobalSet(param('set_id'))){
+        send_error("The set name: " . param('set_id'). " already exists.",404);
+    } elsif (request->is_put() && ! vars->{db}->existsGlobalSet(params->{set_id})){
+        send_error("The set name: " . param('set_id'). " does not exist.",404);  
     }
 
-    my $set = vars->{db}->newGlobalSet;
+    ####
+    #
+    # Set up the global set for either a add (if new) or put (if old)
+    #
+    ##
+
+    my $set = (request->is_post()) ? vars->{db}->newGlobalSet : vars->{db}->getGlobalSet(params->{set_id}); 
 
     for my $key (@set_props) {
         $set->{$key} = param($key);
     }
-            
-    vars->{db}->addGlobalSet($set);
+    if(request->is_post()){     
+        vars->{db}->addGlobalSet($set);
+    } else {
+        vars->{db}->putGlobalSet($set);
+    }
 
-    if(param('users_assigned')){
-        my @users = split(',',param('users_assigned'));
-        for my $user (@users){
-            my $userSet = vars->{db}->newUserSet;
-            $userSet->set_id($set->{set_id});
-            $userSet->user_id($user);
-            vars->{db}->addUserSet($userSet);
+    ##
+    #
+    #  Take care of the assigned users
+    #
+    ###
+
+    my $userNames = params->{assigned_users};
+
+    my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
+
+    my @usersToAdd = array_minus(@{$userNames},@userNamesFromDB);
+
+    my @usersToDelete = array_minus(@userNamesFromDB,@{$userNames});
+
+    for my $user (@usersToAdd){
+        addUserSet($user);
+        addUserProblems($user);
+    }
+
+    if(request->is_put){
+        for my $user (@usersToDelete){
+            vars->{db}->deleteUserSet($user,params->{set_id});
         }
     }
 
-    return convertObjectToHash($set);
+    # handle the global problems. 
+
+    my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+    if(scalar(@problemsFromDB) == scalar(@{params->{problems}})){  # then perhaps the problems need to be reordered.
+        debug "reordering or reassigning problems";
+        debug $userNames;
+        reorderProblems($userNames);
+    } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
+        debug "adding problems";
+        addProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
+    } else { # problems have been deleted.  
+        debug "deleting problems";
+        deleteProblems(vars->{db},params->{set_id},params->{problems});
+    }
+
+    ## handle the user Problems
+
+    # for my $user (@usersToAdd){
+    #     addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
+    # }
+
+    
+    my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+    my $returnSet = convertObjectToHash($set);
+
+
+    $returnSet->{assigned_users} = $userNames;
+    $returnSet->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
+
+    return $returnSet;
+
 };
-
-####
-#  update problem set *set_id* for course *course_id*
-#
-#  returns the new problem set
-#
-#  permission > Student
-##
-
-put '/courses/:course_id/sets/:set_id' => sub {
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-    if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The problem set with name: " . param('set_id'). " does not exist."};  
-    }
-
-    my $set = vars->{db}->getGlobalSet(param('set_id'));
-
-   
-    for my $key (@set_props) {
-        if (param($key)){
-            $set->{$key} = param($key);
-        }
-    }
-
-    vars->{db}->putGlobalSet($set);
-
-    return convertObjectToHash($set);
-};  
 
 
 ####
@@ -158,16 +187,10 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
 del '/courses/:course_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The set " . param('set_id'). " doesn't exist for course " . param("course_id")};
+        send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404);
     }
 
     my $setToDelete = vars->{db}->getGlobalSet(param('set_id'));
@@ -175,65 +198,12 @@ del '/courses/:course_id/sets/:set_id' => sub {
     if(vars->{db}->deleteGlobalSet(param('set_id'))){
         return convertObjectToHash($setToDelete);
     } else {
-        return {error=>"There was an error while trying to delete set " . param('set_id')};
-    }
-};
-
-###
-# reorder the problems in problem set *set_id* for course *course_id*
-#
-# returns an array of problem_id's in the new order.
-#
-# Note: there needs to be two parameters that are set
-#    1) problem_path is a comma-separated list of paths
-#    2) problem_indices is a comma-separated list of indices (problem_id) of the new order corresponding to the problems 
-#       in the problem_path
-#
-#  permission > Student
-#
-###
-
-put '/courses/:course_id/sets/:set_id/order' => sub {
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-    if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The set " . param('set_id'). " doesn't exist for course " . param("course_id")};
-    }
-
-    my @problems_from_db = vars->{db}->getAllGlobalProblems(params->{set_id});
-    my @problem_paths = split(",",params->{problem_paths});
-    my @problem_indices = split(",",params->{problem_indices});
-
-    if (scalar(@problem_paths) != scalar(@problem_indices)){
-        return {error=>"The parameters problem_paths and problem_indices must have the same number of elements separated by commas."};
-    }
-
-    for my $i (0 .. $#problem_paths) {
-        my $problem = first { $_->{source_file} eq $problem_paths[$i] } @problems_from_db;
-        debug $problem_indices[$i];
-        if (vars->{db}->existsGlobalProblem(params->{set_id},$problem_indices[$i])){
-            $problem->problem_id($problem_indices[$i]);                 
-            vars->{db}->putGlobalProblem($problem);
-            debug("updating problem $problem_paths[$i] and setting the index to $problem_indices[$i]");
-
-        } else {
-            # delete the problem with the old problem_id and create a new one
-            vars->{db}->deleteGlobalProblem(params->{set_id},$problem->{problem_id});
-            $problem->problem_id($problem_indices[$i]);
-            vars->{db}->addGlobalProblem($problem);
-
-            debug("adding new problem $problem_paths[$i] and setting the index to $problem_indices[$i]");
-        }
+        send_error("There was an error while trying to delete set " . param('set_id'),424);
     }
 
 };
+
+
 
 
 
@@ -243,21 +213,23 @@ put '/courses/:course_id/sets/:set_id/order' => sub {
 #
 #  Get a list of all user_id's assigned to set *set_id* in course *course_id* 
 #
-#  return:  array of user_id's.
+#  return:  array of properties.
 ##
 
 
 get '/courses/:course_id/sets/:set_id/users' => sub {
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
+
+    checkPermissions(10,session->{user});
+   
+    my @userIDs = vars->{db}->listSetUsers(params->{set_id});
+
+    my @sets = ();
+
+    foreach my $user_id (@userIDs){
+        push(@sets,vars->{db}->getMergedSet($user_id,params->{set_id}))
     }
 
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-    my @sets = vars->{db}->listSetUsers(param('set_id'));
-    return \@sets;
+    return convertArrayOfObjectsToHash(\@sets);
 };
 
 
@@ -272,23 +244,16 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
 #####
 
 post '/courses/:course_id/sets/:set_id/users' => sub {
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-    return {error=>"The parameter: assigned_users has not been declared"} unless param('assigned_users');
-
+    
+    checkPermissions(10,session->{user});
+    send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
     my @usersAdded = ();
 
     for my $userID (split(",",param('assigned_users'))){
 
         # check to make sure that the user is assigned to the course
-        return {error=>"The user " . $userID . " is not enrolled in the course " . param("course_id")} 
+        send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
             unless vars->{db}->getUser($userID);
 
         # check to see if the user has already been assigned and skip the addition if exists already.
@@ -321,22 +286,17 @@ post '/courses/:course_id/sets/:set_id/users' => sub {
 #####
 
 del '/courses/:course_id/sets/:set_id/users' => sub {
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
 
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-    return {error=>"The parameter: assigned_user has not been declared"};
+    checkPermissions(10,session->{user});
+    
+    send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
     my @usersDeleted = ();
 
     for my $userID (split(",",param('assigned_users'))){
 
         # check to make sure that the user is assigned to the course
-        return {error=>"The user " . $userID . " is not enrolled in the course " . param("course_id")} 
+        send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
             unless vars->{db}->getUser($userID);
 
         # check to see if the user has already been assigned and skip the addition if exists already.
@@ -352,7 +312,7 @@ del '/courses/:course_id/sets/:set_id/users' => sub {
 
 ###
 #
-#  Update properties of set *set_id* of course *course_id* for a subset of users
+#  Update properties of set *set_id* of course *course_id* for a subset of users  (updates the userSets)
 #
 #  permission > Student
 #
@@ -361,36 +321,49 @@ del '/courses/:course_id/sets/:set_id/users' => sub {
 #####
 
 put '/courses/:course_id/sets/:set_id/users' => sub {
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
+    
+    checkPermissions(10,session->{user});
 
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
+    ## remember which users were assigned
 
+    my @usersForTheSetBefore = vars->{db}->listSetUsers(params->{set_id});
 
-    return {error=>"The parameter: assigned_user has not been declared"} unless param('assigned_users');
+    ## thenfor all users that were passed in, update or create a new userSet
 
-    for my $userID (split(",",param('assigned_users'))){
-
+    for my $userID (@{params->{assigned_users}}) {
+        
         # check to make sure that the user is assigned to the course
-        return {error=>"The user " . $userID . " is not enrolled in the course " . param("course_id")} 
+        send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
             unless vars->{db}->getUser($userID);
 
-        my $set = vars->{db}->getUserSet($userID,param('set_id'));
-
-        if ($set){
-            for my $key (@set_props) {
-                if (param($key)){
-                    $set->{$key} = param($key);
-                }
+        if (vars->{db}->existsUserSet($userID,params->{set_id})) { 
+            my $set = vars->{db}->getUserSet($userID,params->{set_id});
+            for my $key (@user_set_props) {
+                $set->{$key} = params->{$key} if defined(params->{$key});
             }
-
             vars->{db}->putUserSet($set);
+        } else {
+            my $set = vars->{db}->newUserSet($userID,params->{set_id});
+            $set->{user_id} = $userID;
+            for my $key (@user_set_props) {
+                $set->{$key} = params->{$key} if defined(params->{$key});
+            }
+            vars->{db}->addUserSet($set);   
         }
     }
+
+    ## then delete all users that were in the set originally, but aren't now. 
+
+    for my $userID (@usersForTheSetBefore){
+        if (! grep(/^$userID$/,@{params->{assigned_users}})){
+            vars->{db}->deleteUserSet($userID, params->{set_id});
+        }
+    }
+
+
+    # return all passed in parameters and the current list of assigned users. 
 
     my $out = {};
     for my $key (@set_props){
@@ -402,8 +375,6 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 
     return $out; 
 
-
-    return split(",",param('assigned_users'));
 };
 
 
@@ -419,13 +390,7 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 
 get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     my $userSet = vars->{db}->getUserSet(param('user_id'),param('set_id'));
 
@@ -443,18 +408,12 @@ get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     my $userID = param('user_id');
 
     # check to make sure that the user is assigned to the course
-    return {error=>"The user " . $userID . " is not enrolled in the course " . param("course_id")} 
+    send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
             unless vars->{db}->getUser($userID);
 
     # check to see if the user has already been assigned and skip the addition if exists already.
@@ -478,29 +437,25 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
+    
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     my $userID = param('user_id');
 
     # check to make sure that the user is assigned to the course
-    return {error=>"The user " . $userID . " is not enrolled in the course " . param("course_id")} 
+    send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
             unless vars->{db}->getUser($userID);
 
     my $userSet = vars->{db}->getUserSet($userID,param('set_id'));
     if ($userSet){
         vars->{db}->deleteUserSet($userID,param('set_id'));
-        return convertObjectToHash($userSet);
     } else {
-        return {error=>"An unknown error occurred removing user " . $userID . " from set " . param('set_id'). " in course " . param('course_id')};
+        send_error("An unknown error occurred removing user " . $userID . " from set " 
+                . param('set_id'). " in course " . param('course_id'),466);
     }
 
+    return convertObjectToHash($userSet);
 };
 
 ##
@@ -510,64 +465,39 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 #  return:  UserSet properties
 ##
 
+## I think this is superceded by code above:
 
-put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-    my $userID = param('user_id');
-
-    # check to make sure that the user is assigned to the course
-    return {error=>"The user " . $userID . " is not enrolled in the course " . param("course_id")} 
-            unless vars->{db}->getUser($userID);
-
-    my $set = vars->{db}->getUserSet($userID,param('set_id'));
-
-    if ($set){
-        for my $key (@set_props) {
-            if (param($key)){
-                $set->{$key} = param($key);
-            }
-        }
-
-        vars->{db}->putUserSet($set);
-
-        return convertObjectToHash($set);
-    } else {
-        return {error=>"The user " . $userID . " is not assigned to set " . param('set_id') . " in course " . param('course_id')};
-    }
-
-};
-
-
-###
-#  return all (user) sets for user *user_id* in course *course_id*
-#
-#  permission: > Student || if user_id == user;
-#
-##
-
-get '/users/:user_id/courses/:course_id/sets' => sub {
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
-    my @userSetNames = vars->{db}->listUserSets(param('user'));
-    my @userSets = vars->{db}->getGlobalSets(@userSetNames);
+# put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     
-    return \@userSetNames;
-};
+#     checkPermissions(10,session->{user});
+
+#     my $userID = param('user_id');
+
+#     # check to make sure that the user is assigned to the course
+#     send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
+#             unless vars->{db}->getUser($userID);
+
+#     my $set = vars->{db}->getUserSet($userID,param('set_id'));
+
+#     debug $set;
+
+#     if ($set){
+#         for my $key (@user_set_props) {
+#             if (param($key)){
+#                 $set->{$key} = param($key);
+#             }
+#         }
+
+#         vars->{db}->putUserSet($set);
+
+#         return convertObjectToHash($set);
+#     } else {
+#         send_error("The user " . $userID . " is not assigned to set " . param('set_id') . " in course " 
+#                 . param('course_id'),404);
+#     }
+
+# };
+
 
 ###
 #  return all (user) sets for user *user_id* in course *course_id*
@@ -580,14 +510,8 @@ get '/users/:user_id/courses/:course_id/sets' => sub {
 
 
 get '/courses/:course_id/users/:user_id/sets' => sub {
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    
+    checkPermissions(10,session->{user});
 
     my @userSetNames = vars->{db}->listUserSets(param('user'));
     my @userSets = vars->{db}->getGlobalSets(@userSetNames);
@@ -605,13 +529,7 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
 
 get '/courses/:course_id/sets/:set_id/problems' => sub {
 
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -619,6 +537,35 @@ get '/courses/:course_id/sets/:set_id/problems' => sub {
 
 };
 
+
+###
+#
+# put '/courses/:course_id/sets/:set_id/problems'
+#
+# reorder the problems in problem set *set_id* for course *course_id*
+#
+# returns an array of problem_id's in the new order.
+#
+# Note: the parameter problems must contain an array (in the desired order) of problems
+#
+#  permission > Student
+#
+###
+
+put '/courses/:course_id/sets/:set_id/problems' => sub {
+
+    checkPermissions(10,session->{user});
+
+    if (!vars->{db}->existsGlobalSet(param('set_id'))){
+        send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404);
+    }
+
+    my @problems_from_db = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+    my @newProblems = reorderProblems(vars->{db},params->{set_id},params->{problems});
+    
+    return convertArrayOfObjectsToHash(\@newProblems);
+};
 
 
 ####
@@ -638,26 +585,23 @@ get '/courses/:course_id/sets/:set_id/problems' => sub {
 
 get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
-
+    checkPermissions(10,session->{user});
+  
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The problem set with name: " . param('set_id'). " does not exist."};  
+        send_error("The problem set with name: " . param('set_id'). " does not exist.",404);  
     }
 
     if (!vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id})) {
-        return {error=>"The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id}};
+        send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404);
     }
 
     my $problem = vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
-
-    return convertObjectToHash($problem);
+    if(request->is_ajax){
+        return convertObjectToHash($problem);
+    } else {  # a webpage has requested this
+        my $theProblem = convertObjectToHash($problem);
+        template 'problem.tt', { problem => to_json($theProblem) }; 
+    }
 };
 
 ###
@@ -672,21 +616,14 @@ get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The problem set with name: " . param('set_id'). " does not exist."};  
+        send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
     }
 
     if (!vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id})) {
-        return {error=>"The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id}};
+        send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404);
     }
 
     my $problem = vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
@@ -716,17 +653,10 @@ put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The problem set with name: " . param('set_id'). " does not exist."};  
+        send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
     }
 
     ## check if max_attempts or value was passed.  If not give them default values.
@@ -738,10 +668,7 @@ post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
     my $problem = vars->{db}->newGlobalProblem;
 
-    my $problem_info = database->quick_select('OPL_pgfile', {pgfile_id => param('problem_id')});
-    my $path_id = $problem_info->{path_id};
-    my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
-    $problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
+    $problem->{source_file} = params->{source_file};
     $problem->{max_attempts} = $maxAttempts;
     $problem->{value} = $value; 
 
@@ -776,34 +703,55 @@ post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-
-    if( ! session 'logged_in'){
-        return { error=>"You need to login in again."};
-    }
-
-    if (0+(session 'permission') < 10 && param('user') ne param('user_id')) {
-        return {error=>"You don't have the necessary permission"};
-    }
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        return {error=>"The problem set with name: " . param('set_id'). " does not exist."};  
+        send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
     }
 
     if (!vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id})) {
-        return {error=>"The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id}};
+        send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404);
     }
 
     my $problem_to_delete = vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
 
     my $result = vars->{db}->deleteGlobalProblem(params->{set_id},params->{problem_id});
 
-    if ($result == 1) {
+    if ($result) {
         return convertObjectToHash($problem_to_delete);
     } else {
-        return $result;
+        send_error("There was an error deleting the problem.",446);
     }
 
 };
+
+
+###
+#
+# post /utils/dates 
+#
+#  A utility route to convert WW date-times to unix epochs.
+#
+#  The only needed parameter is dates, an object of webwork date-times
+# 
+###
+
+post '/utils/dates' => sub {
+
+    ##  need to change this later.  Why do we need a course_id for a general renderer? 
+    setCourseEnvironment("_fake_course");
+    #checkPermissions(10,session->{user});  ## not needed but students shouldn't need to access this.
+
+    my $unixDates = {};
+
+    for my $key (qw/open_date answer_date due_date/){
+        $unixDates->{$key} = parseDateTime(params->{$key},params->{timeZone});
+    }
+    
+    return $unixDates;
+};
+
+
 
 
 

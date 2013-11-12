@@ -1,5 +1,10 @@
 # configuration file for development environment
 
+#
+#  The webwork directory needs to be set
+
+webwork_dir: "/Volumes/WW_test/opt/webwork/webwork2"
+
 # the logger engine to use
 # console: log messages to STDOUT (your console where you started the
 #          application server)
@@ -16,6 +21,17 @@ warnings: 1
 
 # should Dancer show a stacktrace when an error is caught?
 show_errors: 1
+
+# use the simple session
+session: "Simple"
+
+# templating parameters
+
+template: template_toolkit
+engines:
+    template_toolkit:
+        start_tag: "[%"
+        stop_tag: "%]"
 
 # auto_reload is a development and experimental feature
 # you should enable it by yourself if you want it

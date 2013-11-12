@@ -2,78 +2,77 @@
     setting the "settings" field and providing it an array of WeBWorKProperty models. 
     */
 
-define(['Backbone', 'underscore','views/EditableCell','config'], 
-function(Backbone, _,EditableCell,config){
+define(['Backbone', 'underscore','config'], 
+function(Backbone, _,config){
     var WWSettingsView = Backbone.View.extend({
 
         initialize: function () {
-            _.bindAll(this,'render','saveSettings');
-            this.rowTemplate = $("#ww-setting-row-template").html();
+            _.bindAll(this,'render');
+            this.settings = options.settings;
+            _(this.settings).each(function(setting){
+                setting.on("change", function (model) {
+                    console.log("saving the setting");
+                    model.save();
+                });
+            });
         },
         render: function ()
         {
             var self = this; 
+            this.$el.html($("#settings-table-template").html());
             var table = this.$(".settings-table tbody");
             _(this.settings).each(function(setting){
-                // var settingView =new WWSettingRowView({property: setting}); 
-                var settingView =new NewSettingRowView({model: setting, rowTemplate: self.rowTemplate}); 
-                table.append(settingView.render().el);
+                switch(setting.get("type")){
+                    case "boolean":
+                        var opts = [{label: "true", value: "1"}, {label: "false", value: "0"}];
+                        var propHtml = "<select class='select-list'></select>";
+                        table.append((new SelectSettingView({model: setting, theOptions: opts,
+                                                                 prop_html: propHtml})).render().el);
+                        break;
+                    case "checkboxlist":
+                        var propHtml = "<select multiple='multiple' class='select-list'></select>";
+                        var opts = _(setting.get('values')).map(function(opt){ return {label: opt, value: opt}; } );
+                        table.append((new SelectSettingView({model: setting, theOptions: opts,
+                                                                 prop_html: propHtml})).render().el);
+                        break;
+                    case "popuplist": 
+                        var propHtml = "<select class='select-list'></select>";
+                        var opts = _(setting.get('values')).map(function(opt){ return {label: opt, value: opt}; } );
+                        table.append((new SelectSettingView({model: setting, theOptions: opts,
+                                                                prop_html: propHtml})).render().el);
+                        break;
+                    case "permission":
+                        var propHtml = "<select class='select-list'></select>";
+                        // the settings have the labels stored instead of number values for permissions
+                        // perhaps we should change this? 
+                        var opts = _(config.permissions).map(function(perm){ return {label: perm.label, value: perm.label}});
+                        table.append((new SelectSettingView({model: setting, theOptions: opts,
+                                                                prop_html: propHtml})).render().el);
+                        break;
+                    case "text":
+                    case "number": 
+                        table.append((new TextSettingView({model: setting, 
+                                                prop_html: "<input class='property'>"})).render().el);
+                        break;
+                }
             });
-        },
-        events: {"click .save-settings-button": "saveSettings"},
-        saveSettings: function () {
-            console.log(this.settings);
+        return this;
         }
-
-
     });
 
-    /* The default display mode depends on the display mode and this is not working currently.  This will probably
-    * need to be hacked a bit. */
-
-
-
-    var NewSettingRowView = Backbone.View.extend({
+    var SettingView = Backbone.View.extend({
         tagName: "tr",
-        initialize: function () {
-            _.bindAll(this,'render');
-            this.rowTemplate = this.options.rowTemplate; 
-            this.bindings= { ".doc": { observe: 'doc', updateMethod: 'html'},
-                    ".doc2": {observe: "doc2", updateMethod: "html"}
-            };
-
-        },
-        /*  
-        * The HTML below should be put into a template.  
-        */ 
         render: function () {
-            this.$el.html(this.rowTemplate);
-              switch(this.model.get("type")){
-                case "text":
-                case "number": 
-                    this.$(".col2").html("<input type='text' class='property'>");
-                    _.extend(this.bindings,{".property": "value"});
-                break;
-                case "checkboxlist": 
-                   this.$(".col2").html("<select multiple='true' class='property'></select>");
-                   this.theOptions = _(this.model.get('values')).map(function(opt){ return {label: opt, value: opt}});
-                   _.extend(this.bindings,{ ".property" : {observe: "value", selectOptions: { collection: "this.theOptions"}}});
-                break;
-                case "popuplist": 
-                    this.$(".col2").html("<select class='property'></select>");
-                    this.theOptions = _(this.model.get('values')).map(function(opt){ return {label: opt, value: opt}});
-                    _.extend(this.bindings,{ ".property" : {observe: "value", selectOptions: { collection: "this.theOptions"}}});
-                break;
-                case "boolean": 
-                 this.$(".col2").html("<select class='property'></select>");
-                 this.theOptions = [{label: "true", value: true}, {label: "false", value: false}];
-                    _.extend(this.bindings,{ ".property" : {observe: "value", selectOptions: { collection: "this.theOptions"}}});
-            }
-            this.stickit(this.model,this.bindings);
-            return this; 
+            this.$el.html(_.template($("#row-setting-template").html(),options));
+            this.stickit();
+            return this;
+        },
+        bindings: { 
+            ".doc" : { observe: 'doc',  updateMethod: 'html'},
+            ".doc2": { observe: "doc2", updateMethod: "html"}
         },
         events: {
-            "click .help-button": "openHelp",
+                "click .help-button": "openHelp",
             "click .close": "closeHelp"
         },
         openHelp: function (evt){
@@ -81,95 +80,31 @@ function(Backbone, _,EditableCell,config){
         },
         closeHelp: function (evt){
             $(evt.target).parent().css("display","none");
-        },
-
+        }
     });
 
-    var WWSettingRowView = Backbone.View.extend({
-        className: "set-detail-row",
-        tagName: "tr",
-        template: _.template($("#setting-row-template").html()),
+    // send the select options in the parameter theOptions
+
+    var SelectSettingView = SettingView.extend({
         initialize: function () {
-            _.bindAll(this,'render','update');
-            this.property = this.options.property;
-            //this.dateRE =/(\d\d\/\d\d\/\d\d\d\d)\sat\s((\d\d:\d\d)([apAP][mM])\s([a-zA-Z]{3}))/;
-            this.render();
-            return this;
-        },
-        render: function() {
-            var self = this; 
-            this.$el.html(this.template(this.property.attributes));
-            
-            switch(this.property.get("type")){
-                case "text":
-                case "number":
-                    this.$el.append("<td><input type='text' value='" + this.property.get("value") + "'></input></td>");
-                    break;
-                case "checkboxlist":
-                    var opts = _(self.property.get("values")).map(function(v) {return "<li><input type='checkbox' value='"+v+"'>" + v + "</li>";});
-                    this.$el.append("<td id='prop-" + self.property.cid + "'><ul style='list-style: none'>" + opts.join("") + "</ul></td>");
-                    _(self.property.get("value")).each(function(v){
-                        self.$("#prop-" + self.property.cid + " input:checkbox[value='" + v + "']").attr("checked","checked");
-                    })
-                    break;
-                case "popuplist":
-                    var opts = _(self.property.get("values")).map(function(v) {return "<option value='" + v + "'>" + v + "</option>";});
-                    this.$el.append("<td id='prop-" + self.property.cid + "'><select class='popuplist'>" + opts + "</select>");
-                    self.$("#prop-" + self.property.cid + " select.popuplist option[value='" + self.property.get("value") + "']").attr("selected","selected");
-                    break;
-                case "boolean":
-                    this.$el.append("<td id='prop-" + self.property.cid + "'>" + 
-                                    "<select class='bool'><option value='1'>true</option><option value='0'>false</option></select");
-                    //this.$("#prop-" + self.property.cid + " select.bool option[value='0']").attr("selected","selected")
-                    this.$("#prop-" + self.property.cid + " select.bool option[value='" + self.property.get("value") +  "']").attr("selected","selected");
-     
-                   break;
-                default: 
-                    this.$el.append("<td id='value-col'> " + this.property.get("value") + "</td>");
+            _.bindAll(this,'render');
+            _.extend(this.bindings,
+                { ".select-list" : {observe: "value", selectOptions: { collection: "options.theOptions"}}});
+        }
+    });
 
-            }
-
-        
+    var TextSettingView = SettingView.extend({
+        initialize: function () {
+            _.bindAll(this,'render');
+            _.extend(this.bindings,{ ".property": {observe: "value", events: ['blur']}});
         },
-        events: {
-            "change input": "update",
-            "change select": "update",
-            "click .help-button": "openHelp",
-            "click .close": "closeHelp",
-        },
-        openHelp: function (evt){
-            $(evt.target).siblings(".help-hidden").css("display","block");
-        },
-        closeHelp: function (evt){
-            $(evt.target).parent().css("display","none");
-        },
-        update: function(evt){
-            var self = this;
-            var prop = self.property.get("var");
-            var newValue = $(evt.target).val();
-            console.log("updating " + prop);
-            console.log("new value: " + newValue);
-            switch(this.property.get("type")){
-                case "text":
-                    self.property.set("value",$(evt.target).val());
-                    break;
-                case "number":
-                    if (config.regexp.number.test(newValue)){
-                        self.property.set("value",$(evt.target).val());                        
-                    } else {
-                        console.log("Error!!! " + newValue + " is not a number");
-                    }
-
-
-                    break;
-                case "checkboxlist":
-
-                    break;
-                case "boolean":
-     
-                   break;
+        events: {"keyup": "checkForEnter"},
+        checkForEnter: function(evt){
+            if(evt.keyCode == 13){
+                $(evt.target).blur();
             }
         }
+
     });
 
     return WWSettingsView;

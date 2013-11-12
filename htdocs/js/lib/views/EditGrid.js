@@ -11,17 +11,20 @@ function(Backbone, _,EditableGrid){
 		initialize: function () {
 			_.bindAll(this,"render","updatePaginator","changePage","showFirstPage","showPreviousPage",
 					"showNextPage","showLastPage");
-			this.grid = new EditableGrid(this.options.grid_name,this.options);
-			this.paginator = this.options.paginator_name;
+			this.grid = new EditableGrid(options.grid_name,options);
+			this.paginator = options.paginator_name;
 			this.grid.tableRendered = this.updatePaginator;
 
 		},
 		render: function () {
+			var self = this;
 			console.log("in EditGrid.render()");
-            this.$el.html($(this.options.template_name).html());
+            this.$el.html($(options.template_name).html());
           
-            this.grid.renderGrid(this.options.table_name,"table table-bordered table-condensed","the_grid");
+            this.grid.renderGrid(options.table_name,"table table-bordered table-condensed","the_grid");
             this.grid.setPageIndex(0);
+
+
             return this;
  
 		},
@@ -31,6 +34,22 @@ function(Backbone, _,EditableGrid){
 	    'click button.go-back-one' : "showPreviousPage",
 	    'click button.go-forward-one': "showNextPage",
 	    'click button.goto-end': "showLastPage",
+		},
+		updateGrid: function () {
+			var self = this;
+			if(this.grid.currentContainerid){
+				this.grid.refreshGrid();
+			}
+			 // if it hasn't been rendered yet. 
+			            // (pstaab)experiment here:
+            // make a View for each row as a wrapper for Backbone.stickit
+
+            
+           /* this.rowViews = this.$("#the_grid tbody tr").map(function(i,_el){
+            	return new EditGridRowView({el: null, bindings: self.options.bindings,
+            			model: self.collection.get($(_el).attr("id").match(/(c\d+)/)[0])});
+            }); */
+
 		},
 		updatePaginator: function () {
 
@@ -75,6 +94,12 @@ function(Backbone, _,EditableGrid){
 
 
 
+	});
+
+	var EditGridRowView = Backbone.View.extend({
+		initialize: function () {
+			this.stickit(this.model,options.bindings);
+		}
 	});
 
 	return EditGrid;
