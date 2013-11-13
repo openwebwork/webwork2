@@ -170,13 +170,17 @@ $(function(){
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
 
-    });
-})
+    // the datepicker uses addOnLoadEvent, so if this function isn't defined,
+    // we dont have to worry about the datepicker.
+    if (typeof(addOnLoadEvent) === 'function') {
+	addOnLoadEvent( function () {
+	    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
+	});
+    }
+});    
 
-addOnLoadEvent(function () {
-    
-    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
-    
-});
+
+
+
 
 
