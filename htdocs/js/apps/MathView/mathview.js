@@ -20,8 +20,16 @@ $(document).keydown(function(e){
 /* load up and config mathview */
 $(document).ready(function() {
     /* Make sure mathjax is confugued for AsciiMath input */
+    MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
+	var AM = MathJax.InputJax.AsciiMath.AM;
+	for (var i=0; i< AM.symbols.length; i++) {
+	    if (AM.symbols[i].input == '**') {
+		AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
+	    }
+	}
+    });
     MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
-    
+
     /* attach a viewer to each input */
     $('.codeshard').each(function () {
 	var input = this;
