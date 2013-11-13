@@ -170,11 +170,13 @@ $(function(){
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
 
+    });
 })
 
 addOnLoadEvent(function () {
-
+    
     $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
-
+    
 });
+
 
