@@ -1,5 +1,5 @@
-define(['Backbone', 'underscore'], 
-  function(Backbone, underscore){
+define(['Backbone', 'underscore','config'], 
+  function(Backbone, _, config){
 
   var ChangePasswordView = Backbone.View.extend({
       tagName: "div",
@@ -22,6 +22,7 @@ define(['Backbone', 'underscore'],
                             buttons: {"Save New Passwords": function () {self.savePasswords(); self.$el.dialog("close")},
                                     "Cancel": function () {self.$el.dialog("close");}}
                           });
+          return this;
      },
      savePasswords: function () {
           _(this.users).each(function(user) {user.save();});

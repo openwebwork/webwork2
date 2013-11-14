@@ -2,7 +2,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
   EmailStudentsView = Backbone.View.extend({
     tagName: "div",
     className: "emailDialog",
-    initialize: function() {
+    initialize: function(options) {
        _.bindAll(this,"render"); 
        this.users = options.users;
      },
@@ -20,6 +20,7 @@ define(['Backbone', 'underscore'], function(Backbone, _){
                           buttons: {"Send Email": function () {self.sendEmail(); self.$el.dialog("close")},
                                     "Cancel": function () {self.$el.dialog("close");}}
                           });
+          return this;
      },
      sendEmail: function ()
      {

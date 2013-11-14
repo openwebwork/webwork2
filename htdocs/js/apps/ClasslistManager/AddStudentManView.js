@@ -4,7 +4,7 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
 	function(Backbone, _, User, UserList, config){	
 	var AddStudentManView = Backbone.View.extend({
 		id: "addStudManDialog",	    
-		initialize: function(){
+		initialize: function(options){
 		    var self=this;
 		    _.bindAll(this, 'render','importStudents','addStudent','openDialog','closeDialog'); // every function that uses 'this' as the current object should be in here
 		    this.collection = new UserList([new User()]);  // add a single blank user to the collection of students to import.		    		    
@@ -16,13 +16,7 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
 		    
 		    this.$el.dialog({autoOpen: false, modal: true, title: "Add Students by Hand",
 							width: (0.95*window.innerWidth), height: (0.60*window.innerHeight) });
-		    
-		    /*this.collection.on('error',function(model, error) {
-				self.errorPane.addMessage(error.message);
-		    }); */
-
-		    
-		    
+		    		    
 	     	Backbone.Validation.bind(this);
 		},
 		events: {
@@ -35,7 +29,7 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
 		template: _.template($("#add_student_man_dialog_content").html()),
 		render: function(){
 			var self = this;
-		    this.$el.html($("#manStudentTableTmpl").html());
+		    this.$el.html($("#manual-import-template").html());
 		    var table = this.$("table#man_student_table tbody");
 		    this.tableRows = []; 
 		    this.collection.each(function(user){ 
@@ -59,16 +53,8 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
 		    if (_.all(usersValid, _.identity)) { 
 		    	this.closeDialog();
 		    	this.collection.each(function(_user) {
-		    		_user.save(
-		    			{ error: function(model, xhr, options){ 
-		    				console.log(model);
-		    				console.log(xhr);
-		    				console.log(options);}, 
-		    			success: function(model, response, options){
-	    					console.log(model);
-		    				console.log(response);
-		    				console.log(options);
-		    				}});
+		    		_user.id = void 0; // make sure that the save is a POST 
+		    		_user.save();
 		    		self.courseUsers.add(_user);});
 		    }
 		},
@@ -79,9 +65,10 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
 
 	var UserRowView = Backbone.View.extend({
         tagName: "tr",
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,'render','isValid');
-        	this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),{"user_id": ".login-name", "email_address": ".email"});
+        	this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
+        		{"user_id": ".login-name", "email_address": ".email"});
 		    this.rowTemplate = options.rowTemplate;
 		    this.permissions = config.permissions;
 		
