@@ -257,6 +257,20 @@ sub name {
 	return "Homework Manager";
 }
 
+sub footer(){
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $ww_version = $ce->{WW_VERSION}||"unknown -- set ww version VERSION";
+	my $pg_version = $ce->{PG_VERSION}||"unknown -- set pg version PG_VERSION link to ../pg/VERSION";
+	my $theme = $ce->{defaultTheme}||"unknown -- set defaultTheme in localOverides.conf";
+	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
+	# print CGI::div({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
+	print CGI::div({-id=>"copyright",class=>"nav navbar-text"}, "WeBWorK &#169; $copyright_years", "| theme: $theme | ww_version: $ww_version | pg_version: $pg_version|", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
+	return ""
+}
+
+
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r      = $self->r;
@@ -431,8 +445,12 @@ sub body {
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
-	
-	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/homework-manager.html');  
+
+	my $theme_dir = $ce->{webworkDirs}->{themes};
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
+	my $template = HTML::Template->new(filename => "$theme_dir/$theme/homework-manager.html");  
+
 	print $template->output();
 	
 	print $self->hidden_authen_fields;
@@ -447,11 +465,15 @@ sub head{
 	my $self = shift;
 	my $r = $self->r;
     my $ce = $r->ce;
-
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+    my $theme_dir = "$site_url/themes";
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
+
+	
 	print "<link rel='stylesheet' href='$site_url/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>";
 	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
-    print "<link rel='stylesheet' type='text/css' href='$site_url/css/homework-manager.css' > </style>";
+    print "<link rel='stylesheet' type='text/css' href='$theme_dir/$theme/homework-manager.css' > </style>";
 	return "";
 }
 
@@ -506,9 +528,6 @@ sub getAllSets {
 
 		push(@sets,convertObjectToHash($set));
 	}
-
-	#debug(to_json(\@all_sets));
-
 	return \@sets;
 }
 
@@ -614,7 +633,7 @@ sub output_JS{
 	# my $ce = $r->ce;
 
 	my $site_url = $self->r->ce->{webworkURLs}->{htdocs};
-	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
+	print qq!<script type="text/javascript" src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
 	print qq!<script type='text/javascript'>!;
     print qq! require.config = { 'HomeworkManager': {!;

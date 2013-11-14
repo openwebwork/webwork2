@@ -39,6 +39,8 @@ my @dirArray = ();
 push(@dirArray,buildTree($libraryRoot));
 
 
+print "Creating the Directory Tree\n"
+
 #$dbh->disconnect;
 
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
@@ -75,15 +77,27 @@ sub buildTree {
 	for my $dir (@dirs){
 		my $theBranch = buildTree($absoluteDir . "/" . $dir);
 		if ($theBranch) {
+			my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir . "/" . $dir);
+			$theBranch->{num_files} = scalar(@files);
 			push(@branches,$theBranch)
 		} else {
 			$b = {};
 			$b->{name} = $dir;
-			push(@branches,$b);
+			
+			my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir . "/" . $dir);
+			
+			#print $absoluteDir . "/" . $dir . "   " . $b->{num_files} . "\n";
+			if (scalar(@files)>0){
+				$b->{num_files} = scalar(@files);
+				push(@branches,$b);
+			}
 		}
 	}
 
 	$branch->{subfields} = \@branches;
+	my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir);
+	$branch->{num_files} = scalar(@files);
+
 
 	return $branch;
 }

@@ -9,8 +9,8 @@ var require = {
         "jquery-ui":            "/webwork2_files/js/components/jquery-ui/ui/jquery-ui",
         "underscore":           "/webwork2_files/js/components/underscore/underscore",
         "jquery":               "/webwork2_files/js/components/jquery/jquery",
-//      "bootstrap":            "/webwork2_files/js/components/bootstrap/dist/js/bootstrap",
-        "bootstrap":            "/webwork2_files/js/components/bootstrap-2/docs/assets/js/bootstrap",
+        "bootstrap":            "/webwork2_files/js/components/bootstrap/dist/js/bootstrap",
+        //"bootstrap":            "/webwork2_files/js/components/bootstrap-2/docs/assets/js/bootstrap",
         "moment":               "/webwork2_files/js/components/moment/moment",
         "stickit":              "/webwork2_files/js/components/backbone.stickit/backbone.stickit",
         "imagesloaded":         "/webwork2_files/js/components/imagesloaded/imagesloaded",
@@ -33,7 +33,7 @@ var require = {
         'jquery-ui-custom': ['jquery'],
         'underscore': { exports: '_' },
         'Backbone': { deps: ['underscore', 'jquery'], exports: 'Backbone'},
-        'bootstrap':['jquery'],
+        'bootstrap':['jquery','jquery-ui'], // saying that bootstrap requires jquery-ui makes bootstrap (javascript) buttons work.
         'backbone-validation': ['Backbone'],
         'moment': {exports: 'moment'},
         'config': {deps: ['moment','editablegrid'], exports: 'config'},
@@ -45,14 +45,6 @@ var require = {
         //'eventie' : {exports :'Eventie'},
         //'eventEmitter': {exports: 'EventEmitter'},
         //'jquery-tablesorter': ['jquery'],
-        'imagesloaded': ['jquery']
-        
+        'imagesloaded': ['jquery'],
     }
 };
-
-
-
-
-//'eventie' : {exports :'eventie'},
-        //'eventEmitter': {exports: 'eventEmitter'},
-        //'

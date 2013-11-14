@@ -4,25 +4,14 @@ use Furl;
 use strict;
 use Data::Dumper;
 use JSON;
+use File::Find::Rule;
+use Path::Class;
 
-use Utils::LibraryUtils qw/list_pg_files/;
+my $level="1";
 
-my $probLib = {Library=>"OPL Library"};
-#my %probLib = ("Library","OPL Library");
-
-my @dirs = ("Library","test1","test2");
-
-@dirs = grep {!$probLib->{$_}} @dirs;
-
-print Dumper(@dirs);
-
-
-
-
-#print list_pg_files("/Volumes/WW_test/opt/webwork/courses/maa101/templates",'.',%probLib) . "\n";
-
-
-
+if ($level =~ /^[1-6](,[1-6])*$/) {
+	print $level . "\n";
+}
 exit;
 
 

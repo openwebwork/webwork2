@@ -11,7 +11,7 @@ var ProblemViewer = WebPage.extend({
         _.bindAll(this,"render","checkAnswer","changeProblem","showPastAnswers");
 
         this.userSet = (module.config().userSet) ? new UserSet(module.config().userSet): new UserSet();
-        config.courseSettings.courseID = module.config().course_id;
+        config.courseSettings.course = module.config().course_id;
         config.courseSettings.user = module.config().user;
 
         if (module.config().problems){

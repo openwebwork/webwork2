@@ -8,11 +8,11 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
 
     
     var SetListView = Backbone.View.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this, 'render','addProblemSet');  // include all functions that need the this object
             var self = this;
-            this.problemSets = this.options.problemSets;
-            this.users = this.options.users;
+            this.problemSets = options.problemSets;
+            this.users = options.users;
 
             this.tableSetup();
 
@@ -21,29 +21,17 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                                   self.addProblemSet();  
                                 }}
             };
-
-            this.problemSets.on("change",function (model) {
-                model.save();
-            })
-
         },
         //events: {"click .add-problem-set-button": "addProblemSet"},
         render: function () {
-            this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
-                                paginator: {page_size: 10, button_class: "btn", row_class: "btn-group"}});
-            this.userTable.render().$el.addClass("table table-bordered table-condensed");
-            this.$el.html(this.userTable.el);
+            this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
+                                paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+            this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
+            this.$el.html(this.problemSetTable.el);
 
             // set up some styling
-            this.userTable.$(".paginator-row td").css("text-align","center");
-            this.userTable.$(".paginator-page").addClass("btn");
-        },
-        deleteProblemSet: function (set,row){
-            var del = confirm("Are you sure you want to delete the set " + set.get("set_id") + "?");
-            if(del){
-            //    this.editgrid.grid.remove(row);
-            //    set.collection.remove(set);
-            }
+            this.problemSetTable.$(".paginator-row td").css("text-align","center");
+            this.problemSetTable.$(".paginator-page").addClass("btn");
         },
         addProblemSet: function (){
             if (! this.addProblemSetView){
@@ -52,10 +40,32 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                 this.addProblemSetView.setModel(new ProblemSet()).render().open();
             }
         },
-
+        deleteSet: function(set){
+             var del = confirm("Are you sure you want to delete the set " + set.get("set_id") + "?");
+            if(del){
+                this.problemSets.remove(set);
+                this.problemSetTable.updateTable();
+                this.problemSetTable.updatePaginator();
+                
+            }
+           
+        },
         tableSetup: function () {
             var self = this;
-            this.cols = [{name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string"},
+            this.cols = [{name: "Delete", key: "delete", classname: "delete-set", 
+                stickit_options: {update: function($el, val, model, options) {
+                    $el.html($("#delete-button-template").html());
+                    $el.children(".btn").on("click",function() {self.deleteSet(model);});
+                }}},
+            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
+                stickit_options: {update: function($el, val, model, options) {
+                    $el.html("<a href='#' class='goto-set'>" + val + "</a>");
+                    $el.children("a").on("click",function() {
+                        var set = self.problemSets.findWhere({set_id: $(this).text()})
+                        set.trigger("show",set);
+                    });}
+                }
+            },
             {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
                 stickit_options: {onGet: function(val){
                     return val.length + "/" + self.problemSets.length;
@@ -68,9 +78,9 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                     return val.length;
                 }    
             },
-            {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring", editable: true, 
+            {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
                     datatype: "string", stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
-            {name: "Visible", key: "visible", classname: "is-visible", editable: true, datatype: "string",
+            {name: "Visible", key: "visible", classname: "is-visible", datatype: "string",
                     stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
             {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
                     editable: false, datatype: "integer", use_contenteditable: false},
@@ -86,23 +96,17 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
     });
 
     var AddProblemSetView = ModalView.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,"render","addNewSet");
             this.model = new ProblemSet();
 
 
-            _.extend(this.options, {template: $("#add-hw-set-template").html(), 
+            _.extend(options, {template: $("#add-hw-set-template").html(), 
                 templateOptions: {name: config.courseSettings.user},
                 buttons: {text: "Add New Set", click: this.addNewSet}});
-            this.constructor.__super__.initialize.apply(this); 
+            this.constructor.__super__.initialize.apply(this,[options]); 
 
-            this.problemSets = this.options.problemSets; 
-
-              /*  Not sure why the following doesn't pass the options along. 
-              this.constructor.__super__.initialize.apply(this,
-                {template: $("#modal-template").html(), templateOptions: {header: "<h3>Create a New Problem Set</h3>", 
-                                saveButton: "Create New Set"}, modalBodyTemplate: $("#add-hw-set-template").html(),
-                                modalBodyTemplateOptions: {name: config.requestObject.user}});  */
+            this.problemSets = options.problemSets; 
         },
         render: function () {
             this.constructor.__super__.render.apply(this); 
@@ -115,9 +119,11 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
         },
         bindings: {".problem-set-name": "set_id"},
         events: {"keyup .problem-set-name": "validateName"},
-        validateName: function(ev){
-            // this.model.preValidate("set_id"),$(ev.target).val())
-            var errorMsg = this.model.preValidate("set_id",$(ev.target).val());
+        validateName: function(evt){
+            if (evt.keyCode==13){
+                this.addNewSet();
+            }
+            var errorMsg = this.model.preValidate("set_id",$(evt.target).val());
             if(errorMsg){
                 this.$(".problem-set-name").css("background","rgba(255,0,0,0.5)");
                 this.$(".problem-set-name-error").html(errorMsg);

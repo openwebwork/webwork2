@@ -13,23 +13,19 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             comment: ""
         },
         validation: { user_id: {pattern: "loginname"},
-                        email_address: {pattern: "email"}
+                        email_address: {pattern: "email", required: false}
                     }, 
-    
+        idAttribute: "user_id",
         initialize: function(){
             //this.on('change',this.update);
             //this.on('change',function() {console.log(this.attributes)});
         },
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/users/" + this.get("user_id");
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id");
         },
         toCSVString: function (){
             var self = this;
             return (config.userProps.map(function(prop){return self.get(prop.shortName);})).join(",") + "\n";
-        },
-        parse: function(response) {
-            this.id=response? response.user_id : this.get("user_id");
-            return response;
         }
     });
     return User;

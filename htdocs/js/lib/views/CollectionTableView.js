@@ -27,11 +27,14 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 	var CollectionTableView = Backbone.View.extend({
 		tagName: "table",
 		className: "collection-table",
-		initialize: function () {
+		initialize: function (options) {
 			var self = this;
-			_.bindAll(this,"render","sortTable");
-			this.columnInfo = this.options.columnInfo;
-			this.paginatorProp = this.options.paginator;
+			_.bindAll(this,"render","sortTable","filter");
+			this.collection = options.collection;
+			this.filteredCollection = [];
+			this.showFiltered = false;
+			this.columnInfo = options.columnInfo;
+			this.paginatorProp = options.paginator;
 			this.bindings = {};
 			_(this.columnInfo).each(function(col){ 
 				var obj = {};
@@ -40,21 +43,23 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 				if(typeof col.use_contenteditable == 'undefined'){ col.use_contenteditable=true;}
 				if(typeof col.stickit_options != 'undefined'){
 					_.extend(obj["."+col.classname],col.stickit_options);
-					col.use_contenteditable = false;
+					col.use_contenteditable = col.editable;
 				}
 				_.extend(self.bindings, obj);
 			});
 
 			// setup the paginator 
-			this.maxPages = Math.ceil(this.collection.length / this.paginatorProp.page_size);
+
 			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
 				this.collection.size();
 			this.pageRange = _.range(this.pageSize);
+			this.currentPage = 0;
+			this.rowViews = [];
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},
 		render: function () {
-			var self = this;
+			var self = this, i;
 			this.$el.empty();
 
 			// set up the HTML for the table header
@@ -63,31 +68,71 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			var tbody = $("<tbody>");
 			this.$el.append(head).append(tbody);
 
-			_(this.options.columnInfo).each(function (col){
+			_(this.columnInfo).each(function (col){
 				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
-				headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
+				if(col.colHeader){
+					headRow.append("<th data-class-name='" + className + "'>" + col.colHeader + "<span class='sort'></span></th>");
+				} else {
+					headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
+				}
 			});
-			_(this.pageRange).each(function(i){
-				tbody.append(new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
-					bindings: self.bindings}).render().el);
-			});
+
+			for(i=0;i<this.pageSize;i++){
+				if(this.showFiltered){ 
+					self.rowViews[i] = new TableRowView({model: this.filteredCollection[i],columnInfo: self.columnInfo,
+						bindings: self.bindings});
+				} else {
+					self.rowViews[i]=new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
+						bindings: self.bindings});
+				}
+				tbody.append(self.rowViews[i].render().el);
+			}
+			this.$el.append($("<tr class='paginator-row'>"));
+			this.updatePaginator();
+
 			if(this.sortInfo){
 				this.$("th[data-class-name='"+ this.sortInfo.classname+ "'] .sort")
-					.html("<i class='icon-chevron-" + (this.sortInfo.direction >0 ? "down": "up") + "'></i>" );
+					.html("<i class='fa fa-long-arrow-" + (this.sortInfo.direction >0 ? "down": "up") + "'></i>" );
+			}
+
+			return this;
+		},
+		updatePaginator: function() {
+			// render the paginator
+
+			if (this.showFiltered){
+				this.maxPages = Math.ceil(this.filteredCollection.length/this.paginatorProp.page_size);
+			} else {
+				this.maxPages = Math.ceil(this.collection.length / this.paginatorProp.page_size);
 			}
 
 			var cell = $("<div>")
-				, i;
+				, i
+				, start =0,
+                stop = this.maxPages;
+            
+            if(this.maxPages>15){
+                start = (this.currentPage-7 <0)?0:this.currentPage-7;
+                stop = start+15<this.maxPages?start+15 : this.maxPages;
+            }
 			cell.append("<button class='paginator-page first-page'>&lt;&lt;</button>");
 			cell.append("<button class='paginator-page prev-page'>&lt;</button>");
-			for(i=0;i<this.maxPages;i++){
-				cell.append("<button class='paginator-page numbered-page'>"+(i+1)+"</button>");
+			if(start>0){
+				cell.append("<button class='paginator-page'>...</button>");
+			}
+			for(i=start;i<stop;i++){
+				cell.append("<button class='paginator-page numbered-page' data-page-num='"+i+"'>"+(i+1)+"</button>");
+			}
+			if(stop<this.maxPages){
+				cell.append("<button class='paginator-page'>...</button>");
 			}
 			cell.append("<button class='paginator-page next-page'>&gt;</button>");
 			cell.append("<button class='paginator-page last-page'>&gt;&gt;</button>");
 			var td = $("<td>").attr("colspan",this.columnInfo.length);
 			td.append(cell);
-			this.$el.append($("<tr class='paginator-row'>").append(td));
+
+			this.$(".paginator-row").html(td);
+
 
 			if(this.paginatorProp.button_class){
 				this.$(".paginator-page").addClass(this.paginatorProp.button_class);
@@ -96,7 +141,35 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 				this.$(".paginator-row div").addClass(this.paginatorProp.row_class);
 			}
 
+			this.$(".paginator-row button").removeClass("current-page");
+			this.$(".numbered-page[data-page-num='"+this.currentPage+"']").addClass("current-page");
+		},
+		filter: function(filterText) {
+			if(filterText===""){
+				this.showFiltered = false;
+				return this;
+			}
+			var filterRE = new RegExp(filterText,"i");
+			this.filteredCollection = this.collection.filter(function(model){
+				return _(model.attributes).values().join(";").search(filterRE) > -1;
+			});
+			this.showFiltered = true;
 			return this;
+		},
+		updateTable: function () {
+			var i;
+			if(this.showFiltered){
+				for(i=0;i<this.pageSize;i++){
+					this.rowViews[i].setModel(this.filteredCollection[this.pageRange[i]]);
+				}
+			} else {
+				for(i=0;i<this.pageSize;i++){
+					this.rowViews[i].setModel(this.collection.at(this.pageRange[i]));
+				}
+			}
+		},
+		getRowCount: function () {
+			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
 		},
 		events: {"click th": "sortTable",
 				"click .first-page": "firstPage",
@@ -110,13 +183,16 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 				return (_.isArray(col.classname)? col.classname[0] : col.classname ) == $(evt.target).data("class-name");
 			});
 			
+			if(typeof(sort)=="undefined"){ // The user clicked on the select all button.
+				return;
+			}
+
 			if(this.sortInfo && this.sortInfo.key==sort.key){
 				this.sortInfo.direction = -1*this.sortInfo.direction;
 			} else {
 				this.sortInfo = {key: sort.key, direction: 1, 
 						classname: _.isArray(sort.classname)? sort.classname[0] : sort.classname};
 			}
-
 			// determine the sort Function
 
 			var sortFunction = sort.sort_function || function(val) { return val;};
@@ -150,10 +226,8 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
 			this.pageRange = _.range(this.currentPage*this.pageSize,
 				(this.currentPage+1)*this.pageSize>this.collection.size()? this.collection.size():(this.currentPage+1)*this.pageSize);
-			this.render();
-			this.$(".paginator-row button").removeClass("current-page");
-			this.$(".paginator-row button:nth-child(" + (this.currentPage+3) +")").addClass("current-page");
-
+			this.updateTable();
+			this.updatePaginator();
 		}
 
 
@@ -162,13 +236,14 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 
 	var TableRowView = Backbone.View.extend({
 		tagName: "tr",
-		initialize: function () {
+		initialize: function (options) {
 			_.bindAll(this,"render");
-			this.bindings = this.options.bindings;
+			this.bindings = options.bindings;
+			this.columnInfo = options.columnInfo;
 		},
 		render: function () {
 			var self = this;
-			_(this.options.columnInfo).each(function (col){
+			_(this.columnInfo).each(function (col){
 				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
 				if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));
@@ -183,7 +258,19 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			});
 			this.stickit();
 			return this; 
-		}, events: {
+		}, 
+		setModel: function(_model){
+			if(typeof(_model)=="undefined"){
+				this.$el.html("");
+			} else {
+				if(this.$el.html().length==0){
+					this.render();
+				}
+				this.model=_model;
+				this.stickit();
+			}
+		},
+		events: {
 			"keypress td[contenteditable='true']": "returnHit"
 		},
 		returnHit: function(evt){
@@ -192,16 +279,6 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			}
 		}
 
-	});
-
-	var Paginator = Backbone.View.extend({
-		tagName: "tfoot",
-		initialize: function () {
-
-		},
-		render: function(){
-			return this;
-		}
 	});
 
 	return CollectionTableView;

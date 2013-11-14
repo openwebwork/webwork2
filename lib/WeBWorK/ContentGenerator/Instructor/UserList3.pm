@@ -116,6 +116,8 @@ sub initialize {
 	
 }
 
+sub name { return "Classlist Manager";}
+
 
 
 sub body {
@@ -192,7 +194,12 @@ sub body {
 	#my $editMode = $self->{editMode};
 	#my $passwordMode = $self->{passwordMode};	
 
-	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/classlist-manager.html');  
+
+	my $theme_dir = $ce->{webworkDirs}->{themes};
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
+	my $template = HTML::Template->new(filename => "$theme_dir/$theme/classlist-manager.html");  
+
 	print $template->output(); 
 
 
@@ -217,13 +224,17 @@ sub body {
 sub head{
 	my $self = shift;
 	my $r = $self->r;
-    	my $ce = $r->ce;
+	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+    my $theme_dir = "$site_url/themes";
+
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
 
 	print "<link rel='stylesheet' href='$site_url/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>";
     print "<link rel='stylesheet' href='$site_url/js/components/editablegrid/editablegrid-2.0.1.css' type='text/css' media='screen'>";
-    print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
+    print "<link rel='stylesheet' type='text/css' href='$theme_dir/$theme/userlist.css' > </style>";
 	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
 	return "";
 }
@@ -363,7 +374,7 @@ sub output_JS{
 	# my $ce = $r->ce;
 
 	my $site_url = $self->r->ce->{webworkURLs}->{htdocs};
-	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
+	print qq!<script type="text/javascript" src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
 	print qq!<script type='text/javascript'>!;
     print qq! require.config = { 'ClasslistManager': {!;

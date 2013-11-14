@@ -6,7 +6,7 @@ define(['Backbone', 'underscore','config'
 		template: _.template($("#user-template").html()),
 		initialize: function() {
 			_.bindAll(this,"render","highlightUsers","disableCheckboxForUsers");
-			_.extend(this,this.options);
+			_.extend(this,options);
 			return this;
 		},
 		render: function () {

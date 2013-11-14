@@ -21,10 +21,10 @@ define(['Backbone', 'underscore', './ProblemView','config'], function(Backbone, 
         initialize: function(){
             var self = this;
             _.bindAll(this,"render","loadNextGroup","deleteProblem","undoDelete","reorder","addProblemView");
-            this.viewAttrs = this.options.viewAttrs;
-            this.type = this.options.type;
-            this.headerTemplate = this.options.headerTemplate;
-            this.displayModes = this.options.displayModes; 
+            this.viewAttrs = options.viewAttrs;
+            this.type = options.type;
+            this.headerTemplate = options.headerTemplate;
+            this.displayModes = options.displayModes; 
             
             this.group_size = 25;  // this should be a setting
            

@@ -21,8 +21,8 @@ define(['Backbone', 'underscore'], function(Backbone, _){
         //on the views model.
         initialize:function () {
             this.model.on('change:data', this.render, this);
-            if(!this.options.remove_display){
-                this.options.remove_display = false;
+            if(!options.remove_display){
+                options.remove_display = false;
             }
             this.model.on('destroy', this.remove, this);
         },

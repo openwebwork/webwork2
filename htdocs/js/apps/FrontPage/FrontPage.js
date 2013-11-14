@@ -11,7 +11,6 @@ require.config({
         "XDate":                "/webwork2_files/js/lib/vendor/xdate",
         "WebPage":              "/webwork2_files/js/lib/views/WebPage",
         "config":               "/webwork2_files/js/apps/config",
-        "Closeable":            "/webwork2_files/js/lib/views/Closeable",
         "jquery-truncate":      "/webwork2_files/js/lib/vendor/jquery.truncate.min"
     },
     urlArgs: "bust=" +  (new Date()).getTime(),

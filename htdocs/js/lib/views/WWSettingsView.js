@@ -2,13 +2,13 @@
     setting the "settings" field and providing it an array of WeBWorKProperty models. 
     */
 
-define(['Backbone', 'underscore','views/EditableCell','config'], 
-function(Backbone, _,EditableCell,config){
+define(['Backbone', 'underscore','config'], 
+function(Backbone, _,config){
     var WWSettingsView = Backbone.View.extend({
 
         initialize: function () {
             _.bindAll(this,'render');
-            this.settings = this.options.settings;
+            this.settings = options.settings;
             _(this.settings).each(function(setting){
                 setting.on("change", function (model) {
                     console.log("saving the setting");
@@ -63,7 +63,7 @@ function(Backbone, _,EditableCell,config){
     var SettingView = Backbone.View.extend({
         tagName: "tr",
         render: function () {
-            this.$el.html(_.template($("#row-setting-template").html(),this.options));
+            this.$el.html(_.template($("#row-setting-template").html(),options));
             this.stickit();
             return this;
         },
@@ -72,7 +72,7 @@ function(Backbone, _,EditableCell,config){
             ".doc2": { observe: "doc2", updateMethod: "html"}
         },
         events: {
-            "click .help-button": "openHelp",
+                "click .help-button": "openHelp",
             "click .close": "closeHelp"
         },
         openHelp: function (evt){
@@ -89,7 +89,7 @@ function(Backbone, _,EditableCell,config){
         initialize: function () {
             _.bindAll(this,'render');
             _.extend(this.bindings,
-                { ".select-list" : {observe: "value", selectOptions: { collection: "this.options.theOptions"}}});
+                { ".select-list" : {observe: "value", selectOptions: { collection: "options.theOptions"}}});
         }
     });
 
@@ -97,7 +97,14 @@ function(Backbone, _,EditableCell,config){
         initialize: function () {
             _.bindAll(this,'render');
             _.extend(this.bindings,{ ".property": {observe: "value", events: ['blur']}});
+        },
+        events: {"keyup": "checkForEnter"},
+        checkForEnter: function(evt){
+            if(evt.keyCode == 13){
+                $(evt.target).blur();
+            }
         }
+
     });
 
     return WWSettingsView;

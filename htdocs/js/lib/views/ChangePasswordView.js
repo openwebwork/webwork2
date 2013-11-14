@@ -1,12 +1,12 @@
-define(['Backbone', 'underscore'], 
-  function(Backbone, underscore){
+define(['Backbone', 'underscore','config'], 
+  function(Backbone, _, config){
 
   var ChangePasswordView = Backbone.View.extend({
       tagName: "div",
       className: "passwordDialog",
       initialize: function() {
          _.bindAll(this,"render");  return this;
-         this.users = this.options.users;
+         this.users = options.users;
       },
        render: function ()
        {
@@ -17,11 +17,12 @@ define(['Backbone', 'underscore'],
               $("table tbody",self.$el).append(tableRow.el);
           });
           
-          this.$el.dialog({autoOpen: false, modal: true, title: "Password Changes",
+          this.$el.dialog({autoOpen: false, modal: true, title: config.msgTemplate({type: "password_changes"}),
   			                    width: (0.5*window.innerWidth), height: (0.5*window.innerHeight),
                             buttons: {"Save New Passwords": function () {self.savePasswords(); self.$el.dialog("close")},
                                     "Cancel": function () {self.$el.dialog("close");}}
                           });
+          return this;
      },
      savePasswords: function () {
           _(this.users).each(function(user) {user.save();});

@@ -11,9 +11,10 @@ use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils qw/cryptPassword/;
+use Data::Dumper;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;
-
+our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 
 ###
@@ -25,15 +26,13 @@ our @user_props = qw/first_name last_name student_id user_id email_address permi
 
 get '/courses/:course/users' => sub {
 
-    my $ce = vars->{ce};
-    my $db = vars->{db};
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
-
-    my @allUsers = $db->getUsers($db->listUsers);
-    my %permissionsHash =  reverse %{$ce->{userRoles}};
+    my @allUsers = vars->{db}->getUsers(vars->{db}->listUsers);
+    my %permissionsHash =  reverse %{vars->{ce}->{userRoles}};
     foreach my $u (@allUsers)
     {
-        my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
+        my $PermissionLevel = vars->{ce}->getPermissionLevel($u->{'user_id'});
         $u->{'permission'} = $PermissionLevel->{'permission'};
 
 		my $studid= $u->{'student_id'};
@@ -53,6 +52,8 @@ get '/courses/:course/users' => sub {
 
 
 post '/courses/:course_id/users/:user_id' => sub {
+
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 	
 	my $user = vars->{db}->getUser(param('user_id'));
 	send_error("The user with login " . param('user_id') . " already exists",404) if $user;
@@ -119,12 +120,9 @@ post '/courses/:course_id/users/:user_id' => sub {
 
 put '/courses/:course_id/users/:user_id' => sub {
 	
-	debug "in /courses/:course_id/users/:user_id";
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
-	debug session->{course};
-	debug session->{user};
-
-	debug vars->{db}->getUser(params->{user_id});
+	##debug Dumper(vars->{db}->listUsers);
 
 	my $user = vars->{db}->getUser(param('user_id'));
 	
@@ -133,8 +131,6 @@ put '/courses/:course_id/users/:user_id' => sub {
 	for my $key (@user_props) {
         $user->{$key} = param($key);
     }
-
-    debug $user;
 
     if (defined(params->{new_password})){
     	my $password = vars->{db}->getPassword(params->{user_id});
@@ -160,13 +156,15 @@ put '/courses/:course_id/users/:user_id' => sub {
 
 
 del '/courses/:course_id/users/:user_id' => sub {
+
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 	
 	# check to see if the user exists
 
 	my $user = vars->{db}->getUser(param('user_id')); # checked
 	send_error("Record for visible user " . param('user_id') . ' not found.',404) unless $user;
 
-	if (param('user_id') eq param('user') )
+	if (param('user_id') eq session('user') )
 	{
 		send_error("You can't delete yourself from the course.",404);
 	} 
@@ -190,6 +188,8 @@ del '/courses/:course_id/users/:user_id' => sub {
 ####
 
 get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
+
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
 	debug 'in /courses/sets/users/problems';
 
@@ -225,12 +225,16 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
 
 get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+
   	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 
     return convertObjectToHash($problem);
 };
 
 put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
+
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
 	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 
