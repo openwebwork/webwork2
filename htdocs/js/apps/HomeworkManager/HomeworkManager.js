@@ -398,14 +398,15 @@ var HomeworkEditorView = WebPage.extend({
 
 var SettingsView = Backbone.View.extend({
     
-    initialize: function () {
+    initialize: function (options) {
         var self = this;
         _.bindAll(this,'render');
 
         this.categories = config.settings.chain().pluck("attributes").pluck("category")
             .unique().difference("timezone").value();
         this.headerInfo = {template: "#settings-header",options: {categories: this.categories},
-            events: {"shown a[data-toggle='tab']": function(evt) { self.changeSettingTab(evt);} }};
+            events: {"shown.bs.tab a[data-toggle='tab']": function(evt) { self.changeSettingTab(evt);} }};
+        this.headerView = options.headerView;
      }, 
      render: function () {
         // get all of the categories except for timezone (include it somewhere?)
@@ -415,7 +416,7 @@ var SettingsView = Backbone.View.extend({
         // set up the general settings tab
 
         $("#setting-tab0").addClass("active");  // show the first settings pane.
-        options.headerView.$("a[href='#setting-tab0']").parent().addClass("active");
+        this.headerView.$("a[href='#setting-tab0']").parent().addClass("active");
 
         var settings = config.settings.where({category: this.categories[0]});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
