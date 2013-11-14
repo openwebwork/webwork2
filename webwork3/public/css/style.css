@@ -1,7 +1,6 @@
-
 body {
-padding: 0;
-padding-top: 50px;
+padding: 50px 10px 50px 10px;
+
 }
 
 .wrong {background-color: rgba(255,0,0,0.3); margin: 10px;}

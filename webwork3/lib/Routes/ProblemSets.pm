@@ -14,6 +14,7 @@ use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems
 use WeBWorK::Utils qw/parseDateTime/;
 use Array::Utils qw(array_minus); 
 use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
+use Utils::CourseUtils qw/getCourseSettings/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
@@ -749,6 +750,22 @@ post '/utils/dates' => sub {
     }
     
     return $unixDates;
+};
+
+
+####
+#
+#  get /courses/:course_id/pgeditor
+#
+#  returns the html for the simple pg editor
+#
+###
+
+get '/courses/:course_id/pgeditor' => sub {
+
+    setCourseEnvironment(params->{course_id});
+    template 'simple-editor.tt', {course_id=> params->{course_id},theSetting => to_json(getCourseSettings),
+        pagename=>"Simple Editor"};
 };
 
 
