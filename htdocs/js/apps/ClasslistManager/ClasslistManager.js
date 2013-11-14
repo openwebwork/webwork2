@@ -3,57 +3,30 @@
   
 */
 
-define(['module','Backbone','views/WebPage','models/UserList','views/EditGrid','config','AddStudentManView',
-			'AddStudentFileView','views/ChangePasswordView','views/EmailStudentsView','bootstrap'], 
-function(module,Backbone,WebPage,UserList,EditGrid,config,AddStudentManView,AddStudentFileView,
-				ChangePasswordView,EmailStudentsView){
+define(['module','Backbone','views/WebPage','models/UserList','config','views/CollectionTableView',
+			'AddStudentManView','AddStudentFileView','models/ProblemSetList','views/ModalView',
+			'views/ChangePasswordView','views/EmailStudentsView','bootstrap'], 
+function(module,Backbone,WebPage,UserList,config,CollectionTableView, AddStudentManView,AddStudentFileView,
+				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView){
 var ClasslistManager = WebPage.extend({
 	initialize: function () {
 		this.constructor.__super__.initialize.apply(this, {el: this.el});
-		_.bindAll(this, 'render','deleteUsers','changePassword','gridChanged');  // include all functions that need the this object
+
+		_.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
 		var self = this;
     	
-		// this.collection is a UserList 
+		// this.users is a UserList 
 
-    	this.collection = (module.config().users) ? new UserList(module.config().users) : new UserList();
-
-    	// call .parse on each user to mimic a fetch call, so it appears each user exists. (id is set)
-    	this.collection.each(function(user){ user.parse(); });
+    	this.users = (module.config().users) ? new UserList(module.config().users) : new UserList();
+    	this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets) : new ProblemSetList();
     	this.messages=[];
-
-        this.editgrid = new EditGrid({grid_name: "users-table-container", table_name: "users-table",
-        paginator_name: "#users-table-paginator", template_name: "#classlist-table-template",
-        enableSort: true, pageSize: 10});
-        
-        this.editgrid.grid.load({metadata: config.userTableHeaders});
-        this.customizeGrid();
-        this.editgrid.grid.modelChanged = this.gridChanged;
-	    this.addStudentManView = new AddStudentManView({users: this.collection});
-	    this.addStudentFileView = new AddStudentFileView({users: this.collection});
-	    this.render();
+		this.addStudentManView = new AddStudentManView({users: this.users});
+	    this.addStudentFileView = new AddStudentFileView({users: this.users});
+	    this.tableSetup();
+	    
             
-	    this.collection.on('add',function(user){
-	    	self.editgrid.grid.append(user.cid, user.toJSON());
-	    	self.editgrid.updatePaginator();
-	    	self.messagePane.addMessage({text: "The user with id " + user.get("user_id") + " has been added.",
-	    			type: "success", short: "User " + user.get("user_id") + " added."});
-	    });
-
-	    this.collection.on('sync',function(model, resp, options){
-	    	var msg = _(self.messages).findWhere({user_id: model.get("user_id")});
-	    	var index = _(self.messages).indexOf(msg);
-	    	self.messages.splice(index,1);
-	    	self.messagePane.addMessage({ short: "User " + model.get("user_id") + " changed",
-	    		text: "The property " + msg.property + " of user " + model.get("user_id") + 
-	    		" changed from " + msg.oldValue + " to " + msg.newValue, type: "success"});
-
-	    	var rowIndex = _(self.editgrid.grid.data).indexOf(_(self.editgrid.grid.data)
-				    						.find(function(row) { return row.columns[2]===model.get("user_id");}));
-	    	$("#users-table tbody tr:nth-child(" + (rowIndex+1) + ") td").css("background-color","transparent"); 
-
-
-	    });	   
-
+        this.users.on({"add": this.addUser,"change": this.changeUser,"sync": this.syncUserMessage,
+    					"remove": this.removeUser});
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
@@ -62,72 +35,136 @@ var ClasslistManager = WebPage.extend({
 	    // Make sure the take Action menu item is reset
 	    $("button#help-link").click(function () {self.helpPane.open();});	  
 
-	    _(this.loggedInUsers).each(function(user){
-			$("tr#UserListTable_" + user + " td:nth-child(3)").css("color","green").css("font-weight","bold");
-	    });
-		
-	    this.loggedInUsers = [];
 	    // Display the number of users shown
-	    $("#usersShownInfo").html(this.editgrid.grid.getRowCount() + " of " + this.collection.length + " users shown.");
+	    //$("#usersShownInfo").html(this.editgrid.grid.getRowCount() + " of " + this.users.length + " users shown.");
 		
 	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation
 	  
-	    this.collection.each(function(model){
+	    this.users.each(function(model){
 	    	model.bind('validated:invalid', function(_model, errors) {
 			    console.log("running invalid");
 			    console.log(errors);
+			    var row; 
+			    self.$("td.user-id").each(function(i,v){
+			    	if($(v).text()===_model.get("user_id")){
+			    		row = i;
+			    	}
+			    })
 			    
 			    _(_.keys(errors)).each(function(key){
-				    self.messagePane.addMessage({text: errors[key],type: "error", short: "Validation Error"});
-				    var columnIndex = _(self.editgrid.grid.columns).indexOf(_(self.editgrid.grid.columns)
-				    						.findWhere({name: key}));
-				    var rowIndex = _(self.editgrid.grid.data).indexOf(_(self.editgrid.grid.data)
-				    						.find(function(row) { return row.columns[2]===_model.get("user_id");}));
-				    $("#users-table tbody tr:nth-child(" + (rowIndex+1) + ") td:nth-child(" + (columnIndex+1) + ")")
-				    	.css("background-color","rgba(255,0,0,0.25");
+			    	var obj = _(self.userTable.columnInfo).findWhere({key: key});
+			    	var col = _(self.userTable.columnInfo).indexOf(obj);
+				    self.messagePane.addMessage({text: errors[key],type: "danger", short: "Validation Error"});
+				    self.$("tbody tr:nth-child("+ (row+1) +") td:nth-child("+(col+1)+")")
+				    	.css("background-color","rgba(255,0,0,0.25)");
 				});
 	        });
 	    }); 
 
-	    // this is needed for the handshaking of session information between the old and new
-	    // webservice
+        // this is needed for the handshaking of session information between the old and new
+        // webservice
 
-	    $.get(config.urlPrefix + "login?" + $.param(config.courseSettings) ,function(response){
-	    	console.log(response);
-	    });
+        // this pulls the course_id from the URL and we need to have a more general way to get this from either 
+        // ww2 or ww3 
+
+        _.extend(config.courseSettings,{course_id: location.href.match(/\/webwork2\/(\w+)\//)[1]});
+        $.post(config.urlPrefix + "handshake?"+$.param(config.courseSettings),
+                function(response){
+                    console.log(response);
+                });
+        this.passwordPane = new ChangePasswordView({users: this.users});
+        this.emailPane = new EmailStudentsView({users: this.users}); 
+        this.render();
 
     },
 
     render: function(){
     	this.$el.empty();
     	this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
-	    
-    	this.$el.append($("#classlist-manager-template").html());
-    	this.editgrid.setElement($("#users-table-container"));
-        this.editgrid.render();
-        this.updateGrid();
-	    this.$(".num-users").html(this.editgrid.grid.getRowCount() + " of " + this.collection.length + " users shown.");
-	    this.$el.append(this.passwordPane = new ChangePasswordView());
-	    this.$el.append(this.emailPane = new EmailStudentsView()); 
+	    this.$el.append($("#classlist-manager-template").html());
+
+	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
+                            paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+        this.userTable.render().$el.addClass("table table-bordered table-condensed");
+        this.$el.append(this.userTable.el);
+
+        // set up some styling
+        this.userTable.$(".paginator-row td").css("text-align","center");
+        this.userTable.$(".paginator-page").addClass("btn");
+
 	    return this;
+    },  
+    addUser: function (_user){
+    	_user.changingAttributes = {user_added: ""};
+    	_user.save();
     },
+    changeUser: function(_user){
+    	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
+    	if(_.keys(_user.changed)[0]==="action"){
+    		return; 
+    	}
+    	_user.save();
+    },
+    removeUser: function(_user){
+    	var self = this;
+    	_user.destroy({success: function(model){
+	    		self.messagePane.addMessage({type: "success",
+            		short: config.msgTemplate({type: "user_removed", opts:{username:_user.get("user_id")}}),
+            		text: config.msgTemplate({type: "user_removed_details", opts: {username: _user.get("user_id")}})});
+    	}});
+    },
+    syncUserMessage: function(_user){
+    	var self = this;
+    	_(_.keys(_user.changingAttributes)).each(function(key){
+    		switch(key){
+                case "user_added":
+                	self.messagePane.addMessage({type: "success",
+                		short: config.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
+                		text: config.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
+                	break;
+                default:    
+		    	 	self.messagePane.addMessage({type: "success", 
+		                short: config.msgTemplate({type:"user_saved",opts:{username:_user.get("user_id")}}),
+		                text: config.msgTemplate({type:"user_saved_details",opts:{username:_user.get("user_id"),
+		                	key: key, oldValue: _user.changingAttributes[key], newValue: _user.get(key)}})});
+		    	}
+	    	});
+   },
 
     // I think some of these should go into EditGrid.js
     events: {
-    	"click .delete-selected": "deleteUsers",
-    	"click .password-selected": "changePassword",
-    	"click .email-selected": "emailStudents",
 	    "click .add-students-file-option": "addStudentsByFile",
 	    "click .add-students-man-option": "addStudentsManually",
 	    "click .export-students-option": "exportStudents",
-		'keyup input#filter' : 'filterUsers',
-	    'click button#clear-filter-text': 'clearFilterText',
-	    'change input.select-all-header': 'selectAll',
-	    "click .page-button": "changePage",
-	    'click button.goto-first': "showFirstPage",
-	    'click button.go-back-one' : "showPreviousPage",
-	    'click button.go-forward-one': "showNextPage",
-	    'click button.goto-end': "showLastPage",
+		'keyup input.filter-text' : 'filterUsers',
+	    'click button.clear-filter-button': 'clearFilterText',
+	    'change .user-action': 'takeAction',
+	    "click a.email-selected": "emailSelected",
+	    "click a.password-selected": "changedPasswordSelected",
+	    "click a.delete-selected": "deleteSelectedUsers",
+	    "change th[data-class-name='select-user'] input": "selectAll"
+	},
+	takeAction: function(evt){
+		var user = this.users.findWhere({user_id: $(evt.target).closest("tr").children("td:nth-child(3)").text()});
+		switch($(evt.target).val()){
+			case "1": // delete user
+				this.deleteUsers([user]);
+				break;
+			case "2": // act as user
+				location.href = "/webwork2/" + config.courseSettings.course_id + "/?effectiveUser=" + 
+					user.get("user_id");
+				break;
+			case "3": // change password
+				alert("Change the password not yet supported");
+				break;
+			case "4": // Email user
+				alert("Email the user not supported yet.");
+				break;
+			case "5": // student progress
+				location.href = "/webwork2/" + config.courseSettings.course_id + "/instructor/progress/student/"
+					+ user.get("user_id");
+				break;
+		}
 	},
 	addStudentsByFile: function () {
 		this.addStudentFileView.openDialog();
@@ -137,140 +174,118 @@ var ClasslistManager = WebPage.extend({
 	},
 	exportStudents: function () {
 	    //var bb = new BlobBuilder;
+
+
 	    
-	    // Write the headers out
-	    bb.append((_(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";})).join(",") + "\n");
+	    var textFileContent = "";
+	    textFileContent += _(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";}).join(",") + "\n";
 	    
         // Write out the user Props
-        this.collection.each(function(user){bb.append(user.toCSVString())});
-	    
-        // need a more appropriate filename
+        this.users.each(function(user){
+        	textFileContent += user.toCSVString();
+	    });
 
-        saveAs(bb.getBlob("text/csv;charset=utf-8"), "hello world.csv");            
+        var _mimetype = "text/csv";
+	    var blob = new Blob([textFileContent], {type:_mimetype});
+        var _url = URL.createObjectURL(blob);
+        var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY");
+        var modalView = new ModalView({template: $("#export-to-file-template").html(), 
+        	templateOptions: {url: _url, filename: _filename, mimetype: _mimetype}});
+        modalView.render().open();
 	},	
-	updateGrid: function (){
-        var _data = this.collection.map(function(user) { return {id: user.cid, values: user.attributes};});
-        this.editgrid.grid.load({data: _data});
-        this.editgrid.grid.refreshGrid();
-        this.editgrid.updatePaginator();
-    },
-    gridChanged: function(rowIndex, columnIndex, oldValue, newValue) {
-
-    	var self = this;
-		
-		if (columnIndex == 0 ) { return;}
-		if (columnIndex == 1 )  // the takeAction column has been selected.
-		{
-		    
-		   	switch (newValue){
-			    case "action1":  // Change Password
-					self.changePassword([rowIndex]);
-				    break;
-			    case "action2":  // deleteUser
-				    self.deleteUsers([rowIndex]);
-				    break;
-			    case "action3":  // Act as User
-					var username = self.grid.getValueAt(rowIndex,2); //
-					
-					// send a relative path, but is this the best way?
-					var url = "../../?user=" + config.requestObject.user + "&effectiveUser=" + username + "&key=" +
-						    config.requestObject.session_key; 
-					location.href = url;
-			    break;
-			    case "action4":  // Student Progress
-					var username = self.grid.getValueAt(rowIndex,2); //
-					
-					// send a relative path, but is this the best way?
-					var url = "../progress/student/" + username + "/?user=" + config.requestObject.user + "&effectiveUser=" + username + "&key=" +
-						    config.requestObject.session_key; 
-					location.href = url;
-			    break;
-			    case "action5":  // Email Student
-				
-					self.emailStudents([rowIndex]);
-			    break;
-		
-			}
-		   
-		}
-		
-		// check to make sure that the updated information needs to be sent to the server
-		
-		else if (oldValue !== newValue  ){
-			var grid = this.editgrid.grid;
-		    var cid = grid.getRowId(rowIndex);
-		    var property = grid.getColumnName(columnIndex);
-		    var editedModel = this.collection.get(cid);
-		    console.log("just before editedModel.set");
-		    
-		    
-			var result = editedModel.save(property,newValue);
-			if(result){  // if it validates
-				$("tr#UserListTable_" + cid + " td:nth-child("+(columnIndex+1) + ")").css("background","none");	
-				this.messages.push({user_id: editedModel.get("user_id"), property: property, oldValue: oldValue, newValue: newValue});
-			} 
-        }
-		
-    },
 	filterUsers: function (evt) {
-	    this.editgrid.grid.filter($("#filter").val());
-	    this.$(".num-users").html(this.editgrid.grid.getRowCount() + " of " + this.collection.length + " users shown.");
+		this.userTable.filter($(evt.target).val()).render();
+	    this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
 	},
 	clearFilterText: function () {
-		$("input#filter").val("");
-		this.editgrid.grid.filter("");
-		this.$(".num-users").html(this.editgrid.grid.getRowCount() + " of " + this.collection.length + " users shown.");
+		$("input.filter-text").val("");
+		this.userTable.filter("").render();
+		this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
 	},
-	selectAll: function () {
-		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",this.$(".select-all-header").prop("checked"));
+	selectAll: function (evt) {
+		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
 	},
-	customizeGrid: function (){
-		function SelectAllRenderer() {}; 
-		SelectAllRenderer.prototype = new CellRenderer();
-		SelectAllRenderer.prototype.render = function(cell, value) {
-			if (value) {
-				$(cell).html("<input type='checkbox' class='select-all-header'>");
-			}
-		}
-
-		this.editgrid.grid.setHeaderRenderer("Select", new SelectAllRenderer());
-		this.editgrid.grid.setCellRenderer("Action", new CellRenderer({
-			render: function(cell, value) { 
-				$(cell).html("<i class='icon-cog'></i>"); }
-		}));
+	tableSetup: function () {
+            var self = this;
+            this.cols = [{name: "Select", key: "select_row", classname: "select-user", 
+                stickit_options: {update: function($el, val, model, options) {
+                    $el.html($("#checkbox-template").html());
+                }}, colHeader: "<input type='checkbox'></input>"},
+                {name: "Action", key: "action", "classname": "user-action",
+            		stickit_options: { selectOptions: { 
+            			collection: [{value: 0, label: "Select"},
+            				{value: 1, label: "Delete User"},
+            				{value: 2, label: "Act As User"},
+            				{value: 3, label: "Change Password"},
+            				{value: 4, label: "Email User"},
+            				{value: 5, label: "Student Progress"}]}}},
+                {name: "Login Name", key: "user_id", classname: "user-id", datatype: "string"},
+                {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets",
+                	stickit_options: {update: function($el, val, model, options) {
+                		$el.html(self.problemSets.filter(function(_set) { 
+                				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length + "/"
+                		+ self.problemSets.size()); }
+                }},
+                {name: "First Name", key: "first_name", classname: "first-name", editable: true, datatype: "string",
+	            	stickit_options: {events: ['blur']}},
+                {name: "Last Name", key: "last_name", classname: "last-name", editable: true, datatype: "string",
+            		stickit_options: {events: ['blur']}},
+                {name: "Email", key: "email_address", classname: "email",  editable: true, datatype: "string",
+            		stickit_options: {events: ['blur']}},
+                {name: "Student ID", key: "student_id", classname: "student-id",  editable: true, datatype: "string",
+            		stickit_options: {events: ['blur']}},
+                {name: "Status", key: "status", classname: "status",  editable: true, datatype: "string",
+            		stickit_options: {events: ['blur']}},
+                {name: "Section", key: "section", classname: "section",  editable: true, datatype: "string",
+            		stickit_options: {events: ['blur']}},
+            	{name: "Recitation", key: "recitation", classname: "recitation",  editable: true, datatype: "string",
+            		stickit_options: {events: ['blur']}},
+            	{name: "Comment", key: "comment", classname: "comment",  editable: true, datatype: "string",
+            		stickit_options: {events: ['blur']}},
+            	{name: "Permission", key: "permission", classname: "permission",
+            		stickit_options: { selectOptions: { 
+            			collection: [{value: "-5", label: "guest"},
+            				{value: "0", label: "Student"},
+            				{value: "2", label: "login proctor"},
+            				{value: "3", label: "grade proctor"},
+            				{value: "5", label: "T.A."},
+            				{value: "10", label: "Professor"},
+            				{value: "20", label: "Admininistrator"}]}}
+            }];
 	},
-	getSelectedRows: function () {
-		return $("td:nth-child(1) input[type='checkbox']:checked").closest("tr")
-					.map(function(i,v) {return $(v).index();}).get();
+	getSelectedUsers: function () {
+		var self = this;
+		return $("tbody td:nth-child(1) input[type='checkbox']:checked").map(function(i,v) { 
+				return self.users.findWhere({user_id: $(v).closest("tr").children("td.user-id").text()}); });
 	}, 
-	getUsersByRows: function(rows){
-		var self = this; 
-		return _(rows).map(function(_row) {
-			return self.collection.get($("#users-table table tr:nth-child(" +(_row+1) + ")").attr("id").split("users-table-container_")[1]);
-		});
+	deleteSelectedUsers: function(){
+		this.deleteUsers(this.getSelectedUsers());
 	},
-	deleteUsers: function(_rows){
+	deleteUsers: function(_users){ // need to put the string below in the template file
+		if(_users.length === 0){
+			alert("You haven't selected any users to delete.");
+			return;
+		}
 		var self = this
-			, rows = _.isArray(_rows) ? _rows: this.getSelectedRows()
-		    , rowsBackwards = _(rows).sortBy(function (num) { return -1*num;})  // the rows need to be sorted in decreasing order so the rows in the table are
-									// removed correctly. 
-			, users = this.getUsersByRows(rows)						
 	    	, str = "Do you wish to delete the following students: " + 
-	    			_(users).map(function (user) {return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
+	    			_(_users).map(function (user) {return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
 		    , del = confirm(str);
-		    
 	    if (del){
-			_(rowsBackwards).each(function (row){self.editgrid.grid.remove(row);});
-			_(users).each(function(user){self.collection.remove(user);});
-
-			this.render();
+	    	self.users.remove(_users);
+			this.userTable.render();
 	    }
+	},
+	changedPasswordSelected: function(){
+		alert("Changing Passwords isn't implemented yet.")
 	},
 	changePassword: function(rows){
 		this.passwordPane.users=this.getUsersByRows(rows);
 	    this.passwordPane.render();
 	    this.passwordPane.$el.dialog("open"); 
 	    },
+	emailSelected: function(){
+		alert("Emailing students is not implemented yet");
+	},
 	emailStudents: function(rows){
 	    this.emailPane.users = this.getSelectedUsers();
 	    this.emailPane.render();
@@ -283,10 +298,6 @@ var ClasslistManager = WebPage.extend({
 
 var App = new ClasslistManager({el: $("div#main")});
     
-
-
-
-	
 });
 
 

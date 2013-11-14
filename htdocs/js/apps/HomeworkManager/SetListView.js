@@ -21,11 +21,6 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                                   self.addProblemSet();  
                                 }}
             };
-
-            /*this.problemSets.on("change",function (model) {
-                model.save();
-            })*/
-
         },
         //events: {"click .add-problem-set-button": "addProblemSet"},
         render: function () {
@@ -83,9 +78,9 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                     return val.length;
                 }    
             },
-            {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring", editable: true, 
+            {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
                     datatype: "string", stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
-            {name: "Visible", key: "visible", classname: "is-visible", editable: true, datatype: "string",
+            {name: "Visible", key: "visible", classname: "is-visible", datatype: "string",
                     stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
             {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
                     editable: false, datatype: "integer", use_contenteditable: false},
@@ -109,15 +104,9 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
             _.extend(options, {template: $("#add-hw-set-template").html(), 
                 templateOptions: {name: config.courseSettings.user},
                 buttons: {text: "Add New Set", click: this.addNewSet}});
-            this.constructor.__super__.initialize.apply(this); 
+            this.constructor.__super__.initialize.apply(this,[options]); 
 
             this.problemSets = options.problemSets; 
-
-              /*  Not sure why the following doesn't pass the options along. 
-              this.constructor.__super__.initialize.apply(this,
-                {template: $("#modal-template").html(), templateOptions: {header: "<h3>Create a New Problem Set</h3>", 
-                                saveButton: "Create New Set"}, modalBodyTemplate: $("#add-hw-set-template").html(),
-                                modalBodyTemplateOptions: {name: config.requestObject.user}});  */
         },
         render: function () {
             this.constructor.__super__.render.apply(this); 

@@ -11,6 +11,7 @@ use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils qw/cryptPassword/;
+use Data::Dumper;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
@@ -121,6 +122,8 @@ put '/courses/:course_id/users/:user_id' => sub {
 	
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
+	##debug Dumper(vars->{db}->listUsers);
+
 	my $user = vars->{db}->getUser(param('user_id'));
 	
 	send_error("The user with login " . param('user_id') . " does not exist",404) unless $user;
@@ -161,7 +164,7 @@ del '/courses/:course_id/users/:user_id' => sub {
 	my $user = vars->{db}->getUser(param('user_id')); # checked
 	send_error("Record for visible user " . param('user_id') . ' not found.',404) unless $user;
 
-	if (param('user_id') eq param('user') )
+	if (param('user_id') eq session('user') )
 	{
 		send_error("You can't delete yourself from the course.",404);
 	} 
