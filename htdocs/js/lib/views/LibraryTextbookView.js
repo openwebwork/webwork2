@@ -14,6 +14,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             _.bindAll(this,"showResults","loadProblems");
             this.libraryProblemsView = new LibraryProblemsView({type: "textbooks", libraryView: this, 
                                             allProblemSets: this.allProblemSets});
+            this.libBrowserType = options.libBrowserType;
     	},
         events: function(){
             return _.extend({},LibraryView.prototype.events,{
@@ -48,7 +49,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             this.$(".load-problems-button").button("reset");
             this.problemList = new ProblemList(data);
             this.$(".num-problems").text(this.problemList.length + " problems");
-            this.libraryProblemsView.set({problems: this.problemList, type:options.libBrowserType});
+            this.libraryProblemsView.set({problems: this.problemList, type:this.libBrowserType});
             this.libraryProblemsView.updatePaginator();
             this.libraryProblemsView.gotoPage(0);
         },

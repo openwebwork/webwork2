@@ -11,7 +11,6 @@ function(Backbone, _,config){
             this.settings = options.settings;
             _(this.settings).each(function(setting){
                 setting.on("change", function (model) {
-                    console.log("saving the setting");
                     model.save();
                 });
             });

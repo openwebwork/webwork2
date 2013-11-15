@@ -491,18 +491,22 @@ at the bottom of the screen and click "Save Changes". </p>
   <span class="throbber">Loading the Library...<i class="fa fa-spinner fa-spin"></i></span>
 </script>
 
+
 <script type="text/template" id="library-select-template">
-<div class="row form-horizontal">
-<div class="col-md-3">
-<select class="form-control input-sm library-level-0 library-selector" data-level="0">
-  <option value="">Select</option>
-  <% _(subjects).each(function(subj){print('<option>' + subj.name + '</option>')}); %>
-</select>
-</div>
-<div class="col-md-3"><select class="form-control input-sm library-level-1 library-selector hidden" data-level="1"></select></div>
-<div class="col-md-3"><select class="form-control input-sm library-level-2 library-selector hidden" data-level="2"></select></div>
-<button class="btn btn-default load-library-button" data-loading-text="Loading Problems...">Load</button>
-<span class="num-files"></span>
+<div class="form-horizontal">
+  <div class="col-md-3 library-level-0">
+    <select class="form-control input-sm"></select>
+  </div>
+  <div class="col-md-3 library-level-1 hidden">
+    <select class="form-control input-sm"></select>
+  </div>
+  <div class="col-md-3 library-level-2 hidden">
+    <select class="form-control input-sm"></select>
+  </div>
+  <div class="col-md-3">
+    <button class="btn btn-default load-library-button" data-loading-text="Loading Problems...">Load</button>
+    <span class="num-files"></span>
+  </div>
 </div>
 </script>
 

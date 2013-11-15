@@ -6,7 +6,7 @@ define(['module','Backbone', 'underscore','models/UserList','models/ProblemSetLi
     'views/AssignmentCalendarView','views/ProblemSetListView','SetListView','LibraryBrowser',
     'views/WebPage','config','views/WWSettingsView','views/HeaderView','ProblemSetDetailView', 'models/ProblemSet',
     'models/AssignmentDate','models/AssignmentDateList','ImportExportView',
-    'backbone-validation','jquery-ui','bootstrap'
+    'jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, Settings, AssignmentCalendarView, ProblemSetListView,
     SetListView,LibraryBrowser,WebPage,config,WWSettingsView,HeaderView,ProblemSetDetailView,
