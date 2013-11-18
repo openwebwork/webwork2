@@ -361,7 +361,7 @@ get '/Library/problems/:problem_id/tags' => sub {
 #
 ###
 
-get '/renderer/problems/:problem_id' => sub {
+any ['get', 'post'] => '/renderer/problems/:problem_id' => sub {
 
 	##  need to change this later.  Why do we need a course_id for a general renderer? 
 	setCourseEnvironment("_fake_course");
@@ -389,13 +389,14 @@ get '/renderer/problems/:problem_id' => sub {
 		$problem->{source_file} = "Library/" . params->{problem_path};
 	} elsif (defined(params->{source_file})){
 		$problem->{source_file} = params->{source_file};
-	} else {  # try to look up the problem_id in the global database;
+	} elsif ((params->{problem_id} =~ /^\d+$/) && (params->{problem_id} > 0)){  
+			# try to look up the problem_id in the global database;
 
 		my $problem_info = database->quick_select('OPL_pgfile', {pgfile_id => param('problem_id')});
 		my $path_id = $problem_info->{path_id};
 		my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
 		$problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
-	}
+	} 
 
 
 	# get all parameters in the form AnSwErXXXX 
@@ -421,6 +422,10 @@ get '/renderer/problems/:problem_id' => sub {
 		refreshMath2img => defined(param("refreshMath2img")) ? param("refreshMath2img") : 0 ,
 		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
 	};
+	if(defined(params->{pgSource})){
+		my $source = params->{pgSource};
+		$translationOptions->{r_source} = \$source;
+	}
 
 
 	my $pg = new WeBWorK::PG(

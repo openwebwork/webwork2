@@ -14,16 +14,16 @@
 	      <div class="row">
         	<div class="col-md-4">
            	<div class="form-group">
-           		<label class="control-label" for="ProblemStatement-input">Problem Statement: </label>
-           		<textarea id="ProblemStatement-input" class="form-control" rows="5" cols="50"></textarea>
+           		<label class="control-label">Problem Statement: 
+           		<textarea class="form-control problem-statement" rows="5" cols="50"></textarea></label>
             </div>
             <div class="form-group">
-              <label class="control-label" for="ProblemDescription-input">Problem Description</label>
-              <textarea id="ProblemDescription-input" class="form-control" cols="50" rows="5"></textarea>
+              <label class="control-label">Problem Description
+              <textarea class="form-control problem-description" cols="50" rows="5"></textarea></label>
             </div>
            	<div class="form-group">
-               <label class="control-label" for="ProblemSolution-input">Problem Solution</label>
-               <textarea id="ProblemSolution-input" class="form-control" cols="50" rows="5"></textarea>
+               <label class="control-label">Problem Solution
+               <textarea class="form-control problem-solution" cols="50" rows="5"></textarea></label>
             </div>  
           </div>
           <div class="col-md-4">
@@ -31,7 +31,7 @@
               <div class="controls"  id="library-subjects"></div>
             </div>
             <div class="form-group">
-             	<select id="answerType-select">
+             	<select class="answer-type">
                	<option data-type="#empty">Choose Type of Answer</option>,
                	<option data-type="#number-option">Number</option>,
                	<option data-type="#string-option">String</option>
@@ -46,9 +46,47 @@
             </div>  
            </div>
           <div class="col-md-4">
-           <div id="author-info-container"></div>
-           <div id="textbook-info-container"></div>
-           <div class="form-group">
+           <div id="author-info-container">
+           	<div class="control-group">Author Information</div>
+					    <div class="control-group">
+					      <div class="controls">
+					        <input type="text" class="input problem-author" placeholder="Problem Author">
+					      </div>
+					    </div>  
+
+					    <div class="control-group">
+					      <div class="controls">
+					         <input type="text" class="input institution" placeholder="Author Institution">
+					      </div>
+					   </div>  
+           </div>
+           <div id="textbook-info-container">
+           	<div class="control-group">Textbook Information:</div>
+      				<div class="controls">
+				        <input type="text" class="input text-title" placeholder="Text Title">
+      				</div>
+   					</div>  
+   					<div class="control-group">
+      				<div class="controls">
+         				<input type="text" class="input text-edition" placeholder="Text Edition">
+      				</div>
+   					</div>  
+					  <div class="control-group">
+					    <div class="controls">
+					      <input type="text" class="input text-author" id="TextAuthor1-input" placeholder="Text Author">
+					    </div>
+					  </div>  
+					  <div class="control-group">
+					    <div class="controls">
+					      <input type="text" class="input text-section" placeholder="Text Section">
+					    </div>
+					  </div>  
+					  <div class="control-group">
+					    <div class="controls">
+					      <input type="text" class="input text-problem-number" placeholder="Text Problem Number">
+					    </div>
+					  </div>
+           	<div class="form-group">
               <div class="btn-group">
                 <button id="build-script" class="btn btn-default">Build Script</button>
                 <button id="testSave" class="btn btn-default">Save the File</button>
@@ -91,33 +129,72 @@
 </script>
 
 
+<script type="text/template" id="row-setting-template">
+<td><span class="doc"></span>
+<button class='btn btn-sm btn-default help-button' style='margin-left: 25px'>
+  <i class='fa fa-question'></i></button>
+  <div class="help-hidden alert alert-info">
+  <button class="close">&times;</button>
+  <span class="doc2"></span></div>
+
+  </td>
+  <td class="col2"><%=prop_html%></td>
+</script>
+
+
+<script type="text/template" id="library-select-template">
+<div class="form-horizontal library-level-0">
+	<div class="col-md-3"><p class='form-control-static'>Subject:</p></div>
+		<div class="col-md-8">
+		<select class="form-control"></select>
+		</div>
+	</div>
+
+	<div class="form-horizontal library-level-1 hidden">
+		<div class="col-md-3"><p class='form-control-static'>Chapter:</p></div>
+		<div class="col-md-8">
+			<select class="form-control"></select>
+		</div>
+	</div>
+
+	<div class="form-horizontal library-level-2 hidden">
+		<div class="col-md-3"><p class='form-control-static'>Section:</p></div>
+		<div class="col-md-8">
+			<select class="form-control"></select>
+		</div>
+	</div>
+</div>
+</script>
+
+
+
 
 <script type="text/template" id="pg-template">
 ##DESCRIPTION
 ##KEYWORDS('trigonometry', 'limits')
-##  <%=ProblemDescription%>
+##  <%=description%>
 ##ENDDESCRIPTION
 
 ## Created with simple-pg
 
-## DBsubject('<%=DBsubject%>')
-## DBchapter('<%=DBchapter%>')
-## DBsection('Derivatives of Trigonometric Functions')
-## Date('')
-## Author('<%=Author%>')
-## Institution('<%=Institution%>')
-## TitleText1('<%=TitleText1%>')
-## EditionText1('<%=EditionText1%>')
-## AuthorText1('<%=AuthorText1%>')
-## Section1('<%=Section1%>')
-## Problem1('<%=Problem1%>')
+## DBsubject('<%=subject%>')
+## DBchapter('<%=chapter%>')
+## DBsection('<%=section%>')
+## Date('<%=date%>')
+## Author('<%=problem_author%>')
+## Institution('<%=institution%>')
+## TitleText1('<%=textbook_title%>')
+## EditionText1('<%=textbook_edition%>')
+## AuthorText1('<%=textbook_author%>')
+## Section1('<%=textbook_section%>')
+## Problem1('<%=textbook_problem_number%>')
 
 DOCUMENT();        # This should be the first executable line in the problem.
 
 loadMacros(
    "PGstandard.pl",     # Standard macros for PG language
-   "contextInequalities.pl", #automatically loads MathObjects.pl
- #  "MathObjects.pl",
+   "contextInequalities.pl", 
+   "MathObjects.pl", #automatically loads MathObjects.pl
    "PGchoicemacros.pl",
    "parserNumberWithUnits.pl",
    "parserFormulaWithUnits.pl",
@@ -134,7 +211,7 @@ $showPartialCorrectAnswers = 1;
 #
 #
 
-<%=SetupSection%>
+<%=setup_section%>
 
 
 ##############################################################
@@ -144,7 +221,7 @@ $showPartialCorrectAnswers = 1;
 #
 
 
-<%=TextSection%>
+<%=statement_section%>
 ##############################################################
 #
 # Answers
@@ -152,12 +229,12 @@ $showPartialCorrectAnswers = 1;
 #
 
 
-<%=AnswerSection%>
+<%=answer_section%>
 
 Context()->texStrings;
 SOLUTION(EV3(<<'END_SOLUTION'));
 $PAR SOLUTION $PAR
-<%=ProblemSolution%>
+<%=solution%>
 
 END_SOLUTION
 Context()->normalStrings;
@@ -176,25 +253,25 @@ ENDDOCUMENT();
 <script id="number-option-template" type="text/template">
    <div class="control-group">
       <div class="controls">          
-         <input id="Answer-input" type="text" placeholder="Numerical Answer">
+         <input class="answer" type="text" placeholder="Numerical Answer">
       </div>
    </div>
    <div class="control-group">
       <div class="controls">
       <label class="checkbox">
-         <input id="requireUnitsCheckBox" class="answer-option" type="checkbox"> Require Units</label>
+         <input class="answer-option require-units" type="checkbox"> Require Units</label>
       </div>
    </div>
 </script>
 <script id="number-option-pg-setup" type="text/template">
       Context("Numeric");
 
-      $answer = <% withUnits ? print('NumberWithUnits("' + answer + '");') : print ('Compute("' + answer +'");') %>
+      $answer = <% require_units ? print('NumberWithUnits("' + answer + '");') : print ('Compute("' + answer +'");') %>
 </script>
 <script id="number-option-pg-text" type="text/template">
    Context()->texStrings;
    BEGIN_TEXT
-   <%=problemStatement%>
+   <%=statement%>$PAR
    Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}
 
    END_TEXT
@@ -212,7 +289,7 @@ ENDDOCUMENT();
 <script id="string-option-template" type="text/template">
          <div class="control-group">
       <div class="controls">          
-         <input id="Answer-input" type="text" placeholder="Answer as a String">
+         <input class="answer" type="text" placeholder="Answer as a String">
       </div>
    </div>
 </script>
@@ -228,7 +305,7 @@ ENDDOCUMENT();
 <script id="string-option-pg-text" type="text/template">
    Context()->texStrings;
    BEGIN_TEXT
-   <%=problemStatement%>
+   <%=statement%>
    Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}\
 
    END_TEXT
@@ -247,18 +324,18 @@ ENDDOCUMENT();
 <script id="formula-option-template" type="text/template">
    <div class="control-group">
       <div class="controls">          
-         <input id="Answer-input" type="text" placeholder="Formula">
+         <input class="answer" type="text" placeholder="Formula">
       </div>
    </div>
    <div class="control-group">
       <div class="controls">          
-         <input id="VariableList-input" class="answer-option" type="text" placeholder="Variables">
+         <input class="variables" type="text" placeholder="Variables">
       </div>
    </div>
    <div class="control-group">
       <div class="controls">
       <label class="checkbox">
-         <input id="requireUnitsCheckBox" class="answer-option" type="checkbox"> Require Units</label>
+         <input class="require-units" type="checkbox"> Require Units</label>
       </div>
    </div>
 
@@ -270,14 +347,14 @@ ENDDOCUMENT();
       Context("Numeric");
       Context()->variables->are(<%=variables%>);
 
-      $answer = <% withUnits ? print('FormulaWithUnits("' + answer + '");') : print ('Compute("' + answer +'");') %>
+      $answer = <% require_units ? print('FormulaWithUnits("' + answer + '");') : print ('Compute("' + answer +'");') %>
 </script>
 
 
 <script id="formula-option-pg-text" type="text/template">
    Context()->texStrings;
    BEGIN_TEXT
-   <%=problemStatement%>
+   <%=statement%>
    Answer:\{ans_rule(55)\} \{AnswerFormatHelp("formulas")\}\
 
    END_TEXT
@@ -291,77 +368,77 @@ ENDDOCUMENT();
    
 <!-- The interval/inequality option -->
 
-<script id="interval-or-inequality-option-template" type="text/template">
+<script id="interval-option-template" type="text/template">
    <div class="control-group">
       <div class="controls">          
-         <input id="Answer-input" type="text" placeholder="Answer">
+         <input class="answer" type="text" placeholder="Answer">
       </div>
    </div>
    <div class="control-group">
       <div class="controls">
       <label class="checkbox">
-         <input id="allowIntervalCheckBox" class="answer-option"  type="checkbox"> Allow interval notation</label>
+         <input class="allow-interval-notation"  type="checkbox"> Allow interval notation</label>
       </div>
    </div>
    <div class="control-group">
       <div class="controls">
       <label class="checkbox">
-         <input id="allowInequalityCheckBox" class="answer-option"  type="checkbox"> Allow inequality notation</label>
+         <input class="allow-inequality-notation" type="checkbox"> Allow inequality notation</label>
       </div>
    </div>
 </script>
 
-<script id="interval-or-inequality-option-pg-setup" type="text/template">
-      <% if (allowInterval && !allowInequality) { print('Context("Interval");')
-      } else if (!allowInterval && allowInequality) { print('Context("Inequalities-Only");')
+<script id="interval-option-pg-setup" type="text/template">
+      <% if (allow_interval && !allow_inequality) { print('Context("Interval");')
+      } else if (!allow_interval && allow_inequality) { print('Context("Inequalities-Only");')
       } else {print('Context("Inequalities");')} %>
 
       $answer = Compute("<%=answer%>");
 </script>
 
 
-<script id="interval-or-inequality-option-pg-text" type="text/template">
+<script id="interval-option-pg-text" type="text/template">
    Context()->texStrings;
    BEGIN_TEXT
-   <%=problemStatement%>
-   Answer:\{ans_rule(55)\} \{AnswerFormatHelp(<% (allowInterval && !allowInequality) ? print('"interval"') : print('"inequalities"')%>)\}\
+   <%=statement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp(<% (allow_interval && !allow_inequality) ? print('"interval"') : print('"inequalities"')%>)\}\
 
    END_TEXT
    Context()->normalStrings;
 </script>
 
-<script id="interval-or-inequality-option-pg-answer" type="text/template">
+<script id="interval-option-pg-answer" type="text/template">
    ANS($answer->cmp);
 </script>
 
 <!-- The comma-separated list of values option -->
 
-<script id="comma-separated-list-option-template" type="text/template">
+<script id="list-option-template" type="text/template">
    <div class="control-group">
       <div class="controls">          
-         <input id="Answer-input" type="text" placeholder="Answer">
+         <input class="answer" type="text" placeholder="Answer">
       </div>
    </div>
 </script>
 
-<script id="comma-separated-list-option-pg-setup" type="text/template">
+<script id="list-option-pg-setup" type="text/template">
       Context("Numeric");
 
       $answer = List("<%=answer%>");
 </script>
 
 
-<script id="comma-separated-list-option-pg-text" type="text/template">
+<script id="list-option-pg-text" type="text/template">
    Context()->texStrings;
    BEGIN_TEXT
-   <%=problemStatement%>
+   <%=statement%>
    Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}\
 
    END_TEXT
    Context()->normalStrings;
 </script>
 
-<script id="comma-separated-list-option-pg-answer" type="text/template">
+<script id="list-option-pg-answer" type="text/template">
    ANS($answer->cmp);
 </script>
 
@@ -370,23 +447,23 @@ ENDDOCUMENT();
 <script id="multiple-choice-option-template" type="text/template">
 <div class="control-group">
       <div class="controls">          
-         <input id="Answer-input" type="text" placeholder="Answer">
+         <input class="answer" type="text" placeholder="Answer">
       </div>
    </div>
    <div class="control-group">
       <div class="controls">          
-         <input id="ExtraMultipleChoice-input" class="answer-option" type="text" placeholder="Extra Multiple Choice">
+         <input class="extra-choice" type="text" placeholder="Extra Multiple Choice">
       </div>
    </div>
    <div class="control-group">
       <div class="controls">          
-         <input id="LastChoice-input" class="answer-option" type="text" placeholder="Last Choice">
+         <input class="last-choice" type="text" placeholder="Last Choice">
       </div>
    </div>   
    <div class="control-group">
       <div class="controls">
       <label class="checkbox">
-         <input id="LastChoiceCheckBox" class="answer-option" type="checkbox"> Use last choice option</label>
+         <input class="use-last-choice" type="checkbox"> Use last choice option</label>
       </div>
    </div>
 
@@ -395,9 +472,9 @@ ENDDOCUMENT();
 
 <script id="multiple-choice-option-pg-setup" type="text/template">
       $mc = new_multiple_choice();
-      $mc->qa("<%=problemStatement%>","<%=answer%>");
-      $mc->extra("<%=extraChoiceString%>");
-      <% if(lastChoiceOption) {print('$mc->makeLast("'+ lastChoice +'"); ')} %>
+      $mc->qa("<%=statement%>","<%=answer%>");
+      $mc->extra("<%=extra_choice%>");
+      <% if(use_last_choice) {print('$mc->makeLast("'+ last_choice +'"); ')} %>
 </script>
          
 <script id="multiple-choice-option-pg-text" type="text/template">
@@ -416,54 +493,10 @@ ENDDOCUMENT();
 
 <!-- Other information -->
 
-<script type="text/template" id="author-info-template">
-   <div class="control-group">Author Information</div>
-   <div class="control-group">
-      <div class="controls">
-         <input type="text" class="input" id="ProblemAuthor-input" placeholder="Problem Author">
-      </div>
-   </div>  
-
-   <div class="control-group">
-      <div class="controls">
-         <input type="text" class="input" id="Institution-input" placeholder="Author Institution">
-      </div>
-   </div>  
-</script>
-
-<script type="text/template" id="textbook-info-template">
-<div class="control-group">Textbook Information:</div>
-   <div class="control-group">
-      <div class="controls">
-         <input type="text" class="input" id="TextTitle1-input" placeholder="Text Title">
-      </div>
-   </div>  
-   <div class="control-group">
-      <div class="controls">
-         <input type="text" class="input" id="TextEdition1-input" placeholder="Text Edition">
-      </div>
-   </div>  
-   <div class="control-group">
-      <div class="controls">
-         <input type="text" class="input" id="TextAuthor1-input" placeholder="Text Author">
-      </div>
-   </div>  
-   <div class="control-group">
-      <div class="controls">
-         <input type="text" class="input" id="TextSection1-input" placeholder="Text Section">
-      </div>
-   </div>  
-   <div class="control-group">
-      <div class="controls">
-         <input type="text" class="input" id="TextProblem1-input" placeholder="Text Problem Number">
-      </div>
-   </div>
-</script>
-
 
 <script type="text/template" id="library-tree-template">
-<col-md- class='library-tree-left'><col-md- class='throbber'>Loading the Library...<img src='/webwork2_files/images/ajax-loader-small.gif'></col-md-></col-md->
-<col-md- class="library-tree-right"></col-md-> 
+<span class='library-tree-left'>
+  <span class="throbber">Loading the Library...<i class="fa fa-spinner fa-spin"></i></span>
 </script>
 
 
@@ -501,6 +534,13 @@ ENDDOCUMENT();
 
   </td>
 </script>
+
+<script type="text/template" id="settings-table-template">
+  <table class="table table-bordered settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</script>
+
 
 
 <!-- This is where all messages to the user go -->

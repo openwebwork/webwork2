@@ -6,139 +6,128 @@
 
 define(['module','Backbone','underscore','views/WebPage','views/LibraryTreeView','models/PGProblem',
     'models/Problem','models/ProblemList','views/ProblemView','views/WWSettingsView','models/Settings',
-    'config', 'bootstrap'], 
-function(module,Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemList,ProblemView,WWSettingsView,Settings,config){
+    'config','moment', 'bootstrap'], 
+function(module,Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemList,ProblemView,WWSettingsView,Settings,
+            config,moment){
 var SimpleEditorView = WebPage.extend({
     initialize: function(options) {
         this.constructor.__super__.initialize.apply(this, [{el: this.el}]);
-        _.bindAll(this,"render","renderProblem","postSettingsFetched");
-        this.problem = new PGProblem();
-        this.model = new Problem();
-        this.problem.on("saveSuccess",this.renderProblem);
+        _.bindAll(this,"changeAnswerType");
+        this.problem = new Problem();
+        this.model = new PGProblem();
+        this.model.on({"change": this.problemChanged});
         config.settings = new Settings();
         if (module.config().settings){
             config.settings.parseSettings(module.config().settings);
         }
+        config.courseSettings.course_id = module.config().course_id;
         this.editorSettingsView = new EditorSettingsView({settings: config.settings});
+        this.updateFields();
         this.render();
+        this.model.bind('validated:invalid', this.handleErrors);
     },
     render: function (){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
-        this.libraryTreeView = new LibraryTreeView({el: this.$("#library-subjects"), parent: this, type: "allLibSubjects"}); 
+        this.libraryTreeView = new LibraryTreeView({el: this.$("#library-subjects"), parent: this, 
+                type: "subjects", orientation: "vertical"}); 
         this.libraryTreeView.render();
-        this.$("#author-info-container").html($("#author-info-template").html());
-        this.$("#textbook-info-container").html($("#textbook-info-template").html());
-        this.editorSettingsView.render();
+        this.editorSettingsView.setElement($("#settings-tab")).render();
+        this.stickit();
     },
     events: {"click #build-script": "buildScript",
-        "change #answerType-select": "changeAnswerType",
+        "change .answer-type": "changeAnswerType",
         "click #testSave": "saveFile"},
+    bindings: { ".problem-statement": {observe: "statement", events: ['blur']},
+        ".problem-description": {observe: "description", events: ['blur']},
+        ".problem-solution": {observe: "solution", events: ['blur']},
+        ".problem-author": {observe: "problem_author", events: ['blur']},
+        ".institution": {observe: "institution", events: ['blur']},
+        ".text-title": {observe: "textbook_title", events: ['blur']},
+        ".text-edition": {observe: "textbook_edition", events: ['blur']},
+        ".text-author": {observe: "textbook_author", events: ['blur']},
+    },
+    problemChanged: function(model) {
+        console.log(model);
+    },
     renderProblem: function(){
       console.log("rendering the problem");
-      this.model.set("path",this.problem.get("path"));
-      this.showProblemView = new ShowProblemView({model: this.model, el: $("#viewer-tab")});
+      this.showProblemView = new ShowProblemView({model: this.problem, el: $("#viewer-tab")});
       this.showProblemView.render();
       this.$("a[href='#viewer-tab']").tab("show");
 
     },
-    postSettingsFetched: function(){
-        this.editorSettingsView = new EditorSettingsView({el: $("#settings-tab"), settings: this.settings});
-        console.log(this.settings);
-        this.render();
+    updateFields: function () {
+        this.model.set({problem_author: config.settings.findWhere({"var": "editor{author}"}).get("value"),
+            institution: config.settings.findWhere({"var": "editor{authorInstitute}"}).get("value"),
+            textbook_title: config.settings.findWhere({"var": "editor{textTitle}"}).get("value"),
+            textbook_edition: config.settings.findWhere({"var": "editor{textEdition}"}).get("value"),
+            textbook_author: config.settings.findWhere({"var": "editor{textAuthor}"}).get("value"),
+            date: moment().format("MM/DD/YYYY")});
     },
     changeAnswerType: function(evt){
-
-        var type = $(evt.target).find("option:selected").data("type");
-        console.log(type);
-        this.answerType = new AnswerChoiceView({template: $(type+"-template"), el: $("#answerArea")});
-        this.answerType.render(); 
+        switch($(evt.target).val()){
+            case "Number":
+                this.answerView = (new NumberAnswerView({el: $("#answerArea")})).render();
+                break;
+            case "String":
+                this.answerView = (new StringAnswerView({el: $("#answerArea")})).render();
+                break;
+            case "Formula":
+                this.answerView = (new FormulaAnswerView({el: $("#answerArea")})).render();
+                break;
+            case "Interval or Inequality":
+                this.answerView = (new IntervalAnswerView({el: $("#answerArea")})).render();
+                break;
+            case "Comma Separated List of Values":
+                this.answerView = (new ListAnswerView({el: $("#answerArea")})).render();
+                break;
+            case "Multiple Choice":
+                this.answerView = (new MultipleChoiceAnswerView({el: $("#answerArea")})).render();
+                break;
+            
+            
+        }
     },        
     saveFile: function(){
-        console.log("Saving the file");
-        this.problem.set("path","set"+this.setInfo.name+"/Problem" + this.setInfo.number + ".pg");
-        this.problem.save(this.buildScript());
+        var self = this;
+        this.buildScript();
+
+        var params = _.pick(this.model.attributes,"pgSource");
+
+        $.ajax({url: config.urlPrefix+"renderer/problems/0",
+            data: params,
+            type: "POST",
+            success: function(response){
+               self.problem.set({data: response.text});
+               self.renderProblem();
+            }
+        })
 
     },
-    buildScript: function (){           
-        var pgTemplate = _.template($("#pg-template").text())
-          , inputProblemDescription = $("#ProblemDescription-input").val()
-          , inputProblemStatement = $("#ProblemStatement-input").val()
-          , inputAuthor = $("#Author-input").val()
-          , inputInstitution = $("#Institution-input").val()
-          , inputTitleText1 = $("#TitleText1-input").val()
-          , inputEditionText1 = $("#EditionText1-input").val()
-          , inputAuthorText1 = $("#AuthorText1-input").val()
-          , inputSection1 = $("#Section1-input").val()
-          , inputProblem1 = $("#Problem1-input").val()
-          , inputAnswer = $("#Answer-input").val()
-          , inputProblemSolution = $("#ProblemSolution-input").val()
-        
-          , answer_type = $("#answerType-select option:selected").text()
+    buildScript: function (){       
+        // check that everything should be filled in
 
-          , _type = $("#answerType-select option:selected").data("type")
-          , _withUnits = $("#requireUnitsCheckBox").prop("checked")
-          , _allowInterval = $("#allowIntervalCheckBox").prop("checked")
-          , _allowInequality = $("#allowInequalityCheckBox").prop("checked")
-          , _variableList = $("#VariableList-input").val()
-          , _inputExtraMultipleChoice = $("#ExtraMultipleChoice-input").val()
-          , _lastChoice = $("#LastChoice-input").val()
-          , _lastChoiceOption = $("#LastChoiceCheckBox").prop("checked")
-          , _extraChoiceString;
-        if(_inputExtraMultipleChoice){
-          var _extraChoiceString = _inputExtraMultipleChoice.split(",").join('","');
-        };
-        if(_variableList){
-           var _variables = _variableList.split(",").join("=>Real,")+"=>Real"; 
-        };
+        this.model.validate();
 
+        var pgTemplate = _.template($("#pg-template").text());
+        var fields = this.libraryTreeView.fields.attributes;
+        _.extend(fields,{setup_section: this.answerView.getSetupText(this.model.attributes),
+            statement_section: this.answerView.getStatementText(this.model.attributes),
+            answer_section: this.answerView.getAnswerText()});
 
-        var _setupSection = _.template($(_type + "-pg-setup").text(),{
-                    answer: inputAnswer
-                    , withUnits: _withUnits
-                    , problemStatement: inputProblemStatement
-                    , allowInterval: _allowInterval
-                    , allowInequality: _allowInequality
-                    , variables: _variables
-                    , extraChoiceString: _extraChoiceString
-                    , lastChoice: _lastChoice
-                    , lastChoiceOption: _lastChoiceOption})
-          , _textSection = _.template($(_type + "-pg-text").text(),{
-                    problemStatement: inputProblemStatement
-                    , allowInterval: _allowInterval
-                    , allowInequality: _allowInequality})
-          , _answerSection = _.template($(_type + "-pg-answer").text(),{});            
-
-
-        var fields = {ProblemDescription:inputProblemDescription,
-                              DBsubject:$("#DBsubject-select option:selected").val(),
-                              DBchapter:$("#DBchapter-select option:selected").val(),
-                              Author:inputAuthor,
-                              Institution:inputInstitution,
-                              TitleText1:inputTitleText1,
-                              EditionText1:inputEditionText1,
-                              AuthorText1:inputAuthorText1,
-                              Section1:inputSection1,
-                              Problem1:inputProblem1,
-                              ProblemStatement:inputProblemStatement,
-                              SetupSection:_setupSection,
-                              TextSection:_textSection,
-                              AnswerSection:_answerSection,
-                              ProblemSolution:inputProblemSolution
-                              }
-            
-        console.log(fields);
-           
-        $("#problem-code").text(pgTemplate(fields));
-        
-        return pgTemplate(fields);
+        _.extend(fields,this.model.attributes);
+        this.model.set("pgSource",pgTemplate(fields));
+        $("#problem-code").text(this.model.get("pgSource"));
       
+    },
+    handleErrors: function(model,errors){
+        console.log(errors);
     }
 });
 
 var ShowProblemView = Backbone.View.extend({
     initialize: function(options) {
       _.bindAll(this,'render');
-      this.model.set("data","");
       this.collection = new ProblemList();  // this is done as a hack b/c Problem View assumes that all problems 
                                             // are in a ProblemList. 
       this.collection.add(this.model);
@@ -148,6 +137,9 @@ var ShowProblemView = Backbone.View.extend({
     },
     render: function (){
         this.$(".problemList").html("").append(this.problemView.render().el);
+    },
+    setProblem: function(problem){
+        this.model = problem;
     }
 });
 
@@ -159,26 +151,102 @@ var EditorSettingsView = WWSettingsView.extend({
      }, 
      render: function () {
         //$("#settings").html(_.template($("#settings-template").html()));
-        this.constructor.__super__.render.apply(this);
+        this.constructor.__super__.render.apply(this,[{settings: this.settings}]);
      }
 });
 
 var AnswerChoiceView = Backbone.View.extend({
-    initialize: function(options){
-        _.bindAll(this,'render');
-        this.theTemplate = options.template.html()
-    },
     render: function(){
-        this.$el.html(_.template(this.theTemplate));
-        
+        this.$el.html(this.viewTemplate);
+        this.stickit();
+        return this;
     },
-    getAnswer: function(){
-        return this.$("#answer").val()
+    getSetupText: function (opts) {
+        return this.pgSetupTemplate(opts? _.extend(opts,this.model.attributes): this.model.attributes);
     },
-    getOptions: function () {
-        return $(".answer-option").map(function(i,elem) { return {id: $(elem).attr("id"), value: $(elem).val()};}); 
+    getStatementText: function(opts){
+        return this.pgTextTemplate(_.extend(opts,this.model.attributes));  
+    },
+    getAnswerText: function (){
+        return this.pgAnswerTemplate(this.model.attributes);
     }
+});
 
-})
+var NumberAnswerView = AnswerChoiceView.extend({
+    initialize: function () {
+        this.viewTemplate = _.template($("#number-option-template").html());    
+        this.pgSetupTemplate = _.template($("#number-option-pg-setup").html());
+        this.pgTextTemplate =_.template($("#number-option-pg-text").html());
+        this.pgAnswerTemplate = _.template($("#number-option-pg-answer").html());
+        var ThisModel = Backbone.Model.extend({defaults: {answer: "", require_units: false}});
+        this.model = new ThisModel();
+    },
+    bindings: { ".answer": "answer", ".require-units": "require_units"},
+});
+
+var StringAnswerView = AnswerChoiceView.extend({
+    initialize: function () {
+        this.viewTemplate = _.template($("#string-option-template").html());    
+        this.pgSetupTemplate = _.template($("#string-option-pg-setup").html());
+        this.pgTextTemplate =_.template($("#string-option-pg-text").html());
+        this.pgAnswerTemplate = _.template($("#string-option-pg-answer").html());
+        var ThisModel = Backbone.Model.extend({defaults: {answer: ""}});
+        this.model = new ThisModel();
+    },
+    bindings: { ".answer": "answer"},
+});
+
+var FormulaAnswerView = AnswerChoiceView.extend({
+    initialize: function () {
+        this.viewTemplate = _.template($("#formula-option-template").html());    
+        this.pgSetupTemplate = _.template($("#formula-option-pg-setup").html());
+        this.pgTextTemplate =_.template($("#formula-option-pg-text").html());
+        this.pgAnswerTemplate = _.template($("#formula-option-pg-answer").html());
+        var ThisModel = Backbone.Model.extend({defaults: {answer: "", require_units: false, variables: ""}});
+        this.model = new ThisModel();
+    },
+    bindings: { ".answer": "answer", ".require-units": "require_units", ".variables" : "variables"},
+});
+
+
+var IntervalAnswerView = AnswerChoiceView.extend({
+    initialize: function () {
+        this.viewTemplate = _.template($("#interval-option-template").html());    
+        this.pgSetupTemplate = _.template($("#interval-option-pg-setup").html());
+        this.pgTextTemplate =_.template($("#interval-option-pg-text").html());
+        this.pgAnswerTemplate = _.template($("#interval-option-pg-answer").html());
+        var ThisModel = Backbone.Model.extend({defaults: {answer: "", allow_interval: false, allow_inequality: false}});
+        this.model = new ThisModel();
+    },
+    bindings: { ".answer": "answer", ".allow-interval-notation": "allow_interval",
+         ".allow-inequality-notation" : "allow_inequality"},
+});
+
+var ListAnswerView = AnswerChoiceView.extend({
+    initialize: function () {
+        this.viewTemplate = _.template($("#list-option-template").html());    
+        this.pgSetupTemplate = _.template($("#list-option-pg-setup").html());
+        this.pgTextTemplate =_.template($("#list-option-pg-text").html());
+        this.pgAnswerTemplate = _.template($("#list-option-pg-answer").html());
+        var ThisModel = Backbone.Model.extend({defaults: {answer: ""}});
+        this.model = new ThisModel();
+    },
+    bindings: { ".answer": "answer"},
+});
+
+var MultipleChoiceAnswerView = AnswerChoiceView.extend({
+    initialize: function () {
+        this.viewTemplate = _.template($("#multiple-choice-option-template").html());    
+        this.pgSetupTemplate = _.template($("#multiple-choice-option-pg-setup").html());
+        this.pgTextTemplate =_.template($("#multiple-choice-option-pg-text").html());
+        this.pgAnswerTemplate = _.template($("#multiple-choice-option-pg-answer").html());
+        var ThisModel = Backbone.Model.extend({defaults: {answer: "", extra_choice: "", last_choice: "", use_last_choice: false}});
+        this.model = new ThisModel();
+    },
+    bindings: { ".answer": "answer", ".extra-choice": "extra_choice", ".last-choice": "last_choice",
+        ".use-last-choice": "use_last_choice"},
+});
+
+
 new SimpleEditorView({el: $("div#mainDiv")});
 });
