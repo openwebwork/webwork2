@@ -107,13 +107,13 @@ var tabberOptions = {manualStartup:true};
 	<!-- Page Title -->
 	<!--#if can="title"-->
 	<div class="row-fluid"><div class="span12">
-		<h2 class='page-title'><!--#title --></h2>
+		<h1 class='page-title'><!--#title --></h1>
 	</div></div>
 	<!--#endif-->
 
 	<!--#if can="nav" can="message"--> 
 	<div class="row-fluid">
-	  <div class="problem-nav span3">
+	  <div class="problem-nav span3" role="navigation" aria-label="question navigation">
 	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
 	<!--#if can="nav"-->
 		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
