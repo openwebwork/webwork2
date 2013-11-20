@@ -113,7 +113,7 @@
 <script src="/webwork2_files/js/apps/require-config.js"></script>
 
 <script type='text/javascript'> 
-	require.config = { 'SimpleEditor': {course_id: "[% course_id %]", settings: [% theSetting %] }};
+	require.config = { 'SimpleEditor': {course_id: "[% course_id %]", settings: [% theSetting %], user: "[%user%]" }};
 </script>
 
 <script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -253,13 +253,14 @@ ENDDOCUMENT();
 
 <script id="number-option-template" type="text/template">
    <div class="control-group">
-      <div class="controls">          
-         <input class="answer" type="text" placeholder="Numerical Answer">
+      <div class="controls">
+        <label class="control-label">Answer:          
+         <input class="answer form-control" type="text" placeholder="Numerical Answer"></label>
       </div>
    </div>
    <div class="control-group">
       <div class="controls">
-      <label class="checkbox">
+      <label class="checkbox-inline">
          <input class="answer-option require-units" type="checkbox"> Require Units</label>
       </div>
    </div>
@@ -523,7 +524,9 @@ ENDDOCUMENT();
 </div>
 <%if(deletable){ %><col-md- class="col-md-1 remove pull-right btn"><i class="icon-trash"></i></col-md-><%}%></div>    
 
+<div>
 <%= data %>
+</div>
 </script>
 
 <script type="text/template" id="setting-row-template">
@@ -544,6 +547,7 @@ ENDDOCUMENT();
 
 
 
+
 <!-- This is where all messages to the user go -->
 
 <script type="text/template" id="all-messages">
@@ -552,7 +556,9 @@ ENDDOCUMENT();
     set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
     set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
       + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
-    
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
+      + "reenter your username and password to continue. ";},    
+    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."}  
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
   

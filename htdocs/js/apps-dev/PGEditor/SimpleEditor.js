@@ -11,8 +11,9 @@ function(module,Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemLis
             config,moment){
 var SimpleEditorView = WebPage.extend({
     initialize: function(options) {
+        var self = this;
         this.constructor.__super__.initialize.apply(this, [{el: this.el}]);
-        _.bindAll(this,"changeAnswerType");
+        _.bindAll(this,"changeAnswerType","checkLogin");
         this.problem = new Problem();
         this.model = new PGProblem();
         this.model.on({"change": this.problemChanged});
@@ -29,6 +30,13 @@ var SimpleEditorView = WebPage.extend({
         this.answerTypeCollection = _(answerTypes).map(function(type){return {label: type, value: type};});
         this.updateFields();
         this.render();
+
+        if(module.config().session){
+            _.extend(config.courseSettings,module.config().session);
+        }
+        if(! config.courseSettings.logged_in){
+            this.constructor.__super__.requestLogin.call(this, {success: this.checkLogin});
+        }
         
     },
     render: function (){
@@ -55,6 +63,14 @@ var SimpleEditorView = WebPage.extend({
         }},
         ".answer-type": {observe: "answer_type", selectOptions: {collection: "this.answerTypeCollection",
             defaultOption: {label: "Select an Answer Type...", value: null}}}
+    },
+    checkLogin: function(data){
+        if(data.logged_in==1){
+            this.closeLogin();
+            _.extend(config.courseSettings,data);
+        } else {
+            this.loginPane.$(".message").html(config.msgTemplate({type: "bad_password"}));
+        }
     },
     problemChanged: function(model) {
         console.log(model);
@@ -133,7 +149,7 @@ var SimpleEditorView = WebPage.extend({
             var answerBindings = typeof(this.answerView)==="undefined" ? {} :  _.chain(this.answerView.bindings).keys()
                 .map(function(key) { return [self.answerView.bindings[key],key];}).object().value();
 
-            _(_(answerErrors).keys()).each(function(key){
+            _(_(answerErrors || {}).keys()).each(function(key){
                 self.answerView.$(answerBindings[key]).closest("div").addClass("has-error");
             })
 
@@ -166,7 +182,8 @@ var ShowProblemView = Backbone.View.extend({
                                             // are in a ProblemList. 
       this.collection.add(this.model);
       problemViewAttrs = {reorderable: false, showPoints: false, showAddTool: false, showEditTool: false,
-                showRefreshTool: false, showViewTool: false, showHideTool: false, deletable: false, draggable: false};
+                showRefreshTool: false, showViewTool: false, showHideTool: false, deletable: false, draggable: false,
+                displayMode: "MathJax"};
       this.problemView = new ProblemView({model: this.model, viewAttrs: problemViewAttrs});
     },
     render: function (){

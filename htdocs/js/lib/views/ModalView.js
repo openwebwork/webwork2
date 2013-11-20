@@ -26,11 +26,19 @@ define(['Backbone','underscore'], function(Backbone, _){
         render: function () {
             var self = this; 
             this.$el.html(this.template(this.templateOptions));
-            this.$el.dialog({height: 300, width: 400,modal: true,
+            this.$el.dialog({height: 400, width: 500,modal: true,
                 buttons: this.buttons, title: this.title});
+            this.$el.siblings(".ui-dialog-buttonpane").children(".ui-dialog-buttonset").addClass("btn-group");
+            this.$el.siblings(".ui-dialog-buttonpane").find("button").addClass("btn btn-default");
             if(this.model){
                 this.stickit();
             }
+            return this;
+        },
+        set: function(opts){
+            _(_.keys(opts)).each(function(key){
+                this[key]=opts[key];
+            });
             return this;
         },
         open: function () {

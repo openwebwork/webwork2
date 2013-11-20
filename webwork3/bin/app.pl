@@ -22,10 +22,10 @@ set serializer => 'JSON';
 
 hook 'before' => sub {
 
-    # for my $key (keys(%{request->params})){
-    # 	my $value = defined(params->{$key}) ? params->{$key} : ''; 
-    # 	debug($key . " : " . $value);
-    # } 
+    for my $key (keys(%{request->params})){
+    	my $value = defined(params->{$key}) ? params->{$key} : ''; 
+    	debug($key . " : " . $value);
+    } 
 
 };
 
@@ -41,8 +41,9 @@ post '/handshake' => sub {
 };
 
 
-post '/login' => sub {
-	debug "in /login";
+post '/courses/:course_id/login' => sub {
+
+	# setCourseEnvironment(params->{course_id});
 
 	my $authen = new WeBWorK::Authen(vars->{ce});
 	$authen->set_params({
@@ -51,13 +52,25 @@ post '/login' => sub {
 		key => params->{session_key}
 		});
 
-	debug $authen->{params};
-	
 	my $result = $authen->verify();
 
-	debug $result;
+	my $out = {};
 
-	return {result=> $result};
+	if($result){
+		my $key = $authen->create_session(params->{user});
+		
+		session->{user} = params->{user};
+		session->{key} = $key;
+		my $permission = vars->{db}->getPermissionLevel(session->{user});
+		session->{permission} = $permission->{permission};		
+
+		debug session;	
+		return {session_key=>$key, user=>params->{user},logged_in=>1};
+
+
+	} else {
+		return {loggin_in=>0};
+	}
 };
 
 

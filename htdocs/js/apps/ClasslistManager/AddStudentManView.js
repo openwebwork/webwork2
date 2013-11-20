@@ -24,7 +24,11 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
 		    "click button#add-more-button": "addStudent",
 		    "click button#cancel-import": "closeDialog"
 		},
-		openDialog: function () { this.$el.dialog("open");},
+		openDialog: function () { 
+			this.$el.dialog("open");
+			this.collection = new UserList([new User()]);
+			this.render();
+		},
 		closeDialog: function () {this.$el.dialog("close");},
 		template: _.template($("#add_student_man_dialog_content").html()),
 		render: function(){

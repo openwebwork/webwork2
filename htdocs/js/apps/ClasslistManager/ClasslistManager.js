@@ -97,6 +97,7 @@ var ClasslistManager = WebPage.extend({
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
     	_user.save();
+
     },
     changeUser: function(_user){
     	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
@@ -121,6 +122,7 @@ var ClasslistManager = WebPage.extend({
                 	self.messagePane.addMessage({type: "success",
                 		short: config.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
                 		text: config.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
+                	self.userTable.render();
                 	break;
                 default:    
 		    	 	self.messagePane.addMessage({type: "success", 
@@ -271,7 +273,7 @@ var ClasslistManager = WebPage.extend({
 	    			_(_users).map(function (user) {return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
 		    , del = confirm(str);
 	    if (del){
-	    	self.users.remove(_users);
+	    	self.users.remove($.makeArray(_users));
 			this.userTable.render();
 	    }
 	},
