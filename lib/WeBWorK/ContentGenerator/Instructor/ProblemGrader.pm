@@ -235,6 +235,8 @@ sub body {
 	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)", "&nbsp;", "Comment"]));
 	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
+	my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseName, setID => $setID, problemID => $problemID });
+
 	# get user records
 	my @userRecords  = ();
 	foreach my $currentUser ( @users) {
@@ -253,6 +255,7 @@ sub body {
 	    my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || "";
 	    
 	    my $userID = $userRecord->user_id;
+	    my $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => $userID });
 	    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 	    my $userAnswerString;
 	    my $comment = "";
@@ -340,7 +343,7 @@ sub body {
 				      CGI::div({class=>
 			$userProblem->flags =~ /needs_grading/ 
 				   ? "NeedsGrading $statusClass" :
-				     $statusClass}, $prettyName), " ", 
+				     $statusClass}, CGI::a({href => $viewProblemLink, target=>"WW_View"}, $prettyName)), " ", 
 				      
 				      $userAnswerString, " ",
 				      CGI::checkbox({
