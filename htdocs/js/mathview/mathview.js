@@ -20,7 +20,7 @@ $(document).keydown(function(e){
 $(document).ready(function() {
     /* Make sure mathjax is confugued for AsciiMath input */
     MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
-    
+
     /* attach a viewer to each input */
     $('.codeshard').each(function () {
 	var input = this;
