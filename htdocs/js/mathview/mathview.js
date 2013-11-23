@@ -17,6 +17,7 @@ $(document).keydown(function(e){
 	$('.popover').hide();
 });
 
+/* load up and config mathview */
 $(document).ready(function() {
     /* Make sure mathjax is confugued for AsciiMath input */
     MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
@@ -230,21 +231,18 @@ function MathViewer(field) {
     /* enables an autocomplete feature for the input */
     this.createAutocomplete = function  () {
 	var source = [];
-
+	
 	/* get autocomplete functions and put into list */
 	$.each(mv_categories, function (cati, catval) {
-		$.each(catval.operators, function (i, val) {
+	    $.each(catval.operators, function (i, val) {
 		    if (val.autocomp) {
 			source.push(val.PG);
 		    }
-		});
+	    });
 	});
-
-
+	
+	
 	/* implement autocomplete feature using bootstrap typeahead */
-	/* Note: Bootstraps typeahead is a little buggy and I had to implement the hack at
-	   https://github.com/twitter/bootstrap/issues/6633 in order to make the ( key work
-	*/
 	$(me.decoratedTextBox).attr('autocomplete', 'off')
 	    .typeahead({source: source,
 			minLength : 0,
@@ -305,14 +303,42 @@ function MathViewer(field) {
 				me.decoratedTextBox.setCaretPos(newpos);
 				me.decoratedTextBox.off('change');
 			    });
-
+			    
 			    return [this.query.slice(0,pos), 
 				    item, 
 				    this.query.slice(pos)].join('');
 			}
-		      });
+		       });
 	
-    }
+	/* this overrides a broken part of bootstrap */
+	$(me.decoratedTextBox).data('typeahead').move = function (e) {
+	    if (!this.shown) return;
+	    
+	    if (e.type === 'keypress') return; //40 and 38 are characters in a keypress
+	    
+	    switch(e.keyCode) {
+	    case 9: // tab
+	    case 13: // enter
+	    case 27: // escape
+		e.preventDefault()
+		break
+		
+	    case 38: // up arrow
+		e.preventDefault()
+		this.prev()
+		break
+		
+	    case 40: // down arrow
+		e.preventDefault()
+		this.next()
+		break
+	    }
+	    e.stopPropagation();
+	    
+	}
+	
+    };
+
 }
 
 $(function () {
