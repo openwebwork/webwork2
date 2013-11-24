@@ -3,14 +3,17 @@ use Dancer;
 use Dancer::Plugin::Database;
 use WeBWorK::DB;
 use WeBWorK::CourseEnvironment;
+use WeBWorK::Authen;
 
-use Routes::Authentication; ## note: must be passed first
+## note: Routes::Authenication must be passed first
+use Routes::Authentication qw/authenticate setCourseEnvironment/; 
 use Routes::Course;
 use Routes::Library;
 use Routes::ProblemSets;
 use Routes::User;
 use Routes::Settings;
 use Routes::PastAnswers;
+
 
 
 
@@ -24,20 +27,38 @@ hook 'before' => sub {
     	debug($key . " : " . $value);
     }
 
-	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
-	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
-
 };
 
 ## right now, this is to help handshaking between the original webservice and dancer.  
 ## it does nothing except sets the session using the hook 'before' above. 
 
-get '/login' => sub {
-	
+post '/handshake' => sub {
+
+	setCourseEnvironment(params->{course_id});
+	authenticate();
+
 	return {msg => "If you get this message the handshaking between Dancer and WW2 worked."};
 };
 
 
+post '/login' => sub {
+	debug "in /login";
+
+	my $authen = new WeBWorK::Authen(vars->{ce});
+	$authen->set_params({
+		user => params->{user},
+		password => params->{password},
+		key => params->{session_key}
+		});
+
+	debug $authen->{params};
+	
+	my $result = $authen->verify();
+
+	debug $result;
+
+	return {result=> $result};
+};
 
 
 
@@ -59,6 +80,34 @@ get '/app-info' => sub {
 		
 	};
 };
+
+get '/courses/:course_id/info' => sub {
+
+	setCourseEnvironment(params->{course_id});
+
+	return {
+		course_id => params->{course_id},
+		webwork_dir => vars->{ce}->{webwork_dir},
+		webworkURLs => vars->{ce}->{webworkURLs},
+		webworkDirs => vars->{ce}->{webworkDirs}
+	};
+
+};
+
+
+sub checkCourse {
+	if (! defined(session->{course})) {
+		if (defined(params->{course_id})) {
+			session->{course} = params->{course_id};
+		} else {
+			send_error("The course has not been defined.  You may need to authenticate again",401);	
+		}
+
+	}
+
+	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
+
+}
 
 sub getCourseEnvironment {
 	my $courseID = shift;

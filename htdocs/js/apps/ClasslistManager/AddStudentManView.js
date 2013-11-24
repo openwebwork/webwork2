@@ -1,7 +1,7 @@
 // This is the View for the dialog for addings students manually    
 
-define(['Backbone', 'underscore','views/Closeable','models/User','models/UserList','config','stickit'], 
-	function(Backbone, _, Closeable, User, UserList, config){	
+define(['Backbone', 'underscore','models/User','models/UserList','config','stickit'], 
+	function(Backbone, _, User, UserList, config){	
 	var AddStudentManView = Backbone.View.extend({
 		id: "addStudManDialog",	    
 		initialize: function(){

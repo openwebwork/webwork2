@@ -33,7 +33,7 @@ var require = {
         'jquery-ui-custom': ['jquery'],
         'underscore': { exports: '_' },
         'Backbone': { deps: ['underscore', 'jquery'], exports: 'Backbone'},
-        'bootstrap':['jquery'],
+        'bootstrap':['jquery','jquery-ui'], // saying that bootstrap requires jquery-ui makes bootstrap (javascript) buttons work.
         'backbone-validation': ['Backbone'],
         'moment': {exports: 'moment'},
         'config': {deps: ['moment','editablegrid'], exports: 'config'},

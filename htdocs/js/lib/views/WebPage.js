@@ -1,40 +1,27 @@
-define(['Backbone','views/Closeable'], function(Backbone,Closeable){
+define(['Backbone','views/MessageListView', 'jquery-truncate'], function(Backbone,MessageListView){
 	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
     initialize: function () {
-    	_.bindAll(this,"render");
+    	_.bindAll(this,"render","toggleMessageWindow");
     	_.extend(this,this.options);
     },
     render: function () {
     	var self = this; 
 
-        // pstaab:  this is new version of the alert system
-
-        //$("#msg-toggle").popover({placement: "bottom"});
-
-
-
-        // Create an announcement pane for successful messages.
-        this.announce = new Closeable({classes: ["alert-success"], id: "announce-pane"});
-        this.$el.prepend(this.announce.el);
+        this.$el.prepend((this.messagePane = new MessageListView()).render().el);
         
-        // Create an announcement pane for error messages.
-        this.errorPane = new Closeable({classes: ["alert-error"], id: "error-pane"});
-        this.$el.prepend(this.errorPane.el);
-        
-        // This is the help Pane
-        this.helpPane = new Closeable({closeableType : "Help", text: $("#help-text").html(), id: "help-pane"});
-        this.$el.prepend(this.helpPane.el);
-
         $("button#help-link").click(function () {
                 self.helpPane.open();});
 
+        $("button#msg-toggle").on("click",this.toggleMessageWindow);
 
          this.setUpNavMenu();  
 
     },
-
+    toggleMessageWindow: function() {
+        this.messagePane.toggle();
+    },
     // setUpNavMenu will dynamically changed the navigation menu to make it look better in the bootstrap view.
     // In the future, we need to have the template for the menu better suited for a navigation menu.  
 

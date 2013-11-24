@@ -24,8 +24,8 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
             
             this.numProblemsPerGroup = 10; // this should be a parameter.
-            
             this.problems = this.options.problems ? this.options.problems : new ProblemList();
+            this.problemSet = this.options.problemSet; 
             this.problems.on("remove",this.deleteProblem);
             this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
 
@@ -35,16 +35,19 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             _.extend(this.viewAttrs,{type: this.options.type});
             _.extend(this,Backbone.Events);
         },
-        setProblems: function(_problems,_type){
-            this.problems = _problems; 
+        set: function(opts){
+            this.problems = opts.problems; 
             this.problems.on("remove",this.deleteProblem);
-            //this.listenTo(this.problems,"remove",this.deleteProblem);
-            this.viewAttrs.type = _type;
-
+            if(opts.problemSet){
+                this.problemSet = opts.problemSet;
+            }
+            this.viewAttrs.type = opts.type || "set";
+            this.viewAttrs.displayMode = opts.displayMode || config.settings.getSettingValue("pg{options}{displayMode}").slice(0);
             // start with showing 10 (numProblemsPerGroup) problems
             this.maxProblemIndex = (this.problems.length > this.numProblemsPerGroup)?
                     this.numProblemsPerGroup : this.problems.length;
 
+            this.problemViews = [];
             return this;
         },
         render: function() {
@@ -52,9 +55,10 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var openEditorURL = this.problems ? "/webwork2/" + $("#hidden_courseID").val() 
                                     + "/instructor/SimplePGEditor/" 
                                     + this.problems.setName + "/" + (this.problems.length +1): "";
-            this.$el.html(_.template($(this.headerTemplate).html(),
-                                {displayModes: config.settings.getSettingValue("pg{displayModes}"), 
-                                editorURL: openEditorURL}));
+            var modes = config.settings.getSettingValue("pg{displayModes}").slice();
+            modes.push("None");
+            this.$el.html(_.template($("#problem-list-template").html(),
+                                {displayModes: modes, editorURL: openEditorURL}));
             this.renderProblems();
             
             return this;
@@ -64,7 +68,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var ul = this.$(".prob-list").empty(); 
             this.problems.each(function(problem,i){
                 if(i<self.maxProblemIndex) {
-                    ul.append((new ProblemView({model: problem, problemSets: self.problemSets,
+                    ul.append((self.problemViews[i] = new ProblemView({model: problem, libraryView: self.libraryView,
                         viewAttrs: self.viewAttrs})).render().el); 
                     
                 }
@@ -77,24 +81,50 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
             this.trigger("update-num-problems",
                 {number_shown: this.$(".prob-list li").length, total: this.problems.size()});
+            if(this.$(".prob-list li").length < this.problems.size()){
+                this.$(".load-more-btn").removeAttr("disabled");
+            } else {
+                this.$(".load-more-btn").attr("disabled","disabled");
+            }
         },        
         loadMore: function () {
             this.maxProblemIndex+=10;
             this.renderProblems();
         },
-
         events: {"click #undo-delete-btn": "undoDelete",
-            "click .display-mode-options a": "changeDisplayMode",
+            "change .display-mode-options": "changeDisplayMode",
             "click #create-new-problem": "openSimpleEditor",
-            "click .load-more-btn": "loadMore"
+            "click .load-more-btn": "loadMore",
+            "click .show-hide-tags-btn": "toggleTags"
         },
         changeDisplayMode: function (evt) {
-            var _displayMode = $(evt.target).text().trim();
-            
-            this.problems.each(function(prob){
-                prob.set({data: null, displayMode: _displayMode},{silent:true});
+            this.problems.each(function(problem){
+                problem.set({data: null},{silent:true});
             });
-            this.render();
+            this.viewAttrs.displayMode = $(evt.target).val();
+            this.renderProblems();
+        },
+        toggleTags: function () {
+            if(this.$(".show-hide-tags-btn").text()==="Show Tags"){
+                this.$(".show-hide-tags-btn").button("hide");
+                this.$(".tag-row").removeClass("hidden");
+                _(this.problemViews).each(function(pv){
+                    if(!pv.tagsLoaded){
+                        pv.$(".loading-row").removeClass("hidden");
+                        pv.$(".tag-row").addClass("hidden");
+                        pv.model.loadTags({success: function (data){
+                            pv.$(".loading-row").addClass("hidden");
+                            pv.$(".tag-row").removeClass("hidden");
+                            pv.stickit();
+                            pv.tagsLoaded=true;
+                        }});
+                    }
+                });
+            } else {
+                this.$(".show-hide-tags-btn").button("reset");
+                this.$(".tag-row").addClass("hidden");
+            }
+            
         },
         /* when the "new" button is clicked open up the simple editor. */
         openSimpleEditor: function(){  
@@ -107,7 +137,14 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 self.problems.findWhere({source_file: $(this).data("path")})
                         .set({problem_id: i+1}, {silent: true});  // set the new order of the problems.  
             });   
-            this.problems.reorder();
+            this.problems.reorder(function() {
+                if(self.model) {
+                    self.model.alteredAttributes=[{attr: "problems",
+                         msg: "The problems have been reordered for Problem Set " + self.model.get("set_id")}];
+                    self.model.trigger("sync",self.model);
+                }    
+            });
+            
         },
         undoDelete: function(){
             console.log("in undoDelete");
@@ -121,14 +158,16 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         setProblemSet: function(_set) {
             this.model = _set; 
-            this.setProblems(this.model.get("problems"));
+            this.set({problems: this.model.get("problems")});
             return this;
         }, 
         addProblemView: function (prob){
             var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
             this.$("#prob-list").append(probView.el);
             probView.render();
-            this.problems.trigger("num-problems-shown");
+            this.trigger("update-num-problems",
+                {number_shown: this.$(".prob-list li").length, total: this.problems.size()});
+
         },
         deleteProblem: function (problem){
             var self = this; 

@@ -12,7 +12,7 @@ define(['Backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,
             console.log(options);
         }, */
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/users/" + this.get("user_id") +
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") +
             "/sets/" + this.get("set_id");
         },
         parse: function (response) {

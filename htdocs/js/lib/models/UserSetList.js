@@ -6,7 +6,7 @@ define(['Backbone', 'underscore','./UserSet','config','moment'], function(Backbo
             console.log("in UserSetList initialize");
         },
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.problemSet.get("set_id") + 
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.problemSet.get("set_id") + 
             '/users';
         },
         parse: function(response){

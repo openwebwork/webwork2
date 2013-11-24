@@ -34,8 +34,8 @@
 
     <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-         	<div class="container">
-         		<div class="btn-group dropdown span2" id="webwork_navigation" style="display: none">
+         	<div class="container-fluid">
+         		<div class="btn-group dropdown span1" id="webwork_navigation" style="display: none">
 	                  <a href="#webwork_navigation" class="dropdown-toggle btn" data-toggle="dropdown">Menu <b class="caret"></b>
 	                  	</a>
                     <!--#if can="links"-->
@@ -47,12 +47,14 @@
             		<a href="#" class="brand"> <!--#name--><a>
 				</div> 
 				<div class="span3"><!--#loginstatus--></div>
-	    		<div class="span3 btn-group">
+	    		<div class="span2 btn-group">
 	    			<button class="btn" id="help-link">Help</button>
 	    			<a class='btn btn-warning' target="_blank" href="https://github.com/openwebwork/webwork2/issues/new">Bugs!</a>
-	    			<button class='btn' href="#" id="msg-toggle"><i class="icon-comment-alt icon-large"></i></button>
+	    			<button class='btn' href="#" id="msg-toggle"><i class="fa fa-comment-o fa-lg"></i></button>
+	    			
     			</div>
-
+    			<div class="navbar-text span3 alert alert-success well"id="short-message"></div>
+    			
 				            
           	</div>
         </div><!-- /navbar-inner -->
@@ -83,17 +85,14 @@
 			  		<!--  styles could be different for different pages so they are not set here -->
 					<!--#info-->
 		    	<!--#endif-->
-		
-	<div id="footer">
+	
+	<div class="container">	
+	<div class="navbar-fixed-bottom navbar" id="footer">
+	<div class="navbar-inner">
 		<!--#footer-->
+		</div>
 	</div>
-<!--	<footer class="footer">
-	    <div class="row-fluid"><span class="span4">Page generated at <!--#timestamp--></span>
-	    <span class="span4">Styled using twitter bootstrap</span>
-	    <span id="copyright" class="span4 pull-right">WeBWorK &#169; 2000-2013 <a href="http://github.com/openwebwork/webwork2/">The WeBWorK Project</a></span>
-	    </div>
-        </div>
-    </footer>-->
+	</div>
 	<!--#if can="output_JS"-->
 <!--#output_JS-->
 <!--#endif-->

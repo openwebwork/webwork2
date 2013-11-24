@@ -33,21 +33,13 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             restrict_ip: "No",
             relax_restrict_ip: "No",
             restricted_login_proctor: "No",
-            assigned_users: []
+            assigned_users: [],
+            problems: []
         },
         validation: {
-           /* open_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            due_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            answer_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            }, */
+           open_date: "checkDates",
+            due_date: "checkDates",
+            answer_date: "checkDates",
             set_id: {pattern: "setname", msg: "A name must only contain letters, numbers, _ and ."}
         },
         descriptions:  {
@@ -76,50 +68,12 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             relax_restrict_ip: "Relax Restrict IP???",
             restricted_login_proctor: "Restricted to Login Proctor"
         },
-        types: {
-            set_id: "string",
-            set_header: "filepath",
-            hardcopy_header: "filepath",
-            open_date: "datetime",
-            due_date: "datetime",
-            answer_date: "datetime",
-            visible: "opt(yes,no)",
-            enable_reduced_scoring: "opt(yes,no)",
-            assignment_type: "opt(homework,gateway/quiz,proctored gateway/quiz)",
-            attempts_per_version: "int(0+)",
-            time_interval: "time(0+)",
-            versions_per_interval: "int(0+)",
-            version_time_limit: "time(0+)",
-            version_creation_time: "time(0+)",
-            problem_randorder: "opt(yes,no)",
-            version_last_attempt_time: "time(0+)",
-            problems_per_page: "int(1+)",
-            hide_score: "opt(yes,no)",
-            hide_score_by_problem: "opt(yes,no)",
-            hide_work: "opt(yes,no)",
-            time_limit_cap: "opt(yes,no)",
-            restrict_ip: "opt(yes,no)",
-            relax_restrict_ip: "opt(yes,no)",
-            restricted_login_proctor: "opt(yes,no)",
-        },
         initialize: function(_set,_assigned_users){
             _.bindAll(this,"addProblem");
-            /*if (_set && _set.problems){
-                var problems = new ProblemList(_set.problems);
-                problems.setName = _set.set_id;
-                this.set("problems",problems,{silent: true});
-            } else {
-                this.set("problems",new ProblemList(),{silent: true});
-            }
-
-            if(_assigned_users){
-                this.set("assigned_users",_assigned_users);
-            }*/
-
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") ;
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.get("set_id") ;
         },
         parse: function (response) {
             var self = this;
@@ -133,16 +87,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
                 }
             });
             this.id = this.get("set_id");
-        },
-        save: function(opts){
-            var self = this;
-            var attrs = this.changedAttributes();
-            if(attrs){
-                this.alteredAttributes = _(_(attrs).keys()).map(function(key){
-                    return {attr: key, new_value: attrs[key], old_value: self._previousAttributes[key]};
-                });
-            }
-            ProblemSet.__super__.save.apply(this,opts);
         },
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
                                                 // as a moment object and defined settings.
@@ -161,24 +105,11 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
         addProblem: function (prob) {  
             var self = this; 
             var newProblem = new Problem(prob.attributes);
-            if (this.problems) {
-                this.problems.add(newProblem);
-                newProblem.save();
-            }  else {  // the problems haven't loaded.
-                console.log("Problem Set " + this.get("set_id") + " not loaded. ");
-                console.log(prob);
-                this.saveProblems.push(newProblem);
-                this.problems = new ProblemList({setName: self.get("set_id"),   type: "Problem Set"});
-                this.problems.fetch({success: function () {
-                    self.problems.add(self.saveProblems);
-                    var lastIndex = parseInt(self.problems.last().get("problem_id"));
-                    _(self.saveProblems).each(function(_prob,i){  
-                        _prob.set("problem_id",lastIndex+i+1,{silent: true});
-                        _prob.save(); 
-                    });
-                    self.saveProblems = []; 
-                } });
-            }
+            var lastProblem = this.get("problems").last();
+            newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
+            this.get("problems").add(newProblem);
+            this.trigger("change:problems",this);
+            this.save();
         },
         setDate: function(attr,_date){
             var currentDate = moment.unix(this.get(attr))
@@ -192,14 +123,18 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             return this;
 
         },
-/*        saveAssignedUsers: function(success){
-            $.ajax({url: config.urlPrefix+"courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") + "/users", 
-                    data: JSON.stringify({assigned_users: this.get("assigned_users"), set_id: this.get("set_id")}),
-                    success: success,
-                    type: "PUT",
-                    processData: false,
-                    contentType: "application/json"});
-        }*/
+        checkDates: function(value, attr, computedState){
+            var openDate = moment.unix(computedState.open_date)
+                , dueDate = moment.unix(computedState.due_date)
+                , answerDate = moment.unix(computedState.answer_date);
+
+            if(openDate.isAfter(dueDate)){ 
+                return "The open date must come before the due date";
+            }
+            if (dueDate.isAfter(answerDate)){
+                return "The due date must come before the answer date.";
+            }
+        }
     });
      
 
