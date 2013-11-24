@@ -50,7 +50,7 @@
 	    		<div class="span2 btn-group">
 	    			<button class="btn" id="help-link">Help</button>
 	    			<a class='btn btn-warning' target="_blank" href="https://github.com/openwebwork/webwork2/issues/new">Bugs!</a>
-	    			<button class='btn' href="#" id="msg-toggle"><i class="icon-comment-alt icon-large"></i></button>
+	    			<button class='btn' href="#" id="msg-toggle"><i class="fa fa-comment-o fa-lg"></i></button>
 	    			
     			</div>
     			<div class="navbar-text span3 alert alert-success well"id="short-message"></div>

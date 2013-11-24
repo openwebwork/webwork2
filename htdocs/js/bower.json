@@ -27,7 +27,7 @@
     "backbone.stickit": "latest",
     
     "jquery-truncate": "git://github.com/tbasse/jquery-truncate.git",
-    "font-awesome": "latest",
+    "font-awesome": "*",
     "imagesloaded": "latest",
     "editablegrid": "https://github.com/downloads/webismymind/editablegrid/editablegrid-2.0.1.tar.gz",
     "underscore-1.4.4": "underscore#1.4.4",

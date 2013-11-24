@@ -10,6 +10,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
                 data: null,
                 problem_id: 0,
                 value: 1,
+                max_attempts: -1,
                 //displayMode: "MathJax",  //this has been commented out.  it should be a property of the problem view, not the problem.
                 problem_seed: 1
         },
@@ -37,6 +38,17 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
                     + "/problems/" + this.get("problem_id"),attrs, opts.success);
             } else {  // it is being rendered from the library
                 $.get(config.urlPrefix + "renderer/problems/0",attrs,opts.success);
+            }
+        },
+        loadTags: function (opts) {
+            var self = this;
+            if(! this.get("tags")){
+                var fileID = (this.get("pgfile_id") || -1)
+                    , params = (fileID<0)? {source_file: this.get("source_file")} : {};
+                $.get(config.urlPrefix + "Library/problems/" + fileID +"/tags",params,function (data) {
+                    self.set(data);
+                    opts.success(data);
+                });
             }
         },
         problemURL: function(){

@@ -12,25 +12,32 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
     	initialize: function (){
             _.bindAll(this,"showResults","showProblems","buildMenu");
     		this.constructor.__super__.initialize.apply(this);
-            this.type = this.options.libBrowserType;
     	},
-    	events: {"click .load-problems-button": "showProblems",
-                    "change .target-set": "resetDisplayModes",
-                    "click .load-more-btn": "loadMore"},
+        events: function(){
+            return _.extend({},this.constructor.__super__.events,{
+                "click .load-problems-button": "showProblems"
+            });
+        },
     	render: function (){
-            var self = this;
-            var modes = config.settings.getSettingValue("pg{displayModes}");
+            var modes = config.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
             this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
-            this.$(".library-tree-container").html("Loading Library...<i class='icon-spinner icon-spin'></i>");
+            
+
+            this.libraryProblemsView.setElement(this.$(".problems-container")).render();
+            if (this.libraryProblemsView.problems){
+                this.libraryProblemsView.renderProblems();
+            }
+            this.$(".library-tree-container").html("Loading Library...<i class='fa fa-spinner fa-spin'></i>");
             if(this.problemList){
-                this.showProblems();
+                this.buildMenu();
             } else {
                 this.problemList = new ProblemList();
-                this.problemList.type = this.type;
+                this.problemList.type = this.options.libBrowserType;
                 this.problemList.fetch({success: this.buildMenu});
             }
+            return this;
     	},
         showResults: function (data) {
             this.problemList = new ProblemList(data);
@@ -38,7 +45,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
         },
         showProblems: function (){
 
-            var dir = $(".local-library-tree").val() == "TOPDIR" ? "" : $(".local-library-tree").val();
+            var dir = this.$(".local-library-tree").val() == "TOPDIR" ? "" : this.$(".local-library-tree").val();
             
             var localProblems = new ProblemList();
             this.problemList.each(function(prob){
@@ -48,14 +55,10 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
                 if( topDir==dir){
                     localProblems.add(new Problem(prob.attributes),{silent: true});
                 }
-            })
+            });
+            this.libraryProblemsView.set({problems: localProblems, type:this.options.libBrowserType});
+            this.libraryProblemsView.renderProblems();
 
-            console.log(localProblems);
-            (this.libraryProblemsView = new LibraryProblemsView({el: this.$(".lib-problem-viewer"), 
-                                            type: "local",  
-                                            problems: localProblems})).render();
-
-            //this.problemList.on("add-to-target",this.addProblem);
 
         },
         buildMenu: function () {

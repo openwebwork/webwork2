@@ -44,6 +44,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
             switch(level){
                 case 0:
                     var subject = this.$(".library-level-0").val() || this.subject;
+                    this.$(".library-level-0").val(subject);
                     this.$(".library-level-1").removeClass("hidden");
                     this.$(".library-level-2").addClass("hidden");
                     var allChapters = _(this.libraryTree.get("tree")).findWhere({name: subject});
@@ -60,6 +61,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                     this.$(".library-level-2").html("<option>Select</option>"+
                         _(allSections.subfields).map(function(sect){return "<option>" + sect.name + "</option>";}));
                     this.$(".num-files").text(allSections.num_files + " problems");
+                    break;
                 case 2:
                     var subject = this.$(".library-level-0").val() || this.subject;
                     var chapter = this.$(".library-level-1").val() || this.chapter;

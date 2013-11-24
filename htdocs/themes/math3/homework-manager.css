@@ -2,6 +2,8 @@
 
 #hw-set-list-container {margin: 20px 15px;  padding:10px;}
 
+a#view-header i {margin-left:1ex;}
+
 
 /* Calendar related styles: */
 
@@ -17,6 +19,7 @@
 .today {background-color: pink}
 .highlight-day { border: 2px solid black; background-color: lightblue;}
 
+.assign-answer {background-color: lightblue;}
 .assign-open {background-color: lightgreen;}
 .assign-due {background-color: red;}
 
@@ -66,7 +69,7 @@
 .assign-filled {height: 30px; background-color: rgb(250,100,100)}
 
 
-//.list {list-style: none;}
+/*.list {list-style: none;} */
 
 .lib-problem-viewer { overflow: scroll;}
 
@@ -81,7 +84,7 @@
 
 .active {display: block;}
 
-.no-bullets {list-style-type: none;}
+.no-bullets {list-style-type: none; margin: 0;}
 
 label.checklist {display: inline; margin-left: 8px;}
 

@@ -62,7 +62,15 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                     $el.html($("#delete-button-template").html());
                     $el.children(".btn").on("click",function() {self.deleteSet(model);});
                 }}},
-            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string"},
+            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
+                stickit_options: {update: function($el, val, model, options) {
+                    $el.html("<a href='#' class='goto-set'>" + val + "</a>");
+                    $el.children("a").on("click",function() {
+                        var set = self.problemSets.findWhere({set_id: $(this).text()})
+                        set.trigger("show",set);
+                    });}
+                }
+            },
             {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
                 stickit_options: {onGet: function(val){
                     return val.length + "/" + self.problemSets.length;
@@ -122,9 +130,11 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
         },
         bindings: {".problem-set-name": "set_id"},
         events: {"keyup .problem-set-name": "validateName"},
-        validateName: function(ev){
-            // this.model.preValidate("set_id"),$(ev.target).val())
-            var errorMsg = this.model.preValidate("set_id",$(ev.target).val());
+        validateName: function(evt){
+            if (evt.keyCode==13){
+                this.addNewSet();
+            }
+            var errorMsg = this.model.preValidate("set_id",$(evt.target).val());
             if(errorMsg){
                 this.$(".problem-set-name").css("background","rgba(255,0,0,0.5)");
                 this.$(".problem-set-name-error").html(errorMsg);
