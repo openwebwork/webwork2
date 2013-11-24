@@ -337,7 +337,7 @@ sub renderProblem {
   		$problem_source = decode_base64($rh->{source});
   		$problem_source =~ tr /\r/\n/;
 		$r_problem_source =\$problem_source;
-		warn "source included in request";
+		# warn "source included in request";
 		$problemRecord->source_file($rh->{envir}->{fileName}) if defined $rh->{envir}->{fileName};
   	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =~/\S/)  {
   	    $problemRecord->source_file($rh->{sourceFilePath});
