@@ -55,22 +55,49 @@ Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
 
 <script type="text/template" id="login-template">
 <div class="message"> <%=message%></div>
-<div class="form-horizontal" role="form">
+<form class="form-horizontal" role="form">
   <div class="form-group">
     <label for="inputEmail3" class="col-sm-2 control-label">Login Name:</label>
     <div class="col-sm-10">
-      <input type="input" class="form-control login-name" id="inputEmail3" placeholder="Login">
+      <input type="input" name="username" class="form-control login-name" id="inputEmail3" placeholder="Login">
     </div>
   </div>
   <div class="form-group">
     <label for="password" class="col-sm-2 control-label">Login Name:</label>
     <div class="col-sm-10">
-      <input type="password" class="form-control login-password" id="password" placeholder="Password">
+      <input type="password" name="password" class="form-control login-password" id="password" placeholder="Password">
     </div>
   </div>
+</form>
+
+</script>
+
+<!-- This is where all messages to the user go -->
+
+<script type="text/template" id="all-messages">
+<%
+  var messages = {
+    set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
+    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
+      + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
+      + "reenter your username and password to continue. ";},    
+    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."}  
+  };
+  print(messages[type](typeof(opts)=="undefined"?{}:opts))
+  
+%>
+</script>
+
+<script type="text/template" id="message-pane-template">
+<div class='row'>
+    <div class='pull-right'><button type='button' class='close'>&times;</button></div>
+    <ul class='main-message-pane no-bullets'></ul>
 </div>
 
 </script>
+
+
 
 </body>
 </html>

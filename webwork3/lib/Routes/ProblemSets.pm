@@ -761,9 +761,6 @@ post '/utils/dates' => sub {
 
 get '/courses/:course_id/pgeditor' => sub {
 
-
-
-    setCourseEnvironment(params->{course_id});
     template 'simple-editor.tt', {course_id=> params->{course_id},theSetting => to_json(getCourseSettings),
         pagename=>"Simple Editor",user=>session->{user}};
 };
