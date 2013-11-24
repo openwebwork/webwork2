@@ -14,7 +14,6 @@ define(['Backbone','underscore','models/MessageList','models/Message'], function
 		render: function() {
 			this.$el.html($("#message-pane-template").html());
 			$("#short-message").on("click",this.open);
-
 			return this;
 		},
 		events: {"click .close": "close"},

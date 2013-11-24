@@ -41,17 +41,8 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/setDefinition";
             }
         },
-/*        parse: function(response){
-            var self = this;
-            return _(response).map(function(_prob){ return (new Problem()).parse(_prob);})
-        }, */
         reorder: function(success){
             var self = this;
-            //var problemPaths = this.pluck("source_file");
-            //var problemIndices = this.pluck("problem_id");
-            //var problems = this.map(function(prob) { 
-            //        return {source_file: prob.get("source_file"), problem_id: prob.get("problem_id")};});
-
             $.ajax({  contentType: "application/json", type: "PUT",
                 url: config.urlPrefix + "courses/"+ config.courseSettings.course_id + "/sets/" + this.setName + "/problems",
                 success: success,

@@ -4,11 +4,13 @@
 */
 define(['module','Backbone', 'underscore','models/UserList','models/ProblemSetList','models/Settings',   
     'views/AssignmentCalendarView','HWDetailView','views/ProblemSetListView','SetListView','LibraryBrowser',
-    'AssignUsersView','views/WebPage','config','views/WWSettingsView','views/HeaderView', 
+    'views/WebPage','config','views/WWSettingsView','views/HeaderView','models/ProblemSet',
+    'models/AssignmentDate','models/AssignmentDateList','ImportExportView',
     'backbone-validation','jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, Settings, AssignmentCalendarView, HWDetailView, 
-            ProblemSetListView,SetListView,LibraryBrowser,AssignUsersView,WebPage,config,WWSettingsView,HeaderView){
+            ProblemSetListView,SetListView,LibraryBrowser,WebPage,config,WWSettingsView,HeaderView,
+            ProblemSet, AssignmentDate,AssignmentDateList,ImportExportView){
 var HomeworkEditorView = WebPage.extend({
     tagName: "div",
     initialize: function(){
@@ -29,31 +31,31 @@ var HomeworkEditorView = WebPage.extend({
         if (module.config().sets) {
             this.problemSets.parse(module.config().sets);
         }
+        this.buildAssignmentDates();
 
         // call parse to set the .id attribute of each set so that backbone's set.isNew()  is false
         config.settings.each(function(setting){setting.parse();});
         this.users.each(function(user){user.parse();});
-
-        this.dispatcher.on("calendar-change", self.updateProblemSetList);
 
         config.timezone = config.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
                 // Define all of the views that are visible with the Pulldown menu
 
         this.views = {
-            calendar : new AssignmentCalendarView({el: $("#calendar"), problemSets: this.problemSets, 
+            calendar : new AssignmentCalendarView({el: $("#calendar"), assignmentDates: this.assignmentDateList,
                     viewType: "instructor", calendarType: "month", users: this.users,
                     reducedScoringMinutes: config.settings.find(function(setting) { return setting.get("var")==="pg{ansEvalDefaults}{reducedScoringPeriod}";}).get("value")}),
             setDetails:  new HWDetailView({el: $("#setDetails"),  users: this.users, problemSets: this.problemSets,
                     headerView: this.headerView}),
             allSets:  new SetListView({el:$("#allSets"), problemSets: this.problemSets, users: this.users}),
-            /*assignSets  :  new AssignUsersView({el: $("#assignSets"), id: "view-assign-users", 
-                                users: this.users, problemSets: this.problemSets}), */
-            importExport:  new ImportExport(),
+            importExport:  new ImportExportView({el: $("#importExport"), headerView: this.headerView,
+                    problemSets: this.problemSets}),
             libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), headerView: this.headerView,
                 errorPane: this.errorPane, problemSets: this.problemSets}),
-            settings      :  new HWSettingsView({parent: this, el: $("#settings")})
+            settings      :  new SettingsView({parent: this, el: $("#settings")})
         };
+
+        this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
 
         this.setMessages();  
         (this.probSetListView = new ProblemSetListView({el: $("#problem-set-list-container"), viewType: "Instructor",
@@ -65,13 +67,8 @@ var HomeworkEditorView = WebPage.extend({
             _set.save();
         })        
 
-
         // set the initial view to be the Calendar. 
         this.changeView(null,"calendar","Calendar");
-        this.updateCalendar();
-
-        //this.updateProblemSetList();
-        //this.updateCalendar();
 
         // this is needed for the handshaking of session information between the old and new
         // webservice
@@ -89,40 +86,93 @@ var HomeworkEditorView = WebPage.extend({
     },
     setMessages: function (){
         var self = this; 
-        this.problemSets.on("add", function (set){
-            if (set.save()){
-                self.messagePane.addMessage({type: "success", short: "Set " + set.get("set_id") + " added.",
-                    text: "Problem Set: " + set.get("set_id") + " has been added to the course."});
-            }
-
+        this.problemSets.on("add", function (_set){
+            _set.save();
+            _set.changingAttributes={add: "Set Added"};
         });
 
-        this.problemSets.on("remove", function(set){
-            if(set.destroy()){
-                self.messagePane.addMessage({type: "success", short: "Set " + set.get("set_id") + " removed.",
-                    text: "Problem Set: " + set.get("set_id") + " has been removed from the course."});
+        this.problemSets.on("remove", function(_set){
+            if(_set.destroy()){
+                self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " removed.",
+                    text: "Problem Set: " + _set.get("set_id") + " has been removed from the course."});
+
+            // update the assignmentDateList to delete the proper assignments
+
+                self.assignmentDateList.remove(self.assignmentDateList.filter(function(assign) { 
+                    return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
             }
+        });
+
+        this.problemSets.on("change:due_date change:open_date change:answer_date",function(_set){
+            var assignments = self.assignmentDateList.filter(function(assign) { 
+                    return assign.get("problemSet").get("set_id")===_set.get("set_id");});
+            _(assignments).each(function(assign){
+                assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")+"_date")).format("YYYY-MM-DD"));
+            });
         });
 
         this.problemSets.on("change_assigned_users", function(_set){
             console.log("the set "+ _set.get("set_id")+ " has changed.");
-        })
+        });
+
+        this.problemSets.each(function(_set) {
+            _set.get("problems").on("change:value",function(prob){
+                prob.changingAttributes=_.pick(prob._previousAttributes,_.keys(prob.changed));
+            });
+            _set. get("problems").on("sync",function(prob){
+                _(_.keys(prob.changingAttributes)).each(function(key){
+                    self.messagePane.addMessage({type: "success", short: "Set " + prob.collection.setName + " saved.",
+                        text: "Problem Set " + prob.collection.setName + " and problem " + prob.get("problem_id") 
+                            + " has changed. The value of property " + key 
+                            + " has changed from " + prob.changingAttributes[key] + " to " 
+                            + prob.get(key) });
+                });
+            });
+        });
+
+        this.problemSets.on("change",function(_set){
+           _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
+        });
+
         
         this.problemSets.on("sync", function (_set){
-            console.log("Synched!!!");
-            _(_set.alteredAttributes).each(function(attr){
-                if(attr.attr=="problems"){
-                    self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
-                        text: attr.msg});
-                } else {
-                    var _old = attr.attr.match(/date$/) ? moment.unix(attr.old_value).format("MM/DD/YYYY") : attr.old_value;
-                    var _new = attr.attr.match(/date$/) ? moment.unix(attr.new_value).format("MM/DD/YYYY") : attr.new_value;
-                    self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
-                        text: "The value of " + attr.attr + " in problem set " 
-                        + _set.get("set_id") + " has changed from " + _old + " to " + _new});
+            _(_.keys(_set.changingAttributes||{})).each(function(key){
+                switch(key){
+                    case "problems":
+                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                            text: attr.msg});
+                        break;
+                    case "assigned_users":
+                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                            text: "The assigned users for set " + _set.get("set_id") + " was updated."});
+                        break;
+                    case "add":
+                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " added.",
+                        text: "The set " + _set.get("set_id") + " was added to the course."});
+                        self.assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
+                            date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+                        self.assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
+                            date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+                        self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
+                            date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+
+                        break;
+                    default:
+                        var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY")
+                                     : _set.changingAttributes[key];
+                        var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY") : _set.get(key);
+                        self.messagePane.addMessage({type: "success", short: "Set " + _set.get("set_id") + " saved.",
+                            text: "The value of " + key + " in problem set " 
+                            + _set.get("set_id") + " has changed from " + _old + " to " + _new});
                 }
             });
             self.updateCalendar();
+        });
+
+        // this will show the given Problem Set sent from "Manage Problem Sets (HWDetailView) or ProblemSetListView"
+
+        this.problemSets.on("show",function(_set){
+            self.showHWdetails(_set.get("set_id"));
         });
 
         // this handles the validation of the problem sets, mainly validating the dates.  
@@ -135,18 +185,25 @@ var HomeworkEditorView = WebPage.extend({
                 self.messagePane.addMessage({type: "error", short: "Error saving problem set " + model.get("set_id"),
                     text: error});
 
-            });
+            }); 
             // change the attributes back to before.
            /* _(_.keys(model.changed)).each(function(key){
                 model.set(key,model._previousAttributes[key]);
             })*/
         });
 
+        config.settings.on("change",function(setting){
+            setting.changingAttributes=_.pick(setting._previousAttributes,_.keys(setting.changed));
+        });
 
-        // can't figure out the best place for this.  
-        /* this.problemSet.problems.on("reordered",function () {
-                self.announce.addMessage({text: "Problem Set " + self.parent.problemSet.get("set_id") + " was reordered"});
-            });  */
+        config.settings.on("sync",function(setting){
+            _(_.keys(setting.changingAttributes)).each(function(key){
+                    self.messagePane.addMessage({type: "success", short: "Setting " + setting.get("var") + " saved.",
+                        text: "The setting " + setting.get("var") + " has changed from " +
+                                setting.changingAttributes[key] + " to " + setting.get("value") + "."});
+            });
+        });
+
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
@@ -157,17 +214,17 @@ var HomeworkEditorView = WebPage.extend({
     showHideSets: function () {
         if ($("#problem-set-list-container").css("display")=="none"){
             $("#problem-set-list-container").show("slide",{direction: "up"});
-            $("#show-hide-sets-button i").removeClass("icon-chevron-down").addClass("icon-chevron-up");            
+            $("#show-hide-sets-button i").removeClass("fa fa-chevron-down").addClass("fa fa-chevron-up");            
         } else {
             $("#problem-set-list-container").hide("slide", { direction: "up" });
-            $("#show-hide-sets-button i").removeClass("icon-chevron-up").addClass("icon-chevron-down");            
+            $("#show-hide-sets-button i").removeClass("fa fa-chevron-up").addClass("fa fa-chevron-down");            
         }
 
     },
-    showHWdetails: function(evt){
+    showHWdetails: function(setName){
         if (this.objectDragging) return;
         this.changeView(null,"setDetails", "Set Details");
-        this.views.setDetails.changeHWSet($(evt.target).closest(".problem-set").data("setname")); 
+        this.views.setDetails.changeHWSet(setName); 
         this.headerView.setTemplate(this.views.setDetails.headerInfo).render();
 
     },
@@ -175,16 +232,17 @@ var HomeworkEditorView = WebPage.extend({
         var linkname = (link)?link:$(evt.target).data("link");
         $(".view-pane").removeClass("active");
         $("#"+linkname).addClass("active");
-        $("#viewHeader").html((header)?header:$(evt.target).data("name"))
+        $("#viewHeader").html(((header)?header:$(evt.target).data("name"))+"<i class='fa fa-chevron-down'></i>")
             .data("linkname",linkname);
         this.views[linkname].render();
         this.headerView.setTemplate(this.views[linkname].headerInfo).render();
         this.updateProblemSetList(linkname);
     },
     updateProblemSetList: function(viewname) {
-    switch(viewname){            // set up the problem sets to be draggable or not
+        switch(viewname){            // set up the problem sets to be draggable or not
             case "calendar":
             this.setProblemSetUI({droppable:true,draggable: true});
+            this.updateCalendar();
             break;
             case "libraryBrowser":
             this.setProblemSetUI({droppable:true,draggable: false});
@@ -230,13 +288,26 @@ var HomeworkEditorView = WebPage.extend({
         } else {
             $(".problem-set.ui-droppable").droppable("destroy");
         }
-
-        // When the HW sets are clicked, open the HW details tab.   
-        // pstaab: can we include this in the ProblemSetListView?       
-        $(".problem-set").on('click', self.showHWdetails);
-
     }, 
-    // This rerenders the calendar and updates the drag-drop features of it.
+    // This travels through all of the assignments and determines the days that assignment dates fall
+    buildAssignmentDates: function () {
+        var self = this;
+        this.assignmentDateList = new AssignmentDateList();
+        this.problemSets.each(function(_set){
+            self.assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
+                    date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+            self.assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
+                    date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+            self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
+                    date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+
+
+        });
+    },
+    updateAssignmentDates: function (){
+
+    },
+    // This updates the drag-drop features of the calendar.
     updateCalendar: function ()
     {
         var self = this;
@@ -257,6 +328,8 @@ var HomeworkEditorView = WebPage.extend({
                     self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"open_date");
                 } else if ($(ui.draggable).hasClass("assign-due")){
                     self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"due_date");
+                } else if ($(ui.draggable).hasClass("assign-answer")){
+                    self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"answer_date");
                 }
 
             }
@@ -264,7 +337,7 @@ var HomeworkEditorView = WebPage.extend({
 
         // The following allows an assignment date (due, open) to be dropped on the calendar
 
-        $(".assign-due,.assign-open").draggable({
+        $(".assign-due,.assign-open,.assign-answer").draggable({
             revert: true,
             start: function () {$(this).popover("destroy")}
         });
@@ -286,7 +359,7 @@ var HomeworkEditorView = WebPage.extend({
     }
 });
 
-var HWSettingsView = Backbone.View.extend({
+var SettingsView = Backbone.View.extend({
     headerInfo: {template: "#settings-header"},
     initialize: function () {
         _.bindAll(this,'render');
@@ -317,16 +390,6 @@ var HWSettingsView = Backbone.View.extend({
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
 
      }
-});
-
-var ImportExport = Backbone.View.extend({
-    headerInfo: {template: "#importExport-header"},
-    initialize: function (){
-        _.bindAll(this,"render");
-    },
-    render: function () {
-
-    }
 });
 
     

@@ -105,21 +105,6 @@ define(['Backbone','moment','backbone-validation','stickit','jquery-ui'], functi
         regexp : {
             wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,
             number: /^\d*(\.\d*)?$/
-        },
-        parseWWDate: function(str) {
-            // this parses webwork dates in the form MM/DD/YYYY at HH:MM AM/PM TMZ
-            // and returns the date (as a moment object) and the timezone (as a string)
-
-            var parsedDate = config.regexp.wwDate.exec(str);
-
-
-
-            if (parsedDate) {
-                var timePart = moment(parsedDate[5],"hh:mmA");
-                var date = moment(parsedDate[1],"MM/DD/YYYY").hours(timePart.hours()).minutes(timePart.minutes());
-                        
-                return {"date": date, "time_zone": parsedDate[9]};
-            }
         }
     }
 

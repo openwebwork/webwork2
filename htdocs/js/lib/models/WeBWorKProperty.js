@@ -7,14 +7,13 @@ define(['Backbone','underscore','config'], function(Backbone,_,config){
 			category: "",
             "var": ""
 		},
-         initialize: function(){
+        initialize: function(){
             //this.on('change',this.update);
         },
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.course + "/settings/" + this.get("var");
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/settings/" + this.get("var");
         },
         parse: function(response) {
-            config.checkForError(response);
             this.id=this.get("var");
             return response;
         }

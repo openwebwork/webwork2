@@ -528,9 +528,6 @@ sub getAllSets {
 
 		push(@sets,convertObjectToHash($set));
 	}
-
-	#debug(to_json(\@all_sets));
-
 	return \@sets;
 }
 

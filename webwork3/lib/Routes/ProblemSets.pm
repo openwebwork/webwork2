@@ -11,8 +11,9 @@ use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems/;
+use WeBWorK::Utils qw/parseDateTime/;
 use Array::Utils qw(array_minus); 
-use Routes::Authentication qw/checkPermissions/;
+use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
@@ -117,7 +118,6 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
     for my $user (@usersToAdd){
         addUserSet(vars->{db},params->{set_id},$user);
-        addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
     }
 
     if(request->is_put){
@@ -125,8 +125,6 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
             vars->{db}->deleteUserSet($user,params->{set_id});
         }
     }
-
-    my $returnSet = convertObjectToHash($set);
 
     # handle the global problems. 
 
@@ -140,7 +138,21 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
         deleteProblems(vars->{db},params->{set_id},params->{problems});
     }
 
+    ## handle the user Problems
+
+    # for my $user (@usersToAdd){
+    #     addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
+    # }
+
+    
+
     my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+
+
+
+    my $returnSet = convertObjectToHash($set);
+
 
     $returnSet->{assigned_users} = $userNames;
     $returnSet->{problems} = convertArrayOfObjectsToHash(\@problems);
@@ -695,6 +707,32 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
         send_error("There was an error deleting the problem.",446);
     }
 
+};
+
+
+###
+#
+# post /utils/dates 
+#
+#  A utility route to convert WW date-times to unix epochs.
+#
+#  The only needed parameter is dates, an object of webwork date-times
+# 
+###
+
+post '/utils/dates' => sub {
+
+    ##  need to change this later.  Why do we need a course_id for a general renderer? 
+    setCourseEnvironment("_fake_course");
+    #checkPermissions(10,session->{user});  ## not needed but students shouldn't need to access this.
+
+    my $unixDates = {};
+
+    for my $key (qw/open_date answer_date due_date/){
+        $unixDates->{$key} = parseDateTime(params->{$key},params->{timeZone});
+    }
+    
+    return $unixDates;
 };
 
 

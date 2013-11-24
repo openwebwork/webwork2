@@ -33,7 +33,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             restrict_ip: "No",
             relax_restrict_ip: "No",
             restricted_login_proctor: "No",
-            assigned_users: []
+            assigned_users: [],
+            problems: []
         },
         validation: {
            open_date: "checkDates",
@@ -67,46 +68,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             relax_restrict_ip: "Relax Restrict IP???",
             restricted_login_proctor: "Restricted to Login Proctor"
         },
-        types: {
-            set_id: "string",
-            set_header: "filepath",
-            hardcopy_header: "filepath",
-            open_date: "datetime",
-            due_date: "datetime",
-            answer_date: "datetime",
-            visible: "opt(yes,no)",
-            enable_reduced_scoring: "opt(yes,no)",
-            assignment_type: "opt(homework,gateway/quiz,proctored gateway/quiz)",
-            attempts_per_version: "int(0+)",
-            time_interval: "time(0+)",
-            versions_per_interval: "int(0+)",
-            version_time_limit: "time(0+)",
-            version_creation_time: "time(0+)",
-            problem_randorder: "opt(yes,no)",
-            version_last_attempt_time: "time(0+)",
-            problems_per_page: "int(1+)",
-            hide_score: "opt(yes,no)",
-            hide_score_by_problem: "opt(yes,no)",
-            hide_work: "opt(yes,no)",
-            time_limit_cap: "opt(yes,no)",
-            restrict_ip: "opt(yes,no)",
-            relax_restrict_ip: "opt(yes,no)",
-            restricted_login_proctor: "opt(yes,no)",
-        },
         initialize: function(_set,_assigned_users){
             _.bindAll(this,"addProblem");
-            /*if (_set && _set.problems){
-                var problems = new ProblemList(_set.problems);
-                problems.setName = _set.set_id;
-                this.set("problems",problems,{silent: true});
-            } else {
-                this.set("problems",new ProblemList(),{silent: true});
-            }
-
-            if(_assigned_users){
-                this.set("assigned_users",_assigned_users);
-            }*/
-
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {
@@ -124,20 +87,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
                 }
             });
             this.id = this.get("set_id");
-        },
-        save: function(opts){
-            console.log("in ProblemSet.save()");
-            console.log(opts);
-            var self = this;
-            var attrs = this.changedAttributes();
-            if(attrs){
-                this.alteredAttributes = _(_(attrs).keys()).map(function(key){
-                    return {attr: key, new_value: attrs[key], old_value: self._previousAttributes[key]};
-                });
-            }
-
-            // I think this is causing this to save a ProblemSet twice.  Maybe a check before doing this.
-            ProblemSet.__super__.save.apply(this,opts);
         },
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
                                                 // as a moment object and defined settings.
@@ -159,9 +108,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             var lastProblem = this.get("problems").last();
             newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
             this.get("problems").add(newProblem);
-            this.save();
-            this.alteredAttributes=[{attr: "problems", msg: "A problem was added to set " + this.get("set_id")}];
             this.trigger("change:problems",this);
+            this.save();
         },
         setDate: function(attr,_date){
             var currentDate = moment.unix(this.get(attr))
