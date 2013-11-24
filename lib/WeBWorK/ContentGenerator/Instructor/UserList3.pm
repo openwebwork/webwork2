@@ -116,6 +116,8 @@ sub initialize {
 	
 }
 
+sub name { return "Classlist Manager";}
+
 
 
 sub body {
@@ -192,7 +194,11 @@ sub body {
 	#my $editMode = $self->{editMode};
 	#my $passwordMode = $self->{passwordMode};	
 
-	my $template = HTML::Template->new(filename => $WeBWorK::Constants::WEBWORK_DIRECTORY . '/htdocs/html-templates/classlist-manager.html');  
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+    my $theme_dir = "$site_url/themes";
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
+	my $template = HTML::Template->new(filename => '$theme_dir/$theme/classlist-manager.html');  
 	print $template->output(); 
 
 
@@ -220,10 +226,11 @@ sub head{
     	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+	my $theme_dir = $ce->{webworkURLs}->{themes};
 
 	print "<link rel='stylesheet' href='$site_url/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>";
     print "<link rel='stylesheet' href='$site_url/js/components/editablegrid/editablegrid-2.0.1.css' type='text/css' media='screen'>";
-    print "<link rel='stylesheet' type='text/css' href='$site_url/css/userlist.css' > </style>";
+    print "<link rel='stylesheet' type='text/css' href='$theme_dir/userlist.css' > </style>";
 	print "<link rel='stylesheet' href='$site_url/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>";
 	return "";
 }

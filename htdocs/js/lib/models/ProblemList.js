@@ -23,7 +23,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             // need to determine if this is a problem in a problem set or a problem from a library browser
 
             if(this.setName) { // the problem comes from a problem set
-                return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.setName 
+                return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.setName 
                 + "/problems"; 
             } else if (this.type=="subjects") { // this is a set of problems from a library. 
                 var dirs = this.path.split("/");
@@ -34,7 +34,11 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 path+= "/problems";
                 return path;
             }  else if (this.type=="directories"){
-                return config.urlPrefix+"Library/directories/"+this.path;
+                return config.urlPrefix+"Library/directories/"+this.path +"?course_id=" + config.courseSettings.course_id;
+            } else if (this.type=="local"){
+                return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/local";
+            } else if (this.type=="setDefinition"){
+                return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/setDefinition";
             }
         },
 /*        parse: function(response){
@@ -49,7 +53,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             //        return {source_file: prob.get("source_file"), problem_id: prob.get("problem_id")};});
 
             $.ajax({  contentType: "application/json", type: "PUT",
-                url: config.urlPrefix + "courses/"+ config.courseSettings.courseID + "/sets/" + this.setName + "/problems",
+                url: config.urlPrefix + "courses/"+ config.courseSettings.course_id + "/sets/" + this.setName + "/problems",
                 success: success,
                 data: JSON.stringify({problems: self.models}),
                 success: success,

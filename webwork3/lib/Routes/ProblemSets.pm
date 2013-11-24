@@ -10,7 +10,9 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Array::Utils qw(array_minus);
+use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems/;
+use Array::Utils qw(array_minus); 
+use Routes::Authentication qw/checkPermissions/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
@@ -26,6 +28,9 @@ our @problem_props = qw/problem_id flags value max_attempts source_file/;
 ##
 
 get '/courses/:course_id/sets' => sub {
+
+    checkPermissions(10,session->{user});
+
 
     my @globalSetNames = vars->{db}->listGlobalSets;
     my @globalSets = vars->{db}->getGlobalSets(@globalSetNames);
@@ -43,6 +48,8 @@ get '/courses/:course_id/sets' => sub {
 
 get '/courses/:course_id/sets/:set_id' => sub {
 
+    checkPermissions(10,session->{user});
+
     my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
 
     return convertObjectToHash($globalSet);
@@ -59,6 +66,10 @@ get '/courses/:course_id/sets/:set_id' => sub {
 ##
 
 any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
+
+    debug 'in /courses/:course_id/sets/:set_id';
+
+    checkPermissions(10);
 
     # call validator directly instead
 
@@ -97,24 +108,17 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
     ###
 
     my $userNames = params->{assigned_users};
-    debug $userNames;
 
     my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
-    debug \@userNamesFromDB;
 
     my @usersToAdd = array_minus(@{$userNames},@userNamesFromDB);
-    debug \@usersToAdd;
 
     my @usersToDelete = array_minus(@userNamesFromDB,@{$userNames});
-    debug \@usersToDelete;
-
 
     for my $user (@usersToAdd){
-         my $userSet = vars->{db}->newUserSet;
-         $userSet->set_id($set->{set_id});
-         $userSet->user_id($user);
-         vars->{db}->addUserSet($userSet);
-     }
+        addUserSet(vars->{db},params->{set_id},$user);
+        addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
+    }
 
     if(request->is_put){
         for my $user (@usersToDelete){
@@ -124,7 +128,17 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
     my $returnSet = convertObjectToHash($set);
 
-    # fetch the problems to return as it is expected in a ProblemSet
+    # handle the global problems. 
+
+    my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+    if(scalar(@problemsFromDB) == scalar(@{params->{problems}})){  # then perhaps the problems need to be reordered.
+        reorderProblems(vars->{db},params->{set_id},params->{problems});
+    } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
+        addProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
+    } else { # problems have been deleted.  
+        deleteProblems(vars->{db},params->{set_id},params->{problems});
+    }
 
     my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -145,6 +159,8 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 ##
 
 del '/courses/:course_id/sets/:set_id' => sub {
+
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404);
@@ -177,6 +193,8 @@ del '/courses/:course_id/sets/:set_id' => sub {
 
 
 get '/courses/:course_id/sets/:set_id/users' => sub {
+
+    checkPermissions(10,session->{user});
    
     my @userIDs = vars->{db}->listSetUsers(params->{set_id});
 
@@ -202,6 +220,7 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
 
 post '/courses/:course_id/sets/:set_id/users' => sub {
     
+    checkPermissions(10,session->{user});
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
     my @usersAdded = ();
@@ -242,6 +261,8 @@ post '/courses/:course_id/sets/:set_id/users' => sub {
 #####
 
 del '/courses/:course_id/sets/:set_id/users' => sub {
+
+    checkPermissions(10,session->{user});
     
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
@@ -276,6 +297,8 @@ del '/courses/:course_id/sets/:set_id/users' => sub {
 
 put '/courses/:course_id/sets/:set_id/users' => sub {
     
+    checkPermissions(10,session->{user});
+
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
     ## remember which users were assigned
@@ -342,6 +365,8 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 
 get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
+    checkPermissions(10,session->{user});
+
     my $userSet = vars->{db}->getUserSet(param('user_id'),param('set_id'));
 
     return convertObjectToHash($userSet);
@@ -357,6 +382,8 @@ get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
+
+    checkPermissions(10,session->{user});
 
     my $userID = param('user_id');
 
@@ -385,6 +412,9 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
+    
+
+    checkPermissions(10,session->{user});
 
     my $userID = param('user_id');
 
@@ -395,12 +425,12 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     my $userSet = vars->{db}->getUserSet($userID,param('set_id'));
     if ($userSet){
         vars->{db}->deleteUserSet($userID,param('set_id'));
-        return convertObjectToHash($userSet);
     } else {
         send_error("An unknown error occurred removing user " . $userID . " from set " 
                 . param('set_id'). " in course " . param('course_id'),466);
     }
 
+    return convertObjectToHash($userSet);
 };
 
 ##
@@ -412,6 +442,8 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
+    
+    checkPermissions(10,session->{user});
 
     my $userID = param('user_id');
 
@@ -450,6 +482,9 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 get '/courses/:course_id/users/:user_id/sets' => sub {
+    
+    checkPermissions(10,session->{user});
+
     my @userSetNames = vars->{db}->listUserSets(param('user'));
     my @userSets = vars->{db}->getGlobalSets(@userSetNames);
     
@@ -465,6 +500,8 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
 ####
 
 get '/courses/:course_id/sets/:set_id/problems' => sub {
+
+    checkPermissions(10,session->{user});
 
     my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -489,35 +526,17 @@ get '/courses/:course_id/sets/:set_id/problems' => sub {
 
 put '/courses/:course_id/sets/:set_id/problems' => sub {
 
+    checkPermissions(10,session->{user});
+
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404);
     }
 
     my @problems_from_db = vars->{db}->getAllGlobalProblems(params->{set_id});
-    my $problems_in_new_order = params->{problems};
 
-
-    for my $p (@{$problems_in_new_order}){
-        #debug $problems_in_new_order[$i]->{problem_id} . " " . $problems_in_new_order[$i]->{source_file};
-        my $problem = first { $_->{source_file} eq $p->{source_file} } @problems_from_db;
-        debug $problem;
-        if (vars->{db}->existsGlobalProblem(params->{set_id},$p->{problem_id})){
-            $problem->problem_id($p->{problem_id});                 
-            vars->{db}->putGlobalProblem($problem);
-            #debug("updating problem $problem_paths[$i] and setting the index to $problem_indices[$i]");
-
-        } else {
-            # delete the problem with the old problem_id and create a new one
-            vars->{db}->deleteGlobalProblem(params->{set_id},$problem->{problem_id});
-            $problem->problem_id($p->{problem_id});
-            vars->{db}->addGlobalProblem($problem);
-
-            #debug("adding new problem $problem_paths[$i] and setting the index to $problem_indices[$i]");
-        }
-    }
-
-    return "yeah! reordered!";
-
+    my @newProblems = reorderProblems(vars->{db},params->{set_id},params->{problems});
+    
+    return convertArrayOfObjectsToHash(\@newProblems);
 };
 
 
@@ -538,6 +557,7 @@ put '/courses/:course_id/sets/:set_id/problems' => sub {
 
 get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
+    checkPermissions(10,session->{user});
   
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);  
@@ -567,6 +587,8 @@ get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 ####
 
 put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
+
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
@@ -602,6 +624,8 @@ put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 ####
 
 post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
+
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
@@ -650,6 +674,8 @@ post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 ####
 
 del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
+
+    checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);

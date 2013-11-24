@@ -6,7 +6,7 @@ define(['Backbone', 'views/ProblemListView'],
 	            this.viewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true,
                     showRefreshTool: true, showViewTool: true, showHideTool: true, deletable: false, draggable: true};
 
-                this.problemSet = this.options.problemSet;
+                this.libraryView = this.options.libraryView;
                 this.options.type = "library";
                 this.constructor.__super__.initialize.apply(this); 
     		}

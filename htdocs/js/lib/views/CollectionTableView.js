@@ -46,15 +46,16 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			});
 
 			// setup the paginator 
-			this.maxPages = Math.ceil(this.collection.length / this.paginatorProp.page_size);
+
 			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
 				this.collection.size();
 			this.pageRange = _.range(this.pageSize);
+			this.rowViews = [];
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},
 		render: function () {
-			var self = this;
+			var self = this, i;
 			this.$el.empty();
 
 			// set up the HTML for the table header
@@ -67,14 +68,26 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
 				headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
 			});
-			_(this.pageRange).each(function(i){
-				tbody.append(new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
-					bindings: self.bindings}).render().el);
-			});
+			for(i=0;i<this.pageSize;i++){
+				self.rowViews[i]=new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
+					bindings: self.bindings});
+				tbody.append(self.rowViews[i].render().el);
+			}
+			this.$el.append($("<tr class='paginator-row'>"));
+			this.updatePaginator();
+
 			if(this.sortInfo){
 				this.$("th[data-class-name='"+ this.sortInfo.classname+ "'] .sort")
 					.html("<i class='icon-chevron-" + (this.sortInfo.direction >0 ? "down": "up") + "'></i>" );
 			}
+
+
+			return this;
+		},
+		updatePaginator: function() {
+			// render the paginator
+
+			this.maxPages = Math.ceil(this.collection.length / this.paginatorProp.page_size);
 
 			var cell = $("<div>")
 				, i;
@@ -87,7 +100,9 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			cell.append("<button class='paginator-page last-page'>&gt;&gt;</button>");
 			var td = $("<td>").attr("colspan",this.columnInfo.length);
 			td.append(cell);
-			this.$el.append($("<tr class='paginator-row'>").append(td));
+
+			this.$(".paginator-row").html(td);
+
 
 			if(this.paginatorProp.button_class){
 				this.$(".paginator-page").addClass(this.paginatorProp.button_class);
@@ -96,7 +111,12 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 				this.$(".paginator-row div").addClass(this.paginatorProp.row_class);
 			}
 
-			return this;
+		},
+		updateTable: function () {
+			var i;
+			for(i=0;i<this.pageSize;i++){
+				this.rowViews[i].setModel(this.collection.at(this.pageRange[i]));
+			}
 		},
 		events: {"click th": "sortTable",
 				"click .first-page": "firstPage",
@@ -150,7 +170,7 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
 			this.pageRange = _.range(this.currentPage*this.pageSize,
 				(this.currentPage+1)*this.pageSize>this.collection.size()? this.collection.size():(this.currentPage+1)*this.pageSize);
-			this.render();
+			this.updateTable();
 			this.$(".paginator-row button").removeClass("current-page");
 			this.$(".paginator-row button:nth-child(" + (this.currentPage+3) +")").addClass("current-page");
 
@@ -183,7 +203,19 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			});
 			this.stickit();
 			return this; 
-		}, events: {
+		}, 
+		setModel: function(_model){
+			if(typeof(_model)=="undefined"){
+				this.$el.html("");
+			} else {
+				if(this.$el.html().length==0){
+					this.render();
+				}
+				this.model=_model;
+				this.stickit();
+			}
+		},
+		events: {
 			"keypress td[contenteditable='true']": "returnHit"
 		},
 		returnHit: function(evt){
@@ -192,16 +224,6 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			}
 		}
 
-	});
-
-	var Paginator = Backbone.View.extend({
-		tagName: "tfoot",
-		initialize: function () {
-
-		},
-		render: function(){
-			return this;
-		}
 	});
 
 	return CollectionTableView;

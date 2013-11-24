@@ -1708,15 +1708,19 @@ $.ui.plugin.add("draggable", "connectToSortable", {
 });
 
 $.ui.plugin.add("draggable", "cursor", {
-	start: function() {
-		var t = $("body"), o = $(this).data("ui-draggable").options;
+	start: function( event, ui, instance ) {
+		if(typeof(instance)=="undefined"){ return;}
+		var t = $( "body" ),
+			o = instance.options;
+
 		if (t.css("cursor")) {
 			o._cursor = t.css("cursor");
 		}
 		t.css("cursor", o.cursor);
 	},
-	stop: function() {
-		var o = $(this).data("ui-draggable").options;
+	stop: function( event, ui, instance ) {
+		if(typeof(instance)=="undefined"){ return;}
+		var o = instance.options;
 		if (o._cursor) {
 			$("body").css("cursor", o._cursor);
 		}

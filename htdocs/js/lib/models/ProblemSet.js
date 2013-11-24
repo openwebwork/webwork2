@@ -36,18 +36,9 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             assigned_users: []
         },
         validation: {
-           /* open_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            due_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            },
-            answer_date: {
-                pattern: "wwdate",
-                msg: "This must be in the form mm/dd/yyyy at hh:mm AM/PM"
-            }, */
+           open_date: "checkDates",
+            due_date: "checkDates",
+            answer_date: "checkDates",
             set_id: {pattern: "setname", msg: "A name must only contain letters, numbers, _ and ."}
         },
         descriptions:  {
@@ -119,7 +110,7 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         },
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") ;
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.get("set_id") ;
         },
         parse: function (response) {
             var self = this;
@@ -135,6 +126,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             this.id = this.get("set_id");
         },
         save: function(opts){
+            console.log("in ProblemSet.save()");
+            console.log(opts);
             var self = this;
             var attrs = this.changedAttributes();
             if(attrs){
@@ -142,6 +135,8 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
                     return {attr: key, new_value: attrs[key], old_value: self._previousAttributes[key]};
                 });
             }
+
+            // I think this is causing this to save a ProblemSet twice.  Maybe a check before doing this.
             ProblemSet.__super__.save.apply(this,opts);
         },
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
@@ -161,24 +156,12 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
         addProblem: function (prob) {  
             var self = this; 
             var newProblem = new Problem(prob.attributes);
-            if (this.problems) {
-                this.problems.add(newProblem);
-                newProblem.save();
-            }  else {  // the problems haven't loaded.
-                console.log("Problem Set " + this.get("set_id") + " not loaded. ");
-                console.log(prob);
-                this.saveProblems.push(newProblem);
-                this.problems = new ProblemList({setName: self.get("set_id"),   type: "Problem Set"});
-                this.problems.fetch({success: function () {
-                    self.problems.add(self.saveProblems);
-                    var lastIndex = parseInt(self.problems.last().get("problem_id"));
-                    _(self.saveProblems).each(function(_prob,i){  
-                        _prob.set("problem_id",lastIndex+i+1,{silent: true});
-                        _prob.save(); 
-                    });
-                    self.saveProblems = []; 
-                } });
-            }
+            var lastProblem = this.get("problems").last();
+            newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
+            this.get("problems").add(newProblem);
+            this.save();
+            this.alteredAttributes=[{attr: "problems", msg: "A problem was added to set " + this.get("set_id")}];
+            this.trigger("change:problems",this);
         },
         setDate: function(attr,_date){
             var currentDate = moment.unix(this.get(attr))
@@ -192,14 +175,18 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem'],
             return this;
 
         },
-/*        saveAssignedUsers: function(success){
-            $.ajax({url: config.urlPrefix+"courses/" + config.courseSettings.courseID + "/sets/" + this.get("set_id") + "/users", 
-                    data: JSON.stringify({assigned_users: this.get("assigned_users"), set_id: this.get("set_id")}),
-                    success: success,
-                    type: "PUT",
-                    processData: false,
-                    contentType: "application/json"});
-        }*/
+        checkDates: function(value, attr, computedState){
+            var openDate = moment.unix(computedState.open_date)
+                , dueDate = moment.unix(computedState.due_date)
+                , answerDate = moment.unix(computedState.answer_date);
+
+            if(openDate.isAfter(dueDate)){ 
+                return "The open date must come before the due date";
+            }
+            if (dueDate.isAfter(answerDate)){
+                return "The due date must come before the answer date.";
+            }
+        }
     });
      
 

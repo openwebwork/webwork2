@@ -74,7 +74,7 @@ define(['Backbone',
             var self = this;
             if(this.problemSet.get("problems")){ // have the problems been fetched yet? 
                 console.log("Loading the problems for set " + this.problemSet.get("set_id"));
-                this.views.problemSetView.setProblems(this.problemSet.get("problems"));
+                this.views.problemSetView.set({problems: this.problemSet.get("problems")});
             } else {
                 this.problemSet.set("problems",ProblemList({setName: this.problemSet.get("set_id")}))
                     .get("problems").fetch({success: this.loadProblems});
@@ -98,14 +98,13 @@ define(['Backbone',
         },
         events: {"click .assign-all-users": "assignAllUsers"},
         assignAllUsers: function(){
-            var userNames = this.users.pluck("user_id");
-            this.model.assignToUsers(_.difference(userNames,this.model.get("assigned_users")));
+            this.model.set({assigned_users: this.users.pluck("user_id")});
         },
         setProblemSet: function(_set) {
             var self = this; 
             this.model = _set; 
-            this.model.on("change",function () { 
-                self.model.save();});
+            // this.model.on("change",function () { 
+            //     self.model.save();});
 
             return this;
         },
@@ -115,7 +114,7 @@ define(['Backbone',
                     ".set-visible": {observe: "visible", selectOptions: {
                         collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
                     }},
-                    ".reduced-credit": {observe: "reduced_credit_enabled", selectOptions: {
+                    ".reduced-credit": {observe: "enable_reduced_scoring", selectOptions: {
                         collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
                     }},
                     ".users-assigned": {
@@ -275,7 +274,7 @@ define(['Backbone',
             _(models).each(function(_model){
                 _model.set({open_date: self.model.get("open_date"), due_date: self.model.get("due_date"),
                             answer_date: self.model.get("answer_date")});
-                _model.save();
+                //_model.save();
             });
         },
         selectAll: function (){

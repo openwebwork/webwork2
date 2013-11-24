@@ -6,6 +6,8 @@
 
 package Routes::Settings;
 
+our $PERMISSION_ERROR = "You don't have the necessary permissions.";
+
 use strict;
 use warnings;
 use Dancer ':syntax';
@@ -20,11 +22,15 @@ use Dancer ':syntax';
 
 get '/courses/:course_id/settings' => sub {
 
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+
 	return getConfigValues(vars->{ce});
 
 };
 
 sub getConfigValues {
+
+
 	my $ce = shift; 
 	my $ConfigValues = $ce->{ConfigValues};
 
@@ -66,6 +72,8 @@ sub getConfigValues {
 
 get '/courses/:course_id/settings/:setting_id' => sub {
 
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+
 	my $ConfigValues = getConfigValues(vars->{ce});
 
 	foreach my $oneConfig (@$ConfigValues) {
@@ -84,6 +92,8 @@ get '/courses/:course_id/settings/:setting_id' => sub {
 ## save the setting
 
 put '/courses/:course_id/settings/:setting_id' => sub {
+
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
 	debug "in PUT /course/:course_id/settings/:setting_id";
 

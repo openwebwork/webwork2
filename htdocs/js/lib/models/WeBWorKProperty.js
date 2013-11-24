@@ -11,7 +11,7 @@ define(['Backbone','underscore','config'], function(Backbone,_,config){
             //this.on('change',this.update);
         },
         url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.courseID + "/settings/" + this.get("var");
+            return config.urlPrefix + "courses/" + config.courseSettings.course + "/settings/" + this.get("var");
         },
         parse: function(response) {
             config.checkForError(response);
