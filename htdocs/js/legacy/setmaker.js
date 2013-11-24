@@ -241,6 +241,7 @@ function markinset() {
     var arr = response.result_data;
     var pathhash = {};
     for(var i=0; i<arr.length; i++) {
+	  arr[i] = arr[i].path;
       arr[i] = arr[i].replace(/^\//,'');
       pathhash[arr[i]] = 1;
     }
