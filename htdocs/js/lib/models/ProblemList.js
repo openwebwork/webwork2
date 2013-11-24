@@ -22,7 +22,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
 
             // need to determine if this is a problem in a problem set or a problem from a library browser
 
-            if(this.setName) { // the problem comes from a problem set
+            if(this.problemSet) { // the problem comes from a problem set
                 return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.setName 
                 + "/problems"; 
             } else if (this.type=="subjects") { // this is a set of problems from a library. 
@@ -40,27 +40,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             } else if (this.type=="setDefinition"){
                 return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/setDefinition";
             }
-        },
-/*        parse: function(response){
-            var self = this;
-            return _(response).map(function(_prob){ return (new Problem()).parse(_prob);})
-        }, */
-        reorder: function(success){
-            var self = this;
-            //var problemPaths = this.pluck("source_file");
-            //var problemIndices = this.pluck("problem_id");
-            //var problems = this.map(function(prob) { 
-            //        return {source_file: prob.get("source_file"), problem_id: prob.get("problem_id")};});
-
-            $.ajax({  contentType: "application/json", type: "PUT",
-                url: config.urlPrefix + "courses/"+ config.courseSettings.course_id + "/sets/" + this.setName + "/problems",
-                success: success,
-                data: JSON.stringify({problems: self.models}),
-                success: success,
-                processData: false,
-            });
-        } 
-
+        }
     });
     
     return ProblemList;

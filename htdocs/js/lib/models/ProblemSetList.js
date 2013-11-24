@@ -7,21 +7,18 @@
 define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _, config, ProblemSet){
     var ProblemSetList = Backbone.Collection.extend({
         model: ProblemSet,
-
-        initialize: function(){
+        /*initialize: function(){
             var self = this;
             _.bindAll(this,"parse");
-           },
+           },*/
         url: function () {
-            return config.urlPrefix+ config.courseSettings.course + "/sets";
+            return config.urlPrefix+ "courses/" + config.courseSettings.course_id + "/sets";
         },
         parse: function(response){
             var self = this;
             _(response).each(function(_set){
-                var theSet = new ProblemSet();
-                theSet.parse(_set);
-                self.add(theSet);
-//                self.add((new ProblemSet()).parse(_set));
+                var newSet = new ProblemSet(_set);
+                self.add(newSet);
             });
         }
     });

@@ -2,27 +2,14 @@ define(['Backbone','views/MessageListView', 'jquery-truncate'], function(Backbon
 	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
-    initialize: function () {
+    initialize: function (options) {
     	_.bindAll(this,"render","toggleMessageWindow");
-    	_.extend(this,this.options);
     },
     render: function () {
     	var self = this; 
 
         this.$el.prepend((this.messagePane = new MessageListView()).render().el);
-
-        // Create an announcement pane for successful messages.
-        // this.announce = new Closeable({classes: ["alert-success"], id: "announce-pane"});
-        // this.$el.prepend(this.announce.el);
         
-        // Create an announcement pane for error messages.
-        // this.errorPane = new Closeable({classes: ["alert-error"], id: "error-pane"});
-        // this.$el.prepend(this.errorPane.el);
-        
-        // This is the help Pane
-        // this.helpPane = new Closeable({closeableType : "Help", text: $("#help-text").html(), id: "help-pane"});
-        // this.$el.prepend(this.helpPane.el);
-
         $("button#help-link").click(function () {
                 self.helpPane.open();});
 

@@ -8,28 +8,27 @@ define(['Backbone', 'underscore','config','imagesloaded'
         //We want the problem to render in a `li` since it will be included in a list
         tagName:"li",
         className: "problem",
-
         //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
-
-    
-        //In most model views initialize is used to set up listeners
-        //on the views model.
-        initialize:function () {
-
+        initialize:function (options) {
             var self = this;
             _.bindAll(this,"render","removeProblem");
-            // this.options.viewAttrs will determine which tools are shown on the problem
+            
+            // options.viewAttrs will determine which tools are shown on the problem
             this.allAttrs = {};
-            _.extend(this.allAttrs,this.options.viewAttrs);
+            _.extend(this.allAttrs,options.viewAttrs);
 
             var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=" 
                 + this.allAttrs.displayMode + "&key=" + config.courseSettings.session_key 
                 + "&sourceFilePath=" + this.model.get("source_file") + "&user=" + config.courseSettings.user + "&problemSeed=1234"; 
             _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
+            
             this.model.on('change:value', function () {
-                self.model.save();
+                if(self.model.get("value").match(/^\d+$/)) {
+                    self.model.save();
+                }
             });
+            this.tagsLoaded=false;
         },
 
         render:function () {
@@ -47,7 +46,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
                 });
 
 
-                if (this.options.viewAttrs.draggable) {
+                if (this.allAttrs.draggable) {
                     this.$el.draggable({
                         helper:'clone',
                         revert:true,
@@ -69,14 +68,13 @@ define(['Backbone', 'underscore','config','imagesloaded'
                 this.stickit();
                 
             } else {
-                this.$el.html("<span style='font: italic 120%'>Loading Problem</span><i class='icon-spinner icon-spin icon-2x'></i>");
+                this.$el.html($("#problem-loading-template").html());
                 this.model.loadHTML({displayMode: this.allAttrs.displayMode, success: function (data) {
-                    if (data.text){
-                        self.model.set("data",data.text);
-                        self.render();
-                    } else {
-                        console.log(data);
-                    }
+                    self.model.set("data",data.text);
+                    self.render();
+                }, error:function(data){
+                    self.model.set("data",data.responseText);
+                    self.render();
                 }});
             }
 
@@ -88,13 +86,30 @@ define(['Backbone', 'underscore','config','imagesloaded'
             "click .refresh-problem": 'reloadWithRandomSeed',
             "click .add-problem": "addProblem",
             "click .seed-button": "toggleSeed",
-            "click .path-button": "togglePath"},
-        bindings: {".prob-value": "value"},
+            "click .path-button": "togglePath",
+            "click .tags-button": "toggleTags"
+        },
+        bindings: {".prob-value": "value",
+            ".mlt-tag": "morelt",
+            ".level-tag": "level",
+            ".keyword-tag": "keyword",
+            ".problem-author-tag": "author",
+            ".institution-tag": "institution",
+            ".tb-title-tag": "textbook_title",
+            ".tb-chapter-tag": "textbook_chapter",
+            ".tb-section-tag": "textbook_section",
+            ".DBsubject-tag": "subject",
+            ".DBchapter-tag": "chapter",
+            ".DBsection-tag": "section",
+        },
         reloadWithRandomSeed: function (){
             var seed = Math.floor((Math.random()*10000));
             console.log("reloading with new seed " + seed);
             this.model.set({data:"", problem_seed: seed},{silent: true});
             this.render();
+        },
+        toggleTags: function () {
+            this.$(".problem-tags").toggleClass("hidden");
         },
         toggleSeed: function () {
             this.$(".problem-seed").toggleClass("hidden");
@@ -104,7 +119,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
         },
         addProblem: function (evt){
             console.log("adding a problem.");
-            this.options.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
+            options.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
         },
         hideProblem: function(evt){
             console.log("hiding a problem ");

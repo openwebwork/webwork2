@@ -10,14 +10,16 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems/;
+use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems deleteProblems/;
+use WeBWorK::Utils qw/parseDateTime/;
 use Array::Utils qw(array_minus); 
-use Routes::Authentication qw/checkPermissions/;
+use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
 
 our @set_props = qw/set_id set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
+our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts source_file/;
 
 ###
@@ -52,7 +54,21 @@ get '/courses/:course_id/sets/:set_id' => sub {
 
     my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
 
-    return convertObjectToHash($globalSet);
+    my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
+
+    my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+
+    my $setResults = convertObjectToHash($globalSet);
+
+    $setResults->{assigned_users} = \@userNamesFromDB;
+
+    $setResults->{problems} = convertArrayOfObjectsToHash(\@problemsFromDB);
+
+
+
+
+    return $setResults;
 };
 
 ####
@@ -94,7 +110,6 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
     for my $key (@set_props) {
         $set->{$key} = param($key);
     }
-    
     if(request->is_post()){     
         vars->{db}->addGlobalSet($set);
     } else {
@@ -116,8 +131,8 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
     my @usersToDelete = array_minus(@userNamesFromDB,@{$userNames});
 
     for my $user (@usersToAdd){
-        addUserSet(vars->{db},params->{set_id},$user);
-        addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
+        addUserSet($user);
+        addUserProblems($user);
     }
 
     if(request->is_put){
@@ -126,24 +141,36 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
         }
     }
 
-    my $returnSet = convertObjectToHash($set);
-
     # handle the global problems. 
 
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
     if(scalar(@problemsFromDB) == scalar(@{params->{problems}})){  # then perhaps the problems need to be reordered.
-        reorderProblems(vars->{db},params->{set_id},params->{problems});
+        debug "reordering or reassigning problems";
+        debug $userNames;
+        reorderProblems($userNames);
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
+        debug "adding problems";
         addProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
     } else { # problems have been deleted.  
+        debug "deleting problems";
         deleteProblems(vars->{db},params->{set_id},params->{problems});
     }
 
-    my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
+    ## handle the user Problems
+
+    # for my $user (@usersToAdd){
+    #     addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
+    # }
+
+    
+    my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+    my $returnSet = convertObjectToHash($set);
+
 
     $returnSet->{assigned_users} = $userNames;
-    $returnSet->{problems} = convertArrayOfObjectsToHash(\@problems);
+    $returnSet->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
 
     return $returnSet;
 
@@ -173,8 +200,6 @@ del '/courses/:course_id/sets/:set_id' => sub {
     } else {
         send_error("There was an error while trying to delete set " . param('set_id'),424);
     }
-
-    ## pstaab: the user sets should also be deleted here.
 
 };
 
@@ -315,14 +340,14 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 
         if (vars->{db}->existsUserSet($userID,params->{set_id})) { 
             my $set = vars->{db}->getUserSet($userID,params->{set_id});
-            for my $key (@set_props) {
+            for my $key (@user_set_props) {
                 $set->{$key} = params->{$key} if defined(params->{$key});
             }
             vars->{db}->putUserSet($set);
         } else {
             my $set = vars->{db}->newUserSet($userID,params->{set_id});
             $set->{user_id} = $userID;
-            for my $key (@set_props) {
+            for my $key (@user_set_props) {
                 $set->{$key} = params->{$key} if defined(params->{$key});
             }
             vars->{db}->addUserSet($set);   
@@ -440,35 +465,38 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 #  return:  UserSet properties
 ##
 
+## I think this is superceded by code above:
 
-put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
+# put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     
-    checkPermissions(10,session->{user});
+#     checkPermissions(10,session->{user});
 
-    my $userID = param('user_id');
+#     my $userID = param('user_id');
 
-    # check to make sure that the user is assigned to the course
-    send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
-            unless vars->{db}->getUser($userID);
+#     # check to make sure that the user is assigned to the course
+#     send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
+#             unless vars->{db}->getUser($userID);
 
-    my $set = vars->{db}->getUserSet($userID,param('set_id'));
+#     my $set = vars->{db}->getUserSet($userID,param('set_id'));
 
-    if ($set){
-        for my $key (@set_props) {
-            if (param($key)){
-                $set->{$key} = param($key);
-            }
-        }
+#     debug $set;
 
-        vars->{db}->putUserSet($set);
+#     if ($set){
+#         for my $key (@user_set_props) {
+#             if (param($key)){
+#                 $set->{$key} = param($key);
+#             }
+#         }
 
-        return convertObjectToHash($set);
-    } else {
-        send_error("The user " . $userID . " is not assigned to set " . param('set_id') . " in course " 
-                . param('course_id'),404);
-    }
+#         vars->{db}->putUserSet($set);
 
-};
+#         return convertObjectToHash($set);
+#     } else {
+#         send_error("The user " . $userID . " is not assigned to set " . param('set_id') . " in course " 
+#                 . param('course_id'),404);
+#     }
+
+# };
 
 
 ###
@@ -695,6 +723,32 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
         send_error("There was an error deleting the problem.",446);
     }
 
+};
+
+
+###
+#
+# post /utils/dates 
+#
+#  A utility route to convert WW date-times to unix epochs.
+#
+#  The only needed parameter is dates, an object of webwork date-times
+# 
+###
+
+post '/utils/dates' => sub {
+
+    ##  need to change this later.  Why do we need a course_id for a general renderer? 
+    setCourseEnvironment("_fake_course");
+    #checkPermissions(10,session->{user});  ## not needed but students shouldn't need to access this.
+
+    my $unixDates = {};
+
+    for my $key (qw/open_date answer_date due_date/){
+        $unixDates->{$key} = parseDateTime(params->{$key},params->{timeZone});
+    }
+    
+    return $unixDates;
 };
 
 

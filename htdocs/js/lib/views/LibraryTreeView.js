@@ -10,10 +10,10 @@
 define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
-    	initialize: function (){
+    	initialize: function (options){
     		_.bindAll(this,"render","loadProblems");
             var self = this;
-            this.libraryTree = new LibraryTree({type: this.options.type});
+            this.libraryTree = new LibraryTree({type: options.type});
             this.libraryTree.set("header","Library/");
     	},
     	render: function(){
@@ -34,6 +34,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                     this.changeLibrary("1",this.section);
                     this.$(".library-level-2").removeClass("hidden").val(this.section);}
             }
+            //this.$("select.library-selector").selectBoxIt();
             return this; 
     	},
         events: {  "change .library-selector": "changeLibrary",
@@ -44,6 +45,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
             switch(level){
                 case 0:
                     var subject = this.$(".library-level-0").val() || this.subject;
+                    this.$(".library-level-0").val(subject);
                     this.$(".library-level-1").removeClass("hidden");
                     this.$(".library-level-2").addClass("hidden");
                     var allChapters = _(this.libraryTree.get("tree")).findWhere({name: subject});
@@ -60,6 +62,7 @@ define(['Backbone', 'underscore','models/LibraryTree'], function(Backbone, _,Lib
                     this.$(".library-level-2").html("<option>Select</option>"+
                         _(allSections.subfields).map(function(sect){return "<option>" + sect.name + "</option>";}));
                     this.$(".num-files").text(allSections.num_files + " problems");
+                    break;
                 case 2:
                     var subject = this.$(".library-level-0").val() || this.subject;
                     var chapter = this.$(".library-level-1").val() || this.chapter;

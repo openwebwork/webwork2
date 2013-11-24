@@ -3,7 +3,7 @@
 
 package Utils::ProblemSets;
 use base qw(Exporter);
-use WeBWorK::Debug;
+use Dancer ':syntax';
 use Data::Dumper;
 use List::Util qw(first);
 
@@ -15,26 +15,38 @@ our @EXPORT_OK = qw(reorderProblems addProblems deleteProblems addUserProblems a
 # This reorders the problems
 
 sub reorderProblems {
-	my ($db,$setID,$problems)=@_;
 
-	my @oldProblems = $db->getAllGlobalProblems($setID);
+	my @oldProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
-    for my $p (@{$problems}){
+    for my $p (@{params->{problems}}){
         my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
 
-        if ($db->existsGlobalProblem($setID,$p->{problem_id})){
+        if (vars->{db}->existsGlobalProblem(params->{set_id},$p->{problem_id})){
             $problem->problem_id($p->{problem_id});                 
-            $db->putGlobalProblem($problem);
-
+            vars->{db}->putGlobalProblem($problem);
         } else {
             # delete the problem with the old problem_id and create a new one
-            $db->deleteGlobalProblem($setID,$problem->{problem_id});
+            vars->{db}->deleteGlobalProblem(params->{set_id},$problem->{problem_id});
             $problem->problem_id($p->{problem_id});
-            $db->addGlobalProblem($problem);
+            vars->{db}->addGlobalProblem($problem);
+
+            for my $user (@{params->{assigned_users}}){
+                my $userProblem = vars->{db}->newUserProblem;
+                $userProblem->set_id(params->{set_id});
+                $userProblem->user_id($user);
+                $userProblem->problem_id($p->{problem_id});
+                debug $userProblem;
+                vars->{db}->addUserProblem($userProblem);
+            }
         }
     }
 
-    return $db->getAllGlobalProblems($setID);
+    ## take care of the userProblems now
+
+
+
+
+    return vars->{db}->getAllGlobalProblems(params->{set_id});
 }
 
 ###
@@ -55,8 +67,9 @@ sub addProblems {
         	my $prob = $db->newGlobalProblem();
         	$prob->{problem_id} = $p->{problem_id};
         	$prob->{source_file} = $p->{source_file};
+            $prob->{value} = $p->{value};
+            $prob->{max_attempts} = $p->{max_attempts};
         	$prob->{set_id} = $setID;
-        	debug Dumper($prob);
         	$db->addGlobalProblem($prob);
 
         	for my $u (@{$users}){
@@ -65,7 +78,6 @@ sub addProblems {
 				$userProblem->{set_id}=$setID;
 				$userProblem->{problem_id}=$p->{problem_id};
 				$db->addUserProblem($userProblem);
-				debug Dumper($userProblem);
         	}
         }
 	}
@@ -105,12 +117,11 @@ sub deleteProblems {
 ###
 
 sub addUserSet {
-	my ($db,$setID,$userID) = @_;
-
-	my $userSet = $db->newUserSet;
-    $userSet->set_id($setID);
-    $userSet->user_id($userID);
-    my $result =  $db->addUserSet($userSet);
+    my ($user_id) = @_;
+	my $userSet = vars->{db}->newUserSet;
+    $userSet->set_id(params->{set_id});
+    $userSet->user_id($user_id);
+    my $result =  vars->{db}->addUserSet($userSet);
 
     return $result;
 }
@@ -122,13 +133,14 @@ sub addUserSet {
 ###
 
 sub addUserProblems {
-	my ($db,$setID,$userID,$problems) = @_;
-	for my $p (@{$problems}){
-		my $userProblem = $db->newUserProblem();
-		$userProblem->{user_id}=$userID;
-		$userProblem->{set_id}=$setID;
-		$userProblem->{problem_id}=$p->{problem_id};
-		$db->addUserProblem($userProblem);
+	my ($userID) = @_;
+	for my $p (@{params->{problems}}){
+        debug $p;
+		my $userProblem = vars->{db}->newUserProblem();
+		$userProblem->user_id($userID);
+		$userProblem->set_id(params->{set_id});
+		$userProblem->problem_id($p->{problem_id});
+		vars->{db}->addUserProblem($userProblem);
 	}
 }
 

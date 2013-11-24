@@ -8,11 +8,11 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
 
     
     var SetListView = Backbone.View.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this, 'render','addProblemSet');  // include all functions that need the this object
             var self = this;
-            this.problemSets = this.options.problemSets;
-            this.users = this.options.users;
+            this.problemSets = options.problemSets;
+            this.users = options.users;
 
             this.tableSetup();
 
@@ -30,7 +30,7 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
         //events: {"click .add-problem-set-button": "addProblemSet"},
         render: function () {
             this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
-                                paginator: {page_size: 5, button_class: "btn", row_class: "btn-group"}});
+                                paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.html(this.problemSetTable.el);
 
@@ -62,7 +62,15 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                     $el.html($("#delete-button-template").html());
                     $el.children(".btn").on("click",function() {self.deleteSet(model);});
                 }}},
-            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string"},
+            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
+                stickit_options: {update: function($el, val, model, options) {
+                    $el.html("<a href='#' class='goto-set'>" + val + "</a>");
+                    $el.children("a").on("click",function() {
+                        var set = self.problemSets.findWhere({set_id: $(this).text()})
+                        set.trigger("show",set);
+                    });}
+                }
+            },
             {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
                 stickit_options: {onGet: function(val){
                     return val.length + "/" + self.problemSets.length;
@@ -93,17 +101,17 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
     });
 
     var AddProblemSetView = ModalView.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,"render","addNewSet");
             this.model = new ProblemSet();
 
 
-            _.extend(this.options, {template: $("#add-hw-set-template").html(), 
+            _.extend(options, {template: $("#add-hw-set-template").html(), 
                 templateOptions: {name: config.courseSettings.user},
                 buttons: {text: "Add New Set", click: this.addNewSet}});
             this.constructor.__super__.initialize.apply(this); 
 
-            this.problemSets = this.options.problemSets; 
+            this.problemSets = options.problemSets; 
 
               /*  Not sure why the following doesn't pass the options along. 
               this.constructor.__super__.initialize.apply(this,
@@ -122,9 +130,11 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
         },
         bindings: {".problem-set-name": "set_id"},
         events: {"keyup .problem-set-name": "validateName"},
-        validateName: function(ev){
-            // this.model.preValidate("set_id"),$(ev.target).val())
-            var errorMsg = this.model.preValidate("set_id",$(ev.target).val());
+        validateName: function(evt){
+            if (evt.keyCode==13){
+                this.addNewSet();
+            }
+            var errorMsg = this.model.preValidate("set_id",$(evt.target).val());
             if(errorMsg){
                 this.$(".problem-set-name").css("background","rgba(255,0,0,0.5)");
                 this.$(".problem-set-name-error").html(errorMsg);

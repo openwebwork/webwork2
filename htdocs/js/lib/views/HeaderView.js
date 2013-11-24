@@ -13,18 +13,20 @@ define(['Backbone', 'underscore'],
     function(Backbone, _){
     var HeaderView = Backbone.View.extend({
     	initialize: function () {
-    		_.bindAll(this,"setTemplate","render");
+    		_.bindAll(this,"setOptions","render");
     	},
     	render: function () {
-    		this.$el.html(_.template($(this.template).html(),this.templateOptions))
-    		if(this.events){
-    			this.delegateEvents(this.events);
-    		}
+            if(typeof(this.template)!=="undefined" && typeof(this.templateOptions)!=="undefined"){
+        		this.$el.html(_.template($(this.template).html(),this.templateOptions))
+        		if(this.events){
+        			this.delegateEvents(this.events);
+        		}
+            }
     	},
-    	setTemplate: function (options){
-    		this.template = options.template;
-    		this.templateOptions = typeof(options.options)=="function"?options.options(): options.options;
-    		this.events = options.events;
+    	setOptions: function (options){
+    		this.template = options.template || "";
+            this.templateOptions = typeof(options.options)=="function"?options.options(): (options.options || {});
+    		this.events = options.events || "";
     		return this; 
     	}
 

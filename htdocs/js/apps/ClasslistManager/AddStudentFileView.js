@@ -16,7 +16,7 @@ define(['Backbone',
 		    this.collection = new UserList();
 		    this.model = new User();
 		    Backbone.Validation.bind(this);
-		    this.users = this.options.users;
+		    this.users = options.users;
 		    this.render();
 		    
 		    this.$el.dialog({autoOpen: false, modal: true, title: "Add Students from a File",

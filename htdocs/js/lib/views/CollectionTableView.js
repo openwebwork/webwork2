@@ -30,8 +30,8 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 		initialize: function () {
 			var self = this;
 			_.bindAll(this,"render","sortTable");
-			this.columnInfo = this.options.columnInfo;
-			this.paginatorProp = this.options.paginator;
+			this.columnInfo = options.columnInfo;
+			this.paginatorProp = options.paginator;
 			this.bindings = {};
 			_(this.columnInfo).each(function(col){ 
 				var obj = {};
@@ -64,7 +64,7 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			var tbody = $("<tbody>");
 			this.$el.append(head).append(tbody);
 
-			_(this.options.columnInfo).each(function (col){
+			_(options.columnInfo).each(function (col){
 				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
 				headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
 			});
@@ -184,11 +184,11 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 		tagName: "tr",
 		initialize: function () {
 			_.bindAll(this,"render");
-			this.bindings = this.options.bindings;
+			this.bindings = options.bindings;
 		},
 		render: function () {
 			var self = this;
-			_(this.options.columnInfo).each(function (col){
+			_(options.columnInfo).each(function (col){
 				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
 				if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));

@@ -4,5 +4,8 @@ applets
 tmp
 logs
 courses.dist
-library-tree.json
+library-directory-tree.json
+library-subject-tree.json
+textbook-tree.json
+
 
