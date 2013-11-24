@@ -60,6 +60,8 @@ get '/courses/:course_id/settings/:setting_id' => sub {
 
 put '/courses/:course_id/settings/:setting_id' => sub {
 
+	debug session;
+
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
 	debug "in PUT /course/:course_id/settings/:setting_id";

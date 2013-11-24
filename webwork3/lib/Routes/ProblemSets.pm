@@ -131,10 +131,11 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
     my @usersToDelete = array_minus(@userNamesFromDB,@{$userNames});
 
-    for my $user (@usersToAdd){
+    for my $user(@usersToAdd){
         addUserSet($user);
-        addUserProblems($user);
     }
+
+
 
     if(request->is_put){
         for my $user (@usersToDelete){
@@ -160,9 +161,6 @@ any ['put', 'post'] => '/courses/:course_id/sets/:set_id' => sub {
 
     ## handle the user Problems
 
-    # for my $user (@usersToAdd){
-    #     addUserProblems(vars->{db},params->{set_id},$user,params->{problems});
-    # }
 
     
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
@@ -763,9 +761,11 @@ post '/utils/dates' => sub {
 
 get '/courses/:course_id/pgeditor' => sub {
 
+
+
     setCourseEnvironment(params->{course_id});
     template 'simple-editor.tt', {course_id=> params->{course_id},theSetting => to_json(getCourseSettings),
-        pagename=>"Simple Editor"};
+        pagename=>"Simple Editor",user=>session->{user}};
 };
 
 

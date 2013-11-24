@@ -11,8 +11,9 @@ function(module,Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemLis
             config,moment){
 var SimpleEditorView = WebPage.extend({
     initialize: function(options) {
+        var self = this;
         this.constructor.__super__.initialize.apply(this, [{el: this.el}]);
-        _.bindAll(this,"changeAnswerType");
+        _.bindAll(this,"changeAnswerType","checkLogin");
         this.problem = new Problem();
         this.model = new PGProblem();
         this.model.on({"change": this.problemChanged});
@@ -22,9 +23,21 @@ var SimpleEditorView = WebPage.extend({
         }
         config.courseSettings.course_id = module.config().course_id;
         this.editorSettingsView = new EditorSettingsView({settings: config.settings});
+        //this.model.bind('validated:invalid', this.handleErrors);
+
+        var answerTypes = ['Number','String','Formula','Interval or Inequality',
+                'Comma Separated List of Values','Multiple Choice'];
+        this.answerTypeCollection = _(answerTypes).map(function(type){return {label: type, value: type};});
         this.updateFields();
         this.render();
-        this.model.bind('validated:invalid', this.handleErrors);
+
+        if(module.config().session){
+            _.extend(config.courseSettings,module.config().session);
+        }
+        if(! config.courseSettings.logged_in){
+            this.constructor.__super__.requestLogin.call(this, {success: this.checkLogin});
+        }
+        
     },
     render: function (){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
@@ -45,6 +58,19 @@ var SimpleEditorView = WebPage.extend({
         ".text-title": {observe: "textbook_title", events: ['blur']},
         ".text-edition": {observe: "textbook_edition", events: ['blur']},
         ".text-author": {observe: "textbook_author", events: ['blur']},
+        ".keywords": {observe: "keywords", events: ['blur'], onSet: function(val, options){
+            return _(val.split(",")).map(function(kw) { return kw.trim()});
+        }},
+        ".answer-type": {observe: "answer_type", selectOptions: {collection: "this.answerTypeCollection",
+            defaultOption: {label: "Select an Answer Type...", value: null}}}
+    },
+    checkLogin: function(data){
+        if(data.logged_in==1){
+            this.closeLogin();
+            _.extend(config.courseSettings,data);
+        } else {
+            this.loginPane.$(".message").html(config.msgTemplate({type: "bad_password"}));
+        }
     },
     problemChanged: function(model) {
         console.log(model);
@@ -106,8 +132,32 @@ var SimpleEditorView = WebPage.extend({
     },
     buildScript: function (){       
         // check that everything should be filled in
+        var self = this;
+        var errors = this.model.validate();
+        var answerErrors;
+        if(this.answerView && this.answerView.model){
+            answerErrors = this.answerView.model.validate();
+        } 
+        if(errors || answerErrors){
+            var bindings = _.chain(this.bindings).keys()
+                .map(function(key) { return [self.bindings[key].observe,key];}).object().value();
 
-        this.model.validate();
+            _(_(errors).keys()).each(function(key){
+                self.$(bindings[key]).closest("div").addClass("has-error");
+            });
+
+            var answerBindings = typeof(this.answerView)==="undefined" ? {} :  _.chain(this.answerView.bindings).keys()
+                .map(function(key) { return [self.answerView.bindings[key],key];}).object().value();
+
+            _(_(answerErrors || {}).keys()).each(function(key){
+                self.answerView.$(answerBindings[key]).closest("div").addClass("has-error");
+            })
+
+
+            this.messagePane.addMessage({type: "danger", short: "The following are required."});
+            
+            return;
+        }
 
         var pgTemplate = _.template($("#pg-template").text());
         var fields = this.libraryTreeView.fields.attributes;
@@ -132,7 +182,8 @@ var ShowProblemView = Backbone.View.extend({
                                             // are in a ProblemList. 
       this.collection.add(this.model);
       problemViewAttrs = {reorderable: false, showPoints: false, showAddTool: false, showEditTool: false,
-                showRefreshTool: false, showViewTool: false, showHideTool: false, deletable: false, draggable: false};
+                showRefreshTool: false, showViewTool: false, showHideTool: false, deletable: false, draggable: false,
+                displayMode: "MathJax"};
       this.problemView = new ProblemView({model: this.model, viewAttrs: problemViewAttrs});
     },
     render: function (){
@@ -178,7 +229,11 @@ var NumberAnswerView = AnswerChoiceView.extend({
         this.pgSetupTemplate = _.template($("#number-option-pg-setup").html());
         this.pgTextTemplate =_.template($("#number-option-pg-text").html());
         this.pgAnswerTemplate = _.template($("#number-option-pg-answer").html());
-        var ThisModel = Backbone.Model.extend({defaults: {answer: "", require_units: false}});
+        var ThisModel = Backbone.Model.extend({
+            defaults: {
+                answer: "", require_units: false
+            },
+            validation: {answer: {required: true}}});
         this.model = new ThisModel();
     },
     bindings: { ".answer": "answer", ".require-units": "require_units"},

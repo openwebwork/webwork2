@@ -9,7 +9,7 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
     
     var SetListView = Backbone.View.extend({
         initialize: function (options) {
-            _.bindAll(this, 'render','addProblemSet');  // include all functions that need the this object
+            _.bindAll(this, 'render','addProblemSet','updateTable');  // include all functions that need the this object
             var self = this;
             this.problemSets = options.problemSets;
             this.users = options.users;
@@ -21,6 +21,8 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                                   self.addProblemSet();  
                                 }}
             };
+            this.problemSets.on("add",this.updateTable);
+            this.problemSets.on("remove",this.updateTable);
         },
         //events: {"click .add-problem-set-button": "addProblemSet"},
         render: function () {
@@ -32,6 +34,11 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
             // set up some styling
             this.problemSetTable.$(".paginator-row td").css("text-align","center");
             this.problemSetTable.$(".paginator-page").addClass("btn");
+        },
+        updateTable: function() {
+            if(this.problemSetTable){
+                this.problemSetTable.render();
+            }
         },
         addProblemSet: function (){
             if (! this.addProblemSetView){
@@ -144,6 +151,7 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
             this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
             console.log(this.model.attributes);
             console.log("adding new set");
+            this.model.id = void 0; // make sure that it is POSTed when saved. 
             this.problemSets.add(this.model);
             this.close();
         }

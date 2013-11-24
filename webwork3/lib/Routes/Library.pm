@@ -361,10 +361,12 @@ get '/Library/problems/:problem_id/tags' => sub {
 #
 ###
 
-any ['get', 'post'] => '/renderer/problems/:problem_id' => sub {
+any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => sub {
 
 	##  need to change this later.  Why do we need a course_id for a general renderer? 
-	setCourseEnvironment("_fake_course");
+	
+	setCourseEnvironment(params->{course_id});
+	
 	
     my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
 	my $problemSeed = defined(params->{problemSeed}) ? params->{problemSeed} : 1; 

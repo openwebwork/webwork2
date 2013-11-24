@@ -54,6 +54,8 @@ get '/courses/:course/users' => sub {
 post '/courses/:course_id/users/:user_id' => sub {
 
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+
+	debug vars->{db}->listUsers;
 	
 	my $user = vars->{db}->getUser(param('user_id'));
 	send_error("The user with login " . param('user_id') . " already exists",404) if $user;
@@ -160,6 +162,8 @@ del '/courses/:course_id/users/:user_id' => sub {
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 	
 	# check to see if the user exists
+
+	debug Dumper(vars->{db}->listUsers);
 
 	my $user = vars->{db}->getUser(param('user_id')); # checked
 	send_error("Record for visible user " . param('user_id') . ' not found.',404) unless $user;

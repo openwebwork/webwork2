@@ -31,28 +31,29 @@
               <div class="controls"  id="library-subjects"></div>
             </div>
             <div class="form-group">
-             	<select class="answer-type">
-               	<option data-type="#empty">Choose Type of Answer</option>,
-               	<option data-type="#number-option">Number</option>,
-               	<option data-type="#string-option">String</option>
-               	<option data-type="#formula-option">Formula</option>
-               	<option data-type="#interval-or-inequality-option">Interval or Inequality</option>
-               	<option data-type="#comma-separated-list-option">Comma Separated List of Values</option>
-               	<option data-type="#multiple-choice-option">Multiple Choice</option>
-             	</select> 
+             	<select class="answer-type"></select> 
           	</div>
             <div class="form-group">
               <div class="controls" id="answerArea"></div>
             </div>  
            </div>
           <div class="col-md-4">
+          	<div>
+          		<div class="control-group">Keywords</div>
+							<div class="control-group">
+								<div class="controls">
+									<input type="text" class="input keywords" placeholder="Keywords">
+								</div>
+							</div>          		
+          	</div>
+
            <div id="author-info-container">
            	<div class="control-group">Author Information</div>
-					    <div class="control-group">
-					      <div class="controls">
-					        <input type="text" class="input problem-author" placeholder="Problem Author">
-					      </div>
-					    </div>  
+				    <div class="control-group">
+				      <div class="controls">
+				        <input type="text" class="input problem-author" placeholder="Problem Author">
+				      </div>
+				    </div>  
 
 					    <div class="control-group">
 					      <div class="controls">
@@ -112,7 +113,7 @@
 <script src="/webwork2_files/js/apps/require-config.js"></script>
 
 <script type='text/javascript'> 
-	require.config = { 'SimpleEditor': {course_id: "[% course_id %]", settings: [% theSetting %] }};
+	require.config = { 'SimpleEditor': {course_id: "[% course_id %]", settings: [% theSetting %], user: "[%user%]" }};
 </script>
 
 <script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -171,7 +172,7 @@
 
 <script type="text/template" id="pg-template">
 ##DESCRIPTION
-##KEYWORDS('trigonometry', 'limits')
+##KEYWORDS(<%print(keywords.map(function(kw){return "'" + kw + "'"}).join(",")) %>)
 ##  <%=description%>
 ##ENDDESCRIPTION
 
@@ -252,13 +253,14 @@ ENDDOCUMENT();
 
 <script id="number-option-template" type="text/template">
    <div class="control-group">
-      <div class="controls">          
-         <input class="answer" type="text" placeholder="Numerical Answer">
+      <div class="controls">
+        <label class="control-label">Answer:          
+         <input class="answer form-control" type="text" placeholder="Numerical Answer"></label>
       </div>
    </div>
    <div class="control-group">
       <div class="controls">
-      <label class="checkbox">
+      <label class="checkbox-inline">
          <input class="answer-option require-units" type="checkbox"> Require Units</label>
       </div>
    </div>
@@ -522,7 +524,9 @@ ENDDOCUMENT();
 </div>
 <%if(deletable){ %><col-md- class="col-md-1 remove pull-right btn"><i class="icon-trash"></i></col-md-><%}%></div>    
 
+<div>
 <%= data %>
+</div>
 </script>
 
 <script type="text/template" id="setting-row-template">
@@ -543,6 +547,7 @@ ENDDOCUMENT();
 
 
 
+
 <!-- This is where all messages to the user go -->
 
 <script type="text/template" id="all-messages">
@@ -551,8 +556,20 @@ ENDDOCUMENT();
     set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
     set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
       + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
-    
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
+      + "reenter your username and password to continue. ";},    
+    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."}  
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
   
 %>
+</script>
+
+<script type="text/template" id="message-pane-template">
+<div class='row'>
+    <div class='pull-right'><button type='button' class='close'>&times;</button></div>
+    <ul class='main-message-pane no-bullets'></ul>
+</div>
+
+</script>
+

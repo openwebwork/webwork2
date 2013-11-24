@@ -24,9 +24,12 @@ define(['Backbone', 'underscore','models/DBFields'], function(Backbone, _,DBFiel
             textbook_section: "",
             textbook_problem_number: "",
             db_fields: "",
+            keywords: [],
+            answer_type: "",
 		},
         validation: {
-            statement: { required: true}
+            statement: { required: true},
+            answer_type: {required: true}
         },
         initialize: function (){
             db_field = new DBFields();

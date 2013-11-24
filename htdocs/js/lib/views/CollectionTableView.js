@@ -77,16 +77,14 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 				}
 			});
 
+			this.updateTable();
 			for(i=0;i<this.pageSize;i++){
-				if(this.showFiltered){ 
-					self.rowViews[i] = new TableRowView({model: this.filteredCollection[i],columnInfo: self.columnInfo,
-						bindings: self.bindings});
-				} else {
-					self.rowViews[i]=new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
-						bindings: self.bindings});
+				if(this.rowViews[i]){
+					tbody.append(self.rowViews[i].render().el);
 				}
-				tbody.append(self.rowViews[i].render().el);
+
 			}
+
 			this.$el.append($("<tr class='paginator-row'>"));
 			this.updatePaginator();
 
@@ -157,17 +155,22 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			return this;
 		},
 		updateTable: function () {
-			var i;
-			if(this.showFiltered){
-				for(i=0;i<this.pageSize;i++){
-					this.rowViews[i].setModel(this.filteredCollection[this.pageRange[i]]);
+			var self = this;
+			this.rowViews = [];
+			_(this.pageRange).each(function(i,j){
+				if(self.showFiltered){ 
+					if(self.filteredCollection[i]){
+						self.rowViews[j] = new TableRowView({model: self.filteredCollection[i],columnInfo: self.columnInfo,
+							bindings: self.bindings});
+					}
+				} else {
+					if(self.collection.at(i)){
+						self.rowViews[j]=new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
+							bindings: self.bindings});
+					}
 				}
-			} else {
-				for(i=0;i<this.pageSize;i++){
-					this.rowViews[i].setModel(this.collection.at(this.pageRange[i]));
-				}
-			}
-		},
+			});
+	},
 		getRowCount: function () {
 			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
 		},
@@ -226,8 +229,7 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
 			this.pageRange = _.range(this.currentPage*this.pageSize,
 				(this.currentPage+1)*this.pageSize>this.collection.size()? this.collection.size():(this.currentPage+1)*this.pageSize);
-			this.updateTable();
-			this.updatePaginator();
+			this.render();
 		}
 
 
@@ -256,7 +258,9 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 					}
 				}
 			});
-			this.stickit();
+			if(this.model){
+				this.stickit();
+			}
 			return this; 
 		}, 
 		setModel: function(_model){
