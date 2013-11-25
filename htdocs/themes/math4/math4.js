@@ -60,7 +60,9 @@ $(function(){
     $('.problem .problem-content').addClass('well well-small');
 
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
-	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/)[1];
+	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
+	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
+	//on the presentation of a matrix  and then causes errors throughout the rest of the script
 	$(this).attr('onmouseover','');
 	if (data) {
 	    $(this).wrapInner('<div class="results-popover" />');
@@ -79,11 +81,6 @@ $(function(){
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small btn-info');
     $('#problem-grader-form td').find('p:last').removeClass('essay-answer graded-answer');
-
-    //Instructor Tools formatting
-    $('.ButtonRow .btn').addClass('btn-mini');
-    $('.ButtonRowCenter .btn').addClass('btn-mini');
-    $('.ScrollingRecordList .btn').addClass('btn-small');
 
     //CourseConfiguration
     $('#config-form').addClass('form-inline');
@@ -173,11 +170,16 @@ $(function(){
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
 
+    addOnLoadEvent(function () {
+	
+	$('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
+	
+    });
 })
 
 addOnLoadEvent(function () {
 
-        $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
+    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
 
 });
 

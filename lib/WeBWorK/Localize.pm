@@ -19,6 +19,8 @@ my   $encoding = undef;
 # For some reason this next stanza needs to be evaluated 
 # separately.  I'm not sure why it can't be
 # directly entered into the code.
+# This code was cribbed from Locale::Maketext::Simple if I remember correctly
+#
 
 eval "
 	package WeBWorK::Localize::I18N;
@@ -32,10 +34,14 @@ eval "
 	});
 	*tense = sub { \$_[1] . ((\$_[2] eq 'present') ? 'ing' : 'ed') };
 	
-" or die $@;
+" or die "Can't process eval in WeBWorK/Localize.pm: line 35:  ". $@;
  
 package WeBWorK::Localize; 
 
+# This subroutine is shared with the safe compartment in PG to 
+# allow maketext() to be constructed in PG problems and macros
+# It seems to be a little fragile -- possibly it breaks
+# on perl 5.8.8
 sub getLoc {
 	my $lang = shift;
 	my $lh = WeBWorK::Localize::I18N->get_handle($lang);	
