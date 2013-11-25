@@ -19,7 +19,7 @@ $(document).keydown(function(e){
 
 /* load up and config mathview */
 $(document).ready(function() {
-    /* Make sure mathjax is confugued for AsciiMath input */
+
     MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
 	var AM = MathJax.InputJax.AsciiMath.AM;
 	for (var i=0; i< AM.symbols.length; i++) {
@@ -28,6 +28,7 @@ $(document).ready(function() {
 	    }
 	}
     });
+    /* Make sure mathjax is confugued for AsciiMath input */
     MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
 
     /* attach a viewer to each input */
@@ -71,6 +72,18 @@ $(document).ready(function() {
 	$(input).parent().append(button);
 	/* make sure popover refreshes math when there is a keyup in the input */
 	$(input).keyup(mviewer.regenPreview);
+	$(input).focus(function () {
+	    var current = $(this).siblings('a')[0];
+	    
+	    $('.codeshard').each(function () {
+		var others = $(this).siblings('a')[0];
+		if (others != current) {
+		    $(others).popover('hide');
+		}
+	    });
+	    
+	});
+	    
     });
     
 });
