@@ -1594,7 +1594,7 @@ sub saveEdit_handler {
 	
 	$self->{editMode} = 0;
 	
-	return CGI::div({class=>"ResultsWithError"}, $r->maketext("changes saved") );
+	return CGI::div({class=>"ResultsWithOutError"}, $r->maketext("changes saved") );
 }
 
 sub duplicate_form {

@@ -113,6 +113,10 @@ ul.nav li a:hover {
 	width: 72%;
 }
 
+h1.page-title {
+	font-size: 31.5px;
+}
+
 h2.page-title {
 	border-bottom: 1px solid #ccc;
 }
