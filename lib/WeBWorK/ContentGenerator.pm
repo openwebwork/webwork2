@@ -377,6 +377,7 @@ sub addmessage {
 	$scrubber->default(
 	    undef,
 	    {
+		'onload' => 0,
 		'*' => 1,
 	    }
 	    );
