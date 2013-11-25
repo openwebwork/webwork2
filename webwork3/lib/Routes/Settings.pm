@@ -10,6 +10,7 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 use strict;
 use warnings;
+use Utils::CourseUtils qw/getCourseSettings/;
 use Dancer ':syntax';
 
 ####
@@ -24,43 +25,9 @@ get '/courses/:course_id/settings' => sub {
 
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
-	return getConfigValues(vars->{ce});
+	return getCourseSettings;
 
 };
-
-sub getConfigValues {
-
-
-	my $ce = shift; 
-	my $ConfigValues = $ce->{ConfigValues};
-
-	# get the list of theme folders in the theme directory and remove . and ..
-	my $themeDir = $ce->{webworkDirs}{themes};
-	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
-	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
-	
-
-	foreach my $oneConfig (@$ConfigValues) {
-		foreach my $hash (@$oneConfig) {
-			if (ref($hash) eq "HASH") {
-				my $string = $hash->{var};
-				if ($string =~ m/^\w+$/) {
-					$string =~ s/^(\w+)$/\{$1\}/;
-				} else {
-					$string =~ s/^(\w+)/\{$1\}->/;
-				}
-				$hash->{value} = eval('$ce->' . $string);
-				
-				if ($hash->{var} eq 'defaultTheme'){
-					$hash->{values} = $themes;	
-				}
-			}
-		}
-	}
-
-	return $ConfigValues;
-
-}
 
 ####
 #
@@ -93,12 +60,13 @@ get '/courses/:course_id/settings/:setting_id' => sub {
 
 put '/courses/:course_id/settings/:setting_id' => sub {
 
+	debug session;
+
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
 	debug "in PUT /course/:course_id/settings/:setting_id";
 
-	my $ConfigValues = getConfigValues(vars->{ce});
-
+	my $ConfigValues = getCourseSettings;
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
 			if (ref($hash)=~/HASH/){
@@ -184,7 +152,7 @@ sub writeConfigToFile {
 sub writeLine {
 	my ($var,$value) = @_;
 	my $val = (ref($value) =~/ARRAY/) ? to_json($value,{pretty=>0}): $value;
-	$val = "'".$val . "'" if ($val =~ /^[a-zA-Z]\w+$/);
+	$val = "'".$val . "'" if ($val =~ /^[a-zA-Z\s]+$/);
 	#$val =~ s/'//g;
 	return "\$" . $var . " = " . $val . ";\n";
 }

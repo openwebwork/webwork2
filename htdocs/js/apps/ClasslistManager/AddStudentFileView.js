@@ -11,7 +11,7 @@ define(['Backbone',
 		tagName: "div",
 		id: "addStudFileDialog",
 	    
-		initialize: function(){
+		initialize: function(options){
 		    _.bindAll(this, 'render','importStudents','openDialog','closeDialog','validateColumn'); // every function that uses 'this' as the current object should be in here
 		    this.collection = new UserList();
 		    this.model = new User();
@@ -27,21 +27,28 @@ define(['Backbone',
 		    "change input#files": "readFile",
 		    "change input#useLST" : "setHeadersForLST",
 		    "change input#useFirst" : "useFirstRow",
-		    "click .reload-file": "loadFile",
+		    "click  .reload-file": "loadFile",
 		    "change select.colHeader": "validateColumn",
-		    "change #selectAllASW":  "selectAll"
+		    "change #selectAllASW":  "selectAll",
+		    "click	.close-button": "closeErrorPane",
+		    "click  .cancel-button": "closeDialog",
+		    "click  .import-help-button": "showImportHelp",
+		    "click  .help-pane button": "closeHelpPane"
+		},
+		closeHelpPane: function () {
+			this.$(".help-pane").hide("slow");
+		},
+		closeErrorPane: function () {
+			this.$(".error-pane").hide("slow");
+		},
+		showImportHelp: function () {
+			this.$(".help-pane").show("slow");
 		},
 		openDialog: function () { this.$el.dialog("open");},
 		closeDialog: function () {this.$el.dialog("close");},
 		render: function(){
 		    var self = this;
-		    //this.errorPane = new Closeable({id: "error-bar"});
-		    this.errorPane.$el.addClass("alert-error");
-		    this.$el.html(this.errorPane.el);
-		    $("button.close",this.errorPane.el).click(function () {self.errorPane.close();}); // for some reason the event inside this.error is not working  this is a hack.
-		   
-		    this.$el.append($("#add_student_file_dialog_content").html());
-		    
+		    this.$el.html($("#add_student_file_dialog_content").html());
 		    return this; 
 		},
 		readFile: function(evt){
@@ -87,6 +94,8 @@ define(['Backbone',
 				var re=new RegExp("\.lst$","i");
 				if (re.test(self.file.name)){self.setHeadersForLST();}
 
+				$("#importStudFromFileButton").removeClass("disabled");
+				self.$(".reload-file").removeClass("disabled");
 				self.delegateEvents();
 			}
 		},
@@ -96,53 +105,44 @@ define(['Backbone',
 		importStudents: function () {  // PLS:  Still need to check if student import is sucessful, like making sure that user_id is valid (not repeating, ...)
 		    // First check to make sure that the headers are not repeated.
 		    var self = this;
-		    var headers = [];
-		    _($("select[class='colHeader']")).each(function(obj,j){if ($(obj).val() != "") headers.push({header: $(obj).val(), position: j});});
-		    
-		    var heads = _(headers).map(function (obj) {return obj.header;});
-		    var sortedHeads = _(heads).sortBy(function (str) {return str;});
-		    
-		    // Determine if the user has selected a unique set of headers.  
-		    
-		    var validHeaders=true;
-		    for (var i=0;i<sortedHeads.length-1;i++){if(sortedHeads[i]==sortedHeads[i+1]) {validHeaders=false; break;}};
-		    if (!validHeaders) {alert("Each Column must have a unique Header.");  return false;}
+		    var tmp = $("select.colHeader").map(function(i,v){return {header: $(v).val(), position: i};});
+		    var headers = _(tmp).filter(function(h) { return h.header!=="";})
+		    _(headers).each(function(h){ h.shortName = _(config.userProps).findWhere({longName: h.header}).shortName;});
 		    
 
+		    // check that the heads are unique
 
+		    var sortedHeads = _(_(headers).pluck("header")).sortBy();
+		    var uniqueHeads = _.uniq(sortedHeads,true);
 
-		    // This is an array of the column numbers that the headers are in.  
-		    
-		    var headCols = _.map(headers, function (value,j)
-					 { return _.find(_.map($("select.colHeader"),
-							       function (val,i) {if (val.value==value) return i; else return -1;}),
-							 function (num) { return typeof num === 'number' && num % 1 == 0; })});
-		    
+		    if(! _.isEqual(sortedHeads,uniqueHeads)){
+		    	this.$(".error-pane-text").html("Each Column must have a unique Header.")
+		    	this.$(".error-pane").show("slow");
+		    	return false;
+		    }
+
+		    // check that "First Name", "Last Name" and "Login name" are among the chosen headers.
 
 		    var requiredHeaders = ["First Name","Last Name", "Login Name"];
-		    var containedHeaders = _(sortedHeads).intersection(requiredHeaders);
-		    if (!((containedHeaders.length === requiredHeaders.length) &&
-		    	(_(containedHeaders).difference(requiredHeaders).length === 0))) {
-		    	self.errorPane.addMessage({text: "There must be the following fields imported: " + requiredHeaders.join(", ")});
+		    var containedHeaders = _(sortedHeads).intersection(requiredHeaders).sort();
+		    if (! _.isEqual(requiredHeaders,containedHeaders)) {
+		    	this.$(".error-pane-text").html("There must be the following fields imported: " + requiredHeaders.join(", "))
+		    	this.$(".error-pane").show("slow");
 			    return;
 		    }
+		    
 
 		    // Determine the rows that have been selected.
 		    
 		    var rows = _.map($("input.selRow:checked"),function(val,i) {return parseInt(val.id.split("row")[1]);});
-		    _.each(rows, function(row){
-			var user = new User();
-			_.each(headers, function(obj){
-				for(var i = 0; i < config.userProps.length; i++)
-				{
-				    // set the appropriate user property given the element in the table. 
-				   if(obj.header==config.userProps[i].longName) {
-				    var props = '{"' +  config.userProps[i].shortName + '":"' +$.trim($("tr#row"+row+" td.column" + obj.position).html()) + '"}';
-				    user.set($.parseJSON(props));  
-				}
-			    }});
-			
-			self.users.add(user);
+		    _(rows).each(function(row){
+				var props = {};
+				_(headers).each(function(obj){
+					props[obj.shortName] = $.trim($("tr#row"+row+" td.column" + obj.position).html());
+			    });
+				var user = new User(props);
+				user.id = void 0;  // make sure that the new users will be added with a POST instead of a PUT
+				self.users.add(user);
 			
 		    });
 		    
@@ -174,7 +174,7 @@ define(['Backbone',
 				, self = this
 			 	, headers = this.$(".colHeader").map(function (i,col) { return $(col).val();})
 			 	, loginCol = _(headers).indexOf("Login Name")
-			 	, changedProperty = _(config.userProps).where({longName: headerName}).shortName
+			 	, changedProperty = _(config.userProps).findWhere({longName: headerName}).shortName
 			 	, colNumber = _(this.$(".colHeader option:selected").map(function(i,v) { return $(v).val()})).indexOf(headerName);
 			
 
@@ -183,10 +183,10 @@ define(['Backbone',
 		    	$("#inner-table tr#row").css("background","white");  // if Login Name is not a header turn off the color of the rows
 		    } else {
 				var impUsers = $(".column" + loginCol).map(function (i,cell) { 
-							return $.trim($(cell).html()).toLowerCase();});  // determine the proposed login names in lower case   
+							return $.trim($(cell).html());});  
 			
-				var users = this.users.map(function (user) {return user.get("user_id").toLowerCase();});
-				var duplicateUsers = _.intersection(impUsers,users);
+				var userIDs = this.users.pluck("user_id");
+				var duplicateUsers = _.intersection(impUsers,userIDs);
 			
 				// highlight where the duplicates users are and notify that there are duplicates.  
 
@@ -203,17 +203,14 @@ define(['Backbone',
 		     // Validate the user property in the changed Header
 		     
 			     
-		    $(".column" + colNumber).each(function(i,cell){
-			    if (i>0){ // skip the header row
+		    $("tbody td.column" + colNumber).each(function(i,cell){
 				var value = $(cell).html().trim(),
 				    errorMessage = self.model.preValidate(changedProperty,value);
 				if ((errorMessage !== "") && (errorMessage !== false)) {
-				    self.errorPane.addMessage({ text: "Error for the " + changedHeader + " with value " +  value + ":  " + errorMessage + "<br/>"});
+			    	self.$(".error-pane-text").html("Error for the " + headerName + " with value " +  value + ":  " + errorMessage)
+			    	self.$(".error-pane").show("slow");
 				    $(cell).css("background-color","rgba(255,0,0,0.5)");
-				
 				}
-			    }
-				
 			});
 		     
 		},

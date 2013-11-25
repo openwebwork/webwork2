@@ -633,7 +633,7 @@ sub output_JS{
 	# my $ce = $r->ce;
 
 	my $site_url = $self->r->ce->{webworkURLs}->{htdocs};
-	print qq!<script src="$site_url/js/apps/require-config.js"></script>!;
+	print qq!<script type="text/javascript" src="$site_url/js/apps/require-config.js"></script>!;
 	print qq!<script type="text/javascript" src="$site_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
 	print qq!<script type='text/javascript'>!;
     print qq! require.config = { 'HomeworkManager': {!;

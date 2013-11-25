@@ -37,7 +37,9 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
                      {shortName: "permission", longName: "Permission Level", regexp: "permission"}
                      ],
     
-        userTableHeaders : [
+                     // probably delete the next commented-out block
+
+ /*       userTableHeaders : [
             { name: "Select", datatype: "boolean", editable: true},
             { name: "Action", datatype: "string", editable: true,
                         values: {"action1":"Change Password",
@@ -81,7 +83,7 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
             {name: "open_date", label: "Open Date", datatype: "integer", editable: true},
             {name: "due_date", label: "Due Date", datatype: "integer", editable: true},
             {name: "answer_date", label: "Answer Date", datatype: "integer", editable: true}
-            ],
+            ], */
         permissions : [{value: -5, label: "guest"},{value: 0, label: "student"},{value: 2, label: "login proctor"}, 
                         {value: 3, label: "T.A."},{value: 10, label: "professor"}, {value: 20, label: "administrator"}],
 
@@ -89,7 +91,7 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
             wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,
             number: /^\d*(\.\d*)?$/
         }
-    }
+    } 
 
     config.msgTemplate= _.template($("#all-messages").html());
 
@@ -229,21 +231,6 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
             }
     });
 
-    function DeleteCellRenderer(config) {
-      this.init(config);
-    }
-
-    DeleteCellRenderer.prototype = new CellRenderer();
-    DeleteCellRenderer.prototype.render  = function(_cell,_value){
-              $(_cell).html("<button class='btn btn-small'><i class='icon-trash'></i></button>")
-                  .on("click", {obj: this, cell: _cell, value: _value}, this.deleteRow); };
-
-    DeleteCellRenderer.prototype.deleteRow = function(evt) {
-      var row =  evt.data.obj.editablegrid.getRowIndex($(evt.data.cell).parent().attr("id").split("_")[1]);
-      evt.data.obj.editablegrid.modelChanged.call(evt.data.obj.editablegrid,row,0,"","delete")
-
-                  };
-    config.deleteCellRenderer = new DeleteCellRenderer();
 
     return config;
 });

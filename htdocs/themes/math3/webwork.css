@@ -54,3 +54,5 @@ body {  /* needed for the navigation bars top and bottom*/
 border-top: solid 1px rgb(220, 220, 220);}
 
 #short-message {padding: 10px;}
+
+.ww-help {position: absolute; top: 70px; bottom: 70px; overflow: auto; z-index: 100}
