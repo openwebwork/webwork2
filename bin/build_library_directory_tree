@@ -39,7 +39,7 @@ my @dirArray = ();
 push(@dirArray,buildTree($libraryRoot));
 
 
-print "Creating the Directory Tree\n"
+print "Creating the Directory Tree\n";
 
 #$dbh->disconnect;
 

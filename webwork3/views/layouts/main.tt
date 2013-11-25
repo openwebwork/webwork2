@@ -2,37 +2,102 @@
 <html>
 <head>
 <title>WeBWorK</title>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap-2/docs/assets/css/bootstrap.css"/>
+<link rel='stylesheet' href='/webwork2_files/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap/dist/css/bootstrap.css">
 <link rel='stylesheet' href='/webwork2_files/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
-<link rel='stylesheet' type="text/css" href="/test/css/style.css">
-
+<link rel='stylesheet' type="text/css" href="/webwork3/css/style.css">
 </head>
 <body>
-<div class="navbar navbar-fixed-top">
-  <div class="navbar-inner">
-    <div class="container">
-        <div class="span2 btn-group dropdown">
-          <a href="#" class="dropdown-toggle btn" data-toggle="dropdown">
-            Menu
-            <b class="caret"></b>
-          </a>
-          <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-            <li class="nav-header">Main Menu</li>
-            <li>item 1</li>
-            <li>item 2</li>
-            <li>item 3</li>
-            <li>item 4</li>
-          </ul>
-        </div>
-        
-    
-    <a class="brand" href="#">[% pagename %]</a>
+  <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">[% pagename %]</a>
     </div>
-  </div>
-</div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Link</a></li>
+        <li>            
+          <button class='btn btn-default navbar-btn' href="#" id="msg-toggle"><i class="fa fa-comment-o fa-lg"></i></button>
+        </li>
+        <li>
+          <p class="navbar-text" id="short-message">
+          </p>
+        </li>                   
+
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="#">Link</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Action</a></li>
+            <li><a href="#">Another action</a></li>
+            <li><a href="#">Something else here</a></li>
+            <li class="divider"></li>
+            <li><a href="#">Separated link</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </nav>
 [% content %]
 <div id="footer">
 Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
 </div>
+
+<script type="text/template" id="login-template">
+<div class="message"> <%=message%></div>
+<form class="form-horizontal" role="form">
+  <div class="form-group">
+    <label for="inputEmail3" class="col-sm-2 control-label">Login Name:</label>
+    <div class="col-sm-10">
+      <input type="input" name="username" class="form-control login-name" id="inputEmail3" placeholder="Login">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="password" class="col-sm-2 control-label">Login Name:</label>
+    <div class="col-sm-10">
+      <input type="password" name="password" class="form-control login-password" id="password" placeholder="Password">
+    </div>
+  </div>
+</form>
+
+</script>
+
+<!-- This is where all messages to the user go -->
+
+<script type="text/template" id="all-messages">
+<%
+  var messages = {
+    set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
+    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
+      + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
+      + "reenter your username and password to continue. ";},    
+    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."}  
+  };
+  print(messages[type](typeof(opts)=="undefined"?{}:opts))
+  
+%>
+</script>
+
+<script type="text/template" id="message-pane-template">
+<div class='row'>
+    <div class='pull-right'><button type='button' class='close'>&times;</button></div>
+    <ul class='main-message-pane no-bullets'></ul>
+</div>
+
+</script>
+
+
+
 </body>
 </html>

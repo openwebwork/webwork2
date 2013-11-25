@@ -6,7 +6,7 @@ define(['module','Backbone', 'underscore','models/UserList','models/ProblemSetLi
     'views/AssignmentCalendarView','views/ProblemSetListView','SetListView','LibraryBrowser',
     'views/WebPage','config','views/WWSettingsView','views/HeaderView','ProblemSetDetailView', 'models/ProblemSet',
     'models/AssignmentDate','models/AssignmentDateList','ImportExportView',
-    'backbone-validation','jquery-ui','bootstrap'
+    'jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, Settings, AssignmentCalendarView, ProblemSetListView,
     SetListView,LibraryBrowser,WebPage,config,WWSettingsView,HeaderView,ProblemSetDetailView,
@@ -219,7 +219,7 @@ var HomeworkEditorView = WebPage.extend({
         this.problemSets.bind('validated:invalid', function(model, errors) {
             var uniqueErrors = _.unique(_.values(errors));
             _(uniqueErrors).each(function(error){
-                self.messagePane.addMessage({type: "error", text: error,
+                self.messagePane.addMessage({type: "danger", text: error,
                         short: config.msgTemplate({type:"set_error",opts:{setname: model.get("set_id")}})});
 
             }); 
@@ -398,14 +398,15 @@ var HomeworkEditorView = WebPage.extend({
 
 var SettingsView = Backbone.View.extend({
     
-    initialize: function () {
+    initialize: function (options) {
         var self = this;
         _.bindAll(this,'render');
 
         this.categories = config.settings.chain().pluck("attributes").pluck("category")
             .unique().difference("timezone").value();
         this.headerInfo = {template: "#settings-header",options: {categories: this.categories},
-            events: {"shown a[data-toggle='tab']": function(evt) { self.changeSettingTab(evt);} }};
+            events: {"shown.bs.tab a[data-toggle='tab']": function(evt) { self.changeSettingTab(evt);} }};
+        this.headerView = options.headerView;
      }, 
      render: function () {
         // get all of the categories except for timezone (include it somewhere?)
@@ -415,7 +416,7 @@ var SettingsView = Backbone.View.extend({
         // set up the general settings tab
 
         $("#setting-tab0").addClass("active");  // show the first settings pane.
-        options.headerView.$("a[href='#setting-tab0']").parent().addClass("active");
+        this.headerView.$("a[href='#setting-tab0']").parent().addClass("active");
 
         var settings = config.settings.where({category: this.categories[0]});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);

@@ -20,7 +20,7 @@ var require = {
         "file-saver":           "/webwork2_files/js/components/file-saver/FileSaver",
         "eventie":              "/webwork2_files/js/components/eventie",
         "eventEmitter":         "/webwork2_files/js/components/eventEmitter",
-        
+        "knowl":                "/webwork2_files/js/vendor/knowl",
         "views":                "/webwork2_files/js/lib/views",
         "models":               "/webwork2_files/js/lib/models",
         "apps":                 "/webwork2_files/js/apps",
@@ -36,7 +36,7 @@ var require = {
         'bootstrap':['jquery','jquery-ui'], // saying that bootstrap requires jquery-ui makes bootstrap (javascript) buttons work.
         'backbone-validation': ['Backbone'],
         'moment': {exports: 'moment'},
-        'config': {deps: ['moment','editablegrid'], exports: 'config'},
+        'config': {deps: ['moment','backbone-validation'], exports: 'config'},
         'stickit': ["Backbone","jquery"],
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],

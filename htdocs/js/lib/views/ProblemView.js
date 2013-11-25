@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','config','imagesloaded'
+define(['Backbone', 'underscore','config','imagesloaded','knowl'
     ], function(Backbone, _,config){
     //##The problem View
 
@@ -13,6 +13,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
         initialize:function (options) {
             var self = this;
             _.bindAll(this,"render","removeProblem");
+            this.libraryView = options.libraryView;
             
             // options.viewAttrs will determine which tools are shown on the problem
             this.allAttrs = {};
@@ -119,7 +120,7 @@ define(['Backbone', 'underscore','config','imagesloaded'
         },
         addProblem: function (evt){
             console.log("adding a problem.");
-            options.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
+            this.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
         },
         hideProblem: function(evt){
             console.log("hiding a problem ");

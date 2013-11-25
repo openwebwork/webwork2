@@ -18,21 +18,6 @@ our @EXPORT_OK = qw(checkPermissions authenticate setCourseEnvironment);
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
-
-# any ['get','put','post','del'] => '/**' => sub {
-	
-# 	debug "In uber route";
-
-# 	if (request->path eq '/login'){
-# 		setCourse();
-# 		pass;
-# 	}
-
-# 	authenticate();
-
-# 	pass;
-# };
-
 ## the following routes is matched for any URL starting with /courses. It is used to load the 
 #  CourseEnvironment
 #
@@ -60,16 +45,11 @@ sub setCourseEnvironment {
 
 	my $courseID = shift;
 
-	if (! defined(session->{course})) {
-		
-
-		if (defined($courseID)) {
-			session->{course} = $courseID;
-		} else {
-			send_error("The course has not been defined.  You may need to authenticate again",401);	
-		}
-
-	}	
+	if (defined($courseID)) {
+		session->{course} = $courseID;
+	} else {
+		send_error("The course has not been defined.  You may need to authenticate again",401);	
+	}
 
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
@@ -78,8 +58,9 @@ sub setCourseEnvironment {
 
 sub authenticate {
 
-	if(! vars->{db}){ send_error("The database object DB is not defined. " .
-			"  Make sure that you call setCourseEnvironment first.",404);}
+	if(! vars->{db}){ 
+		send_error("The database object DB is not defined.  Make sure that you call setCourseEnvironment first.",404);
+	}
 
 
 	## need to check that the session hasn't expired. 
