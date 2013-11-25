@@ -77,8 +77,6 @@ function(Backbone,MessageListView,ModalView,config){
 var LoginView = ModalView.extend({
     initialize: function (options) {
         _.bindAll(this,"login");
-        var LoginModel = Backbone.Model.extend({defaults: {user: "", password: ""}});
-        this.model = new LoginModel();
         var tempOptions = _.extend(options || {} , {template: $("#login-template").html(), 
                         templateOptions: {message: config.msgTemplate({type: "relogin"})},
                         buttons: {text: "Login", click: this.login}});
@@ -88,14 +86,11 @@ var LoginView = ModalView.extend({
         this.constructor.__super__.render.apply(this); 
         return this;
     },
-    bindings: {
-        ".login-password": "password",
-        ".login-name": "user"
-    },
     login: function () {
         console.log("logging in");
+        var loginData = {user: this.$(".login-name").val(), password: this.$(".login-password").val()};
         $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/login",
-                data: this.model.attributes,
+                data: loginData,
                 type: "POST",
                 success: this.loginOptions.success});
     }

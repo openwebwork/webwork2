@@ -69,7 +69,7 @@ post '/courses/:course_id/login' => sub {
 
 
 	} else {
-		return {loggin_in=>0};
+		return {logged_in=>0};
 	}
 };
 
