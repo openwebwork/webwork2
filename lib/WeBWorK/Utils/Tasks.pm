@@ -142,10 +142,10 @@ sub fake_problem {
 
 	$problem->status(0);
 	$problem->sub_status(0); 
-	$problem->attempted(0); 
+	$problem->attempted(2000);  # Large so hints won't be blocked
 	$problem->last_answer(""); 
-	$problem->num_correct(0); 
-	$problem->num_incorrect(0); 
+	$problem->num_correct(1000); 
+	$problem->num_incorrect(1000); 
 
 	#for my $key (keys(%{$problem})){
 	#	my $value = '####UNDEF###';
