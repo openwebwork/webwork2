@@ -150,7 +150,7 @@ $(function(){
     $('#mainform .btn').addClass('btn-small');
     $('#mainform .InfoPanel select').addClass('input-xxlarge');
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
-    $('#mainform select[name=local_sets]').addClass('input-small').removeClass('input-xxlarge');
+    $('#mainform select[name=local_sets]').addClass('input').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
 
     //Change tabber tabs to twitter tabs
