@@ -219,7 +219,7 @@ var HomeworkEditorView = WebPage.extend({
         this.problemSets.bind('validated:invalid', function(model, errors) {
             var uniqueErrors = _.unique(_.values(errors));
             _(uniqueErrors).each(function(error){
-                self.messagePane.addMessage({type: "error", text: error,
+                self.messagePane.addMessage({type: "danger", text: error,
                         short: config.msgTemplate({type:"set_error",opts:{setname: model.get("set_id")}})});
 
             }); 
