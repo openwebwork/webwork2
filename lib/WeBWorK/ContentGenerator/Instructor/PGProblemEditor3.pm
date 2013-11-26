@@ -1997,8 +1997,9 @@ sub save_as_handler {
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
+	    my $targetProblemNumber   =  WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
 	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
-			courseID => $courseName, setID => $setName, problemID => $problemNumber
+			courseID => $courseName, setID => $setName, problemID => $targetProblemNumber
 		);
 		$new_file_type = $file_type;
 	} else {
