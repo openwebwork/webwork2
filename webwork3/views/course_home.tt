@@ -1,5 +1,4 @@
-<div id="mainDiv">
-  <h3>Problems for [% course_id %]</h3>
+<div id="main">
 </div>
 
 
@@ -12,4 +11,9 @@
 
 <script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 <script data-main="/webwork2_files/js/apps-dev/FrontPage/FrontPage" src="/webwork2_files/js/components/requirejs/require.js">
+</script>
+
+
+<script type="text/template" id="loading-problems-template">
+<h3>Problems Loading... <i class="fa fa-spinner fa-spin fa-lg"></i>
 </script>

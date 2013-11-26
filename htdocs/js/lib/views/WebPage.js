@@ -86,7 +86,7 @@ var LoginView = ModalView.extend({
         this.constructor.__super__.render.apply(this); 
         return this;
     },
-    login: function () {
+    login: function (options) {
         console.log("logging in");
         var loginData = {user: this.$(".login-name").val(), password: this.$(".login-password").val()};
         $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/login",
