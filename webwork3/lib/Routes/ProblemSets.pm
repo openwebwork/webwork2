@@ -457,46 +457,6 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     return convertObjectToHash($userSet);
 };
 
-##
-#
-#  update the properties for set *set_id* for user  *user_id*  for course *course_id*
-#
-#  return:  UserSet properties
-##
-
-## I think this is superceded by code above:
-
-# put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-    
-#     checkPermissions(10,session->{user});
-
-#     my $userID = param('user_id');
-
-#     # check to make sure that the user is assigned to the course
-#     send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
-#             unless vars->{db}->getUser($userID);
-
-#     my $set = vars->{db}->getUserSet($userID,param('set_id'));
-
-#     debug $set;
-
-#     if ($set){
-#         for my $key (@user_set_props) {
-#             if (param($key)){
-#                 $set->{$key} = param($key);
-#             }
-#         }
-
-#         vars->{db}->putUserSet($set);
-
-#         return convertObjectToHash($set);
-#     } else {
-#         send_error("The user " . $userID . " is not assigned to set " . param('set_id') . " in course " 
-#                 . param('course_id'),404);
-#     }
-
-# };
-
 
 ###
 #  return all (user) sets for user *user_id* in course *course_id*
@@ -512,7 +472,7 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
     
     checkPermissions(10,session->{user});
 
-    my @userSetNames = vars->{db}->listUserSets(param('user'));
+    my @userSetNames = vars->{db}->listUserSets(param('user_id'));
     my @userSets = vars->{db}->getGlobalSets(@userSetNames);
     
     return \@userSetNames;
@@ -761,9 +721,6 @@ post '/utils/dates' => sub {
 
 get '/courses/:course_id/pgeditor' => sub {
 
-
-
-    setCourseEnvironment(params->{course_id});
     template 'simple-editor.tt', {course_id=> params->{course_id},theSetting => to_json(getCourseSettings),
         pagename=>"Simple Editor",user=>session->{user}};
 };

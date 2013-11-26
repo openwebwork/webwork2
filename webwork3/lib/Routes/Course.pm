@@ -9,10 +9,12 @@ package Routes::Course;
 use strict;
 use warnings;
 use Dancer ':syntax';
+use Dancer::Plugin::Ajax;
 use Utils::Convert qw/convertObjectToHash/;
-use Dancer::Plugin::Database;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
+# use Utils::CourseUtils qw/getCourseSettings/;
+# use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
@@ -49,30 +51,38 @@ get '/courses' => sub {
 
 get '/courses/:course_id' => sub {
 
-	my $ce2 = new WeBWorK::CourseEnvironment({
-	 	webwork_dir         => vars->{ce}->{webwork_dir},
-		courseName => params->{course_id},
-	});
+	# template 'course_home.tt', {course_id=>params->{course_id}};
+	if(request->is_ajax){
+			
 
-	my $coursePath = vars->{ce}->{webworkDirs}->{courses} . "/" . params->{course_id};
+		my $ce2 = new WeBWorK::CourseEnvironment({
+		 	webwork_dir         => vars->{ce}->{webwork_dir},
+			courseName => params->{course_id},
+		});
 
-	if (! -e $coursePath) {
-		return {};
+		my $coursePath = vars->{ce}->{webworkDirs}->{courses} . "/" . params->{course_id};
+
+		if (! -e $coursePath) {
+			return {};
+		}
+
+
+		my ($tables_ok,$dbStatus);
+	    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
+	    if (params->{checkCourseTables}){
+			($tables_ok,$dbStatus) = $CIchecker->checkCourseTables(params->{course_id});
+		}
+		
+		return {
+			coursePath => $coursePath,
+			tables_ok => $tables_ok,
+			dbStatus => $dbStatus
+
+		};
+	} else {
+	    template 'course_home.tt', {course_id=> params->{course_id},
+	        pagename=>"Course Home for " . params->{course_id},user=>session->{user}};
 	}
-
-
-	my ($tables_ok,$dbStatus);
-    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
-    if (params->{checkCourseTables}){
-		($tables_ok,$dbStatus) = $CIchecker->checkCourseTables(params->{course_id});
-	}
-	
-	return {
-		coursePath => $coursePath,
-		tables_ok => $tables_ok,
-		dbStatus => $dbStatus
-
-	};
 
 
 };

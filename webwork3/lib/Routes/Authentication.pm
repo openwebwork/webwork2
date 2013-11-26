@@ -18,28 +18,6 @@ our @EXPORT_OK = qw(checkPermissions authenticate setCourseEnvironment);
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
-# post '/login' => sub {
-
-# 	debug "testing authentication";
-
-# 	return {user=>params->{user},password=>params->{password}};
-
-# };
-
-# any ['get','put','post','del'] => '/**' => sub {
-	
-# 	debug "In uber route";
-
-# 	if (request->path eq '/login'){
-# 		setCourse();
-# 		pass;
-# 	}
-
-# 	authenticate();
-
-# 	pass;
-# };
-
 ## the following routes is matched for any URL starting with /courses. It is used to load the 
 #  CourseEnvironment
 #

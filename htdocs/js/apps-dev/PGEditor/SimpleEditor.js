@@ -116,11 +116,13 @@ var SimpleEditorView = WebPage.extend({
     },        
     saveFile: function(){
         var self = this;
-        this.buildScript();
+        if(!this.buildScript()){
+            return;
+        }
 
         var params = _.pick(this.model.attributes,"pgSource");
 
-        $.ajax({url: config.urlPrefix+"renderer/problems/0",
+        $.ajax({url: config.urlPrefix+"renderer/courses/" + config.courseSettings.course_id+"/problems/0",
             data: params,
             type: "POST",
             success: function(response){
@@ -142,7 +144,7 @@ var SimpleEditorView = WebPage.extend({
             var bindings = _.chain(this.bindings).keys()
                 .map(function(key) { return [self.bindings[key].observe,key];}).object().value();
 
-            _(_(errors).keys()).each(function(key){
+            _(_(errors||{}).keys()).each(function(key){
                 self.$(bindings[key]).closest("div").addClass("has-error");
             });
 
@@ -156,7 +158,7 @@ var SimpleEditorView = WebPage.extend({
 
             this.messagePane.addMessage({type: "danger", short: "The following are required."});
             
-            return;
+            return false;
         }
 
         var pgTemplate = _.template($("#pg-template").text());
@@ -169,6 +171,7 @@ var SimpleEditorView = WebPage.extend({
         this.model.set("pgSource",pgTemplate(fields));
         $("#problem-code").text(this.model.get("pgSource"));
       
+        return true;
     },
     handleErrors: function(model,errors){
         console.log(errors);

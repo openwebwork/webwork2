@@ -57,10 +57,9 @@ define(['Backbone', 'underscore','models/User','models/UserList','config','stick
 		    if (_.all(usersValid, _.identity)) { 
 		    	this.closeDialog();
 		    	this.collection.each(function(_user) {
-		    		_user.id = void 0; // make sure that the save is a POST 
-		    		_user.save();
-		    		self.courseUsers.add(_user);});
-		    }
+		    		self.courseUsers.add(_user);
+		    	});
+			}
 		},
 		addStudent: function (){ 
 			this.collection.add(new User());

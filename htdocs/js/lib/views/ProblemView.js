@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','config','imagesloaded'
+define(['Backbone', 'underscore','config','imagesloaded','knowl'
     ], function(Backbone, _,config){
     //##The problem View
 

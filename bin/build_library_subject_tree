@@ -76,7 +76,7 @@ for my $subj_name (@subject_names){
 
 	my @chapter_tree; # array to store the individual library tree for each chapter
 
-	print Dumper(\@chapter_names);
+	#print Dumper(\@chapter_names);
 
 	for my  $ch_name (@chapter_names){
 	
