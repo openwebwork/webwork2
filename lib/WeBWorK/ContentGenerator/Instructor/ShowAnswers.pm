@@ -327,7 +327,17 @@ sub body {
 	if ($renderAnswers) {
 	    print <<EOS;
 	    <script type="text/javascript">
-		MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "past-answer-table"]);
+		MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
+		    var AM = MathJax.InputJax.AsciiMath.AM;
+		    for (var i=0; i< AM.symbols.length; i++) {
+			if (AM.symbols[i].input == '**') {
+			    AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
+			}
+		    }
+						 });
+	    MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
+	    
+	    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "past-answer-table"]);
 	    </script>
 EOS
 	}
@@ -359,8 +369,11 @@ sub output_JS {
     my $ce = $r->ce;
 
     my $site_url = $ce->{webworkURLs}->{htdocs};
+    
     print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
     print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+
+    return "";
 }
 
 1;
