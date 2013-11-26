@@ -51,89 +51,90 @@ get '/courses/:course/users' => sub {
 ###
 
 
-any ['put','post'] => '/courses/:course_id/users/:user_id' => sub {
+post '/courses/:course_id/users/:user_id' => sub {
 
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
-	my $user; 
 	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
-
-	if (request->is_post()) {  # it's a new user
-		$user = vars->{db}->getUser(param('user_id'));
-		send_error("The user with login " . param('user_id') . " already exists",404) if $user;
-		$user = vars->{db}->newUser();
-	} else { #existing user, update the user
-		$user = vars->{db}->getUser(param('user_id'));	
-		send_error("The user with login " . param('user_id') . " does not exist",404) unless $user;
-	}
+	my $user = vars->{db}->getUser(param('user_id'));
+	send_error("The user with login " . param('user_id') . " already exists",404) if $user;
+	$user = vars->{db}->newUser();
 
 	# update the standard user properties
 	
 	for my $key (@user_props) {
         $user->{$key} = params->{$key} if (defined(params->{$key}));
     }
+    $user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing. 
 	
 	# password record
 
-	my $password = vars->{db}->getPassword(params->{user_id});
-	if(! defined($password)){ # new user
-		$password = vars->{db}->newPassword(params->{user_id});
-		my $cryptedpassword = "";
-		if (defined(params->{password})) {
-			$cryptedpassword = cryptPassword(params->{password});
-		}
-		elsif (defined(params->{student_id})) {
-			$cryptedpassword = cryptPassword(params->{student_id});
-		}
-		$password->password($cryptedpassword);
+	my $password = vars->{db}->newPassword();
+	$password->{user_id}=params->{user_id};
+	my $cryptedpassword = "";
+	if (defined(params->{password})) {
+		$cryptedpassword = cryptPassword(params->{password});
+	}
+	elsif (defined(params->{student_id})) {
+		$cryptedpassword = cryptPassword(params->{student_id});
+	}
+	$password->password($cryptedpassword);
 
-	} elsif (defined(params->{new_password})){ #update existing user
-    	$password->{password} = cryptPassword(params->{new_password});
-    	vars->{db}->putPassword($password);
-    }
+	
 	
 	# permission record
-	my $permission = vars->{db}->getPermissionLevel(params->{user_id});
-	if(defined($permission)){ # existing user
-		if(params->{permission} != $permission->{permission}){
-    		$permission->{permission} = params->{permission};
-    		vars->{db}->putPermissionLevel($permission);
-    	}
-	} else {
-		$permission = vars->{ce}->newPermissionLevel(params->{user_id},params->{permission});
-	}
-
-	my @messages = ();
-	eval{ 
-		if(request->is_post){
-			vars->{db}->addUser($user); 
-		} else {
-			vars->{db}->putUser($user);
-		}
-	};
-
-	if ($@) {
-		push(@messages,"Add user for " . param('user_id') . " failed!");
-	}
 	
-	eval { vars->{db}->addPassword($password); };
-	if ($@) {
-		push(@messages,"Add password for " . param('user_id') . " failed!");
-	}
-	
-	eval { vars->{db}->addPermissionLevel($permission); };
-	if ($@) {
-		push(@messages,"Add permission for " . param('user_id') . " failed!");
-	}
+	my $permission = vars->{db}->newPermissionLevel();
+	$permission->{user_id} = params->{user_id};
+	$permission->{permission} = params->{permission};	
 
-	if (scalar(@messages)>0) {
-		send_error("Attempt to add user failed.  MESSAGE: " . join(", ",@messages), 400);
-	} else {
-		return convertObjectToHash($user);
-	}
+	debug $permission;
+
+	vars->{db}->addUser($user);
+	vars->{db}->addPassword($password);
+	vars->{db}->addPermissionLevel($permission);
+
+	return convertObjectToHash($user);
+	
 };
 
+##
+#
+#  update an existing user
+#
+##
 
+put '/courses/:course_id/users/:user_id' => sub { 
+
+	my $user = vars->{db}->getUser(param('user_id'));	
+	send_error("The user with login " . param('user_id') . " does not exist",404) unless $user;
+
+	# update the standard user properties
+	
+	for my $key (@user_props) {
+        $user->{$key} = params->{$key} if (defined(params->{$key}));
+    }
+	vars->{db}->putUser($user);
+	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing. 
+
+    # update the password
+
+    my $password;
+    if (defined(params->{new_password})){ #update existing user
+    	my $password->{password} = cryptPassword(params->{new_password});
+    	vars->{db}->putPassword($password);
+    }
+
+    my $permission = vars->{db}->getPermissionLevel(params->{user_id});
+	
+	if(params->{permission} != $permission->{permission}){
+		$permission->{permission} = params->{permission};
+		vars->{db}->putPermissionLevel($permission);
+	}
+
+	return convertObjectToHash($user);
+
+};
 ###
 #
 #  create a new user user_id in course *course_id*
@@ -146,8 +147,6 @@ del '/courses/:course_id/users/:user_id' => sub {
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 	
 	# check to see if the user exists
-
-	debug Dumper(vars->{db}->listUsers);
 
 	my $user = vars->{db}->getUser(param('user_id')); # checked
 	send_error("Record for visible user " . param('user_id') . ' not found.',404) unless $user;

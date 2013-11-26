@@ -100,7 +100,10 @@ var ClasslistManager = WebPage.extend({
 
     },
     changeUser: function(_user){
-    	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
+    	if((_user.changingAttributes && typeof(_user.changingAttributes.user_added)==="undefined") || 
+    		(typeof(_user.changingAttributes)==="undefined")){
+	    	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
+    	}
     	if(_.keys(_user.changed)[0]==="action"){
     		return; 
     	}
@@ -112,6 +115,7 @@ var ClasslistManager = WebPage.extend({
 	    		self.messagePane.addMessage({type: "success",
             		short: config.msgTemplate({type: "user_removed", opts:{username:_user.get("user_id")}}),
             		text: config.msgTemplate({type: "user_removed_details", opts: {username: _user.get("user_id")}})});
+	    		self.render();
     	}});
     },
     syncUserMessage: function(_user){
