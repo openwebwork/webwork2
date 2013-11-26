@@ -12,6 +12,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
     	initialize: function (options){
             _.bindAll(this,"showResults","showProblems","buildMenu");
     		this.constructor.__super__.initialize.apply(this,[options]);
+            this.libBrowserType = options.libBrowserType;
     	},
         events: function(){
             return _.extend({},this.constructor.__super__.events,{
@@ -34,7 +35,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
                 this.buildMenu();
             } else {
                 this.problemList = new ProblemList();
-                this.problemList.type = options.libBrowserType;
+                this.problemList.type = this.libBrowserType;
                 this.problemList.fetch({success: this.buildMenu});
             }
             return this;
@@ -56,7 +57,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
                     localProblems.add(new Problem(prob.attributes),{silent: true});
                 }
             });
-            this.libraryProblemsView.set({problems: localProblems, type:options.libBrowserType});
+            this.libraryProblemsView.set({problems: localProblems, type:this.libBrowserType});
             this.libraryProblemsView.updatePaginator();
             this.libraryProblemsView.gotoPage(0);
 

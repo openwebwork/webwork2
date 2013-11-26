@@ -15,7 +15,7 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
         validation: { user_id: {pattern: "loginname"},
                         email_address: {pattern: "email", required: false}
                     }, 
-        idAttribute: "user_id",
+        idAttribute: "_id",
         initialize: function(){
             //this.on('change',this.update);
             //this.on('change',function() {console.log(this.attributes)});

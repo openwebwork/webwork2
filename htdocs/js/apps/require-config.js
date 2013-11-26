@@ -20,11 +20,11 @@ var require = {
         "file-saver":           "/webwork2_files/js/components/file-saver/FileSaver",
         "eventie":              "/webwork2_files/js/components/eventie",
         "eventEmitter":         "/webwork2_files/js/components/eventEmitter",
-        
+        "knowl":                "/webwork2_files/js/vendor/knowl",
         "views":                "/webwork2_files/js/lib/views",
         "models":               "/webwork2_files/js/lib/models",
         "apps":                 "/webwork2_files/js/apps",
-        "config":               "/webwork2_files/js/apps/config",
+        "config":               "/webwork2_files/js/apps/config"
     },
     //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 10,
@@ -46,5 +46,6 @@ var require = {
         //'eventEmitter': {exports: 'EventEmitter'},
         //'jquery-tablesorter': ['jquery'],
         'imagesloaded': ['jquery'],
+        'knowl': ['jquery']
     }
 };

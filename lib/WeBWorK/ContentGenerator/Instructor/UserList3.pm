@@ -350,6 +350,7 @@ sub getAllUsers {
 		my $Key = $db->getKey($u->{'user_id'});
 		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
 		
+		$u->{_id} = $u->{user_id};
 
 		# convert the user $u to a hash
 		my $s = {};
