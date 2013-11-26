@@ -24,7 +24,7 @@ var require = {
         "views":                "/webwork2_files/js/lib/views",
         "models":               "/webwork2_files/js/lib/models",
         "apps":                 "/webwork2_files/js/apps",
-        "config":               "/webwork2_files/js/apps/config",
+        "config":               "/webwork2_files/js/apps/config"
     },
     //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 10,
@@ -46,5 +46,6 @@ var require = {
         //'eventEmitter': {exports: 'EventEmitter'},
         //'jquery-tablesorter': ['jquery'],
         'imagesloaded': ['jquery'],
+        'knowl': ['jquery']
     }
 };

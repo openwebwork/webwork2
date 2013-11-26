@@ -1,4 +1,4 @@
-require(['module','Backbone', 'underscore','models/User', 'models/ProblemSetList', 'models/Problem', 'views/WebPage',
+define(['module','Backbone', 'underscore','models/User', 'models/ProblemSetList', 'models/Problem', 'views/WebPage',
     'views/CalendarView','views/ProblemSetListView','config',     'bootstrap','backbone-validation'], 
 function(module,Backbone, _, User, ProblemSetList, Problem, WebPage, CalendarView, ProblemSetListView, config){
 
