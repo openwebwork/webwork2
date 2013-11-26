@@ -369,6 +369,8 @@ sub addmessage {
     # by default. 
 
 	my ($self, $message) = @_;
+	return unless defined($message);
+
 	my $scrubber = HTML::Scrubber->new(
 	    default => 1,
 	    script => 0,
@@ -380,7 +382,7 @@ sub addmessage {
 		'*' => 1,
 	    }
 	    );
-	
+
 	$message = $scrubber->scrub($message);
 	$self->{status_message} .= $message;
 }

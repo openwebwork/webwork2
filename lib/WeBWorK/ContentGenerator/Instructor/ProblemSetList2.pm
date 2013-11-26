@@ -729,24 +729,30 @@ sub filter_handler {
 		$result = $r->maketext("showing selected sets");
 		$self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
 	} elsif ($scope eq "match_ids") {
+                $result = $r->maketext("showing matching sets");
 		#my @setIDs = split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0];
 		my @setIDs = split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0];
 		$self->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "match_open_date") {
+                $result = $r->maketext("showing matching sets");
 		my $open_date = $actionParams->{"action.filter.open_date"}->[0];
 		$self->{visibleSetIDs} = $self->{open_dates}->{$open_date}; # an arrayref
 	} elsif ($scope eq "match_due_date") {
+                $result = $r->maketext("showing matching sets");
 		my $due_date = $actionParams->{"action.filter.due_date"}->[0];
 		$self->{visibleSetIDs} = $self->{due_date}->{$due_date}; # an arrayref
 	} elsif ($scope eq "match_answer_date") {
+                $result = $r->maketext("showing matching sets");
 		my $answer_date = $actionParams->{"action.filter.answer_date"}->[0];
 		$self->{visibleSetIDs} = $self->{answer_dates}->{$answer_date}; # an arrayref
 	} elsif ($scope eq "visible") {
+                $result = $r->maketext("showing visible sets");
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
 		my @visibleSetIDs = map { $_->visible ? $_->set_id : ""} @setRecords;		
 		$self->{visibleSetIDs} = \@visibleSetIDs;
 	} elsif ($scope eq "unvisible") {
+                $result = $r->maketext("showing hidden sets");
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
 		my @unvisibleSetIDs = map { (not $_->visible) ? $_->set_id : ""} @setRecords;

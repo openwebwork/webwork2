@@ -150,7 +150,7 @@ $(function(){
     $('#mainform .btn').addClass('btn-small');
     $('#mainform .InfoPanel select').addClass('input-xxlarge');
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
-    $('#mainform select[name=local_sets]').addClass('input-small').removeClass('input-xxlarge');
+    $('#mainform select[name=local_sets]').addClass('input').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
 
     //Change tabber tabs to twitter tabs
@@ -170,16 +170,12 @@ $(function(){
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
 
-    addOnLoadEvent(function () {
-	
-	$('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
-	
-    });
-})
-
-addOnLoadEvent(function () {
-
-    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
-
-});
+    // the datepicker uses addOnLoadEvent, so if this function isn't defined,
+    // we dont have to worry about the datepicker.
+    if (typeof(addOnLoadEvent) === 'function') {
+	addOnLoadEvent( function () {
+	    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
+	});
+    }
+});    
 
