@@ -58,7 +58,7 @@ any ['put','post'] => '/courses/:course_id/users/:user_id' => sub {
 	my $user; 
 	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
 
-	if (request->is_post() {  # it's a new user
+	if (request->is_post()) {  # it's a new user
 		$user = vars->{db}->getUser(param('user_id'));
 		send_error("The user with login " . param('user_id') . " already exists",404) if $user;
 		$user = vars->{db}->newUser();
@@ -80,10 +80,10 @@ any ['put','post'] => '/courses/:course_id/users/:user_id' => sub {
 		$password = vars->{db}->newPassword(params->{user_id});
 		my $cryptedpassword = "";
 		if (defined(params->{password})) {
-			$cryptedpassword = cryptPassword(param('password'));
+			$cryptedpassword = cryptPassword(params->{password});
 		}
-		elsif (defined($new_student->{student_id})) {
-			$cryptedpassword = cryptPassword($new_student->{student_id});
+		elsif (defined(params->{student_id})) {
+			$cryptedpassword = cryptPassword(params->{student_id});
 		}
 		$password->password($cryptedpassword);
 
