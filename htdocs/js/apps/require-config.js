@@ -36,7 +36,7 @@ var require = {
         'bootstrap':['jquery','jquery-ui'], // saying that bootstrap requires jquery-ui makes bootstrap (javascript) buttons work.
         'backbone-validation': ['Backbone'],
         'moment': {exports: 'moment'},
-        'config': {deps: ['moment','editablegrid'], exports: 'config'},
+        'config': {deps: ['moment','backbone-validation'], exports: 'config'},
         'stickit': ["Backbone","jquery"],
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],

@@ -6,12 +6,11 @@ define(['Backbone', 'underscore','config'],
 function(Backbone, _,config){
     var WWSettingsView = Backbone.View.extend({
 
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,'render');
             this.settings = options.settings;
             _(this.settings).each(function(setting){
                 setting.on("change", function (model) {
-                    console.log("saving the setting");
                     model.save();
                 });
             });
@@ -62,8 +61,12 @@ function(Backbone, _,config){
 
     var SettingView = Backbone.View.extend({
         tagName: "tr",
+        initialize: function(options){
+            this.templateOptions = _.pick(options,"prop_html");
+            _.extend(this.bindings,options.bindings);
+        },
         render: function () {
-            this.$el.html(_.template($("#row-setting-template").html(),options));
+            this.$el.html(_.template($("#row-setting-template").html(),this.templateOptions));
             this.stickit();
             return this;
         },
@@ -86,17 +89,21 @@ function(Backbone, _,config){
     // send the select options in the parameter theOptions
 
     var SelectSettingView = SettingView.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,'render');
-            _.extend(this.bindings,
-                { ".select-list" : {observe: "value", selectOptions: { collection: "options.theOptions"}}});
+            this.theOptions = options.theOptions;
+            var theBindings = { ".select-list" : {observe: "value", selectOptions: { collection: "this.theOptions"}}};
+            options.bindings = options.bindings? _.extend(options.bindings,theBindings) : theBindings;
+            this.constructor.__super__.initialize.apply(this,[options]);
         }
     });
 
     var TextSettingView = SettingView.extend({
-        initialize: function () {
+        initialize: function (options) {
             _.bindAll(this,'render');
-            _.extend(this.bindings,{ ".property": {observe: "value", events: ['blur']}});
+            var theBindings = { ".property": {observe: "value", events: ['blur']}};
+            options.bindings = options.bindings? _.extend(options.bindings,theBindings) : theBindings;
+            this.constructor.__super__.initialize.apply(this,[options]);
         },
         events: {"keyup": "checkForEnter"},
         checkForEnter: function(evt){

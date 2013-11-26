@@ -3,42 +3,38 @@
   * 
   */
 
-define(['Backbone', 'underscore','config'], function(Backbone, _,config){
+define(['Backbone', 'underscore','models/DBFields'], function(Backbone, _,DBFields){
     var PGProblem = Backbone.Model.extend({
     	defaults:  { 
-    		metadata: [], 
+
     		macros: [],
     		preamble: "",
-    		problem_statement: "",
-    		answer_section: "",
-    		hint_section: "",
-    		solution_section: "",
-    		path: ""
+    		statement: void 0,
+            description: "",
+    		answer: "",
+    		hint: "",
+    		solution: "",
+    		path: "",
+            date: "",
+            problem_author: "",
+            institution: "",
+            textbook_title: "",
+            textbook_author: "",
+            textbook_edition: "",
+            textbook_section: "",
+            textbook_problem_number: "",
+            db_fields: "",
+            keywords: [],
+            answer_type: "",
 		},
-		initialize: function (){
-            _.bindAll(this,"save");
-		},
-		parse: function(str){
+        validation: {
+            statement: { required: true},
+            answer_type: {required: true}
+        },
+        initialize: function (){
+            db_field = new DBFields();
+        }
 
-		},
-		fetch: function(){
-
-		},
-		save: function(prob){
-			var self = this;
-            var requestObject ={xml_command: "saveProblem"};
-
-            _.defaults(requestObject, config.requestObject,this.attributes, {pgCode: prob});
-
-            $.post(config.webserviceURL, requestObject, function (data) {
-                var response = $.parseJSON(data);
-                self.set("path",response.result_data.path);
-            	console.log("Saving the file at path:" + self.get("path"));
-                self.trigger("saveSuccess");
-            });
-    
-
-		}
     		
     });
 

@@ -1,0 +1,575 @@
+<div id="mainDiv">
+  <h3>Simple PG Editor and Problem Viewer</h3>
+
+  <ul class="nav nav-tabs" id="simple-editor-tabs">
+    <li class="active"><a href="#editor-tab" data-toggle="tab">Problem Editor</a></li>
+    <li><a href="#code-tab" data-toggle="tab">Problem Code</a></li>
+    <li><a href="#viewer-tab" data-toggle="tab">Problem Viewer</a></li>
+    <li><a href="#settings-tab" data-toggle="tab">Editor Settings</a></li>
+  </ul>
+    
+  <div class="tab-content">
+    <div class="tab-pane active" id="editor-tab">
+    	<div class="containter">
+	      <div class="row">
+        	<div class="col-md-4">
+           	<div class="form-group">
+           		<label class="control-label">Problem Statement: 
+           		<textarea class="form-control problem-statement" rows="5" cols="50"></textarea></label>
+            </div>
+            <div class="form-group">
+              <label class="control-label">Problem Description
+              <textarea class="form-control problem-description" cols="50" rows="5"></textarea></label>
+            </div>
+           	<div class="form-group">
+               <label class="control-label">Problem Solution
+               <textarea class="form-control problem-solution" cols="50" rows="5"></textarea></label>
+            </div>  
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <div class="controls"  id="library-subjects"></div>
+            </div>
+            <div class="form-group">
+             	<select class="answer-type"></select> 
+          	</div>
+            <div class="form-group">
+              <div class="controls" id="answerArea"></div>
+            </div>  
+           </div>
+          <div class="col-md-4">
+          	<div>
+          		<div class="control-group">Keywords</div>
+							<div class="control-group">
+								<div class="controls">
+									<input type="text" class="input keywords" placeholder="Keywords">
+								</div>
+							</div>          		
+          	</div>
+
+           <div id="author-info-container">
+           	<div class="control-group">Author Information</div>
+				    <div class="control-group">
+				      <div class="controls">
+				        <input type="text" class="input problem-author" placeholder="Problem Author">
+				      </div>
+				    </div>  
+
+					    <div class="control-group">
+					      <div class="controls">
+					         <input type="text" class="input institution" placeholder="Author Institution">
+					      </div>
+					   </div>  
+           </div>
+           <div id="textbook-info-container">
+           	<div class="control-group">Textbook Information:</div>
+      				<div class="controls">
+				        <input type="text" class="input text-title" placeholder="Text Title">
+      				</div>
+   					</div>  
+   					<div class="control-group">
+      				<div class="controls">
+         				<input type="text" class="input text-edition" placeholder="Text Edition">
+      				</div>
+   					</div>  
+					  <div class="control-group">
+					    <div class="controls">
+					      <input type="text" class="input text-author" id="TextAuthor1-input" placeholder="Text Author">
+					    </div>
+					  </div>  
+					  <div class="control-group">
+					    <div class="controls">
+					      <input type="text" class="input text-section" placeholder="Text Section">
+					    </div>
+					  </div>  
+					  <div class="control-group">
+					    <div class="controls">
+					      <input type="text" class="input text-problem-number" placeholder="Text Problem Number">
+					    </div>
+					  </div>
+           	<div class="form-group">
+              <div class="btn-group">
+                <button id="build-script" class="btn btn-default">Build Script</button>
+                <button id="testSave" class="btn btn-default">Save the File</button>
+               </div>
+            </div>
+					</div>
+				</div>
+      </div>
+    </div>
+    <div class="tab-pane" id="viewer-tab"><p>Here&apos;s where the problem will appear.</p>
+       <ul class='problemList no-bullets'>
+       </ul>
+    </div>
+    <div class="tab-pane" id="code-tab"><h4>Code for the Problem</h4>
+       <pre id="problem-code"></pre>
+    </div> 
+    <div class="tab-pane" id="settings-tab">
+       <h4>Settings for the Editor</h4>
+    </div>
+   </div>
+</div>
+
+<script src="/webwork2_files/js/apps/require-config.js"></script>
+
+<script type='text/javascript'> 
+	require.config = { 'SimpleEditor': {course_id: "[% course_id %]", settings: [% theSetting %], user: "[%user%]" }};
+</script>
+
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script data-main="/webwork2_files/js/apps-dev/PGEditor/SimpleEditor" src="/webwork2_files/js/components/requirejs/require.js">
+</script>
+
+
+
+<script type="text/template" id="help-text">
+<h3>Help for the Simple PG Editor</h3>
+   <p> Please add some help text. 
+</p>
+    
+</script>
+
+
+<script type="text/template" id="row-setting-template">
+<td><span class="doc"></span>
+<button class='btn btn-sm btn-default help-button' style='margin-left: 25px'>
+  <i class='fa fa-question'></i></button>
+  <div class="help-hidden alert alert-info">
+  <button class="close">&times;</button>
+  <span class="doc2"></span></div>
+
+  </td>
+  <td class="col2"><%=prop_html%></td>
+</script>
+
+
+<script type="text/template" id="library-select-template">
+<div class="form-horizontal library-level-0">
+	<div class="col-md-3"><p class='form-control-static'>Subject:</p></div>
+		<div class="col-md-8">
+		<select class="form-control"></select>
+		</div>
+	</div>
+
+	<div class="form-horizontal library-level-1 hidden">
+		<div class="col-md-3"><p class='form-control-static'>Chapter:</p></div>
+		<div class="col-md-8">
+			<select class="form-control"></select>
+		</div>
+	</div>
+
+	<div class="form-horizontal library-level-2 hidden">
+		<div class="col-md-3"><p class='form-control-static'>Section:</p></div>
+		<div class="col-md-8">
+			<select class="form-control"></select>
+		</div>
+	</div>
+</div>
+</script>
+
+
+
+
+<script type="text/template" id="pg-template">
+##DESCRIPTION
+##KEYWORDS(<%print(keywords.map(function(kw){return "'" + kw + "'"}).join(",")) %>)
+##  <%=description%>
+##ENDDESCRIPTION
+
+## Created with simple-pg
+
+## DBsubject('<%=subject%>')
+## DBchapter('<%=chapter%>')
+## DBsection('<%=section%>')
+## Date('<%=date%>')
+## Author('<%=problem_author%>')
+## Institution('<%=institution%>')
+## TitleText1('<%=textbook_title%>')
+## EditionText1('<%=textbook_edition%>')
+## AuthorText1('<%=textbook_author%>')
+## Section1('<%=textbook_section%>')
+## Problem1('<%=textbook_problem_number%>')
+
+DOCUMENT();        # This should be the first executable line in the problem.
+
+loadMacros(
+   "PGstandard.pl",     # Standard macros for PG language
+   "contextInequalities.pl", 
+   "MathObjects.pl", #automatically loads MathObjects.pl
+   "PGchoicemacros.pl",
+   "parserNumberWithUnits.pl",
+   "parserFormulaWithUnits.pl",
+   "AnswerFormatHelp.pl",        # provides help links to students
+);
+
+
+TEXT(beginproblem());
+$showPartialCorrectAnswers = 1;
+
+##############################################################
+#
+#  Setup
+#
+#
+
+<%=setup_section%>
+
+
+##############################################################
+#
+#  Text 
+#
+#
+
+
+<%=statement_section%>
+##############################################################
+#
+# Answers
+#
+#
+
+
+<%=answer_section%>
+
+Context()->texStrings;
+SOLUTION(EV3(<<'END_SOLUTION'));
+$PAR SOLUTION $PAR
+<%=solution%>
+
+END_SOLUTION
+Context()->normalStrings;
+
+
+COMMENT('MathObject version');
+ENDDOCUMENT();
+#############################################################
+
+</script>
+<script id="empty-template" type="text/template">
+</script>
+
+<!--- The Number Option -->
+
+<script id="number-option-template" type="text/template">
+   <div class="control-group">
+      <div class="controls">
+        <label class="control-label">Answer:          
+         <input class="answer form-control" type="text" placeholder="Numerical Answer"></label>
+      </div>
+   </div>
+   <div class="control-group">
+      <div class="controls">
+      <label class="checkbox-inline">
+         <input class="answer-option require-units" type="checkbox"> Require Units</label>
+      </div>
+   </div>
+</script>
+<script id="number-option-pg-setup" type="text/template">
+      Context("Numeric");
+
+      $answer = <% require_units ? print('NumberWithUnits("' + answer + '");') : print ('Compute("' + answer +'");') %>
+</script>
+<script id="number-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=statement%>$PAR
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="number-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
+
+<!--- The String Option -->
+
+
+<script id="string-option-template" type="text/template">
+         <div class="control-group">
+      <div class="controls">          
+         <input class="answer" type="text" placeholder="Answer as a String">
+      </div>
+   </div>
+</script>
+
+<script id="string-option-pg-setup" type="text/template">
+      Context("Numeric");
+      Context()->strings->add("<%=answer%>"=>{});
+
+      $answer = Compute("<%=answer%>");
+
+      
+</script>
+<script id="string-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=statement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}\
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="string-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
+
+<!--- The Formula Option -->
+
+
+
+<script id="formula-option-template" type="text/template">
+   <div class="control-group">
+      <div class="controls">          
+         <input class="answer" type="text" placeholder="Formula">
+      </div>
+   </div>
+   <div class="control-group">
+      <div class="controls">          
+         <input class="variables" type="text" placeholder="Variables">
+      </div>
+   </div>
+   <div class="control-group">
+      <div class="controls">
+      <label class="checkbox">
+         <input class="require-units" type="checkbox"> Require Units</label>
+      </div>
+   </div>
+
+</script>
+
+
+
+<script id="formula-option-pg-setup" type="text/template">
+      Context("Numeric");
+      Context()->variables->are(<%=variables%>);
+
+      $answer = <% require_units ? print('FormulaWithUnits("' + answer + '");') : print ('Compute("' + answer +'");') %>
+</script>
+
+
+<script id="formula-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=statement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp("formulas")\}\
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="formula-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
+   
+<!-- The interval/inequality option -->
+
+<script id="interval-option-template" type="text/template">
+   <div class="control-group">
+      <div class="controls">          
+         <input class="answer" type="text" placeholder="Answer">
+      </div>
+   </div>
+   <div class="control-group">
+      <div class="controls">
+      <label class="checkbox">
+         <input class="allow-interval-notation"  type="checkbox"> Allow interval notation</label>
+      </div>
+   </div>
+   <div class="control-group">
+      <div class="controls">
+      <label class="checkbox">
+         <input class="allow-inequality-notation" type="checkbox"> Allow inequality notation</label>
+      </div>
+   </div>
+</script>
+
+<script id="interval-option-pg-setup" type="text/template">
+      <% if (allow_interval && !allow_inequality) { print('Context("Interval");')
+      } else if (!allow_interval && allow_inequality) { print('Context("Inequalities-Only");')
+      } else {print('Context("Inequalities");')} %>
+
+      $answer = Compute("<%=answer%>");
+</script>
+
+
+<script id="interval-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=statement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp(<% (allow_interval && !allow_inequality) ? print('"interval"') : print('"inequalities"')%>)\}\
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="interval-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
+<!-- The comma-separated list of values option -->
+
+<script id="list-option-template" type="text/template">
+   <div class="control-group">
+      <div class="controls">          
+         <input class="answer" type="text" placeholder="Answer">
+      </div>
+   </div>
+</script>
+
+<script id="list-option-pg-setup" type="text/template">
+      Context("Numeric");
+
+      $answer = List("<%=answer%>");
+</script>
+
+
+<script id="list-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   <%=statement%>
+   Answer:\{ans_rule(55)\} \{AnswerFormatHelp("numbers")\}\
+
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="list-option-pg-answer" type="text/template">
+   ANS($answer->cmp);
+</script>
+
+<!-- The multiple choice option -->
+
+<script id="multiple-choice-option-template" type="text/template">
+<div class="control-group">
+      <div class="controls">          
+         <input class="answer" type="text" placeholder="Answer">
+      </div>
+   </div>
+   <div class="control-group">
+      <div class="controls">          
+         <input class="extra-choice" type="text" placeholder="Extra Multiple Choice">
+      </div>
+   </div>
+   <div class="control-group">
+      <div class="controls">          
+         <input class="last-choice" type="text" placeholder="Last Choice">
+      </div>
+   </div>   
+   <div class="control-group">
+      <div class="controls">
+      <label class="checkbox">
+         <input class="use-last-choice" type="checkbox"> Use last choice option</label>
+      </div>
+   </div>
+
+</script>
+
+
+<script id="multiple-choice-option-pg-setup" type="text/template">
+      $mc = new_multiple_choice();
+      $mc->qa("<%=statement%>","<%=answer%>");
+      $mc->extra("<%=extra_choice%>");
+      <% if(use_last_choice) {print('$mc->makeLast("'+ last_choice +'"); ')} %>
+</script>
+         
+<script id="multiple-choice-option-pg-text" type="text/template">
+   Context()->texStrings;
+   BEGIN_TEXT
+   \{$mc->print_q()\}
+   $BR
+   \{$mc->print_a()\}
+   END_TEXT
+   Context()->normalStrings;
+</script>
+
+<script id="multiple-choice-option-pg-answer" type="text/template">
+   ANS(radio_cmp($mc->correct_ans()));
+</script>
+
+<!-- Other information -->
+
+
+<script type="text/template" id="library-tree-template">
+<span class='library-tree-left'>
+  <span class="throbber">Loading the Library...<i class="fa fa-spinner fa-spin"></i></span>
+</script>
+
+
+<script type="text/template" id="problem-template">
+<div class="col-md-4 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
+<div class="handle row-fluid">
+<%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-small" href="#"><i class="icon-resize-vertical icon-large"></i></a></div><%}%>
+<%if(draggable){%>
+  <div class="col-md-1"> <a class="drag-handle btn btn-small" href="#"><i class="icon-move"></i></a></div>
+<%}%>
+<%if(showPoints){%>
+<div class="col-md-3 form-">
+    <label class="control-label">Value: 
+      <input type="text" class="prob-value input-small"></label>
+  </div>
+<%}%>
+<div class="col-md-4 btn-group">
+<%if(showAddTool){%><a class="btn btn-small add-problem" href="#"><i class="icon-plus-sign"></i></a><%}%>
+<%if(showEditTool){%><a class="btn btn-small" target="WW_editor" href="<%=editUrl%>"><i class="icon-pencil"></i></a><%}%>
+<%if(showRefreshTool){%><a href="#"  class="btn btn-small refresh-problem"><i class="icon-refresh"></i></a><%}%>    
+<%if(showViewTool){%><a class="btn btn-small" target="WW_view" href='<%=viewUrl%>'><i class="icon-eye-open"></i></a><%}%>    
+<%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link"><i class="icon-remove"></i></a><%}%>
+</div>
+<%if(deletable){ %><col-md- class="col-md-1 remove pull-right btn"><i class="icon-trash"></i></col-md-><%}%></div>    
+
+<div>
+<%= data %>
+</div>
+</script>
+
+<script type="text/template" id="setting-row-template">
+<td> <%= doc %> <button class='btn btn-small help-button' style='margin-left: 25px'>
+  <i class='icon-question-sign'></i></button>
+  <div class="help-hidden">
+  <button class="close">&times;</button>
+  <%=doc2%></div>
+
+  </td>
+</script>
+
+<script type="text/template" id="settings-table-template">
+  <table class="table table-bordered settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</script>
+
+
+
+
+<!-- This is where all messages to the user go -->
+
+<script type="text/template" id="all-messages">
+<%
+  var messages = {
+    set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
+    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
+      + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
+      + "reenter your username and password to continue. ";},    
+    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."}  
+  };
+  print(messages[type](typeof(opts)=="undefined"?{}:opts))
+  
+%>
+</script>
+
+<script type="text/template" id="message-pane-template">
+<div class='row'>
+    <div class='pull-right'><button type='button' class='close'>&times;</button></div>
+    <ul class='main-message-pane no-bullets'></ul>
+</div>
+
+</script>
+
