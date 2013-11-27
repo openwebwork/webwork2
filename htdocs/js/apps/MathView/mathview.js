@@ -17,10 +17,20 @@ $(document).keydown(function(e){
 	$('.popover').hide();
 });
 
+/* load up and config mathview */
 $(document).ready(function() {
+
+    MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
+	var AM = MathJax.InputJax.AsciiMath.AM;
+	for (var i=0; i< AM.symbols.length; i++) {
+	    if (AM.symbols[i].input == '**') {
+		AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
+	    }
+	}
+    });
     /* Make sure mathjax is confugued for AsciiMath input */
     MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
-    
+
     /* attach a viewer to each input */
     $('.codeshard').each(function () {
 	var input = this;
@@ -62,6 +72,18 @@ $(document).ready(function() {
 	$(input).parent().append(button);
 	/* make sure popover refreshes math when there is a keyup in the input */
 	$(input).keyup(mviewer.regenPreview);
+	$(input).focus(function () {
+	    var current = $(this).siblings('a')[0];
+	    
+	    $('.codeshard').each(function () {
+		var others = $(this).siblings('a')[0];
+		if (others != current) {
+		    $(others).popover('hide');
+		}
+	    });
+	    
+	});
+	    
     });
     
 });
@@ -80,20 +102,26 @@ function MathViewer(field) {
     var me = this;
     this.decoratedTextBox = $(field);
 
+    MathJax.Hub.Config({
+	showProcessingMessages : false,
+	TeX : {MultLineWidth : "50%"},
+    });
+    
     /* start setting up html elements */
-    var popupdiv = $('<div>', {class : 'popupdiv'});
-    var popupttl = $('<div>', {class : 'navbar'});
-    var dropdown = $('<ul>', {class : 'dropdown-menu'});
-    var tabContent = $('<div>', {class : 'tab-content'});
+    var popupdiv;
+    var popupttl;
+    var dropdown;
+    var tabContent;
 
     /* initialization function does heavy lifting of generating html */
     this.initialize = function() {
-	MathJax.Hub.Config({
-	    showProcessingMessages : false,
-	    TeX : {MultLineWidth : "50%"},
-	});
-	
-	
+		
+	/* start setting up html elements */
+	popupdiv = $('<div>', {class : 'popupdiv'});
+	popupttl = $('<div>', {class : 'navbar'});
+	dropdown = $('<ul>', {class : 'dropdown-menu'});
+	tabContent = $('<div>', {class : 'tab-content'});
+
 	/* generate html for each of the categories in the locale file */
 	$.each(mv_categories, this.createCat);
 
@@ -108,7 +136,7 @@ function MathViewer(field) {
 			.append($('<ul>', {class : "nav pull-right"})
 				.append($('<li>')
 					.append('<a href="#" onclick="$(' + "'.codeshard-btn').popover('hide')" + 
-						';"><i class="icon-remove"></i></a>'))));
+						'; return false;"><i class="icon-remove"></i></a>'))));
 	/* put the categories content into the main popop div, 
 	   activate the tabs, 
 	   and put the preview div in place 
@@ -120,7 +148,7 @@ function MathViewer(field) {
 	tabContent.find('.tab-pane:first').addClass('active');
 
 	popupdiv.append($('<div>', {class : 'well well-small mviewerouter'})
-			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer text-center'})
+			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer'})
 				.html('`'+me.decoratedTextBox.val()+'`')));
 	
 	/* set up the autocomplete feature */
@@ -174,6 +202,7 @@ function MathViewer(field) {
     /* this function returns the html for the body of the math viewer */
 
     this.popoverContent = function() {
+	me.initialize();
 	return popupdiv;
 	
     };
@@ -223,21 +252,18 @@ function MathViewer(field) {
     /* enables an autocomplete feature for the input */
     this.createAutocomplete = function  () {
 	var source = [];
-
+	
 	/* get autocomplete functions and put into list */
 	$.each(mv_categories, function (cati, catval) {
-		$.each(catval.operators, function (i, val) {
+	    $.each(catval.operators, function (i, val) {
 		    if (val.autocomp) {
 			source.push(val.PG);
 		    }
-		});
+	    });
 	});
-
-
+	
+	
 	/* implement autocomplete feature using bootstrap typeahead */
-	/* Note: Bootstraps typeahead is a little buggy and I had to implement the hack at
-	   https://github.com/twitter/bootstrap/issues/6633 in order to make the ( key work
-	*/
 	$(me.decoratedTextBox).attr('autocomplete', 'off')
 	    .typeahead({source: source,
 			minLength : 0,
@@ -298,14 +324,42 @@ function MathViewer(field) {
 				me.decoratedTextBox.setCaretPos(newpos);
 				me.decoratedTextBox.off('change');
 			    });
-
+			    
 			    return [this.query.slice(0,pos), 
 				    item, 
 				    this.query.slice(pos)].join('');
 			}
-		      });
+		       });
 	
-    }
+	/* this overrides a broken part of bootstrap */
+	$(me.decoratedTextBox).data('typeahead').move = function (e) {
+	    if (!this.shown) return;
+	    
+	    if (e.type === 'keypress') return; //40 and 38 are characters in a keypress
+	    
+	    switch(e.keyCode) {
+	    case 9: // tab
+	    case 13: // enter
+	    case 27: // escape
+		e.preventDefault()
+		break
+		
+	    case 38: // up arrow
+		e.preventDefault()
+		this.prev()
+		break
+		
+	    case 40: // down arrow
+		e.preventDefault()
+		this.next()
+		break
+	    }
+	    e.stopPropagation();
+	    
+	}
+	
+    };
+
 }
 
 $(function () {

@@ -113,6 +113,10 @@ ul.nav li a:hover {
 	width: 72%;
 }
 
+h1.page-title {
+	font-size: 31.5px;
+}
+
 h2.page-title {
 	border-bottom: 1px solid #ccc;
 }
@@ -179,6 +183,22 @@ ul.courses-list a:hover {
 	text-decoration: none;
 	background: #038;
 	color: white;
+}
+
+/* past answers page */
+.past-answer-table td {
+    white-space: nowrap;
+    min-width: 20px;
+}
+
+.past-answer-table .table-rule {
+    border-top: 3px solid #d5d5d5;
+    padding-top: 5px;
+}
+.past-answer-table .essay,
+.past-answer-table .comment {
+    min-width: 400px;
+    white-space: normal;
 }
 
 /* Classlist Editor */
@@ -356,6 +376,7 @@ span.ResultsWithError { color: #FF9494; background-color: inherit; } /* error re
 span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
 span.incorrect { color: #FF9494; background-color: inherit; } /* red */
+span.unattempted { color: inherit; background-color: #88ECFF;}
 input.correct   { color:inherit; background-color: #8F8; } /* green */
 input.incorrect { color:inherit; background-color: #FF9494; } /* red */
 
@@ -377,6 +398,7 @@ div.ScrollingRecordList select.ScrollingRecordList { width: 99%; }
 
 .viewOptions label {
     font-size:small;
+    display:block;
 }
 
 /* messages, attempt results, answer previews, etc. go in this DIV */
@@ -695,7 +717,7 @@ table caption{
 
 #pg_editor_frame_id{
     width:95%;
-    height:390px;
+    height:590px;
     overflow:scroll;
 }
 
@@ -707,6 +729,7 @@ table caption{
 #render-modal .modal-body {
     height:95%;
     width:95%;
+    max-height:600px;
 }
 
 .radio_span, 
@@ -787,6 +810,7 @@ table#grades_table pre{
 #send-mail-form select,
 .set-list-form input,
 .set-list-form select,
+.set-list-form button,
 .user-list-form input,
 .user-list-form select {
     margin-top: .15em;
@@ -805,12 +829,16 @@ table#grades_table pre{
 #problem_set_form .btn {
     margin-left:.5ex;
     margin-right:.5ex;
-}
+} 
 
 #mainform .btn,
 #problem_set_form .btn {
     margin-bottom:.25ex;
     margin-top:.25ex;
+}
+
+#problem_set_form .ui-datepicker-trigger {
+    margin: 0;
 }
 
 #problem_set_form input[type="checkbox"] {
@@ -824,6 +852,13 @@ table#grades_table pre{
 
 #problem-grader-form select {
     width:60px;
+}
+
+#problem-grader-form .graded-answer,
+#problem-grader-form .essay-answer {
+    border-bottom: 1px solid #d5d5d5;
+    margin-bottom:2px;
+    padding-bottom:5px;
 }
 
 .tab-pane {

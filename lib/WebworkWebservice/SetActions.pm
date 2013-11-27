@@ -658,7 +658,7 @@ sub addProblem {
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
 
 	my $value = $value_default;
-	if (defined($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value}  
+	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
 
 	my $maxAttempts = $params->{maxAttempts} || $max_attempts_default;
 	my $problemID = $params->{problemID};

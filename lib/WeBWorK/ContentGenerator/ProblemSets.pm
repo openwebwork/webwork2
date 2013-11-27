@@ -63,7 +63,7 @@ sub info {
 				$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $course_info_path));
 			}
 			
-			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",  $r, courseID => $courseID);
+			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",  $r, courseID => $courseID);
 			$editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 		}
 		
@@ -398,9 +398,10 @@ sub setListRow {
 	if ( $gwtype ) {
 		if ( $gwtype == 1 ) {
 		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $display_name"; return()}
-			if ( $problemRecords[0]->num_correct() + 
+			if ( $set->attempts_per_version() &&
+			     $problemRecords[0]->num_correct() + 
 			     $problemRecords[0]->num_incorrect() >= 
-			     ( ( !($set->attempts_per_version()) ) ? 0 : $set->attempts_per_version() ) ) {
+			     $set->attempts_per_version()) {
 				$status = $r->maketext("completed.");
 			} elsif ( time() > $set->due_date() + 
 				  $self->r->ce->{gatewayGracePeriod} ) {

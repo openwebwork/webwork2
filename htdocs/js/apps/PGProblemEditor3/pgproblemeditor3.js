@@ -11,8 +11,10 @@ $(function(){
 	$('#pg_editor_frame_id').contents().find('#site-navigation')
 	    .addClass('hidden-desktop hidden-tablet');
     });
+});
 
-    $('#submit_button_id').click(function() {
+addOnLoadEvent( function () {
+    $('#submit_button_id').on('click',function() {
 	/* NOTE:  This makes a lot of the updateTarget()/setTarget() JS
 	   in the main pgeditor3 code superfluous.  Since we are doing a 
 	   just in time check to see what the target should be, it doesn't

@@ -11,6 +11,9 @@ msgstr "WeBWorK has encountered a software error while attempting to process thi
 msgid "_HMWKSETS_EDITOR_DESCRIPTION"
 msgstr "This is the homework sets editor page where you can view and edit the homework sets that exist in this course and the problems that they contain. The top of the page contains forms which allow you to filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, publish homework sets, import/export sets from/to an external file, score sets, or create/delete sets.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table displaying the sets and several pieces of relevant information."
 
+msgid "_ANSWER_LOG_DESCRIPTION"
+msgstr "This is the past answer viewer.  Students can only see their answers, and they will not be able to see which parts are correct.  Instructors can view any users answers using the form below and the answers will be colored according to correctness.  You can use *, ? or | as wildcards in the user field or set field and you can use number ranges in the problem field."
+
 #
 msgid "_EXTERNAL_AUTH_MESSAGE"
 msgstr "%1 uses an external authentication system.  You've authenticated through that system, but aren't allowed to log in to this course."

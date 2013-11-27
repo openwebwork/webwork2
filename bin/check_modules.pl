@@ -52,6 +52,7 @@ my @modulesList = qw(
 	Exception::Class
 	File::Copy
 	File::Find
+	File::Find::Rule
 	File::Path
 	File::Spec
 	File::stat

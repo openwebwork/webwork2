@@ -14,6 +14,21 @@ var basicRequestObject = {
 var basicWebserviceURL = "/webwork2/instructorXMLHandler";
 
 
+// Messaging
+
+function nomsg() {
+  $(".Message").html("");
+}
+
+function goodmsg(msg) {
+  $(".Message").html('<div class="ResultsWithoutError">'+msg+"</div>");
+}
+
+function badmsg(msg) {
+  $(".Message").html('<div class="ResultsWithError">'+msg+"</div>");
+}
+
+
 function settoggle(id, text1, text2) {
   $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
     function() {$('#'+id).html(text1)});
@@ -22,11 +37,39 @@ function settoggle(id, text1, text2) {
 
 function toggle_content(id, text1, text2) {
   var e = $('#'+id);
+  nomsg();
   if(e.text() == text1)
     e.text(text2);
   else
     e.text(text1);
   return true;
+}
+
+function togglepaths() {
+  var toggle_from = $('#toggle_path_current')[0].value;
+  var new_text = $('#showtext');
+  nomsg();
+  if(toggle_from == 'show') {
+    new_text = $('#hidetext')[0].value;
+    $('#toggle_path_current').val('hide');
+	$("[id*=filepath]").each(function() {
+		// If showing, trigger
+		if(this.textContent.match('^Show')) {
+		  this.click();
+	    }
+	});
+  } else {
+    new_text = $('#showtext')[0].value;
+    $('#toggle_path_current').val('show');
+	$("[id*=filepath]").each(function() {
+		// If hidden, trigger
+		if(! this.textContent.match('^Show')) {
+		  this.click();
+		}
+	});
+  }
+  $('#toggle_paths').prop('value',new_text);
+  return false;
 }
 
 function init_webservice(command) {
@@ -53,6 +96,7 @@ function init_webservice(command) {
 function lib_update(who, what) {
   var child = { subjects : 'chapters', chapters : 'sections', sections : 'count'};
 
+  nomsg();
   var all = 'All ' + capFirstLetter(who);
 
   var mydefaultRequestObject = init_webservice('searchLib');
@@ -129,6 +173,7 @@ function capFirstLetter(string) {
 }
 
 function addme(path, who) {
+  nomsg();
   var target = $('[name="local_sets"] option:selected').val();
   if(target == 'Select a Set from this Course') {
     alert('You need to pick a target set above so we know what set to which we should add this problem.');
@@ -137,6 +182,7 @@ function addme(path, who) {
   var mydefaultRequestObject = init_webservice('addProblem');
   if(mydefaultRequestObject == null) {
     // We failed
+	badmsg("Could not connect back to server");
     return false;
   }
   mydefaultRequestObject.set_id = target;
@@ -149,6 +195,7 @@ function addme(path, who) {
       pathlist.push(allprobs[i].value);
     }
   }
+  mydefaultRequestObject.total = pathlist.length;
   mydefaultRequestObject.set = target;
   addemcallback(basicWebserviceURL, mydefaultRequestObject, pathlist, 0)(true);
 }
@@ -160,6 +207,13 @@ function addemcallback(wsURL, ro, probarray, count) {
       if(count!=1) { phrase += "s";}
      // alert("Added "+phrase+" to "+ro.set);
       markinset();
+
+	  var prbs = "problems";
+	  if(ro.total == 1) { 
+		prbs = "problem";
+	  }
+	  goodmsg("Added "+ro.total+" "+prbs+" to set "+ro.set_id);
+
       return true;
     };
   }
@@ -203,6 +257,7 @@ function markinset() {
 }
 
 function delrow(num) { 
+  nomsg();
   var path = $('[name="filetrial'+ num +'"]').val();
   var APLindex = findAPLindex(path);
   var mymlt = $('[name="all_past_mlt'+ APLindex +'"]').val();
@@ -287,6 +342,7 @@ function randomize(filepath, el) {
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
     if(displayMode=='jsMath')
       jsMath.ProcessBeforeShowing(el);
+
     if(displayMode=='asciimath') {
       //processNode(el);
       translate();
