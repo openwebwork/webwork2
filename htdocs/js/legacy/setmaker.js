@@ -130,7 +130,7 @@ function lib_update(who, what) {
   mydefaultRequestObject.library_textsection = lib_textsect;
   if(who == 'count') {
     mydefaultRequestObject.command = 'countDBListings';
-    console.log(mydefaultRequestObject);
+    // console.log(mydefaultRequestObject);
     return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
       console.log(response);
@@ -326,12 +326,19 @@ function delFromPGList(num, path) {
 }
 
 function randomize(filepath, el) {
+  nomsg();
   var seed = Math.floor((Math.random()*10000));
   var ro = init_webservice('renderProblem');
   var templatedir = $('#hidden_templatedir').val();
   ro.problemSeed = seed;
   ro.problemSource = templatedir + '/' + filepath;
   ro.set = ro.problemSource;
+  var showhint = 0;
+  if($("input[name='showHints']").is(':checked')) { showhint = 1;}
+  var showsoln = 0;
+  if($("input[name='showSolutions']").is(':checked')) { showsoln = 1;}
+  ro.showHints = showhint;
+  ro.showSolutions = showsoln;
   var displayMode = $('[name="original_displayMode"]').val();
   if(displayMode != 'None') {
     ro.displayMode = displayMode;
@@ -351,6 +358,7 @@ function randomize(filepath, el) {
 }
 
 function togglemlt(cnt,noshowclass) {
+  nomsg();
   var count = $('.'+noshowclass).length;
   var n1 = $('#lastshown').text();
   var n2 = $('#totalshown').text();

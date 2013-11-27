@@ -317,10 +317,14 @@ sub renderProblem {
 		$problemRecord->problem_seed($problemSeed);
 		$problemRecord->status($problemStatus);
 		$problemRecord->value($problemValue);
-		$problemRecord->attempted($problemAttempted);
+		# We are faking it
+		#$problemRecord->attempted($problemAttempted);
+		#$problemRecord->num_correct($num_correct);
+		#$problemRecord->num_incorrect($num_incorrect);
+		$problemRecord->attempted(2000);
+		$problemRecord->num_correct(1000);
+		$problemRecord->num_incorrect(1000);
 		$problemRecord->last_answer($lastAnswer);
-		$problemRecord->num_correct($num_correct);
-		$problemRecord->num_incorrect($num_incorrect);
 	}
 	# initialize problem source
 	$rh->{sourceFilePath} = $rh->{path} unless defined $rh->{sourceFilePath};

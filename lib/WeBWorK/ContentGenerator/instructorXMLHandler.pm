@@ -249,6 +249,8 @@ sub pre_header_initialize {
             sendViaJSON				=> $r->param('sendViaJSON') || undef,
             assigned_users	        => $r->param('assigned_users') || undef,
             overrides				=> $r->param('overrides') || undef,
+			showHints				=> $r->param('showHints') || 0,
+			showSolutions			=> $r->param('showSolutions') || 0,
 	};
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
@@ -267,6 +269,9 @@ sub pre_header_initialize {
 	$input = {%$std_input, %$input};
 	# Fix the environment display mode
 	$input->{envir}->{displayMode} = $input->{displayMode} if($input->{displayMode});
+	# Set environment variables for hints/solutions
+	$input->{envir}->{showHints} = $r->param('showHints') if($r->param('showHints'));
+	$input->{envir}->{showSolutions} = $r->param('showSolutions') if($r->param('showSolutions'));
 	
 	## getting an error below (pstaab on 6/10/2013)  I don't this this is used anymore.  
 
@@ -359,8 +364,8 @@ Regression
 		envir                   => environment(),
 		problem_state           => {
 		
-			num_of_correct_ans  => 2,
-			num_of_incorrect_ans => 4,
+			num_of_correct_ans  => 200, # we are picking phoney values so
+			num_of_incorrect_ans => 400,
 			recorded_score       => 1.0,
 		},
 		source                   => '',  #base64 encoded
@@ -422,7 +427,6 @@ sub environment {
 		problemValue => -1,
 		probNum => 13,
 		psvn => 54321,
-		psvn=> 54321,
 		questionNumber => 1,
 		scriptDirectory => 'Not defined',
 		sectionName => 'Gage',
