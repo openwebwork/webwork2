@@ -19,16 +19,16 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/components/backbone/backbone",  //ok
-        "underscore": "/webwork2_files/js/components/underscore/underscore", // ok
-        "jquery": "/webwork2_files/js/components/jquery/jquery", // ok
-        "jquery-ui": "/webwork2_files/js/components/jquery-ui/ui/jquery-ui", //FIXMEJS
+        "Backbone": "/webwork2_files/js/bower_components/backbone/backbone",  //ok
+        "underscore": "/webwork2_files/js/bower_components/underscore/underscore", // ok
+        "jquery": "/webwork2_files/js/bower_components/jquery/jquery", // ok
+        "jquery-ui": "/webwork2_files/js/bower_components/jquery-ui/ui/jquery-ui", //FIXMEJS
         //"touch-pinch": "/webwork2_files/js/vendor/jquery/modules/jquery.ui.touch-punch", //ok
         "tabs": "/webwork2_files/js/legacy/vendor/ui.tabs.closable", //ok
         //this is important:
         "config":"/webwork2_files/js/apps/LibraryBrowser/config", // ok
-        "bootstrap":            "/webwork2_files/js/components/bootstrap/docs/assets/js/bootstrap",
-         "moment":               "/webwork2_files/js/components/moment/moment",
+        "bootstrap":            "/webwork2_files/js/bower_components/bootstrap-2/docs/assets/js/bootstrap",
+         "moment":               "/webwork2_files/js/bower_components/moment/moment",
     },
     //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,

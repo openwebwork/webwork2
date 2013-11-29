@@ -23,7 +23,7 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap-2/docs/assets/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/bower_components/bootstrap-2/docs/assets/css/bootstrap.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
