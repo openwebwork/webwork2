@@ -43,7 +43,9 @@ define(['Backbone', 'underscore', './LibraryView'], function(Backbone, _, Librar
                 self.$el.addClass("syncing white");
             }
             this.$el.html(this.template({name: options.name}));
-            self.$("."+options.name+".list").on('change', function(event){self.lib_selected(event)});
+            self.$("."+options.name+".list").on('change', function(event){self.lib_selected(event)}); 
+            //self.$("."+this.options.name+".list").on('change', function(event){self.lib_selected(event)});//MEG options is handled differenty for Backbone 1.1 
+                                     // we'll need to add it manually if we decide to make this work properly for LB3
             this.addAll();
             return this;
         },
