@@ -88,11 +88,12 @@ sub authenticate {
     	}
 	}
 
+
 	if(! defined(session 'session_key')){
 		my $key = vars->{db}->getKey(session 'user');
 
 		if ($key->{key} eq params->{session_key}) {
-			session session_key  => params->{session_key};
+			session->{key} = params->{session_key};
 		} 
 	}
 

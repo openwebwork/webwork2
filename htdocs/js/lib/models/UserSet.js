@@ -1,6 +1,9 @@
 /**
-  * This is a class for UserSet objects.  
-  *
+  * This is a class for UserSet objects. 
+  * 
+  * There are two types of UserSets:
+  *     1. a UserSetOfSets (those that go in a collection for a given User) 
+  *     2. a UserSetOfUsers (those that go in a collection for a given problemSet)
   * 
   */
 
@@ -41,8 +44,7 @@ define(['Backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") +
             "/sets/" + this.get("set_id");
-        },
-        idAttribute:'user_id'
+        }
     });
 
     return UserSet;

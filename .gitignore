@@ -9,4 +9,4 @@ library-subject-tree.json
 textbook-tree.json
 development.yml
 *~
-
+/webwork3/public/js/bower_components/*
