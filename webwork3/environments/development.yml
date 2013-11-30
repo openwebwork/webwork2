@@ -49,7 +49,7 @@ plugins:
         host: 'localhost'
         port: 3306
         username: 'webworkWrite'
-        password: 'password'
+        password: 'zLZAmq'
         connection_check_threshold: 10
         dbi_params:
             RaiseError: 1

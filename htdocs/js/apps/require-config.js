@@ -11,6 +11,7 @@ var require = {
         "jquery":               "/webwork2_files/js/bower_components/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/bower_components/bootstrap/dist/js/bootstrap",
         //"bootstrap":            "/webwork2_files/js/components/bootstrap-2/docs/assets/js/bootstrap",
+
         "moment":               "/webwork2_files/js/bower_components/moment/moment",
         "stickit":              "/webwork2_files/js/bower_components/backbone.stickit/backbone.stickit",
         "imagesloaded":         "/webwork2_files/js/bower_components/imagesloaded/imagesloaded",
@@ -20,7 +21,7 @@ var require = {
         "file-saver":           "/webwork2_files/js/bower_components/file-saver/FileSaver",
         "eventie":              "/webwork2_files/js/bower_components/eventie",
         "eventEmitter":         "/webwork2_files/js/bower_components/eventEmitter",
-        "knowl":                "/webwork2_files/js/vendor/knowl",
+        "knowl":                "/webwork2_files/js/vendor/other/knowl",
         "views":                "/webwork2_files/js/lib/views",
         "models":               "/webwork2_files/js/lib/models",
         "apps":                 "/webwork2_files/js/apps",

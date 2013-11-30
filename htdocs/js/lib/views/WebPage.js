@@ -1,3 +1,4 @@
+
 define(['Backbone','../views/MessageListView','../views/ModalView','config', '../../bower_components/jquery-truncate/jquery.truncate'], 
 function(Backbone,MessageListView,ModalView,config){
 	var WebPage = Backbone.View.extend({

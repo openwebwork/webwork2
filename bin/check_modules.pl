@@ -78,6 +78,7 @@ my @modulesList = qw(
 	Net::SMTP
 	Opcode
 	PadWalker
+	Path::Class
 	PHP::Serialization
 	Pod::Usage
 	Pod::WSDL
