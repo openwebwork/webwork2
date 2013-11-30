@@ -556,9 +556,9 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
     checkPermissions(10,session->{user});
 
     my @userSetNames = vars->{db}->listUserSets(param('user_id'));
-    my @userSets = vars->{db}->getGlobalSets(@userSetNames);
+    my @userSets = vars->{db}->getUserSets(map { [params->{user_id}, $_]} @userSetNames);
     
-    return \@userSetNames;
+    return convertArrayOfObjectsToHash(\@userSets);
 };
 
 ####
@@ -609,6 +609,28 @@ put '/courses/:course_id/sets/:set_id/problems' => sub {
     return convertArrayOfObjectsToHash(\@newProblems);
 };
 
+###
+#
+#  get /courses/:course_id/sets/:set_id/users/:user_id/problems
+#
+#  return all user (merged) problems for course :course_id, user :user_id
+#
+####
+
+get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
+
+    checkPermissions(0,session->{user});  ## need to figure out a way to handle effective users also
+
+    send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404)
+        if !vars->{db}->existsGlobalSet(params->{set_id});
+
+    send_error("The user " . params->{user_id} . " isn't assigned to set ". param('set_id'). ".",404)
+        if !vars->{db}->existsUserSet(params->{user_id},params->{set_id});
+
+    my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
+    
+    return convertArrayOfObjectsToHash(\@problems);
+};
 
 ####
 #

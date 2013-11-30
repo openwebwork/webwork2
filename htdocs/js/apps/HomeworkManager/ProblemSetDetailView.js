@@ -7,10 +7,11 @@
  **/
 
 
-define(['Backbone','underscore','views/ProblemSetView','models/ProblemList','views/CollectionTableView',
-    'models/ProblemSet','views/UserListView','models/UserSetList', 'config','bootstrap'], 
-    function(Backbone, _,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,UserListView,
-        UserSetList, config){
+
+define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
+    'models/ProblemSet','views/UserListView','models/UserSetListOfUsers', 'config','bootstrap'], 
+    function(Backbone, _,ProblemSetView,ProblemList,ProblemSet,UserListView,
+        UserSetListOfUsers, config){
 	var ProblemSetDetailsView = Backbone.View.extend({
         className: "set-detail-view",
         tagName: "div",
@@ -360,7 +361,7 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList','vie
                 this.problemSet.trigger("user_sets_added",this.userSetList);
                 
             } else {
-                (this.userSetList = new UserSetList([],{problemSet: this.model}));
+                (this.userSetList = new UserSetListOfUsers([],{problemSet: this.model}));
                 this.userSetList.fetch({success: this.render});
             }
             return this;

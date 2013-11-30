@@ -80,8 +80,18 @@ get '/courses/:course_id' => sub {
 
 		};
 	} else {
+
+		my $session = {};
+		for my $key (qw/course key permission user/){
+			$session->{$key} = session->{$key} if defined(session->{$key});
+		}
+		$session->{logged_in} = 1 if ($session->{user} && $session->{key});
+
+		debug $session;
+
 	    template 'course_home.tt', {course_id=> params->{course_id},
-	        pagename=>"Course Home for " . params->{course_id},user=>session->{user}};
+	        pagename=>"Course Home for " . params->{course_id},theSession=>to_json($session)},
+	        {layout=>"student.tt"};
 	}
 
 
