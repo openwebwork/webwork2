@@ -206,7 +206,6 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
     Backbone.Stickit.addHandler({
         selector: ".show-datetime",
         onGet: function(val) {  // this is passed in as a moment Object
-            console.log(val);
             var theDate = moment.unix(val);
             var tz = (theDate.toDate() + "").match(/\((.*)\)/)[1];
             return theDate.format("MM/DD/YYYY") + " at " + theDate.format("hh:mmA") + " " + tz;

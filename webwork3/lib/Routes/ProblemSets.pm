@@ -556,7 +556,7 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
     checkPermissions(10,session->{user});
 
     my @userSetNames = vars->{db}->listUserSets(param('user_id'));
-    my @userSets = vars->{db}->getUserSets(map { [params->{user_id}, $_]} @userSetNames);
+    my @userSets = vars->{db}->getMergedSets(map { [params->{user_id}, $_]} @userSetNames);
     
     return convertArrayOfObjectsToHash(\@userSets);
 };

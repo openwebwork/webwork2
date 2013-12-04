@@ -15,9 +15,9 @@
 
 <script type="text/template" id="home-page-template">
 <div class="row">
-<div class="col-md-3 problem-set-list-container">
-</div>
 <div class="col-md-9 problem-set-container">
+</div>
+<div class="col-md-3 problem-set-info-container">
 </div>
 </div>
 </script>
@@ -27,24 +27,65 @@
 </script>
 
 
-<script type="text/template" id="problem-set-list-template">
-<ul class="problem-set-list"></ul>
+<script type="text/template" id="problem-set-template">
+	<li><a class='setname' data-setname='<%=set_id%>' href='#'><%=set_id%></a><li>
 </script>
+<script type="text/template" id="problem-set-name-template">
+	<a class='setname' data-setname='<%=set_id%>' href='#'><%=set_id%></a>
+</script>
+
+<script type="text/template" id="user-set-list-table-template">
+<h3>Open Assignments</h3>
+<table class="table table-bordered table-condensed open-assigns">
+<thead>
+<tr>
+<th>Setname</th><th>Due Date</th><th>Num. Probs.</th><th>Score</th></tr></thead>
+<tbody>
+</tbody>
+</table>
+
+<h3>Closed Assignments</h3>
+<table class="table table-bordered table-condensed closed-assigns">
+<thead>
+<tr>
+<th>Setname</th><th>Due Date</th><th>Num. Probs.</th><th>Score</th></tr></thead>
+<tbody>
+</tbody>
+</table>
+
+</script>
+
+
+<script type="text/template" id="user-set-table-row-template">
+<td class="setname"></td><td class="due-date show-datetime"></td><td class="problems"></td>
+<td class="score"></td>
+</script>
+
+
 
 <script type="text/template" id="problem-list-template">
 <h3>Problems for set <%=set_id%></h3>
-<div class="btn-group problem-button-list">
+<div class="container">
+<div class="row">
+<ul class="pagination problem-button-list">
 <% problems.each(function(problem){
-	print("<button class='btn btn-default problem-button'>" + problem.get("problem_id") + "</button>");
+	print("<li><a class='problem-button' href='#'>" + problem.get("problem_id") + "</a></li>");
 }); %>
+</ul>
 </div>
+</div>
+
 <div class="problem-container">
 	<ul class="no-bullets"></ul>
-	<div class="row">
-		<div class="btn-group">
-			<button class="btn btn-default preview-answer-button">Preview Answers</button>
-			<button class="btn btn-default check-answer-button">Check Answers</button>
-			<button class="btn btn-default submit-answer-button">Submit Answers</button>
+	<div class="container">
+		<div class="row">
+			<div class="btn-group">
+				<button class="btn btn-default preview-answer-button">Preview Answers</button>
+				<button class="btn btn-default check-answer-button" data-loading-text="Checking Answer...">Check Answers</button>
+				<% if(moment().isBefore(moment.unix(due_date))) {%>
+				<button class="btn btn-default submit-answer-button" data-loading-text="Submitting Answer..">Submit Answers</button>
+				<%}%>
+			</div>
 		</div>
 	</div>
 </div>

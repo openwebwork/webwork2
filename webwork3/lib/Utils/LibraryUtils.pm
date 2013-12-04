@@ -9,15 +9,128 @@ use Dancer::Plugin::Database;
 use Data::Dumper;
 use WeBWorK::Utils qw(readDirectory sortByName);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags);
+our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);
 
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
 	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, 'achievements' => 1,
 );
 
-## this returns all problems in the library that matches the given subject
+###
+#
+#  Common functionality for the renderer
+#
+###
 
+sub render {
+	my $renderParams = shift;
+
+	# get all parameters in the form AnSwErXXXX 
+
+	my @anskeys = grep /AnSwEr\d{4}/, request->params;
+
+	my $formFields = {};
+	for my $key (@anskeys){
+		$formFields->{$key} = params->{$key};
+	}
+
+	# remove any pretty garbage around the problem
+	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
+	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
+
+
+	my $translationOptions = {
+		displayMode     => $renderParams->{displayMode},
+		showHints       => $renderParams->{showHints},
+		showSolutions   => $renderParams->{showSolutions},
+		refreshMath2img => defined(param("refreshMath2img")) ? param("refreshMath2img") : 0 ,
+		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
+	};
+
+
+	my $pg = new WeBWorK::PG(
+		vars->{ce},
+		$renderParams->{user},
+		params->{session_key},
+		$renderParams->{set},
+		$renderParams->{problem},
+		123, # PSVN (practically unused in PG)
+		$formFields,
+		$translationOptions,
+    );
+	my $warning_messages="";
+    my (@internal_debug_messages, @pgwarning_messages, @pgdebug_messages);
+    if (ref ($pg->{pgcore}) ) {
+    	@internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
+    	@pgwarning_messages        = $pg ->{pgcore}->get_warning_messages();
+    	@pgdebug_messages          = $pg ->{pgcore}->get_debug_messages();
+    } else {
+    	@internal_debug_messages = ('Error in obtaining debug messages from PGcore');
+    }
+    my $answers = {};
+
+
+    # extract the important parts of the answer, but don't send the correct_ans if not requested. 
+
+    debug $renderParams;
+
+    for my $key (@anskeys){
+    	for my $field (qw(correct_ans score student_ans)) {
+    		if ($field ne 'correct_ans' || $renderParams->{showAnswers}){
+	    		$answers->{$key}->{$field} = $pg->{answers}->{$key}->{$field};
+	    	}
+	    }
+    }
+    
+    my $flags = {};
+
+    ## skip the CODE reference which appears in the PROBLEM_GRADER_TO_USE.  I don't think this is useful for 
+    ## passing out to the client since it is a perl code snippet.
+
+    for my $key (keys(%{$pg->{flags}})){
+     	if (ref($pg->{flags}->{$key}) ne "CODE"){
+     	$flags->{$key}=$pg->{flags}->{$key};}
+     }
+
+    my $problem_hash = {
+		text 						=> $pg->{body_text},
+		header_text 				=> $pg->{head_text},
+		answers 					=> $answers,
+		errors         				=> $pg->{errors},
+		warnings	   				=> $pg->{warnings}, 
+		problem_result 				=> $pg->{result},
+		problem_state				=> $pg->{state},
+		flags						=> $flags,
+		warning_messages            => \@pgwarning_messages,
+		debug_messages              => \@pgdebug_messages,
+		internal_debug_messages     => \@internal_debug_messages,
+	};
+
+	return $problem_hash;
+
+}
+
+
+
+sub getFilePaths {
+	my $allfiles = shift;
+
+	my @problems = ();
+
+	## this seems like a very inefficient way to look up the path header.  Can we build a hash to do this? 
+
+	for my $file (@$allfiles){
+		my $path_header = database->quick_select('OPL_path',{path_id=>$file->{path_id}});
+		push(@problems,{source_file=>"Library/" . $path_header->{path} . "/" . $file->{filename}});
+	}
+
+	return \@problems;
+}
+
+
+
+
+## this returns all problems in the library that matches the given subject
 
 sub get_subject_problems {
 	my ($subject) = @_;

@@ -13,8 +13,7 @@ use Dancer::Plugin::Database;
 use Path::Class;
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::LibraryUtils qw/list_pg_files 
-	searchLibrary getProblemTags/;
+use Utils::LibraryUtils qw/list_pg_files searchLibrary getProblemTags render/;
 use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
@@ -369,138 +368,38 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 	
 	setCourseEnvironment(params->{course_id});
 
-	debug "in renderer";
-	debug $WeBWorK::Constants::WEBWORK_DIRECTORY;
+	my $renderParams = {};
 	
-    	my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
-	my $problemSeed = defined(params->{problemSeed}) ? params->{problemSeed} : 1; 
-	my $showHints = 0;
-	my $showSolutions = 0;
-	my $showAnswers = 0;
+	
+    $renderParams->{displayMode} = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
+	$renderParams->{problemSeed} = defined(params->{problemSeed}) ? params->{problemSeed} : 1; 
+	$renderParams->{showHints} = 0;
+	$renderParams->{showSolutions} = 0;
+	$renderParams->{showAnswers} = 0;
 
-
-	# remove any pretty garbage around the problem
-	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
-	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
-
-	my $user = fake_user(vars->{db});
-	my $set =  fake_set(vars->{db});
-	my $problem = fake_problem(vars->{db});
-	$problem->{problem_seed} = params->{problem_seed} || 0;
-	$problem->{problem_id} = params->{problem_id} || 1;
+	$renderParams->{user} = fake_user(vars->{db});
+	$renderParams->{set} =  fake_set(vars->{db});
+	$renderParams->{problem} = fake_problem(vars->{db});
+	$renderParams->{problem}->{problem_seed} = params->{problem_seed} || 0;
+	$renderParams->{problem}->{problem_id} = params->{problem_id} || 1;
 
 	# check to see if the problem_path is defined
 
 	if (defined(params->{problem_path})){
-		$problem->{source_file} = "Library/" . params->{problem_path};
+		$renderParams->{problem}->{source_file} = "Library/" . params->{problem_path};
 	} elsif (defined(params->{source_file})){
-		$problem->{source_file} = params->{source_file};
+		$renderParams->{problem}->{source_file} = params->{source_file};
 	} elsif ((params->{problem_id} =~ /^\d+$/) && (params->{problem_id} > 0)){  
 			# try to look up the problem_id in the global database;
 
 		my $problem_info = database->quick_select('OPL_pgfile', {pgfile_id => param('problem_id')});
 		my $path_id = $problem_info->{path_id};
 		my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
-		$problem->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
+		$renderParams->{problem}->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
 	} 
 
+	return render($renderParams);
 
-	# get all parameters in the form AnSwErXXXX 
-
-	my @anskeys = grep /AnSwEr\d{4}/, request->params;
-
-	my $formFields = {};
-	for my $key (@anskeys){
-		$formFields->{$key} = params->{$key};
-	}
-
-	# for my $key (keys(%{$formFields})){
-	# 	my $value = '####UNDEF###';
-	# 	$value = $formFields->{$key} if(defined($formFields->{$key}));
-	#  	debug($key . " : " . $value);
-	# }
-
-
-	my $translationOptions = {
-		displayMode     => $displayMode,
-		showHints       => $showHints,
-		showSolutions   => $showSolutions,
-		refreshMath2img => defined(param("refreshMath2img")) ? param("refreshMath2img") : 0 ,
-		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
-	};
-	if(defined(params->{pgSource})){
-		my $source = params->{pgSource};
-		$translationOptions->{r_source} = \$source;
-	}
-
-
-	my $pg = new WeBWorK::PG(
-		vars->{ce},
-		$user,
-		params->{session_key},
-		$set,
-		$problem,
-		123, # PSVN (practically unused in PG)
-		$formFields,
-		$translationOptions,
-    );
-	my $warning_messages="";
-    my (@internal_debug_messages, @pgwarning_messages, @pgdebug_messages);
-    if (ref ($pg->{pgcore}) ) {
-    	@internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
-    	@pgwarning_messages        = $pg ->{pgcore}->get_warning_messages();
-    	@pgdebug_messages          = $pg ->{pgcore}->get_debug_messages();
-    } else {
-    	@internal_debug_messages = ('Error in obtaining debug messages from PGcore');
-    }
-    my $answers = {};
-
-
-    # extract the important parts of the answer, but don't send the correct_ans if not requested. 
-
-    for my $key (@anskeys){
-    	for my $field (qw(correct_ans score student_ans)) {
-    		if ($field ne 'correct_ans' || $showAnswers){
-	    		$answers->{$key}->{$field} = $pg->{answers}->{$key}->{$field};
-	    	}
-	    }
-    }
-    
-    my $flags = {};
-
-    ## skip the CODE reference which appears in the PROBLEM_GRADER_TO_USE.  I don't think this is useful for 
-    ## passing out to the client since it is a perl code snippet.
-
-    for my $key (keys(%{$pg->{flags}})){
-     	if (ref($pg->{flags}->{$key}) ne "CODE"){
-     	$flags->{$key}=$pg->{flags}->{$key};}
-     }
-
-    my $problem_hash = {
-		text 						=> $pg->{body_text},
-		header_text 				=> $pg->{head_text},
-		answers 					=> $answers,
-		errors         				=> $pg->{errors},
-		warnings	   				=> $pg->{warnings}, 
-		problem_result 				=> $pg->{result},
-		problem_state				=> $pg->{state},
-		flags						=> $flags,
-		warning_messages            => \@pgwarning_messages,
-		debug_messages              => \@pgdebug_messages,
-		internal_debug_messages     => \@internal_debug_messages,
-	};
-	return $problem_hash;
-
-	# this was used to get the problem rendering in a ifram
-	#
-
-	#template 'library_problem', $problem_hash, { layout => 0 };
-
-		 # for my $key (keys(%{$out2})){
-		 #  	my $value = '####UNDEF###';
-		 #  	$value = $out2->{$key} if (defined($out2->{$key}));
-		 #  	debug("$key  : $value");
-		 #  }
 };
 
 ###
@@ -510,170 +409,55 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 #
 #  The displayMode parameter will determine the exact HTML code that is returned (images, MathJax, plain, PDF) 
 #
+#  If the request is a post, then it is assumed that the answers are submitted to be recorded.  
+#
 ###
 
-get '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
+any ['get', 'post'] => '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-    my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
-    my ($showHints, $showSolutions,$showAnswers);
-	
+	send_error("The set " . params->{set_id} . " does not exist.",404) unless vars->{db}->existsGlobalSet(params->{set_id});
 
+	send_error("The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id},404) 
+		unless vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id});
+
+
+	my $renderParams = {};
+
+    $renderParams->{displayMode} = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
+    
     ### The user is not a professor
 
     if(session->{permission} < 10){  ### check that the user belongs to the course and set. 
 
-    	if (! (vars->{db}->existsUser(param('user_id')) &&  vars->{db}->existsUserSet(param('user_id'), params->{set_id})))  { 
-    		send_error("You are a student and must be assigned to the set " . params->{set_id},404);
-    	}
+    	send_error("You are a student and must be assigned to the set " . params->{set_id},404)
+    		unless (vars->{db}->existsUser(param('user_id')) &&  vars->{db}->existsUserSet(param('user_id'), params->{set_id}));
 
     	# these should vary depending on number of attempts or due_date or ???
-    	$showHints = 0;
-    	$showSolutions = 0;
-    	$showAnswers = 0; 
+    	$renderParams->{showHints} = 0;
+    	$renderParams->{showSolutions} = 0;
+    	$renderParams->{showAnswers} = 0; 
 
-    } else {
-		$showHints = defined(param('show_hints'))? param('show_hints') : 0;
-		$showSolutions = defined(param('show_solutions'))? param('show_solutions') : 0;
-		$showAnswers = defined(param('show_answers'))? param('show_answers') : 0;
-    }
+    } else { 
+		$renderParams->{showHints} = defined(param('show_hints'))? param('show_hints') : 0;
+		$renderParams->{showSolutions} = defined(param('show_solutions'))? param('show_solutions') : 0;
+		$renderParams->{showAnswers} = defined(param('show_answers'))? param('show_answers') : 0;
+    }	
 
-	# remove any pretty garbage around the problem
-	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
-	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
+	$renderParams->{problem} = vars->{db}->getMergedProblem(params->{effectiveUser}|| session->{user},
+															params->{set_id},params->{problem_id});
+	$renderParams->{user} = vars->{db}->getUser(params->{effectiveUser}|| session->{user});
+	$renderParams->{set} = vars->{db}->getUserSet(params->{effectiveUser}|| session->{user},params->{set_id});		
 
-	if (!vars->{db}->existsGlobalSet(params->{set_id})){
-		send_error("The set " . params->{set_id} . " does not exist.",404);
-	}
-	if (!vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id})){
-		send_error("The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id},404);
-	}
+	my $results = render($renderParams);
 
-	my $globalProblem =  vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
-
-	# the problem fed to PG needs to be a UserProblem.  Pass all the parameters of the global problem to the user problem. 
-
-	my $problem = WeBWorK::DB::Record::UserProblem->new;
-
-	for my $key (keys(%{$globalProblem})){
-		$problem->{$key}=$globalProblem->{$key} if (defined($globalProblem->{$key}));
+	if(request->is_post){
+		$results->{recorded_msg} = record_results($renderParams,$results);
 	}
 
-	my $user = fake_user(vars->{db});
-
-	$problem->{problem_seed}= defined(params->{problem_seed})? params->{problem_seed} : 1;
-
-	debug $problem;
-
-	my $set = vars->{db}->getGlobalSet(params->{set_id});		
-
-	# get all parameters in the form AnSwErXXXX 
-
-	my @anskeys = grep /AnSwEr\d{4}/, request->params;
-
-	my $formFields = {};
-	for my $key (@anskeys){
-		$formFields->{$key} = params->{$key};
-	}
-
-	for my $key (keys(%{$problem})){
-		my $value = '####UNDEF###';
-		$value = $problem->{$key} if(defined($problem->{$key}));
-	 	debug(" $key :  $value");
-	}
+	return $results;
 
 
-	my $translationOptions = {
-		displayMode     => $displayMode,
-		showHints       => $showHints,
-		showSolutions   => $showSolutions,
-		refreshMath2img => defined(param("refreshMath2img")) ? param("refreshMath2img") : 0 ,
-		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
-	};
-
-
-	my $pg = new WeBWorK::PG(
-		vars->{ce},
-		$user,
-		params->{session_key},
-		$set,
-		$problem,
-		123, # PSVN (practically unused in PG)
-		$formFields,
-		$translationOptions,
-    );
-	my $warning_messages="";
-    my (@internal_debug_messages, @pgwarning_messages, @pgdebug_messages);
-    if (ref ($pg->{pgcore}) ) {
-    	@internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
-    	@pgwarning_messages        = $pg ->{pgcore}->get_warning_messages();
-    	@pgdebug_messages          = $pg ->{pgcore}->get_debug_messages();
-    } else {
-    	@internal_debug_messages = ('Error in obtaining debug messages from PGcore');
-    }
-    my $answers = {};
-
-
-    # extract the important parts of the answer, but don't send the correct_ans if not requested. 
-
-    for my $key (@anskeys){
-    	for my $field (qw(correct_ans score student_ans)) {
-    		if ($field ne 'correct_ans' || $showAnswers){
-	    		$answers->{$key}->{$field} = $pg->{answers}->{$key}->{$field};
-	    	}
-	    }
-    }
-    
-    my $flags = {};
-
-    ## skip the CODE reference which appears in the PROBLEM_GRADER_TO_USE.  I don't think this is useful for 
-    ## passing out to the client since it is a perl code snippet.
-
-    for my $key (keys(%{$pg->{flags}})){
-     	if (ref($pg->{flags}->{$key}) ne "CODE"){
-     	$flags->{$key}=$pg->{flags}->{$key};}
-     }
-
-    my $problem_hash = {
-		text 						=> $pg->{body_text},
-		header_text 				=> $pg->{head_text},
-		answers 					=> $answers,
-		errors         				=> $pg->{errors},
-		warnings	   				=> $pg->{warnings}, 
-		problem_result 				=> $pg->{result},
-		problem_state				=> $pg->{state},
-		flags						=> $flags,
-		warning_messages            => \@pgwarning_messages,
-		debug_messages              => \@pgdebug_messages,
-		internal_debug_messages     => \@internal_debug_messages,
-	};
-
-	return $problem_hash;
-
-	# this was used to get the problem rendering in a ifram
-	#
-	# template 'library_problem', $problem_hash, { layout => 0 }; 
-
-		 # for my $key (keys(%{$out2})){
-		 #  	my $value = '####UNDEF###';
-		 #  	$value = $out2->{$key} if (defined($out2->{$key}));
-		 #  	debug("$key  : $value");
-		 #  }
 };
-
-sub getFilePaths {
-	my $allfiles = shift;
-
-	my @problems = ();
-
-	## this seems like a very inefficient way to look up the path header.  Can we build a hash to do this? 
-
-	for my $file (@$allfiles){
-		my $path_header = database->quick_select('OPL_path',{path_id=>$file->{path_id}});
-		push(@problems,{source_file=>"Library/" . $path_header->{path} . "/" . $file->{filename}});
-	}
-
-	return \@problems;
-}
 
 
 

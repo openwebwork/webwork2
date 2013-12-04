@@ -23,8 +23,8 @@
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li><a href="#">Calendar</a></li>
-        <li><a href="#">Progress</a></li>
+        <li class="active"><a href="#" data-link="progress">Progress</a></li>
+        <li><a href="#" data-link="calender">Calendar</a></li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">Problem Sets <b class="caret"></b></a>
           <ul class="dropdown-menu problem-set-dropdown">
@@ -42,9 +42,14 @@
     </div><!-- /.navbar-collapse -->
   </nav>
 [% content %]
-<div id="footer">
+
+<nav class="navbar-fixed-bottom navbar navbar-other" id="footer">
+<div class="container">
+<p id="footer" class="navbar-text">
 Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
+</p>
 </div>
+</nav>
 
 <script type="text/template" id="login-template">
 <div class="message"> <%=message%></div>
