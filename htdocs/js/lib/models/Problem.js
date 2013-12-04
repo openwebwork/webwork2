@@ -22,7 +22,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             if(typeof(this.collection.problemSet)!=="undefined") { // the problem comes from a problem set
                 return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" 
                 + this.collection.problemSet.get("set_id") + "/problems/" + this.get("problem_id");
-            } else {
+            }  else {
                 return config.urlPrefix;
             }
 
@@ -62,11 +62,15 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         },
         checkAnswers: function(answers, success){
             console.log("in checkAnswers");
-            var allAttributes = {};
-            _.extend(allAttributes,answers);
-             $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course + "/sets/" 
-                    + this.collection.setName 
-                    + "/problems/" + this.get("problem_id"),allAttributes, success);
+            //var allAttributes = {};
+            //_.extend(allAttributes,answers);
+             $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
+                    + this.collection.set_id + "/problems/" + this.get("problem_id"),answers, success);
+
+        },
+        submitAnswers: function(answers,success){
+            $.post(config.urlPrefix + "renderer/courses/"+ config.courseSettings.course + "/sets/" 
+                    + this.collection.set_id + "/problems/" + this.get("problem_id"),answers, success);
         }
     });
     

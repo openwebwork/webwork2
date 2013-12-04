@@ -13,6 +13,8 @@ define(['Backbone', 'underscore','./UserSetOfSets','config'], function(Backbone,
         model: UserSetOfSets,
         initialize: function (models,options) {
             this.user = options? options.user : null;
+            this.problems = [];
+            this.set("problems", this.problems);
         },
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.user + "/sets";

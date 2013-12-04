@@ -56,3 +56,7 @@ border-top: solid 1px rgb(220, 220, 220);}
 #short-message {padding: 10px;}
 
 .ww-help {position: absolute; top: 70px; bottom: 70px; overflow: auto; z-index: 100}
+
+#main {padding-left: 10px;}
+
+.no-bullets {list-style-type: none; padding-left: 0}
