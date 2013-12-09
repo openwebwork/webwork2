@@ -194,6 +194,7 @@ sub pre_header_initialize {
 		    library_subjects	    => $r->param("library_subjects") ||undef,
 		    library_chapters	    => $r->param("library_chapters") ||undef,
 		    library_sections	    => $r->param("library_sections") ||undef,
+		    library_levels		    => $r->param("library_levels") ||undef,
 		    library_textbook	    => $r->param("library_textbook") ||undef,
 		    library_keywords	    => $r->param("library_keywords") ||undef,
 		    library_textchapter     => $r->param("library_textchapter") ||undef,
