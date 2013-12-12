@@ -115,14 +115,11 @@ ul.nav li a:hover {
 
 h1.page-title {
 	font-size: 31.5px;
+	line-height: 35px;
 }
 
 h2.page-title {
 	border-bottom: 1px solid #ccc;
-}
-
-h1.page-title {
-    font-size: 31.5px;
 }
 
 #info-panel-right {
