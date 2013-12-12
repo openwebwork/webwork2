@@ -488,9 +488,9 @@ sub setListRow {
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->open_date && @restricted) {
 		my $restriction = ($set->restricted_status)*100;
-		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on set [_3]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2",$restriction),@restricted) if scalar(@restricted) == 1;
+		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on set [_3]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2f",$restriction),@restricted) if scalar(@restricted) == 1;
 		if(@restricted > 1) {
-		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2",$restriction));
+		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2f",$restriction));
 		  foreach(0..$#restricted) {
 		    $status .= " $restricted[$_], " if $_ != $#restricted;
 		    $status .= " and $restricted[$_]. " if $_ == $#restricted;

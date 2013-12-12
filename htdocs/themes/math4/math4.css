@@ -350,6 +350,7 @@ table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
 table.FormLayout tr.ButtonRow { text-align: left; }
 table.FormLayout tr.ButtonRowCenter { text-align: center; }
+table.FormLayout td { padding-right:10px }
 
 div.RenderSolo { background-color: #E0E0E0; color: black; }
 div.AuthorComment { background-color: #00E0E0; color: black; }
