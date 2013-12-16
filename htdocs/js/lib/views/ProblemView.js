@@ -1,5 +1,5 @@
-define(['Backbone', 'underscore','config','imagesloaded','knowl'
-    ], function(Backbone, _,config){
+define(['Backbone', 'underscore','config','models/Problem','imagesloaded','knowl'
+    ], function(Backbone, _,config,Problem){
     //##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
@@ -14,7 +14,9 @@ define(['Backbone', 'underscore','config','imagesloaded','knowl'
             var self = this;
             _.bindAll(this,"render","removeProblem");
             this.libraryView = options.libraryView;
-            
+            if(typeof(this.model)==="undefined"){
+                this.model = new Problem();
+            }
             // options.viewAttrs will determine which tools are shown on the problem
             this.allAttrs = {};
             _.extend(this.allAttrs,options.viewAttrs);
@@ -40,6 +42,10 @@ define(['Backbone', 'underscore','config','imagesloaded','knowl'
                     this.model.attributes.data="";
                 }
                 this.$el.html(this.template(this.allAttrs));
+                if(this.model.renderData.header_text){
+                    this.$el.append(this.model.renderData.header_text);    
+                }
+                
                 this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
                     self.$(".problem").removeAttr("style");
@@ -59,7 +65,7 @@ define(['Backbone', 'underscore','config','imagesloaded','knowl'
 
                 } 
 
-                this.el.id = this.model.cid;
+                this.el.id = this.model.cid; // why do we need this? 
                 this.$el.attr('data-path', this.model.get('source_file'));
                 this.$el.attr('data-source', this.allAttrs.type);
                 if (this.allAttrs.displayMode==="MathJax"){
@@ -67,11 +73,13 @@ define(['Backbone', 'underscore','config','imagesloaded','knowl'
                 }
 
                 this.stickit();
+                this.model.trigger("rendered",this);
                 
             } else {
                 this.$el.html($("#problem-loading-template").html());
                 this.model.loadHTML({displayMode: this.allAttrs.displayMode, success: function (data) {
                     self.model.set("data",data.text);
+                    self.model.renderData = data;
                     self.render();
                 }, error:function(data){
                     self.model.set("data",data.responseText);

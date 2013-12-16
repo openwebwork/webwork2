@@ -89,7 +89,7 @@ get '/courses/:course_id' => sub {
 
 		debug $session;
 
-	    template 'course_home.tt', {course_id=> params->{course_id},
+	    template 'course_home.tt', {course_id=> params->{course_id}, user=> session->{user_id},
 	        pagename=>"Course Home for " . params->{course_id},theSession=>to_json($session)},
 	        {layout=>"student.tt"};
 	}

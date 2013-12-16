@@ -15,9 +15,12 @@
 
 <script type="text/template" id="home-page-template">
 <div class="row">
-<div class="col-md-9 problem-set-container">
+<div class="col-md-8 problem-set-container">
 </div>
-<div class="col-md-3 problem-set-info-container">
+<div class="col-md-4">
+<div id="problem-set-info-container"></div>
+<div id="problem-info-container"></div>
+<div id="past-answer-list-container"></div>
 </div>
 </div>
 </script>
@@ -55,6 +58,37 @@
 
 </script>
 
+<script type="text/template" id="set-info-template">
+<h3>Problem Set Information</h3>
+	<table class="table table-condensed table-bordered">
+	<tr><td>Set Name:</td><td class="setname"></td></tr>
+	<tr><td>No. of Probs.</td><td class="problems"></td></tr>
+	<tr><td>Current Score</td><td class="score"></td></tr>
+	</table>
+</script>
+
+<script type="text/template" id="problem-info-template">
+<h3>Problem Information</h3>
+	<table class="table table-condensed table-bordered">
+	<tr><td>Problem Number:</td><td class="prob-id"></td></tr>
+	<tr><td>Current Score</td><td class="prob-score"></td></tr>
+	</table>
+</script>
+
+<script type="text/template" id="past-answer-list-template">
+<h3>Past Answers</h3>
+	<table class="table table-condensed table-bordered">
+	<tbody></tbody>
+	</table>
+</script>
+
+<script type="text/template" id="past-answer-template">
+	<td class="answer"></td>
+</script>
+
+
+
+
 
 <script type="text/template" id="user-set-table-row-template">
 <td class="setname"></td><td class="due-date show-datetime"></td><td class="problems"></td>
@@ -69,7 +103,7 @@
 <div class="row">
 <ul class="pagination problem-button-list">
 <% problems.each(function(problem){
-	print("<li><a class='problem-button' href='#'>" + problem.get("problem_id") + "</a></li>");
+	print("<li class='problem-li' data-number='"+problem.get("problem_id")+"'><a class='problem-button' href='#'>" + problem.get("problem_id") + "</a></li>");
 }); %>
 </ul>
 </div>
@@ -81,9 +115,10 @@
 		<div class="row">
 			<div class="btn-group">
 				<button class="btn btn-default preview-answer-button">Preview Answers</button>
-				<button class="btn btn-default check-answer-button" data-loading-text="Checking Answer...">Check Answers</button>
 				<% if(moment().isBefore(moment.unix(due_date))) {%>
 				<button class="btn btn-default submit-answer-button" data-loading-text="Submitting Answer..">Submit Answers</button>
+				<%} else {%>
+					<button class="btn btn-default check-answer-button" data-loading-text="Checking Answer...">Check Answers</button>
 				<%}%>
 			</div>
 		</div>
@@ -97,4 +132,36 @@
 <script type="text/template" id="problem-loading-template">
 <span style='font: italic 120%'>Loading Problem</span><i class='fa fa-spinner fa-spin fa-lg'></i>
 </script>
+
+
+<!-- Calendar Templates -->
+
+<script type="text/template" id="calendar-header">
+<div class="calendar-button-row btn-group btn-group-sm">
+<button type="button" class="previous-week btn btn-default"><i class="fa fa-chevron-left"></i>Previous Week</button>
+
+<button type="button" class="view-month btn btn-default">Month View</button>
+<button type="button" class="view-week btn btn-default">Week View</button>
+<button type="button" class="next-week btn btn-default">Next Week<i class="fa fa-chevron-right"></i></button>
+</div>
+</script>
+
+
+<script type="text/template" id="calendar-date-bar">
+<div class="<%= classes %>" data-setname="<%= setname %>" data-title="<%=setname%>" data-content="<button class='btn btn-default goto-set-button' data-setname='<%=setname%>'>Go to Set</button>">
+ <span class="assign-calendar-name"><%=setname %></span><span class="assign-info"><i class="fa fa-info-circle pull-right"></i></span></div>
+
+</script>
+
+<script type="text/template" id="calendar-template">
+<div class="calendar-header"></div>
+<div class="calendar-container">
+  <div class="calendar-view">
+    <table id='calendar-table' class='table-bordered'>
+      <thead></thead><tbody></tbody>
+    </table>
+  </div>
+</div>
+</script>
+
 

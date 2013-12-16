@@ -628,9 +628,17 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
         if !vars->{db}->existsUserSet(params->{user_id},params->{set_id});
 
     my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
-    
+  
+    for my $problem (@problems){
+        my @lastAnswers = decodeAnswers($problem->{last_answer});
+        $problem->{last_answer} = \@lastAnswers;
+    }
+
     return convertArrayOfObjectsToHash(\@problems);
 };
+
+
+
 
 ####
 #
@@ -769,13 +777,11 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
     checkPermissions(10,session->{user});
 
-    if (!vars->{db}->existsGlobalSet(param('set_id'))){
-        send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
-    }
+    send_error("The problem set with name: " . param('set_id'). " does not exist.",404) 
+        unless vars->{db}->existsGlobalSet(param('set_id'));
 
-    if (!vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id})) {
-        send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404);
-    }
+    send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404)
+        unless !vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id});
 
     my $problem_to_delete = vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
 
@@ -896,6 +902,88 @@ post '/courses/:course_id/fix/usersets' => sub {
 
 ###
 #
+#  get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id'
+#
+#  return the user problem for course course_id, set set_id and problem problem_id
+#
+###
+
+get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => sub {
+
+    checkPermissions(10,session->{user});
+
+    send_error("The problem set with name: " . params->{set_id} . " does not exist.",404) 
+        unless vars->{db}->existsGlobalSet(params->{set_id});
+
+    send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404)
+        unless vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id});
+
+    send_error("The user " . params->{user_id} . " is not assigned to set " . params->{set_id})
+        unless vars->{db}->existsUserSet(params->{user_id},params->{set_id});
+
+    my $problem = convertObjectToHash(vars->{db}->getUserProblem(params->{user_id},params->{set_id},params->{problem_id}));
+    my @answers = decodeAnswers($problem->{last_answer});
+    $problem->{last_answer} = \@answers;
+    return $problem;
+
+
+};
+
+###
+#
+#  get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers'
+#
+#  return all past answers for the given problem 
+#
+###
+
+get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers' => sub {
+
+    checkPermissions(0,session->{user});  ## need to figure out a way to check for user or prof with sufficient effective user
+
+    send_error("The problem set with name: " . params->{set_id} . " does not exist.",404) 
+        unless vars->{db}->existsGlobalSet(params->{set_id});
+
+    send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404)
+        unless vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id});
+
+    send_error("The user " . params->{user_id} . " is not assigned to set " . params->{set_id})
+        unless vars->{db}->existsUserSet(params->{user_id},params->{set_id});
+
+    my @pastAnswerIDs = vars->{db}->listProblemPastAnswers(params->{course_id},params->{user_id},
+                                                        params->{set_id},params->{problem_id});
+    my @pastAnswers = vars->{db}->getPastAnswers(\@pastAnswerIDs);
+
+    return convertArrayOfObjectsToHash(\@pastAnswers);
+};
+
+###
+#
+#  get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers/latest'
+#
+#  return all past answers for the given problem 
+#
+###
+
+get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers/latest' => sub {
+
+    checkPermissions(0,session->{user});  ## need to figure out a way to check for user or prof with sufficient effective user
+
+    send_error("The problem set with name: " . params->{set_id} . " does not exist.",404) 
+        unless vars->{db}->existsGlobalSet(params->{set_id});
+
+    send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404)
+        unless vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id});
+
+    send_error("The user " . params->{user_id} . " is not assigned to set " . params->{set_id})
+        unless vars->{db}->existsUserSet(params->{user_id},params->{set_id});
+
+    return  convertObjectToHash(vars->{db}->latestProblemPastAnswer(params->{course_id},params->{user_id},
+                                                        params->{set_id},params->{problem_id}));
+};
+
+###
+#
 # post /utils/dates 
 #
 #  A utility route to convert WW date-times to unix epochs.
@@ -933,6 +1021,7 @@ get '/courses/:course_id/pgeditor' => sub {
     template 'simple-editor.tt', {course_id=> params->{course_id},theSetting => to_json(getCourseSettings),
         pagename=>"Simple Editor",user=>session->{user}};
 };
+
 
 
 

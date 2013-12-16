@@ -24,20 +24,25 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
         <li class="active"><a href="#" data-link="progress">Progress</a></li>
-        <li><a href="#" data-link="calender">Calendar</a></li>
+        <li><a href="#" data-link="calendar">Calendar</a></li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">Problem Sets <b class="caret"></b></a>
           <ul class="dropdown-menu problem-set-dropdown">
           </ul>
-        </li>
-        <li>            
-          <button class='btn btn-default navbar-btn' href="#" id="msg-toggle"><i class="fa fa-comment-o fa-lg"></i></button>
         </li>
         <li>
           <p class="navbar-text" id="short-message">
           </p>
         </li>                   
 
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+      <li class="navbar-text login-container">
+      Welcome, [% user %]
+      </li>
+      
+      <li><button class="btn btn-default navbar-btn" id="logout-button">Logout<i class='fa fa-sign-out'></i></button>
+      </li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </nav>
@@ -68,6 +73,10 @@ Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
   </div>
 </form>
 
+</script>
+
+<script type="text/template" id="logged-in-template">
+Welcome <%=user%>.
 </script>
 
 <!-- This is where all messages to the user go -->

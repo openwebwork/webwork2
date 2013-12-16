@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use WeBWorK::Utils qw/cryptPassword/;
+use WeBWorK::GeneralUtils qw/cryptPassword/;
 use Data::Dumper;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;

@@ -21,7 +21,7 @@ use warnings;
 use Dancer;
 use Data::Dumper;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw/writeCourseLog runtime_use/;
+use WeBWorK::GeneralUtils qw/writeCourseLog runtime_use/;
 use Scalar::Util qw(weaken);
 use Carp qw/croak/;
 

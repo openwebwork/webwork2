@@ -60,3 +60,46 @@ border-top: solid 1px rgb(220, 220, 220);}
 #main {padding-left: 10px;}
 
 .no-bullets {list-style-type: none; padding-left: 0}
+
+
+/* Calendar related styles: */
+
+.calendar-view {height: 100%; overflow: auto;}
+
+#calendar-table {background: lightgray; min-width: 90%;}
+
+#calendar-table td {border: 1px solid black; width: 13%;  vertical-align: top;}
+
+.calendar-day {z-index: 5; height: 100px;}
+
+.month-view {min-height: 100px;}
+.week-view {min-height: 200px;}
+
+.this-month {background-color: lightyellow}
+.today {background-color: pink}
+.highlight-day { border: 2px solid black; background-color: lightblue;}
+
+.assign-answer {background-color: lightblue;}
+.assign-open {background-color: lightgreen;}
+.assign-due {background-color: red;}
+
+.assign-reduced-credit {background-color: rgb(255,128,0);}
+
+.assign-not-visible {background-color: darkgray;}
+
+.assign-calendar-name {font-size: 90%;}
+
+.assign-info {cursor: pointer;}
+
+.assign {text-align: center;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	cursor: move;
+	border: 1px gray solid;
+	margin: 1px;}
+
+#calendar-table th {border: 1px solid black;}
+
+.calendar-button-row {margin: 20px;}
+

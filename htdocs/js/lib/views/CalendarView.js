@@ -63,10 +63,10 @@ define(['Backbone', 'underscore', 'moment','jquery-truncate','bootstrap'],
             this.$el.append(calendarTable.el);
             return this;   
         },
-        events: {"click .previous-week": "viewPreviousWeek",
+        /*events: {"click .previous-week": "viewPreviousWeek",
             "click .next-week": "viewNextWeek",
             "click .view-week": "showWeekView",
-            "click .view-month": "showMonthView"},
+            "click .view-month": "showMonthView"},*/
         viewPreviousWeek: function (){
             var firstDate = moment(this.weeks[0][0]).subtract("days",7)
               , theWeek = [];

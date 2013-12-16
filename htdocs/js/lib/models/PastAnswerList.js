@@ -1,14 +1,14 @@
 define(['Backbone','models/PastAnswer','config'], function(Backbone,PastAnswer,config){
 	var PastAnswerList = Backbone.Collection.extend({
-		model: PastAnswer,
-		initialize: function (options){
-			this.userSet = options.user_set;
-			this.problem = options.problem;
+		initialize: function(models,options){
+			this.userSet= options.userSet;
+			this.problem= options.problem;
 		},
+		model: PastAnswer,
 		url: function () {
-			return config.urlPrefix + "courses/" + config.courseSettings.course + "/users/" + this.userSet.get("user_id")
-				+ "/sets/" + this.userSet.get("set_id")+ "/problems/" + this.problem.get("problem_id") 
-				+ "/pastanswers";
+			return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.userSet.get("user_id")
+				+ "/sets/" + this.userSet.get("set_id")+ "/problems/" + 
+				(this.problem? this.problem.get("problem_id"):"0") + "/pastanswers";
 		}
 
 	});
