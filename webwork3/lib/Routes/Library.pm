@@ -14,6 +14,7 @@ use Path::Class;
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::LibraryUtils qw/list_pg_files searchLibrary getProblemTags render/;
+use Utils::ProblemSets qw/record_results/;
 use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
@@ -363,8 +364,6 @@ get '/Library/problems/:problem_id/tags' => sub {
 ###
 
 any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => sub {
-
-	##  need to change this later.  Why do we need a course_id for a general renderer? 
 	
 	setCourseEnvironment(params->{course_id});
 
@@ -450,6 +449,8 @@ any ['get', 'post'] => '/renderer/courses/:course_id/sets/:set_id/problems/:prob
 
 	my $results = render($renderParams);
 
+
+	## if it was a post request, then we record the the results in the log file and in the past_answer database
 	if(request->is_post){
 		$results->{recorded_msg} = record_results($renderParams,$results);
 	}
@@ -458,7 +459,6 @@ any ['get', 'post'] => '/renderer/courses/:course_id/sets/:set_id/problems/:prob
 
 
 };
-
 
 
 1;

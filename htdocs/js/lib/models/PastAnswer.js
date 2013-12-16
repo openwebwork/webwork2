@@ -11,12 +11,7 @@ define(['Backbone','config'], function(Backbone,config){
 	        answer_string: "",
 		    comment_string: ""
 		},
-		parse: function (response) {
-			if(response.error) {config.checkForError();}
-			this.id = response.answer_id;
-			return response; 
-		}
-
+		idAttribute: "answer_id"
 	});
 
 

@@ -88,29 +88,6 @@ define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem','
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.get("set_id") ;
         },
-        /*parse: function (response) {
-            response.name = response.set_id;
-            if(this.attributes && this.attributes.problems &&
-                    _.isEqual(_(this.attributes.problems.models).pluck("attributes"),response.problems)){
-                response.problems = this.attributes.problems;
-            } else {
-                response.problems = new ProblemList(response.problems);
-            }
-
-            response.problems.problemSet = this;
-            return response; 
-             /*var self = this;
-             this.attributes.name = response.set_id;
-            _(_.keys(response)).each(function(key){
-                if(key==="problems"){
-                    self.attributes.problems = new ProblemList(response.problems);
-                    self.attributes.problems.each(function(_prob){ _prob.parse();})
-                    self.attributes.problems.setName = response.set_id;
-                } else {
-                    self.attributes[key]=response[key];
-                }
-            });
-        },*/
         setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
                                                 // as a moment object and defined settings.
 

@@ -7,7 +7,7 @@ use Path::Class qw/file dir/;
 use Dancer;
 use Dancer::Plugin::Database;
 use Data::Dumper;
-use WeBWorK::Utils qw(readDirectory sortByName);
+use WeBWorK::GeneralUtils qw(readDirectory);
 our @EXPORT    = ();
 our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);
 
@@ -23,16 +23,19 @@ my %ignoredir = (
 ###
 
 sub render {
+
+	debug "in general render sub";
+
 	my $renderParams = shift;
 
-	# get all parameters in the form AnSwErXXXX 
-
-	my @anskeys = grep /AnSwEr\d{4}/, request->params;
-
-	my $formFields = {};
+	my @anskeys = split(";",params->{answer_fields} || ""); 
+	
+	$renderParams->{formFields}= {};
 	for my $key (@anskeys){
-		$formFields->{$key} = params->{$key};
+		$renderParams->{formFields}->{$key} = params->{$key};
 	}
+
+	debug $renderParams->{formFields};
 
 	# remove any pretty garbage around the problem
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
@@ -55,7 +58,7 @@ sub render {
 		$renderParams->{set},
 		$renderParams->{problem},
 		123, # PSVN (practically unused in PG)
-		$formFields,
+		$renderParams->{formFields},
 		$translationOptions,
     );
 	my $warning_messages="";
@@ -69,13 +72,10 @@ sub render {
     }
     my $answers = {};
 
-
     # extract the important parts of the answer, but don't send the correct_ans if not requested. 
 
-    debug $renderParams;
-
     for my $key (@anskeys){
-    	for my $field (qw(correct_ans score student_ans)) {
+    	for my $field (qw(preview_latex_string done original_student_ans preview_text_string ans_message student_ans error_flag score correct_ans ans_label error_message _filter_name type ans_name)) {
     		if ($field ne 'correct_ans' || $renderParams->{showAnswers}){
 	    		$answers->{$key}->{$field} = $pg->{answers}->{$key}->{$field};
 	    	}
@@ -446,7 +446,7 @@ sub list_pg_files {
 	#print "templates: $templates    dir: $dir   problib: $probLib \n";
 	my $top = ($dir eq '.')? 1 : 2;
 	my @pgs = get_library_pgs($top,$templates,$dir,$probLib);
-	return sortByName(undef,@pgs);
+	return sort(@pgs);
 }
 
 ## Search for set definition files

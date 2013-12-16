@@ -202,7 +202,6 @@ sub record_results {
                                                      $renderParams->{problem}->problem_id); # checked
     my $isEssay = 0;
 
-    
     # logging student answers
 
     my $answer_log = vars->{ce}->{courseFiles}->{logs}->{'answer_log'};
@@ -214,7 +213,7 @@ sub record_results {
             # FIXME  this is the line 552 error.  make sure original student ans is defined.
             # The fact that it is not defined is probably due to an error in some answer evaluator.
             # But I think it is useful to suppress this error message in the log.
-            foreach (sortByName(undef, keys %answerHash)) {
+            foreach (sort (keys %answerHash)) {
                 my $orig_ans = $answerHash{$_}->{original_student_ans};
                 my $student_ans = defined $orig_ans ? $orig_ans : '';
                 $answerString  .= $student_ans."\t";
@@ -256,6 +255,7 @@ sub record_results {
         #}
     }
 
+
     # get a "pure" (unmerged) UserProblem to modify
     # this will be undefined if the problem has not been assigned to this user
 
@@ -263,14 +263,14 @@ sub record_results {
         # store answers in DB for sticky answers
         my %answersToStore;
         my %answerHash = %{ $results->{answers} };
-        $answersToStore{$_} = vars->{formFields}->{$_}  #$answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  Don't use it!!
+        $answersToStore{$_} = $renderParams->{formFields}->{$_}  #$answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  Don't use it!!
         foreach (keys %answerHash);
         
         # There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
         # matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
         # however we need to store them.  Fortunately they are still in the input form.
         my @extra_answer_names  = @{ $results->{flags}->{KEPT_EXTRA_ANSWERS}};
-        $answersToStore{$_} = vars->{formFields}->{$_} foreach  (@extra_answer_names);
+        $answersToStore{$_} = $renderParams->{formFields}->{$_} foreach  (@extra_answer_names);
         
         # Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
         my @answer_order = (@{$results->{flags}->{ANSWER_ENTRY_ORDER}}, @extra_answer_names);
@@ -285,16 +285,16 @@ sub record_results {
 
         # store state in DB if it makes sense
         if(1) { # if ($will{recordAnswers}) {
-            $renderParams->{problem}->status($results->{state}->{recorded_score});
-            $renderParams->{problem}->sub_status($results->{state}->{sub_recorded_score});
+            $renderParams->{problem}->status($results->{problem_state}->{recorded_score});
+            $renderParams->{problem}->sub_status($results->{problem_state}->{sub_recorded_score});
             $renderParams->{problem}->attempted(1);
-            $renderParams->{problem}->num_correct($results->{state}->{num_of_correct_ans});
-            $renderParams->{problem}->num_incorrect($results->{state}->{num_of_incorrect_ans});
-            $pureProblem->status($results->{state}->{recorded_score});
-            $pureProblem->sub_status($results->{state}->{sub_recorded_score});
+            $renderParams->{problem}->num_correct($results->{problem_state}->{num_of_correct_ans});
+            $renderParams->{problem}->num_incorrect($results->{problem_state}->{num_of_incorrect_ans});
+            $pureProblem->status($results->{problem_state}->{recorded_score});
+            $pureProblem->sub_status($results->{problem_state}->{sub_recorded_score});
             $pureProblem->attempted(1);
-            $pureProblem->num_correct($results->{state}->{num_of_correct_ans});
-            $pureProblem->num_incorrect($results->{state}->{num_of_incorrect_ans});
+            $pureProblem->num_correct($results->{problem_state}->{num_of_correct_ans});
+            $pureProblem->num_incorrect($results->{problem_state}->{num_of_incorrect_ans});
 
             #add flags for an essay question.  If its an essay question and 
             # we are submitting then there could be potential changes, and it should 
@@ -325,6 +325,8 @@ sub record_results {
                 $pureProblem->num_correct."\t".
                 $pureProblem->num_incorrect
             );
+
+            debug "here!";
         } else {
             if (before($renderParams->{set}->{open_date}) or after($renderParams->{set}->{due_date})) {
                 $scoreRecordedMessage = "Your score was not recorded because this homework set is closed.";

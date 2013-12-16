@@ -22,7 +22,11 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
             if(typeof(this.collection.problemSet)!=="undefined") { // the problem comes from a problem set
                 return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" 
                 + this.collection.problemSet.get("set_id") + "/problems/" + this.get("problem_id");
-            }  else {
+            } else if (this.collection.set_id !=="undefined" && this.collection.user_id !=="undefined"){  // it's a userProblem
+                return config.urlPrefix + "courses/" + config.courseSettings.course_id 
+                    + "/users/" + this.collection.user_id 
+                    + "/sets/" + this.collection.set_id + "/problems/" + this.get("problem_id");
+            } else {
                 return config.urlPrefix;
             }
 
@@ -30,7 +34,7 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         loadHTML: function (opts) {
             var attrs = {displayMode: opts.displayMode};
             _.extend(attrs,this.attributes);
-            if (this.collection.setName){  // the problem is part of a set
+            if (this.collection && this.collection.setName){  // the problem is part of a set
                 $.ajax({url: config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
                     + this.collection.setName + "/problems/" + this.get("problem_id"),
                     data: attrs, success: opts.success,error:opts.error});
@@ -62,15 +66,22 @@ define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
         },
         checkAnswers: function(answers, success){
             console.log("in checkAnswers");
+            answers.answer_fields = _.keys(answers).join(";");
             //var allAttributes = {};
             //_.extend(allAttributes,answers);
              $.get( config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
                     + this.collection.set_id + "/problems/" + this.get("problem_id"),answers, success);
 
         },
-        submitAnswers: function(answers,success){
-            $.post(config.urlPrefix + "renderer/courses/"+ config.courseSettings.course + "/sets/" 
-                    + this.collection.set_id + "/problems/" + this.get("problem_id"),answers, success);
+        submitAnswers: function(answers,_success){
+            answers.answer_fields = _.keys(answers).join(";");
+            $.ajax({
+                type: "POST",
+                url: config.urlPrefix + "renderer/courses/"+ config.courseSettings.course_id + "/sets/" 
+                    + this.collection.set_id + "/problems/" + this.get("problem_id"),
+                    dataType: "json",
+                data: answers, 
+                success: _success});
         }
     });
     

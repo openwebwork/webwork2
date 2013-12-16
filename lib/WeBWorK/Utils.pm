@@ -38,6 +38,7 @@ use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
+use Dancer;
 
 use constant MKDIR_ATTEMPTS => 10;
 

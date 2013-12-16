@@ -1,6 +1,7 @@
-define(['module','Backbone', 'underscore','models/UserSetListOfSets', 'views/WebPage','UserSetView',
-    'models/UserProblemList', 'views/CalendarView','config'], 
-function(module,Backbone, _, UserSetListOfSets, WebPage, UserSetView, UserProblemList, CalendarView, config){
+define(['module','Backbone', 'underscore','models/UserSetListOfSets', 'views/WebPage','UserSetView', 'models/UserSet',
+    'models/UserProblemList', 'StudentCalendarView','models/AssignmentDateList','models/AssignmentDate', 'config'], 
+function(module,Backbone, _, UserSetListOfSets, WebPage, UserSetView, UserSet, UserProblemList, StudentCalendarView, 
+            AssignmentDateList,AssignmentDate, config){
 
 var FrontPage = WebPage.extend({
     tagName: "div",
@@ -8,7 +9,7 @@ var FrontPage = WebPage.extend({
         this.constructor.__super__.initialize.apply(this, {el: this.el});
         //WebPage.prototype.initialize.apply(this, );
         _.bindAll(this, 'render','checkLogin','showProblemSets','processUserProblems','buildProblemSetPulldown',
-                        'changeView');  // include all functions that need the this object
+                        'changeView','changeSet');  // include all functions that need the this object
         var self = this;
         this.render();
         if(module.config().session){
@@ -24,29 +25,69 @@ var FrontPage = WebPage.extend({
             this.postLoginRender();
         }
 
-
+        Backbone.Stickit.addHandler({
+            selector: ".problems",
+            onGet: function(probs){ 
+                if(probs) {
+                    return probs.length;
+                }}});
+        Backbone.Stickit.addHandler({
+            selector: ".score",
+            onGet: function(probs){
+            if(probs){
+                var possiblePoints = 0
+                    , currentPoints = 0;
+                probs.each(function(p){
+                    possiblePoints+=parseFloat(p.get("value")||"0");
+                    currentPoints+=parseFloat(p.get("status")||"0");
+                })
+                return currentPoints.toFixed(3)+"/"+possiblePoints;
+            }}});
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
 
         this.$el.html($("#home-page-template").html());
+        this.setInfoView = new SetInfoView({el: $("#problem-set-info-container")});
 
         $("ul.nav a").on("click",this.changeView);
         
     },
     changeView: function(evt){
+        $("ul.navbar-nav > li").removeClass("active");
+        $(evt.target).parent().addClass("active");
         switch($(evt.target).data("link")){
             case "progress":
                 this.showProblemSets();
             break;
             case "calendar":
+                this.buildAssignmentDates();
+                new StudentCalendarView({el: this.$(".problem-set-container"),assignmentDates: this.assignmentDateList,
+                            calendarType: "month", userSets: this.userSetList}).render();
             break;
 
         }
     },
+        // This travels through all of the assignments and determines the days that assignment dates fall
+    buildAssignmentDates: function () {
+        var self = this;
+        this.assignmentDateList = new AssignmentDateList();
+        this.userSetList.each(function(_set){
+            self.assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
+                    date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+            self.assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
+                    date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+            self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
+                    date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+
+
+        });
+    },
+
     postLoginRender: function(){
         this.userSetList = new UserSetListOfSets([],{user: config.courseSettings.user});
         this.userSetList.fetch({success: this.buildProblemSetPulldown});
+        $(".login-container").html(_.template($("#logged-in-template").html(),{user: config.courseSettings.user}));
     },
     checkLogin: function(data){
         if(data.logged_in==1){
@@ -65,6 +106,7 @@ var FrontPage = WebPage.extend({
             ul.append(template(_set.attributes));
         });
         this.showProblemSets();
+        this.userSetList.on("showSet",this.changeSet);
 
     },
     showProblemSets: function() {
@@ -76,18 +118,26 @@ var FrontPage = WebPage.extend({
             _set.problems.fetch({success: self.processUserProblems});
         });
 
-        $("a.setname").off("click").on("click",function(evt){
-            //console.log($(evt.target));
-            self.userSetView = new UserSetView({el: self.$(".problem-set-container")});
-            var _set = self.userSetList.findWhere({set_id: $(evt.target).data("setname")});
-            self.userSetView.set({userSet: _set}).render();
-        });
+        $("a.setname").off("click").on("click",this.changeSet);
+
+
 
     },
     processUserProblems: function (problems) {
         var _set = this.userSetList.get(problems.set_id);
         _set.set("problems",_set.problems);
         //_set.trigger("change:problems",_set);
+    },
+    changeSet: function (evt){
+        var _set;
+        if (evt instanceof UserSet){
+            _set = evt;
+        } else {
+            _set = this.userSetList.findWhere({set_id: $(evt.target).data("setname")});
+        }
+        this.userSetView = new UserSetView({el: this.$(".problem-set-container")});
+        this.userSetView.set({userSet: _set}).render();
+        this.setInfoView.set({userSet: _set}).render();
     }
 
 });
@@ -132,25 +182,30 @@ var UserSetRowView = Backbone.View.extend({
 //    events: { "click .setname": "showSet"},
     bindings: {".setname": {observe: "set_id" , update: function($el,val,model,options){
         $el.html(_.template($("#problem-set-name-template").html(),{set_id: val}));
-    }},
+        }},
         ".due-date": "due_date",
-        ".problems": {observe: "problems", onGet: function(probs){ 
-            if(probs) {
-                return probs.length;
-            }}},
-        ".score": {observe: "problems", onGet: function(probs){
-            if(probs){
-                var possiblePoints = 0
-                    , currentPoints = 0;
-                probs.each(function(p){
-                    possiblePoints+=parseInt(p.get("value"));
-                    currentPoints+=parseInt(p.get("status"));
-                })
-                return currentPoints+"/"+possiblePoints;
-            }}}
+        ".problems": "problems",
+        ".score": "problems"
+    }
+});
 
-        }
-})
+var SetInfoView = Backbone.View.extend({
+
+    render: function (){
+        this.$el.html($("#set-info-template").html());
+        this.stickit();
+        return this;
+    },
+    set: function(options){
+        this.model = options.userSet;
+        return this;
+    },
+    bindings: {
+        ".setname": "set_id",
+        ".problems": "problems",
+        ".score": "problems"
+    }
+});
 
 
 var App = new FrontPage({el: $("#main")});
