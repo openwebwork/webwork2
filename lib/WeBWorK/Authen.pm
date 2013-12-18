@@ -909,7 +909,7 @@ sub write_log_entry {
 	if (MP2) {
 	    Apache2::ServerUtil::get_server_version() =~ 
 		       m:^Apache/(\d\.\d+\.\d+):;
-	    $APACHE24 = $1 ge '2.2.23';
+	    $APACHE24 = $1 ge '2.4.0';
 	}
 
 	# If its apache 2.4 then the API has changed
