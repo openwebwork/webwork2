@@ -22,13 +22,15 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/gateway.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 <script language="javascript" type="text/javascript" 
-  src="<!--#url type="webwork" name="htdocs"-->/js/gateway.js"></script>
+  src="<!--#url type="webwork" name="htdocs"-->/js/apps/GatewayQuiz/gateway.js"></script>
 </head>
 <body bgcolor="white">
 <div id="masthead">

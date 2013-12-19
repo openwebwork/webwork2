@@ -33,7 +33,7 @@ use strict;
 use sigtrap;
 use Carp;
 use WWSafe;
-#use Apache;
+use WeBWorK::Debug;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::Local;
@@ -93,26 +93,19 @@ use constant DISPLAY_MODES => {
 	# display name   # mode name
 	tex           => "TeX",
 	plainText     => "HTML",
-	formattedText => "HTML_tth",
 	images        => "HTML_dpng",
-	jsMath	      => "HTML_jsMath",
 	MathJax	      => "HTML_MathJax",
-	asciimath     => "HTML_asciimath",
 };
 
 use constant DISPLAY_MODE_FAILOVER => {
 		TeX            => [],
 		HTML           => [],
-		HTML_tth       => [ "HTML", ],
-		HTML_dpng      => [ "HTML_tth", "HTML", ],
-		HTML_jsMath    => [ "HTML_dpng", "HTML_tth", "HTML", ],
-		HTML_MathJax    => [ "HTML_dpng", "HTML_tth", "HTML", ],
-		HTML_asciimath => [ "HTML_dpng", "HTML_tth", "HTML", ],
+		HTML_dpng      => [ "HTML", ],
+		HTML_MathJax    => [ "HTML_dpng", "HTML", ],
 		# legacy modes -- these are not supported, but some problems might try to
 		# set the display mode to one of these values manually and some macros may
 		# provide rendered versions for these modes but not the one we want.
-		Latex2HTML  => [ "TeX", "HTML", ],
-		HTML_img    => [ "HTML_dpng", "HTML_tth", "HTML", ],
+		HTML_img    => [ "HTML_dpng", "HTML", ],
 };
 	
 
@@ -124,6 +117,7 @@ use constant DISPLAY_MODE_FAILOVER => {
 sub renderProblem {
 	my $self = shift;
     my $rh = shift;
+    
 
 ###########################################
 # Grab the course name, if this request is going to depend on 
@@ -134,6 +128,7 @@ sub renderProblem {
 	my $db;
 	my $user;
 	my $beginTime = new Benchmark;
+
 # 	if (defined($self->{courseName}) and $self->{courseName} ) {
 # 		$courseName = $self->{courseName};
 # 	} elsif (defined($rh->{course}) and $rh->{course}=~/\S/ ) {
@@ -194,7 +189,6 @@ sub renderProblem {
     local $SIG{__WARN__} = $warning_handler;
 
 
-
 ###########################################
 # Determine the method for accessing data   ???? what was this
 ###########################################
@@ -208,7 +202,6 @@ sub renderProblem {
 	# One of 
 	#   data_from_course
 	#   data_from_request
-
 ###########################################
 # Determine an effective user for this interaction
 # or create one if it is not given
@@ -324,24 +317,42 @@ sub renderProblem {
 		$problemRecord->problem_seed($problemSeed);
 		$problemRecord->status($problemStatus);
 		$problemRecord->value($problemValue);
-		$problemRecord->attempted($problemAttempted);
+		# We are faking it
+		#$problemRecord->attempted($problemAttempted);
+		#$problemRecord->num_correct($num_correct);
+		#$problemRecord->num_incorrect($num_incorrect);
+		$problemRecord->attempted(2000);
+		$problemRecord->num_correct(1000);
+		$problemRecord->num_incorrect(1000);
 		$problemRecord->last_answer($lastAnswer);
-		$problemRecord->num_correct($num_correct);
-		$problemRecord->num_incorrect($num_incorrect);
 	}
 	# initialize problem source
+	$rh->{sourceFilePath} = $rh->{path} unless defined $rh->{sourceFilePath};
+	if ($UNIT_TESTS_ON){
+			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
+			print STDERR "RenderProblem.pm: source file is ", $rh->{sourceFilePath},"\n";
+			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
+	}	
+
+
 	my $problem_source;
 	my $r_problem_source =undef;
-  	if (defined($rh->{source})) {
+ 	if (defined($rh->{source}) and $rh->{source}) {
   		$problem_source = decode_base64($rh->{source});
   		$problem_source =~ tr /\r/\n/;
 		$r_problem_source =\$problem_source;
+		# warn "source included in request";
 		$problemRecord->source_file($rh->{envir}->{fileName}) if defined $rh->{envir}->{fileName};
-  	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =/\S/)  {
+  	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =~/\S/)  {
   	    $problemRecord->source_file($rh->{sourceFilePath});
+  	    warn "reading source from ", $rh->{sourceFilePath};
+  	    $problem_source = WeBWorK::PG::IO::read_whole_file($ce->{courseDirs}->{templates}.'/'.$rh->{sourceFilePath});
+  	    #warn "source is ", $problem_source;
+  	    $r_problem_source = \$problem_source;
   	}
-	$problemRecord->source_file('foobar') unless defined($problemRecord->source_file);
+	$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
 	if ($UNIT_TESTS_ON){
+			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
 			print STDERR "RenderProblem.pm: source file is ", $problemRecord->source_file,"\n";
 			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
 	}
@@ -510,7 +521,6 @@ sub xml_filter {
 	$input;
 	
 }
-
 
 sub logTimingInfo{
     my ($beginTime,$endTime,) = @_;

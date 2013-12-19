@@ -84,8 +84,8 @@ sub initialize {
 	}
 
 	my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
-	my $visiblityStateClass = ($set->visible) ? "visible" : "hidden";
-	$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::font({class=>$visiblityStateClass}, $visiblityStateText)))) if $authz->hasPermissions($userName, "view_hidden_sets");
+	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
+	$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText)))) if $authz->hasPermissions($userName, "view_hidden_sets");
 
 
 	$self->{userName}        = $userName;
@@ -262,7 +262,7 @@ sub info {
 	
 	my $editorURL;
 	if (defined($set) and $authz->hasPermissions($userID, "modify_problem_sets")) {  
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
 			courseID => $courseID, setID => $set->set_id, problemID => 0);
 		$editorURL = $self->systemLink($editorPage, params => { file_type => 'set_header'});
 	}
@@ -280,7 +280,7 @@ sub info {
 	} else {
 		print $pg->{body_text};
 	}
-	
+
 	#print CGI::end_div();
 	#print CGI::end_div();
 	return "";
@@ -369,8 +369,8 @@ sub body {
 	if (@problemNumbers) {
 		# UPDATE - ghe3
 		# This table now contains a summary, a caption, and scope variables for the columns.
-		print CGI::start_table({-summary=>"This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.", -class=>"problem_set_table"});
-		print CGI::caption($r->maketext("Problems"));
+		print CGI::start_table({-class=>"problem_set_table"});
+		print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.","data-original-title"=>"Problems", "data-placement"=>"bottom"}, "Problems"));
 		print CGI::Tr({},
 
 			CGI::th($r->maketext("Name")),
@@ -378,8 +378,7 @@ sub body {
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
 			CGI::th($r->maketext("Status")),
-			$canScoreProblems ? CGI::th($r->maketext("Grader")) : ""
-
+			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th("")
 		);
 		
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
@@ -471,9 +470,10 @@ sub problemListRow($$$) {
 	}
 
 	return CGI::Tr({},
-		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
-		CGI::td({-nowrap=>1, -align=>"center"},
-	 		[
+#		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
+#		CGI::td({-nowrap=>1, -align=>"center"},
+		CGI::td($interactive),
+		CGI::td([
 				$attempts,
 				$remaining,
 				$problem->value,

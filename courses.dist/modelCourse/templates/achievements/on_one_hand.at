@@ -50,6 +50,10 @@
 #       when $counter >= $maxCounter.  These two variables are used to show a 
 #       progress bar for the achievement.  
 #
+#   - $tags : this contains the metadata for the problem stored in a hash.  This includes DBsubject
+#       DBchapter and DBsection Note:  These values are not super stable and are likely to change
+#       from problem to problem and year to year
+#
 #   - $localData : this is a hash which stores data for this user and achievement
 #       (changes to this variable *will* be saved!)
 #       This hash will persist from evaluation to evaluation.  You can store whatever

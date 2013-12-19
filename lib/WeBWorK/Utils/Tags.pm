@@ -29,16 +29,16 @@ use Carp;
 use IO::File;
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(
+our @EXPORT_OK = qw();
 #	list_set_versions
-);
+#);
 
-use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT);
+use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level Language );
 use constant NUMBERED => qw( TitleText AuthorText EditionText Section Problem );
 
 my $basics = join('|', BASIC);
 my $numbered = join('|', NUMBERED);
-my $re = qr/#\s*\b($basics)\s*\(\s*'?(.*?)'?\s*\)/;
+my $re = qr/#\s*\b($basics)\s*\(\s*'?(.*?)'?\s*\)\s*$/;
 
 sub istagline {
   my $line = shift;
@@ -122,8 +122,9 @@ sub settag {
   my $self = shift;
   my $tagname = shift;
   my $newval = shift;
+  my $force = shift;
 
-  if(defined($newval) and $newval and ($newval ne $self->{$tagname})) {
+  if(defined($newval) and ((defined($force) and $force) or $newval) and ((not defined($self->{$tagname})) or ($newval ne $self->{$tagname}))) {
     $self->{modified}=1;
     $self->{$tagname} = $newval;
   }
@@ -181,16 +182,15 @@ sub new {
 
   $self->{isplaceholder} = 0;
   $self->{modified} = 0;
-  my $lasttag =0;
+  my $lasttag = 1;
 
   my ($text, $edition, $textauthor, $textsection, $textproblem);
   my $textno;
   my $textinfo=[];
-  my @textproblems = (-1);
 
   open(IN,"$name") or die "can not open $name: $!";
   if ($name !~ /pg$/) {
-    print "Not a pg file";
+    warn "Not a pg file";  #print caused trouble with XMLRPC 
     $self->{file}= undef;
     bless($self, $class);
     return $self;
@@ -203,6 +203,7 @@ sub new {
     $self->{$tagname} = '';
   }
   $self->{keywords} = [];
+  #$self->{Language} = 'eng'; # Default to English
 
 
   while (<IN>) {
@@ -210,6 +211,7 @@ sub new {
   SWITCH: {
       if (/#\s*\bKEYWORDS\((.*)\)/i) {
         my @keyword = keywordcleaner($1);
+		@keyword = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
         $self->{keywords} = [@keyword];
         $lasttag = $lineno;
         last SWITCH;
@@ -217,7 +219,9 @@ sub new {
       if (/$re/) { # Checks all other un-numbered tags
         my $tmp1 = $1;
         my $tmp = $2;
-        $tmp =~ s/'/\'/g;
+        #$tmp =~ s/'/\'/g;
+        $tmp =~ s/\s+$//;
+        $tmp =~ s/^\s+//;
         $self->{$tmp1} = $tmp;
         $lasttag = $lineno;
         last SWITCH;
@@ -260,6 +264,8 @@ sub new {
         $textno = $1;
         $textsection = $2;
         $textsection =~ s/'/\'/g;
+		$textsection =~ s/[^\d\.]//g;
+		#print "|$textsection|\n";
         if ($textsection =~ /\S/) {
           $textinfo = maybenewtext($textno, $textinfo);
           if ($textsection =~ /(\d*?)\.(\d*)/) {
@@ -277,6 +283,7 @@ sub new {
         $textno = $1;
         $textproblem = $2;
         $textproblem =~ s/\D/ /g;
+				my @textproblems = (-1);
         @textproblems = split /\s+/, $textproblem;
         @textproblems = grep { $_ =~ /\S/ } @textproblems;
         if (scalar(@textproblems) or defined($textinfo->[$textno])) {
@@ -307,6 +314,13 @@ sub isplaceholder {
   return $self->{isplaceholder};
 }
 
+sub istagged {
+  my $self = shift;
+  #return 1 if (defined($self->{DBchapter}) and $self->{DBchapter} and (not $self->{isplaceholder}));
+  return 1 if (defined($self->{DBsubject}) and $self->{DBsubject} and (not $self->{isplaceholder}));
+	return 0;
+}
+
 # Try to copy in the contents of another Tag object.
 # Return 1 if ok, 0 if not compatible
 sub copyin {
@@ -319,7 +333,7 @@ sub copyin {
 #    }
 #  }
   # Just copy in all basic tags
-  for my $j (qw( DBsubject DBchapter DBsection Date Institution Author )) {
+  for my $j (qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level )) {
     $self->settag($j, $ob->{$j}) if(defined($ob->{$j}));
   }
   # Now copy in keywords
@@ -334,7 +348,7 @@ sub dumptags {
   my $fh = shift;
 
   for my $tagname ( BASIC ) {
-    print $fh "## $tagname('".$self->{$tagname}."')\n" if($self->{$tagname});
+    print $fh "## $tagname(".$self->{$tagname}.")\n" if($self->{$tagname});
   }
   my @textinfo = @{$self->{textinfo}};
   my $textno = 0;

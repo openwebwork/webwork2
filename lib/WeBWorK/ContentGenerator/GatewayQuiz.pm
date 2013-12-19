@@ -101,6 +101,7 @@ sub can_showCorrectAnswers {
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $maxAttempts && 
+		       $maxAttempts != 0 &&
 		       $Set->due_date() == $Set->answer_date() ) ) ||
 		   $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") ) &&
@@ -141,7 +142,8 @@ sub can_showSolutions {
 				after($tmplSet->answer_date) ) );
 
 	return ( ( ( after( $Set->answer_date ) || 
-		     ( $attemptsUsed >= $attempts_per_version && 
+		     ( $attemptsUsed >= $attempts_per_version &&
+		       $attempts_per_version != 0 &&
 		       $Set->due_date() == $Set->answer_date() ) ) ||
 		   $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") ) &&
@@ -201,7 +203,7 @@ sub can_recordAnswers {
 		1 : 0;
 	    my $attempts_per_version = $Set->attempts_per_version() || 0;
 	    my $attempts_used = $Problem->num_correct+$Problem->num_incorrect+$addOne;
-		if ($attempts_per_version == -1 or $attempts_used < $attempts_per_version) {
+		if ($attempts_per_version == 0 or $attempts_used < $attempts_per_version) {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_with_attempts");
 		} else {
 			return $authz->hasPermissions($User->user_id, "record_answers_after_open_date_without_attempts");
@@ -392,7 +394,7 @@ sub attemptResults {
 			     CGI::td({-class=>"output"}, $self->nbsp($resultString)) )  : "";
 		$resultsData{'Results'} = '';
 		$resultsRows{'Messages'} .= $showMessages ? 
-		    CGI::Tr( $pre . $resultsData{'Messages'} . 
+		    CGI::Tr( $resultsData{'Messages'} . 
 			     CGI::td({-class=>"output"}, $self->nbsp($answerMessage)) ) : "";
 
 		$numAns++;
@@ -717,6 +719,7 @@ sub pre_header_initialize {
 
 	# note that having $maxAttemptsPerVersion set to an infinite/0 value is
 	#    nonsensical; if we did that, why have versions? (might want to do it for one individual?)
+	# Its actually a good thing for "repeatable" practice sets
 	my $maxAttemptsPerVersion = $tmplSet->attempts_per_version() || 0;
 	my $timeInterval          = $tmplSet->time_interval() || 0;
 	my $versionsPerInterval   = $tmplSet->versions_per_interval() || 0;
@@ -838,9 +841,10 @@ sub pre_header_initialize {
 				# figure out the due date, taking into account
 				#    any time limit cap
 				my $dueTime = 
-				    ( $set->time_limit_cap &&
-				      $timeNow+$timeLimit > $set->due_date ) ?
+				    ( $timeLimit == 0 || ($set->time_limit_cap &&
+				      $timeNow+$timeLimit > $set->due_date) ) ?
 				      $set->due_date : $timeNow+$timeLimit;
+
 				$set->due_date( $dueTime );
 				$set->answer_date($set->due_date + $ansOffset);
 				$set->version_last_attempt_time( 0 );
@@ -903,7 +907,7 @@ sub pre_header_initialize {
 					"created.";
 				$self->{invalidVersionCreation} = 2;
 
-			} elsif ($currentNumAttempts < $maxAttemptsPerVersion &&
+			} elsif (($maxAttemptsPerVersion == 0 || $currentNumAttempts < $maxAttemptsPerVersion) &&
 				 $timeNow < $set->due_date() + $grace ) {
 				if ( between($set->open_date(), 
 					     $set->due_date() + $grace, 
@@ -1232,17 +1236,6 @@ sub head {
         my $ce = $self->r->ce;
         my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-        # Javascript and style for knowls
-        print qq{
-           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script>
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/Base64.js"></script>
-           <script type="text/javascript" src="$webwork_htdocs_url/js/knowl.js"></script>
-           
-
-           
-        };
-
         return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
 }
 
@@ -1304,6 +1297,7 @@ sub body {
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
+	my $courseID = $urlpath->arg("courseID");
 
 	# report everything with the same time that we started with
 	my $timeNow = $self->{timeNow};
@@ -1644,6 +1638,19 @@ sub body {
 						     "\t$timeNow\t",
 						     "$answerString"), 
 						);
+				#add to PastAnswer db
+				my $pastAnswer = $db->newPastAnswer();
+				$pastAnswer->course_id($courseID);
+				$pastAnswer->user_id($problems[$i]->user_id);
+				$pastAnswer->set_id($setVName);
+				$pastAnswer->problem_id($problems[$i]->problem_id);
+				$pastAnswer->timestamp($timeNow);
+				$pastAnswer->scores($scores);
+				$pastAnswer->answer_string($answerString);
+				$pastAnswer->source_file($problems[$i]->source_file);
+				
+				$db->addPastAnswer($pastAnswer);
+
 			}
 		}
 	}
@@ -1846,18 +1853,18 @@ sub body {
 	if ( $can{recordAnswersNextTime} ) {
 
 		# print timer
-		# FIXME: in the long run, we want to allow a test to not be
-		#    timed.  This does not allow for that possibility
 		my $timeLeft = $set->due_date() - $timeNow;  # this is in secs
-		print CGI::div({-id=>"gwTimer"},"\n");
-		print CGI::startform({-name=>"gwTimeData", -method=>"POST",
-				      -action=>$r->uri});
-		print CGI::hidden({-name=>"serverTime", -value=>$timeNow}), 
-			"\n";
-		print CGI::hidden({-name=>"serverDueTime", 
-				   -value=>$set->due_date()}), "\n";
-		print CGI::endform();
-
+		# dont print the timer if there is over 24 hours because its kind of silly
+		if ($timeLeft < 86400) {
+		    print CGI::div({-id=>"gwTimer"},"\n");
+		    print CGI::startform({-name=>"gwTimeData", -method=>"POST",
+					  -action=>$r->uri});
+		    print CGI::hidden({-name=>"serverTime", -value=>$timeNow}), 
+		    "\n";
+		    print CGI::hidden({-name=>"serverDueTime", 
+				       -value=>$set->due_date()}), "\n";
+		    print CGI::endform();
+		}
 		if ( $timeLeft < 1 && $timeLeft > 0 &&
 		     ! $authz->hasPermissions($user, "record_answers_when_acting_as_student")) {
 			print CGI::span({-class=>"resultsWithError"}, 
@@ -1896,10 +1903,8 @@ sub body {
 			}
 		}
 	} else {
-		print CGI::start_div({class=>'gwMessage'});
-
 		if ( ! $checkAnswers && ! $submitAnswers ) {
-
+			print CGI::start_div({class=>'gwMessage'});
 			if ( $can{showScore} ) {
 				my $scMsg = "Your recorded score on this " .
 					"(test number $versionNumber) is " .
@@ -1913,16 +1918,20 @@ sub body {
 				}
 				print CGI::strong($scMsg), CGI::br();
 			}
+			print CGI::end_div();
 		}
 
 		if ( $set->version_last_attempt_time ) {
+			print CGI::start_div({class=>'gwMessage'});
 			print "Time taken on test: $elapsedTime min " .
 				"($allowed min allowed).";
+			print CGI::end_div();
 		} elsif ( $exceededAllowedTime && $recordedScore != 0 ) {
+			print CGI::start_div({class=>'gwMessage'});
 			print "(This test is overtime because it was not " .
 				"submitted in the allowed time.)";
+			print CGI::end_div();
 		}
-		print CGI::end_div();
 
 		if ( $canShowWork && $set->set_id ne "Undefined_Set" ) {
 			print "The test (which is number $versionNumber) may " .
@@ -2101,11 +2110,10 @@ sub body {
 				my $points = ($pv > 1) ? 
 					" (" . $pv . " points)" : 
 					" (1 point)";
-				print CGI::a({-name=>"#$i1"},"");
+				print CGI::a({-href=>"#", -id=>"prob$i"},"");
 				print CGI::strong("Problem $problemNumber."), 
 					"$points\n", $recordMessage;
-				print CGI::div({class=>
-"problem-content"}, $pg->{body_text}),
+				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
 				       CGI::b("Note: ") : "", 
 				       CGI::i($pg->{result}->{msg}));
@@ -2128,7 +2136,7 @@ sub body {
 				# keep the jump to anchors so that jumping to 
 				#    problem number 6 still works, even if 
 				#    we're viewing only problems 5-7, etc.
-				print CGI::a({-name=>"#$i1"},""), "\n";
+				print CGI::a({-href=>"#", -id=>"prob$i"},""), "\n";
 				# and print out hidden fields with the current 
 				#    last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
@@ -2147,7 +2155,7 @@ sub body {
 # 	    print CGI::hidden({-name=>$probid, -value=>$probval}), "\n";
 			}
 		}
-		print CGI::p($jumpLinks, "\n");
+		print CGI::div($jumpLinks, "\n");
 		print "\n",CGI::hr(), "\n";
 
 		if ($can{showCorrectAnswers}) {
@@ -2212,15 +2220,17 @@ sub body {
 	# finally, put in a show answers option if appropriate
 	# print answer inspection button
 	if ($authz->hasPermissions($user, "view_answers")) {
+	    my $hiddenFields = $self->hidden_authen_fields;
+	    $hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, courseID => $ce->{courseName});
 		my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
 		print "\n", CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
-			$self->hidden_authen_fields,"\n",
+			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$ce->{courseName}), "\n",
 			CGI::hidden(-name => 'problemID', -value=>($startProb+1)), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$setVName), "\n",
 			CGI::hidden(-name => 'studentUser',    -value=>$effectiveUser), "\n",
-			CGI::p( {-align=>"left"},
+			CGI::p(
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 				), "\n",
 			CGI::endform();
@@ -2379,7 +2389,22 @@ sub problemListRow($$$) {
 
 ##### logging subroutine ####
 
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
 
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	# The Base64.js file, which handles base64 encoding and decoding
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
+	#This is for page specfific js
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
+	
+	return "";
+}
 
 
 1;

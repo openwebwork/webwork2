@@ -19,6 +19,8 @@ my   $encoding = undef;
 # For some reason this next stanza needs to be evaluated 
 # separately.  I'm not sure why it can't be
 # directly entered into the code.
+# This code was cribbed from Locale::Maketext::Simple if I remember correctly
+#
 
 eval "
 	package WeBWorK::Localize::I18N;
@@ -32,10 +34,14 @@ eval "
 	});
 	*tense = sub { \$_[1] . ((\$_[2] eq 'present') ? 'ing' : 'ed') };
 	
-" or die $@;
+" or die "Can't process eval in WeBWorK/Localize.pm: line 35:  ". $@;
  
 package WeBWorK::Localize; 
 
+# This subroutine is shared with the safe compartment in PG to 
+# allow maketext() to be constructed in PG problems and macros
+# It seems to be a little fragile -- possibly it breaks
+# on perl 5.8.8
 sub getLoc {
 	my $lang = shift;
 	my $lh = WeBWorK::Localize::I18N->get_handle($lang);	
@@ -99,7 +105,7 @@ in the fields below, and hit the \"Take Action!\" button at the bottom of the fo
 the page contains a table displaying the sets and several pieces of relevant information.",
 },
 "_CLASSLIST_EDITOR_DESCRIPTION" => q{
-tr: This is the classlist editor page, where you can view and edit the records of all the students
+This is the classlist editor page, where you can view and edit the records of all the students
 currently enrolled in this course.  The top of the page contains forms which allow you to filter
 which students to view, sort your students in a chosen order, edit student records, give new
 passwords to students, import/export student records from/to external files, or add/delete students.
@@ -108,24 +114,24 @@ the fields below, and hit the \"Take Action!\" button at the bottom of the form.
 page contains a table containing the student usernames and their information.
 },
 "_ACHIEVEMENTS_EDITOR_DESCRIPTION" => q{
-tr: This is the Achievent Editor.  It is used to edit the achievements available to students.  Please keep in mind the following facts: 
+This is the Achievement Editor.  It is used to edit the achievements available to students.  Please keep in mind the following facts: 
 -The achievements are always sorted by category and then by name.
 -Achievments are displayed, and evaluated, in the order they are listed.
 -The \"secret\" category always comes first and creates achievements which are not visible to students until they are earned.
 -The \"level\" category is used for the achievements associated to a users level.;
 },
 "_REDUCED_CREDIT_MESSAGE_1" => q{
-tr: This assignment has a Reduced Credit Period that begins [_1] and
+This assignment has a Reduced Credit Period that begins [_1] and
 ends on the due date, [_2].  During this period all additional work done counts [_3]\% of the
 original.
 },
 
 "_REDUCED_CREDIT_MESSAGE_2" => q{
-tr: This assignment had a Reduced Credit Period that began [_1] and
+This assignment had a Reduced Credit Period that began [_1] and
 ended on the due date, [_2].  During that period all additional work done counted [_3]\% of the
 original.
 },
-"_GUEST_LOGIN_MESSAGE"   => q{tr: This course supports guest logins. Click [_1] to log into this course as a guest.},
+"_GUEST_LOGIN_MESSAGE"   => q{This course supports guest logins. Click [_1] to log into this course as a guest.},
 
 "_EXTERNAL_AUTH_MESSAGE" => q{[_1] uses an external authentication system.  You've authenticated through that system, but aren't allowed to log in to this course.},
 

@@ -23,7 +23,7 @@ use constant DEFAULT_SEED => 123456;
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::PGProblemEditor2 - Edit a pg file
+WeBWorK::ContentGenerator::Instructor::PGProblemEditor2 - Edit a pg file#
 
 =cut
 
@@ -622,7 +622,7 @@ sub body {
 	}
 	my $target = 'WW_View'; #"problem$edit_level"; # increasing edit_level gives you a new window with each edit.
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script type="text/javascript" src="$site_url/js/wz_tooltip.js"></script>!;
+	print qq!<script type="text/javascript" src="$site_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::script(<<EOF);
  		function setTarget(inWindow) {
 		  document.getElementById("newWindow").checked = inWindow;
@@ -1970,8 +1970,9 @@ sub save_as_handler {
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
+	    my $targetProblemNumber   =  WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
 	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",$r,
-			courseID => $courseName, setID => $setName, problemID => $problemNumber
+			courseID => $courseName, setID => $setName, problemID => $targetProblemNumber
 		);
 		$new_file_type = $file_type;
 	} else {
@@ -2029,8 +2030,8 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	
 	return "";
 }

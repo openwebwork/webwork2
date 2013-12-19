@@ -74,8 +74,8 @@ use WeBWorK::File::Classlist;
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
 use constant HIDE_USERS_THRESHHOLD => 200;
-use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
-use constant PASSWORD_FORMS => [qw(cancelPassword savePassword)];
+use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
+use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
 use constant VIEW_FORMS => [qw(filter sort edit password import export add delete)];
 
 # permissions needed to perform a given action
@@ -156,12 +156,12 @@ use constant  FIELD_PROPERTIES => {
 	},
 	section => {
 		type => "text",
-		size => 4,
+		size => 3,
 		access => "readwrite",
 	},
 	recitation => {
 		type => "text",
-		size => 4,
+		size => 3,
 		access => "readwrite",
 	},
 	comment => {
@@ -173,6 +173,7 @@ use constant  FIELD_PROPERTIES => {
 # this really should be read from $r->ce, but that's not available here
 		type => "permission",
 		access => "readwrite",
+		size => 4,
 #		type => "number",
 #		size => 2,
 #		access => "readwrite",
@@ -477,7 +478,7 @@ sub body {
 	
 	########## print beginning of form
 	
-	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), id=>"userlist", name=>"classlist-form", class=>"edit_form"});
+	print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"userlist", id=>"classlist-form", class=>"edit_form"});
 	print $self->hidden_authen_fields();
 	
 	########## print state data
@@ -1527,7 +1528,7 @@ sub fieldEditHTML {
 	}
 	
 	if ($type eq "number" or $type eq "text") {
-		return WeBWorK::CGI_labeled_input(-type=>"text", -id=>$fieldName."_id", -label_text=>$r->maketext("Edit").":", -input_attr=>{name=>$fieldName, value=>$value, size=>$size});
+		return CGI::input({-type=>"text", -id=>$fieldName."_id", name=>$fieldName, value=>$value, size=>$size});
 	}
 		
 	if ($type eq "enumerable") {
@@ -1575,17 +1576,14 @@ sub fieldEditHTML {
 			}
 		}
 		
-		return WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>$fieldName."_id",
-			-label_text=>$r->maketext("Edit").":",
-			-input_attr=>{
-				name => $fieldName, 
-				values => \@values,
-				default => $value,
-				labels => \%labels,
-			}
-		),
+		return CGI::popup_menu({
+		    -id=>$fieldName."_id",
+		    -name => $fieldName, 
+		    -values => \@values,
+		    -default => $value,
+		    -labels => \%labels,
+				  }
+		    ),
 	}
 
 	if ($type eq "permission") {
@@ -1599,19 +1597,16 @@ sub fieldEditHTML {
 			$default = $val if ( $value eq $role );
 		}
 		
-		return WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>$fieldName."_id",
-			-label_text=>$r->maketext("Edit").":",
-			-input_attr=>{
-				-name => $fieldName,
-				-values => \@values,
-				-default => [$default], # force default of 0 to be a selector value (instead of 
-			                        # being considered as a null -- now works with CGI 3.42
-				#-default => $default,   # works with CGI 3.49 (but the above does not, go figure
-				-labels => \%labels,
-				-override => 1,    # force default value to be selected. (corrects bug on newer CGI
-			}
+		return CGI::popup_menu({
+		    -id=>$fieldName."_id",
+		    -name => $fieldName,
+		    -values => \@values,
+		    -default => [$default], # force default of 0 to be a selector value (instead of 
+		    # being considered as a null -- now works with CGI 3.42
+		    #-default => $default,   # works with CGI 3.49 (but the above does not, go figure
+		    -labels => \%labels,
+		    -override => 1,    # force default value to be selected. (corrects bug on newer CGI
+		    }
 		),
 	}
 }
@@ -1908,10 +1903,10 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/show_hide.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/classlist_handlers.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/classlist_handlers.js"}), CGI::end_script();
 	return "";
 }
 

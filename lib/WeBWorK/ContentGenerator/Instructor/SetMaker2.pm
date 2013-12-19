@@ -1016,7 +1016,7 @@ sub make_data_row {
 	#if($self->{r}->param('browse_which') ne 'browse_npl_library') {
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r,
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
@@ -1616,9 +1616,9 @@ sub options {
 }
 
 sub head {
-  print '<script src="/webwork2_files/js/dnd.js"></script>';
-  print '<script src="/webwork2_files/js/problem_grid.js"></script>';
-  print '<script src="/webwork2_files/js/form_builder.js"></script>';
+  print '<script src="/webwork2_files/js/legacy/dnd.js"></script>';
+  print '<script src="/webwork2_files/js/legacy/problem_grid.js"></script>';
+  print '<script src="/webwork2_files/js/legacy/form_builder.js"></script>';
   #my ($self) = @_;
   #my $r = $self->r;
   #start a timer to save people's stuff idk if people want this

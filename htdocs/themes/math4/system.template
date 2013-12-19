@@ -1,6 +1,10 @@
-<!DOCTYPE html
-	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset='utf-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- This encourages IE to *not* use compatibility view, which breaks math4 -->
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 
 <!--
 ################################################################################
@@ -20,16 +24,23 @@
 ################################################################################
 -->
 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
-<head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/jquery.js"></script>
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+
+<!--#if can="output_jquery_ui"-->
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+<!--#endif-->
+
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+
+<!--#if can="output_achievement_CSS"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/achievements.css"/>
+<!--#endif-->
 
 <!--#if can="output_tabber_CSS"-->
 <script type="text/javascript">
@@ -37,147 +48,161 @@ var tabberOptions = {manualStartup:true};
 </script>
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
-<!--#if can="output_jquery_ui_CSS"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
-<!--#endif-->
+
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
 
-<!--
-    Kludge to get around the fact that some modules load jquery, which clobbers
-    bootstrap above.  
--->
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/lib/vendor/bootstrap/js/bootstrap.js"></script>
-
-
 <title><!--#path style="text" text=" : " textonly="1"--></title>
+
 <!--#head-->
 </head>
+
 <body>
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
 <!--#endif-->
 
-
-<!-- Header -->
-<ul id="masthead" role="banner">
-	<li class="webwork_logo">
-		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
-	</li>
-	<li class="maa_logo">
-		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
-	</li>
-	<li id="loginstatus">
-		<!--#loginstatus-->
-	</li>
-</ul>
-
-
 <!-- Bootstrap Fluid Layout Scaffolding start -->
 <div class="container-fluid">
+<!-- Header -->
+<div id = "masthead" class="row-fluid" role="banner">
+	<div class="span2 webwork_logo">
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+	</div>
+	<div class="span4 maa_logo">
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+	</div>
+	<div id="loginstatus" class="offset3 span3">
+		<!--#loginstatus-->
+	</div>
+</div>
+
 <div class="row-fluid">
 
-
 <!-- Navigation -->
-<div id="site-navigation" class="span2" role="navigation" aria-label="main navigation">
-	<!--#if can="links"-->
-		<!--#links-->
+<div id="site-navigation" class="span2 hidden-phone" role="navigation" aria-label="main navigation">
+  <!--#if can="links"-->
+        <div id="site-links">
+	  <!--#links-->
+	  </div>
 	<!--#endif-->
+
 	<!--#if can="siblings"-->
-		<!--#siblings-->
+	<div>
+	  <!--#siblings-->
+	  </div>
 	<!--#endif-->
 	<!--#if can="options"-->
 	<div class="info-box">
-		<!--#options-->
-	</div>
+	  <!--#options-->
+	  </div>
 	<!--#endif-->
 </div>
-
 
 <!-- Main Content Area -->
 <div id="content" class="span10" >
 	<!-- Breadcrumb -->
+	<div class="row-fluid"><div class="span12">
 	<div role="navigation" aria-label="breadcrumb navigation">
 	<ul class="breadcrumb">
 		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
 	</ul>
 	</div>
+	</div></div>
+
 	<!-- Page Title -->
 	<!--#if can="title"-->
-		<h2 class='page-title'><!--#title --></h2>
+	<div class="row-fluid"><div class="span12">
+		<h1 class='page-title'><!--#title --></h1>
+	</div></div>
 	<!--#endif-->
 
+	<!--#if can="nav" can="message"--> 
+	<div class="row-fluid">
+	  <div class="problem-nav span3" role="navigation" aria-label="question navigation">
 	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
 	<!--#if can="nav"-->
-		<div class="problem-nav">
 		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
-		</div>
+	<!--#endif-->
+	  </div>
+	  
+	  <div class="Message span4 offset5">
+	    <!-- Message for the user -->
+	    <!--#if can="message"-->
+	        <!--#message-->
+	<!--#endif-->
+	  </div>
+	</div>
 	<!--#endif-->
 
-	<!-- Message for the user -->
-	<!--#if can="message"-->
-		<div class="Message">
-			<!--#message-->
-		</div>
-	<!--#endif-->
-	
-	<!-- No clue what this is --> 
+	<!-- Header Text for problem --> 
 	<!--#if can="post_header_text"-->
 		<!--#post_header_text-->
 	<!--#endif-->
-    <div class="barrier"></div>
+
 <!--	==============BEGIN BODY OF PROBLEM===============	-->
 
 	<!-- Indicate presence of perl warnings -->
 	<!--#if warnings="1"-->
-		<div class="alert alert-error">
+	<div class="row-fluid">
+		<div class="span12 alert alert-error">
 			<strong>Warning</strong> -- there may be something wrong with this question. Please inform your instructor including the warning messages below.
 		</div>
+	</div>
 	<!--#endif-->
              
 	<!--#if can="output_tag_info"-->
+	<div class="row-fluid">
+	  <div class="span12">
 		<!--#output_tag_info-->
+	</div></div>
 	<!--#endif-->
 
 	 <!--#if can="output_problem_body"--> 
-		<!-- ==== in this case print body parts --ELSE-- print entire body -->
-		  <div class="Body">
+	    <!-- ==== in this case print body parts ELSE print entire body -->		<div class="row-fluid">
+		  <div class="Body span12">
 
 			<!--#if can="output_custom_edit_message"-->
+			<div class="row-fluid"><div class="span10">
 				<!--#output_custom_edit_message-->
+			</div><div class="span2"></div></div>
 			<!--#endif-->
 			<!--#if can="output_summary"-->
-				<div>
+			<div class="row-fluid"><div class="span10">
 					<!--#output_summary-->
-				</div>
+			</div><div class="span2"></div></div>
 			<!--#endif-->
 
 			<!--#if can="output_achievement_message"-->
-				<div>
+			<div class="row-fluid"><div class="span10">
 					<!--#output_achievement_message-->
-				</div>
+			</div><div class="span2"></div></div>
 			<!--#endif-->
 			
 			<!--#if can="output_comments" "-->
-			<div>
+			<div class="row-fluid"><div class="span10">
 				  <!--#output_comments-->
-			</div>
+			</div><div class="span2"></div></div>
 			<!--#endif-->
 				
 
 
-			<!--#if can="output_hidden_info"-->
-				<!--#output_hidden_info-->
-			<!--#endif-->
 
 			<!--#if can="output_form_start"-->
+			<div class="row-fluid">
+			  <div class="span10">
 				<!--#output_form_start-->
+			    <!--#if can="output_hidden_info"-->
+				     <!--#output_hidden_info-->
+			    <!--#endif-->
 
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">
 						<!--#if can="output_problem_body"-->
+						<div class="problem-content">
 							<!--#output_problem_body-->
+						</div>
 						<!--#endif-->
 						<!--#if can="output_message"-->
 							<!--#output_message-->
@@ -187,7 +212,6 @@ var tabberOptions = {manualStartup:true};
 						<!--#endif-->
 					</div>
 				<!--#endif-->
-				<div class="barrier"></div>
 
 				<!--#if can="output_checkboxes" can="output_submit_buttons"-->
 					<p>
@@ -204,6 +228,7 @@ var tabberOptions = {manualStartup:true};
 						<!--#output_score_summary-->
 					</div>
 				<!--#endif-->
+
 				<!--#if can="output_misc"-->
 					<!--#output_misc-->
 				<!--#endif-->
@@ -219,20 +244,28 @@ var tabberOptions = {manualStartup:true};
 			<!--#info-->
 			</div>
 		<!--#endif-->
-         </div>	  
+
+		</div><div class="span2"></div></div>
+                </div></div>
+
 	<!-- ====  end printing body parts   -->
 	<!--#else-->
-	<!-- ==== couldn't print body parts so we'll print entire body -->	
-		<div class="body <!--#if can="info"-->shrinkbody<!--#endif-->">
-			<!--#body-->
-		</div>
-		<!-- inserted body as a whole -->
-		<!--#if can="info"-->
-		<div id="info-panel-right" class="info-box">
-			<!--  styles could be different for different pages so they are not set here -->
-			<!--#info-->
-		</div>
-		<!--#endif-->
+	<!-- ==== couldn't print body parts so we'll print entire body -->	         <div class="row-fluid">
+	  <!--#if can="info"-->
+	  <div class="body span8">
+	  <!--#else-->
+	    <div class="body span12">
+	  <!--#endif-->
+	      <!--#body-->
+	</div>
+	<!-- inserted body as a whole -->
+	<!--#if can="info"-->
+	<div id="info-panel-right" class="span4 info-box">
+	  <!--  styles could be different for different pages so they are not set here -->
+	  <!--#info-->
+	</div>
+	<!--#endif-->
+	</div>
 	<!--#endif-->  
 
 <!--			      ==============END BODY OF PROBLEM===============      -->
@@ -270,6 +303,8 @@ var tabberOptions = {manualStartup:true};
 <div id="footer" role="contentinfo">
 	<!--#footer-->
 </div>
+
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
 
 </body>
 </html>

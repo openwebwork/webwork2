@@ -17,6 +17,7 @@
 # This module prints out the list of achievements that a student has earned
 package WeBWorK::ContentGenerator::Achievements;
 use base qw(WeBWorK::ContentGenerator);
+use WeBWorK::AchievementItems;
 
 =head1 NAME
 
@@ -36,9 +37,11 @@ sub head {
 	my $r = $self->r;
 	my $ce = $r->ce;
 
-	#Print the achievement css file
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$ce->{webworkURLs}->{htdocs}/css/achievements.css\"/>";	
 	return "";
+}
+
+sub output_achievement_CSS {
+    return "";
 }
 
 sub initialize {
@@ -57,6 +60,32 @@ sub initialize {
 	my $globalUserAchievement = $db->getGlobalUserAchievement($effectiveUserName);
 
 	$self->{globalData} = $globalUserAchievement;
+
+	#Checks to see if user items are enavbled and if the user has
+	# achievement data
+
+	if ($ce->{achievementItemsEnabled} && defined $globalUserAchievement) {
+	    
+	    my $items = WeBWorK::AchievementItems::UserItems($effectiveUserName, $db, $ce);
+
+	    $self->{achievementItems} = $items;
+	    
+	    my $usedItem = $r->param('useditem');
+	    
+	    # if the useditem parameter is defined then the student wanted to
+	    # use an item so lets do that by calling the appropriate item's 
+	    # use method and printing results
+
+	    if (defined $usedItem) {
+		my $error = $$items[$usedItem]->use_item($effectiveUserName, $r);
+		if ($error) {
+		    $self->addmessage(CGI::div({class=>"ResultsWithError"}, $error ));
+		} else {
+		    splice(@$items, $usedItem, 1);
+		    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, "Item Used Successfully!" ));
+		}	
+	    }
+	}
 	
 }
 
@@ -92,7 +121,6 @@ sub options {
 	    $db->putGlobalUserAchievement($globalUserAchievement);
 	}
 	
-	print CGI::start_center();
 	print CGI::start_div({class=>'facebookbox'});
 	print CGI::start_form(-method=>'POST', -action=>$r->uri);
 	print $self->hidden_authen_fields;
@@ -112,7 +140,6 @@ sub options {
 	    print "</fb:login-button>";
 	    print CGI::end_div();
 	}
-	print CGI::end_center();
 	return "";
 }
 
@@ -171,6 +198,73 @@ sub body {
 	    print CGI::end_div();
 	}
 
+
+	#print any items they have if they have items
+	if ($ce->{achievementItemsEnabled} && $self->{achievementItems}) {
+	    my @items = @{$self->{achievementItems}};
+	    my $urlpath = $r->urlpath;
+	    my @setIDs = $db->listUserSets($userID);
+	    my @setProblemCount;
+	    
+	    for (my $i=0; $i<$#setIDs; $i++) {
+		$setProblemCount[$i] = $db->countUserProblems($userID,$setIDs[$i]);
+	    }
+	    
+	    my @userSetIDs = map {[$userID, $_]} @setIDs;
+	    my @unfilteredsets = $db->getMergedSets(@userSetIDs);
+	    my @sets;
+	    
+	    # achievement items only make sense for regular homeworks
+	    # so filter gateways out
+	    foreach my $set (@unfilteredsets) {
+		if ($set->assignment_type() eq 'default') {
+		    push @sets, $set;
+		}
+	    }	    
+
+	    print CGI::h2("Items");
+
+	    if (@items) {
+			    
+		my $itemnumber = 0;
+		foreach my $item (@items) {
+		    # Print each items name and description 
+		    print CGI::start_div({class=>"achievement-item"});
+		    print CGI::h3($item->name());
+		    print CGI::p($item->description());
+		    # Print a modal popup for each item which contains the form
+		    # necessary to get the data to use the item.  Print the 
+		    # form in the modal body.  
+		    print CGI::a({href=>"\#modal_".$item->id(), role=>"button", "data-toggle"=>"modal",class=>"btn",id=>"popup_".$item->id()},"Use Item");
+		    print CGI::start_div({id=>"modal_".$item->id(),class=>"modal hide fade"});
+		    print CGI::start_div({class=>'modal-header'});
+		    print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
+		    print CGI::h3($item->name()); 
+		    print CGI::end_div();
+		    print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"itemform_$itemnumber", class=>"achievementitemform"});
+		    print CGI::start_div({class=>"modal-body"});
+		    #Note: we provide the item with some information about
+		    #the current sets to help set up the form fields. 
+		    print $item->print_form(\@sets,\@setProblemCount,$r);
+		    print CGI::hidden({name=>"useditem", value=>"$itemnumber"});
+		    print $self->hidden_authen_fields;
+		    print CGI::end_div();
+		    print CGI::start_div({-class=>"modal-footer"});
+		    print CGI::submit({value=>"Submit"});
+		    print CGI::end_div();
+		    print CGI::end_form();
+		    print CGI::end_div();
+		    print CGI::end_div();
+		    
+		    $itemnumber++;
+		}
+	    } else {
+		print CGI::p("You don't have any items!");
+	    }
+	    print CGI::br();
+	    print CGI::h2("Achievements");
+	}
+
 	#Get all the achievements
 
 	my @allAchievementIDs = $db->listAchievements;
@@ -210,7 +304,7 @@ sub body {
 	
 			print CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
 			print CGI::start_div({class=>'cheevotextbox'});
-			print CGI::h2($achievement->name);
+			print CGI::h3($achievement->name);
 			print CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
 			
 			if ($achievement->max_counter and not $userAchievement->earned) {
@@ -229,8 +323,6 @@ sub body {
 		} else { # no achievements 
 		print CGI::p("No achievements have been assigned yet");
 		}
-
-	print CGI::br();
 
 	return "";
 	

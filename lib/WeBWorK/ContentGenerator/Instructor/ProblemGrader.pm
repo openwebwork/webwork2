@@ -20,7 +20,7 @@ package WeBWorK::ContentGenerator::Instructor::ProblemGrader;
 use base qw(WeBWorK::ContentGenerator);
 use WeBWorK::Utils qw(sortByName ); 
 use WeBWorK::PG;
-
+use HTML::Entities;
 =head1 NAME
 
 =cut
@@ -60,13 +60,13 @@ sub head {
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+#	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/bootstrap/css/bootstrap.popover.css\">";
+
 	my $MathJax = $ce->{webworkURLs}->{MathJax};
 	
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/lib/vendor/bootstrap/css/bootstrap.popover.css\">";
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/jquery-1.8.1.min.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/lib/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>$MathJax}), CGI::end_script();
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
 	
 	return "";
@@ -128,8 +128,8 @@ sub initialize {
 
 		#if the instructor added a comment we should save that to the latest answer
 		if ($r->param("$userID.comment")) {
-
 		    my $comment = $r->param("$userID.comment");
+
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 		    
 		    if ($userPastAnswerID) {
@@ -199,19 +199,19 @@ sub body {
 	    $set,
 	    $problem,
 	    $set->psvn, # FIXME: this field should be removed
-		$formFields,
-		{ # translation options
-			displayMode     => $displayMode,
-			showHints       => 0,
-			showSolutions   => 0,
-			refreshMath2img => 0,
-			processAnswers  => 1,
-			permissionLevel => $db->getPermissionLevel($userID)->permission,
-			effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
-		},
-	);
-
-
+	    $formFields,
+	    { # translation options
+		displayMode     => $displayMode,
+		showHints       => 0,
+		showSolutions   => 0,
+		refreshMath2img => 0,
+		processAnswers  => 1,
+		permissionLevel => $db->getPermissionLevel($userID)->permission,
+		effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
+	    },
+	    );
+	
+	
 	# check to see what type the answers are.  right now it only checks for essay but could do more
 	my %answerHash = %{ $pg->{answers} };
 	my @answerTypes;
@@ -225,15 +225,17 @@ sub body {
 	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), id=>"problem-grader-form", name=>"problem-grader-form" });
 	 
 	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All',
-				   onClick => "for (i in document.classlist.elements)  { 
-	                       if (document.classlist.elements[i].className == 'mark_correct') { 
-	                           document.classlist.elements[i].checked = true
+				   onClick => "for (i in document.forms['problem-grader-form'].elements)  { 
+	                       if (document.forms['problem-grader-form'].elements[i].className == 'mark_correct') { 
+	                           document.forms['problem-grader-form'].elements[i].checked = true
 	                       }
 	                    }" });
 
 	print CGI::start_table({width=>"1020px"});
 	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)", "&nbsp;", "Comment"]));
 	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
+
+	my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseName, setID => $setID, problemID => $problemID });
 
 	# get user records
 	my @userRecords  = ();
@@ -253,6 +255,7 @@ sub body {
 	    my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || "";
 	    
 	    my $userID = $userRecord->user_id;
+	    my $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => $userID });
 	    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 	    my $userAnswerString;
 	    my $comment = "";
@@ -284,47 +287,26 @@ sub body {
 		    # if the answwer Type is undefined then just print the result and hope for the best. 
 
 		    if (!defined($answerTypes[$i])) {
-			$userAnswerString .= CGI::p($answer);
+			$userAnswerString .= CGI::p(HTML::Entities::encode_entities($answer));
 		    
 		    } elsif ($answerTypes[$i] eq 'essay') {
 			
-			#if its an essay type answer then set up a silly problem to render the text 
-			# provided by the student.  There *has* to be a better way to do this.  
-
-			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-			local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-			my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"contextTypeset.pl\");\n Context(\"Typeset\");\n BEGIN_TEXT\n";
-			$source .= $answer . "\nEND_TEXT\n ENDDOCUMENT();";
-			my $pg = WeBWorK::PG->new(
-			    $ce,
-			    $user,
-			    $key,
-			    $set,
-			    $problem,
-			    $set->psvn, # FIXME: this field should be removed
-			    $formFields,
-			    { # translation options
-				displayMode     => $displayMode,
-				showHints       => 0,
-				showSolutions   => 0,
-				refreshMath2img => 1,
-				processAnswers  => 0,
-				permissionLevel => 0,
-				effectivePermissionLevel => 0,
-				r_source => \$source,
-			    },
-			    );
+			$answer = HTML::Entities::encode_entities($answer);
+			$answer =~ s/\n/<br>/g;
+			$userAnswerString .= CGI::p({class=>'essay-answer'},
+						    $answer);
 			
+		    } elsif ($answerTypes[$i] eq 'Value (Formula)') {
+			#if its a formula then render it and color it
+				$userAnswerString .= CGI::p(CGI::div({class => 'graded-answer', style => $scores[$i] ? 
+				       "color:#006600": "color:#660000" }, 
+				'`'.HTML::Entities::encode_entities($answer).'`'));
 
-			my $htmlout = $pg->{body_text};
-
-			$userAnswerString .= CGI::p($htmlout);
-			
-		    } else {
-			# if itsn ot an essay then don't render it but color it based off if 
-			# webwork thinks its right or not
-			$userAnswerString .= CGI::p(CGI::div({style => $scores[$i] ? 
-				       "color:#006600": "color:#660000" }, $answer));
+		    }else {
+			# if it isnt an essay then don't render it but color it 
+			$userAnswerString .= CGI::p(CGI::div({class => 'graded-answer', style => $scores[$i] ? 
+				       "color:#006600": "color:#660000" }, 
+							     HTML::Entities::encode_entities($answer)));
 		    }
 		}
 		
@@ -361,7 +343,7 @@ sub body {
 				      CGI::div({class=>
 			$userProblem->flags =~ /needs_grading/ 
 				   ? "NeedsGrading $statusClass" :
-				     $statusClass}, $prettyName), " ", 
+				     $statusClass}, CGI::a({href => $viewProblemLink, target=>"WW_View"}, $prettyName)), " ", 
 				      
 				      $userAnswerString, " ",
 				      CGI::checkbox({
@@ -402,6 +384,24 @@ sub body {
 
 	print CGI::end_form();
 	
+	print <<EOS;
+	<script type="text/javascript">
+	    MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
+		var AM = MathJax.InputJax.AsciiMath.AM;
+		for (var i=0; i< AM.symbols.length; i++) {
+		    if (AM.symbols[i].input == '**') {
+			AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
+		    }
+		}
+					     });
+	MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
+	
+	MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'graded-answer']);
+	MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'essay-answer']);
+	</script>
+EOS
+	
+
 	return "";
 }
 

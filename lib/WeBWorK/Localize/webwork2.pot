@@ -958,7 +958,7 @@ msgid "Result of last action performed: %1"
 msgstr ""
 
 #
-#: ContentGenerator/Instructor/ProblemSetList.pm:386
+#: ContentGenerato/Instructor/ProblemSetList.pm:386
 msgid "Results of last action performed"
 msgstr ""
 
@@ -1458,6 +1458,9 @@ msgstr ""
 #
 #: ContentGenerator/Instructor/UserList.pm:476
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
+msgstr ""
+
+msgid "_ANSWER_LOG_DESCRIPTION"
 msgstr ""
 
 #
@@ -2592,3 +2595,1196 @@ msgstr ""
 msgid "Hardcopy Format:"
 msgstr ""
 
+#
+msgid "Force problems to be numbered consecutively from one (always done when reordering problems)"
+msgstr ""
+
+#
+msgid "Hide hints to Students"
+msgstr ""
+
+#
+msgid "Opens"
+msgstr ""
+
+#
+msgid "Answers Due"
+msgstr ""
+
+#
+msgid "Answers Available"
+msgstr ""
+
+
+#
+msgid "Visible to Students"
+msgstr ""
+
+#
+msgid "Assignment type"
+msgstr ""
+
+#
+msgid "Refresh Display"
+msgstr ""
+
+#
+msgid "General Information"
+msgstr ""
+
+msgid "Headers"
+msgstr ""
+
+msgid "Edit it"
+msgstr ""
+
+msgid "View it"
+msgstr ""
+
+msgid "Any time problem numbers are intentionally changed, the problems will always be renumbered consecutively, starting from one.  When deleting problems, gaps will be left in the numbering unless the box above is checked."
+msgstr ""
+
+msgid "blank problem template(s) to end of homework set"
+msgstr ""
+
+msgid "(Any unsaved changes will be lost.)"
+msgstr ""
+
+msgid "Reorder problems only"
+msgstr ""
+
+msgid "Save Changes"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Set Header"
+msgstr ""
+
+msgid "Hardcopy Header"
+msgstr ""
+
+msgid "When changing problem numbers, we will move the problem to be %1 the chosen number."
+msgstr ""
+
+msgid "Delete it?"
+msgstr ""
+
+msgid "Mark Correct?"
+msgstr ""
+
+msgid "Set Description"
+msgstr ""
+
+msgid "Display Mode:"
+msgstr ""
+
+msgid "Try it"
+msgstr ""
+
+msgid "Weight"
+msgstr ""
+
+msgid "Max attempts"
+msgstr ""
+
+msgid "Source File"
+msgstr ""
+
+msgid "Use Default Header File"
+msgstr ""
+
+msgid "before"
+msgstr ""
+
+msgid "unlimited"
+msgstr ""
+
+msgid "Data"
+msgstr ""
+
+
+
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator.pm
+msgid "Library Browser 3"
+msgstr ""
+
+msgid "Orig. Lib. Browser"
+msgstr ""
+
+msgid "Show saved answers?"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Problem.pm
+msgid "Ungraded"
+msgstr ""
+
+msgid "The answer will be graded later."
+msgstr ""
+
+msgid "All of the %1 answers above are correct."
+msgstr ""
+
+msgid "%n unanswered."
+msgstr ""
+
+msgid "font-visible"
+msgstr ""
+
+msgid "font-hidden"
+msgstr ""
+
+msgid "PG question failed to render"
+msgstr ""
+
+msgid "Unable to obtain error messages from within the PG question."
+msgstr ""
+
+msgid "PG question processing error messages"
+msgstr ""
+
+msgid "PG debug messages"
+msgstr ""
+
+msgid "PG warning messages"
+msgstr ""
+
+msgid "PG internal errors"
+msgstr ""
+
+msgid "Edit1"
+msgstr ""
+
+msgid "Edit2"
+msgstr ""
+
+msgid "Edit3"
+msgstr ""
+
+msgid "SimpleEdit"
+msgstr ""
+
+msgid "You have attempted this problem %s."
+msgstr ""
+
+msgid "You have %s remaining."
+msgstr ""
+
+msgid "pg debug"
+msgstr ""
+
+msgid "pg warning"
+msgstr ""
+
+msgid "pg internal errors"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/ProblemSets.pm
+msgid "~%~"
+msgstr ""
+
+msgid "Download Hardcopy for Selected %s"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Options.pm
+msgid "The passwords you entered in the %1 and %2 fields don't match. Please retype your new password and try again."
+msgstr ""
+
+msgid "The password you entered in the %1 field does not match your current password. Please retype your current password and try again."
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Hardcopy.pm
+msgid "Generate hardcopy for selected sets and selected users"
+msgstr ""
+
+msgid "Select the homework sets for which to generate hardcopy versions. You may also select multiple users from the users list. You will receive hardcopy for each (set, user) pair."
+msgstr ""
+
+msgid "Users"
+msgstr ""
+
+msgid "Download hardcopy of set %1 for %2?"
+msgstr ""
+
+msgid "You may choose to show any of the following data. Correct answers and solutions are only available %1 after the answer date of the homework set."
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/CourseAdmin.pm
+msgid "Select an action to perform:"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm
+msgid "User Values"
+msgstr ""
+
+msgid "Class values"
+msgstr ""
+
+msgid "No data exists for set %1 and problem %2"
+msgstr ""
+
+msgid "No user specific data exists for user %1"
+msgstr ""
+
+msgid "Gateway parameters"
+msgstr ""
+
+msgid "Proctored tests require proctor authorization to start and to grade.  Provide a password to have a single password for all students to start a proctored test."
+msgstr ""
+
+msgid "global %1 for set %2 not found."
+msgstr ""
+
+msgid "UserProblem missing for user=%1 set=%2 problem=%3. This may indicate database corruption."
+msgstr ""
+
+msgid "global set %1 not found."
+msgstr ""
+
+msgid "Answers cannot be made available until on or after the due date!"
+msgstr ""
+
+msgid "Answers cannot be due until on or after the open date!"
+msgstr ""
+
+msgid "Error: open date cannot be more than 10 years from now in set %1"
+msgstr ""
+
+msgid "Error: due date cannot be more than 10 years from now in set %1"
+msgstr ""
+
+msgid "Error: answer date cannot be more than 10 years from now in set %1"
+msgstr ""
+
+msgid "No changes were saved!"
+msgstr ""
+
+msgid "Error getting old set-proctor password from the database: %1.  No update to the password was done."
+msgstr ""
+
+msgid "Error adding set-level proctor: %1"
+msgstr ""
+
+msgid "Global problem %1 for set %2 not found."
+msgstr ""
+
+msgid "Source file paths cannot include .. or start with /: your source file path was modified."
+msgstr ""
+
+msgid "Source file paths cannot include .. or start with /: your source file path was modified."
+msgstr ""
+
+msgid "Source file paths cannot include .. or start with /: your source file path was modified."
+msgstr ""
+
+msgid "Can't write to file %1"
+msgstr ""
+
+msgid "Added %1 to %2 as problem %3"
+msgstr ""
+
+msgid "Could not add %1 problems to this set.  The number must be between 1 and %2"
+msgstr ""
+
+msgid "No source filePath specified"
+msgstr ""
+
+msgid "Problem source is drawn from a grouping set"
+msgstr ""
+
+msgid "Invalid headerType %1"
+msgstr ""
+
+msgid "This source file is not readable!"
+msgstr ""
+
+msgid "This source file is a directory!"
+msgstr ""
+
+msgid "This source file does not exist!"
+msgstr ""
+
+msgid "This source file is not a plain file!"
+msgstr ""
+
+msgid "No record for global set %1."
+msgstr ""
+
+msgid "No record for user %1."
+msgstr ""
+
+msgid "You are not authorized to access the Instructor tools."
+msgstr ""
+
+msgid "Versions of a set can only be edited for one user at a time."
+msgstr ""
+
+msgid "The following users are NOT assigned to this set and will be ignored: %1"
+msgstr ""
+
+msgid "None of the selected users are assigned to this set: %1"
+msgstr ""
+
+msgid "Global set data will be shown instead of user specific data"
+msgstr ""
+
+msgid "The set-version (%1, version %2) is not assigned to user %3."
+msgstr ""
+
+msgid "The set %1 is assigned to %2."
+msgstr ""
+
+msgid "The user %1 has been assigned %2."
+msgstr ""
+
+msgid "Assigned to "
+msgstr ""
+
+msgid "Edit set %1 for this user."
+msgstr ""
+
+msgid "To edit a specific student version of this set, edit (all of) her/his assigned sets."
+msgstr ""
+
+msgid "Editing problem set %1 data for these individual students: %2"
+msgstr ""
+
+msgid "Edit set %1 data for ALL students assigned to this set."
+msgstr ""
+
+msgid "This set %1 is assigned to %2."
+msgstr ""
+
+msgid "Edit %1 of set %2."
+msgstr ""
+
+msgid "Any changes made below will be reflected in the set for ONLY the student(s) listed above."
+msgstr ""
+
+msgid "Reset Form"
+msgstr ""
+
+msgid "Data"
+msgstr ""
+
+msgid "Set headers are not used in display of gateway tests."
+msgstr ""
+
+msgid "Screen and Hardcopy set header information can not be overridden for individual students."
+msgstr ""
+
+msgid "Data"
+msgstr ""
+
+msgid "This problem uses the same source file as number %1."
+msgstr ""
+
+msgid "It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle."
+msgstr ""
+
+msgid "This set doesn't contain any problems yet."
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm
+msgid "_ACHIEVEMENTS_EDITOR_DESCRIPTION"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList3.pm
+msgid "Action %1 not found"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm
+msgid "Statistics for"
+msgstr ""
+
+msgid "Due"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm
+msgid "Student Progress for"
+msgstr ""
+
+msgid "set"
+msgstr ""
+
+msgid "Act as:"
+msgstr ""
+
+msgid "Out Of"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/UserList3.pm
+msgid "number of students not defined"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/Config.pm
+msgid "Changes saved."
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm
+msgid "Result of last action performed"
+msgstr ""
+
+msgid "Showing"
+msgstr ""
+
+msgid "out of"
+msgstr ""
+
+msgid "users"
+msgstr ""
+
+msgid "Show"
+msgstr ""
+
+msgid "users who match:"
+msgstr ""
+
+msgid "in their"
+msgstr ""
+
+msgid "then by"
+msgstr ""
+
+msgid "then by"
+msgstr ""
+
+msgid "Give new password to"
+msgstr ""
+
+msgid "Deletion destroys all user-related data and is not undoable!"
+msgstr ""
+
+msgid "to"
+msgstr ""
+
+msgid "a new file named:"
+msgstr ""
+
+msgid "active"
+msgstr ""
+
+msgid "inactive"
+msgstr ""
+
+msgid "Select"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm
+msgid "global set %1  not found."
+msgstr ""
+
+msgid "student"
+msgstr ""
+
+msgid "You are not authorized to access instructor tools"
+msgstr ""
+
+msgid "record for user %1 not found"
+msgstr ""
+
+msgid "Section:"
+msgstr ""
+
+msgid "Recitation:"
+msgstr ""
+
+msgid "Don't recognize statistics display type: |%1|"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm
+msgid "added missing permission level for user"
+msgstr ""
+
+msgid "record for visible user %1 not found"
+msgstr ""
+
+msgid "permissions for %1 not defined"
+msgstr ""
+
+msgid "record for visible user %1 not found"
+msgstr ""
+
+msgid "illegal character in input: '/'"
+msgstr ""
+
+msgid "won't be able to read from file %1/%2: does it exist? is it readable?"
+msgstr ""
+
+msgid "illegal character in input: '/'"
+msgstr ""
+
+msgid "_USER_TABLE_SUMMARY"
+msgstr ""
+
+msgid "_USER_TABLE_SUMMARY"
+msgstr ""
+
+msgid "No students shown.  Choose one of the options above to list the students in the course."
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm
+msgid "Hide Hint"
+msgstr ""
+
+msgid "Edit Set"
+msgstr ""
+
+msgid "Please enter in a value to match in the filter field."
+msgstr ""
+
+msgid "made visible for"
+msgstr ""
+
+msgid "enabled"
+msgstr ""
+
+msgid "disabled"
+msgstr ""
+
+msgid "all current users"
+msgstr ""
+
+msgid "only"
+msgstr ""
+
+msgid "Error: Due date must come after open date in set %1"
+msgstr ""
+
+msgid "Error: Answer date must come after due date in set %1"
+msgstr ""
+
+msgid "addGlobalSet %1 in ProblemSetList:  %2"
+msgstr ""
+
+msgid "error adding set location %1 for set %2: %3"
+msgstr ""
+
+msgid "input set location %1 already exists for set %2."
+msgstr ""
+
+msgid "restriction location %1 does not exist.  IP restrictions have been ignored."
+msgstr ""
+
+msgid "readSetDef error, can't read the line: ||%1||"
+msgstr ""
+
+msgid "The open date: %1, due date: %2, and answer date: %3 must be defined and in chronological order."
+msgstr ""
+
+msgid "The value %1 for the hideScore option is not valid; it will be replaced with 'N'."
+msgstr ""
+
+msgid "The value %1 for the hideWork option is not valid; it will be replaced with 'N'."
+msgstr ""
+
+msgid "The value %1 for the capTimeLimit option is not valid; it will be replaced with '0'."
+msgstr ""
+
+msgid "The value %1 for the restrictIP option is not valid; it will be replaced with 'No'."
+msgstr ""
+
+msgid "The value %1 for the relaxRestrictIP option is not valid; it will be replaced with 'No'."
+msgstr ""
+
+msgid "Can't open file %1"
+msgstr ""
+
+msgid "Illegal filename contains '..'"
+msgstr ""
+
+msgid "No record found."
+msgstr ""
+
+msgid "Existing file %1 could not be backed up and was lost."
+msgstr ""
+
+msgid "No record found for problem %1."
+msgstr ""
+
+msgid "Failed to open %1"
+msgstr ""
+
+msgid "_PROBLEM_SET_SUMMARY"
+msgstr ""
+
+msgid "_PROBLEM_SET_SUMMARY"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm
+msgid "sets"
+msgstr ""
+
+msgid "sets checked below"
+msgstr ""
+
+msgid "sets visible to students"
+msgstr ""
+
+msgid "sets hidden from students"
+msgstr ""
+
+msgid "sets with matching set IDs:"
+msgstr ""
+
+msgid "separate multiple IDs with commas"
+msgstr ""
+
+msgid "Primary sort"
+msgstr ""
+
+msgid "Secondary sort"
+msgstr ""
+
+msgid "Make"
+msgstr ""
+
+msgid "for students"
+msgstr ""
+
+msgid "Deletion destroys all set-related data and is not undoable!"
+msgstr ""
+
+msgid "Create a new set named:"
+msgstr ""
+
+msgid "as"
+msgstr ""
+
+msgid "from"
+msgstr ""
+
+msgid "the following file(s)"
+msgstr ""
+
+msgid "with set name(s):"
+msgstr ""
+
+msgid "assigning this set to"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/ProblemSet.pm
+msgid "Grader"
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/Authen.pm
+msgid "No authentication method found for your request.  "
+msgstr ""
+
+msgid "Your authentication failed.  Please try again."
+msgstr ""
+
+#/home/francois/ExtractStrings/lib/WeBWorK/Authen/LTIBasic.pm
+msgid "Username presented:  "
+msgstr ""
+
+msgid "Bad Nonce for user "
+msgstr ""
+
+msgid "Your authentication failed.  Please return to Oncourse and login again."
+msgstr ""
+
+msgid "Something was wrong with your LTI parameters.  "
+msgstr ""
+
+msgid "Your authentication failed.  Please return to Oncourse and login again."
+msgstr ""
+
+msgid "Your LTI OAuth verification failed.  "
+msgstr ""
+
+msgid "Name of course information file"
+msgstr ""
+
+msgid "The name of course information file (located in the templates directory). Its contents are displayed in the right panel next to the list of homework sets."
+msgstr ""
+
+msgid "Variable Documentation: "
+msgstr ""
+
+msgid "The configuration module did not find the data it needs to function.  Have your site administrator check that Constants.pm is up to date."
+msgstr ""
+
+#/home/francois/ExtractStrings/defaults.config (doc)
+msgid "Name of course information file"
+msgstr ""
+
+msgid "Theme (refresh page after saving changes to reveal new theme.)"
+msgstr ""
+
+msgid "Language (refresh page after saving changes to reveal new language.)"
+msgstr ""
+
+msgid "Inactivity time before a user is required to login again"
+msgstr ""
+
+msgid "Timezone for the course"
+msgstr ""
+
+msgid "Achievement Points Per Problem"
+msgstr ""
+
+msgid "Allowed to login to the course"
+msgstr ""
+
+msgid "Allowed to change their password"
+msgstr ""
+
+msgid "Allowed to <em>act as</em> another user"
+msgstr ""
+
+msgid "Can e-mail instructor"
+msgstr ""
+
+msgid "Can submit answers for a student"
+msgstr ""
+
+msgid "Can report bugs"
+msgstr ""
+
+msgid "Allowed to change their e-mail address"
+msgstr ""
+
+msgid "Allowed to view past answers"
+msgstr ""
+
+msgid "Allowed to view problems in sets which are not open yet"
+msgstr ""
+
+msgid "Allowed to see the correct answers before the answer date"
+msgstr ""
+
+msgid "Allowed to see solutions before the answer date"
+msgstr ""
+
+msgid "Can show old answers by default"
+msgstr ""
+
+msgid "Can always show old answers by default"
+msgstr ""
+
+msgid "List of display modes made available to students"
+msgstr ""
+
+msgid "The default display mode"
+msgstr ""
+
+msgid "Display the evaluated student answer"
+msgstr ""
+
+msgid "Use log base 10 instead of base <i>e</i>"
+msgstr ""
+
+msgid "Use older answer checkers"
+msgstr ""
+
+msgid "Control string for displaying matrices"
+msgstr ""
+
+msgid "Allowed error, as a percentage, for numerical comparisons"
+msgstr ""
+
+msgid "Length of Reduced Credit Period in minutes"
+msgstr ""
+
+msgid "Value of work done in Reduced Credit Period"
+msgstr ""
+
+msgid "Time that the Assignment is Due"
+msgstr ""
+
+msgid "Amount of Time (in minutes) before Due Date that the Assignment is Open"
+msgstr ""
+
+msgid "Amount of Time (in minutes) after Due Date that Answers are Open"
+msgstr ""
+
+msgid "Format for the subject line in feedback e-mails"
+msgstr ""
+
+msgid "E-mail verbosity level"
+msgstr ""
+
+msgid "E-mail addresses which can receive e-mail from a pg problem"
+msgstr ""
+
+msgid "E-mail feedback from students automatically sent to this permission level and higher:"
+msgstr ""
+
+msgid "Additional addresses for receiving feedback e-mail."
+msgstr ""
+
+msgid "Enable Course Achievements"
+msgstr ""
+
+msgid "Enable Achievement Items"
+msgstr ""
+
+msgid "Use Date Picker"
+msgstr ""
+
+msgid "<span style=\"color:red\">NOT READY for achievements: fix database.conf</span>"
+msgstr ""
+
+msgid "Use MathView editor for answer entry"
+msgstr ""
+
+msgid "Use DragMath editor for answer entry"
+msgstr ""
+
+#/home/francois/ExtractStrings/defaults.config (doc2)
+msgid "The name of course information file (located in the templates directory). Its contents are displayed in the right panel next to the list of homework sets."
+msgstr ""
+
+msgid "There are currently five themes (or skins) to choose from: ur, math, math2, and dgage.  The theme specifies a unified look and feel for the WeBWorK course web pages."
+msgstr ""
+
+msgid "WeBWorK currently has translations for four languages: \"English en\", \"Turkish tr\", \"Spanish es\", and \"French fr\" "
+msgstr ""
+
+msgid "Length of time, in seconds, a user has to be inactive before he is required to login again.<p> This value should be entered as a number, so as 3600 instead of 60*60 for one hour"
+msgstr ""
+
+msgid "Some servers handle courses taking place in different timezones.  If this course is not showing the correct timezone, enter the correct value here.  The format consists of unix times, such as \"America/New_York\",\"America/Chicago\", \"America/Denver\", \"America/Phoenix\" or \"America/Los_Angeles\". Complete list: <a href="http://en.wikipedia.org/wiki/List_of_zoneinfo_time_zones">TimeZoneFiles</a>"
+msgstr ""
+
+msgid "Activiating this will enable achievements for webwork.  Achievements can be managed by using the Achievement Editor link."
+msgstr ""
+
+msgid "This is the number of achievement points given to each user for completing a problem."
+msgstr ""
+
+msgid "Activiating this will enable achievement items. This features rewards students who earn achievements with items that allow them to affect their homework in a limited way."
+msgstr ""
+
+msgid "Users at this level and higher are allowed to change their password. Normally guest users are not allowed to change their password."
+msgstr ""
+
+msgid "Only this permission level and higher get buttons for sending e-mail to the instructor."
+msgstr ""
+
+msgid "When acting as a student, this permission level and higher can submit answers for that student."
+msgstr ""
+
+msgid "Users with at least this permission level get a link in the left panel for reporting bugs to the bug tracking system in Rochester"
+msgstr ""
+
+msgid "Users at this level and higher are allowed to change their e-mail address. Normally guest users are not allowed to change the e-mail address since it does not make sense to send e-mail to anonymous accounts."
+msgstr ""
+
+msgid "These users and higher get the \"Show Past Answers\" button on the problem page."
+msgstr ""
+
+msgid "When viewing a problem, WeBWorK usually puts the previously submitted answer in the answer blank if it is before the due date.  Below this level, old answers are never initially shown.  Typically, that is the desired behaviour for guest accounts."
+msgstr ""
+
+msgid "When viewing a problem, WeBWorK usually puts the previously submitted answer in the answer blank if it is before the due date.  At this level and higher, old answers are always shown (independent of the answer date)."
+msgstr ""
+
+msgid "<p>When viewing a problem, users may choose different methods of rendering formulas via an options box in the left panel. Here, you can adjust what display modes are listed.</p><p>Some display modes require other software to be installed on the server. Be sure to check that all display modes selected here work from your server.</p><p>The display modes are <ul><li> plainText: shows the raw LaTeX srings for formulas.<li> images: produces images using the external programs LaTeX and dvipng.<li> MathJax: a successor to jsMath, uses javascript to place render mathematics.</ul></p></p>You must use at least one display mode. If you select only one, then the options box will not give a choice of modes (since there will only be one active).</p>"
+msgstr ""
+
+msgid "Enter one of the allowed display mode types above.  See \'display modes entry\' for descriptions."
+msgstr ""
+
+msgid "Set to true to display pencil DragMath equation editor next to each answer box"
+msgstr ""
+
+msgid "Set to true to display MathView equation editor icon next to each answer box"
+msgstr ""
+
+msgid "Set to true to display the \"Entered\" column which automatically shows the evaluated student answer, e.g. 1 
+		  if student input is sin(pi/2). If this is set to false, e.g. to save space in the response area, the student can 
+		  still see their evaluated answer by hovering the mouse pointer over the typeset version of their answer."
+msgstr ""
+
+msgid "Set to true for log to mean base 10 log and false for log to mean natural logarithm"
+msgstr ""
+
+msgid "During summer 2005, a newer version of the answer checkers was implemented for answers which are functions and numbers.  The newer checkers allow more functions in student answers, and behave better in certain cases.  Some problems are specifically coded to use new (or old) answer checkers.  However, for the bulk of the problems, you can choose what the default will be here.  <p>Choosing <i>false</i> here means that the newer answer checkers will be used by default, and choosing <i>true</i> means that the old answer checkers will be used by default."
+msgstr ""
+
+msgid "String of three characters for defining the defaults for displaying matrices.  The first and last characters give the left and right delimiters of the matrix, so usually one of \"(\" or \"open brackets\" or \"|\" for a left delimiter, and one of \")\" or \"close brackets\" or \"|\" for the right delimiter.  It is also legal to specify "." for no delimiter. <p> The middle character indicates how to display vertical lines in a matrix (e.g., for an augmented matrix).  This can be s for solid lines and d for dashed lines.  While you can specify the defaults, individual problems may override these values."
+msgstr ""
+
+msgid "The Reduced Credit Period (formally called the Reduced Scoring Period) is a period before the due date during which all additional work done by the student counts at a reduced rate. Here is where you set the length of this period in minutes. If this value is greater than 0, a message like \"This assignment has a Reduced Credit Period that begins 11/08/2009  at 06:17pm EST and ends on the due date, 11/10/2009 at 06:17pm EST. During this  period all additional work done counts 50% of the original.\" will be displayed.<p> To use this, you also have to enable Reduced Credit for individual assignments by editing the set data using the Hmwk Sets Editor.<p> This works with the avg_problem_grader (which is the the default grader) and the  std_problem_grader (the all or nothing grader).  It will work with custom graders if they are written appropriately."
+msgstr ""
+
+msgid "<p>The Reduced Credit Period (formally called the Reduced Scoring Period) is a period before the due date during which all additional work done by the student counts at a reduced rate. Here is where you set the reduced rate which must be a number in the interval (0,1). 1 means no reduction. For example if this value is .5 and a student views a problem during the Reduced Credit Period, they will see the message \"You are in the Reduced Credit Period: All additional work done counts 50% of the original.\" </p><p>To use this, you also have to enable Reduced Credit for individual assignments by editing the set data using the Hmwk Sets Editor.</p><p>This works with the avg_problem_grader (which is the the default grader) and the std_problem_grader (the all or nothing grader). It will work with custom graders if they are written appropriately.</p>"
+msgstr ""
+
+msgid "The time of the day that the assignment is due.  This can be changed on an individual basis, but WeBWorK will use this value for default when a date is set."
+msgstr ""
+
+msgid "The amount of time (in minutes) before the due date when the assignment is opened."
+msgstr ""
+
+msgid "The amount of time (in minutes) after the due date that the Answers are available to student to view."
+msgstr ""
+
+msgid "When students click the <em>Email Instructor</em> button to send feedback, WeBWorK fills in the subject line.  Here you can set the subject line.  In it, you can have various bits of information filled in with the following escape sequences.<p><ul><li> %c = course ID<li> %u = user ID<li> %s = set ID<li> %p = problem ID<li> %x = section<li> %r = recitation<li> %% = literal percent sign</ul>"
+msgstr ""
+
+msgid "The e-mail verbosity level controls how much information is automatically added to feedback e-mails.  Levels are<ol><li value="0"> send only the feedback comment and context link<li value="1"> as in 0, plus user, set, problem, and PG data<li value="2"> as in 1, plus the problem environment (debugging data)</ol>"
+msgstr ""
+
+msgid "List of e-mail addresses to which e-mail can be sent by a problem. Professors need to be added to this list if questionaires are used, or other WeBWorK problems which send e-mail as part of their answer mechanism."
+msgstr ""
+
+msgid "Users with this permssion level or greater will automatically be sent feedback from students (generated when they use the \"Contact instructor\" button on any problem page).  In addition the feedback message will be sent to addresses listed below.  To send ONLY to addresses listed below set permission level to \"nobody\"."
+msgstr ""
+
+msgid "By default, feeback is sent to all users above who have permission to receive feedback. Feedback is also sent to any addresses specified in this blank. Separate email address entries by commas."
+msgstr ""
+
+msgid "When numerical answers are checked, most test if the student's answer is close enough to the programmed answer be computing the error as a percentage of the correct answer.  This value controls the default for how close the student answer has to be in order to be marked correct.<p>A value such as 0.1 means 0.1 percent error is allowed."
+msgstr ""
+
+#FileManager.pm
+msgid "Download"
+msgstr ""
+
+msgid "Rename"
+msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Make Archive"
+msgstr ""
+
+msgid "New File"
+msgstr ""
+
+msgid "New Folder"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Upload"
+msgstr ""
+
+msgid "Text"
+msgstr ""
+
+msgid "Binary"
+msgstr ""
+
+msgid "Automatic"
+msgstr ""
+
+msgid "Overwrite existing files silently"
+msgstr ""
+
+msgid "Unpack archives automatically"
+msgstr ""
+
+msgid "then delete them"
+msgstr ""
+
+msgid "Show Date & Size"
+msgstr ""
+
+msgid "Archive '%1' created successfully (%2 file%3)"
+msgstr ""
+
+msgid "Warning:"
+msgstr ""
+
+msgid " You have requested that the following items be deleted"
+msgstr ""
+
+msgid "Some of these files are directories. Only delete directories if you really know what you are doing. You can seriously damage your course if you delete the wrong thing."
+msgstr ""
+
+msgid "There is no undo for deleting files or directories!"
+msgstr ""
+
+msgid "Really delete the items listed above?"
+msgstr ""
+
+msgid "Rename file as:"
+msgstr ""
+
+msgid "New file name:"
+msgstr ""
+
+msgid "New folder name:"
+msgstr ""
+
+msgid "File <b>%1</b> already exists. Overwrite it, or rename it as:"
+msgstr ""
+
+msgid "Copy file as:"
+msgstr ""
+
+
+#/home/francois/ExtractStrings/SetMaker.pm
+msgid "%1 Problems: "
+msgstr ""
+
+msgid "Browse from: "
+msgstr ""
+
+msgid "There are no matching WeBWorK problems"
+msgstr ""
+
+msgid "There are %1 matching WeBWorK problems"
+msgstr ""
+
+msgid "Update Menus"
+msgstr ""
+
+msgid "Reset"
+msgstr ""
+
+msgid "Basic Search"
+msgstr ""
+
+msgid "Textbook:"
+msgstr ""
+
+msgid "Text chapter:"
+msgstr ""
+
+msgid "Text section:"
+msgstr ""
+
+msgid "Level:"
+msgstr ""
+
+msgid "Keywords:"
+msgstr ""
+
+msgid "Previous page"
+msgstr ""
+
+msgid "Next page"
+msgstr ""
+
+msgid "Add All"
+msgstr ""
+
+msgid "Clear Problem Display"
+msgstr ""
+
+msgid "Create a New Set in This Course:"
+msgstr ""
+
+msgid "Name for new set here"
+msgstr ""
+
+msgid "National Problem Library"
+msgstr ""
+
+msgid "Local Problems"
+msgstr ""
+
+msgid "From This Course"
+msgstr ""
+
+msgid "Set Definition Files"
+msgstr ""
+
+msgid " Display Mode: "
+msgstr ""
+
+msgid " Max. Shown: "
+msgstr ""
+
+msgid "Edit Target Set"
+msgstr ""
+
+msgid "Add problems to "
+msgstr ""
+
+msgid "Target Set: "
+msgstr ""
+
+msgid "Advanced Search"
+msgstr ""
+
+msgid "Browse "
+msgstr ""
+
+msgid "Subject:"
+msgstr ""
+
+msgid "Chapter:"
+msgstr ""
+
+msgid "Section:"
+msgstr ""
+
+msgid "Local"
+msgstr ""
+
+msgid "All Chapters"
+msgstr ""
+
+msgid "All Subjects"
+msgstr ""
+
+msgid "All Sections"
+msgstr ""
+
+msgid "All Textbooks"
+msgstr ""
+
+msgid "View Problems"
+msgstr ""
+
+#/home/francois/ExtractStrings/SendMail.pm
+msgid "Message file: "
+msgstr ""
+
+msgid "Save file to: "
+msgstr ""
+
+msgid "Editor rows: "
+msgstr ""
+
+msgid " columns: "
+msgstr ""
+
+msgid "Send to:"
+msgstr ""
+
+msgid "Preview set to: "
+msgstr ""
+
+msgid "Update settings and refresh page"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Merge file: "
+msgstr ""
+
+msgid "Reply-To: "
+msgstr ""
+
+msgid "Subject:  "
+msgstr ""
+
+msgid "All students in course"
+msgstr ""
+
+msgid "Selected students"
+msgstr ""
+
+msgid "Preview message"
+msgstr ""
+
+msgid "Send Email"
+msgstr ""
+
+msgid "Save as:"
+msgstr ""
+
+msgid "Save as Default"
+msgstr ""

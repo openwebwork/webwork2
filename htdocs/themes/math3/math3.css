@@ -448,22 +448,25 @@ clear: both;
  * it is emitted by WW code in ProblemSet.pl (not in system.template) ! */
 #InfoPanel {
     font-size:100%;
-    float: left; /*was right*/
-    min-width: 0;
-    overflow: hidden; /*was auto*/
-    /*margin-right: -1px;*/
-    background-color: #fff;
+
+	float: left; /*was right*/
+	min-width: 0;
+	overflow: auto; /*was hidden*/
+	/*margin-right: -1px;*/
+	background-color: #fff;
+
 }
 #InfoPanel ol {
 	font-size:100%;
 }
 
-#problem-content {
+.problem-content {
   margin-left:auto;
   margin-right:auto;
   border: 2px solid black;
   padding: 10px;
 }
+
 /* tables used for laying out form fields shouldn't have a border */
 table.FormLayout { border: 0; }
 table.FormLayout tr { vertical-align: top; }
@@ -574,11 +577,14 @@ div.NoFontMessage {
 }
 
 /* text colors for visible and hidden sets */
+
 font.visible   { font-style: normal; font-weight: normal; color: #000000; background-color: inherit; display:inline-table; visibility: visible; } /* black */
 font.hidden { font-style: italic; font-weight: normal; color: #aaaaaa; background-color: inherit; display:inline-table; visibility: visible;} /* light grey */
 table font {font-size:75%}
 table a {font-size:75%}
 table th {font-size:75%}
+
+
 /* styles used when editing a temporary file */
 .temporaryFile { font-style: italic; color: #F60; background-color: inherit; }
 
@@ -624,6 +630,22 @@ table th {font-size:75%}
 
 .edit_form  span#filter_err_msg{
 	display: none;
+}
+
+/*styles for the past answer page */
+.past-answer-table td {
+    white-space: nowrap;
+    min-width: 20px;
+}
+
+.past-answer-table .table-rule {
+    border-bottom: 1px solid #d5d5d5;
+    padding-bottom: 5px;
+}
+.past-answer-table .essay,
+.past-answer-table .comment {
+    min-width: 400px;
+    white-space: normal;
 }
 
 /*Styles for the classlist editor page*/
@@ -830,7 +852,7 @@ span.gray_button{
 #pg_editor_frame_id{
     width:95%;
     height:390px;
-    overflow:hidden;
+    overflow:scroll;
 }
 
 #render-modal.modal {
@@ -895,6 +917,7 @@ table.problem_set_table th{
 }
 table.problem_set_table td{
 	padding-right: 30px;
+/*	text-align:center; */
 }
 div.problem_set_options {
 	clear: both;
@@ -903,4 +926,22 @@ div.problem_set_options {
 
 table#grades_table pre{
 	float: left;
+}
+
+table#grades_table {
+    border:1px solid black;
+}
+
+table#grades_table th {
+    text-align:center;
+}
+
+#render-modal.modal {
+    width:1024px;
+    left:25%;
+}
+
+#render-modal .modal-body {
+    height:95%;
+    width:95%;
 }

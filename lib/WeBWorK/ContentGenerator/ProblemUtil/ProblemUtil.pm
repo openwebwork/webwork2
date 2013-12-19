@@ -176,9 +176,9 @@ sub process_and_log_answer{
 				}
 
 				if ($db->putUserProblem($pureProblem)) {
-					$scoreRecordedMessage = "Your score was recorded.";
+					$scoreRecordedMessage = $r->maketext("Your score was recorded.");
 				} else {
-					$scoreRecordedMessage = "Your score was not recorded because there was a failure in storing the problem record to the database.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded because there was a failure in storing the problem record to the database.");
 				}
 				# write to the transaction log, just to make sure
 				writeLog($self->{ce}, "transaction",
@@ -197,13 +197,13 @@ sub process_and_log_answer{
 				);
 			} else {
 				if (before($set->open_date) or after($set->due_date)) {
-					$scoreRecordedMessage = "Your score was not recorded because this homework set is closed.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded because this homework set is closed.");
 				} else {
-					$scoreRecordedMessage = "Your score was not recorded.";
+					$scoreRecordedMessage = $r->maketext("Your score was not recorded.");
 				}
 			}
 		} else {
-			$scoreRecordedMessage = "Your score was not recorded because this problem has not been assigned to you.";
+			$scoreRecordedMessage = $r->maketext("Your score was not recorded because this problem has not been assigned to you.");
 		}
 	}
 	
@@ -241,7 +241,7 @@ sub process_editorLink{
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, "Edit this problem"));
@@ -274,7 +274,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/wz_tooltip.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
 }
 
 # output_summary subroutine
@@ -341,24 +341,25 @@ sub output_summary{
 
 # output_CSS subroutine
 
-# prints the CSS scripts to page.  Does some PERL trickery to form the styles for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
+# prints the CSS scripts to page.  Does some PERL trickery to form the styles 
+# for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
 
-sub output_CSS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $pg = $self->{pg};
-
-	# always show colors for checkAnswers
-	# show colors for submit answer if 
-	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
-		print CGI::start_style({type=>"text/css"});
-		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
-		print	CGI::end_style();
-	}
-}
+# sub output_CSS{
+# 
+# 	my $self = shift;
+# 	my $r = $self->r;
+# 	my $ce = $r->ce;
+# 	my $pg = $self->{pg};
+# 
+# 	# always show colors for checkAnswers
+# 	# show colors for submit answer if 
+# 	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
+# 		print CGI::start_style({type=>"text/css"});
+# 		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
+# 		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
+# 		print	CGI::end_style();
+# 	}
+# }
 
 # output_main_form subroutine.
 

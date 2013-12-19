@@ -975,6 +975,7 @@ sub write_problem_tex {
 	my $db = $r->db;
 	my $authz  = $r->authz;
 	my $userID = $r->param("user");
+	my $eUserID = $r->param("effectiveUser");
 	my $versioned = $self->{versioned};
 	my %canShowScore = %{$self->{canShowScore}};
 
@@ -1052,6 +1053,7 @@ sub write_problem_tex {
 			showSolutions   => $showSolutions      ? 1 : 0, # (or what? -sam)
 			processAnswers  => ($showCorrectAnswers || $printStudentAnswers) ? 1 : 0,
 			permissionLevel => $db->getPermissionLevel($userID)->permission,
+			effectivePermissionLevel => $db->getPermissionLevel($eUserID)->permission,
 		};
 
 	if ( $versioned && $MergedProblem->problem_id != 0 ) {
@@ -1085,7 +1087,7 @@ sub write_problem_tex {
 	my $problem_desc;
 	if ($pg->{warnings} ne "" or $pg->{flags}->{error_flag}) {
 		my $edit_urlpath = $r->urlpath->newFromModule(
-			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r,
 			courseID  => $r->urlpath->arg("courseID"),
 			setID     => $MergedProblem->set_id,
 			problemID => $MergedProblem->problem_id,

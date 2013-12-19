@@ -1,3 +1,5 @@
+
+
 /* WeBWorK Online Homework Delivery System
  * Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
  * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
@@ -13,21 +15,29 @@
  * Artistic License for more details.
  */
 
-/* Bootstrap Overrides */
-.container-fluid {
-	padding: 0.5em;
+/* Bootstrap overrides */
+.row-fluid [class*="span"] {
+    min-height:0px;
+}
+
+input[type="checkbox"] {
+    margin-right:.25em;
 }
 
 /* Banner */
-ul#masthead {
+#masthead {
 	background-color: #038;
-	list-style-type: none;
 	margin: 0;
 	padding: 0;
 	padding: 5px;
 }
 
-li.webwork_logo {
+/* Bootstrap Overrides */
+.container-fluid {
+	padding: 0.5em;
+}
+
+.webwork_logo {
 	background-color: #1048ae;
 	font-size: 1.6em;
 	font-weight: 500;
@@ -36,59 +46,49 @@ li.webwork_logo {
 								the logo & text doesn't look lopsided */
 }
 
-li.webwork_logo img {
+.webwork_logo img {
 	padding-right: 5px; /* distance itself to the Webwork text */
 }
 
-li.maa_logo img {
+.maa_logo img {
 	vertical-align: center;
 }
 
-ul#masthead li {
-	display: inline-block;
-	margin-right: 1em;
-	background: 
-	margin: 0;
-}
-
-ul#masthead a {
+#masthead a {
 	color: white;
 }
 
-ul#masthead a:hover {
+#masthead a:hover {
 	text-decoration: none;
 }
 
-ul#masthead li#loginstatus {
-	margin-right: 2px;
-}
-
-li#loginstatus {
+#loginstatus {
+    	padding-top:1ex;
 	color: white;
 	text-align: right;
-	padding: 0;
-	float: right;
 	font-size: 0.85em;
 	font-weight: normal;
 } 
 
-li#loginstatus a {
+#loginstatus a {
 	color: black;
-	margin-left: 0.5em;
 }
 
-li#loginstatus a .icon-signout {
+#loginstatus a .icon-signout {
 	font-size: 1em;
-	padding-left: 0.3em;
 }
 
 
 /* Nav */
-#site-navigation ul:first-child {
-	border-radius: 8px;
+
+#site-links ul {
 	border: 1px solid #e6e6e6;
 	background: #f6f6f6;
 	overflow: hidden;
+}
+
+#site-links ul ul {
+    border:0px;
 }
 
 ul.nav li a:hover {
@@ -97,6 +97,10 @@ ul.nav li a:hover {
 
 #site-navigation .info-box {
 	margin-top: 0.5em;
+}
+
+#site-navigation .info-box ul {
+        overflow: hidden;
 }
 
 /* Main Content */
@@ -109,17 +113,22 @@ ul.nav li a:hover {
 	width: 72%;
 }
 
+h1.page-title {
+	font-size: 31.5px;
+	line-height: 35px;
+}
+
 h2.page-title {
 	border-bottom: 1px solid #ccc;
 }
 
 #info-panel-right {
 	margin-bottom: 0.5em;
-	width: 25%;
+/*	width: 25%; 8*/
 	overflow: hidden;
 	display: inline-block;
 	vertical-align: top;
-	float: right;
+/*	float: right; */
 }
 
 .breadcrumb {
@@ -130,26 +139,26 @@ h2.page-title {
 	clear: both;
 }
 
+.Warnings code {
+    	white-space: normal;
+}
+
 /* Question nav section */
 .problem-nav {
-	width: 30%;
-	margin-bottom: 1em;
+	margin-bottom:1ex;
 	display: inline-block;
+	
 }
 
 /* Message section */
 
 .Message {
-	display: inline-block;
-}
+    display: inline-block;
+    margin-bottom:1ex;
+}   
 
-.Message div, .Message span {
-	background-color:#eee;
-	padding: 0.5em;
-}
-
-font.visible   { font-weight: bold; }
-font.hidden { font-style: italic; } 
+.font-visible   { font-weight: bold; }
+.font-hidden { font-style: italic; } 
 
 /* Home Page */
 ul.courses-list {
@@ -173,13 +182,33 @@ ul.courses-list a:hover {
 	color: white;
 }
 
+/* past answers page */
+.past-answer-table td {
+    white-space: nowrap;
+    min-width: 20px;
+}
+
+.past-answer-table .table-rule {
+    border-top: 3px solid #d5d5d5;
+    padding-top: 5px;
+}
+.past-answer-table .essay,
+.past-answer-table .comment {
+    min-width: 400px;
+    white-space: normal;
+}
+
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you
  * to scroll if you don't have that width, don't know how to fix it */
 table.classlist-table {
-	display: block;
+/*	display: block; */
 	max-width: 95%; /* prevent it from violating container-fluid's padding,
 					 only valid in a rare edge case */
+}
+
+table.classlist-table .tbody {
+    width: 100%;
 }
 
 /* Homework Sets */
@@ -286,9 +315,11 @@ textarea {
   line-height: 18px;
   width: auto;
 }
+
 input {
 	height: auto;
 }
+
 .barrier {
 	clear:both;
 	border: none; /* 1px solid grey; */
@@ -314,18 +345,12 @@ input {
 	font-size:100%;
 }
 
-#problem-content {
-  margin-left:auto;
-  margin-right:auto;
-  border: 2px solid black;
-  padding: 10px;
-
-}
 table.FormLayout { border: 0; }
 table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
 table.FormLayout tr.ButtonRow { text-align: left; }
 table.FormLayout tr.ButtonRowCenter { text-align: center; }
+table.FormLayout td { padding-right:10px }
 
 div.RenderSolo { background-color: #E0E0E0; color: black; }
 div.AuthorComment { background-color: #00E0E0; color: black; }
@@ -349,8 +374,13 @@ span.ResultsWithError { color: #FF9494; background-color: inherit; } /* error re
 span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
 span.incorrect { color: #FF9494; background-color: inherit; } /* red */
+span.unattempted { color: inherit; background-color: #88ECFF;}
 input.correct   { color:inherit; background-color: #8F8; } /* green */
-input.incorrect { color;inherit; background-color: #FF9494; } /* red */
+input.incorrect { color:inherit; background-color: #FF9494; } /* red */
+
+.results-popover {
+    cursor : pointer;
+}
 
 /* styles used by WeBWorK::HTML::ScrollingRecordList */
 div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
@@ -366,6 +396,7 @@ div.ScrollingRecordList select.ScrollingRecordList { width: 99%; }
 
 .viewOptions label {
     font-size:small;
+    display:block;
 }
 
 /* messages, attempt results, answer previews, etc. go in this DIV */
@@ -395,6 +426,10 @@ table.attemptResults th {
 	background-color: #DDDDDD;
 }
 
+.attemptResults .popover {
+    max-width: 100%;
+}
+
 /*styles for the instructor comment box */
 
 .answerComments {
@@ -407,6 +442,16 @@ table.attemptResults th {
     padding: 2px 5px 2px 5px;
     margin-bottom:1em;
     background-color: #E8E8E8;
+}
+
+/* Make hr a black line for problem render areas so that
+ * it can be used for fractions
+ */
+.RenderSolo hr,
+.problem-content hr {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-top-color: rgb(22,22,22);
 }
 
 /* override above settings in tables used to display ans_array results */
@@ -670,8 +715,8 @@ table caption{
 
 #pg_editor_frame_id{
     width:95%;
-    height:390px;
-    overflow:hidden;
+    height:590px;
+    overflow:scroll;
 }
 
 #render-modal.modal {
@@ -682,6 +727,7 @@ table caption{
 #render-modal .modal-body {
     height:95%;
     width:95%;
+    max-height:600px;
 }
 
 .radio_span, 
@@ -712,6 +758,12 @@ table.problem_sets_table td{
 div.problem_sets_options {
 	clear: both;
 	margin: 1% 1% 1% 1%;
+}
+
+#set_table_id a.set-id-tooltip,
+#set_table_id a.set-id-tooltip:hover {
+    text-decoration: none;
+    color: #000000;
 }
 
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
@@ -756,6 +808,7 @@ table#grades_table pre{
 #send-mail-form select,
 .set-list-form input,
 .set-list-form select,
+.set-list-form button,
 .user-list-form input,
 .user-list-form select {
     margin-top: .15em;
@@ -774,7 +827,7 @@ table#grades_table pre{
 #problem_set_form .btn {
     margin-left:.5ex;
     margin-right:.5ex;
-}
+} 
 
 #mainform .btn,
 #problem_set_form .btn {
@@ -782,11 +835,13 @@ table#grades_table pre{
     margin-top:.25ex;
 }
 
+#problem_set_form .ui-datepicker-trigger {
+    margin: 0;
+}
+
 #problem_set_form input[type="checkbox"] {
     margin-bottom:.5ex;
 }
-
-
 
 #editor input[type="radio"]{
     margin-right:.5ex;
@@ -795,6 +850,13 @@ table#grades_table pre{
 
 #problem-grader-form select {
     width:60px;
+}
+
+#problem-grader-form .graded-answer,
+#problem-grader-form .essay-answer {
+    border-bottom: 1px solid #d5d5d5;
+    margin-bottom:2px;
+    padding-bottom:5px;
 }
 
 .tab-pane {
@@ -810,3 +872,12 @@ table#grades_table pre{
     font-size:small;
 }
 
+/* Equation editor bugfixes */
+#eqEditorDiv {
+    overflow:visible;
+}
+
+#openEqEditor {
+    min-height:35px;
+    min-width:43px;
+}
