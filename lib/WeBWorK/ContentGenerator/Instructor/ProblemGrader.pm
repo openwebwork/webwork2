@@ -129,10 +129,6 @@ sub initialize {
 		#if the instructor added a comment we should save that to the latest answer
 		if ($r->param("$userID.comment")) {
 		    my $comment = $r->param("$userID.comment");
-<<<<<<< HEAD
-=======
-
->>>>>>> release/2.8
 		    my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
 		    
 		    if ($userPastAnswerID) {
