@@ -128,8 +128,7 @@ sub fake_problem {
 	my $db = shift; 
 	my %options = @_;
 	my $problem = $db->newGlobalProblem(); 
-
-	debug("In fake_problem");
+	#debug("In fake_problem");
 
 	$problem = global2user($db->{problem_user}->{record}, $problem); 
 	$problem->set_id(fakeSetName); 
@@ -142,18 +141,18 @@ sub fake_problem {
 
 	$problem->status(0);
 	$problem->sub_status(0); 
-	$problem->attempted(0); 
+	$problem->attempted(2000);  # Large so hints won't be blocked
 	$problem->last_answer(""); 
-	$problem->num_correct(0); 
-	$problem->num_incorrect(0); 
+	$problem->num_correct(1000); 
+	$problem->num_incorrect(1000); 
 
-	for my $key (keys(%{$problem})){
-		my $value = '####UNDEF###';
-		if ($problem->{$key}) {
-			$value = $problem->{$key};
-		}
-		debug($key . " : " . $value);
-	}
+	#for my $key (keys(%{$problem})){
+	#	my $value = '####UNDEF###';
+	#	if ($problem->{$key}) {
+	#		$value = $problem->{$key};
+	#	}
+	#	debug($key . " : " . $value);
+	#}
 
 
 
@@ -286,7 +285,7 @@ sub renderProblems {
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 	my $problem = fake_problem($db, 'problem_seed'=>$problem_seed);
-	$problem->{value} = 1;
+	$problem->{value} = -1;
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
 	my @output;

@@ -60,7 +60,9 @@ $(function(){
     $('.problem .problem-content').addClass('well well-small');
 
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
-	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/)[1];
+	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
+	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
+	//on the presentation of a matrix  and then causes errors throughout the rest of the script
 	$(this).attr('onmouseover','');
 	if (data) {
 	    $(this).wrapInner('<div class="results-popover" />');
@@ -71,9 +73,6 @@ $(function(){
 	    
     });
     
-    // Past answers formatting
-    $('#past-answer-table').addClass('table');
-    
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
     $('#grades_table a').addClass('btn btn-primary');
@@ -81,11 +80,7 @@ $(function(){
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small btn-info');
-
-    //Instructor Tools formatting
-    $('.ButtonRow .btn').addClass('btn-mini');
-    $('.ButtonRowCenter .btn').addClass('btn-mini');
-    $('.ScrollingRecordList .btn').addClass('btn-small');
+    $('#problem-grader-form td').find('p:last').removeClass('essay-answer graded-answer');
 
     //CourseConfiguration
     $('#config-form').addClass('form-inline');
@@ -155,7 +150,7 @@ $(function(){
     $('#mainform .btn').addClass('btn-small');
     $('#mainform .InfoPanel select').addClass('input-xxlarge');
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
-    $('#mainform select[name=local_sets]').addClass('input-small').removeClass('input-xxlarge');
+    $('#mainform select[name=local_sets]').addClass('input').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
 
     //Change tabber tabs to twitter tabs
@@ -168,9 +163,19 @@ $(function(){
     if ($('li.tabberactive a').length > 0) { 
         $('li.tabberactive a').tab('show');}
 
+    //past answer table
+    $('.past-answer-table').addClass("table table-striped");
+
      //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
 
-})
+    // the datepicker uses addOnLoadEvent, so if this function isn't defined,
+    // we dont have to worry about the datepicker.
+    if (typeof(addOnLoadEvent) === 'function') {
+	addOnLoadEvent( function () {
+	    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
+	});
+    }
+});    
 

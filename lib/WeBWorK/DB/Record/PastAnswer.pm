@@ -37,8 +37,8 @@ BEGIN {
 	    source_file       => { type=>"TEXT"},
 	    timestamp         => { type=>"INT" }, 
 	    scores            => { type=>"TINYTEXT"}, 
-        answer_string     => { type=>"VARCHAR(1024)"},
-	    comment_string    => { type=>"VARCHAR(1024)"},    
+        answer_string     => { type=>"VARCHAR(5012)"},
+	    comment_string    => { type=>"VARCHAR(5012)"},    
 
 	);
 }

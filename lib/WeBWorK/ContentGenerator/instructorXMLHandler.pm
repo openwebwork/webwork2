@@ -187,8 +187,8 @@ sub pre_header_initialize {
 		    probList		        => $r->param("probList") ||undef,
 		    command     	        => $r->param("command") ||undef,
 		    subcommand		        => $r->param("subcommand") ||undef,
-		    maxdepth		        => $r->param("maxdepth") // 0,
-		    problemSeed	            => $r->param("problemSeed") // 0,
+		    maxdepth		        => $r->param("maxdepth") || 0,
+		    problemSeed	            => $r->param("problemSeed") || 0,
 		    displayMode	            => $r->param("displayMode") || undef,
 		    noprepostambles	        => $r->param("noprepostambles") || undef,
 		    library_subjects	    => $r->param("library_subjects") ||undef,
@@ -221,8 +221,8 @@ sub pre_header_initialize {
 	     	open_date       	   	=> $r->param('open_date') || undef,
             due_date        	   	=> $r->param('due_date') || undef,
             answer_date     	   	=> $r->param('answer_date') || undef,
-            visible         	   	=> $r->param('visible') // 0,
-            enable_reduced_scoring 	=> $r->param('enable_reduced_scoring') // 0,
+            visible         	   	=> $r->param('visible') || 0,
+            enable_reduced_scoring 	=> $r->param('enable_reduced_scoring') || 0,
             assignment_type        	=> $r->param('assignment_type') || undef,
             attempts_per_version   	=> $r->param('attempts_per_version') || undef,
             time_interval         	=> $r->param('time_interval') || undef,
@@ -305,7 +305,8 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$self->{output}->{problem_out} = $xmlrpc_client->xmlrpcCall('renderProblem', $input);
-			
+		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
+		# FIXME  -- figure out why commmenting out the line above means that $envir->{fileName} is not defined. 
 		#$self->{output}->{text} = "Rendered problem";
 	} else {	
 		$self->{output} = $xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
@@ -387,7 +388,7 @@ sub environment {
 		dueDate=> '4014438528',
 		externalGif2EpsPath=>'not defined',
 		externalPng2EpsPath=>'not defined',
-		fileName=>'the XMLHandlerenvironment->{fileName} should be set',
+		fileName=>'the XMLHandler environment->{fileName} should be set',
 		formattedAnswerDate=>'6/19/00',
 		formattedDueDate=>'6/19/00',
 		formattedOpenDate=>'6/19/00',
@@ -418,7 +419,7 @@ sub environment {
 		PRINT_FILE_NAMES_FOR => [ ],
 		probFileName => 'probFileName should not be used --use fileName instead',
 		problemSeed  => 1234,
-		problemValue =>1,
+		problemValue => -1,
 		probNum => 13,
 		psvn => 54321,
 		psvn=> 54321,

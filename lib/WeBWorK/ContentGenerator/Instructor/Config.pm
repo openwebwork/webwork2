@@ -127,6 +127,29 @@ sub save_string {
 	return('$'. $varname . " = '$newval';\n");
 }
 
+########################### configtimezone
+########################### just like text, but it validates the timezone before saving
+package configtimezone;
+@configtimezone::ISA = qw(configobject);
+
+#use DateTime;
+use DateTime::TimeZone;
+
+sub save_string {
+	my ($self, $oldval, $newvalsource) = @_;
+	my $varname = $self->{var};
+	my $newval = $self->convert_newval_source($newvalsource);
+	my $displayoldval = $self->comparison_value($oldval);
+	return '' if($displayoldval eq $newval);
+	if(not DateTime::TimeZone->is_valid_name($newval)) {
+		$self->{Module}->addbadmessage("String '$newval' is not a valid time zone.  Reverting to the system default value.");
+		return '';
+	}
+	# Remove quotes from the string, we will have a new type for text with quotes
+	$newval =~ s/['"`]//g; #`"'geditsucks
+	return('$'. $varname . " = '$newval';\n");
+}
+
 ########################### confignumber
 package confignumber;
 @confignumber::ISA = qw(configobject);

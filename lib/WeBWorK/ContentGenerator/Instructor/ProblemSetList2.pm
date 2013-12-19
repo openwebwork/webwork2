@@ -729,24 +729,30 @@ sub filter_handler {
 		$result = $r->maketext("showing selected sets");
 		$self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
 	} elsif ($scope eq "match_ids") {
+                $result = $r->maketext("showing matching sets");
 		#my @setIDs = split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0];
 		my @setIDs = split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0];
 		$self->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "match_open_date") {
+                $result = $r->maketext("showing matching sets");
 		my $open_date = $actionParams->{"action.filter.open_date"}->[0];
 		$self->{visibleSetIDs} = $self->{open_dates}->{$open_date}; # an arrayref
 	} elsif ($scope eq "match_due_date") {
+                $result = $r->maketext("showing matching sets");
 		my $due_date = $actionParams->{"action.filter.due_date"}->[0];
 		$self->{visibleSetIDs} = $self->{due_date}->{$due_date}; # an arrayref
 	} elsif ($scope eq "match_answer_date") {
+                $result = $r->maketext("showing matching sets");
 		my $answer_date = $actionParams->{"action.filter.answer_date"}->[0];
 		$self->{visibleSetIDs} = $self->{answer_dates}->{$answer_date}; # an arrayref
 	} elsif ($scope eq "visible") {
+                $result = $r->maketext("showing visible sets");
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
 		my @visibleSetIDs = map { $_->visible ? $_->set_id : ""} @setRecords;		
 		$self->{visibleSetIDs} = \@visibleSetIDs;
 	} elsif ($scope eq "unvisible") {
+                $result = $r->maketext("showing hidden sets");
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
 		my @unvisibleSetIDs = map { (not $_->visible) ? $_->set_id : ""} @setRecords;
@@ -1267,6 +1273,8 @@ sub import_form {
 	my $r = $self->r;
 	my $authz = $r->authz;
 	my $user = $r->param('user');
+	my $ce = $r->ce;
+	my $display_tz = substr($self->formatDateTime(time), -3); 
 
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
@@ -1277,7 +1285,18 @@ sub import_form {
 				"document.getElementsByName('action.import.source')[0].multiple = (number > 1 ? true : false);",
 				"document.getElementsByName('action.import.name')[0].value = (number > 1 ? '(taken from filenames)' : '');",
 			);
-	
+	my $datescript = <<EOS;
+\$('#import_date_shift').datetimepicker({
+  showOn: "button",
+  buttonText: "<i class='icon-calendar'></i>",
+  ampm: true,
+  timeFormat: 'hh:mmtt',
+  timeSuffix: ' $display_tz',
+  separator: ' at ',
+  constrainInput: false, 
+ });
+EOS
+
 	return join(" ",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1321,6 +1340,15 @@ sub import_form {
 				-onchange => $onChange,
 			}
 		),
+		    CGI::br(),
+		    CGI::div(WeBWorK::CGI_labeled_input(
+		      -type=>"text",
+		      -id=>"import_date_shift",
+		      -label_text=>$r->maketext("Shift dates so that the earliest is").": ",
+		      -input_attr=>{
+			  -name => "action.import.start.date",
+			  -size => "27",
+			  -onchange => $onChange,})),
 		CGI::br(),
 		($authz->hasPermissions($user, "assign_problem_sets")) 
 			?
@@ -1340,7 +1368,9 @@ sub import_form {
 				}
 			)
 			:
-			""	#user does not have permissions to assign problem sets
+			"",	#user does not have permissions to assign problem sets
+		    CGI::script({-type=>"text/javascript"},$datescript),
+
 	);
 }
 
@@ -1352,8 +1382,12 @@ sub import_handler {
 	my $newSetName = $actionParams->{"action.import.name"}->[0];
 	$newSetName = "" if $actionParams->{"action.import.number"}->[0] > 1; # cannot assign set names to multiple imports
 	my $assign = $actionParams->{"action.import.assign"}->[0];
-	
-	my ($added, $skipped) = $self->importSetsFromDef($newSetName, $assign, @fileNames);
+	my $startdate = 0;
+	if ($actionParams->{"action.import.start.date"}->[0]) {
+	    $startdate = $self->parseDateTime($actionParams->{"action.import.start.date"}->[0]);
+	}
+
+	my ($added, $skipped) = $self->importSetsFromDef($newSetName, $assign, $startdate, @fileNames);
 
 	# make new sets visible... do we really want to do this? probably.
 	push @{ $self->{visibleSetIDs} }, @$added;
@@ -1560,7 +1594,7 @@ sub saveEdit_handler {
 	
 	$self->{editMode} = 0;
 	
-	return CGI::div({class=>"ResultsWithError"}, $r->maketext("changes saved") );
+	return CGI::div({class=>"ResultsWithOutError"}, $r->maketext("changes saved") );
 }
 
 sub duplicate_form {
@@ -1675,11 +1709,12 @@ sub menuLabels {
 }
 
 sub importSetsFromDef {
-	my ($self, $newSetName, $assign, @setDefFiles) = @_;
+	my ($self, $newSetName, $assign, $startdate, @setDefFiles) = @_;
 	my $r     = $self->r;
 	my $ce    = $r->ce;
 	my $db    = $r->db;
 	my $dir   = $ce->{courseDirs}->{templates};
+	my $mindate = 0;
 
 	# if the user includes "following files" in a multiple selection
 	# it shows up here as "" which causes the importing to die
@@ -1722,6 +1757,11 @@ sub importSetsFromDef {
 			next;
 		} else {
 			push @added, $setName;
+		}
+
+		# keep track of which as the earliest answer date
+		if ($mindate > $openDate || $mindate == 0) {
+		    $mindate = $openDate;
 		}
 
 		debug("$set_definition_file: adding set");
@@ -1802,6 +1842,21 @@ sub importSetsFromDef {
 			$self->assignSetToUser($userName, $newSetRecord); ## always assign set to instructor
 		}
 	}
+
+	#if there is a start date we have to reopen all of the sets that were added and shift the dates
+	if ($startdate) {
+	    #the shift for all of the dates is from the min date to the start date
+	    my $dateshift = $startdate - $mindate;
+	    
+	    foreach my $setID (@added) {
+		my $setRecord = $db->getGlobalSet($setID);
+		$setRecord->open_date($setRecord->open_date + $dateshift);
+		$setRecord->due_date($setRecord->due_date + $dateshift);
+		$setRecord->answer_date($setRecord->answer_date + $dateshift);
+		$db->putGlobalSet($setRecord);
+	    }
+	}
+
 
 	return \@added, \@skipped;
 }
@@ -1931,6 +1986,8 @@ sub readSetDef {
 	
                 #####################################################################
                 # Gateway/version variable cleanup: convert times into seconds
+		$assignmentType ||= 'default';
+
 		$timeInterval = WeBWorK::Utils::timeToSec( $timeInterval )
 		    if ( $timeInterval );
 		$versionTimeLimit = WeBWorK::Utils::timeToSec($versionTimeLimit)

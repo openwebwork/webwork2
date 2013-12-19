@@ -332,25 +332,32 @@ sub renderProblem {
 		$problemRecord->num_incorrect($num_incorrect);
 	}
 	# initialize problem source
-	
-
 	$rh->{sourceFilePath} = $rh->{path} unless defined $rh->{sourceFilePath};
+	if ($UNIT_TESTS_ON){
+			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
+			print STDERR "RenderProblem.pm: source file is ", $rh->{sourceFilePath},"\n";
+			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
+	}	
+
+
 	my $problem_source;
 	my $r_problem_source =undef;
  	if (defined($rh->{source}) and $rh->{source}) {
   		$problem_source = decode_base64($rh->{source});
   		$problem_source =~ tr /\r/\n/;
 		$r_problem_source =\$problem_source;
+		# warn "source included in request";
 		$problemRecord->source_file($rh->{envir}->{fileName}) if defined $rh->{envir}->{fileName};
-  	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =/\S/)  {
+  	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =~/\S/)  {
   	    $problemRecord->source_file($rh->{sourceFilePath});
-  	    #warn "reading from ", $rh->{sourceFilePath};
-  	    $problem_source = WeBWorK::IO::read_whole_file($rh->{sourceFilePath});
+  	    warn "reading source from ", $rh->{sourceFilePath};
+  	    $problem_source = WeBWorK::PG::IO::read_whole_file($ce->{courseDirs}->{templates}.'/'.$rh->{sourceFilePath});
   	    #warn "source is ", $problem_source;
   	    $r_problem_source = \$problem_source;
   	}
-	$problemRecord->source_file('foobar') unless defined($problemRecord->source_file);
+	$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
 	if ($UNIT_TESTS_ON){
+			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
 			print STDERR "RenderProblem.pm: source file is ", $problemRecord->source_file,"\n";
 			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
 	}

@@ -190,7 +190,7 @@ sub new {
 
   open(IN,"$name") or die "can not open $name: $!";
   if ($name !~ /pg$/) {
-    print "Not a pg file";
+    warn "Not a pg file";  #print caused trouble with XMLRPC 
     $self->{file}= undef;
     bless($self, $class);
     return $self;
