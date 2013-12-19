@@ -102,7 +102,7 @@ function lib_update(who, what) {
   var mydefaultRequestObject = init_webservice('searchLib');
   if(mydefaultRequestObject == null) {
     // We failed
-    console.log("Could not get webservice request object");
+    // console.log("Could not get webservice request object");
     return false;
   }
   var subj = $('[name="library_subjects"] option:selected').val();
@@ -125,10 +125,10 @@ function lib_update(who, what) {
   mydefaultRequestObject.library_textsection = lib_textsect;
   if(who == 'count') {
     mydefaultRequestObject.command = 'countDBListings';
-    console.log(mydefaultRequestObject);
+    // console.log(mydefaultRequestObject);
     return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
-      console.log(response);
+      // console.log(response);
       var arr = response.result_data;
       arr = arr[0];
       var line = "There are "+ arr +" matching WeBWorK problems"
@@ -148,10 +148,10 @@ function lib_update(who, what) {
   if(who=='sections' && chap=='') { return lib_update(who, 'clear'); }
   if(who=='sections') { subcommand = "getSectionListings";}
   mydefaultRequestObject.command = subcommand;
-  console.log(mydefaultRequestObject);
+  // console.log(mydefaultRequestObject);
   return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
       var response = $.parseJSON(data);
-      console.log(response);
+      // console.log(response);
       var arr = response.result_data;
       arr.splice(0,0,all);
       setselect('library_'+who, arr);
@@ -237,7 +237,7 @@ function markinset() {
   ro.command = 'true';
   return $.post(basicWebserviceURL, ro, function (data) {
     var response = $.parseJSON(data);
-    console.log(response);
+    // console.log(response);
     var arr = response.result_data;
     var pathhash = {};
     for(var i=0; i<arr.length; i++) {
@@ -323,12 +323,19 @@ function delFromPGList(num, path) {
 }
 
 function randomize(filepath, el) {
+  nomsg();
   var seed = Math.floor((Math.random()*10000));
   var ro = init_webservice('renderProblem');
   var templatedir = $('#hidden_templatedir').val();
   ro.problemSeed = seed;
   ro.problemSource = templatedir + '/' + filepath;
   ro.set = ro.problemSource;
+  var showhint = 0;
+  if($("input[name='showHints']").is(':checked')) { showhint = 1;}
+  var showsoln = 0;
+  if($("input[name='showSolutions']").is(':checked')) { showsoln = 1;}
+  ro.showHints = showhint;
+  ro.showSolutions = showsoln;
   var displayMode = $('[name="original_displayMode"]').val();
   if(displayMode != 'None') {
     ro.displayMode = displayMode;
@@ -356,6 +363,7 @@ function randomize(filepath, el) {
 }
 
 function togglemlt(cnt,noshowclass) {
+  nomsg();
   var count = $('.'+noshowclass).length;
   var n1 = $('#lastshown').text();
   var n2 = $('#totalshown').text();

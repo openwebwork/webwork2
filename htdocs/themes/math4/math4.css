@@ -115,14 +115,11 @@ ul.nav li a:hover {
 
 h1.page-title {
 	font-size: 31.5px;
+	line-height: 35px;
 }
 
 h2.page-title {
 	border-bottom: 1px solid #ccc;
-}
-
-h1.page-title {
-    font-size: 31.5px;
 }
 
 #info-panel-right {
@@ -353,6 +350,7 @@ table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
 table.FormLayout tr.ButtonRow { text-align: left; }
 table.FormLayout tr.ButtonRowCenter { text-align: center; }
+table.FormLayout td { padding-right:10px }
 
 div.RenderSolo { background-color: #E0E0E0; color: black; }
 div.AuthorComment { background-color: #00E0E0; color: black; }

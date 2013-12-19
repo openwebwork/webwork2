@@ -257,5 +257,9 @@
 </div><!--content-->
 </div> <!-- big-wrapper -->
 
+<script type="text/javascript">
+    $('.set-id-tooltip').tooltip({trigger: 'hover'});
+</script>
+
 </body>
 </html>

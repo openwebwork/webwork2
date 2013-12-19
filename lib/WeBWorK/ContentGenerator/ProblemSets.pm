@@ -430,9 +430,9 @@ sub setListRow {
 				}
 			} elsif ( $t < $set->open_date() && @restricted ) {
 				my $restriction = ($set->restricted_status)*100;
-		  		$status = $r->maketext("will open on [_1] if you score at least [_2]% on set [_3]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2f",$restriction),@restricted) if scalar(@restricted) == 1;
+		  		$status = $r->maketext("will open on [_1] if you score at least [_2]% on set [_3]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 				if(@restricted > 1) {
-		  			$status = $r->maketext("will open on [_1] if you score at least [_2]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2f",$restriction));
+		  			$status = $r->maketext("will open on [_1] if you score at least [_2]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
 		  			foreach(0..$#restricted) {
 		    				$status .= " $restricted[$_], " if $_ != $#restricted;
 		    				$status .= " and $restricted[$_]. " if $_ == $#restricted;
@@ -452,9 +452,9 @@ sub setListRow {
 				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 			} elsif ( $t < $set->due_date() && @restricted) {
 				my $restriction = ($set->restricted_status)*100;
-				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2f",$restriction),@restricted) if scalar(@restricted) == 1;
+				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 		if(@restricted > 1) {
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2f",$restriction));
+		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
 		  foreach(0..$#restricted) {
 		    $status .= " $restricted[$_] " if $_ != $#restricted;
 		    $status .= " and $restricted[$_] " if $_ == $#restricted;
@@ -488,9 +488,9 @@ sub setListRow {
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->open_date && @restricted) {
 		my $restriction = ($set->restricted_status)*100;
-		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on set [_3]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2",$restriction),@restricted) if scalar(@restricted) == 1;
+		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on set [_3]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 		if(@restricted > 1) {
-		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2",$restriction));
+		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
 		  foreach(0..$#restricted) {
 		    $status .= " $restricted[$_], " if $_ != $#restricted;
 		    $status .= " and $restricted[$_]. " if $_ == $#restricted;
@@ -514,10 +514,10 @@ sub setListRow {
 		my $restriction = ($set->restricted_status)*100;
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2f",$restriction),@restricted) if scalar(@restricted) == 1;
+		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 
 		if(@restricted > 1) {
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.2f",$restriction));
+		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
 		  foreach(0..$#restricted) {
 		    $status .= " $restricted[$_] " if $_ != $#restricted;
 		    $status .= " and $restricted[$_] " if $_ == $#restricted;
