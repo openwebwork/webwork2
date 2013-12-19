@@ -20,7 +20,7 @@ var require = {
         "file-saver":           "/webwork2_files/js/components/file-saver/FileSaver",
         "eventie":              "/webwork2_files/js/components/eventie",
         "eventEmitter":         "/webwork2_files/js/components/eventEmitter",
-        "knowl":                "/webwork2_files/js/vendor/knowl",
+        "knowl":                "/webwork2_files/js/vendor/other/knowl",
         "views":                "/webwork2_files/js/lib/views",
         "models":               "/webwork2_files/js/lib/models",
         "apps":                 "/webwork2_files/js/apps",

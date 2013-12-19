@@ -8,7 +8,7 @@ use Data::Dumper;
 use List::Util qw(first);
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(reorderProblems addProblems deleteProblems addUserProblems addUserSet);
+our @EXPORT_OK = qw(reorderProblems addProblems deleteProblems addUserProblems addUserSet createNewUserProblem);
 
 ###
 #
@@ -49,6 +49,30 @@ sub reorderProblems {
     return vars->{db}->getAllGlobalProblems(params->{set_id});
 }
 
+### 
+#
+#  This creates and initialized a new user problem for user userID and set setID
+#
+###
+
+sub createNewUserProblem {
+    my ($setID,$userID,$problemID) = @_;
+
+    my $userProblem = vars->{db}->newUserProblem();
+    $userProblem->{user_id}=$userID;
+    $userProblem->{set_id}=$setID;
+    $userProblem->{problem_id}=$problemID;
+    $userProblem->{problem_seed} = int rand 5000;
+    $userProblem->{status}=0.0;
+    $userProblem->{attempted}=0;
+    $userProblem->{num_correct}=0;
+    $userProblem->{num_incorrect}=0;
+    $userProblem->{sub_status}=0.0;
+
+    return $userProblem;
+}
+
+
 ###
 #
 # This adds a problem.  The variable $problems is a reference to an array of problems and 
@@ -57,32 +81,30 @@ sub reorderProblems {
 ##
 
 sub addProblems {
-	my ($db,$setID,$problems,$users)=@_;
+	my ($setID,$problems,$users)=@_;
 
-	my @oldProblems = $db->getAllGlobalProblems($setID);
+    debug "in addProblems";
+
+	my @oldProblems = vars->{db}->getAllGlobalProblems($setID);
 	for my $p (@{$problems}){
         my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
 
-        if(! $db->existsGlobalProblem($setID,$p->{problem_id})){
-        	my $prob = $db->newGlobalProblem();
+        if(! vars->{db}->existsGlobalProblem($setID,$p->{problem_id})){
+        	my $prob = vars->{db}->newGlobalProblem();
         	$prob->{problem_id} = $p->{problem_id};
         	$prob->{source_file} = $p->{source_file};
             $prob->{value} = $p->{value};
             $prob->{max_attempts} = $p->{max_attempts};
         	$prob->{set_id} = $setID;
-        	$db->addGlobalProblem($prob);
+        	vars->{db}->addGlobalProblem($prob);
 
         	for my $u (@{$users}){
-        		my $userProblem = $db->newUserProblem();
-				$userProblem->{user_id}=$u;
-				$userProblem->{set_id}=$setID;
-				$userProblem->{problem_id}=$p->{problem_id};
-				$db->addUserProblem($userProblem);
+                vars->{db}->addUserProblem(createNewUserProblem($setID,$u,$p->{problem_id}));
         	}
         }
 	}
 
-    return $db->getAllGlobalProblems($setID);
+    return vars->{db}->getAllGlobalProblems($setID);
 }
 
 ###
@@ -96,17 +118,17 @@ sub addProblems {
 ### $problems = [1,2,4,5];
 
 sub deleteProblems {
-	my ($db,$setID,$problems)=@_;
+	my ($setID,$problems)=@_;
 
-	my @oldProblems = $db->getAllGlobalProblems($setID);
+	my @oldProblems = vars->{db}->getAllGlobalProblems($setID);
 	for my $p (@oldProblems){
         my $problem = first { $_->{problem_id} eq $p->{problem_id} } @{$problems};
         if(! defined($problem)){
-        	$db->deleteGlobalProblem($setID,$p->{problem_id});
+        	vars->{db}->deleteGlobalProblem($setID,$p->{problem_id});
         }
     }
 
-    return $db->getAllGlobalProblems($setID);
+    return vars->{db}->getAllGlobalProblems($setID);
 }
 
 
