@@ -1,7 +1,7 @@
 define(['module','Backbone', 'underscore','models/UserSetListOfSets', 'views/WebPage','UserSetView', 'models/UserSet',
-    'models/UserProblemList', 'StudentCalendarView','models/AssignmentDateList','models/AssignmentDate', 'config'], 
+    'models/UserProblemList', 'StudentCalendarView','models/AssignmentDateList','models/AssignmentDate','models/Settings', 'config'], 
 function(module,Backbone, _, UserSetListOfSets, WebPage, UserSetView, UserSet, UserProblemList, StudentCalendarView, 
-            AssignmentDateList,AssignmentDate, config){
+            AssignmentDateList,AssignmentDate,Settings,config){
 
 var FrontPage = WebPage.extend({
     tagName: "div",
@@ -85,6 +85,9 @@ var FrontPage = WebPage.extend({
     },
 
     postLoginRender: function(){
+        config.settings = new Settings();
+        config.settings.fetch({success: function(){
+        }});
         this.userSetList = new UserSetListOfSets([],{user: config.courseSettings.user});
         this.userSetList.fetch({success: this.buildProblemSetPulldown});
         $(".login-container").html(_.template($("#logged-in-template").html(),{user: config.courseSettings.user}));
@@ -193,6 +196,9 @@ var SetInfoView = Backbone.View.extend({
 
     render: function (){
         this.$el.html($("#set-info-template").html());
+        if(this.model.get("enable_reduced_scoring")==="1"){
+            this.$(".reduced-credit-row").html($("#reduced-credit-template").html());
+        }
         this.stickit();
         return this;
     },
@@ -203,8 +209,28 @@ var SetInfoView = Backbone.View.extend({
     bindings: {
         ".setname": "set_id",
         ".problems": "problems",
-        ".score": "problems"
+        ".score": "problems",
+        ".open-date": "open_date",
+        ".due-date": "due_date",
+        ".answer-date": "answer_date",
+        ".reduced-credit-date": {observe: "due_date",
+            onGet: function(val){
+                var mins = config.settings.findWhere({var: "pg{ansEvalDefaults}{reducedScoringPeriod}"}).get("value");
+                return moment.unix(val).subtract("minutes",mins).format("MM/DD/YYYY [at] hh:mmA")
+            }
+        }
     }
+    //         updateMethod: "html",
+    //         update: function($el, val, model, options) { 
+    //             if(model.get("enable_reduced_scoring")==="1"){
+    //                 var mins = config.settings.findWhere({var: "pg{ansEvalDefaults}{reducedScoringPeriod}"}).get("value");
+    //                 var reduced_credit_date = moment.unix(model.get("due_date")).subtract("minutes",mins);
+    //                $el.html(this.reducedCreditTemplate({reduced_credit_date: reduced_credit_date.format("MM/DD/YYYY [at] hh:mmA")}));                   
+    //             }
+ 
+    //         }
+    //     }
+    // }
 });
 
 
