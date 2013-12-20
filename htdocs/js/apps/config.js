@@ -159,7 +159,16 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
         onGet: function(val){
             return moment(val).format("MM/DD/YYYY [at] hh:mmA");
         }
-    })
+    });
+
+    // The following is a stickit handler that will display the time from now (or ago) in a human readable way.
+
+    Backbone.Stickit.addHandler({
+        selector:".show-datetime-timeago",
+        onGet: function(val){
+            return moment.unix(val).from(moment());
+        }
+    });
 
     // The main stickit handler for any editable date-time class.
 

@@ -64,6 +64,10 @@
 	<tr><td>Set Name:</td><td class="setname"></td></tr>
 	<tr><td>No. of Probs.</td><td class="problems"></td></tr>
 	<tr><td>Current Score</td><td class="score"></td></tr>
+	<tr><td>Open Date</td><td class="open-date show-datetime-timeago"></td></tr>
+	<tr class="reduced-credit-row"></tr>
+	<tr><td>Due Date</td><td class="due-date show-datetime-timeago"></td></tr>
+	<tr><td>Answer Date</td><td class="answer-date show-datetime-timeago"></td></tr>
 	</table>
 </script>
 
@@ -73,6 +77,10 @@
 	<tr><td>Problem Number:</td><td class="prob-id"></td></tr>
 	<tr><td>Current Score</td><td class="prob-score"></td></tr>
 	</table>
+</script>
+
+<script type="text/template" id="reduced-credit-template">
+	<td>Reduced Credit Date</td><td class="reduced-credit-date show-datetime"></td>
 </script>
 
 <script type="text/template" id="past-answer-list-template">

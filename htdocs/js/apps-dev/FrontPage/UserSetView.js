@@ -169,7 +169,7 @@ var ProblemInfoView = Backbone.View.extend({
 	},
 	bindings: {
 		".prob-id": "problem_id",
-		".prob-score": "status"
+		".prob-score": "status",
 	}
 });
 
