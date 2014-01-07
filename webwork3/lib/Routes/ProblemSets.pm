@@ -106,7 +106,7 @@ post '/courses/:course_id/sets/:set_id' => sub {
         addUserSet($user);
     }
 
-    addProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
+    addProblems(vars->{db},params->{set_id},params->{problems} || [],params->{assigned_users});
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
