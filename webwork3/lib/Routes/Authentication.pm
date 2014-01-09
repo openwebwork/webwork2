@@ -112,6 +112,8 @@ sub checkPermissions {
 
 	my $permissionLevel = shift;
 
-	if(session 'permission' < $permissionLevel){send_error($PERMISSION_ERROR,403)}
+	debug session 'permission';
+
+	if(session('permission') < $permissionLevel){send_error($PERMISSION_ERROR,403)}
 
 }
