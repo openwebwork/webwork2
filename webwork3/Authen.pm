@@ -56,7 +56,6 @@ use warnings;
 #use WeBWorK::Cookie;
 use Date::Format;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
-use WeBWorK::Debug;
 use WeBWorK::Utils qw/writeCourseLog runtime_use/;
 use WeBWorK::Localize;
 use URI::Escape;
