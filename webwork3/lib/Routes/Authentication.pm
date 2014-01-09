@@ -47,7 +47,7 @@ sub setCourseEnvironment {
 	my $courseID = shift;
 
 	if (defined($courseID)) {
-		session->{course} = $courseID;
+		session course => $courseID;
 	} else {
 		send_error("The course has not been defined.  You may need to authenticate again",401);	
 	}
@@ -56,9 +56,7 @@ sub setCourseEnvironment {
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
 
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
-
-	debug $WeBWorK::Constants::WEBWORK_DIRECTORY;
-	debug config->{webwork_dir};
+	$WeBWorK::Constants::Logfile = config->{webwork_dir} . "/logs/debug.log";
 }
 
 sub authenticate {
@@ -72,27 +70,26 @@ sub authenticate {
 
 
 
-	# debug "Checking to see if the user is defined.";
-	# debug session->{user};
+	#debug "Checking to see if the user is defined.";
+	#debug session->{user};
 
-    if (! defined(session->{user})) {
+    if (!defined(session 'user')) {
     	if (defined(params->{user})){
-	    	session->{user} = params->{user};
+	    	session user => params->{user};
     	} else {
     		send_error("The user is not defined. You may need to authenticate again",401);	
     	}
 	}
 
-	if(! defined(session->{session_key})){
-		my $key = vars->{db}->getKey(session->{user});
+	if(! defined(session 'session_key')){
+		my $key = vars->{db}->getKey(session 'user');
 
-		# debug $key;
 		if ($key->{key} eq params->{session_key}) {
-			session->{session_key} = params->{session_key};
+			session session_key  => params->{session_key};
 		} 
 	}
 
-	if(! defined(session->{session_key})){
+	if(! defined(session 'session_key')){
 		send_error("The session_key has not been defined or is not correct.  You may need to authenticate again",401);	
 	}
 
@@ -100,10 +97,11 @@ sub authenticate {
 	# debug session->{permission};
 
 
-	if (! defined(session->{permission})){
-		my $permission = vars->{db}->getPermissionLevel(session->{user});
-		session->{permission} = $permission->{permission};		
+	if (! defined(session 'permission')){
+		my $permission = vars->{db}->getPermissionLevel(session 'user');
+		session 'permission' => $permission->{permission};		
 	}
+
 }
 
 sub checkPermissions {
@@ -114,6 +112,6 @@ sub checkPermissions {
 
 	my $permissionLevel = shift;
 
-	if(session->{permission} < $permissionLevel){send_error($PERMISSION_ERROR,403)}
+	if(session 'permission' < $permissionLevel){send_error($PERMISSION_ERROR,403)}
 
 }

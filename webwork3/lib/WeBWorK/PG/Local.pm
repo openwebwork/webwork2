@@ -41,6 +41,7 @@ use WeBWorK::Constants;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
+use WeBWorK::Debug;
 
 
 # Problem processing will time out after this number of seconds.
