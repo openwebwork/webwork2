@@ -18,6 +18,7 @@ package WeBWorK::Authen;
 
 use strict;
 use warnings;
+use Dancer;
 use Data::Dumper;
 use WeBWorK::Utils qw/writeCourseLog runtime_use/;
 use Scalar::Util qw(weaken);

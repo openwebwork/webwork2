@@ -57,8 +57,10 @@ sub setCourseEnvironment {
 
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
 
-	debug $WeBWorK::Constants::WEBWORK_DIRECTORY;
-	debug config->{webwork_dir};
+	# the following is needed to make sure that the logfile is defined when using dancer. 
+
+        $WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
+
 }
 
 sub authenticate {
@@ -72,8 +74,8 @@ sub authenticate {
 
 
 
-	# debug "Checking to see if the user is defined.";
-	# debug session->{user};
+	debug "Checking to see if the user is defined.";
+	debug session;
 
     if (! defined(session->{user})) {
     	if (defined(params->{user})){

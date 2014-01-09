@@ -38,6 +38,7 @@ the WeBWorK::PG module for information about the API.
 use strict;
 use warnings;
 use WeBWorK::Constants;
+use Dancer;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
