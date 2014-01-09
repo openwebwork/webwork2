@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
+use WeBWorK::Constants;
 
 use base qw(Exporter);
 our @EXPORT    = ();
@@ -54,6 +55,10 @@ sub setCourseEnvironment {
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
 
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
+
+	debug $WeBWorK::Constants::WEBWORK_DIRECTORY;
+	debug config->{webwork_dir};
 }
 
 sub authenticate {
