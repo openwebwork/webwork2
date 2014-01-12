@@ -1069,7 +1069,7 @@ sub countProblemPastAnswers { return scalar shift->listPastAnswers(@_) }
 
 sub listProblemPastAnswers {
         my ($self, $courseID, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/course_id user_id set_id problem_id/);
- my $where = [course_id_eq_user_id_eq_set_id_eq_problem_id_eq => $courseID,$userID,$setID,$problemID];
+ 		my $where = [course_id_eq_user_id_eq_set_id_eq_problem_id_eq => $courseID,$userID,$setID,$problemID];
         my $order = [ 'answer_id' ];
 
 	if (wantarray) {
@@ -1081,7 +1081,7 @@ sub listProblemPastAnswers {
 
 
 sub latestProblemPastAnswer {
-        my ($self, $courseID, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/course_id user_id set_id problem_id/);
+    my ($self, $courseID, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/course_id user_id set_id problem_id/);
 	my @answerIDs = $self->listProblemPastAnswers($courseID,$userID,$setID,$problemID);
 	#array should already be returned from lowest id to greatest.  Latest answer is greatest
 	return $answerIDs[$#answerIDs];
