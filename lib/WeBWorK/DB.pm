@@ -1070,7 +1070,7 @@ sub countProblemPastAnswers { return scalar shift->listPastAnswers(@_) }
 sub listProblemPastAnswers {
         my ($self, $courseID, $userID, $setID, $problemID);
 	$self = shift;
-	$self->checkArgs(\@_, qw/course_id!? user_id set_id problem_id/);
+	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
 
 	#if a courseID is not provided then just do the search without a course 
 	#id.  This is ok becaus the table is course specific.
@@ -1097,7 +1097,7 @@ sub listProblemPastAnswers {
 sub latestProblemPastAnswer {
         my ($self, $courseID, $userID, $setID, $problemID);
 	$self = shift;
-	$self->checkArgs(\@_, qw/course_id!? user_id set_id problem_id/);
+	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
 
 	#if a courseID is not provided then just do the search without a course 
 	#id.  This is ok becaus the table is course specific.
