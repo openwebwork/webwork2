@@ -34,6 +34,8 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
             // set up some styling
             this.problemSetTable.$(".paginator-row td").css("text-align","center");
             this.problemSetTable.$(".paginator-page").addClass("btn");
+
+            this.problemSets.trigger("hide-show-all-sets","hide");
         },
         updateTable: function() {
             if(this.problemSetTable){
@@ -75,12 +77,17 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
             },
             {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
                 stickit_options: {onGet: function(val){
-                    return val.length + "/" + self.problemSets.length;
+                    return val.length + "/" + self.users.length;
                 }},
                 sort_function: function(val){ return val.length;}
                 },
             {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
-                stickit_options: {onGet: function(val){return val.length;  }},
+                stickit_options: {
+                    update: function($el,val,model,options){
+                        $el.html("<a href='/webwork2/" + config.courseSettings.course_id +"/" +
+                                model.get("set_id") + "/'>" + val.length + "</a>")
+                    }},
+
                 sort_function: function(val){
                     return val.length;
                 }    
