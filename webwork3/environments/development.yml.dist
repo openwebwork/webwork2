@@ -23,7 +23,11 @@ warnings: 1
 show_errors: 1
 
 # use the simple session
-session: "Simple"
+#session: "Simple"
+
+# use the YAML session
+session: "YAML"
+session_dir: "/tmp/dancer-sessions"
 
 # templating parameters
 
