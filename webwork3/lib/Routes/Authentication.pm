@@ -56,7 +56,7 @@ sub setCourseEnvironment {
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
 
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
-	$$WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
+	$WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
 }
 
 sub authenticate {
