@@ -100,7 +100,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
             if(this.maxPages>1){
                 this.$(".problem-paginator").html(_.template($("#paginator-template").html(),
-                        {page_start:start,page_stop:stop,num_pages:this.maxPages}));
+                        {current_page: this.currentPage, page_start:start,page_stop:stop,num_pages:this.maxPages}));
             }
         },
         events: {"click .undo-delete-button": "undoDelete",
