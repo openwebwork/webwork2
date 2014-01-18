@@ -8,7 +8,7 @@ use Data::Dumper;
 use List::Util qw(first);
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(reorderProblems addProblems deleteProblems addUserProblems addUserSet createNewUserProblem);
+our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet createNewUserProblem);
 
 ###
 #

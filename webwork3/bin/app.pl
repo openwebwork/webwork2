@@ -34,8 +34,15 @@ hook 'before' => sub {
 
 post '/handshake' => sub {
 
+
+	debug "in /handshake";
+
 	setCourseEnvironment(params->{course_id});
+
+	debug session; 
 	authenticate();
+
+
 
 	return {msg => "If you get this message the handshaking between Dancer and WW2 worked."};
 };

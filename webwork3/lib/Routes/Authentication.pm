@@ -46,6 +46,11 @@ sub setCourseEnvironment {
 
 	my $courseID = shift;
 
+	debug "in setCourseEnvironment";
+	debug session;
+	debug $courseID; 
+
+
 	if (defined($courseID)) {
 		session course => $courseID;
 	} else {
@@ -53,6 +58,7 @@ sub setCourseEnvironment {
 	}
 
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
+
 	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
 
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
@@ -61,6 +67,8 @@ sub setCourseEnvironment {
 
 sub authenticate {
 
+
+
 	if(! vars->{db}){ 
 		send_error("The database object DB is not defined.  Make sure that you call setCourseEnvironment first.",404);
 	}
@@ -68,8 +76,7 @@ sub authenticate {
 
 	## need to check that the session hasn't expired. 
 
-
-
+	
 	#debug "Checking to see if the user is defined.";
 	#debug session->{user};
 

@@ -1,6 +1,3 @@
-
-
-
 define(['Backbone', './WeBWorKProperty','underscore','config'], function(Backbone, WeBWorKProperty,_,config){
     /**
      *

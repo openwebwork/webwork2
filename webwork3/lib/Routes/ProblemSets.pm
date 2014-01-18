@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
+use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
 use WeBWorK::Utils qw/parseDateTime/;
 use Array::Utils qw(array_minus); 
 use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
