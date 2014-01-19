@@ -21,7 +21,7 @@ var HomeworkEditorView = WebPage.extend({
         (this.headerView = new HeaderView({el: $("#page-header")}));
         this.render();
         
-        config.settings = (module.config().settings)? new Settings(module.config().settings, {parse: true}) : new Settings();
+        config.settings = (module.config().settings) ? new Settings(module.config().settings,{parse: true}): new Settings();
         this.users = (module.config().users) ? new UserList(module.config().users) : new UserList();
         this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets,{parse: true}) : new ProblemSetList();
         this.buildAssignmentDates();
