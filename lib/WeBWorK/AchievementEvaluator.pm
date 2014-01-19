@@ -185,8 +185,6 @@ sub checkForAchievements {
 	    next;
 	};
 
-	warn($preamble."\n".$source);
-
 	my $earned = $compartment->reval($preamble."\n".$source);
 	warn "There were errors in achievement $achievement_id\n".$@ if $@;
 
