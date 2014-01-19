@@ -203,7 +203,20 @@ sub body {
 		
 		# get info about remote user (stolen from &WeBWorK::Authen::write_log_entry)
 		my ($remote_host, $remote_port);
+
+		# If its apache 2.4 then it has to also mod perl 2.0 or better
+		my $APACHE24 = 0;
 		if (MP2) {
+		    Apache2::ServerUtil::get_server_version() =~ 
+		      m:^Apache/(\d\.\d+\.\d+):;
+		    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
+		}
+		
+		# If its apache 2.4 then the API has changed
+		if ($APACHE24) {
+		    $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+		    $remote_port = $r->connection->client_addr->port || "UNKNOWN";
+		} elsif (MP2) {
 			$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
 			$remote_port = $r->connection->remote_addr->port || "UNKNOWN";
 		} else {
