@@ -2161,6 +2161,7 @@ sub body {
 			    my $needs_grading = 0;
 			    foreach my $userID (@setUsers)  {
 				my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
+				next unless $userProblem;
 				if ($userProblem->flags =~ /needs_grading/) {
 				    $needs_grading = 1;
 				    $gradeable = 1;
