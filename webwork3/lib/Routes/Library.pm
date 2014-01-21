@@ -19,6 +19,7 @@ use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use WeBWorK::PG::Local;
+use WeBWorK::Constants;
 
 # use constant MY_PROBLEMS => '  My Problems  ';
 # use constant MAIN_PROBLEMS => '  Unclassified Problems  ';
@@ -366,9 +367,11 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 	##  need to change this later.  Why do we need a course_id for a general renderer? 
 	
 	setCourseEnvironment(params->{course_id});
+
+	debug "in renderer";
+	debug $WeBWorK::Constants::WEBWORK_DIRECTORY;
 	
-	
-    my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
+    	my $displayMode = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
 	my $problemSeed = defined(params->{problemSeed}) ? params->{problemSeed} : 1; 
 	my $showHints = 0;
 	my $showSolutions = 0;

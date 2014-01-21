@@ -18,6 +18,7 @@ package WeBWorK::Authen;
 
 use strict;
 use warnings;
+use Dancer;
 use Data::Dumper;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw/writeCourseLog runtime_use/;

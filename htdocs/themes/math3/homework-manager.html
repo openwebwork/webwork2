@@ -667,16 +667,45 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 
 <script type="text/template" id="paginator-template">
 <ul class="pagination">
-<li> <a href="#" class="goto-first"><i class="fa fa-step-backward"></i></a></li>
-<li><a href="#" class="go-back-one"><i class="fa fa-arrow-left"></i></a></li>
+<% if(current_page==0){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+  <a href="#" class="goto-first"><i class="fa fa-step-backward"></i></a></li>
+<% if(current_page==0){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#" class="go-back-one"><i class="fa fa-arrow-left"></i></a></li>
 <% if (page_start>0) {print ("<li><a href=''> ...</a> </li>");} %>
 <% for(i=page_start;i<page_stop;i++){
-    print("<li><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");
+    if(current_page==i){
+      print("<li class='active'><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");  
+    } else {
+      print("<li><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");
+    }
 } %>
 <% if (page_stop+1<num_pages) {print ("<li><a href=''> ...</a> </li>");} %>
 
-<li><a href="#"  class="go-forward-one"><i class="fa fa-arrow-right"></i></a></li>
-<li><a href="#"  class="goto-end"><i class="fa fa-step-forward"></i></a></li>
+<% if(current_page+1===page_stop){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#"  class="go-forward-one"><i class="fa fa-arrow-right"></i></a></li>
+
+<% if(current_page+1===page_stop){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#"  class="goto-end"><i class="fa fa-step-forward"></i></a></li>
 </ul>
 </script>
 

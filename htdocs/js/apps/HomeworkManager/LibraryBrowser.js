@@ -49,6 +49,7 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
             this.$("#library-browser-tabs li:eq(" + index + ") a").tab("show");
             this.views[this.activeView].render()
                 .libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
+            this.problemSets.trigger("hide-show-all-sets","show");
     	},
         //events: {"shown a[data-toggle='tab']": "changeView"},
         changeView: function(evt){

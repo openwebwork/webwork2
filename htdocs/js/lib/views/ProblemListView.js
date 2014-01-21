@@ -100,7 +100,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
             if(this.maxPages>1){
                 this.$(".problem-paginator").html(_.template($("#paginator-template").html(),
-                        {page_start:start,page_stop:stop,num_pages:this.maxPages}));
+                        {current_page: this.currentPage, page_start:start,page_stop:stop,num_pages:this.maxPages}));
             }
         },
         events: {"click .undo-delete-button": "undoDelete",
@@ -150,9 +150,9 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
             this.pageRange = _.range(this.currentPage*this.pageSize,
                 (this.currentPage+1)*this.pageSize>this.problems.size()? this.problems.size():(this.currentPage+1)*this.pageSize);
-            if(this.maxPages>15){
+            //if(this.maxPages>15){
                 this.updatePaginator();
-            }
+            //}
             this.renderProblems();
             this.$(".problem-paginator button").removeClass("current-page");
             this.$(".problem-paginator button[data-page='" + this.currentPage + "']").addClass("current-page");

@@ -186,6 +186,8 @@ var HomeworkEditorView = WebPage.extend({
             self.updateCalendar();
         }).on("show",function(_set){   // this will show the given Problem Set sent from "Manage Problem Sets (HWDetailView) or ProblemSetListView"
             self.showProblemSetDetails(_set.get("set_id"));
+        }).on("hide-show-all-sets",function(showOrHide){
+            self.showHideSets(showOrHide);
         });
 
         /* This sets the events for the problems (of type ProblemList) in each problem Set */
@@ -250,19 +252,36 @@ var HomeworkEditorView = WebPage.extend({
     },
     events: {"click #hw-manager-menu a.link": "changeView",
             "click #show-hide-sets-button": "showHideSets"},
-    showHideSets: function () {
-        if ($("#problem-set-list-container").css("display")=="none"){
-            $("#main-view").removeClass("col-md-12").addClass("col-md-9");
-            $("#problem-set-list-container").show("slide",{direction: "up"});
-            $("#show-hide-sets-button i").removeClass("fa fa-chevron-down").addClass("fa fa-chevron-up");            
-            
-            $("#show-hide-sets-button span").text(config.msgTemplate({type: "hide_prob_set"}))
-        } else {
+    showHideSets: function (showOrHide) {
+
+        function hideSets() {            
             $("#main-view").removeClass("col-md-9").addClass("col-md-12");
             $("#problem-set-list-container").hide("slide", { direction: "up" });
             $("#show-hide-sets-button i").removeClass("fa fa-chevron-up").addClass("fa fa-chevron-down");            
-            
-            $("#show-hide-sets-button span").text(config.msgTemplate({type: "show_prob_set"}))
+            $("#show-hide-sets-button span").text(config.msgTemplate({type: "show_prob_set"}));
+        }
+
+        function showSets() {
+            $("#main-view").removeClass("col-md-12").addClass("col-md-9");
+            $("#problem-set-list-container").show("slide",{direction: "up"});
+            $("#show-hide-sets-button i").removeClass("fa fa-chevron-down").addClass("fa fa-chevron-up");            
+            $("#show-hide-sets-button span").text(config.msgTemplate({type: "hide_prob_set"}))
+        }
+
+        if(showOrHide==="hide"){
+            hideSets();
+            return;
+        }
+
+        if(showOrHide==="show"){
+            showSets();
+            return;
+        }
+        
+        if ($("#problem-set-list-container").css("display")=="none"){
+            showSets();
+        } else {
+            hideSets();
         }
 
     },

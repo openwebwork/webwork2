@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::ProblemSets qw/reorderProblems addProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
+use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
 use WeBWorK::Utils qw/parseDateTime/;
 use Array::Utils qw(array_minus); 
 use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
@@ -106,7 +106,7 @@ post '/courses/:course_id/sets/:set_id' => sub {
         addUserSet($user);
     }
 
-    addProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
+    addProblems(params->{set_id},params->{problems},params->{assigned_users});
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -158,6 +158,8 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     my @usersToDelete = array_minus(@userNamesFromDB,@{params->{assigned_users}});
 
+
+
     for my $user(@usersToAdd){
         addUserSet($user);
     }
@@ -174,13 +176,26 @@ put '/courses/:course_id/sets/:set_id' => sub {
         reorderProblems(params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
         debug "adding problems";
-        addProblems(params->{set_id},params->{problems},params->{assigned_users});
+        addGlobalProblems(params->{set_id},params->{problems},params->{assigned_users});
     } else { # problems have been deleted.  
         debug "deleting problems";
         deleteProblems(params->{set_id},params->{problems});
     }
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
+
+    if (scalar(@usersToAdd)>0){
+        debug "Adding users to set " . params->{set_id};
+        debug join("; ", @usersToAdd);
+        addUserProblems(params->{set_id},params->{problems},\@usersToAdd);
+
+    }
+
+    if (scalar(@usersToDelete)>0){
+        debug "Deleting users to set " . params->{set_id};
+        debug join("; ", @usersToDelete);
+    }
+
 
     my $returnSet = convertObjectToHash($set);
 

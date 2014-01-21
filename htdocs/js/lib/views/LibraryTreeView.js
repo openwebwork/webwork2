@@ -30,20 +30,20 @@ define(['Backbone', 'underscore','models/LibraryTree','models/DBFields','stickit
             } else {
                 this.$(".throbber").remove();
 
-                this.subjects = _(this.libraryTree.get("tree")).map(function(subj) {
-                    return {label: subj.name, value: subj.name};
-                });
+                if(this.subjects.length===0){
+                    this.subjects = _(this.libraryTree.get("tree")).map(function(subj) {
+                        return {label: subj.name, value: subj.name};
+                    });                    
+                }
+
                 this.$(".library-tree-left").html($("#library-select-template").html());
-/*                this.$(".library-tree-left").html(_.template($("#library-select-template").html(),
-                        {subjects: this.libraryTree.get("tree")}));
-            
-                if(this.subject) {$("#library-level-0").val(this.subject);}
-                if(this.chapter) {
-                    this.changeLibrary("0",this.chapter);
-                    this.$(".library-level-1").val(this.chapter);}
-                if(this.section) {
-                    this.changeLibrary("1",this.section);
-                    this.$(".library-level-2").removeClass("hidden").val(this.section);} */
+
+                if(this.chapters.length>0){
+                    this.$(".library-level-1").removeClass("hidden");
+                }
+                if(this.sections.length>0){
+                    this.$(".library-level-2").removeClass("hidden");
+                }
                 this.stickit(this.fields, this.bindings);
             }
             

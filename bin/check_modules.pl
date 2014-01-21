@@ -39,6 +39,8 @@ my @modulesList = qw(
 	Benchmark
 	Carp
 	CGI
+	Dancer
+	Dancer::Plugin::Database
 	Data::Dumper
 	Data::UUID 
 	Date::Format
@@ -78,6 +80,7 @@ my @modulesList = qw(
 	Net::SMTP
 	Opcode
 	PadWalker
+	Path::Class
 	PHP::Serialization
 	Pod::Usage
 	Pod::WSDL
@@ -87,6 +90,7 @@ my @modulesList = qw(
 	Socket
 	SQL::Abstract
 	String::ShellQuote
+	Template::Toolkit
 	Text::CSV
 	Text::Wrap
 	Tie::IxHash

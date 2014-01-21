@@ -8,7 +8,7 @@ use Data::Dumper;
 use List::Util qw(first);
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(reorderProblems addProblems deleteProblems addUserProblems addUserSet createNewUserProblem);
+our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet createNewUserProblem);
 
 ###
 #
@@ -75,13 +75,13 @@ sub createNewUserProblem {
 
 ###
 #
-# This adds a problem.  The variable $problems is a reference to an array of problems and 
+# This adds global problems.  The variable $problems is a reference to an array of problems and 
 # the subroutine checks if any of the given problems are not in the database
 #
 ##
 
-sub addProblems {
-	my ($setID,$problems,$users)=@_;
+sub addGlobalProblems {
+	my ($setID,$problems)=@_;
 
     debug "in addProblems";
 
@@ -91,21 +91,42 @@ sub addProblems {
 
         if(! vars->{db}->existsGlobalProblem($setID,$p->{problem_id})){
         	my $prob = vars->{db}->newGlobalProblem();
+
         	$prob->{problem_id} = $p->{problem_id};
         	$prob->{source_file} = $p->{source_file};
             $prob->{value} = $p->{value};
             $prob->{max_attempts} = $p->{max_attempts};
         	$prob->{set_id} = $setID;
         	vars->{db}->addGlobalProblem($prob);
-
-        	for my $u (@{$users}){
-                vars->{db}->addUserProblem(createNewUserProblem($setID,$u,$p->{problem_id}));
-        	}
         }
 	}
 
     return vars->{db}->getAllGlobalProblems($setID);
 }
+
+####
+#
+#  This subroutine adds the User Problems to the database
+#
+#  parameters: 
+#       $SetID: name of the set
+#       $problems: reference to an array of problems (global)
+#       $users: reference to an array of user IDs
+#
+#####
+
+sub addUserProblems {
+    my ($setID, $problems,$users) = @_;
+
+    for my $p (@{$problems}){
+        for my $userID (@{$users}){
+            my $userProblem = createNewUserProblem($setID,$userID,$p->{problem_id});
+            vars->{db}->addUserProblem($userProblem);
+        }
+    }
+
+}
+
 
 ###
 #
@@ -146,23 +167,5 @@ sub addUserSet {
     my $result =  vars->{db}->addUserSet($userSet);
 
     return $result;
-}
-
-###
-#
-# this adds userProblems for a given user and an array of problems
-#
-###
-
-sub addUserProblems {
-	my ($userID) = @_;
-	for my $p (@{params->{problems}}){
-        debug $p;
-		my $userProblem = vars->{db}->newUserProblem();
-		$userProblem->user_id($userID);
-		$userProblem->set_id(params->{set_id});
-		$userProblem->problem_id($p->{problem_id});
-		vars->{db}->addUserProblem($userProblem);
-	}
 }
 
