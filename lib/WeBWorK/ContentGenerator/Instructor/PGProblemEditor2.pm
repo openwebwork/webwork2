@@ -1262,6 +1262,7 @@ sub getActionParams {
 sub fixProblemContents {
 		#NOT a method
 		my $problemContents = shift;
+		
 		# Handle the problem of line endings.  
 		# Make sure that all of the line endings are of unix type.  
 		# Convert \r\n to \n
