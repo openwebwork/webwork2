@@ -8,66 +8,33 @@ define(['Backbone', './WeBWorKProperty','underscore','config'], function(Backbon
 
 var Settings = Backbone.Collection.extend({ 
     model: WeBWorKProperty,
-    initialize: function (){
-        _.bindAll(this,"fetch","getSettingValue");
-        this.on("update",this.update);
+    getSettingValue: function(_setting){
+        return (this.find(function(v) { return v.get("var")===_setting;})).get("value");
     },
-    fetch: function () {
-        var self=this;
-        var requestObject = { xml_command: "getCourseSettings"};
-        _.defaults(requestObject, config.requestObject);
+    url: function () {
+        return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/settings";
+    },
+    parse: function(data){
+        var models = [];
+        var self = this;
+        if (data.length === 6) {  // this is a hack.  The timezone comes in the last array slot, but could be better. 
+                var tzData = data.pop();
+                models.push({category: "timezone", "var": "timezone", value: tzData[1]});
+            }
 
-        this.reset();
+            _(data).each(function(set){
+                var _category = "";
+                _(set).each(function(prop,i){
+                    if (i===0) {_category = prop} else {
+                        models.push(_.extend(prop,{category: _category}));
+                    }
 
-
-        $.get(config.webserviceURL, requestObject,
-            function (data) {
-                var response = $.parseJSON(data);
-                console.log("The course settings have loaded");
-                var settingsData = response.result_data;
-
-                if (settingsData.length === 6) {  // this is a hack.  The timezone comes in the last array slot, but could be better. 
-                    var tzData = settingsData.pop();
-                    self.add(new WeBWorKProperty({category: "timezone", "var": "timezone", value: tzData[1]},{silent: true}));
-                }
-
-                _(settingsData).each(function(set){
-                    var _category = "";
-                    _(set).each(function(prop,i){
-                        if (i===0) {_category = prop} else {
-                            self.add(new WeBWorKProperty(_.extend(prop,{category: _category})),{silent: true});
-                        }
-
-                    });
                 });
-                self.trigger("fetchSuccess");
             });
+        return models;
+    }
+});
 
-            
-
-        },
-        getSettingValue: function(_setting){
-            return (this.find(function(v) { return v.get("var")===_setting;})).get("value");
-        },
-        parseSettings: function(data){
-            var self = this;
-            if (data.length === 6) {  // this is a hack.  The timezone comes in the last array slot, but could be better. 
-                    var tzData = data.pop();
-                    self.add(new WeBWorKProperty({category: "timezone", "var": "timezone", value: tzData[1]},{silent: true}));
-                }
-
-                _(data).each(function(set){
-                    var _category = "";
-                    _(set).each(function(prop,i){
-                        if (i===0) {_category = prop} else {
-                            self.add(new WeBWorKProperty(_.extend(prop,{category: _category})),{silent: true});
-                        }
-
-                    });
-                });
-        }
-    });
-    
 
     
     return Settings;

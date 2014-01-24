@@ -103,10 +103,11 @@ post '/courses/:course_id/sets/:set_id' => sub {
     vars->{db}->addGlobalSet($set);
 
     for my $user(@{params->{assigned_users}}){
-        addUserSet($user);
+        addUserSet($user,params->{set_id});
     }
 
-    addProblems(params->{set_id},params->{problems},params->{assigned_users});
+    addGlobalProblems(params->{set_id},params->{problems});
+    addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -161,7 +162,7 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
 
     for my $user(@usersToAdd){
-        addUserSet($user);
+        addUserSet($user,params->{set_id});
     }
     for my $user (@usersToDelete){
         vars->{db}->deleteUserSet($user,params->{set_id});

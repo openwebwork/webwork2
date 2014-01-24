@@ -160,9 +160,9 @@ sub deleteProblems {
 ###
 
 sub addUserSet {
-    my ($user_id) = @_;
+    my ($user_id,$set_id) = @_;
 	my $userSet = vars->{db}->newUserSet;
-    $userSet->set_id(params->{set_id});
+    $userSet->set_id($set_id);
     $userSet->user_id($user_id);
     my $result =  vars->{db}->addUserSet($userSet);
 
