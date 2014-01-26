@@ -149,7 +149,8 @@ function MathViewer(field) {
 
 	popupdiv.append($('<div>', {class : 'well well-small mviewerouter'})
 			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer'})
-				.html('`'+me.decoratedTextBox.val()+'`')));
+			       ));
+	this.regenPreview();
 	
 	/* set up the autocomplete feature */
 	this.createAutocomplete();
@@ -189,12 +190,15 @@ function MathViewer(field) {
     this.regenPreview = function() {
 	var text = me.decoratedTextBox.val();
 
+	/* This escapes any html in the input field, preventing xss */
+	text = $('<div>').text(text).html();
+
 	if (me.renderingMode == "LATEX") {
 	    $('#mviewer'+viewerIndex).html("\(" + text + "\)");
 	    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
 	} else if (me.renderingMode == "PGML") {
-		$('#mviewer'+viewerIndex).html("`" + text + "`");
-		MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
+	    $('#mviewer'+viewerIndex).html("`" + text + "`");
+	    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
 	} else
 	    console.log('Invalid Rendering Mode');
     };

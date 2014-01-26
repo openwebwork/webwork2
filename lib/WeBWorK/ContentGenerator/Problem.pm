@@ -762,7 +762,6 @@ sub head {
         # Javascript and style for knowls
         print qq{
            <script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>
-           <script type="text/javascript" src="$webwork_htdocs_url/js/jquery-1.7.1.min.js"></script> 
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
            <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
 
