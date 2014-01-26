@@ -49,7 +49,7 @@ sub info {
 	
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
-		
+			
 		#print CGI::start_div({-class=>"info-wrapper"});
 		#print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 		
@@ -72,7 +72,7 @@ sub info {
 		} else {
 			print CGI::h2($r->maketext("Course Info"));
 		}
-		
+		die "course info path is unsafe!" unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates}, 1); 
 		if (-f $course_info_path) { #check that it's a plain  file
 			my $text = eval { readFile($course_info_path) };
 			if ($@) {
