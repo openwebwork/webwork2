@@ -1068,8 +1068,22 @@ BEGIN {
 sub countProblemPastAnswers { return scalar shift->listPastAnswers(@_) }
 
 sub listProblemPastAnswers {
-        my ($self, $courseID, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/course_id user_id set_id problem_id/);
- my $where = [course_id_eq_user_id_eq_set_id_eq_problem_id_eq => $courseID,$userID,$setID,$problemID];
+        my ($self, $courseID, $userID, $setID, $problemID);
+	$self = shift;
+	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
+
+	#if a courseID is not provided then just do the search without a course 
+	#id.  This is ok becaus the table is course specific.
+	my $where;
+	if ($#_ == 3) {
+	    ($courseID, $userID, $setID, $problemID) = @_;
+	    $where = [course_id_eq_user_id_eq_set_id_eq_problem_id_eq => $courseID,$userID,$setID,$problemID];
+
+	} else {
+	    ($userID, $setID, $problemID) = @_;
+	    $where = [user_id_eq_set_id_eq_problem_id_eq => $userID,$setID,$problemID];
+	}
+
         my $order = [ 'answer_id' ];
 
 	if (wantarray) {
@@ -1081,8 +1095,22 @@ sub listProblemPastAnswers {
 
 
 sub latestProblemPastAnswer {
-        my ($self, $courseID, $userID, $setID, $problemID) = shift->checkArgs(\@_, qw/course_id user_id set_id problem_id/);
-	my @answerIDs = $self->listProblemPastAnswers($courseID,$userID,$setID,$problemID);
+        my ($self, $courseID, $userID, $setID, $problemID);
+	$self = shift;
+	$self->checkArgs(\@_, qw/course_id? user_id set_id problem_id/);
+
+	#if a courseID is not provided then just do the search without a course 
+	#id.  This is ok becaus the table is course specific.
+	my @answerIDs;
+	if ($#_ == 3) {
+	    ($courseID, $userID, $setID, $problemID) = @_;
+	    @answerIDs = $self->listProblemPastAnswers($courseID,$userID,$setID,$problemID);
+
+	} else {
+	    ($userID, $setID, $problemID) = @_;
+	    @answerIDs = $self->listProblemPastAnswers($userID,$setID,$problemID);
+	}
+
 	#array should already be returned from lowest id to greatest.  Latest answer is greatest
 	return $answerIDs[$#answerIDs];
 }

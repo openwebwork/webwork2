@@ -403,14 +403,14 @@ sub initialize  {
 sub path {
 	my ($self, $args) = @_;
 	my $r = $self->r;
-	my $urlpath = $r->urlpath;
-	my $courseName  = $urlpath->arg("courseID");
-	my $setName = $r->urlpath->arg("setID") || '';
-	my $problemNumber = $r->urlpath->arg("problemID") || '';
+	my $urlpath       = $r->urlpath;
+	my $courseName    = $urlpath->arg("courseID");
+	my $setName       = $urlpath->arg("setID") || '';
+	my $problemNumber = $urlpath->arg("problemID") || '';
 
 	# we need to build a path to the problem being edited by hand, since it is not the same as the urlpath
 	# For this page the bread crum path leads back to the problem being edited, not to the Instructor tool.
-	my @path = ( 'WeBWork', $r->location,
+	my @path = ( 'WeBWorK', $r->location,
 	          "$courseName", $r->location."/$courseName",
 	          "$setName",    $r->location."/$courseName/$setName",
 	          "$problemNumber", $r->location."/$courseName/$setName/$problemNumber",
@@ -1971,9 +1971,8 @@ sub save_as_handler {
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
-	    my $targetProblemNumber   =  WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
 	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",$r,
-			courseID => $courseName, setID => $setName, problemID => $targetProblemNumber
+			courseID => $courseName, setID => $setName, problemID => $problemNumber
 		);
 		$new_file_type = $file_type;
 	} else {
