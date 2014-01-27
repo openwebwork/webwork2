@@ -50,6 +50,7 @@ subclasses.
 
 use strict;
 use warnings;
+use version;
 use WeBWorK::Cookie;
 use Date::Format;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for logging
@@ -62,7 +63,6 @@ use Scalar::Util qw(weaken);
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-
 
 #####################
 ## WeBWorK-tr modification
@@ -904,7 +904,20 @@ sub write_log_entry {
 	my $credential_source = defined $self->{credential_source} ? $self->{credential_source} : "";
 	
 	my ($remote_host, $remote_port);
+
+	# If its apache 2.4 then it has to also mod perl 2.0 or better
+	my $APACHE24 = 0;
 	if (MP2) {
+	    Apache2::ServerUtil::get_server_version() =~ 
+		       m:^Apache/(\d\.\d+\.\d+):;
+	    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
+	}
+
+	# If its apache 2.4 then the API has changed
+	if ($APACHE24) {
+	    	$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+		$remote_port = $r->connection->client_addr->port || "UNKNOWN";
+	} elsif (MP2) {
 		$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
 		$remote_port = $r->connection->remote_addr->port || "UNKNOWN";
 	} else {
