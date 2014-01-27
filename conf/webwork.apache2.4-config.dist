@@ -158,8 +158,7 @@ if ($webwork_url eq "") {
          SetHandler perl-script
          PerlSetVar dispatch_to "WebworkSOAP"
          PerlSetVar options "compress_threshold => 10000"
-         Order Allow,Deny
-         Allow from All
+         Require all granted
  </Location>
 
 ####################################################################
@@ -170,8 +169,7 @@ if ($webwork_url eq "") {
          PerlSetVar options "compress_threshold => 10000"
          PerlHandler WebworkSOAP::WSDL
          SetHandler perl-script
-         Order Allow,Deny
-         Allow from All
+         Require all granted
  </Location>
 
 
@@ -189,8 +187,7 @@ PerlModule WebworkWebservice
 	PerlHandler Apache::XMLRPC::Lite
 	PerlSetVar dispatch_to "WebworkXMLRPC"
 	PerlSetVar options "compress_threshold => 10000"
-	Order Allow,Deny
-	Allow from All
+        Require all granted
 </Location>
 
 
@@ -204,8 +201,7 @@ PerlModule WebworkWebservice
 #	PerlHandler Apache::SOAP
 #	PerlSetVar dispatch_to "WebworkXMLRPC" 
 #	PerlSetVar options "compress_threshold => 10000"
-#	Order Allow,Deny
-#	Allow from All
+#       Require all granted
 #</Location>
 
 ####################################################################
