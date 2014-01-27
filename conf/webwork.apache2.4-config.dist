@@ -132,9 +132,7 @@ $Directory{$webwork_htdocs_dir} = {
 # 
 push @AliasMatch, [ "$webwork_courses_url/([^/]*)/(.*)", "$webwork_courses_dir/\$1/html/\$2" ];
 $Directory{"$webwork_courses_dir/*/html"} = {
-	Order => "allow,deny",
-	Allow => "from all",
-	# APACHE 2.2 USERS: comment out the following line.
+        Require => "all granted",
 	Options => "FollowSymLinks",
 	AllowOverride => "none",
 };
