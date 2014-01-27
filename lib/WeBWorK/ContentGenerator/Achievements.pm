@@ -206,10 +206,6 @@ sub body {
 	    my @setIDs = $db->listUserSets($userID);
 	    my @setProblemCount;
 	    
-	    for (my $i=0; $i<$#setIDs; $i++) {
-		$setProblemCount[$i] = $db->countUserProblems($userID,$setIDs[$i]);
-	    }
-	    
 	    my @userSetIDs = map {[$userID, $_]} @setIDs;
 	    my @unfilteredsets = $db->getMergedSets(@userSetIDs);
 	    my @sets;
@@ -221,6 +217,11 @@ sub body {
 		    push @sets, $set;
 		}
 	    }	    
+
+	    # Generate array of problem counts
+	    for (my $i=0; $i<=$#sets; $i++) {		
+		$setProblemCount[$i] = $db->countUserProblems($userID,$sets[$i]->set_id);
+	    }
 
 	    print CGI::h2("Items");
 
