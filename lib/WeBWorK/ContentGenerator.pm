@@ -1411,6 +1411,7 @@ sub pathMacro {
 	while (@path) {
 		my $name = shift @path;
 		my $url = shift @path;
+		next unless $name =~/\S/;  #skip blank names. Blanks can happen for course header and set header files.
 		if ($url and not $args{textonly}) {
 		    if($args{style} eq "bootstrap"){
 		        push @result, CGI::li(CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name))));
