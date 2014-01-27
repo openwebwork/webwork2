@@ -99,6 +99,9 @@ $(function(){
     $('.classlist-table').attr('border',0);
     $('.classlist-table').attr('cellpadding',0);
     $('#show_hide').addClass('btn btn-info');
+    $('#new-users-form table').addClass('table table-condensed');
+    $('#new-users-form .section-input, #new-users-form .recitation-input').attr('size','4');
+    $('#new-users-form .last-name-input, #new-users-form .first-name-input, #new-users-form .user-id-input').attr('size','10');
 
     //Homework sets editor config
     $('#problemsetlist').addClass('form-inline set-list-form');

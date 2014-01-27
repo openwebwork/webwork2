@@ -207,7 +207,7 @@ sub body {
 		
 		foreach my $problemNumber (@problemNumbers) {
     
-		    my @pastAnswerIDs = $db->listProblemPastAnswers($courseName, $studentUser, $setName, $problemNumber);
+		    my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
 		    
 		    print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
 		    print CGI::h3("Past Answers for $studentUser, set $setName, problem $problemNumber" );
