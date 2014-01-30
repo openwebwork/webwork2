@@ -1222,7 +1222,7 @@ sub printTableHTML {
 	my $editMode                = $options{editMode};
 	my $exportMode              = $options{exportMode};
 	my %selectedAchievementIDs          = map { $_ => 1 } @{ $options{selectedAchievementIDs} };
-	
+
 	# names of headings:
 
 	if ($editMode and not %selectedAchievementIDs) {
