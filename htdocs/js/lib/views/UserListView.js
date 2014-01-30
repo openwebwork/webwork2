@@ -1,16 +1,12 @@
 
-define(['Backbone', 
-	'underscore',
-	//'Closeable',
-	//'../../lib/models/User',
-	'config'
+define(['Backbone', 'underscore','config'
 	], function(Backbone, _,config){
     
 	var UserListView = Backbone.View.extend({
 		template: _.template($("#user-template").html()),
 		initialize: function() {
 			_.bindAll(this,"render","highlightUsers","disableCheckboxForUsers");
-			_.extend(this,this.options);
+			_.extend(this,options);
 			return this;
 		},
 		render: function () {

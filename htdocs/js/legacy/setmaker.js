@@ -13,11 +13,6 @@ var basicRequestObject = {
 
 var basicWebserviceURL = "/webwork2/instructorXMLHandler";
 
-// For watermark of sample text for adding set text box
-$(function() {
- $('input[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   '  ) } )
- $('textarea[example]').each(function(a,b) { $(b).watermark($(b).attr('example')+'   ', {useNative:false}  ) } )
-});
 
 // Messaging
 
@@ -212,11 +207,13 @@ function addemcallback(wsURL, ro, probarray, count) {
       if(count!=1) { phrase += "s";}
      // alert("Added "+phrase+" to "+ro.set);
       markinset();
+
 	  var prbs = "problems";
 	  if(ro.total == 1) { 
 		prbs = "problem";
 	  }
 	  goodmsg("Added "+ro.total+" "+prbs+" to set "+ro.set_id);
+
       return true;
     };
   }
@@ -352,6 +349,14 @@ function randomize(filepath, el) {
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
     if(displayMode=='jsMath')
       jsMath.ProcessBeforeShowing(el);
+
+    if(displayMode=='asciimath') {
+      //processNode(el);
+      translate();
+    }
+    if(displayMode=='LaTeXMathML') {
+      AMprocessNode(document.getElementsByTagName("body")[0], false);
+    }
     //console.log(data);
   });
   return false;

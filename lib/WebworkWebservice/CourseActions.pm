@@ -127,24 +127,19 @@ sub listUsers {
     foreach my $u (@userInfo)
     {
         my $PermissionLevel = $db->getPermissionLevel($u->{'user_id'});
-        $u->{'permission'}{'value'} = $PermissionLevel->{'permission'};
-        $u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
-	my $studid= $u->{'student_id'};
-	$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
+        $u->{'permission'} = $PermissionLevel->{'permission'};
+        #$u->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+
+
+		my $studid= $u->{'student_id'};
+		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
         $u->{'num_user_sets'} = $db->listUserSets($studid) . "/" . $numGlobalSets;
 	
-	my $Key = $db->getKey($u->{'user_id'});
-	$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		my $Key = $db->getKey($u->{'user_id'});
+		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
 		
     }
 
-    #my %permissionsHash = $ce->{userRoles};
-    #
-    #push(@userInfo, %permissionsHash);
-
-    #foreach $user (@userInfo){
-    #    $user->{permission}
-    #}
 
     $out->{ra_out} = \@userInfo;
     $out->{text} = encode_base64("Users for course: ".$self->{courseName});
@@ -387,8 +382,8 @@ sub editUser {
 
     my %permissionsHash = reverse %{$ce->{userRoles}};
     $PermissionLevel = $db->getPermissionLevel($User->{'user_id'});
-    $User->{'permission'}{'value'} = $PermissionLevel->{'permission'};
-    $User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
+    $User->{'permission'} = $PermissionLevel->{'permission'};
+    #$User->{'permission'}{'name'} = $permissionsHash{$PermissionLevel->{'permission'}};
     
     
     # If the new_password param is set and not equal to the empty string, change the password.
@@ -571,17 +566,13 @@ sub getCourseSettings {
 	my $db = $self->db;		# database
 	my $ConfigValues = getConfigValues($ce);
 
-	#debug(eval("$siteDefaults{timezone}"));
-
-## until I figure out how to get the default timezone from the $ConfigValues object, this is hard coded.  
-
 	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
 	my $dt = DateTime->now();
 
 	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
 
 
-	debug($tz->short_name_for_datetime($dt));
+	#debug($tz->short_name_for_datetime($dt));
 
 	push(@$ConfigValues, \@tzabbr);
   	
@@ -599,6 +590,11 @@ sub updateSetting {
 
 	my $setVar = $params->{var};
 	my $setValue = $params->{value};
+
+	# this shouldn't be needed, but it seems like it's not get parsed correctly. 
+	#if($params->{sendViaJSON}){
+	#	$setValue = decode_json($setValue);
+	#}
 	debug("in updateSetting");
 	debug("var:  " . $setVar);
 	debug("value: " . $setValue);

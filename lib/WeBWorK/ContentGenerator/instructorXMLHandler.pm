@@ -207,7 +207,7 @@ sub pre_header_initialize {
             student_id     			=> $r->param('student_id') || undef,
             id             			=> $r->param('user_id') || undef,
             email_address  			=> $r->param('email_address') || undef,
-            permission     			=> $r->param('permission') || 0,	# valid values from %userRoles in defaults.config
+            permission     			=> $r->param('permission') // 0,	# valid values from %userRoles in defaults.config
             status         			=> $r->param('status') || undef,#'Enrolled, audit, proctor, drop
             section        			=> $r->param('section') || undef,
             recitation     			=> $r->param('recitation') || undef,

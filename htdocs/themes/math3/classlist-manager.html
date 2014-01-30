@@ -1,0 +1,269 @@
+<div id="main">
+    Loading Users...<i class='fa fa-spinner fa-spin'></i>
+</div>
+
+<script type="text/template" id="help-text">
+<h2>Classlist Manager Help</h2>
+   <p>The Classlist Manager allows you to edit student information as well as perform actions
+(delete, email, act as user) on individuals or a group of students.  Here is a list of features and helpful hints:
+   
+   <ul>
+   <li> To edit a student&quote;s information (name, email, section, recitation,
+   comment or permission),click on the appropriate property to change and retype or select the correct information.  Note: the columns <em>Login Name</em> and <em>Assigned Sets</em> cannot be changed. </li>
+   <li> There are a number of actions (email, change password, delete user, act as user) that you can perform:  To perform an action on an individual student, click on the gear icon in the <em>Action</em> column. </li>
+   <li> To perform an action on a group of students, select those students using the checkboxes on the first
+column, then select the action from the button above (or below) the table.  Toggling the checkbox called <em>Select All</em> will select/deselect
+all rows in the table.  </li>
+<li> The <em>Filter:</em> text box will allow you to search for all users that have that string.  You can find a single student using this or all students by typing "Student" in the text box.  Clear the filter string with the X to the right of the text box.  Additionally, just above the table is information showing how many users are visible.    </li>
+
+<li>You can close this help box by clicking the X in the upper right corner of the help box.  Clicking <em>Help</em> in the bar at the top of the page will bring this help box back. </li>
+
+</ul>
+
+
+</p>
+    
+</script>
+
+
+<script type="text/template" id="classlist-manager-template">
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="input-group">
+          <input type="text" class="form-control filter-text" placeholder="Filter">
+          <span class="input-group-btn">
+            <button class="btn btn-default clear-filter-button" type="button"><i class="fa fa-times"></i></button>
+          </span>
+        </div><!-- /input-group -->
+      </div><!-- /.col-md-4 -->
+    <div class="col-md-3 num-users"></div>
+    <div class="btn-group col-md-2">
+      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+        Action on Selected
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a href="#" class="email-selected">Email Selected Students</a></li>
+        <li><a href="#" class="password-selected">Change the Password of Selected Student</a></li>
+        <li><a href="#" class="delete-selected">Delete Selected Students</a></li>
+      </ul>
+    </div>
+    <div class="btn-group col-md-2">
+      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+        Import or Export Students
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a href="#" class="add-students-file-option">Add Students from a File</a></li>
+        <li><a href="#" class="add-students-man-option">Add Students Manually</a></li>
+        <li><a href="#" class="export-students-option">Export Students to a File</a></li>
+
+      </ul>
+    </div>
+</div>
+<div id="users-table-container"></div>
+
+</script>
+
+<script type="text/template" id="classlist-table-template">
+<div id="users-table"></div>
+<div id="users-table-paginator"></div>
+</script>
+
+<script type="text/template" id="paginator-template">
+<div class="btn-group">
+<button class="btn goto-first"><i class="icon-step-backward"></i>
+<button class="btn go-back-one"><i class="icon-arrow-left"></i>
+<% if (page_start>0) {print ("<button class='btn'> ... </button>");} %>
+<% for(i=page_start;i<page_stop;i++){
+    print("<button class='btn page-button' data-page='" + i + "'>" + (i+1) + "</button>");
+} %>
+<% if (page_stop+1<num_pages) {print ("<button class='btn'> ... </button>");} %>
+
+<button class="btn go-forward-one"><i class="icon-arrow-right"></i>
+<button class="btn goto-end"><i class="icon-step-forward"></i>
+</div>
+</script>
+
+<script type="text/template" id="add_student_file_dialog_content">
+
+<div id="impFromFileInstructions" class="container">
+  <div class="error-pane alert alert-danger"><button class="btn btn-danger btn-xs close-button"><i class="fa fa-times"></i>
+    </button>
+    <div class="error-pane-text"></div>
+  </div>
+  <div class="help-pane alert alert-info">
+    <button class="btn btn-info btn-xs close-button"><i class="fa fa-times"></i>
+    </button>
+    <div class="help-pane-text">
+    <p>To import students from a file, there are a few simple steps:</p>
+    <ol>
+      <li id="step1">Select the file by clicking the "Select File" button above right (or drag a file onto the box).
+      Note: currently only CSV files are supported
+      (click here for help on this).</li>
+      <li id="step2" style="display: none">Once the file is loaded, there are three things that must be done:
+        <ol>
+          <li>Select the proper column header for each column. If you want to ignore a column, leave the column header blank.</li>
+          <li>Select the rows that you want to import into WeBWorK.  You may click the top checkbox to select/deselect all rows, and select the checkbox <em>Use First Row for Headers</em> to tell WeBWorK to try to match the first row of data to the fields. </li>
+          <li> If a user already exists in the userlist, the row will show up in red.  You may still import that student, but all the information will overwrite what is currently in the class. </li>
+          <li>Note: if no password column is selected, the student will be given the initial password from the <em>Student ID</em> column. </li>
+          <li>Click the <em>Import Students</em> button.  This will add the selected students to this class.</li>
+        </ol>
+      </li>
+        
+    </ol>
+    </div>
+  </div> <!-- div.help-pane -->
+  <div class="form-inline">  
+    <div class="col-md-4">
+      <label for="files">Select file:</label><input class="btn" type="file" id="files" name="files" />
+    </div>
+    <div class="col-md-4 btn-group btn-sm">
+      <button class="reload-file btn btn-default disabled">Reload File</button>
+      <button class="btn btn-default disabled" id="importStudFromFileButton">Import Students</button>
+      <button class="cancel-button btn btn-default">Cancel</button>
+      <button class="import-help-button btn btn-default">Help</button>
+    </div>
+    <div class="col-md-4">
+        <div class="checkbox">
+            <label>Use First Row for Headers<input type="checkbox" id="useFirst"></input></label>
+      </div>
+    </div>
+  </div>        
+        
+  <div id="studentTable"></div></p>
+</script>
+
+<script type="text/template" id="export-to-file-template">
+<p>Click on the classlist link below will save the classlist file to your computer. </p>
+<p>
+<a href="<%=url%>" download="<%=filename%>">Save the classlist file</a>
+</script>
+<script type="text/template" id="add_student_man_dialog_content">
+    <div id='error-pane-add-man'></div>
+        <p>Add students below in the designated boxes.  If you leave the password field blank then the student will be given their <em>student id</em>
+            as the initial password. </p>
+            <div id='man_student_list'><%= content %></div>
+            <div id="manDialogTableFooter">
+            <button id="import_stud_button">Import Students</button>
+            <button id="add_more_button">Add Another Blank Line</button>
+            </div>
+</script>
+<script type="text/template" id="manual-import-template">
+    <table id='man_student_table'><thead><tr><td>Delete</td>
+    <td>Login Name</td><td>First Name</td><td>Last Name</td><td>Email</td><td>Student Id</td><td>Status</td>
+    <td>Section</td><td>Recitation</td>
+    <td>Comment</td><td>Permission Level</td><td>Password</td></tr></thead><tbody></tbody></table>
+    <button class="btn btn-default" id="import-stud-button">Import Students</button>
+    <button class="btn btn-default" id="add-more-button">Add One Student</button>
+    <button class="btn btn-default" id="cancel-import">Cancel Import</button>
+</script>
+<script type="text/template" id="passwordDialogText">
+    Change the password of the users below:
+    <table id="userPassTable">
+    <thead>
+    <tr><th>First Name</th><th>Last Name </th><th> Login Name </th> <th> New Password </th> </tr>
+    <tbody> 
+</tbody>
+</table>
+    
+</script>
+
+<script type="text/template" id="emailStudentTemplate">
+    Send email to the following students:  (Note: this is not currently functional.) <br/>
+    <span id="emailStudentList"></span><br/>
+    <textarea id="emailText" cols="40" rows="10"></textarea>
+    
+</script>
+
+<script type="text/template" id="user-row-template">
+    <td><button class="btn btn-default btn-sm delete-button"><i class="fa fa-trash-o"></i></button</td>
+    <td><input class="login-name"></td>
+    <td><input class="first-name"></td>
+    <td><input class="last-name"></td>
+    <td><input class="email"></td>
+    <td><input class="student-id"></td>
+    <td><input class="status"></td>
+    <td><input class="section"></td>
+    <td><input class="recitation"></td>
+    <td><input class="comment"></td>
+    <td><select class="permission span2"></select></td>
+    <td><input class="password"></td>
+</script>
+
+<script type="text/template" id="change-password-row-template">
+  <td class="first-name"></td><td class="last-name"></td><td class="user-id"></td>
+  <td><input type='text' size='10' class='new-password'></input></td>
+</script>
+
+<!-- The templates to the bottom of this file should go in a general template that is
+        loaded by all files -->
+
+<!-- templates for the Backbone.Stickit handlers -->
+
+<script type="text/template" id="time-popover-template">
+<div><input class='wwtime' value='<%=time%>'><br><button class='btn'>Save</button></div> 
+</script>
+
+<script type="text/template" id="edit-date-time-template">
+<input class='wwdate' size='12' value='<%=date%>'><span class='open-time-editor'><i class='icon-time'></i></span>
+</script>
+
+
+<script type="text/template" id="message-pane-template">
+<div class='row-fluid'>
+    <div class='pull-right'><button type='button' class='close'>&times;</button></div>
+    <ul class='main-message-pane'></ul>
+</div>
+
+</script>
+
+<script type="text/template" id="checkbox-template">
+<input type="checkbox">
+</script>
+
+<script type="text/template" id="all-messages">
+<%
+  var messages = {
+    user_saved: function(opt){ return "User " + opt.username + " saved.";},
+    user_saved_details: function(opt){return "The value of " + opt.key + " in the user " 
+      + opt.username + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
+    user_added: function(opt){ return "User " + opt.username + " was added.";},
+    user_added_details: function(opt){ return "A user with login name " + opt.username + " was added to the course.";},
+    user_removed: function(opt){ return "User " + opt.username + " was removed.";},
+    user_removed_details: function(opt){ return "The user with login name " + opt.username + " was removed from the course.";},
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
+      + "reenter your username and password to continue. ";},    
+    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."}  
+  };
+  print(messages[type](typeof(opts)=="undefined"?{}:opts))
+  
+%>
+</script>
+
+<script type="text/template" id="help-template">
+<button class="btn btn-info btn-sm close-help-button pull-right">&times;</button>
+<div class="help-text">
+</div> 
+</script>
+
+<script type="text/template" id="login-template">
+<div class="message"> <%=message%></div>
+<div class="form-horizontal" role="form">
+  <div class="form-group">
+    <label for="inputEmail3" class="col-sm-2 control-label">Login Name:</label>
+    <div class="col-sm-10">
+      <input type="input" class="form-control login-name" id="inputEmail3" placeholder="Login">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="password" class="col-sm-2 control-label">Login Name:</label>
+    <div class="col-sm-10">
+      <input type="password" class="form-control login-password" id="password" placeholder="Password">
+    </div>
+  </div>
+</div>
+
+</script>
+

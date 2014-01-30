@@ -4,7 +4,7 @@
  * 
  */
              
-define(['XDate'], function(XDate){
+define(['underscore','config'], function(_,config){
 var util = {             
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
@@ -54,29 +54,55 @@ var util = {
         }
         str += "</tbody></table></div></td></tr></tbody></table>";
         return str;
-     }
+     },
+     readSetDefinitionFile: function(file){
+        var self = this;
+        var problemSet = {}
+            , problems = []
+            , lines = file.split("\n")
+            , varRegExp = /^(\w+)\s*=\s*([\w\/\s:]*)$/
+            , i,j, result;
+        _(lines).each(function(line,lineNum){
+            var matches = varRegExp.exec(line);
+            if(line.match(/^\s*$/)){return;} // skip any blank lines
+            if(matches){
+                if(matches[1]==="problemList"){
+                    for(i=lineNum+1,j=1;i<lines.length;i++,j++){
+                        if(! lines[i].match(/^\s*$/)){
+                            result = lines[i].split(",");
+                            problems.push({source_file: result[0], value: result[1],max_attempts: result[2],
+                                problem_id: j});
+                        }
+                    }
+                    problemSet.problems=problems;
+                } else {
+                    switch(matches[1]){
+                        case "openDate":
+                            problemSet.open_date = matches[2];
+                            break;
+                        case "dueDate": 
+                            problemSet.due_date = matches[2];
+                            break;
+                        case "answerDate": 
+                            problemSet.answer_date = matches[2];
+                            break;
+                        case "paperHeaderFile":
+                            problemSet.hardcopy_header = matches[2];
+                            break;
+                        case "screenHeaderFile":
+                            problemSet.set_header = matches[2];
+                            break;
+                    }
+                }
+            }
+        });
+
+        return problemSet;
+
+        // now process the problemList
+    }
 }
 
-function parseWWDate(str) {
-	// this parses webwork dates in the form MM/DD/YYYY at HH:MM AM/PM TMZ
-	var wwDateRE = /(\d?\d)\/(\d?\d)\/(\d{4})\sat\s(\d?\d):(\d\d)([aApP][mM])\s([a-zA-Z]{3})/;
-        var parsedDate = wwDateRE.exec(str);
-	if (parsedDate) {
-            var hours = (/[pP][mM]/.test(parsedDate[6]))? (parseInt(parsedDate[4])-1):(parseInt(parsedDate[4])+11);
-		var date = new XDate();
-                date.setFullYear(parseInt(parsedDate[3]));
-                date.setMonth(parseInt(parsedDate[1])-1);
-                date.setDate(parseInt(parsedDate[2]));
-                date.setHours(hours);
-                date.setMinutes(parseInt(parsedDate[5]));
-                
-                // Do we need to include the time zone?
-                
-                return date;
-	}
-}
-
-XDate.parsers.push(parseWWDate);
 
 return util;
 

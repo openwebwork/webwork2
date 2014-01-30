@@ -1,10 +1,10 @@
-define(['Backbone', 'underscore','LibraryList'], function(Backbone, _,LibraryList){
+define(['Backbone', 'underscore','models/LibraryList'], function(Backbone, _,LibraryList){
 	//,function(Backbone,_){
     var LibraryTreeView = Backbone.View.extend({
     	initialize: function (){
     		_.bindAll(this,"render");
             var self = this;
-            this.parent = this.options.parent;
+            this.parent = options.parent;
             this.collection = new LibraryList();
             this.collection.fetch();
 
@@ -24,7 +24,7 @@ define(['Backbone', 'underscore','LibraryList'], function(Backbone, _,LibraryLis
         buildTreeView: function (){
             var self = this;
 
-            var opts = self.collection.map(function(lib){return "<option>" + lib.get("name") + "</option>";});
+            var opts = self.collection.map(function(lib){return "<option>" + lib.get("set_id") + "</option>";});
             this.$el.append("<select>" + opts + "</select>");
         }
 
