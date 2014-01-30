@@ -577,6 +577,7 @@ sub score_handler {
 	foreach my $userRecord (@userRecords) {
 	    my $user_id = $userRecord->user_id;
 	    next unless $db->existsGlobalUserAchievement($user_id);
+	    next if ($userRecord->{status} eq 'D' || $userRecord->{status} eq 'A');
 	    print SCORE "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
 	    my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
 	    my $level_id = $globalUserAchievement->level_achievement_id;
