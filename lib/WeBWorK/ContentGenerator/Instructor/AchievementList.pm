@@ -526,7 +526,6 @@ sub score_handler {
 	
 	if ($scope eq "none") { 
 		@achievementsToScore = ();
-		return "No achievements selected for scoring.";
 	} elsif ($scope eq "all") {
 		@achievementsToScore = @{ $self->{allAchievementIDs} };
 	} elsif ($scope eq "selected") {
@@ -552,8 +551,7 @@ sub score_handler {
 	#print out header info
 	print SCORE "username, last name, first name, section, achievement level, achievement score, ";
 	
-	my @achievementIDs = $db->listAchievements;
-	my @achievements = $db->getAchievements(@achievementIDs);
+	my @achievements = $db->getAchievements(@achievementsToScore);
 	@achievements = sortAchievements(@achievements);
 
 	foreach my $achievement (@achievements) {
@@ -601,8 +599,14 @@ sub score_handler {
 	}
 	
 	close SCORE;
-		    
-	return CGI::div({class=>"ResultsWithoutError"},  "Achievement scores saved to $scoreFileName")
+
+	# Include a download link
+	#
+	my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::FileManager", $r, courseID => $courseName);
+	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {action=>"View", files => "${courseName}_achievement_scores.csv", pwd=>"scoring"});
+	
+	
+	return CGI::div({class=>"ResultsWithoutError"},  "Achievement scores saved to ".CGI::a({href=>$fileManagerURL},$scoreFileName));
 }
 
 
