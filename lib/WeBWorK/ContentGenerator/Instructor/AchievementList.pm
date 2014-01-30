@@ -898,7 +898,7 @@ sub saveExport_handler {
 	my $urlpath = $r->urlpath;
 	my $courseName = $urlpath->arg("courseID");
 
-	my @achievementIDsToExport = @{ $self->{selectedAchievementIDs} };
+	my @achievementIDsToExport = $r->param("selected_export") ;
 
 	#get file path
 	my $FileName = $courseName."_achievements.axp";
@@ -1064,13 +1064,12 @@ sub recordEditHTML {
 	    # selection checkbox
 	    push @tableCells, CGI::checkbox(
 		-type => "checkbox",
-		-name => "selected_achievements",
+		-name => "selected_export",
+		-checked => $achievementSelected,
 		-value => $achievement_id,
 		-label => "",
-		-checked => $achievementSelected,
 					    );
-	
-    
+
 	    my @fields = ("achievement_id", "name");
 	    
 	    foreach my $field (@fields) {
@@ -1275,6 +1274,7 @@ sub printTableHTML {
 			    $Achievement->achievement_id}
 		);
 	}
+
 	
 	print CGI::end_table();
 	#########################################
