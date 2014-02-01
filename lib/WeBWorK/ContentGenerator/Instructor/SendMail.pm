@@ -262,8 +262,19 @@ sub initialize {
 	}
 	
 	my $remote_host;
+	# If its apache 2.4 then it has to also mod perl 2.0 or better
+	my $APACHE24 = 0;
 	if (MP2) {
-		$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
+	    Apache2::ServerUtil::get_server_banner() =~ 
+		       m:^Apache/(\d\.\d+\.\d+):;
+	    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
+	}
+
+	# If its apache 2.4 then the API has changed
+	if ($APACHE24) {
+	    $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+	} elsif (MP2) {
+	    $remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
 	} else {
 		(undef, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
 		$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
