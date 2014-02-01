@@ -197,7 +197,7 @@ put '/courses/:course_id/sets/:set_id' => sub {
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
     debug "Adding users to set " . params->{set_id};
-    addUserProblems(params->{set_id},params->{problems},\@userNamesFromDB);
+    addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
 
 
     if (scalar(@usersToDelete)>0){
