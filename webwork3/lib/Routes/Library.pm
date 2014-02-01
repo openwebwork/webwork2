@@ -135,9 +135,10 @@ get '/Library/directories/**' => sub {
 	splice(@dirs,1,1); # strip the "OpenProblemLibrary" from the path
 
 	my $path = vars->{ce}->{courseDirs}{templates} ."/". join("/",@dirs);
-	my @files = File::Find::Rule->file()->name('*.pg')->in($path);
 
-	my @allFiles =  map { {source_file=>$_} }@files;
+	my $header = vars->{ce}->{courseDirs}{templates} . "/";
+	my @files = File::Find::Rule->file()->name('*.pg')->in($path);
+	my @allFiles =  map { $_ =~ s/$header//; {source_file=>$_}} @files;
 	return \@allFiles;
 };
 
