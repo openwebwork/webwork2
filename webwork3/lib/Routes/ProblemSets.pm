@@ -159,7 +159,18 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     my @usersToDelete = array_minus(@userNamesFromDB,@{params->{assigned_users}});
 
+    my @test2 = grep{ not $_ ~~ @userNamesFromDB } @{params->{assigned_users}};
 
+    debug "usersToAdd";
+    debug \@usersToAdd;
+    debug "usersFromDB";
+    debug \@userNamesFromDB;
+    debug "assigned_users";
+    debug \@{params->{assigned_users}};
+    debug "test2";
+    debug \@test2;
+    debug "users to Delete";
+    debug \@usersToDelete;
 
     for my $user(@usersToAdd){
         addUserSet($user,params->{set_id});
@@ -176,8 +187,8 @@ put '/courses/:course_id/sets/:set_id' => sub {
         debug "reordering or reassigning problems";
         reorderProblems(params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
-        debug "adding problems";
-        addGlobalProblems(params->{set_id},params->{problems},params->{assigned_users});
+        debug "adding global problems";
+        addGlobalProblems(params->{set_id},params->{problems});
     } else { # problems have been deleted.  
         debug "deleting problems";
         deleteProblems(params->{set_id},params->{problems});
@@ -185,12 +196,9 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
-    if (scalar(@usersToAdd)>0){
-        debug "Adding users to set " . params->{set_id};
-        debug join("; ", @usersToAdd);
-        addUserProblems(params->{set_id},params->{problems},\@usersToAdd);
+    debug "Adding users to set " . params->{set_id};
+    addUserProblems(params->{set_id},params->{problems},\@userNamesFromDB);
 
-    }
 
     if (scalar(@usersToDelete)>0){
         debug "Deleting users to set " . params->{set_id};
