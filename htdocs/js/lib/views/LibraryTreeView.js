@@ -7,8 +7,8 @@
 *
 */
 
-define(['Backbone', 'underscore','models/LibraryTree','models/DBFields','stickit'], 
-    function(Backbone, _,LibraryTree,DBFields){
+define(['Backbone', 'underscore','models/LibraryTree','stickit'], 
+    function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
     	initialize: function (options){
@@ -16,97 +16,96 @@ define(['Backbone', 'underscore','models/LibraryTree','models/DBFields','stickit
             var self = this;
             this.libraryTree = new LibraryTree({type: options.type});
             this.libraryTree.set("header","Library/");
-            this.fields = new DBFields();
+            this.fields = new LibraryLevels();
             this.fields.on("change",this.changeLibrary);
-            this.subjects = [];
-            this.chapters = [];
-            this.sections = [];
+
+            this.libraryLevel=[[],[],[],[]];
+            this.bindings = {};
+            for(var i = 0; i<4;i++) {
+                this.bindings[".library-level-"+i+ " select"]= {observe: "level"+i,
+                    selectOptions: {collection: function (view,opts) { 
+                        return self.libraryLevel[opts.observe.split("level")[1]||""]},
+                    defaultOption: {label: "Select...", value: null}}};
+            }
     	},
     	render: function(){
+            var i;
             this.$el.html($("#library-tree-template").html());
             if (!this.libraryTree.get("tree")) {
                 this.libraryTree.fetch({success: this.render});
 
             } else {
                 this.$(".throbber").remove();
-
-                if(this.subjects.length===0){
-                    this.subjects = _(this.libraryTree.get("tree")).map(function(subj) {
+                if(this.libraryLevel[0].length===0){
+                    this.libraryLevel[0] = _(this.libraryTree.get("tree")).map(function(subj) {
                         return {label: subj.name, value: subj.name};
                     });                    
                 }
 
                 this.$(".library-tree-left").html($("#library-select-template").html());
 
-                if(this.chapters.length>0){
-                    this.$(".library-level-1").removeClass("hidden");
-                }
-                if(this.sections.length>0){
-                    this.$(".library-level-2").removeClass("hidden");
+                for(i=1;i<4;i++){
+                    if(this.libraryLevel[i].length>0){
+                        this.$(".library-level-"+i).removeClass("hidden");
+                    }
                 }
                 this.stickit(this.fields, this.bindings);
             }
             
             return this; 
     	},
-        events: {
-                "click .load-library-button": "selectLibrary"},
-        bindings: { ".library-level-0 select": {observe: "subject", selectOptions: {collection: "this.subjects",
-                        defaultOption: {label: "Select...", value: null}}},
-            ".library-level-1 select": {observe: "chapter", selectOptions: {collection: "this.chapters",
-                        defaultOption: {label: "Select...", value: null}}},
-            ".library-level-2 select": {observe: "section", selectOptions: {collection: "this.sections",
-                        defaultOption: {label: "Select...", value: null}}}
-        },
+        events: { "click .load-library-button": "selectLibrary"},
         changeLibrary: function(model){
-            switch(_(model.changed).keys()[0]){
-                case "subject":
-                    this.$(".library-level-1").removeClass("hidden");
-                    this.$(".library-level-2").addClass("hidden");
-                    var selectedSubject = _(this.libraryTree.get("tree")).findWhere({name: this.fields.get("subject")});
-                    this.chapters = _(selectedSubject.subfields).map(function(ch) { return {label: ch.name, value: ch.name};});
-                    
-                    this.$(".num-files").text(selectedSubject.num_files + " problems");
-                    this.fields.set({chapter:"",section:""});
-                    break;
-                case "chapter":
-                    this.$(".library-level-2").removeClass("hidden");
-                    var selectedSubject = _(this.libraryTree.get("tree")).findWhere({name: this.fields.get("subject")});
-                    var selectedChapter = _(selectedSubject.subfields).findWhere({name: this.fields.get("chapter")});
-                    this.sections = _(selectedChapter.subfields).map(function(sect) { return {label: sect.name, value: sect.name};});
-                    this.$(".num-files").text(selectedChapter.num_files + " problems");
-                    this.fields.set({section:""});
-                    break;
-                case "section":
-                    var selectedSubject = _(this.libraryTree.get("tree")).findWhere({name: this.fields.get("subject")});
-                    var selectedChapter = _(selectedSubject.subfields).findWhere({name: this.fields.get("chapter")});
-                    var selectedSection = _(selectedChapter.subfields).findWhere({name: this.fields.get("section")});
-                    this.$(".num-files").text(selectedSection.num_files + " problems");
-                break;
+            var self = this,
+                level = parseInt(_(model.changed).keys()[0].split("level")[1]);
+            function branchOfTree(path){
+                var currentBranch=self.libraryTree.get("tree");
+                var numFiles;
+                _(path).each(function(p,i){
+                    if(p.length>0){
+                        var branch = _(currentBranch).findWhere({name:p});
+                        currentBranch = branch.subfields;
+                        numFiles = branch.num_files;
+                    }
+                });
+                return {branches: _(currentBranch).map(function(s) { return {label: s.name, value: s.name};}), 
+                    num_files: numFiles};
+            }
 
-                
+            
+            for(i=(level+1);i<4;i++){
+                this.fields.set("level"+i,"");
+                this.$(".library-level-"+(i+1)).addClass("hidden");  // hide all other levels. 
+            }
+            var branch = branchOfTree(_(model.attributes).values());
+            this.libraryLevel[level+1] = branch.branches;
+
+            if(branch.branches.length>0){
+                this.$(".library-level-"+(level+1)).removeClass("hidden");  // show the next level in the tree
+                this.$(".num-files").text(branch.num_files + " problems");
             }
             this.unstickit(this.fields);
             this.stickit(this.fields,this.bindings);
         },
         selectLibrary: function(evt){
-            console.log("in LibraryTreeView.selectLibrary")
-            var dirs = [];
-            if(this.fields.get("subject")){dirs.push(this.fields.get("subject"))}
-            if(this.fields.get("chapter")){dirs.push(this.fields.get("chapter"))}
-            if(this.fields.get("section")){dirs.push(this.fields.get("section"))}
- 
-            this.libraryTree.trigger("library-selected",this.libraryTree.get("header")+ dirs.join("/"));
+            this.libraryTree.trigger("library-selected",this.libraryTree.get("header")
+                        +_(this.fields.values()).without("").join("/"));
         },
         loadProblems: function (evt) {
             var path = _(this.$(".lib-select")).map(function(item){ return $(item).val()});
             if (this.$(".lib-select").last().val()==="Choose A Library") {path.pop();}
             this.parent.dispatcher.trigger("load-problems",this.libraryTree.header+path.join("/"));
         }
-
-
     });
 
+    var LibraryLevels = Backbone.Model.extend({
+        defaults:  { 
+            level0: "",
+            level1: "",
+            level2: "",
+            level3: "",
+        }
+    });
 
     return LibraryTreeView;
 

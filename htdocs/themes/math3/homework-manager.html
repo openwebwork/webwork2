@@ -210,7 +210,22 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
 </script>
 
 <script type="text/template" id="problem-set-list-template">
-<div style='font-size:110%; font-weight:bold'>Problem Sets</div>
+<div class="row"><div class="md-col-3 pull-left" style='font-size:110%; font-weight:bold'>Problem Sets</div>
+  <div class="md-col-3 pull-right">
+  <div class="btn-group">
+  <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+    Sort By <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu">
+    <li><a href="#">Action</a></li>
+    <li><a href="#">Another action</a></li>
+    <li><a href="#">Something else here</a></li>
+    <li class="divider"></li>
+    <li><a href="#">Separated link</a></li>
+  </ul>
+</div>
+  </div>
+</div>
 <div class="prob-set-container">
   <ul id='probSetList' class='btn-group btn-group-vertical'></ul>
 </div>
@@ -562,6 +577,10 @@ at the bottom of the screen and click "Save Changes". </p>
   <div class="col-md-3 library-level-2 hidden">
     <select class="form-control input-sm"></select>
   </div>
+  <div class="col-md-3 library-level-3 hidden">
+    <select class="form-control input-sm"></select>
+  </div>
+
   <div class="col-md-3">
     <button class="btn btn-default load-library-button" data-loading-text="Loading Problems...">Load</button>
     <span class="num-files"></span>
