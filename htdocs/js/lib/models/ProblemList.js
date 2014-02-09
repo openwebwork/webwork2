@@ -35,7 +35,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 return path;
             }  else if (this.type=="directories"){
                 return config.urlPrefix+"Library/directories/"+this.path +"?course_id=" + config.courseSettings.course_id;
-            } else if (this.type=="local"){
+            } else if (this.type=="localLibrary"){
                 return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/local";
             } else if (this.type=="setDefinition"){
                 return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/setDefinition";
