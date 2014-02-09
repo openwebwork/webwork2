@@ -29,7 +29,7 @@ define(['Backbone', 'underscore','models/LibraryTree','stickit'],
             }
     	},
     	render: function(){
-            var i;
+            var i,branch,numFiles = null;
             this.$el.html($("#library-tree-template").html());
             if (!this.libraryTree.get("tree")) {
                 this.libraryTree.fetch({success: this.render});
@@ -49,6 +49,10 @@ define(['Backbone', 'underscore','models/LibraryTree','stickit'],
                         this.$(".library-level-"+i).removeClass("hidden");
                     }
                 }
+                if(_(this.fields.values()).without("").length>0){
+                    branch = this.branchOfTree(_(this.fields.attributes).values()); 
+                    this.$(".num-files").text(branch.num_files + " problems");  
+                }
                 this.stickit(this.fields, this.bindings);
             }
             
@@ -56,34 +60,19 @@ define(['Backbone', 'underscore','models/LibraryTree','stickit'],
     	},
         events: { "click .load-library-button": "selectLibrary"},
         changeLibrary: function(model){
-            var self = this,
-                level = parseInt(_(model.changed).keys()[0].split("level")[1]);
-            function branchOfTree(path){
-                var currentBranch=self.libraryTree.get("tree");
-                var numFiles;
-                _(path).each(function(p,i){
-                    if(p.length>0){
-                        var branch = _(currentBranch).findWhere({name:p});
-                        currentBranch = branch.subfields;
-                        numFiles = branch.num_files;
-                    }
-                });
-                return {branches: _(currentBranch).map(function(s) { return {label: s.name, value: s.name};}), 
-                    num_files: numFiles};
-            }
-
-            
+            var level = parseInt(_(model.changed).keys()[0].split("level")[1]);
+             
             for(i=(level+1);i<4;i++){
                 this.fields.set("level"+i,"");
                 this.$(".library-level-"+(i+1)).addClass("hidden");  // hide all other levels. 
             }
-            var branch = branchOfTree(_(model.attributes).values());
+            var branch = this.branchOfTree(_(model.attributes).values());
             this.libraryLevel[level+1] = branch.branches;
 
             if(branch.branches.length>0){
                 this.$(".library-level-"+(level+1)).removeClass("hidden");  // show the next level in the tree
-                this.$(".num-files").text(branch.num_files + " problems");
             }
+            this.$(".num-files").text(branch.num_files + " problems");
             this.unstickit(this.fields);
             this.stickit(this.fields,this.bindings);
         },
@@ -95,6 +84,19 @@ define(['Backbone', 'underscore','models/LibraryTree','stickit'],
             var path = _(this.$(".lib-select")).map(function(item){ return $(item).val()});
             if (this.$(".lib-select").last().val()==="Choose A Library") {path.pop();}
             this.parent.dispatcher.trigger("load-problems",this.libraryTree.header+path.join("/"));
+        },
+        branchOfTree: function(path){
+            var currentBranch=this.libraryTree.get("tree");
+            var numFiles;
+            _(path).each(function(p,i){
+                if(p.length>0){
+                    var branch = _(currentBranch).findWhere({name:p});
+                    currentBranch = branch.subfields;
+                    numFiles = branch.num_files;
+                }
+            });
+            return {branches: _(currentBranch).map(function(s) { return {label: s.name, value: s.name};}), 
+                num_files: numFiles};
         }
     });
 
