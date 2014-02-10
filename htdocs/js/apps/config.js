@@ -89,7 +89,8 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
 
         regexp : {
             wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,
-            number: /^\d*(\.\d*)?$/
+            number: /^\d*(\.\d*)?$/,
+            loginname: /^[\w\d\_]+$/
         }
     } 
 
@@ -99,12 +100,21 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
 
     _.extend(Backbone.Validation.patterns, { "wwdate": config.regexp.wwDate}); 
     _.extend(Backbone.Validation.patterns, { "setname": /^[\w\d\_\.]+$/});
-    _.extend(Backbone.Validation.patterns, { "loginname": /^[\w\d\_]+$/});
+    //_.extend(Backbone.Validation.patterns, { "loginname": /^[\w\d\_]+$/});
     _.extend(Backbone.Validation.validators, {
         setNameValidator: function(value, attr, customValue, model) {
             if(!Backbone.Validation.patterns["setname"].test(value))
                 return config.msgTemplate({type:"set_name_error"});
+            },
+        checkLogin: function(value,attr,customValue,model){
+            if(!value.match(config.regexp.loginname)){
+                return "Value must be a valid login name";
             }
+            if(model.collection.courseUsers.findWhere({user_id: value})){
+                return "The user with login " + value + " already exists in this course.";
+            }
+        }
+
     });
 
     _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);  

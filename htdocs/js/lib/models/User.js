@@ -12,14 +12,11 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             recitation: "",
             comment: ""
         },
-        validation: { user_id: {pattern: "loginname"},
-                        email_address: {pattern: "email", required: false}
-                    }, 
-        idAttribute: "_id",
-        initialize: function(){
-            //this.on('change',this.update);
-            //this.on('change',function() {console.log(this.attributes)});
-        },
+        validation: { 
+            user_id: {checkLogin: "fred"},
+            email_address: {pattern: "email", required: false}
+        }, 
+        idAttribute: "user_id",
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id");
         },
