@@ -110,7 +110,7 @@ define(['Backbone','underscore','moment','backbone-validation','stickit','jquery
             if(!value.match(config.regexp.loginname)){
                 return "Value must be a valid login name";
             }
-            if(model.collection.courseUsers.findWhere({user_id: value})){
+            if(model.collection.courseUsers && model.collection.courseUsers.findWhere({user_id: value})){
                 return "The user with login " + value + " already exists in this course.";
             }
         }

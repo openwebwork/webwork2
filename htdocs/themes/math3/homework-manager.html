@@ -305,6 +305,47 @@ They need to be named as XXX-header where XXX is the id tag of the view pane (se
   </table>
 </script>
 
+<script type="text/template" id="cutomize-assignment-template">
+<p>The students listed below are only those that are assigned to this set.  To change an individual date/time, click on 
+the desired date and change it.  To make changes to two or more students, select those students, change the date/time
+at the bottom of the screen and click "Save Changes".  You can filter down the results by typing in the "search" box.  
+The results will be dispayed below.  To search for section 2 type "section:2" and similar with recitations.   </p>
+<div class="form-inline" role="form">
+  <div class="form-group">
+    <label class="sr-only" for="ca-search-box">Search</label>
+    <input type="search" class="form-control search-box" id="ca-search-box" placeholder="Search">
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="show-section"> Show Section
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="show-recitation"> Show Recitation
+    </label>
+  </div>
+</div>
+<table class="users-table">
+</table>
+<table class="table table-striped" id="customize-problem-set-controls">
+<tr>
+<td class="header">Open Date</td><td class="header">Due Date</td><td class="header">Answer Date</td><td></td></tr>
+<tr>
+<td class="edit-datetime open-date"></td><td class="edit-datetime due-date"></td><td class="edit-datetime answer-date"></td>
+<td> <button class="btn btn-default save-changes">Save Changes</button></td>
+</tr>
+</table>
+</script>
+
+<script type="text/template" id="loading-usersets-template">
+Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
+</script>
+
+
+
+<!-- The following is an old template.  If the new template works, delete this. -->
+
 
 <script type="text/template" id="custom-assign-template">
 <h4>Problem Set: <%=setname%></h4>
@@ -851,6 +892,14 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 <button class="btn btn-info btn-sm close-help-button pull-right">&times;</button>
 <div class="help-text">
 </div> 
+</script>
+
+<script type="text/template" id="checkbox-template">
+<input type="checkbox"><input type="hidden" class="user-id">
+</script>
+
+<script type="text/template" id="user-name-template">
+<%=first_name%> <%=last_name%>
 </script>
 
 

@@ -35,6 +35,25 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			this.showFiltered = false;
 			this.columnInfo = options.columnInfo;
 			this.paginatorProp = options.paginator;
+			this.setColumns(options.columnInfo);
+			if($(options.tablename).length>0){ // if the tablename was passed use it as the $el
+				this.$el=$(options.tablename);
+			}
+			// setup the paginator 
+			if(typeof(options.paginator.showPaginator)==="undefined"){
+				this.paginatorProp.showPaginator = true;	
+			}
+			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
+				this.collection.size();
+			this.pageRange = _.range(this.pageSize);
+			this.currentPage = 0;
+			this.rowViews = [];
+
+			this.sortInfo = {};  //stores the sort column and sort direction
+		},
+		setColumns: function(columnInfo){
+			var self = this;
+			this.columnInfo = columnInfo;
 			this.bindings = {};
 			_(this.columnInfo).each(function(col){ 
 				var obj = {};
@@ -47,16 +66,7 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 				}
 				_.extend(self.bindings, obj);
 			});
-
-			// setup the paginator 
-
-			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
-				this.collection.size();
-			this.pageRange = _.range(this.pageSize);
-			this.currentPage = 0;
-			this.rowViews = [];
-
-			this.sortInfo = {};  //stores the sort column and sort direction
+			return this;
 		},
 		render: function () {
 			var self = this, i;
@@ -84,9 +94,10 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 				}
 
 			}
-
-			this.$el.append($("<tr class='paginator-row'>"));
-			this.updatePaginator();
+			if(this.paginatorProp.showPaginator){
+				this.$el.append($("<tr class='paginator-row'>"));
+				this.updatePaginator();
+			}
 
 			if(this.sortInfo){
 				this.$("th[data-class-name='"+ this.sortInfo.classname+ "'] .sort")
@@ -143,14 +154,20 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 			this.$(".numbered-page[data-page-num='"+this.currentPage+"']").addClass("current-page");
 		},
 		filter: function(filterText) {
+			var filterText;
 			if(filterText===""){
 				this.showFiltered = false;
 				return this;
 			}
-			var filterRE = new RegExp(filterText,"i");
-			this.filteredCollection = this.collection.filter(function(model){
-				return _(model.attributes).values().join(";").search(filterRE) > -1;
-			});
+			if(_(filterText).isObject()){
+				this.filteredCollection =this.collection.where(filterText);
+				console.log(this.filteredCollection);
+			} else {
+				filterRE = new RegExp(filterText,"i");
+				this.filteredCollection = this.collection.filter(function(model){
+					return _(model.attributes).values().join(";").search(filterRE) > -1;
+				});
+			}
 			this.showFiltered = true;
 			return this;
 		},
@@ -170,7 +187,7 @@ define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 					}
 				}
 			});
-	},
+		},
 		getRowCount: function () {
 			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
 		},

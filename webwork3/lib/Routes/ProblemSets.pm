@@ -470,6 +470,48 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 ##
 #
+#  Update user *user_id* to set *set_id* for course *course_id*
+#
+#  return:  UserSet properties
+##
+
+
+put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
+
+    checkPermissions(10,session->{user});
+
+    my $userID = param('user_id');
+
+    # check to make sure that the user is assigned to the course
+    send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
+            unless vars->{db}->getUser($userID);
+
+    # check to see if the user has already been assigned and skip the addition if exists already.
+
+    my $userSet = vars->{db}->getUserSet($userID,params->{set_id});
+    send_error("The user $userID has not been assigned problem set " . params->{set_id} . ".")
+        unless $userSet;
+
+    # get the global problem set to determine if the value has changed
+    my $globalSet = vars->{db}->getGlobalSet(params->{set_id});
+
+    for my $key (@user_set_props) {
+        my $globalValue = $globalSet->{$key} || "";
+        # debug $key . " : " . $globalValue . " : " . params->{$key};
+        # check to see if the value differs from the global value.  If so, set it. 
+        $userSet->{$key} = params->{$key} 
+            if ((defined(params->{$key}) && $globalValue ne params->{$key}) || $key eq "psvn" || $key eq "user_id");
+    }
+    vars->{db}->putUserSet($userSet);
+
+
+    return convertObjectToHash(vars->{db}->getMergedSet($userID,params->{set_id}));
+};
+
+
+
+##
+#
 #  Delete (unassign) user *user_id* to set *set_id* for course *course_id*
 #
 #  return:  the removed UserSet properties
