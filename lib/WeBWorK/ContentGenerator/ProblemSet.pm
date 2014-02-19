@@ -353,16 +353,13 @@ sub body {
 	    my @gradeableProblems;
 
 	    foreach my $problemID (@problemNumbers) {
-		foreach my $userID (@setUsers)  {
-		    my $userProblem = $db->getUserProblem($userID,$setName,$problemID);
-		    if ($userProblem->flags =~ /needs_grading/ || $userProblem->flags =~/graded/) {
-			$canScoreProblems = 1;
-			$gradeableProblems[$problemID] = 1;
-			last;
-		    }
+		my $problem = $db->getGlobalProblem($setName,$problemID);
+		if ($problem->flags =~ /essay/)  {
+		    $canScoreProblems = 1;
+		    $gradeableProblems[$problemID] = 1;
 		}
 	    }
-
+	    
 	    $self->{gradeableProblems} = \@gradeableProblems if $canScoreProblems;
 	}
 	

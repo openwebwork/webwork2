@@ -609,29 +609,15 @@ print
 	my $showGradeRow = 0;
 	unshift (@GradeableRows, CGI::td({}, "manual grader"));
 	foreach my $problemID (@problemIDs) {
-	    my $gradeable = 0;
-	    my $needs_grading = 0;
-	    foreach my $userID (@setUsers)  {
-		    my $userProblem = $db->getUserProblem($userID,$setName,$problemID);
-		    if ($userProblem->flags =~ /needs_grading/) {
-			$needs_grading = 1;
-			$gradeable = 1;
-			$showGradeRow = 1;
-			last;
-		    } elsif ($userProblem->flags =~ /graded/) {
-			$gradeable=1;
-			$showGradeRow = 1;
-		    }
-		    
-		}
-		if ($gradeable) {
-		    
-		    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
-		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs Grading" : "Regrade")));
-		    
-		}  else {
-		    push (@GradeableRows, CGI::td());
-		}
+	    my $globalProblem = $db->getGlobalProblem($setName,$problemID);
+	    if ($globalProblem->flags =~ /essay/) {
+		$showGradeRow = 1;
+		my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
+		push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem")));
+		
+	    }  else {
+		push (@GradeableRows, CGI::td());
+	    }
 	}
 	
 	if ($showGradeRow) {
