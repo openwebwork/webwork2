@@ -20,22 +20,15 @@ var HomeworkEditorView = WebPage.extend({
 
         (this.headerView = new HeaderView({el: $("#page-header")}));
         this.render();
-        this.dispatcher = _.clone(Backbone.Events);
         
-        config.settings = new Settings();
-        if (module.config().settings){
-            config.settings.parseSettings(module.config().settings);
-        }
+        config.settings = (module.config().settings)? new Settings(module.config().settings, {parse: true}) : new Settings();
         this.users = (module.config().users) ? new UserList(module.config().users) : new UserList();
-        this.problemSets = new ProblemSetList();
-        if (module.config().sets) {
-            this.problemSets.parse(module.config().sets);
-        }
+        this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets,{parse: true}) : new ProblemSetList();
         this.buildAssignmentDates();
 
         // call parse to set the .id attribute of each set so that backbone's set.isNew()  is false
-        config.settings.each(function(setting){setting.parse();});
-        this.users.each(function(user){user.parse();});
+        //config.settings.each(function(setting){setting.parse();});
+        //this.users.each(function(user){user.parse();});
 
         config.timezone = config.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     

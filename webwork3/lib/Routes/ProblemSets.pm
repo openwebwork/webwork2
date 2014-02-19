@@ -103,10 +103,11 @@ post '/courses/:course_id/sets/:set_id' => sub {
     vars->{db}->addGlobalSet($set);
 
     for my $user(@{params->{assigned_users}}){
-        addUserSet($user);
+        addUserSet($user,params->{set_id});
     }
 
-    addProblems(params->{set_id},params->{problems},params->{assigned_users});
+    addGlobalProblems(params->{set_id},params->{problems});
+    addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -158,10 +159,21 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     my @usersToDelete = array_minus(@userNamesFromDB,@{params->{assigned_users}});
 
+    my @test2 = grep{ not $_ ~~ @userNamesFromDB } @{params->{assigned_users}};
 
+    debug "usersToAdd";
+    debug \@usersToAdd;
+    debug "usersFromDB";
+    debug \@userNamesFromDB;
+    debug "assigned_users";
+    debug \@{params->{assigned_users}};
+    debug "test2";
+    debug \@test2;
+    debug "users to Delete";
+    debug \@usersToDelete;
 
     for my $user(@usersToAdd){
-        addUserSet($user);
+        addUserSet($user,params->{set_id});
     }
     for my $user (@usersToDelete){
         vars->{db}->deleteUserSet($user,params->{set_id});
@@ -175,8 +187,8 @@ put '/courses/:course_id/sets/:set_id' => sub {
         debug "reordering or reassigning problems";
         reorderProblems(params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
-        debug "adding problems";
-        addGlobalProblems(params->{set_id},params->{problems},params->{assigned_users});
+        debug "adding global problems";
+        addGlobalProblems(params->{set_id},params->{problems});
     } else { # problems have been deleted.  
         debug "deleting problems";
         deleteProblems(params->{set_id},params->{problems});
@@ -184,12 +196,9 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
-    if (scalar(@usersToAdd)>0){
-        debug "Adding users to set " . params->{set_id};
-        debug join("; ", @usersToAdd);
-        addUserProblems(params->{set_id},params->{problems},\@usersToAdd);
+    debug "Adding users to set " . params->{set_id};
+    addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
 
-    }
 
     if (scalar(@usersToDelete)>0){
         debug "Deleting users to set " . params->{set_id};
@@ -458,6 +467,48 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     return convertObjectToHash(vars->{db}->getUserSet($userID,param('set_id')));
 };
+
+##
+#
+#  Update user *user_id* to set *set_id* for course *course_id*
+#
+#  return:  UserSet properties
+##
+
+
+put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
+
+    checkPermissions(10,session->{user});
+
+    my $userID = param('user_id');
+
+    # check to make sure that the user is assigned to the course
+    send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
+            unless vars->{db}->getUser($userID);
+
+    # check to see if the user has already been assigned and skip the addition if exists already.
+
+    my $userSet = vars->{db}->getUserSet($userID,params->{set_id});
+    send_error("The user $userID has not been assigned problem set " . params->{set_id} . ".")
+        unless $userSet;
+
+    # get the global problem set to determine if the value has changed
+    my $globalSet = vars->{db}->getGlobalSet(params->{set_id});
+
+    for my $key (@user_set_props) {
+        my $globalValue = $globalSet->{$key} || "";
+        # debug $key . " : " . $globalValue . " : " . params->{$key};
+        # check to see if the value differs from the global value.  If so, set it. 
+        $userSet->{$key} = params->{$key} 
+            if ((defined(params->{$key}) && $globalValue ne params->{$key}) || $key eq "psvn" || $key eq "user_id");
+    }
+    vars->{db}->putUserSet($userSet);
+
+
+    return convertObjectToHash(vars->{db}->getMergedSet($userID,params->{set_id}));
+};
+
+
 
 ##
 #

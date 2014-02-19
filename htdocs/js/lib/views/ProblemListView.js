@@ -80,7 +80,7 @@ define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                                                 placeholder: "sortable-placeholder",axis: "y",
                                                 stop: this.reorder});
             }
-
+            this.updatePaginator();
             this.updateNumProblems();
         }, 
         updateNumProblems: function () {

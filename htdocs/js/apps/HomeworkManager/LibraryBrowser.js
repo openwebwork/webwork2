@@ -31,7 +31,7 @@ function(Backbone, _,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibr
                 subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: options.problemSets}),
                 directories    :  new LibraryView({libBrowserType: "directories", problemSets: options.problemSets}),
                 textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: options.problemSets}),
-                localLibrary: new LocalLibraryView({libBrowserType: "local", problemSets: options.problemSets}),
+                localLibrary: new LocalLibraryView({libBrowserType: "localLibrary", problemSets: options.problemSets}),
                 setDefinition: new LocalLibraryView({libBrowserType: "setDefinition", problemSets: options.problemSets}),
                 search :  new LibrarySearchView({libBrowserType: "search", problemSets: options.problemSets})
             };

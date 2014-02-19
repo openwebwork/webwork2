@@ -7,11 +7,20 @@ use JSON;
 use File::Find::Rule;
 use Path::Class;
 
-my $level="1";
+my $path = "/Volumes/WW_test/opt/webwork/courses/maa101/templates"."/";
+my @files = ("/Volumes/WW_test/opt/webwork/courses/maa101/templates/Library/270/setDerivatives10MaxMin/c3s3p1.pg",'/Volumes/WW_test/opt/webwork/courses/maa101/templates/Library/270/setDerivatives10MaxMin/c3s3p2.pg','/Volumes/WW_test/opt/webwork/courses/maa101/templates/Library/270/setDerivatives10MaxMin/c3s3p3.pg','/Volumes/WW_test/opt/webwork/courses/maa101/templates/Library/270/setDerivatives10MaxMin/c3s3p4.pg','/Volumes/WW_test/opt/webwork/courses/maa101/templates/Library/270/setDerivatives10MaxMin/c3s4p1.pg','/Volumes/WW_test/opt/webwork/courses/maa101/templates/Library/270/setDerivatives10MaxMin/c3s4p2.pg','/Volumes/WW_test/opt/webwork/courses/maa101/templates/Library/270/setDerivatives10MaxMin/c3s4p2a.pg','/Volumes/WW_test/opt/webwork/courses/maa101/templates/Library/270/setDerivatives10MaxMin/c3s4p3.pg');
 
-if ($level =~ /^[1-6](,[1-6])*$/) {
-	print $level . "\n";
-}
+# my @files2 = ();
+# for my $file (@files){
+# 	$file =~ s/$path//;
+# 	print $file . "\n";
+# 	push(@files2,{source_file=>$file});
+# }
+
+
+my @files2 = map { $_ =~ s/$path//; {source_file=>$_}} @files;
+#$file =~ s/$path//;
+print Dumper(@files2);
 exit;
 
 

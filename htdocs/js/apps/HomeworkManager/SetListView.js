@@ -50,14 +50,13 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
             }
         },
         deleteSet: function(set){
-             var del = confirm("Are you sure you want to delete the set " + set.get("set_id") + "?");
+            var del = confirm("Are you sure you want to delete the set " + set.get("set_id") + "?");
             if(del){
                 this.problemSets.remove(set);
                 this.problemSetTable.updateTable();
                 this.problemSetTable.updatePaginator();
                 
             }
-           
         },
         tableSetup: function () {
             var self = this;
@@ -66,42 +65,42 @@ define(['Backbone', 'underscore','views/CollectionTableView','config','views/Mod
                     $el.html($("#delete-button-template").html());
                     $el.children(".btn").on("click",function() {self.deleteSet(model);});
                 }}},
-            {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
-                stickit_options: {update: function($el, val, model, options) {
-                    $el.html("<a href='#' class='goto-set'>" + val + "</a>");
-                    $el.children("a").on("click",function() {
-                        var set = self.problemSets.findWhere({set_id: $(this).text()})
-                        set.trigger("show",set);
-                    });}
-                }
-            },
-            {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
-                stickit_options: {onGet: function(val){
-                    return val.length + "/" + self.users.length;
-                }},
-                sort_function: function(val){ return val.length;}
+                {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
+                    stickit_options: {update: function($el, val, model, options) {
+                        $el.html("<a href='#' class='goto-set'>" + val + "</a>");
+                        $el.children("a").on("click",function() {
+                            var set = self.problemSets.findWhere({set_id: $(this).text()})
+                            set.trigger("show",set);
+                        });}
+                    }
                 },
-            {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
-                stickit_options: {
-                    update: function($el,val,model,options){
-                        $el.html("<a href='/webwork2/" + config.courseSettings.course_id +"/" +
-                                model.get("set_id") + "/'>" + val.length + "</a>")
+                {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
+                    stickit_options: {onGet: function(val){
+                        return val.length + "/" + self.users.length;
                     }},
+                    sort_function: function(val){ return val.length;}
+                    },
+                {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
+                    stickit_options: {
+                        update: function($el,val,model,options){
+                            $el.html("<a href='/webwork2/" + config.courseSettings.course_id +"/" +
+                                    model.get("set_id") + "/'>" + val.length + "</a>")
+                        }},
 
-                sort_function: function(val){
-                    return val.length;
-                }    
-            },
-            {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
-                    datatype: "string", stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
-            {name: "Visible", key: "visible", classname: "is-visible", datatype: "string",
-                    stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
-            {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
-                    editable: false, datatype: "integer", use_contenteditable: false},
-            {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
-                    editable: false, datatype: "integer", use_contenteditable: false},
-            {name: "Answer Date", key: "answer_date", classname: ["answer-date","edit-datetime"], 
-                    editable: false, datatype: "integer", use_contenteditable: false}
+                    sort_function: function(val){
+                        return val.length;
+                    }    
+                },
+                {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
+                        datatype: "string", stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
+                {name: "Visible", key: "visible", classname: "is-visible", datatype: "string",
+                        stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
+                {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
+                        editable: false, datatype: "integer", use_contenteditable: false},
+                {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
+                        editable: false, datatype: "integer", use_contenteditable: false},
+                {name: "Answer Date", key: "answer_date", classname: ["answer-date","edit-datetime"], 
+                        editable: false, datatype: "integer", use_contenteditable: false}
             ];
 
         }

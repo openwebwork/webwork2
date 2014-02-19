@@ -56,7 +56,7 @@ sub reorderProblems {
 ###
 
 sub createNewUserProblem {
-    my ($setID,$userID,$problemID) = @_;
+    my ($userID,$setID,$problemID) = @_;
 
     my $userProblem = vars->{db}->newUserProblem();
     $userProblem->{user_id}=$userID;
@@ -83,21 +83,21 @@ sub createNewUserProblem {
 sub addGlobalProblems {
 	my ($setID,$problems)=@_;
 
-    debug "in addProblems";
+    debug "in addGlobalProblems";
 
 	my @oldProblems = vars->{db}->getAllGlobalProblems($setID);
 	for my $p (@{$problems}){
         my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
 
+        debug $problem;
         if(! vars->{db}->existsGlobalProblem($setID,$p->{problem_id})){
         	my $prob = vars->{db}->newGlobalProblem();
-
         	$prob->{problem_id} = $p->{problem_id};
         	$prob->{source_file} = $p->{source_file};
             $prob->{value} = $p->{value};
             $prob->{max_attempts} = $p->{max_attempts};
         	$prob->{set_id} = $setID;
-        	vars->{db}->addGlobalProblem($prob);
+        	vars->{db}->addGlobalProblem($prob) unless vars->{db}->existsGlobalProblem($setID,$prob->{problem_id})
         }
 	}
 
@@ -120,11 +120,10 @@ sub addUserProblems {
 
     for my $p (@{$problems}){
         for my $userID (@{$users}){
-            my $userProblem = createNewUserProblem($setID,$userID,$p->{problem_id});
-            vars->{db}->addUserProblem($userProblem);
+            vars->{db}->addUserProblem(createNewUserProblem($userID,$setID,$p->{problem_id}))
+                unless vars->{db}->existsUserProblem($userID,$setID,$p->{problem_id});
         }
     }
-
 }
 
 
@@ -160,9 +159,9 @@ sub deleteProblems {
 ###
 
 sub addUserSet {
-    my ($user_id) = @_;
+    my ($user_id,$set_id) = @_;
 	my $userSet = vars->{db}->newUserSet;
-    $userSet->set_id(params->{set_id});
+    $userSet->set_id($set_id);
     $userSet->user_id($user_id);
     my $result =  vars->{db}->addUserSet($userSet);
 

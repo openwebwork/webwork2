@@ -7,9 +7,9 @@
  **/
 
 
-define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
+define(['Backbone','underscore','views/ProblemSetView','models/ProblemList','views/CollectionTableView',
     'models/ProblemSet','views/UserListView','models/UserSetList', 'config','bootstrap'], 
-    function(Backbone, _,ProblemSetView,ProblemList,ProblemSet,UserListView,
+    function(Backbone, _,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,UserListView,
         UserSetList, config){
 	var ProblemSetDetailsView = Backbone.View.extend({
         className: "set-detail-view",
@@ -218,7 +218,123 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
         }
     });
 
- var CustomizeUserAssignView = Backbone.View.extend({
+    // Trying a new UI for this View
+
+    var CustomizeUserAssignView = Backbone.View.extend({
+        initialize: function(options){
+            _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection");
+            this.model = this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
+            this.users = options.users;
+            this.tableSetup();
+
+          
+        },
+        render: function () {
+            var self = this;
+            this.$el.html($("#loading-usersets-template").html());
+            if (this.collection.size()>0){
+                this.$el.html($("#cutomize-assignment-template").html());
+                (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
+                        paginator: {showPaginator: false}, tablename: ".users-table"}))
+                    .render().$el.addClass("table table-bordered table-condensed");
+                this.$el.append(this.userSetTable.el);
+                this.stickit();
+            } else {
+                this.userSetList.fetch({success: function () {self.buildCollection(); self.render();}});
+            }
+        },
+        events: {"change .show-section,.show-recitation": "updateTable",
+            "click .save-changes": "saveChanges",
+            "keyup .search-box": "filter",
+            "change th[data-class-name='select-user'] input": "selectAllUsers"
+        },
+        bindings: { "#customize-problem-set-controls .open-date" : "open_date",
+                    "#customize-problem-set-controls .due-date": "due_date",
+                    "#customize-problem-set-controls .answer-date": "answer_date"
+        },
+        selectAllUsers: function(evt){
+            $("table.users-table input[type='checkbox']").prop("checked", $(evt.target).prop("checked"));
+        },
+        filter: function(evt) {
+            var str = $(evt.target).val()
+                , match = str.match(/(\w+):(\w+)/)
+                , obj={}; 
+            if(match){
+                obj[match[1]]=match[2];
+                this.userSetTable.filter(obj).render();
+            } else {
+                this.userSetTable.filter(str).render();    
+            }
+        },
+        saveChanges: function (){
+            var self = this;
+            _($(".select-user input:checked").siblings(".user-id").map(function(i,v) { 
+                    return self.userSetList.findWhere({user_id: $(v).val()});
+                })).each(function(_model){
+                    _model.set(self.model.pick("open_date","due_date","answer_date"));
+                });
+        },
+        updateTable: function (){
+            this.tableSetup({show_recitation: this.$(".show-recitation").prop("checked"), 
+                    show_section: this.$(".show-section").prop("checked")});
+            this.userSetTable.setColumns(this.cols).render();
+        },
+        setProblemSet: function(_set) {
+            this.problemSet = _set;  // this is the globalSet
+            this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
+            this.userSetList = new UserSetList([],{problemSet: this.model});
+            this.userSetList.on({change: function(model){model.save();}});
+            // make a new collection that merges the userSetList and the userList 
+            this.collection = new Backbone.Collection();
+            return this;
+        }, 
+        buildCollection: function(){ // since the collection needs to contain a mixture of userSet and user properties, we merge them. 
+            var self = this;
+            this.collection.reset(this.userSetList.models);
+            this.collection.each(function(model){
+                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation"));
+            });
+            this.collection.on({change: function(model){
+                self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date")).save();
+            }});
+
+            return this;
+        },
+        tableSetup: function (opts) {
+            var self = this;
+            this.cols = [
+                {name: "Select", key: "select-user", classname: "select-user", 
+                    stickit_options: {update: function($el, val, model, options) {
+                        $el.html($("#checkbox-template").html());
+                        $el.children(".user-id").val(model.get("user_id"));
+                    }},
+                    colHeader: "<input type='checkbox'></input>"
+                },
+                {name: "Student", key: "user_id", classname: "student",
+                    stickit_options: {update: function($el,val,model,options){
+                        var user = self.users.findWhere({user_id: val});
+                        $el.html(_.template($("#user-name-template").html(),user.attributes));
+                    }}},
+                {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
+                        editable: false, datatype: "integer", use_contenteditable: false},
+                {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
+                        editable: false, datatype: "integer", use_contenteditable: false},
+                {name: "Answer Date", key: "answer_date", classname: ["answer-date","edit-datetime"], 
+                        editable: false, datatype: "integer", use_contenteditable: false}
+                ];
+                if(opts && opts.show_section){
+                    this.cols.push({name: "Section", key: "section", classname: "section", editable: false,
+                        datatype: "string"});
+                }
+                if(opts && opts.show_recitation){
+                    this.cols.push({name: "Recitation", key: "recitation", classname: "recitation", editable: false,
+                        datatype: "string"});
+                }
+        }
+
+    });
+// This is the old UI 
+/* var CustomizeUserAssignView = Backbone.View.extend({
         initialize: function (options) {
             _.bindAll(this,'render','selectAll','saveChanges','setProblemSet');
             this.users = options.users;
@@ -296,7 +412,7 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
                     ".due-date": "due_date",
                     ".answer-date": "answer_date",
         }
-    });
+    }); */
         
 	return ProblemSetDetailsView;
 });

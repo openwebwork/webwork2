@@ -19,7 +19,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             var self = this;
 
             this.setViewTemplate = $("#set-view-template").html();
-            this.template = _.template($("#problem-set-list-template").html());
             this.problemSets = options.problemSets; 
             this.users = options.users; 
 
@@ -29,9 +28,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
         render: function ()
         {
             var self = this;
-            console.log("in PSLV render");
             
-            this.$el.html(this.template({loading: false}));
+            this.$el.html($("#problem-set-list-template").html());
             this.problemSets.each(function (_model) {
                 self.$("#probSetList").append((new ProblemSetView({model: _model, template: self.setViewTemplate,
                         numUsers: self.users.length, problemSets: self.problemSets})).render().el);
