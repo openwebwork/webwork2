@@ -220,14 +220,14 @@ function MathViewer(field) {
     */
 
     this.createCat = function(catCount, catValue) {
-	var thisTabList = $('<ul>', {class : 'thumbnails'});
+	var thisTabList = $('<ul>', {class : 'mvthumbnails'});
 	
 	$.each(catValue.operators, function(i, value) {
 	    
 	    var className = 'opImg' + catCount + i;
 	    /* creates a li for each operator/button in the category */
-	    thisTabList.append($('<li>', {class : 'span3'})
-			       .append($('<a>', {class : 'thumbnail text-center'})
+	    thisTabList.append($('<li>', {class : 'mvspan3'})
+			       .append($('<a>', {class : 'mvthumbnail text-center'})
 				       .append(value.text)
 				       .tooltip({trigger : 'hover',
 						 delay : {show :500, hide:100},
