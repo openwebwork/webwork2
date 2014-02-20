@@ -735,5 +735,4 @@ function initWW(){
 	console.log("Out of initWW");
 }
 // be careful that initWW is not called from more than one place.
-console.log("do not addOnLoadEvent intWW at line 740 of ww_applet_support.js");
-//addOnLoadEvent(initWW);
+addOnLoadEvent(initWW);
