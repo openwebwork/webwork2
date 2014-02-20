@@ -5,6 +5,9 @@ $(function(){
     $('.nav_button').addClass('btn btn-primary');
     $('.classlist').addClass('table table-condensed classlist-table');
 
+    // Try to format checkboxes better
+    $('input:checkbox').parent('label').addClass('checkbox');
+
     // Make grey_buttons disabled buttons
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
     
