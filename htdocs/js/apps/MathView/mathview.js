@@ -29,49 +29,38 @@ $(document).ready(function() {
 	}
     });
     /* Make sure mathjax is confugued for AsciiMath input */
-    MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
+    MathJax.Hub.Config(["input/Tex","input/AsciiMath","input/TeX", "output/HTML-CSS"]);
 
-    /* attach a viewer to each input */
+    /* attach a viewer to each answer input */
     $('.codeshard').each(function () {
 	var input = this;
-	var mviewer = new MathViewer(input);
-	mviewer.initialize();
 	/* create button and attach it to side of input */
 	$(input).wrap('<div class="input-append" />')
 	    .css('margin-right', '0px');
 
-	/* set button behavior.  It closes all other popovers and opens this inputs popover when clicked */
+	/* define the button and place it */
 	var button = $('<a>', {href : '#', class : 'btn codeshard-btn', style : 'margin-right : .5ex'})
 	    .html('<i class="icon-th"></i>')
-	    .click(function () {
-		var current = this;
-		
-		$('.codeshard').each(function () {
-		    var others = $(this).siblings('a')[0];
-		    if (others != current) {
-			$(others).popover('hide');
-		    }
-		});
-
-		$(current).popover('toggle');
-		$('.popover').draggable({handle: ".brand"});
-		$(this).siblings('input').keyup();
-		MathJax.Hub.Queue([ "Typeset", MathJax.Hub]);
-
-		return false;
-	    });
-
-	/* actually initialize the popover */
-	$(button).popover({html : 'true',
-			 content : mviewer.popoverContent,
-			 trigger : 'manual',
-			 placement : 'right',
-			 title : mviewer.popoverTitle,
-			 container : '.problem-content'
-		     }); 
 	$(input).parent().append(button);
-	/* make sure popover refreshes math when there is a keyup in the input */
-	$(input).keyup(mviewer.regenPreview);
+
+	/* generate the mathviewer */
+	var mviewer = new MathViewer(input,button,'.problem-content');
+	mviewer.initialize();
+
+	/* set mviewer behavior specific to problem inputs */
+	/* have button close other open mviewers */
+	mviewer.button.click(function () {
+	    var current = this;
+		
+	    $('.codeshard').each(function () {
+		var others = $(this).siblings('a')[0];
+		if (others != current) {
+		    $(others).popover('hide');
+		    }
+	    });
+	});
+	
+	/* have the mviewer close if the input loses focus */
 	$(input).focus(function () {
 	    var current = $(this).siblings('a')[0];
 	    
@@ -80,18 +69,43 @@ $(document).ready(function() {
 		if (others != current) {
 		    $(others).popover('hide');
 		}
-	    });
-	    
+	    });	    	    
 	});
-	    
+	
     });
     
-});
+    /* attach an editor to any needed latex/pg fields */
+    $('.latexentryfield').each(function () {
+	var input = this;
 
-function MathViewer(field) {
+	/* define the button and place it */
+	var button = $('<a>', {href : '#', class : 'btn codeshard-btn', style : 'margin-left : 2ex; vertical-align : top'})
+	    .html('<i class="icon-th"></i>')
+	$(input).parent().append(button);
+	options = { renderingMode : 'LATEX',
+		    decoratedTextBoxAsInput : false,
+		    autocomplete : false
+		  };
+	
+	/* generate the mathviewer */
+	var mviewer = new MathViewer(input,button,'form',options);
+	mviewer.initialize();
+	
+    });
+});
+    
+function MathViewer(field,button,container,userOptions) {
+
+    var defaults = {
+	renderingMode : "PGML",
+	decoratedTextBoxAsInput : true,
+	autocomplete : true,
+    }
+
+    var options = $.extend({}, defaults, userOptions);
 
     /* Always render using PGML.  Latex mode is vestigal */
-    this.renderingMode = "PGML";
+    this.renderingMode = options.renderingMode;
 
     /* give a unique index to this instance of the viewer */
     if (typeof MathViewer.viewerCount == 'undefined' ) {
@@ -101,6 +115,13 @@ function MathViewer(field) {
     var viewerIndex = MathViewer.viewerCount;
     var me = this;
     this.decoratedTextBox = $(field);
+    this.button = $(button);
+    
+    if (options.decoratedTextBoxAsInput) {
+	this.inputTextBox = $(field);
+    } else {
+	this.inputTextBox = $('<input>',{type : 'text', class : 'mv-input', size:'40'});
+    }
 
     MathJax.Hub.Config({
 	showProcessingMessages : false,
@@ -112,6 +133,19 @@ function MathViewer(field) {
     var popupttl;
     var dropdown;
     var tabContent;
+
+    /* make sure the popover opens when we click the button */
+    this.button.click(function () {
+	me.button.popover('toggle');
+	$('.popover').draggable({handle: ".brand"});
+	    
+	me.inputTextBox.keyup();
+	MathJax.Hub.Queue([ "Typeset", MathJax.Hub]);
+	return false;
+    });
+    
+    
+    /* set mviewer behavior specific to problem inputs */
 
     /* initialization function does heavy lifting of generating html */
     this.initialize = function() {
@@ -148,11 +182,36 @@ function MathViewer(field) {
 	tabContent.find('.tab-pane:first').addClass('active');
 
 	popupdiv.append($('<div>', {class : 'well well-small mviewerouter'})
-			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer'})
-				.html('`'+me.decoratedTextBox.val()+'`')));
-	
+			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer'})));
+			
+	if (!options.decoratedTextBoxAsInput) {
+	    var insertbutton = $('<a>', {href : '#', class : 'btn btn-primary' }).html('Insert');
+	    popupdiv.append($('<div>',{class : 'mvinput'}).append(this.inputTextBox).append(insertbutton));
+	    insertbutton.click(function () {
+		me.decoratedTextBox.insertAtCaret(me.inputTextBox.val());
+		return false;
+	    });
+	}
+
+	$('#mviewer'+viewerIndex).html(me.inputTextBox.val());
+
 	/* set up the autocomplete feature */
-	this.createAutocomplete();
+	if (options.autocomplete) {
+	    this.createAutocomplete();
+	}
+	
+	/* make sure popover refreshes math when there is a keyup in the input */
+	$(this.inputTextBox).keyup(this.regenPreview);
+
+	/* actually initialize the popover */
+	this.button.popover({html : 'true',
+			     content : this.popoverContent,
+			     trigger : 'manual',
+			     placement : 'right',
+			     title : this.popoverTitle,
+			     container : container
+			}); 
+	$(container).addClass('mv-container');		
 	
     }	
 
@@ -160,25 +219,25 @@ function MathViewer(field) {
        input box when a button in the viewer is pressed */
 
     this.generateTex = function(strucValue) {
-	var pos = me.decoratedTextBox.getCaretPos();
+	var pos = me.inputTextBox.getCaretPos();
 	var newpos = pos;
 
 	if (me.renderingMode == "LATEX") {
-	    me.decoratedTextBox.insertAtCaret(strucValue.latex);
+	    me.inputTextBox.insertAtCaret(strucValue.latex);
 	    var parmatch = strucValue.latex.match(/\(\)/);
 	    if (parmatch) {
 		newpos += parmatch[0].index;
 	    }
-	    me.decoratedTextBox.setCaretPos(newpos);
-	    me.decoratedTextBox.keyup();
+	    me.inputTextBox.setCaretPos(newpos);
+	    me.inputTextBox.keyup();
 	} else if (me.renderingMode == "PGML") {
-	    me.decoratedTextBox.insertAtCaret(strucValue.PG);
+	    me.inputTextBox.insertAtCaret(strucValue.PG);
 	    var parmatch = strucValue.PG.match(/\(\)/);
 	    if (parmatch) {
 		newpos += parmatch.index+1;
 	    }
-	    me.decoratedTextBox.setCaretPos(newpos);
-	    me.decoratedTextBox.keyup();
+	    me.inputTextBox.setCaretPos(newpos);
+	    me.inputTextBox.keyup();
 	} else
 	    console.log('Invalid Rendering Mode');
     }
@@ -187,10 +246,10 @@ function MathViewer(field) {
        whenever the input value changes */
     
     this.regenPreview = function() {
-	var text = me.decoratedTextBox.val();
+	var text = me.inputTextBox.val();
 
 	if (me.renderingMode == "LATEX") {
-	    $('#mviewer'+viewerIndex).html("\(" + text + "\)");
+	    $('#mviewer'+viewerIndex).html('\\(' + text + '\\)');
 	    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
 	} else if (me.renderingMode == "PGML") {
 		$('#mviewer'+viewerIndex).html("`" + text + "`");
@@ -264,7 +323,7 @@ function MathViewer(field) {
 	
 	
 	/* implement autocomplete feature using bootstrap typeahead */
-	$(me.decoratedTextBox).attr('autocomplete', 'off')
+	$(me.inputTextBox).attr('autocomplete', 'off')
 	    .typeahead({source: source,
 			minLength : 0,
 			/* the matcher function tries to strip off all of the parts
@@ -272,7 +331,7 @@ function MathViewer(field) {
 			   are not a-z and compares to item */
 			matcher: function (item) {
 			    var len = this.query.length;
-			    var pos = me.decoratedTextBox.getCaretPos();
+			    var pos = me.inputTextBox.getCaretPos();
 			    var re = new RegExp('[a-z]*.{'+(len-pos)+'}$');
 			    var query = this.query;
 			    var match = query.match(re);
@@ -305,7 +364,7 @@ function MathViewer(field) {
 			   at the cursor position */
 			updater : function (item) {
 			    var len = this.query.length;
-			    var pos = me.decoratedTextBox.getCaretPos();
+			    var pos = me.inputTextBox.getCaretPos();
 			    var newpos = pos;
 			    var re = new RegExp('[a-z]*.{'+(len-pos)+'}$');
 			    var query = this.query;
@@ -320,9 +379,9 @@ function MathViewer(field) {
 			    }
 			    newpos -= query.length;
 			    item = item.replace(query,'');
-			    me.decoratedTextBox.change(function () {
-				me.decoratedTextBox.setCaretPos(newpos);
-				me.decoratedTextBox.off('change');
+			    me.inputTextBox.change(function () {
+				me.inputTextBox.setCaretPos(newpos);
+				me.inputTextBox.off('change');
 			    });
 			    
 			    return [this.query.slice(0,pos), 
@@ -332,7 +391,7 @@ function MathViewer(field) {
 		       });
 	
 	/* this overrides a broken part of bootstrap */
-	$(me.decoratedTextBox).data('typeahead').move = function (e) {
+	$(me.inputTextBox).data('typeahead').move = function (e) {
 	    if (!this.shown) return;
 	    
 	    if (e.type === 'keypress') return; //40 and 38 are characters in a keypress

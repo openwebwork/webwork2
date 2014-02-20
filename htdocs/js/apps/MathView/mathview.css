@@ -1,37 +1,37 @@
-.problem-content .popover {
+.mv-container .popover {
     width : 400px;
     max-width : 400px;
-    height : 350px;
+    max-height: 400px;
 }
 
-.problem-content .popover .mviewer {
+.mv-container .popover .mviewer {
     height : 60px;
     margin-bottom : 0px;
     text-align : center;
 }
 
-.problem-content .popover .mviewerouter {
+.mv-container .popover .mviewerouter {
     padding-top:15px;
     padding-bottom:5px;
     overflow-x : auto;
     margin-bottom : 0px;
 }
 
-.problem-content .input-append {
+.mv-container .input-append {
     display: inline-block;
 }
 
-.problem-content .popover .tab-content {
+.mv-container .popover .tab-content {
     height : 145px;
     margin-top:20px;
 }
 
-.problem-content .popover .tab-content .mvspan3 {
+.mv-container .popover .tab-content .mvspan3 {
     width: 87px;
     *width: 87px;
 }
 
-.problem-content .popover .tab-content .mvthumbnail {
+.mv-container .popover .tab-content .mvthumbnail {
     padding:12px;
     height:22px;
     cursor: pointer;
@@ -51,38 +51,48 @@
 
 }
 
-.problem-content .popover a.mvthumbnail:hover,
-.problem-content .popover a.mvthumbnail:focus {
+.mv-container .popover a.mvthumbnail:hover,
+.mv-container .popover a.mvthumbnail:focus {
   border-color: #003388;
   -webkit-box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
   -moz-box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
   box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
 }
 
-.problem-content .popover .mvthumbnails {
+.mv-container .popover .mvthumbnails {
     margin: 0;
     padding: 0;
     list-style-type: none;
 }
 
-.problem-content .popover .mvthumbnails .mvspan3:nth-child(3n+1) {
+.mv-container .popover .mvthumbnails .mvspan3:nth-child(3n+1) {
     margin-left: 42px;
 }
 
-.problem-content .popover .mvthumbnails > li {
+.mv-container .popover .mvthumbnails > li {
   float: left;
   margin-bottom: 20px;
   margin-left: 20px;
 }
 
-.problem-content .popover .navbar {
+.mv-container .popover .mvinput {
+    height: 22px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.mv-container .popover .mvinput a {
+    float:right;
+}
+
+.mv-container .popover .navbar {
   *position: relative;
   *z-index: 2;
   margin-bottom: 0px;
   overflow: visible;
 }
 
-.problem-content .popover .navbar-inner {
+.mv-container .popover .navbar-inner {
     min-height: 40px;
     padding-right: 5px;
     padding-left: 5px;
@@ -92,7 +102,7 @@
     box-shadow: none;
 }
 
-.problem-content .popover .navbar .brand {
+.mv-container .popover .navbar .brand {
   display: block;
   float: left;
   padding: 10px 20px 10px;
@@ -105,27 +115,27 @@
   text-decoration: none;
 }
 
-.problem-content .popover .navbar .brand:hover,
-.problem-content .popover .navbar .brand:focus {
+.mv-container .popover .navbar .brand:hover,
+.mv-container .popover .navbar .brand:focus {
   text-decoration: none;
 }
 
-.problem-content .popover .navbar-text {
+.mv-container .popover .navbar-text {
   margin-bottom: 0;
   line-height: 40px;
   color: #777777;
 }
 
-.problem-content .popover .navbar-link {
+.mv-container .popover .navbar-link {
   color: #777777;
 }
 
-.problem-content .popover .navbar-link:hover,
-.problem-content .popover .navbar-link:focus {
+.mv-container .popover .navbar-link:hover,
+.mv-container .popover .navbar-link:focus {
   color: #333333;
 }
 
-.problem-content .popover .navbar .nav {
+.mv-container .popover .navbar .nav {
   position: relative;
   left: 0;
   display: block;
@@ -134,16 +144,16 @@
   padding-left: 10px;
 }
 
-.problem-content .popover .navbar .nav.pull-right {
+.mv-container .popover .navbar .nav.pull-right {
   float: right;
   margin-right: 0;
 }
 
-.problem-content .popover .navbar .nav > li {
+.mv-container .popover .navbar .nav > li {
   float: left;
 }
 
-.problem-content .popover .navbar .nav > li > a {
+.mv-container .popover .navbar .nav > li > a {
   float: none;
   padding: 10px 10px 10px;
   color: #777777;
@@ -151,25 +161,25 @@
   text-shadow: 0 1px 0 #ffffff;
 }
 
-.problem-content .popover .navbar .nav .dropdown-toggle .caret {
+.mv-container .popover .navbar .nav .dropdown-toggle .caret {
   margin-top: 8px;
 }
 
-.problem-content .popover .navbar .nav > li > a:focus,
-.problem-content .popover .navbar .nav > li > a:hover {
+.mv-container .popover .navbar .nav > li > a:focus,
+.mv-container .popover .navbar .nav > li > a:hover {
   color: #333333;
   text-decoration: none;
   background-color: transparent;
 }
 
-.problem-content .popover .navbar .nav > .active > a,
-.problem-content .popover .navbar .nav > .active > a:hover,
-.problem-content .popover .navbar .nav > .active > a:focus {
+.mv-container .popover .navbar .nav > .active > a,
+.mv-container .popover .navbar .nav > .active > a:hover,
+.mv-container .popover .navbar .nav > .active > a:focus {
   background-color: #f7f7f7;
   box-shadow: none;
 }
 
-.problem-content .popover .navbar .btn-navbar {
+.mv-container .popover .navbar .btn-navbar {
   display: none;
   float: right;
   padding: 7px 10px;
@@ -194,7 +204,7 @@
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 0 rgba(255, 255, 255, 0.075);
 }
 
-.problem-content .popover .navbar .btn-navbar .icon-bar {
+.mv-container .popover .navbar .btn-navbar .icon-bar {
   display: block;
   width: 18px;
   height: 2px;
@@ -207,11 +217,11 @@
           box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
 }
 
-.problem-content .popover .btn-navbar .icon-bar + .icon-bar {
+.mv-container .popover .btn-navbar .icon-bar + .icon-bar {
   margin-top: 3px;
 }
 
-.problem-content .popover .navbar .nav > li > .dropdown-menu:before {
+.mv-container .popover .navbar .nav > li > .dropdown-menu:before {
   position: absolute;
   top: -7px;
   left: 9px;
@@ -223,7 +233,7 @@
   content: '';
 }
 
-.problem-content .popover .navbar .nav > li > .dropdown-menu:after {
+.mv-container .popover .navbar .nav > li > .dropdown-menu:after {
   position: absolute;
   top: -6px;
   left: 10px;
@@ -234,7 +244,7 @@
   content: '';
 }
 
-.problem-content .popover .navbar-fixed-bottom .nav > li > .dropdown-menu:before {
+.mv-container .popover .navbar-fixed-bottom .nav > li > .dropdown-menu:before {
   top: auto;
   bottom: -7px;
   border-top: 7px solid #ccc;
@@ -242,50 +252,50 @@
   border-top-color: rgba(0, 0, 0, 0.2);
 }
 
-.problem-content .popover .navbar-fixed-bottom .nav > li > .dropdown-menu:after {
+.mv-container .popover .navbar-fixed-bottom .nav > li > .dropdown-menu:after {
   top: auto;
   bottom: -6px;
   border-top: 6px solid #ffffff;
   border-bottom: 0;
 }
 
-.problem-content .popover .navbar .nav li.dropdown > a:hover .caret,
-.problem-content .popover .navbar .nav li.dropdown > a:focus .caret {
+.mv-container .popover .navbar .nav li.dropdown > a:hover .caret,
+.mv-container .popover .navbar .nav li.dropdown > a:focus .caret {
   border-top-color: #333333;
   border-bottom-color: #333333;
 }
 
-.problem-content .popover .navbar .nav li.dropdown > .dropdown-toggle .caret {
+.mv-container .popover .navbar .nav li.dropdown > .dropdown-toggle .caret {
   border-top-color: #777777;
   border-bottom-color: #777777;
 }
 
-.problem-content .popover .navbar .nav li.dropdown.open > .dropdown-toggle,
-.problem-content .popover .navbar .nav li.dropdown.open.active > .dropdown-toggle {
+.mv-container .popover .navbar .nav li.dropdown.open > .dropdown-toggle,
+.mv-container .popover .navbar .nav li.dropdown.open.active > .dropdown-toggle {
   background-color: #e5e5e5;
   color: #555555;
 }
 
-.problem-content .popover .navbar .pull-right > li > .dropdown-menu,
-.problem-content .popover .navbar .nav > li > .dropdown-menu.pull-right {
+.mv-container .popover .navbar .pull-right > li > .dropdown-menu,
+.mv-container .popover .navbar .nav > li > .dropdown-menu.pull-right {
   right: 0;
   left: auto;
 }
 
-.problem-content .popover .navbar .pull-right > li > .dropdown-menu:before,
-.problem-content .popover .navbar .nav > li > .dropdown-menu.pull-right:before {
+.mv-container .popover .navbar .pull-right > li > .dropdown-menu:before,
+.mv-container .popover .navbar .nav > li > .dropdown-menu.pull-right:before {
   right: 12px;
   left: auto;
 }
 
-.problem-content .popover .navbar .pull-right > li > .dropdown-menu:after,
-.problem-content .popover .navbar .nav > li > .dropdown-menu.pull-right:after {
+.mv-container .popover .navbar .pull-right > li > .dropdown-menu:after,
+.mv-container .popover .navbar .nav > li > .dropdown-menu.pull-right:after {
   right: 13px;
   left: auto;
 }
 
-.problem-content .popover .navbar .pull-right > li > .dropdown-menu .dropdown-menu,
-.problem-content .popover .navbar .nav > li > .dropdown-menu.pull-right .dropdown-menu {
+.mv-container .popover .navbar .pull-right > li > .dropdown-menu .dropdown-menu,
+.mv-container .popover .navbar .nav > li > .dropdown-menu.pull-right .dropdown-menu {
   right: 100%;
   left: auto;
   margin-right: -1px;
