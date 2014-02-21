@@ -79,16 +79,17 @@ $(document).ready(function() {
 	var input = this;
 
 	/* define the button and place it */
-	var button = $('<a>', {href : '#', class : 'btn codeshard-btn', style : 'margin-left : 2ex; vertical-align : top'})
-	    .html('<i class="icon-th"></i>')
+	var button = $('<a>', {href : '#', class : 'btn', style : 'margin-left : 2ex; vertical-align : top'})
+	    .html('<i class="icon-pencil"></i>')
 	$(input).parent().append(button);
 	options = { renderingMode : 'LATEX',
 		    decoratedTextBoxAsInput : false,
-		    autocomplete : false
+		    autocomplete : false,
+		    includeDelimiters : true
 		  };
 	
 	/* generate the mathviewer */
-	var mviewer = new MathViewer(input,button,'form',options);
+	var mviewer = new MathViewer(input,button,'body',options);
 	mviewer.initialize();
 	
     });
@@ -100,12 +101,12 @@ function MathViewer(field,button,container,userOptions) {
 	renderingMode : "PGML",
 	decoratedTextBoxAsInput : true,
 	autocomplete : true,
+	includeDelimiters : false
     }
 
-    var options = $.extend({}, defaults, userOptions);
+    this.options = $.extend({}, defaults, userOptions);
 
-    /* Always render using PGML.  Latex mode is vestigal */
-    this.renderingMode = options.renderingMode;
+    this.renderingMode = this.options.renderingMode;
 
     /* give a unique index to this instance of the viewer */
     if (typeof MathViewer.viewerCount == 'undefined' ) {
@@ -117,7 +118,7 @@ function MathViewer(field,button,container,userOptions) {
     this.decoratedTextBox = $(field);
     this.button = $(button);
     
-    if (options.decoratedTextBoxAsInput) {
+    if (this.options.decoratedTextBoxAsInput) {
 	this.inputTextBox = $(field);
     } else {
 	this.inputTextBox = $('<input>',{type : 'text', class : 'mv-input', size:'40'});
@@ -169,8 +170,10 @@ function MathViewer(field,button,container,userOptions) {
 					.append(dropdown)))
 			.append($('<ul>', {class : "nav pull-right"})
 				.append($('<li>')
-					.append('<a href="#" onclick="$(' + "'.codeshard-btn').popover('hide')" + 
-						'; return false;"><i class="icon-remove"></i></a>'))));
+					.append('<a href="#"><i class="icon-remove"></i></a>').click(function () {
+					    me.button.popover('hide');
+					    return false;
+					}))));
 	/* put the categories content into the main popop div, 
 	   activate the tabs, 
 	   and put the preview div in place 
@@ -184,11 +187,15 @@ function MathViewer(field,button,container,userOptions) {
 	popupdiv.append($('<div>', {class : 'well well-small mviewerouter'})
 			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer'})));
 			
-	if (!options.decoratedTextBoxAsInput) {
+	if (!this.options.decoratedTextBoxAsInput) {
 	    var insertbutton = $('<a>', {href : '#', class : 'btn btn-primary' }).html('Insert');
 	    popupdiv.append($('<div>',{class : 'mvinput'}).append(this.inputTextBox).append(insertbutton));
 	    insertbutton.click(function () {
-		me.decoratedTextBox.insertAtCaret(me.inputTextBox.val());
+		var insertstring = me.inputTextBox.val();
+		if (me.options.includeDelimiters) {
+		    insertstring = '\\('+insertstring+'\\)';
+		}
+		me.decoratedTextBox.insertAtCaret(insertstring);
 		return false;
 	    });
 	}
@@ -196,7 +203,7 @@ function MathViewer(field,button,container,userOptions) {
 	$('#mviewer'+viewerIndex).html(me.inputTextBox.val());
 
 	/* set up the autocomplete feature */
-	if (options.autocomplete) {
+	if (this.options.autocomplete) {
 	    this.createAutocomplete();
 	}
 	
