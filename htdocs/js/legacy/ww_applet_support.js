@@ -728,6 +728,12 @@ function iamhere() {
 //Initialize the WWquestion.
 
 function initWW(){
+    if (typeof initWW.hasRun == 'undefined') {
+	initWW.hasRun = true;
+    } else {
+	return;
+    }	
+
     console.log("Into initWW");
 	if (typeof(initializeWWquestion) == 'function') {
 		initializeWWquestion();
