@@ -32,14 +32,14 @@ get '/courses/:course/users' => sub {
     my %permissionsHash =  reverse %{vars->{ce}->{userRoles}};
     foreach my $u (@allUsers)
     {
-        my $PermissionLevel = vars->{ce}->getPermissionLevel($u->{'user_id'});
+        my $PermissionLevel = vars->{db}->getPermissionLevel($u->{'user_id'});
         $u->{'permission'} = $PermissionLevel->{'permission'};
 
 		my $studid= $u->{'student_id'};
 		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
 		
     }
-    return Routes::convertArrayOfObjectsToHash(\@allUsers);
+    return convertArrayOfObjectsToHash(\@allUsers);
 };
 
 

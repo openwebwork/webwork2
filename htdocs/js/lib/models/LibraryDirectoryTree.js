@@ -1,4 +1,4 @@
-define(['Backbone','config'], function(Backbone,config){
+define(['backbone','config'], function(Backbone,config){
 	/**
 	 *   The LibraryTree is a model of the entire WeBWorK library formed as a tree.
 	 *

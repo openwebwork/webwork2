@@ -7,7 +7,7 @@
 *
 */
 
-define(['Backbone', 'underscore','models/LibraryTree','stickit'], 
+define(['backbone', 'underscore','models/LibraryTree','stickit'], 
     function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({

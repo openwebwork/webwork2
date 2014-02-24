@@ -1,5 +1,5 @@
-define(['Backbone','views/MessageListView','views/ModalView','config', 'jquery-truncate'], 
-function(Backbone,MessageListView,ModalView,config){
+define(['backbone','views/MessageListView','views/ModalView','config','views/NavigationBar', 'jquery-truncate'], 
+function(Backbone,MessageListView,ModalView,config,NavigationBar){
 	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",

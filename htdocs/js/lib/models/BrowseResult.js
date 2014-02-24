@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore','config', 'ProblemList'], function(Backbone, _, config, ProblemList){
+define(['backbone', 'underscore','config', 'ProblemList'], function(Backbone, _, config, ProblemList){
 
     var BrowseResult = Backbone.Model.extend({
         defaults:{

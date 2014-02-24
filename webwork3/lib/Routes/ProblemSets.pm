@@ -37,6 +37,13 @@ get '/courses/:course_id/sets' => sub {
 
     my @globalSetNames = vars->{db}->listGlobalSets;
     my @globalSets = vars->{db}->getGlobalSets(@globalSetNames);
+
+    for my $set (@globalSets){
+        my @globalProblems = vars->{db}->getAllGlobalProblems($set->{set_id});
+        $set->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
+        my @userNames = vars->{db}->listSetUsers($set->{set_id});
+        $set->{assigned_users} = \@userNames;
+    }
     
     return convertArrayOfObjectsToHash(\@globalSets);
 };
