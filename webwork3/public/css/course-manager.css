@@ -1,0 +1,89 @@
+@import "webwork.css";
+
+#hw-set-list-container {margin: 20px 15px;  padding:10px;}
+
+a#view-header i {margin-left:1ex;}
+
+
+
+
+/* Help with the spacing in the top row */
+
+#page-header h2 {font-size: 24px; line-height: 28px; margin: 0px; display: inline-block;}
+
+
+
+.help-hidden {display: none;}
+
+.empty {background-color: none;}
+
+
+.dropdown-submenu a {width: 180px; overflow: hidden;}
+
+/* the num-users in the left-column */
+
+.num-users { margin-left: 2ex;}
+
+.set-not-visible {font-style: italic;}
+.set-visible {font-weight: bold;}
+.set-reduced-credit {color: rgb(217,115,52);}
+
+.assign-set-name {cursor: pointer;}
+
+.assign-filled {height: 30px; background-color: rgb(250,100,100)}
+
+
+.problem-paginator {text-align: center;}
+.problem-paginator .pagination {margin-top: 5px;}
+
+
+/*.lib-problem-viewer { overflow: scroll;}*/
+
+
+
+.scrollable {height: 100%; overflow: scroll;}
+
+.num-problems {margin-left: 10px;}
+
+.view-pane {display: none;}
+.option-pane {display: none;}
+
+.active {display: block;}
+
+h3.setname {margin-top:5px;}
+
+label.checklist {display: inline; margin-left: 8px;}
+
+.hw-assigned {color: blue;}
+
+#probSetList {margin:0;padding:0px; height:100%; overflow-y: auto;}
+/*.prob-set-container {overflow-y: scroll; width: 100%;}*/
+.prob-value {width: 20px;}
+
+.loading {background-color: orange;}
+
+#problem-set-name h2 {font-size: 18pt; line-height: 20pt;}
+
+.problem-set-header-row .btn-toolbar {margin-top: 0px;}
+
+/* Styles for problem viewing */
+
+.problem {border: 1px black solid;
+padding: 5px;
+border-radius: 5px;}
+
+.filename {font-style: italic; font-weight:  bold;}
+.problem-seed {margin-right: 2ex;}
+
+/* class for reordering problem sets */
+
+.sortable-placeholder {
+	border: 1px dashed black; background: lightgray;
+}
+
+/* #main-row {position: absolute; top: 105px; bottom: 25px;}*/
+
+#main-view-container {position: relative;}
+
+/*#main-view {position: absolute; height: 100%; overflow: scroll;}*/
+

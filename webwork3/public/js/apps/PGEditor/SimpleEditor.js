@@ -4,7 +4,7 @@
 */
 
 
-define(['module','Backbone','underscore','views/WebPage','views/LibraryTreeView','models/PGProblem',
+define(['module','backbone','underscore','views/WebPage','views/LibraryTreeView','models/PGProblem',
     'models/Problem','models/ProblemList','views/ProblemView','views/WWSettingsView','models/Settings',
     'config','moment', 'bootstrap'], 
 function(module,Backbone, _,WebPage,LibraryTreeView,PGProblem,Problem,ProblemList,ProblemView,WWSettingsView,Settings,

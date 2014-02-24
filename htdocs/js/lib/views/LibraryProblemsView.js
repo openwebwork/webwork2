@@ -1,4 +1,4 @@
-define(['Backbone', 'views/ProblemListView','config'], 
+define(['backbone', 'views/ProblemListView','config'], 
     function(Backbone, ProblemListView,config) {
     	var LibraryProblemsView = ProblemListView.extend({
     		initialize: function (options) {

@@ -1,0 +1,35 @@
+{
+  "name": "WeBWorK",
+  "version": "develop",
+  "main": "/stylesheets/style.css",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components"
+  ],
+  "dependencies": {
+    
+    "jquery-1.8": "jquery#1.8.*",
+    "jquery": "*",
+
+    "jquery-ui": "*",
+    "requirejs": "*",
+
+    "bootstrap-2": "bootstrap#2.*",
+    "bootstrap": "*",
+
+    "backbone": "*",
+    "backbone-validation-0.7.1": "backbone-validation#0.7",
+    "backbone-validation": "*",
+
+    "moment": "*",
+    
+    "backbone.stickit": "*",
+    
+    "jquery-truncate": "git://github.com/tbasse/jquery-truncate.git",
+    "font-awesome": "*",
+    "imagesloaded": "*",
+    "underscore-1.4.4": "underscore#1.4.4",
+    "underscore": "*"
+  }
+}

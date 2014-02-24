@@ -1,4 +1,4 @@
-define(['module','Backbone', 'underscore','models/UserSetListOfSets', 'views/WebPage','UserSetView', 'models/UserSet',
+define(['module','backbone', 'underscore','models/UserSetListOfSets', 'views/WebPage','UserSetView', 'models/UserSet',
     'models/UserProblemList', 'StudentCalendarView','models/AssignmentDateList','models/AssignmentDate','models/Settings', 'config'], 
 function(module,Backbone, _, UserSetListOfSets, WebPage, UserSetView, UserSet, UserProblemList, StudentCalendarView, 
             AssignmentDateList,AssignmentDate,Settings,config){

@@ -1,4 +1,4 @@
-define(['Backbone', './WeBWorKProperty','underscore','config'], function(Backbone, WeBWorKProperty,_,config){
+define(['backbone', './WeBWorKProperty','underscore','config'], function(Backbone, WeBWorKProperty,_,config){
     /**
      *
      * @class webwork
@@ -15,7 +15,7 @@ var Settings = Backbone.Collection.extend({
         return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/settings";
     },
     parse: function(data){
-        var models = [];
+        /*var models = [];
         var self = this;
         if (data.length === 6) {  // this is a hack.  The timezone comes in the last array slot, but could be better. 
                 var tzData = data.pop();
@@ -31,7 +31,9 @@ var Settings = Backbone.Collection.extend({
 
                 });
             });
-        return models;
+        return models; */
+
+        return data;
     }
 });
 

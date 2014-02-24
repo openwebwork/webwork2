@@ -10,11 +10,13 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Ajax;
-use Utils::Convert qw/convertObjectToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
+use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
 # use Utils::CourseUtils qw/getCourseSettings/;
 # use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
+use Data::Dumper;
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
@@ -87,9 +89,7 @@ get '/courses/:course_id' => sub {
 		}
 		$session->{logged_in} = 1 if ($session->{user} && $session->{key});
 
-		debug $session;
-
-	    template 'course_home.tt', {course_id=> params->{course_id}, user=> session->{user_id},
+	    template 'course_home.tt', {course_id=> params->{course_id},, user=> session->{user_id},
 	        pagename=>"Course Home for " . params->{course_id},theSession=>to_json($session)},
 	        {layout=>"student.tt"};
 	}
@@ -268,6 +268,41 @@ del '/courses/:course_id' => sub {
 };
  
 
+<<<<<<< HEAD
+=======
+get '/courses/:course_id/manager' =>  sub {
+
+	# two situations here.  Either
+	# 1) the user has already logged in and its safe to send all of the requisite data
+	# 2) the user hasn't already logged in and needs to pop open a login window.  
+
+	# Case #1:
+
+	debug session;
+
+	my ($settings,$sets,$users);
+
+	if(! defined session->{user}){
+		$settings = [];
+		$sets = [];
+		$users = [];
+	} else {
+		$settings = getCourseSettings();
+		$sets = getAllSets();
+		$users = getAllUsers();
+	}
+
+	debug "here";
+
+	# Case #2: 
+
+	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
+		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users),
+		pagename=>"Course Manager"},
+		{layout=>'manager.tt'};
+};
+
+>>>>>>> Reorganization and initial checkin of the Course Manager.
 
 ###
 #
@@ -293,6 +328,8 @@ sub cryptPassword($) {
 	my $cryptPassword = crypt($clearPassword, $salt);
 	return $cryptPassword;
 }
+
+
 
 
 

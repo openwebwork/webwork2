@@ -46,11 +46,6 @@ sub setCourseEnvironment {
 
 	my $courseID = shift;
 
-	debug "in setCourseEnvironment";
-	debug session;
-	debug $courseID; 
-
-
 	if (defined($courseID)) {
 		session course => $courseID;
 	} else {
@@ -66,8 +61,6 @@ sub setCourseEnvironment {
 }
 
 sub authenticate {
-
-
 
 	if(! vars->{db}){ 
 		send_error("The database object DB is not defined.  Make sure that you call setCourseEnvironment first.",404);
@@ -88,17 +81,23 @@ sub authenticate {
     	}
 	}
 
+<<<<<<< HEAD
 
 	if(! defined(session 'session_key')){
+=======
+	if(! defined(session 'key')){
+>>>>>>> Reorganization and initial checkin of the Course Manager.
 		my $key = vars->{db}->getKey(session 'user');
+
+		debug $key;
 
 		if ($key->{key} eq params->{session_key}) {
 			session->{key} = params->{session_key};
 		} 
 	}
 
-	if(! defined(session 'session_key')){
-		send_error("The session_key has not been defined or is not correct.  You may need to authenticate again",401);	
+	if(! defined(session 'key')){
+		send_error("The session key has not been defined or is not correct.  You may need to authenticate again",401);	
 	}
 
 	# debug "Checking if session->{permission} is defined";

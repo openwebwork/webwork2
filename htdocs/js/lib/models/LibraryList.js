@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', 'config', 'Library'], function(Backbone, _, config, Library){
+define(['backbone', 'underscore', 'config', 'Library'], function(Backbone, _, config, Library){
     /**
      *
      * This is a Collection of WeBWorK libraries.  Each library is one segment of the Open Problem Library (OPL). 

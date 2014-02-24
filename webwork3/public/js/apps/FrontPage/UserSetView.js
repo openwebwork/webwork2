@@ -1,4 +1,4 @@
-define(['module','Backbone', 'underscore','config','models/UserProblemList','views/ProblemView','models/PastAnswerList',
+define(['module','backbone', 'underscore','config','models/UserProblemList','views/ProblemView','models/PastAnswerList',
             'models/PastAnswer'], 
 function(module,Backbone, _, config,UserProblemList,ProblemView,PastAnswerList,PastAnswer){
 

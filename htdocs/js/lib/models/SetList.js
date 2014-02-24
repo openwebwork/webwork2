@@ -1,4 +1,4 @@
-define(['Backbone', 'underscore', 'Set', 'config'], function(Backbone, _, Set, config){
+define(['backbone', 'underscore', 'Set', 'config'], function(Backbone, _, Set, config){
     /**
      *
      * @type {*}
