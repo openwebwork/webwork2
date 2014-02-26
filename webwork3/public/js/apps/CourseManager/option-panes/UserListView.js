@@ -1,7 +1,7 @@
 
-define(['backbone','stickit'], function(Backbone){
+define(['backbone','views/SidePane','stickit'], function(Backbone,SidePane){
     
-	var UserListView = Backbone.View.extend({
+	var UserListView = SidePane.extend({
 		template: _.template($("#user-template").html()),
 		initialize: function(options) {
 			this.users = options.users;

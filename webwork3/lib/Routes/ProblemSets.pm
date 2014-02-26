@@ -43,6 +43,7 @@ get '/courses/:course_id/sets' => sub {
         $set->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
         my @userNames = vars->{db}->listSetUsers($set->{set_id});
         $set->{assigned_users} = \@userNames;
+        $set->{_id} = $set->{set_id};
     }
     
     return convertArrayOfObjectsToHash(\@globalSets);
@@ -90,9 +91,9 @@ get '/courses/:course_id/sets/:set_id' => sub {
 ##
 
 post '/courses/:course_id/sets/:set_id' => sub {
-      debug 'in post /courses/:course_id/sets/:set_id';
+    debug 'in post /courses/:course_id/sets/:set_id';
 
-      checkPermissions(10);
+    checkPermissions(10);
 
           # call validator directly instead
 

@@ -6,6 +6,7 @@ use base qw(Exporter);
 use Dancer;
 #use Dancer::Plugin::Database;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::ProblemSets qw/getGlobalSet/;
 use Data::Dumper;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(getCourseSettings getAllSets getAllUsers);
@@ -16,22 +17,8 @@ our @EXPORT_OK = qw(getCourseSettings getAllSets getAllUsers);
 
 sub getAllSets {
 
-	my @found_sets = vars->{db}->listGlobalSets;
-  
-  	my @all_sets = vars->{db}->getGlobalSets(@found_sets);
-
-  	my @sets = ();
-  
-  
-	foreach my $set (@all_sets){
-		my @users = vars->{db}->listSetUsers($set->{set_id});
-		$set->{assigned_users} = \@users;
-
-		my @problems = vars->{db}->getAllGlobalProblems($set->{set_id});
-		$set->{problems} = convertArrayOfObjectsToHash(\@problems);
-
-		push(@sets,convertObjectToHash($set));
-	}
+	my @setNames = vars->{db}->listGlobalSets;
+  	my @sets = map { getGlobalSet($_) } @setNames;
 	return \@sets;
 }
 

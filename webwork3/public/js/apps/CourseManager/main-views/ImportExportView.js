@@ -2,7 +2,6 @@ define(['backbone', 'underscore','views/MainView', 'apps/util','models/ProblemSe
 	function(Backbone, _,MainView, util,ProblemSetList,ProblemSet,config){
 
 var ImportExportView = MainView.extend({
-    headerInfo: {template: "#importExport-header"},
     initialize: function (options){
     	var self = this;
         _.bindAll(this,"render");
@@ -12,13 +11,12 @@ var ImportExportView = MainView.extend({
         this.problemSetsToImport.on("change:name",function (_set) {
     		self.checkSetNames();
     		_set.id=_set.get("set_id");
-    	})
-
-
+    	});
     },
     render: function () {
         this.$el.html($("#import-export-template").html());
         this.$(".date-shift-input").datepicker();
+        return this;
     },
     renderSets: function () {
     	self = this;
@@ -29,6 +27,7 @@ var ImportExportView = MainView.extend({
             table.append(self.rowViews[i].el);
         });
         this.checkSetNames();
+        return this;
     },
     events: {"change #import-from-file": "loadSetDefinition",
 			"change .date-shift-checkbox": "toggleDateShift",

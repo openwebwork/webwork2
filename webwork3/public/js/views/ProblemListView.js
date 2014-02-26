@@ -51,11 +51,6 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             return this;
         },
         render: function() {
-    
-    /*        var openEditorURL = this.problems ? "/webwork2/" + $("#hidden_courseID").val() 
-                                    + "/instructor/SimplePGEditor/" 
-                                    + this.problems.setName + "/" + (this.problems.length +1): ""; */
-
             this.$el.html($("#problem-list-template").html());
             this.updatePaginator();
             this.gotoPage(0);

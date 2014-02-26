@@ -12,18 +12,8 @@
 <div id="mainDiv" class="container">
   <div class="row" id="main-row">  
     <div class="col-md-9" id="main-view">
-      <div class="view-pane active" id="calendar"></div>
-      <div class="view-pane" id="allSets"></div>
-      <div class="view-pane" id="setDetails"></div>
-      <div class="view-pane" id="importExport"></div>
-      <div class="view-pane" id="settings"></div>
-      <div class="view-pane" id="libraryBrowser"></div>
-      <div class="view-pane" id="classlist"></div>
     </div>
-    <div class="col-md-3" id="option-view">
-      <div class="well option-pane active" id="problemSets"></div>
-      <div class="well option-pane" id="userList"></div>
-      <div class="well option-pane" id="libraryViewOptions"></div>
+    <div class="col-md-3 well" id="sidebar-container">
     </div>  
   </div>
 </div>
@@ -331,15 +321,21 @@ at the bottom of the screen and click "Save Changes". </p>
   <div class="form-group">
     <label for="add-problem-set-option">Add Problem Set</label>
     <div class="col-md-10">
-      <input id="add-problem-set-option" class="add-problem-set-option form-control" placeholder="Set Name">
+      <div class="input-group">
+        <input id="add-problem-set-option" class="add-problem-set-option form-control" placeholder="Set Name">
+        <span class="input-group-btn">
+            <button class="btn btn-default add-problem-set-button">Add</button>
+        </span>
     </div>
-    <button class="btn btn-default">Add Problem Set</button>
   </div>
-  
-  <div class="btn-group">
-  <button class="btn btn-default">Show Tags</button>
-  <button class="btn btn-default">Show Path</button>
 
+  
+  <div class="form-group">
+    <div class="btn-group">
+      <button class="btn btn-default show-hide-tags-button">Show Tags</button>
+      <button class="btn btn-default show-hide-path-button">Show Path</button>
+
+    </div>
   </div>
 
 </script>
@@ -452,76 +448,7 @@ at the bottom of the screen and click "Save Changes". </p>
   </table>
 </script>
 
-<!-- Templates for the Library Browser -->
 
-<script type="text/template" id="library-browser-template">
-<ul class="nav nav-tabs" id="library-browser-tabs">
-  <li class="active"><a href="#library-subjects-tab" data-toggle="tab">By Subject</a></li>
-  <li><a href="#library-directories-tab" data-toggle="tab">By Directory</a></li>
-  <li><a href="#library-textbooks-tab" data-toggle="tab">Textbooks</a></li>
-  <li><a href="#library-local-tab" data-toggle="tab">Local Problems</a></li>
-  <li><a href="#set-definition-tab" data-toggle="tab">Set Defn. files</a></li>
-  <li><a href="#library-search-tab" data-toggle="tab">Search</a></li>
-</ul>
-
-<div class="tab-content">
-  <div class="tab-pane active" id="library-subjects-tab"></div>
-  <div class="tab-pane" id="library-directories-tab"></div>
-  <div class="tab-pane" id="library-textbooks-tab"></div>
-  <div class="tab-pane" id="library-local-tab"></div>
-  <div class="tab-pane" id="set-definition-tab"></div>
-  <div class="tab-pane" id="library-search-tab"></div>
-</div> 
-
-
-</script>
-
-<script type="text/template" id="library-textbooks-template">
-<div class="row">
-<div class="col-md-2">
-<select class="form-control textbook-title">
- <option>Select Textbook</option>
- <%_(textbooks).each(function(book,i){
-    print("<option data-id='" + book.textbook_id + "' value='"+ i + "'>" + book.author + ": " 
-        + book.title + "(" + book.edition + "e) </option>");
- }) %>
-</select>
-</div>
-<div class="col-md-2">
-<select class="form-control textbook-chapter hidden"></select>
-</div>
-<div class="col-md-2">
-<select class="form-control textbook-section hidden"></select>
-</div>
-<button type="button" class="btn btn-default load-problems-button">Load</button>
-<span class="textbook-message"></span>
-</div>
-</script>
-
-<script type="text/template" id="library-textbook-sections-template">
-<option>Select <%=type%></option>
-<% _(sections).each(function(sect,i) { print("<option data-id='" 
-    + (type=='Section'?sect.section_id:sect.chapter_id) + "' value='"+ i + "' "+
-    "data-numprobs='"+ sect.num_probs+"'>" + sect.number + ": "+ sect.name + "</option>");});
-%>
-</script>
-
-<script type="text/template" id="library-view-template">
-<div class="row">
-<div class="library-tree-container col-md-9"></div></div>
-<div class="problems-container">
-</div>
-</script>
-
-<script type="text/template" id="local-library-tree-template">
-<div class="row form-horizontal">
-<div class="col-md-4">Local Problem Directory:</div>
-<div class="col-md-4"><select class="local-library-tree form-control">
-<% _(menu).each(function(m){ print("<option>" + m + "</option>")}) %>
-</select></div>
-<button class="btn btn-default load-problems-button">Load</button>
-</div>
-</script>
 
 <!-- I think this isn't necessary --> 
 <!--
@@ -645,11 +572,11 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 <div class="col-md-4 btn-group btn-group-sm">
 <%if(showAddTool){%><a class="btn btn-default add-problem" href="#" title="add to target set">
   <i class="fa fa-plus"></i></a><%}%>
-<%if(showEditTool){%><a class="btn btn-default" target="WW_editor" href="<%=editUrl%>" title="edit">
+<%if(showEditTool){%><a class="btn btn-default" target="WW_editor" href="#" title="edit">
     <i class="fa fa-pencil"></i></a><%}%>
 <%if(showRefreshTool){%><a href="#"  class="btn btn-default refresh-problem" title="randomize">
       <i class="fa fa-refresh"></i></a><%}%>    
-<%if(showViewTool){%><a class="btn btn-default" target="WW_view" href='<%=viewUrl%>' title="view problem">
+<%if(showViewTool){%><a class="btn btn-default" target="WW_view" href='#' title="view problem">
     <i class="fa fa-eye"></i></a><%}%>    
 <%if(showHideTool){%><a href="#" class="btn btn-default hide-problem link" title="hide problem">
     <i class="fa fa-times"></i></a><%}%>
@@ -660,7 +587,7 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 </div>
 <div class="problem-tags">
 <table class="table table-condensed table-bordered"><tbody>
-<tr><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
+<tr class="hidden"><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
 <td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
 <tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
 <tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
@@ -855,6 +782,8 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 
 
 
+
+
 <!-- The templates to the bottom of this file should go in a general template that is
         loaded by all files -->
 
@@ -898,3 +827,6 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 </div>
 
 </script>
+
+
+[% INCLUDE main/library.tt %]

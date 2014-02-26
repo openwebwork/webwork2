@@ -11,14 +11,12 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
         className: "lib-browser",
     	initialize: function (options){
     		var self = this;
-            _.bindAll(this,'addProblem','loadProblems','showProblems');
+            _.bindAll(this,'addProblem','loadProblems','showProblems','changeDisplayMode');
             this.allProblemSets = options.problemSets;
-            this.errorPane = options.errorPane;
             this.libBrowserType = options.libBrowserType;
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this,
                  allProblemSets: this.allProblemSets});
-            this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType, 
-                                        allProblemSets: options.problemSets});
+            this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets});
             this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
 
             
@@ -37,14 +35,18 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             }
             return this;
     	},
+        changeDisplayMode:function(evt){
+            this.libraryProblemsView.changeDisplayMode(evt);
+        },
         resetDisplayModes: function(){  // needed if there no target set was selected. 
             this.$('.target-set').css('background-color','white');
             this.$('.target-set').popover("hide");
         },
+        setTargetSet: function(set){
+            this.targetSet = set;
+        },
         addProblem: function(model){
-            var targetSet = this.$(".target-set option:selected").val();
-            var problemSet = this.allProblemSets.find(function(set) {return set.get("set_id")===targetSet});
-            console.log(problemSet);
+            var problemSet = this.allProblemSets.findWhere({set_id: this.targetSet});
             if(!problemSet){
                 this.$(".target-set").css("background-color","rgba(255,0,0,0.4)")
                     .popover({placement: "bottom",content: config.msgTemplate({type:"select_target_set"})}).popover("show");

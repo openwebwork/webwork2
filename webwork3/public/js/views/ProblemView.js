@@ -20,12 +20,7 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
             // options.viewAttrs will determine which tools are shown on the problem
             this.allAttrs = {};
             _.extend(this.allAttrs,options.viewAttrs);
-
-            var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=" 
-                + this.allAttrs.displayMode + "&key=" + config.courseSettings.session_key 
-                + "&sourceFilePath=" + this.model.get("source_file") + "&user=" + config.courseSettings.user + "&problemSeed=1234"; 
-            _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
-            
+                        
             this.model.on('change:value', function () {
                 if(self.model.get("value").match(/^\d+$/)) {
                     self.model.save();

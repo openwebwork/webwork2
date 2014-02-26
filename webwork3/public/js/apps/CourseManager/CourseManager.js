@@ -4,20 +4,20 @@
 */
 define(['module','backbone', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
     'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config',
-    'main-views/AssignmentCalendarView','main-views/ProblemSetsManager','main-views/LibraryBrowser',
+    'main-views/AssignmentCalendar','main-views/ProblemSetsManager','main-views/LibraryBrowser',
     'main-views/ProblemSetDetailView','main-views/ImportExportView','main-views/ClasslistView','main-views/SettingsView',
     'option-panes/ProblemSetListView','option-panes/UserListView','option-panes/LibraryOptionsView',
     'jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, SettingList,AssignmentDate,AssignmentDateList,WebPage,config,
-    AssignmentCalendarView, ProblemSetsManager, LibraryBrowser,ProblemSetDetailView,ImportExportView,ClasslistView,
+    AssignmentCalendar, ProblemSetsManager, LibraryBrowser,ProblemSetDetailView,ImportExportView,ClasslistView,
     SettingsView,ProblemSetListView,UserListView,LibraryOptionsView){
 var CourseManager = WebPage.extend({
     tagName: "div",
     initialize: function(){
 	    this.constructor.__super__.initialize.apply(this, {el: this.el});
 	    _.bindAll(this, 'render','updateCalendar','setProblemSetUI', 'setMessages',"showProblemSetDetails",
-            "changeView","openOptionPane","loadData","checkData");  // include all functions that need the this object
+            "changeView","changeSidebar","loadData","checkData");  // include all functions that need the this object
 	    var self = this;
 
         this.render();
@@ -26,24 +26,31 @@ var CourseManager = WebPage.extend({
         config.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;
         this.users = (module.config().users) ? new UserList(module.config().users) : null;
         this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets,{parse: true}) : null;
-        _.extend(config.courseSettings,{course_id: module.config().course_id});
+        _.extend(config.courseSettings,{course_id: module.config().course_id,user: this.session.user});
         if(this.session.user){
             this.startManager();
         } else {
-            // open the login window. 
-            
             this.requestLogin({success: this.loadData});
         }
 
     },
     loadData: function (data) {
+        var self = this;
         if(data.logged_in===1){ // logged in successful,  load the data
             this.loginPane.$(".message-bottom").html(config.msgTemplate({type: "loading_data"}))
                 .append("<i class='fa fa-spinner fa-spin'></i>");
             this.data_loaded = {settings: false, users: false, problemSets: false};
+            console.log(config.urlPrefix+"courses/"
+                    +config.courseSettings.course_id+"/session");
+            // request the session information
+            $.get(config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session",function(data){
+                self.session = data;
+                config.courseSettings.user = self.session.user;
+            })
             this.problemSets.fetch({success: this.checkData});
             config.settings.fetch({success: this.checkData});
             this.users.fetch({success: this.checkData});
+
             
         } else { // send an error
             this.loginPane.$(".message").html(config.msgTemplate({type: "bad_password"}));
@@ -55,7 +62,7 @@ var CourseManager = WebPage.extend({
             this.data_loaded.users = true;
         } else if (data instanceof ProblemSetList){
             this.data_loaded.problemSets = true;
-        } else if (data instanceof Settings){
+        } else if (data instanceof SettingList){
             this.data_loaded.settings = true;
         }
         console.log(_(this.data_loaded).chain().values().every(_.identity).value());
@@ -66,6 +73,7 @@ var CourseManager = WebPage.extend({
     },
     startManager: function () {
 
+        this.navigationBar.setLoginName("Welcome " +this.session.user);
         this.buildAssignmentDates();
 
 
@@ -74,26 +82,29 @@ var CourseManager = WebPage.extend({
     
         // Define all of the views that are visible with the Pulldown menu
 
+        // This information should be in a configuration file
+        // then modules could add to it easily 
+        // Here, all of the views can be loaded in. 
+
         this.views = {
-            calendar : new AssignmentCalendarView({el: $("#calendar"), assignmentDates: this.assignmentDateList,
+            calendar : new AssignmentCalendar({assignmentDates: this.assignmentDateList,
                     viewType: "instructor", calendarType: "month", users: this.users,
-                    reducedScoringMinutes: config.settings.find(function(setting) { return setting.get("var")==="pg{ansEvalDefaults}{reducedScoringPeriod}";}).get("value")}),
-            setDetails:  new ProblemSetDetailView({el: $("#setDetails"),  users: this.users, problemSets: this.problemSets,
-                    headerView: this.headerView}),
-            allSets:  new ProblemSetsManager({el:$("#allSets"), problemSets: this.problemSets, users: this.users}),
-            importExport:  new ImportExportView({el: $("#importExport"), headerView: this.headerView,
-                    problemSets: this.problemSets}),
-            libraryBrowser : new LibraryBrowser({el: $("#libraryBrowser"), headerView: this.headerView,
-                errorPane: this.errorPane, problemSets: this.problemSets}),
-            settings      :  new SettingsView({headerView: this.headerView, el: $("#settings")}),
-            classlist: new ClasslistView({el: $("#classlist"), users: this.users, problemSets: this.problemSets})
+                    reducedScoringMinutes: config.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}")}),
+            setDetails:  new ProblemSetDetailView({ users: this.users, problemSets: this.problemSets}),
+            allSets:  new ProblemSetsManager({problemSets: this.problemSets, users: this.users}),
+            importExport:  new ImportExportView({problemSets: this.problemSets}),
+            libraryBrowser : new LibraryBrowser({errorPane: this.errorPane, problemSets: this.problemSets}),
+            settings      :  new SettingsView(),
+            classlist: new ClasslistView({users: this.users, problemSets: this.problemSets})
         };
 
         this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
 
         // Define all of the option views available for the right side
+        // 
+        // Again, this should be in a configuration file. 
 
-        this.optionViews = {
+        this.sidePane = {
             problemSets: new ProblemSetListView({el: $("#problemSets"), problemSets: this.problemSets,
                 users: this.users}),
             userList: new UserListView({el: $("#userList"), users: this.users}),
@@ -111,12 +122,15 @@ var CourseManager = WebPage.extend({
 
         // set the initial view to be the Calendar. 
         this.changeView({link: "calendar",name: "Calendar"});
-        this.openOptionPane({link: "problemSets", name: "Problem Sets"});
+        this.changeSidebar({link: "problemSets", name: "Problem Sets"});
 
         this.navigationBar.on("change-view",this.changeView);
-        this.navigationBar.on("open-option",this.openOptionPane);
+        this.navigationBar.on("open-option",this.changeSidebar);
 
     },
+
+    // can a lot of this be handled by the individual views?  
+
     setMessages: function (){
         var self = this; 
 
@@ -285,24 +299,35 @@ var CourseManager = WebPage.extend({
         this.changeView({link: "setDetails", name: "Set Details"});
         this.views.setDetails.changeHWSet(setName); 
     },
-    openOptionPane: function(opts){
-        $(".option-pane").removeClass("active");
-        $("#"+opts.link).addClass("active");
-        (this.currentOptionView = this.optionViews[opts.link]).render()
-        this.currentView.setOptionPane(this.currentOptionView);
+    changeSidebar: function(opts){
+        if(this.currentSidePane){
+            this.currentSidePane.remove();
+        }
+        if(opts.link==="hide-options"){
+            return;
+        }
+        $("#sidebar-container").html("<div class='sidebar'></div>");
+
+        (this.currentSidePane = this.sidePane[opts.link]).setElement(this.$(".sidebar")).render()
+            .setMainView(this.currentView);
+        this.currentView.setSidePane(this.currentSidePane);
 
     },
     changeView: function (opts){
-        $(".view-pane").removeClass("active");
-        $("#"+opts.link).addClass("active");
+        if(this.currentView){
+            this.currentView.remove();
+        }
+        $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(opts.name);
-        (this.currentView = this.views[opts.link]).render();
-        this.updateProblemSetList(opts.link); // why do we need this? 
+        (this.currentView = this.views[opts.link]).setElement(this.$(".main")).render()
+            .setSidePane(this.currentSidePane);
+        this.updateProblemSetList(opts.link); 
+
     },
     updateProblemSetList: function(viewname) {
         switch(viewname){            // set up the problem sets to be draggable or not
             case "calendar":
-            this.setProblemSetUI({droppable:true,draggable: true});
+            //this.setProblemSetUI({droppable:true,draggable: true});
             this.updateCalendar();
             break;
             case "libraryBrowser":
@@ -364,9 +389,6 @@ var CourseManager = WebPage.extend({
 
 
         });
-    },
-    updateAssignmentDates: function (){
-
     },
     // This updates the drag-drop features of the calendar.
     updateCalendar: function ()
