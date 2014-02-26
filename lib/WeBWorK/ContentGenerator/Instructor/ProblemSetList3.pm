@@ -533,7 +533,7 @@ sub getAllSets {
 
 # get the course settings
 
-sub getCourseSettings {
+sub getCourseSettings2 {
 
 	my $self = shift;
 	my $r = $self->r;
@@ -577,6 +577,53 @@ sub getCourseSettings {
 	push(@$ConfigValues, \@tzabbr);
 
 	return $ConfigValues;
+}
+
+# get the course settings
+
+sub getCourseSettings {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $ConfigValues = $ce->{ConfigValues};
+	my @settings = ();
+
+	# get the list of theme folders in the theme directory and remove . and ..
+	my $themeDir = $ce->{webworkDirs}{themes};
+	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
+	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
+	
+
+	# change the configuration into a form ready to send to the browser. 
+	foreach my $oneConfig (@$ConfigValues) {
+		my $category = @$oneConfig[0];
+		foreach my $hash (@$oneConfig) {
+			if (ref($hash) eq "HASH") {
+				my $setting ={%$hash};
+				my $string = $hash->{var};
+				if ($string =~ m/^\w+$/) {
+					$string =~ s/^(\w+)$/\{$1\}/;
+				} else {
+					$string =~ s/^(\w+)/\{$1\}->/;
+				}
+				$setting->{value} = eval('$ce->' . $string);
+				if ($hash->{var} eq 'defaultTheme'){
+					$setting->{value} = $themes;	
+				}
+				$setting->{category} = $category;
+				push(@settings,$setting);
+			}
+		}
+	}
+
+	my $tz = DateTime::TimeZone->new( name => $ce->{siteDefaults}->{timezone}); 
+	my $dt = DateTime->now();
+	my $timeZone = {var=>"timezone",value=>$tz->short_name_for_datetime( $dt ), category=>"timezone"};
+
+	push(@settings,$timeZone);
+
+	return \@settings;
 }
 
 
@@ -643,7 +690,7 @@ sub output_JS{
     print qq!    }};!;
     print qq!</script>!;
 	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="$site_url/js/components/requirejs/require.js"></script>\n!;
-
+#	print qq!<script data-main="$site_url/js/apps/HomeworkManager/HomeworkManager" src="/webwork3/js/bower_components/requirejs/require.js"></script>\n!;
 	return "";
 }
 
