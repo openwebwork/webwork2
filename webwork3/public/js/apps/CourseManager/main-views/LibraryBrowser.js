@@ -6,8 +6,9 @@
 
 
 define(['backbone', 'underscore','views/MainView', 'views/LibraryView','views/LibrarySearchView','views/LibraryProblemsView',
-            'views/LocalLibraryView','views/LibraryTextbookView'], 
-function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,LibraryTextbookView){
+            'views/LocalLibraryView','views/LibraryTextbookView','models/ProblemSet','moment','config'], 
+function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,
+    LibraryTextbookView,ProblemSet,moment,config){
     var LibraryBrowser = MainView.extend({
         
     	initialize: function (options){
@@ -48,8 +49,8 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             this.views[this.activeView].render()
                 .libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
             this.problemSets.trigger("hide-show-all-sets","show");
+            return this;
     	},
-        //events: {"shown a[data-toggle='tab']": "changeView"},
         changeView: function(evt){
             var self = this;
             var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab
@@ -61,6 +62,24 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             })
             this.views[viewType].libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
             this.views[viewType].render();
+        },
+        setSidePane: function(optionPane){
+            this.constructor.__super__.setSidePane.call(this,optionPane);
+            this.listenTo(this.optionPane,"change-display-mode",this.views[this.activeView].changeDisplayMode);
+            this.listenTo(this.optionPane,"change-target-set",function(evt) { 
+                this.views[this.activeView].setTargetSet($(evt.target).val());
+            });
+            this.listenTo(this.optionPane,"add-problem-set",function(_set_name){
+                var _set = new ProblemSet({set_id: _set_name});
+
+                _set.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
+                _set.id = void 0; // make sure that it is POSTed when saved. 
+               this.views[this.activeView].allProblemSets.add(_set); 
+            })
+            this.listenTo(this.optionPane,"all",function(type, model){
+                console.log(type);
+                console.log(model);
+            })
         },
         updateNumberOfProblems: function (text) {
             this.headerView.$(".number-of-problems").html(text);

@@ -36,6 +36,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSetTable.$(".paginator-page").addClass("btn");
 
             this.problemSets.trigger("hide-show-all-sets","hide");
+            return this;
         },
         updateTable: function() {
             if(this.problemSetTable){

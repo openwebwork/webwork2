@@ -11,7 +11,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
     'models/ProblemSet','models/UserSetListOfUsers', 'config','bootstrap'], 
     function(Backbone, _,MainView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
         UserSetListOfUsers, config){
-	var ProblemSetDetailsView = Backbone.View.extend({
+	var ProblemSetDetailsView = MainView.extend({
         className: "set-detail-view",
         tagName: "div",
         initialize: function (options) {
@@ -20,8 +20,6 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             this.users = options.users; 
             this.allProblemSets = options.problemSets;
             this.problemSet = this.model;
-            this.headerView = options.headerView;
-
             
             this.views = {
                 problemSetView : new ProblemSetView({problemSet: this.problemSet}),
@@ -41,7 +39,8 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             this.views.usersAssignedView.setElement($("#user-assign-tab"));
             this.views.propertiesView.setElement($("#property-tab"));
             this.views.customizeUserAssignView.setElement($("#user-customize-tab")); 
-            this.views.unassignUsersView.setElement($("#user-unassign-tab"));     
+            this.views.unassignUsersView.setElement($("#user-unassign-tab"));  
+            return this;   
         },
         events: {"shown.bs.tab #problem-set-tabs a[data-toggle='tab']": "changeView"},
         changeView: function(evt){

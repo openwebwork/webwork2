@@ -266,6 +266,16 @@ del '/courses/:course_id' => sub {
 	return $delCourse;
 
 };
+
+## 
+#
+# get the current session 
+#
+##
+
+get '/courses/:course_id/session' => sub {
+	return convertObjectToHash(session); 
+};
  
 
 <<<<<<< HEAD

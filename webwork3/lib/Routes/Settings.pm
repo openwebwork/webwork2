@@ -66,7 +66,7 @@ put '/courses/:course_id/settings/:setting_id' => sub {
 
 	debug "in PUT /course/:course_id/settings/:setting_id";
 
-	my $ConfigValues = getCourseSettings;
+	my $ConfigValues = getCourseSettingsWW2();
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {
 			if (ref($hash)=~/HASH/){
@@ -80,6 +80,50 @@ put '/courses/:course_id/settings/:setting_id' => sub {
 
 	return {};
 };
+
+
+# the following are used for loading settings in the WW2 way.  
+# we should change the settings so they are stored as a JSON file instead.  This
+# eliminate the need for these subroutines.  
+
+sub getCourseSettingsWW2 {
+
+	my $ConfigValues = vars->{ce}->{ConfigValues};
+
+	# get the list of theme folders in the theme directory and remove . and ..
+	my $themeDir = vars->{ce}->{webworkDirs}{themes};
+	opendir(my $dh, $themeDir) || die "can't opendir $themeDir: $!";
+	my $themes =[grep {!/^\.{1,2}$/} sort readdir($dh)];
+
+
+	foreach my $oneConfig (@$ConfigValues) {
+		foreach my $hash (@$oneConfig) {
+			if (ref($hash) eq "HASH") {
+				my $string = $hash->{var};
+				if ($string =~ m/^\w+$/) {
+					$string =~ s/^(\w+)$/\{$1\}/;
+				} else {
+					$string =~ s/^(\w+)/\{$1\}->/;
+				}
+				$hash->{value} = eval('vars->{ce}->' . $string);
+
+				if ($hash->{var} eq 'defaultTheme'){
+					$hash->{values} = $themes;	
+				}
+			}
+		}
+	}
+
+
+	my $tz = DateTime::TimeZone->new( name => vars->{ce}->{siteDefaults}->{timezone}); 
+	my $dt = DateTime->now();
+
+	my @tzabbr = ("tz_abbr", $tz->short_name_for_datetime( $dt ));
+
+	push(@$ConfigValues, \@tzabbr);
+
+	return $ConfigValues;
+}
 
 
 

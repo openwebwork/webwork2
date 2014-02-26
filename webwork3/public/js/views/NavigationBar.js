@@ -18,6 +18,9 @@ define(['backbone'], function(Backbone){
 		},
 		setPaneName: function(name){
 			this.$(".pane-name").text(name);
+		}, 
+		setLoginName: function(name){
+			this.$(".logged-in-as").text(name);
 		}
 	});
 

@@ -6,9 +6,24 @@ use base qw(Exporter);
 use Dancer ':syntax';
 use Data::Dumper;
 use List::Util qw(first);
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet createNewUserProblem);
+our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet createNewUserProblem getGlobalSet);
+
+sub getGlobalSet {
+    my ($setName) = @_;
+    my $set = vars->{db}->getGlobalSet($setName);
+    my $problemSet = convertObjectToHash($set);
+    my @users = vars->{db}->listSetUsers($setName);
+    my @problems = vars->{db}->getAllGlobalProblems($setName);
+
+    $problemSet->{assigned_users} = \@users;
+    $problemSet->{problems} = convertArrayOfObjectsToHash(\@problems);
+    $problemSet->{_id} = $setName; # this is needed so that backbone works with the server. 
+
+    return $problemSet;
+}
 
 ###
 #

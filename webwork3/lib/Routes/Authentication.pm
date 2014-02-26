@@ -92,7 +92,7 @@ sub authenticate {
 		debug $key;
 
 		if ($key->{key} eq params->{session_key}) {
-			session->{key} = params->{session_key};
+			session key  => params->{session_key};
 		} 
 	}
 
@@ -118,8 +118,6 @@ sub checkPermissions {
 	## include an override here as well
 
 	my $permissionLevel = shift;
-
-	debug session 'permission';
 
 	if(session('permission') < $permissionLevel){send_error($PERMISSION_ERROR,403)}
 

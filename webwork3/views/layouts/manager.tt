@@ -57,9 +57,16 @@ Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
             <li><a class="link" data-link="settings" data-name="Settings">Settings</a></li>
           </ul>        
         </li>
+        <li>
+          <p class="nav-text" id="short-message">
+          </p>
+        </li>
       </ul>
 
         <ul class="nav navbar-nav navbar-right">
+          <li><p class="logged-in-as navbar-text">Hello</p><li>
+          <!--<li><a href="#"><button class="btn btn-default navbar-btn">Bugs!</button></a></li>-->
+          <li><a href="#">Bugs!</a></li>
           <li><a href="#" class="main-help-button">Help</a></li>
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Options <b class="caret"></b></a>

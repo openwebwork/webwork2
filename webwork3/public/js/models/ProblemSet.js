@@ -70,7 +70,7 @@ define(['backbone', 'underscore','config','moment','./ProblemList','./Problem','
             relax_restrict_ip: "Relax Restrict IP???",
             restricted_login_proctor: "Restricted to Login Proctor"
         },
-        idAttribute: "set_id",
+        idAttribute: "_id",
         initialize: function (opts) {
             _.bindAll(this,"addProblem");
             var pbs = (opts && opts.problems) ? opts.problems : [];

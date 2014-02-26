@@ -1,5 +1,5 @@
-define(['backbone','config','views/WWSettingsView'],function(Backbone,config,WWSettingsView){
-	var SettingsView = Backbone.View.extend({
+define(['backbone','config','views/WWSettingsView','views/MainView'],function(Backbone,config,WWSettingsView,MainView){
+	var SettingsView = MainView.extend({
     
     initialize: function (options) {
         var self = this;
@@ -13,17 +13,11 @@ define(['backbone','config','views/WWSettingsView'],function(Backbone,config,WWS
      },
      render: function () {
         // get all of the categories except for timezone (include it somewhere?)
-        
-        $("#settings").html(_.template($("#settings-template").html(),{categories: this.categories}));
-
-        // set up the general settings tab
-
-        $("#setting-tab0").addClass("active");  // show the first settings pane.
-        //this.headerView.$("a[href='#setting-tab0']").parent().addClass("active");
-
+        this.$el.html(_.template($("#settings-template").html(),{categories: this.categories}));
         var settings = config.settings.where({category: this.categories[0]});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
-        this.$('.nav-tabs a:first').tab('show')
+        this.$('.nav-tabs a:first').tab('show');
+        return this;
 
      },
      changeSettingTab: function(evt){

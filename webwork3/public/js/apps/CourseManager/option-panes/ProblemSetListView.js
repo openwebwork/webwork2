@@ -8,11 +8,11 @@
 *
 */
 
-define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config',
-            'views/ModalView', 'jquery-truncate'], 
-function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
+define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config','views/SidePane',
+           'main-views/AssignmentCalendar', 'views/ModalView', 'jquery-truncate'], 
+function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalendar,ModalView){
 	
-    var ProblemSetListView = Backbone.View.extend({
+    var ProblemSetListView = SidePane.extend({
 
     	initialize: function (options){
     		_.bindAll(this,"render");
@@ -44,6 +44,20 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
             }
             $("#problemSets").height($(window).height()-80);
             this.$(".prob-set-container").height($(window).height()-150);
+            return this;
+        },
+        setMainView: function(view){
+            this.constructor.__super__.setMainView.call(this,view);  // Call  SidePane.setMainView();
+            if(view instanceof AssignmentCalendar){
+                $(".problem-set").draggable({ 
+                    disabled: false,  
+                    revert: true, 
+                    scroll: false, 
+                    helper: "clone",
+                    appendTo: "body",
+                    cursorAt: {left: 10, top: 10}
+                });
+            } 
         }
     });
 

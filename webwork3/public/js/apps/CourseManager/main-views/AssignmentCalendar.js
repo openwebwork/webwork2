@@ -7,7 +7,7 @@
 define(['backbone', 'underscore', 'moment','views/CalendarView','config'], 
     function(Backbone, _, moment,CalendarView,config) {
 	
-    var AssignmentCalendarView = CalendarView.extend({
+    var AssignmentCalendar = CalendarView.extend({
     	template: _.template($("#calendar-date-bar").html()),
         headerInfo: {template: "#calendar-header", events: 
                 { "click .previous-week": "viewPreviousWeek",
@@ -32,6 +32,7 @@ define(['backbone', 'underscore', 'moment','views/CalendarView','config'],
             this.$(".assign").truncate({width: 100});
             // set up the calendar to scroll correctly
             this.$(".calendar-container").height($(window).height()-160);
+            return this;
     	},
     	renderDay: function (day){
     		var self = this;
@@ -46,5 +47,5 @@ define(['backbone', 'underscore', 'moment','views/CalendarView','config'],
     	}
     });
 
-	return AssignmentCalendarView;
+	return AssignmentCalendar;
 });
