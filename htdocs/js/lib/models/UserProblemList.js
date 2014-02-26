@@ -1,4 +1,4 @@
-define(['backbone', 'models/ProblemList','models/UserProblem','config'], function(Backbone, ProblemList,UserProblem,config){
+define(['Backbone', 'models/ProblemList','models/UserProblem','config'], function(Backbone, ProblemList,UserProblem,config){
 	var UserProblemList = ProblemList.extend({
 		initialize: function(models,options){
 			this.user_id = options.user_id;

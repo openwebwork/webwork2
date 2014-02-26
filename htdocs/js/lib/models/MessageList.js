@@ -1,4 +1,4 @@
-define(['backbone', 'underscore','config','./Message'], function(Backbone, _, config,Message){
+define(['Backbone', 'underscore','config','./Message'], function(Backbone, _, config,Message){
     var MessageList = Backbone.Collection.extend({
         model: Message,
         comparator: function(msg1,msg2){

@@ -1,4 +1,4 @@
-define(['backbone'], function(Backbone){
+define(['Backbone'], function(Backbone){
 	var NavigationBar = Backbone.View.extend({
 		render: function (){
 			_(this).extend(Backbone.Events);

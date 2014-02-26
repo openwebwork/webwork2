@@ -1,4 +1,4 @@
-define(['backbone', 'underscore','config','./Problem'], function(Backbone, _, config,Problem){
+define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, config,Problem){
     //Problem admin functions
     
     /**

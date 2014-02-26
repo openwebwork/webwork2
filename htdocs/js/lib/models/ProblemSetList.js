@@ -4,7 +4,7 @@
 */ 
 
 
-define(['backbone', 'underscore','config', './ProblemSet'], function(Backbone, _, config, ProblemSet){
+define(['Backbone', 'underscore','config', './ProblemSet'], function(Backbone, _, config, ProblemSet){
     var ProblemSetList = Backbone.Collection.extend({
         model: ProblemSet,
         /*initialize: function(){

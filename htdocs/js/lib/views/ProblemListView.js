@@ -1,4 +1,4 @@
-define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemList'], 
+define(['Backbone', 'underscore', 'views/ProblemView','config','models/ProblemList'], 
     function(Backbone, _, ProblemView,config,ProblemList){
 
     /******

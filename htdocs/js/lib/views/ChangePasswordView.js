@@ -1,4 +1,4 @@
-define(['backbone', 'underscore','config'], 
+define(['Backbone', 'underscore','config'], 
   function(Backbone, _, config){
 
   var ChangePasswordView = Backbone.View.extend({

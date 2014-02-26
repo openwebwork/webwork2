@@ -3,7 +3,7 @@
   * 
   */
 
-define(['backbone', 'underscore','models/DBFields'], function(Backbone, _,DBFields){
+define(['Backbone', 'underscore','models/DBFields'], function(Backbone, _,DBFields){
     var PGProblem = Backbone.Model.extend({
     	defaults:  { 
 

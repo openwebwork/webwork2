@@ -1,4 +1,4 @@
-define(['backbone', 'models/Problem'], function(Backbone, Problem){
+define(['Backbone', 'models/Problem'], function(Backbone, Problem){
 	var UserProblem = Problem.extend({
 		defaults: {
 			user_id: "",

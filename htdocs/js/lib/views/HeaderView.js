@@ -9,8 +9,7 @@
  *
  */
 
-define(['backbone', 'underscore'], 
-    function(Backbone, _){
+define(['Backbone'], function(Backbone){
     var HeaderView = Backbone.View.extend({
     	initialize: function () {
     		_.bindAll(this,"setOptions","render");

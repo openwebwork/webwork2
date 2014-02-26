@@ -3,7 +3,7 @@
  * of problems.  More specifially, it also contains a Problem List of type "Problem Set".  
  *
  * */
-define(['backbone', 'underscore','config','moment','./ProblemList','./Problem','config'], 
+define(['Backbone', 'underscore','config','moment','./ProblemList','./Problem','config'], 
         function(Backbone, _, config,moment,ProblemList,Problem,config){
 
 

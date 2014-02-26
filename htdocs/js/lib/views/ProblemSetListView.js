@@ -8,7 +8,7 @@
 *
 */
 
-define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config',
+define(['Backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config',
             'views/ModalView', 'jquery-truncate'], 
 function(Backbone, _,ProblemSetList,ProblemSet,config,ModalView){
 	

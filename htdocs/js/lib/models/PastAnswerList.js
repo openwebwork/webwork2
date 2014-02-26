@@ -1,4 +1,4 @@
-define(['backbone','models/PastAnswer','config'], function(Backbone,PastAnswer,config){
+define(['Backbone','models/PastAnswer','config'], function(Backbone,PastAnswer,config){
 	var PastAnswerList = Backbone.Collection.extend({
 		initialize: function(models,options){
 			this.userSet= options.userSet;

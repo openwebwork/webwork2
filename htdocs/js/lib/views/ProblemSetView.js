@@ -1,4 +1,4 @@
-define(['backbone', 'views/ProblemListView'], 
+define(['Backbone', 'views/ProblemListView'], 
     function(Backbone, ProblemListView) {
     	var ProblemSetView = ProblemListView.extend({
     		initialize: function (options) {

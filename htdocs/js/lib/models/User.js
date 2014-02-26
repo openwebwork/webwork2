@@ -1,4 +1,4 @@
-define(['backbone', 'underscore','config'], function(Backbone, _, config){
+define(['Backbone', 'underscore','config'], function(Backbone, _, config){
     var User = Backbone.Model.extend({
         defaults:{
             first_name: "",

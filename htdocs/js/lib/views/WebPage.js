@@ -1,4 +1,4 @@
-define(['backbone','views/MessageListView','views/ModalView','config','views/NavigationBar', 'jquery-truncate'], 
+define(['Backbone','views/MessageListView','views/ModalView','config','views/NavigationBar', 'jquery-truncate'], 
 function(Backbone,MessageListView,ModalView,config,NavigationBar){
 	var WebPage = Backbone.View.extend({
     tagName: "div",

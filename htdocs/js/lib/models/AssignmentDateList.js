@@ -3,7 +3,7 @@
   * in a calendar. 
   */
 
-define(['backbone', 'underscore','moment','models/AssignmentDate'], function(Backbone, _,moment,AssignmentDate){
+define(['Backbone', 'underscore','moment','models/AssignmentDate'], function(Backbone, _,moment,AssignmentDate){
 	var AssignmentDateList = Backbone.Collection.extend({
 		model: AssignmentDate,
 	});

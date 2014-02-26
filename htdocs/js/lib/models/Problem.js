@@ -1,4 +1,4 @@
-define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
+define(['Backbone', 'underscore', 'config'], function(Backbone, _, config){
     /**
      *
      * This defines a single webwork Problem (Global Problem)

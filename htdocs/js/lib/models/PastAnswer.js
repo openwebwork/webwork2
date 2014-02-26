@@ -1,4 +1,4 @@
-define(['backbone','config'], function(Backbone,config){
+define(['Backbone','config'], function(Backbone,config){
 	var PastAnswer = Backbone.Model.extend({
 		defaults: {answer_id: "",
 		    course_id: "",         

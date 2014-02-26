@@ -19,7 +19,7 @@
 require.config({
     //baseUrl: "/webwork2_files/js/",
     paths: {
-        "Backbone": "/webwork2_files/js/components/backbone/backbone",  //ok
+        'Backbone': "/webwork2_files/js/components/backbone/backbone",  //ok
         "underscore": "/webwork2_files/js/components/underscore/underscore", // ok
         "jquery": "/webwork2_files/js/components/jquery/jquery", // ok
         "jquery-ui": "/webwork2_files/js/components/jquery-ui/ui/jquery-ui", //FIXMEJS

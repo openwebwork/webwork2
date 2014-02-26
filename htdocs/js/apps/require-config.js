@@ -4,13 +4,12 @@
 
 var require = {
     paths: {
-        "Backbone":             "/webwork2_files/js/components/backbone/backbone",
+        'Backbone':             "/webwork2_files/js/components/backbone/backbone",
         "backbone-validation":  "/webwork2_files/js/components/backbone-validation/dist/backbone-validation",
         "jquery-ui":            "/webwork2_files/js/components/jquery-ui/ui/jquery-ui",
         "underscore":           "/webwork2_files/js/components/underscore/underscore",
         "jquery":               "/webwork2_files/js/components/jquery/jquery",
         "bootstrap":            "/webwork2_files/js/components/bootstrap/dist/js/bootstrap",
-        //"bootstrap":            "/webwork2_files/js/components/bootstrap-2/docs/assets/js/bootstrap",
         "moment":               "/webwork2_files/js/components/moment/moment",
         "stickit":              "/webwork2_files/js/components/backbone.stickit/backbone.stickit",
         "imagesloaded":         "/webwork2_files/js/components/imagesloaded/imagesloaded",
@@ -26,7 +25,6 @@ var require = {
         "apps":                 "/webwork2_files/js/apps",
         "config":               "/webwork2_files/js/apps/config"
     },
-    //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 10,
     shim: {
         'jquery-ui': ['jquery'],
@@ -37,7 +35,7 @@ var require = {
         'backbone-validation': ['Backbone'],
         'moment': {exports: 'moment'},
         'config': {deps: ['moment','backbone-validation'], exports: 'config'},
-        'stickit': ["Backbone","jquery"],
+        'stickit': ['Backbone',"jquery"],
         'datepicker': ['bootstrap'],
         'jquery-truncate': ['jquery'],
         'editablegrid': {deps: ['jquery'], exports: 'EditableGrid'},

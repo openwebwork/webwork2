@@ -1,5 +1,5 @@
 
-define(['backbone','underscore','config'], function(Backbone,_,config){
+define(['Backbone','underscore','config'], function(Backbone,_,config){
 	var WeBWorkProperty = Backbone.Model.extend({
 		defaults: {
             doc:"",
