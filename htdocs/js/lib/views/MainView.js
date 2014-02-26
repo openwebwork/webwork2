@@ -1,4 +1,4 @@
-define(['backbone'],function(Backbone){
+define(['Backbone'],function(Backbone){
 	var MainView = Backbone.View.extend({
 		setOptionPane: function(pane){
 			this.optionPane = pane;

@@ -1,4 +1,4 @@
-define(['backbone', 'underscore'], function(Backbone, _){
+define(['Backbone', 'underscore'], function(Backbone, _){
   EmailStudentsView = Backbone.View.extend({
     tagName: "div",
     className: "emailDialog",

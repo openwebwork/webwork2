@@ -1,4 +1,4 @@
-define(['backbone', 'underscore','config', './ProblemList', './Problem'], function(Backbone, _, config, ProblemList, Problem){
+define(['Backbone', 'underscore','config', './ProblemList', './Problem'], function(Backbone, _, config, ProblemList, Problem){
     /**
      *
      * @constructor

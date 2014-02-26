@@ -3,7 +3,7 @@
  *
  */
 
-define(['backbone','underscore','models/MessageList','models/Message'], function(Backbone, _,MessageList,Message){
+define(['Backbone','underscore','models/MessageList','models/Message'], function(Backbone, _,MessageList,Message){
 	var MessageListView = Backbone.View.extend({
 		id: "message-pane",
 		isOpen: false,

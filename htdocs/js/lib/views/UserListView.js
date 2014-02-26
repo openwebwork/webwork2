@@ -1,5 +1,5 @@
 
-define(['backbone','stickit'], function(Backbone){
+define(['Backbone','stickit'], function(Backbone){
     
 	var UserListView = Backbone.View.extend({
 		template: _.template($("#user-template").html()),

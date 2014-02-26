@@ -7,7 +7,7 @@
   * 
   */
 
-define(['backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,config,ProblemSet){
+define(['Backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,config,ProblemSet){
     var UserSet = Backbone.Model.extend({
         defaults: {
             user_id: "",

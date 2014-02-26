@@ -22,7 +22,7 @@
  */
 
 
-define(['backbone', 'underscore','stickit'], function(Backbone, _){
+define(['Backbone', 'underscore','stickit'], function(Backbone, _){
 
 	var CollectionTableView = Backbone.View.extend({
 		tagName: "table",

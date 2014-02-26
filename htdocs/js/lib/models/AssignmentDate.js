@@ -4,7 +4,7 @@
   * 
   */
 
-define(['backbone', 'underscore','moment'], function(Backbone, _,moment){
+define(['Backbone'], function(Backbone){
 	var AssignmentDate = Backbone.Model.extend({
 		defaults: {
 			type: "", // type of assignment Date (open, due, answer, reduced)

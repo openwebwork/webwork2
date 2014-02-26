@@ -1,4 +1,4 @@
-define(['backbone', 'underscore', 'ProblemList', 'config'], function(Backbone, _, ProblemList, config){
+define(['Backbone', 'underscore', 'ProblemList', 'config'], function(Backbone, _, ProblemList, config){
     /**
      *
      * This is a single WeBWorK library.  

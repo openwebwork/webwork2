@@ -1,4 +1,4 @@
-define(['backbone', './WeBWorKProperty','underscore','config'], function(Backbone, WeBWorKProperty,_,config){
+define(['Backbone', './WeBWorKProperty','underscore','config'], function(Backbone, WeBWorKProperty,_,config){
     /**
      *
      * @class webwork

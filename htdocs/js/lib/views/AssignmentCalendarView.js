@@ -4,7 +4,7 @@
   */
 
 
-define(['backbone', 'underscore', 'moment','views/CalendarView','config'], 
+define(['Backbone', 'underscore', 'moment','views/CalendarView','config'], 
     function(Backbone, _, moment,CalendarView,config) {
 	
     var AssignmentCalendarView = CalendarView.extend({

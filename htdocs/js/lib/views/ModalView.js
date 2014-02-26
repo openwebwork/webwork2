@@ -9,7 +9,7 @@
  * 	   modalBodyTemplateoptions: an object containing any options need for the modalBodyTemplate
  */  
 
-define(['backbone','underscore'], function(Backbone, _){
+define(['Backbone','underscore'], function(Backbone, _){
 
     var ModalView = Backbone.View.extend({
  	  initialize: function (options) {
