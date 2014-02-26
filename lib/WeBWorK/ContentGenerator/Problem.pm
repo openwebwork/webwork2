@@ -38,6 +38,7 @@ use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers
 	ref2string makeTempDirectory path_is_subdir sortByName before after between);
 use WeBWorK::DB::Utils qw(global2user user2global);
+require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
@@ -80,6 +81,7 @@ use HTML::Scrubber;
 #     redisplay - name of the "Redisplay Problem" button
 #     submitAnswers - name of "Submit Answers" button
 #     checkAnswers - name of the "Check Answers" button
+#     showMeAnother - name of the "Show me another" button
 #     previewAnswers - name of the "Preview Answers" button
 
 ################################################################################
@@ -154,6 +156,28 @@ sub can_recordAnswers {
 }
 
 sub can_checkAnswers {
+	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+	my $authz = $self->r->authz;
+	my $thisAttempt = $submitAnswers ? 1 : 0;
+	
+	if (before($Set->open_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
+	} elsif (between($Set->open_date, $Set->due_date)) {
+		my $max_attempts = $Problem->max_attempts;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
+		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
+			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
+		} else {
+			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
+		}
+	} elsif (between($Set->due_date, $Set->answer_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
+	} elsif (after($Set->answer_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
+	}
+}
+
+sub can_showMeAnother {
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
@@ -622,6 +646,7 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
 		}
 
+
 		my $visiblityStateClass = ($set->visible) ? $r->maketext("visible") : $r->maketext("hidden");
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
 		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::font({class=>$visiblityStateClass}, $visiblityStateText))));
@@ -648,6 +673,7 @@ sub pre_header_initialize {
 	my $redisplay          = $r->param("redisplay");
 	my $submitAnswers      = $r->param("submitAnswers");
 	my $checkAnswers       = $r->param("checkAnswers");
+	my $showMeAnother      = $r->param("showMeAnother");
 	my $previewAnswers     = $r->param("previewAnswers");
 	
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
@@ -656,6 +682,7 @@ sub pre_header_initialize {
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
 	$self->{checkAnswers}   = $checkAnswers;
+	$self->{showMeAnother}  = $showMeAnother;
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
 
@@ -665,6 +692,15 @@ sub pre_header_initialize {
 
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
+
+    # if showMeAnother is active, then change the problem seed
+    if ($showMeAnother) {
+          # change the problem seed
+	      $problem->problem_seed(int(rand(10000)));
+          # update the database
+          $db->putUserProblem($problem);
+          }
+
 	
 	##### permissions #####
 
@@ -682,6 +718,7 @@ sub pre_header_initialize {
 		showSolutions      => $r->param("showSolutions")      || $ce->{pg}->{options}->{showSolutions},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
+		showMeAnother      => $showMeAnother,
 		getSubmitButton    => 1,
 	);
 
@@ -693,6 +730,7 @@ sub pre_header_initialize {
 		showSolutions      => 0,
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
+		showMeAnother      => 0,
 		getSubmitButton    => 0,
 	);
 	 
@@ -705,8 +743,10 @@ sub pre_header_initialize {
 		showSolutions      => $self->can_showSolutions(@args),
 		recordAnswers      => $self->can_recordAnswers(@args, 0),
 		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
+		showMeAnother      => $self->can_showMeAnother(@args, $submitAnswers),
 		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
 	);
+
 	
 	# final values for options
 	my %will;
@@ -717,7 +757,7 @@ sub pre_header_initialize {
 	
 	##### sticky answers #####
 	
-	if (not ($submitAnswers or $previewAnswers or $checkAnswers) and $will{showOldAnswers}) {
+	if (not ($submitAnswers or $previewAnswers or $checkAnswers or $showMeAnother) and $will{showOldAnswers}) {
 		# do this only if new answers are NOT being submitted
 		my %oldAnswers = decodeAnswers($problem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
@@ -1264,6 +1304,9 @@ sub output_submit_buttons{
 	if ($can{checkAnswers}) {
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
 	}
+	if ($can{showMeAnother}) {
+		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+	}
 	if ($can{getSubmitButton}) {
 		if ($user ne $effectiveUser) {
 			# if acting as a student, make it clear that answer submissions will
@@ -1509,6 +1552,7 @@ sub output_summary{
 	my $submitAnswers = $self->{submitAnswers};
 	my %will = %{ $self->{will} };
 	my $checkAnswers = $self->{checkAnswers};
+	my $showMeAnother = $self->{showMeAnother};
 	my $previewAnswers = $self->{previewAnswers};
 	
 	my $r = $self->r;

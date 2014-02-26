@@ -282,6 +282,13 @@ use constant FIELD_PROPERTIES => {
 				"-1" => "unlimited",
 		},
 	},
+    showmeanother => {
+        name => "Show me another",
+        type => "edit",
+        size => "6",
+		override  => "any",
+        default=>"-1",
+    },
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
