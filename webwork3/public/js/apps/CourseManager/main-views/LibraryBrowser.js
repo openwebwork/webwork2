@@ -63,23 +63,23 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             this.views[viewType].libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
             this.views[viewType].render();
         },
-        setSidePane: function(optionPane){
-            this.constructor.__super__.setSidePane.call(this,optionPane);
-            this.listenTo(this.optionPane,"change-display-mode",this.views[this.activeView].changeDisplayMode);
-            this.listenTo(this.optionPane,"change-target-set",function(evt) { 
+        sidepaneEvents: {
+            "change-display-mode": function() { this.views[this.activeView].changeDisplayMode() },
+            "change-target-set": function(evt) { 
                 this.views[this.activeView].setTargetSet($(evt.target).val());
-            });
-            this.listenTo(this.optionPane,"add-problem-set",function(_set_name){
+            }, 
+            "add-problem-set": function(_set_name){
                 var _set = new ProblemSet({set_id: _set_name});
-
                 _set.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
-                _set.id = void 0; // make sure that it is POSTed when saved. 
                this.views[this.activeView].allProblemSets.add(_set); 
-            })
-            this.listenTo(this.optionPane,"all",function(type, model){
-                console.log(type);
-                console.log(model);
-            })
+            },
+            "show-hide-tags": function(show_hide_button) {
+                this.views[this.activeView].libraryProblemsView.toggleTags(show_hide_button);
+            },
+            "show-hide-path": function(button) {
+                this.views[this.activeView].libraryProblemsView.toggleShowPath(button);
+            }
+
         },
         updateNumberOfProblems: function (text) {
             this.headerView.$(".number-of-problems").html(text);

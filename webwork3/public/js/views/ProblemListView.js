@@ -112,10 +112,18 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.viewAttrs.displayMode = $(evt.target).val();
             this.renderProblems();
         },
-        toggleTags: function () {
-            if(this.$(".show-hide-tags-btn").text()==="Show Tags"){
-                this.$(".show-hide-tags-btn").button("hide");
-                this.$(".tag-row").removeClass("hidden");
+        toggleShowPath: function(path_button){
+            if(path_button.text()==="Show Path"){
+                path_button.button("hide");
+                this.$(".path-row").removeClass("hidden");
+            } else {
+                path_button.button("reset");
+                this.$(".path-row").addClass("hidden");
+            }
+        },
+        toggleTags: function (tag_button) {
+            if(tag_button.text()==="Show Tags"){
+                tag_button.button("hide");
                 _(this.problemViews).each(function(pv){
                     if(!pv.tagsLoaded){
                         pv.$(".loading-row").removeClass("hidden");
@@ -129,7 +137,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                     }
                 });
             } else {
-                this.$(".show-hide-tags-btn").button("reset");
+                tag_button.button("reset");
                 this.$(".tag-row").addClass("hidden");
             }
             
