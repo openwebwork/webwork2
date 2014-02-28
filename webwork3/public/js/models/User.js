@@ -1,5 +1,8 @@
 define(['backbone', 'underscore','config'], function(Backbone, _, config){
     var User = Backbone.Model.extend({
+        initialize: function (model){
+            this.changingAttributes = {};
+        },
         defaults:{
             first_name: "",
             last_name: "",
