@@ -9,8 +9,8 @@
 */
 
 define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config','views/SidePane',
-           'main-views/AssignmentCalendar', 'views/ModalView', 'jquery-truncate'], 
-function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalendar,ModalView){
+           'main-views/AssignmentCalendar', 'views/ModalView','main-views/LibraryBrowser', 'jquery-truncate'], 
+function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalendar,ModalView,LibraryBrowser){
 	
     var ProblemSetListView = SidePane.extend({
 
@@ -48,8 +48,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
         },
         setMainView: function(view){
             this.constructor.__super__.setMainView.call(this,view);  // Call  SidePane.setMainView();
+            this.$(".problem-set").draggable({disabled: true}).droppable({disabled: true});
             if(view instanceof AssignmentCalendar){
-                $(".problem-set").draggable({ 
+                this.$(".problem-set").draggable({ 
                     disabled: false,  
                     revert: true, 
                     scroll: false, 
@@ -58,6 +59,24 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                     cursorAt: {left: 10, top: 10}
                 });
             } 
+            if(view instanceof LibraryBrowser){
+                this.$(".problem-set").droppable({
+                    disabled: false,
+                    hoverClass: "btn-info",
+                    accept: ".problem",
+                    tolerance: "pointer",
+                    drop: function( evt, ui ) { 
+                        console.log("Adding a Problem to HW set " + $(evt.target).data("setname"));
+                        console.log($(ui.draggable).data("path"));
+                        var source = $(ui.draggable).data("source");
+                        console.log(source);
+                        var set = self.problemSets.findWhere({set_id: $(evt.target).data("setname")})
+                        var prob = self.views.libraryBrowser.views[source].problemList
+                                            .findWhere({source_file: $(ui.draggable).data("path")});
+                        set.addProblem(prob);
+                    }
+                });
+            }
         }
     });
 
