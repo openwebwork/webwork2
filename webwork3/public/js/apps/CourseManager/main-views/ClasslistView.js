@@ -9,6 +9,7 @@ define(['backbone','views/MainView','models/UserList','config','views/Collection
 function(Backbone,MainView,UserList,config,CollectionTableView, AddStudentManView,AddStudentFileView,
 				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView){
 var ClasslistView = MainView.extend({
+	msgTemplate: _.template($("#classlist-messages").html()),
 	initialize: function (options) {
 
 
@@ -66,7 +67,6 @@ var ClasslistView = MainView.extend({
 
     render: function(){
 	    this.$el.html($("#classlist-manager-template").html());
-
 	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
                             paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
@@ -75,7 +75,7 @@ var ClasslistView = MainView.extend({
         // set up some styling
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
-
+        this.clearFilterText();
 	    return this;
     },  
     addUser: function (_user){
@@ -84,8 +84,7 @@ var ClasslistView = MainView.extend({
 
     },
     changeUser: function(_user){
-    	if((_user.changingAttributes && typeof(_user.changingAttributes.user_added)==="undefined") || 
-    		(typeof(_user.changingAttributes)==="undefined")){
+    	if(_(_user.changingAttributes).has("user_added") || _(_user.changingAttributes).isEqual({})){
 	    	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
     	}
     	if(_.keys(_user.changed)[0]==="action"){
@@ -96,29 +95,29 @@ var ClasslistView = MainView.extend({
     removeUser: function(_user){
     	var self = this;
     	_user.destroy({success: function(model){
-	    		self.messagePane.addMessage({type: "success",
-            		short: config.msgTemplate({type: "user_removed", opts:{username:_user.get("user_id")}}),
-            		text: config.msgTemplate({type: "user_removed_details", opts: {username: _user.get("user_id")}})});
+	    		self.parentView.messagePane.addMessage({type: "success",
+            		short: self.msgTemplate({type: "user_removed", opts:{username:_user.get("user_id")}}),
+            		text: self.msgTemplate({type: "user_removed_details", opts: {username: _user.get("user_id")}})});
 	    		self.render();
     	}});
     },
     syncUserMessage: function(_user){
     	var self = this;
-    	_(_.keys(_user.changingAttributes)).each(function(key){
+    	_(_user.changingAttributes).chain().keys().each(function(key){
     		switch(key){
                 case "user_added":
-                	self.messagePane.addMessage({type: "success",
-                		short: config.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
-                		text: config.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
+                	self.parentView.messagePane.addMessage({type: "success",
+                		short: self.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
+                		text: self.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
                 	self.userTable.render();
                 	break;
                 default:    
-		    	 	self.messagePane.addMessage({type: "success", 
-		                short: config.msgTemplate({type:"user_saved",opts:{username:_user.get("user_id")}}),
-		                text: config.msgTemplate({type:"user_saved_details",opts:{username:_user.get("user_id"),
+		    	 	self.parentView.messagePane.addMessage({type: "success", 
+		                short: self.msgTemplate({type:"user_saved",opts:{username:_user.get("user_id")}}),
+		                text: self.msgTemplate({type:"user_saved_details",opts:{username:_user.get("user_id"),
 		                	key: key, oldValue: _user.changingAttributes[key], newValue: _user.get(key)}})});
-		    	}
-	    	});
+	    	}
+    	});
    },
 
     // I think some of these should go into EditGrid.js
@@ -163,10 +162,6 @@ var ClasslistView = MainView.extend({
 		this.addStudentManView.openDialog();
 	},
 	exportStudents: function () {
-	    //var bb = new BlobBuilder;
-
-
-	    
 	    var textFileContent = "";
 	    textFileContent += _(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";}).join(",") + "\n";
 	    
@@ -209,7 +204,7 @@ var ClasslistView = MainView.extend({
             				{value: 3, label: "Change Password"},
             				{value: 4, label: "Email User"},
             				{value: 5, label: "Student Progress"}]}}},
-                {name: "Login Name", key: "user_id", classname: "user-id", datatype: "string"},
+                {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
                 {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets",
                 	stickit_options: {update: function($el, val, model, options) {
                 		$el.html(self.problemSets.filter(function(_set) { 

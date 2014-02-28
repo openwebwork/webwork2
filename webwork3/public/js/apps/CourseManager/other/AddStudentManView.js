@@ -55,7 +55,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','stick
         tagName: "tr",
         initialize: function (options) {
         	var self = this;
-            _.bindAll(this,'render','isValid');
+            _.bindAll(this,'render');
         	this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
         		{"user_id": ".login-name", "email_address": ".email"});
 		    this.rowTemplate = options.rowTemplate;
