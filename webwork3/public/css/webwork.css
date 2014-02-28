@@ -5,6 +5,7 @@ body {  /* needed for the navigation bars top and bottom*/
 
 #navigation-menu { width: 250px;}
 
+.main-view-name {font-size: 125%;}
 
 
 .breadcrumb {padding: 2px 15px ;} 
