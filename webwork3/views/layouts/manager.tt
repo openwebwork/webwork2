@@ -3,7 +3,7 @@
 <head>
 <title>WeBWorK 3</title>
 <link rel='stylesheet' href='/webwork2_files/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/components/bootstrap/dist/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="/webwork3/js/bower_components/bootstrap/dist/css/bootstrap.css">
 <link rel='stylesheet' href='/webwork2_files/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
 <link rel='stylesheet' type="text/css" href="/webwork3/css/course-manager.css">
 </head>
@@ -39,14 +39,14 @@ Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
   <div class="container-fluid">
     <!-- Brand and toggle get grouped for better mobile display -->
       <div class="navbar-header">
-        <a class="navbar-brand" href="#">Course Manager</a>
-        <p class="navbar-text pane-name">Calendar</p>
+        <a class="navbar-brand" href="#">WW3 &nbsp; Course Manager</a>
       </div> 
       
       <div class="collapse navbar-collapse" id="menu-navbar-collapse">
         <ul class="nav navbar-nav">
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Change View <b class="caret"></b></a>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="main-view-name">
+              </span><b class="caret"></b></a>
           <ul class="dropdown-menu manager-menu">
             <li><a class="link" data-link="calendar" data-name="Calendar">View Calendar</a></li>
             <li><a class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
@@ -71,10 +71,10 @@ Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Options <b class="caret"></b></a>
           <ul class="dropdown-menu option-menu">
-            <li><a class="link" data-link="hide-options" data-name="Hide Options">Hide Options</a></li>          
+            <li><a class="link" data-link="hide-sidebar" data-name="Hide Options">Hide Options</a></li>          
             <li><a class="link" data-link="problemSets" data-name="Problem Sets">View Problem Sets</a></li>
             <li><a class="link" data-link="userList" data-name="Classlist">View Classlist</a></li>
-            <li><a class="link" data-link="libraryViewOptions" data-name="Problem View Options">LibraryView Options</a></li>
+            <li><a class="link" data-link="libraryOptions" data-name="Library Options">Library Options</a></li>
             
           </ul>        
         </li>

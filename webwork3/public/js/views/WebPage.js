@@ -14,8 +14,8 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar){
         this.$el.prepend((this.helpPane = new HelpView()).render().el);
         this.navigationBar = new NavigationBar({el: $(".navbar-fixed-top")}).render();
         
-        this.navigationBar.on("help",function () {
-                self.helpPane.open();});
+        //this.navigationBar.on("help",function () {
+        //        self.helpPane.open();});
 
         $("button#msg-toggle").on("click",this.toggleMessageWindow);
 

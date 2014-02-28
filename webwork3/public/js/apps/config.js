@@ -45,6 +45,18 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,
             number: /^\d*(\.\d*)?$/,
             loginname: /^[\w\d\_]+$/
+        },
+        /* 
+        This is an object of all of the main views, default side pans and optional side panes.  
+        */
+        main_views: {
+            "calendar": {default_side: "problemSets",optional_sides: []},
+            "setDetails": {default_side: "problemSets",optional_sides: []},
+            "allSets": {default_side: "hide-sidebar",optional_sides: []},
+            "importExport": {default_side: "hide-sidebar",optional_sides: []},
+            "libraryBrowser": {default_side: "libraryOptions",optional_sides: []},
+            "settings": {default_side: "hide-sidebar",optional_sides: []},
+            "classlist": {default_side: "hide-sidebar",optional_sides: []},
         }
     } 
 

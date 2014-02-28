@@ -7,11 +7,11 @@ define(['module','backbone', 'underscore','models/UserList','models/ProblemSetLi
     'main-views/AssignmentCalendar','main-views/ProblemSetsManager','main-views/LibraryBrowser',
     'main-views/ProblemSetDetailView','main-views/ImportExportView','main-views/ClasslistView','main-views/SettingsView',
     'option-panes/ProblemSetListView','option-panes/UserListView','option-panes/LibraryOptionsView',
-    'jquery-ui','bootstrap'
+    'option-panes/HelpSidePane','jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, SettingList,AssignmentDate,AssignmentDateList,WebPage,config,
     AssignmentCalendar, ProblemSetsManager, LibraryBrowser,ProblemSetDetailView,ImportExportView,ClasslistView,
-    SettingsView,ProblemSetListView,UserListView,LibraryOptionsView){
+    SettingsView,ProblemSetListView,UserListView,LibraryOptionsView,HelpSidePane){
 var CourseManager = WebPage.extend({
     tagName: "div",
     initialize: function(){
@@ -72,7 +72,7 @@ var CourseManager = WebPage.extend({
         }
     },
     startManager: function () {
-
+        var self = this;
         this.navigationBar.setLoginName("Welcome " +this.session.user);
         this.buildAssignmentDates();
 
@@ -98,6 +98,8 @@ var CourseManager = WebPage.extend({
             classlist: new ClasslistView({users: this.users, problemSets: this.problemSets})
         };
 
+        _(this.views).chain().keys().each(function(key){ self.views[key].setParentView(self)});
+
         this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
 
         // Define all of the option views available for the right side
@@ -105,10 +107,10 @@ var CourseManager = WebPage.extend({
         // Again, this should be in a configuration file. 
 
         this.sidePane = {
-            problemSets: new ProblemSetListView({el: $("#problemSets"), problemSets: this.problemSets,
-                users: this.users}),
-            userList: new UserListView({el: $("#userList"), users: this.users}),
-            libraryViewOptions: new LibraryOptionsView({el: $("#libraryViewOptions"), problemSets: this.problemSets})
+            problemSets: new ProblemSetListView({problemSets: this.problemSets, users: this.users}),
+            userList: new UserListView({users: this.users}),
+            libraryOptions: new LibraryOptionsView({problemSets: this.problemSets}),
+            helpSidepane: new HelpSidePane()
         }
 
 
@@ -122,10 +124,10 @@ var CourseManager = WebPage.extend({
 
         // set the initial view to be the Calendar. 
         this.changeView({link: "calendar",name: "Calendar"});
-        this.changeSidebar({link: "problemSets", name: "Problem Sets"});
 
-        this.navigationBar.on("change-view",this.changeView);
-        this.navigationBar.on("open-option",this.changeSidebar);
+        this.navigationBar.on({"change-view": this.changeView,
+            "open-option": this.changeSidebar
+        });
 
     },
 
@@ -162,8 +164,6 @@ var CourseManager = WebPage.extend({
         }).on("change:problems",function(_set){
             _set.save();
         }).on("user_sets_added",function(_userSetList){
-            console.log("Yippee!!");
-
             _userSetList.on("change",function(_userSet){
                 _userSet.changingAttributes=_.pick(_userSet._previousAttributes,_.keys(_userSet.changed));
                 _userSet.save();
@@ -177,8 +177,7 @@ var CourseManager = WebPage.extend({
                         text: config.msgTemplate({type:"set_saved_details",opts:{setname:_userSet.get("set_id"),key: key,
                             oldValue: _old, newValue: _new}})});
                 });
-            })
-
+            }); // close _userSetList.on 
         }).on("sync", function (_set){
             _(_.keys(_set.changingAttributes||{})).each(function(key){
                 switch(key){
@@ -269,10 +268,6 @@ var CourseManager = WebPage.extend({
                         short: config.msgTemplate({type:"set_error",opts:{setname: model.get("set_id")}})});
 
             }); 
-            // change the attributes back to before.
-           /* _(_.keys(model.changed)).each(function(key){
-                model.set(key,model._previousAttributes[key]);
-            })*/
         });
 
         /* Set the events for the settings */
@@ -303,8 +298,13 @@ var CourseManager = WebPage.extend({
         if(this.currentSidePane){
             this.currentSidePane.remove();
         }
-        if(opts.link==="hide-options"){
+        if(opts.link==="hide-sidebar"){
+            $("#sidebar-container").addClass("hidden");
+            $("#main-view").removeClass("col-md-9").addClass("col-md-12");
             return;
+        } else {
+            $("#sidebar-container").removeClass("hidden");
+            $("#main-view").removeClass("col-md-12").addClass("col-md-9");
         }
         $("#sidebar-container").html("<div class='sidebar'></div>");
 
@@ -319,8 +319,8 @@ var CourseManager = WebPage.extend({
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(opts.name);
-        (this.currentView = this.views[opts.link]).setElement(this.$(".main")).render()
-            .setSidePane(this.currentSidePane);
+        (this.currentView = this.views[opts.link]).setElement(this.$(".main")).render();
+        this.changeSidebar({link: config.main_views[opts.link].default_side});
         this.updateProblemSetList(opts.link); 
 
     },

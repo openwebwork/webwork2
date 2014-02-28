@@ -332,13 +332,16 @@ at the bottom of the screen and click "Save Changes". </p>
   
   <div class="form-group">
     <div class="btn-group">
-      <button class="btn btn-default show-hide-tags-button">Show Tags</button>
-      <button class="btn btn-default show-hide-path-button">Show Path</button>
+      <button class="btn btn-default show-hide-tags-button" data-hide-text="Hide Tags">Show Tags</button>
+      <button class="btn btn-default show-hide-path-button" data-hide-text="Hide Path">Show Path</button>
 
     </div>
   </div>
 
 </script>
+
+
+
 
 
 <script type="text/template" id="calendar-template">
@@ -557,7 +560,6 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 <script type="text/template" id="problem-template">
 <div class="loading btn-sm">Problem Loading...<i class="fa fa-spinner fa-spin"></i></div>
 <div class="handle row">
-
 <%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-resize-vertical"></i></a></div><%}%>
 <%if(draggable){%>
   <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-move"></i></a></div>
@@ -587,7 +589,7 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 </div>
 <div class="problem-tags">
 <table class="table table-condensed table-bordered"><tbody>
-<tr class="hidden"><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
+<tr class="hidden path-row"><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
 <td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
 <tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
 <tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
@@ -780,6 +782,10 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 </script>
 
 
+<script type="text/template" id="help-sidepane-template">
+<p class="bg-info">This is where the help goes. </p>
+</script>
+
 
 
 
@@ -828,5 +834,7 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 
 </script>
 
+
+[% INCLUDE main/classlist.tt %]
 
 [% INCLUDE main/library.tt %]
