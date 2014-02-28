@@ -8,28 +8,20 @@
     "components"
   ],
   "dependencies": {
-    
     "jquery-1.8": "jquery#1.8.*",
-    "jquery": "*",
-
-    "jquery-ui": "*",
-    "requirejs": "*",
-
+    "jquery": "2.0.3",
+    "jquery-ui": "1.10.3",
+    "requirejs": "2.1.4",
     "bootstrap-2": "bootstrap#2.*",
-    "bootstrap": "*",
-
-    "backbone": "*",
-    "backbone-validation-0.7.1": "backbone-validation#0.7",
-    "backbone-validation": "*",
-
-    "moment": "*",
-    
-    "backbone.stickit": "*",
-    
+    "bootstrap": "3.1.1",
+    "backbone": "1.1.1",
+    "backbone-validation": "0.9.1",
+    "moment": "2.5.1",
+    "backbone.stickit": "0.7.0",  
     "jquery-truncate": "git://github.com/tbasse/jquery-truncate.git",
-    "font-awesome": "*",
-    "imagesloaded": "*",
+    "font-awesome": "4.0.3",
+    "imagesloaded": "3.1.4",
     "underscore-1.4.4": "underscore#1.4.4",
-    "underscore": "*"
+    "underscore": "1.6.0"
   }
 }
