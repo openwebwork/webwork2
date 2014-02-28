@@ -1,0 +1,14 @@
+#
+# check if node is installed
+
+# check if npm is installed
+
+# check if bower is installed
+
+# check if git is installed
+
+# call bower update on /webwork3/public/js/bower.json
+
+# call git pull on whatever branch we want
+
+# restart ww-dancer  (ubic restart ww-dancer)
