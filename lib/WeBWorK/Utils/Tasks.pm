@@ -131,6 +131,7 @@ sub fake_problem {
 	$problem->set_id(fakeSetName); 
 	$problem->value(""); 
 	$problem->max_attempts("-1"); 
+	$problem->showMeAnother("-1"); 
  
 	$problem->problem_seed(0); 
 	$problem->problem_seed($options{'problem_seed'})

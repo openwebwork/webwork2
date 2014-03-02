@@ -1712,6 +1712,7 @@ sub importSetsFromDef {
 			  problemID => $freeProblemID++,
 			  value => $rh_problem->{value},
 			  maxAttempts => $rh_problem->{max_attempts});
+			  showMeAnother => $rh_problem->{showMeAnother});
 		}
 
 
@@ -1733,6 +1734,7 @@ sub readSetDef {
 	my $filePath      = "$templateDir/$fileName";
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
+	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
 
 	my $setName = '';
 
@@ -2011,12 +2013,14 @@ SET:	foreach my $set (keys %filenames) {
 			my $source_file   = $problemRecord->source_file();
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
+			my $showMeAnother  = $problemRecord->showMeAnother();
 			
 			# backslash-escape commas in fields
 			$source_file =~ s/([,\\])/\\$1/g;
 			$value =~ s/([,\\])/\\$1/g;
 			$max_attempts =~ s/([,\\])/\\$1/g;
-			$problemList     .= "$source_file, $value, $max_attempts \n";
+			$showMeAnother =~ s/([,\\])/\\$1/g;
+			$problemList     .= "$source_file, $value, $max_attempts $showMeAnother \n";
 		}
 
 		# gateway fields

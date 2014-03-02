@@ -233,6 +233,7 @@ sub addProblemToSet {
 	my $db = $self->{db};
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
+	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
 	
 
 	die "addProblemToSet called without specifying the set name." if $args->{setName} eq "";
@@ -248,6 +249,7 @@ sub addProblemToSet {
 	if (defined($args->{value})){$value = $args->{value};}  # 0 is a valid value for $args{value}  
 
 	my $maxAttempts = $args->{maxAttempts} || $max_attempts_default;
+	my $showMeAnother = $args->{showMeAnother} || $showMeAnother_default;
 	my $problemID = $args->{problemID};
 
 	unless ($problemID) {
@@ -260,6 +262,7 @@ sub addProblemToSet {
 	$problemRecord->source_file($sourceFile);
 	$problemRecord->value($value);
 	$problemRecord->max_attempts($maxAttempts);
+	$problemRecord->showMeAnother($showMeAnother);
 	$db->addGlobalProblem($problemRecord);
 
 	return $problemRecord;
