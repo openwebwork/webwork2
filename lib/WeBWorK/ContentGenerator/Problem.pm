@@ -185,9 +185,13 @@ sub can_showMeAnother {
 	if (before($Set->open_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
-		my $max_attempts = $Problem->max_attempts;
+		my $showMeAnother = $Problem->showMeAnother;
+        if($showMeAnother eq "")
+        {
+            $showMeAnother =-1;
+         }
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
-		if ($max_attempts == -1 or $attempts_used < $max_attempts) {
+		if ($showMeAnother == -1 or $attempts_used < $showMeAnother) {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
 		} else {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
