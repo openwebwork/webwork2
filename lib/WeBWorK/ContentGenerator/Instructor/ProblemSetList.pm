@@ -1711,7 +1711,7 @@ sub importSetsFromDef {
 			  sourceFile => $rh_problem->{source_file},
 			  problemID => $freeProblemID++,
 			  value => $rh_problem->{value},
-			  maxAttempts => $rh_problem->{max_attempts});
+			  maxAttempts => $rh_problem->{max_attempts},
 			  showMeAnother => $rh_problem->{showMeAnother});
 		}
 
