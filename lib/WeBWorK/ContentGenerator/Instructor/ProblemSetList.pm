@@ -2020,7 +2020,7 @@ SET:	foreach my $set (keys %filenames) {
 			$value =~ s/([,\\])/\\$1/g;
 			$max_attempts =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
-			$problemList     .= "$source_file, $value, $max_attempts $showMeAnother \n";
+			$problemList     .= "$source_file, $value, $max_attempts, $showMeAnother \n";
 		}
 
 		# gateway fields
