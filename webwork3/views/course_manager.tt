@@ -182,8 +182,11 @@
 
 <script type="text/template" id="problem-list-template">
 <div class="row">
-  <div class="problem-paginator col-md-9"></div>
-  <div class="col-md-2 num-problems"></div>
+  <div class="problem-paginator col-md-8"></div>
+  <div class="col-md-3 num-problems"></div>
+  <%if(show_undo||false) {%>
+  <div class="pull-right"><button class="btn btn-default btn-sm"><i class="fa fa-undo"></i></button></div>
+  <%}%>
 </div>
 <div class="prob-list-container">
 <ul class='prob-list scrollable no-bullets'></ul>
@@ -562,7 +565,7 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 <div class="handle row">
 <%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-resize-vertical"></i></a></div><%}%>
 <%if(draggable){%>
-  <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-move"></i></a></div>
+  <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
 <%}%>
 <%if(showPoints){%>
 <div class="col-md-3 form-">
@@ -764,7 +767,7 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
     select_target_set: function() { return "You need to select a target set";},
     show_prob_set: function() { return "Show Problem Sets";},
     hide_prob_set: function() { return "Hide Problem Sets";},
-    problems_shown: function(opt) {return "Problems " + opt.probFrom + " to " + opt.probTo + " of " + opt.total;},
+    problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
     unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
                   ". Click OK to confirm this."},
     problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
