@@ -37,9 +37,6 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
                     this.model.attributes.data="";
                 }
                 this.$el.html(this.template(this.allAttrs));
-                if(this.model.renderData.header_text){
-                    this.$el.append(this.model.renderData.header_text);    
-                }
                 
                 this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
