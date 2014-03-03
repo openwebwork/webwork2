@@ -81,12 +81,7 @@ sub authenticate {
     	}
 	}
 
-<<<<<<< HEAD
-
-	if(! defined(session 'session_key')){
-=======
 	if(! defined(session 'key')){
->>>>>>> Reorganization and initial checkin of the Course Manager.
 		my $key = vars->{db}->getKey(session 'user');
 
 		debug $key;

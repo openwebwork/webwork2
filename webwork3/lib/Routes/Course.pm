@@ -278,8 +278,6 @@ get '/courses/:course_id/session' => sub {
 };
  
 
-<<<<<<< HEAD
-=======
 get '/courses/:course_id/manager' =>  sub {
 
 	# two situations here.  Either
@@ -311,8 +309,6 @@ get '/courses/:course_id/manager' =>  sub {
 		pagename=>"Course Manager"},
 		{layout=>'manager.tt'};
 };
-
->>>>>>> Reorganization and initial checkin of the Course Manager.
 
 ###
 #
