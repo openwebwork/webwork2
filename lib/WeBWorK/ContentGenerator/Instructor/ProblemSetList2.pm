@@ -1994,6 +1994,7 @@ sub readSetDef {
 			push(@problemData, {source_file    => $name,
 			                    value          =>  $value,
 			                    max_attempts   =>, $attemptLimit,
+			                    showMeAnother  =>, -1,
 			                    continuation   => $continueFlag 
 			                    });
 		}
