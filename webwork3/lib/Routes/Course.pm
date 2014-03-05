@@ -89,7 +89,7 @@ get '/courses/:course_id' => sub {
 		}
 		$session->{logged_in} = 1 if ($session->{user} && $session->{key});
 
-	    template 'course_home.tt', {course_id=> params->{course_id},, user=> session->{user_id},
+	    template 'course_home.tt', {course_id=> params->{course_id}, user=> session->{user_id},
 	        pagename=>"Course Home for " . params->{course_id},theSession=>to_json($session)},
 	        {layout=>"student.tt"};
 	}
@@ -276,6 +276,11 @@ del '/courses/:course_id' => sub {
 get '/courses/:course_id/session' => sub {
 	return convertObjectToHash(session); 
 };
+
+post '/courses/:course_id/session' => sub {
+	session 'effectiveUser' => params->{effectiveUser};
+	return convertObjectToHash(session);
+};
  
 
 get '/courses/:course_id/manager' =>  sub {
@@ -284,25 +289,26 @@ get '/courses/:course_id/manager' =>  sub {
 	# 1) the user has already logged in and its safe to send all of the requisite data
 	# 2) the user hasn't already logged in and needs to pop open a login window.  
 
-	# Case #1:
+	
 
 	debug session;
 
 	my ($settings,$sets,$users);
 
-	if(! defined session->{user}){
-		$settings = [];
-		$sets = [];
-		$users = [];
-	} else {
+
+	if(defined session->{user}){
 		$settings = getCourseSettings();
 		$sets = getAllSets();
 		$users = getAllUsers();
+	} else {
+		$settings = [];
+		$sets = [];
+		$users = [];
+		
 	}
 
-	debug "here";
-
-	# Case #2: 
+	my $theSession = convertObjectToHash(session);
+	$theSession->{effectiveUser} = session->{user};
 
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
 		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users),

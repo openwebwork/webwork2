@@ -40,8 +40,6 @@ var CourseManager = WebPage.extend({
             this.loginPane.$(".message-bottom").html(config.msgTemplate({type: "loading_data"}))
                 .append("<i class='fa fa-spinner fa-spin'></i>");
             this.data_loaded = {settings: false, users: false, problemSets: false};
-            console.log(config.urlPrefix+"courses/"
-                    +config.courseSettings.course_id+"/session");
             // request the session information
             $.get(config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session",function(data){
                 self.session = data;
@@ -127,6 +125,17 @@ var CourseManager = WebPage.extend({
         this.navigationBar.on({"change-view": this.changeView,
             "open-option": this.changeSidebar
         });
+
+        this.users.on({"act_as_user": function(model){
+            self.session.effectiveUser = model.get("user_id");
+            $.ajax({method: "POST", 
+                url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session", 
+                data: {effectiveUser: self.session.effectiveUser},
+                success: function () {
+                    self.navigationBar.setLoginName("Welcome " +self.session.user + " (" + self.session.effectiveUser + ")");                    
+                }
+            });
+        }});
 
     },
 
