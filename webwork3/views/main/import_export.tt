@@ -1,0 +1,48 @@
+<!-- Import/Export pane templates -->
+
+<script type="text/template" id="import-export-template">
+<ul class="nav nav-tabs" id="import-export-tabs">
+  <li class="active"><a href="#import-tab" data-toggle="tab">Import Problem Sets</a></li>
+  <li><a href="#export-tab" data-toggle="tab">Export Problem Sets</a></li>
+</ul>
+ 
+<div class="tab-content">
+  <div class="tab-pane active" id="import-tab">
+  <div class="row">
+   <div class="col-md-5 form-horizontal"> Select Files: <input type="file" id="import-from-file" multiple></div>
+   <div class="col-md-4 form-horizontal">
+     <label class="checkbox inline">Upload set definition files to server <input type="checkbox" class="upload-selected-files"></label></div>
+   </div>
+   <div class="import-table hidden">
+    <div class="row form-horizontal">
+    <div class="col-md-2"><label class="checkbox inline">Select All<input class="select-all-checkbox" type="checkbox" checked="checked">
+    </label></div>
+    <div class="col-md-2"><label class="checkbox inline">Shift Input Dates<input class="date-shift-checkbox" type="checkbox"></label></div>
+    <div class="col-md-5 hidden date-shift-container">Shift first Open Date to <input class="date-shift-input input-medium"></div>
+    </div>
+    <div class="row import-error alert alert-danger"></div>
+     <table class="table table-bordered table-condensed">
+     <thead><tr><th>Select</th><th>Set Name</th><th>Num. Probs.</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+     <tbody>
+     </tbody>
+     </table>
+    <div class="row form-horizontal">
+    <div class="col-md-3"><button type="button" class="btn btn-default import-button">Import Selected Sets</button></div>
+    <div class="col-md-5 import-message"></div>
+
+    </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="export-tab">This has yet to be implemented</div>
+  </div> 
+</script>
+
+<script type="text/template" id='import-problem-set-row-template'>
+  <td><input type="checkbox" class="import-checkbox" checked="checked"></td>
+  <td class="set-name" contenteditable='true'></td> 
+  <td class="num-probs"></td>
+  <td class='open-date edit-datetime'></td>
+  <td class='due-date edit-datetime'></td>
+  <td class='answer-date edit-datetime'></td>
+</script>

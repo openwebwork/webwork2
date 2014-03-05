@@ -226,7 +226,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             var self = this;
             this.$el.html($("#loading-usersets-template").html());
             if (this.collection.size()>0){
-                this.$el.html($("#cutomize-assignment-template").html());
+                this.$el.html($("#customize-assignment-template").html());
                 (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
                         paginator: {showPaginator: false}, tablename: ".users-table"}))
                     .render().$el.addClass("table table-bordered table-condensed");
