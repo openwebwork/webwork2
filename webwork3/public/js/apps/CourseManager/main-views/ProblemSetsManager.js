@@ -9,7 +9,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
     
     var ProblemSetsManager = MainView.extend({
         initialize: function (options) {
-            _.bindAll(this, 'render','addProblemSet','updateTable');  // include all functions that need the this object
+            _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText');  // include all functions that need the this object
             var self = this;
             this.problemSets = options.problemSets;
             this.users = options.users;
@@ -24,12 +24,17 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSets.on("add",this.updateTable);
             this.problemSets.on("remove",this.updateTable);
         },
-        //events: {"click .add-problem-set-button": "addProblemSet"},
+        events: {
+            "click .add-problem-set-button": "addProblemSet",
+            'keyup input.filter-text' : 'filterProblemSets',
+            'click button.clear-filter-button': 'clearFilterText',
+        },
         render: function () {
+            this.$el.html($("#problem-set-manager-template").html());
             this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
                                 paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
-            this.$el.html(this.problemSetTable.el);
+            this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
             return this;
         },
@@ -53,6 +58,15 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 this.problemSetTable.updatePaginator();
                 
             }
+        },
+        filterProblemSets: function (evt) {
+            this.problemSetTable.filter($(evt.target).val()).render();
+            this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
+        },
+        clearFilterText: function () {
+            $("input.filter-text").val("");
+            this.problemSetTable.filter("").render();
+            this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
         },
         tableSetup: function () {
             var self = this;
