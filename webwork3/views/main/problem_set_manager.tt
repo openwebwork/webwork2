@@ -1,0 +1,15 @@
+<!-- Problem Set Manager Templates -->
+
+<script type="text/template" id="add-hw-set-template">
+  <div class="add-problem-set-dialog-content">
+  <p>A new homework set with the name below will be created.  In addition, it will be assigned to you 
+  (user: <%= name %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
+  <table><tr>
+    <td>Homework Set Name:</td>
+    <td><input type='text' size='20' class='problem-set-name'></td>
+    </tr>
+    <tr><td  colcol-md-="2" class="problem-set-name-error" style="color: red"></td></tr>
+    </table>
+    </div>
+
+</script>
