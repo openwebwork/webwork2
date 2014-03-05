@@ -21,16 +21,22 @@ define(['backbone','views/SidePane','stickit'], function(Backbone,SidePane){
 
 	var UserListRowView = Backbone.View.extend({
 		tagName: "button",
-		className: "btn btn-default",
+		className: "btn btn-default user-button",
 		initialize: function(options){
 			this.template = options.rowTemplate;
 		},
 		render: function (){
 			this.$el.html(this.template.html());
+			this.$el.data("userid",this.model.get("user_id"));
+			console.log(this.model.get("user_id"));
 			this.stickit();
 			return this;
 		},
-		bindings: {".user-id": "user_id"}
+		bindings: {".user-id": "user_id", ".first-name": "first_name", ".last-name": "last_name"},
+		events: {"click": "actAsUser"},
+		actAsUser: function(){
+			this.model.collection.trigger("act_as_user",this.model);
+		}
 	})
 
 	return UserListView;
