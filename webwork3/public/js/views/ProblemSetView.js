@@ -5,7 +5,7 @@ define(['backbone', 'views/ProblemListView'],
     			this.headerTemplate = "#problem-set-header";
     			this.viewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showEditTool: true,
                     showRefreshTool: true, showViewTool: true, showHideTool: false, deletable: true, draggable: false,
-                    problem_seed: 1};
+                    problem_seed: 1, show_undo: true};
                 this.problemSet = options.problemSet;
                 options.type = "problem_set";
                 this.constructor.__super__.initialize.apply(this,[options]);

@@ -9,7 +9,8 @@ use List::Util qw(first);
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet createNewUserProblem getGlobalSet);
+our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 
+        createNewUserProblem getGlobalSet record_results);
 
 sub getGlobalSet {
     my ($setName) = @_;
@@ -184,23 +185,6 @@ sub addUserSet {
 }
 
 
-###
-#
-# this adds userProblems for a given user and an array of problems
-#
-###
-
-sub addUserProblems {
-	my ($userID) = @_;
-	for my $p (@{params->{problems}}){
-        debug $p;
-		my $userProblem = vars->{db}->newUserProblem();
-		$userProblem->user_id($userID);
-		$userProblem->set_id(params->{set_id});
-		$userProblem->problem_id($p->{problem_id});
-		vars->{db}->addUserProblem($userProblem);
-	}
-}
 
 ## the following is mostly copied from webwork2/lib/ContentGenerator/Utils/ProblemUtils.pm
 

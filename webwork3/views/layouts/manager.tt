@@ -4,7 +4,7 @@
 <title>WeBWorK 3</title>
 <link rel='stylesheet' href='/webwork2_files/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>
 <link rel="stylesheet" type="text/css" href="/webwork3/js/bower_components/bootstrap/dist/css/bootstrap.css">
-<link rel='stylesheet' href='/webwork2_files/js/components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
+<link rel='stylesheet' href='/webwork3/js/bower_components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
 <link rel='stylesheet' type="text/css" href="/webwork3/css/course-manager.css">
 </head>
 <body>
@@ -19,14 +19,14 @@ Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
 <div class="message"> <%=message%></div>
 <form class="form-horizontal" role="form">
   <div class="form-group">
-    <label for="inputEmail3" class="col-sm-2 control-label">Login Name:</label>
-    <div class="col-sm-10">
+    <label for="inputEmail3" class="col-md-4 control-label">Login Name:</label>
+    <div class="col-md-7">
       <input type="input" name="username" class="form-control login-name" id="inputEmail3" placeholder="Login">
     </div>
   </div>
   <div class="form-group">
-    <label for="password" class="col-sm-2 control-label">Login Name:</label>
-    <div class="col-sm-10">
+    <label for="password" class="col-md-4 control-label">Password</label>
+    <div class="col-md-7">
       <input type="password" name="password" class="form-control login-password" id="password" placeholder="Password">
     </div>
   </div>

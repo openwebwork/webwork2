@@ -64,7 +64,7 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             this.views[viewType].render();
         },
         sidepaneEvents: {
-            "change-display-mode": function() { this.views[this.activeView].changeDisplayMode() },
+            "change-display-mode": function(evt) { this.views[this.activeView].changeDisplayMode(evt) },
             "change-target-set": function(evt) { 
                 this.views[this.activeView].setTargetSet($(evt.target).val());
             }, 

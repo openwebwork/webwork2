@@ -73,10 +73,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			this.$el.empty();
 
 			// set up the HTML for the table header
-			var head = $("<thead>");
-			var headRow = $("<tr>"); head.append(headRow);
+			var headRow = $("<tr>");
 			var tbody = $("<tbody>");
-			this.$el.append(head).append(tbody);
+			this.$el.append($("<thead>").append(headRow)).append(tbody);
 
 			_(this.columnInfo).each(function (col){
 				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
@@ -117,8 +116,8 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			var cell = $("<div>")
 				, i
-				, start =0,
-                stop = this.maxPages;
+				, start =0
+                , stop = this.maxPages;
             
             if(this.maxPages>15){
                 start = (this.currentPage-7 <0)?0:this.currentPage-7;
@@ -127,18 +126,18 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			cell.append("<button class='paginator-page first-page'>&lt;&lt;</button>");
 			cell.append("<button class='paginator-page prev-page'>&lt;</button>");
 			if(start>0){
-				cell.append("<button class='paginator-page'>...</button>");
+				cell.append("<button class='paginator-page' disabled='disabled'>...</button>");
 			}
 			for(i=start;i<stop;i++){
 				cell.append("<button class='paginator-page numbered-page' data-page-num='"+i+"'>"+(i+1)+"</button>");
 			}
 			if(stop<this.maxPages){
-				cell.append("<button class='paginator-page'>...</button>");
+				cell.append("<button class='paginator-page' disabled='disabled'>...</button>");
 			}
 			cell.append("<button class='paginator-page next-page'>&gt;</button>");
 			cell.append("<button class='paginator-page last-page'>&gt;&gt;</button>");
 			var td = $("<td>").attr("colspan",this.columnInfo.length);
-			td.append(cell);
+			td.append(cell).css("text-align","center");
 
 			this.$(".paginator-row").html(td);
 
@@ -161,7 +160,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			}
 			if(_(filterText).isObject()){
 				this.filteredCollection =this.collection.where(filterText);
-				console.log(this.filteredCollection);
 			} else {
 				filterRE = new RegExp(filterText,"i");
 				this.filteredCollection = this.collection.filter(function(model){
