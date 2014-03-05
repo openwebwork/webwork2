@@ -454,6 +454,13 @@ table.attemptResults th {
   border-top-color: rgb(22,22,22);
 }
 
+/* This makes it so that the css doesn't change the height/width of 
+ *  problem images that have been set 
+ */
+.problem-content img {
+    width:100%;
+}
+
 /* override above settings in tables used to display ans_array results */
 table.attemptResults td td,
 table.attemptResults td th,
