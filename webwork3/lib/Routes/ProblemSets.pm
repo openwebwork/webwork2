@@ -274,10 +274,12 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
     my @sets = ();
 
     foreach my $user_id (@userIDs){
-        push(@sets,vars->{db}->getMergedSet($user_id,params->{set_id}))
+        my $userSet = convertObjectToHash(vars->{db}->getMergedSet($user_id,params->{set_id}));
+        $userSet->{_id} = $user_id;
+        push(@sets,$userSet);
     }
 
-    return convertArrayOfObjectsToHash(\@sets);
+    return \@sets;
 };
 
 
@@ -425,8 +427,22 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 
 };
 
+###
+#
+# We have two types of UserSets.  To clarify the next sets of CRUD calls, time to clarify
+#
+#  1. For a given problem set (set_id) a list of user specifiy properties.  Call this type "users"
+#  2. For a given user (user_id) a list of problem sets associated with this.  Call this type "sets"
+#
+#  Below we have two sets of CRUD Calls 
+
 
 ######## CRUD for /courses/:course_id/users/:user_id/sets/:set_id
+#
+#  This is of type "sets"
+#
+###
+
 
 ##
 #
@@ -440,7 +456,8 @@ get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     checkPermissions(10,session->{user});
 
-    my $userSet = vars->{db}->getUserSet(param('user_id'),param('set_id'));
+    my $userSet = convertObjectToHash(vars->{db}->getUserSet(param('user_id'),param('set_id')));
+    $userSet->{_id} = params->{set_id}; # tells Backbone on the client that the data has been sent from the server. 
 
     return convertObjectToHash($userSet);
 
@@ -458,22 +475,24 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     checkPermissions(10,session->{user});
 
-    my $userID = param('user_id');
-
     # check to make sure that the user is assigned to the course
-    send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
-            unless vars->{db}->getUser($userID);
+    send_error("The user " . params->{user_id} . " is not enrolled in the course " . param("course_id"),404)
+            unless vars->{db}->getUser(params->{user_id});
 
-    # check to see if the user has already been assigned and skip the addition if exists already.
-    if (!vars->{db}->existsUserSet($userID,param('set_id'))) {
-        my $userSet = vars->{db}->newUserSet;
+    # check to see if the userSet already exists. 
 
-        $userSet->{user_id}=$userID;
-        $userSet->{set_id}=param('set_id');
-        vars->{db}->addUserSet($userSet);
-    }
+    send_error("The set " . params->{set_id} . " already exists for " . params->{user_id} . ".  Perhaps you"
+            . " meant to make a PUT call. ",403) if vars->{db}->existsUserSet(params->{user_id},params->{set_id});
 
-    return convertObjectToHash(vars->{db}->getUserSet($userID,param('set_id')));
+    my $userSet = vars->{db}->newUserSet;
+
+    $userSet->{user_id} = params->{user_id};
+    $userSet->{set_id} = params->{set_id};
+    vars->{db}->addUserSet($userSet);
+
+    my $set = convertObjectToHash($userSet);
+    $set->{_id} = params->{set_id};  # tells Backbone on the client that the data has been sent from the server. 
+    return $set; 
 };
 
 ##
@@ -488,16 +507,14 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     checkPermissions(10,session->{user});
 
-    my $userID = param('user_id');
-
     # check to make sure that the user is assigned to the course
-    send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
-            unless vars->{db}->getUser($userID);
+    send_error("The user " . params->{user_id} . " is not enrolled in the course " . param("course_id"),404)
+            unless vars->{db}->getUser(params->{user_id});
 
     # check to see if the user has already been assigned and skip the addition if exists already.
 
-    my $userSet = vars->{db}->getUserSet($userID,params->{set_id});
-    send_error("The user $userID has not been assigned problem set " . params->{set_id} . ".")
+    my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
+    send_error("The user " . params->{user_id} . " has not been assigned problem set " . params->{set_id} . ".")
         unless $userSet;
 
     # get the global problem set to determine if the value has changed
@@ -513,7 +530,7 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     vars->{db}->putUserSet($userSet);
 
 
-    return convertObjectToHash(vars->{db}->getMergedSet($userID,params->{set_id}));
+    return convertObjectToHash(vars->{db}->getMergedSet(params->{user_id},params->{set_id}));
 };
 
 
@@ -527,26 +544,47 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
 
 del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-    
-
     checkPermissions(10,session->{user});
 
-    my $userID = param('user_id');
-
     # check to make sure that the user is assigned to the course
-    send_error("The user " . $userID . " is not enrolled in the course " . param("course_id"),404)
-            unless vars->{db}->getUser($userID);
+    send_error("The user " . params->{user_id} . " is not enrolled in the course " . param("course_id"),404)
+            unless vars->{db}->getUser(params->{user_id});
 
-    my $userSet = vars->{db}->getUserSet($userID,param('set_id'));
+    send_error("The set " . params->{set_id} . " does not exist for user " . params->{user_id}. 
+            " so the set cannot be deleted. ",403) unless vars->{db}->existsUserSet(params->{user_id},params->{set_id});
+
+    my $userSet = vars->{db}->getUserSet(params->{user_id},param('set_id'));
     if ($userSet){
-        vars->{db}->deleteUserSet($userID,param('set_id'));
+        vars->{db}->deleteUserSet(params->{user_id},param('set_id'));
     } else {
-        send_error("An unknown error occurred removing user " . $userID . " from set " 
-                . param('set_id'). " in course " . param('course_id'),466);
+        send_error("An unknown error occurred removing user " . params->{user_id} . " from set " 
+                . params->{set_id}. " in course " . params->{course_id},466);
     }
 
     return convertObjectToHash($userSet);
 };
+
+
+######## CRUD for /courses/:course_id/sets/:set_id/users/:user_id
+#
+#  This is of type "users".  See above for an explain of the UserSets.  
+#
+#  Note: each of these passes to the above routes
+###
+
+
+##
+#
+#  Get the (user) properties for *set_id* for user *user_id* in course *course_id*
+#
+#  return:  UserSet properties
+##
+
+any '/courses/:course_id/sets/:set_id/users/:user_id' => sub {
+    forward '/courses/' . params->{course_id} . '/users/' . params->{user_id} . '/sets/' . params->{set_id};
+};
+
+
 
 
 ###

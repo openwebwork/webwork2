@@ -41,6 +41,7 @@ define(['backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,
             restricted_login_proctor: "",
             hide_hint:"" 
         },
+        idAttribute: "_id",
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") +
             "/sets/" + this.get("set_id");
