@@ -51,7 +51,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             return this;
         },
         render: function() {
-            this.$el.html($("#problem-list-template").html());
+            this.$el.html(_.template($("#problem-list-template").html(),{show_undo: this.viewAttrs.show_undo}));
             this.updatePaginator();
             this.gotoPage(0);
             return this;

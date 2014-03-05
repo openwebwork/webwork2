@@ -118,7 +118,6 @@ var CourseManager = WebPage.extend({
 
         // this will automatically save (sync) any change made to a problem set.
         this.problemSets.on("change",function(_set){
-            console.log(_set.changed);
             _set.save();
         })        
 

@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # check if node is installed
 
@@ -8,6 +9,10 @@
 # check if git is installed
 
 # call bower update on /webwork3/public/js/bower.json
+
+cd $WEBWORK_HOME/webwork3/public/js
+bower update
+
 
 # call git pull on whatever branch we want
 

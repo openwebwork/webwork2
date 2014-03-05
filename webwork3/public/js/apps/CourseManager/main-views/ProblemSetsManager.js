@@ -30,11 +30,6 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                                 paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.html(this.problemSetTable.el);
-
-            // set up some styling
-            this.problemSetTable.$(".paginator-row td").css("text-align","center");
-            this.problemSetTable.$(".paginator-page").addClass("btn");
-
             this.problemSets.trigger("hide-show-all-sets","hide");
             return this;
         },
