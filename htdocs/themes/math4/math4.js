@@ -1,8 +1,5 @@
 $(function(){
 
-    document.documentElement.setAttribute('data-useragent', 
-					  navigator.userAgent);
-    
     // Turn submit inputs into buttons
     $('input:submit').addClass('btn btn-primary');
     $('.nav_button').addClass('btn btn-primary');
