@@ -747,6 +747,23 @@ sub pre_header_initialize {
 		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
 	);
 
+    # if showMeAnother is active, then disable all other options
+    if ($showMeAnother) {
+	%can = (
+		showOldAnswers     => 0,
+		showCorrectAnswers => 1,
+		showHints          => 1,
+		showSolutions      => 1,
+		recordAnswers      => 0,
+		checkAnswers       => 0,
+		showMeAnother      => 0,
+		getSubmitButton    => 0,
+	);
+	%must = (
+		showSolutions      => 1,
+	);
+          }
+
 	
 	# final values for options
 	my %will;
@@ -1300,12 +1317,14 @@ sub output_submit_buttons{
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 
-	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
+	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
 	if ($can{checkAnswers}) {
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
+		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
 	}
 	if ($can{showMeAnother}) {
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open(document.URL, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open($location, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
 	}
 	if ($can{getSubmitButton}) {
 		if ($user ne $effectiveUser) {
