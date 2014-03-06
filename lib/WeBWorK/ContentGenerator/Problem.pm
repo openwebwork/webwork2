@@ -1309,7 +1309,7 @@ sub output_submit_buttons{
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
 	}
 	if ($can{showMeAnother}) {
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
 	}
 	if ($can{getSubmitButton}) {
 		if ($user ne $effectiveUser) {
