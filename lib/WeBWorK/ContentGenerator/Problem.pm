@@ -696,9 +696,12 @@ sub pre_header_initialize {
     # if showMeAnother is active, then change the problem seed
     if ($showMeAnother) {
           # change the problem seed
-	      $problem->problem_seed(int(rand(10000)));
+          my $oldProblemSeed = $problem->problem_seed(0);
+          my $newProblemSeed = $oldProblemSeed;
+          $newProblemSeed = int(rand(10000)) while($oldProblemSeed == $newProblemSeed ); 
+	      $problem->problem_seed($newProblemSeed);
           # update the database
-          $db->putUserProblem($problem);
+          $db->putUserProblem($problem) if($ce->{showMeAnotherChangeCurrentSeed});
           }
 
 	
@@ -1312,6 +1315,7 @@ sub output_checkboxes{
 sub output_submit_buttons{
 	my $self = shift;
 	my $r = $self->r;
+	my $ce = $self->r->ce;
 	my %can = %{ $self->{can} };
 	
 	my $user = $r->param('user');
@@ -1322,7 +1326,15 @@ sub output_submit_buttons{
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
 	}
 	if ($can{showMeAnother}) {
+      # the behaviour of showMeAnother is determined by the course configuration
+      if($ce->{showMeAnotherChangeCurrentSeed})
+      {
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open(document.URL, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+      }
+      else{
+        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+      }
         #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open(document.URL, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
         #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open($location, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
 	}
