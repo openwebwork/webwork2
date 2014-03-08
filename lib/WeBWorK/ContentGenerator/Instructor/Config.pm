@@ -373,6 +373,11 @@ package configpopuplist;
 sub display_value {
 	my ($self, $val) = @_;
 	$val = 'ur' if not defined($val);
+
+	if ($self->{labels}->{$val}) {
+	    return join(CGI::br(), $self->{labels}->{$val});
+	}
+
 	return join(CGI::br(), $val);
 }
 
@@ -410,10 +415,12 @@ sub save_string {
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
+
 	return CGI::popup_menu(
 		-name => $name,
 		-values => $self->{values},
 		-default => $default,
+	        -labels => $self->{labels},
 
 	);
 }

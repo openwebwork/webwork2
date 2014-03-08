@@ -35,7 +35,7 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers
+use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
 	ref2string makeTempDirectory path_is_subdir sortByName before after between);
 use WeBWorK::DB::Utils qw(global2user user2global);
 use URI::Escape;
@@ -444,9 +444,15 @@ sub pre_header_initialize {
 	my $effectiveUser = $db->getUser($effectiveUserName); # checked
 	die "record for user $effectiveUserName (effective user) does not exist."
 		unless defined $effectiveUser;
-	
+		
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); # checked
+
+	$self->{isOpen} = (time >= $set->open_date && 
+			   !is_restricted($db, $set, $set->set_id, $effectiveUserName))
+	    || $authz->hasPermissions($userName, "view_unopened_sets");
+	
+	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
 
 	$self->set_showOldAnswers_default($ce, $userName, $authz, $set);
 

@@ -923,6 +923,7 @@ sub publish_handler {
 sub enable_reduced_scoring_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
+	my $ce = $self->ce;
 
 	return join ("",
 		"Make ",

@@ -1004,6 +1004,7 @@ sub enable_reduced_scoring_handler {
 
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 
 	my $result = "";
 	
@@ -1031,7 +1032,15 @@ sub enable_reduced_scoring_handler {
 	# can we use UPDATE here, instead of fetch/change/store?
 	my @sets = $db->getGlobalSets(@setIDs);
 	
-	map { $_->enable_reduced_scoring("$value") if $_; $db->putGlobalSet($_); } @sets;
+	foreach my $set (@sets) {
+	    next unless $set;
+	    $set->enable_reduced_scoring("$value");
+	    if ($value  && !$set->reduced_credit_date) {
+		$set->reduced_credit_date($set->due_date -
+					  60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
+	    }
+	    $db->putGlobalSet($set);
+	}
 	
 	return $result
 	
@@ -1543,6 +1552,7 @@ sub saveEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r           = $self->r;
 	my $db          = $r->db;
+	my $ce          = $r->ce;
 	
 	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
 	foreach my $setID (@visibleSetIDs) {
@@ -1555,8 +1565,17 @@ sub saveEdit_handler {
 			if (defined $tableParams->{$param}->[0]) {
 				if ($field =~ /_date/) {
 					$Set->$field($self->parseDateTime($tableParams->{$param}->[0]));
+				} elsif ($field eq 'enable_reduced_scoring') {
+				    #If we are enableing reduced scoring, make sure the reduced scoring date is set
+				    my $value = $tableParams->{$param}->[0];
+				    $Set->enable_reduced_scoring($value);
+				    if (!$Set->reduced_credit_date) {
+					$Set->reduced_credit_date($Set->due_date -
+								  60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
+				    }
+
 				} else {
-					$Set->$field($tableParams->{$param}->[0]);
+				    $Set->$field($tableParams->{$param}->[0]);
 				}
 			}
 		}
@@ -2458,6 +2477,11 @@ sub recordEditHTML {
 		@fieldsToShow = @{ VIEW_FIELD_ORDER() };
 	}
 	
+	# Remove the enable reduced scoring box if that feature isnt enabled
+	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
+	    @fieldsToShow = grep {$_ ne 'enable_reduced_scoring'} @fieldsToShow;
+	}
+
 	# make a hash out of this so we can test membership easily
 	my %nonkeyfields; @nonkeyfields{$Set->NONKEYFIELDS} = ();
 	
@@ -2491,6 +2515,7 @@ sub recordEditHTML {
 sub printTableHTML {
 	my ($self, $SetsRef, $fieldNamesRef, %options) = @_;
 	my $r                       = $self->r;
+	my $ce = $r->ce;
 	my $authz                   = $r->authz;
 	my $user                    = $r->param('user');
 	my $setTemplate	            = $self->{setTemplate};
@@ -2516,6 +2541,12 @@ sub printTableHTML {
 	
 	if ($exportMode) {
 		@realFieldNames = @{ EXPORT_FIELD_ORDER() };
+	}
+
+	
+	# Remove the enable reduced scoring box if that feature isnt enabled
+	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
+	    @realFieldNames = grep {$_ ne 'enable_reduced_scoring'} @realFieldNames;
 	}
 
 	

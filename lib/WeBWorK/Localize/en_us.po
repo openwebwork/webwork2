@@ -1,7 +1,7 @@
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_1"
-msgstr "tr: This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3\% of the original."
+msgstr "This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3\% of the original."
 
 #
 msgid "_REQUEST_ERROR"
@@ -44,11 +44,11 @@ msgstr "Next"
 
 #
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
-msgstr "tr: This is the classlist editor page, where you can view and edit the records of all the studentscurrently enrolled in this course.  The top of the page contains forms which allow you to filterwhich students to view, sort your students in a chosen order, edit student records, give new passwords to students, import/export student records from/to external files, or add/delete students. To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table containing the student usernames and their information."
+msgstr "This is the classlist editor page, where you can view and edit the records of all the studentscurrently enrolled in this course.  The top of the page contains forms which allow you to filterwhich students to view, sort your students in a chosen order, edit student records, give new passwords to students, import/export student records from/to external files, or add/delete students. To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table containing the student usernames and their information."
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_2"
-msgstr "tr: This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
+msgstr "This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
 
 #
 msgid "_LOGIN_MESSAGE"
@@ -64,4 +64,4 @@ msgstr "Prev"
 
 #
 msgid "_GUEST_LOGIN_MESSAGE"
-msgstr "tr: This course supports guest logins. Click %1 to log into this course as a guest."
+msgstr "This course supports guest logins. Click %1 to log into this course as a guest."
