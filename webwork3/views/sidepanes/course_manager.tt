@@ -25,8 +25,8 @@
     Sort By <span class="caret"></span>
   </button>
   <ul class="dropdown-menu" role="menu">
-    <li><a href="#">Set Name</a></li>
-    <li><a href="#">Due Date</a></li>
+    <li><a class="sort-problem-set-option" data-sortfield="set_id" href="#">Set Name</a></li>
+    <li><a class="sort-problem-set-option" data-sortfield="due_date" href="#">Due Date</a></li>
   </ul>
 </div>
   </div>
