@@ -178,4 +178,17 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 
 </script>
 
+<script type="text/template" id="library-help-template">
+<h4>Library Browser Help</h4>
+  <ul>
+    <li>The Library Browser is used to browse or search the library and add problems to sets.</li>
+    <li>You can view problems by subject/chapter/section, as directories, in textbooks, local problems, within set defintion files and searching.</li>
+    <li>Within a problem you have many of the same options as viewing a problem set (see above).</li>
+    <li>To add a problem to a set, click and hold the <button class="btn btn-default btn-sm"><i class="fa fa-arrows"></i></button> 
+    button and drag the problem on top of the problem set on the left. </li>
+    <li>Addiitonal, you can add a problem to a set by selecting the target set, then clicking the + button. </li>
+    <li>There is additional help on searching by clicking the Help button next to the search button</li>
+  </ul>
+
+</script>
 

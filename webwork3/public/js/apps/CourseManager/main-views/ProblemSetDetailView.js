@@ -34,23 +34,45 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         render: function () {
             var self = this;
             this.$el.html($("#HW-detail-template").html());
-            
+            this.currentView = this.views.problemSetView;
+
             this.views.problemSetView.setElement($("#problem-list-tab"));
             this.views.usersAssignedView.setElement($("#user-assign-tab"));
             this.views.propertiesView.setElement($("#property-tab"));
             this.views.customizeUserAssignView.setElement($("#user-customize-tab")); 
             this.views.unassignUsersView.setElement($("#user-unassign-tab"));  
+
+            // fill the pulldown menu with all of the set names:
+
+            var ul = this.$(".problem-set-name-menu .dropdown-menu");
+            var setNameTemplate = _.template($("#problem-set-name-template").html());
+            this.allProblemSets.each(function(_set) {
+                ul.append(setNameTemplate({setname: _set.get("set_id")}));
+            });
+
             return this;   
         },
-        events: {"shown.bs.tab #problem-set-tabs a[data-toggle='tab']": "changeView"},
+        getHelpTemplate: function () {
+            return $("#customize-assignment-help-template").html();
+        },
+        events: {
+            "shown.bs.tab #problem-set-tabs a[data-toggle='tab']": "changeView",
+            "click .set-name-target": function(evt){
+                this.changeHWSet($(evt.target).text());
+            }
+        },
         changeView: function(evt){
-            this.views[$(evt.target).data("view")].setProblemSet(this.problemSet).render();
+            this.currentView = this.views[$(evt.target).data("view")];
+            this.currentView.setProblemSet(this.problemSet).render();
+            if($(evt.target).data("view")==="customizeUserAssignView"){
+                this.allProblemSets.trigger("show-help");
+            }
         },
         changeHWSet: function (setName)
         {
             $("#problem-set-tabs a:first").tab("show");  // shows the properties tab
         	this.problemSet = this.allProblemSets.findWhere({set_id: setName});
-            this.$("#problem-set-name").html("<h2>Problem Set: "+setName+"</h2>");
+            this.$(".problem-set-name-menu .set-name").text(setName).truncate({width: 150});
             this.views.propertiesView.setProblemSet(this.problemSet).render();
             this.loadProblems();
         },
@@ -329,86 +351,6 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         }
 
     });
-// This is the old UI 
-/* var CustomizeUserAssignView = Backbone.View.extend({
-        initialize: function (options) {
-            _.bindAll(this,'render','selectAll','saveChanges','setProblemSet');
-            this.users = options.users;
-            this.problemSet = options.problemSet;
-            this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
-            this.UserSetListOfUsers = null;
-            this.rowTemplate = $("#customize-user-row-template").html();
-            this.userList = this.users.map(function(user){ 
-                return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
-        },
-        render: function() {
-            var self = this;
-            this.$el.html(_.template($("#custom-assign-template").html(),{setname: this.model.get("set_id")}))
-
-            
-            if (this.UserSetListOfUsers){
-
-                var table = this.$("#customize-problem-set tbody").empty();
-                this.stickit();
-                this.UserSetListOfUsers.each(function(userSet){
-                    table.append((new CustomizeUsersRowView({rowTemplate: self.rowTemplate, model: userSet})).render().el);
-                })
-                this.problemSet.trigger("user_sets_added",this.UserSetListOfUsers);
-                
-            } else {
-                (this.UserSetListOfUsers = new UserSetListOfUsers([],{problemSet: this.model}));
-                this.UserSetListOfUsers.fetch({success: this.render});
-            }
-            return this;
-        },
-         events: {  "click .save-changes": "saveChanges",
-                    "click #unassign-users": "unassignUsers",
-                    "click #custom-select-all": "selectAll"
-        },
-        bindings: { ".open-date" : "open_date",
-                    ".due-date": "due_date",
-                    ".answer-date": "answer_date"
-        },
-        setProblemSet: function(_set) {
-            this.problemSet = _set;
-            this.model = new ProblemSet(_set.attributes); 
-            this.UserSetListOfUsers = null;
-            return this;
-        },
-        saveChanges: function (){
-            var self = this;
-            var models = this.$(".user-select:checked").closest("tr")
-                            .map(function(i,v) { return self.UserSetListOfUsers.get($(v).data("cid"));}).get();
-            _(models).each(function(_model){
-                _model.set({open_date: self.model.get("open_date"), due_date: self.model.get("due_date"),
-                            answer_date: self.model.get("answer_date")});
-            });
-        },
-        selectAll: function (){
-            this.$(".user-select").prop("checked",$("#custom-select-all").prop("checked"));
-
-        }
-    });
-
-    var CustomizeUsersRowView = Backbone.View.extend({
-        tagName: "tr",
-        initialize: function(options) {
-            var self = this;
-            _.bindAll(this,"render");
-            this.template = options.rowTemplate;
-        },
-        render: function(){
-            this.$el.html(this.template);
-            this.$el.data("cid",this.model.cid);
-            this.stickit();
-            return this;
-        },
-        bindings: { ".user-id": "user_id",
-                    ".open-date" : "open_date",
-                    ".due-date": "due_date",
-                    ".answer-date": "answer_date",
-        }
-    }); */
         
 	return ProblemSetDetailsView;
 });

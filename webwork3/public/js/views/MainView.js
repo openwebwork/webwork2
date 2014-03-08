@@ -13,6 +13,10 @@ define(['backbone'],function(Backbone){
 			_(this.sidepaneEvents).chain().keys().each(function(event){
 				self.listenTo(self.optionPane,event,self.sidepaneEvents[event]);
 			});
+		},
+		// returns a defualt help template. This should be overriden to return a more helpful template. 
+		getHelpTemplate: function () { 
+			return $("#help-sidepane-template").html();
 		}
 	});
 

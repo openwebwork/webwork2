@@ -239,7 +239,9 @@ var CourseManager = WebPage.extend({
             self.updateCalendar();
         }).on("show",function(_set){   // this will show the given Problem Set sent from "Manage Problem Sets (HWDetailView) or ProblemSetListView"
             self.showProblemSetDetails(_set.get("set_id"));
-        });
+        }).on("show-help",function(){ // this isn't a particular good way to do this, but is a fix. 
+            self.changeSidebar({link: "helpSidepane"});
+        })
 
         /* This sets the events for the problems (of type ProblemList) in each problem Set */
 
@@ -316,8 +318,8 @@ var CourseManager = WebPage.extend({
         }
         $("#sidebar-container").html("<div class='sidebar'></div>");
 
-        (this.currentSidePane = this.sidePane[opts.link]).setElement(this.$(".sidebar")).render()
-            .setMainView(this.currentView);
+        (this.currentSidePane = this.sidePane[opts.link])
+            .setMainView(this.currentView).setElement(this.$(".sidebar")).render();
         this.currentView.setSidePane(this.currentSidePane);
 
     },
