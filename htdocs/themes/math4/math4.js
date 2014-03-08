@@ -6,7 +6,8 @@ $(function(){
     $('.classlist').addClass('table table-condensed classlist-table');
 
     // Try to format checkboxes better
-    $('input:checkbox').parent('label').addClass('checkbox');
+    $('input:checkbox').parent('label').addClass('checkbox').css('white-space','nowrap');
+    $('input:radio').parent('label').addClass('radio').css('white-space','nowrap');
 
     // Make grey_buttons disabled buttons
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
@@ -51,7 +52,19 @@ $(function(){
     if($('.problem_set_table th:contains("Test Score")').length > 0) {
 	$('.problem_set_table').addClass('small-table-text');
     }
-    $('.problem_set_table td a').addClass('btn btn-primary btn-small');
+    $('.problem_set_table td label').each(function () {
+	if ($(this).children('a').length > 0) {
+	    return;
+	}
+	var kids = this.childNodes;
+        for (var i=0,len=kids.length;i<len;i++){
+            if (kids[i].nodeName == '#text'){
+                $(kids[i]).wrap('<div class="btn btn-small disabled" />');
+            }
+	}
+    });
+
+    $('.problem_set_table td a').addClass('btn btn-primary btn-small').css('margin-right',10);
     $('#hardcopy-form').addClass('form-inline');
 
     $('.problem_set_options input').addClass('btn btn-info');
