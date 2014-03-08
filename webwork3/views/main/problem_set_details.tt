@@ -2,22 +2,38 @@
 
 
 <script type="text/template" id="HW-detail-template">
-<ul class="nav nav-tabs" id="problem-set-tabs">
+<div class="row">
+  <div class="col-md-3 header-set-name">
+    <div class="problem-set-name-menu" class="btn-group btn-group-lg">
+         <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+          <span class="set-name">Select Set...</span>
+          <i class="fa fa-chevron-down"></i>
+        </a>
+        <ul class="dropdown-menu">
+        </ul>
+      </div>
+  </div>
+<div><ul class="nav nav-tabs" id="problem-set-tabs">
   <li class="active"><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
   <li><a href="#problem-list-tab" data-toggle="tab" data-view="problemSetView">Problems</a></li>
   <li><a href="#user-assign-tab" data-toggle="tab" data-view="usersAssignedView">Assign to Users</a></li>
   <li><a href="#user-unassign-tab" data-toggle="tab" data-view="unassignUsersView">Unassign Users</a></li>
   <li><a href="#user-customize-tab" data-toggle="tab" data-view="customizeUserAssignView">Customize to Users</a></li>
 </ul>
+</div>
+</div>
 
 <div class="tab-content">
-  <div class="tab-pane active" id="property-tab" data-view="propertiesView">
-  To select a problem set, click on the desired one from the list on the right.</div>
-  <div class="tab-pane" id="problem-list-tab" data-view="problemListView"><p>Click on a Problem Set Name on the left to view the set.</p></div>
+  <div class="tab-pane active" id="property-tab" data-view="propertiesView"></div>
+  <div class="tab-pane" id="problem-list-tab" data-view="problemListView"></div>
   <div class="tab-pane" id="user-assign-tab" data-view="usersAssignedView"></div>
   <div class="tab-pane" id="user-customize-tab" data-view="customizeUserAssignView"></div>
   <div class="tab-pane" id="user-unassign-tab" data-view="unassignUsersView"></div>
 </div> 
+</script>
+
+<script type="text/template" id="problem-set-name-template">
+<li><a class="set-name-target"><%=setname%></a></li>
 </script>
 
 <script type="text/template" id="assign-users-template">
@@ -93,12 +109,16 @@
 </ul>
 </script>
 
-
-<script type="text/template" id="customize-assignment-template">
-<p>The students listed below are only those that are assigned to this set.  To change an individual date/time, click on 
+<script type="text/template" id="customize-assignment-help-template">
+<h4>Help For Customize to Users</h4>
+<p>The students listed are only those that are assigned to this set.  To change an individual date/time, click on 
 the desired date and change it.  To make changes to two or more students, select those students, change the date/time
 at the bottom of the screen and click "Save Changes".  You can filter down the results by typing in the "search" box.  
 The results will be dispayed below.  To search for section 2 type "section:2" and similar with recitations.   </p>
+</script>
+
+
+<script type="text/template" id="customize-assignment-template">
 <div class="form-inline" role="form">
   <div class="form-group">
     <label class="sr-only" for="ca-search-box">Search</label>

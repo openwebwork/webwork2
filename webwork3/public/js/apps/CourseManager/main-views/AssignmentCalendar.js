@@ -44,7 +44,10 @@ define(['backbone', 'underscore', 'moment','views/CalendarView','config'],
                     totalUsers: self.users.length, visibleToStudents: assign.get("problemSet").get("visible"),
                     showName: true}));
             });
-    	}
+    	},
+        getHelpTemplate: function (){
+            return $("#calendar-help-template").html();
+        }
     });
 
 	return AssignmentCalendar;

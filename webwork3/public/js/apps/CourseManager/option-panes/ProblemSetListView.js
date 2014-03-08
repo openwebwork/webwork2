@@ -80,6 +80,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                     }
                 });
             }
+            return this;
         }
     });
 
