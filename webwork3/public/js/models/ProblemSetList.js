@@ -7,10 +7,11 @@
 define(['backbone', 'underscore','config', './ProblemSet'], function(Backbone, _, config, ProblemSet){
     var ProblemSetList = Backbone.Collection.extend({
         model: ProblemSet,
-        /*initialize: function(){
-            var self = this;
-            _.bindAll(this,"parse");
-           },*/
+        setSortField: function(field){
+            this.comparator=field;
+            return this;
+        },
+        comparator: null,
         url: function () {
             return config.urlPrefix+ "courses/" + config.courseSettings.course_id + "/sets";
         },
