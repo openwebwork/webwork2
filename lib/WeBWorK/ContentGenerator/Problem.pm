@@ -187,6 +187,7 @@ sub can_useMathView {
 sub can_showMeAnother {
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
+    my $ce = $self->r->ce;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
 	
 	if (before($Set->open_date)) {
@@ -194,7 +195,10 @@ sub can_showMeAnother {
 	} elsif (between($Set->open_date, $Set->due_date)) {
 		my $showMeAnother = $Problem->showMeAnother;
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
-		if ($showMeAnother == -1 or $attempts_used < $showMeAnother) {
+        my $showMeAnotherCount = $Problem->{showMeAnotherCount};
+		if ($showMeAnother == -1 
+            or $attempts_used < $showMeAnother 
+            or ($showMeAnotherCount>$ce->{showMeAnotherMaxReps} and $ce->{showMeAnotherMaxReps}>-1)) {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
 		} else {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
@@ -624,7 +628,6 @@ sub pre_header_initialize {
     # get the number of times the student has clicked the button
     # (or refreshed the page (sneaky)) for showMeAnother
     my $showMeAnotherCount = $problem->{showMeAnotherCount};
-		print CGI::p($r->maketext("here: showMeAnotherCount:$showMeAnotherCount"));
 
     # if showMeAnother is active, then output a new problem in a new tab with a new seed
     if ($showMeAnother) {
@@ -638,11 +641,8 @@ sub pre_header_initialize {
           my $oldProblemSeed = $problem->{problem_seed};
           my $newProblemSeed = $oldProblemSeed;
           $newProblemSeed = int(rand(10000)) while($oldProblemSeed == $newProblemSeed ); 
-          #$problem->problem_seed($newProblemSeed);
           $problem->{problem_seed} = $newProblemSeed;
-          ## update the database
-          #$db->putUserProblem($problem) if($ce->{showMeAnotherChangeCurrentSeed});
-          }
+    }
 
 	
 	##### permissions #####
@@ -708,7 +708,7 @@ sub pre_header_initialize {
 	        );
             # only show solution if showMeAnother has been clicked (or refreshed)
             # less than the maximum amount allowed specified in Course Configuration
-            if($showMeAnotherCount<$ce->{showMeAnotherMaxReps})
+            if($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1))
             {
 	          %can = (
 	          	showSolutions      => 1,
@@ -1266,17 +1266,7 @@ sub output_submit_buttons{
 		}
 	}
 	if ($can{showMeAnother}) {
-      # the behaviour of showMeAnother is determined by the course configuration
-      if($ce->{showMeAnotherChangeCurrentSeed})
-      {
-        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open(document.URL, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
-      }
-      else{
-        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
-      }
-        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open(document.URL, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
-        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open($location, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
 	}
 	
 	return "";
