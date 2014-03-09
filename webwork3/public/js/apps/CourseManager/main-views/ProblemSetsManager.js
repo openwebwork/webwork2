@@ -3,7 +3,7 @@
  *
  */
 
-define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','config','views/ModalView','models/ProblemSet'], 
+define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','config','views/ModalView','models/ProblemSet','jquery-truncate'], 
     function(Backbone, _,MainView,CollectionTableView,config,ModalView,ProblemSet){
 
     
@@ -36,6 +36,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
+            this.$(".set-id a").truncate({width: 120});
             return this;
         },
         updateTable: function() {
@@ -77,9 +78,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 }}},
                 {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
                     stickit_options: {update: function($el, val, model, options) {
-                        $el.html("<a href='#' class='goto-set'>" + val + "</a>");
+                        $el.html("<a href='#' class='goto-set' data-setname='"+val+"'>" + val + "</a>");
                         $el.children("a").on("click",function() {
-                            var set = self.problemSets.findWhere({set_id: $(this).text()})
+                            var set = self.problemSets.findWhere({set_id: $(this).data("setname")})
                             set.trigger("show",set);
                         });}
                     }
@@ -113,6 +114,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                         editable: false, datatype: "integer", use_contenteditable: false}
             ];
 
+        },
+        getHelpTemplate: function () {
+            return $("#problem-sets-manager-help-template").html();
         }
 
 
