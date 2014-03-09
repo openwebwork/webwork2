@@ -657,6 +657,8 @@ sub addProblem {
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
+    # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
+	my $showMeAnotherCount = 0;	
 	
 	my $value = $value_default;
 	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
@@ -676,6 +678,7 @@ sub addProblem {
 	$problemRecord->value($value);
 	$problemRecord->max_attempts($maxAttempts);
 	$problemRecord->showMeAnother($showMeAnother);
+	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
 	$db->addGlobalProblem($problemRecord);
 
 	my @results; 

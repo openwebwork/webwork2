@@ -34,6 +34,7 @@ BEGIN {
 		value        => { type=>"INT" },
 		max_attempts => { type=>"INT" },
 		showMeAnother => { type=>"INT" },
+		showMeAnotherCount => { type=>"INT" },
 	        # a field for flags relating to this problem  
 	        flags => { type =>"TEXT" },
 	);

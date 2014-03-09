@@ -7,6 +7,7 @@ package WebworkSOAP::Classes::GlobalProblem;
         _ATTR value         $string value
         _ATTR max_attempts  $string max_attempts
         _ATTR showMeAnother  $string showMeAnother
+        _ATTR showMeAnotherCount  $string showMeAnotherCount
 =cut
 sub new {
     my $self = shift;
@@ -18,6 +19,7 @@ sub new {
     $self->{value} = SOAP::Data->type( 'string', $data->value );
     $self->{max_attempts} = SOAP::Data->type( 'string', $data->max_attempts );
     $self->{showMeAnother} = SOAP::Data->type( 'string', $data->showMeAnother );
+    $self->{showMeAnotherCount} = SOAP::Data->type( 'string', $data->showMeAnotherCount );
     bless $self;
     return $self;
 }

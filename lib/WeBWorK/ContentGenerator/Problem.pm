@@ -621,15 +621,27 @@ sub pre_header_initialize {
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
 
-    # if showMeAnother is active, then change the problem seed
+    # get the number of times the student has clicked the button
+    # (or refreshed the page (sneaky)) for showMeAnother
+    my $showMeAnotherCount = $problem->{showMeAnotherCount};
+		print CGI::p($r->maketext("here: showMeAnotherCount:$showMeAnotherCount"));
+
+    # if showMeAnother is active, then output a new problem in a new tab with a new seed
     if ($showMeAnother) {
+          # increment the count
+          $showMeAnotherCount++;
+          # update the database
+	      $problem->{showMeAnotherCount}=$showMeAnotherCount;
+          $db->putUserProblem($problem);
+
           # change the problem seed
-          my $oldProblemSeed = $problem->problem_seed(0);
+          my $oldProblemSeed = $problem->{problem_seed};
           my $newProblemSeed = $oldProblemSeed;
           $newProblemSeed = int(rand(10000)) while($oldProblemSeed == $newProblemSeed ); 
-	      $problem->problem_seed($newProblemSeed);
-          # update the database
-          $db->putUserProblem($problem) if($ce->{showMeAnotherChangeCurrentSeed});
+          #$problem->problem_seed($newProblemSeed);
+          $problem->{problem_seed} = $newProblemSeed;
+          ## update the database
+          #$db->putUserProblem($problem) if($ce->{showMeAnotherChangeCurrentSeed});
           }
 
 	
@@ -685,20 +697,27 @@ sub pre_header_initialize {
 
     # if showMeAnother is active, then disable all other options
     if ($showMeAnother) {
-	%can = (
-		showOldAnswers     => 0,
-		showCorrectAnswers => 1,
-		showHints          => 1,
-		showSolutions      => 1,
-		recordAnswers      => 0,
-		checkAnswers       => 0,
-		showMeAnother      => 0,
-		getSubmitButton    => 0,
-	);
-	%must = (
-		showSolutions      => 1,
-	);
-          }
+	        %can = (
+	        	showOldAnswers     => 0,
+	        	showCorrectAnswers => 1,
+	        	showHints          => 1,
+	        	recordAnswers      => 0,
+	        	checkAnswers       => 0,
+	        	showMeAnother      => 0,
+	        	getSubmitButton    => 0,
+	        );
+            # only show solution if showMeAnother has been clicked (or refreshed)
+            # less than the maximum amount allowed specified in Course Configuration
+            if($showMeAnotherCount<$ce->{showMeAnotherMaxReps})
+            {
+	          %can = (
+	          	showSolutions      => 1,
+	          );
+	          %must = (
+	          	showSolutions      => 1,
+	          );
+            }
+      }
 
 	
 	# final values for options

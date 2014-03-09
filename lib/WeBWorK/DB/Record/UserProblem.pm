@@ -37,6 +37,7 @@ BEGIN {
 		value         => { type=>"INT" },
 		max_attempts  => { type=>"INT" },
 		showMeAnother  => { type=>"INT" },
+		showMeAnotherCount  => { type=>"INT" },
 		problem_seed  => { type=>"INT" },
 		status        => { type=>"FLOAT" },
 		attempted     => { type=>"INT" },

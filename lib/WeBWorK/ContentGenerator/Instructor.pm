@@ -521,6 +521,8 @@ sub addProblemToSet {
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
+    # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
+	my $showMeAnotherCount = 0;	
 	
 
 	die "addProblemToSet called without specifying the set name." if $args{setName} eq "";
@@ -550,6 +552,7 @@ sub addProblemToSet {
 	$problemRecord->value($value);
 	$problemRecord->max_attempts($maxAttempts);
 	$problemRecord->showMeAnother($showMeAnother);
+	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
 	$db->addGlobalProblem($problemRecord);
 
 	return $problemRecord;
