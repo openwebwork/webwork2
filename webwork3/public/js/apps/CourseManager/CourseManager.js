@@ -7,11 +7,11 @@ define(['module','backbone', 'underscore','models/UserList','models/ProblemSetLi
     'main-views/AssignmentCalendar','main-views/ProblemSetsManager','main-views/LibraryBrowser',
     'main-views/ProblemSetDetailView','main-views/ImportExportView','main-views/ClasslistView','main-views/SettingsView',
     'option-panes/ProblemSetListView','option-panes/UserListView','option-panes/LibraryOptionsView',
-    'option-panes/HelpSidePane','jquery-ui','bootstrap'
+    'option-panes/HelpSidePane','option-panes/ProblemListOptionsSidePane',  'jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, SettingList,AssignmentDate,AssignmentDateList,WebPage,config,
     AssignmentCalendar, ProblemSetsManager, LibraryBrowser,ProblemSetDetailView,ImportExportView,ClasslistView,
-    SettingsView,ProblemSetListView,UserListView,LibraryOptionsView,HelpSidePane){
+    SettingsView,ProblemSetListView,UserListView,LibraryOptionsView,HelpSidePane,ProblemListOptionsSidePane){
 var CourseManager = WebPage.extend({
     tagName: "div",
     initialize: function(){
@@ -108,6 +108,7 @@ var CourseManager = WebPage.extend({
             problemSets: new ProblemSetListView({problemSets: this.problemSets, users: this.users}),
             userList: new UserListView({users: this.users}),
             libraryOptions: new LibraryOptionsView({problemSets: this.problemSets}),
+            problemList: new ProblemListOptionsSidePane({problemSets: this.problemSets}),
             helpSidepane: new HelpSidePane()
         }
 
