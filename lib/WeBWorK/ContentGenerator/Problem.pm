@@ -38,6 +38,7 @@ use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers
 	ref2string makeTempDirectory path_is_subdir sortByName before after between);
 use WeBWorK::DB::Utils qw(global2user user2global);
+require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
@@ -79,6 +80,7 @@ use WeBWorK::AchievementEvaluator;
 #     redisplay - name of the "Redisplay Problem" button
 #     submitAnswers - name of "Submit Answers" button
 #     checkAnswers - name of the "Check Answers" button
+#     showMeAnother - name of the "Show me another" button
 #     previewAnswers - name of the "Preview Answers" button
 
 ################################################################################
@@ -182,6 +184,28 @@ sub can_useMathView {
     return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
 }
     
+sub can_showMeAnother {
+	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+	my $authz = $self->r->authz;
+	my $thisAttempt = $submitAnswers ? 1 : 0;
+	
+	if (before($Set->open_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
+	} elsif (between($Set->open_date, $Set->due_date)) {
+		my $showMeAnother = $Problem->showMeAnother;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
+		if ($showMeAnother == -1 or $attempts_used < $showMeAnother) {
+			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
+		} else {
+			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
+		}
+	} elsif (between($Set->due_date, $Set->answer_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
+	} elsif (after($Set->answer_date)) {
+		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
+	}
+}
+
 # Reset the default in some cases
 sub set_showOldAnswers_default {
 	my ($self, $ce, $userName, $authz, $set) = @_;
@@ -577,6 +601,7 @@ sub pre_header_initialize {
 	my $redisplay          = $r->param("redisplay");
 	my $submitAnswers      = $r->param("submitAnswers");
 	my $checkAnswers       = $r->param("checkAnswers");
+	my $showMeAnother      = $r->param("showMeAnother");
 	my $previewAnswers     = $r->param("previewAnswers");
 	
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
@@ -585,6 +610,7 @@ sub pre_header_initialize {
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
 	$self->{checkAnswers}   = $checkAnswers;
+	$self->{showMeAnother}  = $showMeAnother;
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
 
@@ -594,6 +620,18 @@ sub pre_header_initialize {
 
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
+
+    # if showMeAnother is active, then change the problem seed
+    if ($showMeAnother) {
+          # change the problem seed
+          my $oldProblemSeed = $problem->problem_seed(0);
+          my $newProblemSeed = $oldProblemSeed;
+          $newProblemSeed = int(rand(10000)) while($oldProblemSeed == $newProblemSeed ); 
+	      $problem->problem_seed($newProblemSeed);
+          # update the database
+          $db->putUserProblem($problem) if($ce->{showMeAnotherChangeCurrentSeed});
+          }
+
 	
 	##### permissions #####
 
@@ -614,6 +652,7 @@ sub pre_header_initialize {
         useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
+		showMeAnother      => $showMeAnother,
 		getSubmitButton    => 1,
 	);
 
@@ -625,6 +664,7 @@ sub pre_header_initialize {
 		showSolutions      => 0,
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
+		showMeAnother      => 0,
 		getSubmitButton    => 0,
 	    useMathView        => 0,
 	);
@@ -638,9 +678,28 @@ sub pre_header_initialize {
 		showSolutions      => $self->can_showSolutions(@args),
 		recordAnswers      => $self->can_recordAnswers(@args, 0),
 		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
+		showMeAnother      => $self->can_showMeAnother(@args, $submitAnswers),
 		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
        	        useMathView           => $self->can_useMathView(@args)
 	);
+
+    # if showMeAnother is active, then disable all other options
+    if ($showMeAnother) {
+	%can = (
+		showOldAnswers     => 0,
+		showCorrectAnswers => 1,
+		showHints          => 1,
+		showSolutions      => 1,
+		recordAnswers      => 0,
+		checkAnswers       => 0,
+		showMeAnother      => 0,
+		getSubmitButton    => 0,
+	);
+	%must = (
+		showSolutions      => 1,
+	);
+          }
+
 	
 	# final values for options
 	my %will;
@@ -651,7 +710,7 @@ sub pre_header_initialize {
 	
 	##### sticky answers #####
 	
-	if (not ($submitAnswers or $previewAnswers or $checkAnswers) and $will{showOldAnswers}) {
+	if (not ($submitAnswers or $previewAnswers or $checkAnswers or $showMeAnother) and $will{showOldAnswers}) {
 		# do this only if new answers are NOT being submitted
 		my %oldAnswers = decodeAnswers($problem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
@@ -1165,14 +1224,28 @@ sub output_checkboxes{
 sub output_submit_buttons{
 	my $self = shift;
 	my $r = $self->r;
+	my $ce = $self->r->ce;
 	my %can = %{ $self->{can} };
 	
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 
-	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
+	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
 	if ($can{checkAnswers}) {
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
+		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
+	}
+	if ($can{showMeAnother}) {
+      # the behaviour of showMeAnother is determined by the course configuration
+      if($ce->{showMeAnotherChangeCurrentSeed})
+      {
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open(document.URL, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+      }
+      else{
+        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+      }
+        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open(document.URL, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+        #print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"window.open($location, '_blank', '')",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
 	}
 	if ($can{getSubmitButton}) {
 		if ($user ne $effectiveUser) {
@@ -1181,7 +1254,7 @@ sub output_submit_buttons{
 			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
 		} else {
 			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>""});
+			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>"this.form.target='_self'"});
 			# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
 			# WTF???
 		}
@@ -1419,6 +1492,7 @@ sub output_summary{
 	my $submitAnswers = $self->{submitAnswers};
 	my %will = %{ $self->{will} };
 	my $checkAnswers = $self->{checkAnswers};
+	my $showMeAnother = $self->{showMeAnother};
 	my $previewAnswers = $self->{previewAnswers};
 	
 	my $r = $self->r;
