@@ -151,6 +151,24 @@ The results will be dispayed below.  To search for section 2 type "section:2" an
 Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 </script>
 
+<script type="text/template" id="problem-list-options-template">
+  <h4>Problem List Options</h4>
+  <div class="form-group">
+    <label for="problem-display-option">Display Options</label>
+    <div class="col-md-10">
+      <select id="problem-display-option" class="problem-display-option form-control"></select>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="btn-group">
+      <button class="btn btn-default show-hide-tags-button" data-hide-text="Hide Tags">Show Tags</button>
+      <button class="btn btn-default show-hide-path-button" data-hide-text="Hide Path">Show Path</button>
+
+    </div>
+  </div>
+
+</script>
+
 
 <script type="text/template" id="set-properties-tab-template">
 <table class="table">
