@@ -658,18 +658,11 @@ sub addProblem {
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
 	
-
-	die "addProblemToSet called without specifying the set name." if $args->{setName} eq "";
-	my $setName = $args->{setName};
-
-	my $sourceFile = $args->{sourceFile} or 
-		die "addProblemToSet called without specifying the sourceFile.";
-
 	my $value = $value_default;
 	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
 
 	my $maxAttempts = $params->{maxAttempts} || $max_attempts_default;
-	my $showMeAnother = $args->{showMeAnother} || $showMeAnother_default;
+	my $showMeAnother = $params->{showMeAnother} || $showMeAnother_default;
 	my $problemID = $params->{problemID};
 
 	unless ($problemID) {
