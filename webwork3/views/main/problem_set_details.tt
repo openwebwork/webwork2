@@ -181,3 +181,24 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
     </tbody> 
   </table>
 </script>
+
+
+<script type="text/template" id="problem-set-details-help-template">
+<h4>Problem Set Properties Help</h4>
+              <ul>
+                <li>The basic properties (open, due and answer dates) as well as visibility and reduced credit.</li>
+                <li>To change any of the dates, click on the date and select (or type) in a new one.</li>
+                <li>To change the time of the open, due or answer dates, click on the clock and type in a new time.</li>
+              </ul>
+</script>
+
+<script type="text/template" id="problem-set-view-help-template">
+<h4>Problems Help</h4>
+  <ul>
+    <li>The problems will load dynamically.  You can view the tags on all problems with the "View Tags" button.</li>
+    <li>To reorder problems, click the <button class="btn btn-default btn-sm"><i class="fa fa-resize-vertical"></i></button> and drag to a new position in the list. </li>
+    <li>To remove a problem, click the <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button> button. You can undo the delete by clicking the "Undo Delete button". </li>
+    <li>To view a problem with a new random seed, click the <button class="btn btn-default btn-sm"><i class="fa fa-refresh"></i></button> button.</li>
+    <li>To change the value (or weight) of a problem, type in a new value and it will be updated automatically.</li>
+  </ul>
+</script>

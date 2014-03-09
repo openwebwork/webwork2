@@ -34,7 +34,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         render: function () {
             var self = this;
             this.$el.html($("#HW-detail-template").html());
-            this.currentView = this.views.problemSetView;
+            this.currentView = this.views.propertiesView;
 
             this.views.problemSetView.setElement($("#problem-list-tab"));
             this.views.usersAssignedView.setElement($("#user-assign-tab"));
@@ -53,7 +53,13 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             return this;   
         },
         getHelpTemplate: function () {
-            return $("#customize-assignment-help-template").html();
+            if(this.currentView instanceof DetailsView){
+                return $("#problem-set-details-help-template").html();
+            } else if(this.currentView instanceof ProblemSetView){
+                return $("#problem-set-view-help-template").html();
+            } else if(this.currentView instanceof CustomizeUserAssignView){
+                return $("#customize-assignment-help-template").html();
+            }
         },
         events: {
             "shown.bs.tab #problem-set-tabs a[data-toggle='tab']": "changeView",

@@ -275,6 +275,9 @@ var ClasslistView = MainView.extend({
 	    this.emailPane.users = this.getSelectedUsers();
 	    this.emailPane.render();
 	    this.emailPane.$el.dialog("open");
+    }, 
+    getHelpTemplate: function (){
+    	return $("#classlist-help-template").html();
     }
 });
 
