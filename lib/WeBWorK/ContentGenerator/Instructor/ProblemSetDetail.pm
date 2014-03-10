@@ -322,6 +322,9 @@ use constant FIELD_PROPERTIES => {
         size => "6",
 		override  => "any",
         default=>"-1",
+		labels    => {
+				"-1" => "Never",
+		},
     },
 	problem_seed => {
 		name      => "Seed",
@@ -422,6 +425,12 @@ sub FieldTable {
 
 		($gwFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
+
+    # remove the showMeAnother box from this screen if the feature isn't enabled (in the configuration screen)
+    if(!$r->ce->{options}{enableShowMeAnother})
+    {
+        @fieldOrder = grep {$_ ne 'showMeAnother'} @fieldOrder;  
+    }
 
 	my $output = CGI::start_table({border => 0, cellpadding => 1});
 	if ($forUsers) {
