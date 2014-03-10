@@ -1092,7 +1092,7 @@ sub is_restricted {
 	my @needed;
 	if ( $set and $set->restricted_release ) {
 	        my @proposed_sets = split(/\s*,\s*/,$set->restricted_release);
-		my $restriction = $set->restricted_status;
+		my $restriction =  $set->restricted_status  ||  0;
 		my @good_sets;
 		foreach(@proposed_sets) {
 		  push @good_sets,$_ if $db->existsGlobalSet($_);

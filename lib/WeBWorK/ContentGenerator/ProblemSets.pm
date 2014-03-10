@@ -340,7 +340,8 @@ sub setListRow {
 	$tmplSet = $set if ( ! defined( $tmplSet ) );
 	
 	my $name = $set->set_id;
-	my @restricted =  is_restricted($db, $set, $name, $user);
+	my @restricted = $ce->{options}{enableConditionalRelease} ?  
+	    is_restricted($db, $set, $name, $user) : ();
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");

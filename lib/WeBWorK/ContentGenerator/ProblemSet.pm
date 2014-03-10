@@ -38,6 +38,7 @@ sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	my $authz = $r->authz;
 	
@@ -95,10 +96,11 @@ sub initialize {
 	
 	##### permissions #####
 	
-	$self->{isOpen} = (time >= $set->open_date && 
-			   !is_restricted($db, $set, $set->set_id, $effectiveUserName))
+	$self->{isOpen} = (time >= $set->open_date && !(
+			       $ce->{options}{enableConditionalRelease} && 
+			       is_restricted($db, $set, $set->set_id, $effectiveUserName)))
 	    || $authz->hasPermissions($userName, "view_unopened_sets");
-
+	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};
 }
 
