@@ -197,6 +197,7 @@ sub can_showMeAnother {
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
         my $showMeAnotherCount = $Problem->{showMeAnotherCount};
 		if ($showMeAnother == -1 
+            or !$ce->{options}->{enableShowMeAnother}
             or $attempts_used < $showMeAnother 
             or ($showMeAnotherCount>$ce->{showMeAnotherMaxReps} and $ce->{showMeAnotherMaxReps}>-1)) {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");

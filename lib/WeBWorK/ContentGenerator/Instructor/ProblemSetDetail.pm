@@ -427,8 +427,7 @@ sub FieldTable {
 	}
 
     # remove the showMeAnother box from this screen if the feature isn't enabled (in the configuration screen)
-    if(!$r->ce->{options}{enableShowMeAnother})
-    {
+    if(!$r->ce->{options}{enableShowMeAnother}){
         @fieldOrder = grep {$_ ne 'showMeAnother'} @fieldOrder;  
     }
 
