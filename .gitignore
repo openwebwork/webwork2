@@ -3,6 +3,8 @@
 applets
 tmp
 logs
+PG_VERSION
+PG_VERSIONOLD
 nohup.out
 courses.dist
 htdocs/mathjax
