@@ -5,7 +5,7 @@ tmp
 logs
 courses.dist
 htdocs/mathjax
-htdocs/jsMath
+#htdocs/jsMath/*
 library-directory-tree.json
 library-subject-tree.json
 textbook-tree.json
