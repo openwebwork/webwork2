@@ -11,7 +11,7 @@ use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
-use WeBWorK::Utils qw/parseDateTime/;
+use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Array::Utils qw(array_minus); 
 use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 use Utils::CourseUtils qw/getCourseSettings/;
@@ -655,6 +655,79 @@ put '/courses/:course_id/sets/:set_id/problems' => sub {
     return convertArrayOfObjectsToHash(\@newProblems);
 };
 
+
+###
+#
+#  get /courses/:course_id/sets/:set_id/users/all/problems
+#
+#  return all user sets with all problem information.  
+#
+####
+
+get '/courses/:course_id/sets/:set_id/users/all/problems' => sub {
+
+    checkPermissions(0,session->{user});  ## need to figure out a way to handle effective users also
+
+    send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404)
+        unless vars->{db}->existsGlobalSet(params->{set_id});
+
+    my @allUsers = vars->{db}->listSetUsers(params->{set_id});
+    my @userSets = ();
+    for my $userID (@allUsers){
+        my $userSet = convertObjectToHash(vars->{db}->getUserSet($userID,params->{set_id}));
+
+        my @problems = vars->{db}->getAllMergedUserProblems($userID,params->{set_id});
+        my @userProblems = ();
+        for my $problem (@problems){
+            my @lastAnswers = decodeAnswers($problem->{last_answer});
+            $problem->{last_answer} = \@lastAnswers;
+            my $prob = convertObjectToHash($problem);
+            push(@userProblems,$prob);
+        }
+        $userSet->{problems} = \@userProblems;
+        push(@userSets,$userSet);
+    }
+
+    return \@userSets;
+};
+
+###
+#
+#  get /courses/:course_id/sets/:set_id/users/all/problems
+#
+#  return all user sets with all problem information.  
+#
+####
+
+get '/courses/:course_id/users/:user_id/sets/all/problems' => sub {
+
+    checkPermissions(0,session->{user});  ## need to figure out a way to handle effective users also
+
+    send_error("The user " . params->{user_id} . " isn't enrolled the the course " . param("course_id"),404)
+        unless vars->{db}->existsUser(params->{user_id});
+
+    my @userSetNames = vars->{db}->listUserSets(params->{user_id});
+    my @userSets = ();
+    for my $setID (@userSetNames){
+         my $userSet = convertObjectToHash(vars->{db}->getUserSet(params->{user_id},$setID));
+
+        my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},$setID);
+        my @userProblems = ();
+        for my $problem (@problems){
+            my @lastAnswers = decodeAnswers($problem->{last_answer});
+            $problem->{last_answer} = \@lastAnswers;
+            my $prob = convertObjectToHash($problem);
+            push(@userProblems,$prob);
+        }
+        $userSet->{problems} = \@userProblems;
+        push(@userSets,$userSet);
+    }
+
+    return \@userSets;
+};
+
+
+
 ###
 #
 #  get /courses/:course_id/sets/:set_id/users/:user_id/problems
@@ -682,6 +755,9 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
 
     return convertArrayOfObjectsToHash(\@problems);
 };
+
+
+
 
 
 
