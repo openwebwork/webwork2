@@ -41,10 +41,20 @@ define(['Backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,
             restricted_login_proctor: "",
             hide_hint:"" 
         },
-        url: function () {
-            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") +
-            "/sets/" + this.get("set_id");
+        idAttribute: "_id",
+        type: "",
+/*        url: function () {
+            switch(this.type){
+                case "sets": 
+
+                case "users":
+                    return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") +
+                        "/sets/" + this.get("set_id");
+                default: 
+                    console.error("The type of UserSet must be either 'sets' or 'users'. ");
+            }
         }
+        */
     });
 
     return UserSet;

@@ -22,8 +22,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             this.problemSets = options.problemSets; 
             this.users = options.users; 
 
-            this.problemSets.on("add",this.render);
-            this.problemSets.on("remove",this.render);
+            this.problemSets.on("add remove sort",this.render);
         },
         render: function ()
         {
@@ -45,6 +44,10 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             $("#problemSets").height($(window).height()-80);
             this.$(".prob-set-container").height($(window).height()-150);
             return this;
+        },
+        events: {"click a.sort-problem-set-option": "resort"},
+        resort: function(evt){
+            this.problemSets.setSortField($(evt.target).data("sortfield")).sort();
         },
         setMainView: function(view){
             this.constructor.__super__.setMainView.call(this,view);  // Call  SidePane.setMainView();
@@ -77,6 +80,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                     }
                 });
             }
+            return this;
         }
     });
 

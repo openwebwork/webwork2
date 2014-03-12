@@ -12,7 +12,7 @@
   </nav>
 [% content %]
 <div class="navbar-fixed-bottom navbar navbar-other" id="footer">
-Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
+Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_version %]
 </div>
 
 <script type="text/template" id="login-template">
@@ -39,22 +39,23 @@ Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
   <div class="container-fluid">
     <!-- Brand and toggle get grouped for better mobile display -->
       <div class="navbar-header">
-        <a class="navbar-brand" href="#">WW3 &nbsp; Course Manager</a>
+        <a href="#" class="navbar-brand" href="#">WW3 &nbsp; Course Manager</a>
       </div> 
       
       <div class="collapse navbar-collapse" id="menu-navbar-collapse">
         <ul class="nav navbar-nav">
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="main-view-name">
+            <a href="#" href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="main-view-name">
               </span><b class="caret"></b></a>
           <ul class="dropdown-menu manager-menu">
-            <li><a class="link" data-link="calendar" data-name="Calendar">View Calendar</a></li>
-            <li><a class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
-            <li><a class="link" data-link='libraryBrowser' data-name="Library Browser">Library Browser</a></li>
-            <li><a class="link" data-link="allSets" data-name="All Sets">Manage Problem Sets</a></li>
-            <li><a class="link" data-link="classlist" data-name="Classlist Manager">Classlist Manager</a></li>
-            <li><a class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>
-            <li><a class="link" data-link="settings" data-name="Settings">Settings</a></li>
+            <li><a href="#" class="link" data-link="calendar" data-name="Calendar">View Calendar</a></li>
+            <li><a href="#" class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
+            <li><a href="#" class="link" data-link='libraryBrowser' data-name="Library Browser">Library Browser</a></li>
+            <li><a href="#" class="link" data-link="allSets" data-name="All Sets">Manage Problem Sets</a></li>
+            <li><a href="#" class="link" data-link="studentProgress" data-name="Student Progress">Student Progress</a></li>
+            <li><a href="#" class="link" data-link="classlist" data-name="Classlist Manager">Classlist Manager</a></li>
+            <li><a href="#" class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>
+            <li><a href="#" class="link" data-link="settings" data-name="Settings">Settings</a></li>
           </ul>        
         </li>
         <li>
@@ -65,16 +66,16 @@ Powered by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
 
         <ul class="nav navbar-nav navbar-right">
           <li><p class="logged-in-as navbar-text">Hello</p><li>
-          <!--<li><a href="#"><button class="btn btn-default navbar-btn">Bugs!</button></a></li>-->
-          <li><a href="#">Bugs!</a></li>
-          <li><a href="#" class="main-help-button">Help</a></li>
+          <li><a href="#" href="https://github.com/openwebwork/webwork2/issues/new" target="_blank">Bugs!</a></li>
+          <li><a href="#" href="#" class="main-help-button">Help</a></li>
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Options <b class="caret"></b></a>
+            <a href="#" href="#" class="dropdown-toggle" data-toggle="dropdown">Options <b class="caret"></b></a>
           <ul class="dropdown-menu option-menu">
-            <li><a class="link" data-link="hide-sidebar" data-name="Hide Options">Hide Options</a></li>          
-            <li><a class="link" data-link="problemSets" data-name="Problem Sets">View Problem Sets</a></li>
-            <li><a class="link" data-link="userList" data-name="Classlist">View Classlist</a></li>
-            <li><a class="link" data-link="libraryOptions" data-name="Library Options">Library Options</a></li>
+            <li><a href="#" class="link" data-link="hide-sidebar" data-name="Hide Options">Hide Options</a></li>          
+            <li><a href="#" class="link" data-link="problemSets" data-name="Problem Sets">View Problem Sets</a></li>
+            <li><a href="#" class="link" data-link="userList" data-name="Classlist">View Classlist</a></li>
+            <li><a href="#" class="link" data-link="libraryOptions" data-name="Library Options">Library Options</a></li>
+            <li><a href="#" class="link" data-link="problemList" data-name="Problem List Options">Problem List Options</a></li>
             
           </ul>        
         </li>

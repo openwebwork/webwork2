@@ -51,6 +51,9 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             this.problemSets.trigger("hide-show-all-sets","show");
             return this;
     	},
+        getHelpTemplate: function(){
+            return $("#library-help-template").html();
+        },
         changeView: function(evt){
             var self = this;
             var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab

@@ -1,0 +1,44 @@
+<!-- Problem Set Manager Templates -->
+
+<script type="text/template" id="problem-set-manager-template">
+  <div class="row">
+      <div class="col-md-3">
+        <div class="input-group">
+          <input type="text" class="form-control filter-text" placeholder="Filter">
+          <span class="input-group-btn">
+            <button class="btn btn-default clear-filter-button" type="button"><i class="fa fa-times"></i></button>
+          </span>
+        </div><!-- /input-group -->
+      </div><!-- /.col-md-4 -->
+
+    <div class="pull-right">
+      <button class="btn btn-default add-problem-set-button">Add Problem Set</button>
+    </div>
+  </div>
+</script>
+
+<script type="text/template" id="add-hw-set-template">
+  <div class="add-problem-set-dialog-content">
+  <p>A new homework set with the name below will be created.  In addition, it will be assigned to you 
+  (user: <%= name %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
+  <table><tr>
+    <td>Homework Set Name:</td>
+    <td><input type='text' size='20' class='problem-set-name'></td>
+    </tr>
+    <tr><td  colcol-md-="2" class="problem-set-name-error" style="color: red"></td></tr>
+    </table>
+    </div>
+
+</script>
+
+
+<script type="text/template" id="problem-sets-manager-help-template">
+<h4>Manager Problem Sets:</h4>
+      <ul>  
+        <li>This view shows details of all of the problem sets.  You can change the dates, visibility and reduced credit for each set here by clicking or change the appropriate item. </li>
+        <li>To add a new set, click the "Add Problem Set" button at the top of the page. </li>
+        <li>To delete a set click the <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button> button. </li>
+        <li>If there are more that 10 sets, you can view the remainder by click the forward page button at the bottom. </li>
+        <li>You can sort by any aspect of the sets, by clicking the header column. </li>
+      </ul>
+</script>

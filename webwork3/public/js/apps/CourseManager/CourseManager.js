@@ -6,12 +6,14 @@ define(['module','backbone', 'underscore','models/UserList','models/ProblemSetLi
     'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config',
     'main-views/AssignmentCalendar','main-views/ProblemSetsManager','main-views/LibraryBrowser',
     'main-views/ProblemSetDetailView','main-views/ImportExportView','main-views/ClasslistView','main-views/SettingsView',
+    'main-views/StudentProgressView',
     'option-panes/ProblemSetListView','option-panes/UserListView','option-panes/LibraryOptionsView',
-    'option-panes/HelpSidePane','jquery-ui','bootstrap'
+    'option-panes/HelpSidePane','option-panes/ProblemListOptionsSidePane',  'jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, SettingList,AssignmentDate,AssignmentDateList,WebPage,config,
     AssignmentCalendar, ProblemSetsManager, LibraryBrowser,ProblemSetDetailView,ImportExportView,ClasslistView,
-    SettingsView,ProblemSetListView,UserListView,LibraryOptionsView,HelpSidePane){
+    SettingsView,StudentProgressView,ProblemSetListView,UserListView,LibraryOptionsView,HelpSidePane,
+    ProblemListOptionsSidePane){
 var CourseManager = WebPage.extend({
     tagName: "div",
     initialize: function(){
@@ -40,8 +42,6 @@ var CourseManager = WebPage.extend({
             this.loginPane.$(".message-bottom").html(config.msgTemplate({type: "loading_data"}))
                 .append("<i class='fa fa-spinner fa-spin'></i>");
             this.data_loaded = {settings: false, users: false, problemSets: false};
-            console.log(config.urlPrefix+"courses/"
-                    +config.courseSettings.course_id+"/session");
             // request the session information
             $.get(config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session",function(data){
                 self.session = data;
@@ -95,7 +95,8 @@ var CourseManager = WebPage.extend({
             importExport:  new ImportExportView({problemSets: this.problemSets}),
             libraryBrowser : new LibraryBrowser({errorPane: this.errorPane, problemSets: this.problemSets}),
             settings      :  new SettingsView(),
-            classlist: new ClasslistView({users: this.users, problemSets: this.problemSets})
+            classlist: new ClasslistView({users: this.users, problemSets: this.problemSets}),
+            studentProgress: new StudentProgressView({users: this.users, problemSets: this.problemSets})
         };
 
         _(this.views).chain().keys().each(function(key){ self.views[key].setParentView(self)});
@@ -110,6 +111,7 @@ var CourseManager = WebPage.extend({
             problemSets: new ProblemSetListView({problemSets: this.problemSets, users: this.users}),
             userList: new UserListView({users: this.users}),
             libraryOptions: new LibraryOptionsView({problemSets: this.problemSets}),
+            problemList: new ProblemListOptionsSidePane({problemSets: this.problemSets}),
             helpSidepane: new HelpSidePane()
         }
 
@@ -127,6 +129,17 @@ var CourseManager = WebPage.extend({
         this.navigationBar.on({"change-view": this.changeView,
             "open-option": this.changeSidebar
         });
+
+        this.users.on({"act_as_user": function(model){
+            self.session.effectiveUser = model.get("user_id");
+            $.ajax({method: "POST", 
+                url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session", 
+                data: {effectiveUser: self.session.effectiveUser},
+                success: function () {
+                    self.navigationBar.setLoginName("Welcome " +self.session.user + " (" + self.session.effectiveUser + ")");                    
+                }
+            });
+        }});
 
     },
 
@@ -230,7 +243,9 @@ var CourseManager = WebPage.extend({
             self.updateCalendar();
         }).on("show",function(_set){   // this will show the given Problem Set sent from "Manage Problem Sets (HWDetailView) or ProblemSetListView"
             self.showProblemSetDetails(_set.get("set_id"));
-        });
+        }).on("show-help",function(){ // this isn't a particular good way to do this, but is a fix. 
+            self.changeSidebar({link: "helpSidepane"});
+        })
 
         /* This sets the events for the problems (of type ProblemList) in each problem Set */
 
@@ -307,8 +322,8 @@ var CourseManager = WebPage.extend({
         }
         $("#sidebar-container").html("<div class='sidebar'></div>");
 
-        (this.currentSidePane = this.sidePane[opts.link]).setElement(this.$(".sidebar")).render()
-            .setMainView(this.currentView);
+        (this.currentSidePane = this.sidePane[opts.link])
+            .setMainView(this.currentView).setElement(this.$(".sidebar")).render();
         this.currentView.setSidePane(this.currentSidePane);
 
     },

@@ -1,0 +1,41 @@
+<!-- Settings template -->
+
+<script type="text/template" id="settings-template">
+<ul class="nav nav-tabs">
+  <% _(categories).each(function(cat,i){
+    print("<li><a href='#setting-tab"+i+"' data-toggle='tab'>"+cat+"</a></li>");
+  });%>
+</ul>
+
+<div class="tab-content">
+    <% _(categories).each(function(cat,i){
+    print("<div class='tab-pane' id='setting-tab"+i+"'></div>");
+  });%>
+</div>
+
+</script>
+
+<script type="text/template" id="settings-table-template">
+  <table class="table table-bordered settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</script>
+
+
+<script type="text/template" id="row-setting-template">
+<td><span class="doc"></span>
+<button class='btn btn-sm btn-default help-button' style='margin-left: 25px'>
+  <i class='fa fa-question'></i></button>
+  <div class="help-hidden alert alert-info">
+  <button class="close">&times;</button>
+  <span class="doc2"></span></div>
+
+  </td>
+  <td class="col2"><%=prop_html%></td>
+</script>
+
+<script type="text/template" id="settings-help-template">
+<h4>Settings Help</h4>
+<p>The Settings for WeBWorK are divided into categories and each is in a tab.  To change the desired setting, simply change the 
+value using the textbox, popup menu or checkbox.  Changes are made immediately.  You do not need to save the settings with clicking a "save" button.  </p>
+</script>

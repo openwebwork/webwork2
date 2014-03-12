@@ -173,3 +173,28 @@ print(messages[type](typeof(opts)=="undefined"?{}:opts));
 %>
 </script>
 
+<script type="text/template" id="classlist-help-template">
+<h4>Classlist Manager Help</h4>
+   <p>The Classlist Manager allows you to edit student information as well as perform actions
+(delete, email, act as user) on individuals or a group of students.  Here is a list of features and helpful hints:
+   
+   <ul>
+   <li>The students are displayed in pages (default of 10, but this can be changed under "Settings").  To sort by a column, 
+   click on the column header and the results will be displayed in ascending order.  Click again, and the results will be
+   shown in descending order.  
+   <li> To edit a student&apos;s information (name, email, section, recitation,
+   comment or permission),click on the appropriate property to change and retype or select the correct information. The changes will be saved and you will receive a message in the navigation bar.  Note: the columns <em>Login Name</em> and <em>Assigned Sets</em> cannot be changed. </li>
+   <li> There are a number of actions (email, change password, delete user, act as user) that you can perform:  To perform an action on an individual student, click on the "select" popup list in the <em>Action</em> column. </li>
+   <li> To perform an action on a group of students, select those students using the checkboxes on the first
+column, then select the action from the button above (or below) the table.  Toggling the checkbox called <em>Select All</em> will select/deselect
+all rows in the table.  </li>
+<li> The <em>Filter:</em> text box will allow you to search for all users that have that string.  You can find a single student using this or all students by typing "Student" in the text box.  Clear the filter string with the X to the right of the text box.  Additionally, just above the table is information showing how many users are visible.    </li>
+
+<li>You can close this help box by clicking the X in the upper right corner of the help box.  Clicking <em>Help</em> in the bar at the top of the page will bring this help box back. </li>
+
+</ul>
+
+
+</p>
+</script>
+
