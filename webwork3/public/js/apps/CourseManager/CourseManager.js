@@ -6,12 +6,14 @@ define(['module','backbone', 'underscore','models/UserList','models/ProblemSetLi
     'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config',
     'main-views/AssignmentCalendar','main-views/ProblemSetsManager','main-views/LibraryBrowser',
     'main-views/ProblemSetDetailView','main-views/ImportExportView','main-views/ClasslistView','main-views/SettingsView',
+    'main-views/StudentProgressView',
     'option-panes/ProblemSetListView','option-panes/UserListView','option-panes/LibraryOptionsView',
     'option-panes/HelpSidePane','option-panes/ProblemListOptionsSidePane',  'jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, SettingList,AssignmentDate,AssignmentDateList,WebPage,config,
     AssignmentCalendar, ProblemSetsManager, LibraryBrowser,ProblemSetDetailView,ImportExportView,ClasslistView,
-    SettingsView,ProblemSetListView,UserListView,LibraryOptionsView,HelpSidePane,ProblemListOptionsSidePane){
+    SettingsView,StudentProgressView,ProblemSetListView,UserListView,LibraryOptionsView,HelpSidePane,
+    ProblemListOptionsSidePane){
 var CourseManager = WebPage.extend({
     tagName: "div",
     initialize: function(){
@@ -93,7 +95,8 @@ var CourseManager = WebPage.extend({
             importExport:  new ImportExportView({problemSets: this.problemSets}),
             libraryBrowser : new LibraryBrowser({errorPane: this.errorPane, problemSets: this.problemSets}),
             settings      :  new SettingsView(),
-            classlist: new ClasslistView({users: this.users, problemSets: this.problemSets})
+            classlist: new ClasslistView({users: this.users, problemSets: this.problemSets}),
+            studentProgress: new StudentProgressView({users: this.users, problemSets: this.problemSets})
         };
 
         _(this.views).chain().keys().each(function(key){ self.views[key].setParentView(self)});

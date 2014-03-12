@@ -281,4 +281,6 @@ at the bottom of the screen and click "Save Changes". </p>
 
 [% INCLUDE main/settings.tt %]
 
+[% INCLUDE main/student_progress.tt %]
+
 [% INCLUDE sidepanes/course_manager.tt %]
