@@ -1,0 +1,53 @@
+<!-- These are the student progress templates -->
+
+<script type="text/template" id="student-progress-template">
+<div class="row">
+<div class="col-md-5">Student Progress for 
+  <div class="btn-group">
+    <button class="btn btn-default dropdown-toggle progress-menu-header" data-toggle="dropdown">
+    <span class="name">Select Set...</span>
+    <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu progress-menu" role="menu">
+    </ul>
+  </div>
+</div>
+<div class="pull-right">Show Progress for 
+  <div class="btn-group">
+    <button class="btn btn-default dropdown-toggle progress-type" data-toggle="dropdown">
+    <span class="type-name">Sets</span>
+    <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu change-display-type" role="menu">
+      <li><a href="#">Sets</a></li>
+      <li><a href="#">Users</a></li>
+    </ul>
+</div>
+</script>
+
+<script type="text/template" id="progress-menu-item">
+<li><a href="#" data-name="<%=name%>"><%=name%></a></li>
+</script>
+
+
+
+<script type="text/template" id="classlist-messages">
+<%
+var messages = {
+	    user_saved: function(opt){ return "User " + opt.username + " saved.";},
+    user_saved_details: function(opt){return "The value of " + opt.key + " in the user " 
+      + opt.username + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
+    user_added: function(opt){ return "User " + opt.username + " was added.";},
+    user_added_details: function(opt){ return "A user with login name " + opt.username + " was added to the course.";},
+    user_removed: function(opt){ return "User " + opt.username + " was removed.";},
+    user_removed_details: function(opt){ return "The user with login name " + opt.username + " was removed from the course.";},
+
+};
+print(messages[type](typeof(opts)=="undefined"?{}:opts));
+%>
+</script>
+
+<script type="text/template" id="student-progress-help-template">
+<h4>Student Progress Help</h4>
+</script>
+

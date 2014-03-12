@@ -1,0 +1,125 @@
+<!-- templates for the Backbone.Stickit handlers -->
+
+<script type="text/template" id="time-popover-template">
+<div><input class='wwtime' value='<%=time%>'><br>
+<button class='btn btn-default save-time-button'>Save</button>
+<button class='btn btn-default cancel-time-button'>Cancel</button>
+</div> 
+</script>
+
+<script type="text/template" id="edit-date-time-template">
+<input class='wwdate' size='12' value='<%=date%>'><span class='open-time-editor'><i class='fa fa-clock-o'></i></span>
+</script>
+
+<!-- Some general templates that are used throughout the WW3 interface -->
+
+<script type="text/template" id="delete-button-template">
+<button class="btn btn-default btn-sm"><i class='fa fa-trash-o'></i></button>
+</script>
+
+<script type="text/template" id="checkbox-template">
+<input type="checkbox"><input type="hidden" class="user-id">
+</script>
+
+<script type="text/template" id="user-name-template">
+<%=first_name%> <%=last_name%>
+</script>
+
+
+<script type="text/template" id="modal-template">
+<div class="modal hide fade">
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <%= header %>
+  </div>
+  <div class="modal-body">
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    <button class="btn btn-primary"><%= saveButton %></button>
+  </div>
+</div>
+
+</script>
+
+
+
+<!-- Some problem set and problem templates -->
+
+<script type="text/template" id="problem-list-template">
+<div class="row">
+  <div class="problem-paginator col-md-7"></div>
+  <div class="col-md-3 num-problems"></div>
+  <%if(show_undo||false) {%>
+  <div class="pull-right col-md-1"><button class="btn btn-default btn-sm"><i class="fa fa-undo"></i></button></div>
+  <%}%>
+</div>
+<div class="prob-list-container">
+<ul class='prob-list scrollable no-bullets'></ul>
+</div>
+</script>
+
+
+<!-- The template for viewing a problem -->
+
+
+<script type="text/template" id="problem-template">
+<div class="loading btn-sm">Problem Loading...<i class="fa fa-spinner fa-spin"></i></div>
+<div class="handle row">
+<%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-resize-vertical"></i></a></div><%}%>
+<%if(draggable){%>
+  <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
+<%}%>
+<%if(showPoints){%>
+<div class="col-md-3 form-">
+    <label class="control-label">Value: 
+      <input type="text" class="prob-value input-small"></label>
+  </div>
+<%}%>
+
+<div class="col-md-4 btn-group btn-group-sm">
+<%if(showAddTool){%><a class="btn btn-default add-problem" href="#" title="add to target set">
+  <i class="fa fa-plus"></i></a><%}%>
+<%if(showEditTool){%><a class="btn btn-default" target="WW_editor" href="#" title="edit">
+    <i class="fa fa-pencil"></i></a><%}%>
+<%if(showRefreshTool){%><a href="#"  class="btn btn-default refresh-problem" title="randomize">
+      <i class="fa fa-refresh"></i></a><%}%>    
+<%if(showViewTool){%><a class="btn btn-default" target="WW_view" href='#' title="view problem">
+    <i class="fa fa-eye"></i></a><%}%>    
+<%if(showHideTool){%><a href="#" class="btn btn-default hide-problem link" title="hide problem">
+    <i class="fa fa-times"></i></a><%}%>
+<%if(deletable){ %><a  href="#" class="remove-problem btn btn-default" title="delete problem">
+    <i class="fa fa-trash-o"></i></span><%}%>
+<a href="#" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
+</div>
+</div>
+<div class="problem-tags">
+<table class="table table-condensed table-bordered"><tbody>
+<tr class="hidden path-row"><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
+<td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
+<tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
+<tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
+<td>Level:</td><td class="level-tag"></td></tr>
+<tr class="tag-row hidden"><td>Problem Author:</td><td class="problem-author-tag"></td>
+<td>Institution:</td><td class="institution-tag"></td>
+<td>More LT:</td><td class="mlt-tag"></td>
+</tr>
+<tr class="tag-row hidden"><td>DB Subject:</td><td class="DBsubject-tag"></td>
+<td>DB Chapter:</td><td class="DBchapter-tag"></td>
+<td>DB Section:</td><td class="DBsection-tag"></td></tr>
+<tr class="tag-row hidden"><td>Textbook Title:</td><td class="tb-title-tag"></td>
+<td>Textbook Chapter:</td><td class="tb-chapter-tag"></td>
+<td>Textbook Section:</td><td class="tb-section-tag"></td></tr>
+</tbody>
+</table>
+</div>
+<div><%=data%></div>
+<!--<div class="filename"><%=source_file%></div>    
+<iframe class="data" style="width:100%" seamless="seamless"><%= data %></iframe>-->
+</script>
+
+<script type="text/template" id="problem-loading-template">
+<span style='font: italic 120%'>Loading Problem</span><i class='fa fa-spinner fa-spin fa-lg'></i>
+</script>
+
+

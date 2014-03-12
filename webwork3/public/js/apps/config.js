@@ -57,6 +57,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             "libraryBrowser": {default_side: "libraryOptions",optional_sides: []},
             "settings": {default_side: "hide-sidebar",optional_sides: []},
             "classlist": {default_side: "hide-sidebar",optional_sides: []},
+            "studentProgress": {default_side: "hide-sidebar",optional_sides: []},
         }
     } 
 

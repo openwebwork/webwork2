@@ -1,0 +1,222 @@
+<!-- Problem Set Detail Templates -->
+
+
+<script type="text/template" id="HW-detail-template">
+<div class="row">
+  <div class="col-md-3 header-set-name">
+    <div class="problem-set-name-menu" class="btn-group btn-group-lg">
+         <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+          <span class="set-name">Select Set...</span>
+          <i class="fa fa-chevron-down"></i>
+        </a>
+        <ul class="dropdown-menu">
+        </ul>
+      </div>
+  </div>
+<div><ul class="nav nav-tabs" id="problem-set-tabs">
+  <li class="active"><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
+  <li><a href="#problem-list-tab" data-toggle="tab" data-view="problemSetView">Problems</a></li>
+  <li><a href="#user-assign-tab" data-toggle="tab" data-view="usersAssignedView">Assign to Users</a></li>
+  <li><a href="#user-unassign-tab" data-toggle="tab" data-view="unassignUsersView">Unassign Users</a></li>
+  <li><a href="#user-customize-tab" data-toggle="tab" data-view="customizeUserAssignView">Customize to Users</a></li>
+</ul>
+</div>
+</div>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="property-tab" data-view="propertiesView"></div>
+  <div class="tab-pane" id="problem-list-tab" data-view="problemListView"></div>
+  <div class="tab-pane" id="user-assign-tab" data-view="usersAssignedView"></div>
+  <div class="tab-pane" id="user-customize-tab" data-view="customizeUserAssignView"></div>
+  <div class="tab-pane" id="user-unassign-tab" data-view="unassignUsersView"></div>
+</div> 
+</script>
+
+<script type="text/template" id="problem-set-name-template">
+<li><a class="set-name-target"><%=setname%></a></li>
+</script>
+
+<script type="text/template" id="assign-users-template">
+  <h4>Problem Set: <%=setname%></h4>
+  <p>The following list of users are those currently not assigned to this Problem Set.  Select those you wish
+  to assign to the problem set.  If the user is not able to be selected, then that user is already 
+  assigned to this set. </p>
+  <table class="table">
+    <tbody>
+      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
+         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
+         <tr><td><button class="btn btn-default assign-button">Assign Selected Users</button></td></tr>
+    </tbody> 
+  </table>
+</script>
+
+<script type="text/template" id="unassign-users-template">
+<h4>Problem Set: <%=setname%></h4>
+  <p>The following list of users are those currently assigned to this Problem Set.  Select those you wish
+  to unassign from the problem set.  If the user is not able to be selected, then that user is not 
+  assigned to this set. </p>
+  <table class="table">
+    <tbody>
+      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
+         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
+         <tr><td><button class="btn btn-default unassign-button">Unassign Selected Users</button></td></tr>
+    </tbody>
+  </table>
+</script>
+
+
+<script type="text/template" id="paginator-template">
+<ul class="pagination">
+<% if(current_page==0){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+  <a href="#" class="goto-first"><i class="fa fa-step-backward"></i></a></li>
+<% if(current_page==0){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#" class="go-back-one"><i class="fa fa-arrow-left"></i></a></li>
+<% if (page_start>0) {print ("<li><a href=''> ...</a> </li>");} %>
+<% for(i=page_start;i<page_stop;i++){
+    if(current_page==i){
+      print("<li class='active'><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");  
+    } else {
+      print("<li><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");
+    }
+} %>
+<% if (page_stop+1<num_pages) {print ("<li><a href=''> ...</a> </li>");} %>
+
+<% if(current_page+1===page_stop){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#"  class="go-forward-one"><i class="fa fa-arrow-right"></i></a></li>
+
+<% if(current_page+1===page_stop){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#"  class="goto-end"><i class="fa fa-step-forward"></i></a></li>
+</ul>
+</script>
+
+<script type="text/template" id="customize-assignment-help-template">
+<h4>Help For Customize to Users</h4>
+<p>The students listed are only those that are assigned to this set.  To change an individual date/time, click on 
+the desired date and change it.  To make changes to two or more students, select those students, change the date/time
+at the bottom of the screen and click "Save Changes".  You can filter down the results by typing in the "search" box.  
+The results will be dispayed below.  To search for section 2 type "section:2" and similar with recitations.   </p>
+</script>
+
+
+<script type="text/template" id="customize-assignment-template">
+<div class="form-inline" role="form">
+  <div class="form-group">
+    <label class="sr-only" for="ca-search-box">Search</label>
+    <input type="search" class="form-control search-box" id="ca-search-box" placeholder="Search">
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="show-section"> Show Section
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="show-recitation"> Show Recitation
+    </label>
+  </div>
+</div>
+<table class="users-table">
+</table>
+<table class="table table-striped" id="customize-problem-set-controls">
+<tr>
+<td class="header">Open Date</td><td class="header">Due Date</td><td class="header">Answer Date</td><td></td></tr>
+<tr>
+<td class="edit-datetime open-date"></td><td class="edit-datetime due-date"></td><td class="edit-datetime answer-date"></td>
+<td> <button class="btn btn-default save-changes">Save Changes</button></td>
+</tr>
+</table>
+</script>
+
+<script type="text/template" id="loading-usersets-template">
+Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
+</script>
+
+<script type="text/template" id="problem-list-options-template">
+  <h4>Problem List Options</h4>
+  <div class="form-group">
+    <label for="problem-display-option">Display Options</label>
+    <div class="col-md-10">
+      <select id="problem-display-option" class="problem-display-option form-control"></select>
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="btn-group">
+      <button class="btn btn-default show-hide-tags-button" data-hide-text="Hide Tags">Show Tags</button>
+      <button class="btn btn-default show-hide-path-button" data-hide-text="Hide Path">Show Path</button>
+
+    </div>
+  </div>
+
+</script>
+
+
+<script type="text/template" id="set-properties-tab-template">
+<table class="table">
+<tbody>
+<tr><td class="header">Set Name</td><td class="set-name"></td></tr>
+<tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
+<tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
+<tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
+<tr><td>Problem Set visible to Users</td><td><select class='prob-set-visible input-small'> </select></td></tr>
+<tr><td>Reduced Credit Enabled</td><td><select class='reduced-credit input-small'></select></td></tr>
+<tr><td>Users Assigned</td><td class="users-assigned"></td>
+<td><button class="assign-all-users btn btn-default">Assign to All Users</td></tr>
+
+</tbody>
+</table>
+</script>
+
+<script type="text/template" id="assign-users-template">
+  <h4>Problem Set: <%=setname%></h4>
+  <p>The following list of users are those currently not assigned to this Problem Set.  Select those you wish
+  to assign to the problem set.  If the user is not able to be selected, then that user is already 
+  assigned to this set. </p>
+  <table class="table">
+    <tbody>
+      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
+         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
+         <tr><td><button class="btn btn-default assign-button">Assign Selected Users</button></td></tr>
+    </tbody> 
+  </table>
+</script>
+
+
+<script type="text/template" id="problem-set-details-help-template">
+<h4>Problem Set Properties Help</h4>
+              <ul>
+                <li>The basic properties (open, due and answer dates) as well as visibility and reduced credit.</li>
+                <li>To change any of the dates, click on the date and select (or type) in a new one.</li>
+                <li>To change the time of the open, due or answer dates, click on the clock and type in a new time.</li>
+              </ul>
+</script>
+
+<script type="text/template" id="problem-set-view-help-template">
+<h4>Problems Help</h4>
+  <ul>
+    <li>The problems will load dynamically.  You can view the tags on all problems with the "View Tags" button.</li>
+    <li>To reorder problems, click the <button class="btn btn-default btn-sm"><i class="fa fa-resize-vertical"></i></button> and drag to a new position in the list. </li>
+    <li>To remove a problem, click the <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button> button. You can undo the delete by clicking the "Undo Delete button". </li>
+    <li>To view a problem with a new random seed, click the <button class="btn btn-default btn-sm"><i class="fa fa-refresh"></i></button> button.</li>
+    <li>To change the value (or weight) of a problem, type in a new value and it will be updated automatically.</li>
+  </ul>
+</script>

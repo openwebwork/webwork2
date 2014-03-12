@@ -8,10 +8,10 @@
 
 
 
-define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
-    'models/ProblemSet','views/UserListView','models/UserSetListOfUsers', 'config','bootstrap'], 
-    function(Backbone, _,ProblemSetView,ProblemList,ProblemSet,UserListView,
-        UserSetListOfUsers, config){
+define(['Backbone','underscore','views/ProblemSetView','models/ProblemList','views/CollectionTableView',
+    'models/ProblemSet','views/UserListView','models/UserSetList', 'config','bootstrap'], 
+    function(Backbone, _,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,UserListView,
+        UserSetList, config){
 	var ProblemSetDetailsView = Backbone.View.extend({
         className: "set-detail-view",
         tagName: "div",
@@ -220,10 +220,11 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
     });
 
     // Trying a new UI for this View
+    // This allows an instructor to customize dates to individual or groups of students
 
     var CustomizeUserAssignView = Backbone.View.extend({
         initialize: function(options){
-            _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection");
+            _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
             this.model = this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             this.users = options.users;
             this.tableSetup();
@@ -281,10 +282,13 @@ define(['Backbone','underscore','views/ProblemSetView','models/ProblemList',
             this.userSetTable.setColumns(this.cols).render();
         },
         setProblemSet: function(_set) {
+            var self = this;
             this.problemSet = _set;  // this is the globalSet
             this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
-            this.userSetList = new UserSetList([],{problemSet: this.model});
-            this.userSetList.on({change: function(model){model.save();}});
+            this.userSetList = new UserSetList([],{problemSet: this.model, type: "users"});
+            this.userSetList.on("change:due_date change:answer_date change:open_date", function(model){
+                model.save();
+            });
             // make a new collection that merges the userSetList and the userList 
             this.collection = new Backbone.Collection();
             return this;

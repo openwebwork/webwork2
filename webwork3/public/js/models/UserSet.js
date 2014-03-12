@@ -7,7 +7,8 @@
   * 
   */
 
-define(['backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,config,ProblemSet){
+define(['backbone', 'underscore','config','models/ProblemSet','models/UserProblemList'], 
+    function(Backbone, _,config,ProblemSet,UserProblemList){
     var UserSet = Backbone.Model.extend({
         defaults: {
             user_id: "",
@@ -41,9 +42,16 @@ define(['backbone', 'underscore','config','./ProblemSet'], function(Backbone, _,
             restricted_login_proctor: "",
             hide_hint:"" 
         },
+        idAttribute: "_id",
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") +
             "/sets/" + this.get("set_id");
+        },
+        parse: function(data){
+            if(data.problems){
+                data.problems = new UserProblemList(data.problems,{user_id: data.user_id,set_id: data.set_id});
+            }
+            return data;
         }
     });
 

@@ -24,6 +24,9 @@ define(['backbone','config','views/WWSettingsView','views/MainView'],function(Ba
         var settings = config.settings.where({category: $(evt.target).text()});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
 
+     }, 
+     getHelpTemplate: function (){
+        return $("#settings-help-template").html();
      }
 });
 

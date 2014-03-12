@@ -3,13 +3,13 @@
  *
  */
 
-define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','config','views/ModalView','models/ProblemSet'], 
+define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','config','views/ModalView','models/ProblemSet','jquery-truncate'], 
     function(Backbone, _,MainView,CollectionTableView,config,ModalView,ProblemSet){
 
     
     var ProblemSetsManager = MainView.extend({
         initialize: function (options) {
-            _.bindAll(this, 'render','addProblemSet','updateTable');  // include all functions that need the this object
+            _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText');  // include all functions that need the this object
             var self = this;
             this.problemSets = options.problemSets;
             this.users = options.users;
@@ -24,13 +24,19 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSets.on("add",this.updateTable);
             this.problemSets.on("remove",this.updateTable);
         },
-        //events: {"click .add-problem-set-button": "addProblemSet"},
+        events: {
+            "click .add-problem-set-button": "addProblemSet",
+            'keyup input.filter-text' : 'filterProblemSets',
+            'click button.clear-filter-button': 'clearFilterText',
+        },
         render: function () {
+            this.$el.html($("#problem-set-manager-template").html());
             this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
                                 paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
-            this.$el.html(this.problemSetTable.el);
+            this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
+            this.$(".set-id a").truncate({width: 120});
             return this;
         },
         updateTable: function() {
@@ -54,6 +60,15 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 
             }
         },
+        filterProblemSets: function (evt) {
+            this.problemSetTable.filter($(evt.target).val()).render();
+            this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
+        },
+        clearFilterText: function () {
+            $("input.filter-text").val("");
+            this.problemSetTable.filter("").render();
+            this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
+        },
         tableSetup: function () {
             var self = this;
             this.cols = [{name: "Delete", key: "delete", classname: "delete-set", 
@@ -63,9 +78,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 }}},
                 {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
                     stickit_options: {update: function($el, val, model, options) {
-                        $el.html("<a href='#' class='goto-set'>" + val + "</a>");
+                        $el.html("<a href='#' class='goto-set' data-setname='"+val+"'>" + val + "</a>");
                         $el.children("a").on("click",function() {
-                            var set = self.problemSets.findWhere({set_id: $(this).text()})
+                            var set = self.problemSets.findWhere({set_id: $(this).data("setname")})
                             set.trigger("show",set);
                         });}
                     }
@@ -99,6 +114,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                         editable: false, datatype: "integer", use_contenteditable: false}
             ];
 
+        },
+        getHelpTemplate: function () {
+            return $("#problem-sets-manager-help-template").html();
         }
 
 

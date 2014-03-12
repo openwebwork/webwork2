@@ -1,0 +1,42 @@
+<script type="text/template" id="user-template">
+<li><input class='classlist-li' type='checkbox' data-username='<%= user %>' id='li-<%= cid %>'>
+    <label class='checklist' for='li-<%= cid %>'> <%= firstname %> <%= lastname %> ( <%= user %> ) </label></li>
+
+</script>
+
+
+<script type="text/template" id="user-list-template">
+<div class="prob-set-container">
+  <div class='btn-group-vertical'></div>
+</div>
+</script>
+
+<script type="text/template" id="user-list-row-template">
+  <span class="first-name"></span> <span class="last-name"></span>
+  (<span class="user-id"></span>)
+</script>
+
+
+<script type="text/template" id="problem-set-list-template">
+<div class="row"><div class="md-col-3 pull-left" style='font-size:110%; font-weight:bold'>Problem Sets</div>
+  <div class="md-col-3 pull-right">
+  <div class="btn-group">
+  <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+    Sort By <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu">
+    <li><a class="sort-problem-set-option" data-sortfield="set_id" href="#">Set Name</a></li>
+    <li><a class="sort-problem-set-option" data-sortfield="due_date" href="#">Due Date</a></li>
+  </ul>
+</div>
+  </div>
+</div>
+<div class="prob-set-container">
+  <ul id='probSetList' class='btn-group btn-group-vertical'></ul>
+</div>
+</script>
+
+
+<script type="text/template" id="set-view-template">
+<span class="set-name"></span><span class="num-users"></span>
+</script>
