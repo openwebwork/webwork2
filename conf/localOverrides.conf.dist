@@ -243,13 +243,14 @@ $problemDefaults{max_attempts} = -1;
 # These will disappear (or at least decrease in number) once the final editor verisons
 # are determined. 
  %showeditors = (
+ 	ww3				   => 1,
 # 	classlisteditor1   => 1,
  	classlisteditor2   => 1,
-	classlisteditor3   => 1,
+#	classlisteditor3   => 1,
 # 	
 # 	homeworkseteditor1 => 1,
  	homeworkseteditor2 => 1,
-	homeworkseteditor3 => 1,
+#	homeworkseteditor3 => 1,
 # 	
 # 	librarybrowsernojs    => 1,
  	librarybrowser1    => 1,

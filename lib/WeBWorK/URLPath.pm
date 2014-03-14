@@ -356,7 +356,8 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_user_list3 instructor_set_list instructor_set_list2 instructor_set_list3
+		kids    => [ qw/ww3_course_manager instructor_user_list instructor_user_list2 instructor_user_list3 
+			instructor_set_list instructor_set_list2 instructor_set_list3
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3 instructor_simple_editor
@@ -374,6 +375,23 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Index',
 	},
 	
+	################################################################################
+	#
+	#  Link to WW3 Course Manager
+	#
+	################################################################################
+
+	ww3_course_manager => {
+		name 	=> 'WeBWorK3',
+		parent	=> 'instructor_tools',
+		kids    => [ qw// ],
+		match 	=> qr|^ww3/|,
+		capture => [ qw// ],
+		produce => 'ww3',
+		display => 'WeBWorK::ContentGenerator::Instructor::WW3',
+
+	},
+
 	################################################################################
 	
 	instructor_user_list => {
@@ -394,15 +412,16 @@ our %pathTypes = (
 		produce => 'users2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
-	instructor_user_list3 => {
-    		name    => 'Classlist Manager',
-    		parent  => 'instructor_tools',
-    		kids    => [ qw/instructor_user_detail/ ],
-    		match   => qr|^users3/|,
-    		capture => [ qw// ],
-    		produce => 'users3/',
-    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
-    	},
+	# This is a WW3 page that is being included else.  
+	# instructor_user_list3 => {
+ #    		name    => 'Classlist Manager',
+ #    		parent  => 'instructor_tools',
+ #    		kids    => [ qw/instructor_user_detail/ ],
+ #    		match   => qr|^users3/|,
+ #    		capture => [ qw// ],
+ #    		produce => 'users3/',
+ #    		display => 'WeBWorK::ContentGenerator::Instructor::UserList3',
+ #    	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
 		parent  => 'instructor_user_list',
@@ -442,16 +461,17 @@ our %pathTypes = (
 		produce => 'sets2/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList2',
 	},
-
-	instructor_set_list3 => {
-		name    => 'Homework Manager',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_detail/ ],
-		match   => qr|^sets3/|,
-		capture => [ qw// ],
-		produce => 'sets3/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList3',
-	},
+	#  This is a WW3 page that is being included elsewhere
+	# 
+	# instructor_set_list3 => {
+	# 	name    => 'Homework Manager',
+	# 	parent  => 'instructor_tools',
+	# 	kids    => [ qw/instructor_set_detail/ ],
+	# 	match   => qr|^sets3/|,
+	# 	capture => [ qw// ],
+	# 	produce => 'sets3/',
+	# 	display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList3',
+	# },
 
 	
 	instructor_set_detail => {
