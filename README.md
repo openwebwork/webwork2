@@ -1,7 +1,7 @@
 #WeBWorK Development
 This is a rough draft of our developer instructions, so parts of it are likely missing or wrong. Any corrections/additions are welcome
 
-We're trying to folow [git flow](http://nvie.com/posts/a-successful-git-branching-model/) so it would be a good idea for developers to read up on it 
+We're trying to follow [git flow](http://nvie.com/posts/a-successful-git-branching-model/) so it would be a good idea for developers to read up on it 
 and [install](https://github.com/nvie/gitflow/wiki/Installation) the commandline tools.  
 We're working on getting our own, more specific, documentation up about our desired development flow.
 
