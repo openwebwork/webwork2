@@ -16,7 +16,7 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
     		var self = this; 
             _.bindAll(this,'render','updateNumberOfProblems');
 
-            this.activeView = "subjects";
+            this.currentViewname = "subjects";
 
             this.elements = {subjects: "library-subjects-tab",
                              directories: "library-directories-tab",
@@ -50,22 +50,26 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             _.chain(this.elements).keys().each(function(key){
                 self.views[key].setElement(self.$("#"+self.elements[key]));
             });
-            var index = _(_.keys(this.views)).indexOf(this.activeView);
+            var index = _(_.keys(this.views)).indexOf(this.currentViewname);
             this.$("#library-browser-tabs li:eq(" + index + ") a").tab("show");
-            this.views[this.activeView].render()
+            this.views[this.currentViewname].render()
                 .libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
             this.problemSets.trigger("hide-show-all-sets","show");
             return this;
     	},
+        getState: function() {
+            return {subview: this.currentViewname};
+        },
         getHelpTemplate: function(){
             return $("#library-help-template").html();
         },
         changeView: function(evt){
             var self = this;
-            var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); // this search through the this.elements for selected tab
+
+            // search through the this.elements for selected tab
+            var tabType = _(_(this.elements).invert()).pick($(evt.target).attr("href").substring(1)); 
             var viewType = _(tabType).values()[0];
-            this.activeView = viewType;
-            //this.$("#library-browser-tabs li:eq(3) a").tab("show")
+            this.currentViewname = viewType;
             _(_.keys(this.views)).each(function(view){
                 self.views[view].libraryProblemsView.off("update-num-problems");
             })
@@ -73,20 +77,20 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             this.views[viewType].render();
         },
         sidepaneEvents: {
-            "change-display-mode": function(evt) { this.views[this.activeView].changeDisplayMode(evt) },
+            "change-display-mode": function(evt) { this.views[this.currentViewname].changeDisplayMode(evt) },
             "change-target-set": function(evt) { 
-                this.views[this.activeView].setTargetSet($(evt.target).val());
+                this.views[this.currentViewname].setTargetSet($(evt.target).val());
             }, 
             "add-problem-set": function(_set_name){
                 var _set = new ProblemSet({set_id: _set_name});
                 _set.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
-               this.views[this.activeView].allProblemSets.add(_set); 
+               this.views[this.currentViewname].allProblemSets.add(_set); 
             },
             "show-hide-tags": function(show_hide_button) {
-                this.views[this.activeView].libraryProblemsView.toggleTags(show_hide_button);
+                this.views[this.currentViewname].libraryProblemsView.toggleTags(show_hide_button);
             },
             "show-hide-path": function(button) {
-                this.views[this.activeView].libraryProblemsView.toggleShowPath(button);
+                this.views[this.currentViewname].libraryProblemsView.toggleShowPath(button);
             }
 
         },

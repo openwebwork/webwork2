@@ -21,6 +21,10 @@ var StudentProgressView = MainView.extend({
 		"click .progress-menu a": "loadData",
 		"click .change-display-type a": "changeDisplay"
 	},
+    getState: function () {
+        return {};
+    },
+
 	changeDisplay: function(evt){
 		this.displayType = _.isString(evt)? evt.toLowerCase(): $(evt.target).text().toLowerCase();
 		this.$(".progress-type .type-name").text(_.isString(evt)? evt: $(evt.target).text());

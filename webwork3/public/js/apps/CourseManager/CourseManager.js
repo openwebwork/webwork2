@@ -39,6 +39,7 @@ var CourseManager = WebPage.extend({
                 .append("<i class='fa fa-spinner fa-spin'></i>");
             this.data_loaded = {settings: false, users: false, problemSets: false};
             // request the session information
+            // make the session a Model to save/fetch
             $.get(config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session",function(data){
                 self.session = data;
                 config.courseSettings.user = self.session.user;
@@ -138,10 +139,15 @@ var CourseManager = WebPage.extend({
 
         // load the previous state of the app
         var state = this.loadState();
-        
+
+        if(state){
+            this.changeView(state.view,state);
+        } else {
+            this.changeView("Calendar",{});    
+        }
 
         // set the initial view to be the Calendar. 
-        this.changeView({link: "calendar",name: "Calendar"});
+        
 
         this.navigationBar.on({"change-view": this.changeView,
             "open-option": this.changeSidebar
@@ -334,7 +340,7 @@ var CourseManager = WebPage.extend({
     },
     showProblemSetDetails: function(setName){
         if (this.objectDragging) return;
-        this.changeView({link: "setDetails", name: "Problem Set Details"});
+        this.changeView("Problem Set Details",{});
         this.currentView.changeHWSet(setName); 
     },
     changeSidebar: function(_name){
@@ -356,18 +362,23 @@ var CourseManager = WebPage.extend({
         this.currentView.setSidePane(this.currentSidePane);
 
     },
-    changeView: function (opts){
+    changeView: function (_name,state){
         if(this.currentView){
             this.currentView.remove();
         }
         $("#main-view").html("<div class='main'></div>");
-        this.navigationBar.setPaneName(opts.name);
-        (this.currentView = this.mainViewList.getViewByName(opts.name)).setElement(this.$(".main")).render();
-        this.changeSidebar(_(this.mainViewList.viewInfo.main_views).findWhere({name: opts.name}).default_sidepane);
-        this.updateProblemSetList(opts.link); 
+        this.navigationBar.setPaneName(_name);
+        (this.currentView = this.mainViewList.getViewByName(_name)).setElement(this.$(".main"))
+            .setState(state).render();
+
+        this.changeSidebar(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
+        this.saveState();
+        //this.updateProblemSetList(opts.link); 
         // store the current view in local storage for state persistence
     },
-    saveState: function (state) {
+    saveState: function() {
+        var state = this.currentView.getState();
+        state.view = this.currentView.viewName;
         window.localStorage.setItem("ww3_cm_state",JSON.stringify(state));
     },
     loadState: function () {
@@ -387,10 +398,12 @@ var CourseManager = WebPage.extend({
         }
     },
     // call this to set the problems to be draggable or not or droppable or not: 
+
+    // Note: this should be done in the individual views.  
     setProblemSetUI: function (opts) {
         var self = this;
 
-        // The following allows a problem set (on the left column to be dragged onto the Calendar)
+        // The following allows a problem set (on the sidepane to be dragged onto the Calendar)
         if(opts.draggable){
             $(".problem-set").draggable({ 
                 disabled: false,  

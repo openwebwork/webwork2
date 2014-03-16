@@ -16,7 +16,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         tagName: "div",
         initialize: function (options) {
             MainView.prototype.initialize.call(this,options);
-            _.bindAll(this,'render','changeHWSet','updateNumberOfProblems','loadProblems');
+            _.bindAll(this,'render','changeProblemSet','updateNumberOfProblems','loadProblems');
             var self = this;
             this.users = options.users; 
             this.allProblemSets = options.problemSets;
@@ -37,7 +37,10 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             var self = this;
             this.$el.html($("#HW-detail-template").html());
 
-            this.currentView = this.views.propertiesView;
+            this.currentView =  this.currentView || this.views.propertiesView;
+            this.currentViewName = this.currentViewName || "propertiesView";
+            this.eventDispatcher.trigger("save-state");
+
 
             this.views.problemSetView.setElement($("#problem-list-tab"));
             this.views.usersAssignedView.setElement($("#user-assign-tab"));
@@ -53,7 +56,22 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 ul.append(setNameTemplate({setname: _set.get("set_id")}));
             });
 
+            this.changeView(this.currentViewName);
+
+            if(this.problemSet){
+                this.changeProblemSet(this.problemSet.get("set_id"));
+            }
+
             return this;   
+        },
+        setState: function(state){
+            this.currentViewName = state.subview;
+            this.currentView = this.views[this.currentViewName];
+            this.problemSet = this.allProblemSets.findWhere({set_id: state.set_id});
+            return this;
+        },
+        getState: function(){
+            return {subview: this.currentViewName, set_id: this.problemSet ? this.problemSet.get("set_id") : ""};
         },
         getHelpTemplate: function () {
             if(this.currentView instanceof DetailsView){
@@ -71,21 +89,17 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             }
         },
         changeView: function(evt){
-            this.currentViewName = $(evt.target).data("view")
+            this.currentViewName = _.isString(evt)? evt: $(evt.target).data("view")
             this.currentView = this.views[this.currentViewName];
             this.currentView.setProblemSet(this.problemSet).render();
             if($(evt.target).data("view")==="customizeUserAssignView"){
                 this.allProblemSets.trigger("show-help");
             }
-            this.eventDispatcher.trigger("save-state",{
-                view: "ProblemSetDetailsView",
-                subview: this.currentViewName,
-                set_id: this.problemSet ? this.problemSet.get("set_id"): ""
-                });
+            this.eventDispatcher.trigger("save-state");
+            $("#problem-set-tabs a[data-view='"+ this.currentViewName+"']").tab("show");  // shows the properties tab
         },
-        changeHWSet: function (setName)
+        changeProblemSet: function (setName)
         {
-            $("#problem-set-tabs a:first").tab("show");  // shows the properties tab
         	this.problemSet = this.allProblemSets.findWhere({set_id: setName});
             this.$(".problem-set-name-menu .set-name").text(setName).truncate({width: 150});
             this.views.propertiesView.setProblemSet(this.problemSet).render();

@@ -40,6 +40,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.$(".set-id a").truncate({width: 120});
             return this;
         },
+        getState: function () {
+            return {};
+        },
         updateTable: function() {
             if(this.problemSetTable){
                 this.problemSetTable.render();

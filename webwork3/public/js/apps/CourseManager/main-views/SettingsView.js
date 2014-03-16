@@ -22,12 +22,16 @@ define(['backbone','config','views/WWSettingsView','views/MainView'],function(Ba
 
      },
      changeSettingTab: function(evt){
-        var settings = this.settings.where({category: $(evt.target).text()});
+        this.currentCategory = $(evt.target).text();
+        var settings = this.settings.where({category: this.currentCategory});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
 
      }, 
      getHelpTemplate: function (){
         return $("#settings-help-template").html();
+     },
+     getState: function () {
+        return this.currentCategory;
      }
 });
 

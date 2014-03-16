@@ -7,7 +7,7 @@ define(['backbone'], function(Backbone){
 		},
 		events: {
 			"click .manager-menu a": function(evt){
-				this.trigger("change-view",{link: $(evt.target).data("link"), name: $(evt.target).data("name")});
+				this.trigger("change-view",$(evt.target).data("name"));
 			},
 			"click .main-help-button": function(evt){
 				this.trigger("open-option","Help");

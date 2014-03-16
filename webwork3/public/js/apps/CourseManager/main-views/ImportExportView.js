@@ -19,6 +19,10 @@ var ImportExportView = MainView.extend({
         this.$(".date-shift-input").datepicker();
         return this;
     },
+    getState: function () {
+        return {};
+    },
+
     renderSets: function () {
     	self = this;
         this.$(".import-table").removeClass("hidden");

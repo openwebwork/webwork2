@@ -4,8 +4,10 @@ define(main_view_paths,function(module,Backbone){
 	var MainViewList = Backbone.View.extend({
 		initialize: function(options){
 			var self = this;
+			_.extend(options,{viewName: ""})
 			this.viewInfo = module.config().main_views;
 			this.views = _(mainViews).map(function(view,i){
+				options.viewName = self.viewInfo.main_views[i].name;
 				return _.extend({view: new view(options)},self.viewInfo.main_views[i]);
 			});
 			this.sidepanes = _(sidepanes).map(function(sp,i){

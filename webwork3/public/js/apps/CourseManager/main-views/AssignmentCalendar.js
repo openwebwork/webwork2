@@ -48,7 +48,11 @@ define(['backbone', 'underscore', 'moment','views/CalendarView','config'],
         set: function (options) {
             CalendarView.prototype.set.call(this,options);
             return this;
-        }
+        },
+        getState: function () {
+            return {};
+        },
+
     });
 
 	return AssignmentCalendar;
