@@ -3,6 +3,7 @@ define(['backbone', 'underscore','views/MainView', 'apps/util','models/ProblemSe
 
 var ImportExportView = MainView.extend({
     initialize: function (options){
+    	MainView.prototype.initialize.call(this,options);
     	var self = this;
         _.bindAll(this,"render");
         this.problemSets = options.problemSets;

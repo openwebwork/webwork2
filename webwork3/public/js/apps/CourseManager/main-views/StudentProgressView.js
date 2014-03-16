@@ -4,6 +4,7 @@ define(['backbone', 'underscore','views/MainView','config','views/CollectionTabl
 function(Backbone, _,MainView,config,CollectionTableView,UserSetList){
 var StudentProgressView = MainView.extend({
 	initialize: function (options){
+		MainView.prototype.initialize.call(this,options);
 		_(this).bindAll("loadData");
 		this.problemSets = options.problemSets;
 		this.users = options.users;

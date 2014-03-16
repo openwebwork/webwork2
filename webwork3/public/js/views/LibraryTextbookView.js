@@ -13,8 +13,9 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             this.constructor.__super__.initialize.apply(this,[options]);
             _.bindAll(this,"showResults","loadProblems");
             this.libraryProblemsView = new LibraryProblemsView({type: "textbooks", libraryView: this, 
-                                            allProblemSets: this.allProblemSets});
+                                            allProblemSets: this.allProblemSets, settings: options.settings});
             this.libBrowserType = options.libBrowserType;
+            this.settings = options.settings;
     	},
         events: function(){
             return _.extend({},LibraryView.prototype.events,{
@@ -26,7 +27,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
         },
     	render: function (){
             var self = this;
-            var modes = config.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
+            var modes = this.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
             this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));

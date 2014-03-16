@@ -17,13 +17,9 @@ define(['backbone', 'underscore', 'moment','views/CalendarView','config'],
         },
     	initialize: function (options) {
             var self = this;
-    		this.constructor.__super__.initialize.apply(this, [_.extend({el: this.el},options)]);
+            CalendarView.prototype.initialize.call(this,options);
     		_.bindAll(this,"render","renderDay");
-
-    		this.assignmentDates = options.assignmentDates;
-            this.users = options.users; 
-
-    		this.reducedScoringMinutes = options.reducedScoringMinutes;
+            return this;
     	},
     	render: function (){
     		this.constructor.__super__.render.apply(this);
@@ -47,6 +43,11 @@ define(['backbone', 'underscore', 'moment','views/CalendarView','config'],
     	},
         getHelpTemplate: function (){
             return $("#calendar-help-template").html();
+        },
+        // perhaps this should go in the MainView class
+        set: function (options) {
+            CalendarView.prototype.set.call(this,options);
+            return this;
         }
     });
 

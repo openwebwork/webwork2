@@ -12,9 +12,9 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
     var LibraryBrowser = MainView.extend({
         
     	initialize: function (options){
+            MainView.prototype.initialize.call(this,options);
     		var self = this; 
             _.bindAll(this,'render','updateNumberOfProblems');
-            _.extend(this,options);
 
             this.activeView = "subjects";
 
@@ -29,12 +29,18 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             //this.libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
 
             this.views = {
-                subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: options.problemSets}),
-                directories    :  new LibraryView({libBrowserType: "directories", problemSets: options.problemSets}),
-                textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: options.problemSets}),
-                localLibrary: new LocalLibraryView({libBrowserType: "localLibrary", problemSets: options.problemSets}),
-                setDefinition: new LocalLibraryView({libBrowserType: "setDefinition", problemSets: options.problemSets}),
-                search :  new LibrarySearchView({libBrowserType: "search", problemSets: options.problemSets})
+                subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: options.problemSets,
+                                    settings: this.settings}),
+                directories    :  new LibraryView({libBrowserType: "directories", problemSets: options.problemSets,
+                                    settings: this.settings}),
+                textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: options.problemSets,
+                                    settings: this.settings}),
+                localLibrary: new LocalLibraryView({libBrowserType: "localLibrary", problemSets: options.problemSets,
+                                    settings: this.settings}),
+                setDefinition: new LocalLibraryView({libBrowserType: "setDefinition", problemSets: options.problemSets,
+                                    settings: this.settings}),
+                search :  new LibrarySearchView({libBrowserType: "search", problemSets: options.problemSets,
+                                    settings: this.settings})
             };
     	},
         events: {"show.bs.tab a[data-toggle='tab']": "changeView"},

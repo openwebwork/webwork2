@@ -15,14 +15,16 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         className: "set-detail-view",
         tagName: "div",
         initialize: function (options) {
+            MainView.prototype.initialize.call(this,options);
             _.bindAll(this,'render','changeHWSet','updateNumberOfProblems','loadProblems');
             var self = this;
             this.users = options.users; 
             this.allProblemSets = options.problemSets;
             this.problemSet = this.model;
+            this.eventDispatcher = options.eventDispatcher;
             
             this.views = {
-                problemSetView : new ProblemSetView({problemSet: this.problemSet}),
+                problemSetView : new ProblemSetView({problemSet: this.problemSet, settings: this.settings}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
                 propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
@@ -34,6 +36,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         render: function () {
             var self = this;
             this.$el.html($("#HW-detail-template").html());
+
             this.currentView = this.views.propertiesView;
 
             this.views.problemSetView.setElement($("#problem-list-tab"));
@@ -68,11 +71,17 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             }
         },
         changeView: function(evt){
-            this.currentView = this.views[$(evt.target).data("view")];
+            this.currentViewName = $(evt.target).data("view")
+            this.currentView = this.views[this.currentViewName];
             this.currentView.setProblemSet(this.problemSet).render();
             if($(evt.target).data("view")==="customizeUserAssignView"){
                 this.allProblemSets.trigger("show-help");
             }
+            this.eventDispatcher.trigger("save-state",{
+                view: "ProblemSetDetailsView",
+                subview: this.currentViewName,
+                set_id: this.problemSet ? this.problemSet.get("set_id"): ""
+                });
         },
         changeHWSet: function (setName)
         {

@@ -2,8 +2,9 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
 	var ProblemListOptionsSidePane = SidePane.extend({
     initialize: function(options){
         this.problemSets = options.problemSets; 
+        this.settings = options.settings;
         var LibraryOptions = Backbone.Model.extend({});
-        this.model = new LibraryOptions({display_option: config.settings.getSettingValue("pg{options}{displayMode}"),
+        this.model = new LibraryOptions({display_option: this.settings.getSettingValue("pg{options}{displayMode}"),
             target_set: "", new_problem_set: ""});
         _.extend(this,Backbone.Events);
     },
@@ -14,7 +15,7 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
     }, 
     bindings: {".problem-display-option": {observe: "display_option", selectOptions: {
             collection: function () {
-                var modes = config.settings.getSettingValue("pg{displayModes}").slice();
+                var modes = this.settings.getSettingValue("pg{displayModes}").slice();
                 modes.push("None");
                 return modes;
             }

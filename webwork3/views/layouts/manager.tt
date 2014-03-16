@@ -49,9 +49,9 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
               </span><b class="caret"></b></a>
           <ul class="dropdown-menu manager-menu">
             <li><a href="#" class="link" data-link="calendar" data-name="Calendar">View Calendar</a></li>
-            <li><a href="#" class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
+            <li><a href="#" class="link" data-link="setDetails" data-name="Problem Set Details">View Problem Set</a></li>
             <li><a href="#" class="link" data-link='libraryBrowser' data-name="Library Browser">Library Browser</a></li>
-            <li><a href="#" class="link" data-link="allSets" data-name="All Sets">Manage Problem Sets</a></li>
+            <li><a href="#" class="link" data-link="allSets" data-name="Problem Set Manager">Manage Problem Sets</a></li>
             <li><a href="#" class="link" data-link="studentProgress" data-name="Student Progress">Student Progress</a></li>
             <li><a href="#" class="link" data-link="classlist" data-name="Classlist Manager">Classlist Manager</a></li>
             <li><a href="#" class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>

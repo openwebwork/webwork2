@@ -3,17 +3,14 @@
   
 */
 define(['module','backbone', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
+    'views/MainViewList',
     'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config',
-    'main-views/AssignmentCalendar','main-views/ProblemSetsManager','main-views/LibraryBrowser',
-    'main-views/ProblemSetDetailView','main-views/ImportExportView','main-views/ClasslistView','main-views/SettingsView',
-    'main-views/StudentProgressView',
     'option-panes/ProblemSetListView','option-panes/UserListView','option-panes/LibraryOptionsView',
     'option-panes/HelpSidePane','option-panes/ProblemListOptionsSidePane',  'jquery-ui','bootstrap'
     ], 
-function(module, Backbone, _, UserList, ProblemSetList, SettingList,AssignmentDate,AssignmentDateList,WebPage,config,
-    AssignmentCalendar, ProblemSetsManager, LibraryBrowser,ProblemSetDetailView,ImportExportView,ClasslistView,
-    SettingsView,StudentProgressView,ProblemSetListView,UserListView,LibraryOptionsView,HelpSidePane,
-    ProblemListOptionsSidePane){
+function(module, Backbone, _, UserList, ProblemSetList, SettingList,MainViewList,
+    AssignmentDate,AssignmentDateList,WebPage,config,ProblemSetListView,UserListView,LibraryOptionsView,
+    HelpSidePane,ProblemListOptionsSidePane){
 var CourseManager = WebPage.extend({
     tagName: "div",
     initialize: function(){
@@ -23,11 +20,12 @@ var CourseManager = WebPage.extend({
 	    var self = this;
 
         this.render();
-        
+        this.eventDispatcher = _.clone(Backbone.Events);
         this.session = (module.config().session)? module.config().session : {};
-        config.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;
+        this.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;
         this.users = (module.config().users) ? new UserList(module.config().users) : null;
         this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets,{parse: true}) : null;
+
         _.extend(config.courseSettings,{course_id: module.config().course_id,user: this.session.user});
         if(this.session.user){
             this.startManager();
@@ -48,7 +46,7 @@ var CourseManager = WebPage.extend({
                 config.courseSettings.user = self.session.user;
             })
             this.problemSets.fetch({success: this.checkData});
-            config.settings.fetch({success: this.checkData});
+            this.settings.fetch({success: this.checkData});
             this.users.fetch({success: this.checkData});
 
             
@@ -75,10 +73,11 @@ var CourseManager = WebPage.extend({
         var self = this;
         this.navigationBar.setLoginName("Welcome " +this.session.user);
         this.buildAssignmentDates();
-
+        this.mainViewList = new MainViewList({settings: this.settings, users: this.users, 
+                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher});
 
         // can't we just pull this from the settings when needed.  Why do we need another variable. 
-        config.timezone = config.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
+        config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
         // Define all of the views that are visible with the Pulldown menu
 
@@ -86,22 +85,28 @@ var CourseManager = WebPage.extend({
         // then modules could add to it easily 
         // Here, all of the views can be loaded in. 
 
+/*
         this.views = {
             calendar : new AssignmentCalendar({assignmentDates: this.assignmentDateList,
                     viewType: "instructor", calendarType: "month", users: this.users,
                     reducedScoringMinutes: config.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}")}),
-            setDetails:  new ProblemSetDetailView({ users: this.users, problemSets: this.problemSets}),
+            setDetails:  new ProblemSetDetailView({ users: this.users, problemSets: this.problemSets, 
+                    eventDispatcher: this.eventDispatcher}),
             allSets:  new ProblemSetsManager({problemSets: this.problemSets, users: this.users}),
             importExport:  new ImportExportView({problemSets: this.problemSets}),
             libraryBrowser : new LibraryBrowser({errorPane: this.errorPane, problemSets: this.problemSets}),
             settings      :  new SettingsView(),
             classlist: new ClasslistView({users: this.users, problemSets: this.problemSets}),
             studentProgress: new StudentProgressView({users: this.users, problemSets: this.problemSets})
-        };
+        }; */
 
         _(this.views).chain().keys().each(function(key){ self.views[key].setParentView(self)});
 
-        this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
+        //this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
+
+        this.mainViewList.getViewByName("Calendar")
+            .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
+            .dispatcher.on("calendar-change",self.updateCalendar);
 
         // Define all of the option views available for the right side
         // 
@@ -110,8 +115,8 @@ var CourseManager = WebPage.extend({
         this.sidePane = {
             problemSets: new ProblemSetListView({problemSets: this.problemSets, users: this.users}),
             userList: new UserListView({users: this.users}),
-            libraryOptions: new LibraryOptionsView({problemSets: this.problemSets}),
-            problemList: new ProblemListOptionsSidePane({problemSets: this.problemSets}),
+            libraryOptions: new LibraryOptionsView({problemSets: this.problemSets,settings: this.settings}),
+            problemList: new ProblemListOptionsSidePane({problemSets: this.problemSets, settings: this.settings}),
             helpSidepane: new HelpSidePane()
         }
 
@@ -122,6 +127,10 @@ var CourseManager = WebPage.extend({
         this.problemSets.on("change",function(_set){
             _set.save();
         })        
+
+        // load the previous state of the app
+        var state = this.loadState();
+        
 
         // set the initial view to be the Calendar. 
         this.changeView({link: "calendar",name: "Calendar"});
@@ -141,12 +150,24 @@ var CourseManager = WebPage.extend({
             });
         }});
 
+
+
     },
 
     // can a lot of this be handled by the individual views?  
 
     setMessages: function (){
         var self = this; 
+
+        this.eventDispatcher.on("save-state",function(state){
+            self.saveState(state);
+        })
+
+        /* The following is how messages will be handled */
+
+        this.eventDispatcher.on("add-message",function(message){
+            self.messagePane.addMessage(message);
+        });
 
         /* Set up all of the events on the problemSets */
 
@@ -286,7 +307,7 @@ var CourseManager = WebPage.extend({
 
         /* Set the events for the settings */
 
-        config.settings.on("change",function(setting){
+        this.settings.on("change",function(setting){
             setting.changingAttributes=_.pick(setting._previousAttributes,_.keys(setting.changed));
         }).on("sync",function(setting){
             _(_.keys(setting.changingAttributes)).each(function(key){
@@ -305,8 +326,8 @@ var CourseManager = WebPage.extend({
     },
     showProblemSetDetails: function(setName){
         if (this.objectDragging) return;
-        this.changeView({link: "setDetails", name: "Set Details"});
-        this.views.setDetails.changeHWSet(setName); 
+        this.changeView({link: "setDetails", name: "Problem Set Details"});
+        this.currentView.changeHWSet(setName); 
     },
     changeSidebar: function(opts){
         if(this.currentSidePane){
@@ -333,10 +354,16 @@ var CourseManager = WebPage.extend({
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(opts.name);
-        (this.currentView = this.views[opts.link]).setElement(this.$(".main")).render();
+        (this.currentView = this.mainViewList.getViewByName(opts.name)).setElement(this.$(".main")).render();
         this.changeSidebar({link: config.main_views[opts.link].default_side});
         this.updateProblemSetList(opts.link); 
-
+        // store the current view in local storage for state persistence
+    },
+    saveState: function (state) {
+        window.localStorage.setItem("ww3_cm_state",JSON.stringify(state));
+    },
+    loadState: function () {
+        return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
     },
     updateProblemSetList: function(viewname) {
         switch(viewname){            // set up the problem sets to be draggable or not
@@ -408,7 +435,7 @@ var CourseManager = WebPage.extend({
     updateCalendar: function ()
     {
         var self = this;
-        this.views.calendar.render();
+        this.mainViewList.getViewByName("Calendar").render();
         // The following allows each day in the calendar to allow a problem set to be dropped on. 
              
         $(".calendar-day").droppable({
