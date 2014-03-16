@@ -4,9 +4,7 @@
 */
 define(['module','backbone', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
     'views/MainViewList',
-    'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config',
-    'option-panes/ProblemSetListView','option-panes/UserListView','option-panes/LibraryOptionsView',
-    'option-panes/HelpSidePane','option-panes/ProblemListOptionsSidePane',  'jquery-ui','bootstrap'
+    'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config','jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, SettingList,MainViewList,
     AssignmentDate,AssignmentDateList,WebPage,config,ProblemSetListView,UserListView,LibraryOptionsView,
@@ -45,9 +43,9 @@ var CourseManager = WebPage.extend({
                 self.session = data;
                 config.courseSettings.user = self.session.user;
             })
-            this.problemSets.fetch({success: this.checkData});
-            this.settings.fetch({success: this.checkData});
-            this.users.fetch({success: this.checkData});
+            this.problemSets.fetch({success: function(){self.checkData("problemSets")}});
+            this.settings.fetch({success: function(){self.checkData("settings")}});
+            this.users.fetch({success: function(){self.checkData("users")}});
 
             
         } else { // send an error
@@ -55,14 +53,8 @@ var CourseManager = WebPage.extend({
         }
     },
     // wait for all of the data to get loaded in, close the login window, then start the Course Manager. 
-    checkData: function (data) {
-        if (data instanceof UserList){
-            this.data_loaded.users = true;
-        } else if (data instanceof ProblemSetList){
-            this.data_loaded.problemSets = true;
-        } else if (data instanceof SettingList){
-            this.data_loaded.settings = true;
-        }
+    checkData: function(name) {
+        this.data_loaded[name] = true;
         console.log(_(this.data_loaded).chain().values().every(_.identity).value());
         if(_(this.data_loaded).chain().values().every(_.identity).value()){
             this.closeLogin();
@@ -75,6 +67,14 @@ var CourseManager = WebPage.extend({
         this.buildAssignmentDates();
         this.mainViewList = new MainViewList({settings: this.settings, users: this.users, 
                 problemSets: this.problemSets, eventDispatcher: this.eventDispatcher});
+
+        // Build the menu.  Should we make a View for this?  
+
+        var menuItemTemplate = _.template($("#main-menu-item-template").html());
+        var ul = $("#menu-navbar-collapse .manager-menu");
+        _(this.mainViewList.viewInfo.main_views).each(function(item){
+            ul.append(menuItemTemplate({name: item.name}));
+        })
 
         // can't we just pull this from the settings when needed.  Why do we need another variable. 
         config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
@@ -112,13 +112,21 @@ var CourseManager = WebPage.extend({
         // 
         // Again, this should be in a configuration file. 
 
-        this.sidePane = {
+        // Build the options menu.  Should we make a View for this?  
+
+        var menuItemTemplate = _.template($("#main-menu-item-template").html());
+        var ul = $("#menu-navbar-collapse .option-menu");
+        _(this.mainViewList.viewInfo.sidepanes).each(function(item){
+            ul.append(menuItemTemplate({name: item.name}));
+        })
+
+/*        this.sidePane = {
             problemSets: new ProblemSetListView({problemSets: this.problemSets, users: this.users}),
             userList: new UserListView({users: this.users}),
             libraryOptions: new LibraryOptionsView({problemSets: this.problemSets,settings: this.settings}),
             problemList: new ProblemListOptionsSidePane({problemSets: this.problemSets, settings: this.settings}),
             helpSidepane: new HelpSidePane()
-        }
+        } */
 
 
         this.setMessages();  
@@ -329,11 +337,11 @@ var CourseManager = WebPage.extend({
         this.changeView({link: "setDetails", name: "Problem Set Details"});
         this.currentView.changeHWSet(setName); 
     },
-    changeSidebar: function(opts){
+    changeSidebar: function(_name){
         if(this.currentSidePane){
             this.currentSidePane.remove();
         }
-        if(opts.link==="hide-sidebar"){
+        if(_name===""){
             $("#sidebar-container").addClass("hidden");
             $("#main-view").removeClass("col-md-9").addClass("col-md-12");
             return;
@@ -343,7 +351,7 @@ var CourseManager = WebPage.extend({
         }
         $("#sidebar-container").html("<div class='sidebar'></div>");
 
-        (this.currentSidePane = this.sidePane[opts.link])
+        (this.currentSidePane = this.mainViewList.getSidepaneByName(_name))
             .setMainView(this.currentView).setElement(this.$(".sidebar")).render();
         this.currentView.setSidePane(this.currentSidePane);
 
@@ -355,7 +363,7 @@ var CourseManager = WebPage.extend({
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(opts.name);
         (this.currentView = this.mainViewList.getViewByName(opts.name)).setElement(this.$(".main")).render();
-        this.changeSidebar({link: config.main_views[opts.link].default_side});
+        this.changeSidebar(_(this.mainViewList.viewInfo.main_views).findWhere({name: opts.name}).default_sidepane);
         this.updateProblemSetList(opts.link); 
         // store the current view in local storage for state persistence
     },

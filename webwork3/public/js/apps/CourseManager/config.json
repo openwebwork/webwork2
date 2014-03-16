@@ -3,13 +3,13 @@
 	{
 		"name": "Calendar",
 		"path": "main-views/AssignmentCalendar",
-		"default_sidepane": "ProblemSets",
+		"default_sidepane": "Problem Sets",
 		"other_sidepanes": []
 	},
 	{
 		"name": "Problem Set Details",
 		"path": "main-views/ProblemSetDetailView",
-		"default_sidepane": "ProblemSets",
+		"default_sidepane": "Problem Sets",
 		"other_sidepanes": []
 	},
 	{
@@ -19,7 +19,7 @@
 		"other_sidepanes": []	
 	},
 	{
-		"name": "Problem Set Manager",
+		"name": "Problem Sets Manager",
 		"path": "main-views/ProblemSetsManager",
 		"default_sidepane": "",
 		"other_sidepanes": []

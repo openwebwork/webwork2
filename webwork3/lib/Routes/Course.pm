@@ -292,7 +292,11 @@ get '/courses/:course_id/manager' =>  sub {
 	my $fileContents = read_file_content($configFilePath);
 	my $config = from_json($fileContents);
 
-	my @view_paths = map {$_->{path}} @{$config->{main_views}};
+	my @main_view_paths = map {$_->{path}} @{$config->{main_views}};
+	my @sidepane_paths = map {$_->{path}} @{$config->{sidepanes}};
+
+	my @view_paths = (@main_view_paths,@sidepane_paths);
+
 
 
 	# two situations here.  Either
