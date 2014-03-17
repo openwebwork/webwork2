@@ -208,7 +208,6 @@ $mail{smtpTimeout}           = 30;
 #CONFIGURE problemLibrary values in this file. These settings override defaults in default.config
 #################################################
 $problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
-$problemLibrary{version}     ="2.0"; # 2.0 for NPL, 2.5 for OPL
 ###########################################################
 
 ################################################################################
