@@ -41,6 +41,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
             if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size()>0){
                 this.libraryProblemsView.renderProblems();
             }
+            return this;
     	},
         buildTree: function () {
             this.$(".library-tree-container").html(_.template($("#library-textbooks-template").html()

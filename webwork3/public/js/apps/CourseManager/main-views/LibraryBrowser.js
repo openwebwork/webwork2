@@ -60,6 +60,11 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
         getState: function() {
             return {subview: this.currentViewname};
         },
+        setState: function(state){
+            this.currentViewname = state.subview;
+            this.currentView = this.views[this.currentViewname];
+            return this;
+        },
         getHelpTemplate: function(){
             return $("#library-help-template").html();
         },
@@ -74,6 +79,7 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
                 self.views[view].libraryProblemsView.off("update-num-problems");
             })
             this.views[viewType].libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
+            this.eventDispatcher.trigger("save-state");
             this.views[viewType].render();
         },
         sidepaneEvents: {
