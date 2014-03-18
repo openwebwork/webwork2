@@ -189,6 +189,9 @@ sub can_showMeAnother {
 	my $authz = $self->r->authz;
     my $ce = $self->r->ce;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
+    # if the showMeAnother button isn't enabled in the course configuration, 
+    # don't show it under any circumstances (not even for the instructor)
+    return 0 unless($ce->{options}->{enableShowMeAnother});
 	
 	if (before($Set->open_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
