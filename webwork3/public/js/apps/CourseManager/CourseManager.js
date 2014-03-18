@@ -164,7 +164,9 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-
+        $(window).on("beforeunload", function () {
+            return config.msgTemplate({type: "leave_page"});
+         });
 
     },
 

@@ -224,6 +224,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <script type="text/template" id="all-messages">
 <%
   var messages = {
+    leave_page: function() { return "Do you want to leave this page?";},
     set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
     set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
       + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
