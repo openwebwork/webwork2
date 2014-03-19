@@ -225,15 +225,6 @@ at the bottom of the screen and click "Save Changes". </p>
 <%
   var messages = {
     leave_page: function() { return "Do you want to leave this page?";},
-    set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
-    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
-      + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
-    set_added: function(opt){ return "Set " + opt.setname + " added.";},
-    set_added_details: function(opt){ return "The set " + opt.setname + " was added to the course."},
-    set_removed: function(opt){ return "Set " + opt.setname + " removed.";},
-    set_removed_details: function(opt){ return "The set " + opt.setname + " was removed to the course."},
-    set_error: function(opt){ return "Error saving set " + opt.setname + " .";},
-    set_error_details: function(opt){ return "The set " + opt.setname + " had an error."},
     set_assigned_users_saved: function(opt){ 
       return "The assigned users for set " + opt.setname + " was updated."},
     problem_added: function(opt){ return "A problem was added to " + opt.setname},

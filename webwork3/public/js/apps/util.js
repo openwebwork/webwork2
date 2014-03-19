@@ -100,6 +100,16 @@ var util = {
         return problemSet;
 
         // now process the problemList
+    },
+    pluckDateSettings: function(settings){
+        var dateVars = ["pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"];
+        var values = settings.chain().filter(function(_set){
+            return _(dateVars).contains(_set.get("var"))
+        })
+            .map(function(_set){ 
+                return _set.get("value")
+            }).value();
+        return _.object(dateVars,values);
     }
 }
 
