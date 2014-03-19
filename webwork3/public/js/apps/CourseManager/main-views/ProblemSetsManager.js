@@ -135,84 +135,121 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
         setMessages: function(){
             var self = this;
-            this.problemSets.on("add", function (_set){
-                _set.save();
-                _set.changingAttributes={add: ""};
-            }).on("remove", function(_set){
-                _set.destroy({success: function() {
-                    self.eventDispatcher.trigger("add-message",{type:"success",
-                        short: self.messageTemplate({type:"set_removed",opts:{setname: _set.get("set_id")}}),
-                        text: self.messageTemplate({type: "set_removed_details",opts:{setname: _set.get("set_id")}})});
-                           
-                   // update the assignmentDates to delete the proper assignments
 
-                    self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
-                        return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
+            this.problemSets.on({
+                add: function (_set){
+                    _set.save();
+                    _set.changingAttributes={add: ""};
+                },
+                remove: function(_set){
+                    _set.destroy({success: function() {
+                        self.eventDispatcher.trigger("add-message",{type:"success",
+                            short: self.messageTemplate({type:"set_removed",opts:{setname: _set.get("set_id")}}),
+                            text: self.messageTemplate({type: "set_removed_details",opts:{setname: _set.get("set_id")}})});
+                               
+                       // update the assignmentDates to delete the proper assignments
 
-                }});
-            }).on("change:due_date change:open_date change:answer_date",function(_set){
-                var assignments = self.assignmentDates.filter(function(assign) { 
-                        return assign.get("problemSet").get("set_id")===_set.get("set_id");});
-                _(assignments).each(function(assign){
-                    assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")+"_date")).format("YYYY-MM-DD"));
+                        self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
+                            return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
+
+                    }});
+                },
+                "change:due_date change:open_date change:answer_date": function(_set){
+                    self.assignmentDates.chain().filter(function(assign) { 
+                            return assign.get("problemSet").get("set_id")===_set.get("set_id");})
+                        .each(function(assign){
+                            assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")+"_date"))
+                                .format("YYYY-MM-DD"));
+                        });
+                },
+                "change:problems": function(_set){
+                    _set.save();
+                },
+                change: function(_set){
+                    _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
+                },
+                sync: function(_set){
+                    _(_set.changingAttributes||{}).chain().keys().each(function(key){ 
+                        switch(key){
+                            case "problems":
+                                self.eventDispatcher.trigger("add-message",{type: "success", 
+                                    short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
+                                    text: attr.msg});
+                                break;
+                            case "problem_added": 
+                                self.eventDispatcher.trigger("add-message",{type: "success", 
+                                    short: self.messageTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
+                                    text: self.messageTemplate({type:"problem_added_details",opts:{setname: _set.get("set_id")}})});
+                                break;
+                            case "problems_reordered": 
+                                self.eventDispatcher.trigger("add-message",{type: "success", 
+                                    short: self.messageTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
+                                    text: self.messageTemplate({type:"problems_reordered_details",opts:{setname: _set.get("set_id")}})});
+                                break;
+                            case "problem_deleted": 
+                                self.eventDispatcher.trigger("add-message",{type: "success", 
+                                    short: self.messageTemplate({type:"problem_deleted",opts:{setname: _set.get("set_id")}}),
+                                    text: self.messageTemplate({type: "problem_deleted_details", opts: _set.changingAttributes[key]})});
+                                break;
+                            case "assigned_users":
+                                self.eventDispatcher.trigger("add-message",{type: "success",
+                                    short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}), 
+                                    text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})}); 
+                                break;
+                            case "add":
+                                self.eventDispatcher.trigger("add-message",{type: "success", 
+                                    short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
+                                    text: self.messageTemplate({type: "set_added_details",opts:{setname: _set.get("set_id")}})});
+                                self.assignmentDates.add(new AssignmentDate({type: "open", problemSet: _set,
+                                    date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+                                self.assignmentDates.add(new AssignmentDate({type: "due", problemSet: _set,
+                                    date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+                                self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
+                                    date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+
+                                break;    
+                            default:
+                                var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
+                                             : _set.changingAttributes[key];
+                                var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
+                                self.eventDispatcher.trigger("add-message",{type: "success", 
+                                    short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
+                                    text: self.messageTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),key: key,
+                                        oldValue: _old, newValue: _new}})});
+                        } // switch 
+                }); // .each
+                } // sync
+            }); // this.problemSets.on
+
+                    /* This sets the events for the problems (of type ProblemList) in each problem Set */
+
+            this.problemSets.each(function(_set) {
+                _set.problems.on({
+                    "change:value": function(prob){
+                        // not sure this is actually working.
+                        prob.changingAttributes={"value_changed": {oldValue: prob._previousAttributes.value, 
+                                newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}}
+                    },
+                    add: function(problems){
+                        _set.changingAttributes={"problem_added": ""};
+                    },
+                    sync: function(problems){
+                        _(problems.changingAttributes||{}).chain().keys().each(function(key){ 
+                            switch(key){
+                                case "value_changed": 
+                                    self.messagePane.addMessage({type: "success", 
+                                        short: config.msgTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
+                                        text: config.msgTemplate({type: "problems_values_details", opts: problems.changingAttributes[key]})});
+                                    break;
+                                
+                            }
+                        });
+                    }
                 });
-            }).on("change",function(_set){
-               _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
-            }).on("change:problems",function(_set){
-                _set.save();
-            }).on("sync", function (_set){
-            _(_.keys(_set.changingAttributes||{})).each(function(key){
-                switch(key){
-                    case "problems":
-                        self.eventDispatcher.trigger("add-message",{type: "success", 
-                            short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
-                            text: attr.msg});
-                        break;
-                    case "problem_added": 
-                        self.eventDispatcher.trigger("add-message",{type: "success", 
-                            short: self.messageTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
-                            text: self.messageTemplate({type:"problem_added_details",opts:{setname: _set.get("set_id")}})});
-                        break;
-                    case "problems_reordered": 
-                        self.eventDispatcher.trigger("add-message",{type: "success", 
-                            short: self.messageTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
-                            text: self.messageTemplate({type:"problems_reordered_details",opts:{setname: _set.get("set_id")}})});
-                        break;
-                    case "problem_deleted": 
-                        self.eventDispatcher.trigger("add-message",{type: "success", 
-                            short: self.messageTemplate({type:"problem_deleted",opts:{setname: _set.get("set_id")}}),
-                            text: self.messageTemplate({type: "problem_deleted_details", opts: _set.changingAttributes[key]})});
-                        break;
-                    case "assigned_users":
-                        self.eventDispatcher.trigger("add-message",{type: "success",
-                            short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}), 
-                            text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})}); 
-                        break;
-                    case "add":
-                        self.eventDispatcher.trigger("add-message",{type: "success", 
-                            short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
-                            text: self.messageTemplate({type: "set_added_details",opts:{setname: _set.get("set_id")}})});
-                        self.assignmentDates.add(new AssignmentDate({type: "open", problemSet: _set,
-                            date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
-                        self.assignmentDates.add(new AssignmentDate({type: "due", problemSet: _set,
-                            date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
-                        self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
-                            date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+            });  // this.problemSets.each
 
-                        break;    
-                    default:
-                        var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
-                                     : _set.changingAttributes[key];
-                        var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
-                        self.eventDispatcher.trigger("add-message",{type: "success", 
-                            short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
-                            text: self.messageTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),key: key,
-                                oldValue: _old, newValue: _new}})});
-                }
-            });
-        })
-        }
 
+        } // setMessages
 
     });
 

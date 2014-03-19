@@ -104,6 +104,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             this.$(".problem-set-name-menu .set-name").text(setName).truncate({width: 150});
             this.views.propertiesView.setProblemSet(this.problemSet).render();
             this.loadProblems();
+            return this;
         },
         loadProblems: function () {
             var self = this;
@@ -128,7 +129,9 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
-            this.stickit();
+            if(this.model){
+                this.stickit();                
+            }
             return this;
         },
         events: {"click .assign-all-users": "assignAllUsers"},

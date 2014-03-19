@@ -225,17 +225,6 @@ at the bottom of the screen and click "Save Changes". </p>
 <%
   var messages = {
     leave_page: function() { return "Do you want to leave this page?";},
-    set_assigned_users_saved: function(opt){ 
-      return "The assigned users for set " + opt.setname + " was updated."},
-    problem_added: function(opt){ return "A problem was added to " + opt.setname},
-    problem_added_details: function(opt){ return "A problem was added to " + opt.setname},
-    problems_reordered: function(opt){ return "The problems were reordered in " + opt.setname},
-    problems_reordered_details: function(opt){ return "The problems were reordered in " + opt.setname},
-    problems_values_details: function(opt) { return "The value for problem " + opt.problem_id + " of set " + opt.set_id +
-      " was changed from "+ opt.oldValue + " to " + opt.newValue + "."},
-    setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
-    setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
-                                opt.oldValue + " to " + opt.newValue + "."},
     openDate_after_dueDate: function(){return "The open date must come before the due date";},
     dueDate_after_answerDate: function(){return "The due date must come before the answer date.";},
     set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
