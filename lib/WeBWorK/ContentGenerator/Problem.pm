@@ -189,6 +189,7 @@ sub can_showMeAnother {
 	my $authz = $self->r->authz;
     my $ce = $self->r->ce;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
+
     # if the showMeAnother button isn't enabled in the course configuration, 
     # don't show it under any circumstances (not even for the instructor)
     return 0 unless($ce->{options}->{enableShowMeAnother});
@@ -577,11 +578,11 @@ sub pre_header_initialize {
 		# then this is really an invalid problem (probably from a bad URL)
 		$self->{invalidProblem} = not (defined $sourceFilePath or $problem->source_file);
 		
-		# if the caller is asking to override the problem seed, do so
-		my $problemSeed = $r->param("problemSeed");
-		if (defined $problemSeed) {
-			$problem->problem_seed($problemSeed);
-		}
+        ## if the caller is asking to override the problem seed, do so
+		#my $problemSeed = $r->param("problemSeed");
+		#if (defined $problemSeed) {
+		#	$problem->problem_seed($problemSeed);
+		#}
 
 		my $visiblityStateClass = ($set->visible) ? $r->maketext("font-visible") : $r->maketext("font-hidden");
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
@@ -592,6 +593,13 @@ sub pre_header_initialize {
 		$self->{invalidProblem} = !(defined $problem and ($set->visible || $authz->hasPermissions($userName, "view_hidden_sets")));
 		
 		$self->addbadmessage(CGI::p($r->maketext("This problem will not count towards your grade."))) if $problem and not $problem->value and not $self->{invalidProblem};
+	}
+
+	# if the caller is asking to override the problem seed, do so
+    # cmh: is this dodgy having this available outside of the authorization check?
+	my $problemSeed = $r->param("problemSeed");
+	if (defined $problemSeed) {
+		$problem->problem_seed($problemSeed);
 	}
 
 	$self->{userName}          = $userName;
@@ -605,12 +613,13 @@ sub pre_header_initialize {
 	##### form processing #####
 	
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode        = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
-	my $redisplay          = $r->param("redisplay");
-	my $submitAnswers      = $r->param("submitAnswers");
-	my $checkAnswers       = $r->param("checkAnswers");
-	my $showMeAnother      = $r->param("showMeAnother");
-	my $previewAnswers     = $r->param("previewAnswers");
+	my $displayMode               = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+	my $redisplay                 = $r->param("redisplay");
+	my $submitAnswers             = $r->param("submitAnswers");
+	my $checkAnswers              = $r->param("checkAnswers");
+	my $showMeAnother             = $r->param("showMeAnother");
+	my $showMeAnotherCheckAnswers = $r->param("showMeAnotherCheckAnswers");
+	my $previewAnswers            = $r->param("previewAnswers");
 	
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
@@ -619,6 +628,7 @@ sub pre_header_initialize {
 	$self->{submitAnswers}  = $submitAnswers;
 	$self->{checkAnswers}   = $checkAnswers;
 	$self->{showMeAnother}  = $showMeAnother;
+	$self->{showMeAnotherCheckAnswers}  = $showMeAnotherCheckAnswers;
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
 
@@ -635,8 +645,9 @@ sub pre_header_initialize {
 
     # if showMeAnother is active, then output a new problem in a new tab with a new seed
     if ($showMeAnother) {
-          # increment the count
-          $showMeAnotherCount++;
+          # increment the counter detailing the number of times showMeAnother has been used
+          # unless we're trying to check answers from the showMeAnother screen
+          $showMeAnotherCount++ unless($showMeAnotherCheckAnswers);
           # update the database
 	      $problem->{showMeAnotherCount}=$showMeAnotherCount;
           $db->putUserProblem($problem);
@@ -700,26 +711,22 @@ sub pre_header_initialize {
 	);
 
     # if showMeAnother is active, then disable all other options
-    if ($showMeAnother) {
-	        %can = (
-	        	showOldAnswers     => 0,
-	        	showCorrectAnswers => 1,
-	        	showHints          => 1,
-	        	recordAnswers      => 0,
-	        	checkAnswers       => 0,
-	        	showMeAnother      => 0,
-	        	getSubmitButton    => 0,
-	        );
+    if ($showMeAnother or $showMeAnotherCheckAnswers) {
+
+	        $can{showOldAnswers} = 0;
+	        $can{showCorrectAnswers} = 1;
+	        $can{showHints}          = 1;
+	        $can{recordAnswers}      = 0;
+	        $can{checkAnswers}       = $ce->{options}->{enableShowMeAnotherCheckAnswers};
+	        $can{showMeAnother}      = 0;
+	        $can{getSubmitButton}    = 0;
+
             # only show solution if showMeAnother has been clicked (or refreshed)
             # less than the maximum amount allowed specified in Course Configuration
             if($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1))
             {
-	          %can = (
-	          	showSolutions      => 1,
-	          );
-	          %must = (
-	          	showSolutions      => 1,
-	          );
+	          $can{showSolutions} = 1;
+	          $must{showSolutions} = 1;
             }
       }
 
@@ -1703,6 +1710,17 @@ sub output_hidden_info{
 	my $previewAnswers = $self->{previewAnswers};
 	my $checkAnswers   = $self->{checkAnswers};
 	my $showPartialCorrectAnswers = $self->{pg}->{flags}->{showPartialCorrectAnswers};
+    my $showMeAnother = $self->{showMeAnother};
+    my $showMeAnotherCheckAnswers = $self->{showMeAnotherCheckAnswers};
+    my $problemSeed = $self->{problem}->{problem_seed};
+
+    # hidden field for clicking Check Answers from a Show Me Another screen
+    # it needs to send the seed from showMeAnother back to the screen
+    if($showMeAnother or $showMeAnotherCheckAnswers){
+	  	print CGI::hidden({name => "showMeAnotherCheckAnswers", id=>"showMeAnotherCheckAnswers_id", value => 1});
+        # output the problem seed from ShowMeAnother so that it can be used in Check Answers
+        print( CGI::hidden({name => "problemSeed", value  =>  $problemSeed}));
+    }
 	if($previewAnswers){  # never color previewed answers 
 		return "";
 	}
