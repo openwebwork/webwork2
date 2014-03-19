@@ -12,7 +12,7 @@ First create an account/login to github.  Head to the https://github.com/openweb
 Once that's done, clone your newly forked repo to your local computer and add openwebwork as an upstream.
 
 ```
-git add remote upstream git://github.com/openwebwork/webwork2.git
+git remote add upstream git://github.com/openwebwork/webwork2.git
 ```
 
 I'd also recomend making sure the develop branch is pulled down from openwebwork and ready to push up to your github repo.
