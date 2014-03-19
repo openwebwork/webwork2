@@ -8,7 +8,7 @@ define(['backbone','underscore','models/MessageList','models/Message'], function
 		id: "message-pane",
 		isOpen: false,
 		initialize: function () {
-			_.bindAll(this,"open");
+			_.bindAll(this,"open","addMessage");
             this.messages = new MessageList();
 		},
 		render: function() {
