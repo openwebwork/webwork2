@@ -184,48 +184,11 @@ var CourseManager = WebPage.extend({
         // This is the way that general messages are handled in the app
 
         this.eventDispatcher.on({
-            "save-state": self.saveState,
+            "save-state": this.saveState,
             "show-problem-set": this.showProblemSetDetails,
-            "add-message": this.messagePane.addMessage
+            "add-message": this.messagePane.addMessage,
+            "show-help": function() { self.changeSidebar({link: "helpSidepane"})}
         });
-
-        /* Set up all of the events on the problemSets */
-
-        this.problemSets.on("user_sets_added",function(_userSetList){
-            _userSetList.on("change",function(_userSet){
-                _userSet.changingAttributes=_.pick(_userSet._previousAttributes,_.keys(_userSet.changed));
-                _userSet.save();
-            }).on("sync",function(_userSet){  // note: this was just copied from HomeworkManager.js  perhaps a common place for this
-                _(_.keys(_userSet.changingAttributes||{})).each(function(key){
-                    var _old = key.match(/date$/) ? moment.unix(_userSet.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
-                                         : _userSet.changingAttributes[key];
-                    var _new = key.match(/date$/) ? moment.unix(_userSet.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _userSet.get(key);
-                    self.messagePane.addMessage({type: "success", 
-                        short: config.msgTemplate({type:"set_saved",opts:{setname:_userSet.get("set_id")}}),
-                        text: config.msgTemplate({type:"set_saved_details",opts:{setname:_userSet.get("set_id"),key: key,
-                            oldValue: _old, newValue: _new}})});
-                });
-            }); // close _userSetList.on 
-        }).on("show-help",function(){ // this isn't a particular good way to do this, but is a fix. 
-            self.changeSidebar({link: "helpSidepane"});
-        })
-
-
-
-        // this handles the validation of the problem sets, mainly validating the dates.  
-
-
-
-        this.problemSets.bind('validated:invalid', function(model, errors) {
-            var uniqueErrors = _.unique(_.values(errors));
-            _(uniqueErrors).each(function(error){
-                self.messagePane.addMessage({type: "danger", text: error,
-                        short: config.msgTemplate({type:"set_error",opts:{setname: model.get("set_id")}})});
-
-            }); 
-        });
-
-
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
