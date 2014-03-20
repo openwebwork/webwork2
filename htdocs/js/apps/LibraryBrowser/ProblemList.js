@@ -18,7 +18,6 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             var self = this;
             _.bindAll(this,"fetch","addProblem","removeProblem");
             _.extend(this,options);
-            this.defaultRequestObject = {};
             this.on("remove",this.removeProblem);
             if (this.type){   // this prevents the fetch if the ProblemList comes from the Browse object. 
                 this.fetch(); 
@@ -32,21 +31,18 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         {
             var self = this;
             var requestObject = {};
-            console.log("type here");
-            console.log(this.type);
             switch(this.type){
                 case "Problem Set":
-                    console.log("fetching problems for Problem Set " + this.defaultRequestObject.set);
-                    requestObject = {xml_command: "listSetProblems", set_id: this.defaultRequestObject.set};
+                    console.log("fetching problems for Problem Set " + this.setName);
+                    requestObject = {xml_command: "listSetProblems", set_id: this.setName};
                     break;
                 case "Library Problems":
-                    var pathParts = this.defaultRequestObject.library_name.split('/');
-                    console.log(pathParts);
-                    switch(pathParts[1]){
+                    var pathParts = this.path.split("/");
+                    switch(pathParts[0]){
                         case "Library":
-                            console.log("Fetching Library: " + this.defaultRequestObject.library_name);
+                            console.log("Fetching Library: " + this.path);
                             requestObject = {  xml_command: "listLib", command: "files",
-                                    maxdepth: 0, library_name: this.defaultRequestObject.library_name};
+                                    maxdepth: 0, library_name: this.path + "/"};
                             break;
                         case "Subjects":
                             console.log("fetching subjects");
@@ -58,6 +54,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                         }
                     break;
             }
+
             _.defaults(requestObject, config.requestObject);
             $.get(config.webserviceURL, requestObject,function (data) {
                 var response = $.parseJSON(data);

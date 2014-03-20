@@ -1,33 +1,39 @@
-define(['Backbone','Closeable'], function(Backbone,Closeable){
+define(['Backbone','views/MessageListView','views/ModalView','config', 'jquery-truncate'], 
+function(Backbone,MessageListView,ModalView,config){
 	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
-    initialize: function () {
-    	_.bindAll(this,"render");
-    	_.extend(this,this.options);
+    initialize: function (options) {
+    	_.bindAll(this,"render","toggleMessageWindow","closeLogin");
     },
     render: function () {
     	var self = this; 
 
-
-        // Create an announcement pane for successful messages.
-        this.announce = new Closeable({classes: ["alert-success"], id: "announce-pane"});
-        this.$el.prepend(this.announce.el);
+        this.$el.prepend((this.messagePane = new MessageListView()).render().el);
+        this.loginPane = new LoginView();
+        this.$el.prepend((this.helpPane = new HelpView()).render().el);
         
-        // Create an announcement pane for error messages.
-        this.errorPane = new Closeable({classes: ["alert-error"], id: "error-pane"});
-        this.$el.prepend(this.errorPane.el);
-        
-        // This is the help Pane
-        this.helpPane = new Closeable({closeableType : "Help", text: $("#help-text").html(), id: "help-pane"});
-        this.$el.prepend(this.helpPane.el);
-
         $("button#help-link").click(function () {
                 self.helpPane.open();});
+
+        $("button#msg-toggle").on("click",this.toggleMessageWindow);
+
+                // this is just for testing
+
+        $(".navbar-right>li:nth-child(1)").on("click", function () {
+            console.log("testing the login");
+            self.loginPane.render().open();
+        })
 
 
          this.setUpNavMenu();  
 
+    },
+    toggleMessageWindow: function() {
+        this.messagePane.toggle();
+    },
+    closeLogin: function () {
+        this.loginPane.close();
     },
 
     // setUpNavMenu will dynamically changed the navigation menu to make it look better in the bootstrap view.
@@ -35,20 +41,14 @@ define(['Backbone','Closeable'], function(Backbone,Closeable){
 
     setUpNavMenu: function ()
     {
-        $("#webwork_navigation h2").remove() //  Remove the "Main Menu" in the menu. 
-
         var allCourses = $("#webwork_navigation ul:eq(0)").addClass("dropdown-menu");
-
         var InstructorTools = $("#webwork_navigation ul:eq(0) ul:eq(0) ul:eq(0)");
-
         var StudentTools = $("#webwork_navigation ul:eq(0) ul:eq(0)");
 
 
 
         InstructorTools.children("ul").remove();  // remove any links under the instructor tools
-
         StudentTools.children("ul").remove(); // remove 
-
         allCourses.children("ul").remove();
 
         allCourses.append("<li class='divider'>").append(StudentTools.children("li"))
@@ -59,17 +59,60 @@ define(['Backbone','Closeable'], function(Backbone,Closeable){
         strongElem.children().remove();
         strongElem.addClass("active").append(activeLink);
 
-        $("#webwork_navigation").attr("style","");
+        $("#webwork_navigation").removeAttr("style")
 
-        var toolName = $(".navbar .breadcrumb li:last").text();
+    },
+    requestLogin: function (opts){
+        this.loginPane.loginOptions = opts;
+        this.loginPane.render().open();
 
-        var toolSpan = $(".navbar .breadcrumb").parent();
-        toolSpan.html(toolName);
-        toolSpan.addClass("brand");
-
+    },
+    setLoginTemplate: function(opts){
+        this.loginPane.set(opts);
     }
 
 
-    });
-    return WebPage;
+});
+
+var LoginView = ModalView.extend({
+    initialize: function (options) {
+        _.bindAll(this,"login");
+        var tempOptions = _.extend(options || {} , {template: $("#login-template").html(), 
+                        templateOptions: {message: config.msgTemplate({type: "relogin"})},
+                        buttons: {text: "Login", click: this.login}});
+        this.constructor.__super__.initialize.apply(this,[tempOptions]);
+    },
+    render: function () {
+        this.constructor.__super__.render.apply(this); 
+        return this;
+    },
+    login: function (options) {
+        console.log("logging in");
+        var loginData = {user: this.$(".login-name").val(), password: this.$(".login-password").val()};
+        $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/login",
+                data: loginData,
+                type: "POST",
+                success: this.loginOptions.success});
+    }
+
+});
+
+var HelpView = Backbone.View.extend({
+    className: "ww-help hidden alert alert-info",
+    render: function (){
+        this.$el.html($("#help-template").html());
+        this.$(".help-text").html($("#help-text").html());
+        return this;
+    },
+    open: function(){
+        this.$el.removeClass("hidden");
+    },
+    close: function() {
+        this.$el.addClass("hidden");
+    },
+    events: {"click .close-help-button": "close"}
+});
+
+
+return WebPage;
 });

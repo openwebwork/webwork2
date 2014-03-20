@@ -1,0 +1,930 @@
+<div id="mainDiv" class="container">
+  <div class="row">
+    <div class="col-md-2">
+      <div id="hw-manager-menu" class="btn-group btn-group-lg">
+         <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="view-header" href="#">
+          <span>Calendar</span>
+          <i class="fa fa-chevron-down"></i>
+        </a>
+        <ul class="dropdown-menu">
+          <li><a class="link" data-link="calendar" data-name="Calendar">View Calendar</a></li>
+          <li><a class="link" data-link="setDetails" data-name="Set Details">View Problem Set</a></li>
+          <li><a class="link" data-link='libraryBrowser' data-name="Library Browser">Library Browser</a></li>
+          <li><a class="link" data-link="allSets" data-name="All Sets">Manage Problem Sets</a></li>
+          <li><a class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>
+          <li><a class="link" data-link="settings" data-name="Settings">Settings</a></li>
+        </ul>
+      </div>
+    </div>
+      <div id="page-header" class="col-md-8"></div>
+      <div class="col-md-2 pull-right" style="display: inline">
+      <button type="button" class="btn btn-default" id="show-hide-sets-button">
+      <span>Hide Problem Sets</span>
+        <i class="fa fa-chevron-up fa fa-lg"></i></button>
+    </div>
+      
+  
+  </div>
+  <div class="row" id="main-row">  
+    <div class="col-md-9" id="main-view">
+      <div class="view-pane active" id="calendar"></div>
+      <div class="view-pane" id="allSets"></div>
+      <div class="view-pane" id="setDetails"></div>
+      <div class="view-pane" id="importExport"></div>
+      <div class="view-pane" id="settings"></div>
+      <div class="view-pane" id="libraryBrowser"></div>
+    </div>
+    <div class="col-md-3">
+      <div id="problem-set-list-container"  class="well"></div>
+    </div>
+  
+  </div>
+</div>
+
+<!-- Here are the templates for the headers for each view. 
+
+They need to be named as XXX-header where XXX is the id tag of the view pane (see above).  -->
+
+<script type="text/template" id="calendar-header">
+<div class="calendar-button-row btn-group btn-group-sm">
+<button type="button" class="previous-week btn btn-default"><i class="fa fa-chevron-left"></i>Previous Week</button>
+
+<button type="button" class="view-month btn btn-default">Month View</button>
+<button type="button" class="view-week btn btn-default">Week View</button>
+<button type="button" class="next-week btn btn-default">Next Week<i class="fa fa-chevron-right"></i></button>
+</div>
+
+
+</script>
+
+<script type="text/template" id="allSets-header">
+  <button class="btn btn-default add-problem-set-button pull-right" type="button">Add Problem Set</button>
+</script>
+
+<script type="text/template" id="setDetails-header">
+<ul class="nav nav-tabs" id="problem-set-tabs">
+  <li class="active"><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
+  <li><a href="#problem-list-tab" data-toggle="tab" data-view="problemSetView">Problems</a></li>
+  <li><a href="#user-assign-tab" data-toggle="tab" data-view="usersAssignedView">Assign to Users</a></li>
+  <li><a href="#user-unassign-tab" data-toggle="tab" data-view="unassignUsersView">Unassign Users</a></li>
+  <li><a href="#user-customize-tab" data-toggle="tab" data-view="customizeUserAssignView">Customize to Users</a></li>
+</ul>
+ 
+</script>
+
+<script type="text/template" id="importExport-header">
+</script>
+
+<script type="text/template" id="settings-header">
+<ul class="nav nav-tabs">
+  <% _(categories).each(function(cat,i){
+    print("<li><a href='#setting-tab"+i+"' data-toggle='tab'>"+cat+"</a></li>");
+  });%>
+</ul>
+
+</script>
+
+<script type="text/template" id="libraryBrowser-header">
+<ul class="nav nav-tabs" id="library-browser-tabs">
+  <li class="active"><a href="#library-subjects-tab" data-toggle="tab">By Subject</a></li>
+  <li><a href="#library-directories-tab" data-toggle="tab">By Directory</a></li>
+  <li><a href="#library-textbooks-tab" data-toggle="tab">Textbooks</a></li>
+  <li><a href="#library-local-tab" data-toggle="tab">Local Problems</a></li>
+  <li><a href="#set-definition-tab" data-toggle="tab">Set Defn. files</a></li>
+  <li><a href="#library-search-tab" data-toggle="tab">Search</a></li>
+</ul>
+</script>
+
+
+
+
+
+
+
+<!-- The following is the help for the page -->
+
+
+<script type="text/template" id="help-text">
+<h3>Help for the Homework Manager</h3>
+   <p>The Homework Manager is where all creating and editing of homwork sets takes place.  The right side of the 
+   page is a list of the homework sets.  The rest of the page is a set of different views.  The Calendar View is default on opening.  There are also a Problem Set View, a Library Browser, Manage Problem Sets, Importing/Exporting Problem Sets and a Settings editor.  Here are a number of the common features. 
+
+   <ul>
+    <li>General Features:
+     <ul>
+      <li>To close the help, click the X in the upper right.  To reopen Help, click the "Help" button on the top bar. </li>
+      <li>To open a homework set, click on the Problem Set name in the list on the right. </li>
+      <li>There is a message bar at the top next to the <button class="btn btn-sm btn-default"><i class="fa fa-comment-o"></i></button> button. Click on that button and you will toggle detailed messages that Webwork tells you.</li>
+    </ul>
+    <li>Calendar:
+     <ul>
+        <li>The calendar shows open dates (green), due dates (red) and answer dates (blue) of homework sets.  Drag any to a new day and you will change that particular date.</li>
+        <li>Click on a homework set will show additional information about the set.</li>
+
+       <li>To change the due date of a homework set, you can drag the set from the left column to the day on the calendar.  
+   The open date and information about reduced credit will be set automatically based on the settings (for example, the reduced credit time is 3 days and the open date is 10 days before the due date.)</li>
+   </ul>
+   <li>Problem Set Editor:
+     <ul>
+        <li>First, you need to click on a homework set on the list on the right to view a set.</li>
+        <li>There are 5 tabs with additional information about the set:
+          <ul>
+            <li>Properties:
+              <ul>
+                <li>The basic properties (open, due and answer dates) as well as visibility and reduced credit.</li>
+                <li>To change any of the dates, click on the date and select (or type) in a new one.</li>
+                <li>To change the time of the open, due or answer dates, click on the clock and type in a new time.</li>
+              </ul>
+            </li>
+            <li>Problems:
+              <ul>
+                <li>The problems will load dynamically.  You can view the tags on all problems with the "View Tags" button.</li>
+                <li>To reorder problems, click the <button class="btn btn-default btn-sm"><i class="fa fa-resize-vertical"></i></button> and drag to a new position in the list. </li>
+                <li>To remove a problem, click the <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button> button. You can undo the delete by clicking the "Undo Delete button". </li>
+                <li>To view a problem with a new random seed, click the <button class="btn btn-default btn-sm"><i class="fa fa-refresh"></i></button> button.</li>
+                <li>To change the value (or weight) of a problem, type in a new value and it will be updated automatically.</li>
+              </ul>
+            </li>
+            <li>Assign Users:
+              <ul>
+                <li>In this view, there is a list of all users.  Select any user or group of users and click the button to assign.</li>
+              </ul>
+            </li>
+            <li>Unassign Users:
+              <ul>
+                <li>In this view, there is a list of all users.  Select any user or group of users that hasn&apos;t been assigned and click the button to unassign.</li>
+              </ul>
+            </li>
+            <li>Customize to Users:
+              <ul>
+                <li>This view allows you to customize the open, due and answer dates for a student or group of students. </li>
+                <li>For a single student, change the date/time on the row of the table with the user. </li>
+                <li>For a group of students,  select the desired rows, then change the appropriate dates on the bottom row and click "Save Changes".</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul
+    </li>
+    <li>Library Browser: 
+      <ul>
+        <li>The Library Browser is used to browse or search the library and add problems to sets.</li>
+        <li>You can view problems by subject/chapter/section, as directories, in textbooks, local problems, within set defintion files and searching.</li>
+        <li>Within a problem you have many of the same options as viewing a problem set (see above).</li>
+        <li>To add a problem to a set, click and hold the <button class="btn btn-default"><i class="fa fa-move"></i></button> 
+        button and drag the problem on top of the problem set on the left. </li>
+        <li>Addiitonal, you can add a problem to a set by selecting the target set, then clicking the + button. </li>
+        <li>There is additional help on searching by clicking the Help button next to the search button</li>
+      </ul>
+    </li>
+    <li>Manager Problem Sets:
+      <ul>  
+        <li>This view shows details of all of the problem sets.  You can change the dates, visibility and reduced credit for each set here by clicking or change the appropriate item. </li>
+        <li>To add a new set, click the "Add Problem Set" button at the top of the page. </li>
+        <li>To delete a set click the <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button> button. </li>
+        <li>If there are more that 10 sets, you can view the remainder by click the forward page button at the bottom. </li>
+        <li>You can sort by any aspect of the sets, by clicking the header column. </li>
+      </ul>
+    </li>  
+    <li>Import/Export Sets:</li>
+    <li>Settings</li>
+   </ul>
+</p>
+    
+</script>
+
+<script type="text/template" id="modal-template">
+<div class="modal hide fade">
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <%= header %>
+  </div>
+  <div class="modal-body">
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    <button class="btn btn-primary"><%= saveButton %></button>
+  </div>
+</div>
+
+</script>
+
+<script type="text/template" id="problem-set-list-template">
+<div class="row"><div class="md-col-3 pull-left" style='font-size:110%; font-weight:bold'>Problem Sets</div>
+  <div class="md-col-3 pull-right">
+  <div class="btn-group">
+  <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+    Sort By <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" role="menu">
+    <li><a href="#">Action</a></li>
+    <li><a href="#">Another action</a></li>
+    <li><a href="#">Something else here</a></li>
+    <li class="divider"></li>
+    <li><a href="#">Separated link</a></li>
+  </ul>
+</div>
+  </div>
+</div>
+<div class="prob-set-container">
+  <ul id='probSetList' class='btn-group btn-group-vertical'></ul>
+</div>
+</script>
+
+<script type="text/template" id="add-hw-set-template">
+  <div class="add-problem-set-dialog-content">
+  <p>A new homework set with the name below will be created.  In addition, it will be assigned to you 
+  (user: <%= name %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
+  <table><tr>
+    <td>Homework Set Name:</td>
+    <td><input type='text' size='20' class='problem-set-name'></td>
+    </tr>
+    <tr><td  colcol-md-="2" class="problem-set-name-error" style="color: red"></td></tr>
+    </table>
+    </div>
+
+</script>
+
+
+
+<script type="text/template" id="problem-list-template">
+<div class="row form-horizontal">
+<% if(typeof(setname)!=="undefined"){
+  print("<div class='col-md-2'><h3 class='setname'>Set:" + setname+"</h3></div>");
+} %>
+<div class="col-md-2">Display Mode</div>
+  <div class="col-md-2">
+    <select class="form-control display-mode-options">
+      <% _(displayModes).each(function(mode) {print("<option>"+mode+"</option>");}) %>
+    </select>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-default undo-delete-button disabled">Undo Delete</button>
+    <a href="<%=editorURL%>" target="Simple_Editor" class="btn btn-default" id="create-new-problem">New</a>
+    <button class="btn btn-default show-hide-tags-btn" data-hide-text="Hide Tags">Show Tags</button>
+  </div>
+  <div class="col-md-3 pull-right num-problems">
+  </div>
+</div>
+<div class="problem-paginator"></div>
+<div class="prob-list-container">
+<ul class='prob-list scrollable no-bullets'></ul>
+</div>
+</script>
+
+
+
+<script type="text/template" id="set-properties-tab-template">
+<table class="table">
+<tbody>
+<tr><td class="header">Set Name</td><td class="set-name"></td></tr>
+<tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
+<tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
+<tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
+<tr><td>Problem Set visible to Users</td><td><select class='prob-set-visible input-small'> </select></td></tr>
+<tr><td>Reduced Credit Enabled</td><td><select class='reduced-credit input-small'></select></td></tr>
+<tr><td>Users Assigned</td><td class="users-assigned"></td>
+<td><button class="assign-all-users btn btn-default">Assign to All Users</td></tr>
+
+</tbody>
+</table>
+</script>
+
+<script type="text/template" id="assign-users-template">
+  <h4>Problem Set: <%=setname%></h4>
+  <p>The following list of users are those currently not assigned to this Problem Set.  Select those you wish
+  to assign to the problem set.  If the user is not able to be selected, then that user is already 
+  assigned to this set. </p>
+  <table class="table">
+    <tbody>
+      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
+         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
+         <tr><td><button class="btn btn-default assign-button">Assign Selected Users</button></td></tr>
+    </tbody> 
+  </table>
+</script>
+
+<script type="text/template" id="cutomize-assignment-template">
+<p>The students listed below are only those that are assigned to this set.  To change an individual date/time, click on 
+the desired date and change it.  To make changes to two or more students, select those students, change the date/time
+at the bottom of the screen and click "Save Changes".  You can filter down the results by typing in the "search" box.  
+The results will be dispayed below.  To search for section 2 type "section:2" and similar with recitations.   </p>
+<div class="form-inline" role="form">
+  <div class="form-group">
+    <label class="sr-only" for="ca-search-box">Search</label>
+    <input type="search" class="form-control search-box" id="ca-search-box" placeholder="Search">
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="show-section"> Show Section
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="show-recitation"> Show Recitation
+    </label>
+  </div>
+</div>
+<table class="users-table">
+</table>
+<table class="table table-striped" id="customize-problem-set-controls">
+<tr>
+<td class="header">Open Date</td><td class="header">Due Date</td><td class="header">Answer Date</td><td></td></tr>
+<tr>
+<td class="edit-datetime open-date"></td><td class="edit-datetime due-date"></td><td class="edit-datetime answer-date"></td>
+<td> <button class="btn btn-default save-changes">Save Changes</button></td>
+</tr>
+</table>
+</script>
+
+<script type="text/template" id="loading-usersets-template">
+Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
+</script>
+
+
+
+<!-- The following is an old template.  If the new template works, delete this. -->
+
+
+<script type="text/template" id="custom-assign-template">
+<h4>Problem Set: <%=setname%></h4>
+<p>The students listed below are only those that are assigned to this set.  To change an individual date/time, click on 
+the desired date and change it.  To make changes to two or more students, select those students, change the date/time
+at the bottom of the screen and click "Save Changes". </p>
+<table class="table" id="customize-problem-set">
+<thead>
+<tr>
+<th>Select</th><th>Student (login name)</th><th>Open Date</th><th>Due date</th><th>Answer Date</th></tr>
+<tbody>
+<tr><td colcol-md-="5">Loading User Information...<i class="fa fa-spinner fa-spin"></i></td><th>
+
+</tbody>
+</table>
+<table class="table" id="customize-problem-set-controls">
+<tr>
+<td class="header">Open Date</td><td class="header">Due Date</td><td class="header">Answer Date</td></tr>
+<tr>
+<td class="edit-datetime open-date"></td><td class="edit-datetime due-date"></td><td class="edit-datetime answer-date"></td>
+</tr>
+<tr>
+<td> <label class="checkbox inline"><input type="checkbox" id="custom-select-all">Select All</label></td>
+<td> <button class="btn btn-default save-changes">Save Changes</button></td>
+<td></td>
+</tr>
+</script>
+
+<script type="text/template" id="customize-user-row-template">
+  <td><input type="checkbox" class="user-select"></td><td class="user-id"></td>
+  <td class="open-date edit-datetime"></td>
+  <td class="due-date edit-datetime"></td><td class="answer-date edit-datetime"></td>
+</script>
+
+
+<script type="text/template" id="user-template">
+<li><input class='classlist-li' type='checkbox' data-username='<%= user %>' id='li-<%= cid %>'>
+    <label class='checklist' for='li-<%= cid %>'> <%= firstname %> <%= lastname %> ( <%= user %> ) </label></li>
+
+</script>
+
+<script type="text/template" id="set-view-template">
+<span class="set-name"></span><span class="num-users"></span>
+</script>
+
+
+
+<script type="text/template" id="calendar-template">
+<div class="calendar-container">
+  <div class="calendar-view">
+    <table id='calendar-table' class='table-bordered'>
+      <thead></thead><tbody></tbody>
+    </table>
+  </div>
+</div>
+</script>
+
+
+
+<script type="text/template" id="calendar-date-bar">
+<div class="<%= classes %>" data-setname="<%= setname %>" data-title="<%=setname%>" data-content="Users Assigned: <%=assignedUsers%>/<%=totalUsers%><br>Visible To Students: <% print((visibleToStudents==1)?'yes':'no');%>">
+ <span class="assign-calendar-name"><%if(showName){%><%=setname %><%}%></span><span class="assign-info"><i class="fa fa-info-circle pull-right"></i></span></div>
+
+</script>
+
+
+<script type="text/template" id="settings-template">
+<div class="tab-content">
+    <% _(categories).each(function(cat,i){
+    print("<div class='tab-pane' id='setting-tab"+i+"'></div>");
+  });%>
+</div>
+
+</script>
+
+<script type="text/template" id="settings-table-template">
+  <table class="table table-bordered settings-table"><thead><tr><th>Property</th><th>Value</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</script>
+
+
+<script type="text/template" id="HW-detail-template">
+<div class="tab-content">
+  <div class="tab-pane active" id="property-tab" data-view="propertiesView">
+  To select a problem set, click on the desired one from the list on the right.</div>
+  <div class="tab-pane" id="problem-list-tab" data-view="problemListView"><p>Click on a Problem Set Name on the left to view the set.</p></div>
+  <div class="tab-pane" id="user-assign-tab" data-view="usersAssignedView"></div>
+  <div class="tab-pane" id="user-customize-tab" data-view="customizeUserAssignView"></div>
+  <div class="tab-pane" id="user-unassign-tab" data-view="unassignUsersView"></div>
+</div> 
+</script>
+
+<script type="text/template" id="assign-users-template">
+<p>Select the users and the problem sets then click the button to change the assignment dates. </p>
+<p><button type="button" id="assign-users-sets" class="btn">Assign Users to Sets</button></p>
+
+<table class="table">
+<thead><tr><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+<tbody>
+<tr id="assign-users-due-date-row"></tr>
+</tbody>
+</table>
+
+<table class="table">
+<thead>
+<tr><th>Users</th><th><input type="checkbox" id="select-users-checkbox" class="select-all">&nbsp;Select All</th>
+<th>Sets</th><th><input type="checkbox" id="select-sets-checkbox" class="select-all">&nbsp;Select All</th></tr>
+</thead>
+<tbody>
+<tr><td colcol-md-="2"><ul class="no-bullets scrollable assign-users-list"></ul></td>
+<td colcol-md-="2"><ul id='assign-sets-list' class="no-bullets scrollable"></ul></td></tr>
+</tbody>
+</table>
+
+</script>
+
+<script type="text/template" id="unassign-users-template">
+<h4>Problem Set: <%=setname%></h4>
+  <p>The following list of users are those currently assigned to this Problem Set.  Select those you wish
+  to unassign from the problem set.  If the user is not able to be selected, then that user is not 
+  assigned to this set. </p>
+  <table class="table">
+    <tbody>
+      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
+         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
+         <tr><td><button class="btn btn-default unassign-button">Unassign Selected Users</button></td></tr>
+    </tbody>
+  </table>
+</script>
+
+<script type="text/template" id="library-browser-template">
+<div class="tab-content">
+  <div class="tab-pane active" id="library-subjects-tab"></div>
+  <div class="tab-pane" id="library-directories-tab"></div>
+  <div class="tab-pane" id="library-textbooks-tab"></div>
+  <div class="tab-pane" id="library-local-tab"></div>
+  <div class="tab-pane" id="set-definition-tab"></div>
+  <div class="tab-pane" id="library-search-tab"></div>
+</div> 
+
+
+</script>
+
+<script type="text/template" id="library-textbooks-template">
+<div class="row">
+<div class="col-md-2">
+<select class="form-control textbook-title">
+ <option>Select Textbook</option>
+ <%_(textbooks).each(function(book,i){
+    print("<option data-id='" + book.textbook_id + "' value='"+ i + "'>" + book.author + ": " 
+        + book.title + "(" + book.edition + "e) </option>");
+ }) %>
+</select>
+</div>
+<div class="col-md-2">
+<select class="form-control textbook-chapter hidden"></select>
+</div>
+<div class="col-md-2">
+<select class="form-control textbook-section hidden"></select>
+</div>
+<button type="button" class="btn btn-default load-problems-button">Load</button>
+<span class="textbook-message"></span>
+</div>
+</script>
+
+<script type="text/template" id="library-textbook-sections-template">
+<option>Select <%=type%></option>
+<% _(sections).each(function(sect,i) { print("<option data-id='" 
+    + (type=='Section'?sect.section_id:sect.chapter_id) + "' value='"+ i + "' "+
+    "data-numprobs='"+ sect.num_probs+"'>" + sect.number + ": "+ sect.name + "</option>");});
+%>
+</script>
+
+<script type="text/template" id="library-view-template">
+<div class="row">
+<div class="library-tree-container col-md-9"></div></div>
+<div class="problems-container">
+</div>
+</script>
+
+<script type="text/template" id="local-library-tree-template">
+<div class="row form-horizontal">
+<div class="col-md-4">Local Problem Directory:</div>
+<div class="col-md-4"><select class="local-library-tree form-control">
+<% _(menu).each(function(m){ print("<option>" + m + "</option>")}) %>
+</select></div>
+<button class="btn btn-default load-problems-button">Load</button>
+</div>
+</script>
+
+<script type="text/template" id="library-problems-view-template">
+<div class="row form-horizontal">
+<span class="col-md-2">Display Mode</span>
+<div class="col-md-2">
+  <select class="form-control display-mode-options">
+      <% _(displayModes).each(function(mode) {print("<option>"+mode+"</option>");}) %>
+  </select>
+</div>
+<div class="col-md-2">
+    <select class="form-control target-set input-medium">
+      <option>Select Target Set</option>
+      <% _(sets).each(function(set){print('<option>' + set + ' </option> ')  });%>
+    </select>
+</div>
+    <button class="btn btn-default show-hide-tags-btn" data-hide-text="Hide Tags">Show Tags</button>
+  </div>
+
+</div>
+<div class="lib-problem-viewer">
+<div class="problem-paginator"></div>
+<div class="prob-list-container">
+<ul class="prob-list no-bullets scrollable"> </ul> 
+</div>
+</div>
+</script>
+
+<script type="text/template" id="library-search-template">
+<div class="panel-group" id="accordion">
+  <div class="panel panel-default">
+    <div id="collapseOne" class="panel-collapse collapse">
+      <div class="panel-body">
+        <p>To search the library, type in the search string in pairs separated by a colon (:).  
+          For example, "keyword:quadratic" will search the library for the single keyword "quadratic" whereas a search
+          "keyword:quadratic and author:rogness" will result in problems that contain both the keyword quadratic and the problem
+            author of Rogness. </p>
+        <p>You can also search via the % wildcard for most fields. For example, typing author:P% will match Arnie Pizer and Paul Pearson.  Also typing author:%er will match Arnie Pizer, Christopher Sira and Joseph Neisendorfer. </p>
+        <p>Here&apos;s a listing of all searchable fields:</p>
+        <ul>
+          <li>author: the problem author.  It will match either the first or last name.</li>
+          <li>level: the level of the problem.  Currently the values are 1-6 (or 0 if no level is given)</li>
+          <li>keyword: a stated keyword of the problem.  </li>
+          <li>institution: the author institution.  Note: this is generally not accurately tagged in a problem.</li>
+          <li>subject: the database subject.</li>
+          <li>chapter: the database chapter.</li>
+          <li>section: the database section.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="row form-horizontal">
+  <div class="col-md-5"><input type="text" class="form-control search-query" placeholder="Enter search terms"></div>
+  <button class="search-button btn btn-default" type="button" data-loading-text="Loading Problems..." >Search</button>
+  <button class="search-help-button btn btn-default" type="button" data-toggle="collapse" data-target="#collapseOne">Help</button>
+  <span class="num-problems"></span>
+</div>
+<div class="problems-container">
+</div>
+
+</script>
+
+
+
+<script type="text/template" id="library-tree-template">
+<span class='library-tree-left'>
+  <span class="throbber">Loading the Library...<i class="fa fa-spinner fa-spin"></i></span>
+</script>
+
+
+<script type="text/template" id="library-select-template">
+<div class="form-horizontal">
+  <div class="col-md-3 library-level-0">
+    <select class="form-control input-sm"></select>
+  </div>
+  <div class="col-md-3 library-level-1 hidden">
+    <select class="form-control input-sm"></select>
+  </div>
+  <div class="col-md-3 library-level-2 hidden">
+    <select class="form-control input-sm"></select>
+  </div>
+  <div class="col-md-3 library-level-3 hidden">
+    <select class="form-control input-sm"></select>
+  </div>
+
+  <div class="col-md-3">
+    <button class="btn btn-default load-library-button" data-loading-text="Loading Problems...">Load</button>
+    <span class="num-files"></span>
+  </div>
+</div>
+</script>
+
+<script type="text/template" id="loading-library-template">
+Loading Library...<i class='fa fa-spinner fa-spin'></i>
+</script>
+
+<script type="text/template" id="target-set-template">
+  <option><%=set_id%></option>
+</script>
+
+
+
+<script type="text/template" id="problem-template">
+<div class="loading btn-sm">Problem Loading...<i class="fa fa-spinner fa-spin"></i></div>
+<div class="handle row">
+
+<%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-resize-vertical"></i></a></div><%}%>
+<%if(draggable){%>
+  <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-move"></i></a></div>
+<%}%>
+<%if(showPoints){%>
+<div class="col-md-3 form-">
+    <label class="control-label">Value: 
+      <input type="text" class="prob-value input-small"></label>
+  </div>
+<%}%>
+
+<div class="col-md-4 btn-group btn-group-sm">
+<%if(showAddTool){%><a class="btn btn-default add-problem" href="#" title="add to target set">
+  <i class="fa fa-plus"></i></a><%}%>
+<%if(showEditTool){%><a class="btn btn-default" target="WW_editor" href="<%=editUrl%>" title="edit">
+    <i class="fa fa-pencil"></i></a><%}%>
+<%if(showRefreshTool){%><a href="#"  class="btn btn-default refresh-problem" title="randomize">
+      <i class="fa fa-refresh"></i></a><%}%>    
+<%if(showViewTool){%><a class="btn btn-default" target="WW_view" href='<%=viewUrl%>' title="view problem">
+    <i class="fa fa-eye"></i></a><%}%>    
+<%if(showHideTool){%><a href="#" class="btn btn-default hide-problem link" title="hide problem">
+    <i class="fa fa-times"></i></a><%}%>
+<%if(deletable){ %><a  href="#" class="remove-problem btn btn-default" title="delete problem">
+    <i class="fa fa-trash-o"></i></span><%}%>
+<a href="#" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
+</div>
+</div>
+<div class="problem-tags">
+<table class="table table-condensed table-bordered"><tbody>
+<tr><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
+<td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
+<tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
+<tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
+<td>Level:</td><td class="level-tag"></td></tr>
+<tr class="tag-row hidden"><td>Problem Author:</td><td class="problem-author-tag"></td>
+<td>Institution:</td><td class="institution-tag"></td>
+<td>More LT:</td><td class="mlt-tag"></td>
+</tr>
+<tr class="tag-row hidden"><td>DB Subject:</td><td class="DBsubject-tag"></td>
+<td>DB Chapter:</td><td class="DBchapter-tag"></td>
+<td>DB Section:</td><td class="DBsection-tag"></td></tr>
+<tr class="tag-row hidden"><td>Textbook Title:</td><td class="tb-title-tag"></td>
+<td>Textbook Chapter:</td><td class="tb-chapter-tag"></td>
+<td>Textbook Section:</td><td class="tb-section-tag"></td></tr>
+</tbody>
+</table>
+</div>
+<div><%=data%></div>
+<!--<div class="filename"><%=source_file%></div>    
+<iframe class="data" style="width:100%" seamless="seamless"><%= data %></iframe>-->
+</script>
+
+<script type="text/template" id="problem-loading-template">
+<span style='font: italic 120%'>Loading Problem</span><i class='fa fa-spinner fa-spin fa-lg'></i>
+</script>
+
+<script type="text/template" id="row-setting-template">
+<td><span class="doc"></span>
+<button class='btn btn-sm btn-default help-button' style='margin-left: 25px'>
+  <i class='fa fa-question'></i></button>
+  <div class="help-hidden alert alert-info">
+  <button class="close">&times;</button>
+  <span class="doc2"></span></div>
+
+  </td>
+  <td class="col2"><%=prop_html%></td>
+</script>
+
+<script type="text/template" id='problem-set-row-template'>
+    <td class="set-name"></td>
+    <td><select class="set-visible col-md-1"></select></td>
+    <td><select class="reduced-credit col-md-1"></select></td>
+    <td class='open-date edit-datetime'></td>
+    <td class='due-date edit-datetime'></td>
+    <td class='answer-date edit-datetime'></td>
+</script>
+
+<script type="text/template" id="all-problem-sets-template">
+<div id="sets-table-container"></div>
+<div id="sets-table-paginator"></div>
+</script>
+
+<script type="text/template" id="paginator-template">
+<ul class="pagination">
+<% if(current_page==0){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+  <a href="#" class="goto-first"><i class="fa fa-step-backward"></i></a></li>
+<% if(current_page==0){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#" class="go-back-one"><i class="fa fa-arrow-left"></i></a></li>
+<% if (page_start>0) {print ("<li><a href=''> ...</a> </li>");} %>
+<% for(i=page_start;i<page_stop;i++){
+    if(current_page==i){
+      print("<li class='active'><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");  
+    } else {
+      print("<li><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");
+    }
+} %>
+<% if (page_stop+1<num_pages) {print ("<li><a href=''> ...</a> </li>");} %>
+
+<% if(current_page+1===page_stop){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#"  class="go-forward-one"><i class="fa fa-arrow-right"></i></a></li>
+
+<% if(current_page+1===page_stop){
+  print("<li class='disabled'>")
+} else {
+  print("<li>");
+}
+%>
+<a href="#"  class="goto-end"><i class="fa fa-step-forward"></i></a></li>
+</ul>
+</script>
+
+<script type="text/template" id="import-export-template">
+<ul class="nav nav-tabs" id="import-export-tabs">
+  <li class="active"><a href="#import-tab" data-toggle="tab">Import Problem Sets</a></li>
+  <li><a href="#export-tab" data-toggle="tab">Export Problem Sets</a></li>
+</ul>
+ 
+<div class="tab-content">
+  <div class="tab-pane active" id="import-tab">
+  <div class="row">
+   <div class="col-md-5 form-horizontal"> Select Files: <input type="file" id="import-from-file" multiple></div>
+   <div class="col-md-4 form-horizontal">
+     <label class="checkbox inline">Upload set definition files to server <input type="checkbox" class="upload-selected-files"></label></div>
+   </div>
+   <div class="import-table hidden">
+    <div class="row form-horizontal">
+    <div class="col-md-2"><label class="checkbox inline">Select All<input class="select-all-checkbox" type="checkbox" checked="checked">
+    </label></div>
+    <div class="col-md-2"><label class="checkbox inline">Shift Input Dates<input class="date-shift-checkbox" type="checkbox"></label></div>
+    <div class="col-md-5 hidden date-shift-container">Shift first Open Date to <input class="date-shift-input input-medium"></div>
+    </div>
+    <div class="row import-error alert alert-danger"></div>
+     <table class="table table-bordered table-condensed">
+     <thead><tr><th>Select</th><th>Set Name</th><th>Num. Probs.</th><th>Open Date</th><th>Due Date</th><th>Answer Date</th></tr></thead>
+     <tbody>
+     </tbody>
+     </table>
+    <div class="row form-horizontal">
+    <div class="col-md-3"><button type="button" class="btn btn-default import-button">Import Selected Sets</button></div>
+    <div class="col-md-5 import-message"></div>
+
+    </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="export-tab">This has yet to be implemented</div>
+  </div> 
+</script>
+
+<script type="text/template" id='import-problem-set-row-template'>
+  <td><input type="checkbox" class="import-checkbox" checked="checked"></td>
+  <td class="set-name" contenteditable='true'></td> 
+  <td class="num-probs"></td>
+  <td class='open-date edit-datetime'></td>
+  <td class='due-date edit-datetime'></td>
+  <td class='answer-date edit-datetime'></td>
+</script>
+
+<!-- This is where all messages to the user go -->
+
+<script type="text/template" id="all-messages">
+<%
+  var messages = {
+    set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
+    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
+      + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
+    set_added: function(opt){ return "Set " + opt.setname + " added.";},
+    set_added_details: function(opt){ return "The set " + opt.setname + " was added to the course."},
+    set_removed: function(opt){ return "Set " + opt.setname + " removed.";},
+    set_removed_details: function(opt){ return "The set " + opt.setname + " was removed to the course."},
+    set_error: function(opt){ return "Error saving set " + opt.setname + " .";},
+    set_error_details: function(opt){ return "The set " + opt.setname + " had an error."},
+    set_assigned_users_saved: function(opt){ 
+      return "The assigned users for set " + opt.setname + " was updated."},
+    problem_added: function(opt){ return "A problem was added to " + opt.setname},
+    problem_added_details: function(opt){ return "A problem was added to " + opt.setname},
+    problems_reordered: function(opt){ return "The problems were reordered in " + opt.setname},
+    problems_reordered_details: function(opt){ return "The problems were reordered in " + opt.setname},
+    problems_values_details: function(opt) { return "The value for problem " + opt.problem_id + " of set " + opt.set_id +
+      " was changed from "+ opt.oldValue + " to " + opt.newValue + "."},
+    setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
+    setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
+                                opt.oldValue + " to " + opt.newValue + "."},
+    openDate_after_dueDate: function(){return "The open date must come before the due date";},
+    dueDate_after_answerDate: function(){return "The due date must come before the answer date.";},
+    set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
+    select_target_set: function() { return "You need to select a target set";},
+    show_prob_set: function() { return "Show Problem Sets";},
+    hide_prob_set: function() { return "Hide Problem Sets";},
+    problems_shown: function(opt) {return "Problems " + opt.probFrom + " to " + opt.probTo + " of " + opt.total;},
+    unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
+                  ". Click OK to confirm this."},
+    problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
+    problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id 
+        + " was deleted from set " + opt.setname},
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
+      + "reenter your username and password to continue. ";},    
+    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."}  
+  };
+  print(messages[type](typeof(opts)=="undefined"?{}:opts))
+  
+%>
+
+</script>
+
+
+
+
+<!-- The templates to the bottom of this file should go in a general template that is
+        loaded by all files -->
+
+
+        <script type="text/template" id="login-template">
+<div class="form-horizontal" role="form">
+  <div class="form-group">
+    <label for="inputEmail3" class="col-sm-2 control-label">Login Name:</label>
+    <div class="col-sm-10">
+      <input type="input" class="form-control login-name" id="inputEmail3" placeholder="Login">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="password" class="col-sm-2 control-label">Login Name:</label>
+    <div class="col-sm-10">
+      <input type="password" class="form-control login-password" id="password" placeholder="Password">
+    </div>
+  </div>
+</div>
+
+</script>
+
+<script type="text/template" id="help-template">
+<button class="btn btn-info btn-sm close-help-button pull-right">&times;</button>
+<div class="help-text">
+</div> 
+</script>
+
+<script type="text/template" id="checkbox-template">
+<input type="checkbox"><input type="hidden" class="user-id">
+</script>
+
+<script type="text/template" id="user-name-template">
+<%=first_name%> <%=last_name%>
+</script>
+
+
+<!-- templates for the Backbone.Stickit handlers -->
+
+<script type="text/template" id="time-popover-template">
+<div><input class='wwtime' value='<%=time%>'><br>
+<button class='btn btn-default save-time-button'>Save</button>
+<button class='btn btn-default cancel-time-button'>Cancel</button>
+</div> 
+</script>
+
+<script type="text/template" id="edit-date-time-template">
+<input class='wwdate' size='12' value='<%=date%>'><span class='open-time-editor'><i class='fa fa-clock-o'></i></span>
+</script>
+
+<script type="text/template" id="delete-button-template">
+<button class="btn btn-default btn-sm"><i class='fa fa-trash-o'></i></button>
+</script>
+
+<script type="text/template" id="message-pane-template">
+<div class='row'>
+    <div class='pull-right'><button type='button' class='close'>&times;</button></div>
+    <ul class='main-message-pane no-bullets'></ul>
+</div>
+
+</script>
+

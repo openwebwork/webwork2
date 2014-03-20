@@ -275,7 +275,7 @@ sub process_editorLink{
 
 # output_JS subroutine
 
-# prints out the wz_tooltip.js script for the current site.
+# prints out the legacy/vendor/wz_tooltip.js script for the current site.
 
 sub output_JS{
 	

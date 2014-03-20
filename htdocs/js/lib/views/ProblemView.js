@@ -1,5 +1,6 @@
-define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backbone, _,config){
-	//##The problem View
+define(['Backbone', 'underscore','config','imagesloaded','knowl'
+    ], function(Backbone, _,config){
+    //##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
     //There's no reason this same view couldn't be used in other pages almost as is.
@@ -7,49 +8,46 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
         //We want the problem to render in a `li` since it will be included in a list
         tagName:"li",
         className: "problem",
-        //Add the 'problem' class to every problem
-        //className: "problem",
         //This is the template for a problem, the html is defined in SetMaker3.pm
         template: _.template($('#problem-template').html()),
-
-    
-        //In most model views initialize is used to set up listeners
-        //on the views model.
-        initialize:function () {
-            _.bindAll(this,"render","updateProblem","clear");
-            // this.options.viewAttrs will determine which tools are shown on the problem
+        initialize:function (options) {
+            var self = this;
+            _.bindAll(this,"render","removeProblem");
+            this.libraryView = options.libraryView;
+            
+            // options.viewAttrs will determine which tools are shown on the problem
             this.allAttrs = {};
-            _.extend(this.allAttrs,this.options.viewAttrs,{type: this.options.type});
+            _.extend(this.allAttrs,options.viewAttrs);
 
-            var thePath = this.model.get("path").split("templates/")[1];
-            var probURL = "?effectiveUser=" + config.requestObject.user + "&editMode=SetMaker&displayMode=images&key=" 
-                + config.requestObject.session_key 
-                + "&sourceFilePath=" + thePath + "&user=" + config.requestObject.user + "&problemSeed=1234";
+            var probURL = "?effectiveUser=" + config.courseSettings.user + "&editMode=SetMaker&displayMode=" 
+                + this.allAttrs.displayMode + "&key=" + config.courseSettings.session_key 
+                + "&sourceFilePath=" + this.model.get("source_file") + "&user=" + config.courseSettings.user + "&problemSeed=1234"; 
             _.extend(this.allAttrs,{editUrl: "../pgProblemEditor/Undefined_Set/1/" + probURL, viewUrl: "../../Undefined_Set/1/" + probURL});
-            this.model.on('change:data', this.render, this);
-            this.model.on('destroy', this.remove, this);
+            
+            this.model.on('change:value', function () {
+                if(self.model.get("value").match(/^\d+$/)) {
+                    self.model.save();
+                }
+            });
+            this.tagsLoaded=false;
         },
 
         render:function () {
             var self = this;
-            if(this.model.get('data')){
+            if(this.model.get('data') || this.allAttrs.displayMode=="None"){
                 _.extend(this.allAttrs,this.model.attributes);
+                if(this.allAttrs.displayMode=="None"){
+                    this.model.attributes.data="";
+                }
                 this.$el.html(this.template(this.allAttrs));
-                this.$el.css("background-color","lightgray");
-                this.$(".problem").css("opacity","0.5");
-                this.$(".prob-value").on("change",this.updateProblem);
-                this.model.collection.trigger("problemRendered",this.model.get("place"));
-                
-                // if images  mode is used
-                var dfd = this.$el.imagesLoaded();
-                dfd.done( function( $images ){
-
+                this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
                     self.$(".problem").removeAttr("style");
                     self.$(".loading").remove();
                 });
 
-                if (this.options.viewAttrs.draggable) {
+
+                if (this.allAttrs.draggable) {
                     this.$el.draggable({
                         helper:'clone',
                         revert:true,
@@ -61,49 +59,80 @@ define(['Backbone', 'underscore','config','jquery-imagesloaded'], function(Backb
 
                 } 
 
-                if(this.model.get("displayMode")==="MathJax"){
+                this.el.id = this.model.cid;
+                this.$el.attr('data-path', this.model.get('source_file'));
+                this.$el.attr('data-source', this.allAttrs.type);
+                if (this.allAttrs.displayMode==="MathJax"){
                     MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
                 }
+
+                this.stickit();
                 
             } else {
-                this.$el.html("<img src='/webwork2_files/images/ajax-loader-small.gif' alt='loading'/>");
-                this.model.fetch();
+                this.$el.html($("#problem-loading-template").html());
+                this.model.loadHTML({displayMode: this.allAttrs.displayMode, success: function (data) {
+                    self.model.set("data",data.text);
+                    self.render();
+                }, error:function(data){
+                    self.model.set("data",data.responseText);
+                    self.render();
+                }});
             }
 
-            this.el.id = this.model.cid;
-            this.$el.attr('data-path', this.model.get('path'));
-            this.$el.attr('data-source', this.allAttrs.type);
 
             return this;
         },
         events: {"click .hide-problem": "hideProblem",
-            "click .remove": 'clear',
+            "click .remove-problem": "removeProblem",
             "click .refresh-problem": 'reloadWithRandomSeed',
-            "click .add-problem": "addProblem"},
+            "click .add-problem": "addProblem",
+            "click .seed-button": "toggleSeed",
+            "click .path-button": "togglePath",
+            "click .tags-button": "toggleTags"
+        },
+        bindings: {".prob-value": "value",
+            ".mlt-tag": "morelt",
+            ".level-tag": "level",
+            ".keyword-tag": "keyword",
+            ".problem-author-tag": "author",
+            ".institution-tag": "institution",
+            ".tb-title-tag": "textbook_title",
+            ".tb-chapter-tag": "textbook_chapter",
+            ".tb-section-tag": "textbook_section",
+            ".DBsubject-tag": "subject",
+            ".DBchapter-tag": "chapter",
+            ".DBsection-tag": "section",
+        },
         reloadWithRandomSeed: function (){
             var seed = Math.floor((Math.random()*10000));
-            this.model.set({data:"", problemSeed: seed},{silent: true});
-
+            console.log("reloading with new seed " + seed);
+            this.model.set({data:"", problem_seed: seed},{silent: true});
             this.render();
         },
+        toggleTags: function () {
+            this.$(".problem-tags").toggleClass("hidden");
+        },
+        toggleSeed: function () {
+            this.$(".problem-seed").toggleClass("hidden");
+        },
+        togglePath: function () {
+            this.$(".filename").toggleClass("hidden");
+        },
         addProblem: function (evt){
-            this.model.collection.trigger("add-to-target",this.model);
+            console.log("adding a problem.");
+            this.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
         },
         hideProblem: function(evt){
-            $(evt.target).parent().parent().css("display","none")
+            console.log("hiding a problem ");
+            this.$el.css("display","none")
         },
-        updateProblem: function(evt)
-        {
-            this.model.update({value: $(evt.target).val()});
-        },
-        clear: function(){
+        removeProblem: function(){
             console.log("removing problem");
+            //this.model.collection.remove(this.model);
             this.model.collection.remove(this.model);
-            this.model.clear();
-
-            // update the number of problems shown
+            this.remove();  // remove the view
         }
     });
 
-	return ProblemView;
+    return ProblemView;
 });

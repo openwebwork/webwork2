@@ -128,7 +128,6 @@ sub fake_problem {
 	my $db = shift; 
 	my %options = @_;
 	my $problem = $db->newGlobalProblem(); 
-
 	#debug("In fake_problem");
 
 	$problem = global2user($db->{problem_user}->{record}, $problem); 

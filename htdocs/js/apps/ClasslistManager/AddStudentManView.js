@@ -1,94 +1,104 @@
-    // This is the View for the dialog for addings students manually    
+// This is the View for the dialog for addings students manually    
 
-define(['Backbone', 
-	'underscore',
-	'Closeable',
-	'../../lib/models/User',
-	'config',
-	'../../lib/views/UserRowView'], function(Backbone, _,Closeable,User,config,UserRowView){	
+define(['Backbone', 'underscore','models/User','models/UserList','config','stickit'], 
+	function(Backbone, _, User, UserList, config){	
 	var AddStudentManView = Backbone.View.extend({
-		tagName: "div",
-		id: "addStudManDialog",
-	    
-		initialize: function(){
+		id: "addStudManDialog",	    
+		initialize: function(options){
 		    var self=this;
-		    _.bindAll(this, 'render','importStudents','addStudent','appendRow','openDialog','closeDialog'); // every function that uses 'this' as the current object should be in here
-		    this.collection = new TempUserList();
-		    
-		    
-		    this.collection.bind('add', this.appendRow);
-		    this.parent = this.options.parent;
-		    this.render();
-		    
-		    this.collection.add(new User);  // add a single blank line. 
-		    
-		    
+		    _.bindAll(this, 'render','importStudents','addStudent','openDialog','closeDialog'); // every function that uses 'this' as the current object should be in here
+		    this.courseUsers = options.users; 
 		    this.$el.dialog({autoOpen: false, modal: true, title: "Add Students by Hand",
-							width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
-		    
-		    this.collection.on('error',function(model, error) {
-				self.errorPane.appendHTML(error.message + "<br/>");
-		    });
-		    
-		     Backbone.Validation.bind(this);
+							width: (0.95*window.innerWidth), height: (0.60*window.innerHeight) });
 		},
+		rowTemplate: $("#user-row-template").html(),
 		events: {
-		    "click button#import_stud_button": "importStudents",
-		    "click button#add_more_button": "addStudent"
+		    "click button#import-stud-button": "importStudents",
+		    "click button#add-more-button": "addStudent",
+		    "click button#cancel-import": "closeDialog"
 		},
-		openDialog: function () { this.$el.dialog("open");},
+		openDialog: function () { 
+			var self = this;
+			this.$el.dialog("open");
+			this.collection = new UserList([new User()]);  // add a single blank user to the collection of students to import.		    		    
+			this.collection.on({add: this.render, remove: this.render}).courseUsers = this.courseUsers;
+			this.render();
+		},
 		closeDialog: function () {this.$el.dialog("close");},
-		template: _.template($("#add_student_man_dialog_content").html()),
 		render: function(){
-		    var self = this;
-		    var tableHTML = "<table id='man_student_table'><tbody><tr><td>Delete</td>"
-		    tableHTML += (_(config.userProps).map(function (prop) {return "<td>" + prop.longName + "</td>";})).join("") + "</tr></tbody></table>";
-		    
-		    this.$el.append(this.template({content: tableHTML}));
-		    _(this.collection).each(function(user){ self.appendRow(user);}, this);
-		    
-			    
-		    this.errorPane = new Closeable({el: this.$("#error-pane-add-man"), classes : ["alert-error"]});
-		    
-		    
-		    
+			var self = this;
+		    this.$el.html($("#manual-import-template").html());
+		    var table = this.$("table#man_student_table tbody");
+		    this.collection.each(function(user){ 
+			    table.append(new UserRowView({model: user, rowTemplate: self.rowTemplate}).render().el);
+		    });
 		},
 		importStudents: function(){  // validate each student data then if successful upload to the server.
-		    var self = this,
-			usersValid = new Array();
-			
-		    this.errorPane.setHTML("");
-		    
-		    this.collection.each(function(user){
-				_(user.attributes).each(function(value,key) {
-			    
-					var errorMessage = user.preValidate(key, value);
-					if ((errorMessage!=="") && (errorMessage !== false)) {
-						self.collection.trigger("error",user, {type: key, message: errorMessage}); 
-					}
-				});
-			
-				usersValid.push(user.isValid(true)===true);
-		    });
-		    
-		    console.log(usersValid);
-		    
+		    var self = this;
+		    var usersValid = this.collection.map(function(model){ return model.isValid(true);});
 		    if (_.all(usersValid, _.identity)) { 
 		    	this.closeDialog();
-		    	this.collection.each(function(_user) {self.parent.collection.add(_user);});
-		    }
+		    	this.collection.each(function(_user) {
+		    		_user.id = void 0; // to ensure that it is a new user. 
+		    		self.courseUsers.add(_user);
+		    	});
+			}
 		},
-		appendRow: function(user){
-		    var tableRow = new UserRowView({model: user});
-		    $("table#man_student_table tbody",this.el).append(tableRow.el);
+		addStudent: function (){ 
+			var user = new User()
+			user.id="temp"+(this.collection.length+1); // to make sure a unique id is generated. 
+			this.collection.add(user);
+		}
+    });
+
+	var UserRowView = Backbone.View.extend({
+        tagName: "tr",
+        initialize: function (options) {
+        	var self = this;
+            _.bindAll(this,'render','isValid');
+        	this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
+        		{"user_id": ".login-name", "email_address": ".email"});
+		    this.rowTemplate = options.rowTemplate;
+		    Backbone.Validation.bind(this, {
+		    	invalid: function(view,attr,error){
+		    		self.$(self.invBindings[attr]).popover({placement: "right", content: error})
+                    	.popover("show").addClass("error");
+		    	}
+		    });
+		
+        },
+        render: function () {
+            this.$el.html(this.rowTemplate);
+            this.stickit();
+            return this; 
+	    },       
+    	bindings : { ".student-id": "student_id",
+    				".last-name": "last_name",    		
+    				".first-name": "first_name",
+    				".status": "status",
+    				".comment": "comment",
+    				".status": "status",
+    				".recitation": "recitation",
+    				".email": {observe: "email_address", setOptions: {silent:true}},
+    				".login-name": {observe: "user_id", setOptions: {silent:true}},
+    				".password": "password",
+    				".permission": { 
+    					observe: "permission",
+    					selectOptions: { collection: function() { return config.permissions;}}
+    				}
+    			},
+        events: {
+		    'click .delete-button': 'removeRow'
 		},
-		addStudent: function (){ this.collection.add(new User());}
-	    });
-	    
-	    // This is a Backbone collection of webwork.User(s).  This is different than the webwork.userList class  because we don't need
-    // the added expense of additions to the server.
-    
-    var TempUserList = Backbone.Collection.extend({model:User});
+		removeRow: function () { 
+			console.log("in removeRow");
+			this.model.collection.remove(this.model); 
+
+			this.$el.remove();	
+		}
+
+    });
+
 
     return AddStudentManView;
 

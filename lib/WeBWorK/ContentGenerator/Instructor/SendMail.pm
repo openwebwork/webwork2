@@ -445,7 +445,7 @@ sub initialize {
 			$r->post_connection($post_connection_action, $r);
 		}
 	} else {
-		$self->addbadmessage(CGI::p("Didn't recognize button $action"));
+		$self->addbadmessage(CGI::p("Didn't recognize action"));
 	}
 
 

@@ -6,51 +6,19 @@ define(['Backbone', 'underscore','config'], function(Backbone, _, config){
             student_id: "",
             user_id: "",
             email_address: "",
-            permission: {name: "student", value: 0}, //student
+            permission: 0, //student
             status: "C", //enrolled
             section: "",
             recitation: "",
-            comment: "",
-            userpassword: ""
+            comment: ""
         },
-    
-        initialize: function(){
-            this.on('change',this.update);
-        },
-    
-        update: function(){
-            
-            console.log("in config.User update");
-            var self = this;
-            var requestObject = {
-                "xml_command": 'editUser'
-            };
-            _.extend(requestObject, this.attributes);
-            _.defaults(requestObject, config.requestObject);
-    
-            // store the changed attribute. 
-
-            this.oldAttributes = _.clone(this.changedAttributes());
-
-            for(prop in this.changedAttributes())
-            {
-                this.oldAttributes[prop] = this.previous(prop);
-            }
-
-            requestObject.permission = requestObject.permission.value;
-            console.log(requestObject.permission);
-    
-            $.post(config.webserviceURL, requestObject, function(data){
-                console.log(data);
-                var response = $.parseJSON(data);
-                var user = response.result_data;
-                
-                
-                // if this is successful, then report back by triggering a updateSuccess event
-                // Somehow it would be nice to deliver whether a general update of user information was made
-                // or a password change.  
-                self.trigger("success","property_changed", self);
-            });
+        validation: { 
+            user_id: {checkLogin: "fred"},
+            email_address: {pattern: "email", required: false}
+        }, 
+        idAttribute: "user_id",
+        url: function () {
+            return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id");
         },
         toCSVString: function (){
             var self = this;

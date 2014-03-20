@@ -1,113 +1,113 @@
 /**
-*  This view is the interface to the Library Tree and allows the user to easier navigate the Library. 
+*  This view is the interface to the Library Tree and allows the user to more easier navigate the Library. 
 *
 *  To use the LibraryTreeView the following parameters are needed:
-*  dispatcher:  A backbone Event dispatcher to send a event when a library is accessed.  // can be null
-*  orientation: either "pulldown" or "horiztonal" as two layouts of the library
 *  type:  the type of library needed which is passed to the Library Tree
 *  
 *
 */
 
-define(['Backbone', 
-    'underscore',
-    '../models/LibraryTree'], 
-function(Backbone, _,LibraryTree){
+define(['Backbone', 'underscore','models/LibraryTree','stickit'], 
+    function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
-    	initialize: function (){
-    		_.bindAll(this,"render","buildTreeView","updateLibraryTree","loadProblems");
+    	initialize: function (options){
+    		_.bindAll(this,"render","loadProblems","changeLibrary");
             var self = this;
-            this.dispatcher = this.options.dispatcher; 
-            this.orientation = this.options.orientation;
-            this.libraryTree = new LibraryTree({type: this.options.type});
-            this.libraryTree.on("fetchSuccess", this.render);
+            this.libraryTree = new LibraryTree({type: options.type});
+            this.libraryTree.set("header","Library/");
+            this.fields = new LibraryLevels();
+            this.fields.on("change",this.changeLibrary);
 
+            this.libraryLevel=[[],[],[],[]];
+            this.bindings = {};
+            for(var i = 0; i<4;i++) {
+                this.bindings[".library-level-"+i+ " select"]= {observe: "level"+i,
+                    selectOptions: {collection: function (view,opts) { 
+                        return self.libraryLevel[opts.observe.split("level")[1]||""]},
+                    defaultOption: {label: "Select...", value: null}}};
+            }
     	},
     	render: function(){
-            this.$el.html(_.template($("#library-tree-template").html()));
-            if (!this.libraryTree.fetched) {
-                this.libraryTree.fetch();
+            var i,branch,numFiles = null;
+            this.$el.html($("#library-tree-template").html());
+            if (!this.libraryTree.get("tree")) {
+                this.libraryTree.fetch({success: this.render});
+
             } else {
                 this.$(".throbber").remove();
-                //this.buildTreeView(this.libraryTree.tree,0);
-                this.$(".library-tree-left").html(_.template($("#library-dropdown-template").html(),{subjects: this.libraryTree.tree}));
+                if(this.libraryLevel[0].length===0){
+                    this.libraryLevel[0] = _(this.libraryTree.get("tree")).map(function(subj) {
+                        return {label: subj.name, value: subj.name};
+                    });                    
+                }
+
+                this.$(".library-tree-left").html($("#library-select-template").html());
+
+                for(i=1;i<4;i++){
+                    if(this.libraryLevel[i].length>0){
+                        this.$(".library-level-"+i).removeClass("hidden");
+                    }
+                }
+                if(_(this.fields.values()).without("").length>0){
+                    branch = this.branchOfTree(_(this.fields.attributes).values()); 
+                    this.$(".num-files").text(branch.num_files + " problems");  
+                }
+                this.stickit(this.fields, this.bindings);
             }
+            
+            return this; 
     	},
-        events: { "click .library-tree-left a": "selectLibrary"},
+        events: { "click .load-library-button": "selectLibrary"},
+        changeLibrary: function(model){
+            var level = parseInt(_(model.changed).keys()[0].split("level")[1]);
+             
+            for(i=(level+1);i<4;i++){
+                this.fields.set("level"+i,"");
+                this.$(".library-level-"+(i+1)).addClass("hidden");  // hide all other levels. 
+            }
+            var branch = this.branchOfTree(_(model.attributes).values());
+            this.libraryLevel[level+1] = branch.branches;
+
+            if(branch.branches.length>0){
+                this.$(".library-level-"+(level+1)).removeClass("hidden");  // show the next level in the tree
+            }
+            this.$(".num-files").text(branch.num_files + " problems");
+            this.unstickit(this.fields);
+            this.stickit(this.fields,this.bindings);
+        },
         selectLibrary: function(evt){
-            var leaf = $(evt.target);
-            if (leaf.text().trim() === "Library"){ return; }
-
-
-            var path = leaf.text().trim();
-            var level = parseInt(leaf.closest("li").data('level'));
-
-            while(level>0){
-                leaf = leaf.closest("li").parent().parent().children("a");
-                path = leaf.text().trim() + "/" + path;
-                level--;
-            }
-
-            this.dispatcher.trigger("load-problems",this.libraryTree.header+path);
-
-
-            
-        },
-        buildTreeView: function (libs,index){
-            var self = this;
-            var i;
-            self.$(".throbber").remove();
-
-            // remove other input item to the right of the selected one. 
-
-            _(self.$(".lib-select")).each(function(item){
-                var level = parseInt($(item).attr("id").split("-")[1],10);
-                if (level >= index) {$(item).remove();}
-            });
-
-            self.$(".load-problems").remove();
-            self.$(".load-problems").off("click");
-
-
-            var opts = _(libs).map(function(lib){return "<option>" + (_.isArray(lib)?lib[0]:lib) + "</option>";});
-            this.$(".library-tree-left").append("<select class='lib-select input-medium' id='ls-" + index + "'><option>Choose A Library</option>" 
-                + opts.join("") + "</select>" + "<button class='load-problems btn btn-small'>Load Problems</button>");
-
-            this.$(".lib-select").on("change",this.updateLibraryTree);
-            this.$(".load-problems").on("click",self.loadProblems);
-
-        },
-        updateLibraryTree: function (evt) {
-            var level = parseInt($(evt.target).attr("id").split("-")[1],10);  // the library level that was changed.  
-            var i=0;
-            var _tree = this.libraryTree.tree; 
-            var buildTree = false; 
-            while(i<=level){
-                var selectedName = this.$("#ls-"+i).val();
-                var index = _(_tree).map(function(item) { return (_.isArray(item)?item[0]:item);}).indexOf(selectedName);
-                if (_.isArray(_tree[index])) {
-                    buildTree = true;
-                    _tree = _tree[index][1];
-                } else { buildTree = false;}
-                i++;
-
-            }
-
-            if (buildTree) {
-                    this.buildTreeView(_tree,level+1);            
-            }
-            
+            this.libraryTree.trigger("library-selected",this.libraryTree.get("header")
+                        +_(this.fields.values()).without("").join("/"));
         },
         loadProblems: function (evt) {
             var path = _(this.$(".lib-select")).map(function(item){ return $(item).val()});
             if (this.$(".lib-select").last().val()==="Choose A Library") {path.pop();}
             this.parent.dispatcher.trigger("load-problems",this.libraryTree.header+path.join("/"));
+        },
+        branchOfTree: function(path){
+            var currentBranch=this.libraryTree.get("tree");
+            var numFiles;
+            _(path).each(function(p,i){
+                if(p.length>0){
+                    var branch = _(currentBranch).findWhere({name:p});
+                    currentBranch = branch.subfields;
+                    numFiles = branch.num_files;
+                }
+            });
+            return {branches: _(currentBranch).map(function(s) { return {label: s.name, value: s.name};}), 
+                num_files: numFiles};
         }
-
-
     });
 
+    var LibraryLevels = Backbone.Model.extend({
+        defaults:  { 
+            level0: "",
+            level1: "",
+            level2: "",
+            level3: "",
+        }
+    });
 
     return LibraryTreeView;
 
