@@ -211,6 +211,10 @@ table.classlist-table .tbody {
     width: 100%;
 }
 
+table.classlist-table td {
+    padding-right: 20px;
+}
+
 /* Homework Sets */
 .problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
 	margin: 0.5em; /* keep the assignment buttons from crowding chkbox */
@@ -552,7 +556,7 @@ div.NoFontMessage {
 }
 
 .set_table td{
-	padding-right: 5px;
+	padding-right: 20px;
 }
 
 .set_table th{

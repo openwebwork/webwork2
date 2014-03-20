@@ -39,7 +39,7 @@ use WeBWorK::Utils::DatePickerScripts;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring reduced_credit_date restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring reduced_scoring_date restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
 use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
@@ -57,7 +57,7 @@ use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attemp
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring reduced_credit_date restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring reduced_scoring_date restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 
@@ -146,7 +146,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	enable_reduced_scoring => {
-		name      => "Reduced Credit Enabled",
+		name      => "Reduced Scoring Enabled",
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( 0 1 )],
@@ -155,7 +155,7 @@ use constant FIELD_PROPERTIES => {
 				0 => "No",
 		},
 	},
-	reduced_credit_date => {
+	reduced_scoring_date => {
 		name      => "Reduced Scoring Date",
 		type      => "edit",
 		size      => "30em",
@@ -454,11 +454,11 @@ sub FieldTable {
 		    }
 		
 		if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-		    ($field eq 'reduced_credit_date' || $field eq 'enable_reduced_scoring')) {
+		    ($field eq 'reduced_scoring_date' || $field eq 'enable_reduced_scoring')) {
 			$properties{'type'} = 'hidden';
 		} elsif ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-		    $field eq 'reduced_credit_date' && !$globalRecord->reduced_credit_date) {
-		    $globalRecord->reduced_credit_date($globalRecord->due_date -
+		    $field eq 'reduced_scoring_date' && !$globalRecord->reduced_scoring_date) {
+		    $globalRecord->reduced_scoring_date($globalRecord->due_date -
 			60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 		}
 
@@ -983,10 +983,10 @@ sub initialize {
 	# Check date information
 	#####################################################################
 
-	my ($open_date, $due_date, $answer_date, $reduced_credit_date);
+	my ($open_date, $due_date, $answer_date, $reduced_scoring_date);
 	my $error = 0;	
 	if (defined $r->param('submit_changes')) {
-		my @names = ("open_date", "due_date", "answer_date", "reduced_credit_date");
+		my @names = ("open_date", "due_date", "answer_date", "reduced_scoring_date");
 		
 		my %dates = map { $_ => $r->param("set.$setID.$_") } @names;
 
@@ -995,7 +995,7 @@ sub initialize {
 			$_ => defined $unlabel ? $setRecord->$_ : $self->parseDateTime($dates{$_}) 
 		} @names;
 
-		($open_date, $due_date, $answer_date, $reduced_credit_date) = map { $dates{$_}||0 } @names;
+		($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_}||0 } @names;
 		
 		# make sure dates are numeric by using ||0
         
@@ -1009,8 +1009,8 @@ sub initialize {
 			$error = $r->param('submit_changes');
 		}
 
-		if ($reduced_credit_date && ($reduced_credit_date > $due_date || $reduced_credit_date < $open_date)) {
-			$self->addbadmessage($r->maketext("The reduced credit date shoudl be between the open date and due date."));
+		if ($reduced_scoring_date && ($reduced_scoring_date > $due_date || $reduced_scoring_date < $open_date)) {
+			$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
 			$error = $r->param('submit_changes');
 		}
 		

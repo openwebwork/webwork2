@@ -333,12 +333,12 @@ sub body {
 
 
 	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
-	my $reduced_credit_date = $set->reduced_credit_date;
-	if ($reduced_credit_date and $enable_reduced_scoring) {
+	my $reduced_scoring_date = $set->reduced_scoring_date;
+	if ($reduced_scoring_date and $enable_reduced_scoring) {
 		my $dueDate = $self->formatDateTime($set->due_date());
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
-		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_credit_date);
+		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
 
 		if (time < $set->due_date()) {
 			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_1",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));

@@ -455,10 +455,10 @@ sub body {
 		$r->maketext("Due Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
-	    # Reduced Credit Enabled made the column wider than it needed
+	    # Reduced Scoring Enabled made the column wider than it needed
 	    # to be...
-	    #   $r->maketext("Reduced Credit Enabled"), 
-	        $r->maketext("Reduced Credit"), 
+	    #   $r->maketext("Reduced Scoring Enabled"), 
+	        $r->maketext("Reduced Scoring"), 
 		$r->maketext("Hide Hints") 
 	);
 	
@@ -610,7 +610,7 @@ sub body {
 	
 	########## first adjust heading if in editMode
 	$prettyFieldNames{set_id} = $r->maketext("Edit Set") if $editMode;
-	$prettyFieldNames{enable_reduced_scoring} = $r->maketext('Enable Reduced Credit') if $editMode;
+	$prettyFieldNames{enable_reduced_scoring} = $r->maketext('Enable Reduced Scoring') if $editMode;
 	
 	
 	print CGI::p({},$r->maketext("Showing [_1] out of [_2] sets.", scalar @visibleSetIDs, scalar @allSetIDs));
@@ -1020,13 +1020,13 @@ sub enable_reduced_scoring_handler {
 		$result =  CGI::div({class=>"ResultsWithError"}, $r->maketext("No change made to any set"));
 	} elsif ($scope eq "all") {
 		@setIDs = @{ $self->{allSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Credit [_1] for all sets", $verb));
+		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for all sets", $verb));
 	} elsif ($scope eq "visible") {
 		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Credit [_1] for visable sets", $verb));
+		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for visable sets", $verb));
 	} elsif ($scope eq "selected") {
 		@setIDs = @{ $genericParams->{selected_sets} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Credit [_1] for selected sets", $verb));
+		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for selected sets", $verb));
 	}
 	
 	# can we use UPDATE here, instead of fetch/change/store?
@@ -1035,8 +1035,8 @@ sub enable_reduced_scoring_handler {
 	foreach my $set (@sets) {
 	    next unless $set;
 	    $set->enable_reduced_scoring("$value");
-	    if ($value  && !$set->reduced_credit_date) {
-		$set->reduced_credit_date($set->due_date -
+	    if ($value  && !$set->reduced_scoring_date) {
+		$set->reduced_scoring_date($set->due_date -
 					  60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 	    }
 	    $db->putGlobalSet($set);
@@ -1569,8 +1569,8 @@ sub saveEdit_handler {
 				    #If we are enableing reduced scoring, make sure the reduced scoring date is set
 				    my $value = $tableParams->{$param}->[0];
 				    $Set->enable_reduced_scoring($value);
-				    if (!$Set->reduced_credit_date) {
-					$Set->reduced_credit_date($Set->due_date -
+				    if (!$Set->reduced_scoring_date) {
+					$Set->reduced_scoring_date($Set->due_date -
 								  60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 				    }
 
@@ -2383,7 +2383,7 @@ sub recordEditHTML {
 	my $setSelected = $options{setSelected};
 
 	my $visibleClass = $Set->visible ? $r->maketext("font-visible") : $r->maketext("font-hidden");
-	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Credit Enabled') : $r->maketext('Reduced Credit Disabled');
+	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Scoring Enabled') : $r->maketext('Reduced Scoring Disabled');
 
 	my $users = $db->countSetUsers($Set->set_id);
 	my $totalUsers = $self->{totalUsers};
@@ -2576,7 +2576,7 @@ sub printTableHTML {
 
 	# print the table
 	if ($editMode or $exportMode) {
-		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY"). " This is a subset of all homework sets" });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
+		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY"). " This is a subset of all homework sets" });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Scoring Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	} else {
 		print CGI::start_table({-id=>"set_table_id", -border=>1, -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") }); #"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	}

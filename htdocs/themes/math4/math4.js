@@ -16,7 +16,9 @@ $(function(){
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
 
     // replace pencil gifs by something prettier
-    $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
+    $('td a:has(img[src$="edit.gif"])').each(function () { 
+	$(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); 
+    });
 
     // Turn summaries into popovers
     $('a.table-summary').popover();

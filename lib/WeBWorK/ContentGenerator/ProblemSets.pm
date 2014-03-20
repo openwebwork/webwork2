@@ -502,11 +502,11 @@ sub setListRow {
 	} elsif (time < $set->due_date && !@restricted) {
 			$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 			my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
-			my $reduced_credit_date = $set->reduced_credit_date;
-			if ($reduced_credit_date and $enable_reduced_scoring) {
-			    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_credit_date);
-#				$status .= '. <FONT COLOR="#cc6600">Reduced Credit starts ' . $beginReducedScoringPeriod . '</FONT>';
-			    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Credit Starts: [_1]", $beginReducedScoringPeriod));
+			my $reduced_scoring_date = $set->reduced_scoring_date;
+			if ($reduced_scoring_date and $enable_reduced_scoring) {
+			    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
+#				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
+			    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
 			    
 			}
 		$setIsOpen = 1;
@@ -524,14 +524,15 @@ sub setListRow {
 		  }
 		 $status .= " to open this set."
 		}
-		my $enable_reduced_scoring = $set->enable_reduced_scoring;
-		my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
-		if ($reducedScoringPeriod > 0 and $enable_reduced_scoring ) {
-			my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
-			my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec,undef,$ce->{studentDateDisplayFormat});
-#				$status .= '. <FONT COLOR="#cc6600">Reduced Credit starts ' . $beginReducedScoringPeriod . '</FONT>';
-			$status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Credit Starts: [_1]", $beginReducedScoringPeriod));
 
+		my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+		my $reduced_scoring_date = $set->reduced_scoring_date;
+		if ($reduced_scoring_date and $enable_reduced_scoring) {
+		    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
+		    
+#				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
+		    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
+		    
 		}
 		$setIsOpen = 0;
 	} elsif (time < $set->answer_date) {

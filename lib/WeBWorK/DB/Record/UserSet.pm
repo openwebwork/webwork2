@@ -36,7 +36,7 @@ BEGIN {
 		open_date                 => { type=>"BIGINT" },
 		due_date                  => { type=>"BIGINT" },
 		answer_date               => { type=>"BIGINT" },
-		reduced_credit_date       => { type=>"BIGINT" },	    
+		reduced_scoring_date       => { type=>"BIGINT" },	    
 		visible                   => { type=>"INT" },
 		enable_reduced_scoring    => { type=>"INT" },
 		assignment_type           => { type=>"TEXT" },
