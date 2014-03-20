@@ -2181,8 +2181,7 @@ sub body {
 			#    homework set, or if we're editing a gateway set version, or 
 			#    if we're editing a gateway set and the problem is not a 
 			#    group problem		
-
-			# we also want "needs grading" or "regrade" links for problems which
+			# we also want "grade problem" links for problems which
 			# have essay questions.  
 	
 			my $showLinks = ( ! $isGatewaySet || 
@@ -2190,28 +2189,13 @@ sub body {
 			
 			my $gradingLink = "";
 			if ($showLinks) {
-			    my @setUsers = $db->listSetUsers($setID);
-			    my $gradeable = 0;
-			    my $needs_grading = 0;
-			    foreach my $userID (@setUsers)  {
-				my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
-				next unless $userProblem;
-				if ($userProblem->flags =~ /needs_grading/) {
-				    $needs_grading = 1;
-				    $gradeable = 1;
-				    last;
-				} elsif ($userProblem->flags =~ /graded/) {
-				    $gradeable=1;
-				}
-				
-			    }
-			    if ($gradeable) {
-				
+			    
+			    if ($problemRecord->flags =~ /essay/) {
 				my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-				$gradingLink = CGI::Tr({}, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs Grading" : "Regrade")));
+				$gradingLink = CGI::Tr({}, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem")));
+			    }
+			    
 			}
-			
-		}
 		
 			
 			print CGI::Tr({}, CGI::td({}, [
@@ -2273,6 +2257,7 @@ sub body {
 			),CGI::input({
 					name=>"add_n_problems",
 					size=>2,
+					type=>'text',
 					value=>1 },
 					$r->maketext("blank problem template(s) to end of homework set")
 			);
