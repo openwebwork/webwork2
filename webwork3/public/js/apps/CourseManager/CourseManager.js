@@ -10,8 +10,9 @@ function(module, Backbone, _, UserList, ProblemSetList, SettingList,MainViewList
     AssignmentDate,AssignmentDateList,WebPage,config,util){
 var CourseManager = WebPage.extend({
     tagName: "div",
+    messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
-	    this.constructor.__super__.initialize.apply(this, {el: this.el});
+        WebPage.prototype.initialize.apply(this,{el: this.el});
 	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails",
             "changeView","changeSidebar","loadData","checkData","saveState");  // include all functions that need the this object
 	    var self = this;
@@ -21,7 +22,6 @@ var CourseManager = WebPage.extend({
         this.session = (module.config().session)? module.config().session : {};
         this.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;
         this.users = (module.config().users) ? new UserList(module.config().users) : null;
-
         // We need to pass the standard date settings to the problemSets.  
         var dateSettings = util.pluckDateSettings(this.settings);
         this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets,{parse: true, 
@@ -38,7 +38,7 @@ var CourseManager = WebPage.extend({
     loadData: function (data) {
         var self = this;
         if(data.logged_in===1){ // logged in successful,  load the data
-            this.loginPane.$(".message-bottom").html(config.msgTemplate({type: "loading_data"}))
+            this.loginPane.$(".message-bottom").html(this.messageTemplate({type: "loading_data"}))
                 .append("<i class='fa fa-spinner fa-spin'></i>");
             this.data_loaded = {settings: false, users: false, problemSets: false};
             // request the session information
@@ -53,7 +53,7 @@ var CourseManager = WebPage.extend({
 
             
         } else { // send an error
-            this.loginPane.$(".message").html(config.msgTemplate({type: "bad_password"}));
+            this.loginPane.$(".message").html(this.messageTemplate({type: "bad_password"}));
         }
     },
     // wait for all of the data to get loaded in, close the login window, then start the Course Manager. 
@@ -62,15 +62,21 @@ var CourseManager = WebPage.extend({
         console.log(_(this.data_loaded).chain().values().every(_.identity).value());
         if(_(this.data_loaded).chain().values().every(_.identity).value()){
             this.closeLogin();
+
+            // make sure the dateSettings are properly stored:
+            this.problemSets.dateSettings = util.pluckDateSettings(this.settings);
+
             this.startManager();
         }
     },
     startManager: function () {
         var self = this;
         this.navigationBar.setLoginName("Welcome " +this.session.user);
-        this.buildAssignmentDates();
+        
         this.mainViewList = new MainViewList({settings: this.settings, users: this.users, 
                 problemSets: this.problemSets, eventDispatcher: this.eventDispatcher});
+
+        this.buildAssignmentDates();
 
         // Build the menu.  Should we make a View for this?  
 
@@ -171,7 +177,7 @@ var CourseManager = WebPage.extend({
         }});
 
         $(window).on("beforeunload", function () {
-            return config.msgTemplate({type: "leave_page"});
+            return this.messageTemplate({type: "leave_page"});
          });
 
     },

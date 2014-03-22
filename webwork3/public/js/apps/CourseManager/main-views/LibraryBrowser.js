@@ -10,7 +10,7 @@ define(['backbone', 'underscore','views/MainView', 'views/LibraryView','views/Li
 function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,
     LibraryTextbookView,ProblemSet,moment,config){
     var LibraryBrowser = MainView.extend({
-        
+        messageTemplate: _.template($("#library-messages-template").html()),
     	initialize: function (options){
             MainView.prototype.initialize.call(this,options);
     		var self = this; 
@@ -30,17 +30,17 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
 
             this.views = {
                 subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: options.problemSets,
-                                    settings: this.settings}),
+                                    settings: this.settings, messageTemplate: this.messageTemplate}),
                 directories    :  new LibraryView({libBrowserType: "directories", problemSets: options.problemSets,
-                                    settings: this.settings}),
+                                    settings: this.settings,messageTemplate: this.messageTemplate}),
                 textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: options.problemSets,
-                                    settings: this.settings}),
+                                    settings: this.settings,messageTemplate: this.messageTemplate}),
                 localLibrary: new LocalLibraryView({libBrowserType: "localLibrary", problemSets: options.problemSets,
-                                    settings: this.settings}),
+                                    settings: this.settings,messageTemplate: this.messageTemplate}),
                 setDefinition: new LocalLibraryView({libBrowserType: "setDefinition", problemSets: options.problemSets,
-                                    settings: this.settings}),
+                                    settings: this.settings,messageTemplate: this.messageTemplate}),
                 search :  new LibrarySearchView({libBrowserType: "search", problemSets: options.problemSets,
-                                    settings: this.settings})
+                                    settings: this.settings,messageTemplate: this.messageTemplate})
             };
     	},
         events: {"show.bs.tab a[data-toggle='tab']": "changeView"},

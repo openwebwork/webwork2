@@ -221,22 +221,18 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <!-- This is where all messages to the user go -->
 
-<script type="text/template" id="all-messages">
+<script type="text/template" id="course-manager-messages-template">
 <%
   var messages = {
     leave_page: function() { return "Do you want to leave this page?";},
     openDate_after_dueDate: function(){return "The open date must come before the due date";},
     dueDate_after_answerDate: function(){return "The due date must come before the answer date.";},
     set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
-    select_target_set: function() { return "You need to select a target set";},
     show_prob_set: function() { return "Show Problem Sets";},
     hide_prob_set: function() { return "Hide Problem Sets";},
     problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
     unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
                   ". Click OK to confirm this."},
-    problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
-    problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id 
-        + " was deleted from set " + opt.setname},
     relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
       + "reenter your username and password to continue. ";},    
     bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."},
