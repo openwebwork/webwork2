@@ -11,7 +11,7 @@
     "jquery-1.8": "jquery#1.8.*",
     "jquery-1.9": "jquery#1.9.*",
     "jquery": "2.0.3",
-    "jquery-ui": "1.10.4",
+    "jquery-ui": "jquery-ui#0fc3f6dc1ded6031a2c84937453c9b3067112cbf",
     "requirejs": "2.1.11",
     "bootstrap-2": "bootstrap#2.*",
     "bootstrap": "3.1.1",
@@ -24,8 +24,5 @@
     "imagesloaded": "3.1.4",
     "underscore-1.4.4": "underscore#1.4.4",
     "underscore": "1.6.0"
-  },
-  "resolutions": {
-    "jquery": ">=1.6"
   }
 }
