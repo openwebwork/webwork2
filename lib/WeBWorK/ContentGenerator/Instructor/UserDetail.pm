@@ -31,10 +31,11 @@ use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Debug;
 
 use constant DATE_FIELDS => {   open_date    => " Open: ",
+                                reduced_scoring_date => " Reduced&nbsp;: ",
 	                            due_date     => " Due&nbsp;: ",
 	                            answer_date  => " Ans&nbsp;: "
 };
-use constant DATE_FIELDS_ORDER =>[qw(open_date due_date answer_date )];
+use constant DATE_FIELDS_ORDER =>[qw(open_date due_date reduced_scoring_date answer_date )];
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -487,6 +488,7 @@ sub checkDates {
 	my $setRecord    = shift;
 	my $setID        = shift;
 	my $r            = $self->r;
+	my $ce           = $r->ce;
 	my %dates = ();
 	my $error_undefined_override = 0;
 	my $numerical_date=0;
@@ -507,7 +509,7 @@ sub checkDates {
 	}
 	return {%dates,error=>1} if $error;    # no point in going on if the dates can't be parsed.
 	
-	my ($open_date, $due_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
+	my ($open_date, $due_date, $reduced_scoring_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
 
     unless ($answer_date && $due_date && $open_date) {
     	$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, 
@@ -522,7 +524,15 @@ sub checkDates {
 		$self->addbadmessage("Answers cannot be due until on or after the open date in set $setID!");
 		$error = 1;
 	}
-	
+
+	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
+	    $setRecord->enable_reduced_scoring &&
+	    ($reduced_scoring_date < $open_date || $reduced_scoring_date > $due_date)) {
+    		$self->addbadmessage("The reduced scoring date should be between the open date and the due date in set $setID!");
+		$error = 1;
+}
+    
+
 	# make sure the dates are not more than 10 years in the future
 	my $curr_time = time;
 	my $seconds_per_year = 31_556_926;
@@ -562,9 +572,15 @@ sub DBFieldTable {
 		$isVersioned = 1;
 	}
 	my $r = $self->r;
+        my $ce = $r->ce;
 	my @fields = @$fieldsRef;
 	my @results;
 	foreach my $field (@fields) {
+                #Skip reduced credit dates for sets which don't have them
+	        next unless ($field ne 'reduced_scoring_date' ||
+			     ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
+			      $GlobalRecord->enable_reduced_scoring));	 
+
 		my $globalValue = $GlobalRecord->$field;
 		my $userValue = defined $UserRecord ? $UserRecord->$field : $globalValue;
 		my $mergedValue  = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
@@ -576,7 +592,7 @@ sub DBFieldTable {
 					name => "$recordType.$recordID.$field.override",
 					label => "",
 					value => $field,
-					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || $isVersioned) ? 1 : 0
+					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || ($isVersioned && $field ne 'reduced_scoring_date')) ? 1 : 0
 				}) : "",
 				defined $UserRecord ? 
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
