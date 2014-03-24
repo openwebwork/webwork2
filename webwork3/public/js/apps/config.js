@@ -61,6 +61,8 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         }
     } 
 
+    config.messageTemplate= _.template($("#general-messages").html());
+
     // These are additional validation patterns to be available to Backbone Validation
 
     _.extend(Backbone.Validation.patterns, { "wwdate": config.regexp.wwDate}); 

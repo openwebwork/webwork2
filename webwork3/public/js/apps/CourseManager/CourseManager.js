@@ -123,7 +123,10 @@ var CourseManager = WebPage.extend({
 
         // Define all of the option views available for the right side
         // 
-        // Again, this should be in a configuration file. 
+
+        this.mainViewList.getSidepaneByName("All Messages")
+            .set({messages: this.messagePane.messages});
+
 
         // Build the options menu.  Should we make a View for this?  
 
