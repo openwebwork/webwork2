@@ -24,6 +24,12 @@ input[type="checkbox"] {
     margin-right:.25em;
 }
 
+label.checkbox, 
+label.radio {
+  white-space:nowrap;
+  margin-right: 20px;
+}
+
 /* Banner */
 #masthead {
 	background-color: #038;
@@ -209,10 +215,6 @@ table.classlist-table {
 
 table.classlist-table .tbody {
     width: 100%;
-}
-
-table.classlist-table td {
-    padding-right: 20px;
 }
 
 /* Homework Sets */
@@ -556,7 +558,7 @@ div.NoFontMessage {
 }
 
 .set_table td{
-	padding-right: 20px;
+	padding-right: 5px;
 }
 
 .set_table th{
