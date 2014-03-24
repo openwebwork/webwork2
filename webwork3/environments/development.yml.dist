@@ -4,6 +4,7 @@
 #  The webwork directory needs to be set
 
 webwork_dir: "/opt/webwork/webwork2"
+pg_dir: "/opt/webwork/pg"
 
 # the logger engine to use
 # console: log messages to STDOUT (your console where you started the
