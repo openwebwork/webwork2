@@ -24,8 +24,8 @@ input[type="checkbox"] {
     margin-right:.25em;
 }
 
-label.checkbox, 
-label.radio {
+td > label.checkbox, 
+td > label.radio {
   white-space:nowrap;
   margin-right: 20px;
 }
@@ -845,7 +845,8 @@ table#grades_table pre{
     margin: 0;
 }
 
-#problem_set_form input[type="checkbox"] {
+#problem_set_form label.checkbox {
+    font-size:14px;
     margin-bottom:.5ex;
 }
 
