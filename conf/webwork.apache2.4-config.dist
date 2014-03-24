@@ -143,7 +143,14 @@ if ($webwork_url eq "") {
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
 
+##########################################################################
+# WeBWork 3
 # This sets up webwork 3 to be served via dancer via cgi
+# If you want to serve webwork 3 directly through dancer comment
+# out the following block, and then uncomment the proxy pass lines below
+# You will need to start dancer manually, or set it up as service
+##########################################################################
+
 my $webwork3_htdocs_dir = $webwork_dir."/webwork3/public";
 # Set up /webwork3 to point to the dispatch cgi
 push @ScriptAlias, [ "/webwork3" => "$webwork3_htdocs_dir/dispatch.fcgi" ];
@@ -156,8 +163,11 @@ Directory{"$webwork3_htdocs_dir"} = {
     AddHandler => "fastcgi-script .fcgi",
 };
 
-
 </Perl>
+
+# These lines are for service WeBWork 3 through dancer directly.  
+#ProxyPass /webwork3 http://localhost:3000
+#ProxyPassReverse /webwork3 http://localhost:3000
 
 ####################################################################
 # WebworkSOAP handlers (for integration with moodle)
