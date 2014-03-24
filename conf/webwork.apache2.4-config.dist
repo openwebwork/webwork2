@@ -153,7 +153,10 @@ if ($webwork_url eq "") {
 
 my $webwork3_htdocs_dir = $webwork_dir."/webwork3/public";
 # Set up /webwork3 to point to the dispatch cgi
-push @ScriptAlias, [ "/webwork3" => "$webwork3_htdocs_dir/dispatch.fcgi" ];
+push @Alias, [ "/webwork3/js" => "$webwork3_htdocs_dir/js"];
+push @Alias, [ "/webwork3/css" => "$webwork3_htdocs_dir/css"];
+push @Alias, [ "/webwork3/images" => "$webwork3_htdocs_dir/images"];
+push @PerlConfig, "ScriptAlias /webwork3 $webwork3_htdocs_dir/dispatch.fcgi";
 
 # Allow cgi to run in the webwork3 dir
 Directory{"$webwork3_htdocs_dir"} = {
