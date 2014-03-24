@@ -24,12 +24,6 @@ input[type="checkbox"] {
     margin-right:.25em;
 }
 
-td > label.checkbox, 
-td > label.radio {
-  white-space:nowrap;
-  margin-right: 20px;
-}
-
 /* Banner */
 #masthead {
 	background-color: #038;
