@@ -1,5 +1,6 @@
-# configuration file for development environment
-
+# configuration file for WeBWorK 3.  This is a YAML formatted file, not Perl
+# formatted like the other configuration files.  The webwork_dir, pg_dir, 
+# and database information needs to be set for WeBWorK 3 to work.  
 #
 #  The webwork directory needs to be set
 
@@ -9,7 +10,11 @@ pg_dir: "/opt/webwork/pg"
 # the logger engine to use
 # console: log messages to STDOUT (your console where you started the
 #          application server)
-# file:    log message to a file in log/
+# file:    log message to a file in logs/
+# Note: If you are running through apache and not a stand alone server you 
+# wont be able to see the log information.  To see the log information you 
+# need to change this to file and then make sure that webwork2/webwork3/logs
+# is owned, readable and writable by the wwdata group.  
 logger: "console"
 
 # the log level for this environment
