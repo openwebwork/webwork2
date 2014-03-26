@@ -35,9 +35,7 @@
 # The "show source" button is most useful for webwork "courses" used to train new authors
 # It is not desirable to expose the code of regular homework questions to students
 
-ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
-
-
+#ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
 
 PerlModule mod_perl2
 
@@ -145,7 +143,34 @@ if ($webwork_url eq "") {
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
 
+##########################################################################
+# WeBWork 3
+# This sets up webwork 3 to be served via dancer via cgi
+# If you want to serve webwork 3 directly through dancer comment
+# out the following block, and then uncomment the proxy pass lines below
+# You will need to start dancer manually, or set it up as service
+##########################################################################
+
+my $webwork3_htdocs_dir = $webwork_dir."/webwork3/public";
+# Set up /webwork3 to point to the dispatch cgi
+push @Alias, [ "/webwork3/js" => "$webwork3_htdocs_dir/js"];
+push @Alias, [ "/webwork3/css" => "$webwork3_htdocs_dir/css"];
+push @Alias, [ "/webwork3/images" => "$webwork3_htdocs_dir/images"];
+push @PerlConfig, "ScriptAlias /webwork3 $webwork3_htdocs_dir/dispatch.fcgi";
+
+# Allow cgi to run in the webwork3 dir
+Directory{"$webwork3_htdocs_dir"} = {
+    AllowOverride => "None",
+    Options => "+ExecCGI -MultiViews +SymLinksIfOwnerMatch",
+    Require => "all granted",    
+    AddHandler => "fastcgi-script .fcgi",
+};
+
 </Perl>
+
+# These lines are for service WeBWork 3 through dancer directly.  
+#ProxyPass /webwork3 http://localhost:3000
+#ProxyPassReverse /webwork3 http://localhost:3000
 
 ####################################################################
 # WebworkSOAP handlers (for integration with moodle)

@@ -7,11 +7,11 @@ use Plack::Handler::FCGI;
 # correctly to the dispatchers, so forcing PSGI and env here 
 # is safer.
 set apphandler => 'PSGI';
-set environment => 'production';
+set environment => 'development';
 
 my $psgi = path($RealBin, '..', 'bin', 'app.pl');
 my $app = do($psgi);
 die "Unable to read startup script: $@" if $@;
-my $server = Plack::Handler::FCGI->new(nproc => 5, detach => 1);
+my $server = Plack::Handler::FCGI->new(nproc => 1, detach => 1);
 
 $server->run($app);
