@@ -67,14 +67,13 @@ post '/courses/:course_id/login' => sub {
 	if($result){
 		my $key = $authen->create_session(params->{user});
 		
-		session->{user} = params->{user};
-		session->{key} = $key;
+		session user => params->{user};
+		session key => $key;
+
 		my $permission = vars->{db}->getPermissionLevel(session->{user});
-		session->{permission} = $permission->{permission};		
+		session permission => $permission->{permission};		
 
-		debug session;	
 		return {session_key=>$key, user=>params->{user},logged_in=>1};
-
 
 	} else {
 		return {logged_in=>0};
