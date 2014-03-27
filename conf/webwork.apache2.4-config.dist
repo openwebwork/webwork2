@@ -159,7 +159,7 @@ push @Alias, [ "/webwork3/images" => "$webwork3_htdocs_dir/images"];
 push @PerlConfig, "ScriptAlias /webwork3 $webwork3_htdocs_dir/dispatch.fcgi";
 
 # Allow cgi to run in the webwork3 dir
-Directory{"$webwork3_htdocs_dir"} = {
+$Directory{"$webwork3_htdocs_dir"} = {
     AllowOverride => "None",
     Options => "+ExecCGI -MultiViews +SymLinksIfOwnerMatch",
     Require => "all granted",    
