@@ -141,6 +141,8 @@ var CourseManager = WebPage.extend({
             });
         }});
 
+        $(".ww2-link").attr("href","/webwork2/"+config.courseSettings.course_id); // create a link back to ww2. 
+
     },
 
     // can a lot of this be handled by the individual views?  
