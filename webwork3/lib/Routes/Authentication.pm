@@ -84,20 +84,22 @@ sub authenticate {
 	if(! defined(session 'key')){
 		my $key = vars->{db}->getKey(session 'user');
 
-		debug $key;
-
 		if ($key->{key} eq params->{session_key}) {
 			session key  => params->{session_key};
 		} 
+
+
 	}
 
 	if(! defined(session 'key')){
 		send_error("The session key has not been defined or is not correct.  You may need to authenticate again",401);	
 	}
 
-	# debug "Checking if session->{permission} is defined";
-	# debug session->{permission};
+	# update the timestamp in the database so the user isn't logged out prematurely.
 
+	my $key = vars->{db}->getKey(session 'user');
+	$key->{timestamp} = time();
+	vars->{db}->putKey($key);
 
 	if (! defined(session 'permission')){
 		my $permission = vars->{db}->getPermissionLevel(session 'user');

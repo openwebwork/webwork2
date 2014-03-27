@@ -56,6 +56,7 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
             <li><a href="#" class="link" data-link="classlist" data-name="Classlist Manager">Classlist Manager</a></li>
             <li><a href="#" class="link" data-link="importExport" data-name="Import/Export">Import and Export HW sets</a></li>
             <li><a href="#" class="link" data-link="settings" data-name="Settings">Settings</a></li>
+            <li><a href="#" class="ww2-link">WeBWorK2</a></li>
           </ul>        
         </li>
         <li>
