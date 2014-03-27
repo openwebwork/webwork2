@@ -356,8 +356,8 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => 'Instructor Tools',
 		parent  => 'set_list',
-		kids    => [ qw/ww3_course_manager instructor_user_list instructor_user_list2 instructor_user_list3 
-			instructor_set_list instructor_set_list2 instructor_set_list3
+		kids    => [ qw/ww3_course_manager instructor_user_list instructor_user_list2 
+			instructor_set_list instructor_set_list2
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3 instructor_simple_editor
