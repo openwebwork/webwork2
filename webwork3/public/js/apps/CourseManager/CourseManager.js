@@ -283,7 +283,7 @@ var CourseManager = WebPage.extend({
         }).on("show",function(_set){   // this will show the given Problem Set sent from "Manage Problem Sets (HWDetailView) or ProblemSetListView"
             self.showProblemSetDetails(_set.get("set_id"));
         }).on("show-help",function(){ // this isn't a particular good way to do this, but is a fix. 
-            self.changeSidebar({link: "helpSidepane"});
+            self.changeSidebar("Help");
         })
 
         /* This sets the events for the problems (of type ProblemList) in each problem Set */
