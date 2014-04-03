@@ -14,7 +14,7 @@ use WeBWorK::Constants;
 
 use base qw(Exporter);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(checkPermissions authenticate setCourseEnvironment);
+our @EXPORT_OK = qw(checkPermissions authenticate setCourseEnvironment buildSession);
 
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
@@ -85,7 +85,7 @@ sub authenticate {
 		my $key = vars->{db}->getKey(session 'user');
 
 		if ($key->{key} eq params->{session_key}) {
-			session key  => params->{session_key};
+			session 'key'  => params->{session_key};
 		} 
 
 
@@ -106,6 +106,30 @@ sub authenticate {
 		session 'permission' => $permission->{permission};		
 	}
 
+	debug session;
+}
+
+# this will build up the dancer session based on the ww2 session. 
+
+sub buildSession {
+	if (!defined(session 'user')) {
+    	if (defined(params->{user})){
+	    	session user => params->{user};
+    	}
+	}
+
+	if(! defined(session 'key')){
+		my $key = vars ->{db}->getKey(session 'user');
+		session 'key' => $key->{key}; 
+		$key->{timestamp} = time();
+		vars->{db}->putKey($key);
+
+	}
+
+	if (! defined(session 'permission')){
+		my $permission = vars->{db}->getPermissionLevel(session 'user');
+		session 'permission' => $permission->{permission};		
+	}
 }
 
 sub checkPermissions {

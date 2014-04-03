@@ -15,7 +15,8 @@ use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCours
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
 # use Utils::CourseUtils qw/getCourseSettings/;
-# use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
+#use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
+use Routes::Authentication qw/buildSession/;
 use Data::Dumper;
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
@@ -289,7 +290,7 @@ get '/courses/:course_id/manager' =>  sub {
 	# 1) the user has already logged in and its safe to send all of the requisite data
 	# 2) the user hasn't already logged in and needs to pop open a login window.  
 
-	
+	buildSession();
 
 	debug session;
 
