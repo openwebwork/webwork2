@@ -52,7 +52,7 @@ sub pre_header_initialize {
 	my $self          = shift;
 	my $r             = $self->r;
 	my $urlpath       = $r->urlpath;
-	print redirect("/webwork3/courses/". $urlpath->arg("courseID") . "/manager");
+	print redirect("/webwork3/courses/". $urlpath->arg("courseID") . "/manager?user=" . $r->param("user"));
 
 }
 
