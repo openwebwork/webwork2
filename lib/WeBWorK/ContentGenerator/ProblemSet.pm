@@ -31,13 +31,14 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted);
 use WeBWorK::Localize;
 
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	my $authz = $r->authz;
 	
@@ -95,7 +96,12 @@ sub initialize {
 	
 	##### permissions #####
 	
-	$self->{isOpen} = time >= $set->open_date || $authz->hasPermissions($userName, "view_unopened_sets");
+	$self->{isOpen} = (time >= $set->open_date && !(
+			       $ce->{options}{enableConditionalRelease} && 
+			       is_restricted($db, $set, $set->set_id, $effectiveUserName)))
+	    || $authz->hasPermissions($userName, "view_unopened_sets");
+	
+	die("You do not have permission to view unopened sets") unless $self->{isOpen};
 }
 
 sub nav {
@@ -326,14 +332,14 @@ sub body {
 	# print CGI::div({-class=>"problem_set_options"}, CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set")));
 
 
-	my $enable_reduced_scoring = $set->enable_reduced_scoring;
-	my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
-	if ($reducedScoringPeriod > 0 and $enable_reduced_scoring) {
+	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+	my $reduced_scoring_date = $set->reduced_scoring_date;
+	if ($reduced_scoring_date and $enable_reduced_scoring) {
 		my $dueDate = $self->formatDateTime($set->due_date());
-		my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
-		my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec);
+		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
+
 		if (time < $set->due_date()) {
 			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_1",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		} else {
