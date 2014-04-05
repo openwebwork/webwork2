@@ -3,6 +3,7 @@ define(['backbone', 'underscore','views/MainView', 'apps/util','models/ProblemSe
 
 var ImportExportView = MainView.extend({
     initialize: function (options){
+    	MainView.prototype.initialize.call(this,options);
     	var self = this;
         _.bindAll(this,"render");
         this.problemSets = options.problemSets;
@@ -18,6 +19,10 @@ var ImportExportView = MainView.extend({
         this.$(".date-shift-input").datepicker();
         return this;
     },
+    getState: function () {
+        return {};
+    },
+
     renderSets: function () {
     	self = this;
         this.$(".import-table").removeClass("hidden");

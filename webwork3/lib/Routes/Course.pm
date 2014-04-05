@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Ajax;
+use Dancer::FileUtils qw /read_file_content path/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
@@ -286,13 +287,27 @@ post '/courses/:course_id/session' => sub {
 
 get '/courses/:course_id/manager' =>  sub {
 
+	# read the course manager configuration file
+
+	my $configFilePath = path(config->{webwork_dir},"webwork3","public","js","apps","CourseManager","config.json");
+	my $fileContents = read_file_content($configFilePath);
+	my $config = from_json($fileContents);
+
+	my @main_view_paths = map {$_->{path}} @{$config->{main_views}};
+	my @sidepane_paths = map {$_->{path}} @{$config->{sidepanes}};
+
+	my @view_paths = (@main_view_paths,@sidepane_paths);
+
+
+
 	# two situations here.  Either
 	# 1) the user has already logged in and its safe to send all of the requisite data
 	# 2) the user hasn't already logged in and needs to pop open a login window.  
 
 	buildSession();
 
-	debug session;
+	
+
 
 	my ($settings,$sets,$users);
 
@@ -312,8 +327,8 @@ get '/courses/:course_id/manager' =>  sub {
 	$theSession->{effectiveUser} = session->{user};
 
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
-		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users),
-		pagename=>"Course Manager"},
+		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),
+		main_views=>to_json($config),pagename=>"Course Manager"},
 		{layout=>'manager.tt'};
 };
 

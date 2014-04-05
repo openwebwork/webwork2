@@ -15,14 +15,16 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         className: "set-detail-view",
         tagName: "div",
         initialize: function (options) {
-            _.bindAll(this,'render','changeHWSet','updateNumberOfProblems','loadProblems');
+            MainView.prototype.initialize.call(this,options);
+            _.bindAll(this,'render','changeProblemSet','updateNumberOfProblems','loadProblems');
             var self = this;
             this.users = options.users; 
             this.allProblemSets = options.problemSets;
             this.problemSet = this.model;
+            this.eventDispatcher = options.eventDispatcher;
             
             this.views = {
-                problemSetView : new ProblemSetView({problemSet: this.problemSet}),
+                problemSetView : new ProblemSetView({problemSet: this.problemSet, settings: this.settings}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
                 propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
@@ -34,7 +36,11 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         render: function () {
             var self = this;
             this.$el.html($("#HW-detail-template").html());
-            this.currentView = this.views.propertiesView;
+
+            this.currentView =  this.currentView || this.views.propertiesView;
+            this.currentViewName = this.currentViewName || "propertiesView";
+            this.eventDispatcher.trigger("save-state");
+
 
             this.views.problemSetView.setElement($("#problem-list-tab"));
             this.views.usersAssignedView.setElement($("#user-assign-tab"));
@@ -50,7 +56,24 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 ul.append(setNameTemplate({setname: _set.get("set_id")}));
             });
 
+            this.changeView(this.currentViewName);
+
+            if(this.problemSet){
+                this.changeProblemSet(this.problemSet.get("set_id"));
+            }
+
             return this;   
+        },
+        setState: function(state){
+            if(state){
+                this.currentViewName =  state.subview || "problemSetView";
+                this.currentView = this.views[this.currentViewName];
+                this.problemSet = this.allProblemSets.findWhere({set_id: state.set_id});
+            }
+            return this;
+        },
+        getState: function(){
+            return {subview: this.currentViewName, set_id: this.problemSet ? this.problemSet.get("set_id") : ""};
         },
         getHelpTemplate: function () {
             if(this.currentView instanceof DetailsView){
@@ -64,22 +87,26 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         events: {
             "shown.bs.tab #problem-set-tabs a[data-toggle='tab']": "changeView",
             "click .set-name-target": function(evt){
-                this.changeHWSet($(evt.target).text());
+                this.changeProblemSet($(evt.target).text());
             }
         },
         changeView: function(evt){
-            this.currentView = this.views[$(evt.target).data("view")];
-            this.currentView.setProblemSet(this.problemSet).render();
+            this.currentViewName = _.isString(evt)? evt: $(evt.target).data("view")
+            this.currentView = this.views[this.currentViewName];
+            if(this.problemSet){
+                this.currentView.setProblemSet(this.problemSet).render();
+            }
             if($(evt.target).data("view")==="customizeUserAssignView"){
                 this.allProblemSets.trigger("show-help");
             }
+            this.eventDispatcher.trigger("save-state");
+            $("#problem-set-tabs a[data-view='"+ this.currentViewName+"']").tab("show");  // shows the properties tab
         },
-        changeHWSet: function (setName)
+        changeProblemSet: function (setName)
         {
-            $("#problem-set-tabs a:first").tab("show");  // shows the properties tab
         	this.problemSet = this.allProblemSets.findWhere({set_id: setName});
             this.$(".problem-set-name-menu .set-name").text(setName).truncate({width: 150});
-            this.views.propertiesView.setProblemSet(this.problemSet).render();
+            this.changeView("propertiesView");
             this.loadProblems();
         },
         loadProblems: function () {
@@ -105,7 +132,9 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
-            this.stickit();
+            if(this.model){
+                this.stickit();
+            }
             return this;
         },
         events: {"click .assign-all-users": "assignAllUsers"},

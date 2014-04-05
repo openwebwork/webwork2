@@ -6,14 +6,14 @@ define(['backbone'], function(Backbone){
 			return this;
 		},
 		events: {
-			"click .manager-menu a": function(evt){
-				this.trigger("change-view",{link: $(evt.target).data("link"), name: $(evt.target).data("name")});
+			"click .manager-menu a.link": function(evt){
+				this.trigger("change-view",$(evt.target).data("name"));
 			},
 			"click .main-help-button": function(evt){
-				this.trigger("open-option",{link: "helpSidepane", name: "Help"});
+				this.trigger("open-option","Help");
 			},
 			"click .option-menu a": function(evt){
-				this.trigger("open-option",{link: $(evt.target).data("link"), name: $(evt.target).data("name")});
+				this.trigger("open-option",$(evt.target).data("name"));
 			}
 		},
 		setPaneName: function(name){

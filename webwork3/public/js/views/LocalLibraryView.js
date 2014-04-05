@@ -13,6 +13,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
             _.bindAll(this,"showResults","showProblems","buildMenu");
     		this.constructor.__super__.initialize.apply(this,[options]);
             this.libBrowserType = options.libBrowserType;
+            this.settings = options.settings;
     	},
         events: function(){
             return _.extend({},this.constructor.__super__.events,{
@@ -20,7 +21,7 @@ function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem
             });
         },
     	render: function (){
-            var modes = config.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
+            var modes = this.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
             this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));

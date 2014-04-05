@@ -42,6 +42,11 @@
 
 </script>
 
+<!-- template for building the menu -->
+
+<script type="text/template" id="main-menu-item-template">
+<li><a href="#" class="link" data-name="<%=name%>"><%=name%></a></li>
+</script>
 
 
 <!-- Some problem set and problem templates -->
@@ -66,7 +71,7 @@
 <script type="text/template" id="problem-template">
 <div class="loading btn-sm">Problem Loading...<i class="fa fa-spinner fa-spin"></i></div>
 <div class="handle row">
-<%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-resize-vertical"></i></a></div><%}%>
+<%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-arrows-v"></i></a></div><%}%>
 <%if(draggable){%>
   <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
 <%}%>

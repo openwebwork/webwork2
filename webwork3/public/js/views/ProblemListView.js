@@ -23,7 +23,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var self = this;
             _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
             
-
+            this.settings  = options.settings;
             this.problems = options.problems ? options.problems : new ProblemList();
             this.problemSet = options.problemSet; 
             this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
@@ -42,7 +42,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 this.problems.problemSet = opts.problemSet;
             }
             this.viewAttrs.type = opts.type || "set";
-            this.viewAttrs.displayMode = config.settings.getSettingValue("pg{options}{displayMode}");
+            this.viewAttrs.displayMode = this.settings.getSettingValue("pg{options}{displayMode}");
             // start with showing 10 (pageSize) problems
             this.maxProblemIndex = (this.problems.length > this.pageSize)?
                     this.pageSize : this.problems.length;

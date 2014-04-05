@@ -4,6 +4,7 @@ define(['backbone', 'underscore','views/MainView','config','views/CollectionTabl
 function(Backbone, _,MainView,config,CollectionTableView,UserSetList){
 var StudentProgressView = MainView.extend({
 	initialize: function (options){
+		MainView.prototype.initialize.call(this,options);
 		_(this).bindAll("loadData");
 		this.problemSets = options.problemSets;
 		this.users = options.users;
@@ -20,6 +21,10 @@ var StudentProgressView = MainView.extend({
 		"click .progress-menu a": "loadData",
 		"click .change-display-type a": "changeDisplay"
 	},
+    getState: function () {
+        return {};
+    },
+
 	changeDisplay: function(evt){
 		this.displayType = _.isString(evt)? evt.toLowerCase(): $(evt.target).text().toLowerCase();
 		this.$(".progress-type .type-name").text(_.isString(evt)? evt: $(evt.target).text());

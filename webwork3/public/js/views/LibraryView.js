@@ -14,8 +14,9 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             _.bindAll(this,'addProblem','loadProblems','showProblems','changeDisplayMode');
             this.allProblemSets = options.problemSets;
             this.libBrowserType = options.libBrowserType;
+            this.settings = options.settings;
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this,
-                 allProblemSets: this.allProblemSets});
+                 allProblemSets: this.allProblemSets, settings: this.settings});
             this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets});
             this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
 
@@ -24,7 +25,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
     	events: {   "change .target-set": "resetDisplayModes"
         }, 
     	render: function (){
-            var modes = config.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
+            var modes = this.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
     		this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));

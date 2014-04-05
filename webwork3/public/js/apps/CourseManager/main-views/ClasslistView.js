@@ -11,7 +11,7 @@ function(Backbone,MainView,UserList,config,CollectionTableView, AddStudentManVie
 var ClasslistView = MainView.extend({
 	msgTemplate: _.template($("#classlist-messages").html()),
 	initialize: function (options) {
-
+		MainView.prototype.initialize.call(this,options);
 
 		_.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
 		var self = this;
@@ -54,7 +54,7 @@ var ClasslistView = MainView.extend({
 			    _(_.keys(errors)).each(function(key){
 			    	var obj = _(self.userTable.columnInfo).findWhere({key: key});
 			    	var col = _(self.userTable.columnInfo).indexOf(obj);
-				    self.messagePane.addMessage({text: errors[key],type: "danger", short: "Validation Error"});
+				    self.eventDispatcher.trigger("add-message",{text: errors[key],type: "danger", short: "Validation Error"});
 				    self.$("tbody tr:nth-child("+ (row+1) +") td:nth-child("+(col+1)+")")
 				    	.css("background-color","rgba(255,0,0,0.25)");
 				});
@@ -78,6 +78,9 @@ var ClasslistView = MainView.extend({
         this.clearFilterText();
 	    return this;
     },  
+    getState: function () {
+        return {};
+    },
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
     	_user.save();
@@ -95,7 +98,7 @@ var ClasslistView = MainView.extend({
     removeUser: function(_user){
     	var self = this;
     	_user.destroy({success: function(model){
-	    		self.parentView.messagePane.addMessage({type: "success",
+	    		self.eventDispatcher.trigger("add-message",{type: "success",
             		short: self.msgTemplate({type: "user_removed", opts:{username:_user.get("user_id")}}),
             		text: self.msgTemplate({type: "user_removed_details", opts: {username: _user.get("user_id")}})});
 	    		self.render();
@@ -106,13 +109,13 @@ var ClasslistView = MainView.extend({
     	_(_user.changingAttributes).chain().keys().each(function(key){
     		switch(key){
                 case "user_added":
-                	self.parentView.messagePane.addMessage({type: "success",
+                	self.eventDispatcher.trigger("add-message",{type: "success",
                 		short: self.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
                 		text: self.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
                 	self.userTable.render();
                 	break;
                 default:    
-		    	 	self.parentView.messagePane.addMessage({type: "success", 
+		    	 	self.eventDispatcher.trigger("add-message",{type: "success", 
 		                short: self.msgTemplate({type:"user_saved",opts:{username:_user.get("user_id")}}),
 		                text: self.msgTemplate({type:"user_saved_details",opts:{username:_user.get("user_id"),
 		                	key: key, oldValue: _user.changingAttributes[key], newValue: _user.get(key)}})});

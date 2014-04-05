@@ -9,6 +9,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
     
     var ProblemSetsManager = MainView.extend({
         initialize: function (options) {
+            MainView.prototype.initialize.call(this,options);
             _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText');  // include all functions that need the this object
             var self = this;
             this.problemSets = options.problemSets;
@@ -38,6 +39,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSets.trigger("hide-show-all-sets","hide");
             this.$(".set-id a").truncate({width: 120});
             return this;
+        },
+        getState: function () {
+            return {};
         },
         updateTable: function() {
             if(this.problemSetTable){

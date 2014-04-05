@@ -1,0 +1,73 @@
+{
+	"main_views": [
+	{
+		"name": "Calendar",
+		"path": "main-views/AssignmentCalendar",
+		"default_sidepane": "Problem Sets",
+		"other_sidepanes": []
+	},
+	{
+		"name": "Problem Set Details",
+		"path": "main-views/ProblemSetDetailView",
+		"default_sidepane": "Problem Sets",
+		"other_sidepanes": []
+	},
+	{
+		"name": "Library Browser",
+		"path": "main-views/LibraryBrowser",
+		"default_sidepane": "Library Options",
+		"other_sidepanes": []	
+	},
+	{
+		"name": "Problem Sets Manager",
+		"path": "main-views/ProblemSetsManager",
+		"default_sidepane": "",
+		"other_sidepanes": []
+	},
+	{
+		"name": "Student Progress",
+		"path": "main-views/StudentProgressView",
+		"default_sidepane": "",
+		"other_sidepanes": []
+	},
+	{
+		"name": "Classlist Manager",
+		"path": "main-views/ClasslistView",
+		"default_sidepane": "",
+		"other_sidepanes": []
+	},
+	{
+		"name": "Import/Export Sets",
+		"path": "main-views/ImportExportView",
+		"default_sidepane": "",
+		"other_sidepanes": []
+	},
+	{
+		"name": "Settings",
+		"path": "main-views/SettingsView",
+		"default_sidepane": "",
+		"other_sidepanes": []
+	}],
+	"sidepanes": [
+	{
+		"name": "Problem Sets",
+		"path": "option-panes/ProblemSetListView"
+	},
+	{
+		"name": "User Lists",
+		"path": "option-panes/UserListView"
+	},
+	{
+		"name": "Library Options",
+		"path": "option-panes/LibraryOptionsView"
+	},
+	{
+		"name": "Problem List Options",
+		"path": "option-panes/ProblemListOptionsSidePane"
+	},
+	{
+		"name": "Help",
+		"path": "option-panes/HelpSidePane"
+	}
+	]
+}

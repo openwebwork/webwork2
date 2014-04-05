@@ -1,8 +1,17 @@
 
 <script src="/webwork3/js/apps/require-config.js"></script>
+
+<!-- The follow script sets up the MainViewList, which contains all of the main views for the application.
+   This allows to load a configuration file instead of hard coding each of the views and sidebars. -->
+<script type="text/javascript">
+var main_view_paths = [%main_view_paths%];
+main_view_paths.unshift("module","backbone");
+</script>
 <script type='text/javascript'> 
 	require.config = { 'CourseManager': { session: [%theSession%], course_id: "[% course_id %]", 
-		sets: [%sets%], users: [%users%], settings: [% theSettings %]}};
+		sets: [%sets%], users: [%users%], settings: [% theSettings %]},
+    'views/MainViewList': {main_views: [%main_views%]}
+  };
 </script>
 
 <script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -215,6 +224,7 @@ at the bottom of the screen and click "Save Changes". </p>
 <script type="text/template" id="all-messages">
 <%
   var messages = {
+    leave_page: function() { return "Do you want to leave this page?";},
     set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
     set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
       + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},

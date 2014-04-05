@@ -25,7 +25,7 @@
 <script type="text/template" id="library-textbooks-template">
 <div class="row">
 <div class="col-md-2">
-<select class="form-control textbook-title">
+<select class="form-control textbook-title input-sm">
  <option>Select Textbook</option>
  <%_(textbooks).each(function(book,i){
     print("<option data-id='" + book.textbook_id + "' value='"+ i + "'>" + book.author + ": " 
@@ -34,10 +34,10 @@
 </select>
 </div>
 <div class="col-md-2">
-<select class="form-control textbook-chapter hidden"></select>
+<select class="form-control textbook-chapter hidden input-sm"></select>
 </div>
 <div class="col-md-2">
-<select class="form-control textbook-section hidden"></select>
+<select class="form-control textbook-section hidden input-sm"></select>
 </div>
 <button type="button" class="btn btn-default load-problems-button">Load</button>
 <span class="textbook-message"></span>

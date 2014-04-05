@@ -11,10 +11,12 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
     var CalendarView = MainView.extend({
         className: "calendar",
         initialize: function (options){
+            MainView.prototype.initialize.call(this,options);
+            //this.constructor.__super__.constructor.__super__.initialize.apply(this, options);
             _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');  // include all functions that need the this object
     	    this.dispatcher = _.clone(Backbone.Events);  // include a dispatch to manage calendar changes. 
         
-            this.calendarType = options.calendarType;
+            this.calendarType = options.calendarType || "month";
 
             if (! this.date){
                 this.date = moment();  // today!
@@ -106,6 +108,12 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         }, 
         renderDay: function(){
             // this is called from the CalendarDayView.render() to be useful, this should be overridden in the subclass
+        },
+        set: function(options){
+            this.assignmentDates = options.assignmentDates;
+            this.viewType = options.viewType;
+            this.reducedScoringMinutes = options.reducedScoringMinutes;
+            return this;
         }
     });
 
