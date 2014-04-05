@@ -221,42 +221,18 @@ at the bottom of the screen and click "Save Changes". </p>
 
 <!-- This is where all messages to the user go -->
 
-<script type="text/template" id="all-messages">
+<script type="text/template" id="course-manager-messages-template">
 <%
   var messages = {
     leave_page: function() { return "Do you want to leave this page?";},
-    set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
-    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
-      + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
-    set_added: function(opt){ return "Set " + opt.setname + " added.";},
-    set_added_details: function(opt){ return "The set " + opt.setname + " was added to the course."},
-    set_removed: function(opt){ return "Set " + opt.setname + " removed.";},
-    set_removed_details: function(opt){ return "The set " + opt.setname + " was removed to the course."},
-    set_error: function(opt){ return "Error saving set " + opt.setname + " .";},
-    set_error_details: function(opt){ return "The set " + opt.setname + " had an error."},
-    set_assigned_users_saved: function(opt){ 
-      return "The assigned users for set " + opt.setname + " was updated."},
-    problem_added: function(opt){ return "A problem was added to " + opt.setname},
-    problem_added_details: function(opt){ return "A problem was added to " + opt.setname},
-    problems_reordered: function(opt){ return "The problems were reordered in " + opt.setname},
-    problems_reordered_details: function(opt){ return "The problems were reordered in " + opt.setname},
-    problems_values_details: function(opt) { return "The value for problem " + opt.problem_id + " of set " + opt.set_id +
-      " was changed from "+ opt.oldValue + " to " + opt.newValue + "."},
-    setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
-    setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
-                                opt.oldValue + " to " + opt.newValue + "."},
     openDate_after_dueDate: function(){return "The open date must come before the due date";},
     dueDate_after_answerDate: function(){return "The due date must come before the answer date.";},
     set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
-    select_target_set: function() { return "You need to select a target set";},
     show_prob_set: function() { return "Show Problem Sets";},
     hide_prob_set: function() { return "Hide Problem Sets";},
     problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
     unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
                   ". Click OK to confirm this."},
-    problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
-    problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id 
-        + " was deleted from set " + opt.setname},
     relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
       + "reenter your username and password to continue. ";},    
     bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."},

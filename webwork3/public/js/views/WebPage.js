@@ -3,6 +3,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar){
 	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
+    messageTemplate: _.template($("#general-messages").html()),
     initialize: function (options) {
     	_.bindAll(this,"render","toggleMessageWindow","closeLogin");
     },
@@ -10,7 +11,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar){
     	var self = this; 
 
         this.$el.prepend((this.messagePane = new MessageListView()).render().el);
-        this.loginPane = new LoginView();
+        this.loginPane = new LoginView({messageTemplate: this.messageTemplate});
         this.$el.prepend((this.helpPane = new HelpView()).render().el);
         this.navigationBar = new NavigationBar({el: $(".navbar-fixed-top")}).render();
         
@@ -79,7 +80,7 @@ var LoginView = ModalView.extend({
     initialize: function (options) {
         _.bindAll(this,"login");
         var tempOptions = _.extend(options || {} , {template: $("#login-template").html(), 
-                        templateOptions: {message: config.msgTemplate({type: "relogin"})},
+                        templateOptions: {message: options.messageTemplate({type: "relogin"})},
                         buttons: {text: "Login", click: this.login}});
         this.constructor.__super__.initialize.apply(this,[tempOptions]);
     },

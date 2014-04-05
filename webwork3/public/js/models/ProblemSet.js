@@ -3,8 +3,8 @@
  * of problems.  More specifially, it also contains a Problem List of type "Problem Set".  
  *
  * */
-define(['backbone', 'underscore','config','moment','./ProblemList','./Problem','config'], 
-        function(Backbone, _, config,moment,ProblemList,Problem,config){
+define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'], 
+        function(Backbone, _,moment,ProblemList,Problem,config){
 
 
     var ProblemSet = Backbone.Model.extend({
@@ -71,8 +71,9 @@ define(['backbone', 'underscore','config','moment','./ProblemList','./Problem','
             restricted_login_proctor: "Restricted to Login Proctor"
         },
         idAttribute: "_id",
-        initialize: function (opts) {
+        initialize: function (opts,dateSettings) {
             _.bindAll(this,"addProblem");
+            this.dateSettings = dateSettings;
             var pbs = (opts && opts.problems) ? opts.problems : [];
             this.problems = new ProblemList(pbs);
             this.attributes.problems = this.problems;
@@ -92,9 +93,9 @@ define(['backbone', 'underscore','config','moment','./ProblemList','./Problem','
                                                 // as a moment object and defined settings.
 
             var _dueDate = theDueDate? moment(theDueDate): moment()
-            , timeAssignDue = moment(config.settings.getSettingValue("pg{timeAssignDue}"),"hh:mmA")
-            , assignOpenPriorToDue = config.settings.getSettingValue("pg{assignOpenPriorToDue}")
-            , answerAfterDueDate = config.settings.getSettingValue("pg{answersOpenAfterDueDate}"); 
+            , timeAssignDue = moment(this.dateSettings["pg{timeAssignDue}"],"hh:mmA")
+            , assignOpenPriorToDue = this.dateSettings["pg{assignOpenPriorToDue}"]
+            , answerAfterDueDate = this.dateSettings["pg{answersOpenAfterDueDate}"]; 
 
             _dueDate.hours(timeAssignDue.hours()).minutes(timeAssignDue.minutes());
             var _openDate = moment(_dueDate).subtract(parseInt(assignOpenPriorToDue),"minutes")
@@ -125,10 +126,10 @@ define(['backbone', 'underscore','config','moment','./ProblemList','./Problem','
                 , answerDate = moment.unix(computedState.answer_date);
 
             if(openDate.isAfter(dueDate)){ 
-                return config.msgTemplate({type: "openDate_after_dueDate"});
+                return this.msgTemplate({type: "openDate_after_dueDate"});
             }
             if (dueDate.isAfter(answerDate)){
-                return config.msgTemplate({type: "dueDate_after_answerDate"});
+                return this.msgTemplate({type: "dueDate_after_answerDate"});
             }
         }
     });

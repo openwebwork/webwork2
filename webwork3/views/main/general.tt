@@ -56,7 +56,8 @@
   <div class="problem-paginator col-md-7"></div>
   <div class="col-md-3 num-problems"></div>
   <%if(show_undo||false) {%>
-  <div class="pull-right col-md-1"><button class="btn btn-default btn-sm"><i class="fa fa-undo"></i></button></div>
+  <div class="pull-right col-md-1">
+    <button class="btn btn-default undo-delete-button btn-sm" disabled="disabled"><i class="fa fa-undo"></i></button></div>
   <%}%>
 </div>
 <div class="prob-list-container">
@@ -127,4 +128,17 @@
 <span style='font: italic 120%'>Loading Problem</span><i class='fa fa-spinner fa-spin fa-lg'></i>
 </script>
 
+
+<script type="text/template" id="general-messages">
+<%
+  var messages = {
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
+      + "reenter your username and password to continue. ";},    
+    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."},
+    loading_data: function(){ return "The page is now loading...";}
+  };
+  print(messages[type](typeof(opts)=="undefined"?{}:opts))
+  
+%>
+</script>
 

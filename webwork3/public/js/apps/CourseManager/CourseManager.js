@@ -4,17 +4,17 @@
 */
 define(['module','backbone', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
     'views/MainViewList',
-    'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config','jquery-ui','bootstrap'
+    'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config','apps/util','jquery-ui','bootstrap'
     ], 
 function(module, Backbone, _, UserList, ProblemSetList, SettingList,MainViewList,
-    AssignmentDate,AssignmentDateList,WebPage,config,ProblemSetListView,UserListView,LibraryOptionsView,
-    HelpSidePane,ProblemListOptionsSidePane){
+    AssignmentDate,AssignmentDateList,WebPage,config,util){
 var CourseManager = WebPage.extend({
     tagName: "div",
+    messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
-	    this.constructor.__super__.initialize.apply(this, {el: this.el});
-	    _.bindAll(this, 'render','updateCalendar','setProblemSetUI', 'setMessages',"showProblemSetDetails",
-            "changeView","changeSidebar","loadData","checkData");  // include all functions that need the this object
+        WebPage.prototype.initialize.apply(this,{el: this.el});
+	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails",
+            "changeView","changeSidebar","loadData","checkData","saveState");  // include all functions that need the this object
 	    var self = this;
 
         this.render();
@@ -22,7 +22,10 @@ var CourseManager = WebPage.extend({
         this.session = (module.config().session)? module.config().session : {};
         this.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;
         this.users = (module.config().users) ? new UserList(module.config().users) : null;
-        this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets,{parse: true}) : null;
+        // We need to pass the standard date settings to the problemSets.  
+        var dateSettings = util.pluckDateSettings(this.settings);
+        this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets,{parse: true, 
+                dateSettings: dateSettings}) : null;
 
         _.extend(config.courseSettings,{course_id: module.config().course_id,user: this.session.user});
         if(this.session.user){
@@ -35,7 +38,7 @@ var CourseManager = WebPage.extend({
     loadData: function (data) {
         var self = this;
         if(data.logged_in===1){ // logged in successful,  load the data
-            this.loginPane.$(".message-bottom").html(config.msgTemplate({type: "loading_data"}))
+            this.loginPane.$(".message-bottom").html(this.messageTemplate({type: "loading_data"}))
                 .append("<i class='fa fa-spinner fa-spin'></i>");
             this.data_loaded = {settings: false, users: false, problemSets: false};
             // request the session information
@@ -50,7 +53,7 @@ var CourseManager = WebPage.extend({
 
             
         } else { // send an error
-            this.loginPane.$(".message").html(config.msgTemplate({type: "bad_password"}));
+            this.loginPane.$(".message").html(this.messageTemplate({type: "bad_password"}));
         }
     },
     // wait for all of the data to get loaded in, close the login window, then start the Course Manager. 
@@ -59,15 +62,21 @@ var CourseManager = WebPage.extend({
         console.log(_(this.data_loaded).chain().values().every(_.identity).value());
         if(_(this.data_loaded).chain().values().every(_.identity).value()){
             this.closeLogin();
+
+            // make sure the dateSettings are properly stored:
+            this.problemSets.dateSettings = util.pluckDateSettings(this.settings);
+
             this.startManager();
         }
     },
     startManager: function () {
         var self = this;
         this.navigationBar.setLoginName("Welcome " +this.session.user);
-        this.buildAssignmentDates();
+        
         this.mainViewList = new MainViewList({settings: this.settings, users: this.users, 
                 problemSets: this.problemSets, eventDispatcher: this.eventDispatcher});
+
+        this.buildAssignmentDates();
 
         // Build the menu.  Should we make a View for this?  
 
@@ -108,6 +117,9 @@ var CourseManager = WebPage.extend({
         this.mainViewList.getViewByName("Calendar")
             .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
             .dispatcher.on("calendar-change",self.updateCalendar);
+
+        this.mainViewList.getViewByName("Problem Sets Manager")
+            .set({assignmentDates: this.assignmentDateList});
 
         // Define all of the option views available for the right side
         // 
@@ -165,7 +177,7 @@ var CourseManager = WebPage.extend({
         }});
 
         $(window).on("beforeunload", function () {
-            return config.msgTemplate({type: "leave_page"});
+            return this.messageTemplate({type: "leave_page"});
          });
 
         // Add a link to WW2 via the main menu.
@@ -181,175 +193,22 @@ var CourseManager = WebPage.extend({
     setMessages: function (){
         var self = this; 
 
-        this.eventDispatcher.on("save-state",function(state){
-            self.saveState(state);
-        })
+        // This is the way that general messages are handled in the app
 
-        /* The following is how messages will be handled */
-
-        this.eventDispatcher.on("add-message",function(message){
-            self.messagePane.addMessage(message);
+        this.eventDispatcher.on({
+            "save-state": this.saveState,
+            "show-problem-set": this.showProblemSetDetails,
+            "add-message": this.messagePane.addMessage,
+            "show-help": function() { self.changeSidebar({link: "helpSidepane"})}
         });
-
-        /* Set up all of the events on the problemSets */
-
-        this.problemSets.on("add", function (_set){
-            _set.save();
-            _set.changingAttributes={add: ""};
-        }).on("remove", function(_set){
-            _set.destroy({success: function() {
-                self.messagePane.addMessage({type:"success",
-                    short: config.msgTemplate({type:"set_removed",opts:{setname: _set.get("set_id")}}),
-                    text: config.msgTemplate({type: "set_removed_details",opts:{setname: _set.get("set_id")}})});
-                       
-               // update the assignmentDateList to delete the proper assignments
-
-                self.assignmentDateList.remove(self.assignmentDateList.filter(function(assign) { 
-                    return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
-
-            }});
-        }).on("change:due_date change:open_date change:answer_date",function(_set){
-            var assignments = self.assignmentDateList.filter(function(assign) { 
-                    return assign.get("problemSet").get("set_id")===_set.get("set_id");});
-            _(assignments).each(function(assign){
-                assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")+"_date")).format("YYYY-MM-DD"));
-            });
-        }).on("change",function(_set){
-           _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
-        }).on("change:problems",function(_set){
-            _set.save();
-        }).on("user_sets_added",function(_userSetList){
-            _userSetList.on("change",function(_userSet){
-                _userSet.changingAttributes=_.pick(_userSet._previousAttributes,_.keys(_userSet.changed));
-                _userSet.save();
-            }).on("sync",function(_userSet){  // note: this was just copied from HomeworkManager.js  perhaps a common place for this
-                _(_.keys(_userSet.changingAttributes||{})).each(function(key){
-                    var _old = key.match(/date$/) ? moment.unix(_userSet.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
-                                         : _userSet.changingAttributes[key];
-                    var _new = key.match(/date$/) ? moment.unix(_userSet.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _userSet.get(key);
-                    self.messagePane.addMessage({type: "success", 
-                        short: config.msgTemplate({type:"set_saved",opts:{setname:_userSet.get("set_id")}}),
-                        text: config.msgTemplate({type:"set_saved_details",opts:{setname:_userSet.get("set_id"),key: key,
-                            oldValue: _old, newValue: _new}})});
-                });
-            }); // close _userSetList.on 
-        }).on("sync", function (_set){
-            _(_.keys(_set.changingAttributes||{})).each(function(key){
-                switch(key){
-                    case "problems":
-                        self.messagePane.addMessage({type: "success", 
-                            short: config.msgTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
-                            text: attr.msg});
-                        break;
-                    case "problem_added": 
-                        self.messagePane.addMessage({type: "success", 
-                            short: config.msgTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
-                            text: config.msgTemplate({type:"problem_added_details",opts:{setname: _set.get("set_id")}})});
-                        break;
-                    case "problems_reordered": 
-                        self.messagePane.addMessage({type: "success", 
-                            short: config.msgTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
-                            text: config.msgTemplate({type:"problems_reordered_details",opts:{setname: _set.get("set_id")}})});
-                        break;
-                    case "problem_deleted": 
-                        self.messagePane.addMessage({type: "success", 
-                            short: config.msgTemplate({type:"problem_deleted",opts:{setname: _set.get("set_id")}}),
-                            text: config.msgTemplate({type: "problem_deleted_details", opts: _set.changingAttributes[key]})});
-                        break;
-                    case "assigned_users":
-                        self.messagePane.addMessage({type: "success",
-                            short: config.msgTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}), 
-                            text: config.msgTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})}); 
-                        break;
-                    case "add":
-                        self.messagePane.addMessage({type: "success", 
-                            short: config.msgTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
-                            text: config.msgTemplate({type: "set_added_details",opts:{setname: _set.get("set_id")}})});
-                        self.assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
-                            date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
-                        self.assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
-                            date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
-                        self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
-                            date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-
-                        break;    
-                    default:
-                        var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
-                                     : _set.changingAttributes[key];
-                        var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
-                        self.messagePane.addMessage({type: "success", 
-                            short: config.msgTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
-                            text: config.msgTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),key: key,
-                                oldValue: _old, newValue: _new}})});
-                }
-            });
-            self.updateCalendar();
-        }).on("show",function(_set){   // this will show the given Problem Set sent from "Manage Problem Sets (HWDetailView) or ProblemSetListView"
-            self.showProblemSetDetails(_set.get("set_id"));
-        }).on("show-help",function(){ // this isn't a particular good way to do this, but is a fix. 
-            self.changeSidebar("Help");
-        })
-
-        /* This sets the events for the problems (of type ProblemList) in each problem Set */
-
-        this.problemSets.each(function(_set) {
-            _set.problems.on("change:value",function(prob){
-                // not sure this is actually working.
-                prob.changingAttributes={"value_changed": {oldValue: prob._previousAttributes.value, 
-                        newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}}
-            }).on("add",function(problems){
-                _set.changingAttributes={"problem_added": ""};
-            }).on("sync",function(problems){
-                _(_.keys(problems.changingAttributes)).each(function(key){
-                    switch(key){
-                        case "value_changed": 
-                            self.messagePane.addMessage({type: "success", 
-                                short: config.msgTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
-                                text: config.msgTemplate({type: "problems_values_details", opts: problems.changingAttributes[key]})});
-                            break;
-                        
-                    }
-                });
-            })
-        });
-
-
-        // this handles the validation of the problem sets, mainly validating the dates.  
-
-
-
-        this.problemSets.bind('validated:invalid', function(model, errors) {
-            var uniqueErrors = _.unique(_.values(errors));
-            _(uniqueErrors).each(function(error){
-                self.messagePane.addMessage({type: "danger", text: error,
-                        short: config.msgTemplate({type:"set_error",opts:{setname: model.get("set_id")}})});
-
-            }); 
-        });
-
-        /* Set the events for the settings */
-
-        this.settings.on("change",function(setting){
-            setting.changingAttributes=_.pick(setting._previousAttributes,_.keys(setting.changed));
-        }).on("sync",function(setting){
-            _(_.keys(setting.changingAttributes)).each(function(key){
-                    self.messagePane.addMessage({type: "success",
-                        short: config.msgTemplate({type:"setting_saved",opts:{varname:setting.get("var")}}), 
-                        text: config.msgTemplate({type:"setting_saved_details"
-                                ,opts:{varname:setting.get("var"), oldValue: setting.changingAttributes[key],
-                                    newValue: setting.get("value") }})}); 
-            });
-        });
-
-
     },
     render: function(){
         this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
     },
     showProblemSetDetails: function(setName){
         if (this.objectDragging) return;
-        this.changeView("Problem Set Details",{});
-        this.currentView.changeHWSet(setName); 
+        this.changeView("Problem Set Details",{});        
+        this.mainViewList.getViewByName("Problem Set Details").changeProblemSet(setName).render();
     },
     changeSidebar: function(_name){
         if(this.currentSidePane){
@@ -405,46 +264,6 @@ var CourseManager = WebPage.extend({
             this.setProblemSetUI({droppable: false, draggable:false});
         }
     },
-    // call this to set the problems to be draggable or not or droppable or not: 
-
-    // Note: this should be done in the individual views.  
-    setProblemSetUI: function (opts) {
-        var self = this;
-
-        // The following allows a problem set (on the sidepane to be dragged onto the Calendar)
-        if(opts.draggable){
-            $(".problem-set").draggable({ 
-                disabled: false,  
-                revert: true, 
-                scroll: false, 
-                helper: "clone",
-                appendTo: "body",
-                cursorAt: {left: 10, top: 10}
-            });
-        } else {
-            $(".problem-set.ui-draggable").draggable("destroy");
-        }
-        if(opts.droppable){
-            $(".problem-set").droppable({
-                disabled: false,
-                hoverClass: "btn-info",
-                accept: ".problem",
-                tolerance: "pointer",
-                drop: function( evt, ui ) { 
-                    console.log("Adding a Problem to HW set " + $(evt.target).data("setname"));
-                    console.log($(ui.draggable).data("path"));
-                    var source = $(ui.draggable).data("source");
-                    console.log(source);
-                    var set = self.problemSets.findWhere({set_id: $(evt.target).data("setname")})
-                    var prob = self.views.libraryBrowser.views[source].problemList
-                                        .findWhere({source_file: $(ui.draggable).data("path")});
-                    set.addProblem(prob);
-                }
-            });
-        } else {
-            $(".problem-set.ui-droppable").droppable("destroy");
-        }
-    }, 
     // This travels through all of the assignments and determines the days that assignment dates fall
     buildAssignmentDates: function () {
         var self = this;
@@ -460,48 +279,6 @@ var CourseManager = WebPage.extend({
 
         });
     },
-    // This updates the drag-drop features of the calendar.
-    updateCalendar: function ()
-    {
-        var self = this;
-        this.mainViewList.getViewByName("Calendar").render();
-        // The following allows each day in the calendar to allow a problem set to be dropped on. 
-             
-        $(".calendar-day").droppable({
-            hoverClass: "highlight-day",
-            accept: ".problem-set, .assign",
-            greedy: true,
-            drop: function(ev,ui) {
-                ev.stopPropagation();
-                if($(ui.draggable).hasClass("problem-set")){
-                    self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"all");
-                } else if ($(ui.draggable).hasClass("assign-open")){
-                    self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"open_date");
-                } else if ($(ui.draggable).hasClass("assign-due")){
-                    self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"due_date");
-                } else if ($(ui.draggable).hasClass("assign-answer")){
-                    self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"answer_date");
-                }
-
-            }
-        });
-
-        // The following allows an assignment date (due, open) to be dropped on the calendar
-
-        $(".assign-due,.assign-open,.assign-answer").draggable({
-            revert: true,
-            start: function () {$(this).popover("destroy")}
-        });
-    },
-    setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
-        var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
-        if(type==="all") {
-            problemSet.setDefaultDates(_date).save({success: this.updateCalendar()});
-        } else {
-            problemSet.setDate(type,moment(_date,"YYYY-MM-DD").unix());
-        }
-
-    }
 });
 
    

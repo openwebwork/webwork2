@@ -42,3 +42,36 @@
         <li>You can sort by any aspect of the sets, by clicking the header column. </li>
       </ul>
 </script>
+
+<script type="text/template" id="problem-sets-manager-messages-template">
+<%
+var messages = {
+      set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
+    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
+      + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
+    set_added: function(opt){ return "Set " + opt.setname + " added.";},
+    set_added_details: function(opt){ return "The set " + opt.setname + " was added to the course."},
+    set_removed: function(opt){ return "Set " + opt.setname + " removed.";},
+    set_removed_details: function(opt){ return "The set " + opt.setname + " was removed to the course."},
+    set_error: function(opt){ return "Error saving set " + opt.setname + " .";},
+    set_error_details: function(opt){ return "The set " + opt.setname + " had an error."},
+    set_assigned_users_saved: function(opt){ 
+      return "The assigned users for set " + opt.setname + " was updated."},
+    problem_added: function(opt){ return "A problem was added to " + opt.setname},
+    problem_added_details: function(opt){ return "A problem was added to " + opt.setname},
+    problems_reordered: function(opt){ return "The problems were reordered in " + opt.setname},
+    problems_reordered_details: function(opt){ return "The problems were reordered in " + opt.setname},
+    problems_values_details: function(opt) { return "The value for problem " + opt.problem_id + " of set " + opt.set_id +
+      " was changed from "+ opt.oldValue + " to " + opt.newValue + "."},
+    problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
+    problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id 
+        + " was deleted from set " + opt.setname},  
+    setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
+    setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
+                                opt.oldValue + " to " + opt.newValue + "."},
+ 
+}
+print(messages[type](typeof(opts)=="undefined"?{}:opts))
+%>
+
+</script>

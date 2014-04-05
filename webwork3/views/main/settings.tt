@@ -1,7 +1,7 @@
 <!-- Settings template -->
 
 <script type="text/template" id="settings-template">
-<ul class="nav nav-tabs">
+<ul class="nav nav-tabs settings-tabs">
   <% _(categories).each(function(cat,i){
     print("<li><a href='#setting-tab"+i+"' data-toggle='tab'>"+cat+"</a></li>");
   });%>

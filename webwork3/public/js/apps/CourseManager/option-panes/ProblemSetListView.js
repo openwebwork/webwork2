@@ -31,7 +31,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             this.$el.html($("#problem-set-list-template").html());
             this.problemSets.each(function (_model) {
                 self.$("#probSetList").append((new ProblemSetView({model: _model, template: self.setViewTemplate,
-                        numUsers: self.users.length, problemSets: self.problemSets})).render().el);
+                        numUsers: self.users.length, problemSets: self.problemSets,
+                        eventDispatcher: self.mainView.eventDispatcher})).render().el);
             });
             
             self.$(".set-name").truncate({width: "150"}); //if the Problem Set Names are too long.  
@@ -43,6 +44,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             }
             $("#problemSets").height($(window).height()-80);
             this.$(".prob-set-container").height($(window).height()-150);
+            this.setDragDrop();
             return this;
         },
         events: {"click a.sort-problem-set-option": "resort"},
@@ -81,6 +83,43 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                 });
             }
             return this;
+        },
+        setDragDrop: function(){
+            var self = this;
+
+            // The following allows a problem set (on the sidepane to be dragged onto the Calendar)
+            if(this.mainView.viewName==="Calendar"){
+                this.$(".problem-set").draggable({ 
+                    disabled: false,  
+                    revert: true, 
+                    scroll: false, 
+                    helper: "clone",
+                    appendTo: "body",
+                    cursorAt: {left: 10, top: 10}
+                });
+            } else {
+                this.$(".problem-set.ui-draggable").draggable("destroy");
+            }
+            if(this.mainView.viewName==="Library Browser"){
+                this.$(".problem-set").droppable({
+                    disabled: false,
+                    hoverClass: "btn-info",
+                    accept: ".problem",
+                    tolerance: "pointer",
+                    drop: function( evt, ui ) { 
+                        console.log("Adding a Problem to HW set " + $(evt.target).data("setname"));
+                        console.log($(ui.draggable).data("path"));
+                        var source = $(ui.draggable).data("source");
+                        console.log(source);
+                        var set = self.problemSets.findWhere({set_id: $(evt.target).data("setname")})
+                        var prob = self.mainView.views[source].problemList
+                                            .findWhere({source_file: $(ui.draggable).data("path")});
+                        set.addProblem(prob);
+                    }
+                });
+            } else {
+                this.$(".problem-set.ui-droppable").droppable("destroy");
+            }
         }
     });
 
@@ -92,6 +131,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             this.template = options.template; 
             this.numUsers = options.numUsers;
             this.problemSets = options.problemSets;
+            this.eventDispatcher = options.eventDispatcher;
         },
         render: function(){
             this.$el.html(this.template);
@@ -120,8 +160,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
 
         },
         showProblemSet: function (evt) {
-            var set = this.problemSets.findWhere({set_id: this.model.get("set_id")})
-            set.trigger("show",set);
+            this.eventDispatcher.trigger("show-problem-set",this.model.get("set_id"));
         }
 
     });

@@ -7,7 +7,7 @@ var ImportExportView = MainView.extend({
     	var self = this;
         _.bindAll(this,"render");
         this.problemSets = options.problemSets;
-        this.problemSetsToImport = new ProblemSetList();
+        this.problemSetsToImport = new ProblemSetList([],{dateSettings: util.pluckDateSettings(this.settings)});
         this.rowViews=[];
         this.problemSetsToImport.on("change:name",function (_set) {
     		self.checkSetNames();

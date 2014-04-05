@@ -185,7 +185,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 this.gotoPage(this.currentPage);
                 this.problemSet.trigger("change:problems",this.problemSet);
                 if(this.undoStack.length==0){
-                    this.$(".undo-delete-button").addClass("disabled");
+                    this.$(".undo-delete-button").attr("disabled","disabled");
                 }
             }
         },
@@ -210,7 +210,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.problemSet.trigger("change:problems",this.problemSet);
             this.undoStack.push(problem);
             this.gotoPage(this.currentPage);
-            this.$(".undo-delete-button").removeClass("disabled");
+            this.$(".undo-delete-button").removeAttr("disabled");
         }
     });
 	return ProblemListView;

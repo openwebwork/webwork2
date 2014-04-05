@@ -15,6 +15,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             this.allProblemSets = options.problemSets;
             this.libBrowserType = options.libBrowserType;
             this.settings = options.settings;
+            this.messageTemplate = options.messageTemplate;
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this,
                  allProblemSets: this.allProblemSets, settings: this.settings});
             this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets});
@@ -50,7 +51,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             var problemSet = this.allProblemSets.findWhere({set_id: this.targetSet});
             if(!problemSet){
                 this.$(".target-set").css("background-color","rgba(255,0,0,0.4)")
-                    .popover({placement: "bottom",content: config.msgTemplate({type:"select_target_set"})}).popover("show");
+                    .popover({placement: "bottom",content: this.messageTemplate({type:"select_target_set"})}).popover("show");
                 return;
             }
             problemSet.addProblem(model);
