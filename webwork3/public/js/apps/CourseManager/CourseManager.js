@@ -177,8 +177,11 @@ var CourseManager = WebPage.extend({
         }});
 
         $(window).on("beforeunload", function () {
-            return this.messageTemplate({type: "leave_page"});
-         });
+            return self.messageTemplate({type: "leave_page"});
+         }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
+            self.currentView.render();
+            self.currentSidePane.render();
+         })
 
         // Add a link to WW2 via the main menu.
 
