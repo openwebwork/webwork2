@@ -48,7 +48,9 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         },
         /* 
         This is an object of all of the main views, default side pans and optional side panes.  
-        */
+
+        Put this into a configuration file. 
+        
         main_views: {
             "calendar": {default_side: "problemSets",optional_sides: []},
             "setDetails": {default_side: "problemSets",optional_sides: []},
@@ -58,7 +60,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             "settings": {default_side: "hide-sidebar",optional_sides: []},
             "classlist": {default_side: "hide-sidebar",optional_sides: []},
             "studentProgress": {default_side: "hide-sidebar",optional_sides: []},
-        }
+        } */
     } 
 
     // These are additional validation patterns to be available to Backbone Validation

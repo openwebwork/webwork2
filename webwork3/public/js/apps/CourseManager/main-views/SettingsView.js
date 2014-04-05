@@ -16,9 +16,11 @@ define(['backbone','config','views/WWSettingsView','views/MainView'],function(Ba
      render: function () {
         this.currentCategory = this.currentCategory || "General";
         // get all of the categories except for timezone (include it somewhere?)
+        this.currentCategory = this.currentCategory || this.categories[0];
         this.$el.html(_.template($("#settings-template").html(),{categories: this.categories}));
-        this.changeSettingTab(this.currentCategory);
-        this.$(".settings-tabs a[href='#setting-tab"+_(this.categories).indexOf(this.currentCategory)+"']").tab("show");
+        var settings = this.settings.where({category: this.currentCategory});
+        this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
+        this.$('.nav-tabs a:eq('+(_(this.categories).indexOf(this.currentCategory)+1)+')').tab('show');
         return this;
 
      },
@@ -27,7 +29,6 @@ define(['backbone','config','views/WWSettingsView','views/MainView'],function(Ba
         var settings = this.settings.where({category: this.currentCategory});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
         this.eventDispatcher.trigger("save-state");
-
      }, 
      getHelpTemplate: function (){
         return $("#settings-help-template").html();

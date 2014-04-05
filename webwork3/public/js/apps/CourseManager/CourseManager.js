@@ -180,6 +180,12 @@ var CourseManager = WebPage.extend({
             return this.messageTemplate({type: "leave_page"});
          });
 
+        // Add a link to WW2 via the main menu.
+
+        this.navigationBar.$(".manager-menu").append("<li><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
+
+        //$(".ww2-link").attr("href","/webwork2/"+config.courseSettings.course_id); // create a link back to ww2. 
+
     },
 
     // can a lot of this be handled by the individual views?  

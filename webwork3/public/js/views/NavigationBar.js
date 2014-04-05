@@ -6,7 +6,7 @@ define(['backbone'], function(Backbone){
 			return this;
 		},
 		events: {
-			"click .manager-menu a": function(evt){
+			"click .manager-menu a.link": function(evt){
 				this.trigger("change-view",$(evt.target).data("name"));
 			},
 			"click .main-help-button": function(evt){

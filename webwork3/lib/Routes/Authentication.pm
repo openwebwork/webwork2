@@ -14,7 +14,7 @@ use WeBWorK::Constants;
 
 use base qw(Exporter);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(checkPermissions authenticate setCourseEnvironment);
+our @EXPORT_OK = qw(checkPermissions authenticate setCourseEnvironment buildSession);
 
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
@@ -84,26 +84,52 @@ sub authenticate {
 	if(! defined(session 'key')){
 		my $key = vars->{db}->getKey(session 'user');
 
-		debug $key;
-
 		if ($key->{key} eq params->{session_key}) {
-			session key  => params->{session_key};
+			session 'key'  => params->{session_key};
 		} 
+
+
 	}
 
 	if(! defined(session 'key')){
 		send_error("The session key has not been defined or is not correct.  You may need to authenticate again",401);	
 	}
 
-	# debug "Checking if session->{permission} is defined";
-	# debug session->{permission};
+	# update the timestamp in the database so the user isn't logged out prematurely.
 
+	my $key = vars->{db}->getKey(session 'user');
+	$key->{timestamp} = time();
+	vars->{db}->putKey($key);
 
 	if (! defined(session 'permission')){
 		my $permission = vars->{db}->getPermissionLevel(session 'user');
 		session 'permission' => $permission->{permission};		
 	}
 
+	debug session;
+}
+
+# this will build up the dancer session based on the ww2 session. 
+
+sub buildSession {
+	if (!defined(session 'user')) {
+    	if (defined(params->{user})){
+	    	session user => params->{user};
+    	}
+	}
+
+	if(! defined(session 'key')){
+		my $key = vars ->{db}->getKey(session 'user');
+		session 'key' => $key->{key}; 
+		$key->{timestamp} = time();
+		vars->{db}->putKey($key);
+
+	}
+
+	if (! defined(session 'permission')){
+		my $permission = vars->{db}->getPermissionLevel(session 'user');
+		session 'permission' => $permission->{permission};		
+	}
 }
 
 sub checkPermissions {

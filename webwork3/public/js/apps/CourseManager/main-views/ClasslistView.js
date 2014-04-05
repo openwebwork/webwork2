@@ -78,6 +78,9 @@ var ClasslistView = MainView.extend({
         this.clearFilterText();
 	    return this;
     },  
+    getState: function () {
+        return {};
+    },
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
     	_user.save();

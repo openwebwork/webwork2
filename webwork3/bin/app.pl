@@ -1,8 +1,13 @@
 #!/usr/bin/env perl
 use Dancer;
 use Dancer::Plugin::Database;
-use WeBWorK::DB;
+
+# link to WeBWorK code libraries
+use lib config->{webwork_dir}.'/lib';
+use lib config->{pg_dir}.'/lib';
+
 use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
 use WeBWorK::Authen;
 
 ## note: Routes::Authenication must be passed first
@@ -13,10 +18,6 @@ use Routes::ProblemSets;
 use Routes::User;
 use Routes::Settings;
 use Routes::PastAnswers;
-
-
-
-
 
 set serializer => 'JSON';
 
@@ -66,18 +67,17 @@ post '/courses/:course_id/login' => sub {
 	if($result){
 		my $key = $authen->create_session(params->{user});
 		
-		session->{user} = params->{user};
-		session->{key} = $key;
+		session user => params->{user};
+		session key => $key;
+
 		my $permission = vars->{db}->getPermissionLevel(session->{user});
-		session->{permission} = $permission->{permission};		
+		session permission => $permission->{permission};		
 
-		debug session;	
 		return {session_key=>$key, user=>params->{user},logged_in=>1};
-
 
 	} else {
 		return {logged_in=>0};
-	}
+	} 
 };
 
 
@@ -97,7 +97,6 @@ get '/app-info' => sub {
 		session_name=>config->{session_name},
 		session_secure=>config->{session_secure},
 		session_is_http_only=>config->{session_is_http_only},
-		
 	};
 };
 

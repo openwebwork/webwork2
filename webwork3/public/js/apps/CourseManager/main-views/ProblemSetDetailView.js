@@ -66,9 +66,11 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             return this;   
         },
         setState: function(state){
-            this.currentViewName = state.subview;
-            this.currentView = this.views[this.currentViewName];
-            this.problemSet = this.allProblemSets.findWhere({set_id: state.set_id});
+            if(state){
+                this.currentViewName =  state.subview || "problemSetView";
+                this.currentView = this.views[this.currentViewName];
+                this.problemSet = this.allProblemSets.findWhere({set_id: state.set_id});
+            }
             return this;
         },
         getState: function(){
@@ -86,13 +88,15 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         events: {
             "shown.bs.tab #problem-set-tabs a[data-toggle='tab']": "changeView",
             "click .set-name-target": function(evt){
-                this.changeHWSet($(evt.target).text());
+                this.changeProblemSet($(evt.target).text());
             }
         },
         changeView: function(evt){
             this.currentViewName = _.isString(evt)? evt: $(evt.target).data("view")
             this.currentView = this.views[this.currentViewName];
-            this.currentView.setProblemSet(this.problemSet).render();
+            if(this.problemSet){
+                this.currentView.setProblemSet(this.problemSet).render();
+            }
             if($(evt.target).data("view")==="customizeUserAssignView"){
                 this.allProblemSets.trigger("show-help");
             }
@@ -103,7 +107,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         {
         	this.problemSet = this.allProblemSets.findWhere({set_id: setName});
             this.$(".problem-set-name-menu .set-name").text(setName).truncate({width: 150});
-            this.views.propertiesView.setProblemSet(this.problemSet).render();
+            this.changeView("propertiesView");
             this.loadProblems();
             return this;
         },
@@ -158,7 +162,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
             if(this.model){
-                this.stickit();                
+                this.stickit();
             }
             return this;
         },

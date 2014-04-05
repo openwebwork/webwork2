@@ -754,14 +754,21 @@ sub links {
 				print CGI::end_li();
 				print CGI::start_li();
 				print CGI::start_ul();
+
+				# WW3 redirect
+				print CGI::li(&$makelink("${pfx}WW3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+					if $ce->{showeditors}->{ww3};
+				
 				
                 #class list editor
 				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{classlisteditor1};
 				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{classlisteditor2};
-				print CGI::li(&$makelink("${pfx}UserList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor3};
+
+				# the following is WW3 page which is being included elsewhere
+				# print CGI::li(&$makelink("${pfx}UserList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+				# 	if $ce->{showeditors}->{classlisteditor3};
 
 				
 				# Homework Set Editor
@@ -770,8 +777,9 @@ sub links {
 
 				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor2};
-				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{homeworkseteditor3};
+				# the following is WW3 page which is being included elsewhere
+				# print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+				# 	if $ce->{showeditors}->{homeworkseteditor3};
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {

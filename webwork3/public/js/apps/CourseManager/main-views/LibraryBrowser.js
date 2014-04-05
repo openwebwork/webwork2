@@ -62,7 +62,7 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
         },
         setState: function(state){
             if(state){
-                this.currentViewname = state.subview;
+                this.currentViewname = state.subview || "subjects";
                 this.currentView = this.views[this.currentViewname];
             }
             return this;
