@@ -225,8 +225,6 @@ at the bottom of the screen and click "Save Changes". </p>
 <%
   var messages = {
     leave_page: function() { return "Do you want to leave this page?";},
-    openDate_after_dueDate: function(){return "The open date must come before the due date";},
-    dueDate_after_answerDate: function(){return "The due date must come before the answer date.";},
     set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
     show_prob_set: function() { return "Show Problem Sets";},
     hide_prob_set: function() { return "Hide Problem Sets";},

@@ -126,10 +126,12 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
                 , answerDate = moment.unix(computedState.answer_date);
 
             if(openDate.isAfter(dueDate)){ 
-                return this.msgTemplate({type: "openDate_after_dueDate"});
+                this.trigger("set_date_error",{set_id: this.get("set_id"), type: "openDate_after_dueDate"});
+                return "open date is after due date";
             }
             if (dueDate.isAfter(answerDate)){
-                return this.msgTemplate({type: "dueDate_after_answerDate"});
+                this.trigger("set_date_error",{set_id: this.get("set_id"), type: "dueDate_after_answerDate"});
+                return "due date is after answer date";
             }
         }
     });
