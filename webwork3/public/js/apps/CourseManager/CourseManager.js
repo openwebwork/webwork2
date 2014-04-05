@@ -168,7 +168,11 @@ var CourseManager = WebPage.extend({
             return config.msgTemplate({type: "leave_page"});
          });
 
-        $(".ww2-link").attr("href","/webwork2/"+config.courseSettings.course_id); // create a link back to ww2. 
+        // Add a link to WW2 via the main menu.
+
+        this.navigationBar.$(".manager-menu").append("<li><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
+
+        //$(".ww2-link").attr("href","/webwork2/"+config.courseSettings.course_id); // create a link back to ww2. 
 
     },
 
