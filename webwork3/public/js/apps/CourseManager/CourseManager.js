@@ -89,30 +89,8 @@ var CourseManager = WebPage.extend({
         // can't we just pull this from the settings when needed.  Why do we need another variable. 
         config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
-        // Define all of the views that are visible with the Pulldown menu
-
-        // This information should be in a configuration file
-        // then modules could add to it easily 
-        // Here, all of the views can be loaded in. 
-
-/*
-        this.views = {
-            calendar : new AssignmentCalendar({assignmentDates: this.assignmentDateList,
-                    viewType: "instructor", calendarType: "month", users: this.users,
-                    reducedScoringMinutes: config.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}")}),
-            setDetails:  new ProblemSetDetailView({ users: this.users, problemSets: this.problemSets, 
-                    eventDispatcher: this.eventDispatcher}),
-            allSets:  new ProblemSetsManager({problemSets: this.problemSets, users: this.users}),
-            importExport:  new ImportExportView({problemSets: this.problemSets}),
-            libraryBrowser : new LibraryBrowser({errorPane: this.errorPane, problemSets: this.problemSets}),
-            settings      :  new SettingsView(),
-            classlist: new ClasslistView({users: this.users, problemSets: this.problemSets}),
-            studentProgress: new StudentProgressView({users: this.users, problemSets: this.problemSets})
-        }; */
-
         _(this.views).chain().keys().each(function(key){ self.views[key].setParentView(self)});
 
-        //this.views.calendar.dispatcher.on("calendar-change", self.updateCalendar);
 
         this.mainViewList.getViewByName("Calendar")
             .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
@@ -120,10 +98,6 @@ var CourseManager = WebPage.extend({
 
         this.mainViewList.getViewByName("Problem Sets Manager")
             .set({assignmentDates: this.assignmentDateList});
-
-        // Define all of the option views available for the right side
-        // 
-        // Again, this should be in a configuration file. 
 
         // Build the options menu.  Should we make a View for this?  
 
@@ -133,15 +107,6 @@ var CourseManager = WebPage.extend({
             ul.append(menuItemTemplate({name: item.name}));
         })
 
-/*        this.sidePane = {
-            problemSets: new ProblemSetListView({problemSets: this.problemSets, users: this.users}),
-            userList: new UserListView({users: this.users}),
-            libraryOptions: new LibraryOptionsView({problemSets: this.problemSets,settings: this.settings}),
-            problemList: new ProblemListOptionsSidePane({problemSets: this.problemSets, settings: this.settings}),
-            helpSidepane: new HelpSidePane()
-        } */
-
-
         this.setMessages();  
 
         // this will automatically save (sync) any change made to a problem set.
@@ -149,17 +114,14 @@ var CourseManager = WebPage.extend({
             _set.save();
         })        
 
-        // load the previous state of the app
+        // load the previous state of the app or set it to the Calendar
         var state = this.loadState();
 
         if(state){
             this.changeView(state.view,state);
         } else {
             this.changeView("Calendar",{});    
-        }
-
-        // set the initial view to be the Calendar. 
-        
+        }        
 
         this.navigationBar.on({"change-view": this.changeView,
             "open-option": this.changeSidebar
@@ -186,8 +148,6 @@ var CourseManager = WebPage.extend({
         // Add a link to WW2 via the main menu.
 
         this.navigationBar.$(".manager-menu").append("<li><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
-
-        //$(".ww2-link").attr("href","/webwork2/"+config.courseSettings.course_id); // create a link back to ww2. 
 
     },
 
@@ -243,8 +203,6 @@ var CourseManager = WebPage.extend({
 
         this.changeSidebar(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
         this.saveState();
-        //this.updateProblemSetList(opts.link); 
-        // store the current view in local storage for state persistence
     },
     saveState: function() {
         var state = this.currentView.getState();
@@ -253,19 +211,6 @@ var CourseManager = WebPage.extend({
     },
     loadState: function () {
         return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
-    },
-    updateProblemSetList: function(viewname) {
-        switch(viewname){            // set up the problem sets to be draggable or not
-            case "calendar":
-            //this.setProblemSetUI({droppable:true,draggable: true});
-            this.updateCalendar();
-            break;
-            case "libraryBrowser":
-            this.setProblemSetUI({droppable:true,draggable: false});
-            break;
-            default:
-            this.setProblemSetUI({droppable: false, draggable:false});
-        }
     },
     // This travels through all of the assignments and determines the days that assignment dates fall
     buildAssignmentDates: function () {
@@ -278,8 +223,6 @@ var CourseManager = WebPage.extend({
                     date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
             self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
                     date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-
-
         });
     },
 });
