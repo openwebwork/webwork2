@@ -16,7 +16,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             this.libBrowserType = options.libBrowserType;
             this.settings = options.settings;
             this.messageTemplate = options.messageTemplate;
-            this.libraryProblemsView = new LibraryProblemsView({libraryView: this,
+            this.libraryProblemsView = new LibraryProblemsView({libraryView: this, messageTemplate: this.messageTemplate,
                  allProblemSets: this.allProblemSets, settings: this.settings});
             this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets});
             this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            

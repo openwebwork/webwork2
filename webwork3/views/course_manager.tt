@@ -242,7 +242,6 @@ at the bottom of the screen and click "Save Changes". </p>
     set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
     show_prob_set: function() { return "Show Problem Sets";},
     hide_prob_set: function() { return "Hide Problem Sets";},
-    problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
     unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
                   ". Click OK to confirm this."},
     relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 

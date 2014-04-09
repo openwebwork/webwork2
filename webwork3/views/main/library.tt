@@ -194,9 +194,11 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 
 <script type="text/template" id="library-messages-template">
 <% var messages = {
-  select_target_set: function() { return "You need to select a target set";}
+  select_target_set: function() { return "You need to select a target set";},
+  problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
 }
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
+  %>
 </script>
 
 <script type="text/template" id="library-help-template">
