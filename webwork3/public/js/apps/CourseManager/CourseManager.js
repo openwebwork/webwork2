@@ -71,7 +71,7 @@ var CourseManager = WebPage.extend({
     },
     startManager: function () {
         var self = this;
-        this.navigationBar.setLoginName("Welcome " +this.session.user);
+        this.navigationBar.setLoginName(this.session.user);
         this.currentSidePane = {};
         
         this.mainViewList = new MainViewList({settings: this.settings, users: this.users, 
@@ -126,7 +126,11 @@ var CourseManager = WebPage.extend({
             this.changeView("Calendar",{});    
         }        
 
-        this.navigationBar.on({"change-view": this.changeView});
+        this.navigationBar.on({
+            "change-view": this.changeView,
+            "logout": this.logout,
+            "stop-acting": this.stopActing
+        });
 
         this.users.on({"act_as_user": function(model){
             self.session.effectiveUser = model.get("user_id");
@@ -134,7 +138,7 @@ var CourseManager = WebPage.extend({
                 url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session", 
                 data: {effectiveUser: self.session.effectiveUser},
                 success: function () {
-                    self.navigationBar.setLoginName("Welcome " +self.session.user + " (" + self.session.effectiveUser + ")");                    
+                    self.navigationBar.setActAsName(self.session.effectiveUser);                    
                 }
             });
         }});
@@ -231,6 +235,21 @@ var CourseManager = WebPage.extend({
     },
     loadState: function () {
         return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
+    },
+    logout: function(){
+        var conf = confirm("Do you want to log out?");
+        if(conf){
+            $.ajax({method: "POST", 
+                url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/logout", 
+                success: function () {
+                    location.href="/webwork2";
+                }
+            });
+        }
+        console.log("time to log out");
+    },
+    stopActing: function (){
+        console.log("not acting");
     },
     // This travels through all of the assignments and determines the days that assignment dates fall
     buildAssignmentDates: function () {

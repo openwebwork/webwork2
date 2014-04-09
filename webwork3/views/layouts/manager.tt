@@ -57,7 +57,17 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
       </ul>
 
         <ul class="nav navbar-nav navbar-right">
-          <li><p class="logged-in-as navbar-text">Hello</p><li>
+          <li><p class="navbar-text">
+          Welcome <span class="logged-in-as"></span>
+            <span class="act-as-user"></span>
+          </p><li>
+          <li><button class="btn btn-default btn-sm navbar-btn logout-button" data-toggle="dropdown">
+                <span class="glyphicon glyphicon-log-out"></span></button>
+                <ul class="dropdown-menu" role="menu">
+                  <li><a class="logout-link" href="#">Logout</a></li>
+                  <li class="stop-acting-li disabled"><a class="stop-acting-link" href="#">Stop Acting as User</a></li>
+                </ul>
+          </li>
           <li><a href="#" href="https://github.com/openwebwork/webwork2/issues/new" target="_blank">Bugs!</a></li>
           <li><a href="#" href="#" class="main-help-button">Help</a></li>
       </ul>
@@ -68,15 +78,6 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
 </script>
 
 <!-- This is where all messages to the user go -->
-
-<script type="text/template" id="logged-in-template">
-Welcome <%=user_id%>
-<%if(euser){%>
-  (<%=euser%>)
-<%}%>
-<span class="glyphicon glyphicon-log-out"></span>
-</script>
-
 <script type="text/template" id="message-pane-template">
 <div class='row'>
     <div class='pull-right'><button type='button' class='close'>&times;</button></div>
