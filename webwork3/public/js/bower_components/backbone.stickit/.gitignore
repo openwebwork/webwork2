@@ -1,0 +1,13 @@
+build
+dist
+node_modules
+npm-debug.log
+docs
+gh-pages
+*.diff
+*.patch
+*.bak
+*.log
+*.swp
+.DS_Store
+.project

@@ -8,8 +8,4 @@ library-directory-tree.json
 library-subject-tree.json
 textbook-tree.json
 *~
-<<<<<<< HEAD
-/webwork3/public/js/bower_components/*
-=======
-webwork3/public/js/bower_components
->>>>>>> Reorganization and initial checkin of the Course Manager.
+
