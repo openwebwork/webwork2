@@ -62,7 +62,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             if(this.problemSet){
                 this.changeProblemSet(this.problemSet.get("set_id"));
             }
-
+            MainView.prototype.render.apply(this);
             return this;   
         },
         setState: function(state){

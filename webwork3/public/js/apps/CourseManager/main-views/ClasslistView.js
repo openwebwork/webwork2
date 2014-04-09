@@ -76,6 +76,7 @@ var ClasslistView = MainView.extend({
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
         this.clearFilterText();
+        MainView.prototype.render.apply(this);
 	    return this;
     },  
     getState: function () {

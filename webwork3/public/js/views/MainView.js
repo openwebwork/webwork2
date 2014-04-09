@@ -10,6 +10,21 @@ define(['backbone'],function(Backbone){
 		setParentView: function(parentView){
 			this.parentView = parentView;
 		},
+		render: function() {
+			var self = this;
+			this.$el.prepend($("#open-close-view-template").html());
+			// since this won't happen automatically in Backbone's delegate events, call the click event directly. 
+			this.$(".open-close-view").off("click").on("click", function(){
+				var it = self.$(".open-close-view i");
+				if(it.hasClass("fa-chevron-right")){
+					it.removeClass("fa-chevron-right").addClass("fa-chevron-left")
+				} else {
+					it.removeClass("fa-chevron-left").addClass("fa-chevron-right")
+				}
+				self.eventDispatcher.trigger("open-close-sidebar");
+			})
+			return this;
+		},
 		setSidePane: function(pane){
 			if(typeof(pane)==="undefined"){
 				return;
