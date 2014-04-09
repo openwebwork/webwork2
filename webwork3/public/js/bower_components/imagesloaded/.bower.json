@@ -1,0 +1,30 @@
+{
+  "name": "imagesloaded",
+  "version": "3.1.4",
+  "description": "JavaScript is all like _You images done yet or what?_",
+  "main": "imagesloaded.js",
+  "dependencies": {
+    "eventEmitter": "4.x",
+    "eventie": "eventie#>=1.0.4 <2"
+  },
+  "devDependencies": {
+    "jquery": ">=1.9 <2.0",
+    "qunit": ">=1.10"
+  },
+  "ignore": [
+    "**/.*",
+    "test",
+    "component.json",
+    "imagesloaded.jquery.json"
+  ],
+  "homepage": "https://github.com/desandro/imagesloaded",
+  "_release": "3.1.4",
+  "_resolution": {
+    "type": "version",
+    "tag": "v3.1.4",
+    "commit": "022f806ce59de9bb16ec07a90f8832a90f0a5d45"
+  },
+  "_source": "git://github.com/desandro/imagesloaded.git",
+  "_target": "3.1.4",
+  "_originalSource": "imagesloaded"
+}

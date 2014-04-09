@@ -1,0 +1,14 @@
+{
+  "name": "backbone.stickit",
+  "homepage": "https://github.com/NYTimes/backbone.stickit",
+  "version": "0.7.0",
+  "_release": "0.7.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.7.0",
+    "commit": "2f1735768216c28aa699341de50137b0e70f1678"
+  },
+  "_source": "git://github.com/NYTimes/backbone.stickit.git",
+  "_target": "0.7.0",
+  "_originalSource": "backbone.stickit"
+}
