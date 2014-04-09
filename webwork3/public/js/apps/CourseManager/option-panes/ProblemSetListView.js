@@ -36,22 +36,15 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                         numUsers: self.users.length, problemSets: self.problemSets,
                         eventDispatcher: self.mainView.eventDispatcher})).render().el);
             });
-            console.log(ul.width());
-            console.log(this.$el.width());
             if(ul.width()>this.$el.width()){
                 this.$(".sidepane-problem-set").each(function(i,v){
                     var setNameSize = $(v).children(".set-name").width();
                     var numUsersSize = $(v).children(".num-users").width();
-                    //console.log([setNameSize,numUsersSize]);
                     if(setNameSize+numUsersSize>self.$el.width()){
                         $(v).children(".set-name").truncate({width: self.$el.width()-numUsersSize-25});
                     }
                 })
             }
-
-
-            //self.$(".set-name").truncate({width: "150"}); //if the Problem Set Names are too long.  
-           
 
            // move the HTML below to the template file.
             if (this.problemSets.size() === 0 ) {
