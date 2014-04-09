@@ -178,21 +178,27 @@ var CourseManager = WebPage.extend({
         this.changeView("Problem Set Details",{});        
         this.mainViewList.getViewByName("Problem Set Details").changeProblemSet(setName).render();
     },
-    openCloseSidebar: function () {
-        if(this.currentSidePane.isOpen){
+    openCloseSidebar: function (str) {
+        if(this.currentSidePane.isOpen || str === "open"){
             this.currentSidePane.isOpen = false;
             $("#sidebar-container").removeClass("hidden");
             $("#main-view").removeClass("col-md-12").addClass("col-md-9");
-        } else {
+            self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
+        } else if (! this.currentSidePane.isOpen || str === "close"){
             this.currentSidePane.isOpen = true;
-           $("#sidebar-container").addClass("hidden");
+            $("#sidebar-container").addClass("hidden");
             $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
+            self.$(".open-close-view i").removeClass("fa-chevron-right").addClass("fa-chevron-left");
         }
     },
     changeSidebar: function(_name){
         var name = _.isString(_name) ? _name : $(_name.target).data("name");
         if(this.currentSidePane && this.currentSidePane.sidePane){
             this.currentSidePane.sidePane.remove();
+        }
+        if ((name==="")){
+            this.openCloseSidebar("close");
+            return;
         }
         this.currentSidePane.sidePane = this.mainViewList.getSidepaneByName(name);
         if(this.currentSidePane.sidePane){
@@ -204,6 +210,7 @@ var CourseManager = WebPage.extend({
                 .setElement(this.$(".sidebar-content")).render();
         }    
         this.currentView.setSidePane(this.currentSidePane.sidePane);
+        this.openCloseSidebar("open");
     },
     changeView: function (_name,state){
         if(this.currentView){
