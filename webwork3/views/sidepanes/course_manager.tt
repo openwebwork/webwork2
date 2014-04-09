@@ -6,7 +6,7 @@
 
 
 <script type="text/template" id="user-list-template">
-<div class="prob-set-container">
+<div class="user-list-container">
   <div class='btn-group-vertical'></div>
 </div>
 </script>
@@ -18,20 +18,21 @@
 
 
 <script type="text/template" id="problem-set-list-template">
-  <div class="md-col-3 pull-right">
-  <div class="btn-group">
-  <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
-    Sort By <span class="caret"></span>
-  </button>
-  <ul class="dropdown-menu" role="menu">
-    <li><a class="sort-problem-set-option" data-sortfield="set_id" href="#">Set Name</a></li>
-    <li><a class="sort-problem-set-option" data-sortfield="due_date" href="#">Due Date</a></li>
-  </ul>
-</div>
+  <div class="row">
+    <div class="md-col-3 pull-right">
+      <div class="btn-group">
+        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+          Sort By <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a class="sort-problem-set-option" data-sortfield="set_id" href="#">Set Name</a></li>
+          <li><a class="sort-problem-set-option" data-sortfield="due_date" href="#">Due Date</a></li>
+        </ul>
+      </div>
   </div>
 </div>
-<div class="prob-set-container">
-  <ul id='probSetList' class='btn-group btn-group-vertical'></ul>
+<div class="prob-set-list-container">
+  <div class='btn-group-vertical'></div>
 </div>
 </script>
 

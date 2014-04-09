@@ -29,13 +29,28 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             var self = this;
             
             this.$el.html($("#problem-set-list-template").html());
+            var ul = this.$(".btn-group-vertical");
+            //var ul = this.$(".prob-set-container ul");
             this.problemSets.each(function (_model) {
-                self.$("#probSetList").append((new ProblemSetView({model: _model, template: self.setViewTemplate,
+                ul.append((new ProblemSetView({model: _model, template: self.setViewTemplate,
                         numUsers: self.users.length, problemSets: self.problemSets,
                         eventDispatcher: self.mainView.eventDispatcher})).render().el);
             });
-            
-            self.$(".set-name").truncate({width: "150"}); //if the Problem Set Names are too long.  
+            console.log(ul.width());
+            console.log(this.$el.width());
+            if(ul.width()>this.$el.width()){
+                this.$(".sidepane-problem-set").each(function(i,v){
+                    var setNameSize = $(v).children(".set-name").width();
+                    var numUsersSize = $(v).children(".num-users").width();
+                    //console.log([setNameSize,numUsersSize]);
+                    if(setNameSize+numUsersSize>self.$el.width()){
+                        $(v).children(".set-name").truncate({width: self.$el.width()-numUsersSize-25});
+                    }
+                })
+            }
+
+
+            //self.$(".set-name").truncate({width: "150"}); //if the Problem Set Names are too long.  
            
 
            // move the HTML below to the template file.
@@ -124,7 +139,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
     });
 
     var ProblemSetView = Backbone.View.extend({
-        tagName: "li",
+        tagName: "button",
+        className: "btn btn-default sidepane-problem-set",
         initialize: function(options) {
             _.bindAll(this,"render","showProblemSet");
             this.$el.addClass("problem-set").addClass("btn btn-default btn-sm");
