@@ -13,7 +13,7 @@ var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
-	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidebar",
+	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidebar","stopActing",
             "changeView","changeSidebar","loadData","checkData","saveState");  // include all functions that need the this object
 	    var self = this;
 
@@ -249,7 +249,16 @@ var CourseManager = WebPage.extend({
         console.log("time to log out");
     },
     stopActing: function (){
-        console.log("not acting");
+        var self = this;
+        this.session.effectiveUser = this.session.user;
+        $.ajax({method: "POST", 
+            url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session", 
+            data: {effectiveUser: self.session.effectiveUser},
+            success: function () {
+                self.navigationBar.setActAsName("");                    
+            }
+        });
+
     },
     // This travels through all of the assignments and determines the days that assignment dates fall
     buildAssignmentDates: function () {
