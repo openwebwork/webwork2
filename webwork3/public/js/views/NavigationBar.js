@@ -11,9 +11,6 @@ define(['backbone'], function(Backbone){
 			},
 			"click .main-help-button": function(evt){
 				this.trigger("open-option","Help");
-			},
-			"click .option-menu a": function(evt){
-				this.trigger("open-option",$(evt.target).data("name"));
 			}
 		},
 		setPaneName: function(name){

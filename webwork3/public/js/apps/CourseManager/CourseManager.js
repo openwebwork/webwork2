@@ -13,7 +13,7 @@ var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
-	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails",
+	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidebar",
             "changeView","changeSidebar","loadData","checkData","saveState");  // include all functions that need the this object
 	    var self = this;
 
@@ -72,6 +72,7 @@ var CourseManager = WebPage.extend({
     startManager: function () {
         var self = this;
         this.navigationBar.setLoginName("Welcome " +this.session.user);
+        this.currentSidePane = {};
         
         this.mainViewList = new MainViewList({settings: this.settings, users: this.users, 
                 problemSets: this.problemSets, eventDispatcher: this.eventDispatcher});
@@ -102,10 +103,12 @@ var CourseManager = WebPage.extend({
         // Build the options menu.  Should we make a View for this?  
 
         var menuItemTemplate = _.template($("#main-menu-item-template").html());
-        var ul = $("#menu-navbar-collapse .option-menu");
+        var ul = this.$(".sidebar-menu .dropdown-menu");
         _(this.mainViewList.viewInfo.sidepanes).each(function(item){
             ul.append(menuItemTemplate({name: item.name}));
         })
+
+
 
         this.setMessages();  
 
@@ -123,9 +126,7 @@ var CourseManager = WebPage.extend({
             this.changeView("Calendar",{});    
         }        
 
-        this.navigationBar.on({"change-view": this.changeView,
-            "open-option": this.changeSidebar
-        });
+        this.navigationBar.on({"change-view": this.changeView});
 
         this.users.on({"act_as_user": function(model){
             self.session.effectiveUser = model.get("user_id");
@@ -142,13 +143,16 @@ var CourseManager = WebPage.extend({
             return self.messageTemplate({type: "leave_page"});
          }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
             self.currentView.render();
-            self.currentSidePane.render();
+            self.currentSidePane.sidePane.render();
          })
 
         // Add a link to WW2 via the main menu.
 
         this.navigationBar.$(".manager-menu").append("<li><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
-
+        this.delegateEvents();
+    },
+    events: {
+        "click .sidebar-menu a.link": "changeSidebar"
     },
 
     // can a lot of this be handled by the individual views?  
@@ -162,35 +166,44 @@ var CourseManager = WebPage.extend({
             "save-state": this.saveState,
             "show-problem-set": this.showProblemSetDetails,
             "add-message": this.messagePane.addMessage,
-            "show-help": function() { self.changeSidebar({link: "helpSidepane"})}
+            "show-help": function() { self.changeSidebar({link: "helpSidepane"})},
+            "open-close-sidebar": this.openCloseSidebar
         });
     },
     render: function(){
-        this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
+        WebPage.prototype.render.apply(this);  // Call  WebPage.render();
     },
     showProblemSetDetails: function(setName){
         if (this.objectDragging) return;
         this.changeView("Problem Set Details",{});        
         this.mainViewList.getViewByName("Problem Set Details").changeProblemSet(setName).render();
     },
-    changeSidebar: function(_name){
-        if(this.currentSidePane){
-            this.currentSidePane.remove();
-        }
-        if(_name===""){
-            $("#sidebar-container").addClass("hidden");
-            $("#main-view").removeClass("col-md-9").addClass("col-md-12");
-            return;
-        } else {
+    openCloseSidebar: function () {
+        if(this.currentSidePane.isOpen){
+            this.currentSidePane.isOpen = false;
             $("#sidebar-container").removeClass("hidden");
             $("#main-view").removeClass("col-md-12").addClass("col-md-9");
+        } else {
+            this.currentSidePane.isOpen = true;
+           $("#sidebar-container").addClass("hidden");
+            $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
         }
-        $("#sidebar-container").html("<div class='sidebar'></div>");
-
-        (this.currentSidePane = this.mainViewList.getSidepaneByName(_name))
-            .setMainView(this.currentView).setElement(this.$(".sidebar")).render();
-        this.currentView.setSidePane(this.currentSidePane);
-
+    },
+    changeSidebar: function(_name){
+        var name = _.isString(_name) ? _name : $(_name.target).data("name");
+        if(this.currentSidePane && this.currentSidePane.sidePane){
+            this.currentSidePane.sidePane.remove();
+        }
+        this.currentSidePane.sidePane = this.mainViewList.getSidepaneByName(name);
+        if(this.currentSidePane.sidePane){
+            this.$(".sidebar-menu .sidebar-name").text(name);
+            if (! $("#sidebar-container .sidebar-content").length){
+                $("#sidebar-container").append("<div class='sidebar-content'></div>");
+            }
+            this.currentSidePane.sidePane.setMainView(this.currentView)
+                .setElement(this.$(".sidebar-content")).render();
+        }    
+        this.currentView.setSidePane(this.currentSidePane.sidePane);
     },
     changeView: function (_name,state){
         if(this.currentView){

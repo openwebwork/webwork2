@@ -18,7 +18,7 @@ define(main_view_paths,function(module,Backbone){
 			return _(this.views).findWhere({name: _name}).view;
 		},
 		getSidepaneByName: function(_name){
-			return _(this.sidepanes).findWhere({name: _name}).view;
+			return _name===""? null :  _(this.sidepanes).findWhere({name: _name}).view;
 		}
 	});
 

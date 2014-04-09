@@ -60,11 +60,6 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
           <li><p class="logged-in-as navbar-text">Hello</p><li>
           <li><a href="#" href="https://github.com/openwebwork/webwork2/issues/new" target="_blank">Bugs!</a></li>
           <li><a href="#" href="#" class="main-help-button">Help</a></li>
-          <li class="dropdown">
-            <a href="#" href="#" class="dropdown-toggle" data-toggle="dropdown">Options <b class="caret"></b></a>
-          <ul class="dropdown-menu option-menu">
-          </ul>        
-        </li>
       </ul>
       </div><!-- /.navbar-collapse -->
 
@@ -74,6 +69,13 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
 
 <!-- This is where all messages to the user go -->
 
+<script type="text/template" id="logged-in-template">
+Welcome <%=user_id%>
+<%if(euser){%>
+  (<%=euser%>)
+<%}%>
+<span class="glyphicon glyphicon-log-out"></span>
+</script>
 
 <script type="text/template" id="message-pane-template">
 <div class='row'>

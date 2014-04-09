@@ -143,7 +143,6 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 </script>
 
 <script type="text/template" id="library-options-template">
-  <h3>Library Options</h3>
   <div class="form-group">
     <label for="problem-display-option">Display Options</label>
     <div class="col-md-10">
