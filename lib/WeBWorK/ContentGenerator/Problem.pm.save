@@ -201,7 +201,7 @@ sub can_showMeAnother {
                 $showMeAnother = -1 if ($showMeAnother eq "");
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
         my $showMeAnotherCount = $Problem->{showMeAnotherCount};
-        $showMeAnotherCount = $ce->{showMeAnotherMaxReps} if ($showMeAnotherCount eq "");
+        $showMeAnotherCount = $ce-> if ($showMeAnotherCount eq "");
 		if ($showMeAnother == -1 
             or !$ce->{options}->{enableShowMeAnother}
             or $attempts_used < $showMeAnother 
