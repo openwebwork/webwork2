@@ -19,7 +19,7 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
             user_id: {checkLogin: "fred"},
             email_address: {pattern: "email", required: false}
         }, 
-        idAttribute: "user_id",
+        idAttribute: "_id",
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id");
         },

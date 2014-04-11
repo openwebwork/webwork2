@@ -52,6 +52,8 @@ sub getAllUsers {
 			$s->{$key} = $u->{$key}
 		}
 
+		$s->{_id} = $s->{user_id};
+
 		push(@allUsers,$s);
     }
 

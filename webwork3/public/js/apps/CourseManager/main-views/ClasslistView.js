@@ -244,7 +244,8 @@ var ClasslistView = MainView.extend({
 	getSelectedUsers: function () {
 		var self = this;
 		return $("tbody td:nth-child(1) input[type='checkbox']:checked").map(function(i,v) { 
-				return self.users.findWhere({user_id: $(v).closest("tr").children("td.user-id").text()}); });
+				return self.users.findWhere({user_id: $(v).closest("tr").children("td.login-name").text()}); 
+			});
 	}, 
 	deleteSelectedUsers: function(){
 		this.deleteUsers(this.getSelectedUsers());

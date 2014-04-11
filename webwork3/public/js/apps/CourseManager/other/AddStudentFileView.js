@@ -10,6 +10,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 		    _.bindAll(this, 'render','importStudents','openDialog','closeDialog','validateColumn'); // every function that uses 'this' as the current object should be in here
 		    this.collection = new UserList();
 		    this.model = new User();
+		    this.model.collection = this.collection; // helps with the validation. 
 		    Backbone.Validation.bind(this);
 		    this.users = options.users;
 		    this.render();
