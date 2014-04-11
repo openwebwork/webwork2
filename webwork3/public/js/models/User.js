@@ -16,7 +16,7 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
             comment: ""
         },
         validation: { 
-            user_id: {checkLogin: "fred"},
+            user_id: {pattern: "loginname"},
             email_address: {pattern: "email", required: false}
         }, 
         idAttribute: "_id",
