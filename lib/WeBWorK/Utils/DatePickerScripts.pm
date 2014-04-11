@@ -17,6 +17,7 @@
 package WeBWorK::Utils::DatePickerScripts;
 use base qw(Exporter);
 use WeBWorK::Utils qw(formatDateTime);
+use POSIX;
 
 sub date_scripts {
         my $ce = shift;
@@ -26,6 +27,56 @@ sub date_scripts {
 	my $open_timezone = substr(formatDateTime($set->open_date, $display_tz), -3); 
 	my $due_timezone = substr(formatDateTime($set->due_date, $display_tz), -3); 
 	my $answer_timezone = substr(formatDateTime($set->answer_date, $display_tz), -3); 
+        	
+
+	my $reduced_credit_date_script_header = '';
+	my $reduced_credit_date_script = '';
+	my $reduced_credit_date_scoring_script = '';
+
+	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
+	    my $reduced_scoring_date;
+	    my $default_reduced_scoring_period = 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
+	    
+	    if ($set->reduced_scoring_date) {
+		$reduced_scoring_date = $set->reduced_scoring_date;
+	    } else {
+		$reduced_scoring_date = $set->due_date - $default_reduced_scoring_period;
+	    }
+	    
+	    my $default_hrs = floor($default_reduced_scoring_period/3600);
+	    my $default_min = floor(60*($default_reduced_scoring_period/3600 - $default_hrs));
+
+	    my $reduced_timezone = substr(formatDateTime($reduced_scoring_date, $display_tz), -3);     
+	    
+	    $reduced_credit_date_script_header = "var reduced_rule = \$('#' + name + '\\\\.reduced_scoring_date_id');";
+
+	    $reduced_credit_date_script = <<EOS;
+	    reduced_rule.datetimepicker({
+              showOn: "button",
+	      buttonText: "<i class='icon-calendar'></i>",
+	      ampm: true,
+	      timeFormat: 'hh:mmtt',
+	      timeSuffix: ' $reduced_timezone',
+	      separator: ' at ',
+	      constrainInput: false, 
+	      onClose: function(dateText, inst) {
+		  update();
+	      },
+            });
+EOS
+       $reduced_credit_date_update_script = <<EOS;
+	    var reducedDate = reduced_rule.datetimepicker('getDate');
+	    if (dueDate < reducedDate ||
+		answerDate < reducedDate ||
+		openDate > reducedDate) {
+		reducedDate = dueDate;
+		reducedDate.setHours(dueDate.getHours() - $default_hrs );
+		reducedDate.setMinutes(dueDate.getMinutes() - $default_min );
+		reduced_rule.datetimepicker('setDate',reducedDate);
+	    }
+EOS
+
+	}
 
 	my $out = <<EOF;
 addOnLoadEvent(function() {
@@ -35,6 +86,7 @@ var due_rule = \$('#' + name + '\\\\.due_date_id');
 var answer_rule = \$('#' + name + '\\\\.answer_date_id');
 var dueDateOffset = 7; // 7 days after open date
 var answerDateOffset = 5; //5 hours after due date
+$reduced_credit_date_script_header
 
 var update = function() {
 	var openDate = open_rule.datetimepicker('getDate');
@@ -63,6 +115,9 @@ var update = function() {
 	open_rule.addClass("changed");
 	due_rule.addClass("changed");
 	answer_rule.addClass("changed");
+
+	$reduced_credit_date_update_script
+
 }
 open_rule.datetimepicker({
               showOn: "button",
@@ -133,8 +188,11 @@ answer_rule.datetimepicker({
     }
 });
 
+$reduced_credit_date_script
+
 });	
 EOF
+
 	return $out;
 }
 

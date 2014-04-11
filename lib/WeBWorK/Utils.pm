@@ -89,6 +89,8 @@ our @EXPORT_OK = qw(
 	writeCourseLog
 	writeLog
 	writeTimingLogEntry
+        is_restricted
+        grade_set
 );
 
 =head1 FUNCTIONS
@@ -1083,5 +1085,174 @@ sub has_aux_files ($) { #  determine whether a question has auxiliary files
     return 0;    # no aux files with this .pg file
 
 }
+
+sub is_restricted {
+        my ($db, $set, $setName, $studentName) = @_;
+        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+	my @needed;
+	if ( $set and $set->restricted_release ) {
+	        my @proposed_sets = split(/\s*,\s*/,$set->restricted_release);
+		my $restriction =  $set->restricted_status  ||  0;
+		my @good_sets;
+		foreach(@proposed_sets) {
+		  push @good_sets,$_ if $db->existsGlobalSet($_);
+		}
+		foreach(@good_sets) {
+	  	  my $restrictor =  $db->getGlobalSet($_);
+		  my $r_score = grade_set($db,$restrictor,$_, $studentName,0); 
+		  if($r_score < $restriction) {
+	  	    push @needed,$_;
+		  }
+		}
+	}
+	return unless @needed;
+	return @needed;
+}
+
+sub grade_set {
+        
+        my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
+
+        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+
+		my $status = 0;
+		my $longStatus = '';
+		my $string     = '';
+		my $twoString  = '';
+		my $totalRight = 0;
+		my $total      = 0;
+		my $num_of_attempts = 0;
+	
+	
+		# DBFIXME: to collect the problem records, we have to know 
+		#    which merge routines to call.  Should this really be an 
+		#    issue here?  That is, shouldn't the database deal with 
+		#    it invisibly by detecting what the problem types are?  
+		#    oh well.
+		
+		my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
+		my $num_of_problems  = @problemRecords || 0;
+		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
+
+		if ( $setIsVersioned ) {
+			@problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
+		}   # use versioned problems instead (assume that each version has the same number of problems.
+		
+
+	####################
+	# Resort records
+	#####################
+		@problemRecords = sort {$a->problem_id <=> $b->problem_id }  @problemRecords;
+		
+		# for gateway/quiz assignments we have to be careful about 
+		#    the order in which the problems are displayed, because
+		#    they may be in a random order
+		if ( $set->problem_randorder ) {
+			my @newOrder = ();
+			my @probOrder = (0..$#problemRecords);
+			# we reorder using a pgrand based on the set psvn
+			my $pgrand = PGrandom->new();
+			$pgrand->srand( $set->psvn );
+			while ( @probOrder ) { 
+				my $i = int($pgrand->rand(scalar(@probOrder)));
+				push( @newOrder, $probOrder[$i] );
+				splice(@probOrder, $i, 1);
+			}
+			# now $newOrder[i] = pNum-1, where pNum is the problem
+			#    number to display in the ith position on the test
+			#    for sorting, invert this mapping:
+			my %pSort = map {($newOrder[$_]+1)=>$_} (0..$#newOrder);
+
+			@problemRecords = sort {$pSort{$a->problem_id} <=> $pSort{$b->problem_id}} @problemRecords;
+		}
+		
+		
+    #######################################################
+	# construct header
+	
+		foreach my $problemRecord (@problemRecords) {
+			my $prob = $problemRecord->problem_id;
+			
+			unless (defined($problemRecord) ){
+				# warn "Can't find record for problem $prob in set $setName for $student";
+				# FIXME check the legitimate reasons why a student record might not be defined
+				next;
+			}
+			
+		    $status           = $problemRecord->status || 0;
+		    my  $attempted    = $problemRecord->attempted;
+			my $num_correct   = $problemRecord->num_correct || 0;
+			my $num_incorrect = $problemRecord->num_incorrect   || 0;
+			$num_of_attempts  += $num_correct + $num_incorrect;
+
+#######################################################
+			# This is a fail safe mechanism that makes sure that
+			# the problem is marked as attempted if the status has
+			# been set or if the problem has been attempted
+			# DBFIXME this should happen in the database layer, not here!
+			if (!$attempted && ($status || $num_correct || $num_incorrect )) {
+				$attempted = 1;
+				$problemRecord->attempted('1');
+				# DBFIXME: this is another case where it 
+				#    seems we shouldn't have to check for 
+				#    which routine to use here...
+				if ( $setIsVersioned ) {
+					$db->putProblemVersion($problemRecord);
+				} else {
+					$db->putUserProblem($problemRecord );
+				}
+			}
+######################################################			
+
+			# sanity check that the status (score) is 
+			# between 0 and 1
+			my $valid_status = ($status>=0 && $status<=1)?1:0;
+
+			###########################################
+			# Determine the string $longStatus which 
+			# will display the student's current score
+			###########################################			
+
+			if (!$attempted){
+				$longStatus     = '.';
+			} elsif   ($valid_status) {
+				$longStatus     = int(100*$status+.5);
+				$longStatus='C' if ($longStatus==100);
+			} else	{
+				$longStatus 	= 'X';
+			}
+
+			my $probValue     = $problemRecord->value;
+			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
+			$total           += $probValue;
+			$totalRight      += $status*$probValue if $valid_status;
+# 				
+# 			# initialize the number of correct answers 
+# 			# for this problem if the value has not been 
+# 			# defined.
+# 			$correct_answers_for_problem{$probID} = 0 
+# 				unless defined($correct_answers_for_problem{$probID});
+			
+# 				
+# 		# add on the scores for this problem
+# 			if (defined($attempted) and $attempted) {
+# 				$number_of_students_attempting_problem{$probID}++;
+# 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
+# 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
+# 				$h_problemData{$probID}                               = $num_incorrect;
+# 				$total_num_of_attempts_for_set                       += $num_of_attempts;
+# 				$correct_answers_for_problem{$probID}                += $status;
+# 			}
+
+		}  # end of problem record loop
+		return 0 unless $total;
+		my $percentage = $totalRight/$total;
+
+
+
+		#return($status,  $longStatus, $string, $twoString, $totalRight, $total, $num_of_attempts, $num_of_problems			);
+		return $percentage;
+}	
+
 
 1;
