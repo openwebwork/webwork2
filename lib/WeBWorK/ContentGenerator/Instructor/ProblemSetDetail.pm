@@ -987,12 +987,12 @@ sub initialize {
 	my $error = 0;	
 	if (defined $r->param('submit_changes')) {
 		my @names = ("open_date", "due_date", "answer_date", "reduced_scoring_date");
-		
-		my %dates = map { $_ => $r->param("set.$setID.$_") } @names;
+
+		my %dates = map { $_ => $r->param("set.$setID.$_") || ''} @names;
 
 		%dates = map { 
 			my $unlabel = $undoLabels{$_}->{$dates{$_}}; 
-			$_ => defined $unlabel ? $setRecord->$_ : $self->parseDateTime($dates{$_}) 
+			$_ => (defined($unlabel) || !$dates{$_}) ? $setRecord->$_ : $self->parseDateTime($dates{$_}) 
 		} @names;
 
 		($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_}||0 } @names;
@@ -1187,7 +1187,7 @@ sub initialize {
 				my $unlabel = $undoLabels{$field}->{$param};
 				$param = $unlabel if defined $unlabel;
 				if ($field =~ /_date/ ) {
-				    $param = $self->parseDateTime($param) unless defined $unlabel;
+				    $param = $self->parseDateTime($param) unless (defined $unlabel || !$param);
 				} 
 				if ($field =~ /restricted_release/) {
 				    $self->check_sets($db,$param) if $param;
