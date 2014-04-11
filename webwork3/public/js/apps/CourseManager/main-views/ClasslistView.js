@@ -87,12 +87,10 @@ var ClasslistView = MainView.extend({
 
     },
     changeUser: function(_user){
-    	if(_(_user.changingAttributes).has("user_added") || _(_user.changingAttributes).isEqual({})){
-	    	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
+    	if(_(_user.changingAttributes).has("user_added") || _.keys(_user.changed)[0]==="action"){
+    		return;
     	}
-    	if(_.keys(_user.changed)[0]==="action"){
-    		return; 
-    	}
+    	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
     	_user.save();
     },
     removeUser: function(_user){
