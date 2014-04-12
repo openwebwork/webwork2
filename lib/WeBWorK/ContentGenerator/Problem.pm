@@ -661,11 +661,55 @@ sub pre_header_initialize {
 	      $problem->{showMeAnotherCount}=$showMeAnotherCount;
           $db->putUserProblem($problem);
 
+          # store text of original problem for later comparison with potential new seed
+          my $showMeAnotherOriginalPG = WeBWorK::PG->new(
+                $ce,
+                $effectiveUser,
+                $key,
+                $set,
+                $problem,
+                $set->psvn, # FIXME: this field should be removed
+                $formFields,
+                { # translation options
+                        displayMode     => $displayMode,
+                        showHints       => 0,
+                        showSolutions   => 0,
+                        refreshMath2img => 0,
+                        processAnswers  => 0,
+                        permissionLevel => $db->getPermissionLevel($userName)->permission,
+                        effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+                },
+          );
+
           # change the problem seed
           my $oldProblemSeed = $problem->{problem_seed};
-          my $newProblemSeed = $oldProblemSeed;
-          $newProblemSeed = int(rand(10000)) while($oldProblemSeed == $newProblemSeed ); 
-          $problem->{problem_seed} = $newProblemSeed;
+          my $newProblemSeed;
+
+          for my $i (0..2) {
+            do {$newProblemSeed = int(rand(10000))} until ($newProblemSeed != $oldProblemSeed ); 
+            $problem->{problem_seed} = $newProblemSeed;
+            my $showMeAnotherNewPG = WeBWorK::PG->new(
+                $ce,
+                $effectiveUser,
+                $key,
+                $set,
+                $problem,
+                $set->psvn, # FIXME: this field should be removed
+                $formFields,
+                { # translation options
+                        displayMode     => $displayMode,
+                        showHints       => 0,
+                        showSolutions   => 0,
+                        refreshMath2img => 0,
+                        processAnswers  => 0,
+                        permissionLevel => $db->getPermissionLevel($userName)->permission,
+                        effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+                },
+            );
+
+          if ($showMeAnotherNewPG->{body_text} ne $showMeAnotherOriginalPG->{body_text}) {last;};
+          }
+
     }
 
 	
