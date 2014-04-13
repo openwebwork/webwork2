@@ -154,7 +154,9 @@ var CourseManager = WebPage.extend({
             return self.messageTemplate({type: "leave_page"});
          }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
             self.currentView.render();
-            self.currentSidePane.sidePane.render();
+            if(self.currentSidePane.sidePane){
+                self.currentSidePane.sidePane.render();
+            }
          })
 
         // Add a link to WW2 via the main menu.

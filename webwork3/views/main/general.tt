@@ -129,7 +129,6 @@
 </script>
 
 <script type="text/template" id="all-messages-template">
-<h3>All Messages</h3>
 <ul class="messages-list no-bullets"></ul>
 </script>
 

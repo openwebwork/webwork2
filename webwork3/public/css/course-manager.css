@@ -138,3 +138,7 @@ label {font-weight: bold; display: inline; margin-right: 20px;}
 #selectalldiv {display: inline; margin-left: 25px; margin-right: 25px;}
 #filterdiv {display: inline;}
 
+/* All Messages Sidepane */
+
+.messages-list li { border: 1px solid; border-radius: 5px; padding: 5px; margin-bottom: 5px;}
+
