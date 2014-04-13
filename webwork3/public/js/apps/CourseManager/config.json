@@ -68,6 +68,10 @@
 	{
 		"name": "Help",
 		"path": "option-panes/HelpSidePane"
+	},
+	{	
+		"name": "All Messages",
+		"path": "option-panes/AllMessagesSidePane"
 	}
 	]
 }
