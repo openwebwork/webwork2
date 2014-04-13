@@ -71,6 +71,7 @@ var messages = {
     problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
     problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id 
         + " was deleted from set " + opt.setname},  
+    problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
     setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
     setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
                                 opt.oldValue + " to " + opt.newValue + "."},

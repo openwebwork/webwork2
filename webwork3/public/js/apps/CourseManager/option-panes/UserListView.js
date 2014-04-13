@@ -15,6 +15,10 @@ define(['backbone','views/SidePane','stickit'], function(Backbone,SidePane){
 				ul.append(new UserListRowView({model:user,rowTemplate: self.rowTemplate}).render().el);
 			});
 
+			if(ul.width()>this.$el.width()){
+				ul.width(this.$el.width());
+			}
+
             return this;
 		}
 	});
@@ -28,7 +32,6 @@ define(['backbone','views/SidePane','stickit'], function(Backbone,SidePane){
 		render: function (){
 			this.$el.html(this.template.html());
 			this.$el.data("userid",this.model.get("user_id"));
-			console.log(this.model.get("user_id"));
 			this.stickit();
 			return this;
 		},

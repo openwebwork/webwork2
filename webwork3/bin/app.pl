@@ -81,6 +81,12 @@ post '/courses/:course_id/login' => sub {
 };
 
 
+post '/courses/:course_id/logout' => sub {
+	my $deleteKey = vars->{db}->deleteKey(session 'user');
+	my $sessionDestroy = session->destroy;
+	return {logged_in=>0};
+};
+
 
 get '/app-info' => sub {
 	return {

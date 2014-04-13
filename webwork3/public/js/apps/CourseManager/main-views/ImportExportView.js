@@ -17,6 +17,7 @@ var ImportExportView = MainView.extend({
     render: function () {
         this.$el.html($("#import-export-template").html());
         this.$(".date-shift-input").datepicker();
+        MainView.prototype.render.apply(this);
         return this;
     },
     getState: function () {
