@@ -20,14 +20,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             CalendarView.prototype.initialize.call(this,options);
     		_.bindAll(this,"render","renderDay","update");
 
-            this.problemSets.on({sync: this.render})
-                .bind('validated:invalid', function(model, errors) {
-                    self.eventDispatcher.trigger("add-message",{short: "Date error occurred.", type: "danger"});
-                   console.log(model);
-                   console.log(errors);
-                });
-
-
+            this.problemSets.on({sync: this.render});
             return this;
     	},
     	render: function (){
