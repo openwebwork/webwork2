@@ -722,6 +722,9 @@ sub pre_header_initialize {
                       # put the new problem seed back in
                       $problem->{problem_seed} = $newProblemSeed;
 
+                      # make sure to switch on the possibility
+                      $showMeAnotherIsPossible = 1;
+
                       # exit the loop
                       last;
                     } else {
