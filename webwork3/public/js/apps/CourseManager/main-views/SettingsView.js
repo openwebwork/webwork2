@@ -21,6 +21,7 @@ define(['backbone','config','views/WWSettingsView','views/MainView'],function(Ba
         var settings = this.settings.where({category: this.currentCategory});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
         this.$('.nav-tabs a:eq('+(_(this.categories).indexOf(this.currentCategory)+1)+')').tab('show');
+        MainView.prototype.render.apply(this);
         return this;
 
      },
