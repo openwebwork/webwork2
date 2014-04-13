@@ -652,6 +652,10 @@ sub pre_header_initialize {
     # (or refreshed the page (sneaky)) for showMeAnother
     my $showMeAnotherCount = $problem->{showMeAnotherCount};
 
+    # assume that showMeAnother is possible - it can be switched off 
+    # during the following check 
+    my $showMeAnotherIsPossible = 1;
+
     # if showMeAnother is active, then output a new problem in a new tab with a new seed
     if ($showMeAnother) {
 
@@ -681,54 +685,53 @@ sub pre_header_initialize {
 
           # check to see if changing the problem seed will change the problem 
           for my $i (0..$ce->{options}->{showMeAnotherGeneratesDifferentProblem}) {
-            do {$newProblemSeed = int(rand(10000))} until ($newProblemSeed != $oldProblemSeed ); 
-            $problem->{problem_seed} = $newProblemSeed;
-            my $showMeAnotherNewPG = WeBWorK::PG->new(
-                $ce,
-                $effectiveUser,
-                $key,
-                $set,
-                $problem,
-                $set->psvn, # FIXME: this field should be removed
-                $formFields,
-                { # translation options
-                        displayMode     => $displayMode,
-                        showHints       => 0,
-                        showSolutions   => 0,
-                        refreshMath2img => 0,
-                        processAnswers  => 0,
-                        permissionLevel => $db->getPermissionLevel($userName)->permission,
-                        effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-                },
-            );
-
-          # check to see if we've found a new version
-          if ($showMeAnotherNewPG->{body_text} ne $showMeAnotherOriginalPG->{body_text}) {
-                # if we've found a new version, then 
-                # increment the counter detailing the number of times showMeAnother has been used
-                # unless we're trying to check answers from the showMeAnother screen
-                $showMeAnotherCount++ unless($showMeAnotherCheckAnswers);
-
-                # update the database (make sure to put the old problem seed back in)
-	            $problem->{showMeAnotherCount}=$showMeAnotherCount;
-                $problem->{problem_seed} = $oldProblemSeed;
-                $db->putUserProblem($problem);
-
-                # put the new problem seed back in
+                do {$newProblemSeed = int(rand(10000))} until ($newProblemSeed != $oldProblemSeed ); 
                 $problem->{problem_seed} = $newProblemSeed;
+                my $showMeAnotherNewPG = WeBWorK::PG->new(
+                    $ce,
+                    $effectiveUser,
+                    $key,
+                    $set,
+                    $problem,
+                    $set->psvn, # FIXME: this field should be removed
+                    $formFields,
+                    { # translation options
+                            displayMode     => $displayMode,
+                            showHints       => 0,
+                            showSolutions   => 0,
+                            refreshMath2img => 0,
+                            processAnswers  => 0,
+                            permissionLevel => $db->getPermissionLevel($userName)->permission,
+                            effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+                    },
+                );
 
-                # exit the loop
-                last;
-              } else {
-                # otherwise we must disable check answers as a new version
-                # was *not* found
-                $showMeAnotherCheckAnswers = 0;
-              }
-          }
+                # check to see if we've found a new version
+                if ($showMeAnotherNewPG->{body_text} ne $showMeAnotherOriginalPG->{body_text}) {
+                      # if we've found a new version, then 
+                      # increment the counter detailing the number of times showMeAnother has been used
+                      # unless we're trying to check answers from the showMeAnother screen
+                      $showMeAnotherCount++ unless($showMeAnotherCheckAnswers);
+
+                      # update the database (make sure to put the old problem seed back in)
+	                  $problem->{showMeAnotherCount}=$showMeAnotherCount;
+                      $problem->{problem_seed} = $oldProblemSeed;
+                      $db->putUserProblem($problem);
+
+                      # put the new problem seed back in
+                      $problem->{problem_seed} = $newProblemSeed;
+
+                      # exit the loop
+                      last;
+                    } else {
+                      # otherwise a new version was *not* found, and 
+                      # showMeAnother is not possible
+                      $showMeAnotherIsPossible = 0;
+                    }
+                }
 
     }
 
-	
 	##### permissions #####
 
 	# what does the user want to do?
@@ -749,6 +752,7 @@ sub pre_header_initialize {
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		showMeAnother      => $showMeAnother,
+		showMeAnotherIsPossible  => $showMeAnotherIsPossible,
 		getSubmitButton    => 1,
 	);
 
@@ -761,6 +765,7 @@ sub pre_header_initialize {
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
 		showMeAnother      => 0,
+		showMeAnotherIsPossible  => $showMeAnotherIsPossible,
 		getSubmitButton    => 0,
 	    useMathView        => 0,
 	);
@@ -768,15 +773,16 @@ sub pre_header_initialize {
 	# does the user have permission to use certain options?
 	my @args = ($user, $effectiveUser, $set, $problem);
 	my %can = (
-		showOldAnswers     => $self->can_showOldAnswers(@args),
-		showCorrectAnswers => $self->can_showCorrectAnswers(@args),
-		showHints          => $self->can_showHints(@args),
-		showSolutions      => $self->can_showSolutions(@args),
-		recordAnswers      => $self->can_recordAnswers(@args, 0),
-		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
-		showMeAnother      => $self->can_showMeAnother(@args, $submitAnswers),
-		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
-       	        useMathView           => $self->can_useMathView(@args)
+		showOldAnswers           => $self->can_showOldAnswers(@args),
+		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
+		showHints                => $self->can_showHints(@args),
+		showSolutions            => $self->can_showSolutions(@args),
+		recordAnswers            => $self->can_recordAnswers(@args, 0),
+		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
+		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
+		showMeAnotherIsPossible  => $showMeAnotherIsPossible,
+		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
+        useMathView              => $self->can_useMathView(@args)
 	);
 
     # if showMeAnother is active, then disable all other options
@@ -786,16 +792,19 @@ sub pre_header_initialize {
 	        $can{showCorrectAnswers} = 1;
 	        $can{showHints}          = 1;
 	        $can{recordAnswers}      = 0;
-	        $can{checkAnswers}       = $ce->{options}->{enableShowMeAnotherCheckAnswers};
+	        $can{checkAnswers}       = 0; # turned on if showMeAnother conditions met below
 	        $can{showMeAnother}      = 0;
 	        $can{getSubmitButton}    = 0;
 
             # only show solution if showMeAnother has been clicked (or refreshed)
-            # less than the maximum amount allowed specified in Course Configuration
-            if($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1))
+            # less than the maximum amount allowed specified in Course Configuration, 
+            # and also make sure that showMeAnother is possible
+            if(($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1))
+                and $showMeAnotherIsPossible )
             {
 	          $can{showSolutions} = 1;
 	          $must{showSolutions} = 1;
+	          $can{checkAnswers}       = $ce->{options}->{enableShowMeAnotherCheckAnswers};
             }
       }
 
@@ -1582,6 +1591,7 @@ sub output_summary{
 	my %will = %{ $self->{will} };
 	my $checkAnswers = $self->{checkAnswers};
 	my $showMeAnother = $self->{showMeAnother};
+	my $showMeAnotherIsPossible = $will{showMeAnotherIsPossible};
 	my $previewAnswers = $self->{previewAnswers};
 	
 	my $r = $self->r;
@@ -1619,7 +1629,11 @@ sub output_summary{
 			# don't show correct answers
 			# don't show attempt results (correctness)
 			# show attempt previews
-	}
+    } elsif ($showMeAnother and !$showMeAnotherIsPossible){
+		# print this if showMeAnother has been clicked, but it is not possible to 
+        # find a new version of the problem
+		print CGI::div({class=>'ResultsWithError'},$r->maketext("WeBWorK was unable to generate a different version of this problem - consider contacting your instructor; close this tab, and return to the original problem.")),CGI::br();
+    }
 	
 	return "";
 }
