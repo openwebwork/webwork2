@@ -205,7 +205,8 @@ sub can_showMeAnother {
 		if ($showMeAnother == -1 
             or !$ce->{options}->{enableShowMeAnother}
             or $attempts_used < $showMeAnother 
-            or ($showMeAnotherCount>$ce->{showMeAnotherMaxReps} and $ce->{showMeAnotherMaxReps}>-1)) {
+          #or ($showMeAnotherCount>$ce->{showMeAnotherMaxReps} and $ce->{showMeAnotherMaxReps}>-1)) 
+        ) { 
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
 		} else {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
@@ -1590,9 +1591,10 @@ sub output_summary{
 	my $submitAnswers = $self->{submitAnswers};
 	my %will = %{ $self->{will} };
 	my $checkAnswers = $self->{checkAnswers};
+	my $previewAnswers = $self->{previewAnswers};
 	my $showMeAnother = $self->{showMeAnother};
 	my $showMeAnotherIsPossible = $will{showMeAnotherIsPossible};
-	my $previewAnswers = $self->{previewAnswers};
+    my $showMeAnotherCount = $problem->{showMeAnotherCount};
 	
 	my $r = $self->r;
 	my $ce = $r->ce;
@@ -1629,10 +1631,21 @@ sub output_summary{
 			# don't show correct answers
 			# don't show attempt results (correctness)
 			# show attempt previews
+    } elsif ($showMeAnother and $showMeAnotherIsPossible){
+		# print this if showMeAnother has been clicked and a new version has been found, 
+        # give some details of what the student is seeing
+        if($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1)){
+		    print CGI::div({class=>'ResultsWithoutError'},$r->maketext("Here is a new version of your problem, complete with solution (assuming that one has been written by the problem author). You may check your answers to this problem
+                without affecting the maximum number of tries to your original problem. If there is no solution, consider contacting your instructor.")),CGI::br();
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("*Remember to return to your original problem when you're finished here!*")),CGI::br();}
+          else {
+            my $showMeAnotherMaxReps = $ce->{showMeAnotherMaxReps};
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps times per problem. The solution has been removed. Close this tab, and return to the original problem.")),CGI::br();
+          }
     } elsif ($showMeAnother and !$showMeAnotherIsPossible){
 		# print this if showMeAnother has been clicked, but it is not possible to 
         # find a new version of the problem
-		print CGI::div({class=>'ResultsWithError'},$r->maketext("WeBWorK was unable to generate a different version of this problem - consider contacting your instructor; close this tab, and return to the original problem.")),CGI::br();
+		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem - consider contacting your instructor; close this tab, and return to the original problem.")),CGI::br();
     }
 	
 	return "";
