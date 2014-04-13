@@ -3,12 +3,10 @@
 applets
 tmp
 logs
-htdocs/mathjax
 courses.dist
 library-directory-tree.json
 library-subject-tree.json
 textbook-tree.json
 development.yml
-htdocs/themes/PCC-dev/*
 *~
 

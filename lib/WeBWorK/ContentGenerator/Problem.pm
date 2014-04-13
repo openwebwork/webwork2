@@ -654,14 +654,8 @@ sub pre_header_initialize {
 
     # if showMeAnother is active, then output a new problem in a new tab with a new seed
     if ($showMeAnother) {
-          # increment the counter detailing the number of times showMeAnother has been used
-          # unless we're trying to check answers from the showMeAnother screen
-          $showMeAnotherCount++ unless($showMeAnotherCheckAnswers);
-          # update the database
-	      $problem->{showMeAnotherCount}=$showMeAnotherCount;
-          $db->putUserProblem($problem);
 
-          # store text of original problem for later comparison with potential new seed
+          # store text of original problem for later comparison with text from problem with new seed
           my $showMeAnotherOriginalPG = WeBWorK::PG->new(
                 $ce,
                 $effectiveUser,
@@ -685,7 +679,8 @@ sub pre_header_initialize {
           my $oldProblemSeed = $problem->{problem_seed};
           my $newProblemSeed;
 
-          for my $i (0..2) {
+          # check to see if changing the problem seed will change the problem 
+          for my $i (0..$ce->{options}->{showMeAnotherGeneratesDifferentProblem}) {
             do {$newProblemSeed = int(rand(10000))} until ($newProblemSeed != $oldProblemSeed ); 
             $problem->{problem_seed} = $newProblemSeed;
             my $showMeAnotherNewPG = WeBWorK::PG->new(
@@ -707,7 +702,28 @@ sub pre_header_initialize {
                 },
             );
 
-          if ($showMeAnotherNewPG->{body_text} ne $showMeAnotherOriginalPG->{body_text}) {last;};
+          # check to see if we've found a new version
+          if ($showMeAnotherNewPG->{body_text} ne $showMeAnotherOriginalPG->{body_text}) {
+                # if we've found a new version, then 
+                # increment the counter detailing the number of times showMeAnother has been used
+                # unless we're trying to check answers from the showMeAnother screen
+                $showMeAnotherCount++ unless($showMeAnotherCheckAnswers);
+
+                # update the database (make sure to put the old problem seed back in)
+	            $problem->{showMeAnotherCount}=$showMeAnotherCount;
+                $problem->{problem_seed} = $oldProblemSeed;
+                $db->putUserProblem($problem);
+
+                # put the new problem seed back in
+                $problem->{problem_seed} = $newProblemSeed;
+
+                # exit the loop
+                last;
+              } else {
+                # otherwise we must disable check answers as a new version
+                # was *not* found
+                $showMeAnotherCheckAnswers = 0;
+              }
           }
 
     }
