@@ -18,7 +18,14 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
 	        this.messages.each(function(message){
 	        	ul.append(new MessageView({model: message}).render().el);
 	        })
+
+	        if(this.$(".messages-container").height()>$(window).height()-$("#menu-navbar-collapse").height()-50){
+	        	this.$(".messages-container").height($(window).height()-$("#menu-navbar-collapse").height()-50);
+
+	        }
+
 	        return this;
+
 	    }
 	});
 
