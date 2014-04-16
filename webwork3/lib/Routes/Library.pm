@@ -316,6 +316,33 @@ get '/Library/textbooks/:textbook_id/problems' => sub {
 
 };
 
+####
+#
+#  The following are used when getting problems from textbooks (from the Library Browser)
+#
+####
+
+get '/textbooks/author/:author_name/title/:title/problems' => sub {
+
+	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title}});
+
+};
+
+get '/textbooks/author/:author_name/title/:title/chapter/:chapter/problems' => sub {
+
+	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title},
+			textbook_chapter=>params->{chapter}});
+
+};
+
+get '/textbooks/author/:author_name/title/:title/chapter/:chapter/section/:section/problems' => sub {
+
+	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title},
+			textbook_chapter=>params->{chapter},textbook_section=>params->{section}});
+
+};
+
+
 
 
 ####

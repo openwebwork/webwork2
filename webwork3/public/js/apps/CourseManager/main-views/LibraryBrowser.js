@@ -5,9 +5,11 @@
 */ 
 
 
-define(['backbone', 'underscore','views/MainView', 'views/LibraryView','views/LibrarySearchView','views/LibraryProblemsView',
-            'views/LocalLibraryView','views/LibraryTextbookView','models/ProblemSet','moment','config','apps/util'], 
-function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,
+define(['backbone', 'underscore','views/MainView', 
+        'views/library-views/LibrarySubjectView','views/library-views/LibraryDirectoryView',
+        'views/library-views/LibrarySearchView','views/library-views/LocalLibraryView',
+        'views/library-views/LibraryTextbookView','models/ProblemSet','moment','config','apps/util'], 
+function(Backbone, _,MainView,LibrarySubjectView,LibraryDirectoryView, LibrarySearchView,LocalLibraryView,
     LibraryTextbookView,ProblemSet,moment,config,util){
     var LibraryBrowser = MainView.extend({
         messageTemplate: _.template($("#library-messages-template").html()),
@@ -31,9 +33,9 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             //this.libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
 
             this.views = {
-                subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: options.problemSets,
+                subjects  :  new LibrarySubjectView({libBrowserType: "subjects", problemSets: options.problemSets,
                                     settings: this.settings, messageTemplate: this.messageTemplate}),
-                directories    :  new LibraryView({libBrowserType: "directories", problemSets: options.problemSets,
+                directories    :  new LibraryDirectoryView({libBrowserType: "directories", problemSets: options.problemSets,
                                     settings: this.settings,messageTemplate: this.messageTemplate}),
                 textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: options.problemSets,
                                     settings: this.settings,messageTemplate: this.messageTemplate}),
