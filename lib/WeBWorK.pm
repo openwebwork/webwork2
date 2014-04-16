@@ -179,6 +179,7 @@ sub dispatch($) {
 	
 	debug("The raw params:\n");
 	foreach my $key ($r->param) {
+	        next if ($key eq 'passwd');
 		my @vals = $r->param($key);
 		my $vals = join(", ", map { "'$_'" } @vals);
 		debug("\t$key => $vals\n");
