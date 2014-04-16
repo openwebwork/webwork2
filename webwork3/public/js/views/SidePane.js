@@ -3,7 +3,8 @@ define(['backbone'],function(Backbone){
 		setMainView: function(view){
 			this.mainView = view;
 			return this;
-		}
+		},
+		isOpen: false
 	});
 
 	return SidePane;

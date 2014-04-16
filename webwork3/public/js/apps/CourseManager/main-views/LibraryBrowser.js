@@ -6,9 +6,9 @@
 
 
 define(['backbone', 'underscore','views/MainView', 'views/LibraryView','views/LibrarySearchView','views/LibraryProblemsView',
-            'views/LocalLibraryView','views/LibraryTextbookView','models/ProblemSet','moment','config'], 
+            'views/LocalLibraryView','views/LibraryTextbookView','models/ProblemSet','moment','config','apps/util'], 
 function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,
-    LibraryTextbookView,ProblemSet,moment,config){
+    LibraryTextbookView,ProblemSet,moment,config,util){
     var LibraryBrowser = MainView.extend({
         messageTemplate: _.template($("#library-messages-template").html()),
     	initialize: function (options){
@@ -24,6 +24,8 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
                              localLibrary: "library-local-tab",
                              setDefinition: "set-definition-tab",
                              search: "library-search-tab"};
+
+            this.dateSettings = util.pluckDateSettings(this.settings);
 
 
             //this.libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
@@ -91,7 +93,7 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
                 this.views[this.currentViewname].setTargetSet($(evt.target).val());
             }, 
             "add-problem-set": function(_set_name){
-                var _set = new ProblemSet({set_id: _set_name});
+                var _set = new ProblemSet({set_id: _set_name},this.dateSettings);
                 _set.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
                this.views[this.currentViewname].allProblemSets.add(_set); 
             },
