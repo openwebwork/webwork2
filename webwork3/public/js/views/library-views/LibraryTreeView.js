@@ -15,7 +15,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
     		_.bindAll(this,"render","loadProblems","changeLibrary");
             var self = this;
             this.libraryTree = new LibraryTree({type: options.type});
-            this.libraryTree.set("header","Library/");
+            this.libraryTree.set("header",options.type==="textbooks"?"textbooks/":"Library/");
             this.fields = new LibraryLevels();
             this.fields.on("change",this.changeLibrary);
 

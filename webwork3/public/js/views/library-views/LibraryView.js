@@ -5,10 +5,10 @@
 */ 
 
 
-define(['backbone', 'underscore','config', 'views/LibraryProblemsView','models/ProblemList','views/LibraryTreeView'], 
-function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
+define(['backbone', 'underscore','config', 'views/library-views/LibraryProblemsView','models/ProblemList'], 
+function(Backbone, _,config, LibraryProblemsView, ProblemList){
     var LibraryView = Backbone.View.extend({
-        className: "lib-browser",
+        className: "library-view",
     	initialize: function (options){
     		var self = this;
             _.bindAll(this,'addProblem','loadProblems','showProblems','changeDisplayMode');
@@ -17,13 +17,10 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             this.settings = options.settings;
             this.messageTemplate = options.messageTemplate;
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this, messageTemplate: this.messageTemplate,
-                 allProblemSets: this.allProblemSets, settings: this.settings});
-            this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets});
-            this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
-
-            
+                 allProblemSets: this.allProblemSets, settings: this.settings});  
     	},
-    	events: {   "change .target-set": "resetDisplayModes"
+    	events: {   
+            "change .target-set": "resetDisplayModes"
         }, 
     	render: function (){
             var modes = this.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
