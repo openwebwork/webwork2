@@ -795,8 +795,6 @@ sub pre_header_initialize {
     if ($showMeAnother or $showMeAnotherCheckAnswers) {
 
 	        $can{showOldAnswers} = 0;
-	        $can{showCorrectAnswers} = 1;
-	        $can{showHints}          = 1;
 	        $can{recordAnswers}      = 0;
 	        $can{checkAnswers}       = 0; # turned on if showMeAnother conditions met below
 	        $can{showMeAnother}      = 0;
@@ -808,6 +806,8 @@ sub pre_header_initialize {
             if(($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1))
                 and $showMeAnotherIsPossible )
             {
+	          $can{showCorrectAnswers} = 1;
+	          $can{showHints}          = 1;
 	          $can{showSolutions} = 1;
 	          $must{showSolutions} = 1;
 	          $can{checkAnswers}       = $ce->{options}->{enableShowMeAnotherCheckAnswers};
@@ -1363,7 +1363,9 @@ sub output_submit_buttons{
 	if ($can{showMeAnother}) {
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
 	} else {
-        if($ce->{options}->{enableShowMeAnother} and !$r->param("showMeAnother")){
+        # if showMeAnother is available for the course, and for the current problem (but not yet
+        # because the student hasn't tried enough times) then gray it out; otherwise display nothing
+        if($ce->{options}->{enableShowMeAnother} and ($self->{problem}->{showMeAnother}>-1) and !$r->param("showMeAnother")){
 	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another"));
         }
     }
