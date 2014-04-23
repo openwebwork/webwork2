@@ -198,14 +198,14 @@ sub can_showMeAnother {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
 		my $showMeAnother = $Problem->showMeAnother;
-                $showMeAnother = -1 if ($showMeAnother eq "");
+        $showMeAnother = -1 if ($showMeAnother eq "");
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
         my $showMeAnotherCount = $Problem->{showMeAnotherCount};
         $showMeAnotherCount = $ce->{showMeAnotherMaxReps} if ($showMeAnotherCount eq "");
 		if ($showMeAnother == -1 
             or !$ce->{options}->{enableShowMeAnother}
             or $attempts_used < $showMeAnother 
-          #or ($showMeAnotherCount>$ce->{showMeAnotherMaxReps} and $ce->{showMeAnotherMaxReps}>-1)) 
+            or ($showMeAnotherCount>$ce->{showMeAnotherMaxReps} and $ce->{showMeAnotherMaxReps}>-1) 
         ) { 
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
 		} else {
@@ -214,7 +214,9 @@ sub can_showMeAnother {
 	} elsif (between($Set->due_date, $Set->answer_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
 	} elsif (after($Set->answer_date)) {
-		return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
+        return 0;
+        #return 0 unless($ce->{options}->{enableShowMeAnother});
+        #return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
 	}
 }
 
@@ -1360,7 +1362,11 @@ sub output_submit_buttons{
 	}
 	if ($can{showMeAnother}) {
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
-	}
+	} else {
+        if($ce->{options}->{enableShowMeAnother} and !$r->param("showMeAnother")){
+	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another"));
+        }
+    }
 	
 	return "";
 }
@@ -1640,10 +1646,11 @@ sub output_summary{
         if($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1)){
 		    print CGI::div({class=>'ResultsWithoutError'},$r->maketext("Here is a new version of your problem, complete with solution (assuming that one has been written by the problem author). You may check your answers to this problem
                 without affecting the maximum number of tries to your original problem. If there is no solution, consider contacting your instructor.")),CGI::br();
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("*Remember to return to your original problem when you're finished here!*")),CGI::br();}
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();}
           else {
             my $showMeAnotherMaxReps = $ce->{showMeAnotherMaxReps};
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps times per problem. The solution has been removed. Close this tab, and return to the original problem.")),CGI::br();
+            my $times = ($showMeAnotherMaxReps>1) ? "times" : "time";
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps $times per problem. The solution has been removed. Close this tab, and return to the original problem.")),CGI::br();
           }
     } elsif ($showMeAnother and !$showMeAnotherIsPossible){
 		# print this if showMeAnother has been clicked, but it is not possible to 
