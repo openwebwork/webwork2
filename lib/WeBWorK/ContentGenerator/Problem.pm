@@ -1646,7 +1646,7 @@ sub output_summary{
 		# print this if showMeAnother has been clicked and a new version has been found, 
         # give some details of what the student is seeing
         if($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1)){
-		    print CGI::div({class=>'ResultsWithoutError'},$r->maketext("Here is a new version of your problem, complete with solution (assuming that one has been written by the problem author). You may check your answers to this problem
+		    print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem, complete with solution (assuming that one has been written by the problem author). You may check your answers to this problem
                 without affecting the maximum number of tries to your original problem. If there is no solution, consider contacting your instructor.")),CGI::br();
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();}
           else {
