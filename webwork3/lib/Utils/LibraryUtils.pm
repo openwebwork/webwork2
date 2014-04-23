@@ -35,8 +35,6 @@ sub render {
 		$renderParams->{formFields}->{$key} = params->{$key};
 	}
 
-	debug $renderParams->{formFields};
-
 	# remove any pretty garbage around the problem
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
@@ -215,7 +213,17 @@ sub get_section_problems {
 ###
 
 sub searchLibrary {
-	my ($param) = @_;
+	my $p = shift;
+
+	my $param = {};
+
+	# escape the ' in any parameter. 
+
+	for my $key (keys %{$p}){
+		my $val = $p->{$key};
+		$val =~ s/\'/\\'/g;
+		$param->{$key} = $val;
+	}
 
 	debug $param;
 
