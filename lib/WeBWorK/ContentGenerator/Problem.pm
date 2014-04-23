@@ -1643,13 +1643,23 @@ sub output_summary{
 			# don't show attempt results (correctness)
 			# show attempt previews
     } elsif ($showMeAnother and $showMeAnotherIsPossible){
-		# print this if showMeAnother has been clicked and a new version has been found, 
+        # the feedback varies a little bit if Check Answers is available or not
+        my $checkAnswersAvailable = "";
+        if ($ce->{options}->{enableShowMeAnotherCheckAnswers}){
+            $checkAnswersAvailable = "You may check your answers to this problem without affecting the maximum number of tries to your original problem."; };
+		# if showMeAnother has been clicked and a new version has been found, 
         # give some details of what the student is seeing
         if($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1)){
-		    print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem, complete with solution (assuming that one has been written by the problem author). You may check your answers to this problem
-                without affecting the maximum number of tries to your original problem. If there is no solution, consider contacting your instructor.")),CGI::br();
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();}
-          else {
+            # check to see if a solution exists for this problem, and vary the feedback accordingly
+            if($pg->{flags}->{solutionExists}){
+		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem, complete with solution. $checkAnswersAvailable  
+                                                                     ")),CGI::br();
+            } else {
+		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem. $checkAnswersAvailable  
+                                                                     There is no walk-through solution for this problem - consider contacting your instructor.")),CGI::br();
+            }
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
+         } else {
             my $showMeAnotherMaxReps = $ce->{showMeAnotherMaxReps};
             my $times = ($showMeAnotherMaxReps>1) ? "times" : "time";
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps $times per problem. The solution has been removed. Close this tab, and return to the original problem.")),CGI::br();
