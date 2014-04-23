@@ -5,6 +5,9 @@ function(Backbone, _,LibraryView,LibraryTreeView){
     		LibraryView.prototype.initialize.apply(this,[options]);
             this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets});
             this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
+    	},
+    	loadProblems: function(_dirs){
+    		LibraryView.prototype.loadProblems.apply(this,[_dirs.join("/")]);
     	}
 
 

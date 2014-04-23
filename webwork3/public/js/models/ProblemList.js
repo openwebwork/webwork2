@@ -26,13 +26,7 @@ define(['backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.setName 
                 + "/problems"; 
             } else if (this.type=="subjects") { // this is a set of problems from a library. 
-                var dirs = this.path.split("/");
-                var path = config.urlPrefix + dirs[0];
-                if (dirs[1]) {path += "/subjects/" + dirs[1];}
-                if (dirs[2]) {path += "/chapters/" + dirs[2];}
-                if (dirs[3]) {path += "/sections/" + dirs[3];}
-                path+= "/problems";
-                return path;
+                return config.urlPrefix + "Library" + this.path + "/problems";
             }  else if (this.type=="directories"){
                 return config.urlPrefix+"Library/directories/"+this.path +"?course_id=" + config.courseSettings.course_id;
             }  else if (this.type==="textbooks"){

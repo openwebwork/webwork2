@@ -77,8 +77,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
             this.stickit(this.fields,this.bindings);
         },
         selectLibrary: function(evt){
-            this.libraryTree.trigger("library-selected",this.libraryTree.get("header")
-                        +_(this.fields.values()).without("").join("/"));
+            this.libraryTree.trigger("library-selected",_(this.fields.values()).without(""));
         },
         loadProblems: function (evt) {
             var path = _(this.$(".lib-select")).map(function(item){ return $(item).val()});
