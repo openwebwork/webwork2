@@ -1012,6 +1012,10 @@ sub siblings {
 sub nav {
 	my ($self, $args) = @_;
 	my $r = $self->r;
+    # if showMeAnother or check answers from showMeAnother
+    # is active, then don't show the navigation bar
+	return "" if($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers"));
+
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 
@@ -1604,6 +1608,7 @@ sub output_summary{
 	my $checkAnswers = $self->{checkAnswers};
 	my $previewAnswers = $self->{previewAnswers};
 	my $showMeAnother = $self->{showMeAnother};
+    my $showMeAnotherCheckAnswers = $self->{showMeAnotherCheckAnswers};
 	my $showMeAnotherIsPossible = $will{showMeAnotherIsPossible};
     my $showMeAnotherCount = $problem->{showMeAnotherCount};
 	
@@ -1628,6 +1633,11 @@ sub output_summary{
 	    print $results;
 	    
 	} elsif ($checkAnswers) {
+        if ($showMeAnotherCheckAnswers){
+            # if the student is checking answers to a new problem, give them a reminder that they are doing so
+            print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these will not be recorded, and you should remember to return to your original 
+                                                                     problem once you are done here.")),CGI::br();
+        }
 	    # print this if user previewed answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
@@ -1656,7 +1666,7 @@ sub output_summary{
                                                                      ")),CGI::br();
             } else {
 		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem. $checkAnswersAvailable  
-                                                                     There is no walk-through solution for this problem - consider contacting your instructor.")),CGI::br();
+                                                                     There is no walk-through solution for this problem, but you can still view the correct answer - consider contacting your instructor.")),CGI::br();
             }
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
          } else {
@@ -1668,7 +1678,7 @@ sub output_summary{
 		# print this if showMeAnother has been clicked, but it is not possible to 
         # find a new version of the problem
 		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem - consider contacting your instructor; close this tab, and return to the original problem.")),CGI::br();
-    }
+    } 
 	
 	return "";
 }
