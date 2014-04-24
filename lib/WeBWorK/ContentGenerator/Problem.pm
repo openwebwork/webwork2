@@ -806,11 +806,11 @@ sub pre_header_initialize {
             if(($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1))
                 and $showMeAnotherIsPossible )
             {
-	          $can{showCorrectAnswers} = 1;
+	          $can{showCorrectAnswers} = (('SMAshowCorrect' ~~ @{$ce->{showMeAnother}->{options}}) and ('SMAcheckAnswers' ~~ @{$ce->{showMeAnother}->{options}}));
 	          $can{showHints}          = 1;
-	          $can{showSolutions} = 1;
-	          $must{showSolutions} = 1;
-	          $can{checkAnswers}       = $ce->{options}->{enableShowMeAnotherCheckAnswers};
+	          $can{showSolutions} = ('SMAshowSolutions' ~~ @{$ce->{showMeAnother}->{options}});
+	          $must{showSolutions} = ('SMAshowSolutions' ~~ @{$ce->{showMeAnother}->{options}});
+	          $can{checkAnswers}       = ('SMAcheckAnswers' ~~ @{$ce->{showMeAnother}->{options}});
             }
       }
 
@@ -1654,15 +1654,14 @@ sub output_summary{
 			# show attempt previews
     } elsif ($showMeAnother and $showMeAnotherIsPossible){
         # the feedback varies a little bit if Check Answers is available or not
-        my $checkAnswersAvailable = "";
-        if ($ce->{options}->{enableShowMeAnotherCheckAnswers}){
-            $checkAnswersAvailable = "You may check your answers to this problem without affecting the maximum number of tries to your original problem."; };
+        my $checkAnswersAvailable = ('SMAcheckAnswers' ~~ @{$ce->{showMeAnother}->{options}}) ? "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
 		# if showMeAnother has been clicked and a new version has been found, 
         # give some details of what the student is seeing
         if($showMeAnotherCount<($ce->{showMeAnotherMaxReps}+1) or ($ce->{showMeAnotherMaxReps}==-1)){
             # check to see if a solution exists for this problem, and vary the feedback accordingly
             if($pg->{flags}->{solutionExists}){
-		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem, complete with solution. $checkAnswersAvailable  
+                my $solutionShown = ('SMAshowSolutions' ~~ @{$ce->{showMeAnother}->{options}}) ? ", complete with solution" : "";
+		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem$solutionShown. $checkAnswersAvailable  
                                                                      ")),CGI::br();
             } else {
 		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem. $checkAnswersAvailable  
