@@ -624,18 +624,25 @@ sub body {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script type="text/javascript" src="$site_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::script(<<EOF);
- 		function setTarget(inWindow) {
-		  document.getElementById("newWindow").checked = inWindow;
-		  updateTarget();
+	function setTarget(inWindow) {
+	    document.getElementById("newWindow").checked = inWindow;
+	    updateTarget();
+	}
+	function updateTarget() {
+	    var inWindow = document.getElementById("newWindow").checked;
+	    if (inWindow) {
+		if (document.getElementById("save_as_form_id").checked) {
+		    document.getElementById("editor").target = "WW_New_Edit";
+		} else {
+		    document.getElementById("editor").target = "WW_View";
 		}
-		function updateTarget() {
-		  var inWindow = document.getElementById("newWindow").checked;
-		  document.getElementById("editor").target = (inWindow? "WW_View": "");
-		}
-		function setRadio(i,nw) {
-		  document.getElementById('action'+i).checked = true;
-		  setTarget(nw);
-		}
+	    } else {
+		document.getElementById("editor").target = "";
+	    }
+	}
+	function setRadio(i,nw) {
+	    setTarget(nw);
+	}
 EOF
 	
 
