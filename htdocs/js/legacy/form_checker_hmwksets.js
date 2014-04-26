@@ -6,7 +6,7 @@ function check_form_hmwk_sets() {
 	var filter_err_msg = document.getElementById("filter_err_msg");
 	var filter_radio = document.getElementById("filter_id");
 	
-	if(filter_radio.checked && filter_select.selectedIndex == 3 && filter_text.value == ""){
+	if(filter_radio && filter_select && filter_err_msg && filter_text && filter_radio.checked && filter_select.selectedIndex == 3 && filter_text.value == ""){
 		filter_err_msg.style.display = "inline";
 		return false;
 	}

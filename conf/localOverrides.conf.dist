@@ -125,7 +125,7 @@ $problemLibrary{version}    = "2.5";
 # Problem Library.
  
 $courseFiles{problibs}    = {
-	Library          => "NPL Directory",
+	Library          => "OPL Directory",
 # 	rochesterLibrary => "Rochester",
 # 	unionLibrary     => "Union",
 # 	asuLibrary       => "Arizona State",
