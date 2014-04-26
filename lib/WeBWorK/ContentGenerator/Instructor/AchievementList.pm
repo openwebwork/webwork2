@@ -526,7 +526,6 @@ sub score_handler {
 	
 	if ($scope eq "none") { 
 		@achievementsToScore = ();
-		return "No achievements selected for scoring.";
 	} elsif ($scope eq "all") {
 		@achievementsToScore = @{ $self->{allAchievementIDs} };
 	} elsif ($scope eq "selected") {
@@ -552,8 +551,7 @@ sub score_handler {
 	#print out header info
 	print SCORE "username, last name, first name, section, achievement level, achievement score, ";
 	
-	my @achievementIDs = $db->listAchievements;
-	my @achievements = $db->getAchievements(@achievementIDs);
+	my @achievements = $db->getAchievements(@achievementsToScore);
 	@achievements = sortAchievements(@achievements);
 
 	foreach my $achievement (@achievements) {
@@ -579,6 +577,7 @@ sub score_handler {
 	foreach my $userRecord (@userRecords) {
 	    my $user_id = $userRecord->user_id;
 	    next unless $db->existsGlobalUserAchievement($user_id);
+	    next if ($userRecord->{status} eq 'D' || $userRecord->{status} eq 'A');
 	    print SCORE "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
 	    my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
 	    my $level_id = $globalUserAchievement->level_achievement_id;
@@ -601,8 +600,14 @@ sub score_handler {
 	}
 	
 	close SCORE;
-		    
-	return CGI::div({class=>"ResultsWithoutError"},  "Achievement scores saved to $scoreFileName")
+
+	# Include a download link
+	#
+	my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::FileManager", $r, courseID => $courseName);
+	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {action=>"View", files => "${courseName}_achievement_scores.csv", pwd=>"scoring"});
+	
+	
+	return CGI::div({class=>"ResultsWithoutError"},  "Achievement scores saved to ".CGI::a({href=>$fileManagerURL},$scoreFileName));
 }
 
 
@@ -898,7 +903,7 @@ sub saveExport_handler {
 	my $urlpath = $r->urlpath;
 	my $courseName = $urlpath->arg("courseID");
 
-	my @achievementIDsToExport = @{ $self->{selectedAchievementIDs} };
+	my @achievementIDsToExport = $r->param("selected_export") ;
 
 	#get file path
 	my $FileName = $courseName."_achievements.axp";
@@ -1064,13 +1069,12 @@ sub recordEditHTML {
 	    # selection checkbox
 	    push @tableCells, CGI::checkbox(
 		-type => "checkbox",
-		-name => "selected_achievements",
+		-name => "selected_export",
+		-checked => $achievementSelected,
 		-value => $achievement_id,
 		-label => "",
-		-checked => $achievementSelected,
 					    );
-	
-    
+
 	    my @fields = ("achievement_id", "name");
 	    
 	    foreach my $field (@fields) {
@@ -1222,7 +1226,7 @@ sub printTableHTML {
 	my $editMode                = $options{editMode};
 	my $exportMode              = $options{exportMode};
 	my %selectedAchievementIDs          = map { $_ => 1 } @{ $options{selectedAchievementIDs} };
-	
+
 	# names of headings:
 
 	if ($editMode and not %selectedAchievementIDs) {
@@ -1275,6 +1279,7 @@ sub printTableHTML {
 			    $Achievement->achievement_id}
 		);
 	}
+
 	
 	print CGI::end_table();
 	#########################################

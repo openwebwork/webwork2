@@ -740,7 +740,7 @@ EOF
 				# Check permissions
 				#next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
 				my $actionForm = "${actionID}_form";
-				my $newWindow = ($actionID =~ m/^(view|add_problem|save)$/)? 1: 0;
+				my $newWindow = 0;
 				my $onChange = "setRadio($i,$newWindow)";
 				my %actionParams = $self->getActionParams($actionID);
 				my $line_contents = $self->$actionForm($onChange, %actionParams);
