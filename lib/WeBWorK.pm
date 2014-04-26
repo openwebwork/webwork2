@@ -477,7 +477,7 @@ sub CGI_labeled_input
 		return CGI::label($param{-label_attr},$param{-label_text}).CGI::input($param{-input_attr});
 	}
 	elsif($param{-type} eq "checkbox" or $param{-type} eq "radio"){
-		return CGI::input($param{-input_attr}).CGI::label($param{-label_attr},$param{-label_text});
+		return CGI::label($param{-label_attr},CGI::input($param{-input_attr}),$param{-label_text});
 	}
 	elsif($param{-type} eq "submit" or $param{-type} eq "button" or $param{-type} eq "reset"){
 		return CGI::input($param{-input_attr});

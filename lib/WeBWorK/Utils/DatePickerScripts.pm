@@ -22,7 +22,9 @@ sub date_scripts {
         my $ce = shift;
 	my $set = shift;
 	my $display_tz ||= $ce->{siteDefaults}{timezone};
-	my $bareName = 'set\\\\.'.$set->set_id;
+	my $bareName = 'set.'.$set->set_id;
+        $bareName =~ s/\./\\\\\./g;
+
 	my $open_timezone = substr(formatDateTime($set->open_date, $display_tz), -3); 
 	my $due_timezone = substr(formatDateTime($set->due_date, $display_tz), -3); 
 	my $answer_timezone = substr(formatDateTime($set->answer_date, $display_tz), -3); 
