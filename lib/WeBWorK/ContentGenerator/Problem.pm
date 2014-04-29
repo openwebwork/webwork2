@@ -1635,7 +1635,8 @@ sub output_summary{
 	} elsif ($checkAnswers) {
         if ($showMeAnotherCheckAnswers){
             # if the student is checking answers to a new problem, give them a reminder that they are doing so
-            print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these will not be recorded, and you should remember to return to your original 
+            print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
+                                                                     will not be recorded, and you should remember to return to your original 
                                                                      problem once you are done here.")),CGI::br();
         }
 	    # print this if user previewed answers
@@ -1654,7 +1655,8 @@ sub output_summary{
 			# show attempt previews
     } elsif ($showMeAnother and $showMeAnotherIsPossible){
         # the feedback varies a little bit if Check Answers is available or not
-        my $checkAnswersAvailable = ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}) ? "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
+        my $checkAnswersAvailable = ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}) ? 
+                       "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
 		# if showMeAnother has been clicked and a new version has been found, 
         # give some details of what the student is seeing
         if($showMeAnotherCount<($ce->{pg}->{options}->{showMeAnotherMaxReps}+1) or ($ce->{pg}->{options}->{showMeAnotherMaxReps}==-1)){
@@ -1664,20 +1666,24 @@ sub output_summary{
 		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem$solutionShown. $checkAnswersAvailable  
                                                                      ")),CGI::br();
             } else {
-                my $viewCorrect = (('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}}) and ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}})) ? ", but you can still view the correct answer ":"";
-                my $solutionShown = ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}}) ? "There is no walk-through solution for this problem$viewCorrect - consider contacting your instructor" : "";
+                my $viewCorrect = (('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}}) and ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}})) ? 
+                      ", but you can still view the correct answer ":"";
+                my $solutionShown = ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}}) ? 
+                      "There is no walk-through solution available for this problem$viewCorrect"."." : "";
 		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem. $checkAnswersAvailable $solutionShown")),CGI::br();
             }
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
          } else {
             my $showMeAnotherMaxReps = $ce->{pg}->{options}->{showMeAnotherMaxReps};
             my $times = ($showMeAnotherMaxReps>1) ? "times" : "time";
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps $times per problem. The solution has been removed. Close this tab, and return to the original problem.")),CGI::br();
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps $times per problem. 
+                                                                         The solution has been removed. Close this tab, and return to the original problem.")),CGI::br();
           }
     } elsif ($showMeAnother and !$showMeAnotherIsPossible){
 		# print this if showMeAnother has been clicked, but it is not possible to 
         # find a new version of the problem
-		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem - consider contacting your instructor; close this tab, and return to the original problem.")),CGI::br();
+		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem; 
+                       close this tab, and return to the original problem.")),CGI::br();
     } 
 	
 	return "";
