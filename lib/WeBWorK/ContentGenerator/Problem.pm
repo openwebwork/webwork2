@@ -1369,8 +1369,9 @@ sub output_submit_buttons{
 	} else {
         # if showMeAnother is available for the course, and for the current problem (but not yet
         # because the student hasn't tried enough times) then gray it out; otherwise display nothing
-        if($ce->{pg}->{options}->{enableShowMeAnother} and ($self->{problem}->{showMeAnother}>-1) and !($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers"))){
+        if($ce->{pg}->{options}->{enableShowMeAnother} and ($self->{problem}->{showMeAnother}ne'-1') and !($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers"))){
 	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another"));
+          
         }
     }
 	

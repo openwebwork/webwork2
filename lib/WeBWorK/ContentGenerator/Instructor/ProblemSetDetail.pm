@@ -326,16 +326,16 @@ use constant FIELD_PROPERTIES => {
 				"-1" => "unlimited",
 		},
 	},
-    showMeAnother => {
-        name => "Show me another",
-        type => "edit",
-        size => "6",
+        showMeAnother => {
+                name => "Show me another",
+                type => "edit",
+                size => "6",
 		override  => "any",
-        default=>"-1",
+                default=>"-1",
 		labels    => {
 				"-1" => "Never",
 		},
-    },
+        },
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
@@ -438,10 +438,6 @@ sub FieldTable {
 		($gwFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
 
-    # remove the showMeAnother box from this screen if the feature isn't enabled (in the configuration screen)
-    if(!$r->ce->{options}{enableShowMeAnother}){
-        @fieldOrder = grep {$_ ne 'showMeAnother'} @fieldOrder;  
-    }
 
        	my $output = CGI::start_table({border => 0, cellpadding => 1});
 	if ($forUsers) {
@@ -491,6 +487,10 @@ sub FieldTable {
 		#    but aren't editing a set version
 		next if ( $field eq 'problem_seed'  &&
 			  ( $isGWset && $forUsers && ! $setVersion ) );
+
+                # skip the Show Me Another value if SMA is not enabled
+	        next if ( $field eq 'showMeAnother' &&
+                          !$ce->{pg}->{options}->{enableShowMeAnother} );
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
