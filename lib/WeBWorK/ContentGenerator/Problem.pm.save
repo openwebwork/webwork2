@@ -189,6 +189,10 @@ sub can_showMeAnother {
 	my $authz = $self->r->authz;
         my $ce = $self->r->ce;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
+        my $showMeAnother = $Problem->showMeAnother;
+        $showMeAnother = -1 if ($showMeAnother eq "");
+        my $showMeAnotherCount = $Problem->{showMeAnotherCount};
+        $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} if ($showMeAnotherCount eq "");
 
     # if the showMeAnother button isn't enabled in the course configuration, 
     # don't show it under any circumstances (not even for the instructor)
@@ -197,20 +201,14 @@ sub can_showMeAnother {
 	if (before($Set->open_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
-		my $showMeAnother = $Problem->showMeAnother;
-                   # if $showMeAnother is somehow not an integer, make it one
-                   $showMeAnother = -1 unless ($showMeAnother =~ /^[+-]?\d+$/);
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
-                my $showMeAnotherCount = $Problem->{showMeAnotherCount};
-                   # if $showMeAnotherCount is somehow not an integer, make it one
-                   $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
 		if ($showMeAnother == -1 
-                     or !$ce->{pg}->{options}->{enableShowMeAnother}
-                     or $attempts_used < $showMeAnother 
-                     or ($showMeAnotherCount>$ce->{pg}->{options}->{showMeAnotherMaxReps} and $ce->{pg}->{options}->{showMeAnotherMaxReps}>-1) 
-                   ) { 
+            or !$ce->{pg}->{options}->{enableShowMeAnother}
+            or $attempts_used < $showMeAnother 
+            or ($showMeAnotherCount>$ce->{pg}->{options}->{showMeAnotherMaxReps} and $ce->{pg}->{options}->{showMeAnotherMaxReps}>-1) 
+        ) { 
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
-		     } else {
+		} else {
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
 		}
 	} elsif (between($Set->due_date, $Set->answer_date)) {
@@ -656,8 +654,6 @@ sub pre_header_initialize {
     # get the number of times the student has clicked the button
     # (or refreshed the page (sneaky)) for showMeAnother
     my $showMeAnotherCount = $problem->{showMeAnotherCount};
-    # if $showMeAnotherCount is somehow not an integer, make it one
-    $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
 
     # assume that showMeAnother is possible - it can be switched off 
     # during the following check 
@@ -1373,10 +1369,7 @@ sub output_submit_buttons{
 	} else {
         # if showMeAnother is available for the course, and for the current problem (but not yet
         # because the student hasn't tried enough times) then gray it out; otherwise display nothing
-                my $showMeAnother = $self->{problem}->{showMeAnother};
-                # if $showMeAnother is somehow not an integer, make it one
-                $showMeAnother = -1 unless ($showMeAnother =~ /^[+-]?\d+$/);
-        if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother < 0) and !($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers"))){
+        if($ce->{pg}->{options}->{enableShowMeAnother} and ($self->{problem}->{showMeAnother}ne'-1') and !($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers"))){
 	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another"));
           
         }
@@ -1616,9 +1609,9 @@ sub output_summary{
 	my $checkAnswers = $self->{checkAnswers};
 	my $previewAnswers = $self->{previewAnswers};
 	my $showMeAnother = $self->{showMeAnother};
-        my $showMeAnotherCheckAnswers = $self->{showMeAnotherCheckAnswers};
+    my $showMeAnotherCheckAnswers = $self->{showMeAnotherCheckAnswers};
 	my $showMeAnotherIsPossible = $will{showMeAnotherIsPossible};
-        my $showMeAnotherCount = $problem->{showMeAnotherCount};
+    my $showMeAnotherCount = $problem->{showMeAnotherCount};
 	
 	my $r = $self->r;
 	my $ce = $r->ce;
@@ -1627,10 +1620,7 @@ sub output_summary{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	
-        # if $showMeAnotherCount is somehow not an integer, make it one
-           $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
-	
-        # attempt summary
+	# attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
 	# do I need to check $will{showCorrectAnswers} to make preflight work??
