@@ -2188,7 +2188,7 @@ SET:	foreach my $set (keys %filenames) {
 			$showMeAnother =~ s/([,\\])/\\$1/g;
 
             # only include showMeAnother if it has been enabled in the course configuration
-            if($ce->{options}{enableShowMeAnother}){
+            if($ce->{pg}->{options}{enableShowMeAnother}){
 			    $problemList     .= "$source_file, $value, $max_attempts, $showMeAnother \n";
             } else {
 			    $problemList     .= "$source_file, $value, $max_attempts \n";
