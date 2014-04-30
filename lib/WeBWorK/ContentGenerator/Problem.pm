@@ -187,7 +187,7 @@ sub can_useMathView {
 sub can_showMeAnother {
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
-        my $ce = $self->r->ce;
+    my $ce = $self->r->ce;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
 
     # if the showMeAnother button isn't enabled in the course configuration, 
@@ -198,12 +198,14 @@ sub can_showMeAnother {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
 		my $showMeAnother = $Problem->showMeAnother;
-                   # if $showMeAnother is somehow not an integer, make it one
-                   $showMeAnother = -1 unless ($showMeAnother =~ /^[+-]?\d+$/);
+
+        # if $showMeAnother is somehow not an integer, make it one, using the default value from course config
+        $showMeAnother = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother =~ /^[+-]?\d+$/);
 		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
-                my $showMeAnotherCount = $Problem->{showMeAnotherCount};
-                   # if $showMeAnotherCount is somehow not an integer, make it one
-                   $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
+        my $showMeAnotherCount = $Problem->{showMeAnotherCount};
+
+        # if $showMeAnotherCount is somehow not an integer, make it one, using the default value from course config
+        $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
 		if ($showMeAnother == -1 
                      or !$ce->{pg}->{options}->{enableShowMeAnother}
                      or $attempts_used < $showMeAnother 
@@ -1373,12 +1375,12 @@ sub output_submit_buttons{
 	} else {
         # if showMeAnother is available for the course, and for the current problem (but not yet
         # because the student hasn't tried enough times) then gray it out; otherwise display nothing
-                my $showMeAnother = $self->{problem}->{showMeAnother};
-                # if $showMeAnother is somehow not an integer, make it one
-                $showMeAnother = -1 unless ($showMeAnother =~ /^[+-]?\d+$/);
-        if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother < 0) and !($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers"))){
+        my $showMeAnother = $self->{problem}->{showMeAnother};
+
+        # if $showMeAnother is somehow not an integer, make it one, using the default from the course configuration
+        $showMeAnother = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother =~ /^[+-]?\d+$/);
+        if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother >-1 ) and !($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers"))){
 	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another"));
-          
         }
     }
 	
@@ -1687,8 +1689,9 @@ sub output_summary{
          } else {
             my $showMeAnotherMaxReps = $ce->{pg}->{options}->{showMeAnotherMaxReps};
             my $times = ($showMeAnotherMaxReps>1) ? "times" : "time";
+            my $solutionShown = ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}} and $pg->{flags}->{solutionExists}) ? "The solution has been remove." : "";
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps $times per problem. 
-                                                                         The solution has been removed. Close this tab, and return to the original problem.")),CGI::br();
+                                                                         $solutionShown Close this tab, and return to the original problem.")),CGI::br();
           }
     } elsif ($showMeAnother and !$showMeAnotherIsPossible){
 		# print this if showMeAnother has been clicked, but it is not possible to 
