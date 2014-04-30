@@ -521,9 +521,9 @@ $svg = $svg . "<svg id=\"bargraph\" xmlns=\"http://www.w3.org/2000/svg\" xlink=\
 
 $svg = $svg . "<rect id=\"bargraphwindow\" x=\"0\" y=\"0\" width=\"". $imagewidth ."\" height=\"". $imageheight ."\" rx=\"20\" ry=\"20\" style=\"fill:white;stroke:888888;stroke-width:2;fill-opacity:0;stroke-opacity:1\" />\n";
 
-$svg = $svg . "<text id=\"bargraphtitle\" x=\"". $titlexpixel ."\" y=\"". $titleypixel ."\" font-family=\"sans-serif\" font-size=\"16\" fill=\"black\" text-anchor=\"middle\" font-weight=\"bold\">Percentage of Active Students with Correct Answers</text>\n";
+$svg = $svg . "<text id=\"bargraphtitle\" x=\"". $titlexpixel ."\" y=\"". $titleypixel ."\" font-family=\"sans-serif\" font-size=\"14\" fill=\"black\" text-anchor=\"middle\" font-weight=\"bold\">".$r->maketext("Percentage of Active Students with Correct Answers")."</text>\n";
 
-$svg = $svg . "<text id=\"bargraphxaxislabel\" x=\"". $xaxislabelxpixel ."\" y=\"". $xaxislabelypixel ."\" font-family=\"sans-serif\" font-size=\"14\" fill=\"black\" text-anchor=\"middle\" font-weight=\"normal\">Problem Number</text>\n";
+$svg = $svg . "<text id=\"bargraphxaxislabel\" x=\"". $xaxislabelxpixel ."\" y=\"". $xaxislabelypixel ."\" font-family=\"sans-serif\" font-size=\"14\" fill=\"black\" text-anchor=\"middle\" font-weight=\"normal\">".$r->maketext("Problem Number")."</text>\n";
 
 $svg = $svg . "<rect id=\"bargraphplotwindow\" x=\"". $leftmargin ."\" y=\"". $topmargin ."\" width=\"". $plotwindowwidth ."\" height=\"". $plotwindowheight ."\" style=\"fill:white;stroke:bbbbbb;stroke-width:1;fill-opacity:0;stroke-opacity:1\" />\n";
 
