@@ -1689,7 +1689,7 @@ sub output_summary{
          } else {
             my $showMeAnotherMaxReps = $ce->{pg}->{options}->{showMeAnotherMaxReps};
             my $times = ($showMeAnotherMaxReps>1) ? "times" : "time";
-            my $solutionShown = ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}} and $pg->{flags}->{solutionExists}) ? "The solution has been remove." : "";
+            my $solutionShown = ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps $times per problem. 
                                                                          $solutionShown Close this tab, and return to the original problem.")),CGI::br();
           }
