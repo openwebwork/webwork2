@@ -1629,8 +1629,8 @@ sub output_summary{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	
-        # if $showMeAnotherCount is somehow not an integer, make it one
-           $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
+    # if $showMeAnotherCount is somehow not an integer, make it one
+    $showMeAnotherCount = 0 unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
 	
         # attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
