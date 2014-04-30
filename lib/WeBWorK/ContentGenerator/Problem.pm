@@ -205,11 +205,11 @@ sub can_showMeAnother {
         my $showMeAnotherCount = $Problem->{showMeAnotherCount};
 
         # if $showMeAnotherCount is somehow not an integer, make it one, using the default value from course config
-        $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
+        $showMeAnotherCount = 0 unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
 		if ($showMeAnother == -1 
                      or !$ce->{pg}->{options}->{enableShowMeAnother}
                      or $attempts_used < $showMeAnother 
-                     or ($showMeAnotherCount>$ce->{pg}->{options}->{showMeAnotherMaxReps} and $ce->{pg}->{options}->{showMeAnotherMaxReps}>-1) 
+                     or ($showMeAnotherCount>=$ce->{pg}->{options}->{showMeAnotherMaxReps} and $ce->{pg}->{options}->{showMeAnotherMaxReps}>-1) 
                    ) { 
 			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
 		     } else {
@@ -659,7 +659,7 @@ sub pre_header_initialize {
     # (or refreshed the page (sneaky)) for showMeAnother
     my $showMeAnotherCount = $problem->{showMeAnotherCount};
     # if $showMeAnotherCount is somehow not an integer, make it one
-    $showMeAnotherCount = $ce->{pg}->{options}->{showMeAnotherMaxReps} unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
+    $showMeAnotherCount = 0 unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
 
     # assume that showMeAnother is possible - it can be switched off 
     # during the following check 
@@ -1618,9 +1618,9 @@ sub output_summary{
 	my $checkAnswers = $self->{checkAnswers};
 	my $previewAnswers = $self->{previewAnswers};
 	my $showMeAnother = $self->{showMeAnother};
-        my $showMeAnotherCheckAnswers = $self->{showMeAnotherCheckAnswers};
+    my $showMeAnotherCheckAnswers = $self->{showMeAnotherCheckAnswers};
 	my $showMeAnotherIsPossible = $will{showMeAnotherIsPossible};
-        my $showMeAnotherCount = $problem->{showMeAnotherCount};
+    my $showMeAnotherCount = $problem->{showMeAnotherCount};
 	
 	my $r = $self->r;
 	my $ce = $r->ce;
