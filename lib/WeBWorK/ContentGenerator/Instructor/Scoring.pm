@@ -236,7 +236,7 @@ sub body {
 			}
 		}
 		if (-f "$scoringDir/$scoringFileName") {
-			print CGI::h2("Totals");
+			print CGI::h2($r->maketext("Totals"));
 			#print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
 			print CGI::a({href=>$self->systemLink($scoringDownloadPage,
 					               params=>{getFile => "$scoringFileName" } )}, "$scoringFileName");
