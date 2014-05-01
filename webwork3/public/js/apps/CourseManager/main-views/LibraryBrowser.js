@@ -55,6 +55,7 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             this.views[this.currentViewname].render()
                 .libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
             this.problemSets.trigger("hide-show-all-sets","show");
+            MainView.prototype.render.apply(this);
             return this;
     	},
         getState: function() {
@@ -99,6 +100,9 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             },
             "show-hide-path": function(button) {
                 this.views[this.currentViewname].libraryProblemsView.toggleShowPath(button);
+            },
+            "goto-problem-set": function(setName){
+                this.eventDispatcher.trigger("show-problem-set",setName);
             }
 
         },

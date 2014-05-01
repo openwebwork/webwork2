@@ -2,7 +2,7 @@
 <script src="/webwork3/js/apps/require-config.js"></script>
 
 <!-- The follow script sets up the MainViewList, which contains all of the main views for the application.
-   This allows to load a configuration file instead of hard coding each of the views and sidebars. -->
+   This allows to load a configuration file instead of hard coding each of the views and sidepanes. -->
 <script type="text/javascript">
 var main_view_paths = [%main_view_paths%];
 main_view_paths.unshift("module","backbone");
@@ -22,10 +22,24 @@ main_view_paths.unshift("module","backbone");
   <div class="row" id="main-row">  
     <div class="col-md-9" id="main-view">
     </div>
-    <div class="col-md-3 well" id="sidebar-container">
+    <div class="col-md-3 well" id="sidepane-container">
+      <div class="dropdown sidepane-menu">
+        <h3 class="dropdown-toggle" data-toggle="dropdown">
+          <span class="sidepane-name"></span>
+          <span class="caret"></span>
+        </h3>
+        <ul class="dropdown-menu" role="menu">
+        </ul>
+    </div>
+    <div class="sidepane-content">
+    </div>
     </div>  
   </div>
 </div>
+
+<script type="text/template" id="open-close-view-template">
+<span class="pull-right"><button class="btn btn-default btn-sm open-close-view"><i class="fa fa-chevron-right"></i></button></span>
+</script>
 
 
 <!-- The following is the help for the page -->
@@ -228,7 +242,6 @@ at the bottom of the screen and click "Save Changes". </p>
     set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
     show_prob_set: function() { return "Show Problem Sets";},
     hide_prob_set: function() { return "Hide Problem Sets";},
-    problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
     unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
                   ". Click OK to confirm this."},
     relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 

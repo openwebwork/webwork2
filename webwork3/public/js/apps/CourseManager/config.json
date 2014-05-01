@@ -4,19 +4,19 @@
 		"name": "Calendar",
 		"path": "main-views/AssignmentCalendar",
 		"default_sidepane": "Problem Sets",
-		"other_sidepanes": []
+		"other_sidepanes": ["Problem Sets", "Users"]
 	},
 	{
 		"name": "Problem Set Details",
 		"path": "main-views/ProblemSetDetailView",
 		"default_sidepane": "Problem Sets",
-		"other_sidepanes": []
+		"other_sidepanes": ["Problem Sets","Users", "Problem List Options"]
 	},
 	{
 		"name": "Library Browser",
 		"path": "main-views/LibraryBrowser",
 		"default_sidepane": "Library Options",
-		"other_sidepanes": []	
+		"other_sidepanes": ["Library Options","Problem Sets","Users"]	
 	},
 	{
 		"name": "Problem Sets Manager",
@@ -40,7 +40,7 @@
 		"name": "Import/Export Sets",
 		"path": "main-views/ImportExportView",
 		"default_sidepane": "",
-		"other_sidepanes": []
+		"other_sidepanes": ["Problem Sets"]
 	},
 	{
 		"name": "Settings",
@@ -54,7 +54,7 @@
 		"path": "option-panes/ProblemSetListView"
 	},
 	{
-		"name": "User Lists",
+		"name": "Users",
 		"path": "option-panes/UserListView"
 	},
 	{

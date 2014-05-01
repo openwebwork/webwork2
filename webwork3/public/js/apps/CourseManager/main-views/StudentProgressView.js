@@ -15,6 +15,7 @@ var StudentProgressView = MainView.extend({
 	render: function (){
 		this.$el.html($("#student-progress-template").html());
 		this.changeDisplay("Sets");
+		MainView.prototype.render.apply(this);
 	    return this;
 	},
 	events: {

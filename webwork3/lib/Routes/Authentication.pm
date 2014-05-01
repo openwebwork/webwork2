@@ -118,7 +118,7 @@ sub buildSession {
     	}
 	}
 
-	if(! defined(session 'key')){
+	if(! defined(session 'key') && defined(session 'user')){
 		my $key = vars ->{db}->getKey(session 'user');
 		session 'key' => $key->{key}; 
 		$key->{timestamp} = time();
@@ -126,7 +126,7 @@ sub buildSession {
 
 	}
 
-	if (! defined(session 'permission')){
+	if (! defined(session 'permission') && defined(session 'user')){
 		my $permission = vars->{db}->getPermissionLevel(session 'user');
 		session 'permission' => $permission->{permission};		
 	}

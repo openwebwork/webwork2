@@ -30,6 +30,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.pageSize = 10; // this should be a parameter.
             this.pageRange = _.range(this.pageSize);
             this.currentPage = 1;
+            this.messageTemplate = options.messageTemplate;
             _.extend(this.viewAttrs,{type: options.type});
             _.extend(this,Backbone.Events);
         },
@@ -75,7 +76,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         }, 
         updateNumProblems: function () {
             if (this.problems.size()>0){
-                this.$(".num-problems").html(config.msgTemplate({type: "problems_shown", 
+                this.$(".num-problems").html(this.messageTemplate({type: "problems_shown", 
                     opts: {probFrom: (this.pageRange[0]+1), probTo:(_(this.pageRange).last() + 1),
                          total: this.problems.size() }}));
             }
