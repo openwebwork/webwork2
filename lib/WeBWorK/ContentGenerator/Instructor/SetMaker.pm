@@ -1505,7 +1505,8 @@ sub pre_header_initialize {
 
 
 sub title {
-	return "Library Browser";
+	my ($self) = @_;
+	return $self->r->maketext("Library Browser");
 }
 
 # hide view options panel since it distracts from SetMaker's built-in view options
