@@ -1947,6 +1947,16 @@ sub listGlobalProblems {
 	}
 }
 
+sub listGlobalParentProblems {
+	my ($self, $problemUID) = shift->checkArgs(\@_, qw/problem_uid/);
+	my $where = [parent_uid_eq => $problemUID];
+	if (wantarray) {
+		return map { @$_ } $self->{problem}->get_fields_where(["problem_id"], $where);
+	} else {
+		return $self->{problem}->count_where($where);
+	}
+}
+
 sub existsGlobalProblem {
 	my ($self, $setID, $problemID) = shift->checkArgs(\@_, qw/set_id problem_id/);
 	return $self->{problem}->exists($setID, $problemID);
@@ -1960,6 +1970,25 @@ sub getGlobalProblem {
 sub getGlobalProblems {
 	my ($self, @problemIDs) = shift->checkArgsRefList(\@_, qw/set_id problem_id/);
 	return $self->{problem}->gets(@problemIDs);
+}
+
+sub existsGlobalProblemByUID {
+	my ($self, $problemUID) = shift->checkArgs(\@_, qw/problem_uid/);
+	return $self->{problem}->exists_where([problem_uid_eq => 
+					       $problemUID]);
+}
+
+sub getGlobalProblembyUID {
+	my ($self, $problemUID) = shift->checkArgs(\@_, qw/problem_uid/);
+	return ($self->{problem}->get_records_where([problem_uid_eq =>
+						    $problemUID]))[0];
+}
+
+sub getGlobalProblemsbyUID {
+	my ($self, @problemUIDs) = shift->checkArgsRefList(\@_, qw/problem_uid/);
+
+	return map {@($self->{problem}->get_records_where([problem_uid_eq 
+						   => $_]))} @problemUIDs;
 }
 
 sub getAllGlobalProblems {

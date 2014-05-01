@@ -40,7 +40,7 @@ BEGIN {
 		visible                   => { type=>"INT" },
 		enable_reduced_scoring    => { type=>"INT" },
 		assignment_type           => { type=>"TEXT" },
-	    description               => { type=>"TEXT" },
+	        description               => { type=>"TEXT" },
 		restricted_release	      => { type=>"TEXT" },
 		restricted_status	      => { type=>"FLOAT" },
 		attempts_per_version      => { type=>"INT" },
@@ -59,6 +59,8 @@ BEGIN {
 		relax_restrict_ip         => { type=>"ENUM('No','AfterAnswerDate','AfterVersionAnswerDate')" },
 		restricted_login_proctor  => { type=>"ENUM('No','Yes')" },
 		hide_hint                 => { type=>"INT" },
+		restrict_prob_progression => { type=>"INT" },
+		email_instructor          => { type=>"INT" },
 	);
 }
 

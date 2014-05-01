@@ -32,6 +32,8 @@ BEGIN {
 		user_id       => { type=>"TINYBLOB NOT NULL", key=>1 },
 		set_id        => { type=>"TINYBLOB NOT NULL", key=>1 },
 		problem_id    => { type=>"INT NOT NULL", key=>1 },
+   	        problem_uid   => { type=>"INT"},
+	        parent_uid   => { type=>"INT"}, 
 		source_file   => { type=>"TEXT" },
 		# FIXME i think value should be able to hold decimal values...
 		value         => { type=>"INT" },
@@ -42,6 +44,8 @@ BEGIN {
 		last_answer   => { type=>"TEXT" },
 		num_correct   => { type=>"INT" },
 		num_incorrect => { type=>"INT" },
+		att_to_open_children => { type=>"INT" },
+	        counts_parent_grade => { type=>"INT" },
 		sub_status    => { type=>"FLOAT" },    # A subsidiary status used to implement the reduced scoring period
 	        #a field for flags which need to be set 
 	        flags => { type=>"TEXT" },

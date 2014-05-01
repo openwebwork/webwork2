@@ -58,6 +58,18 @@ sub where_answer_id_eq {
     return {answer_id=>$answer_id};
 }
 
+#can be used for problem
+sub where_probelm_uid_eq {
+    my ($self, $flags, $problem_uid) = @_;
+    return {problem_uid=>$problem_uid};
+}
+
+sub where_parent_uid_eq {
+    my ($self, $flags, $problem_uid) = @_;
+    return {parent_uid=>$problem_uid};
+}
+
+
 # can be used for past_answers
 sub where_course_id_eq_user_id_eq_set_id_eq_problem_id_eq {
     my ($self, $flags, $course_id, $user_id, $set_id, $problem_id) = @_;

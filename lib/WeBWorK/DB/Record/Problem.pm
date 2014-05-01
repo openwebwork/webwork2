@@ -30,9 +30,13 @@ BEGIN {
 	__PACKAGE__->_fields(
 		set_id       => { type=>"TINYBLOB NOT NULL", key=>1 },
 		problem_id   => { type=>"INT NOT NULL", key=>1 },
+	        problem_uid    => { type=>"INT NOT NULL AUTOINCREMENT"},
+	        parent_uid   => { type=>"INT"}, 
 		source_file  => { type=>"TEXT" },
 		value        => { type=>"INT" },
 		max_attempts => { type=>"INT" },
+		att_to_open_children => { type=>"INT" },
+	        counts_parent_grade => { type=>"INT" },
 	        # a field for flags relating to this problem  
 	        flags => { type =>"TEXT" },
 	);
