@@ -171,8 +171,7 @@ var CourseManager = WebPage.extend({
             "save-state": this.saveState,
             "show-problem-set": this.showProblemSetDetails,
             "add-message": this.messagePane.addMessage,
-            "show-help": function() { self.changeSidebar({link: "helpSidepane"})},
-            "open-close-sidebar": this.openCloseSidebar
+            "open-close-sidepane": this.openCloseSidePane
         });
     },
     render: function(){
@@ -249,8 +248,7 @@ var CourseManager = WebPage.extend({
         this.navigationBar.setPaneName(_name);
         (this.currentView = this.mainViewList.getViewByName(_name)).setElement(this.$(".main"))
             .setState(state).render();
-
-        this.changeSidebar(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
+        this.changeSidePane(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
         this.saveState();
     },
     saveState: function() {
