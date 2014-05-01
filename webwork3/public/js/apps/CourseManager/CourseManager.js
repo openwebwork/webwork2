@@ -13,8 +13,8 @@ var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
-	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidebar","stopActing",
-            "changeView","changeSidebar","loadData","checkData","saveState");  // include all functions that need the this object
+	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidePane","stopActing",
+            "changeView","changeSidePane","loadData","checkData","saveState","logout");  // include all functions that need the this object
 	    var self = this;
 
         this.render();
