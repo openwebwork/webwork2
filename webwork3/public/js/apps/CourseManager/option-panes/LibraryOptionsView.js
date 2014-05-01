@@ -28,10 +28,19 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
     },
     events: {
         "change .problem-display-option": function (evt) { this.trigger("change-display-mode", evt);},
-        "change .select-target-option": function (evt) {this.trigger("change-target-set",evt);},
+        "change .select-target-option": function (evt) {
+            if($(evt.target).val()){
+                $(".goto-problem-set-button").removeAttr("disabled");
+            } else {
+                $(".goto-problem-set-button").attr("disabled","disabled");
+            }
+            this.trigger("change-target-set",evt);},
         "click .add-problem-set-button": function () { this.trigger("add-problem-set",this.model.get("new_problem_set"));},
         "click .show-hide-tags-button" : function (evt) {this.trigger("show-hide-tags",$(evt.target))},
         "click .show-hide-path-button" : function (evt) {this.trigger("show-hide-path",$(evt.target))},
+        "click .goto-problem-set-button": function(evt) {
+            this.trigger("goto-problem-set",this.$(".select-target-option").val())
+        }
     }
 });
 
