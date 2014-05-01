@@ -100,15 +100,6 @@ var CourseManager = WebPage.extend({
         this.mainViewList.getViewByName("Problem Sets Manager")
             .set({assignmentDates: this.assignmentDateList});
 
-        // Build the options menu.  Should we make a View for this?  
-
-        var menuItemTemplate = _.template($("#main-menu-item-template").html());
-        var ul = this.$(".sidebar-menu .dropdown-menu");
-        _(this.mainViewList.viewInfo.sidepanes).each(function(item){
-            ul.append(menuItemTemplate({name: item.name}));
-        })
-
-
 
         this.setMessages();  
 
@@ -182,39 +173,63 @@ var CourseManager = WebPage.extend({
         this.changeView("Problem Set Details",{});        
         this.mainViewList.getViewByName("Problem Set Details").changeProblemSet(setName).render();
     },
-    openCloseSidebar: function (str) {
-        if(this.currentSidePane.isOpen || str === "open"){
-            this.currentSidePane.isOpen = false;
-            $("#sidebar-container").removeClass("hidden");
-            $("#main-view").removeClass("col-md-12").addClass("col-md-9");
-            self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
-        } else if (! this.currentSidePane.isOpen || str === "close"){
-            this.currentSidePane.isOpen = true;
-            $("#sidebar-container").addClass("hidden");
-            $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
-            self.$(".open-close-view i").removeClass("fa-chevron-right").addClass("fa-chevron-left");
+    openSidePane: function (){
+        this.currentSidePane.isOpen = true;
+        $("#sidepane-container").removeClass("hidden");
+        $("#main-view").removeClass("col-md-12").addClass("col-md-9");
+        self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
+    },
+    closeSidePane: function (){
+        this.currentSidePane.isOpen = false;
+        $("#sidepane-container").addClass("hidden");
+        $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
+        self.$(".open-close-view i").removeClass("fa-chevron-right").addClass("fa-chevron-left");
+    },
+    openCloseSidePane: function (str) {
+        if(str==="close"){
+            this.closeSidePane();
+        } else if (str==="open"){
+            this.openSidePane();
+        } else if (this.currentSidePane.isOpen) {
+            this.closeSidePane();
+        } else if (! this.currentSidePane.isOpen){
+            this.openSidePane();
         }
     },
-    changeSidebar: function(_name){
+    changeSidePane: function(_name){
         var name = _.isString(_name) ? _name : $(_name.target).data("name");
         if(this.currentSidePane && this.currentSidePane.sidePane){
             this.currentSidePane.sidePane.remove();
         }
+        var mainViewInfo = _(this.mainViewList.views).findWhere({name: this.currentView.viewName});
         if ((name==="")){
-            this.openCloseSidebar("close");
+            this.openCloseSidePane("close");
             return;
         }
         this.currentSidePane.sidePane = this.mainViewList.getSidepaneByName(name);
+
         if(this.currentSidePane.sidePane){
-            this.$(".sidebar-menu .sidebar-name").text(name);
-            if (! $("#sidebar-container .sidebar-content").length){
-                $("#sidebar-container").append("<div class='sidebar-content'></div>");
+            this.$(".sidepane-menu .sidepane-name").text(name);
+            if (! $("#sidepane-container .sidepane-content").length){
+                $("#sidepane-container").append("<div class='sidepane-content'></div>");
             }
             this.currentSidePane.sidePane.setMainView(this.currentView)
-                .setElement(this.$(".sidebar-content")).render();
-        }    
+                .setElement(this.$(".sidepane-content")).render();
+
+            // set the side pane options for the main view
+
+            var menuItemTemplate = _.template($("#main-menu-item-template").html());
+            var ul = this.$(".sidepane-menu .dropdown-menu").empty();
+            var sidePanes = ["Help"].concat(mainViewInfo.other_sidepanes);
+            _(sidePanes).each(function(_name){
+                ul.append(menuItemTemplate({name: _name}));
+            })
+
+
+
+        }
         this.currentView.setSidePane(this.currentSidePane.sidePane);
-        this.openCloseSidebar("open");
+        this.openCloseSidePane("open");
     },
     changeView: function (_name,state){
         if(this.currentView){
