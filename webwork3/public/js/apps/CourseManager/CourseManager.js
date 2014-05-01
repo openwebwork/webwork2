@@ -120,7 +120,8 @@ var CourseManager = WebPage.extend({
         this.navigationBar.on({
             "change-view": this.changeView,
             "logout": this.logout,
-            "stop-acting": this.stopActing
+            "stop-acting": this.stopActing,
+            "show-help": function() { self.changeSidePane("Help")},
         });
 
         this.users.on({"act_as_user": function(model){
