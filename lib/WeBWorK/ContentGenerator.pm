@@ -703,7 +703,9 @@ sub links {
 	if (defined $courseID) {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
-			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+                        my $primaryMenuName = "Homework Sets";
+                        $primaryMenuName = "Course Administration" if ($ce->{courseName} eq 'admin');
+			print &$makelink("${pfx}ProblemSets", text=>$r->maketext($primaryMenuName), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::end_li();
 			if (defined $setID) {
 			    print CGI::start_li();
