@@ -79,9 +79,9 @@ sub title {
 	my $string              = $r->maketext("Statistics for")." ".$self->{ce}->{courseName}." ";
 	
 	if ($type eq 'student') {
-		$string             .= "student ".$self->{studentName};
+		$string             .= $r->maketext("student")." ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
-		$string             .= "set   ".$self->{setName};
+		$string             .= $r->maketext("set")." ".$self->{setName};
 		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ". $self->formatDateTime($self->{set_due_date});
 	}
 	return $string;
@@ -149,14 +149,14 @@ sub body {
 		my $email = $studentRecord->email_address;
 		
 		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			"Section: ", $studentRecord->section, CGI::br(),
-			"Recitation: ", $studentRecord->recitation, CGI::br();
+			$r->maketext("Section:")." ", $studentRecord->section, CGI::br(),
+			$r->maketext("Recitation:")." ", $studentRecord->recitation, CGI::br();
 		
 		if ($authz->hasPermissions($user, "become_student")) {
 			my $act_as_student_url = $self->systemLink($courseHomePage,
 				params => {effectiveUser=>$studentName});
 			
-			print 'Act as: ', CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
+			print $r->maketext('Act as:')." ", CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
 		}
 		
 		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
