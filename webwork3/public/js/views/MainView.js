@@ -15,13 +15,7 @@ define(['backbone'],function(Backbone){
 			this.$el.prepend($("#open-close-view-template").html());
 			// since this won't happen automatically in Backbone's delegate events, call the click event directly. 
 			this.$(".open-close-view").off("click").on("click", function(){
-				/*var it = self.$(".open-close-view i");
-				if(it.hasClass("fa-chevron-right")){
-					it.removeClass("fa-chevron-right").addClass("fa-chevron-left")
-				} else {
-					it.removeClass("fa-chevron-left").addClass("fa-chevron-right")
-				} */
-				self.eventDispatcher.trigger("open-close-sidebar");
+				self.eventDispatcher.trigger("open-close-sidepane");
 			})
 			return this;
 		},

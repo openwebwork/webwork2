@@ -2,7 +2,7 @@
 <script src="/webwork3/js/apps/require-config.js"></script>
 
 <!-- The follow script sets up the MainViewList, which contains all of the main views for the application.
-   This allows to load a configuration file instead of hard coding each of the views and sidebars. -->
+   This allows to load a configuration file instead of hard coding each of the views and sidepanes. -->
 <script type="text/javascript">
 var main_view_paths = [%main_view_paths%];
 main_view_paths.unshift("module","backbone");
@@ -22,16 +22,16 @@ main_view_paths.unshift("module","backbone");
   <div class="row" id="main-row">  
     <div class="col-md-9" id="main-view">
     </div>
-    <div class="col-md-3 well" id="sidebar-container">
-      <div class="dropdown sidebar-menu">
+    <div class="col-md-3 well" id="sidepane-container">
+      <div class="dropdown sidepane-menu">
         <h3 class="dropdown-toggle" data-toggle="dropdown">
-          <span class="sidebar-name"></span>
+          <span class="sidepane-name"></span>
           <span class="caret"></span>
         </h3>
         <ul class="dropdown-menu" role="menu">
         </ul>
     </div>
-    <div class="sidebar-content">
+    <div class="sidepane-content">
     </div>
     </div>  
   </div>
