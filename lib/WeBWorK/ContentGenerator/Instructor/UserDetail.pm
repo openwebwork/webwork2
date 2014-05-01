@@ -31,8 +31,8 @@ use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Debug;
 
 use constant DATE_FIELDS => {   open_date    => " Open: ",
-	                            due_date     => " Due&nbsp;: ",
-	                            answer_date  => " Ans&nbsp;: "
+                                   due_date     => " Due&nbsp;: ",
+                                   answer_date  => " Ans&nbsp;: "
 };
 use constant DATE_FIELDS_ORDER =>[qw(open_date due_date answer_date )];
 sub initialize {
@@ -356,7 +356,7 @@ sub body {
 
 	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail'}),"\n";
 	print $self->hidden_authen_fields();
-	print CGI::p(CGI::submit(-name=>'save_button',-label=>'Save changes',));
+	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	
 	print CGI::start_table({ border=> 1,cellpadding=>5}),"\n";
 	print CGI::Tr(
@@ -439,7 +439,7 @@ sub body {
 		),"\n";
 	}
 	print CGI::end_table(),"\n";
-	print CGI::p(CGI::submit(-name=>'save_button',-label=>'Save changes',));
+	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	print CGI::end_form(),"\n";
 	########################################
 	# Print warning

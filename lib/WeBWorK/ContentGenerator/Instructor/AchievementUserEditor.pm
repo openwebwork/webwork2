@@ -144,7 +144,7 @@ sub body {
 	 
 	# Assign to everyone message
 	print CGI::p(
-		    CGI::submit({name=>"assignToAll", value => "Assign to All Current Users"}), CGI::i("This action will not overwrite existing users.")
+		    CGI::submit({name=>"assignToAll", value => $r->maketext("Assign to All Current Users")}), CGI::i($r->maketext("This action will not overwrite existing users."))
 		  ),
 		  CGI::div({-style=>"color:red"}, "Do not uncheck students, unless you know what you are doing.",CGI::br(),
 	           "There is NO undo for unassigning students. "),
