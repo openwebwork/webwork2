@@ -144,8 +144,9 @@ var ClasslistView = MainView.extend({
 				this.deleteUsers([user]);
 				break;
 			case "2": // act as user
-				location.href = "/webwork2/" + config.courseSettings.course_id + "/?effectiveUser=" + 
-					user.get("user_id");
+				user.trigger("act_as_user",user);
+				//location.href = "/webwork2/" + config.courseSettings.course_id + "/?effectiveUser=" + 
+				//	user.get("user_id");
 				break;
 			case "3": // change password
 				alert("Change the password not yet supported");
@@ -158,6 +159,7 @@ var ClasslistView = MainView.extend({
 					+ user.get("user_id");
 				break;
 		}
+		$(evt.target).val(0); // reset the select pulldown
 	},
 	addStudentsByFile: function () {
 		this.addStudentFileView.openDialog();
