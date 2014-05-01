@@ -130,13 +130,22 @@ var CourseManager = WebPage.extend({
                 url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session", 
                 data: {effectiveUser: self.session.effectiveUser},
                 success: function () {
-                    self.navigationBar.setActAsName(self.session.effectiveUser);                    
+                    self.navigationBar.setActAsName(self.session.effectiveUser);
+                    // update the WW2 link
+                    var obj = {
+                        effectiveUser: self.session.effectiveUser,
+                        user: self.session.user,
+                        key: self.session.key
+                    };
+                    $(".ww2-link").children("a").attr("href","/webwork2/" + config.courseSettings.course_id+"?"+$.param(obj));
                 }
             });
         }});
 
         $(window).on("beforeunload", function () {
-            return self.messageTemplate({type: "leave_page"});
+            if(self.session.logged_in!==0){ // if the user didn't just log out. 
+                return self.messageTemplate({type: "leave_page"});
+            }
          }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
             self.currentView.render();
             self.currentSidePane.sidePane.render();
@@ -144,11 +153,11 @@ var CourseManager = WebPage.extend({
 
         // Add a link to WW2 via the main menu.
 
-        this.navigationBar.$(".manager-menu").append("<li><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
+        this.navigationBar.$(".manager-menu").append("<li class='ww2-link'><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
         this.delegateEvents();
     },
     events: {
-        "click .sidebar-menu a.link": "changeSidebar"
+        "click .sidepane-menu a.link": "changeSidePane"
     },
 
     // can a lot of this be handled by the individual views?  
@@ -253,16 +262,17 @@ var CourseManager = WebPage.extend({
         return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
     },
     logout: function(){
+        var self = this;
         var conf = confirm("Do you want to log out?");
         if(conf){
             $.ajax({method: "POST", 
                 url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/logout", 
-                success: function () {
+                success: function (data) {
+                    self.session.logged_in = data.logged_in;
                     location.href="/webwork2";
                 }
             });
         }
-        console.log("time to log out");
     },
     stopActing: function (){
         var self = this;
