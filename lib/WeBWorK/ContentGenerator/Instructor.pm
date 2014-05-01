@@ -597,18 +597,19 @@ sub userCountMessage {
 
 sub setCountMessage {
 	my ($self, $count, $numSets) = @_;
-	
+	my $r = $self->r;
+
 	my $message;
 	if ($count == 0) {
-		$message = CGI::em("no sets");
+		$message = CGI::em($r->maketext("no sets"));
 	} elsif ($count == $numSets) {
-		$message = "all sets";
+		$message = $r->maketext("all sets");
 	} elsif ($count == 1) {
-		$message = "1 set";
+		$message = "1 ".$r->maketext("set");
 	} elsif ($count > $numSets || $count < 0) {
 		$message = CGI::em("an impossible number of sets: $count out of $numSets");
 	} else {
-		$message = "$count sets";
+		$message = $count." ".$r->maketext("sets");
 	}
 	
 	return $message;
