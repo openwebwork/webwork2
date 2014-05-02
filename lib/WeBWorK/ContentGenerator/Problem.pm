@@ -655,6 +655,9 @@ sub pre_header_initialize {
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
 
+	# does the user have permission to use certain options?
+	my @args = ($user, $effectiveUser, $set, $problem);
+
     # get the number of times the student has clicked the button
     # (or refreshed the page (sneaky)) for showMeAnother
     my $showMeAnotherCount = $problem->{showMeAnotherCount};
@@ -666,7 +669,7 @@ sub pre_header_initialize {
     my $showMeAnotherIsPossible = 1;
 
     # if showMeAnother is active, then output a new problem in a new tab with a new seed
-    if ($showMeAnother) {
+    if ($showMeAnother and $self->can_showMeAnother(@args, $submitAnswers)) {
 
           # store text of original problem for later comparison with text from problem with new seed
           my $showMeAnotherOriginalPG = WeBWorK::PG->new(
@@ -782,8 +785,6 @@ sub pre_header_initialize {
 	    useMathView        => 0,
 	);
 	 
-	# does the user have permission to use certain options?
-	my @args = ($user, $effectiveUser, $set, $problem);
 	my %can = (
 		showOldAnswers           => $self->can_showOldAnswers(@args),
 		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
@@ -798,7 +799,7 @@ sub pre_header_initialize {
 	);
 
     # if showMeAnother is active, then disable all other options
-    if ($showMeAnother or $showMeAnotherCheckAnswers) {
+    if ( ( $showMeAnother or $showMeAnotherCheckAnswers ) and $can{showMeAnother} ) {
 
 	        $can{showOldAnswers} = 0;
 	        $can{recordAnswers}      = 0;
