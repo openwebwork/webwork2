@@ -633,8 +633,8 @@ sub pre_header_initialize {
 	my $redisplay                 = $r->param("redisplay");
 	my $submitAnswers             = $r->param("submitAnswers");
 	my $checkAnswers              = $r->param("checkAnswers");
-	my $showMeAnother             = $r->param("showMeAnother");
-	my $showMeAnotherCheckAnswers = $r->param("showMeAnotherCheckAnswers");
+	my $showMeAnother             = ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}) ;
+	my $showMeAnotherCheckAnswers = ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother});
 	my $previewAnswers            = $r->param("previewAnswers");
 	
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
