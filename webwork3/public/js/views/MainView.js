@@ -10,6 +10,15 @@ define(['backbone'],function(Backbone){
 		setParentView: function(parentView){
 			this.parentView = parentView;
 		},
+		render: function() {
+			var self = this;
+			this.$el.prepend($("#open-close-view-template").html());
+			// since this won't happen automatically in Backbone's delegate events, call the click event directly. 
+			this.$(".open-close-view").off("click").on("click", function(){
+				self.eventDispatcher.trigger("open-close-sidepane");
+			})
+			return this;
+		},
 		setSidePane: function(pane){
 			if(typeof(pane)==="undefined"){
 				return;

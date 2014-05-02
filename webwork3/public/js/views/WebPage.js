@@ -5,7 +5,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar){
     className: "webwork-container",
     messageTemplate: _.template($("#general-messages").html()),
     initialize: function (options) {
-    	_.bindAll(this,"render","toggleMessageWindow","closeLogin");
+    	_.bindAll(this,"render","closeLogin");
     },
     render: function () {
     	var self = this; 
@@ -14,55 +14,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar){
         this.loginPane = new LoginView({messageTemplate: this.messageTemplate});
         this.$el.prepend((this.helpPane = new HelpView()).render().el);
         this.navigationBar = new NavigationBar({el: $(".navbar-fixed-top")}).render();
-        
-        //this.navigationBar.on("help",function () {
-        //        self.helpPane.open();});
-
-        $("button#msg-toggle").on("click",this.toggleMessageWindow);
-
-                // this is just for testing
-
-        $(".navbar-right>li:nth-child(1)").on("click", function () {
-            console.log("testing the login");
-            self.loginPane.render().open();
-        })
-
-
-         this.setUpNavMenu();  
-
-    },
-    toggleMessageWindow: function() {
-        this.messagePane.toggle();
     },
     closeLogin: function () {
         this.loginPane.close();
-    },
-
-    // setUpNavMenu will dynamically changed the navigation menu to make it look better in the bootstrap view.
-    // In the future, we need to have the template for the menu better suited for a navigation menu.  
-
-    setUpNavMenu: function ()
-    {
-        var allCourses = $("#webwork_navigation ul:eq(0)").addClass("dropdown-menu");
-        var InstructorTools = $("#webwork_navigation ul:eq(0) ul:eq(0) ul:eq(0)");
-        var StudentTools = $("#webwork_navigation ul:eq(0) ul:eq(0)");
-
-
-
-        InstructorTools.children("ul").remove();  // remove any links under the instructor tools
-        StudentTools.children("ul").remove(); // remove 
-        allCourses.children("ul").remove();
-
-        allCourses.append("<li class='divider'>").append(StudentTools.children("li"))
-            .append("<li class='divider'>").append(InstructorTools.children("li"));
-
-        var activeLink = $("#webwork_navigation strong").children();
-        var strongElem = $("#webwork_navigation strong").parent();
-        strongElem.children().remove();
-        strongElem.addClass("active").append(activeLink);
-
-        $("#webwork_navigation").removeAttr("style")
-
     },
     requestLogin: function (opts){
         this.loginPane.loginOptions = opts;

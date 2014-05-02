@@ -4,8 +4,8 @@
   */
 
 
-define(['backbone', 'underscore', 'moment','views/CalendarView','config'], 
-    function(Backbone, _, moment,CalendarView,config) {
+define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView','config'], 
+    function(Backbone, _, moment,MainView, CalendarView,config) {
 	
     var AssignmentCalendar = CalendarView.extend({
     	template: _.template($("#calendar-date-bar").html()),
@@ -31,6 +31,7 @@ define(['backbone', 'underscore', 'moment','views/CalendarView','config'],
             this.$(".assign").truncate({width: 100});
             // set up the calendar to scroll correctly
             this.$(".calendar-container").height($(window).height()-160);
+            MainView.prototype.render.apply(this);
             return this;
     	},
     	renderDay: function (day){

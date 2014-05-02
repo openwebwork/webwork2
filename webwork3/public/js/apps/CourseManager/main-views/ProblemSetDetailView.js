@@ -14,6 +14,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
 	var ProblemSetDetailsView = MainView.extend({
         className: "set-detail-view",
         tagName: "div",
+        messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
         initialize: function (options) {
             MainView.prototype.initialize.call(this,options);
             _.bindAll(this,'render','changeProblemSet','updateNumberOfProblems','loadProblems');
@@ -24,7 +25,8 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             this.eventDispatcher = options.eventDispatcher;
             
             this.views = {
-                problemSetView : new ProblemSetView({problemSet: this.problemSet, settings: this.settings}),
+                problemSetView : new ProblemSetView({problemSet: this.problemSet, settings: this.settings, 
+                            messageTemplate: this.messageTemplate}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
                 propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
@@ -62,7 +64,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             if(this.problemSet){
                 this.changeProblemSet(this.problemSet.get("set_id"));
             }
-
+            MainView.prototype.render.apply(this);
             return this;   
         },
         setState: function(state){
@@ -127,6 +129,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         setMessages: function () {
             /* Set up all of the events on the user problemSets */
 
+            var self = this;
             this.problemSets.on("user_sets_added",function(_userSetList){
                 _userSetList.on(
                 {
@@ -143,8 +146,8 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                                         ? moment.unix(_userSet.get(key)).format("MM/DD/YYYY [at] hh:mmA") 
                                         : _userSet.get(key);
                             self.eventDispatcher.trigger("add-message",{type: "success", 
-                                short: config.msgTemplate({type:"set_saved",opts:{setname:_userSet.get("set_id")}}),
-                                text: config.msgTemplate({type:"set_saved_details",opts:{setname:_userSet.get("set_id"),key: key,
+                                short: self.messageTemplate({type:"set_saved",opts:{setname:_userSet.get("set_id")}}),
+                                text: self.messageTemplate({type:"set_saved_details",opts:{setname:_userSet.get("set_id"),key: key,
                                     oldValue: _old, newValue: _new}})});
                         });
                     }
@@ -288,7 +291,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         unassignUsers: function(){
             var self = this;
             var currentUsers = _(this.originalAssignedUsers).difference(this.model.get("assigned_users"));
-            var confirmDelete = confirm(config.msgTemplate({type: "unassign_users", 
+            var confirmDelete = confirm(this.messageTemplate({type: "unassign_users", 
                     opts: {users: this.model.get("assigned_users").join(", ")}}));
             if (confirmDelete){
                 this.problemSet.set("assigned_users",currentUsers);

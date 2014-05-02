@@ -41,6 +41,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
             this.$(".set-id a").truncate({width: 120});
+            MainView.prototype.render.apply(this);
             return this;
         },
         getState: function () {
