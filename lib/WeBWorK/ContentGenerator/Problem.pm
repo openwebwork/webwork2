@@ -804,7 +804,7 @@ sub pre_header_initialize {
 	        $can{showOldAnswers} = 0;
 	        $can{recordAnswers}      = 0;
 	        $can{checkAnswers}       = 0; # turned on if showMeAnother conditions met below
-	        $can{showMeAnother}      = 0;
+            #$can{showMeAnother}      = 0;
 	        $can{getSubmitButton}    = 0;
 
             # only show solution if showMeAnother has been clicked (or refreshed)
@@ -1019,9 +1019,11 @@ sub siblings {
 sub nav {
 	my ($self, $args) = @_;
 	my $r = $self->r;
+	my %can = %{ $self->{can} };
+
     # if showMeAnother or check answers from showMeAnother
     # is active, then don't show the navigation bar
-	return "" if($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers"));
+	return "" if(($r->param("showMeAnother") or $r->param("showMeAnotherCheckAnswers")) and $can{showMeAnother});
 
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
@@ -1351,6 +1353,7 @@ sub output_submit_buttons{
 	my $r = $self->r;
 	my $ce = $self->r->ce;
 	my %can = %{ $self->{can} };
+	my $showMeAnother = ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}) ;
 	
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
@@ -1371,7 +1374,7 @@ sub output_submit_buttons{
 			# WTF???
 		}
 	}
-	if ($can{showMeAnother}) {
+	if ($can{showMeAnother} and !$showMeAnother) {
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
 	} else {
         # if showMeAnother is available for the course, and for the current problem (but not yet
@@ -1616,9 +1619,10 @@ sub output_summary{
 	my $pg = $self->{pg};
 	my $submitAnswers = $self->{submitAnswers};
 	my %will = %{ $self->{will} };
+	my %can = %{ $self->{can} };
 	my $checkAnswers = $self->{checkAnswers};
 	my $previewAnswers = $self->{previewAnswers};
-	my $showMeAnother = $self->{showMeAnother};
+    my $showMeAnother = ($self->{showMeAnother} and $can{showMeAnother});
     my $showMeAnotherCheckAnswers = $self->{showMeAnotherCheckAnswers};
 	my $showMeAnotherIsPossible = $will{showMeAnotherIsPossible};
     my $showMeAnotherCount = $problem->{showMeAnotherCount};
