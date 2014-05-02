@@ -115,7 +115,7 @@
     <td>Section</td><td>Recitation</td>
     <td>Comment</td><td>Permission Level</td><td>Password</td></tr></thead><tbody></tbody></table>
     <button class="btn btn-default" id="import-stud-button">Import Students</button>
-    <button class="btn btn-default" id="add-more-button">Add One Student</button>
+    <button class="btn btn-default" id="add-more-button">Add Another Row</button>
     <button class="btn btn-default" id="cancel-import">Cancel Import</button>
 </script>
 <script type="text/template" id="passwordDialogText">
