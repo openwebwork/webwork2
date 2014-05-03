@@ -633,10 +633,23 @@ sub pre_header_initialize {
 	my $redisplay                 = $r->param("redisplay");
 	my $submitAnswers             = $r->param("submitAnswers");
 	my $checkAnswers              = $r->param("checkAnswers");
-	my $showMeAnother             = ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}) ;
-	my $showMeAnotherCheckAnswers = ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother});
 	my $previewAnswers            = $r->param("previewAnswers");
-	
+	my $showMeAnother             = ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}) ;
+    my $showMeAnotherCheckAnswers = ($r->param("showMeAnotherCheckAnswers")and $ce->{pg}->{options}->{enableShowMeAnother}) ;
+	if($showMeAnotherCheckAnswers){
+        # check the original seed against the current seed - provided that 
+        # they are not the same, and that showMeAnother is enabled, together with 
+        # checkAnswers then the student is entitled to check answers to a new version
+        # of the problem
+        my $tmp = $db->getUserProblem($userName, $setName, $problemNumber);
+      
+        $showMeAnotherCheckAnswers = (defined($r->param("problemSeed"))) ?                          # showMeAnotherCheckAnswers is only appropriate
+                                        ($r->param("showMeAnotherCheckAnswers")                    # if a problemSeed is passed
+                                        and $ce->{pg}->{options}->{enableShowMeAnother}            # and if showMeAnother is enabled
+                                        and ($problem->{problem_seed} != $tmp->{problem_seed}) # and if the problemSeed is not the original problemSeed
+                                        and ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}})):0;      
+                                  }
+
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
 	$self->{displayMode}    = $displayMode;
@@ -802,10 +815,10 @@ sub pre_header_initialize {
     if ( ( $showMeAnother or $showMeAnotherCheckAnswers ) and $can{showMeAnother} ) {
 
 	        $can{showOldAnswers} = 0;
-	        $can{recordAnswers}      = 0;
-	        $can{checkAnswers}       = 0; # turned on if showMeAnother conditions met below
-            #$can{showMeAnother}      = 0;
-	        $can{getSubmitButton}    = 0;
+	        $can{recordAnswers}  = 0;
+	        $can{checkAnswers}   = 0; # turned on if showMeAnother conditions met below
+            #$can{showMeAnother}  = 0 if($showMeAnotherCheckAnswers);
+	        $can{getSubmitButton}= 0;
 
             # only show solution if showMeAnother has been clicked (or refreshed)
             # less than the maximum amount allowed specified in Course Configuration, 
