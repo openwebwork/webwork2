@@ -184,44 +184,43 @@ sub can_useMathView {
     return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
 }
     
+
 sub can_showMeAnother {
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
-	my $authz = $self->r->authz;
     my $ce = $self->r->ce;
-	my $thisAttempt = $submitAnswers ? 1 : 0;
 
     # if the showMeAnother button isn't enabled in the course configuration, 
     # don't show it under any circumstances (not even for the instructor)
     return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
-	
-	if (before($Set->open_date)) {
-		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
-	} elsif (between($Set->open_date, $Set->due_date)) {
-		my $showMeAnother = $Problem->showMeAnother;
 
-        # if $showMeAnother is somehow not an integer, make it one, using the default value from course config
-        $showMeAnother = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother =~ /^[+-]?\d+$/);
-		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
-        my $showMeAnotherCount = $Problem->{showMeAnotherCount};
+    # get the hash of information about showMeAnother
+	my %showMeAnother = %{ $self->{showMeAnother} };
 
-        # if $showMeAnotherCount is somehow not an integer, make it one, using the default value from course config
-        $showMeAnotherCount = 0 unless ($showMeAnotherCount =~ /^[+-]?\d+$/);
-		if ($showMeAnother == -1 
-                     or !$ce->{pg}->{options}->{enableShowMeAnother}
-                     or $attempts_used < $showMeAnother 
-                     or ($showMeAnotherCount>$ce->{pg}->{options}->{showMeAnotherMaxReps} and $ce->{pg}->{options}->{showMeAnotherMaxReps}>-1) 
-                   ) { 
-			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_with_attempts");
-		     } else {
-			return $authz->hasPermissions($User->user_id, "check_answers_after_open_date_without_attempts");
-		}
-	} elsif (between($Set->due_date, $Set->answer_date)) {
-		return $authz->hasPermissions($User->user_id, "check_answers_after_due_date");
-	} elsif (after($Set->answer_date)) {
-        return 0;
-        #return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
-        #return $authz->hasPermissions($User->user_id, "check_answers_after_answer_date");
-	}
+    if (after($Set->open_date)) {
+        # if $showMeAnother{TriesNeeded} is somehow not an integer, make it one, using the default value from course config
+        $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
+
+	    # if SMA is just not permitted for the problem, don't show it
+	    return 0 unless ($showMeAnother{TriesNeeded} > -1);
+
+        my $thisAttempt = $submitAnswers ? 1 : 0;
+	    my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
+
+        # if $showMeAnother{Count} is somehow not an integer, it probably means that the database was never
+	    # inititialized meaning that the student hasn't pushed it yet and it should be 0
+        $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
+
+	    # if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
+	    # not submitted enough answers yet or has used the SMA button too many times
+	    if ($attempts_used < $showMeAnother{TriesNeeded} 
+	        or ($showMeAnother{Count}>$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
+          return 0;
+        } else {
+          return 1;
+        }
+    } else {
+      # otherwise the set hasn't been opened yet, so we can't use showMeAnother 
+      return 0;}
 }
 
 # Reset the default in some cases
@@ -692,9 +691,12 @@ sub pre_header_initialize {
                                         and ($showMeAnother{options}->{checkAnswers})):0;      
     }
 
+    # store the showMeAnother hash for the check to see if the button can be used
+    # (this hash is updated and re-stored after the can, must, will hashes)
+	$self->{showMeAnother} = \%showMeAnother;
+
     # if showMeAnother is active, then output a new problem in a new tab with a new seed
     if ($showMeAnother{active} and $self->can_showMeAnother(@args, $submitAnswers)) {
-
           # store text of original problem for later comparison with text from problem with new seed
           my $showMeAnotherOriginalPG = WeBWorK::PG->new(
                 $ce,
