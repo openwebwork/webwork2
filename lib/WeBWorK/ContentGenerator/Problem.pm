@@ -660,7 +660,8 @@ sub pre_header_initialize {
     #       IsPossible:    checks to see if generating a new seed changes the problem (assume it is possible by default)
     #       TriesNeeded:   the number of times the student needs to attempt the problem before the button is available
     #       MaxReps:       the Maximum Number of times that showMeAnother can be clicked (specified in course configuration
-    #       configOptions: the options available when showMeAnother has been pushed (check answers, see solution (when available), see correct answer)
+    #       options:       the options available when showMeAnother has been pushed (check answers, see solution (when available), see correct answer)
+    #                      these are set via check boxes from the configuration screen
     #       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
     my %showMeAnother;
 	$showMeAnother{active}       = ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}) ;
@@ -668,7 +669,9 @@ sub pre_header_initialize {
     $showMeAnother{IsPossible} = 1;
     $showMeAnother{TriesNeeded} = $problem->{showMeAnother};
     $showMeAnother{MaxReps} = $ce->{pg}->{options}->{showMeAnotherMaxReps};
-    $showMeAnother{configOptions} = $ce->{pg}->{options}->{showMeAnother};
+    $showMeAnother{options}{checkAnswers} = ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}});
+    $showMeAnother{options}{showSolutions} = ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}});
+    $showMeAnother{options}{showCorrect} = ('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}});
     $showMeAnother{Count} = $problem->{showMeAnotherCount};
     # if $showMeAnother{Count} is somehow not an integer, make it one
     $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
@@ -686,7 +689,7 @@ sub pre_header_initialize {
                                         ($r->param("showMeAnotherCheckAnswers")                    
                                         and $ce->{pg}->{options}->{enableShowMeAnother}            
                                         and ($problem->{problem_seed} != $tmp->{problem_seed}) 
-                                        and ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}})):0;      
+                                        and ($showMeAnother{options}->{checkAnswers})):0;      
     }
 
     # if showMeAnother is active, then output a new problem in a new tab with a new seed
@@ -834,11 +837,11 @@ sub pre_header_initialize {
             if(($showMeAnother{Count}<=($showMeAnother{MaxReps}) or ($showMeAnother{MaxReps}==-1))
                 and $showMeAnother{IsPossible} )
             {
-	          $can{showCorrectAnswers} = (('SMAshowCorrect' ~~ @{$showMeAnother{configOptions}}) and ('SMAcheckAnswers' ~~ @{$showMeAnother{configOptions}}));
+	          $can{showCorrectAnswers} = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers}));
 	          $can{showHints}          = 1;
-	          $can{showSolutions} = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}});
-	          $must{showSolutions} = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}});
-	          $can{checkAnswers}       = ('SMAcheckAnswers' ~~ @{$showMeAnother{configOptions}});
+	          $can{showSolutions} = ($showMeAnother{options}->{showSolutions});
+	          $must{showSolutions} = ($showMeAnother{options}->{showSolutions});
+	          $can{checkAnswers}       = ($showMeAnother{options}->{checkAnswers});
             }
       }
 
@@ -1407,8 +1410,8 @@ sub output_submit_buttons{
         # if $showMeAnother is somehow not an integer, make it one, using the default from the course configuration
         $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
         if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother{TriesNeeded} >-1 ) and !($showMeAnother{active} or $showMeAnother{CheckAnswers})){
-	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another")) if($showMeAnother{Count}<=$showMeAnother{MaxReps});
-	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another exhausted")) if($showMeAnother{Count}>$showMeAnother{MaxReps});
+            my $exhausted = ($showMeAnother{Count}>$showMeAnother{MaxReps}) ? "exhausted" : "";
+	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another [_1]",$exhausted));
         }
     }
 	
@@ -1696,7 +1699,7 @@ sub output_summary{
 			# show attempt previews
     } elsif ($showMeAnother{active} and $showMeAnother{IsPossible} and $can{showMeAnother}){
         # the feedback varies a little bit if Check Answers is available or not
-        my $checkAnswersAvailable = ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}) ? 
+        my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ? 
                        "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
         my $solutionShown;
 		# if showMeAnother has been clicked and a new version has been found, 
@@ -1704,11 +1707,11 @@ sub output_summary{
         if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
             # check to see if a solution exists for this problem, and vary the feedback accordingly
             if($pg->{flags}->{solutionExists}){
-                $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}}) ? ", complete with solution" : "";
+                $solutionShown = ($showMeAnother{options}->{showSolutions}) ? ", complete with solution" : "";
             } else {
-                my $viewCorrect = (('SMAshowCorrect' ~~ @{$showMeAnother{configOptions}}) and ('SMAcheckAnswers' ~~ @{$showMeAnother{configOptions}})) ? 
+                my $viewCorrect = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers})) ? 
                       ", but you can still view the correct answer":"";
-                $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}}) ? 
+                $solutionShown = ($showMeAnother{options}->{showSolutions}) ? 
                       ". There is no walk-through solution available for this problem$viewCorrect" : "";
             }
          } 
@@ -1717,7 +1720,7 @@ sub output_summary{
      } elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
             my $showMeAnotherMaxReps = $showMeAnother{MaxReps};
             my $times = ($showMeAnother{MaxReps}>1) ? "times" : "time";
-            my $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
+            my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [_1] [_2] per problem. 
                                                                          [_3] Close this tab, and return to the original problem.",$showMeAnotherMaxReps,$times,$solutionShown  )),CGI::br();
      } elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
