@@ -1698,29 +1698,28 @@ sub output_summary{
         # the feedback varies a little bit if Check Answers is available or not
         my $checkAnswersAvailable = ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}) ? 
                        "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
+        my $solutionShown;
 		# if showMeAnother has been clicked and a new version has been found, 
         # give some details of what the student is seeing
         if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
             # check to see if a solution exists for this problem, and vary the feedback accordingly
             if($pg->{flags}->{solutionExists}){
-                my $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}}) ? ", complete with solution" : "";
-		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem$solutionShown. $checkAnswersAvailable  
-                                                                     ")),CGI::br();
+                $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}}) ? ", complete with solution" : "";
             } else {
                 my $viewCorrect = (('SMAshowCorrect' ~~ @{$showMeAnother{configOptions}}) and ('SMAcheckAnswers' ~~ @{$showMeAnother{configOptions}})) ? 
-                      ", but you can still view the correct answer ":"";
-                my $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}}) ? 
-                      "There is no walk-through solution available for this problem$viewCorrect"."." : "";
-		        print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem. $checkAnswersAvailable $solutionShown")),CGI::br();
+                      ", but you can still view the correct answer":"";
+                $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}}) ? 
+                      ". There is no walk-through solution available for this problem$viewCorrect" : "";
             }
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
          } 
+		 print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem[_1]. [_2] ",$solutionShown,$checkAnswersAvailable)),CGI::br();
+		 print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
      } elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
             my $showMeAnotherMaxReps = $showMeAnother{MaxReps};
             my $times = ($showMeAnother{MaxReps}>1) ? "times" : "time";
             my $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another $showMeAnotherMaxReps $times per problem. 
-                                                                         $solutionShown Close this tab, and return to the original problem.")),CGI::br();
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [_1] [_2] per problem. 
+                                                                         [_3] Close this tab, and return to the original problem.",$showMeAnotherMaxReps,$times,$solutionShown  )),CGI::br();
      } elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
 		# print this if showMeAnother has been clicked, but it is not possible to 
         # find a new version of the problem
