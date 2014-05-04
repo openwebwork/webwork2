@@ -146,8 +146,8 @@ sub body {
 	print CGI::p(
 		    CGI::submit({name=>"assignToAll", value => $r->maketext("Assign to All Current Users")}), CGI::i($r->maketext("This action will not overwrite existing users."))
 		  ),
-		  CGI::div({-style=>"color:red"}, "Do not uncheck students, unless you know what you are doing.",CGI::br(),
-	           "There is NO undo for unassigning students. "),
+		  CGI::div({-style=>"color:red"}, $r->maketext("Do not uncheck students, unless you know what you are doing."),CGI::br(),
+	           $r->maketext("There is NO undo for unassigning students.")),
 	      CGI::p("When you unassign
 				        by unchecking a student's name, you destroy all
 				        of the data for achievement ".CGI::b($achievementID)." for this student. You will then need to
