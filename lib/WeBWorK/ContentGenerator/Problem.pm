@@ -1407,7 +1407,7 @@ sub output_submit_buttons{
         # if $showMeAnother is somehow not an integer, make it one, using the default from the course configuration
         $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
         if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother{TriesNeeded} >-1 ) and !($showMeAnother{active} or $showMeAnother{CheckAnswers})){
-	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another")) if($showMeAnother{Count}<($showMeAnother{MaxReps}+1));
+	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another")) if($showMeAnother{Count}<=$showMeAnother{MaxReps});
 	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another exhausted")) if($showMeAnother{Count}>$showMeAnother{MaxReps});
         }
     }
@@ -1700,7 +1700,7 @@ sub output_summary{
                        "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
 		# if showMeAnother has been clicked and a new version has been found, 
         # give some details of what the student is seeing
-        if($showMeAnother{Count}<($showMeAnother{MaxReps}+1) or ($showMeAnother{MaxReps}==-1)){
+        if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
             # check to see if a solution exists for this problem, and vary the feedback accordingly
             if($pg->{flags}->{solutionExists}){
                 my $solutionShown = ('SMAshowSolutions' ~~ @{$showMeAnother{configOptions}}) ? ", complete with solution" : "";
