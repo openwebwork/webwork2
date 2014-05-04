@@ -124,12 +124,8 @@ sub body {
 		    CGI::submit({name=>"assignToAll", value => $r->maketext("Assign to All Current Users")}), CGI::i($r->maketext("This action can take a long time if there are many students."))
 		  ),
 		  CGI::div({-style=>"color:red"}, $r->maketext("Do not uncheck students, unless you know what you are doing."),CGI::br(),
-	           "There is NO undo for unassigning students. "),
-	      CGI::p("When you unassign
-				        by unchecking a student's name, you destroy all
-				        of the data for homework set ".CGI::b($setID)." for this student. You will then need to
-				        reassign the set to these students and they will receive new versions of the problems.
-				        Make sure this is what you want to do before unchecking students."
+	           $r->maketext("There is NO undo for unassigning students.")),
+	      CGI::p($r->maketext("When you unassign by unchecking a student's name, you destroy all of the data for homework set [_1] for this student. You will then need to reassign the set to these students and they will receive new versions of the problems. Make sure this is what you want to do before unchecking students.", CGI::b($setID))
 	);
 				        
 	print CGI::start_table({});
