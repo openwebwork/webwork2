@@ -341,7 +341,9 @@ sub noRecipientsAvailable {
 	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel E-Mail")) if $returnURL;
 }
 sub title {
-	return "E-mail Instructor";
+	my ($self, $user, $returnURL, $message) = @_;
+	my $r = $self->r;
+	return $r->maketext("E-mail Instructor");
 }
 sub feedbackForm {
 	my ($self, $user, $returnURL, $message) = @_;
@@ -353,24 +355,20 @@ sub feedbackForm {
 		module set problem displayMode showOldAnswers showCorrectAnswers
 		showHints showSolutions
 	));
-	print CGI::p(CGI::b("From:"), " ",
+	print CGI::p(CGI::b($r->maketext("From:")), " ",
 		($user && $user->email_address
 			? CGI::tt($user->email_address)
 			: CGI::textfield("from", "", 40))
 	);
-	print CGI::p("Use this form to report to your professor a
-		problem with the WeBWorK system or an error in a problem
-		you are attempting. Along with your message, additional
-		information about the state of the system will be
-		included.");
+	print CGI::p("Use this form to report to your professor a problem with the WeBWorK system or an error in a problem you are attempting. Along with your message, additional information about the state of the system will be included.");
 	print CGI::p(CGI::i($message)) if $message;
 	print CGI::p(
 		CGI::b("E-mail:"), CGI::br(),
 		CGI::textarea("feedback", "", 20, 80),
 	);
-	print CGI::submit("sendFeedback", "Send E-mail");
+	print CGI::submit("sendFeedback", $r->maketext("Send E-mail"));
 	print CGI::end_form();
-	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel E-mail")) if $returnURL;
+	print CGI::p(CGI::a({-href=>$returnURL}, $r->maketext("Cancel E-mail"))) if $returnURL;
 }
 
 sub getFeedbackRecipients {
