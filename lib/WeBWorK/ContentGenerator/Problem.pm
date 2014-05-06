@@ -186,6 +186,10 @@ sub can_useMathView {
     
 
 sub can_showMeAnother {
+    # PURPOSE: subroutine to check if showMeAnother 
+    #          button should be allowed; note that this is done
+    #          *before* the check to see if showMeAnother is 
+    #          possible.
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce = $self->r->ce;
 
@@ -213,7 +217,7 @@ sub can_showMeAnother {
 	    # if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
 	    # not submitted enough answers yet or has used the SMA button too many times
 	    if ($attempts_used < $showMeAnother{TriesNeeded} 
-	        or ($showMeAnother{Count}>$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
+	        or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
           return 0;
         } else {
           return 1;
@@ -594,10 +598,10 @@ sub pre_header_initialize {
 		$self->{invalidProblem} = not (defined $sourceFilePath or $problem->source_file);
 		
         ## if the caller is asking to override the problem seed, do so
-		#my $problemSeed = $r->param("problemSeed");
-		#if (defined $problemSeed) {
-		#	$problem->problem_seed($problemSeed);
-		#}
+		my $problemSeed = $r->param("problemSeed");
+		if (defined $problemSeed) {
+			$problem->problem_seed($problemSeed);
+        }	
 
 		my $visiblityStateClass = ($set->visible) ? $r->maketext("font-visible") : $r->maketext("font-hidden");
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
@@ -608,13 +612,6 @@ sub pre_header_initialize {
 		$self->{invalidProblem} = !(defined $problem and ($set->visible || $authz->hasPermissions($userName, "view_hidden_sets")));
 		
 		$self->addbadmessage(CGI::p($r->maketext("This problem will not count towards your grade."))) if $problem and not $problem->value and not $self->{invalidProblem};
-	}
-
-	# if the caller is asking to override the problem seed, do so
-    # cmh: is this dodgy having this available outside of the authorization check?
-	my $problemSeed = $r->param("problemSeed");
-	if (defined $problemSeed) {
-		$problem->problem_seed($problemSeed);
 	}
 
 	$self->{userName}          = $userName;
@@ -650,9 +647,6 @@ sub pre_header_initialize {
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
 
-	# does the user have permission to use certain options?
-	my @args = ($user, $effectiveUser, $set, $problem);
-
     # a hash containing information for showMeAnother
     #       active:        has the button been pushed?
     #       CheckAnswers:  has the user clicked Check Answers while SMA is active
@@ -662,32 +656,44 @@ sub pre_header_initialize {
     #       options:       the options available when showMeAnother has been pushed (check answers, see solution (when available), see correct answer)
     #                      these are set via check boxes from the configuration screen
     #       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
-    my %showMeAnother;
-	$showMeAnother{active}       = ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}) ;
-    $showMeAnother{CheckAnswers} = ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}) ;
-    $showMeAnother{IsPossible} = 1;
-    $showMeAnother{TriesNeeded} = $problem->{showMeAnother};
-    $showMeAnother{MaxReps} = $ce->{pg}->{options}->{showMeAnotherMaxReps};
-    $showMeAnother{options}{checkAnswers} = ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}});
-    $showMeAnother{options}{showSolutions} = ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}});
-    $showMeAnother{options}{showCorrect} = ('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}});
-    $showMeAnother{Count} = $problem->{showMeAnotherCount};
+    my %showMeAnother = (
+	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}),
+            CheckAnswers => ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
+            IsPossible => 1,
+            TriesNeeded => $problem->{showMeAnother},
+            MaxReps => $ce->{pg}->{options}->{showMeAnotherMaxReps},
+            options => {
+                    checkAnswers  => ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+                    showSolutions => ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+                    showCorrect   => ('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+                  },
+            Count => $problem->{showMeAnotherCount},
+          );
+
     # if $showMeAnother{Count} is somehow not an integer, make it one
     $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
 
 	if($showMeAnother{CheckAnswers}){
-        # check the original seed against the current seed - provided that 
+        # check the new seed against the old seed - provided that 
         # they are not the same, and that showMeAnother is enabled, together with 
-        # checkAnswers then the student is entitled to check answers to a new version
+        # checkAnswers enabled then the student is entitled to check answers to a new version
         # of the problem
-        my $tmp = $db->getUserProblem($userName, $setName, $problemNumber);
+        #
+        # this is essentially the first part of an integrity check to make sure that the user
+        # hasn't simply put &showMeAnotherCheckAnswers=1 into the URL
+        my $newProblemSeed = $r->param("problemSeed");
+        my $oldProblemSeed = $problem->{problem_seed};
+
+	    if (defined $newProblemSeed) {
+	    	$problem->problem_seed($newProblemSeed);
+	    }
 
         # showMeAnother{CheckAnswers} is only appropriate if a problemSeed is passed
         # and if showMeAnother is enabled and if the problemSeed is not the original problemSeed
         $showMeAnother{CheckAnswers} = (defined($r->param("problemSeed"))) ?                          
                                         ($r->param("showMeAnotherCheckAnswers")                    
                                         and $ce->{pg}->{options}->{enableShowMeAnother}            
-                                        and ($problem->{problem_seed} != $tmp->{problem_seed}) 
+                                        and ($newProblemSeed != $oldProblemSeed) 
                                         and ($showMeAnother{options}->{checkAnswers})):0;      
     }
 
@@ -695,8 +701,59 @@ sub pre_header_initialize {
     # (this hash is updated and re-stored after the can, must, will hashes)
 	$self->{showMeAnother} = \%showMeAnother;
 
+	##### permissions #####
+
+	# what does the user want to do?
+	#FIXME  There is a problem with checkboxes -- if they are not checked they are invisible.  Hence if the default mode in $ce is 1
+	# there is no way to override this.  Probably this is ok for the last three options, but it was definitely not ok for showing
+	# saved answers which is normally on, but you want to be able to turn it off!  This section should be moved to ContentGenerator
+	# so that you can set these options anywhere.  We also need mechanisms for making them sticky.
+	# Note: ProblemSet and ProblemSets might set showOldAnswers to '', which
+	#       needs to be treated as if it is not set.
+	my %want = (
+		showOldAnswers     => (defined($r->param("showOldAnswers")) and $r->param("showOldAnswers") ne '') ? $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers},
+		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
+		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
+		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
+		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
+							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
+        useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
+		recordAnswers      => $submitAnswers,
+		checkAnswers       => $checkAnswers,
+		showMeAnother      => $showMeAnother{active},
+		getSubmitButton    => 1,
+	);
+
+	# are certain options enforced?
+	my %must = (
+		showOldAnswers     => 0,
+		showCorrectAnswers => 0,
+		showHints          => 0,
+		showSolutions      => 0,
+		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
+		checkAnswers       => 0,
+		showMeAnother      => 0,
+		getSubmitButton    => 0,
+	    useMathView        => 0,
+	);
+	 
+	# does the user have permission to use certain options?
+	my @args = ($user, $effectiveUser, $set, $problem);
+
+	my %can = (
+		showOldAnswers           => $self->can_showOldAnswers(@args),
+		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
+		showHints                => $self->can_showHints(@args),
+		showSolutions            => $self->can_showSolutions(@args),
+		recordAnswers            => $self->can_recordAnswers(@args, 0),
+		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
+		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
+		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
+        useMathView              => $self->can_useMathView(@args)
+	);
+
     # if showMeAnother is active, then output a new problem in a new tab with a new seed
-    if ($showMeAnother{active} and $self->can_showMeAnother(@args, $submitAnswers)) {
+    if ($showMeAnother{active} and $can{showMeAnother}) {
           # store text of original problem for later comparison with text from problem with new seed
           my $showMeAnotherOriginalPG = WeBWorK::PG->new(
                 $ce,
@@ -773,64 +830,12 @@ sub pre_header_initialize {
 
     }
 
-	##### permissions #####
-
-	# what does the user want to do?
-	#FIXME  There is a problem with checkboxes -- if they are not checked they are invisible.  Hence if the default mode in $ce is 1
-	# there is no way to override this.  Probably this is ok for the last three options, but it was definitely not ok for showing
-	# saved answers which is normally on, but you want to be able to turn it off!  This section should be moved to ContentGenerator
-	# so that you can set these options anywhere.  We also need mechanisms for making them sticky.
-	# Note: ProblemSet and ProblemSets might set showOldAnswers to '', which
-	#       needs to be treated as if it is not set.
-	my %want = (
-		showOldAnswers     => (defined($r->param("showOldAnswers")) and $r->param("showOldAnswers") ne '') ? $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers},
-		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
-		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
-		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
-		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
-							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
-        useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
-		recordAnswers      => $submitAnswers,
-		checkAnswers       => $checkAnswers,
-		showMeAnother      => $showMeAnother{active},
-		showMeAnotherIsPossible  => $showMeAnother{IsPossible},
-		getSubmitButton    => 1,
-	);
-
-	# are certain options enforced?
-	my %must = (
-		showOldAnswers     => 0,
-		showCorrectAnswers => 0,
-		showHints          => 0,
-		showSolutions      => 0,
-		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
-		checkAnswers       => 0,
-		showMeAnother      => 0,
-		showMeAnotherIsPossible  => $showMeAnother{IsPossible},
-		getSubmitButton    => 0,
-	    useMathView        => 0,
-	);
-	 
-	my %can = (
-		showOldAnswers           => $self->can_showOldAnswers(@args),
-		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
-		showHints                => $self->can_showHints(@args),
-		showSolutions            => $self->can_showSolutions(@args),
-		recordAnswers            => $self->can_recordAnswers(@args, 0),
-		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
-		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
-		showMeAnotherIsPossible  => $showMeAnother{IsPossible},
-		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
-        useMathView              => $self->can_useMathView(@args)
-	);
-
     # if showMeAnother is active, then disable all other options
     if ( ( $showMeAnother{active} or $showMeAnother{CheckAnswers} ) and $can{showMeAnother} ) {
 
 	        $can{showOldAnswers} = 0;
 	        $can{recordAnswers}  = 0;
 	        $can{checkAnswers}   = 0; # turned on if showMeAnother conditions met below
-            #$can{showMeAnother}  = 0 if($showMeAnother{CheckAnswers});
 	        $can{getSubmitButton}= 0;
 
             # only show solution if showMeAnother has been clicked (or refreshed)
@@ -1412,7 +1417,7 @@ sub output_submit_buttons{
         # if $showMeAnother is somehow not an integer, make it one, using the default from the course configuration
         $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
         if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother{TriesNeeded} >-1 ) and !($showMeAnother{active} or $showMeAnother{CheckAnswers})){
-            my $exhausted = ($showMeAnother{Count}>$showMeAnother{MaxReps}) ? "exhausted" : "";
+            my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
 	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another [_1]",$exhausted));
         }
     }
@@ -1653,8 +1658,6 @@ sub output_summary{
 	my $checkAnswers = $self->{checkAnswers};
 	my $previewAnswers = $self->{previewAnswers};
 
-	$showMeAnother{IsPossible} = $will{showMeAnotherIsPossible};
-	
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
@@ -1720,11 +1723,9 @@ sub output_summary{
 		 print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem[_1]. [_2] ",$solutionShown,$checkAnswersAvailable)),CGI::br();
 		 print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
      } elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
-            my $showMeAnotherMaxReps = $showMeAnother{MaxReps};
-            my $times = ($showMeAnother{MaxReps}>1) ? "times" : "time";
             my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [_1] [_2] per problem. 
-                                                                         [_3] Close this tab, and return to the original problem.",$showMeAnotherMaxReps,$times,$solutionShown  )),CGI::br();
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. 
+                                                                         [_2] Close this tab, and return to the original problem.",$showMeAnother{MaxReps},$solutionShown  )),CGI::br();
      } elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
 		# print this if showMeAnother has been clicked, but it is not possible to 
         # find a new version of the problem
