@@ -581,15 +581,15 @@ sub userCountMessage {
 	
 	my $message;
 	if ($count == 0) {
-		$message = CGI::em("no students");
+		$message = CGI::em($self->r->maketext("no students"));
 	} elsif ($count == $numUsers) {
-		$message = "all students";
+		$message = $self->r->maketext("all students");
 	} elsif ($count == 1) {
-		$message = "1 student";
+		$message = $self->r->maketext("1 student");
 	} elsif ($count > $numUsers || $count < 0) {
 		$message = CGI::em("an impossible number of users: $count out of $numUsers");
 	} else {
-		$message = "$count students out of $numUsers";
+		$message = $self->r->maketext("[_1] students out of [_2]", $count, $numUsers);
 	}
 	
 	return $message;
