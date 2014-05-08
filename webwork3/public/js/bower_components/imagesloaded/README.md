@@ -24,7 +24,7 @@ bower install imagesloaded
 Or install via [Component](https://github.com/component/component):
 
 ``` js
-bower install desandro/imagesloaded
+component install desandro/imagesloaded
 ```
 
 ## Usage
@@ -191,7 +191,7 @@ Or, you can manage dependencies with [Bower](http://bower.io). Set `baseUrl` to 
 ``` js
 requirejs.config({
   baseUrl: 'bower_components/',
-  paths: { // path your your app
+  paths: { // path to your app
     app: '../'
   }
 });

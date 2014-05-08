@@ -1,6 +1,6 @@
 {
   "name": "imagesloaded",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "description": "JavaScript is all like _You images done yet or what?_",
   "main": "imagesloaded.js",
   "dependencies": {
@@ -15,16 +15,17 @@
     "**/.*",
     "test",
     "component.json",
-    "imagesloaded.jquery.json"
+    "imagesloaded.jquery.json",
+    "package.json"
   ],
   "homepage": "https://github.com/desandro/imagesloaded",
-  "_release": "3.1.4",
+  "_release": "3.1.5",
   "_resolution": {
     "type": "version",
-    "tag": "v3.1.4",
-    "commit": "022f806ce59de9bb16ec07a90f8832a90f0a5d45"
+    "tag": "v3.1.5",
+    "commit": "977a2aed67483b45dacf0bfe2464e09b49ae9c35"
   },
   "_source": "git://github.com/desandro/imagesloaded.git",
-  "_target": "3.1.4",
+  "_target": "3.1.5",
   "_originalSource": "imagesloaded"
 }
