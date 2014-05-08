@@ -583,7 +583,7 @@ print
 	   CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
 		CGI::start_table({-border=>1, -class=>"stats-table"}),
 		CGI::Tr(CGI::td(
-			['Problem #', 
+			[ $r->maketext('Problem #'), 
 			   map {CGI::a({ href=>$self->systemLink($problemPage{$_}) },$_)} @problemIDs
 			]
 		)),
