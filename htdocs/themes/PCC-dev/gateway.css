@@ -1,0 +1,141 @@
+/******************/
+/* gateway styles */
+/******************/
+
+/* update margins to reflect missing left column */
+#content {
+	margin: 1em 
+}
+
+div.gwMessage { 
+	background-color: coral;
+	box-shadow: 3px 3px 3px darkgray;
+	margin: 1em 0;
+	padding: 0.5em;
+	border-radius: 3px;
+}
+
+.Message {
+	display: block;
+}
+
+div#gwTimer {
+	background-color:#ffeeaa;
+	color: black;
+	position: fixed; 
+	right: 1em;
+	top: 3.5em;
+	padding: 0.5em;
+	text-align: center;
+	z-index: 2;
+	box-shadow: 3px 3px 0.5em darkgray;
+} 
+
+div#gwScoreSummary {
+	background-color:#fcfccc;
+	color: black;
+	font-family:Times serif;
+	z-index: 1;
+	font-size: 85%;
+	border: black 3px outset;
+	width: 15em;
+	top: 8em;
+	right: 2em;
+	padding: 3px;
+	position: fixed;
+}
+
+span.resultsWithError, .ResultsWithoutError {
+	padding: 0.2em 1em;
+	box-shadow: 2px 2px 3px darkgray;
+	margin-bottom: 0.5em;
+	margin-right: 1em;
+	border-radius: 3px;
+}
+span.resultsWithError { 
+	background-color: #ffcccc;
+}
+.ResultsWithoutError 
+{ 
+	background-color: #66ff99;  
+}
+div.gwCorrect { background-color: #66ff99; }
+div.gwIncorrect { background-color: #ff9999; }
+div.gwCorrect, div.gwIncorrect {
+	padding: 0.5em;
+	box-shadow: 3px 3px 3px darkgray;
+	border-radius: 3px;
+}
+
+div.gwProblem 
+{
+	background-color: #fafafa;
+	padding: 0.5em;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+}
+
+/* Put space between the "Jump to: Problem ..." nav and the first problem */
+table + .gwProblem {
+	margin-top: 1em;
+}
+
+hr 
+{ 
+	border: none;
+	height: 1em;
+	margin: 0;
+}
+
+div.gwSoln {
+	/*      background-color: #e0e0ff; */
+	background-color: transparent;
+	/*      padding: 2px; */
+	/*      border: dashed black 1px; */
+}
+div.gwSoln b { color: navy; }
+
+p.gwPreview {
+	text-align: right;
+	margin-top: 1em;
+}
+
+table.gwAttemptResults {
+	border-width: 0px;
+}
+table.gwAttemptResults td.label {
+	font-weight: bold;
+	background-color: transparent;
+	color: navy;
+}
+table.gwAttemptResults td.output {
+	padding: 2px;
+	border: solid black 1px;
+	background-color: #eeeeee;
+}
+
+/* Print Test & Preview Problems links now look like a button */
+div.gwPrintMe { 
+	float: right;
+	margin-top: 1em;
+}
+
+/*div.gwPrintMe a, p.gwPreview a {
+	color: white;
+	border-radius: 8px;
+	padding: 0.5em 1em;
+	background-color: #038;
+	box-shadow: 3px 3px 3px darkgray;
+}
+
+div.gwPrintMe a:hover, p.gwPreview a:hover {
+	background-color: dodgerblue;
+	text-decoration: none;
+}
+*/
+
+/* Fix checkbox input's label text not aligned with the checkbox. */
+label input[type='checkbox'] {
+	margin: 0 0.2em 0.1em 0;
+
+}

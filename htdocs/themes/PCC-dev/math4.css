@@ -14,7 +14,7 @@
  * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
  * Artistic License for more details.
  */
- 
+
 /* Bootstrap overrides */
 .row-fluid [class*="span"] {
     min-height:0px;
@@ -360,23 +360,23 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.WarningMessage { background-color: #C11B17; padding: 3px 3px 3px 3px; } /* chili pepper */
+div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-div.ResultsWithError { color: #C11B17; background-color: inherit; } /* chili pepper */
-div.ResultsAlert { color: inherit; background-color: #FBB117; } /* beer */
-label.WarningMessage { background-color: #C11B17; padding: 3px 3px 3px 3px; } /* chili pepper */
+div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-label.ResultsWithError { color: #C11B17; background-color: inherit; } /* chili pepper */
-label.ResultsAlert { color: inherit; background-color: #FBB117; } /* beer */
-span.WarningMessage { background-color: #C11B17; padding: 3px 3px 3px 3px; } /* chili pepper */
+label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+label.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-span.ResultsWithError { color: #C11B17; background-color: inherit; } /* chili pepper */
-span.ResultsAlert { color: inherit; background-color: #FBB117; } /* beer */
+span.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
-span.incorrect { color: #C11B17; background-color: inherit; } /* chili pepper */
+span.incorrect { color: #FF9494; background-color: inherit; } /* red */
 span.unattempted { color: inherit; background-color: #88ECFF;}
 input.correct   { color:inherit; background-color: #8F8; } /* green */
-input.incorrect { color:inherit; background-color: #C11B17; } /* chili pepper */
+input.incorrect { color:inherit; background-color: #FF9494; } /* red */
 
 .results-popover {
     cursor : pointer;
@@ -420,7 +420,6 @@ table.attemptResults th {
 	border-style: inset; 
 	border-width: 1px; 
 	text-align: center; 
-	vertical-align: middle;
 	/*width: 15ex;*/ /* this was erroniously commented out with "#" */
 	padding: 2px 5px 2px 5px;
 	color: inherit;
@@ -430,10 +429,6 @@ table.attemptResults th {
 .attemptResults .popover {
     max-width: 100%;
 }
-
-table.attemptResults td.FeedbackMessage { background-color:#FBB117;} /* beer */
-table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
-table.attemptResults td.ResultsWithError { background-color:#FF9696;} /* error red */
 
 /*styles for the instructor comment box */
 
