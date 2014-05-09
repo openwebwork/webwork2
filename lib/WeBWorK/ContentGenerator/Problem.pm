@@ -1203,9 +1203,13 @@ sub output_form_start{
 sub output_problem_body{
 	my $self = shift;
 	my $pg = $self->{pg};
+	my %will = %{ $self->{will} };
+	my %showMeAnother = %{ $self->{showMeAnother} };
 
 	print "\n";
-	print CGI::div($pg->{body_text});
+	print CGI::div($pg->{body_text}) 
+		#ignore body if SMA was pushed and no new problem will be shown; otherwise original problem will be shown
+		unless ($showMeAnother{active} and (!$will{showMeAnother} or !$showMeAnother{IsPossible}));
 	return "";
 }
 
@@ -1298,11 +1302,16 @@ sub output_checkboxes{
 	my %can = %{ $self->{can} };
 	my %will = %{ $self->{will} };
 	my $ce = $r->ce;
+	my %showMeAnother = %{ $self->{showMeAnother} };
     my $showHintCheckbox      = $ce->{pg}->{options}->{show_hint_checkbox};
     my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
     my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
     my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
     #  warn "showHintCheckbox $showHintCheckbox  showSolutionCheckbox $showSolutionCheckbox";
+    #skip check boxes if SMA was pushed and no new problem will be shown
+    if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible})) 
+    {
+
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
@@ -1373,7 +1382,8 @@ sub output_checkboxes{
 	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
 		print CGI::br();
 	}
-	
+       
+    }
 	return "";
 }
 
@@ -1386,10 +1396,15 @@ sub output_submit_buttons{
 	my $r = $self->r;
 	my $ce = $self->r->ce;
 	my %can = %{ $self->{can} };
+	my %will = %{ $self->{will} };
 	my %showMeAnother = %{ $self->{showMeAnother} };
 	
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
+
+   # skip buttons if SMA button has been pushed but there is no new problem shown
+   if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible}))
+   {
 
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
 	if ($can{checkAnswers}) {
@@ -1419,9 +1434,9 @@ sub output_submit_buttons{
         if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother{TriesNeeded} >-1 ) and !($showMeAnother{active} or $showMeAnother{CheckAnswers})){
             my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
 	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another [_1]",$exhausted));
+          }
         }
-    }
-	
+   }
 	return "";
 }
 
@@ -1439,7 +1454,12 @@ sub output_score_summary{
 	my $pg = $self->{pg};
 	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
 	my $submitAnswers = $self->{submitAnswers};
+	my %will = %{ $self->{will} };
+	my %showMeAnother = %{ $self->{showMeAnother} };
 
+    # skip score summary if SMA has been pushed but there is no new problem to show
+    if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible}))
+    { 
 	# score summary
 	warn "num_correct =", $problem->num_correct,"num_incorrect=",$problem->num_incorrect 
 	        unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
@@ -1483,7 +1503,8 @@ sub output_score_summary{
 	}else {
 		print CGI::p($pg->{state}->{state_summary_msg});
 	}
-	
+
+    } 
 	return "";
 }
 
