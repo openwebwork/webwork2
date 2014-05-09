@@ -433,7 +433,7 @@ table.attemptResults th {
 
 table.attemptResults td.FeedbackMessage { background-color:#FBB117;} /* beer */
 table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
-table.attemptResults td.ResultsWithError { background-color:#FF9696;} /* error red */
+table.attemptResults td.ResultsWithError { background-color:#FF9494;} /* error red */
 
 /*styles for the instructor comment box */
 
