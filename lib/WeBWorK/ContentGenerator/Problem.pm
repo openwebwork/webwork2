@@ -276,15 +276,18 @@ sub attemptResults {
 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
 
 		my $resultString;
+		my $resultCellClass = "";
 		if ($answerScore >= 1) {
-		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
+		    $resultString = $r->maketext("correct");
+		    $resultCellClass = "ResultsWithoutError";
 		    push @correct_ids,   $name if $answerScore == 1;
 		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded"); 
 		    $self->{essayFlag} = 1;
 		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
 		    push @incorrect_ids, $name if $answerScore < 1;
-		    $resultString = CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
+		    $resultString = $r->maketext("incorrect");
+		    $resultCellClass = "ResultsWithError"
 		} else {
 		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
 		    push @incorrect_ids, $name if $answerScore < 1;
@@ -304,10 +307,10 @@ sub attemptResults {
 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                  $self->nbsp($correctAnswerPreview)) : "";
-		$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString))  : "";
-		#I'm pretty sure this message shouldn't have the message class
-		#$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
-		$row .= $showMessages       ? CGI::td($self->nbsp($answerMessage)) : "";
+		$row .= $showAttemptResults ? CGI::td({class=>$resultCellClass},$self->nbsp($resultString))  : "";
+		if ($showMessages)
+                  {$row .= ($answerMessage ne "") ? CGI::td({class=>"FeedbackMessage"},$self->nbsp($answerMessage)) : 
+                                                    CGI::td($self->nbsp($answerMessage));}
 		push @tableRows, $row;
 	}
 	
@@ -1450,7 +1453,7 @@ sub output_summary{
 	    
 	} elsif ($checkAnswers) {
 	    # print this if user previewed answers
-	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
+	    print CGI::div({class=>'ResultsAlert'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
 	    # show attempt answers
 	    # show correct answers if asked
@@ -1458,7 +1461,7 @@ sub output_summary{
 	    # show attempt previews
 	} elsif ($previewAnswers) {
 		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+		print CGI::div({class=>'ResultsAlert'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
 			# show attempt answers
 			# don't show correct answers
 			# don't show attempt results (correctness)
