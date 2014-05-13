@@ -1987,8 +1987,8 @@ sub getGlobalProblembyUID {
 sub getGlobalProblemsbyUID {
 	my ($self, @problemUIDs) = shift->checkArgsRefList(\@_, qw/problem_uid/);
 
-	return map {@($self->{problem}->get_records_where([problem_uid_eq 
-						   => $_]))} @problemUIDs;
+	return map {$self->{problem}->get_records_where([problem_uid_eq 
+						   => $_])} @problemUIDs;
 }
 
 sub getAllGlobalProblems {
