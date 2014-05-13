@@ -28,7 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(readDirectory list2hash sortByName listFilesRecursive max cryptPassword);
+use WeBWorK::Utils qw(readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -837,6 +837,25 @@ sub proctoredFieldHTML {
 			       size=>10,
 		       }),
 		  '' ) );
+}
+
+# used to print nested lists for jitar sets
+sub print_nested_list {
+    my $nestedHash = shift;
+    
+    if (defined $nestedHash{'row'}) {
+	print CGI::li({class=>"psd_list_row"},$nestedHash{'row'});
+	delete $nestedHash{'row'};
+    }
+
+    my @keys = keys $nestedHash;
+    return unless @keys;
+    
+    print CGI::start_ul({class=>"psd_list"});
+    foreach my $id (sort @keys) {
+	print_nested_list($nestedHash{$id});
+    }
+    print CGI::end_ul;
 }
 
 # creates a popup menu of all possible problem numbers (for possible rearranging)
@@ -2243,7 +2262,8 @@ sub body {
 		my $problemNumber = $problemID;
 		
 		if ($globalSet->assignment_type eq 'jitar') {
-		    $problemNumber = $(
+		    $problemNumber = jitar_id_to_seq($problemNumber)[-1];
+		}
 		
 		push @problemRow, CGI::div({class="problem_detail_row"}, CGI::div({class=>"pdr_block_1"},
 					      CGI::start_table({border => 0, cellpadding => 1}) .
@@ -2277,10 +2297,21 @@ sub body {
 	    
 	    # If a jitar set then print nested lists, otherwise print an unordered list. 
 	    if ($setRecord->assignment_type eq 'jitar') {
-		
+		my $nestedIDHash = {};
+		for (my $i=0; $i<=$#problemIDList; $i++) {
+		    my @id_seq = jitar_id_to_seq($problemIDList[$i]);
+		    
+		    #This takes the id_seq and builds a nested hash
+		    my $ref = $$nestedIDHash;
+		    $ref = \$$ref->{$_} foreach @id_seq;
+		    $$ref{'row'} = @problemRow[$i];
+		}
+
+		# now use the nested hash to build nested lists
+		print_nested_list($nestedIDHash, \@problemRow);		    
 
 	    } else {
-		print CGI::ul({id=>"psd_list"}, @problemRow);
+		print CGI::ul({id=>"psd_list"}, CGI::li({class=>"pst_list_row"}, @problemRow));
 	    }
 
 # print final lines

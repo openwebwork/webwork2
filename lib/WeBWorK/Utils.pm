@@ -38,6 +38,7 @@ use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
+use Math::Prime::Util qw (next_prime factor_exp);
 
 use constant MKDIR_ATTEMPTS => 10;
 
@@ -91,6 +92,8 @@ our @EXPORT_OK = qw(
 	writeTimingLogEntry
         is_restricted
         grade_set
+        jitar_id_to_seq
+        seq_to_jitar_id
 );
 
 =head1 FUNCTIONS
@@ -1254,5 +1257,26 @@ sub grade_set {
 		return $percentage;
 }	
 
+#takes a tree sequence and uses the integers as prime powers to get an id
+sub jitar_id_to_seq {
+    my @seq = shift;
+    my $prime = 0;
+    my $id = 1;
+
+    foreach my $i (@seq) {
+	$prime = next_prime($prime);
+	$id *=$prime^$i;
+    }
+
+    return $id;
+}
+
+# Takes a jitar_id and returns the exponets of the powers in the prime 
+# factorization to get the tree sequence
+sub seq_to_jitar_id {
+    my $id = shift;
+
+    return map {$_[1]} factor_exp($id);
+}
 
 1;

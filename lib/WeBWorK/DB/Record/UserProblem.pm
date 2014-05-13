@@ -32,8 +32,6 @@ BEGIN {
 		user_id       => { type=>"TINYBLOB NOT NULL", key=>1 },
 		set_id        => { type=>"TINYBLOB NOT NULL", key=>1 },
 		problem_id    => { type=>"INT NOT NULL", key=>1 },
-   	        problem_uid   => { type=>"INT"},
-	        parent_uid   => { type=>"INT"}, 
 		source_file   => { type=>"TEXT" },
 		# FIXME i think value should be able to hold decimal values...
 		value         => { type=>"INT" },
