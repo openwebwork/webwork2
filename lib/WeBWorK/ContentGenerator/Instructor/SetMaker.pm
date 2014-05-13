@@ -206,7 +206,7 @@ sub next_prob_group {
 	return -1 if($ind >= $len-1);
 	my $mlt= $pgfiles[$ind]->{morelt} || 0;
 	return $ind+1 if($mlt == 0);
-	while($ind<$len and ($pgfiles[$ind]->{morelt} || 0) == $mlt) {
+	while($ind<$len and defined($pgfiles[$ind]->{morelt}) and $pgfiles[$ind]->{morelt} == $mlt) {
 		$ind++;
 	}
 	return -1 if($ind==$len);
@@ -1534,7 +1534,7 @@ sub head {
   print "\n";
 	print qq{
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
   print "\n";
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
