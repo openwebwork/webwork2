@@ -48,8 +48,8 @@
 <script type="text/template" id="add_student_file_dialog_content">
 
 <div id="impFromFileInstructions" class="container">
-  <div class="error-pane alert alert-danger"><button class="btn btn-danger btn-xs close-button"><i class="fa fa-times"></i>
-    </button>
+  <div class="error-pane alert alert-danger">
+    <button class="btn btn-danger btn-xs close-button"><i class="fa fa-times"></i></button>
     <div class="error-pane-text"></div>
   </div>
   <div class="help-pane alert alert-info">
@@ -167,7 +167,7 @@ var messages = {
     user_added_details: function(opt){ return "A user with login name " + opt.username + " was added to the course.";},
     user_removed: function(opt){ return "User " + opt.username + " was removed.";},
     user_removed_details: function(opt){ return "The user with login name " + opt.username + " was removed from the course.";},
-
+    csv_file_needed: function() { return "You must upload a csv or lst (classlist) file."}
 };
 print(messages[type](typeof(opts)=="undefined"?{}:opts));
 %>

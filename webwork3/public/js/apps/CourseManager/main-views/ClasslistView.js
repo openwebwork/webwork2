@@ -20,8 +20,8 @@ var ClasslistView = MainView.extend({
 
     	this.users = options.users;
     	this.problemSets = options.problemSets;
-		this.addStudentManView = new AddStudentManView({users: this.users});
-	    this.addStudentFileView = new AddStudentFileView({users: this.users});
+		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
+	    this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.tableSetup();
 	    
             
