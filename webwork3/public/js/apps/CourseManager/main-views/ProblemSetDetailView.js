@@ -93,6 +93,20 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 this.changeProblemSet($(evt.target).text());
             }
         },
+        sidepaneEvents: {
+            "change-display-mode": function(evt) { 
+                if(_.isFunction(this.views[this.currentViewName].changeDisplayMode)){
+                    this.views[this.currentViewName].changeDisplayMode(evt);
+                }},
+            "show-hide-tags": function(evt){
+                if(_.isFunction(this.views[this.currentViewName].toggleTags)){
+                    this.views[this.currentViewName].toggleTags(evt);
+            }},
+            "show-hide-path": function(evt){
+                if(_.isFunction(this.views[this.currentViewName].toggleShowPath)){
+                    this.views[this.currentViewName].toggleShowPath(evt);
+            }},
+        },
         changeView: function(evt){
             this.currentViewName = _.isString(evt)? evt: $(evt.target).data("view")
             this.currentView = this.views[this.currentViewName];
