@@ -92,6 +92,7 @@ function init_webservice(command) {
   mydefaultRequestObject.xml_command = command;
   return mydefaultRequestObject;
 }
+
 function addme(path, who) {
   nomsg();
   var target = $('[name="local_sets"] option:selected').val();

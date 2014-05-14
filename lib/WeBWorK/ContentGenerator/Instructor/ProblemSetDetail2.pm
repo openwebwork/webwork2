@@ -1,3 +1,4 @@
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -436,20 +437,24 @@ use constant FIELD_PROPERTIES_GWQUIZ => {
 # if only the setID is included, it creates a table of set information
 # if the problemID is included, it creates a table of problem information
 sub FieldTable {
-	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $isGWset) = @_;
+	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $setType) = @_;
 
 	my $r = $self->r;	
 	my $ce = $r->ce;
 	my @editForUser = $r->param('editForUser');
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
-
+	my $isGWset = 0;
 	my @fieldOrder;
 
-	# needed for gateway output
-	my $gwFields = '';
+	# needed for gateway/jitar output
+	my $extraFields = '';
 	# $isGWset will come in undef if we don't need to worry about it
 	$isGWset = 0 if ( ! defined( $isGWset ) );
+	if ($setType =~ /gateway/) {
+	    $isGWset = 1;
+	}
+
 	# are we editing a set version?
 	my $setVersion = (defined($userRecord) && $userRecord->can("version_id")) ? 1 : 0;
 
@@ -464,12 +469,18 @@ sub FieldTable {
 
 
 	if (defined $problemID) {
-		@fieldOrder = ($isGWset) ? @{ GATEWAY_PROBLEM_FIELD_ORDER() } :
-			@{ PROBLEM_FIELD_ORDER() };
+	 
+	    if ($setType eq 'jitar') {
+		@fieldOrder = @{ JITAR_PROBLEM_FIELD_ORDER() };
+	    } elsif ($setType =~ /gateway/) {
+		@fieldOrder = @{ GATEWAY_PROBLEM_FIELD_ORDER() };
+	    } else {
+		@fieldOrder = @{ PROBLEM_FIELD_ORDER() };
+	    }
 	} else {
 		@fieldOrder = @{ SET_FIELD_ORDER() };
 
-		($gwFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
+		($extraFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
 
        	my $output = CGI::start_table({border => 0, cellpadding => 1});
@@ -532,7 +543,7 @@ sub FieldTable {
 		}
 					      
 		if ( $field eq 'assignment_type' ) {
-			$output .= "$procFields\n$gwFields\n";
+			$output .= "$procFields\n$extraFields\n";
 		}
 	} 
 
@@ -710,14 +721,14 @@ sub extraSetFields {
 	my $db = $self->r->{db};
 	my $r = $self->r;
 
-	my ($gwFields, $ipFields, $ipDefaults, $numLocations, $ipOverride,
+	my ($extraFields, $ipFields, $ipDefaults, $numLocations, $ipOverride,
 	    $procFields) = ( '', '', '', 0, '', '' );
 
 	# if we're dealing with a gateway, set up a table of gateway fields
 	my $nF = 0;  # this is the number of columns in the set field table
 	if ( $globalRecord->assignment_type() =~ /gateway/ ) {
 		my $gwhdr = "\n<!-- begin gwoutput table -->\n";
-
+		my $gwFields = '';
 		foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
 
 			# don't show template gateway fields when editing
@@ -741,7 +752,29 @@ sub extraSetFields {
 		$gwhdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
 					     CGI::em($r->maketext("Gateway parameters"))))
 		    if ( $nF );
-		$gwFields = "$gwhdr$gwFields\n" .
+		$extraFields = "$gwhdr$gwFields\n" .
+		    "<!-- end gwoutput table -->\n";
+		
+	} elsif ( $globalRecord->assignment_type() eq 'jitar') {
+		my $jthdr = "\n<!-- begin jtoutput table -->\n";
+		my $jtFields = '';
+		foreach my $jtfield ( @{ JITAR_SET_FIELD_ORDER() } ) {
+
+			my @fieldData = 
+			    ($self->FieldHTML($userID, $setID, undef, 
+					      $globalRecord, $userRecord, 
+					      $jtfield));
+			if ( @fieldData && defined($fieldData[1]) and 
+			     $fieldData[1] ne '' ) {
+				$nF = @fieldData if ( @fieldData > $nF );
+				$jtFields .= CGI::Tr({}, 
+					CGI::td({}, [@fieldData]));
+		    	}
+		}
+		$jthdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
+					     CGI::em($r->maketext("Just-In-Tiem parameters"))))
+		    if ( $nF );
+		$extraFields = "$jthdr$jtFields\n" .
 			"<!-- end gwoutput table -->\n";
 	}
 
@@ -809,7 +842,7 @@ sub extraSetFields {
 			);
 		}
 	}
-	return($gwFields, $ipFields, $numLocations, $procFields);
+	return($extraFields, $ipFields, $numLocations, $procFields);
 }
 
 sub proctoredFieldHTML {
@@ -841,14 +874,15 @@ sub proctoredFieldHTML {
 
 # used to print nested lists for jitar sets
 sub print_nested_list {
-    my $nestedHash = shift;
+    my $self = shift;
+    my %nestedHash = shift;
     
     if (defined $nestedHash{'row'}) {
 	print CGI::li({class=>"psd_list_row"},$nestedHash{'row'});
 	delete $nestedHash{'row'};
     }
 
-    my @keys = keys $nestedHash;
+    my @keys = keys %nestedHash;
     return unless @keys;
     
     print CGI::start_ul({class=>"psd_list"});
@@ -1819,7 +1853,8 @@ sub body {
 
 	# a useful gateway variable
 	my $isGatewaySet = ( $setRecord->assignment_type =~ /gateway/ ) ? 1 : 0;
-	
+	my $isJitarSet = ( $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
+
 	# DBFIXME no need to get ID lists -- counts would be fine
 	my $userCount        = $db->listUsers();
 	my $setCount         = $db->listGlobalSets(); # if $forOneUser;
@@ -2261,13 +2296,15 @@ sub body {
 		
 		my $problemNumber = $problemID;
 		
-		if ($globalSet->assignment_type eq 'jitar') {
-		    $problemNumber = jitar_id_to_seq($problemNumber)[-1];
+		if ($isJitarSet) {
+		    my @seq = jitar_id_to_seq($problemNumber);
+		    $problemNumber = $seq[-1];
 		}
 		
-		push @problemRow, CGI::div({class="problem_detail_row"}, CGI::div({class=>"pdr_block_1"},
+		push @problemRow, CGI::div({class=>"problem_detail_row"}, 
+					   CGI::div({class=>"pdr_block_1"},
 					      CGI::start_table({border => 0, cellpadding => 1}) .
-					      CGI::Tr({}, CGI::td({}, $problemNumber . CGI:br() .
+					      CGI::Tr({}, CGI::td({}, $problemNumber . CGI::br())) .
 					      CGI::Tr({}, CGI::td({}, 
 								  $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, $r->maketext("Edit it")) : "" )) .
 					      CGI::Tr({}, CGI::td({}, 
@@ -2276,8 +2313,8 @@ sub body {
 					      ($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
 					      ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
 					      CGI::end_table()).
-					      CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $isGatewaySet).
-					      CGI::div({class=>"pdr_block_3"}, join ("\n", $self->FieldHTML(
+					   CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $GlobalProblems{$problemID}->assignment_type())).
+					   CGI::div({class=>"pdr_block_3"}, join ("\n", $self->FieldHTML(
 							$userToShow,
 							$setID,
 							$problemID,
@@ -2291,12 +2328,12 @@ sub body {
 					       : CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
 					      ) .
 					      ($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : ''))
-					  ));
+					  );
 	    }
 	    
 	    
 	    # If a jitar set then print nested lists, otherwise print an unordered list. 
-	    if ($setRecord->assignment_type eq 'jitar') {
+	    if ($isJitarSet) {
 		my $nestedIDHash = {};
 		for (my $i=0; $i<=$#problemIDList; $i++) {
 		    my @id_seq = jitar_id_to_seq($problemIDList[$i]);
@@ -2304,7 +2341,7 @@ sub body {
 		    #This takes the id_seq and builds a nested hash
 		    my $ref = $$nestedIDHash;
 		    $ref = \$$ref->{$_} foreach @id_seq;
-		    $$ref{'row'} = @problemRow[$i];
+		    $$ref{'row'} = $problemRow[$i];
 		}
 
 		# now use the nested hash to build nested lists
