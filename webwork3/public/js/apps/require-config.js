@@ -8,7 +8,7 @@ var require = {
         "backbone-validation":  "/webwork3/js/bower_components/backbone-validation/dist/backbone-validation",
         "jquery-ui":            "/webwork3/js/bower_components/jquery-ui/ui/jquery-ui",
         "underscore":           "/webwork3/js/bower_components/underscore/underscore",
-        "jquery":               "/webwork3/js/bower_components/jquery/jquery",
+        "jquery":               "/webwork3/js/bower_components/jquery/dist/jquery",
         "bootstrap":            "/webwork3/js/bower_components/bootstrap/dist/js/bootstrap",
         //"bootstrap":            "/webwork3/js/bower_components/bootstrap-2/docs/assets/js/bootstrap",
         "moment":               "/webwork3/js/bower_components/moment/moment",
