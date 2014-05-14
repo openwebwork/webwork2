@@ -13,8 +13,8 @@ var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
-	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidebar","stopActing",
-            "changeView","changeSidebar","loadData","checkData","saveState");  // include all functions that need the this object
+	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidePane","stopActing",
+            "changeView","changeSidePane","loadData","checkData","saveState","logout");  // include all functions that need the this object
 	    var self = this;
 
         this.render();
@@ -109,14 +109,6 @@ var CourseManager = WebPage.extend({
 
         // Build the options menu.  Should we make a View for this?  
 
-        var menuItemTemplate = _.template($("#main-menu-item-template").html());
-        var ul = this.$(".sidebar-menu .dropdown-menu");
-        _(this.mainViewList.viewInfo.sidepanes).each(function(item){
-            ul.append(menuItemTemplate({name: item.name}));
-        })
-
-
-
         this.setMessages();  
 
         // this will automatically save (sync) any change made to a problem set.
@@ -136,7 +128,8 @@ var CourseManager = WebPage.extend({
         this.navigationBar.on({
             "change-view": this.changeView,
             "logout": this.logout,
-            "stop-acting": this.stopActing
+            "stop-acting": this.stopActing,
+            "show-help": function() { self.changeSidePane("Help")},
         });
 
         this.users.on({"act_as_user": function(model){
@@ -145,13 +138,22 @@ var CourseManager = WebPage.extend({
                 url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/session", 
                 data: {effectiveUser: self.session.effectiveUser},
                 success: function () {
-                    self.navigationBar.setActAsName(self.session.effectiveUser);                    
+                    self.navigationBar.setActAsName(self.session.effectiveUser);
+                    // update the WW2 link
+                    var obj = {
+                        effectiveUser: self.session.effectiveUser,
+                        user: self.session.user,
+                        key: self.session.key
+                    };
+                    $(".ww2-link").children("a").attr("href","/webwork2/" + config.courseSettings.course_id+"?"+$.param(obj));
                 }
             });
         }});
 
         $(window).on("beforeunload", function () {
-            return self.messageTemplate({type: "leave_page"});
+            if(self.session.logged_in!==0){ // if the user didn't just log out. 
+                return self.messageTemplate({type: "leave_page"});
+            }
          }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
             self.currentView.render();
             if(self.currentSidePane.sidePane){
@@ -161,11 +163,11 @@ var CourseManager = WebPage.extend({
 
         // Add a link to WW2 via the main menu.
 
-        this.navigationBar.$(".manager-menu").append("<li><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
+        this.navigationBar.$(".manager-menu").append("<li class='ww2-link'><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
         this.delegateEvents();
     },
     events: {
-        "click .sidebar-menu a.link": "changeSidebar"
+        "click .sidepane-menu a.link": "changeSidePane"
     },
 
     // can a lot of this be handled by the individual views?  
@@ -179,8 +181,7 @@ var CourseManager = WebPage.extend({
             "save-state": this.saveState,
             "show-problem-set": this.showProblemSetDetails,
             "add-message": this.messagePane.addMessage,
-            "show-help": function() { self.changeSidebar({link: "helpSidepane"})},
-            "open-close-sidebar": this.openCloseSidebar
+            "open-close-sidepane": this.openCloseSidePane
         });
     },
     render: function(){
@@ -191,39 +192,63 @@ var CourseManager = WebPage.extend({
         this.changeView("Problem Set Details",{});        
         this.mainViewList.getViewByName("Problem Set Details").changeProblemSet(setName).render();
     },
-    openCloseSidebar: function (str) {
-        if(this.currentSidePane.isOpen || str === "open"){
-            this.currentSidePane.isOpen = false;
-            $("#sidebar-container").removeClass("hidden");
-            $("#main-view").removeClass("col-md-12").addClass("col-md-9");
-            self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
-        } else if (! this.currentSidePane.isOpen || str === "close"){
-            this.currentSidePane.isOpen = true;
-            $("#sidebar-container").addClass("hidden");
-            $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
-            self.$(".open-close-view i").removeClass("fa-chevron-right").addClass("fa-chevron-left");
+    openSidePane: function (){
+        this.currentSidePane.isOpen = true;
+        $("#sidepane-container").removeClass("hidden");
+        $("#main-view").removeClass("col-md-12").addClass("col-md-9");
+        self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
+    },
+    closeSidePane: function (){
+        this.currentSidePane.isOpen = false;
+        $("#sidepane-container").addClass("hidden");
+        $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
+        self.$(".open-close-view i").removeClass("fa-chevron-right").addClass("fa-chevron-left");
+    },
+    openCloseSidePane: function (str) {
+        if(str==="close"){
+            this.closeSidePane();
+        } else if (str==="open"){
+            this.openSidePane();
+        } else if (this.currentSidePane.isOpen) {
+            this.closeSidePane();
+        } else if (! this.currentSidePane.isOpen){
+            this.openSidePane();
         }
     },
-    changeSidebar: function(_name){
+    changeSidePane: function(_name){
         var name = _.isString(_name) ? _name : $(_name.target).data("name");
         if(this.currentSidePane && this.currentSidePane.sidePane){
             this.currentSidePane.sidePane.remove();
         }
+        var mainViewInfo = _(this.mainViewList.views).findWhere({name: this.currentView.viewName});
         if ((name==="")){
-            this.openCloseSidebar("close");
+            this.openCloseSidePane("close");
             return;
         }
         this.currentSidePane.sidePane = this.mainViewList.getSidepaneByName(name);
+
         if(this.currentSidePane.sidePane){
-            this.$(".sidebar-menu .sidebar-name").text(name);
-            if (! $("#sidebar-container .sidebar-content").length){
-                $("#sidebar-container").append("<div class='sidebar-content'></div>");
+            this.$(".sidepane-menu .sidepane-name").text(name);
+            if (! $("#sidepane-container .sidepane-content").length){
+                $("#sidepane-container").append("<div class='sidepane-content'></div>");
             }
             this.currentSidePane.sidePane.setMainView(this.currentView)
-                .setElement(this.$(".sidebar-content")).render();
-        }    
+                .setElement(this.$(".sidepane-content")).render();
+
+            // set the side pane options for the main view
+
+            var menuItemTemplate = _.template($("#main-menu-item-template").html());
+            var ul = this.$(".sidepane-menu .dropdown-menu").empty();
+            var sidePanes = ["Help"].concat(mainViewInfo.other_sidepanes);
+            _(sidePanes).each(function(_name){
+                ul.append(menuItemTemplate({name: _name}));
+            })
+
+
+
+        }
         this.currentView.setSidePane(this.currentSidePane.sidePane);
-        this.openCloseSidebar("open");
+        this.openCloseSidePane("open");
     },
     changeView: function (_name,state){
         if(this.currentView){
@@ -233,8 +258,7 @@ var CourseManager = WebPage.extend({
         this.navigationBar.setPaneName(_name);
         (this.currentView = this.mainViewList.getViewByName(_name)).setElement(this.$(".main"))
             .setState(state).render();
-
-        this.changeSidebar(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
+        this.changeSidePane(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
         this.saveState();
     },
     saveState: function() {
@@ -246,16 +270,17 @@ var CourseManager = WebPage.extend({
         return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
     },
     logout: function(){
+        var self = this;
         var conf = confirm("Do you want to log out?");
         if(conf){
             $.ajax({method: "POST", 
                 url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/logout", 
-                success: function () {
+                success: function (data) {
+                    self.session.logged_in = data.logged_in;
                     location.href="/webwork2";
                 }
             });
         }
-        console.log("time to log out");
     },
     stopActing: function (){
         var self = this;

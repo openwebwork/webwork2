@@ -68,8 +68,8 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
                   <li class="stop-acting-li disabled"><a class="stop-acting-link" href="#">Stop Acting as User</a></li>
                 </ul>
           </li>
-          <li><a href="#" href="https://github.com/openwebwork/webwork2/issues/new" target="_blank">Bugs!</a></li>
-          <li><a href="#" href="#" class="main-help-button">Help</a></li>
+          <li><a href="https://github.com/openwebwork/webwork2/issues/new" target="_blank">Bugs!</a></li>
+          <li><a href="#" class="main-help-button">Help</a></li>
       </ul>
       </div><!-- /.navbar-collapse -->
 
