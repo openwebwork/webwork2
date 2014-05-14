@@ -139,6 +139,30 @@ $(function(){
 	label.addClass('checkbox');
     });
     
+    //Problem set detail 2 
+    $('#problemset_detail_list').addClass('container-fluid');
+    $('#psd_list').nestedSortable({
+	handle: 'div.pdr_handle',
+	placeholder: 'pdr_placeholder',
+	tolerance: 'intersect',
+	toleranceElement: '> div',
+	items: 'li',
+	opacity: '.1',
+	forcePlaceholderSize: true,
+ 	scrollSpeed: 40,
+	scrollSensitivity: 30,
+	tabSize: 30,
+ 
+    });
+    $('.psd_list_row').wrapInner('<div class="span11 well"/>')
+        .append('<div class="span1"/>')
+	.wrapInner('<div class="pdr_container row-fluid" />');
+
+    $('.pdr_block_1').addClass('span2');
+    $('.pdr_block_2').addClass('span3');
+    $('.pdr_block_3').addClass('span7');
+
+
     //PG editor styling
     $('#editor').addClass('form-inline span9');
     $('#editor a').addClass('btn btn-small btn-info');

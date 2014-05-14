@@ -766,6 +766,26 @@ div.problem_sets_options {
     color: #000000;
 }
 
+/* Problem set detail css */
+#psd_list li {
+    list-style-type: none;
+}
+
+.pdr_placeholder {
+    height: 100px;
+    width: 90%;
+    border-style: dashed;
+    border-width: 1px;	
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.pdr_handle {
+    cursor: move;
+}
+
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 /*BUG FIXES*/
 

@@ -451,7 +451,7 @@ sub FieldTable {
 	my $extraFields = '';
 	# $isGWset will come in undef if we don't need to worry about it
 	$isGWset = 0 if ( ! defined( $isGWset ) );
-	if ($setType =~ /gateway/) {
+	if (defined $setType && $setType =~ /gateway/) {
 	    $isGWset = 1;
 	}
 
@@ -885,11 +885,11 @@ sub print_nested_list {
     my @keys = keys %nestedHash;
     return unless @keys;
     
-    print CGI::start_ul({class=>"psd_list"});
+    print CGI::start_ol;
     foreach my $id (sort @keys) {
 	print_nested_list($nestedHash{$id});
     }
-    print CGI::end_ul;
+    print CGI::end_ol;
 }
 
 # creates a popup menu of all possible problem numbers (for possible rearranging)
@@ -2186,8 +2186,7 @@ sub body {
 	
 	if (scalar @problemIDList) {
 
-	    print CGI::h4($r->maketext("Problems"));
-	    print CGI::br();
+	    print CGI::h2($r->maketext("Problems"));
 	    print CGI::p($r->maketext("Display Mode:") . 
 			 CGI::popup_menu(-name => "problem.displaymode", 
 					 -values => \@active_modes, -default => $default_problem_mode));
@@ -2304,7 +2303,7 @@ sub body {
 		push @problemRow, CGI::div({class=>"problem_detail_row"}, 
 					   CGI::div({class=>"pdr_block_1"},
 					      CGI::start_table({border => 0, cellpadding => 1}) .
-					      CGI::Tr({}, CGI::td({}, $problemNumber . CGI::br())) .
+					      CGI::Tr({}, CGI::td({}, CGI::div({class=>"pdr_handle"}, $problemNumber))) .	      
 					      CGI::Tr({}, CGI::td({}, 
 								  $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, $r->maketext("Edit it")) : "" )) .
 					      CGI::Tr({}, CGI::td({}, 
@@ -2313,7 +2312,7 @@ sub body {
 					      ($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
 					      ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
 					      CGI::end_table()).
-					   CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $GlobalProblems{$problemID}->assignment_type())).
+					   CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type())).
 					   CGI::div({class=>"pdr_block_3"}, join ("\n", $self->FieldHTML(
 							$userToShow,
 							$setID,
@@ -2344,11 +2343,15 @@ sub body {
 		    $$ref{'row'} = $problemRow[$i];
 		}
 
-		# now use the nested hash to build nested lists
-		print_nested_list($nestedIDHash, \@problemRow);		    
+		# now use recursion to print the nested lists
+		print CGI::start_ol({id=>"psd_list"});
+		foreach my $id (sort keys $nestedIDHash) {
+		    print_nested_list($nestedIDHash->{$id});
+		}
+		print CGI::end_ol;
 
 	    } else {
-		print CGI::ul({id=>"psd_list"}, CGI::li({class=>"pst_list_row"}, @problemRow));
+		print CGI::ol({id=>"psd_list"}, CGI::li({class=>"psd_list_row mjs-nestedSortable-no-nesting"}, \@problemRow));
 	    }
 
 # print final lines
@@ -2413,10 +2416,11 @@ sub output_JS {
 	.auto-changed{background-color: #ffffcc} 
 	.changed {background-color: #ffffcc}
     </style>!,"\n";
-    	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+    	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.nestedSortable.js"}), CGI::end_script();
+    	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
 
     	
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
