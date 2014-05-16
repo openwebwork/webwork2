@@ -19,15 +19,17 @@ $(function() {
  
     });
 
-    $('.psd_list_row').wrapInner('<div class="span11 well"/>')
-        .append('<div class="span1"/>')
-	.wrapInner('<div class="pdr_container row-fluid" />');
+    $('.problem_detail_row').addClass('well span11')
+	.wrap('<div class="row-fluid" />')
+	.after('<div class="span1" />');
 
     $('.pdr_block_1').addClass('span2');
     $('.pdr_block_2').addClass('span3');
     $('.pdr_block_3').addClass('span7');
 
     $('.pdr_collapse').prepend('<i class="icon-minus"\>');
+    $('.mjs-nestedSortable-branch').find('i:first').removeClass('icon-minus')
+	.addClass('icon-plus');
 
     $('.pdr_collapse').on('click', function() {
 	$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
@@ -40,8 +42,13 @@ $(function() {
 
 	    $('#prob_num_'+id).val(i+1);
 	    $('#pdr_handle_'+id).html(i+1);
-	    $('#prob_parent_id_'+id).val(array[i].parent_id);
 
+	    for (var j=0; j < array.length; j++) {
+		if (array[j].item_id == id) {
+		    $('#prob_parent_id_'+id).val(array[j].parent_id);
+		}
+	    }
+		
 	    if (typeof heirarchy[i].children != 'undefined') {
 		recurse_on_heirarchy(heirarchy[i].children,array);
 	    }
@@ -49,8 +56,8 @@ $(function() {
     };
 
     var set_prob_num_fields = function () {
-	var array = $('#psd_list').nestedSortable("toArray",{key:'prob_num'});
-	var heirarchy = $('#psd_list').nestedSortable("toHierarchy",{key:'prob_num'});
+	var array = $('#psd_list').nestedSortable("toArray");
+	var heirarchy = $('#psd_list').nestedSortable("toHierarchy");
 	
 	recurse_on_heirarchy(heirarchy,array);
     };

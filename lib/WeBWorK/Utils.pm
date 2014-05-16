@@ -1259,14 +1259,15 @@ sub grade_set {
 
 #takes a tree sequence and uses the integers as prime powers to get an id
 sub seq_to_jitar_id {
-    my @seq = shift;
+    my @seq = @_;
     my $prime = 0;
     my $id = 1;
 
     foreach my $i (@seq) {
 	$prime = next_prime($prime);
-	$id *=$prime**$i;
+	$id = $id*$prime**$i;
     }
+
 
     return $id;
 }

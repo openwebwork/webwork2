@@ -1,4 +1,5 @@
 
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -313,10 +314,10 @@ use constant FIELD_PROPERTIES => {
 	email_instructor  => {
 		name      => "Email Instructor On Failed Attempt",
 		type      => "choose",
-		choices   => [ qw(N Y BeforeAnswerDate) ],
+		choices   => [ qw(N Y BeforeDueDate) ],
 		override  => "any",
                 default   => "N",
-		labels    => { 'Y' => "Yes", 'N' => "No", 'BeforeAnswerDate' => "Before Answer Date"},
+		labels    => { 'Y' => "Yes", 'N' => "No", 'BeforeDueDate' => "Before Due Date"},
 	},
 
 	# in addition to the set fields above, there are a number of things
@@ -403,7 +404,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	att_to_open_children  => {
-		name      => "Attempts For Children",
+		name      => "Attempts to Open",
 		type      => "edit",
 		size      => 6,
 		override  => "any",
@@ -414,9 +415,9 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	counts_parent_grade  => {
-		name      => "Counts for Parent Grade",
+		name      => "Counts for Parent",
 		type      => "choose",
-		choices   => [ qw(N Y BeforeAnswerDate) ],
+		choices   => [ qw(N Y) ],
 		override  => "any",
                 default   => "N",
 		labels    => { 'Y' => "Yes", 'N' => "No", },
@@ -878,20 +879,23 @@ sub print_nested_list {
     my $id = shift;
     
     if (defined $nestedHash->{'row'}) {
-	print CGI::li({class=>"psd_list_row",id=>"psd_list_".$nestedHash->{'id'}},
-		      $nestedHash->{'row'});
+	print CGI::start_li({class=>"psd_list_row",id=>"psd_list_".$nestedHash->{'id'}});
+	print  $nestedHash->{'row'};
 	delete $nestedHash->{'row'};
 	delete $nestedHash->{'id'}
     }
-
-    my @keys = keys %$nestedHash;
-    return unless @keys;
     
-    print CGI::start_ol();
-    foreach my $id (sort @keys) {
-	print_nested_list($nestedHash->{$id});
+    my @keys = keys %$nestedHash;
+    
+    if (@keys) {
+	print CGI::start_ol();
+	foreach my $id (sort @keys) {
+	    print_nested_list($nestedHash->{$id});
+	}
+	print CGI::end_ol();
     }
-    print CGI::end_ol();
+
+    print CGI::end_li();
 }
 
 # creates a popup menu of all possible problem numbers (for possible rearranging)
@@ -1621,10 +1625,6 @@ sub initialize {
 			}
 		    }
 
-		    foreach my $k (keys %newProblemNumbers) {
-			warn $k.' and '.$newProblemNumbers{$k};
-		    }
-
 		    handle_problem_numbers($self,\%newProblemNumbers, $db, $setID);
 		    
 		}
@@ -1972,9 +1972,8 @@ sub body {
 		    $id = $r->param('prob_parent_id_'.$id);
 		    unshift @idSeq, $r->param('prob_num_'.$id);
 		}
-
 		$newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
-	
+
 	    } else {
 		$newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
 	    }
