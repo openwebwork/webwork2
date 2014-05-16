@@ -364,7 +364,7 @@ div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
-div.showMeAnotherBox {  background-color: #EDE275;} /* harvest gold */
+div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px} /* bright gold border and harvest gold background*/
 label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
