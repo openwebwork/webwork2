@@ -597,7 +597,7 @@ sub pre_header_initialize {
 		# then this is really an invalid problem (probably from a bad URL)
 		$self->{invalidProblem} = not (defined $sourceFilePath or $problem->source_file);
 		
-        ## if the caller is asking to override the problem seed, do so
+        # if the caller is asking to override the problem seed, do so
 		my $problemSeed = $r->param("problemSeed");
 		if (defined $problemSeed) {
 			$problem->problem_seed($problemSeed);
@@ -656,6 +656,7 @@ sub pre_header_initialize {
     #       options:       the options available when showMeAnother has been pushed (check answers, see solution (when available), see correct answer)
     #                      these are set via check boxes from the configuration screen
     #       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
+    #       Preview:       has the preview button been clicked while SMA is active
     my %showMeAnother = (
 	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}),
             CheckAnswers => ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
@@ -668,6 +669,7 @@ sub pre_header_initialize {
                     showCorrect   => ('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
                   },
             Count => $problem->{showMeAnotherCount},
+            Preview => ($previewAnswers and $r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}), 
           );
 
     # if $showMeAnother{Count} is somehow not an integer, make it one
@@ -831,7 +833,7 @@ sub pre_header_initialize {
     }
 
     # if showMeAnother is active, then disable all other options
-    if ( ( $showMeAnother{active} or $showMeAnother{CheckAnswers} ) and $can{showMeAnother} ) {
+    if ( ( $showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}) and $can{showMeAnother} ) {
 
 	        $can{showOldAnswers} = 0;
 	        $can{recordAnswers}  = 0;
@@ -1056,7 +1058,7 @@ sub nav {
 
     # if showMeAnother or check answers from showMeAnother
     # is active, then don't show the navigation bar
-	return "" if(($showMeAnother{active} or $showMeAnother{CheckAnswers}) and $can{showMeAnother});
+	return "" if(($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}) and $can{showMeAnother});
 
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
@@ -1402,41 +1404,39 @@ sub output_submit_buttons{
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 
-   # skip buttons if SMA button has been pushed but there is no new problem shown
-   if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible}))
-   {
-
-	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
-	if ($can{checkAnswers}) {
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
-	}
-	if ($can{getSubmitButton}) {
-		if ($user ne $effectiveUser) {
-			# if acting as a student, make it clear that answer submissions will
-			# apply to the student's records, not the professor's.
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
-		} else {
-			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>"this.form.target='_self'"});
-			# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
-			# WTF???
-		}
-	}
-	if ($can{showMeAnother} and !($showMeAnother{active} or $showMeAnother{CheckAnswers})) {
-        # only output showMeAnother button if we're not on the showMeAnother page (or checking answers)
-        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
-	} else {
-        # if showMeAnother is available for the course, and for the current problem (but not yet
-        # because the student hasn't tried enough times) then gray it out; otherwise display nothing
-
-        # if $showMeAnother is somehow not an integer, make it one, using the default from the course configuration
-        $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
-        if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother{TriesNeeded} >-1 ) and !($showMeAnother{active} or $showMeAnother{CheckAnswers})){
-            my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
-	        print CGI::span({class=>'gray_button'},$r->maketext("Show me another [_1]",$exhausted));
-          }
+    # skip buttons if SMA button has been pushed but there is no new problem shown
+    if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible})){
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
+        if ($can{checkAnswers}) {
+        	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
         }
-   }
+        if ($can{getSubmitButton}) {
+        	if ($user ne $effectiveUser) {
+        		# if acting as a student, make it clear that answer submissions will
+        		# apply to the student's records, not the professor's.
+        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
+        	} else {
+        		#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
+        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>"this.form.target='_self'"});
+        		# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
+        		# WTF???
+        	}
+        }
+        if ($can{showMeAnother} and !($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview})) {
+            # only output showMeAnother button if we're not on the showMeAnother page (or checking answers)
+            print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+        } else {
+            # if showMeAnother is available for the course, and for the current problem (but not yet
+            # because the student hasn't tried enough times) then gray it out; otherwise display nothing
+
+            # if $showMeAnother is somehow not an integer, make it one, using the default from the course configuration
+            $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
+            if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother{TriesNeeded} >-1 ) and !($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview})){
+                my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
+                print CGI::span({class=>'gray_button'},$r->maketext("Show me another [_1]",$exhausted));
+              }
+            }
+    }
 	return "";
 }
 
@@ -1703,7 +1703,7 @@ sub output_summary{
 	    print $results;
 	    
 	} elsif ($checkAnswers) {
-        if ($showMeAnother{CheckAnswers}){
+        if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
             # if the student is checking answers to a new problem, give them a reminder that they are doing so
             print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
                                                                      will not be recorded, and you should remember to return to your original 
@@ -1717,6 +1717,12 @@ sub output_summary{
 	    # show attempt results (correctness)
 	    # show attempt previews
 	} elsif ($previewAnswers) {
+        # if the student is previewing answers to a new problem, give them a reminder that they are doing so
+        if($showMeAnother{Preview} and $can{showMeAnother}){
+          print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently previewing answers to a different version of your problem - these 
+                                                                 will not be recorded, and you should remember to return to your original 
+                                                                 problem once you are done here.")),CGI::br();
+        }
 		# print this if user previewed answers
 		print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
 			# show attempt answers
@@ -1915,9 +1921,9 @@ sub output_hidden_info{
 	my %showMeAnother = %{ $self->{showMeAnother} };
     my $problemSeed = $self->{problem}->{problem_seed};
 
-    # hidden field for clicking Check Answers from a Show Me Another screen
+    # hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen
     # it needs to send the seed from showMeAnother back to the screen
-    if($showMeAnother{active} or $showMeAnother{CheckAnswers}){
+    if($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}){
 	  	print CGI::hidden({name => "showMeAnotherCheckAnswers", id=>"showMeAnotherCheckAnswers_id", value => 1});
         # output the problem seed from ShowMeAnother so that it can be used in Check Answers
         print( CGI::hidden({name => "problemSeed", value  =>  $problemSeed}));
