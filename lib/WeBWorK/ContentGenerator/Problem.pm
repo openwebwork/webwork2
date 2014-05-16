@@ -656,7 +656,8 @@ sub pre_header_initialize {
     #       options:       the options available when showMeAnother has been pushed (check answers, see solution (when available), see correct answer)
     #                      these are set via check boxes from the configuration screen
     #       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
-    #       Preview:       has the preview button been clicked while SMA is active
+    #       Preview:       has the preview button been clicked while SMA is active?
+    #       DisplayChange: has a display change been made while SMA is active?
     my %showMeAnother = (
 	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}),
             CheckAnswers => ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
@@ -670,6 +671,7 @@ sub pre_header_initialize {
                   },
             Count => $problem->{showMeAnotherCount},
             Preview => ($previewAnswers and $r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}), 
+            DisplayChange => ( $r->param("SMAdisplayChange") and $ce->{pg}->{options}->{enableShowMeAnother}), 
           );
 
     # if $showMeAnother{Count} is somehow not an integer, make it one
@@ -1729,7 +1731,8 @@ sub output_summary{
 			# don't show correct answers
 			# don't show attempt results (correctness)
 			# show attempt previews
-    } elsif ($showMeAnother{active} and $showMeAnother{IsPossible} and $can{showMeAnother}){
+    } elsif ( (($showMeAnother{active} and $showMeAnother{IsPossible}) or $showMeAnother{DisplayChange}) 
+                    and $can{showMeAnother}){
         # the feedback varies a little bit if Check Answers is available or not
         my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ? 
                        "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
