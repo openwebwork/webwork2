@@ -2146,11 +2146,27 @@ sub warningOutput($$) {
 	my $r = $self->{r};
 	print "Entering ContentGenerator::warningOutput subroutine</br>" if $TRACE_WARNINGS;
 	my @warnings = split m/\n+/, $warnings;
+
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+	
 	foreach my $warning (@warnings) {
 	    # This used to be commented out because it interfered with warnings
 	    # from PG.  But now PG has a seperate warning channel thats not
 	    # encoded.  
-	    $warning = HTML::Entities::encode_entities($warning);  
+	    #$warning = HTML::Entities::encode_entities($warning);  
+
+	    $warning = $scrubber->scrub($warning);
+
 	    $warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);

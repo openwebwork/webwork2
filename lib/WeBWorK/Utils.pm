@@ -1258,14 +1258,14 @@ sub grade_set {
 }	
 
 #takes a tree sequence and uses the integers as prime powers to get an id
-sub jitar_id_to_seq {
+sub seq_to_jitar_id {
     my @seq = shift;
     my $prime = 0;
     my $id = 1;
 
     foreach my $i (@seq) {
 	$prime = next_prime($prime);
-	$id *=$prime^$i;
+	$id *=$prime**$i;
     }
 
     return $id;
@@ -1273,10 +1273,9 @@ sub jitar_id_to_seq {
 
 # Takes a jitar_id and returns the exponets of the powers in the prime 
 # factorization to get the tree sequence
-sub seq_to_jitar_id {
+sub jitar_id_to_seq {
     my $id = shift;
-
-    return map {$_[1]} factor_exp($id);
+    return map {${$_}[1]} factor_exp($id);
 }
 
 1;

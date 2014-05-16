@@ -31,6 +31,7 @@ details.
 use strict;
 use warnings;
 use HTML::Entities;
+use HTML::Scrubber;
 use Date::Format;
 use WeBWorK;
 
@@ -287,8 +288,23 @@ Formats a list of warning strings as list items for HTML output.
 
 sub htmlWarningsList(@) {
 	my (@warnings) = @_;
+
+
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+
 	foreach my $warning (@warnings) {
-		$warning = htmlEscape($warning);
+#		$warning = htmlEscape($warning);
+                $warning = $scrubber->scrub($warning);
 		$warning = "<li><code>$warning</code></li>";
 	}
 	return join "\n", @warnings;

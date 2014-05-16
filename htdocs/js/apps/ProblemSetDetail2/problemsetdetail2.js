@@ -1,3 +1,69 @@
+$(function() {
+
+    //Problem set detail 2 
+    $('#problemset_detail_list').addClass('container-fluid');
+
+    $('#psd_list').nestedSortable({
+	handle: 'span.pdr_handle',
+	placeholder: 'pdr_placeholder',
+	tolerance: 'intersect',
+	toleranceElement: '> div',
+	items: 'li',
+	opacity: '.1',
+	forcePlaceholderSize: true,
+ 	scrollSpeed: 40,
+	scrollSensitivity: 30,
+	tabSize: 30,
+	isTree: true,
+	startCollapsed: true,
+ 
+    });
+
+    $('.psd_list_row').wrapInner('<div class="span11 well"/>')
+        .append('<div class="span1"/>')
+	.wrapInner('<div class="pdr_container row-fluid" />');
+
+    $('.pdr_block_1').addClass('span2');
+    $('.pdr_block_2').addClass('span3');
+    $('.pdr_block_3').addClass('span7');
+
+    $('.pdr_collapse').prepend('<i class="icon-minus"\>');
+
+    $('.pdr_collapse').on('click', function() {
+	$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
+	$(this).children('i').toggleClass('icon-plus').toggleClass('icon-minus');
+    })
+
+    var recurse_on_heirarchy = function (heirarchy,array) {
+	for (var i=0; i < heirarchy.length; i++) {
+	    var id = heirarchy[i].id;
+
+	    $('#prob_num_'+id).val(i+1);
+	    $('#pdr_handle_'+id).html(i+1);
+	    $('#prob_parent_id_'+id).val(array[i].parent_id);
+
+	    if (typeof heirarchy[i].children != 'undefined') {
+		recurse_on_heirarchy(heirarchy[i].children,array);
+	    }
+	}
+    };
+
+    var set_prob_num_fields = function () {
+	var array = $('#psd_list').nestedSortable("toArray",{key:'prob_num'});
+	var heirarchy = $('#psd_list').nestedSortable("toHierarchy",{key:'prob_num'});
+	
+	recurse_on_heirarchy(heirarchy,array);
+    };
+
+    $('#psd_list').on('sortupdate', set_prob_num_fields);
+
+    $('#psd_renumber').addClass('btn').click(function (event) {
+	event.preventDefault();
+	set_prob_num_fields();
+    });
+
+});
+
 var basicRequestObject = {
     "xml_command":"listLib",
     "pw":"",

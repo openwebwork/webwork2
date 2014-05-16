@@ -50,7 +50,7 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts a
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
-use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts att_to_open_children counts_parent_grade attempte last_answer num_correct num_incorrect)];
+use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
 
 
 # we exclude the gateway set fields from the set field order, because they
@@ -301,11 +301,11 @@ use constant FIELD_PROPERTIES => {
 		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
 	},
 
-	restric_prob_pregression => {
+	restrict_prob_progression => {
 		name      => "Restrict Problem Progression",
 		type      => "choose",
 		choices   => [ qw(Y N) ],
-		override  => "none",
+		override  => "all",
                 default   => "N",
 		labels    => { 'Y' => "Yes", 'N' => "No", },
 	},
@@ -316,7 +316,7 @@ use constant FIELD_PROPERTIES => {
 		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
                 default   => "N",
-		labels    => { 'Y' => "Yes", 'N' => "No", },
+		labels    => { 'Y' => "Yes", 'N' => "No", 'BeforeAnswerDate' => "Before Answer Date"},
 	},
 
 	# in addition to the set fields above, there are a number of things
@@ -403,7 +403,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	att_to_open_children  => {
-		name      => "Attempts to Open Children",
+		name      => "Attempts For Children",
 		type      => "edit",
 		size      => 6,
 		override  => "any",
@@ -414,7 +414,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	counts_parent_grade  => {
-		name      => "Counts for Parent Problem Grade",
+		name      => "Counts for Parent Grade",
 		type      => "choose",
 		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
@@ -496,10 +496,10 @@ sub FieldTable {
 		
 		
 		if($isGWset && defined( FIELD_PROPERTIES_GWQUIZ->{$field} )){
-			%properties = %{ FIELD_PROPERTIES_GWQUIZ->{$field} };
+		    %properties = %{ FIELD_PROPERTIES_GWQUIZ->{$field} };
 		}
 		else{
-			%properties = %{ FIELD_PROPERTIES()->{$field} };
+		    %properties = %{ FIELD_PROPERTIES()->{$field} };
 		}
 
 		#Don't show fields if that option isn't enabled.  
@@ -586,11 +586,12 @@ sub FieldHTML {
 	
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	my %labels = %{ $properties{labels} };
+
 	return "" if $properties{type} eq "hidden";
 	return "" if $properties{override} eq "one" && not $forOneUser;
 	return "" if $properties{override} eq "none" && not $forOneUser;
 	return "" if $properties{override} eq "all" && $forUsers;
-			
+	
 	my $edit = ($properties{type} eq "edit") && ($properties{override} ne "none");
 	my $choose = ($properties{type} eq "choose") && ($properties{override} ne "none");
 	
@@ -759,7 +760,6 @@ sub extraSetFields {
 		my $jthdr = "\n<!-- begin jtoutput table -->\n";
 		my $jtFields = '';
 		foreach my $jtfield ( @{ JITAR_SET_FIELD_ORDER() } ) {
-
 			my @fieldData = 
 			    ($self->FieldHTML($userID, $setID, undef, 
 					      $globalRecord, $userRecord, 
@@ -772,7 +772,7 @@ sub extraSetFields {
 		    	}
 		}
 		$jthdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
-					     CGI::em($r->maketext("Just-In-Tiem parameters"))))
+					     CGI::em($r->maketext("Just-In-Time parameters"))))
 		    if ( $nF );
 		$extraFields = "$jthdr$jtFields\n" .
 			"<!-- end gwoutput table -->\n";
@@ -874,22 +874,24 @@ sub proctoredFieldHTML {
 
 # used to print nested lists for jitar sets
 sub print_nested_list {
-    my $self = shift;
-    my %nestedHash = shift;
+    my $nestedHash = shift;
+    my $id = shift;
     
-    if (defined $nestedHash{'row'}) {
-	print CGI::li({class=>"psd_list_row"},$nestedHash{'row'});
-	delete $nestedHash{'row'};
+    if (defined $nestedHash->{'row'}) {
+	print CGI::li({class=>"psd_list_row",id=>"psd_list_".$nestedHash->{'id'}},
+		      $nestedHash->{'row'});
+	delete $nestedHash->{'row'};
+	delete $nestedHash->{'id'}
     }
 
-    my @keys = keys %nestedHash;
+    my @keys = keys %$nestedHash;
     return unless @keys;
     
-    print CGI::start_ol;
+    print CGI::start_ol();
     foreach my $id (sort @keys) {
-	print_nested_list($nestedHash{$id});
+	print_nested_list($nestedHash->{$id});
     }
-    print CGI::end_ol;
+    print CGI::end_ol();
 }
 
 # creates a popup menu of all possible problem numbers (for possible rearranging)
@@ -907,118 +909,86 @@ sub handle_problem_numbers {
 	my $r = $self->r;
 	my $newProblemNumbersref = shift;
 	my %newProblemNumbers = %$newProblemNumbersref;
-	my $maxNum = shift;
 	my $db = shift;
 	my $setID = shift;
-	my $force = shift || 0;
+	my $force = 0;
+	my $maxDepth = 0;
 	my @sortme=();
 	my ($j, $val);
+	my @prob_ids; 
 
-	# keys are current problem numbers, values are target problem numbers
+	# check ot see that everything has a number and if anything was renumbered.  
 	foreach $j (keys %newProblemNumbers) {
-		# we don't want to act unless all problems have been assigned a new problem number, so if any have not, return
-		return "" if (not defined $newProblemNumbers{"$j"});
-		# if the problem has been given a new number, we reduce the "score" of the problem by the original number of the problem
-		# when multiple problems are assigned the same number, this results in the last one ending up first -- FIXME?
-		if ($newProblemNumbers{"$j"} != $j) {
-			# force always gets set if reordering is done, so don't expect to be able to delete a problem,
-			# reorder some other problems, and end up with a hole -- FIXME
-			$force = 1;
-			$val = 1000 * $newProblemNumbers{$j} - $j;
-		} else {
-			$val = 1000 * $newProblemNumbers{$j};
-		}
-		# store a mapping between current problem number and score (based on currnet and new problem number)
-		push @sortme, [$j, $val];
-		# replace new problem numbers in hash with the (global) problems themselves
-		$newProblemNumbers{$j} = $db->getGlobalProblem($setID, $j);
-		die $r->maketext("global [_1] for set [_2] not found.", $j, $setID) unless $newProblemNumbers{$j};
+		return "" if (not defined $newProblemNumbers{$j});
+		$force = 1 if $newProblemNumbers{$j} != $j; 
 	}
 
-	# we don't have to do anything if we're not getting rid of holes
-	return "" unless $force;
+	# we dont do anything unless a problem has been reordered or we were asked to
+	return "" unless $force; 
 
-	# sort the curr. prob. num./score pairs by score
-	@sortme = sort {$a->[1] <=> $b->[1]} @sortme;
-	# now, for global and each user with this set, loop through problem list
-	#   get all of the problem records
-	# assign new problem numbers
-	# loop - if number is new, put the problem record
-	# print "Sorted to get ". join(', ', map {$_->[0] } @sortme) ."<p>\n";
-
-
-	# Now, three stages.  First global values
-
-	for ($j = 0; $j < scalar @sortme; $j++) {
-		if($sortme[$j][0] == $j + 1) {
-			# if the jth problem (according to the new ordering) is in the right place (problem IDs are numbered from 1, hence $j+1)
-			# do nothing
-		} elsif (not defined $newProblemNumbers{$j + 1}) {
-			# otherwise, if there's a hole for it, add it there
-			$newProblemNumbers{$sortme[$j][0]}->problem_id($j + 1);
-			$db->addGlobalProblem($newProblemNumbers{$sortme[$j][0]});
-		} else {
-			# otherwise, overwrite the data for the problem that's already there with the jth problem's data (with a changed problemID)
-			$newProblemNumbers{$sortme[$j][0]}->problem_id($j + 1);
-			$db->putGlobalProblem($newProblemNumbers{$sortme[$j][0]});
-		}
-	}
-
+	# get problems and store them in a hash.  We do this all at once because its not always clear 
+	# what is overwriting what and when.  
+	# We try to keep things sane by only getting and storing things
+	# which have actually been reordered
+	my %problemHash;
 	my @setUsers = $db->listSetUsers($setID);
-	my (@problist, $user);
+	my %userProblemHash;
 
-	foreach $user (@setUsers) {
-		# grab a copy of each UserProblem for this user. @problist can be sparse (if problems were deleted)
-		for $j (keys %newProblemNumbers) {
-			$problist[$j] = $db->getUserProblem($user, $setID, $j);
+
+	foreach $j (keys %newProblemNumbers) {
+	    next if $newProblemNumbers{$j} == $j;
+
+	    $problemHash{$j} = $db->getGlobalProblem($setID, $j);
+	    die $r->maketext("global [_1] for set [_2] not found.", $j, $setID) unless $problemHash{$j};
+	    foreach my $user (@setUsers) {
+		$userProblemHash{$user}{$j} = $db->getUserProblem($user,$setID, $j);
+		warn $r->maketext("UserProblem missing for user=[_1] set=[_2] problem=[_3]. This may indicate database corruption.", $user, $setID, $j)."\n" 
+		    unless $userProblemHash{$user}{$j};
+	    }
+	}
+	
+	# now go through and move problems around 		
+	# because of the way the reordering works we cant have any conflicts or holes
+	
+	foreach $j (keys %newProblemNumbers) {
+	    next if ($newProblemNumbers{$j} == $j);
+			 
+	    $problemHash{$j}->problem_id($newProblemNumbers{$j});
+
+	    if ($db->existsGlobalProblem($setID, $newProblemNumbers{$j})) {
+		$db->putGlobalProblem($problemHash{$j});
+	    } else {
+		$db->addGlobalProblem($problemHash{$j});
+	    }
+	    
+	    # now deal with the user sets	
+		
+	    foreach my $user (@setUsers) {
+	
+		$userProblemHash{$user}{$j}->problem_id($newProblemNumbers{$j});
+		if ($db->existsUserProblem($user, $setID, $newProblemNumbers{$j})) {
+		    $db->putUserProblem($userProblemHash{$user}{$j});
+		} else {
+		    $db->addUserProblem($userProblemHash{$user}{$j});
 		}
-		for($j = 0; $j < scalar @sortme; $j++) { 
-			if ($sortme[$j][0] == $j + 1) {
-				# same as above -- the jth problem is in the right place, so don't worry about it
-				# do nothing
-			} elsif ($problist[$sortme[$j][0]]) {
-				# we've made sure the user's problem actually exists HERE, since we want to be able to fail gracefullly if it doesn't
-				# the problem with the original conditional below is that %newProblemNumbers maps oldids => global problem record
-				# we need to check if the target USER PROBLEM exists, which is what @problist knows
-				#if (not defined $newProblemNumbers{$j + 1}) {
-				if (not defined $problist[$j+1]) {
-					# same as above -- there's a hole for that problem to go into, so add it in its new place
-					$problist[$sortme[$j][0]]->problem_id($j + 1); 
-					$db->addUserProblem($problist[$sortme[$j][0]]); 
-				} else { 
-					# same as above -- there's a problem already there, so overwrite its data with the data from the jth problem
-					$problist[$sortme[$j][0]]->problem_id($j + 1); 
-					$db->putUserProblem($problist[$sortme[$j][0]]); 
-				} 
-			} else {
-				warn $r->maketext("UserProblem missing for user=[_1] set=[_2] problem=[_3]. This may indicate database corruption.", $user, $setID, $sortme[$j][0])."\n";
-				# when a problem doesn't exist in the target slot, a new problem gets added there, but the original problem
-				# never gets overwritten (because there wan't a problem it would have to get exchanged with)
-				# i think this can get pretty complex. consider 1=>2, 2=>3, 3=>4, 4=>1 where problem 1 doesn't exist for some user:
-				# @sortme[$j][0] will contain: 4, 1, 2, 3
-				# - problem 1 will get **added** with the data from problem 4 (because problem 1 doesn't exist for this user)
-				# - problem 2 will get overwritten with the data from problem 1
-				# - problem 3 will get overwritten with the data from problem 2
-				# - nothing will happend to problem 4, since problem 1 doesn't exit
-				# so the solution is to delete problem 4 altogether!
-				# here's the fix:
-				
-				# the data from problem $j+1 was/will be moved to another problem slot,
-				# but there's no problem $sortme[$j][0] to replace it. thus, we delete it now.
-				$db->deleteUserProblem($user, $setID, $j+1);
-			}
-		} 
+
+	    }
+
+	    # now we need to delete "orphan" problems that were not overwritten by something else
+	    my $delete = 1;
+	    foreach my $k (keys %newProblemNumbers) {
+		$delete = 0 if ($j == $newProblemNumbers{$k});
+	    }
+	    
+	    if ($delete) {
+		$db->deleteGlobalProblem($setID, $j);
+	    }
+
 	}
 
-	# any problems with IDs above $maxNum get deleted -- presumably their data has been copied into problems with lower IDs
-	foreach ($j = scalar @sortme; $j < $maxNum; $j++) {
-		if (defined $newProblemNumbers{$j + 1}) {
-			$db->deleteGlobalProblem($setID, $j+1);
-		}
-	}
-
+	
 	# return a string form of the old problem IDs in the new order (not used by caller, incidentally)
-	return join(', ', map {$_->[0]} @sortme);
+	return join(', ', values %newProblemNumbers);
 }
 
 
@@ -1137,7 +1107,8 @@ sub initialize {
 	if (defined $r->param('submit_changes') && !$error) {
 
 		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
-
+	        my $oldAssignmentType = $setRecord->assignment_type(); 
+		
 		#####################################################################
 		# Save general set information (including headers)
 		#####################################################################
@@ -1630,6 +1601,35 @@ sub initialize {
 			$db->deleteGlobalProblem($setID, $problemID);
 		}
 		
+		# Change problem_ids from regular style to jitar style if appropraite.  (not
+		# applicable when editing for users)
+		# this is a very long operaiton because we are shuffling the whole database around
+		if ($oldAssignmentType ne $setRecord->assignment_type() &&(
+		    $oldAssignmentType eq 'jitar' ||
+		    $setRecord->assignment_type eq 'jitar')) {
+
+		    my %newProblemNumbers;
+		    my @ids = $db->listGlobalProblems($setID);
+		    
+		    foreach my $id (@ids) {
+			my $i = 1;
+			if ($setRecord->assignment_type eq 'jitar') {
+			    $newProblemNumbers{$id} = seq_to_jitar_id(($id));
+			} else {
+			    $newProblemNumbers{$id} = $i;
+			    $i++;
+			}
+		    }
+
+		    foreach my $k (keys %newProblemNumbers) {
+			warn $k.' and '.$newProblemNumbers{$k};
+		    }
+
+		    handle_problem_numbers($self,\%newProblemNumbers, $db, $setID);
+		    
+		}
+		
+	
 		#####################################################################
 		# Add blank problem if needed
 		#####################################################################
@@ -1638,9 +1638,20 @@ sub initialize {
 		    my $newBlankProblems = (defined($r->param("add_n_problems")) ) ? $r->param("add_n_problems") :1;
 		    $newBlankProblems = int($newBlankProblems);
 		    my $MAX_NEW_PROBLEMS = 20;
+		    my @ids = $self->r->db->listGlobalProblems($setID);
+
+		    if ($setRecord->assignment_type eq 'jitar') {
+			for (my $i=0; $i <= $#ids; $i++) {
+			    my @seq = jitar_id_to_seq($ids[$i]);
+			    $ids[$i] = $seq[0];
+			    #this strips off the depth 0 problem numbers if its a jitar set
+			}
+		    }
+		    my $targetProblemNumber = WeBWorK::Utils::max(@ids);
+
 		    if ($newBlankProblems >=1 and $newBlankProblems <= $MAX_NEW_PROBLEMS ) {
 				foreach my $newProb (1..$newBlankProblems) {
-						my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setID));
+						$targetProblemNumber++;
 						##################################################
 						# make local copy of the blankProblem
 						##################################################
@@ -1659,8 +1670,12 @@ sub initialize {
 						my $problemRecord  = $self->addProblemToSet(
 								   setName        => $setID,
 								   sourceFile     => $new_file_path, 
-								   problemID      => $targetProblemNumber, #added to end of set
+								   problemID      => 
+						    $setRecord->assignment_type eq 'jitar' ? 
+						    seq_to_jitar_id(($targetProblemNumber)) : 
+						    $targetProblemNumber, #added to end of set
 						);
+
 						$self->assignProblemToAllSetUsers($problemRecord);
 						$self->addgoodmessage($r->maketext("Added [_1] to [_2] as problem [_3]", $new_file_path, $setID, $targetProblemNumber)) ;
 				}
@@ -1943,14 +1958,29 @@ sub body {
 	print CGI::a({name=>"problems"}, "");
 
 	my %newProblemNumbers = ();
-	my $maxProblemNumber = -1;
-	for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
-		$newProblemNumbers{$jj} = $r->param('problem_num_' . $jj);
-		$maxProblemNumber = $jj if $jj > $maxProblemNumber;
-	}
 
-	my $forceRenumber = $r->param('force_renumber') || 0;
-	handle_problem_numbers($self,\%newProblemNumbers, $maxProblemNumber, $db, $setID, $forceRenumber) unless defined $r->param('undo_changes');
+	for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
+	    
+	    if ($isJitarSet) {
+		my @idSeq;
+		my $id = $jj;
+
+		next unless $r->param('prob_num_'.$id);
+
+		unshift @idSeq, $r->param('prob_num_'.$id);
+		while (defined $r->param('prob_parent_id_'.$id)) {
+		    $id = $r->param('prob_parent_id_'.$id);
+		    unshift @idSeq, $r->param('prob_num_'.$id);
+		}
+
+		$newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
+	
+	    } else {
+		$newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
+	    }
+	}
+	
+	handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
 
 	my %properties = %{ FIELD_PROPERTIES() };
 
@@ -1986,7 +2016,7 @@ sub body {
 	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
-	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")});
+	print CGI::input({type=>"submit", id=>"submit_changes_1", name=>"submit_changes", value=>$r->maketext("Save Changes")});
 	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
 
 	# spacing
@@ -2189,7 +2219,12 @@ sub body {
 	    print CGI::h2($r->maketext("Problems"));
 	    print CGI::p($r->maketext("Display Mode:") . 
 			 CGI::popup_menu(-name => "problem.displaymode", 
-					 -values => \@active_modes, -default => $default_problem_mode));
+					 -values => \@active_modes, -default => $default_problem_mode)
+		. CGI::a({href=>"#", id=>"psd_renumber", 'data-toggle'=>"tooltip", 'data-placement'=>"bottom",
+			 'data-original-title'=>"Force problems to be numbered consecutively from one."},
+			 "Reorder Problems"));
+
+
 	    print CGI::start_div({id=>"problemset_detail_list"});
 	    
 	    my %shownYet;
@@ -2294,16 +2329,21 @@ sub body {
 		}
 		
 		my $problemNumber = $problemID;
-		
+		my $parentID = '';
+                my $collapseButton = '';
 		if ($isJitarSet) {
 		    my @seq = jitar_id_to_seq($problemNumber);
-		    $problemNumber = $seq[-1];
+		    $problemNumber = pop @seq;
+		    $parentID = seq_to_jitar_id(@seq) if @seq;
+                    $collapseButton = CGI::span({class=>"pdr_collapse"},"");
 		}
 		
 		push @problemRow, CGI::div({class=>"problem_detail_row"}, 
 					   CGI::div({class=>"pdr_block_1"},
 					      CGI::start_table({border => 0, cellpadding => 1}) .
-					      CGI::Tr({}, CGI::td({}, CGI::div({class=>"pdr_handle"}, $problemNumber))) .	      
+					      CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle", id=>"pdr_handle_$problemID"}, $problemNumber).$collapseButton .
+					      CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$problemNumber}).
+					      CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID}))) .	      
 					      CGI::Tr({}, CGI::td({}, 
 								  $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, $r->maketext("Edit it")) : "" )) .
 					      CGI::Tr({}, CGI::td({}, 
@@ -2334,33 +2374,38 @@ sub body {
 	    # If a jitar set then print nested lists, otherwise print an unordered list. 
 	    if ($isJitarSet) {
 		my $nestedIDHash = {};
+
 		for (my $i=0; $i<=$#problemIDList; $i++) {
 		    my @id_seq = jitar_id_to_seq($problemIDList[$i]);
-		    
-		    #This takes the id_seq and builds a nested hash
-		    my $ref = $$nestedIDHash;
-		    $ref = \$$ref->{$_} foreach @id_seq;
-		    $$ref{'row'} = $problemRow[$i];
+
+		    my $hashref = $nestedIDHash;
+		    foreach my $num (@id_seq) {
+			$hashref->{$num} = {} unless defined $hashref->{$num};
+			$hashref = $hashref->{$num};
+		    }
+		    $hashref->{'row'} = $problemRow[$i];
+		    $hashref->{'id'} = $problemIDList[$i];
 		}
 
 		# now use recursion to print the nested lists
 		print CGI::start_ol({id=>"psd_list"});
-		foreach my $id (sort keys $nestedIDHash) {
+		foreach my $id (sort keys %$nestedIDHash) {
 		    print_nested_list($nestedIDHash->{$id});
 		}
-		print CGI::end_ol;
+		print CGI::end_ol();
 
 	    } else {
-		print CGI::ol({id=>"psd_list"}, CGI::li({class=>"psd_list_row mjs-nestedSortable-no-nesting"}, \@problemRow));
+		print CGI::start_ol({id=>"psd_list"});
+		for (my $i=0; $i<=$#problemIDList; $i++) {
+		    print CGI::li({class=>"psd_list_row mjs-nestedSortable-no-nesting", id=>"psd_list_".$problemIDList[$i]} , $problemRow[$i]);
+		}
+		print CGI::end_ol();
 	    }
 
 # print final lines
 	    
 	    
-	    print CGI::checkbox({
-		label=> $r->maketext("Force problems to be numbered consecutively from one (always done when reordering problems)"),
-		name=>"force_renumber", value=>"1"});
-	    print CGI::p($r->maketext("Any time problem numbers are intentionally changed, the problems will always be renumbered consecutively, starting from one.  When deleting problems, gaps will be left in the numbering unless the box above is checked."));
+	    print CGI::p($r->maketext("Any time problem numbers are intentionally changed, the problems will always be renumbered consecutively, starting from one.  When deleting problems, gaps will be left in the numbering unless the box above is checked.  If you accidentally reorder the problems use the Reset Form butotn."));
 	    print CGI::p($r->maketext("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.")) if ($setRecord->open_date>time());
 	    print CGI::p($r->maketext("When changing problem numbers, we will move the problem to be [_1] the chosen number.",CGI::em($r->maketext("before"))));
 	    
@@ -2380,8 +2425,7 @@ sub body {
 		    );
 	}
 	print CGI::br(),CGI::br(),
-	CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")}),
-	CGI::input({type=>"submit", name=>"handle_numbers", value=>$r->maketext("Reorder problems only")}),
+	CGI::input({type=>"submit", name=>"submit_changes", id=>"submit_changes_2", value=>$r->maketext("Save Changes")}),
 	$r->maketext("(Any unsaved changes will be lost.)");
 	
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
