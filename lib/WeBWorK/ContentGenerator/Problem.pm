@@ -214,6 +214,10 @@ sub can_showMeAnother {
 	    # inititialized meaning that the student hasn't pushed it yet and it should be 0
         $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
 
+        # if the student is *preview*ing or *check*ing their answer to SMA then showMeAnother{Count} IS ALLOWED
+        # to be equal to showMeAnother{MaxReps}
+        $showMeAnother{Count}-- if($showMeAnother{CheckAnswers} or $showMeAnother{Preview});
+
 	    # if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
 	    # not submitted enough answers yet or has used the SMA button too many times
 	    if ($attempts_used < $showMeAnother{TriesNeeded} 
@@ -659,7 +663,7 @@ sub pre_header_initialize {
     #       Preview:       has the preview button been clicked while SMA is active?
     #       DisplayChange: has a display change been made while SMA is active?
     my %showMeAnother = (
-	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother}),
+	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother} and ($problem->{showMeAnother}>-1)),
             CheckAnswers => ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
             IsPossible => 1,
             TriesNeeded => $problem->{showMeAnother},
@@ -1753,9 +1757,13 @@ sub output_summary{
 		 print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem[_1]. [_2] ",$solutionShown,$checkAnswersAvailable)),CGI::br();
 		 print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
      } elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
+        if($showMeAnother{Count}>=$showMeAnother{MaxReps}){
             my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. 
                                                                          [_2] Close this tab, and return to the original problem.",$showMeAnother{MaxReps},$solutionShown  )),CGI::br();
+        } elsif ($showMeAnother{Count}<$showMeAnother{TriesNeeded}) {
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You must attempt this problem [quant,_1,time,times] before Show Me Another is available.",$showMeAnother{TriesNeeded})),CGI::br();
+        }
      } elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
 		# print this if showMeAnother has been clicked, but it is not possible to 
         # find a new version of the problem
