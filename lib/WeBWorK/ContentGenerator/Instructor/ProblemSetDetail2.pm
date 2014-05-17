@@ -1,5 +1,4 @@
 
-
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -1985,7 +1984,6 @@ sub body {
 
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 	my @active_modes = grep { exists $display_modes{$_} } @{$r->ce->{pg}->{displayModes}};
-	push @active_modes, $r->maketext('None');
 	my $default_header_mode = $r->param('header.displaymode') || $r->maketext('None');
 	my $default_problem_mode = $r->param('problem.displaymode') || $r->maketext('None');
 
@@ -2015,6 +2013,7 @@ sub body {
 	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
+	print CGI::input({type=>"hidden", id=>"template_dir", name=>"template_dir", value=>$ce->{courseDirs}->{templates}});
 	print CGI::input({type=>"submit", id=>"submit_changes_1", name=>"submit_changes", value=>$r->maketext("Save Changes")});
 	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
 
@@ -2093,14 +2092,9 @@ sub body {
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Headers"),
-#			$r->maketext("Data"),
-			$r->maketext("Display Mode:") . 
-			CGI::popup_menu(-name => "header.displaymode", -values => \@active_modes, -default => $default_header_mode) . '&nbsp;'. 
-			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
-		]));
+			$r->maketext("Data"),
+					  ]));
 
-		my %header_html;
-		
 		my %error;
 		my $this_set = $db->getMergedSet($userToShow, $setID);
 		my $guaranteed_set = $this_set;
@@ -2121,17 +2115,7 @@ sub body {
 
 			$error{$headerType} = $self->checkFile($headerFile,$headerType);
 
-			unless ($error{$headerType}) {	    
-				my @temp = renderProblems(
-					r=> $r, 
-					user => $db->getUser($userToShow),
-					displayMode=> $default_header_mode,
-					problem_number=> 0,
-					this_set => $this_set,
-					problem_list => [$headerFile],
-				);
-				$header_html{$headerType} = $temp[0];	
-			}
+			
 		}
 		
 		foreach my $headerType (@headers) {
@@ -2157,8 +2141,7 @@ sub body {
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
 					CGI::Tr({}, CGI::td({}, $r->maketext($properties{$headerType}->{name}))) . 
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, $r->maketext("Edit it")))) .
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, $r->maketext("View it")))) .
+					CGI::Tr({}, CGI::td({}, CGI::a({class=>"psd_edit", href => $editHeaderLink, target=>"WW_Editor", 'data-toggle'=>"tooltip", 'data-original-title'=>$r->maketext("Edit Header"), 'data-placement'=>"top"}, $r->maketext("Edit")).CGI::a({class=>"psd_view", href => $viewHeaderLink, target=>"WW_View",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Open in New Window")}, $r->maketext("View")))) .
 				CGI::end_table(),
 
 				comboBox({
@@ -2168,12 +2151,8 @@ sub body {
 					multiple => 0,
 					values => ["defaultHeader", @headerFileList],
 					labels => { "defaultHeader" => $r->maketext("Use Default Header File") },
-				}) .
-				($error{$headerType} ? 
-					CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error{$headerType}) 
-					: CGI::div({class=> "RenderSolo"}, $header_html{$headerType}->{body_text})
-				),
-			]));
+				})
+						  ]));
 		}
 		
 		print CGI::end_table();
@@ -2219,8 +2198,8 @@ sub body {
 	    print CGI::p($r->maketext("Display Mode:") . 
 			 CGI::popup_menu(-name => "problem.displaymode", 
 					 -values => \@active_modes, -default => $default_problem_mode)
-		. CGI::a({href=>"#", id=>"psd_renumber", 'data-toggle'=>"tooltip", 'data-placement'=>"bottom",
-			 'data-original-title'=>"Force problems to be numbered consecutively from one."},
+		. CGI::a({href=>"#", id=>"psd_renumber", 'data-toggle'=>"tooltip", 'data-placement'=>"top",
+			 'data-original-title'=>$r->maketext("Force problems to be numbered consecutively from one.")},
 			 "Reorder Problems"));
 
 
@@ -2294,18 +2273,7 @@ sub body {
 		
 		my $error = $self->checkFile($problemFile, undef);
 		my $this_set = $db->getMergedSet($userToShow, $setID);
-		my @problem_html;
-		unless ($error) {
-		    @problem_html = renderProblems(
-			r=> $r, 
-			user => $db->getUser($userToShow),
-			displayMode=> $default_problem_mode,
-			problem_number=> $problemID,
-			this_set => $this_set,
-			problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
-			problem_list => [$problemFile],     #  [$problemRecord->source_file],
-			);
-		}
+
 		# we want to show the "Try It" and "Edit It" links if there's a 
 		#    well defined problem to view; this is when we're editing a 
 		#    homework set, or if we're editing a gateway set version, or 
@@ -2322,7 +2290,7 @@ sub body {
 		    
 		    if ($problemRecord->flags =~ /essay/) {
 			my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-			$gradingLink = CGI::Tr({}, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem")));
+			$gradingLink = CGI::a({class=>"psd-grade-link", href => $self->systemLink($gradeProblemPage)}, "Grade");
 		    }
 		    
 		}
@@ -2336,37 +2304,38 @@ sub body {
 		    $parentID = seq_to_jitar_id(@seq) if @seq;
                     $collapseButton = CGI::span({class=>"pdr_collapse"},"");
 		}
-		
+	
+		my $pdr_block_1 =  CGI::div({class=>"pdr_block_1"},
+			CGI::start_table({border => 0, cellpadding => 1}) .
+			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID"}, $problemNumber).$collapseButton.
+					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$problemNumber}).
+					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) .	      
+             	        CGI::Tr({}, CGI::td({}, 
+					    CGI::a({href=>"#", class=>"pdr_render", id=>"pdr_render_$problemID",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Render Problem")}, $r->maketext('Render')).
+					    ($showLinks ? CGI::a({class=>"psd_edit", href => $editProblemLink, target=>"WW_Editor",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Edit Problem")}, $r->maketext("Edit")) : "")  . 
+					    ($showLinks ? CGI::a({class=>"psd_view", href => $viewProblemLink, target=>"WW_View",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Open in New Window")}, $r->maketext("View")) : "") .
+					    $gradingLink )). 
+			  ($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
+			  ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
+				CGI::end_table()));
+		my $pdr_block_2 = CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type()));
+		my $pdr_block_3 = CGI::div({class=>"pdr_block_3"}, 
+					   join ("\n", $self->FieldHTML(
+						     $userToShow,
+						     $setID,
+						     $problemID,
+						     $GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
+						     $problemToShow, # pass previously fetched user record to FieldHTML --sam
+						     "source_file"
+						 )) .
+					   CGI::br() .
+					   ($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : '') .
+					   CGI::div({class=> "psr_render_area", id=>"psr_render_area_$problemID"},''));   
+	
 		push @problemRow, CGI::div({class=>"problem_detail_row"}, 
-					   CGI::div({class=>"pdr_block_1"},
-					      CGI::start_table({border => 0, cellpadding => 1}) .
-					      CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle", id=>"pdr_handle_$problemID"}, $problemNumber).$collapseButton .
-					      CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$problemNumber}).
-					      CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID}))) .	      
-					      CGI::Tr({}, CGI::td({}, 
-								  $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, $r->maketext("Edit it")) : "" )) .
-					      CGI::Tr({}, CGI::td({}, 
-								  $showLinks ? CGI::a({href => $viewProblemLink, target=>"WW_View"}, $r->maketext("Try it") . ($forOneUser ? " (as $editForUser[0])" : "")) : "" )) .
-					      $gradingLink . 
-					      ($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
-					      ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
-					      CGI::end_table()).
-					   CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type())).
-					   CGI::div({class=>"pdr_block_3"}, join ("\n", $self->FieldHTML(
-							$userToShow,
-							$setID,
-							$problemID,
-							$GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
-							$problemToShow, # pass previously fetched user record to FieldHTML --sam
-							"source_file"
-						    )) .
-					      CGI::br() . 
-					      ($error ? 
-					       CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error) 
-					       : CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
-					      ) .
-					      ($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : ''))
-					  );
+					   $pdr_block_1.
+					   $pdr_block_2.
+					   $pdr_block_3 );
 	    }
 	    
 	    

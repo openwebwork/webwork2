@@ -27,21 +27,42 @@ $(function() {
     $('.pdr_block_2').addClass('span3');
     $('.pdr_block_3').addClass('span7');
 
-    $('.pdr_collapse').prepend('<i class="icon-minus"\>');
-    $('.mjs-nestedSortable-branch').find('i:first').removeClass('icon-minus')
-	.addClass('icon-plus');
+    $('.psd_view').addClass('btn btn-mini')
+	.html('<i class="icon-eye-open" />')
+	.tooltip();
+    $('.psd_edit').addClass('btn btn-mini')
+	.html('<i class="icon-pencil" />')
+	.tooltip();
+    $('.pdr_render').addClass('btn btn-mini')
+	.html('<i class="icon-picture" />')
+	.tooltip();
+
+    $('.pdr_handle').append('<i class="icon-resize-vertical" />');
+
+    $('.pdr_collapse').prepend('<i class="icon-minus-sign"\>');
+    $('.mjs-nestedSortable-collapsed .pdr_collapse').find('i:first')
+	.removeClass('icon-minus-sign')
+	.addClass('icon-plus-sign');
 
     $('.pdr_collapse').on('click', function() {
 	$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
-	$(this).children('i').toggleClass('icon-plus').toggleClass('icon-minus');
+	$(this).children('i').toggleClass('icon-plus-sign').toggleClass('icon-minus-sign');
     })
+
+    $('.pdr_render').click(function() {
+	event.preventDefault();
+	var id = this.id.match(/^pdr_render_(\d+)/)[1];
+	render(id);
+	
+    });
 
     var recurse_on_heirarchy = function (heirarchy,array) {
 	for (var i=0; i < heirarchy.length; i++) {
 	    var id = heirarchy[i].id;
 
 	    $('#prob_num_'+id).val(i+1);
-	    $('#pdr_handle_'+id).html(i+1);
+	    $('#pdr_handle_'+id).html(i+1)
+		.append('<i class="icon-resize-vertical" />');;
 
 	    for (var j=0; j < array.length; j++) {
 		if (array[j].item_id == id) {
@@ -64,7 +85,7 @@ $(function() {
 
     $('#psd_list').on('sortupdate', set_prob_num_fields);
 
-    $('#psd_renumber').addClass('btn').click(function (event) {
+    $('#psd_renumber').addClass('btn').tooltip().click(function (event) {
 	event.preventDefault();
 	set_prob_num_fields();
     });
@@ -87,64 +108,6 @@ var basicRequestObject = {
 var basicWebserviceURL = "/webwork2/instructorXMLHandler";
 
 
-// Messaging
-
-function nomsg() {
-  $(".Message").html("");
-}
-
-function goodmsg(msg) {
-  $(".Message").html('<div class="ResultsWithoutError">'+msg+"</div>");
-}
-
-function badmsg(msg) {
-  $(".Message").html('<div class="ResultsWithError">'+msg+"</div>");
-}
-
-
-function settoggle(id, text1, text2) {
-  $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
-    function() {$('#'+id).html(text1)});
-  return true;
-}
-
-function toggle_content(id, text1, text2) {
-  var e = $('#'+id);
-  nomsg();
-  if(e.text() == text1)
-    e.text(text2);
-  else
-    e.text(text1);
-  return true;
-}
-
-function togglepaths() {
-  var toggle_from = $('#toggle_path_current')[0].value;
-  var new_text = $('#showtext');
-  nomsg();
-  if(toggle_from == 'show') {
-    new_text = $('#hidetext')[0].value;
-    $('#toggle_path_current').val('hide');
-	$("[id*=filepath]").each(function() {
-		// If showing, trigger
-		if(this.textContent.match('^Show')) {
-		  this.click();
-	    }
-	});
-  } else {
-    new_text = $('#showtext')[0].value;
-    $('#toggle_path_current').val('show');
-	$("[id*=filepath]").each(function() {
-		// If hidden, trigger
-		if(! this.textContent.match('^Show')) {
-		  this.click();
-		}
-	});
-  }
-  $('#toggle_paths').prop('value',new_text);
-  return false;
-}
-
 function init_webservice(command) {
   var myUser = $('#hidden_user').val();
   var myCourseID = $('#hidden_courseID').val();
@@ -166,55 +129,37 @@ function init_webservice(command) {
   return mydefaultRequestObject;
 }
 
-function addme(path, who) {
-  nomsg();
-  var target = $('[name="local_sets"] option:selected').val();
-  if(target == 'Select a Set from this Course') {
-    alert('You need to pick a target set above so we know what set to which we should add this problem.');
-    return true;
-  }
-  var mydefaultRequestObject = init_webservice('addProblem');
-  if(mydefaultRequestObject == null) {
-    // We failed
-	badmsg("Could not connect back to server");
-    return false;
-  }
-  mydefaultRequestObject.set_id = target;
-  var pathlist = new Array();
-  if(who=='one') {
-    pathlist.push(path);
-  } else { // who == 'all'
-    var allprobs = $('[name^="filetrial"]');
-    for(var i=0,len =allprobs.length; i< len; ++i) {
-      pathlist.push(allprobs[i].value);
+function render(id) {
+    var ro = init_webservice('renderProblem');
+    var templatedir = $('#template_dir').val();
+    if ($('#problem.'+id+'.problem_seed_id').length > 0) {
+	ro.problemSeed = $('#problem.'+id+'.problem_seed_id').val();
+    } else {
+	ro.problemSeed = 0;
     }
-  }
-  mydefaultRequestObject.total = pathlist.length;
-  mydefaultRequestObject.set = target;
-  addemcallback(basicWebserviceURL, mydefaultRequestObject, pathlist, 0)(true);
-}
-
-function addemcallback(wsURL, ro, probarray, count) {
-  if(probarray.length==0) {
-    return function(data) {
-      var phrase = count+" problem";
-      if(count!=1) { phrase += "s";}
-     // alert("Added "+phrase+" to "+ro.set);
-      markinset();
-
-	  var prbs = "problems";
-	  if(ro.total == 1) { 
-		prbs = "problem";
-	  }
-	  goodmsg("Added "+ro.total+" "+prbs+" to set "+ro.set_id);
-
-      return true;
-    };
-  }
-  // Need to clone the object so the recursion works
-  var ro2 = jQuery.extend(true, {}, ro);
-  ro2.problemPath=probarray.shift();
-  return function (data) {
-    return $.post(wsURL, ro2, addemcallback(wsURL, ro2, probarray, count+1));
-  };
+    ro.problemSource = templatedir + '/' + $('#prob_filepath_'+id);
+    ro.set = ro.problemSource;
+    ro.showHints = 1;
+    ro.showSolutions = 1;
+    var displayMode = $('[name="problem.displayMode"]').val();
+    ro.noprepostambles = 1;
+    $.post(basicWebserviceURL, ro, function (data) {
+	var response = data;
+	$('#psr_render_area_'+id).html(data);
+	// run typesetter depending on the displaymode
+	if(displayMode=='MathJax')
+	    MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
+	if(displayMode=='jsMath')
+	    jsMath.ProcessBeforeShowing(el);
+	
+	if(displayMode=='asciimath') {
+	    //processNode(el);
+	    translate();
+	}
+	if(displayMode=='LaTeXMathML') {
+	    AMprocessNode(document.getElementsByTagName("body")[0], false);
+	}
+	//console.log(data);
+    });
+    return false;
 }

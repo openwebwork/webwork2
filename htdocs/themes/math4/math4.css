@@ -784,28 +784,16 @@ div.problem_sets_options {
     margin-bottom: 20px;
 }
 
-.pdr_handle {
+.pdr_handle {    
     cursor: move;
-    font-weight:bold;
+    margin-right:2px;
     font-size:large;
-    display: inline-block;
-    padding: 4px;
-    color: #ffffff;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-    white-space: nowrap;
-    vertical-align: baseline;
-    background-color: #002188;
-    padding-right: 9px;
-    padding-left: 9px;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    border-radius: 3px;
 }
-
 
 .pdr_collapse {
     cursor: pointer;
     width: 10px;
+    font-size:large;
     display: none;
 }
 
