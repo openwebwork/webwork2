@@ -446,12 +446,13 @@ sub pre_header_initialize {
 		unless defined $effectiveUser;
 		
 	# obtain the merged set for $effectiveUser
-	my $set = $db->getMergedSet($effectiveUserName, $setName); # checked
+	my $set = $db->getMergedSet($effectiveUserName, $setName); 
 
-	$self->{isOpen} = (time >= $set->open_date && !(
-			   $ce->{options}{enableConditionalRelease} && 
-			   is_restricted($db, $set, $set->set_id, $effectiveUserName)))
-	    || $authz->hasPermissions($userName, "view_unopened_sets");
+	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || 
+	    ($setName eq "Undefined_Set" || 
+	     (time >= $set->open_date && !(
+		  $ce->{options}{enableConditionalRelease} && 
+		  is_restricted($db, $set, $set->set_id, $effectiveUserName))));
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
 
