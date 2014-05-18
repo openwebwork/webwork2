@@ -21,11 +21,59 @@ $(document).ready(function() {
     };
     $('#qunit-fixture').html(view.render().el);
 
-    equal(_.keys(view.model._events).length, 4);
+    equal(_.keys(view.model._events).length, 3);
+    var events = $._data(view.$el[0], 'events');
+    ok(events.input.length && events.propertychange.length && events.change.length);
 
     view.unstickit();
-
     equal(_.keys(view.model._events).length, 0);
+    events = $._data(view.$el[0], 'events');
+    ok(!events);
+  });
+
+  test('unstickit with selector parameter', 4, function() {
+
+    model.set({'water':'fountain', 'candy':'skittles', 'album':'rival-dealer', 'state': 'liquid'});
+    view.model = model;
+    view.templateId = 'jst14';
+    view.bindings = {
+      '#test14-1': 'water',
+      '#test14-2': 'candy',
+      '#test14-3': 'album',
+      '#test14-6': 'state'
+    };
+    $('#qunit-fixture').html(view.render().el);
+    equal(_.keys(view.model._events).length, 4);
+    
+    view.unstickit(null, '#test14-1');
+    equal(_.keys(view.model._events).length, 3);
+
+    view.$('#test14-6').val('solid').change();
+    equal(model.get('state'), 'solid');
+
+    view.unstickit(null, view.bindings);
+    equal(_.keys(view.model._events).length, 0);  
+  });
+
+  test('unstickit is only called once on remove with multiple stickits', function() {
+    view.model = model;
+    view.render = function() {
+      this.stickit();
+      this.stickit();
+      return this;
+    }
+    view.render();
+
+    var unstickit = view.unstickit, counter = 0;
+    view.unstickit = function() {
+      counter++;
+      unstickit.apply(this, arguments);
+    }
+
+    view.remove();
+
+    equal(counter, 1);
+    view.unstickit = unstickit;
   });
 
   test('unstickit (multiple models)', function() {
@@ -62,23 +110,60 @@ $(document).ready(function() {
       }
     }))().render();
 
-    equal(_.keys(model1._events).length, 3);
-    equal(_.keys(model2._events).length, 3);
-    equal(_.keys(model3._events).length, 3);
+    var events = $._data(view.$el[0], 'events');
+    ok(events.input.length == 6 && events.propertychange.length == 6 && events.change.length == 6);
+
+    equal(_.keys(model1._events).length, 2);
+    equal(_.keys(model2._events).length, 2);
+    equal(_.keys(model3._events).length, 2);
     equal(view._modelBindings.length, 6);
 
     view.unstickit(model3);
 
-    equal(_.keys(model1._events).length, 3);
-    equal(_.keys(model2._events).length, 3);
+    events = $._data(view.$el[0], 'events');
+    ok(events.input.length == 4 && events.propertychange.length == 4 && events.change.length == 4);
+
+    equal(_.keys(model1._events).length, 2);
+    equal(_.keys(model2._events).length, 2);
     equal(_.keys(model3._events).length, 0);
     equal(view._modelBindings.length, 4);
 
     view.unstickit();
 
+    events = $._data(view.$el[0], 'events');
+    ok(!events);
+
     equal(_.keys(model1._events).length, 0);
     equal(_.keys(model2._events).length, 0);
     equal(view._modelBindings.length, 0);
+  });
+
+  test('addBinding', 2, function() {
+    view = new (Backbone.View.extend({
+      initialize: function() {
+        this.model = model;
+      },
+      bindings: {
+        '.test12-1': {
+          observe: 'one',
+          destroy: function() {
+            ok(true);
+          }
+        },
+        '.test12-2': 'two'
+      },
+      render: function() {
+        var html = document.getElementById('jst12').innerHTML;
+        this.$el.html(_.template(html)());
+        this.stickit();
+        this.addBinding(null, '.test12-3', 'three');
+        this.addBinding(null, {'.test12-4': 'four'});
+        this.addBinding(null, {'.test12-1': 'one'});
+        return this;
+      }
+    }))().render();
+
+    equal(view._modelBindings.length, 4);
   });
 
   test('stickit:unstuck event', 1, function() {
@@ -94,6 +179,7 @@ $(document).ready(function() {
     $('#qunit-fixture').html(view.render().el);
 
     model.on('stickit:unstuck', function() { ok(true); });
+    view.unstickit();
     view.unstickit();
   });
 });

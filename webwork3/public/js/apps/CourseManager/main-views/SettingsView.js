@@ -17,18 +17,22 @@ define(['backbone','config','views/WWSettingsView','views/MainView'],function(Ba
         this.currentCategory = this.currentCategory || "General";
         // get all of the categories except for timezone (include it somewhere?)
         this.currentCategory = this.currentCategory || this.categories[0];
+        MainView.prototype.render.apply(this);
         this.$el.html(_.template($("#settings-template").html(),{categories: this.categories}));
-        var settings = this.settings.where({category: this.currentCategory});
+        this.changeSettingTab(this.currentCategory);
+/*        var settings = this.settings.where({category: this.currentCategory});
         this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
         this.$('.nav-tabs a:eq('+(_(this.categories).indexOf(this.currentCategory)+1)+')').tab('show');
-        MainView.prototype.render.apply(this);
+  */      
         return this;
 
      },
      changeSettingTab: function(evt){
         this.currentCategory = _.isString(evt)? evt : $(evt.target).text();
         var settings = this.settings.where({category: this.currentCategory});
-        this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
+        var settingNum = this.categories.indexOf(this.currentCategory);
+        this.$("#setting-tab"+settingNum).empty().append((new WWSettingsView({settings: settings})).render().el);
+        this.$(".settings-tabs li:eq("+settingNum+") a").tab("show")
         this.eventDispatcher.trigger("save-state");
      }, 
      getHelpTemplate: function (){

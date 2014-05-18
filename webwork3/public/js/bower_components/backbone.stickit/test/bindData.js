@@ -233,6 +233,8 @@ $(document).ready(function() {
 
     equal(model1.get('candy'), 'kit kat');
     equal(model2.get('candy'), 'butterfinger');
+
+    testView.remove();
   });
 
   test('stickit (existing events property as hash with multiple models and bindings)', function() {
@@ -312,15 +314,15 @@ $(document).ready(function() {
       },
 
       events: function() {
-
         var self = this;
 
         return {
-          click: function() {
-            self.clickHandled = true;
-          }
+          click: self.clickHandled
         };
+      },
 
+      clickHandled: function() {
+        this.clickHandled = true;
       },
 
       bindings: {
@@ -353,6 +355,7 @@ $(document).ready(function() {
 
     equal(testView.clickHandled, true);
 
+    testView.remove();
   });
 
   test('bindings:setOptions', function() {
@@ -1416,6 +1419,8 @@ test('bindings:selectOptions:defaultOption:OptGroups', 8, function() {
 
     testView.$('#test1').val('dasina').trigger('change');
     equal(model.get('water'), 'dasina');
+
+    testView.remove();
   });
 
   test('bindings:updateView', 9, function() {
@@ -1613,6 +1618,7 @@ test('bindings:selectOptions:defaultOption:OptGroups', 8, function() {
     view.bindings = {
       '#test1': {
         observe: 'water',
+        events: ['change', 'input', 'keyup'],
         destroy: function($el, model, options) {
           equal($el.val(), 'fountain');
           equal(model.get('water'), 'fountain');
@@ -1663,6 +1669,24 @@ test('bindings:selectOptions:defaultOption:OptGroups', 8, function() {
     });
 
     view.$('#test1').val('dasina').trigger('change');
+  });
+
+  test('view.remove should be called and unbind events', 4, function() {
+
+    model.set({'water':null});
+    view.model = model;
+    view.templateId = 'jst1';
+    view.bindings = {
+      '#test1': 'water'
+    };
+    view.remove = function(option) {
+      ok(true);
+      ok(!!option);
+    };
+    $('#qunit-fixture').html(view.render().el);
+    equal(view._modelBindings.length, 1);
+    view.remove('test');
+    equal(view._modelBindings.length, 0);
   });
 
 });
