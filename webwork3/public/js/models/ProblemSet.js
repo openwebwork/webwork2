@@ -15,6 +15,7 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
             open_date: "",
             due_date: "",
             answer_date: "",
+            reduced_scoring_date: "",
             visible: 0,
             enable_reduced_scoring: 0,
             assignment_type: "",
@@ -40,6 +41,7 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
            open_date: "checkDates",
             due_date: "checkDates",
             answer_date: "checkDates",
+            reduced_scoring_date: "checkDates",
             set_id: {  
                 setNameValidator: 1 // uses your custom validator
             }

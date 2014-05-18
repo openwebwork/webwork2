@@ -174,6 +174,7 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <tbody>
 <tr><td class="header">Set Name</td><td class="set-name"></td></tr>
 <tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
+<tr><td class="header">Reduced Credit Date</td><td class="reduced-credit-date edit-datetime"></td></tr>
 <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
 <tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
 <tr><td>Problem Set visible to Users</td><td><select class='prob-set-visible input-small'> </select></td></tr>
