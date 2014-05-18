@@ -1430,7 +1430,12 @@ sub output_submit_buttons{
         }
         if ($can{showMeAnother} and !($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview})) {
             # only output showMeAnother button if we're not on the showMeAnother page (or checking answers)
-            print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", -input_attr=>{-onclick=>"this.form.target='_blank'",-name=>"showMeAnother", -value=>$r->maketext("Show me another")});
+            print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", 
+                                                              -input_attr=>{-onclick=>"this.form.target='_blank'",
+                                                                            -name=>"showMeAnother", 
+                                                                            -value=>$r->maketext("Show me another"),
+                                                                            class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", 
+                                                                            "data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")});
         } else {
             # if showMeAnother is available for the course, and for the current problem (but not yet
             # because the student hasn't tried enough times) then gray it out; otherwise display nothing
@@ -1439,7 +1444,10 @@ sub output_submit_buttons{
             $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
             if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother{TriesNeeded} >-1 ) and !($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview})){
                 my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
-                print CGI::span({class=>'gray_button'},$r->maketext("Show me another [_1]",$exhausted));
+                print CGI::span({class=>"gray_button set-id-tooltip",
+                                "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"",
+                                "data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",($showMeAnother{TriesNeeded}-$showMeAnother{Count})),
+                                }, $r->maketext("Show me another [_1]",$exhausted));
               }
             }
     }
