@@ -11,7 +11,7 @@
 #   1) The OPL downloaded to your machine (the .pg files)
 #   2) The environment variable WEBWORK_ROOT needs to be 
 #      correctly defined (as with other scripts here).
-#   3) Configuration for the OPL in site.conf needs to be
+#   3) Configuration for the OPL in localOverrides.conf needs to be
 #      done (basically just setting the path to the OPL files).
 
 #use strict;
@@ -406,7 +406,7 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 	close(IN);
 } else {
 	print "Textbooks file was not found in library $libraryRoot. If the path to the problem library doesn't seem
-	correct, make modifications in webwork2/conf/site.conf (\$problemLibrary{root}).  If that is correct then
+	correct, make modifications in webwork2/conf/localOverrides.conf (\$problemLibrary{root}).  If that is correct then
 	updating from git should download the Textbooks file.\n";
 }
 #### End of textbooks
