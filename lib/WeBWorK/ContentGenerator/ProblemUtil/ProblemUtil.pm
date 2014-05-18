@@ -169,12 +169,22 @@ sub process_and_log_answer{
 				#add flags for an essay question.  If its an essay question and 
 				# we are submitting then there could be potential changes, and it should 
 				# be flaged as needing grading
+				# we shoudl also check for the appropriate flag in the global problem and set it 
 
 				if ($isEssay && $pureProblem->{flags} !~ /needs_grading/) {
 				    $pureProblem->{flags} =~ s/graded,//;
 				    $pureProblem->{flags} .= "needs_grading,";
 				}
-
+				
+				my $globalProblem = $db->getGlobalProblem($problem->set_id, $problem->problem_id);		
+				if ($isEssay && $globalProblem->{flags} !~ /essay/) {
+				    $globalProblem->{flags} .= "essay,";
+				    $db->putGlobalProblem($globalProblem);
+				} elsif (!$isEssay && $globalProblem->{flags} =~ /essay/) {
+				    $globalProblem->{flags} =~ s/essay,//;
+				    $db->putGlobalProblem($globalProblem);
+				}
+				
 				if ($db->putUserProblem($pureProblem)) {
 					$scoreRecordedMessage = $r->maketext("Your score was recorded.");
 				} else {

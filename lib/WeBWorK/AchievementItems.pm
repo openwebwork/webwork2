@@ -332,7 +332,7 @@ sub new {
 	name => "Ring of Reduction",
 	#Reduced credit needs to be set up in course configuration for this
 	# item to work,
-	description => "Enable reduced credit for a homework set.  This will allow you to submit answers for partial credit for limited time after the due date.",
+	description => "Enable reduced scoring for a homework set.  This will allow you to submit answers for partial credit for limited time after the due date.",
 	%options,
     };
     
@@ -398,6 +398,7 @@ sub use_item {
     # to the due date.  
     my $additionalTime = 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
     $set->enable_reduced_scoring(1);
+    $set->reduced_scoring_date($set->due_date());
     $set->due_date($set->due_date()+$additionalTime);
     $set->answer_date($set->answer_date()+$additionalTime);
 
