@@ -672,6 +672,7 @@ sub pre_header_initialize {
                     checkAnswers  => ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
                     showSolutions => ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
                     showCorrect   => ('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+                    showHints     => ('SMAshowHints' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
                   },
             Count => $problem->{showMeAnotherCount},
             Preview => ($previewAnswers and $r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}), 
@@ -852,11 +853,11 @@ sub pre_header_initialize {
             if(($showMeAnother{Count}<=($showMeAnother{MaxReps}) or ($showMeAnother{MaxReps}==-1))
                 and $showMeAnother{IsPossible} )
             {
-	          $can{showCorrectAnswers} = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers}));
-	          $can{showHints}          = 1;
-	          $can{showSolutions} = ($showMeAnother{options}->{showSolutions});
-	          $must{showSolutions} = ($showMeAnother{options}->{showSolutions});
-	          $can{checkAnswers}       = ($showMeAnother{options}->{checkAnswers});
+	          $can{showCorrectAnswers} = ($showMeAnother{options}->{showCorrect} and $showMeAnother{options}->{checkAnswers});
+	          $can{showHints}          = $showMeAnother{options}->{showHints};
+	          $can{showSolutions}      = $showMeAnother{options}->{showSolutions};
+	          $must{showSolutions}     = $showMeAnother{options}->{showSolutions};
+	          $can{checkAnswers}       = $showMeAnother{options}->{checkAnswers};
             }
       }
 
