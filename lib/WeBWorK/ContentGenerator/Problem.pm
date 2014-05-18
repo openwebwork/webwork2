@@ -1447,7 +1447,7 @@ sub output_submit_buttons{
                 my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
                 print CGI::span({class=>"gray_button set-id-tooltip",
                                 "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"",
-                                "data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",($showMeAnother{TriesNeeded}-$showMeAnother{Count})),
+                                "data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
                                 }, $r->maketext("Show me another [_1]",$exhausted));
               }
             }
