@@ -113,11 +113,11 @@ The standard procedure follows:
     *  Beware of spaghetti pull requests.  Its fine if two feature branches which both track the same branch in origin are merged together, but it creates confusion.  In particular, if a feature branch tracking master has been pulled into a feature branch tracking develop then the feature branch tracking develop cannot be merged into openwebwork.  
 
 3.  Get a local copy of the proposed changes.  The easiest way to do this is to go to the bottom of the "Conversation" tab on the pull request page, click the "command line" link, and run the commands under "Step 1".  You may need to add "origin/" in front of the target branch.  The result will look something like 
-```
-git checkout -b <git-username>-feature/<feature-branch-name> origin/<target-branch>
-git pull https://github.com/<git-username>/webwork2.git <feature-branch-name>
-```
-    Restart the webserver, and update config files or upgrade databases as necessary.  
+  ```
+  git checkout -b <git-username>-feature/<feature-branch-name> origin/<target-branch>
+  git pull https://github.com/<git-username>/webwork2.git <feature-branch-name>
+  ```
+  Restart the webserver, and update config files or upgrade databases as necessary.  
 
 4.  Test the code using the testing instructions provided in the pull request.  If they didn't provide instructions, figure out your own way to test the changes.  If/When something breaks, report it as a comment.  The submitter can fix the bugs and the pull request will update automatically.  
 
@@ -127,7 +127,7 @@ git pull https://github.com/<git-username>/webwork2.git <feature-branch-name>
 
 Note:  If you do not have merge privileges for openwebwork you can still review pull requests.  Just follow steps 1 through 6 and when you are done write a comment explaining what you have tested and what the results were.  A maintainer can then merge the request later. 
 
-For cleanup feel free to delete the branch that you created to test the pull request `git branch -D <git-username>-feature/<feature-branch-name>`
+For cleanup feel free to delete the branch that you created to test the pull request: `git branch -D <git-username>-feature/<feature-branch-name>`
 
 ## Frequently Asked Questions
 
