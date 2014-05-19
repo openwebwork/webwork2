@@ -118,9 +118,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                     }    
                 },
                 {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
-                        datatype: "string", stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
+                        datatype: "string", stickit_options: { selectOptions: { collection: [{value: "0", label: "No"},{value: "1", label: "Yes"}]}}},
                 {name: "Visible", key: "visible", classname: "is-visible", datatype: "string",
-                        stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
+                        stickit_options: { selectOptions: { collection: [{value: "0", label: "No"},{value: "1", label: "Yes"}]}}},
                 {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: ["reduced-scoring-date","edit-datetime"], 
