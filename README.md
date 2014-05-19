@@ -101,6 +101,7 @@ After your pull request has been merged you can delete your feature branch.  You
 The other side of the coin is reviewing and testing submitted pull request so they can be merged.  This is usually done by by a maintainer of the openwebwork repository, but it doesn't have to be.  Anyone can review a pull request.  Something to keep in mind is that anything pulled into master is immediately distributed and has to be rock solid.  Anything pulled into a release/x.y branch will be merged into master in about six months and needs to be very stable.  Things merged into develop will make it into master in about a year or so, passing through a release branch on the way.  In particular something pulled into develop will eventually end up in master, and should be at least in its "beta" stage.  Experimental or preliminary code should be kept on individual contributers personal github repos and distributed from there.  
 
 The standard procedure follows:
+
 1.  Open the pull request and check to see that the file changes look sane and that the feature is being pulled into the correct branch.
 
 Note:  First time submitters don't always use feature branches.  Often they are submitting their personal versions of develop.  As long as the file changes look fine its reasonable to think of "develop" as a badly named feature branch.  However you should point them to this documentation for future contributions. 
