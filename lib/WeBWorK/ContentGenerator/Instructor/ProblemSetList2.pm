@@ -1849,7 +1849,8 @@ sub importSetsFromDef {
 			  sourceFile => $rh_problem->{source_file},
 			  problemID => $freeProblemID++,
 			  value => $rh_problem->{value},
-			  maxAttempts => $rh_problem->{max_attempts});
+			  maxAttempts => $rh_problem->{max_attempts},
+			  showMeAnother => $rh_problem->{showMeAnother});
 		}
 
 
@@ -1886,6 +1887,7 @@ sub readSetDef {
 	my $filePath      = "$templateDir/$fileName";
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
+	my $showMeAnother = $self->{ce}->{problemDefaults}->{showMeAnother};
 
 	my $setName = '';
 	
@@ -2069,7 +2071,12 @@ sub readSetDef {
 			## anything left?
 			push(@line, $curr) if ( $curr );
 			
-			($name, $value, $attemptLimit, $continueFlag) = @line;
+            # read the line and only look for $showMeAnother if it has the correct number of entries
+            if(scalar(@line)==4){
+			    ($name, $value, $attemptLimit, $showMeAnother, $continueFlag) = @line;
+            } else {
+			    ($name, $value, $attemptLimit, $continueFlag) = @line;
+            }
 			#####################
 			#  clean up problem values
 			###########################
@@ -2085,6 +2092,7 @@ sub readSetDef {
 			push(@problemData, {source_file    => $name,
 			                    value          =>  $value,
 			                    max_attempts   =>, $attemptLimit,
+			                    showMeAnother  =>, $showMeAnother,
 			                    continuation   => $continueFlag 
 			                    });
 		}
@@ -2171,12 +2179,20 @@ SET:	foreach my $set (keys %filenames) {
 			my $source_file   = $problemRecord->source_file();
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
+			my $showMeAnother  = $problemRecord->showMeAnother();
 			
 			# backslash-escape commas in fields
 			$source_file =~ s/([,\\])/\\$1/g;
 			$value =~ s/([,\\])/\\$1/g;
 			$max_attempts =~ s/([,\\])/\\$1/g;
-			$problemList     .= "$source_file, $value, $max_attempts \n";
+			$showMeAnother =~ s/([,\\])/\\$1/g;
+
+            # only include showMeAnother if it has been enabled in the course configuration
+            if($ce->{pg}->{options}{enableShowMeAnother}){
+			    $problemList     .= "$source_file, $value, $max_attempts, $showMeAnother \n";
+            } else {
+			    $problemList     .= "$source_file, $value, $max_attempts \n";
+            }
 		}
 
 		# gateway fields
