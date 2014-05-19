@@ -18,7 +18,7 @@ define(['backbone','views/SidePane','stickit'], function(Backbone,SidePane){
 			if(ul.width()>this.$el.width()){
 				ul.width(this.$el.width());
 			}
-
+			SidePane.prototype.render.apply(this);
             return this;
 		}
 	});

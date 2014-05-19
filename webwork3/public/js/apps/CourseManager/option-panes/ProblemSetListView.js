@@ -50,9 +50,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             if (this.problemSets.size() === 0 ) {
                 $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
             }
-            $("#problemSets").height($(window).height()-80);
-            this.$(".prob-set-container").height($(window).height()-150);
             this.setDragDrop();
+            SidePane.prototype.render.apply(this);
             return this;
         },
         events: {"click a.sort-problem-set-option": "resort"},

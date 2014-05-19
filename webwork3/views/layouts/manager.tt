@@ -77,16 +77,6 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
     </div><!-- /.container-fluid -->
 </script>
 
-<!-- This is where all messages to the user go -->
-<script type="text/template" id="message-pane-template">
-<div class='row'>
-    <div class='pull-right'><button type='button' class='close'>&times;</button></div>
-    <ul class='main-message-pane no-bullets'></ul>
-</div>
-
-</script>
-
-
 
 </body>
 </html>

@@ -101,6 +101,12 @@ var CourseManager = WebPage.extend({
             .set({assignmentDates: this.assignmentDateList});
 
 
+        this.mainViewList.getSidepaneByName("All Messages")
+            .set({messages: this.messagePane.messages});
+
+
+        // Build the options menu.  Should we make a View for this?  
+
         this.setMessages();  
 
         // this will automatically save (sync) any change made to a problem set.
