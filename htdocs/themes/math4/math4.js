@@ -6,8 +6,8 @@ $(function(){
     $('.classlist').addClass('table table-condensed classlist-table');
 
     // Try to format checkboxes better
-    $('input:checkbox').parent('label').addClass('checkbox').css('white-space','nowrap');
-    $('input:radio').parent('label').addClass('radio').css('white-space','nowrap');
+    $('input:checkbox').parent('label').addClass('checkbox');
+    $('input:radio').parent('label').addClass('radio');
 
     // Make grey_buttons disabled buttons
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');

@@ -1294,7 +1294,9 @@ sub import_form {
 				"document.getElementsByName('action.import.source')[0].multiple = (number > 1 ? true : false);",
 				"document.getElementsByName('action.import.name')[0].value = (number > 1 ? '(taken from filenames)' : '');",
 			);
-	my $datescript = <<EOS;
+	my $datescript = "";
+	if ($ce->{options}{useDateTimePicker}) {
+	    $datescript = <<EOS;
 \$('#import_date_shift').datetimepicker({
   showOn: "button",
   buttonText: "<i class='icon-calendar'></i>",
@@ -1305,6 +1307,7 @@ sub import_form {
   constrainInput: false, 
  });
 EOS
+	}
 
 	return join(" ",
 		WeBWorK::CGI_labeled_input(
@@ -1357,6 +1360,7 @@ EOS
 		      -input_attr=>{
 			  -name => "action.import.start.date",
 			  -size => "27",
+                          -value => $actionParams{"action.import.start.date"}->[0] || "",
 			  -onchange => $onChange,})),
 		CGI::br(),
 		($authz->hasPermissions($user, "assign_problem_sets")) 
