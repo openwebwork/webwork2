@@ -196,6 +196,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                     ".open-date" : "open_date",
                     ".due-date" : "due_date",
                     ".answer-date": "answer_date",
+                    ".reduced-scoring-date": "reduced_scoring_date",
                     ".prob-set-visible": {observe: "visible", selectOptions: {
                         collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
                     }},

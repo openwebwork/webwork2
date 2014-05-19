@@ -123,6 +123,8 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                         stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
                 {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
+                {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: ["reduced-scoring-date","edit-datetime"], 
+                        editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Answer Date", key: "answer_date", classname: ["answer-date","edit-datetime"], 
