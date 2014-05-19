@@ -1,7 +1,7 @@
 #WeBWorK Development
 This is a rough draft of our developer instructions, so parts of it are likely missing or wrong. Any corrections/additions are welcome
 
-We're trying to folow [git flow](http://nvie.com/posts/a-successful-git-branching-model/) so it would be a good idea for developers to read up on it 
+We're trying to follow [git flow](http://nvie.com/posts/a-successful-git-branching-model/) so it would be a good idea for developers to read up on it 
 and [install](https://github.com/nvie/gitflow/wiki/Installation) the commandline tools.  
 We're working on getting our own, more specific, documentation up about our desired development flow.
 
@@ -12,7 +12,7 @@ First create an account/login to github.  Head to the https://github.com/openweb
 Once that's done, clone your newly forked repo to your local computer and add openwebwork as an upstream.
 
 ```
-git add remote upstream git://github.com/openwebwork/webwork2.git
+git remote add upstream git://github.com/openwebwork/webwork2.git
 ```
 
 I'd also recomend making sure the develop branch is pulled down from openwebwork and ready to push up to your github repo.

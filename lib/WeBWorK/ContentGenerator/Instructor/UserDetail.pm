@@ -357,7 +357,7 @@ sub body {
 
 	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail'}),"\n";
 	print $self->hidden_authen_fields();
-	print CGI::p(CGI::submit(-name=>'save_button',-label=>'Save changes',));
+	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	
 	print CGI::start_table({ border=> 1,cellpadding=>5}),"\n";
 	print CGI::Tr(
@@ -440,7 +440,7 @@ sub body {
 		),"\n";
 	}
 	print CGI::end_table(),"\n";
-	print CGI::p(CGI::submit(-name=>'save_button',-label=>'Save changes',));
+	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	print CGI::end_form(),"\n";
 	########################################
 	# Print warning
