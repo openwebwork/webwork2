@@ -16,9 +16,9 @@ Next you will need to set up your own repository and add it as a remote to your 
 2.  Your WeBWorK installation currently has the openwebwork github repository set up as a remote named origin.  Add your remote by using the command
 ```
 cd /opt/webwork/webwork2
-git remote add personal git://github.com/<github username here>/webwork2.git
+git remote add personal https://github.com/<github username here>/webwork2.git
 cd /opt/webwork/pg
-git remote add personal git://github.com/<github username here>/pg.git
+git remote add personal https://github.com/<github username here>/pg.git
 ```
 Note:  If you installed WeBWorK manually using clone from your personal repository, then your personal repository will be named origin.  You would then add the openwebwork repository using a similar command as above.  You can then rename your branches using `git branch -m <old branch name> <new branch name>`.  
 3.  Recommended:  This step is optional but recommended.  As described in the next section, all new code for WeBWorK should be written on feature branches.  We don't recommend keeping local copies of the develop and master branches around since you shouldn't be making commits to those.  If you want to work with a fresh copy of develop you should either make a feature branch or checkout a "headless"  version of develop to play around on.  The following commands will checkout a "headless" develop and delete the local master branch.
