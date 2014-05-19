@@ -84,13 +84,9 @@ If you have been following the advice of the previous section then creating the 
 3.  Click "Edit" on the pull request bar and change the base of the openwebwork/webwork2 fork to the tracking branch of your feature.  I.E.  If your feature was created using `git checkout -b my-feature-branch origin/develop` then make sure you select "develop" as the base for openwebwork.  
 
 4.  Review your pull request.  In particular take a close look at the file changes. 
-
     -  Are all of the changes relevant to your feature?  Did anything unexpected sneak in? 
-
     -  Do you have any "configuration" changes or changes with hard-coded path?  Any site specific code?  
-
     -  Are there a reasonable number of changes?  Will it be easy for a reviewer to look over your submission?  
-
     Note: If your are adding js libraries to WeBWorK and they are making your pull request hard to read, one solution is to create a new feature branch, just add the js libraries, and submit that pull first.  It should be accepted and merged relatively quickly.  Afterwards your feature branch will have a much smaller set of changes. 
 
 5. Pick a title for your pull request and write a description.  Your description should describe the major changes included in the pull request as well as fairly detailed instructions on how to test to see if the changes are working.  The better your description is and the clearer your instructions are the more likely someone will be able to test and merge your pull request in a timely manner.  
@@ -107,13 +103,13 @@ The other side of the coin is reviewing and testing submitted pull request so th
 The standard procedure follows:
 1.  Open the pull request and check to see that the file changes look sane and that the feature is being pulled into the correct branch.
 
-Note:  First time submitters don't always use feature branches.  Often they are submitting their personal versions of develop.  As long as the file changes look fine its reasonable to think of "develop" as a badly named feature branch.  However you should point them to this documentation for future contributions. 
+    Note:  First time submitters don't always use feature branches.  Often they are submitting their personal versions of develop.  As long as the file changes look fine its reasonable to think of "develop" as a badly named feature branch.  However you should point them to this documentation for future contributions. 
 
 2.  Open the "Network" page for openwebwork and find the line corresponding to the feature branch on the Network page.  (You may need to click "refresh".)  Ideally the line will either be a "loop" or a "ladder" minus the final pull.  (See the above diagram).  
-*  The branch must track (i.e. be split from) the same branch it is being pulled into.  E.G. If it splits off master it cannot be pulled into develop. 
-Note: This is a common issue with first time submitters.  Point them to these instructions.  They can salvage their work by creating a proper feature branch and then either rebasing or using cherry-pick to move their commits to the feature branch.  
-*  If a branch which is targeted for, say, develop, has had master or release/x.y merged into it, then it cannot be merged.  The developer will need to make a new feature branch tracking the appropriate branch and then use rebase or cherry-pick to move their code over. 
-*  Beware of spaghetti pull requests.  Its fine if two feature branches which both track the same branch in origin are merged together, but it creates confusion.  In particular, if a feature branch tracking master has been pulled into a feature branch tracking develop then the feature branch tracking develop cannot be merged into openwebwork.  
+     *  The branch must track (i.e. be split from) the same branch it is being pulled into.  E.G. If it splits off master it cannot be pulled into develop. 
+    Note: This is a common issue with first time submitters.  Point them to these instructions.  They can salvage their work by creating a proper feature branch and then either rebasing or using cherry-pick to move their commits to the feature branch.  
+    *  If a branch which is targeted for, say, develop, has had master or release/x.y merged into it, then it cannot be merged.  The developer will need to make a new feature branch tracking the appropriate branch and then use rebase or cherry-pick to move their code over. 
+    *  Beware of spaghetti pull requests.  Its fine if two feature branches which both track the same branch in origin are merged together, but it creates confusion.  In particular, if a feature branch tracking master has been pulled into a feature branch tracking develop then the feature branch tracking develop cannot be merged into openwebwork.  
 
 3.  Get a local copy of the proposed changes.  The easiest way to do this is to go to the bottom of the "Conversation" tab on the pull request page, click the "command line" link, and run the commands under "Step 1".  You may need to add "origin/" in front of the target branch.  The result will look something like 
 ```
@@ -125,6 +121,7 @@ Restart the webserver, and update config files or upgrade databases as necessary
 4.  Test the code using the testing instructions provided in the pull request.  If they didn't provide instructions, figure out your own way to test the changes.  If/When something breaks, report it as a comment.  The submitter can fix the bugs and the pull request will update automatically.  
 
 5.  Do a more thorough overview of the file changes.  Check to see that the changes look reasonable and that nothing seems unusual, out of place, or wrong.  
+
 6.  Continue to try and break the pull request.  When the code is ready to be merged, write a short comment explaining what you have tested and merge the commit.  You should merge the pull request using the web interface, not via the command line.  
 
 Note:  If you do not have merge privileges for openwebwork you can still review pull requests.  Just follow steps 1 through 6 and when you are done write a comment explaining what you have tested and what the results were.  A maintainer can then merge the request later. 
