@@ -28,7 +28,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 problemSetView : new ProblemSetView({problemSet: this.problemSet, settings: this.settings, 
                             messageTemplate: this.messageTemplate}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
-                propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet}),
+                propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet, settings: this.settings}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
                 unassignUsersView: new UnassignUserView({users:this.users})
             };
@@ -174,10 +174,15 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         initialize: function (options) {
             _.bindAll(this,'render','setProblemSet');
             this.users = options.users;
+            this.settings = options.settings;
 
         },
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==0){
+               this.$(".reduced-scoring-date,.reduced-credit").closest("tr").css("display","none")               
+            }
+ 
             if(this.model){
                 this.stickit();
             }
