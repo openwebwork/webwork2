@@ -702,9 +702,10 @@ sub pre_header_initialize {
         $showMeAnother{CheckAnswers} = (defined($r->param("problemSeed"))) ?                          
                                         ($r->param("showMeAnotherCheckAnswers")                    
                                         and $ce->{pg}->{options}->{enableShowMeAnother}            
-                                        and ($newProblemSeed != $oldProblemSeed) 
+                                        and (($newProblemSeed != $oldProblemSeed) or ($authz->hasPermissions($userName, "modify_problem_sets"))) 
                                         and ($showMeAnother{options}->{checkAnswers})):0;      
     }
+
 
     # store the showMeAnother hash for the check to see if the button can be used
     # (this hash is updated and re-stored after the can, must, will hashes)
