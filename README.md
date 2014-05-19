@@ -93,12 +93,12 @@ If you have been following the advice of the previous section then creating the 
 
     Note: If your are adding js libraries to WeBWorK and they are making your pull request hard to read, one solution is to create a new feature branch, just add the js libraries, and submit that pull first.  It should be accepted and merged relatively quickly.  Afterwards your feature branch will have a much smaller set of changes. 
 
-5.  Pick a title for your pull request and write a description.  Your description should describe the major changes included in the pull request as well as fairly detailed instructions on how to test to see if the changes are working.  The better your description is and the clearer your instructions are the more likely someone will be able to test and merge your pull request in a timely manner.  
+5. Pick a title for your pull request and write a description.  Your description should describe the major changes included in the pull request as well as fairly detailed instructions on how to test to see if the changes are working.  The better your description is and the clearer your instructions are the more likely someone will be able to test and merge your pull request in a timely manner.  
 
-6.  Double check that the pull request is for the correct branch and submit.  Now scroll down to the bottom of the pull request page and check that it can be merged.  (The merge button should be green, not grey.)  If it can't be merged, pull the target branch into the feature branch, fix any conflicts, and push the changes to your personal git repository.  
+6. Double check that the pull request is for the correct branch and submit.  Now scroll down to the bottom of the pull request page and check that it can be merged.  (The merge button should be green, not grey.)  If it can't be merged, pull the target branch into the feature branch, fix any conflicts, and push the changes to your personal git repository.  
 Note:  It is likely you will need/want to change your pull request after it has been submitted.  If you push new commits to your personal git repository they will automatically be integrated into your pull request.  
 
-After your pull request has been merged you can delete your feature branch.  Your changes are part of openwebwork now.  All that's left is to sit back and wait for someone to break something.  You can sign up for an account with the WeBWorK bug tracking service at http://bugs.webwork.maa.org.  Once you have an account you can set up you can get bug reports emailed to you by visiting preferences, going to the email preferences tab and clicking "Enable All Mail".  
+After your pull request has been merged you can delete your feature branch.  Your changes are part of openwebwork now.  All that's left is to sit back and wait for someone to break something.  You can sign up for an account with the WeBWorK bug tracking service at http://bugs.webwork.maa.org.  Once you have an account you can get bug reports emailed to you by visiting preferences, going to the email preferences tab and clicking "Enable All Mail".  
 
 ## Merging Pull Requests
 
