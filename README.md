@@ -104,15 +104,12 @@ The standard procedure follows:
 
 1.  Open the pull request and check to see that the file changes look sane and that the feature is being pulled into the correct branch.
 
-Note:  First time submitters don't always use feature branches.  Often they are submitting their personal versions of develop.  As long as the file changes look fine its reasonable to think of "develop" as a badly named feature branch.  However you should point them to this documentation for future contributions. 
+  Note:  First time submitters don't always use feature branches.  Often they are submitting their personal versions of develop.  As long as the file changes look fine its reasonable to think of "develop" as a badly named feature branch.  However you should point them to this documentation for future contributions. 
 
 2.  Open the "Network" page for openwebwork and find the line corresponding to the feature branch on the Network page.  (You may need to click "refresh".)  Ideally the line will either be a "loop" or a "ladder" minus the final pull.  (See the above diagram).  
     *  The branch must track (i.e. be split from) the same branch it is being pulled into.  E.G. If it splits off master it cannot be pulled into develop. 
-    
-    Note: This is a common issue with first time submitters.  Point them to these instructions.  They can salvage their work by creating a proper feature branch and then either rebasing or using cherry-pick to move their commits to the feature branch.  
-    
+        Note: This is a common issue with first time submitters.  If its a problem, work with them and point them to these instructions.  They can salvage their work by creating a proper feature branch and then either rebasing or using cherry-pick to move their commits to the feature branch.  
     *  If a branch which is targeted for, say, develop, has had master or release/x.y merged into it, then it cannot be merged.  The developer will need to make a new feature branch tracking the appropriate branch and then use rebase or cherry-pick to move their code over. 
-    
     *  Beware of spaghetti pull requests.  Its fine if two feature branches which both track the same branch in origin are merged together, but it creates confusion.  In particular, if a feature branch tracking master has been pulled into a feature branch tracking develop then the feature branch tracking develop cannot be merged into openwebwork.  
 
 3.  Get a local copy of the proposed changes.  The easiest way to do this is to go to the bottom of the "Conversation" tab on the pull request page, click the "command line" link, and run the commands under "Step 1".  You may need to add "origin/" in front of the target branch.  The result will look something like 
