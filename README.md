@@ -103,7 +103,7 @@ The other side of the coin is reviewing and testing submitted pull request so th
 The standard procedure follows:
 1.  Open the pull request and check to see that the file changes look sane and that the feature is being pulled into the correct branch.
 
-    Note:  First time submitters don't always use feature branches.  Often they are submitting their personal versions of develop.  As long as the file changes look fine its reasonable to think of "develop" as a badly named feature branch.  However you should point them to this documentation for future contributions. 
+Note:  First time submitters don't always use feature branches.  Often they are submitting their personal versions of develop.  As long as the file changes look fine its reasonable to think of "develop" as a badly named feature branch.  However you should point them to this documentation for future contributions. 
 
 2.  Open the "Network" page for openwebwork and find the line corresponding to the feature branch on the Network page.  (You may need to click "refresh".)  Ideally the line will either be a "loop" or a "ladder" minus the final pull.  (See the above diagram).  
     *  The branch must track (i.e. be split from) the same branch it is being pulled into.  E.G. If it splits off master it cannot be pulled into develop. 
