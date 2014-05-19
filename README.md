@@ -70,7 +70,7 @@ Here the last diagonal line represents the final merge of the feature branch int
 The most strict version of this policy is that your feature branch is only allowed to pull its tracking branch.  It should not have any other branches merged into it and it should not be merged into other branches.  This is more restrictive than is absolutely necessary, but it is very safe.  If you do decide to merge your branch into something else, or merge something else into it, keep the following in mind: 
 *  If you merge a branch from origin other than your tracking branch into your feature branch, then your feature branch will not be able to be merged into openwebwork anymore. I.E. If you based your feature branch off origin/develop then you cannot pull origin/master or origin/release/x.y into your feature branch. 
 *  If you merge a different feature branch which is tracking a branch different than your current feature branch, then your feature branch will not be able to be integrated into openwebwork anymore.  I.E.  If you have feature-a which is tracking origin/develop then you cannot pull feature-b into feature-a if feature-b is tracking origin/master. 
-*  You can merge two feature branches which are both tracking the same branch in origin, but it makes life slightly more difficult for the person evaluating the pull request, so have a good reason for doing so.  
+*  You can merge two feature branches which are both tracking the same branch in origin, but it makes life more difficult for the person evaluating the pull request, so have a good reason for doing so.  
 
 Writing all of your changes into feature branches helps keep different features and different changes separate.  You can work on your experimental new student view in one branch, bugfix a previous contribution in another branch, and apply a quick hotfix to master in a third.  This does mean your local machine fills up with feature branches.  You can delete branches that have already been merged with `git branch -d <my-feature-branch>`.
 
@@ -78,14 +78,23 @@ Writing all of your changes into feature branches helps keep different features 
 
 If you have been following the advice of the previous section then creating the pull request should be relatively simple.  
 1.  Make sure your feature branch can be merged cleanly.  In other words, pull it's tracking branch (`git pull`), fix any conflicts, commit the results, and push to your git repository. 
+
 2.  Go to the webwork2 repository page in your personal account, select your feature branch from the branch dropdown and click the green button. 
+
 3.  Click "Edit" on the pull request bar and change the base of the openwebwork/webwork2 fork to the tracking branch of your feature.  I.E.  If your feature was created using `git checkout -b my-feature-branch origin/develop` then make sure you select "develop" as the base for openwebwork.  
+
 4.  Review your pull request.  In particular take a close look at the file changes. 
+
     - Are all of the changes relevant to your feature?  Did anything unexpected sneak in? 
+
     - Do you have any "configuration" changes or changes with hard-coded path?  Any site specific code?  
+
     - Are there a reasonable number of changes?  Will it be easy for a reviewer to look over your submission?  
+
 Note: If your are adding js libraries to WeBWorK and they are making your pull request hard to read, one solution is to create a new feature branch, just add, the js libraries, and submit that pull first.  It should be accepted and merged relatively quickly.  Afterwards your feature branch will have a much smaller set of changes. 
+
 5.  Pick a title for your pull request and write a description.  Your description should describe the major changes included in the pull request as well as fairly detailed instructions on how to test to see if the changes are working.  The better your description is and the clearer your instructions are the more likely someone will be able to test and merge your pull request in a timely manner.  
+
 6.  Double check that the pull request is for the correct branch and submit.  Now scroll down to the bottom of the pull request page and check that it can be merged.  (The merge button should be green, not grey.)  If it can't be merged, pull the target branch into the feature branch, fix any conflicts, and push the changes to your personal git repository.  
 Note:  It is likely you will need/want to change your pull request after it has been submitted.  If you push new commits to your personal git repository they will automatically be integrated into your pull request.  
 
