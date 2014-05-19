@@ -102,11 +102,10 @@ The other side of the coin is reviewing and testing submitted pull request so th
 
 The standard procedure follows:
 1.  Open the pull request and check to see that the file changes look sane and that the feature is being pulled into the correct branch.
-
     Note:  First time submitters don't always use feature branches.  Often they are submitting their personal versions of develop.  As long as the file changes look fine its reasonable to think of "develop" as a badly named feature branch.  However you should point them to this documentation for future contributions. 
 
 2.  Open the "Network" page for openwebwork and find the line corresponding to the feature branch on the Network page.  (You may need to click "refresh".)  Ideally the line will either be a "loop" or a "ladder" minus the final pull.  (See the above diagram).  
-     *  The branch must track (i.e. be split from) the same branch it is being pulled into.  E.G. If it splits off master it cannot be pulled into develop. 
+    *  The branch must track (i.e. be split from) the same branch it is being pulled into.  E.G. If it splits off master it cannot be pulled into develop. 
     Note: This is a common issue with first time submitters.  Point them to these instructions.  They can salvage their work by creating a proper feature branch and then either rebasing or using cherry-pick to move their commits to the feature branch.  
     *  If a branch which is targeted for, say, develop, has had master or release/x.y merged into it, then it cannot be merged.  The developer will need to make a new feature branch tracking the appropriate branch and then use rebase or cherry-pick to move their code over. 
     *  Beware of spaghetti pull requests.  Its fine if two feature branches which both track the same branch in origin are merged together, but it creates confusion.  In particular, if a feature branch tracking master has been pulled into a feature branch tracking develop then the feature branch tracking develop cannot be merged into openwebwork.  
@@ -116,7 +115,7 @@ The standard procedure follows:
 git checkout -b <git-username>-feature/<feature-branch-name> origin/<target-branch>
 git pull https://github.com/<git-username>/webwork2.git <feature-branch-name>
 ```
-Restart the webserver, and update config files or upgrade databases as necessary.  
+    Restart the webserver, and update config files or upgrade databases as necessary.  
 
 4.  Test the code using the testing instructions provided in the pull request.  If they didn't provide instructions, figure out your own way to test the changes.  If/When something breaks, report it as a comment.  The submitter can fix the bugs and the pull request will update automatically.  
 
