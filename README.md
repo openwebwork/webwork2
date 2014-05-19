@@ -91,7 +91,7 @@ If you have been following the advice of the previous section then creating the 
 
     - Are there a reasonable number of changes?  Will it be easy for a reviewer to look over your submission?  
 
-Note: If your are adding js libraries to WeBWorK and they are making your pull request hard to read, one solution is to create a new feature branch, just add, the js libraries, and submit that pull first.  It should be accepted and merged relatively quickly.  Afterwards your feature branch will have a much smaller set of changes. 
+    Note: If your are adding js libraries to WeBWorK and they are making your pull request hard to read, one solution is to create a new feature branch, just add, the js libraries, and submit that pull first.  It should be accepted and merged relatively quickly.  Afterwards your feature branch will have a much smaller set of changes. 
 
 5.  Pick a title for your pull request and write a description.  Your description should describe the major changes included in the pull request as well as fairly detailed instructions on how to test to see if the changes are working.  The better your description is and the clearer your instructions are the more likely someone will be able to test and merge your pull request in a timely manner.  
 
