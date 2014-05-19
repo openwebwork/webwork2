@@ -177,7 +177,7 @@ var ClasslistView = MainView.extend({
         var _mimetype = "text/csv";
 	    var blob = new Blob([textFileContent], {type:_mimetype});
         var _url = URL.createObjectURL(blob);
-        var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY");
+        var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY") + ".csv";
         var modalView = new ModalView({template: $("#export-to-file-template").html(), 
         	templateOptions: {url: _url, filename: _filename, mimetype: _mimetype}});
         modalView.render().open();
