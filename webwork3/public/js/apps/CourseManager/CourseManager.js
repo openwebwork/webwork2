@@ -100,8 +100,6 @@ var CourseManager = WebPage.extend({
         this.mainViewList.getViewByName("Problem Sets Manager")
             .set({assignmentDates: this.assignmentDateList});
 
-        // Define all of the option views available for the right side
-        // 
 
         this.mainViewList.getSidepaneByName("All Messages")
             .set({messages: this.messagePane.messages});
@@ -156,8 +154,8 @@ var CourseManager = WebPage.extend({
             }
          }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
             self.currentView.render();
-            if(self.currentSidePane.sidePane){
-                self.currentSidePane.sidePane.render();
+            if(self.currentSidePane && self.currentSidePane.sidePane){
+                self.currentSidePane.sidePane.render();                
             }
          })
 
