@@ -48,8 +48,8 @@ Now you are ready to code.  The recommended workflow looks something like
 2.  *code*
 3.  `git commit -a`
 4.  `git pull origin/develop`
-5.  *fix merge problems if any and commit changes*
-6.  `git push personal/<my-feature-branch>`
+5.  *fix merge conflicts, if any, and commit changes*
+6.  `git push personal <my-feature-branch>`
 7.  *repeat*
 
 In particular you should be wary about pulling anything other your tracking branch (e.g. origin/develop) into your feature branch.  Ideally after your code is pulled into openwebwork its network graph should either be a "loop" or a "ladder".  
@@ -58,6 +58,7 @@ origin/develop ----------------------------o
                            \              /
                             \            /
 personal/my-feature-branch   o-----o----o
+```
 ```
 origin/develop ---------------o--o---------o-o-------------o
                            \          \         \         /
