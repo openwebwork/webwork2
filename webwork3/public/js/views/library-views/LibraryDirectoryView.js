@@ -5,9 +5,21 @@ function(Backbone, _,LibraryView,LibraryTreeView){
     		LibraryView.prototype.initialize.apply(this,[options]);
             this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets,
                 topLevelNames: ["Select Library...","Select...","Select...","Select..."]});
-            this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
-    	},
+            this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);
+            Backbone.Validation.bind(this.libraryTreeView, {model: this.libraryTreeView.fields,
+                invalid: function(view,attr,error){
+                    view.$(".library-level-"+attr.split("level")[1])
+                        .popover({title: "Error", content: this.messageTemplate({type: "subject_not_selected"})})
+                        .popover("show");
+                }
+            });
+        },
     	loadProblems: function(_dirs){
+           if(this.libraryTreeView.fields.validate()){
+                console.log("Error!");
+                return;
+            } 
+ 
     		LibraryView.prototype.loadProblems.apply(this,[_dirs.join("/")]);
     	}
 

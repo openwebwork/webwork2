@@ -7,7 +7,7 @@
 *
 */
 
-define(['backbone', 'underscore','models/LibraryTree','stickit'], 
+define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-validation'], 
     function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
@@ -105,6 +105,11 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
             level1: "",
             level2: "",
             level3: "",
+        },
+        validation: {
+            level0: {
+                required: true
+            },
         }
     });
 

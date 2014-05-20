@@ -4,7 +4,6 @@
 *  
 */ 
 
-
 define(['backbone', 'underscore','config', 'views/library-views/LibraryProblemsView','models/ProblemList'], 
 function(Backbone, _,config, LibraryProblemsView, ProblemList){
     var LibraryView = Backbone.View.extend({

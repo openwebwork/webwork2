@@ -196,6 +196,7 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 <% var messages = {
   select_target_set: function() { return "You need to select a target set";},
   problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
+  subject_not_selected: function() { return "You must select a subject."}
 }
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
   %>
