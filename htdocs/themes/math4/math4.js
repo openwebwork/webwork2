@@ -46,6 +46,13 @@ $(function(){
 	$('#toggle-sidebar').click();
     }
 
+    // if no fish eye then collapse site-navigation 
+    if(!$('#site-links').html().match(/[^\s]/)) {
+	$('#site-navigation').removeClass('span2');
+	$('#content').removeClass('span10').addClass('span12');
+	$('#toggle-sidebar').addClass('hidden');
+    }
+
     // Makes the fisheye stuff bootstrap nav
     $('#site-navigation ul').addClass('nav nav-list');
     $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
