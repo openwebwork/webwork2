@@ -2,8 +2,11 @@ define(['backbone', 'underscore','views/library-views/LibraryView','views/librar
 function(Backbone, _,LibraryView,LibraryTreeView){
     var LibrarySubjectView = LibraryView.extend({
     	initialize: function(options){
+            
     		LibraryView.prototype.initialize.apply(this,[options]);
-            this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets});
+            // Put the top level names in a template so it can be translated. 
+            this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets,
+                topLevelNames: ["Select Subject...","Select Chapter...","Select Section...","Select..."]});
             this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
     	},
     	loadProblems: function(_dirs){

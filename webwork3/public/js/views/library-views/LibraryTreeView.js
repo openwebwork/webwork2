@@ -25,7 +25,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
                 this.bindings[".library-level-"+i+ " select"]= {observe: "level"+i,
                     selectOptions: {collection: function (view,opts) { 
                         return self.libraryLevel[opts.observe.split("level")[1]||""]},
-                    defaultOption: {label: "Select...", value: null}}};
+                    defaultOption: {label: options.topLevelNames[i], value: null}}};
             }
     	},
     	render: function(){
