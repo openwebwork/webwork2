@@ -56,8 +56,9 @@ var SettingsView = MainView.extend({
             },
             sync: function(setting){
                 _(_.keys(setting.changingAttributes)).each(function(key){
+                    var msg = setting.get("doc").replace(/\(.*\)/,"");
                     self.eventDispatcher.trigger("add-message",{type: "success",
-                        short: self.messageTemplate({type:"setting_saved",opts:{varname:setting.get("var")}}), 
+                        short: self.messageTemplate({type:"setting_saved",opts:{varname:msg}}), 
                         text: self.messageTemplate({type:"setting_saved_details"
                                 ,opts:{varname:setting.get("var"), oldValue: setting.changingAttributes[key],
                                     newValue: setting.get("value") }})}); 
