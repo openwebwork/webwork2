@@ -188,7 +188,10 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             }
             return this;
         },
-        events: {"click .assign-all-users": "assignAllUsers"},
+        events: {
+            "click .assign-all-users": "assignAllUsers",
+            "change .reduced-credit": "showHideReducedCreditDate"
+        },
         assignAllUsers: function(){
             this.model.set({assigned_users: this.users.pluck("user_id")});
         },
@@ -197,22 +200,33 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             this.model = _set; 
             return this;
         },
-        bindings: { ".set-name" : "set_id",
-                    ".open-date" : "open_date",
-                    ".due-date" : "due_date",
-                    ".answer-date": "answer_date",
-                    ".reduced-scoring-date": "reduced_scoring_date",
-                    ".prob-set-visible": {observe: "visible", selectOptions: {
-                        collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
-                    }},
-                    ".reduced-credit": {observe: "enable_reduced_scoring", selectOptions: {
-                        collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
-                    }},
-                    ".users-assigned": {
-                        observe: "assigned_users",
-                        onGet: function(value, options){ return value.length + "/" +this.users.size();}
-                    }
-                }
+        bindings: { 
+            ".set-name" : "set_id",
+            ".open-date" : "open_date",
+            ".due-date" : "due_date",
+            ".answer-date": "answer_date",
+            ".reduced-scoring-date": "reduced_scoring_date",
+            ".prob-set-visible": {observe: "visible", selectOptions: {
+                collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
+            }},
+            ".reduced-credit": {observe: "enable_reduced_scoring", selectOptions: {
+                collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
+            }},
+            ".users-assigned": {
+                observe: "assigned_users",
+                onGet: function(value, options){ return value.length + "/" +this.users.size();}
+            }
+        },
+        showHideReducedCreditDate: function(evt){
+            if($(evt.target).val()==="1") { // show reduced credit field
+                var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
+                    this.settings.getSettingValue("pg{reducedScoringBeforeDueDate}"));
+                this.model.set({reduced_scoring_date: rcDate.unix()},{silent: true});
+                this.$(".reduced-scoring-date").closest("tr").removeAttr("style");
+            } else {
+                this.$(".reduced-scoring-date").closest("tr").css("display","none");
+            }
+        }
 
     });
 

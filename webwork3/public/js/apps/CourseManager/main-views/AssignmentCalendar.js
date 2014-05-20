@@ -24,7 +24,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             return this;
     	},
     	render: function (){
-    		this.constructor.__super__.render.apply(this);
+    		CalendarView.prototype.render.apply(this);
             this.update();
 
     		this.$(".assign").popover({html: true});

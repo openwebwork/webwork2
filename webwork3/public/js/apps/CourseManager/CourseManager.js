@@ -297,6 +297,11 @@ var CourseManager = WebPage.extend({
                     date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
             self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
                     date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+            if(parseInt(self.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"))===1 
+                    && _.isNumber(_set.get("reduced_scoring_date"))) {
+                self.assignmentDateList.add(new AssignmentDate({type: "reduced", problemSet: _set,
+                    date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
+            }
         });
     },
 });
