@@ -1,11 +1,15 @@
-define(['backbone','config','views/WWSettingsView','views/MainView'],function(Backbone,config,WWSettingsView,MainView){
-	var SettingsView = MainView.extend({
-    
+/*  This is the main view for the Webwork Settings */
+
+
+define(['backbone','underscore','config','views/WWSettingsView','views/MainView'],
+    function(Backbone,_,config,WWSettingsView,MainView){
+var SettingsView = MainView.extend({
+    messageTemplate : _.template($("#settings-messages-template").html()),
     initialize: function (options) {
         MainView.prototype.initialize.call(this,options);
         var self = this;
         _.bindAll(this,'render');
-
+        
         this.categories = this.settings.chain().pluck("attributes").pluck("category")
             .unique().difference("timezone").value();
         this.setMessages();
@@ -20,10 +24,6 @@ define(['backbone','config','views/WWSettingsView','views/MainView'],function(Ba
         MainView.prototype.render.apply(this);
         this.$el.html(_.template($("#settings-template").html(),{categories: this.categories}));
         this.changeSettingTab(this.currentCategory);
-/*        var settings = this.settings.where({category: this.currentCategory});
-        this.$(".tab-content .active").empty().append((new WWSettingsView({settings: settings})).render().el);
-        this.$('.nav-tabs a:eq('+(_(this.categories).indexOf(this.currentCategory)+1)+')').tab('show');
-  */      
         return this;
 
      },
@@ -57,8 +57,8 @@ define(['backbone','config','views/WWSettingsView','views/MainView'],function(Ba
             sync: function(setting){
                 _(_.keys(setting.changingAttributes)).each(function(key){
                     self.eventDispatcher.trigger("add-message",{type: "success",
-                        short: config.msgTemplate({type:"setting_saved",opts:{varname:setting.get("var")}}), 
-                        text: config.msgTemplate({type:"setting_saved_details"
+                        short: self.messageTemplate({type:"setting_saved",opts:{varname:setting.get("var")}}), 
+                        text: self.messageTemplate({type:"setting_saved_details"
                                 ,opts:{varname:setting.get("var"), oldValue: setting.changingAttributes[key],
                                     newValue: setting.get("value") }})}); 
                 });
