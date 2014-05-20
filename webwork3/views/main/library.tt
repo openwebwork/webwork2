@@ -62,7 +62,7 @@
 <script type="text/template" id="local-library-tree-template">
 <div class="row form-horizontal">
 <div class="col-md-4">Local Problem Directory:</div>
-<div class="col-md-4"><select class="local-library-tree form-control">
+<div class="col-md-4"><select class="local-library-tree-select form-control">
 <% _(menu).each(function(m){ print("<option>" + m + "</option>")}) %>
 </select></div>
 <button class="btn btn-default load-problems-button">Load</button>

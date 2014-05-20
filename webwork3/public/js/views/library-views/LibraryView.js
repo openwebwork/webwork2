@@ -27,7 +27,9 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList){
             modes.push("None");
     		this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
-            this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
+            if(this.libraryTreeView){
+                this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
+            }
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
             if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size() >0){
                 this.libraryProblemsView.renderProblems();

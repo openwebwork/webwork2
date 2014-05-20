@@ -6,67 +6,61 @@
 
 
 define(['backbone', 'underscore','views/library-views/LibraryView','models/ProblemList','config','models/Problem'], 
-function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config,Problem){
+function(Backbone, _, LibraryView,ProblemList,config,Problem){
     var LocalLibraryView = LibraryView.extend({
         className: "lib-browser",
     	initialize: function (options){
-            _.bindAll(this,"showResults","showProblems","buildMenu");
+            //_.bindAll(this,"showResults","showProblems","buildMenu");
+            _(this).bindAll("buildMenu");
             LibraryView.prototype.initialize.apply(this,[options]);
             this.libBrowserType = options.libBrowserType;
+            this.libraryProblemsView.problems.type = "localLibrary";
             this.settings = options.settings;
+
     	},
         events: function(){
             return _.extend({},this.constructor.__super__.events,{
                 "click .load-problems-button": "showProblems"
             });
         },
-    	render: function (){
-            var modes = this.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
-            modes.push("None");
-            this.$el.html(_.template($("#library-view-template").html(), 
-                    {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
-            
+        render: function (){
+            LibraryView.prototype.render.apply(this);
 
-            this.libraryProblemsView.setElement(this.$(".problems-container")).render();
+
             if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size() >0){
                 this.libraryProblemsView.renderProblems();
+            } else { 
+                this.$(".library-tree-container").html($("#loading-library-template").html());
+                this.localProblems = new ProblemList();
+                this.localProblems.type = this.libBrowserType;
+                this.localProblems.fetch({success: this.buildMenu});
             }
-            this.$(".library-tree-container").html($("#loading-library-template").html());
-            if(this.problemList){
-                this.buildMenu();
-            } else {
-                this.problemList = new ProblemList();
-                this.problemList.type = this.libBrowserType;
-                this.problemList.fetch({success: this.buildMenu});
-            }
+            
             return this;
-    	},
+    	}, 
         showResults: function (data) {
             this.problemList = new ProblemList(data);
             this.showProblems();
         },
         showProblems: function (){
-
-            var dir = this.$(".local-library-tree").val() == "TOPDIR" ? "" : this.$(".local-library-tree").val();
+            var self = this;
+            var dir = this.$(".local-library-tree-select").val() == "TOPDIR" ? "" : this.$(".local-library-tree-select").val();
             
-            var localProblems = new ProblemList();
-            this.problemList.each(function(prob){
+            this.problemList = new ProblemList();
+            this.localProblems.each(function(prob){
                 var comps = prob.get("source_file").split("/");
                 comps.pop();
                 var topDir = comps.join("/");
                 if( topDir==dir){
-                    localProblems.add(new Problem(prob.attributes),{silent: true});
+                    self.problemList.add(new Problem(prob.attributes),{silent: true});
                 }
             });
-            this.libraryProblemsView.set({problems: localProblems, type:this.libBrowserType});
-            this.libraryProblemsView.updatePaginator();
-            this.libraryProblemsView.gotoPage(0);
+            LibraryView.prototype.showProblems.apply(this);
 
-
-        },
+        }, 
         buildMenu: function () {
             var _menu = [];
-            this.problemList.each(function(prob){
+            this.localProblems.each(function(prob){
                 var comps = prob.get("source_file").split("/");
                 comps.pop();
                 _menu.push(comps.join("/"));
