@@ -32,6 +32,20 @@ $(function(){
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
 
+    // Add a button to make the sidebar more dynamic for small screens
+    $('#toggle-sidebar').click(function (event) {
+	    event.preventDefault();
+	    $('#site-navigation').toggleClass('hidden');
+	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
+		.toggleClass('icon-chevron-right');
+	    $('#site-navigation').toggleClass('span2');
+	    $('#content').toggleClass('span10').toggleClass('span12');
+	});
+
+    if($(window).width() < 480) {
+	$('#toggle-sidebar').click();
+    }
+
     // Makes the fisheye stuff bootstrap nav
     $('#site-navigation ul').addClass('nav nav-list');
     $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
