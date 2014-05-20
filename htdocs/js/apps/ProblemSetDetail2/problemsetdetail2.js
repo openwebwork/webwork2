@@ -49,20 +49,53 @@ $(function() {
 	$(this).children('i').toggleClass('icon-plus-sign').toggleClass('icon-minus-sign');
     })
 
-    $('.pdr_render').click(function() {
+    $('.pdr_render').click(function(event) {
 	event.preventDefault();
 	var id = this.id.match(/^pdr_render_(\d+)/)[1];
-	render(id);
-	
+	if ($('#psr_render_area_'+id).html()) {
+	    $('#psr_render_area_'+id).html('');
+	} else {
+	    render(id);	
+	}
     });
+
+    $('#psd_toolbar').addClass('btn-group');
+
+    $('#psd_render_all').addClass('btn').click(function (event) {
+	event.preventDefault();
+	$('.pdr_render').each(function () {
+	    var id = this.id.match(/^pdr_render_(\d+)/)[1];
+	    render(id);
+	});
+    });
+
+    $('#psd_hide_all').addClass('btn').click(function (event) {
+	event.preventDefault();
+	$('.psr_render_area').html('');
+    });
+
+    $('#psd_expand_all').addClass('btn').click(function (event) {
+	event.preventDefault();
+	$('li.psd_list_row').removeClass('mjs-nestedSortable-collapsed').addClass('mjs-nestedSortable-expanded');
+	$('i.icon-plus-sign').removeClass('icon-plus-sign').addClass('icon-minus-sign');
+    });
+
+    $('#psd_collapse_all').addClass('btn').click(function (event) {
+	event.preventDefault();
+	$('li.psd_list_row').addClass('mjs-nestedSortable-collapsed').removeClass('mjs-nestedSortable-expanded');
+	$('i.icon-minus-sign').addClass('icon-plus-sign').removeClass('icon-minus-sign');
+    });
+
 
     var recurse_on_heirarchy = function (heirarchy,array) {
 	for (var i=0; i < heirarchy.length; i++) {
 	    var id = heirarchy[i].id;
 
 	    $('#prob_num_'+id).val(i+1);
-	    $('#pdr_handle_'+id).html(i+1)
-		.append('<i class="icon-resize-vertical" />');;
+	
+	    $('#psd_list_'+id).find('.pdr_handle').each(function () {
+		$(this).html($(this).html()+(i+1)+'.');
+	    });
 
 	    for (var j=0; j < array.length; j++) {
 		if (array[j].item_id == id) {
@@ -80,7 +113,14 @@ $(function() {
 	var array = $('#psd_list').nestedSortable("toArray");
 	var heirarchy = $('#psd_list').nestedSortable("toHierarchy");
 	
+	$('.pdr_handle').html('');
 	recurse_on_heirarchy(heirarchy,array);
+	
+	$('.pdr_handle').each(function () {
+	    $(this).html($(this).html().slice(0,-1));
+	    $(this).append('<i class="icon-resize-vertical" />');
+	});
+
     };
 
     $('#psd_list').on('sortupdate', set_prob_num_fields);
@@ -110,11 +150,11 @@ var basicWebserviceURL = "/webwork2/instructorXMLHandler";
 
 function init_webservice(command) {
   var myUser = $('#hidden_user').val();
-  var myCourseID = $('#hidden_courseID').val();
+  var myCourseID = $('#hidden_course_id').val();
   var mySessionKey = $('#hidden_key').val();
   var mydefaultRequestObject = {
         };
-  _.defaults(mydefaultRequestObject, basicRequestObject);
+
   if (myUser && mySessionKey && myCourseID) {
     mydefaultRequestObject.user = myUser;
     mydefaultRequestObject.session_key = mySessionKey;
@@ -132,12 +172,12 @@ function init_webservice(command) {
 function render(id) {
     var ro = init_webservice('renderProblem');
     var templatedir = $('#template_dir').val();
-    if ($('#problem.'+id+'.problem_seed_id').length > 0) {
-	ro.problemSeed = $('#problem.'+id+'.problem_seed_id').val();
+    if ($('[name="problem.'+id+'.problem_seed"]').length > 0) {
+	ro.problemSeed = $('[name="problem.'+id+'.problem_seed"]').val();
     } else {
 	ro.problemSeed = 0;
     }
-    ro.problemSource = templatedir + '/' + $('#prob_filepath_'+id);
+    ro.problemSource = templatedir + '/' + $('[name="problem.'+id+'.source_file"]').val();
     ro.set = ro.problemSource;
     ro.showHints = 1;
     ro.showSolutions = 1;

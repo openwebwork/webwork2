@@ -798,6 +798,15 @@ div.problem_sets_options {
     display: none;
 }
 
+#psd_toolbar {
+    margin-right:10px;
+}
+
+#psd_toolbar a.btn {
+    margin-left:0px;
+    margin-right:0px;
+}
+
 #psd_list li.mjs-nestedSortable-collapsed > ol {
     display: none;
     }
@@ -808,6 +817,10 @@ div.problem_sets_options {
 
 #psd_list li.mjs-nestedSortable-leaf .pdr_collapse {
     display: none;
+}
+
+.psr_render_area {
+    margin-top: 10px;
 }
 
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/

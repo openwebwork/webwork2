@@ -952,12 +952,10 @@ sub handle_problem_numbers {
 	
 	# now go through and move problems around 		
 	# because of the way the reordering works we cant have any conflicts or holes
-	
 	foreach $j (keys %newProblemNumbers) {
 	    next if ($newProblemNumbers{$j} == $j);
 			 
 	    $problemHash{$j}->problem_id($newProblemNumbers{$j});
-
 	    if ($db->existsGlobalProblem($setID, $newProblemNumbers{$j})) {
 		$db->putGlobalProblem($problemHash{$j});
 	    } else {
@@ -1613,15 +1611,21 @@ sub initialize {
 
 		    my %newProblemNumbers;
 		    my @ids = $db->listGlobalProblems($setID);
-		    
+		    my $i = 1;    
 		    foreach my $id (@ids) {
-			my $i = 1;
+		
 			if ($setRecord->assignment_type eq 'jitar') {
 			    $newProblemNumbers{$id} = seq_to_jitar_id(($id));
 			} else {
 			    $newProblemNumbers{$id} = $i;
 			    $i++;
 			}
+		    }
+
+		    #we dont want to confuse the script by changing the problem
+		    #ids out from under it so remove the params
+		    foreach my $id (@ids) {
+			$r->param("prob_num_".$id,"");
 		    }
 
 		    handle_problem_numbers($self,\%newProblemNumbers, $db, $setID);
@@ -2013,6 +2017,7 @@ sub body {
 	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
+	print CGI::input({type=>"hidden", id=>"hidden_course_id", name=>"courseID", value=>$courseID});
 	print CGI::input({type=>"hidden", id=>"template_dir", name=>"template_dir", value=>$ce->{courseDirs}->{templates}});
 	print CGI::input({type=>"submit", id=>"submit_changes_1", name=>"submit_changes", value=>$r->maketext("Save Changes")});
 	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
@@ -2195,12 +2200,19 @@ sub body {
 	if (scalar @problemIDList) {
 
 	    print CGI::h2($r->maketext("Problems"));
-	    print CGI::p($r->maketext("Display Mode:") . 
-			 CGI::popup_menu(-name => "problem.displaymode", 
-					 -values => \@active_modes, -default => $default_problem_mode)
-		. CGI::a({href=>"#", id=>"psd_renumber", 'data-toggle'=>"tooltip", 'data-placement'=>"top",
-			 'data-original-title'=>$r->maketext("Force problems to be numbered consecutively from one.")},
-			 "Reorder Problems"));
+	    print CGI::div(CGI::div({id=>"psd_toolbar"}, CGI::a({href=>"#", id=>"psd_renumber"}, $r->maketext("Renumber Problems")).
+		CGI::a({href=>"#", id=>"psd_render_all"},
+		       $r->maketext("Render All")).
+		CGI::a({href=>"#", id=>"psd_hide_all"},
+		       $r->maketext("Hide All")).
+		CGI::a({href=>"#", id=>"psd_expand_all"},
+		       $r->maketext("Expand All")).
+		CGI::a({href=>"#", id=>"psd_collapse_all"},
+		       $r->maketext("Collapse All"))).
+		       CGI::span($r->maketext("Display Mode:")) . 
+			      CGI::popup_menu(-name => "problem.displaymode", 
+					      -values => \@active_modes, -default => $default_problem_mode));
+		
 
 
 	    print CGI::start_div({id=>"problemset_detail_list"});
@@ -2296,11 +2308,13 @@ sub body {
 		}
 		
 		my $problemNumber = $problemID;
+		my $lastProblemNumber = $problemID;
 		my $parentID = '';
                 my $collapseButton = '';
 		if ($isJitarSet) {
 		    my @seq = jitar_id_to_seq($problemNumber);
-		    $problemNumber = pop @seq;
+		    $problemNumber = join('.',@seq);
+		    $lastProblemNumber = pop @seq;
 		    $parentID = seq_to_jitar_id(@seq) if @seq;
                     $collapseButton = CGI::span({class=>"pdr_collapse"},"");
 		}
@@ -2308,7 +2322,7 @@ sub body {
 		my $pdr_block_1 =  CGI::div({class=>"pdr_block_1"},
 			CGI::start_table({border => 0, cellpadding => 1}) .
 			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID"}, $problemNumber).$collapseButton.
-					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$problemNumber}).
+					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$lastProblemNumber}).
 					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) .	      
              	        CGI::Tr({}, CGI::td({}, 
 					    CGI::a({href=>"#", class=>"pdr_render", id=>"pdr_render_$problemID",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Render Problem")}, $r->maketext('Render')).
