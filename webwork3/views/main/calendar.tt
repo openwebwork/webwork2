@@ -1,14 +1,51 @@
 <!-- Calendar Templates -->
 
 <script type="text/template" id="calendar-template">
-<div class="row" style="text-align: center">
+<div class="row">
+  <div class="col-md-2">
+    <div class="btn-group">
+      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        Assign. Types <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu show-date-types" role="menu">
+        <li><div class="checkbox assign-open">
+            <label>
+              <input type="checkbox" class="show-open-date">Open Dates
+            </label>
+          </div>
+        </li>
+        <li><div class="checkbox assign-reduced-credit">
+            <label>
+              <input type="checkbox" class="show-reduced-credit-date">Reduced Credit Dates
+            </label>
+          </div>
+        </li>
+        <li><div class="checkbox assign-due">
+            <label>
+              <input type="checkbox" class="show-due-date">Due Dates
+            </label>
+          </div>
+        </li>
+        <li><div class="checkbox assign-answer">
+            <label>
+              <input type="checkbox" class="show-answer-date">Answer Dates
+            </label>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>  
+
+
+  <div class="col-md-9" style="text-align: center">
     <div class="calendar-button-row btn-group btn-group-sm">
       <button type="button" class="previous-week btn btn-default"><i class="fa fa-chevron-left"></i>Previous Week</button>
       <button type="button" class="view-month btn btn-default">Month View</button>
       <button type="button" class="view-week btn btn-default">Week View</button>
       <button type="button" class="next-week btn btn-default">Next Week<i class="fa fa-chevron-right"></i></button>
-    </div> 
+    </div>
   </div>
+</div>
 
 <div class="calendar-container">
   <div class="calendar-view">

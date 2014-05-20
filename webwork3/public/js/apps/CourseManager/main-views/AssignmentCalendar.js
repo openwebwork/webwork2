@@ -21,6 +21,13 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		_.bindAll(this,"render","renderDay","update");
 
             this.problemSets.on({sync: this.render});
+            var DateTypeModel = Backbone.Model.extend({});
+            this.model = new DateTypeModel({
+                answer_date: true,
+                due_date: true,
+                reduced_credit_date: true,
+                open_date: true 
+            });
             return this;
     	},
     	render: function (){
@@ -31,9 +38,24 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             this.$(".assign").truncate({width: 100});
             // set up the calendar to scroll correctly
             this.$(".calendar-container").height($(window).height()-160);
+            $('.show-date-types input, .show-date-types label').click(function(e) {
+                e.stopPropagation();
+            });
+
+            // show/hide the desired date types
+
+            
+
             MainView.prototype.render.apply(this);
+            this.stickit();
             return this;
     	},
+        bindings: {
+            ".show-open-date": "open_date",
+            ".show-due-date": "due_date",
+            ".show-reduced-credit-date": "reduced_credit_date",
+            ".show-answer-date": "answer_date"
+        },
     	renderDay: function (day){
     		var self = this;
             var assignments = this.assignmentDates.where({date: day.model.format("YYYY-MM-DD")});
