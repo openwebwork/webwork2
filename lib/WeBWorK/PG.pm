@@ -169,8 +169,9 @@ sub defineProblemEnvir {
 	$envir{problemValue}        = $problem->value;
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $ce->{courseName};
-	$envir{enable_reduced_scoring} = $set->enable_reduced_scoring;
+	$envir{enable_reduced_scoring} = $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
 	$envir{language}            = $ce->{language};
+	$envir{reducedScoringDate} = $set->reduced_scoring_date;
 	
 	# Student Information
 	# ADDED: studentID

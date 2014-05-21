@@ -94,7 +94,10 @@ post '/courses/:course_id/users/:user_id' => sub {
 	vars->{db}->addPassword($password);
 	vars->{db}->addPermissionLevel($permission);
 
-	return convertObjectToHash($user);
+	my $u =convertObjectToHash($user);
+	$u->{_id} = $u->{user_id}; 
+
+	return $u;
 	
 };
 
@@ -132,7 +135,10 @@ put '/courses/:course_id/users/:user_id' => sub {
 		vars->{db}->putPermissionLevel($permission);
 	}
 
-	return convertObjectToHash($user);
+	my $u =convertObjectToHash($user);
+	$u->{_id} = $u->{user_id}; 
+
+	return $u;
 
 };
 ###

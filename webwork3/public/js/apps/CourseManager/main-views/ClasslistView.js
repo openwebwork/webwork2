@@ -20,8 +20,8 @@ var ClasslistView = MainView.extend({
 
     	this.users = options.users;
     	this.problemSets = options.problemSets;
-		this.addStudentManView = new AddStudentManView({users: this.users});
-	    this.addStudentFileView = new AddStudentFileView({users: this.users});
+		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
+	    this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.tableSetup();
 	    
             
@@ -88,12 +88,10 @@ var ClasslistView = MainView.extend({
 
     },
     changeUser: function(_user){
-    	if(_(_user.changingAttributes).has("user_added") || _(_user.changingAttributes).isEqual({})){
-	    	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
+    	if(_(_user.changingAttributes).has("user_added") || _.keys(_user.changed)[0]==="action"){
+    		return;
     	}
-    	if(_.keys(_user.changed)[0]==="action"){
-    		return; 
-    	}
+    	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
     	_user.save();
     },
     removeUser: function(_user){
@@ -179,7 +177,7 @@ var ClasslistView = MainView.extend({
         var _mimetype = "text/csv";
 	    var blob = new Blob([textFileContent], {type:_mimetype});
         var _url = URL.createObjectURL(blob);
-        var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY");
+        var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY") + ".csv";
         var modalView = new ModalView({template: $("#export-to-file-template").html(), 
         	templateOptions: {url: _url, filename: _filename, mimetype: _mimetype}});
         modalView.render().open();
@@ -247,7 +245,8 @@ var ClasslistView = MainView.extend({
 	getSelectedUsers: function () {
 		var self = this;
 		return $("tbody td:nth-child(1) input[type='checkbox']:checked").map(function(i,v) { 
-				return self.users.findWhere({user_id: $(v).closest("tr").children("td.user-id").text()}); });
+				return self.users.findWhere({user_id: $(v).closest("tr").children("td.login-name").text()}); 
+			});
 	}, 
 	deleteSelectedUsers: function(){
 		this.deleteUsers(this.getSelectedUsers());
