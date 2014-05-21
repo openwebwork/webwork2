@@ -4,8 +4,7 @@ define(['backbone'],function(Backbone){
 			this.mainView = view;
 			return this;
 		},
-		isOpen: false
-		},
+		isOpen: false,
 		render: function() {
 			// this makes sure that the content fits vertically in the sidepane. 
 

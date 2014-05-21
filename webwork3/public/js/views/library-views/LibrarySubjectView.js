@@ -2,7 +2,7 @@ define(['backbone', 'underscore','views/library-views/LibraryView','views/librar
 function(Backbone, _,LibraryView,LibraryTreeView){
     var LibrarySubjectView = LibraryView.extend({
     	initialize: function(options){
-            
+            var self = this;
     		LibraryView.prototype.initialize.apply(this,[options]);
             // Put the top level names in a template so it can be translated. 
             this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets,
@@ -11,7 +11,7 @@ function(Backbone, _,LibraryView,LibraryTreeView){
             Backbone.Validation.bind(this.libraryTreeView, {model: this.libraryTreeView.fields,
                 invalid: function(view,attr,error){
                     view.$(".library-level-"+attr.split("level")[1])
-                        .popover({title: "Error", content: this.messageTemplate({type: "subject_not_selected"})})
+                        .popover({title: "Error", content: self.messageTemplate({type: "subject_not_selected"})})
                         .popover("show");
                 }
             });          
