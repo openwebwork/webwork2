@@ -91,8 +91,8 @@ function(Backbone, _,MainView,LibrarySubjectView,LibraryDirectoryView, LibrarySe
         },
         sidepaneEvents: {
             "change-display-mode": function(evt) { this.views[this.currentViewname].changeDisplayMode(evt) },
-            "change-target-set": function(evt) { 
-                this.views[this.currentViewname].setTargetSet($(evt.target).val());
+            "change-target-set": function(opt) { 
+                this.views[this.currentViewname].setTargetSet(_.isString(opt)? opt: $(opt.target).val());
             }, 
             "add-problem-set": function(_set_name){
                 var _set = new ProblemSet({set_id: _set_name},this.dateSettings);

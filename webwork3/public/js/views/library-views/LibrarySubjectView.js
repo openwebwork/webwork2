@@ -11,7 +11,7 @@ function(Backbone, _,LibraryView,LibraryTreeView){
             Backbone.Validation.bind(this.libraryTreeView, {model: this.libraryTreeView.fields,
                 invalid: function(view,attr,error){
                     view.$(".library-level-"+attr.split("level")[1])
-                        .popover({title: "Error", content: self.messageTemplate({type: "subject_not_selected"})})
+                        .popover({title: "Error", content: self.messageTemplate({type: "library_not_selected"})})
                         .popover("show");
                 }
             });          

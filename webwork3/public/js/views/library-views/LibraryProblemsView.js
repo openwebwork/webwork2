@@ -21,8 +21,16 @@ define(['backbone', 'views/ProblemListView','config'],
                         .problems.pluck("source_file");
                     var pathsInLibrary = this.problems.pluck("source_file");
                     var pathsInCommon = _.intersection(pathsInLibrary,pathsInTargetSet);
-
-                    _(pathsInLibrary).each(function(path,i){
+                    _(self.problemViews).each(function(pv,i){
+                        if(pv.rendered){
+                            pv.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
+                        } else {
+                            pv.model.once("rendered", function(v) {
+                                v.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
+                            });
+                        }
+                    });
+/*                    _(pathsInLibrary).each(function(path,i){
                         if(self.problemViews[i].rendered){
                             self.problemViews[i].highlight(_(pathsInCommon).contains(path));
                         } else {
@@ -30,7 +38,7 @@ define(['backbone', 'views/ProblemListView','config'],
                                 v.highlight(_(pathsInCommon).contains(path));
                             });
                         }
-                    });
+                    });*/
                 }
             }
     	});

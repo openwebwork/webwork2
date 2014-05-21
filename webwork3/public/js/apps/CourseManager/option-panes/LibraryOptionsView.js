@@ -3,11 +3,17 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
     initialize: function(options){
         var self = this;
         this.problemSets = options.problemSets;
-        this.problemSets.on({add: this.AddProblemSet, sync: function(_set){
-            self.render();
-            self.$(".select-target-option").val(_set.get("set_id"));
-            self.model.set({new_problem_set: ""});
-        }}); 
+        this.problemSets.on({
+            add: this.AddProblemSet, sync: function(_set){
+                self.render();
+                self.$(".select-target-option").val(_set.get("set_id"));
+                self.model.set({new_problem_set: ""});
+            },
+            remove: function(_set){
+                self.model.set({target_set: ""});
+                self.trigger("change-target-set","");
+            }
+        }); 
         this.settings = options.settings;
         this.model = new LibraryOptions({display_option: this.settings.getSettingValue("pg{options}{displayMode}"),
             target_set: "", new_problem_set: "", problemSets: this.problemSets});
@@ -16,6 +22,10 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
     render: function(){
         this.$el.html($("#library-options-template").html());
         this.stickit();
+        if(this.model.get("target_set")){
+            this.$(".goto-problem-set-button").removeAttr("disabled");
+        }
+
         return this;
     }, 
     bindings: {".problem-display-option": {observe: "display_option", selectOptions: {
@@ -36,18 +46,18 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
         "change .select-target-option": function (evt) {
             this.trigger("change-target-set",evt);
             if($(evt.target).val()===""){
-                $(".goto-problem-set-button").attr("disabled","disabled")
+                this.$(".goto-problem-set-button").attr("disabled","disabled")
             } else {
-                $(".goto-problem-set-button").removeAttr("disabled")
+                this.$(".goto-problem-set-button").removeAttr("disabled")
             }
         },
         "click .add-problem-set-button": function () { 
             var msg;
             if(msg = this.model.validate()){
-                $(".add-problem-set-option").popover({title: "Error", content: msg.new_problem_set, placement: "bottom"})
+                this.$(".add-problem-set-option").popover({title: "Error", content: msg.new_problem_set, placement: "bottom"})
                     .popover("show");
             } else {
-                $(".add-problem-set-option").popover("destroy");
+                this.$(".add-problem-set-option").popover("destroy");
                 this.trigger("add-problem-set",this.model.get("new_problem_set"));
             }
         },

@@ -122,7 +122,7 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
             this.$(".filename").toggleClass("hidden");
         },
         addProblem: function (evt){
-            if(this.library){
+            if(this.libraryView){
                 this.libraryView.addProblem(this.model);  
             } else {
                 console.error("This is not an addable problem.")
