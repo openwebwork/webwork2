@@ -1032,24 +1032,75 @@ sub siblings {
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $self->{set}->set_id;
 	my $eUserID = $r->param("effectiveUser");
-	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
+    my @problemRecords = $db->getAllMergedUserProblems( $eUserID, $setID );
+	# Resort records
+    @problemRecords = sort {$a->problem_id <=> $b->problem_id } @problemRecords;
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
 	print CGI::h2($r->maketext("Problems"));
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, "Problems");
-	print CGI::start_ul();
 
-	foreach my $problemID (@problemIDs) {
+    my $num_of_problems  = @problemRecords || 0;
+    my $problemList;
+    my $total_correct;
+    my $attempted;
+
+	foreach my $problemRecord (@problemRecords) {
+		my $problemID = $problemRecord->problem_id;
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID);
-		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
+		$problemList .= CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
 													params=>{  displayMode => $self->{displayMode}, 
 															   showOldAnswers => $self->{will}->{showOldAnswers}
 															})},  $r->maketext("Problem [_1]",$problemID))
 	   );
+
+	   $total_correct += ($problemRecord->status || 0);
+	   $attempted     += $problemRecord->attempted;
 	}
+
+    if($num_of_problems>0 and $r->ce->{pg}->{options}->{enableProgressBar}){
+        $attempted -= $total_correct;
+        my $unattempted = $num_of_problems - $attempted - $total_correct;
+        my $progress_bar_correct_width = $total_correct*100/$num_of_problems;
+        my $progress_bar_attempted_width = $attempted*100/$num_of_problems;
+        my $progress_bar_unattempted_width = $unattempted*100/$num_of_problems;
+
+        # construct the progress bar 
+        my $progress_bar = CGI::start_div({-class=>"progress-bar set-id-tooltip",
+                                           "aria-label"=>"progress bar for current problem set",
+                                          });
+        if($total_correct>0){
+            $progress_bar .= CGI::div({-class=>"correct-progress set-id-tooltip",-style=>"width:$progress_bar_correct_width%",
+                                      "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
+                                      "data-original-title"=>$r->maketext("Correct: $total_correct/$num_of_problems")
+                                    });
+            $progress_bar .= CGI::end_div();
+        } 
+        if($attempted>0){
+            $progress_bar .= CGI::div({-class=>"attempted-progress set-id-tooltip",-style=>"width:$progress_bar_attempted_width%",
+                                      "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
+                                      "data-original-title"=>$r->maketext("Incorrect: $attempted/$num_of_problems")
+                                    });
+            $progress_bar .= CGI::end_div();
+        }
+        if($unattempted>0){
+            $progress_bar .= CGI::div({-class=>"unattempted-progress set-id-tooltip",-style=>"width:$progress_bar_unattempted_width%",
+                                      "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
+                                      "data-original-title"=>$r->maketext("Unattempted: $unattempted/$num_of_problems")
+                                    });
+            $progress_bar .= CGI::end_div();
+        }
+        # close the progress bar div 
+        $progress_bar .= CGI::end_div();
+
+        print $progress_bar;
+    }
+
+	print CGI::start_ul();
+    print $problemList;
 
 	print CGI::end_ul();
 	#print CGI::end_li();
@@ -1132,79 +1183,6 @@ sub title {
 
 	return $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
 }
-
-sub progressBar {
-	my ($self) = @_;
-
-    # don't show progress if showMeAnother (and friends) is active
-	my %showMeAnother = %{ $self->{showMeAnother} };
-    return "" if($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview} or $showMeAnother{DisplayChange});
-
-    # grab the set ID and effective user ID exit if the set is undefined
-	my $setID = $self->{set}->set_id if !($self->{invalidSet});
-    return "" if(!defined($setID) or ($setID eq "Undefined_Set"));
-
-    # otherwise carry on with the Progress Bar
-	my $r = $self->r;
-	my $db = $r->db;
-    # exit if the progress bar is not enabled
-    return "" if(!$r->ce->{pg}->{options}->{enableProgressBar});
-
-    # problemID, effective user, and their records for the current set
-	my $eUserID = $r->param("effectiveUser");
-	my $problemID = $self->r->urlpath->arg("problemID");
-    my @problemRecords = $db->getAllMergedUserProblems( $eUserID, $setID );
-
-    my $num_of_problems  = @problemRecords || 0;
-    return "" if($num_of_problems ==0 );
-
-    my $total_correct;
-    my $attempted;
-
-    # most of this is taken from lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm
-	foreach my $problemRecord (@problemRecords) {
-			my $prob = $problemRecord->problem_id;
-			
-			unless (defined($problemRecord) ){
-				# warn "Can't find record for problem $prob in set $setName for $student";
-    			# FIXME check the legitimate reasons why a student record might not be defined
-				next;
-			}
-			
-		    $total_correct += ($problemRecord->status || 0);
-			$attempted     += $problemRecord->attempted;
-          }
-    
-    $attempted -= $total_correct;
-    my $unattempted = $num_of_problems - $attempted - $total_correct;
-    my $progress_bar_correct_width = $total_correct*100/$num_of_problems;
-    my $progress_bar_attempted_width = $attempted*100/$num_of_problems;
-
-    # construct the progress bar 
-    my $progress_bar = CGI::start_div({-class=>"progress-bar set-id-tooltip",
-                                       "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", 
-                                       "data-original-title"=>$r->maketext("Unattempted: $unattempted/$num_of_problems")
-                                      });
-    if($total_correct>0){
-        $progress_bar .= CGI::div({-class=>"correct-progress set-id-tooltip",-style=>"width:$progress_bar_correct_width%",
-                                  "data-toggle"=>"tooltip", "data-placement"=>"top", title=>"", 
-                                  "data-original-title"=>$r->maketext("Correct: $total_correct/$num_of_problems")
-                                });
-        $progress_bar .= CGI::end_div();
-    } 
-    if($attempted>0){
-        $progress_bar .= CGI::div({-class=>"attempted-progress set-id-tooltip",-style=>"width:$progress_bar_attempted_width%",
-                                  "data-toggle"=>"tooltip", "data-placement"=>"top", title=>"", 
-                                  "data-original-title"=>$r->maketext("Incorrect: $attempted/$num_of_problems")
-                                });
-        $progress_bar .= CGI::end_div();
-    }
-    # close the progress bar div 
-    $progress_bar .= CGI::end_div();
-
-    return $progress_bar;
-}
-
 
 # now altered to outsource most output operations to the template, main functions now are simply error checking and answer processing - ghe3
 sub body {

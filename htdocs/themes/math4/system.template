@@ -121,15 +121,6 @@ var tabberOptions = {manualStartup:true};
 	</div></div>
 	<!--#endif-->
 
-	<!-- Progress Bar -->
-	<!--#if can="progressBar"-->
-    <div class="row-fluid">
-      <div class="span12" aria-label="progress bar for current problem set">
-		<!--#progressBar -->
-      </div>
-    </div>
-	<!--#endif-->
-
 	<!--#if can="nav" can="message"--> 
 	<div class="row-fluid">
 	  <div class="problem-nav span3" role="navigation" aria-label="question navigation">

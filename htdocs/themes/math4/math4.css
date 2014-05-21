@@ -106,18 +106,18 @@ ul.nav li a:hover {
 /* Progress Bar */
 div.progress-bar {
    height: 20px;
-   max-width: 30%;
+   max-width: 100%;
    border: 1px solid #B6B6B4;
    background-color: #DDDDDD;
    border-radius: 5px;
-   margin-bottom: 20px;
+   margin-bottom: 10px;
    position: relative;
 }
 
 div.correct-progress {
    height: 20px;
-   background-color: #88ECFF; /*same colour used as 'incorrect' in grade book*/
-   border: 1px solid #38ACEC; /*butterfly blue*/
+   background-color: #8F8; /*same colour used as 'correct' */
+   border: 1px solid #5FFB17; 
    border-radius: 4px;
    display: inline-block;
    float:left;
@@ -129,6 +129,12 @@ div.attempted-progress {
    background-color: #F87217; /* pumpkin orange */
    border: 1px solid #7F462C;
    opacity:0.5;
+   display: inline-block;
+   box-sizing:border-box;
+}
+
+div.unattempted-progress {
+   height: 20px;
    display: inline-block;
    box-sizing:border-box;
 }
