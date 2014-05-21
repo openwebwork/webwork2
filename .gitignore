@@ -10,4 +10,5 @@ library-directory-tree.json
 library-subject-tree.json
 textbook-tree.json
 *~
-
+!tmp/README
+!htdocs/tmp/README
