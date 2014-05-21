@@ -52,7 +52,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
                 if(_(this.fields.values()).without("").length>0){
                     branch = this.branchOfTree(_(this.fields.attributes).values()); 
                     // the following needs to go into a template.
-                    this.$(".load-library-button").text(branch.numfiles? "Load " +branch.num_files + " problems": "Load");  
+                    this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
                 }
                 this.stickit(this.fields, this.bindings);
             }
@@ -75,7 +75,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
             if(branch.branches.length>0){
                 this.$(".library-level-"+(level+1)).removeClass("hidden");  // show the next level in the tree
             }
-            this.$(".load-library-button").text(branch.numfiles? "Load " +branch.num_files + " problems": "Load");  
+            this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
             this.unstickit(this.fields);
             this.stickit(this.fields,this.bindings);
         },

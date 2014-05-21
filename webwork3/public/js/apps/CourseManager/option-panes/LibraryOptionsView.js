@@ -4,10 +4,11 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
         var self = this;
         this.problemSets = options.problemSets;
         this.problemSets.on({
-            add: this.AddProblemSet, sync: function(_set){
-                self.render();
+            add: this.AddProblemSet, sync: function(_set){               
                 self.$(".select-target-option").val(_set.get("set_id"));
-                self.model.set({new_problem_set: ""});
+                self.model.set({new_problem_set: "",target_set: _set.get("set_id")});
+                self.trigger("change-target-set",self.model.get("target_set"));
+                self.render();
             },
             remove: function(_set){
                 self.model.set({target_set: ""});
