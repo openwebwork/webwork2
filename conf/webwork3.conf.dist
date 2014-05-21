@@ -15,12 +15,12 @@ pg_dir: "/opt/webwork/pg"
 # wont be able to see the log information.  To see the log information you 
 # need to change this to file and then make sure that webwork2/webwork3/logs
 # is owned, readable and writable by the wwdata group.  
-logger: "console"
+logger: "file"
 
 # the log level for this environment
 # core is the lowest, it shows Dancer's core log messages as well as yours
 # (debug, info, warning and error)
-log: "core"
+log: "warning"
 
 # should Dancer consider warnings as critical errors?
 warnings: 1
