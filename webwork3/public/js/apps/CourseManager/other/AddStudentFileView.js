@@ -8,8 +8,10 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 	    
 		initialize: function(options){
 		    _.bindAll(this, 'render','importStudents','openDialog','closeDialog','validateColumn'); // every function that uses 'this' as the current object should be in here
+		    this.messageTemplate = options.messageTemplate;
 		    this.collection = new UserList();
 		    this.model = new User();
+		    this.model.collection = this.collection; // helps with the validation. 
 		    Backbone.Validation.bind(this);
 		    this.users = options.users;
 		    this.render();
@@ -35,6 +37,10 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 		},
 		closeErrorPane: function () {
 			this.$(".error-pane").hide("slow");
+		},
+		showError: function(errorMessage){
+			this.$(".error-pane").show("slow");
+			this.$(".error-pane-text").text(errorMessage);
 		},
 		showImportHelp: function () {
 			this.$(".help-pane").show("slow");
@@ -63,8 +69,8 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 		    // Need to test if the browser can handle this new object.  If not, find alternative route.
 		
 
-		    if (!(this.file.type.match(/csv/))){
-		    	this.errorPane.setMessage({text: "You must upload a csv file"});
+		    if (!(this.file.name.match(/\.(lst|csv)$/))){
+		    	this.showError(this.messageTemplate({type: "csv_file_needed"}));
 		    	return;
 		    }
 		    this.reader = new FileReader();
@@ -111,6 +117,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 		    var uniqueHeads = _.uniq(sortedHeads,true);
 
 		    if(! _.isEqual(sortedHeads,uniqueHeads)){
+
 		    	this.$(".error-pane-text").html("Each Column must have a unique Header.")
 		    	this.$(".error-pane").show("slow");
 		    	return false;

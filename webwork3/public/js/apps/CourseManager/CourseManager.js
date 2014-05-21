@@ -155,7 +155,7 @@ var CourseManager = WebPage.extend({
          }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
             self.currentView.render();
             if(self.currentSidePane && self.currentSidePane.sidePane){
-                self.currentSidePane.sidePane.render();                
+                self.currentSidePane.sidePane.render();
             }
          })
 
