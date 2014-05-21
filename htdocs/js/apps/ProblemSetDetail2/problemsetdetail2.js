@@ -16,6 +16,7 @@ $(function() {
 	tabSize: 30,
 	isTree: true,
 	startCollapsed: true,
+	maxLevels: 7,
  
     });
 
@@ -35,6 +36,10 @@ $(function() {
 	.tooltip();
     $('.pdr_render').addClass('btn btn-mini')
 	.html('<i class="icon-picture" />')
+	.tooltip();
+
+    $('.pdr_grader').addClass('btn btn-mini')
+	.html('<i class="icon-edit">')
 	.tooltip();
 
     $('.pdr_handle').append('<i class="icon-resize-vertical" />');

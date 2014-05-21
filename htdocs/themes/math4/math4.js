@@ -67,6 +67,7 @@ $(function(){
     });
 
     $('.problem_set_table td a').addClass('btn btn-primary btn-small').css('margin-right',10);
+    $('.problem_set_table .disabled-problem').addclass('btn btn-small disabled');
     $('#hardcopy-form').addClass('form-inline');
 
     $('.problem_set_options input').addClass('btn btn-info');

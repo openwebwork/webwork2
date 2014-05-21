@@ -543,7 +543,7 @@ sub FieldTable {
 		}
 					      
 		if ( $field eq 'assignment_type' ) {
-			$output .= "$procFields\n$extraFields\n";
+		    $output .= "$procFields\n$extraFields\n";
 		}
 	} 
 
@@ -2205,10 +2205,10 @@ sub body {
 		       $r->maketext("Render All")).
 		CGI::a({href=>"#", id=>"psd_hide_all"},
 		       $r->maketext("Hide All")).
-		CGI::a({href=>"#", id=>"psd_expand_all"},
-		       $r->maketext("Expand All")).
-		CGI::a({href=>"#", id=>"psd_collapse_all"},
-		       $r->maketext("Collapse All"))).
+		($isJitarSet ? CGI::a({href=>"#", id=>"psd_expand_all"},
+		       $r->maketext("Expand All")) : '').
+		($isJitarSet ? CGI::a({href=>"#", id=>"psd_collapse_all"},
+		       $r->maketext("Collapse All")) : '')).
 		       CGI::span($r->maketext("Display Mode:")) . 
 			      CGI::popup_menu(-name => "problem.displaymode", 
 					      -values => \@active_modes, -default => $default_problem_mode));
@@ -2302,7 +2302,7 @@ sub body {
 		    
 		    if ($problemRecord->flags =~ /essay/) {
 			my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-			$gradingLink = CGI::a({class=>"psd-grade-link", href => $self->systemLink($gradeProblemPage)}, "Grade");
+			$gradingLink = CGI::a({class=>"pdr_grader", href => $self->systemLink($gradeProblemPage),'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Grade Problem")}, $r->maketext("Grade"));
 		    }
 		    
 		}

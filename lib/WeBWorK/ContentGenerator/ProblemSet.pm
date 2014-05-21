@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_restricted jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -320,6 +320,8 @@ sub body {
 				CGI::p($self->{invalidSet}));
 	}
 	
+	my $isJitarSet = ($set->assignment_type eq 'jitar');
+
 	#my $hardcopyURL =
 	#	$ce->{webworkURLs}->{root} . "/"
 	#	. $ce->{courseName} . "/"
@@ -346,7 +348,7 @@ sub body {
 			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_2",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		}
 	}
-	
+
 	# DBFIXME use iterator
 	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
 
@@ -380,14 +382,21 @@ sub body {
 			CGI::th($r->maketext("Attempts")),
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
-			CGI::th($r->maketext("Status")),
+			CGI::th($isJitarSet ? $r->maketext("Status") : 
+				$r->maketext("Adjusted Status")),
 			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th("")
 		);
 		
+		if ($isJitarSet) {
+		    @problemNumbers = jitar_order_problems(@problemNumbers);
+		} else {
+		    @problemNumbers = sort { $a <=> $b } @problemNumbers;
+		}
+
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
 			my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
 			die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
-			print $self->problemListRow($set, $problem, $canScoreProblems);
+			print $self->problemListRow($set, $problem, $db, $canScoreProblems, $isJitarSet);
 		}
 		
 		print CGI::end_table();
@@ -435,15 +444,31 @@ sub body {
 	return "";
 }
 
-sub problemListRow($$$) {
-	my ($self, $set, $problem, $canScoreProblems) = @_;
+sub problemListRow($$$$$) {
+	my ($self, $set, $problem, $db, $canScoreProblems, $isJitarSet) = @_;
 	my $r = $self->r;
 	my $urlpath = $r->urlpath;
 	
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $set->set_id;
 	my $problemID = $problem->problem_id;
+	my $problemNumber = $problemID;
 	
+	my $jitarRestriction = 0;
+	my $problemLevel = 0;
+
+	if ($isJitarSet) {
+	    $jitarRestriction = is_jitar_problem_restricted($db, $problem->user_id, $setID, $problemID);
+	    my @seq = jitar_id_to_seq($problemID);
+	    $problemLevel = $#seq;
+	    $problemNumber = join('.',@seq);
+	}
+
+	# if the problem is closed we dont even print it
+	if ($jitarRestriction eq 'closed') {
+	    return '';
+	}
+
 	my $interactiveURL = $self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID
@@ -452,13 +477,33 @@ sub problemListRow($$$) {
 			       showOldAnswers => $self->{will}->{showOldAnswers}
 		}
 	);
+
+	my $linkClasses = '';
+	my $interactive;
 	
-	my $interactive = CGI::a({-href=>$interactiveURL}, $r->maketext("Problem [_1]",$problemID));
+	if ($problemLevel != 0) {
+	    $linkClasses = "nested-problem-$problemLevel";
+	}
+	
+	# if the problem is trestricted we show that it exists but its greyed out
+	if ($jitarRestriction eq 'restricted') {
+	    $interactive = CGI::span({class=>$linkClasses." disabled-problem"}, $r->maketext("Problem [_1]",$problemNumber));
+	} else {
+	    $interactive = CGI::a({-href=>$interactiveURL,-class=>$linkClasses}, $r->maketext("Problem [_1]",$problemNumber));
+	    
+	}
+	
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $remaining = (($problem->max_attempts||-1) < 0) #a blank yields 'infinite' because it evaluates as false with out giving warnings about comparing non-numbers
 		? $r->maketext("unlimited")
 		: $problem->max_attempts - $attempts;
-	my $rawStatus = $problem->status || 0;
+	my $rawStatus = 0;
+	if ($isJitarSet) {
+	    $rawStatus = jitar_problem_adjusted_status($problem, $db);
+	} else {
+	    $rawStatus = $problem->status;
+	}
+
 	my $status;
 	$status = eval{ sprintf("%.0f%%", $rawStatus * 100)}; # round to whole number
 	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
