@@ -35,17 +35,9 @@ body {  /* needed for the navigation bars top and bottom*/
 #short-message {margin-top: 5px; padding:5px; display: none; border-radius:5px; width: 300px; height: 40px;
 }
 
-#message-pane {
-	position: absolute; 
-	width: 600px; 
-	height:	300px; 
-	top: 50px; 
-	right: 5px;
-	z-index: 100;
-	display: none;
-	opacity: 0.92;
-	background-color: white;
-	}
+/* Styling for the sidepane */
+
+.sidepane-menu h3 {margin-top: 0px;}
 
 #footer {min-height: 20px;}
 #footer .navbar-text {margin: 0; line-height: 20px}
@@ -55,7 +47,7 @@ body {  /* needed for the navigation bars top and bottom*/
 .navbar-other {background-color: #f8f8f8;
 border-top: solid 1px rgb(220, 220, 220);}
 
-.ww-help {position: absolute; top: 70px; bottom: 70px; overflow: auto; z-index: 100}
+/*.ww-help {position: absolute; top: 70px; bottom: 70px; overflow: auto; z-index: 100}*/
 
 #main {padding-left: 10px;}
 

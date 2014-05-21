@@ -24,12 +24,14 @@
 
 <script type="text/template" id="row-setting-template">
 <td><span class="doc"></span>
-<button class='btn btn-sm btn-default help-button' style='margin-left: 25px'>
-  <i class='fa fa-question'></i></button>
-  <div class="help-hidden alert alert-info">
-  <button class="close">&times;</button>
-  <span class="doc2"></span></div>
-
+    <%if(doc2){%>
+      <button class='btn btn-sm btn-default help-button' style='margin-left: 25px'>
+        <i class='fa fa-question'></i></button>
+      <div class="help-hidden alert alert-info">
+      <button class="close">&times;</button>
+      <span class="doc2"></span></div>
+    <%}%>
+  
   </td>
   <td class="col2"><%=prop_html%></td>
 </script>
@@ -38,4 +40,15 @@
 <h4>Settings Help</h4>
 <p>The Settings for WeBWorK are divided into categories and each is in a tab.  To change the desired setting, simply change the 
 value using the textbox, popup menu or checkbox.  Changes are made immediately.  You do not need to save the settings with clicking a "save" button.  </p>
+</script>
+
+<script type="text/template" id="settings-messages-template">
+<%
+var messages = {
+    setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
+    setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
+                                opt.oldValue + " to " + opt.newValue + "."},
+}
+print(messages[type](typeof(opts)=="undefined"?{}:opts))
+%>
 </script>
