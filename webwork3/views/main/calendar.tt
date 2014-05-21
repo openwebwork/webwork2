@@ -14,9 +14,9 @@
             </label>
           </div>
         </li>
-        <li><div class="checkbox assign-reduced-credit">
+        <li><div class="checkbox assign-reduced-scoring">
             <label>
-              <input type="checkbox" class="show-reduced-credit-date">Reduced Credit Dates
+              <input type="checkbox" class="show-reduced-scoring-date">Reduced Credit Dates
             </label>
           </div>
         </li>

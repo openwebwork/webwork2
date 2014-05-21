@@ -18,16 +18,12 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     	initialize: function (options) {
             var self = this;
             CalendarView.prototype.initialize.call(this,options);
-    		_.bindAll(this,"render","renderDay","update");
+    		_.bindAll(this,"render","renderDay","update","showHideAssigns");
 
             this.problemSets.on({sync: this.render});
-            var DateTypeModel = Backbone.Model.extend({});
-            this.model = new DateTypeModel({
-                answer_date: true,
-                due_date: true,
-                reduced_scoring_date: true,
-                open_date: true 
-            });
+            
+            this.model = new DateTypeModel();
+            this.model.on({change: this.showHideAssigns})
             return this;
     	},
     	render: function (){
@@ -110,6 +106,16 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 start: function () {$(this).popover("destroy")}
             });
         },
+        showHideAssigns: function(model){
+            _(_(model.changed).keys()).each(function(key){
+                var type = key.split(/_date/)[0].replace("_","-");
+                if(model.changed[key]){
+                    $(".assign.assign-"+type).removeClass("hidden");
+                } else {
+                    $(".assign.assign-"+type).addClass("hidden");
+                }
+            })
+        },
         setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
             var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
             if(type==="all") {
@@ -120,6 +126,15 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
         }
 
+    });
+
+    var DateTypeModel = Backbone.Model.extend({
+        defaults: {
+                answer_date: true,
+                due_date: true,
+                reduced_scoring_date: true,
+                open_date: true 
+            }
     });
 
 	return AssignmentCalendar;
