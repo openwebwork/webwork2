@@ -36,8 +36,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         set: function(opts){
             this.problems = opts.problems; 
-            this.problems.off("remove");
-            this.problems.on("remove",this.deleteProblem);
+            this.problems.off("remove").on("remove",this.deleteProblem);
             if(opts.problemSet){
                 this.problemSet = opts.problemSet;
                 this.problems.problemSet = opts.problemSet;
@@ -53,8 +52,10 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         render: function() {
             this.$el.html(_.template($("#problem-list-template").html(),{show_undo: this.viewAttrs.show_undo}));
-            this.updatePaginator();
-            this.gotoPage(0);
+            this.updatePaginator().gotoPage(0);
+            if(this.libraryView && this.libraryView.libProblemListView){
+                this.libraryView.libraryProblemsView.highlightCommonProblems();
+            }
             return this;
         }, 
         renderProblems: function () {
@@ -95,6 +96,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 this.$(".problem-paginator").html(_.template($("#paginator-template").html(),
                         {current_page: this.currentPage, page_start:start,page_stop:stop,num_pages:this.maxPages}));
             }
+            return this;
         },
         events: {"click .undo-delete-button": "undoDelete",
             "change .display-mode-options": "changeDisplayMode",
@@ -157,7 +159,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.renderProblems();
             this.$(".problem-paginator button").removeClass("current-page");
             this.$(".problem-paginator button[data-page='" + this.currentPage + "']").addClass("current-page");
-
+            return this;
         },
         /* when the "new" button is clicked open up the simple editor. */
         openSimpleEditor: function(){  

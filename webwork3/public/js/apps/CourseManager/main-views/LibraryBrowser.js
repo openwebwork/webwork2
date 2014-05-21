@@ -104,6 +104,9 @@ function(Backbone, _,MainView,LibrarySubjectView,LibraryDirectoryView, LibrarySe
             },
             "show-hide-path": function(button) {
                 this.views[this.currentViewname].libraryProblemsView.toggleShowPath(button);
+            },
+            "goto-problem-set": function(_setName){
+                this.eventDispatcher.trigger("show-problem-set",_setName);
             }
 
         },

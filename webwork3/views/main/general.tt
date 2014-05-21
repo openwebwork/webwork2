@@ -98,6 +98,10 @@
     <i class="fa fa-trash-o"></i></span><%}%>
 <a href="#" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
 </div>
+
+<div class="col-md-2 btn-group btn-group-sm">
+<button class="btn btn-sm btn-success highlight-problem hidden"><i class="fa fa-bullseye fa-lg"></i></button>
+</div>
 </div>
 <div class="problem-tags">
 <table class="table table-condensed table-bordered"><tbody>

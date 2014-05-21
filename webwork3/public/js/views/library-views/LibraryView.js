@@ -44,6 +44,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList){
         },
         setTargetSet: function(set){
             this.targetSet = set;
+            this.libraryProblemsView.highlightCommonProblems();
         },
         addProblem: function(model){
             var problemSet = this.allProblemSets.findWhere({set_id: this.targetSet});
@@ -56,9 +57,8 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList){
         },
         showProblems: function () {
             this.$(".load-library-button").button("reset");  
-            this.libraryProblemsView.set({problems: this.problemList, type:this.libBrowserType});
-            this.libraryProblemsView.updatePaginator();
-            this.libraryProblemsView.gotoPage(0);
+            this.libraryProblemsView.set({problems: this.problemList, type:this.libBrowserType})
+                    .updatePaginator().gotoPage(0).highlightCommonProblems();
         },
     	loadProblems: function (_path){   
             this.$(".load-library-button").button("loading"); 	

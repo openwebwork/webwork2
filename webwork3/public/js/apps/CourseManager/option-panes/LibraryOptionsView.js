@@ -1,11 +1,16 @@
 define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config){
 	var LibraryOptionsView = SidePane.extend({
     initialize: function(options){
-        this.problemSets = options.problemSets; 
+        var self = this;
+        this.problemSets = options.problemSets;
+        this.problemSets.on({add: this.AddProblemSet, sync: function(_set){
+            self.render();
+            self.$(".select-target-option").val(_set.get("set_id"));
+            self.model.set({new_problem_set: ""});
+        }}); 
         this.settings = options.settings;
-        var LibraryOptions = Backbone.Model.extend({});
         this.model = new LibraryOptions({display_option: this.settings.getSettingValue("pg{options}{displayMode}"),
-            target_set: "", new_problem_set: ""});
+            target_set: "", new_problem_set: "", problemSets: this.problemSets});
         _.extend(this,Backbone.Events);
     },
     render: function(){
@@ -28,12 +33,45 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
     },
     events: {
         "change .problem-display-option": function (evt) { this.trigger("change-display-mode", evt);},
-        "change .select-target-option": function (evt) {this.trigger("change-target-set",evt);},
-        "click .add-problem-set-button": function () { this.trigger("add-problem-set",this.model.get("new_problem_set"));},
+        "change .select-target-option": function (evt) {
+            this.trigger("change-target-set",evt);
+            if($(evt.target).val()===""){
+                $(".goto-problem-set-button").attr("disabled","disabled")
+            } else {
+                $(".goto-problem-set-button").removeAttr("disabled")
+            }
+        },
+        "click .add-problem-set-button": function () { 
+            var msg;
+            if(msg = this.model.validate()){
+                $(".add-problem-set-option").popover({title: "Error", content: msg.new_problem_set, placement: "bottom"})
+                    .popover("show");
+            } else {
+                $(".add-problem-set-option").popover("destroy");
+                this.trigger("add-problem-set",this.model.get("new_problem_set"));
+            }
+        },
         "click .show-hide-tags-button" : function (evt) {this.trigger("show-hide-tags",$(evt.target))},
         "click .show-hide-path-button" : function (evt) {this.trigger("show-hide-path",$(evt.target))},
+        "click .goto-problem-set-button": function (){ this.trigger("goto-problem-set",this.model.get("target_set"))}
+    },
+    addProblemSet: function(_set){
+        this.model.set("target_set",_set.get("set_id"));
+        this.render();
     }
 });
+
+var LibraryOptions = Backbone.Model.extend({
+    validation: {
+        new_problem_set: function(value, attr, computedState) {
+            if(_(computedState.problemSets.pluck("set_id")).contains(value)){
+                return "The problem set " + value + " already exists.";
+            }
+        }
+    }
+});
+
+
 
 return LibraryOptionsView;
 })

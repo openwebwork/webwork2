@@ -11,7 +11,27 @@ define(['backbone', 'views/ProblemListView','config'],
     		},
             render: function(){
                   ProblemListView.prototype.render.apply(this);
-                  this.$(".prob-list-container").height($(window).height()-((this.maxPages==1) ? 200: 250))  
+                  this.highlightCommonProblems();
+                  this.$(".prob-list-container").height($(window).height()-((this.maxPages==1) ? 200: 250))
+            },
+            highlightCommonProblems: function () {
+                var self = this;
+                if(this.libraryView.targetSet){ 
+                    var pathsInTargetSet = this.libraryView.allProblemSets.findWhere({set_id: this.libraryView.targetSet})
+                        .problems.pluck("source_file");
+                    var pathsInLibrary = this.problems.pluck("source_file");
+                    var pathsInCommon = _.intersection(pathsInLibrary,pathsInTargetSet);
+
+                    _(pathsInLibrary).each(function(path,i){
+                        if(self.problemViews[i].rendered){
+                            self.problemViews[i].highlight(_(pathsInCommon).contains(path));
+                        } else {
+                            self.problemViews[i].model.once("rendered", function(v) {
+                                v.highlight(_(pathsInCommon).contains(path));
+                            });
+                        }
+                    });
+                }
             }
     	});
 

@@ -27,6 +27,7 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
                 }
             });
             this.tagsLoaded=false;
+            this.rendered = false;
         },
 
         render:function () {
@@ -66,8 +67,10 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
 
                 this.stickit();
                 this.model.trigger("rendered",this);
+                this.rendered = true;
                 
             } else {
+                this.rendered = false;
                 this.$el.html($("#problem-loading-template").html());
                 this.model.loadHTML({displayMode: this.allAttrs.displayMode, success: function (data) {
                     self.model.set("data",data.text);
@@ -119,8 +122,18 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
             this.$(".filename").toggleClass("hidden");
         },
         addProblem: function (evt){
-            console.log("adding a problem.");
-            this.libraryView.addProblem(this.model);  // pstaab: will there be an issue if this is not part of a library?
+            if(this.library){
+                this.libraryView.addProblem(this.model);  
+            } else {
+                console.error("This is not an addable problem.")
+            }
+        },
+        highlight: function(turn_on){
+            if(turn_on){
+                this.$(".highlight-problem").removeClass("hidden")
+            } else {
+                this.$(".highlight-problem").addClass("hidden")
+            }
         },
         hideProblem: function(evt){
             console.log("hiding a problem ");
