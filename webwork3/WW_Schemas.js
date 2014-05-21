@@ -32,13 +32,13 @@
   	user: User,
   	due_date: Date,
   	open_date: Date,
-  	reduced_credit_date: Date
+  	reduced_scoring_date: Date
   });
 
   var Assignment = new Schema({
   	due_date: Date,
   	open_date: Date,
-  	reduced_credit_date: Date
+  	reduced_scoring_date: Date
   	set: [UserSet]
   })
 

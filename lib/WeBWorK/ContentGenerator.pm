@@ -703,7 +703,9 @@ sub links {
 	if (defined $courseID) {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
-			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+                        my $primaryMenuName = "Homework Sets";
+                        $primaryMenuName = "Course Administration" if ($ce->{courseName} eq 'admin');
+			print &$makelink("${pfx}ProblemSets", text=>$r->maketext($primaryMenuName), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::end_li();
 			if (defined $setID) {
 			    print CGI::start_li();
@@ -1569,6 +1571,14 @@ method. The simplest way to to this is:
 sub optionsMacro {
 	my ($self, %options) = @_;
 	my $r = $self->r;
+    my %showMeAnother;
+    my $problemSeed;
+
+    # check if showMeAnother is defined
+    if($self->{showMeAnother}){
+        %showMeAnother = %{ $self->{showMeAnother} };
+        $problemSeed = $self->{problem}->{problem_seed};
+    }
 	
 	my @options_to_show = @{$options{options_to_show}} if exists $options{options_to_show};
 	@options_to_show = "displayMode" unless @options_to_show;  #FIXME -- I don't understant this -- type seems wrong
@@ -1634,6 +1644,16 @@ sub optionsMacro {
 		);
 		$result .= CGI::br();
 	}
+
+    # hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen
+    # it needs to send the seed from showMeAnother back to the screen
+    if($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}){
+	  	$result .= CGI::hidden({name => "showMeAnotherCheckAnswers", id=>"showMeAnotherCheckAnswers_id", value => 1});
+        # output the problem seed from ShowMeAnother so that it can be recycled in the refreshed screen
+        $result .= CGI::hidden({name => "problemSeed", value  =>  $problemSeed});
+        # tell showMeAnother that a display change has been made
+        $result .= CGI::hidden({name => "SMAdisplayChange", value  =>  1});
+    }
 
 	$result .= CGI::submit(-name=>"redisplay", -label=>$r->maketext("Apply Options"));
 	$result .= CGI::end_div();

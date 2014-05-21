@@ -79,9 +79,9 @@ sub title {
 	my $string              = $r->maketext("Statistics for")." ".$self->{ce}->{courseName}." ";
 	
 	if ($type eq 'student') {
-		$string             .= "student ".$self->{studentName};
+		$string             .= $r->maketext("student")." ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
-		$string             .= "set   ".$self->{setName};
+		$string             .= $r->maketext("set")." ".$self->{setName};
 		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ". $self->formatDateTime($self->{set_due_date});
 	}
 	return $string;
@@ -149,14 +149,14 @@ sub body {
 		my $email = $studentRecord->email_address;
 		
 		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			"Section: ", $studentRecord->section, CGI::br(),
-			"Recitation: ", $studentRecord->recitation, CGI::br();
+			$r->maketext("Section:")." ", $studentRecord->section, CGI::br(),
+			$r->maketext("Recitation:")." ", $studentRecord->recitation, CGI::br();
 		
 		if ($authz->hasPermissions($user, "become_student")) {
 			my $act_as_student_url = $self->systemLink($courseHomePage,
 				params => {effectiveUser=>$studentName});
 			
-			print 'Act as: ', CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
+			print $r->maketext('Act as:')." ", CGI::a({-href=>$act_as_student_url},$studentRecord->user_id);
 		}
 		
 		print WeBWorK::ContentGenerator::Grades::displayStudentStats($self,$studentName);
@@ -521,9 +521,9 @@ $svg = $svg . "<svg id=\"bargraph\" xmlns=\"http://www.w3.org/2000/svg\" xlink=\
 
 $svg = $svg . "<rect id=\"bargraphwindow\" x=\"0\" y=\"0\" width=\"". $imagewidth ."\" height=\"". $imageheight ."\" rx=\"20\" ry=\"20\" style=\"fill:white;stroke:888888;stroke-width:2;fill-opacity:0;stroke-opacity:1\" />\n";
 
-$svg = $svg . "<text id=\"bargraphtitle\" x=\"". $titlexpixel ."\" y=\"". $titleypixel ."\" font-family=\"sans-serif\" font-size=\"16\" fill=\"black\" text-anchor=\"middle\" font-weight=\"bold\">Percentage of Active Students with Correct Answers</text>\n";
+$svg = $svg . "<text id=\"bargraphtitle\" x=\"". $titlexpixel ."\" y=\"". $titleypixel ."\" font-family=\"sans-serif\" font-size=\"14\" fill=\"black\" text-anchor=\"middle\" font-weight=\"bold\">".$r->maketext("Percentage of Active Students with Correct Answers")."</text>\n";
 
-$svg = $svg . "<text id=\"bargraphxaxislabel\" x=\"". $xaxislabelxpixel ."\" y=\"". $xaxislabelypixel ."\" font-family=\"sans-serif\" font-size=\"14\" fill=\"black\" text-anchor=\"middle\" font-weight=\"normal\">Problem Number</text>\n";
+$svg = $svg . "<text id=\"bargraphxaxislabel\" x=\"". $xaxislabelxpixel ."\" y=\"". $xaxislabelypixel ."\" font-family=\"sans-serif\" font-size=\"14\" fill=\"black\" text-anchor=\"middle\" font-weight=\"normal\">".$r->maketext("Problem Number")."</text>\n";
 
 $svg = $svg . "<rect id=\"bargraphplotwindow\" x=\"". $leftmargin ."\" y=\"". $topmargin ."\" width=\"". $plotwindowwidth ."\" height=\"". $plotwindowheight ."\" style=\"fill:white;stroke:bbbbbb;stroke-width:1;fill-opacity:0;stroke-opacity:1\" />\n";
 
@@ -583,7 +583,7 @@ print
 	   CGI::p($r->maketext('The percentage of active students with correct answers for each problem')),
 		CGI::start_table({-border=>1, -class=>"stats-table"}),
 		CGI::Tr(CGI::td(
-			['Problem #', 
+			[ $r->maketext('Problem #'), 
 			   map {CGI::a({ href=>$self->systemLink($problemPage{$_}) },$_)} @problemIDs
 			]
 		)),
@@ -609,29 +609,15 @@ print
 	my $showGradeRow = 0;
 	unshift (@GradeableRows, CGI::td({}, "manual grader"));
 	foreach my $problemID (@problemIDs) {
-	    my $gradeable = 0;
-	    my $needs_grading = 0;
-	    foreach my $userID (@setUsers)  {
-		    my $userProblem = $db->getUserProblem($userID,$setName,$problemID);
-		    if ($userProblem->flags =~ /needs_grading/) {
-			$needs_grading = 1;
-			$gradeable = 1;
-			$showGradeRow = 1;
-			last;
-		    } elsif ($userProblem->flags =~ /graded/) {
-			$gradeable=1;
-			$showGradeRow = 1;
-		    }
-		    
-		}
-		if ($gradeable) {
-		    
-		    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
-		    push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $needs_grading ? "Needs Grading" : "Regrade")));
-		    
-		}  else {
-		    push (@GradeableRows, CGI::td());
-		}
+	    my $globalProblem = $db->getGlobalProblem($setName,$problemID);
+	    if ($globalProblem->flags =~ /essay/) {
+		$showGradeRow = 1;
+		my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
+		push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem")));
+		
+	    }  else {
+		push (@GradeableRows, CGI::td());
+	    }
 	}
 	
 	if ($showGradeRow) {

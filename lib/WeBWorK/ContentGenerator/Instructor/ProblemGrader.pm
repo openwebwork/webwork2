@@ -225,7 +225,9 @@ sub body {
 	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All',
 				   onClick => "for (i in document.forms['problem-grader-form'].elements)  { 
 	                       if (document.forms['problem-grader-form'].elements[i].className == 'mark_correct') { 
-	                           document.forms['problem-grader-form'].elements[i].checked = true
+	                       if (document.forms['problem-grader-form'].elements[i].checked) {
+                               document.forms['problem-grader-form'].elements[i].checked = false; } else {
+                               document.forms['problem-grader-form'].elements[i].checked = true; }
 	                       }
 	                    }" });
 

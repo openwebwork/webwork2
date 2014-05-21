@@ -563,7 +563,7 @@ sub body {
 	if ($editMode) {
 	   
 
-		print CGI::p('<b>Click</b> on the login name to <b>edit individual problem set data</b>, (e.g. due dates) for these students.');
+		print CGI::p($r->maketext('Click on the login name to edit individual problem set data, (e.g. due dates) for these students.'));
 	}
 	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
@@ -1137,7 +1137,7 @@ sub export_handler {
 
 sub cancelEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Abandon changes";
+	return $self->r->maketext("Abandon changes");
 }
 
 sub cancelEdit_handler {
@@ -1160,7 +1160,7 @@ sub cancelEdit_handler {
 
 sub saveEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Save changes";
+	return $self->r->maketext("Save changes");
 }
 
 sub saveEdit_handler {
@@ -1230,7 +1230,7 @@ sub cancelPassword_handler {
 
 sub savePassword_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Save changes";
+	return $self->r->maketext("Save changes");
 }
 
 sub savePassword_handler {
