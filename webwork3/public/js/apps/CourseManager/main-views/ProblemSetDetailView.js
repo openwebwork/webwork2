@@ -346,7 +346,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
             this.model = this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             this.users = options.users;
-            this.tableSetup();
+            this.tableSetup({show_reduced_scoring: true});
 
           
         },
@@ -453,6 +453,11 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 if(opts && opts.show_recitation){
                     this.cols.push({name: "Recitation", key: "recitation", classname: "recitation", editable: false,
                         datatype: "string"});
+                }
+                if(opts && opts.show_reduced_scoring){
+                    this.cols.push({name: "Reduced Scoring Date", key: "reduced_scoring_date", 
+                        classname: ["reduced-scoring-date","edit-datetime"], editable: true,
+                        datatype: "integer"});
                 }
         }
 
