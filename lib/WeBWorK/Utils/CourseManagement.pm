@@ -1010,6 +1010,13 @@ sub initNonNativeTables {
 	# Find the names of the non-native database tables 
 	foreach my $table (sort keys %$db) {
 	    next unless $db->{$table}{params}{non_native}; # only look at non-native tables
+	    # hack: these two tables are virtual and don't need to be created 
+	    # for the admin course or in the database in general
+	    # if they were created in earlier versions for the admin course 
+	    # you can use mysql to drop the field version_id manually
+	    # this will get rid of a spurious error
+	    next if $table eq 'problem_version' or $table eq 'set_version';
+	   
 	    my $database_table_name = (exists $db->{$table}->{params}->{tableOverride})? $db->{$table}->{params}->{tableOverride}:$table;
 	    #warn "table is $table";
 	    #warn "checking $database_table_name";
@@ -1038,7 +1045,7 @@ sub initNonNativeTables {
 		    if (!$database_field_exists) { 
 			$fields_ok = 0;
 			$fieldStatus{$field} =[ONLY_IN_A];
-			warn "$field from $database_table_name is only in schema, not in database, so adding it ... ";
+			warn "$field from $database_table_name (aka |$table|) is only in schema, not in database, so adding it ... ";
 			if ( $db->{$table}->can("add_column_field") ) {
 			    if ($db->{$table}->add_column_field($field_name)) {
 				warn "added column $field_name to table $database_table_name";
