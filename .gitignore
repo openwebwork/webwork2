@@ -2,7 +2,9 @@
 *-config
 applets
 tmp
-logs
+logs/
+webwork3/logs
+!webwork3/logs/README
 courses.dist
 library-directory-tree.json
 library-subject-tree.json
