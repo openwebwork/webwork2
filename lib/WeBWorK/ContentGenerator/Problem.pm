@@ -1046,15 +1046,18 @@ sub siblings {
     my $problemList;
     my $total_correct;
     my $attempted;
+	my $currentProblemID = $self->{problem}->problem_id if !($self->{invalidProblem});
 
 	foreach my $problemRecord (@problemRecords) {
 		my $problemID = $problemRecord->problem_id;
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID);
-		$problemList .= CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
+        # if this is the currently active problem, highlight it
+        my $liClass = ($currentProblemID==$problemID) ? "currentProblem":"";
+		$problemList .= CGI::li({-class=>$liClass},CGI::a( {href=>$self->systemLink($problemPage, 
 													params=>{  displayMode => $self->{displayMode}, 
 															   showOldAnswers => $self->{will}->{showOldAnswers}
-															})},  $r->maketext("Problem [_1]",$problemID))
+															})},  $r->maketext("Problem [_1][_2]",$problemID,($problemRecord->status==1)?"&#x2713;":""))
 	   );
 
 	   $total_correct += ($problemRecord->status || 0);

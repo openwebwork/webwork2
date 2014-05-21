@@ -95,6 +95,10 @@ ul.nav li a:hover {
 	background: #e1e1e1;	
 }
 
+li.currentProblem{
+	background: #e1e1e1;	
+}
+
 #site-navigation .info-box {
 	margin-top: 0.5em;
 }
