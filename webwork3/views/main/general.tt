@@ -100,7 +100,8 @@
 </div>
 
 <div class="col-md-2 btn-group btn-group-sm">
-<button class="btn btn-sm btn-success highlight-problem hidden"><i class="fa fa-bullseye fa-lg"></i></button>
+<button class="btn btn-sm btn-success highlight-problem hidden" title="This problem is in the target set.">
+  <i class="fa fa-bullseye fa-lg"></i></button>
 </div>
 </div>
 <div class="problem-tags">
