@@ -143,28 +143,32 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
 </script>
 
 <script type="text/template" id="library-options-template">
+<table>
+<tr><td>
   <div class="form-group">
     <label for="problem-display-option">Display Options</label>
     <div class="row">
-      <div class="col-md-10">
+      <div class="col-md-2">
         <select id="problem-display-option" class="problem-display-option form-control"></select>
       </div>
     </div>
   </div>
-
+  </td></tr>
+  <tr><td>
   <div class="form-group">
     <label for="select-target-option">Problem Set Target</label>
     <div class="row">
-      <div class="col-md-10">
+      <div class="col-md-2">
         <select id="select-target-option" class="select-target-option form-control"></select>
       </div>
     </div>
   </div>
-
+  </td></tr>
+  <tr><td>
   <div class="form-group">
     <label for="add-problem-set-option">Add Problem Set</label>
     <div class="row">
-      <div class="col-md-10">
+      <div class="col-md-2">
         <div class="input-group">
           <input id="add-problem-set-option" class="add-problem-set-option form-control" placeholder="Set Name">
           <span class="input-group-btn">
@@ -172,23 +176,24 @@ Loading Library...<i class='fa fa-spinner fa-spin'></i>
           </span>
       </div>
     </div>
-  </div>
-
+  </div></td></tr>
+  <tr><td>
 <div class="container">
   <div class="btn-group center-block">
     <button class="btn btn-default show-hide-tags-button" data-hide-text="Hide Tags">Show Tags</button>
     <button class="btn btn-default show-hide-path-button" data-hide-text="Hide Path">Show Path</button>
   </div>
 </div>
+</td></tr>
 
+<tr><td>
 <div class="container">
-  <div class="row">
-    <div class="center-block">
+  <div class="row center-block">
     <button class="btn btn-default goto-problem-set-button" disabled>View Target Problem Set</button>
-    </div>
   </div>
 </div>
-
+</td>
+</table>
 
 </script>
 

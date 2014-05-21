@@ -5,10 +5,7 @@ define(['backbone', 'views/ProblemListView','config'],
 	            this.viewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true, 
                     problem_seed: 1, showRefreshTool: true, showViewTool: true, showHideTool: true, 
                     deletable: false, draggable: true, show_undo: false};
-                this.allProblemSets = options.allProblemSets;
-                this.libraryView = options.libraryView;
-                this.settings = options.settings;
-                this.type = options.type;
+                _.extend(this,_(options).pluck("allProblemSets","libraryView","settings","type"));
                 ProblemListView.prototype.initialize.apply(this,[options]); 
     		},
             render: function(){
@@ -16,7 +13,6 @@ define(['backbone', 'views/ProblemListView','config'],
                   this.$(".prob-list-container").height($(window).height()-((this.maxPages==1) ? 200: 250))  
             }
     	});
-
-
+        
     	return LibraryProblemsView;
 });

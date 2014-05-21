@@ -53,7 +53,7 @@
 
 <script type="text/template" id="problem-list-template">
 <div class="row">
-  <div class="problem-paginator col-md-7"></div>
+  <div class="problem-paginator col-md-8"></div>
   <div class="col-md-3 num-problems"></div>
   <%if(show_undo||false) {%>
   <div class="pull-right col-md-1">
