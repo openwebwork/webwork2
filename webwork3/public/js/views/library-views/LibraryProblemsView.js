@@ -6,6 +6,7 @@ define(['backbone', 'views/ProblemListView','config'],
                     problem_seed: 1, showRefreshTool: true, showViewTool: true, showHideTool: true, 
                     deletable: false, draggable: true, show_undo: false};
                 _.extend(this,_(options).pluck("allProblemSets","libraryView","settings","type"));
+                this.libraryView = options.libraryView;
                 ProblemListView.prototype.initialize.apply(this,[options]); 
     		},
             render: function(){
@@ -13,6 +14,6 @@ define(['backbone', 'views/ProblemListView','config'],
                   this.$(".prob-list-container").height($(window).height()-((this.maxPages==1) ? 200: 250))  
             }
     	});
-        
+
     	return LibraryProblemsView;
 });
