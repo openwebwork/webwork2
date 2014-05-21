@@ -176,13 +176,17 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             this.users = options.users;
             this.settings = options.settings;
 
+
         },
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
-            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==0){
-               this.$(".reduced-scoring-date,.reduced-credit").closest("tr").css("display","none")               
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==0
+                || parseInt(this.model.get("enable_reduced_scoring"))===0){
+                   this.$(".reduced-scoring-date").closest("tr").addClass("hidden")
             }
- 
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==0){
+                this.$(".reduced-credit").closest("tr").addClass("hidden")   
+            }
             if(this.model){
                 this.stickit();
             }
@@ -205,11 +209,11 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             ".open-date" : "open_date",
             ".due-date" : "due_date",
             ".answer-date": "answer_date",
-            ".reduced-scoring-date": "reduced_scoring_date",
+            ".reduced-scoring-date": {observe: "reduced_scoring_date"},
             ".prob-set-visible": {observe: "visible", selectOptions: {
                 collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
             }},
-            ".reduced-credit": {observe: "enable_reduced_scoring", selectOptions: {
+            ".reduced-credit": {observe: "enable_reduced_scoring", updateModel: false, selectOptions: {
                 collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
             }},
             ".users-assigned": {
@@ -221,10 +225,11 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             if($(evt.target).val()==="1") { // show reduced credit field
                 var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
                     this.settings.getSettingValue("pg{reducedScoringBeforeDueDate}"));
-                this.model.set({reduced_scoring_date: rcDate.unix()},{silent: true});
-                this.$(".reduced-scoring-date").closest("tr").removeAttr("style");
+                this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
+                this.model.set({reduced_scoring_date: rcDate.unix(), enable_reduced_scoring: "1"});
             } else {
-                this.$(".reduced-scoring-date").closest("tr").css("display","none");
+                this.model.set({enable_reduced_scoring: "0"});
+                this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
             }
         }
 

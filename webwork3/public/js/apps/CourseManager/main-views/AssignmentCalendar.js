@@ -25,7 +25,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             this.model = new DateTypeModel({
                 answer_date: true,
                 due_date: true,
-                reduced_credit_date: true,
+                reduced_scoring_date: true,
                 open_date: true 
             });
             return this;
@@ -53,7 +53,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         bindings: {
             ".show-open-date": "open_date",
             ".show-due-date": "due_date",
-            ".show-reduced-credit-date": "reduced_credit_date",
+            ".show-reduced-scoring-date": "reduced_scoring_date",
             ".show-answer-date": "answer_date"
         },
     	renderDay: function (day){
@@ -96,6 +96,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"due_date");
                     } else if ($(ui.draggable).hasClass("assign-answer")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"answer_date");
+                    } else if ($(ui.draggable).hasClass("assign-reduced-scoring")){
+                        self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"reduced_scoring_date");
                     }
 
                 }
@@ -103,7 +105,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
             // The following allows an assignment date (due, open) to be dropped on the calendar
 
-            this.$(".assign-due,.assign-open,.assign-answer").draggable({
+            this.$(".assign-due,.assign-open,.assign-answer,.assign-reduced-scoring").draggable({
                 revert: true,
                 start: function () {$(this).popover("destroy")}
             });

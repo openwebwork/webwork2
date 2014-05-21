@@ -19,7 +19,7 @@ use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw(first max );
 
-our @set_props = qw/set_id set_header hardcopy_header open_date reduced_credit_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
+our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_credit_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts source_file/;
 
@@ -168,17 +168,6 @@ put '/courses/:course_id/sets/:set_id' => sub {
     my @usersToDelete = array_minus(@userNamesFromDB,@{params->{assigned_users}});
 
     my @test2 = grep{ not $_ ~~ @userNamesFromDB } @{params->{assigned_users}};
-
-    debug "usersToAdd";
-    debug \@usersToAdd;
-    debug "usersFromDB";
-    debug \@userNamesFromDB;
-    debug "assigned_users";
-    debug \@{params->{assigned_users}};
-    debug "test2";
-    debug \@test2;
-    debug "users to Delete";
-    debug \@usersToDelete;
 
     for my $user(@usersToAdd){
         addUserSet($user,params->{set_id});

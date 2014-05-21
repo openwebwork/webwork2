@@ -157,11 +157,11 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
 
                     }});
                 },
-                "change:due_date change:open_date change:answer_date": function(_set){
+                "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
                     self.assignmentDates.chain().filter(function(assign) { 
                             return assign.get("problemSet").get("set_id")===_set.get("set_id");})
                         .each(function(assign){
-                            assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")+"_date"))
+                            assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type").replace("-","_")+"_date"))
                                 .format("YYYY-MM-DD"));
                         });
                 },

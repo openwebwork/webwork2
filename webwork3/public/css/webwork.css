@@ -84,7 +84,7 @@ border-top: solid 1px rgb(220, 220, 220);}
 .assign-open {background-color: lightgreen;}
 .assign-due {background-color: red;}
 
-.assign-reduced-credit {background-color: rgb(255,128,0);}
+.assign-reduced-scoring {background-color: rgb(255,128,0);}
 
 .assign-not-visible {background-color: darkgray;}
 
