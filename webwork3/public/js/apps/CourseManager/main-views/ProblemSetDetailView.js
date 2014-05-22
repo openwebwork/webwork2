@@ -224,10 +224,15 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         showHideReducedScoringDate: function(evt){
             if($(evt.target).val()==="1") { // show reduced credit field
-                var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
-                    this.settings.getSettingValue("pg{reducedScoringBeforeDueDate}"));
                 this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
-                this.model.set({reduced_scoring_date: rcDate.unix(), enable_reduced_scoring: "1"});
+
+                // fill in a reduced_scoring_date if the field is empty.  
+                if(! this.model.get("reduced_scoring_date") || parseInt(this.model.get("reduced_scoring_date"))===0){
+                    var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
+                        this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
+                    
+                    this.model.set({reduced_scoring_date: rcDate.unix(), enable_reduced_scoring: "1"});
+                }
             } else {
                 this.model.set({enable_reduced_scoring: "0"});
                 this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
