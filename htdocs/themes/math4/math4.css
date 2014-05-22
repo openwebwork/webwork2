@@ -126,6 +126,7 @@ div.correct-progress {
    display: inline-block;
    float:left;
    box-sizing:border-box;
+   text-align:center;
 }
 
 div.attempted-progress {
