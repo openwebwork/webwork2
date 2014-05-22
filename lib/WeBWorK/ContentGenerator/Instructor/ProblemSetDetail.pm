@@ -224,6 +224,7 @@ use constant FIELD_PROPERTIES => {
 		labels    => {	default => "homework",
 				gateway => "gateway/quiz",
 				proctored_gateway => "proctored gateway/quiz",
+				jitar => "just-in-time"
 		},
 	},
 	version_time_limit => {
@@ -1800,6 +1801,11 @@ sub body {
 	$userCountMessage = $r->maketext("The set [_1] is assigned to [_2].", $setID, $userCountMessage);
 	$setCountMessage  = $r->maketext("The user [_1] has been assigned [_2].", $editForUser[0], $setCountMessage) if $forOneUser;
 
+
+	if ($setRecord->assignment_type eq 'jitar') {
+	    print CGI::p(CGI::div({class=>"ResultsWithError"}, $r->maketext("You cannot use this version of Set Detail to edit just-in-type type sets.  You must use Set Detail 2.")));
+	}
+
 	if ($forUsers) {
 	    ##############################################
 		# calculate links for the users being edited:
@@ -1834,6 +1840,7 @@ sub body {
 		my $gwmsg = ( $isGatewaySet && ! $editingSetVersion ) ?
 			CGI::br() . CGI::em($r->maketext("To edit a specific student version of this set, edit (all of) her/his assigned sets.")) : "";
 		my $vermsg = ( $editingSetVersion ) ? ", $editingSetVersion" : "";
+
 
 		print CGI::table({border=>2,cellpadding=>10}, 
 		    CGI::Tr({},
@@ -1899,7 +1906,7 @@ sub body {
 	} else {
 		print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students.")));
 	}
-
+	
 	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;

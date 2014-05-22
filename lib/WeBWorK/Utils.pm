@@ -1336,6 +1336,7 @@ sub is_jitar_problem_restricted {
     
     # if we restrict problem progression then we need to check to see if the previous
     # problem has been "completed" (this cant happen for the first problem)
+
     if ($mergedSet->restrict_prob_progression() &&
 	$idSeq[-1] != 1) {
 	

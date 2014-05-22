@@ -41,12 +41,12 @@ use WeBWorK::Utils::DatePickerScripts;
 
 # these constants determine which fields belong to what type of record
 use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring reduced_scoring_date restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts att_to_open_children counts_parent_grade)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother att_to_open_children counts_parent_grade)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts attempted last_answer num_correct num_incorrect)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother attempted last_answer num_correct num_incorrect)];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
@@ -304,19 +304,19 @@ use constant FIELD_PROPERTIES => {
 	restrict_prob_progression => {
 		name      => "Restrict Problem Progression",
 		type      => "choose",
-		choices   => [ qw(Y N) ],
+		choices   => [ qw(1 0) ],
 		override  => "all",
-                default   => "N",
-		labels    => { 'Y' => "Yes", 'N' => "No", },
+                default   => "0",
+		labels    => { '1' => "Yes", '0' => "No", },
 	},
 
 	email_instructor  => {
 		name      => "Email Instructor On Failed Attempt",
 		type      => "choose",
-		choices   => [ qw(N Y BeforeDueDate) ],
+		choices   => [ qw(0 1 2) ],
 		override  => "any",
                 default   => "N",
-		labels    => { 'Y' => "Yes", 'N' => "No", 'BeforeDueDate' => "Before Due Date"},
+		labels    => { '1' => "Yes", '0' => "No", '2' => "Before Due Date"},
 	},
 
 	# in addition to the set fields above, there are a number of things
@@ -350,6 +350,16 @@ use constant FIELD_PROPERTIES => {
 				"-1" => "unlimited",
 		},
 	},
+        showMeAnother => {
+                 name => "Show me another",
+                 type => "edit",
+                 size => "6",
+                 override  => "any",
+                 default=>"-1",
+                 labels    => {
+                      "-1" => "Never",
+                 },
+        },
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
@@ -416,10 +426,10 @@ use constant FIELD_PROPERTIES => {
 	counts_parent_grade  => {
 		name      => "Counts for Parent",
 		type      => "choose",
-		choices   => [ qw(N Y) ],
+		choices   => [ qw(0 1) ],
 		override  => "any",
-                default   => "N",
-		labels    => { 'Y' => "Yes", 'N' => "No", },
+                default   => "0",
+		labels    => { '1' => "Yes", '0' => "No", },
 	},
 
 
@@ -531,6 +541,10 @@ sub FieldTable {
 		#    but aren't editing a set version
 		next if ( $field eq 'problem_seed'  &&
 			  ( $isGWset && $forUsers && ! $setVersion ) );
+
+		# skip teh Show Me Another value if SMA is not enabled
+		next if ( $field eq 'showMeAnother' &&
+			  !$ce->{pg}->{options}->{enableShowMeAnother} );
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
@@ -1883,8 +1897,7 @@ sub body {
 	
 	my $editUsersAssignedToSetURL = $self->systemLink(
 	      $urlpath->newFromModule(
-                "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet", $r,
-                  courseID => $courseID, setID => $setID));
+                "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet", $r, courseID => $courseID, setID => $setID),params=>{pageVersion=> "instructor_set_detail2"});
 	my $editSetsAssignedToUserURL = $self->systemLink(
 	      $urlpath->newFromModule(
                 "WeBWorK::ContentGenerator::Instructor::UserDetail",$r,
@@ -2333,15 +2346,20 @@ sub body {
 			  ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
 				CGI::end_table()));
 		my $pdr_block_2 = CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type()));
-		my $pdr_block_3 = CGI::div({class=>"pdr_block_3"}, 
-					   join ("\n", $self->FieldHTML(
+
+		my @source_file_string = $self->FieldHTML(
 						     $userToShow,
 						     $setID,
 						     $problemID,
 						     $GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
 						     $problemToShow, # pass previously fetched user record to FieldHTML --sam
 						     "source_file"
-						 )) .
+		    );
+
+		$source_file_string[3] = CGI::br().CGI::input({type=>'hidden',id=>"problem_".$problemID."_default_source_file",value=>$GlobalProblems{$problemID}->source_file()}).$source_file_string[3];
+
+		my $pdr_block_3 = CGI::div({class=>"pdr_block_3"}, 
+					   join ('',@source_file_string) .
 					   CGI::br() .
 					   ($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : '') .
 					   CGI::div({class=> "psr_render_area", id=>"psr_render_area_$problemID"},''));   

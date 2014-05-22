@@ -465,7 +465,7 @@ our %pathTypes = (
 	},
 
 	instructor_set_detail2 => {
-		name    => 'Set Detail for set $setID',
+		name    => 'Set Detail 2 for set $setID',
 		parent  => 'instructor_set_list2',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,

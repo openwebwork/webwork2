@@ -147,6 +147,10 @@ sub body {
 	$globalUserID = $db->{set}->{params}->{globalUserID}
 		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
 
+	my $detailPageType = 'instructor_set_detail';
+       
+	$detailPageType = $r->param('pageVersion') if ($r->param('pageVersion'));
+
 	foreach my $userRecord (@userRecords) {
 
 		my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || "";
@@ -184,7 +188,7 @@ sub body {
 					defined $userSetRecord
 ###					? $prettyDate . CGI::a(
 					? ($prettyDate, "", CGI::a(
-						{href=>$self->systemLink($urlpath->new(type =>'instructor_set_detail',
+						{href=>$self->systemLink($urlpath->new(type =>$detailPageType,
 						                                       args =>{courseID => $courseName,
 						                                               setID    => $setID
 						                                       }),

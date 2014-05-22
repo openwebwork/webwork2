@@ -182,7 +182,16 @@ function render(id) {
     } else {
 	ro.problemSeed = 0;
     }
-    ro.problemSource = templatedir + '/' + $('[name="problem.'+id+'.source_file"]').val();
+    var source_file
+
+    if ($('[name="problem.'+id+'.source_file"]').val()) {
+	source_file = $('[name="problem.'+id+'.source_file"]').val();
+    } else {
+	source_file = $('#problem_'+id+'_default_source_file').val();
+    }
+
+    ro.problemSource = templatedir + '/' + source_file;
+
     ro.set = ro.problemSource;
     ro.showHints = 1;
     ro.showSolutions = 1;

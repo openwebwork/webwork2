@@ -779,10 +779,18 @@ sub links {
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
 				    print CGI::start_li();
 				    print CGI::start_ul();
+				    if ($ce->{showeditors}->{problemsetdetail1}) {
 					print CGI::start_li(); # $setID
-					print &$makelink("${pfx}ProblemSetDetail", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail", text=>"-$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
                      		        print CGI::end_li();
-					
+				    }
+
+				    if ($ce->{showeditors}->{problemsetdetail2}) {
+					print CGI::start_li(); # $setID (2)
+					print &$makelink("${pfx}ProblemSetDetail2", text=>"--$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+                     		        print CGI::end_li();
+				    }
+
 					if (defined $problemID) {
 					    print CGI::start_li();
 					    print CGI::start_ul();
