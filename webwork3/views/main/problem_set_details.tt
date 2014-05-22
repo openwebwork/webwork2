@@ -139,9 +139,16 @@ The results will be dispayed below.  To search for section 2 type "section:2" an
 </table>
 <table class="table table-striped" id="customize-problem-set-controls">
 <tr>
-<td class="header">Open Date</td><td class="header">Due Date</td><td class="header">Answer Date</td><td></td></tr>
+  <td class="header">Open Date</td>
+  <td class="header">Reduced Scoring Date</td>
+  <td class="header">Due Date</td>
+  <td class="header">Answer Date</td>
+  <td></td></tr>
 <tr>
-<td class="edit-datetime open-date"></td><td class="edit-datetime due-date"></td><td class="edit-datetime answer-date"></td>
+  <td class="edit-datetime open-date"></td>
+  <td class="edit-datetime reduced-scoring-date"></td>
+  <td class="edit-datetime due-date"></td>
+  <td class="edit-datetime answer-date"></td>
 <td> <button class="btn btn-default save-changes">Save Changes</button></td>
 </tr>
 </table>
@@ -219,4 +226,16 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
     <li>To view a problem with a new random seed, click the <button class="btn btn-default btn-sm"><i class="fa fa-refresh"></i></button> button.</li>
     <li>To change the value (or weight) of a problem, type in a new value and it will be updated automatically.</li>
   </ul>
+</script>
+
+
+<script type="text/template" id="customize-users-messages-template">
+<%
+var messages = {
+    set_saved: function(opt){return "The set " + opt.set_id + " for user " + opt.user_id + " has been saved.";},
+    set_saved_details: function(opt){return "The set " + opt.set_id + " for user " + opt.user_id + " has been saved.";},
+}
+print(messages[type](typeof(opts)=="undefined"?{}:opts))
+%>
+
 </script>
