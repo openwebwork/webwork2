@@ -94,6 +94,7 @@ our @EXPORT_OK = qw(
         grade_set
         jitar_id_to_seq
         seq_to_jitar_id
+        is_jitar_problem_closed
         is_jitar_problem_restricted
         jitar_problem_adjusted_status
         jitar_problem_finished
@@ -1283,12 +1284,9 @@ sub jitar_id_to_seq {
     return map {${$_}[1]} factor_exp($id);
 }
 
-# returns 0 if not restricted
-# if it is restricted it returns either "closed" if 
-# the attempts to open child problems hasnt been passed isnt set
-# or "restricted" if restricted progression is set. 
+# returns 0 if the problem is open and 1 if closed
 
-sub is_jitar_problem_restricted {
+sub is_jitar_problem_closed {
     my ($db, $userID, $setID, $problemID) = @_;
     
     my $mergedSet = $db->getMergedSet($userID,$setID); 
@@ -1327,46 +1325,69 @@ sub is_jitar_problem_restricted {
 	# attempts to open children, or if they have exausted their max_attempts
 	if (($userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) ||
 	    ($userParentProb->num_incorrect() == $userParentProb->max_attempts())) {
-	    return 'closed';
+	    return 1;
 	}
 
 	pop @parentIDSeq;
     }
     
+    # we shouldnt get here...
+    return 0;
+}
     
-    # if we restrict problem progression then we need to check to see if the previous
-    # problem has been "completed" (this cant happen for the first problem)
 
-    if ($mergedSet->restrict_prob_progression() &&
-	$idSeq[-1] != 1) {
-	
-	my $prevProb;
-	
-	until ($prevProb) {
-	    $idSeq[-1]--;
-	    
-	    if ($idSeq[-1] == 0) {
-		#this means we cant find a previous problem to test against
-		return 0;
-	    }
-	    
-	    my $id = seq_to_jitar_id(@idSeq);
-	    my $prevProb = $db->getMergedProblem($userID,$setID,$id);
-	    if (jitar_problem_adjusted_status($prevProb,$db) == 1 ||
-		jitar_problem_finished($prevProb,$db)) {
-		
-		# either the previous problem is 100% or we cant do better
-		return 0;
-	    } else {
-		
-		#in this case the previous problem is hidden
-		return 'hidden';
-	    }
-	}
+# returns 0 if the problem is not restricted and 1 if it is 
+
+sub is_jitar_problem_restricted {
+    my ($db, $userID, $setID, $problemID) = @_;
+
+    my $mergedSet = $db->getMergedSet($userID,$setID); 
+
+    unless ($mergedSet) {
+	warn "Couldn't get set $setID for user $userID from the database";
+	return 0;
     }
 
-    #if we have gotten to this point then the problem is open
-    return 0;
+    # return 0 unless we are a restricted jitar set
+    return 0 unless ($mergedSet->assignment_type eq 'jitar' && $
+		     mergedSet->restrict_prob_progression());
+
+    # if we restrict problem progression then we need to check to see if the previous
+    # problem has been "completed" or, if we are the first problem, if the parent problem
+    # has been completed
+
+    my $prob;
+    my $id;
+    my @idSeq = jitar_id_to_seq($problemID);
+
+    do {
+	# if we cant find something return 0
+	
+	return 0 unless @idSeq;
+
+	$idSeq[$#idSeq]--;
+	    
+	if ($idSeq[$#idSeq] == 0) {
+	    #this means we cant find a previous problem to test against so test against th eparent
+	    pop @idSeq;
+	}
+	
+	$id = seq_to_jitar_id(@idSeq);
+    } until ($db->existsUserProblem($userID,$setID,$id));
+
+    my $prob = $db->getMergedProblem($userID,$setID,$id);
+
+    if (jitar_problem_adjusted_status($prob,$db) == 1 ||
+	jitar_problem_finished($prob,$db)) {
+	
+	# either the previous problem is 100% or we cant do better so this is open
+	return 0;
+    } else {
+	
+	#in this case the previous problem is hidden
+	return 1
+    }
+    
 }
 
 

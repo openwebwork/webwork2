@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_restricted jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_restricted is_jitar_problem_closed jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -458,14 +458,13 @@ sub problemListRow($$$$$) {
 	my $problemLevel = 0;
 
 	if ($isJitarSet) {
-	    $jitarRestriction = is_jitar_problem_restricted($db, $problem->user_id, $setID, $problemID);
 	    my @seq = jitar_id_to_seq($problemID);
 	    $problemLevel = $#seq;
 	    $problemNumber = join('.',@seq);
 	}
 
 	# if the problem is closed we dont even print it
-	if ($jitarRestriction eq 'closed') {
+	if ($isJitarSet && is_jitar_problem_closed($db, $problem->user_id, $setID, $problemID)) {
 	    return '';
 	}
 
@@ -486,7 +485,7 @@ sub problemListRow($$$$$) {
 	}
 	
 	# if the problem is trestricted we show that it exists but its greyed out
-	if ($jitarRestriction eq 'restricted') {
+	if ($isJitarSet && is_jitar_problem_restricted($db, $problem->user_id, $setID, $problemID)) {
 	    $interactive = CGI::span({class=>$linkClasses." disabled-problem"}, $r->maketext("Problem [_1]",$problemNumber));
 	} else {
 	    $interactive = CGI::a({-href=>$interactiveURL,-class=>$linkClasses}, $r->maketext("Problem [_1]",$problemNumber));
