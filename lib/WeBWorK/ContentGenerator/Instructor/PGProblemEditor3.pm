@@ -682,7 +682,9 @@ EOF
 # 		),
 		CGI::p(
 			CGI::textarea(
-				-name => 'problemContents', -default => $problemContents,
+				-name => 'problemContents', 
+			        -class => 'latexentryfield',
+			        -default => $problemContents,
 				-rows => $rows, -cols => $columns, -override => 1,
 			),
 		);
@@ -2063,7 +2065,19 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
+
+	if ($ce->{options}->{PGMathView}) {
+	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	}
 	
+	return "";
+}
+
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
 	return "";
 }
 

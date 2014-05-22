@@ -342,6 +342,8 @@ $problemDefaults{max_attempts} = -1;
 # Achievement Facebook Integration
 ################################################################################
 
+#  Note:  This feature is out of date and no longer works with facebooks api
+
 ## Because of the way facebook works, in order to use facebook integration
 ## with webwork, you will need to create a facebook "app" specific to the 
 ## domain name of the server you are running.  Once you have created the app
