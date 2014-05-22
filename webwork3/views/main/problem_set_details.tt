@@ -185,7 +185,7 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
 <tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
 <tr><td>Problem Set visible to Users</td><td><select class='prob-set-visible input-small'> </select></td></tr>
-<tr><td>Reduced Credit Enabled</td><td><select class='reduced-credit input-small'></select></td></tr>
+<tr><td>Reduced Scoring Enabled</td><td><select class='reduced-scoring input-small'></select></td></tr>
 <tr><td>Users Assigned</td><td class="users-assigned"></td>
 <td><button class="assign-all-users btn btn-default">Assign to All Users</td></tr>
 

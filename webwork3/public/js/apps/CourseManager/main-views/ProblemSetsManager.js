@@ -168,11 +168,14 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 "change:problems": function(_set){
                     _set.save();
                 },
-                "set_date_error": function(opt){
+                "set_date_error": function(_opts, model){
                     self.eventDispatcher.trigger("add-message",{type: "danger",
-                        short: self.messageTemplate({type: "date_set_error", opts: {set_id: opt.set_id}}),
-                        text: self.messageTemplate({type: opt.type, opts: {set_id: opt.set_id}})
+                        short: self.messageTemplate({type: "date_set_error", opts: _opts}),
+                        text: self.messageTemplate({type: "date_set_error", opts: _opts})
                     });
+                    _(model.changed).chain().keys().each(function(key) {
+                        model.set(key,model.changingAttributes[key]);
+                    })
                 },
                 change: function(_set){
                     _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));

@@ -30,7 +30,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
                 propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet, settings: this.settings}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet,
-                        eventDispatcher: this.eventDispatcher}),
+                        eventDispatcher: this.eventDispatcher, settings: this.settings}),
                 unassignUsersView: new UnassignUserView({users:this.users})
             };
 
@@ -186,7 +186,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                    this.$(".reduced-scoring-date").closest("tr").addClass("hidden")
             }
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==0){
-                this.$(".reduced-credit").closest("tr").addClass("hidden")   
+                this.$(".reduced-scoring").closest("tr").addClass("hidden")   
             }
             if(this.model){
                 this.stickit();
@@ -195,7 +195,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         events: {
             "click .assign-all-users": "assignAllUsers",
-            "change .reduced-credit": "showHideReducedCreditDate"
+            "change .reduced-scoring": "showHideReducedScoringDate"
         },
         assignAllUsers: function(){
             this.model.set({assigned_users: this.users.pluck("user_id")});
@@ -214,7 +214,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             ".prob-set-visible": {observe: "visible", selectOptions: {
                 collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
             }},
-            ".reduced-credit": {observe: "enable_reduced_scoring", updateModel: false, selectOptions: {
+            ".reduced-scoring": {observe: "enable_reduced_scoring", updateModel: false, selectOptions: {
                 collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
             }},
             ".users-assigned": {
@@ -222,7 +222,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 onGet: function(value, options){ return value.length + "/" +this.users.size();}
             }
         },
-        showHideReducedCreditDate: function(evt){
+        showHideReducedScoringDate: function(evt){
             if($(evt.target).val()==="1") { // show reduced credit field
                 var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
                     this.settings.getSettingValue("pg{reducedScoringBeforeDueDate}"));
@@ -345,16 +345,14 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
     var CustomizeUserAssignView = Backbone.View.extend({
         initialize: function(options){
             _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
-            this.model = this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
-            this.users = options.users;
-            this.eventDispatcher = options.eventDispatcher;
-            this.tableSetup({show_reduced_scoring: true});
-
-
-          
+            this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
+            _.extend(this,_(options).pick("users","settings","eventDispatcher"));
         },
         render: function () {
             var self = this;
+            var reducedScoring = this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==1 
+                && this.problemSet.get("enable_reduced_scoring") == 1; 
+            this.tableSetup({show_reduced_scoring: reducedScoring});
             this.$el.html($("#loading-usersets-template").html());
             if (this.collection.size()>0){
                 this.$el.html($("#customize-assignment-template").html());

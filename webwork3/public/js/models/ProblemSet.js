@@ -125,15 +125,36 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
         checkDates: function(value, attr, computedState){
             var openDate = moment.unix(computedState.open_date)
                 , dueDate = moment.unix(computedState.due_date)
-                , answerDate = moment.unix(computedState.answer_date);
+                , answerDate = moment.unix(computedState.answer_date)
+                , reducedScoringDate = moment.unix(computedState.reduced_scoring_date);
+
+            // the following prevents the rest of the code from checking more than once per validation. 
+            // since there are 4 fields that use this method for validation, it gets called 4 times.     
+            this.numChecks = this.numChecks? this.numChecks+=1: 1;
+            if(this.numChecks==4){ delete this.numChecks;}
+            if(this.numChecks>1) { return;}
 
             if(openDate.isAfter(dueDate)){ 
-                this.trigger("set_date_error",{set_id: this.get("set_id"), type: "openDate_after_dueDate"});
+                this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), date1: "open date",
+                        date2: "due date"},this);
                 return "open date is after due date";
             }
             if (dueDate.isAfter(answerDate)){
-                this.trigger("set_date_error",{set_id: this.get("set_id"), type: "dueDate_after_answerDate"});
+                this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), date1: "due date",
+                        date2: "answer date"},this);
                 return "due date is after answer date";
+            }
+            if(computedState.enable_reduced_scoring==1){
+                if(reducedScoringDate.isAfter(dueDate)){
+                    this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), 
+                        date1: "reduced scoring date", date2: "due date"},this);
+                        return "reduced scoring date is after due date";       
+                }
+                if(openDate.isAfter(reducedScoringDate)){
+                    this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), date1: "open date",
+                        date2: "reduced scoring date"},this);
+                        return "due date is after reduced scoring date";       
+                }
             }
         }
     });
