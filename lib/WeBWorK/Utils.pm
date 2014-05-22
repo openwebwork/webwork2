@@ -1305,28 +1305,34 @@ sub is_jitar_problem_restricted {
 
     my @idSeq = jitar_id_to_seq($problemID);
     my @parentIDSeq = @idSeq;
-    pop @parentIDSeq;
 
-    unless( @parentIDSeq) {
+    unless( $#parentIDSeq != 0 ) {
 	#this means we are at a top level problem and this check doesnt make sense
 	return 0;
     }
 
-    my $parentProbID = seq_to_jitar_id(@parentIDSeq);
-    
-    my $userParentProb = $db->getMergedProblem($userID,$setID,$parentProbID);
-    
-    unless ($userParentProb) {
-	warn "Couldn't get problem $parentProbID for user $userID and set $setID from the database";
-	return 0;
-    }
+    pop @parentIDSeq;
+    while (@parentIDSeq) {
+	
+	my $parentProbID = seq_to_jitar_id(@parentIDSeq);
+	
+	my $userParentProb = $db->getMergedProblem($userID,$setID,$parentProbID);
+	
+	unless ($userParentProb) {
+	    warn "Couldn't get problem $parentProbID for user $userID and set $setID from the database";
+	    return 0;
+	}
+	
+	# the child problems are closed unless the number of incorrect attempts is above the 
+	# attempts to open children, or if they have exausted their max_attempts
+	if (($userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) ||
+	    ($userParentProb->num_incorrect() == $userParentProb->max_attempts())) {
+	    return 'closed';
+	}
 
-    # the child problems are closed unless the number of incorrect attempts is above the 
-    # attempts to open children, or if they have exausted their max_attempts
-    if (($userParentProb->num_incorrect() >= $userParentProb->att_to_open_children()) ||
-	($userParentProb->num_incorrect() == $userParentProb->max_attempts())) {
-	return 'closed';
+	pop @parentIDSeq;
     }
+    
     
     # if we restrict problem progression then we need to check to see if the previous
     # problem has been "completed" (this cant happen for the first problem)
@@ -1334,16 +1340,17 @@ sub is_jitar_problem_restricted {
 	$idSeq[-1] != 1) {
 	
 	my $prevProb;
-
+	
 	until ($prevProb) {
 	    $idSeq[-1]--;
 	    
 	    if ($idSeq[-1] == 0) {
 		#this means we cant find a previous problem to test against
-		return 0
+		return 0;
 	    }
-
-	    my $prevProb = $db->getMergedProblem($userID,$setID,$parentProbID);
+	    
+	    my $id = seq_to_jitar_id(@idSeq);
+	    my $prevProb = $db->getMergedProblem($userID,$setID,$id);
 	    if (jitar_problem_adjusted_status($prevProb,$db) == 1 ||
 		jitar_problem_finished($prevProb,$db)) {
 		
@@ -1365,22 +1372,22 @@ sub is_jitar_problem_restricted {
 sub jitar_id_sort {
     my ($ar, $br) = @_;
 
-    if ($ar->[0] != $br->[0]) {
-	return $ar->[0] <=> $br->[0];
-    }
-
     my @a = @$ar;
     my @b = @$br;
 
-    @a = pop @a;
-    @b = pop @b;
+    if ($a[0] != $b[0]) {
+	return ($a[0] <=> $b[0]);
+    }
+
+    shift @a;
+    shift @b;
 
     if (!@a && !@b) {
 	return 0;
     } elsif (!@a) {
-	return 1;
+	return -1;
     } elsif (!@b) {
-	return 0;
+	return 1;
     } else {
 	return jitar_id_sort(\@a,\@b);
     }
@@ -1391,9 +1398,9 @@ sub jitar_order_problems {
  
     my %problemSeqs;
 
-    for (my $i; $i<=$#problemIDs; $i++) {
+    for (my $i=0; $i<=$#problemIDs; $i++) {
 	my @seq = jitar_id_to_seq($problemIDs[$i]);
-	$problemSeqs{$i} = \@seq;
+	$problemSeqs{$problemIDs[$i]} = \@seq;
     }
 
     return sort {jitar_id_sort($problemSeqs{$a},$problemSeqs{$b})} @problemIDs;	

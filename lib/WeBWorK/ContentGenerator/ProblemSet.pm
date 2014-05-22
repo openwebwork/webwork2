@@ -393,7 +393,7 @@ sub body {
 		    @problemNumbers = sort { $a <=> $b } @problemNumbers;
 		}
 
-		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
+		foreach my $problemNumber (@problemNumbers) {
 			my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
 			die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
 			print $self->problemListRow($set, $problem, $db, $canScoreProblems, $isJitarSet);
