@@ -4,11 +4,10 @@
 *  
 */ 
 
-
-define(['backbone', 'underscore','config', 'views/LibraryProblemsView','models/ProblemList','views/LibraryTreeView'], 
-function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
+define(['backbone', 'underscore','config', 'views/library-views/LibraryProblemsView','models/ProblemList'], 
+function(Backbone, _,config, LibraryProblemsView, ProblemList){
     var LibraryView = Backbone.View.extend({
-        className: "lib-browser",
+        className: "library-view",
     	initialize: function (options){
     		var self = this;
             _.bindAll(this,'addProblem','loadProblems','showProblems','changeDisplayMode');
@@ -17,20 +16,19 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
             this.settings = options.settings;
             this.messageTemplate = options.messageTemplate;
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this, messageTemplate: this.messageTemplate,
-                 allProblemSets: this.allProblemSets, settings: this.settings});
-            this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets});
-            this.libraryTreeView.libraryTree.on("library-selected", this.loadProblems);            
-
-            
+                 allProblemSets: this.allProblemSets, settings: this.settings});  
     	},
-    	events: {   "change .target-set": "resetDisplayModes"
+    	events: {   
+            "change .target-set": "resetDisplayModes"
         }, 
     	render: function (){
             var modes = this.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
     		this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
-            this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
+            if(this.libraryTreeView){
+                this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
+            }
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
             if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size() >0){
                 this.libraryProblemsView.renderProblems();
@@ -46,6 +44,7 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
         },
         setTargetSet: function(set){
             this.targetSet = set;
+            this.libraryProblemsView.highlightCommonProblems();
         },
         addProblem: function(model){
             var problemSet = this.allProblemSets.findWhere({set_id: this.targetSet});
@@ -58,9 +57,8 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList,LibraryTreeView){
         },
         showProblems: function () {
             this.$(".load-library-button").button("reset");  
-            this.libraryProblemsView.set({problems: this.problemList, type:this.libBrowserType});
-            this.libraryProblemsView.updatePaginator();
-            this.libraryProblemsView.gotoPage(0);
+            this.libraryProblemsView.set({problems: this.problemList, type:this.libBrowserType})
+                    .updatePaginator().gotoPage(0).highlightCommonProblems();
         },
     	loadProblems: function (_path){   
             this.$(".load-library-button").button("loading"); 	

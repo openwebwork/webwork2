@@ -40,12 +40,12 @@ use WeBWorK::Utils::DatePickerScripts;
 
 # these constants determine which fields belong to what type of record
 use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring reduced_scoring_date restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts attempted last_answer num_correct num_incorrect)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother attempted last_answer num_correct num_incorrect)];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
@@ -326,6 +326,16 @@ use constant FIELD_PROPERTIES => {
 				"-1" => "unlimited",
 		},
 	},
+        showMeAnother => {
+                name => "Show me another",
+                type => "edit",
+                size => "6",
+		override  => "any",
+                default=>"-1",
+		labels    => {
+				"-1" => "Never",
+		},
+        },
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
@@ -428,6 +438,7 @@ sub FieldTable {
 		($gwFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
 
+
        	my $output = CGI::start_table({border => 0, cellpadding => 1});
 	if ($forUsers) {
 		$output .= CGI::Tr({},
@@ -476,6 +487,10 @@ sub FieldTable {
 		#    but aren't editing a set version
 		next if ( $field eq 'problem_seed'  &&
 			  ( $isGWset && $forUsers && ! $setVersion ) );
+
+                # skip the Show Me Another value if SMA is not enabled
+	        next if ( $field eq 'showMeAnother' &&
+                          !$ce->{pg}->{options}->{enableShowMeAnother} );
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
@@ -987,12 +1002,12 @@ sub initialize {
 	my $error = 0;	
 	if (defined $r->param('submit_changes')) {
 		my @names = ("open_date", "due_date", "answer_date", "reduced_scoring_date");
-		
-		my %dates = map { $_ => $r->param("set.$setID.$_") } @names;
+
+		my %dates = map { $_ => $r->param("set.$setID.$_") || ''} @names;
 
 		%dates = map { 
 			my $unlabel = $undoLabels{$_}->{$dates{$_}}; 
-			$_ => defined $unlabel ? $setRecord->$_ : $self->parseDateTime($dates{$_}) 
+			$_ => (defined($unlabel) || !$dates{$_}) ? $setRecord->$_ : $self->parseDateTime($dates{$_}) 
 		} @names;
 
 		($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_}||0 } @names;
@@ -1187,7 +1202,7 @@ sub initialize {
 				my $unlabel = $undoLabels{$field}->{$param};
 				$param = $unlabel if defined $unlabel;
 				if ($field =~ /_date/ ) {
-				    $param = $self->parseDateTime($param) unless defined $unlabel;
+				    $param = $self->parseDateTime($param) unless (defined $unlabel || !$param);
 				} 
 				if ($field =~ /restricted_release/) {
 				    $self->check_sets($db,$param) if $param;

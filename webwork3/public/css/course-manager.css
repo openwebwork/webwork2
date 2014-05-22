@@ -41,7 +41,7 @@ a#view-header i {margin-left:1ex;}
 
 
 
-.scrollable {height: 100%; overflow: scroll;}
+.scrollable {height: 100%; overflow-y: scroll;}
 
 .num-problems {margin-left: 10px;}
 
@@ -56,7 +56,7 @@ label.checklist {display: inline; margin-left: 8px;}
 
 .hw-assigned {color: blue;}
 
-#probSetList {margin:0;padding:0px; height:100%; overflow-y: auto;}
+/* #probSetList {margin:0;padding:0px; height:100%; overflow-y: auto;} */
 /*.prob-set-container {overflow-y: scroll; width: 100%;}*/
 .prob-value {width: 20px;}
 
@@ -74,6 +74,8 @@ border-radius: 5px;}
 
 .filename {font-style: italic; font-weight:  bold;}
 .problem-seed {margin-right: 2ex;}
+
+.num-problems {padding: 15px;}
 
 /* class for reordering problem sets */
 
@@ -111,16 +113,14 @@ table#sTable select {width: 150px;}
 #impFromFileInstructions {position: relative;}
 #impFromFileInstructions .error-pane{
 	display: none;
-	position: absolute;
-	z-index: 20;
-	width: 400px;
-	padding: 20px;
+	width: 100%;
+	padding: 10px;
 }
 
 #impFromFileInstructions .error-pane button {float: right;}
 
-#impFromFileInstructions .help-pane { display: none;
-	z-index: 10;
+#impFromFileInstructions .help-pane { 
+	display: none;
 	width: 100%;
 	padding: 10px;}
 
@@ -137,4 +137,9 @@ label {font-weight: bold; display: inline; margin-right: 20px;}
 #testButton {margin-left: 25px; margin-right: 25px;}
 #selectalldiv {display: inline; margin-left: 25px; margin-right: 25px;}
 #filterdiv {display: inline;}
+
+/* All Messages Sidepane */
+
+/*.messages-list {overflow: auto; height: 100%;}*/
+.messages-list li { border: 1px solid; border-radius: 5px; padding: 5px; margin-bottom: 5px;}
 

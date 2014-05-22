@@ -310,6 +310,8 @@ sub build_library_textbook_tree {
 	my @textbooks=map { {textbook_id=>$_->[0],title=>$_->[1],edition=>$_->[2],
 			author=>$_->[3],publisher=>$_->[4],isbn=>$_->[5],pubdate=>$_->[6]}} @{$results};
 
+	my @output = ();
+
 	my $i =0; ## index to alert user the length of the build
 
 	print "Building the Textbook Library Tree\n";
@@ -325,6 +327,8 @@ sub build_library_textbook_tree {
 			. " WHERE text.textbook_id='" . $textbook->{textbook_id} . "' ORDER BY ch.number;");
 
 		my @chapters=map { {chapter_id=>$_->[0],name=>$_->[1],number=>$_->[2]}} @{$results};
+
+		my @chs = ();
 
 		for my $chapter (@chapters){
 
@@ -357,6 +361,10 @@ sub build_library_textbook_tree {
 			$chapter->{num_probs}=$sth->rows;
 
 			$chapter->{sections}=\@sections;
+
+			my @sects = map {{name=>$_->{name}, num_files=>$_->{num_probs} } } @sections;
+
+			push(@chs,{name=>$chapter->{name},num_files=>$chapter->{num_probs},subfields=>\@sects});
 		
 		}
 		my $whereClause ="WHERE text.textbook_id='".$textbook->{textbook_id}."'";
@@ -366,6 +374,8 @@ sub build_library_textbook_tree {
 		$textbook->{num_probs}=$sth->rows;
 
 		$textbook->{chapters}=\@chapters;
+
+		push(@output,{name=>$textbook->{title}. " - " . $textbook->{author},subfields=>\@chs,num_files=>$sth->rows});
 	}
 
 
@@ -380,13 +390,13 @@ sub build_library_textbook_tree {
 	open $OUTFILE, '>', $file  or die "Cannot open $file";
 
 	# you can check for errors (e.g., if after opening the disk gets full)
-	print { $OUTFILE } to_json(\@textbooks,{pretty=>1}) or die "Cannot write to $file";
+	print { $OUTFILE } to_json(\@output,{pretty=>1}) or die "Cannot write to $file";
 
 	# check for errors
 	close $OUTFILE or die "Cannot close $file";
 
 
-	print "Wrote Library Textbook Tree to $file\n";
+	print "\n\nWrote Library Textbook Tree to $file\n";
 
 }
 

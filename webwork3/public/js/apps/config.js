@@ -63,10 +63,13 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         } */
     } 
 
+    config.messageTemplate= _.template($("#general-messages").html());
+
     // These are additional validation patterns to be available to Backbone Validation
 
     _.extend(Backbone.Validation.patterns, { "wwdate": config.regexp.wwDate}); 
     _.extend(Backbone.Validation.patterns, { "setname": /^[\w\d\_\.]+$/});
+    _.extend(Backbone.Validation.patterns, { "loginname": config.regexp.loginname});
     //_.extend(Backbone.Validation.patterns, { "loginname": /^[\w\d\_]+$/});
     _.extend(Backbone.Validation.validators, {
         setNameValidator: function(value, attr, customValue, model) {
@@ -75,7 +78,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             },
         checkLogin: function(value,attr,customValue,model){
             if(!value.match(config.regexp.loginname)){
-                return "Value must be a valid login name";
+                return "Value must be a valid login name"; // add to messageTemplate
             }
             if(model.collection.courseUsers && model.collection.courseUsers.findWhere({user_id: value})){
                 return "The user with login " + value + " already exists in this course.";

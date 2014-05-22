@@ -101,6 +101,12 @@ var CourseManager = WebPage.extend({
             .set({assignmentDates: this.assignmentDateList});
 
 
+        this.mainViewList.getSidepaneByName("All Messages")
+            .set({messages: this.messagePane.messages});
+
+
+        // Build the options menu.  Should we make a View for this?  
+
         this.setMessages();  
 
         // this will automatically save (sync) any change made to a problem set.
@@ -149,7 +155,7 @@ var CourseManager = WebPage.extend({
          }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
             self.currentView.render();
             if(self.currentSidePane && self.currentSidePane.sidePane){
-                self.currentSidePane.sidePane.render();                
+                self.currentSidePane.sidePane.render();
             }
          })
 

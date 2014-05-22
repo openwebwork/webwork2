@@ -561,7 +561,8 @@ sub pgfiles {
 			# pgfile table -- set 2 defaults first
 
 			my $level = $tags->{Level} || 0;
-			my $lang = $tags->{Language} || "eng";
+			# Default language is English
+			my $lang = $tags->{Language} || "en";
 
 			my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
 				qq(WHERE filename = ? AND path_id = ?), [$pgfile, $path_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, "", $level, $lang);

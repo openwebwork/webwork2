@@ -57,7 +57,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','stick
         	var self = this;
             _.bindAll(this,'render');
         	this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
-        		{"user_id": ".login-name", "email_address": ".email"});
+        		{"user_id": ".user-id", "email_address": ".email"});
 		    this.rowTemplate = options.rowTemplate;
 		    Backbone.Validation.bind(this, {
 		    	invalid: function(view,attr,error){
@@ -65,7 +65,6 @@ define(['backbone', 'underscore','models/User','models/UserList','config','stick
                     	.popover("show").addClass("error");
 		    	}
 		    });
-		
         },
         render: function () {
             this.$el.html(this.rowTemplate);
@@ -80,7 +79,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','stick
     				".status": "status",
     				".recitation": "recitation",
     				".email": {observe: "email_address", setOptions: {silent:true}},
-    				".login-name": {observe: "user_id", setOptions: {silent:true}},
+    				".user-id": {observe: "user_id", setOptions: {silent:true}},
     				".password": "password",
     				".permission": { 
     					observe: "permission",

@@ -41,3 +41,14 @@
 <p>The Settings for WeBWorK are divided into categories and each is in a tab.  To change the desired setting, simply change the 
 value using the textbox, popup menu or checkbox.  Changes are made immediately.  You do not need to save the settings with clicking a "save" button.  </p>
 </script>
+
+<script type="text/template" id="settings-messages-template">
+<%
+var messages = {
+    setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
+    setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
+                                opt.oldValue + " to " + opt.newValue + "."},
+}
+print(messages[type](typeof(opts)=="undefined"?{}:opts))
+%>
+</script>

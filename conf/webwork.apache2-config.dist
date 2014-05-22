@@ -168,7 +168,7 @@ $Directory{"$webwork3_htdocs_dir"} = {
     Options => "+ExecCGI -MultiViews +SymLinksIfOwnerMatch",
     Order => "allow,deny",
     Allow => "from all",
-    AddHandler => "fastcgi-script .fcgi",
+    AddHandler => "fcgid-script .fcgi",
 };
 
 </Perl>

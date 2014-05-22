@@ -16,10 +16,10 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
             comment: ""
         },
         validation: { 
-            user_id: {checkLogin: "fred"},
+            user_id: {pattern: "loginname"},
             email_address: {pattern: "email", required: false}
         }, 
-        idAttribute: "user_id",
+        idAttribute: "_id",
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id");
         },

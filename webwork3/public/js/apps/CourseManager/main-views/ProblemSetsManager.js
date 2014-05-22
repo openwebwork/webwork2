@@ -142,6 +142,11 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSets.on({
                 add: function (_set){
                     _set.save();
+                    _set.problems.on({
+                        "change:value": function(prob){ self.changeProblemValueEvent(prob,_set)},
+                        add: function(prob){ self.addProblemEvent(prob,_set)},
+                        sync: function(prob){ self.syncProblemEvent(prob,_set)},
+                    });
                     _set.changingAttributes={add: ""};
                 },
                 remove: function(_set){
@@ -237,32 +242,36 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
 
             this.problemSets.each(function(_set) {
                 _set.problems.on({
-                    "change:value": function(prob){
-                        // not sure this is actually working.
-                        prob.changingAttributes={"value_changed": {oldValue: prob._previousAttributes.value, 
-                                newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}}
-                    },
-                    add: function(problems){
-                        _set.changingAttributes={"problem_added": ""};
-                    },
-                    sync: function(problems){
-                        _(problems.changingAttributes||{}).chain().keys().each(function(key){ 
-                            switch(key){
-                                case "value_changed": 
-                                    self.messagePane.addMessage({type: "success", 
-                                        short: config.msgTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
-                                        text: config.msgTemplate({type: "problems_values_details", opts: problems.changingAttributes[key]})});
-                                    break;
-                                
-                            }
-                        });
-                    }
+                    "change:value": function(prob){ self.changeProblemValueEvent(prob,_set)},
+                    add: function(prob){ self.addProblemEvent(prob,_set)},
+                    sync: function(prob){ self.syncProblemEvent(prob,_set)},
                 });
-            });  // this.problemSets.each
-
-
-        } // setMessages
-
+            });
+        }, // setMessages
+        changeProblemValueEvent: function (prob,_set){    // not sure this is actually working.
+            if(typeof(_set.changingAttributes.problem_added)==="undefined"){
+                _set.changingAttributes={"value_changed": {oldValue: prob._previousAttributes.value, 
+                    newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}}
+                }
+        },
+         addProblemEvent: function(prob,_set){
+            _set.changingAttributes={"problem_added": ""};
+        },
+        syncProblemEvent: function(prob,_set){
+            _(_set.changingAttributes||{}).chain().keys().each(function(key){ 
+                switch(key){
+                    case "value_changed": 
+                        self.messagePane.addMessage({type: "success", 
+                            short: config.msgTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
+                            text: config.msgTemplate({type: "problems_values_details", opts: problems.changingAttributes[key]})});
+                        break;
+                    
+                }
+            });
+        }
+        
+        
+        
     });
 
     var AddProblemSetView = ModalView.extend({
