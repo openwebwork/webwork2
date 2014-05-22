@@ -231,7 +231,7 @@ function MathViewer(field,button,container,userOptions) {
 
 	if (me.renderingMode == "LATEX") {
 	    me.inputTextBox.insertAtCaret(strucValue.latex);
-	    var parmatch = strucValue.latex.match(/\(\)/);
+	    var parmatch = strucValue.latex.match(/\(\)|\[,|\(,/);
 	    if (parmatch) {
 		newpos += parmatch[0].index;
 	    }
@@ -239,7 +239,7 @@ function MathViewer(field,button,container,userOptions) {
 	    me.inputTextBox.keyup();
 	} else if (me.renderingMode == "PGML") {
 	    me.inputTextBox.insertAtCaret(strucValue.PG);
-	    var parmatch = strucValue.PG.match(/\(\)/);
+	    var parmatch = strucValue.PG.match(/\(\)|\[,|\(,/);
 	    if (parmatch) {
 		newpos += parmatch.index+1;
 	    }
@@ -378,7 +378,7 @@ function MathViewer(field,button,container,userOptions) {
 			    var query = query.match(re)[0];
 			    re = new RegExp('^.{'+(pos-(len-query.length))+'}[a-z]*');
 			    query = query.match(re)[0];
-			    var parmatch = item.match(/\(\)/);
+			    var parmatch = item.match(/\(\)|\[,|\(,/);
 			    if (parmatch) {
 				newpos += parmatch.index+1;
 			    } else {
