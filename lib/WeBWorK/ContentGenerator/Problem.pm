@@ -1048,37 +1048,58 @@ sub siblings {
     # variables for the progress bar
     my $num_of_problems  = @problemRecords || 0;
     my $problemList;
-    my $total_correct;
-    my $attempted;
+    my $total_correct=0;
+    my $total_incorrect=0;
+    my $total_inprogress=0;
 	my $currentProblemID = $self->{problem}->problem_id if !($self->{invalidProblem});
     
 	foreach my $problemRecord (@problemRecords) {
 		my $problemID = $problemRecord->problem_id;
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID);
-        # if this is the currently active problem, highlight it;
-        # furthermore put a checkmark (&#x2713) by any problems which the 
-        # student has answered correctly, and a cross by those that not (&#x2717;)
-		$problemList .= CGI::li({-class=>($currentProblemID==$problemID) ? "currentProblem":""},CGI::a( {href=>$self->systemLink($problemPage, 
+
+	   my $total_attempts = $problemRecord->num_correct + $problemRecord->num_incorrect;
+
+       my $status_symbol;
+       # variables for the widths of the bars in the Progress Bar
+       if( $problemRecord->status ==1 ){
+          # correct
+          $total_correct++;
+          $status_symbol = "&#x2713;"; # checkmark
+       } else {
+          # incorrect
+          if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
+            $total_incorrect++;
+            $status_symbol = "&#x2717;"; # cross
+          } else {
+            # in progress
+            if($problemRecord->attempted>0){
+                $total_inprogress++;
+                $status_symbol = " &hellip;"; # horizontal ellipsis
+            }
+          }
+       }
+
+       # if this is the currently active problem, highlight it;
+       # furthermore put the status_symbol next to the problem
+       # illustrating if it is correct, in progress, or incorrect
+	   $problemList .= CGI::li({-class=>($currentProblemID==$problemID) ? "currentProblem":""},CGI::a( {href=>$self->systemLink($problemPage, 
 													params=>{  displayMode => $self->{displayMode}, 
 															   showOldAnswers => $self->{will}->{showOldAnswers}
-															})},  $r->maketext("Problem [_1][_2]",$problemID,($problemRecord->status==1)?"&#x2713;":(($problemRecord->attempted>0)?"&#x2717;":"")))
+															})},  $r->maketext("Problem [_1][_2]",$problemID,$status_symbol))
 	   );
-
-       # variables for the widths of the bars in the Progress Bar
-	   $total_correct += ($problemRecord->status || 0);
-	   $attempted     += $problemRecord->attempted;
 	}
 
     # output the progress bar
     if($num_of_problems>0 and $r->ce->{pg}->{options}->{enableProgressBar}){
-        $attempted -= $total_correct;
-        my $unattempted = $num_of_problems - $attempted - $total_correct;
+        my $unattempted = $num_of_problems - $total_correct - $total_incorrect - $total_inprogress;
         my $progress_bar_correct_width = $total_correct*100/$num_of_problems;
-        my $progress_bar_attempted_width = $attempted*100/$num_of_problems;
+        my $progress_bar_incorrect_width = $total_incorrect*100/$num_of_problems;
+        my $progress_bar_inprogress_width = $total_inprogress*100/$num_of_problems;
         my $progress_bar_unattempted_width = $unattempted*100/$num_of_problems;
 
         # construct the progress bar 
+        #       CORRECT | IN PROGRESS | INCORRECT | UNATTEMPTED
         my $progress_bar = CGI::start_div({-class=>"progress-bar set-id-tooltip",
                                            "aria-label"=>"progress bar for current problem set",
                                           });
@@ -1092,11 +1113,19 @@ sub siblings {
             $progress_bar .= ($total_correct == $num_of_problems)?"&#9733;Perfect&#9733;":"";
             $progress_bar .= CGI::end_div();
         } 
-        if($attempted>0){
-            $progress_bar .= CGI::div({-class=>"attempted-progress set-id-tooltip",-style=>"width:$progress_bar_attempted_width%",
-                                      "aria-label"=>"attempted progress bar for current problem set",
+        if($total_inprogress>0){
+            $progress_bar .= CGI::div({-class=>"inprogress-progress set-id-tooltip",-style=>"width:$progress_bar_inprogress_width%",
+                                      "aria-label"=>"in progress bar for current problem set",
                                       "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-                                      "data-original-title"=>$r->maketext("Incorrect: $attempted/$num_of_problems")
+                                      "data-original-title"=>$r->maketext("In progress: $total_inprogress/$num_of_problems")
+                                    });
+            $progress_bar .= CGI::end_div();
+        }
+        if($total_incorrect>0){
+            $progress_bar .= CGI::div({-class=>"incorrect-progress set-id-tooltip",-style=>"width:$progress_bar_incorrect_width%",
+                                      "aria-label"=>"incorrect progress bar for current problem set",
+                                      "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
+                                      "data-original-title"=>$r->maketext("Incorrect: $total_incorrect/$num_of_problems")
                                     });
             $progress_bar .= CGI::end_div();
         }

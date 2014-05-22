@@ -95,6 +95,7 @@ ul.nav li a:hover {
 	background: #e1e1e1;	
 }
 
+/* for the side navigation 'fisheye' list of problems */
 li.currentProblem{
 	background: #e1e1e1;	
 }
@@ -121,7 +122,7 @@ div.progress-bar {
 div.correct-progress {
    height: 20px;
    background-color: #8F8; /*same colour used as 'correct' */
-   border: 1px solid #5FFB17; 
+   border: 2px solid #00FF00; 
    border-radius: 4px;
    display: inline-block;
    float:left;
@@ -129,11 +130,20 @@ div.correct-progress {
    text-align:center;
 }
 
-div.attempted-progress {
+div.incorrect-progress {
    height: 20px;
-   background-color: #F87217; /* pumpkin orange */
-   border: 1px solid #7F462C;
-   opacity:0.5;
+   background-color: #FF9494; /* same colour used as 'incorrect' */
+   border: 2px solid #FF0000;
+   border-radius: 4px;
+   display: inline-block;
+   box-sizing:border-box;
+}
+
+div.inprogress-progress {
+   height: 20px;
+   background-color: #FFFF00; /* yellow */
+   border: 2px solid #FBB117; /* beer border*/
+   border-radius: 4px;
    display: inline-block;
    box-sizing:border-box;
 }
