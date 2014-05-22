@@ -5,15 +5,15 @@
 */ 
 
 
-define(['backbone', 'underscore','views/LibraryView','views/LibraryProblemsView','models/ProblemList','config'], 
-function(Backbone, _,LibraryView, LibraryProblemsView,ProblemList,config){
+define(['backbone', 'underscore','views/library-views/LibraryView','models/ProblemList','config'], 
+function(Backbone, _,LibraryView,ProblemList,config){
     var LibrarySearchView = LibraryView.extend({
         className: "lib-browser",
     	initialize: function (options){
             this.constructor.__super__.initialize.apply(this,[options]);
             _.bindAll(this,"search","showResults","checkForEnter");
-            this.libraryProblemsView = new LibraryProblemsView({type: "search", libraryView: this, 
-                                            allProblemSets: this.allProblemSets, settings: this.settings});
+           /* this.libraryProblemsView = new LibraryProblemsView({type: "search", libraryView: this, 
+                                            allProblemSets: this.allProblemSets, settings: this.settings});*/
     	},
         events: function(){
             return _.extend({},LibraryView.prototype.events,{

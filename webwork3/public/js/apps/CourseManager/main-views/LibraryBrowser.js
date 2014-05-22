@@ -5,10 +5,12 @@
 */ 
 
 
-define(['backbone', 'underscore','views/MainView', 'views/LibraryView','views/LibrarySearchView','views/LibraryProblemsView',
-            'views/LocalLibraryView','views/LibraryTextbookView','models/ProblemSet','moment','config'], 
-function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,LocalLibraryView,
-    LibraryTextbookView,ProblemSet,moment,config){
+define(['backbone', 'underscore','views/MainView', 
+        'views/library-views/LibrarySubjectView','views/library-views/LibraryDirectoryView',
+        'views/library-views/LibrarySearchView','views/library-views/LocalLibraryView',
+        'views/library-views/LibraryTextbookView','models/ProblemSet','moment','config','apps/util'], 
+function(Backbone, _,MainView,LibrarySubjectView,LibraryDirectoryView, LibrarySearchView,LocalLibraryView,
+    LibraryTextbookView,ProblemSet,moment,config,util){
     var LibraryBrowser = MainView.extend({
         messageTemplate: _.template($("#library-messages-template").html()),
     	initialize: function (options){
@@ -25,13 +27,15 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
                              setDefinition: "set-definition-tab",
                              search: "library-search-tab"};
 
+            this.dateSettings = util.pluckDateSettings(this.settings);
+
 
             //this.libraryProblemsView.on("update-num-problems",this.updateNumberOfProblems);
 
             this.views = {
-                subjects  :  new LibraryView({libBrowserType: "subjects", problemSets: options.problemSets,
+                subjects  :  new LibrarySubjectView({libBrowserType: "subjects", problemSets: options.problemSets,
                                     settings: this.settings, messageTemplate: this.messageTemplate}),
-                directories    :  new LibraryView({libBrowserType: "directories", problemSets: options.problemSets,
+                directories    :  new LibraryDirectoryView({libBrowserType: "directories", problemSets: options.problemSets,
                                     settings: this.settings,messageTemplate: this.messageTemplate}),
                 textbooks    :  new LibraryTextbookView({libBrowserType: "textbooks", problemSets: options.problemSets,
                                     settings: this.settings,messageTemplate: this.messageTemplate}),
@@ -87,11 +91,11 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
         },
         sidepaneEvents: {
             "change-display-mode": function(evt) { this.views[this.currentViewname].changeDisplayMode(evt) },
-            "change-target-set": function(evt) { 
-                this.views[this.currentViewname].setTargetSet($(evt.target).val());
+            "change-target-set": function(opt) { 
+                this.views[this.currentViewname].setTargetSet(_.isString(opt)? opt: $(opt.target).val());
             }, 
             "add-problem-set": function(_set_name){
-                var _set = new ProblemSet({set_id: _set_name});
+                var _set = new ProblemSet({set_id: _set_name},this.dateSettings);
                 _set.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
                this.views[this.currentViewname].allProblemSets.add(_set); 
             },
@@ -101,8 +105,8 @@ function(Backbone, _,MainView,LibraryView,LibrarySearchView,LibraryProblemsView,
             "show-hide-path": function(button) {
                 this.views[this.currentViewname].libraryProblemsView.toggleShowPath(button);
             },
-            "goto-problem-set": function(setName){
-                this.eventDispatcher.trigger("show-problem-set",setName);
+            "goto-problem-set": function(_setName){
+                this.eventDispatcher.trigger("show-problem-set",_setName);
             }
 
         },

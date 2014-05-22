@@ -43,7 +43,7 @@ get '/Library/subjects' => sub {
 
 ####
 #
-#  get all problems with subject *subject_id* 
+#  get all problems with subject *subject_id* and chapter *chapter_id* and section *section_id*
 #
 #   returns a array of problem paths? (global problem_id's)?
 #
@@ -52,10 +52,11 @@ get '/Library/subjects' => sub {
 ####
 
 
-get '/Library/subjects/:subject/problems' => sub {
+get qr{\/Library\/subjects\/(.+)\/chapters\/(.+)\/sections\/(.+)\/problems} => sub {
 
-	return searchLibrary({subject=>params->{subject}});
+	my ($subj,$chap,$sect) = splat;
 
+	return searchLibrary({subject=>$subj,chapter=>$chap,section=>$sect});
 };
 
 
@@ -69,15 +70,17 @@ get '/Library/subjects/:subject/problems' => sub {
 #
 ####
 
+get qr{\/Library\/subjects\/(.+)\/chapters\/(.+)\/problems} => sub {
 
-get '/Library/subjects/:subject/chapters/:chapter/problems' => sub {
+	my ($subj,$chap) = splat;
 
-	return searchLibrary({subject=>params->{subject},chapter=>params->{chapter}});
+	return searchLibrary({subject=>$subj,chapter=>$chap});
 };
+
 
 ####
 #
-#  get all problems with subject *subject_id* and chapter *chapter_id* and section *section_id*
+#  get all problems with subject *subject_id* 
 #
 #   returns a array of problem paths? (global problem_id's)?
 #
@@ -86,10 +89,15 @@ get '/Library/subjects/:subject/chapters/:chapter/problems' => sub {
 ####
 
 
-get '/Library/subjects/:subject/chapters/:chapter/sections/:section/problems' => sub {
+get qr{\/Library\/subjects\/(.+)\/problems} => sub {
 
-	return searchLibrary({subject=>params->{subject},chapter=>params->{chapter},section=>params->{section}});
+	my ($subj) = splat;
+
+	return searchLibrary({subject=>$subj});
 };
+
+
+
 
 #######
 #
@@ -131,11 +139,8 @@ get '/Library/directories/**' => sub {
 
 	setCourseEnvironment(params->{course_id});
 	my ($dirs) = splat;
-	my @dirs = @{$dirs};
-	splice(@dirs,1,1); # strip the "OpenProblemLibrary" from the path
-
-	my $path = vars->{ce}->{courseDirs}{templates} ."/". join("/",@dirs);
-
+	my @dirs =  shift @{$dirs};# strip the "OpenProblemLibrary" from the path
+	my $path = vars->{ce}->{courseDirs}{templates} ."/Library/". join("/",@$dirs);
 	my $header = vars->{ce}->{courseDirs}{templates} . "/";
 	my @files = File::Find::Rule->file()->name('*.pg')->in($path);
 	my @allFiles =  map { $_ =~ s/$header//; {source_file=>$_}} @files;
@@ -315,6 +320,33 @@ get '/Library/textbooks/:textbook_id/problems' => sub {
 	return searchLibrary({textbook_id=>params->{textbook_id}});
 
 };
+
+####
+#
+#  The following are used when getting problems from textbooks (from the Library Browser)
+#
+####
+
+get '/textbooks/author/:author_name/title/:title/problems' => sub {
+
+	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title}});
+
+};
+
+get '/textbooks/author/:author_name/title/:title/chapter/:chapter/problems' => sub {
+
+	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title},
+			textbook_chapter=>params->{chapter}});
+
+};
+
+get '/textbooks/author/:author_name/title/:title/chapter/:chapter/section/:section/problems' => sub {
+
+	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title},
+			textbook_chapter=>params->{chapter},textbook_section=>params->{section}});
+
+};
+
 
 
 

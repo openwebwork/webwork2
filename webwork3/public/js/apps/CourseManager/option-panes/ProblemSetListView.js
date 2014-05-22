@@ -27,7 +27,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
         render: function ()
         {
             var self = this;
-            
+            if(!this.mainView){ // if this isn't a sidepane 
+                return;
+            }
             this.$el.html($("#problem-set-list-template").html());
             var ul = this.$(".btn-group-vertical");
             //var ul = this.$(".prob-set-container ul");

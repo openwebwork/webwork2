@@ -35,8 +35,6 @@ sub render {
 		$renderParams->{formFields}->{$key} = params->{$key};
 	}
 
-	debug $renderParams->{formFields};
-
 	# remove any pretty garbage around the problem
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
@@ -215,7 +213,17 @@ sub get_section_problems {
 ###
 
 sub searchLibrary {
-	my ($param) = @_;
+	my $p = shift;
+
+	my $param = {};
+
+	# escape the ' in any parameter. 
+
+	for my $key (keys %{$p}){
+		my $val = $p->{$key};
+		$val =~ s/\'/\\'/g;
+		$param->{$key} = $val;
+	}
 
 	debug $param;
 
@@ -283,7 +291,7 @@ sub searchLibrary {
 		$whereClause .="DBsect.name LIKE '" . $param->{section} . "'  ";
 	}
 	##Textbook search 
-	if(defined($param->{section_id})||defined($param->{textbook_id})||defined($param->{chapter_id})){
+	if(defined($param->{section_id})||defined($param->{textbook_id})||defined($param->{chapter_id}) || defined($param->{textbook_title}) || defined($param->{textbook_author})){
 		$selectClause .= "LEFT JOIN OPL_pgfile_problem AS pgprob ON pgprob.pgfile_id=pg.pgfile_id "
 				. "LEFT JOIN OPL_problem AS prob ON pgprob.problem_id=prob.problem_id "
 				. "LEFT JOIN OPL_section AS sect ON prob.section_id=sect.section_id "
@@ -305,6 +313,30 @@ sub searchLibrary {
 		$whereClause .="AND " if(length($whereClause)>6); 
 		$whereClause .="sect.section_id='".$param->{section_id} ."' ";
 	}
+
+	##Textbook author search 
+	if(defined($param->{textbook_author})){
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="textbook.author='".$param->{textbook_author}."' ";
+	}
+	##Textbook title search 
+	if(defined($param->{textbook_title})){
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="textbook.title='".$param->{textbook_title}."' ";
+	}
+	
+	##Textbook chapter search 
+	if(defined($param->{textbook_chapter})){
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="ch.name='".$param->{textbook_chapter}."' ";
+	}
+
+	##Textbook section search 
+	if(defined($param->{textbook_section})){
+		$whereClause .="AND " if(length($whereClause)>6); 
+		$whereClause .="sect.name='".$param->{textbook_section}."' ";
+	}
+
 
 	debug $selectClause,$whereClause.$groupClause;
 

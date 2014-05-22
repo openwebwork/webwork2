@@ -53,7 +53,7 @@
 
 <script type="text/template" id="problem-list-template">
 <div class="row">
-  <div class="problem-paginator col-md-7"></div>
+  <div class="problem-paginator col-md-8"></div>
   <div class="col-md-3 num-problems"></div>
   <%if(show_undo||false) {%>
   <div class="pull-right col-md-1">
@@ -97,6 +97,11 @@
 <%if(deletable){ %><a  href="#" class="remove-problem btn btn-default" title="delete problem">
     <i class="fa fa-trash-o"></i></span><%}%>
 <a href="#" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
+</div>
+
+<div class="col-md-2 btn-group btn-group-sm">
+<button class="btn btn-sm btn-success highlight-problem hidden" title="This problem is in the target set.">
+  <i class="fa fa-bullseye fa-lg"></i></button>
 </div>
 </div>
 <div class="problem-tags">

@@ -7,7 +7,7 @@
 *
 */
 
-define(['backbone', 'underscore','models/LibraryTree','stickit'], 
+define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-validation'], 
     function(Backbone, _,LibraryTree){
 	
     var LibraryTreeView = Backbone.View.extend({
@@ -15,8 +15,8 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
     		_.bindAll(this,"render","loadProblems","changeLibrary");
             var self = this;
             this.libraryTree = new LibraryTree({type: options.type});
-            this.libraryTree.set("header","Library/");
-            this.fields = new LibraryLevels();
+            this.libraryTree.set("header",options.type==="textbooks"?"textbooks/":"Library/");
+            (this.fields = new LibraryLevels()).type = options.type;
             this.fields.on("change",this.changeLibrary);
 
             this.libraryLevel=[[],[],[],[]];
@@ -25,7 +25,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
                 this.bindings[".library-level-"+i+ " select"]= {observe: "level"+i,
                     selectOptions: {collection: function (view,opts) { 
                         return self.libraryLevel[opts.observe.split("level")[1]||""]},
-                    defaultOption: {label: "Select...", value: null}}};
+                    defaultOption: {label: options.topLevelNames[i], value: ""}}};
             }
     	},
     	render: function(){
@@ -51,7 +51,8 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
                 }
                 if(_(this.fields.values()).without("").length>0){
                     branch = this.branchOfTree(_(this.fields.attributes).values()); 
-                    this.$(".load-library-button").text("Load " +branch.num_files + " problems");  
+                    // the following needs to go into a template.
+                    this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
                 }
                 this.stickit(this.fields, this.bindings);
             }
@@ -60,10 +61,12 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
     	},
         events: { "click .load-library-button": "selectLibrary"},
         changeLibrary: function(model){
-            var level = parseInt(_(model.changed).keys()[0].split("level")[1]);
-             
+            var i, level = parseInt(_(model.changed).keys()[0].split("level")[1])
+                , first = _(model.values()).compact().length;
             for(i=(level+1);i<4;i++){
                 this.fields.set("level"+i,"");
+            }
+            for(i=first;i<4;i++){
                 this.$(".library-level-"+(i+1)).addClass("hidden");  // hide all other levels. 
             }
             var branch = this.branchOfTree(_(model.attributes).values());
@@ -72,13 +75,12 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
             if(branch.branches.length>0){
                 this.$(".library-level-"+(level+1)).removeClass("hidden");  // show the next level in the tree
             }
-            this.$(".load-library-button").text("Load " +branch.num_files + " problems");  
+            this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
             this.unstickit(this.fields);
             this.stickit(this.fields,this.bindings);
         },
         selectLibrary: function(evt){
-            this.libraryTree.trigger("library-selected",this.libraryTree.get("header")
-                        +_(this.fields.values()).without("").join("/"));
+            this.libraryTree.trigger("library-selected",_(this.fields.values()).without(""));
         },
         loadProblems: function (evt) {
             var path = _(this.$(".lib-select")).map(function(item){ return $(item).val()});
@@ -86,6 +88,9 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
             this.parent.dispatcher.trigger("load-problems",this.libraryTree.header+path.join("/"));
         },
         branchOfTree: function(path){
+            if(_(path).compact().length ===0){
+                return {branches: []};
+            }
             var currentBranch=this.libraryTree.get("tree");
             var numFiles;
             _(path).each(function(p,i){
@@ -106,6 +111,19 @@ define(['backbone', 'underscore','models/LibraryTree','stickit'],
             level1: "",
             level2: "",
             level3: "",
+        },
+        validation: {
+            level0: "checkLevel",
+            level1: "checkLevel"
+        },
+        checkLevel: function() {
+            if(this.type==="subjects" && this.get("level0")===""){
+                return "Error!";
+            } else if (this.type==="directories" && this.get("level0")===""){
+                return "level-0-error";
+            } else if (this.type==="directories" && this.get("level1")===""){
+                return "level-1-error";
+            }
         }
     });
 
