@@ -44,7 +44,7 @@ sub istagline {
   my $line = shift;
   return 1 if($line =~ /$re/);
   return 1 if($line =~ /#\s*\bKEYWORDS?\s*\(\s*'?(.*?)'?\s*\)/);
-  return 1 if($line =~ /#\s*\b$numbered\d+\s*\(\s*'?(.*?)'?\s*\)/);
+  return 1 if($line =~ /#\s*\b($numbered)\d+\s*\(\s*'?(.*?)'?\s*\)/);
   return 0;
 }
 

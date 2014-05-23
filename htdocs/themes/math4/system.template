@@ -84,7 +84,7 @@ var tabberOptions = {manualStartup:true};
 <div class="row-fluid">
 
 <!-- Navigation -->
-<div id="site-navigation" class="span2 hidden-phone" role="navigation" aria-label="main navigation">
+<div id="site-navigation" class="span2" role="navigation" aria-label="main navigation">
   <!--#if can="links"-->
         <div id="site-links">
 	  <!--#links-->
@@ -106,14 +106,18 @@ var tabberOptions = {manualStartup:true};
 <!-- Main Content Area -->
 <div id="content" class="span10" >
 	<!-- Breadcrumb -->
-	<div class="row-fluid"><div class="span12">
-	<div role="navigation" aria-label="breadcrumb navigation">
-	<ul class="breadcrumb">
-		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
-	</ul>
-	</div>
-	</div></div>
+	<div id="breadcrumb-row" class="row-fluid">
+	  <div class="span12">
+	  <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
+	  <i id="toggle-sidebar-icon" class="icon-chevron-left"></i></a>
 
+	    <div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
+	      <ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+	      </ul>
+	    </div>
+	</div></div>
+	
 	<!-- Page Title -->
 	<!--#if can="title"-->
 	<div class="row-fluid"><div class="span12">

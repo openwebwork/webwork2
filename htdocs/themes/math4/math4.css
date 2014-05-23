@@ -152,6 +152,21 @@ div.unattempted-progress {
    height: 20px;
    display: inline-block;
    box-sizing:border-box;
+ }
+
+#breadcrumb-row {
+    margin-top:1ex;
+}
+
+#toggle-sidebar {
+    float:left;
+    margin-top:3px;
+}
+
+#breadcrumb-navigation {
+    float:left;
+    display:inline-block;
+    width:90%;
 }
 
 /* Main Content */
