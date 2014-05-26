@@ -10,6 +10,8 @@ $(function(){
     $('#pg_editor_frame_id').on('load', function () {
 	$('#pg_editor_frame_id').contents().find('#site-navigation')
 	    .addClass('hidden-desktop hidden-tablet');
+	$('#pg_editor_frame_id').contents().find('#content')
+	    .removeClass('span10').addClass('span12');
     });
 });
 

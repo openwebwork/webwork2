@@ -263,7 +263,7 @@ $problemDefaults{showMeAnother} = -1;
 # 	librarybrowsernojs    => 1,
  	librarybrowser1    => 1,
 # 	librarybrowser2    => 1,
- 	librarybrowser3    => 1,
+#	librarybrowser3    => 1,
 # 	
 #	pgproblemeditor1   => 1,
 	pgproblemeditor2   => 1,
@@ -343,6 +343,8 @@ $problemDefaults{showMeAnother} = -1;
 ################################################################################
 # Achievement Facebook Integration
 ################################################################################
+
+#  Note:  This feature is out of date and no longer works with facebooks api
 
 ## Because of the way facebook works, in order to use facebook integration
 ## with webwork, you will need to create a facebook "app" specific to the 

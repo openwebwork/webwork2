@@ -101,6 +101,21 @@ ul.nav li a:hover {
         overflow: hidden;
 }
 
+#breadcrumb-row {
+    margin-top:1ex;
+}
+
+#toggle-sidebar {
+    float:left;
+    margin-top:3px;
+}
+
+#breadcrumb-navigation {
+    float:left;
+    display:inline-block;
+    width:90%;
+}
+
 /* Main Content */
 .body {
 	display: inline-block;
