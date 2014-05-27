@@ -36,7 +36,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
-	ref2string makeTempDirectory path_is_subdir sortByName before after between jitar_id_to_seq);
+	ref2string makeTempDirectory path_is_subdir sortByName before after between is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -1033,29 +1033,55 @@ sub siblings {
 	my $setID = $self->{set}->set_id;
 	my $eUserID = $r->param("effectiveUser");
 	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
+
+	my $isJitarSet = 0;
+
+	if ($setID) {
+	    my $set = $r->db->getGlobalSet($setID);
+	    if ($set && $set->assignment_type eq 'jitar') {
+		$isJitarSet = 1;
+		@problemIDs = jitar_order_problems(@problemIDs);
+	    }
+	}
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
 	print CGI::h2($r->maketext("Problems"));
-	#print CGI::start_ul({class=>"LinksMenu"});
-	#print CGI::start_li();
-	#print CGI::span({style=>"font-size:larger"}, "Problems");
-	print CGI::start_ul();
+	print CGI::start_ul({class=>"problem-list"});
 
 	foreach my $problemID (@problemIDs) {
-		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
-			courseID => $courseID, setID => $setID, problemID => $problemID);
-		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
-													params=>{  displayMode => $self->{displayMode}, 
-															   showOldAnswers => $self->{will}->{showOldAnswers}
-															})},  $r->maketext("Problem [_1]",$problemID))
-	   );
+	    my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, courseID => $courseID, setID => $setID, problemID => $problemID);
+	    my $link;
+
+	    if ($isJitarSet) {
+		next if is_jitar_problem_hidden($db,$eUserID, $setID, $problemID);
+		
+		my @seq = jitar_id_to_seq($problemID);
+		my $level = $#seq;
+		my $class = '';
+		if ($level != 0) {
+		    $class='nested-problem-'.$level;
+		}
+		
+		if (is_jitar_problem_closed($db, $eUserID, $setID, $problemID)) {
+		    $link = CGI::a( {href=>'#', class=>$class.' disabled-problem'},  $r->maketext("Problem [_1]", join('.',@seq)));
+		} else {
+		    $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage, 
+								   params=>{  displayMode => $self->{displayMode}, 
+									      showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", join('.',@seq)));
+		    
+		}
+	    } else {
+		$link = CGI::a( {href=>$self->systemLink($problemPage , 
+						 params=>{  displayMode => $self->{displayMode}, 
+							    showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", $problemID));
+	    }
+	    
+	    print CGI::li( $link);
 	}
-
+	
 	print CGI::end_ul();
-	#print CGI::end_li();
-	#print CGI::end_ul();
 	print CGI::end_div();
-
+	
 	return "";
 }
 
@@ -1474,6 +1500,7 @@ sub output_score_summary{
 	my $problem = $self->{problem};
 	my $set = $self->{set};
 	my $pg = $self->{pg};
+	my $effectiveUser = $r->param('effectiveUser') || $r->param('user');
 	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
 	my $submitAnswers = $self->{submitAnswers};
 	my %will = %{ $self->{will} };
@@ -1510,22 +1537,76 @@ sub output_score_summary{
 	#		$setClosedMessage .= " Additional attempts will not be recorded.";
 	#	}
 	#}
-
+	print CGI::start_p();
 	unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
 		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
-		print CGI::p(join("",
+		print join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
 			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",sprintf("%.0f%%", $pg->{result}->{score} * 100)) . CGI::br():'',
 			$problem->attempted
-				? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
+		
+		? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
 			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
-		));
+		);
 	}else {
-		print CGI::p($pg->{state}->{state_summary_msg});
+		print $pg->{state}->{state_summary_msg};
 	}
 
+	#print jitar specific informaton for students. 
+	if ($set->assignment_type() eq 'jitar') {
+	    my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
+	    @problemIDs = jitar_order_problems(@problemIDs);
+
+	    my @problemSeqs;
+	    my $index;
+	    for (my $i=0; $i<=$#problemIDs; $i++) {
+		$index = $i if ($problemIDs[$i] == $problem->problem_id);
+		my @seq = jitar_id_to_seq($problemIDs[$i]);
+		push @problemSeqs, \@seq;
+	    }
+	    if (length(@{$problemSeqs[$index]}) > length(@{$problemSeqs[$index+1]})
+		&& ($problem->num_incorrect >= $problem->att_to_open_children ||
+		    ($problem->max_attempts != -1 && 
+		     $problem->num_incorrect >= $problem->max_attempts))) {
+		print CGI::br().$r->maketext('This problem has open sub-problems.  You can visit them by using the links to the left or visiting the set page.');
+	    }
+
+	    my $next_id = $index+1;
+	    my @seq = @{$problemSeqs[$index]};
+	    my @children_counts_indexs;
+	    my $hasChildren = 0;
+
+	    until (length($problemSeqs[$index]) == length($problemSeqs[$next_id]) ||
+		$next_id > $#problemIDs) {
+		my $childProblem = $db->getMergedProblem($effectiveUser,$set->set_id, $problemIDs[$next_id]);
+		$hasChildren = 1;
+		push @children_counts_indexs, $index if $childProblem->counts_parent_grade;
+		$next_id++;
+	    }	
+	    warn($next_id);
+	    warn(@problemSeqs);
+	    if ($set->restrict_prob_progression() && $next_id <= $#problemIDs &&
+		is_jitar_problem_closed($problemIDs[$next_id])) {
+		if ($hasChildren) {
+		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its children].',join('.',@{$problemSeqs[$index]}));
+		} else {
+		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
+		}
+	    }
+	    if (length(@children_counts_indexs) > 0) {
+		print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
+	    }
+	    if ($problem->counts_parent_grade()) {
+		pop @seq;
+		print CGI::br().$r->maketext('The weighted average of this problem, along with others that have this message, can replace the score of problem [_1] if it is larger.',join('.',@seq));
+	    } else {
+		pop @seq;
+		print CGI::br().$r->maketext('This score for this problem does not count for the score of problem [_1] or for the set.',join('.',@seq));
+	    }
+	}
+	print CGI::end_p();
     } 
 	return "";
 }

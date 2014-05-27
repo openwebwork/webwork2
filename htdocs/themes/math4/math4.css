@@ -229,27 +229,33 @@ table.classlist-table .tbody {
 	margin: 0.5em; /* keep the assignment buttons from crowding chkbox */
 }
 
-.problem_set_table .nested-problem-1 {
+.problem_set_table .nested-problem-1,
+.problem-list .nested-problem-1 {
     margin-left: 15px;
 }
 
-.problem_set_table .nested-problem-2 {
+.problem_set_table .nested-problem-2,
+.problem-list .nested-problem-2 {
     margin-left: 30px;
 }
 
-.problem_set_table .nested-problem-3 {
+.problem_set_table .nested-problem-3,
+.problem-list .nested-problem-3 {
     margin-left: 45px;
 }
 
-.problem_set_table .nested-problem-4 {
+.problem_set_table .nested-problem-4,
+.problem-list .nested-problem-4 {
     margin-left: 60px;
 }
 
-.problem_set_table .nested-problem-5 {
+.problem_set_table .nested-problem-5,
+.problem-list .nested-problem-5 {
     margin-left: 75px;
 }
 
-.problem_set_table .nested-problem-6 {
+.problem_set_table .nested-problem-6,
+.problem-list .nested-problem-6 {
     margin-left: 90px;
 }
 

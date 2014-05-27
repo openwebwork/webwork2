@@ -31,7 +31,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir);
+use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq);
 use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
@@ -410,6 +410,13 @@ sub path {
 	my $setName = $r->urlpath->arg("setID") || '';
 	my $problemNumber = $r->urlpath->arg("problemID") || '';
 
+	if ($setName) {
+	    my $set = $r->db->getGlobalSet($setName);
+	    if ($set && $set->assignment_type eq 'jitar') {
+		$problemNumber = join('.',jitar_id_to_seq($problemNumber));
+	    }
+	}
+
 	# we need to build a path to the problem being edited by hand, since it is not the same as the urlpath
 	# For this page the bread crum path leads back to the problem being edited, not to the Instructor tool.
 	my @path = ( 'WeBWork', $r->location,
@@ -438,7 +445,14 @@ sub title {
 	return "Course Information for course $courseName" if ($file_type eq 'course_info');
 	return "Options Information" if ($file_type eq 'options_info');
 
-	return 'Problem ' . $r->{urlpath}->name;
+	if ($setID) {
+	    my $set = $r->db->getGlobalSet($setID);
+	    if ($set && $set->assignment_type eq 'jitar') {
+		$problemNumber = join('.',jitar_id_to_seq($problemNumber));
+	    }
+	}
+
+	return 'Problem ' . $problemNumber;
 }
 
 sub body {
