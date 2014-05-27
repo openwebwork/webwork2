@@ -1006,7 +1006,7 @@ sub make_data_row {
 		my $numchild = scalar(@{$sourceFileData->{children}});
 		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
-		$mltstart = "<tr><td><table style='border:1px solid black' width='100%'><tr><td>\n";
+		$mltstart = "<tr><td><table id='mlt-table$cnt' style='border:1px solid black' width='100%'><tr><td>\n";
 	}
 	$mltend = "</td></tr></table></td></tr>\n" if($mltnumleft==0);
 	my $noshow = '';
