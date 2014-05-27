@@ -724,9 +724,9 @@ sub warnings {
 		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
     } elsif ( $self->{pgerrors} > 0 ) {
-        my @pgdebug          = (defined @{ $self->{pgdebug}}) ? @{ $self->{pgdebug}} : () ; 
- 		my @pgwarning        = (defined @{ $self->{pgwarning}}) ? @{ $self->{pgwarning}} : ();
- 		my @pginternalerrors = (defined @{ $self->{pginternalerrors}}) ? @{ $self->{pginternalerrors}} : ();
+        my @pgdebug          = (@{ $self->{pgdebug}}) ? @{ $self->{pgdebug}} : () ; 
+ 		my @pgwarning        = (@{ $self->{pgwarning}}) ? @{ $self->{pgwarning}} : ();
+ 		my @pginternalerrors = (@{ $self->{pginternalerrors}}) ? @{ $self->{pginternalerrors}} : ();
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
 		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
@@ -1697,10 +1697,8 @@ sub output_JS{
 	
 	# This is for MathView.  
 	if ($self->{will}->{useMathView}) {
-	    if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
-		if ($self->{displayMode} ne 'MathJax') {
-		    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
-		}
+	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
+		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
 		
 		print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 		print CGI::start_script({type=>"text/javascript"});
