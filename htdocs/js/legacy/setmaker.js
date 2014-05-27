@@ -288,7 +288,6 @@ function delrow(num) {
    } else if ((mymlt > 0) && mymltMtext=='L') {
       var new_num = $('#mlt-table'+num+' .MLT'+mymlt+':first')
 	   .attr('id').match(/pgrow([0-9]+)/)[1];
-       alert(new_num);
       $('#mlt-table'+num).attr('id','mlt-table'+new_num);
       var onclickfunction = mymltM.attr('onclick').replace(num,new_num);
       mymltM.attr('id','mlt'+new_num).attr('onclick', onclickfunction);
