@@ -1052,6 +1052,7 @@ sub siblings {
     my $total_incorrect=0;
     my $total_inprogress=0;
 	my $currentProblemID = $self->{problem}->problem_id if !($self->{invalidProblem});
+    my $progressBarEnabled = $r->ce->{pg}->{options}->{enableProgressBar};
     
 	foreach my $problemRecord (@problemRecords) {
 		my $problemID = $problemRecord->problem_id;
@@ -1061,32 +1062,34 @@ sub siblings {
 	   my $total_attempts = $problemRecord->num_correct + $problemRecord->num_incorrect;
 
        my $status_symbol;
-       # variables for the widths of the bars in the Progress Bar
-       if( $problemRecord->status ==1 ){
-          # correct
-          $total_correct++;
-          $status_symbol = "&#x2713;"; # checkmark
-       } else {
-          # incorrect
-          if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
-            $total_incorrect++;
-            $status_symbol = "&#x2717;"; # cross
-          } else {
-            # in progress
-            if($problemRecord->attempted>0){
-                $total_inprogress++;
-                $status_symbol = " &hellip;"; # horizontal ellipsis
+       if($progressBarEnabled){
+         # variables for the widths of the bars in the Progress Bar
+         if( $problemRecord->status ==1 ){
+            # correct
+            $total_correct++;
+            $status_symbol = "&#x2713;"; # checkmark
+         } else {
+            # incorrect
+            if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
+              $total_incorrect++;
+              $status_symbol = "&#x2717;"; # cross
+            } else {
+              # in progress
+              if($problemRecord->attempted>0){
+                  $total_inprogress++;
+                  $status_symbol = " &hellip;"; # horizontal ellipsis
+              }
             }
-          }
+         }
        }
 
        # if this is the currently active problem, highlight it;
        # furthermore put the status_symbol next to the problem
        # illustrating if it is correct, in progress, or incorrect
-	   $problemList .= CGI::li({-class=>($currentProblemID==$problemID) ? "currentProblem":""},CGI::a( {href=>$self->systemLink($problemPage, 
+	   $problemList .= CGI::li({-class=>($currentProblemID==$problemID and $progressBarEnabled) ? "currentProblem":""},CGI::a( {href=>$self->systemLink($problemPage, 
 													params=>{  displayMode => $self->{displayMode}, 
 															   showOldAnswers => $self->{will}->{showOldAnswers}
-															})},  $r->maketext("Problem [_1][_2]",$problemID,$status_symbol))
+															})},  $r->maketext("Problem [_1][_2]",$problemID,$progressBarEnabled?$status_symbol:""))
 	   );
 	}
 
