@@ -39,7 +39,7 @@ $(function(){
 	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
 		.toggleClass('icon-chevron-right');
 	    $('#site-navigation').toggleClass('span2');
-	    $('#content').toggleClass('span10').toggleClass('span12');
+	    $('#content').toggleClass('span10').toggleClass('span11');
 	});
 
     if($(window).width() < 480) {
@@ -49,7 +49,7 @@ $(function(){
     // if no fish eye then collapse site-navigation 
     if(!$('#site-links').html().match(/[^\s]/)) {
 	$('#site-navigation').removeClass('span2');
-	$('#content').removeClass('span10').addClass('span12');
+	$('#content').removeClass('span10').addClass('span11');
 	$('#toggle-sidebar').addClass('hidden');
     }
 

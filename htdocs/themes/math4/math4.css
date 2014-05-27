@@ -109,13 +109,16 @@ ul.nav li a:hover {
 
 #toggle-sidebar {
     float:left;
-    margin-top:3px;
+    height:20px;
+    padding-top:8px;
+    padding-bottom:8px;
 }
 
 #breadcrumb-navigation {
     float:left;
     display:inline-block;
     width:90%;
+    width:calc(100% - 35px);
 }
 
 /* Main Content */
