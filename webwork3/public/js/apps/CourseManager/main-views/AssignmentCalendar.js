@@ -8,7 +8,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     function(Backbone, _, moment,MainView, CalendarView,config) {
 	
     var AssignmentCalendar = CalendarView.extend({
-    	template: _.template($("#calendar-date-bar").html()),
+    	template: _.template(this.$("#calendar-date-bar").html()),
+        popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
         headerInfo: {template: "#calendar-header", events: 
                 { "click .previous-week": "viewPreviousWeek",
                     "click .next-week": "viewNextWeek",
@@ -38,11 +39,12 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		var self = this;
             var assignments = this.assignmentDates.where({date: day.model.format("YYYY-MM-DD")});
             _(assignments).each(function(assign){
-                day.$el.append(self.template({classes: "assign assign-" + assign.get("type"), 
-                    setname: assign.get("problemSet").get("set_id"), 
-                    assignedUsers: assign.get("problemSet").get("assigned_users").length, 
-                    totalUsers: self.users.length, visibleToStudents: assign.get("problemSet").get("visible"),
-                    showName: true}));
+                var popup = this.$(self.template({classes: "assign assign-" + assign.get("type"), 
+                    setname: assign.get("problemSet").get("set_id"), showName: true}));
+                popup.attr("data-content",self.popupTemplate(_.extend({},assign.get("problemSet"),
+                    {totalUsers: self.users.length})));
+
+                day.$el.append(popup);
             });
     	},
         getHelpTemplate: function (){

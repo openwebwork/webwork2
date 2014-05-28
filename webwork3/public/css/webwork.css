@@ -26,6 +26,8 @@ body {  /* needed for the navigation bars top and bottom*/
 
 .hidden, .form-horizontal .hidden {display: none;}	
 
+.no-borders {border: none;}
+
 /* the following is needed to get pop-up boxes to display correctly.*/
 
 /*.view-pane, .view-pane .tab-content {height: 100%;}*/
