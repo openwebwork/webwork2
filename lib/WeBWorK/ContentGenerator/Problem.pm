@@ -724,9 +724,9 @@ sub warnings {
 		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
     } elsif ( $self->{pgerrors} > 0 ) {
-        my @pgdebug          = (@{ $self->{pgdebug}}) ? @{ $self->{pgdebug}} : () ; 
- 		my @pgwarning        = (@{ $self->{pgwarning}}) ? @{ $self->{pgwarning}} : ();
- 		my @pginternalerrors = (@{ $self->{pginternalerrors}}) ? @{ $self->{pginternalerrors}} : ();
+        my @pgdebug          = (defined $self->{pgdebug}) ? @{ $self->{pgdebug}} : () ; 
+ 		my @pgwarning        = (defined $self->{pgwarning}) ? @{ $self->{pgwarning}} : ();
+ 		my @pginternalerrors = (defined $self->{pginternalerrors}) ? @{ $self->{pginternalerrors}} : ();
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
 		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
