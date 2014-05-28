@@ -2,7 +2,7 @@
 
 # This is the script formerly known as loadDB2, and then known as NPL-update.  
 
-#It is used to update
+# It is used to update
 # the database when it comes to the WeBWorK Open Problem Library (OPL).
 # This should be run after doing a git clone or pull for the OPL
 # files.
@@ -31,8 +31,14 @@ BEGIN {
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
 }
 
-### Data for creating the database tables
+# Taxonomy global variables
+# Make a hash of hashes of hashes to record what is legal
+# Also create list for json file
+my $taxo={};
+#my $taxsubs = [];
 
+
+### Data for creating the database tables
 
 my %OPLtables = (
  dbsubject => 'OPL_DBsubject',
@@ -165,7 +171,7 @@ if($libraryVersion eq '2.5') {
 	institution tinyblob,
 	path_id int(15) NOT NULL,
 	filename varchar(255) NOT NULL,
-	morelt_id int(127) DEFAULT 0,
+	morelt_id int(127) DEFAULT 0 NOT NULL,
 	level int(15),
 	language varchar(15),
 	PRIMARY KEY (pgfile_id)
@@ -273,7 +279,6 @@ print "Mysql database reinitialized.\n";
 ## AuthorText1('Stewart')
 ## Section1('2.3')
 ## Problem1('7')
-#
 
 # Get an id, and add entry to the database if needed
 sub safe_get_id {
@@ -310,6 +315,22 @@ sub safe_get_id {
 	return($idvalue);
 }
 
+sub isvalid {
+	my $tags = shift;
+	if(not defined $taxo->{$tags->{DBsubject}}) {
+		print "\nInvalid subject ".$tags->{DBsubject}."\n";
+		return 0;
+	}
+	if(not ($tags->{DBchapter} eq 'Misc.') and not defined $taxo->{$tags->{DBsubject}}->{$tags->{DBchapter}}) {
+		print "\nInvalid chapter ".$tags->{DBchapter}."\n";
+		return 0;
+	}
+	if(not ($tags->{DBsection} eq 'Misc.') and not defined $taxo->{$tags->{DBsubject}}->{$tags->{DBchapter}}->{$tags->{DBsection}}) {
+		print "\nInvalid section ".$tags->{DBsection}."\n";
+		return 0;
+	}
+	return 1;
+}
 
 my ($name,$pgfile,$pgpath);
 
@@ -406,36 +427,76 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 #### End of textbooks
 
 #### Next read in the taxonomy
+my $clsep = '<<<';
+my $clinner = '__';
+my @cllist = ();
 
-if(open(IN, "$libraryRoot/Taxonomy")) {
+my $canopenfile = 0;
+if(open(IN, "$libraryRoot/Taxonomy2")) {
+	print "Reading in OPL taxonomy from Taxonomy2 in the library $libraryRoot.\n";
+	$canopenfile = 1;
+} elsif(open(IN, "$libraryRoot/Taxonomy")) {
 	print "Reading in OPL taxonomy from Taxonomy in the library $libraryRoot.\n";
-
-	my ($subj, $chap, $sect);
-	while(my $line = <IN>) {
-		$line =~ /^(\t*)/;
-		my $count = length($1);
-		$line =~ s/^\s*//;
-		chomp($line);
-		$line =~ s/\s*$//;
-		if($count == 0) { #DBsubject
-			$subj = safe_get_id($tables{dbsubject}, 'DBsubject_id',
-				qq(WHERE name = ?), [$line], 1, "", $line);
-		} elsif($count == 1) { #DBchapter
-			$chap = safe_get_id($tables{dbchapter}, 'DBchapter_id',
-				qq(WHERE name = ? and DBsubject_id = ?), [$line, $subj], 1, "", $line, $subj);
-		} else { #DBsection
-			$sect = safe_get_id($tables{dbsection}, 'DBsection_id',
-				qq(WHERE name = ? and DBchapter_id = ?), [$line, $chap], 1, "", $line, $chap);
-			;
-		}
-	}
-	close(IN);
+	$canopenfile = 1;
 } else {
 	print "Taxonomy file was not found in library $libraryRoot. If the path to the problem library doesn't seem
 	correct, make modifications in webwork2/conf/site.conf (\$problemLibrary{root}).  If that is correct then
-	updating from git should download the Textbooks file.\n";
+	updating from git should download the Taxonomy file.\n";
 } 
-#### End of taxonomy
+
+# Taxonomy is a subset of Taxonomy2, so we can use the same code either way
+if($canopenfile) {
+	my ($cursub,$curchap); # these are strings
+	my ($subj, $chap, $sect); # these are indeces
+	while(my $line = <IN>) {
+		$line =~ /^(\t*)/;
+		my $count = length($1);
+		my $oktag = 1;
+		chomp($line);
+		if($line =~ m/$clsep/) {
+			$oktag = 0;
+			my @cross = split $clsep, $line;
+			@cross = map(trim($_), @cross);
+			if(scalar(@cross) > 1) {
+				push @cllist, [join($clinner, ($cursub,$curchap,$cross[0])) ,$cross[1]];
+			}
+			$line = $cross[0];
+		}
+		$line = trim($line);
+
+		# We put the line in the database in all cases
+		# but crosslists are not put in the heierarchy of legal tags
+		# instead they go in a list of crosslists to deal with after
+		# the full taxonomy is read in
+		if($count == 0) { #DBsubject
+			$taxo->{$line} = {} if $oktag;
+			$cursub = $line;
+			$subj = safe_get_id($tables{dbsubject}, 'DBsubject_id',
+				qq(WHERE name = ?), [$line], 1, "", $line);
+		} elsif($count == 1) { #DBchapter
+			$taxo->{$cursub}->{$line} = {} if $oktag;
+			$curchap = $line;
+			$chap = safe_get_id($tables{dbchapter}, 'DBchapter_id',
+				qq(WHERE name = ? and DBsubject_id = ?), [$line, $subj], 1, "", $line, $subj);
+		} else { #DBsection
+			$taxo->{$cursub}->{$curchap}->{$line} = [] if $oktag;
+			$sect = safe_get_id($tables{dbsection}, 'DBsection_id',
+				qq(WHERE name = ? and DBchapter_id = ?), [$line, $chap], 1, "", $line, $chap);
+		}
+	}
+	close(IN);
+}
+#### End of taxonomy/taxonomy2
+
+#### Now deal with cross-listed sections
+for my $clinfo (@cllist) {
+	my @scs = split /$clinner/, $clinfo->[1];
+	if(defined $taxo->{$scs[0]}->{$scs[1]}->{$scs[2]}) {
+			push @{$taxo->{$scs[0]}->{$scs[1]}->{$scs[2]}}, $clinfo->[0];
+	} else {
+		print "Faulty cross-list: pointing to $scs[0] / $scs[1] / $scs[2]\n";
+	}
+}
 
 print "Converting data from tagged pgfiles into mysql.\n";
 print "Number of files processed:\n";
@@ -444,6 +505,13 @@ print "Number of files processed:\n";
 #recursive search for all pg files
 
 File::Find::find({ wanted => \&pgfiles, follow_fast=> 1}, $libraryRoot);
+
+sub trim {
+	my $str = shift;
+	$str =~ s/^\s+//;
+	$str =~ s/\s+$//;
+	return $str;
+}
 
 sub kwtidy {
 	my $s = shift;
@@ -478,6 +546,7 @@ sub pgfiles {
 	my ($text, $edition, $textauthor, $textsection, $textproblem);
 	%textinfo=();
 	my @textproblems = (-1);
+#print "\n$name";
 
 	if ($name =~ /swf$/) { # Found a flash applet
 		my $applet_file = basename($name);
@@ -503,32 +572,49 @@ sub pgfiles {
 
 			# DBsubject table
 
-			my $addifnew = 0;
-			my $DBsubject_id = safe_get_id($tables{dbsubject}, 'DBsubject_id',
-				qq(WHERE name = ?), [$tags->{DBsubject}], $addifnew, "", $tags->{DBsubject});
-			if(not $DBsubject_id) {
-				print "\nInvalid subject '$tags->{DBsubject}' in $name\n";
+			if(isvalid($tags)) {
+				my $DBsubject_id = safe_get_id($tables{dbsubject}, 'DBsubject_id',
+					qq(WHERE BINARY name = ?), [$tags->{DBsubject}], 1, "", $tags->{DBsubject});
+				if(not $DBsubject_id) {
+					print "\nInvalid subject '$tags->{DBsubject}' in $name\n";
+					next;
+				}
+
+				# DBchapter table
+
+				$DBchapter_id = safe_get_id($tables{dbchapter}, 'DBchapter_id',
+					qq(WHERE BINARY name = ? and DBsubject_id = ?), [$tags->{DBchapter}, $DBsubject_id], 1, "", $tags->{DBchapter}, $DBsubject_id);
+				if(not $DBchapter_id) {
+					print "\nInvalid chapter '$tags->{DBchapter}' in $name\n";
+					next;
+				}
+
+				# DBsection table
+
+				$aDBsection_id = safe_get_id($tables{dbsection}, 'DBsection_id',
+					qq(WHERE BINARY name = ? and DBchapter_id = ?), [$tags->{DBsection}, $DBchapter_id], 1, "", $tags->{DBsection}, $DBchapter_id);
+				if(not $aDBsection_id) {
+					print "\nInvalid section '$tags->{DBsection}' in $name\n";
+					next;
+				}
+			} else { # tags are not valid, error printed by validation part
+				print "File $name\n";
 				next;
 			}
 
-			# DBchapter table
-
-			$addifnew = 1 if($tags->{DBchapter} eq 'Misc.');
-			$DBchapter_id = safe_get_id($tables{dbchapter}, 'DBchapter_id',
-				qq(WHERE name = ? and DBsubject_id = ?), [$tags->{DBchapter}, $DBsubject_id], $addifnew, "", $tags->{DBchapter}, $DBsubject_id);
-			if(not $DBchapter_id) {
-				print "\nInvalid chapter '$tags->{DBchapter}' in $name\n";
-				next;
-			}
-
-			# DBsection table
-
-			$addifnew = ($tags->{DBsection} eq 'Misc.') ? 1 : 0;
-			$DBsection_id = safe_get_id($tables{dbsection}, 'DBsection_id',
-				qq(WHERE name = ? and DBchapter_id = ?), [$tags->{DBsection}, $DBchapter_id], $addifnew, "", $tags->{DBsection}, $DBchapter_id);
-			if(not $DBsection_id) {
-				print "\nInvalid section '$tags->{DBsection}' in $name\n";
-				next;
+			my @DBsection_ids=($aDBsection_id);
+			# Now add crosslisted section
+			my @CL_array = @{$taxo->{$tags->{DBsubject}}->{$tags->{DBchapter}}->{$tags->{DBsection}}};
+			for my $clsect (@CL_array) {
+				my @np = split /$clinner/, $clsect;
+				@np = map(trim($_), @np);
+				my $new_dbsubj_id = safe_get_id($tables{dbsubject}, 'DBsubject_id',
+					qq(WHERE name = ?), [$np[0]], 1, "", $np[0]);
+				my $new_dbchap_id = safe_get_id($tables{dbchapter}, 'DBchapter_id',
+					qq(WHERE name = ? and DBsubject_id = ?), [$np[1], $new_dbsubj_id], 1, "", $np[1], $new_dbsubj_id);
+				my $new_dbsect_id = safe_get_id($tables{dbsection}, 'DBsection_id',
+					qq(WHERE name = ? and DBchapter_id = ?), [$np[2], $new_dbchap_id], 1, "", $np[2], $new_dbchap_id);
+				push @DBsection_ids, $new_dbsect_id;
 			}
 
 			# author table
@@ -554,27 +640,43 @@ sub pgfiles {
 
 			# pgfile table -- set 2 defaults first
 
+			## TODO this is where we have to deal with crosslists, and pgfileid
+			##      will be an array of id's
+			##      Make an array of DBsection-id's above
+
 			my $level = $tags->{Level} || 0;
 			my $lang = $tags->{Language} || "eng";
 
-			my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
-				qq(WHERE filename = ? AND path_id = ?), [$pgfile, $path_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, "", $level, $lang);
+			my @pgfile_ids = ();
+
+			for my $DBsection_id (@DBsection_ids) {
+				my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
+					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? ), [$pgfile, $path_id, $DBsection_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, 0, $level, $lang);
+				push @pgfile_ids, $pgfile_id;
+			}
+#if (scalar(@pgfile_ids)>1) {
+ # print "\npg ".join(', ', @pgfile_ids)."\n";
+#}
 
 			# morelt table
 
 			my $morelt_id;
 			if($tags->{MLT}) {
-				$morelt_id = safe_get_id($tables{morelt}, 'morelt_id',
-					qq(WHERE name = ?), [$tags->{MLT}], 1, "", $tags->{MLT}, $DBsection_id, "");
+				for my $DBsection_id (@DBsection_ids) {
+					$morelt_id = safe_get_id($tables{morelt}, 'morelt_id',
+						qq(WHERE name = ?), [$tags->{MLT}], 1, "", $tags->{MLT}, $DBsection_id, "");
 
-				$dbh->do("UPDATE `$tables{pgfile}` SET
-					morelt_id = \"$morelt_id\" WHERE pgfile_id = \"$pgfile_id\" ");
+					for my $pgfile_id (@pgfile_ids) {
+						$dbh->do("UPDATE `$tables{pgfile}` SET
+							morelt_id = \"$morelt_id\" WHERE pgfile_id = \"$pgfile_id\" ");
 
-				dbug "UPDATE pgfile morelt_id for $pgfile_id to $morelt_id\n";
-				if($tags->{MLTleader}) {
-					$dbh->do("UPDATE `$tables{morelt}` SET
-							leader = \"$pgfile_id\" WHERE morelt_id = \"$morelt_id\" ");
-					dbug "UPDATE morelt leader for $morelt_id to $pgfile_id\n";
+						dbug "UPDATE pgfile morelt_id for $pgfile_id to $morelt_id\n";
+						if($tags->{MLTleader}) {
+							$dbh->do("UPDATE `$tables{morelt}` SET
+									leader = \"$pgfile_id\" WHERE morelt_id = \"$morelt_id\" ");
+							dbug "UPDATE morelt leader for $morelt_id to $pgfile_id\n";
+						}
+					}
 				}
 			}
 
@@ -583,19 +685,23 @@ sub pgfiles {
 			foreach my $keyword (@{$tags->{keywords}}) {
 				$keyword =~ s/[\'\"]//g;
 				$keyword = kwtidy($keyword);
+                                # skip it if it is empty
+                                next unless $keyword;
 				my $keyword_id = safe_get_id($tables{keyword}, 'keyword_id',
 					qq(WHERE keyword = ?), [$keyword], 1, "", $keyword);
 
-				$query = "SELECT pgfile_id FROM `$tables{pgfile_keyword}` WHERE keyword_id = \"$keyword_id\" and pgfile_id=\"$pgfile_id\"";
-				my $ok = $dbh->selectrow_array($query);
-				if (!defined($ok)) {
-					$dbh->do("INSERT INTO `$tables{pgfile_keyword}`
-						VALUES(
-							\"$pgfile_id\",
-							\"$keyword_id\"
-						)"
-							);
-					dbug "INSERT INTO pgfile_keyword VALUES( \"$pgfile_id\", \"$keyword_id\" )\n";
+				for my $pgfile_id (@pgfile_ids) {
+					$query = "SELECT pgfile_id FROM `$tables{pgfile_keyword}` WHERE keyword_id = \"$keyword_id\" and pgfile_id=\"$pgfile_id\"";
+					my $ok = $dbh->selectrow_array($query);
+					if (!defined($ok)) {
+						$dbh->do("INSERT INTO `$tables{pgfile_keyword}`
+							VALUES(
+								\"$pgfile_id\",
+								\"$keyword_id\"
+							)"
+								);
+						dbug "INSERT INTO pgfile_keyword VALUES( \"$pgfile_id\", \"$keyword_id\" )\n";
+					}
 				}
 			}					#end foreach keyword
 
@@ -689,17 +795,18 @@ sub pgfiles {
 					}
 
 					# pgfile_problem table associates pgfiles with textbook problems
-					#
-					$query = "SELECT problem_id FROM `$tables{pgfile_problem}` WHERE problem_id = \"$problem_id\" AND pgfile_id = \"$pgfile_id\"";
-					my $pg_problem_id = $dbh->selectrow_array($query);  
-					if (!defined($pg_problem_id)) {
-						$dbh->do("INSERT INTO `$tables{pgfile_problem}`
-					VALUES(
-						\"$pgfile_id\",
-						\"$problem_id\"
-					)"
-								);
-						dbug "INSERT INTO pgfile_problem VALUES( \"$pgfile_id\", \"$problem_id\" )\n";
+					for my $pgfile_id (@pgfile_ids) {
+						$query = "SELECT problem_id FROM `$tables{pgfile_problem}` WHERE problem_id = \"$problem_id\" AND pgfile_id = \"$pgfile_id\"";
+						my $pg_problem_id = $dbh->selectrow_array($query);  
+						if (!defined($pg_problem_id)) {
+							$dbh->do("INSERT INTO `$tables{pgfile_problem}`
+						VALUES(
+							\"$pgfile_id\",
+							\"$problem_id\"
+						)"
+									);
+							dbug "INSERT INTO pgfile_problem VALUES( \"$pgfile_id\", \"$problem_id\" )\n";
+						}
 					}
 				}
 
@@ -711,6 +818,31 @@ sub pgfiles {
 			# print STDERR "File $name is not tagged\n" if not $tags->isplaceholder();
 			;
 		}
+	}
+}
+
+# Now prune away DBsection, etc, which do not appear in any files
+#%my $query = "SELECT chapter_id FROM `$tables{chapter}` WHERE textbook_id = \"$bookid\" AND number = \"$1\"";
+#%my $chapid = $dbh->selectrow_array($query);
+
+#select dbs.DBsection_id from OPL_DBsection dbs;
+#select COUNT(*) from OPL_pgfile where DBsection_id=857;
+
+my $dbsects = $dbh->selectall_arrayref("SELECT DBsection_id from `$tables{dbsection}`");
+for my $sect (@{$dbsects}) {
+	$sect = $sect->[0];
+	my $srar = $dbh->selectall_arrayref("SELECT * FROM `$tables{pgfile}` WHERE DBsection_id=$sect");
+	if(scalar(@{$srar})==0) {
+		$dbh->do("DELETE FROM `$tables{dbsection}` WHERE DBsection_id=$sect");
+	}
+}
+
+my $dbchaps = $dbh->selectall_arrayref("SELECT DBchapter_id from `$tables{dbchapter}`");
+for my $chap (@{$dbchaps}) {
+	$chap = $chap->[0];
+	my $srar = $dbh->selectall_arrayref("SELECT * FROM `$tables{dbsection}` WHERE DBchapter_id=$chap");
+	if(scalar(@{$srar})==0) {
+		$dbh->do("DELETE FROM `$tables{dbchapter}` WHERE DBchapter_id=$chap");
 	}
 }
 
@@ -759,7 +891,7 @@ foreach my $i (0..$#subjects){
 	foreach my $j (0..$#chapters) {
 		my $chapter_row = $chapters[$j];
 		my $chapter_name = $chapter_names[$j];
-		my $sth = $dbh->prepare("SELECT * FROM OPL_DBsection WHERE DBchapter_id=$chapter_row");
+		my $sth = $dbh->prepare("SELECT * FROM `$tables{dbsection}` WHERE DBchapter_id=$chapter_row");
 		$sth->execute;
 
 		my @subfields = ();
