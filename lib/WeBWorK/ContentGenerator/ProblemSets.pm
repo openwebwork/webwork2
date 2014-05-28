@@ -503,7 +503,8 @@ sub setListRow {
 			$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 			my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
 			my $reduced_scoring_date = $set->reduced_scoring_date;
-			if ($reduced_scoring_date and $enable_reduced_scoring) {
+			if ($reduced_scoring_date and $enable_reduced_scoring
+			    and $reduced_scoring_date != $set->due_date) {
 			    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
 #				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
 			    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
