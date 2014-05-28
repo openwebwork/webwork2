@@ -8,8 +8,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     function(Backbone, _, moment,MainView, CalendarView,config) {
 	
     var AssignmentCalendar = CalendarView.extend({
-    	template: _.template(this.$("#calendar-date-bar").html()),
-        popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
+        template: this.$("#calendar-date-bar").html(),
+        popupTemplate: this.$("#calendar-date-popup-bar").html(),
         headerInfo: {template: "#calendar-header", events: 
                 { "click .previous-week": "viewPreviousWeek",
                     "click .next-week": "viewNextWeek",
@@ -39,12 +39,16 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		var self = this;
             var assignments = this.assignmentDates.where({date: day.model.format("YYYY-MM-DD")});
             _(assignments).each(function(assign){
-                var popup = this.$(self.template({classes: "assign assign-" + assign.get("type"), 
+                var _model = _.extend({assign_type: assign.get("type"),totalUsers: self.users.length,
+                    eventDispatcher: self.eventDispatcher},assign.get("problemSet").attributes);
+                day.$el.append( new DateInfoBar({template: self.template, model: _model}).render().el);
+
+                /*var popup = this.$(self.template({classes: "assign assign-" + assign.get("type"), 
                     setname: assign.get("problemSet").get("set_id"), showName: true}));
                 popup.attr("data-content",self.popupTemplate(_.extend({},assign.get("problemSet"),
-                    {totalUsers: self.users.length})));
+                    {totalUsers: self.users.length}))); */
 
-                day.$el.append(popup);
+//                day.$el.append(popup);
             });
     	},
         getHelpTemplate: function (){
@@ -98,6 +102,24 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
         }
 
+    });
+
+    var DateInfoBar = Backbone.View.extend({
+        className: "assign",
+        initialize: function(options){
+            this.template = options.template;
+            this.model = new Backbone.Model(options.model);
+        },
+        render: function(){
+            this.$el.html(this.template);
+            this.$el.addClass("assign-"+this.model.get("assign_type"));
+            this.stickit();
+            return this;
+        },
+        bindings: {
+            ".assign-calendar-name": "set_id",
+            ".assign-info": "set_id"  // this seems to be a hack to get stickit to add the handler. 
+        }
     });
 
 	return AssignmentCalendar;

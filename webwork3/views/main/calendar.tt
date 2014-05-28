@@ -21,19 +21,24 @@
 
 <script type="text/template" id="calendar-date-popup-bar">
 <table class="no-borders">
-<tr><td>Users Assigned:</td><td> <%=attributes.assigned_users.length%>/<%=totalUsers%></td></tr>
-<tr><td>Visible To Students:</td><td> <% print((attributes.visible==1)?'yes':'no'); %></td></tr>
-<tr><td>Reduced Scoring:</td><td><%print(attributes.enable_reduced_scoring==1?'yes':'no'); %></td></tr>
-<tr><td colspan="2"><a href="#" class="goto-problem-set-button">Visit Problem Set</a></td></tr>
+<tr><td>Users Assigned:</td><td class="users-assigned"><%=assigned_users.length%></td></tr>
+<tr><td>Visible To Students:</td><td class="visible"></td></tr>
+<tr><td>Reduced Scoring:</td><td class="reduced-scoring"></td></tr>
+<tr><td colspan="2"><a href="#" class="goto-problem-set-button" data-setname="<%=set_id%>">Visit Problem Set</a></td></tr>
 </table>
 </script>
 
 
-<script type="text/template" id="calendar-date-bar">
+<!--<script type="text/template" id="calendar-date-bar">
 <div class="<%= classes %>" data-setname="<%= setname %>" data-title="<%=setname%>" data-container="body">
  <span class="assign-calendar-name"><%if(showName){%><%=setname %><%}%></span><span class="assign-info"><i class="fa fa-info-circle pull-right"></i></span></div>
 
+</script> -->
+<script type="text/template" id="calendar-date-bar">
+  <span class="assign-calendar-name"></span>
+  <span class="assign-info show-set-popup-info"><i class="fa fa-info-circle"></i></span>
 </script>
+
 
 <script type="text/template" id="calendar-help-template">
 <h4>Calendar Help</h4>
