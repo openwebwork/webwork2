@@ -497,11 +497,29 @@ sub pre_header_initialize {
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); 
 
-	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || 
-	    ($setName eq "Undefined_Set" || 
-	     (time >= $set->open_date && !(
-		  $ce->{options}{enableConditionalRelease} && 
-		  is_restricted($db, $set, $set->set_id, $effectiveUserName))));
+	# we are open if we can view unopened sets
+	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets");
+
+	# or if the set is the "Undefined_set"
+	$self->{isOpen} = $self->{isOpen} || $setName eq "Undefined_Set";
+	
+	# or if the set is past the ansewr date
+	$self->{isOpen} = $self->{isOpen} || time >= $set->answer_date;
+	
+	my $isClosed = 0;
+	# now we check the reasons why it might be closed
+	unless ($self->{isOpen}) {
+	    # its closed if the set is restricted
+	    $isClosed = $ce->{options}{enableConditionalRelease} && is_restricted($db, $set, $set->set_id, $effectiveUserName);
+	    # or if its a jitar set and the problem is hidden or closed
+	    $isClosed = $isClosed || ($set->assignment_type() eq 'jitar' &&
+				      is_jitar_problem_hidden($db,$effectiveUserName,$set->set_id,$problemNumber));
+	    $isClosed = $isClosed || ($set->assignment_type() eq 'jitar' &&
+				      is_jitar_problem_closed($db,$effectiveUserName,$set->set_id,$problemNumber));
+	}
+
+	# isOpen overrides $isClosed.  
+	$self->{isOpen} = $self->{isOpen} || !$isClosed;
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
 
@@ -1034,6 +1052,9 @@ sub siblings {
 	my $eUserID = $r->param("effectiveUser");
 	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
 
+	my @where = map {[$eUserID, $setID, $_]} @problemIDs;
+	my @problemRecords = $db->getMergedProblems(@where);
+
 	my $isJitarSet = 0;
 
 	if ($setID) {
@@ -1044,27 +1065,89 @@ sub siblings {
 	    }
 	}
 	
-	# we need to check if the current answer is correct or not so that the Progress Bar is updated onclick
-	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
-	my @problemRecords = $db->getAllMergedUserProblems( $eUserID, $setID );
-	# Resort records
-	@problemRecords = sort {$a->problem_id <=> $b->problem_id } @problemRecords;
-	
-	#print CGI::span({style=>"font-size:larger"}, "Problems");
-
 	# variables for the progress bar
-	my $num_of_problems  = @problemRecords || 0;
+	my $num_of_problems  = 0;
 	my $problemList;
 	my $total_correct=0;
 	my $total_incorrect=0;
 	my $total_inprogress=0;
 	my $currentProblemID = $self->{problem}->problem_id if !($self->{invalidProblem});
+
 	my $progressBarEnabled = $r->ce->{pg}->{options}->{enableProgressBar};
 	
 
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
 	print CGI::h2($r->maketext("Problems"));
 	print CGI::start_ul({class=>"problem-list"});
+	
+	my @items;
+
+	foreach my $problemID (@problemIDs) {
+	    next if ($isJitarSet && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID));
+
+	    my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, courseID => $courseID, setID => $setID, problemID => $problemID);
+	    my $link;
+	    
+	    my $status_symbol = '';
+	    if($progressBarEnabled){
+		my $problemRecord = shift(@problemRecords);
+		$num_of_problems++;
+		# update with current information if available
+		if ($problemRecord->problem_id == $currentProblemID) {
+		    my $pg = $self->{pg};
+		    $problemRecord->status($pg->{state}->{recorded_score});
+		    $problemRecord->attempted(1);
+		    $problemRecord->num_correct($pg->{state}->{num_of_correct_ans});
+		    $problemRecord->num_incorrect($pg->{state}->{num_of_incorrect_ans});
+		}
+
+		my $total_attempts = $problemRecord->num_correct+$problemRecord->num_incorrect;
+
+                # variables for the widths of the bars in the Progress Bar
+		if( $problemRecord->status ==1 ){
+		    # correct
+		    $total_correct++;
+		    $status_symbol = " &#x2713;"; # checkmark
+		} else {
+		    # incorrect
+		    if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
+			$total_incorrect++;
+			$status_symbol = " &#x2717;"; # cross
+		    } else {
+			# in progress
+			if($problemRecord->attempted>0){
+			    $total_inprogress++;
+			    $status_symbol = " &hellip;"; # horizontal ellipsis
+			}
+		    }
+		}
+	    }
+	    
+	    if ($isJitarSet) {
+		
+		my @seq = jitar_id_to_seq($problemID);
+		my $level = $#seq;
+		my $class = '';
+		if ($level != 0) {
+		    $class='nested-problem-'.$level;
+		}
+		
+		if (is_jitar_problem_closed($db, $eUserID, $setID, $problemID)) {
+		    $link = CGI::a( {href=>'#', class=>$class.' disabled-problem'},  $r->maketext("Problem [_1]", join('.',@seq)));
+		} else {
+		    $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage, 
+								   params=>{  displayMode => $self->{displayMode}, 
+									      showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", join('.',@seq)).($progressBarEnabled?$status_symbol:""));
+		    
+		}
+	    } else {
+		$link = CGI::a( {href=>$self->systemLink($problemPage , 
+						 params=>{  displayMode => $self->{displayMode}, 
+							    showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", $problemID).($progressBarEnabled?$status_symbol:""));
+	    }
+	    
+	    push @items, CGI::li( $link);
+	}
 	
 	# output the progress bar
 	if($num_of_problems>0 and $r->ce->{pg}->{options}->{enableProgressBar}){
@@ -1120,61 +1203,8 @@ sub siblings {
 	    print $progress_bar;
 	}
 
+	print @items;
 
-	foreach my $problemID (@problemIDs) {
-	    my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, courseID => $courseID, setID => $setID, problemID => $problemID);
-	    my $link;
-	    
-	    my $status_symbol;
-	    if($progressBarEnabled){
-		# variables for the widths of the bars in the Progress Bar
-		if( $problemRecord->status ==1 ){
-		    # correct
-		    $total_correct++;
-		    $status_symbol = "&#x2713;"; # checkmark
-		} else {
-		    # incorrect
-		    if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
-			$total_incorrect++;
-			$status_symbol = "&#x2717;"; # cross
-		    } else {
-			# in progress
-			if($problemRecord->attempted>0){
-			    $total_inprogress++;
-			    $status_symbol = " &hellip;"; # horizontal ellipsis
-			}
-		    }
-		}
-	    }
-	    
-
-	    if ($isJitarSet) {
-		next if is_jitar_problem_hidden($db,$eUserID, $setID, $problemID);
-		
-		my @seq = jitar_id_to_seq($problemID);
-		my $level = $#seq;
-		my $class = '';
-		if ($level != 0) {
-		    $class='nested-problem-'.$level;
-		}
-		
-		if (is_jitar_problem_closed($db, $eUserID, $setID, $problemID)) {
-		    $link = CGI::a( {href=>'#', class=>$class.' disabled-problem'},  $r->maketext("Problem [_1]", join('.',@seq)));
-		} else {
-		    $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage, 
-								   params=>{  displayMode => $self->{displayMode}, 
-									      showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", join('.',@seq)).$progressBarEnabled?$status_symbol:"");
-		    
-		}
-	    } else {
-		$link = CGI::a( {href=>$self->systemLink($problemPage , 
-						 params=>{  displayMode => $self->{displayMode}, 
-							    showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", $problemID).$progressBarEnabled?$status_symbol:"");
-	    }
-	    
-	    print CGI::li( $link);
-	}
-	
 	print CGI::end_ul();
 	print CGI::end_div();
 	
@@ -1200,19 +1230,45 @@ sub nav {
 	my $setID = $self->{set}->set_id if !($self->{invalidSet});
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
 	my $eUserID = $r->param("effectiveUser");
+	my $mergedSet = $db->getMergedSet($eUserID,$setID);
+	return "" unless $mergedSet;
+
+	my $isJitarSet = ($mergedSet->assignment_type eq 'jitar');
 
 	my ($prevID, $nextID);
 
 	if (!$self->{invalidProblem}) {
 		my @problemIDs = $db->listUserProblems($eUserID, $setID);
-		foreach my $id (@problemIDs) {
-			$prevID = $id if $id < $problemID
-				and (not defined $prevID or $id > $prevID);
-			$nextID = $id if $id > $problemID
-				and (not defined $nextID or $id < $nextID);
-		}
-	}
 
+		if ($isJitarSet) {
+		    @problemIDs = jitar_order_problems(@problemIDs);
+		} else {
+		    @problemIDs = sort @problemIDs;
+		}
+
+		if ($isJitarSet) {
+		    my @processedProblemIDs;
+		    foreach my $id (@problemIDs) {
+			push @processedProblemIDs, $id unless
+			    is_jitar_problem_hidden($db,$eUserID,$setID,$id);
+		    }
+		    @problemIDs = @processedProblemIDs;
+		}
+
+		my $curr_index = 0;
+
+		for (my $i=0; $i<=$#problemIDs; $i++) {
+		    $curr_index = $i if $problemIDs[$i] == $problemID;
+		}
+
+		$prevID = $problemIDs[$curr_index-1] if $curr_index-1 >=0;
+		$nextID = $problemIDs[$curr_index+1] if $curr_index+1 <= $#problemIDs;
+		$nextID = '' if ($isJitarSet &&
+				 is_jitar_problem_closed($db,$eUserID,$setID,$nextID));
+		    
+		
+	}
+	
 	my @links;
 
 	if ($prevID) {
@@ -1661,42 +1717,44 @@ sub output_score_summary{
 		my @seq = jitar_id_to_seq($problemIDs[$i]);
 		push @problemSeqs, \@seq;
 	    }
-	    if (length(@{$problemSeqs[$index]}) > length(@{$problemSeqs[$index+1]})
-		&& ($problem->num_incorrect >= $problem->att_to_open_children ||
-		    ($problem->max_attempts != -1 && 
-		     $problem->num_incorrect >= $problem->max_attempts))) {
-		print CGI::br().$r->maketext('This problem has open sub-problems.  You can visit them by using the links to the left or visiting the set page.');
-	    }
 
 	    my $next_id = $index+1;
 	    my @seq = @{$problemSeqs[$index]};
 	    my @children_counts_indexs;
 	    my $hasChildren = 0;
 
-	    until (length($problemSeqs[$index]) == length($problemSeqs[$next_id]) ||
-		$next_id > $#problemIDs) {
+	    while ($next_id <= $#problemIDs && scalar(@{$problemSeqs[$index]}) < scalar(@{$problemSeqs[$next_id]})) {
+
 		my $childProblem = $db->getMergedProblem($effectiveUser,$set->set_id, $problemIDs[$next_id]);
 		$hasChildren = 1;
-		push @children_counts_indexs, $index if $childProblem->counts_parent_grade;
+		push @children_counts_indexs, $next_id if $childProblem->counts_parent_grade;
 		$next_id++;
 	    }	
-	    warn($next_id);
-	    warn(@problemSeqs);
-	    if ($set->restrict_prob_progression() && $next_id <= $#problemIDs &&
-		is_jitar_problem_closed($problemIDs[$next_id])) {
+
+	    if ( $hasChildren 
+		&& ($problem->num_incorrect >= $problem->att_to_open_children ||
+		    ($problem->max_attempts != -1 && 
+		     $problem->num_incorrect >= $problem->max_attempts))) {
+		print CGI::br().$r->maketext('This problem has open subproblems.  You can visit them by using the links to the left or visiting the set page.');
+
+		if (scalar(@children_counts_indexs) > 0) {
+		    print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
+		}
+		
+
+	    }
+
+	    if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
 		if ($hasChildren) {
-		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its children].',join('.',@{$problemSeqs[$index]}));
+		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its subproblems.',join('.',@{$problemSeqs[$next_id]}));
 		} else {
 		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
 		}
 	    }
-	    if (length(@children_counts_indexs) > 0) {
-		print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
-	    }
-	    if ($problem->counts_parent_grade()) {
+	    if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
 		pop @seq;
 		print CGI::br().$r->maketext('The weighted average of this problem, along with others that have this message, can replace the score of problem [_1] if it is larger.',join('.',@seq));
-	    } else {
+	    } elsif (scalar(@seq)!=1) {
 		pop @seq;
 		print CGI::br().$r->maketext('This score for this problem does not count for the score of problem [_1] or for the set.',join('.',@seq));
 	    }

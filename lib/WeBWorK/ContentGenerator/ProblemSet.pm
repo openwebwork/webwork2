@@ -382,9 +382,10 @@ sub body {
 			CGI::th($r->maketext("Attempts")),
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
-			CGI::th($isJitarSet ? $r->maketext("Status") : 
-				$r->maketext("Adjusted Status")),
-			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th("")
+			CGI::th($isJitarSet ? $r->maketext("Adjusted Status") :
+				$r->maketext("Status")),
+			      $isJitarSet  ? CGI::th($r->maketext("Credit For Parent")) : CGI::th(""),
+			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th(""),
 		);
 		
 		if ($isJitarSet) {
@@ -496,20 +497,37 @@ sub problemListRow($$$$$) {
 	my $remaining = (($problem->max_attempts||-1) < 0) #a blank yields 'infinite' because it evaluates as false with out giving warnings about comparing non-numbers
 		? $r->maketext("unlimited")
 		: $problem->max_attempts - $attempts;
+
+	my $value = $problem->value;
+
+	$value = '' if ($isJitarSet && $problemLevel != 0 
+			&& !$problem->counts_parent_grade);
+
+	# we only show the (adjusted status) for the top level JITAR problems
+	# since they are the only grades that count.  We have a seperate 
+	# column for child problems. 
 	my $rawStatus = 0;
-	if ($isJitarSet) {
+	if ($isJitarSet && $problemLevel == 0) {
 	    $rawStatus = jitar_problem_adjusted_status($problem, $db);
 	} else {
 	    $rawStatus = $problem->status;
 	}
 
-	my $status;
-	$status = eval{ sprintf("%.0f%%", $rawStatus * 100)}; # round to whole number
-	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
-	                                  # FIXME  -- this may not cover all cases.
-	
+	my $status = '';
+	if (!$isJitarSet || $problemLevel == 0) {
+
+	    $status = eval{ sprintf("%.0f%%", $rawStatus * 100)}; # round to whole number
+	    $status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
+	    # FIXME  -- this may not cover all cases.
+	    
 #	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
-	
+	}
+
+	my $statusForParent = "";
+	if ($isJitarSet && $problem->counts_parent_grade && $problemLevel != 0 ) {
+	    $statusForParent =  eval{ sprintf("%.0f%%", jitar_problem_adjusted_status($problem,$db) * 100)};
+	}
+
 	my $graderLink = "";
 	if ($canScoreProblems && $self->{gradeableProblems}[$problemID]) {
 	    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
@@ -523,8 +541,9 @@ sub problemListRow($$$$$) {
 		CGI::td([
 				$attempts,
 				$remaining,
-				$problem->value,
+				$value,
 				$status, 
+		                $statusForParent,
 			        $graderLink
 			]));
 }

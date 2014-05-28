@@ -1289,6 +1289,8 @@ sub jitar_id_to_seq {
 sub is_jitar_problem_hidden {
     my ($db, $userID, $setID, $problemID) = @_;
     
+    die "Not enough arguments.  Use is_jitar_problem_hidden($db,$userID,$setID,$problemID)" unless ($db && $userID && $setID && $problemID);
+
     my $mergedSet = $db->getMergedSet($userID,$setID); 
 
     unless ($mergedSet) {
@@ -1311,7 +1313,7 @@ sub is_jitar_problem_hidden {
 
     pop @parentIDSeq;
     while (@parentIDSeq) {
-	
+
 	my $parentProbID = seq_to_jitar_id(@parentIDSeq);
 	
 	my $userParentProb = $db->getMergedProblem($userID,$setID,$parentProbID);
@@ -1324,14 +1326,14 @@ sub is_jitar_problem_hidden {
 	# the child problems are closed unless the number of incorrect attempts is above the 
 	# attempts to open children, or if they have exausted their max_attempts
 	if (($userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) ||
-	    ($userParentProb->num_incorrect() < $userParentProb->max_attempts())) {
+	    $userParentProb->num_incorrect() < $userParentProb->max_attempts()) {
 	    return 1;
 	}
 
 	pop @parentIDSeq;
     }
     
-    # we shouldnt get here...
+    # if we get here then all of the parents are open so the problem is open.
     return 0;
 }
     
@@ -1340,6 +1342,8 @@ sub is_jitar_problem_hidden {
 
 sub is_jitar_problem_closed {
     my ($db, $userID, $setID, $problemID) = @_;
+
+    die "Not enough arguments.  Use is_jitar_problem_closed($db,$userID,$setID,$problemID)" unless ($db && $userID && $setID && $problemID);
 
     my $mergedSet = $db->getMergedSet($userID,$setID); 
 
@@ -1353,23 +1357,32 @@ sub is_jitar_problem_closed {
 		     mergedSet->restrict_prob_progression());
 
     # if we restrict problem progression then we need to check to see if the previous
-    # problem has been "completed" or, if we are the first problem, if the parent problem
-    # has been completed
+    # problem has been "completed" or, if we are the first problem in this level
 
     my $prob;
     my $id;
     my @idSeq = jitar_id_to_seq($problemID);
 
     do {
-	# if we cant find something return 0
 	
+	# failsafe if we cant find aanything. 
 	return 0 unless @idSeq;
 
 	$idSeq[$#idSeq]--;
 	    
 	if ($idSeq[$#idSeq] == 0) {
-	    #this means we cant find a previous problem to test against so test against th eparent
-	    pop @idSeq;
+	    #this means we cant find a previous problem to test against so we are open as long as the parent is open
+	    pop(@idSeq);
+	    
+	    #if we can't get a parent problem then this one is open. 
+	    return 0 unless @idSeq;
+
+	    $id = seq_to_jitar_id(@idSeq);
+	    if (is_jitar_problem_closed($db,$userID,$setID,$id)) {
+		return 1;
+	    } else {
+		return 0
+	    }
 	}
 	
 	$id = seq_to_jitar_id(@idSeq);
@@ -1447,14 +1460,15 @@ sub jitar_problem_adjusted_status {
     my @weights;
     my @scores;
 
-    foreach my $id (@problemIDs) {
+    ID: foreach my $id (@problemIDs) {
 	my @seq = jitar_id_to_seq($id);
 
 	#check and see if this is a child
 	next unless $#seq == $#problemSeq+1;
 	
+	#oh no!! a goto!! 
 	for (my $i = 0; $i<=$#problemSeq; $i++) {
-	    next unless $seq[$i] = $problemSeq[$i];
+	    next ID unless $seq[$i] == $problemSeq[$i];
 	}
 
 	#check to see if this counts towards the parent grade
@@ -1466,7 +1480,7 @@ sub jitar_problem_adjusted_status {
 
 	# if it does count then add its adjusted status to the grading array
 	push @weights, $problem->value;
-	push @scores, jitar_problem_adjusted_status($problem);
+	push @scores, jitar_problem_adjusted_status($problem,$db);
     }
 
     # if no children count towards the problem grade return status
