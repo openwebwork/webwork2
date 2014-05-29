@@ -36,7 +36,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
-	ref2string makeTempDirectory path_is_subdir sortByName before after between is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
+	ref2string makeTempDirectory path_is_subdir sortByName before after between is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems jitar_problem_finished);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -1263,7 +1263,7 @@ sub nav {
 
 		$prevID = $problemIDs[$curr_index-1] if $curr_index-1 >=0;
 		$nextID = $problemIDs[$curr_index+1] if $curr_index+1 <= $#problemIDs;
-		$nextID = '' if ($isJitarSet &&
+		$nextID = '' if ($isJitarSet && $nextID &&
 				 is_jitar_problem_closed($db,$eUserID,$setID,$nextID));
 		    
 		
@@ -1705,8 +1705,9 @@ sub output_score_summary{
 		print $pg->{state}->{state_summary_msg};
 	}
 
-	#print jitar specific informaton for students. 
-	if ($set->assignment_type() eq 'jitar') {
+	#print jitar specific informaton for students. (and notify instructor 
+	# if necessary
+	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	    my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
 	    @problemIDs = jitar_order_problems(@problemIDs);
 
@@ -1758,9 +1759,23 @@ sub output_score_summary{
 		pop @seq;
 		print CGI::br().$r->maketext('This score for this problem does not count for the score of problem [_1] or for the set.',join('.',@seq));
 	    }
+
+	    if ($submitAnswers && ($set->email_instructor == 1 ||
+		($set->email_instructor == 2 && before($set->due_date)))) {
+		my $parentProb = $db->getMergedProblem($effectiveUser,$set->set_id,seq_to_jitar_id($seq[0]));
+		warn("Couldn't find problem $seq[0] from set ".$set->set_id." in the database") unless $parentProb;
+
+		#email instructor with a message if the student didnt finish
+		if (jitar_problem_finished($parentProb,$db) &&
+		    jitar_problem_adjusted_status($parentProb,$db) != 1) {
+		    
+		     WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::jitar_send_warning_email($self,$parentProb);
+		}
+		
+	    }   
 	}
 	print CGI::end_p();
-    } 
+    }
 	return "";
 }
 

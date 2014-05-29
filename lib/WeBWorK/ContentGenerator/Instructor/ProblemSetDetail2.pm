@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -899,10 +899,9 @@ sub print_nested_list {
     }
     
     my @keys = keys %$nestedHash;
-    
     if (@keys) {
 	print CGI::start_ol();
-	foreach my $id (sort @keys) {
+	foreach my $id (sort {$a <=> $b} @keys) {
 	    print_nested_list($nestedHash->{$id});
 	}
 	print CGI::end_ol();
@@ -2186,7 +2185,7 @@ sub body {
 	# Display problem information
 	#####################################################################
 
-	my @problemIDList = sort { $a <=> $b } $db->listGlobalProblems($setID);
+	my @problemIDList = $db->listGlobalProblems($setID);
 	
 	# DBFIXME use iterators instead of getting all at once
 	
@@ -2389,7 +2388,7 @@ sub body {
 
 		# now use recursion to print the nested lists
 		print CGI::start_ol({id=>"psd_list"});
-		foreach my $id (sort keys %$nestedIDHash) {
+		foreach my $id (sort {$a <=> $b} keys %$nestedIDHash) {
 		    print_nested_list($nestedIDHash->{$id});
 		}
 		print CGI::end_ol();

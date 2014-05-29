@@ -1766,7 +1766,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1799,6 +1799,8 @@ sub importSetsFromDef {
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE);
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
 		$newSetRecord->description($description);
+		$newSetRecord->email_instructor($emailInstructor);
+		$newSetRecord->restrict_prob_progression($restrictProbProgression);
 
 	# gateway/version data.  these should are all initialized to ''
         #   by readSetDef, so for non-gateway/versioned sets they'll just 
@@ -1851,10 +1853,13 @@ sub importSetsFromDef {
 			$self->addProblemToSet(
 			  setName => $setName,
 			  sourceFile => $rh_problem->{source_file},
-			  problemID => $freeProblemID++,
+			  problemID => $rh_problem->{problemID} ? $rh_problem->{problemID} : $freeProblemID++,
 			  value => $rh_problem->{value},
 			  maxAttempts => $rh_problem->{max_attempts},
-			  showMeAnother => $rh_problem->{showMeAnother});
+			  showMeAnother => $rh_problem->{showMeAnother},
+			  attToOpenChildren => $rh_problem->{attToOpenChildren},
+			    countsParentGrade => $rh_problem->{countsParentGrade}
+			    );
 		}
 
 
@@ -1889,7 +1894,7 @@ sub readSetDef {
 	my ($self, $fileName) = @_;
 	my $templateDir   = $self->{ce}->{courseDirs}->{templates};
 	my $filePath      = "$templateDir/$fileName";
-	my $value_default = $self->{ce}->{problemDefaults}->{value};
+	my $weight_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
 	my $showMeAnother = $self->{ce}->{problemDefaults}->{showMeAnother};
 
@@ -1910,7 +1915,7 @@ sub readSetDef {
 
 	}
 
-	my ($line, $name, $value, $attemptLimit, $continueFlag);
+	my ($line, $name, $weight, $attemptLimit, $continueFlag);
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
 	my $description = '';
@@ -1920,7 +1925,7 @@ sub readSetDef {
 # added fields for gateway test/versioned set definitions:
 	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage, $restrictLoc,
+	     $problemsPerPage, $restrictLoc, $emailInstructor, $restrictProbProgression, $countsParentGrade, $attToOpenChildren, $problemID, $listType
 	     ) = 
 		 ('')x8;  # initialize these to ''
 	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
@@ -1986,10 +1991,16 @@ sub readSetDef {
 				$restrictLoc = ( $value ) ? $value : '';
 			} elsif ( $item eq 'relaxRestrictIP' ) {
 			    $relaxRestrictIP = ( $value ) ? $value : 'No';
+			} elsif ( $item eq 'emailInstructor' ) {
+			    $emailInstructor = ( $value ) ? $value : 'No';
+			} elsif ( $item eq 'restrictProbProgression' ) {
+			    $restrictProbProgression = ( $value ) ? $value : 'No';
 			} elsif ( $item eq 'description' ) {
 			    $value =~ s/<n>/\n/g;
 			    $description = $value;
-			} elsif ($item eq 'problemList') {
+			} elsif ($item eq 'problemList' ||
+			    $item eq 'newProblemList') {
+			    $listType = $item;
 				last;
 			} else {
 				warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
@@ -2052,54 +2063,148 @@ sub readSetDef {
 		#####################################################################
 		# Read and check list of problems for the set
 		#####################################################################
-		while(<SETFILENAME>) {
+
+		if ($listType eq 'problemList') {
+
+		    
+		    while(<SETFILENAME>) {
 			chomp($line=$_);
 			$line =~ s/(#.*)//;                             ## don't read past comments
 			unless ($line =~ /\S/) {next;}                  ## skip blank lines
-	
+			
 			# commas are valid in filenames, so we have to handle commas
 			# using backslash escaping, so \X will be replaced with X
 			my @line = ();
 			my $curr = '';
 			for (my $i = 0; $i < length $line; $i++) {
-				my $c = substr($line,$i,1);
-				if ($c eq '\\') {
-					$curr .= substr($line,++$i,1);
+			    my $c = substr($line,$i,1);
+			    if ($c eq '\\') {
+				$curr .= substr($line,++$i,1);
 			    } elsif ($c eq ',') {
-					push @line, $curr;
-					$curr = '';
-				} else {
-					$curr .= $c;
-				}
+				push @line, $curr;
+				$curr = '';
+			    } else {
+				$curr .= $c;
+			    }
 			}
 			## anything left?
 			push(@line, $curr) if ( $curr );
 			
-            # read the line and only look for $showMeAnother if it has the correct number of entries
-            if(scalar(@line)==4){
-			    ($name, $value, $attemptLimit, $showMeAnother, $continueFlag) = @line;
-            } else {
-			    ($name, $value, $attemptLimit, $continueFlag) = @line;
-            }
+			# read the line and only look for $showMeAnother if it has the correct number of entries
+			# otherwise the default value will be used
+			if(scalar(@line)==4){
+			    ($name, $weight, $attemptLimit, $showMeAnother, $continueFlag) = @line;
+			} else {
+			    ($name, $weight, $attemptLimit, $continueFlag) = @line;
+			}
+			
 			#####################
 			#  clean up problem values
 			###########################
 			$name =~ s/\s*//g;
-			$value = "" unless defined($value);
-			$value =~ s/[^\d\.]*//g;
-			unless ($value =~ /\d+/) {$value = $value_default;}
+			$weight = "" unless defined($weight);
+			$weight =~ s/[^\d\.]*//g;
+			unless ($weight =~ /\d+/) {$weight = $weight_default;}
 			$attemptLimit = "" unless defined($attemptLimit);
 			$attemptLimit =~ s/[^\d-]*//g;
 			unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
 			$continueFlag = "0" unless( defined($continueFlag) && @problemData );  
 			# can't put continuation flag onto the first problem
 			push(@problemData, {source_file    => $name,
-			                    value          =>  $value,
+			                    value          =>  $weight,
 			                    max_attempts   =>, $attemptLimit,
-			                    showMeAnother  =>, $showMeAnother,
+			                    showMeAnother   =>, $showMeAnother,
 			                    continuation   => $continueFlag 
-			                    });
+			     });
+		    }
+		} else {
+		    
+		    while (<SETFILENAME>) {
+		
+			chomp($line = $_);
+			$line =~ s|(#.*)||;                              ## don't read past comments
+			unless ($line =~ /\S/) {next;}                   ## skip blank lines
+			$line =~ s|\s*$||;                               ## trim trailing spaces
+			$line =~ m|^\s*(\w+)\s*=\s*(.*)|;
+			
+			######################
+			# sanity check entries
+			######################
+			my $item = $1;
+			$item    = '' unless defined $item;
+			my $value = $2;
+			$value    = '' unless defined $value;
+			
+						$problemList     .= "problem\n";
+			$problemList     .= "source_file = $source_file\n";
+			$problemList     .= "value = $value\n";
+			$problemList     .= "max_attempts = $max_attempts\n";
+			$problemList     .= "showMeAnother = $showMeAnother\n";
+			$problemList     .= "problem_id = $problem_id\n";
+			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
+			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
+			# can't put continuation flag onto the first problem
+			push(@problemData, {source_file    => $name,
+			                    value          =>  $weight,
+			                    max_attempts   =>, $attemptLimit,
+			                    showMeAnother   =>, $showMeAnother,
+			                    continuation   => $continueFlag 
+			     });
+
+			if ($item eq 'problem_start') {
+			    next;
+			} elsif ($item eq 'source_file') {
+			    next unless $value;
+			    $source_file = $value;
+			} elsif ($item eq 'value' ) { 
+			    $weight = ( $value ) ? $value : $weight_default;
+			} elsif ( $item eq 'max_attempts' ) {
+			    $attemptLimit = ( $value ) ? $value : $max_attempts_default;
+			} elsif ( $item eq 'showMeAnother' ) {
+			    $showMeAnother = ( $value ) ? $value : 0;
+			} elsif ( $item eq 'restrictProbProgression' ) {
+			    $restrictProbProgression = ( $value ) ? $value : 'No';
+			} elsif ( $item eq 'problem_id' ) {
+			    $problem_id = ( $value ) ? $value : '';
+			} elsif ( $item eq 'counts_parent_grade' ) {
+			    $countsParentGrade = ( $value ) ? $value : 0;
+			} elsif ( $item eq 'att_to_open_children' ) {
+			    $attToOpenChildren = ( $value ) ? $value : 0;
+			} elsif ($item eq 'end_problem') {
+				 
+			    #####################
+			    #  clean up problem values
+			    ###########################
+			    $name =~ s/\s*//g;
+			    $value = "" unless defined($value);
+			    $value =~ s/[^\d\.]*//g;
+			    unless ($value =~ /\d+/) {$value = $value_default;}
+			    $attemptLimit = "" unless defined($attemptLimit);
+			    $attemptLimit =~ s/[^\d-]*//g;
+			    unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
+			    $countsParentGrade =~ s/[^\d-]*//g;
+			    $attToOpenChildren =~ s/[^\d-]*//g;
+			    $problemID =~ s/[^\d-]*//g;
+			    
+			    # can't put continuation flag onto the first problem
+			    push(@problemData, {source_file    => $name,
+						problemID      => $problemID, 
+						value          =>  $value,
+						max_attempts   =>, $attemptLimit,
+						showMeAnother  =>, $showMeAnother,
+						attToOpenChildren => $attToOpenChildren,
+						countsParentGrade => $countsParentGrade
+				 });
+			    
+			    
+			} else {
+			    warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
+			}
+		    }
+		    
+		    
 		}
+		
 		close(SETFILENAME);
 		($setName,
 		 $paperHeaderFile,
@@ -2117,7 +2222,9 @@ sub readSetDef {
 		 $restrictIP,
 		 $restrictLoc,
 		 $relaxRestrictIP,
-		 $description
+		 $description,
+		 $emailInstructor,
+		 $restrictProbProgression
 		);
 	} else {
 		warn $r->maketext("Can't open file [_1]", $filePath)."\n";
@@ -2166,9 +2273,13 @@ SET:	foreach my $set (keys %filenames) {
 		if ($description) {
 		    $description =~ s/\n/<n>/g;
 		}
-		
+
+		my $assignmentType = $setRecord->assignment_type;
 		my $setHeader    = $setRecord->set_header;
 		my $paperHeader  = $setRecord->hardcopy_header;
+		my $emailInstructor = $setRecord->email_instructor;
+		my $restrictProbProgression = $setRecord->restrict_prob_progression;
+
 		my @problemList = $db->listGlobalProblems($set);
 
 		my $problemList  = '';
@@ -2180,27 +2291,34 @@ SET:	foreach my $set (keys %filenames) {
 				$reason{$set} = $r->maketext("No record found for problem [_1].", $prob);
 				next SET;
 			}
+			my $problem_id    = $problemRecord->problem_id();
 			my $source_file   = $problemRecord->source_file();
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
 			my $showMeAnother  = $problemRecord->showMeAnother();
-			
+			my $countsParentGrade = $problemRecord->counts_parent_grade();
+			my $attToOpenChildren = $problemRecord->att_to_open_children();
+
 			# backslash-escape commas in fields
 			$source_file =~ s/([,\\])/\\$1/g;
 			$value =~ s/([,\\])/\\$1/g;
 			$max_attempts =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
 
-            # only include showMeAnother if it has been enabled in the course configuration
-            if($ce->{pg}->{options}{enableShowMeAnother}){
-			    $problemList     .= "$source_file, $value, $max_attempts, $showMeAnother \n";
-            } else {
-			    $problemList     .= "$source_file, $value, $max_attempts \n";
-            }
+			# only include showMeAnother if it has been enabled in the course configuration
+			$problemList     .= "problem_start\n";
+			$problemList     .= "source_file = $source_file\n";
+			$problemList     .= "value = $value\n";
+			$problemList     .= "max_attempts = $max_attempts\n";
+			$problemList     .= "showMeAnother = $showMeAnother\n";
+			$problemList     .= "problem_id = $problem_id\n";
+			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
+			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
+			$problemList     .= "problem_end\n"
+			
 		}
 
 		# gateway fields
-		my $assignmentType = $setRecord->assignment_type;
 		my $gwFields = '';
 		if ( $assignmentType =~ /gateway/ ) {
 		    my $attemptsPerV = $setRecord->attempts_per_version;
@@ -2214,7 +2332,6 @@ SET:	foreach my $set (keys %filenames) {
 		    my $timeCap      = $setRecord->time_limit_cap;
 		    $gwFields =<<EOG;
 
-assignmentType      = $assignmentType
 attemptsPerVersion  = $attemptsPerV
 timeInterval        = $timeInterval
 versionsPerInterval = $vPerInterval
@@ -2242,14 +2359,16 @@ EOG
 		}
 
 		my $fileContents = <<EOF;
-
+assignmentType      = $assignmentType
 openDate          = $openDate
 dueDate           = $dueDate
 answerDate        = $answerDate
 paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader$gwFields
 description       = $description
-${restrictFields}problemList       = 
+restrictProbProgression = $restrictProbProgression
+emailInstructor = $emailInstructor
+${restrictFields}newProblemList 
 $problemList
 EOF
 

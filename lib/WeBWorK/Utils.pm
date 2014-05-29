@@ -39,6 +39,7 @@ use File::Path qw(rmtree);
 use Storable;
 use Carp;
 use Math::Prime::Util qw (next_prime factor_exp);
+use Mail::Sender;
 
 use constant MKDIR_ATTEMPTS => 10;
 
@@ -1289,7 +1290,7 @@ sub jitar_id_to_seq {
 sub is_jitar_problem_hidden {
     my ($db, $userID, $setID, $problemID) = @_;
     
-    die "Not enough arguments.  Use is_jitar_problem_hidden($db,$userID,$setID,$problemID)" unless ($db && $userID && $setID && $problemID);
+    die "Not enough arguments.  Use is_jitar_problem_hidden(db,userID,setID,problemID)" unless ($db && $userID && $setID && $problemID);
 
     my $mergedSet = $db->getMergedSet($userID,$setID); 
 
@@ -1343,7 +1344,7 @@ sub is_jitar_problem_hidden {
 sub is_jitar_problem_closed {
     my ($db, $userID, $setID, $problemID) = @_;
 
-    die "Not enough arguments.  Use is_jitar_problem_closed($db,$userID,$setID,$problemID)" unless ($db && $userID && $setID && $problemID);
+    die "Not enough arguments.  Use is_jitar_problem_closed(db,userID,setID,problemID)" unless ($db && $userID && $setID && $problemID);
 
     my $mergedSet = $db->getMergedSet($userID,$setID); 
 
@@ -1513,21 +1514,21 @@ sub jitar_problem_finished {
 
     # the problem is open if you can still make attempts
     return 0 if ($userProblem->max_attempts == -1 ||
-	$userProblem->max_attempts <= ($userProblem->num_correct + 
-				       $userProblem->num_incorrect));
+	$userProblem->max_attempts < ($userProblem->num_correct + 
+				      $userProblem->num_incorrect));
     # find children and do the check on them.      
     my @problemSeq = jitar_id_to_seq($userProblem->problem_id);
 
     my @problemIDs = $db->listUserProblems($userProblem->user_id,$userProblem->set_id);
 
-    foreach my $id (@problemIDs) {
+    ID: foreach my $id (@problemIDs) {
 	my @seq = jitar_id_to_seq($id);
 
 	#check and see if this is a child
 	next unless $#seq == $#problemSeq+1;
 	
 	for (my $i = 0; $i<=$#problemSeq; $i++) {
-	    next unless $seq[$i] = $problemSeq[$i];
+	    next ID unless $seq[$i] = $problemSeq[$i];
 	}
 
 	#check to see if this counts towards the parent grade
@@ -1537,16 +1538,13 @@ sub jitar_problem_finished {
 
 	next unless $problem->counts_parent_grade();
 
-
 	#if it does then see if the problem is closed, if it isnt then the parent isnt closed
-	return 0 unless jitar_problem_finished($problem);
+	return 0 unless jitar_problem_finished($problem,$db);
 
     }
 
     # if we got here then all of the children are closed so 
     return 1;
 }
-
-    
 
 1;
