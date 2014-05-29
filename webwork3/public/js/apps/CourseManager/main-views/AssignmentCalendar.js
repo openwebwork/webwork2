@@ -9,7 +9,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 	
     var AssignmentCalendar = CalendarView.extend({
         template: this.$("#calendar-date-bar").html(),
-        popupTemplate: this.$("#calendar-date-popup-bar").html(),
+        popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
         headerInfo: {template: "#calendar-header", events: 
                 { "click .previous-week": "viewPreviousWeek",
                     "click .next-week": "viewNextWeek",
@@ -33,22 +33,28 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             // set up the calendar to scroll correctly
             this.$(".calendar-container").height($(window).height()-160);
             MainView.prototype.render.apply(this);
+
+            // hides any popover clicked outside.
+            $('body').on('click', function (e) {
+                $('[data-toggle="popover"]').each(function () {
+                    //the 'is' for buttons that trigger popups
+                    //the 'has' for icons within a button that triggers a popup
+                    if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
+                        $(this).popover('hide');
+                    }
+                });
+            });
+
             return this;
     	},
     	renderDay: function (day){
     		var self = this;
             var assignments = this.assignmentDates.where({date: day.model.format("YYYY-MM-DD")});
             _(assignments).each(function(assign){
-                var _model = _.extend({assign_type: assign.get("type"),totalUsers: self.users.length,
-                    eventDispatcher: self.eventDispatcher},assign.get("problemSet").attributes);
+                var _model = _.extend({assign_type: assign.get("type"),total_users: self.users.length,
+                    eventDispatcher: self.eventDispatcher,popupTemplate: self.popupTemplate},
+                    assign.get("problemSet").attributes);
                 day.$el.append( new DateInfoBar({template: self.template, model: _model}).render().el);
-
-                /*var popup = this.$(self.template({classes: "assign assign-" + assign.get("type"), 
-                    setname: assign.get("problemSet").get("set_id"), showName: true}));
-                popup.attr("data-content",self.popupTemplate(_.extend({},assign.get("problemSet"),
-                    {totalUsers: self.users.length}))); */
-
-//                day.$el.append(popup);
             });
     	},
         getHelpTemplate: function (){

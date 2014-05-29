@@ -21,9 +21,9 @@
 
 <script type="text/template" id="calendar-date-popup-bar">
 <table class="no-borders">
-<tr><td>Users Assigned:</td><td class="users-assigned"><%=assigned_users.length%></td></tr>
-<tr><td>Visible To Students:</td><td class="visible"></td></tr>
-<tr><td>Reduced Scoring:</td><td class="reduced-scoring"></td></tr>
+<tr><td>Users Assigned:</td><td><%=assigned_users.length%>/<%=total_users%></td></tr>
+<tr><td style="padding-right: 5px">Visible To Students:</td><td><%=(visible=="1")?"Yes":"No"%></td></tr>
+<tr><td>Reduced Scoring:</td><td><%=(enable_reduced_scoring=="1")?"Yes":"No"%></td></tr>
 <tr><td colspan="2"><a href="#" class="goto-problem-set-button" data-setname="<%=set_id%>">Visit Problem Set</a></td></tr>
 </table>
 </script>
@@ -36,7 +36,7 @@
 </script> -->
 <script type="text/template" id="calendar-date-bar">
   <span class="assign-calendar-name"></span>
-  <span class="assign-info show-set-popup-info"><i class="fa fa-info-circle"></i></span>
+  <span class="assign-info show-set-popup-info" data-toggle="popover"><i class="fa fa-info-circle"></i></span>
 </script>
 
 

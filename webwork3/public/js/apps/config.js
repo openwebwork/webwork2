@@ -194,7 +194,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
     Backbone.Stickit.addHandler({
         selector: '.show-set-popup-info',
         update: function($el, val, model, options){
-            var popoverHTML = _.template($("#calendar-date-popup-bar").html(),model.attributes);
+            var popoverHTML = model.get("popupTemplate")(model.attributes);
             $el.popover({title: model.get("set_id"), html: true, content: popoverHTML, container: "body"});
             $el.on("shown.bs.popover",function(){
                 $("a.goto-problem-set-button[data-setname='"+model.get("set_id")+"']").off()
@@ -203,41 +203,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                         model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
                 })
             });
-
-            return;
-            var theDate = moment.unix(val);
-            $el.html(_.template($("#edit-date-time-template").html(),{date: theDate.format("MM/DD/YYYY")}));
-            var setDate = function(evt){
-                var newDate = moment(evt.data.$el.children(".wwdate").val(),"MM/DD/YYYY");
-                var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
-                theDate.years(newDate.years()).months(newDate.months()).date(newDate.date());
-                evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
-            };
-            var setTime = function(evt,timeStr){
-                var newDate = moment(timeStr,"hh:mmA");
-                var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
-                theDate.hours(newDate.hours()).minutes(newDate.minutes());
-                evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
-            };
-
-            var popoverHTML = _.template($("#time-popover-template").html(),
-                        {time : moment.unix(model.get(options.observe)).format("h:mm a")});
-            var timeIcon = $el.children(".open-time-editor");
-            timeIcon.popover({title: "Change Time:", html: true, content: popoverHTML,
-                trigger: "manual"});
-            timeIcon.parent().delegate(".save-time-button","click",{$el:$el.closest(".edit-datetime"),
-                             model: model, options: options},
-                function (evt) {
-                    timeIcon.popover("hide");
-                    setTime(evt,$(this).siblings(".wwtime").val());
-            });
-            timeIcon.parent().delegate(".cancel-time-button","click",{},function(){timeIcon.popover("hide");});
-            $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, setDate);
-            $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, setTime);
-            timeIcon.parent().on("click",".open-time-editor", function() {
-                timeIcon.popover("toggle");
-            });
-            $el.children(".wwdate").datepicker();
         },
         updateMethod: 'html'
     });
