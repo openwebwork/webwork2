@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory list2hash max);
+use WeBWorK::Utils qw(readDirectory list2hash max jitar_id_to_seq jitar_problem_adjusted_status);
 use WeBWorK::Localize;
 sub initialize {
 	my ($self) = @_;
@@ -452,8 +452,19 @@ sub grade_set {
 		if ( $setIsVersioned ) {
 			@problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
 		}   # use versioned problems instead (assume that each version has the same number of problems.
-		
-		debug("End collecting problems for set $setName");
+	
+	# for jitar sets we only use the top level problems
+	if ($set->assignment_type eq 'jitar') {
+	    my @topLevelProblems;
+	    foreach my $problem (@problemRecords) {
+		my @seq = jitar_id_to_seq($problem->problem_id);
+		push @topLevelProblems, $problem if ($#seq == 0);
+	    }
+	
+	    @problemRecords = @topLevelProblems;
+	}
+
+	debug("End collecting problems for set $setName");
 
 	####################
 	# Resort records
@@ -495,8 +506,12 @@ sub grade_set {
 				next;
 			}
 			
-		    $status           = $problemRecord->status || 0;
-		    my  $attempted    = $problemRecord->attempted;
+			$status           = $problemRecord->status || 0;
+			if ($set->assignment_type eq 'jitar') {
+			    $status = jitar_problem_adjusted_status($problemRecord,$db);
+			}
+			
+			my  $attempted    = $problemRecord->attempted;
 			my $num_correct   = $problemRecord->num_correct || 0;
 			my $num_incorrect = $problemRecord->num_incorrect   || 0;
 			$num_of_attempts  += $num_correct + $num_incorrect;

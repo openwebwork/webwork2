@@ -521,6 +521,8 @@ sub addProblemToSet {
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
+	my $att_to_open_children_default = $self->{ce}->{problemDefaults}->{att_to_open_children};	
+	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};	
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
 	
@@ -540,8 +542,8 @@ sub addProblemToSet {
 	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
 	my $showMeAnother = $args{showMeAnother} || $showMeAnother_default;
 	my $problemID = $args{problemID};
-	my $countsParentGrade = $args{countsParentGrade} || 0;
-	my $attToOpenChildren = $args{attToOpenChildren} || 0;
+	my $countsParentGrade = $args{countsParentGrade} || $counts_parent_grade_default;
+	my $attToOpenChildren = $args{attToOpenChildren} || $att_to_open_children_default;
 
 	unless ($problemID) {
 

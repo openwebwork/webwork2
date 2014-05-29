@@ -1,3 +1,4 @@
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -1896,7 +1897,11 @@ sub readSetDef {
 	my $filePath      = "$templateDir/$fileName";
 	my $weight_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
-	my $showMeAnother = $self->{ce}->{problemDefaults}->{showMeAnother};
+	my $att_to_open_children_default = 
+	    $self->{ce}->{problemDefaults}->{att_to_open_children};
+	my $counts_parent_grade_default = 
+	    $self->{ce}->{problemDefaults}->{counts_parent_grade};
+	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
 
 	my $setName = '';
 	
@@ -1925,7 +1930,7 @@ sub readSetDef {
 # added fields for gateway test/versioned set definitions:
 	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage, $restrictLoc, $emailInstructor, $restrictProbProgression, $countsParentGrade, $attToOpenChildren, $problemID, $listType
+	     $problemsPerPage, $restrictLoc, $emailInstructor, $restrictProbProgression, $countsParentGrade, $attToOpenChildren, $problemID, $showMeAnother, $listType
 	     ) = 
 		 ('')x8;  # initialize these to ''
 	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
@@ -1999,7 +2004,7 @@ sub readSetDef {
 			    $value =~ s/<n>/\n/g;
 			    $description = $value;
 			} elsif ($item eq 'problemList' ||
-			    $item eq 'newProblemList') {
+			    $item eq 'problemListV2') {
 			    $listType = $item;
 				last;
 			} else {
@@ -2135,27 +2140,11 @@ sub readSetDef {
 			my $value = $2;
 			$value    = '' unless defined $value;
 			
-						$problemList     .= "problem\n";
-			$problemList     .= "source_file = $source_file\n";
-			$problemList     .= "value = $value\n";
-			$problemList     .= "max_attempts = $max_attempts\n";
-			$problemList     .= "showMeAnother = $showMeAnother\n";
-			$problemList     .= "problem_id = $problem_id\n";
-			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
-			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
-			# can't put continuation flag onto the first problem
-			push(@problemData, {source_file    => $name,
-			                    value          =>  $weight,
-			                    max_attempts   =>, $attemptLimit,
-			                    showMeAnother   =>, $showMeAnother,
-			                    continuation   => $continueFlag 
-			     });
-
 			if ($item eq 'problem_start') {
 			    next;
 			} elsif ($item eq 'source_file') {
-			    next unless $value;
-			    $source_file = $value;
+			    warn($r->maketext('No source_file for problem in .def file')) unless $value;
+			    $name = $value;
 			} elsif ($item eq 'value' ) { 
 			    $weight = ( $value ) ? $value : $weight_default;
 			} elsif ( $item eq 'max_attempts' ) {
@@ -2165,31 +2154,40 @@ sub readSetDef {
 			} elsif ( $item eq 'restrictProbProgression' ) {
 			    $restrictProbProgression = ( $value ) ? $value : 'No';
 			} elsif ( $item eq 'problem_id' ) {
-			    $problem_id = ( $value ) ? $value : '';
+			    $problemID = ( $value ) ? $value : '';
 			} elsif ( $item eq 'counts_parent_grade' ) {
 			    $countsParentGrade = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'att_to_open_children' ) {
 			    $attToOpenChildren = ( $value ) ? $value : 0;
-			} elsif ($item eq 'end_problem') {
+			} elsif ($item eq 'problem_end') {
 				 
 			    #####################
 			    #  clean up problem values
 			    ###########################
 			    $name =~ s/\s*//g;
-			    $value = "" unless defined($value);
-			    $value =~ s/[^\d\.]*//g;
-			    unless ($value =~ /\d+/) {$value = $value_default;}
+			    $weight = "" unless defined($weight);
+			    $weight =~ s/[^\d\.]*//g;
+			    unless ($weight =~ /\d+/) {$weight = $weight_default;}
 			    $attemptLimit = "" unless defined($attemptLimit);
 			    $attemptLimit =~ s/[^\d-]*//g;
 			    unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
+
+			    unless ($countsParentGrade =~ /(0|1)/) {$countsParentGrade = $counts_parent_grade_default;}	    
 			    $countsParentGrade =~ s/[^\d-]*//g;
+
+			    unless ($showMeAnother =~ /-?\d+/) {$showMeAnother = $showMeAnother_default;}		
+			    $showMeAnother =~ s/[^-?\d-]*//g;
+
+			    unless ($attToOpenChildren =~ /\d+/) {$attToOpenChildren = $att_to_open_children_default;}		
 			    $attToOpenChildren =~ s/[^\d-]*//g;
+					    
+			    unless ($problemID =~ /\d+/) {$problemID = '';}
 			    $problemID =~ s/[^\d-]*//g;
-			    
+
 			    # can't put continuation flag onto the first problem
 			    push(@problemData, {source_file    => $name,
 						problemID      => $problemID, 
-						value          =>  $value,
+						value          =>  $weight,
 						max_attempts   =>, $attemptLimit,
 						showMeAnother  =>, $showMeAnother,
 						attToOpenChildren => $attToOpenChildren,
@@ -2306,7 +2304,7 @@ SET:	foreach my $set (keys %filenames) {
 			$showMeAnother =~ s/([,\\])/\\$1/g;
 
 			# only include showMeAnother if it has been enabled in the course configuration
-			$problemList     .= "problem_start\n";
+			$problemList     .= "problem_start = \n";
 			$problemList     .= "source_file = $source_file\n";
 			$problemList     .= "value = $value\n";
 			$problemList     .= "max_attempts = $max_attempts\n";
@@ -2314,7 +2312,7 @@ SET:	foreach my $set (keys %filenames) {
 			$problemList     .= "problem_id = $problem_id\n";
 			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
 			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
-			$problemList     .= "problem_end\n"
+			$problemList     .= "problem_end = \n"
 			
 		}
 
@@ -2367,8 +2365,9 @@ paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader$gwFields
 description       = $description
 restrictProbProgression = $restrictProbProgression
-emailInstructor = $emailInstructor
-${restrictFields}newProblemList 
+emailInstructor   = $emailInstructor
+${restrictFields}
+problemListV2     = 
 $problemList
 EOF
 

@@ -220,7 +220,7 @@ use constant FIELD_PROPERTIES => {
 		name      => "Assignment type",
 		type      => "choose",
 		override  => "all",
-		choices   => [qw( default gateway proctored_gateway )],
+		choices   => [qw( default gateway proctored_gateway jitar)],
 		labels    => {	default => "homework",
 				gateway => "gateway/quiz",
 				proctored_gateway => "proctored gateway/quiz",
@@ -1772,7 +1772,8 @@ sub body {
 
 	# a useful gateway variable
 	my $isGatewaySet = ( $setRecord->assignment_type =~ /gateway/ ) ? 1 : 0;
-	
+	my $isJitarSet = ($setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
+
 	# DBFIXME no need to get ID lists -- counts would be fine
 	my $userCount        = $db->listUsers();
 	my $setCount         = $db->listGlobalSets(); # if $forOneUser;
@@ -1802,7 +1803,7 @@ sub body {
 	$setCountMessage  = $r->maketext("The user [_1] has been assigned [_2].", $editForUser[0], $setCountMessage) if $forOneUser;
 
 
-	if ($setRecord->assignment_type eq 'jitar') {
+	if ($isJitarSet) {
 	    print CGI::p(CGI::div({class=>"ResultsWithError"}, $r->maketext("You cannot use this version of Set Detail to edit just-in-type type sets.  You must use Set Detail 2.")));
 	}
 
@@ -1910,8 +1911,8 @@ sub body {
 	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
-	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")});
-	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
+	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes"), ($isJitarSet ? ('disabled',1) : ())});
+	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form"), ($isJitarSet ? ('disabled',1) : ())});
 
 	# spacing
 	print CGI::p();
@@ -2285,8 +2286,8 @@ sub body {
 			);
 	}
 	print CGI::br(),CGI::br(),
-		CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")}),
-		CGI::input({type=>"submit", name=>"handle_numbers", value=>$r->maketext("Reorder problems only")}),
+		CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes"), ($isJitarSet ? ('disabled',1) : ())}),
+		CGI::input({type=>"submit", name=>"handle_numbers", value=>$r->maketext("Reorder problems only"), ($isJitarSet ? ('disabled',1) : ())}),
 			$r->maketext("(Any unsaved changes will be lost.)");
 
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });

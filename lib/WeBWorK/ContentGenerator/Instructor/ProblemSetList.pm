@@ -1848,6 +1848,9 @@ sub readSetDef {
 				$relaxRestrictIP = ( $value ) ? $value : 'No';
 			} elsif ($item eq 'problemList') {
 				last;
+			} elsif ($item eq 'problemListV2') {
+			    $self->addbadmessage( $self->r->maketext("Newer problem set def files must be imported using Hmwk Sets Editor2"));
+			    return;
 			} else {
 				warn "readSetDef error, can't read the line: ||$line||";
 			}
