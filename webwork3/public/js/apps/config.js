@@ -146,7 +146,9 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         selector: '.edit-datetime',
         update: function($el, val, model, options){
             var theDate = moment.unix(val);
-            $el.html(_.template($("#edit-date-time-template").html(),{date: theDate.format("MM/DD/YYYY")}));
+            $el.html(_.template($("#edit-date-time-template").html(),
+                {date: model.get("enable_reduced_scoring")==0 && options.observe==="reduced_scoring_date"
+                    ?"":theDate.format("MM/DD/YYYY")}));
             var setDate = function(evt){
                 var newDate = moment(evt.data.$el.children(".wwdate").val(),"MM/DD/YYYY");
                 var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
