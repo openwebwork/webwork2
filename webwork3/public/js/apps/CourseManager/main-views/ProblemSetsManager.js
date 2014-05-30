@@ -106,8 +106,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                     stickit_options: {update: function($el, val, model, options) {
                         $el.html("<a href='#' class='goto-set' data-setname='"+val+"'>" + val + "</a>");
                         $el.children("a").on("click",function() {
-                            var set = self.problemSets.findWhere({set_id: $(this).data("setname")})
-                            set.trigger("show",set);
+                            self.eventDispatcher.trigger("show-problem-set",$(this).data("setname"));
                         });}
                     }
                 },
