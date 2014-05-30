@@ -12,7 +12,8 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
     var ProblemSetsManager = MainView.extend({
         initialize: function (options) {
             MainView.prototype.initialize.call(this,options);
-            _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText');  // include all functions that need the this object
+            _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText',
+                        'hideShowReducedScoring');  // include all functions that need the this object
             var self = this;
             this.problemSets = options.problemSets;
             this.users = options.users;
@@ -26,12 +27,22 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             };
             this.problemSets.on("add",this.updateTable);
             this.problemSets.on("remove",this.updateTable);
+            this.problemSets.on("change:enable_reduced_scoring",this.hideShowReducedScoring);
             this.setMessages();
         },
         events: {
             "click .add-problem-set-button": "addProblemSet",
             'keyup input.filter-text' : 'filterProblemSets',
             'click button.clear-filter-button': 'clearFilterText',
+            //'change .enable-reduced-scoring': "hideShowReducedScoring"
+        },
+        hideShowReducedScoring: function(model){
+            if(model.get("enable_reduced_scoring")==1 && model.get("reduced_scoring_date")===""){
+                var rcDate = moment.unix(model.get("due_date")).subtract(this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"))
+                model.set({reduced_scoring_date: rcDate.unix()})
+            }
+            this.problemSetTable.refreshTable();
+            this.$(".set-id a").truncate({width: 120});
         },
         render: function () {
             this.$el.html($("#problem-set-manager-template").html());

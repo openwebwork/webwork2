@@ -186,6 +186,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				}
 			});
 		},
+		refreshTable: function (){
+			_(this.rowViews).each(function(row){row.refresh();});
+		},
 		getRowCount: function () {
 			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
 		},
@@ -288,6 +291,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				this.model=_model;
 				this.stickit();
 			}
+		},
+		refresh: function(){
+			this.stickit();
 		},
 		events: {
 			"keypress td[contenteditable='true']": "returnHit"

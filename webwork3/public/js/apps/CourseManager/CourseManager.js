@@ -14,7 +14,7 @@ var CourseManager = WebPage.extend({
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
 	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidePane","stopActing",
-            "changeView","changeSidePane","loadData","checkData","saveState","logout");  // include all functions that need the this object
+            "changeView","changeSidePane","loadData","checkData","saveState","logout","setDates");  // include all functions that need the this object
 	    var self = this;
 
         this.render();
@@ -123,6 +123,11 @@ var CourseManager = WebPage.extend({
             this.changeView("Calendar",{});    
         }        
 
+        // The following is useful in many different views, so is defined here. 
+        // It adjusts dates to ensure that they aren't illegal.
+
+        this.problemSets.on("change:due_date change:reduced_scoring_date change:open_date change:answer_date",this.setDates);
+                
         this.navigationBar.on({
             "change-view": this.changeView,
             "logout": this.logout,
@@ -310,6 +315,93 @@ var CourseManager = WebPage.extend({
             }
         });
     },
+    setDates: function(model){
+        var self = this;
+
+        if(_(model.changed).keys().length>1){
+            return;
+        }
+        // convert all of the dates to Moment objects. 
+        var oldUnixDates = model.pick("answer_date","due_date","reduced_scoring_date","open_date")
+        var oldMomentDates = _(oldUnixDates).chain().pairs().map(function(date){ return [date[0],moment.unix(date[1])];}).object().value();
+        // make sure that the dates are in integer form. 
+        oldUnixDates = _(oldMomentDates).chain().pairs().map(function(date) { return [date[0],date[1].unix()]}).object().value();
+        var newMomentDates = _(oldUnixDates).chain().pairs().map(function(date){ return [date[0],moment.unix(date[1])];}).object().value();
+
+        if(model.changed["due_date"]){
+            if(oldMomentDates.due_date.isBefore(oldMomentDates.open_date)){
+                newMomentDates.open_date = moment(oldMomentDates.due_date);
+            }
+            if(oldMomentDates.due_date.isBefore(oldMomentDates.reduced_scoring_date)){
+                var oldDueDate = moment(oldMomentDates.due_date);
+                newMomentDates.reduced_scoring_date = oldDueDate.subtract("minutes",
+                        self.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
+                if(newMomentDates.open_date.isAfter(newMomentDates.reduced_scoring_date)){
+                    newMomentDates.open_date = moment(newMomentDates.reduced_scoring_date);
+                }
+            }
+            if(oldMomentDates.answer_date.isBefore(oldMomentDates.due_date)){
+                newMomentDates.answer_date = moment(newMomentDates.due_date);
+            }
+        }
+
+        if(model.changed["open_date"]){
+            if(oldMomentDates.open_date.isAfter(oldMomentDates.reduced_scoring_date)){
+                newMomentDates.reduced_scoring_date = moment(oldMomentDates.open_date);
+
+                if(newMomentDates.reduced_scoring_date.isAfter(newMomentDates.due_date)){
+                    var oldRSDate = moment(newMomentDates.reduced_scoring_date);
+                    newMomentDates.due_date = oldRSDate.add("minutes",
+                        self.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
+                }
+            }
+            if(oldMomentDates.answer_date.isBefore(newMomentDates.due_date)){
+                newMomentDates.answer_date = moment(newMomentDates.due_date);
+            }
+        }
+
+        if(model.changed["reduced_scoring_date"]){
+            if(oldMomentDates.reduced_scoring_date.isBefore(oldMomentDates.open_date)){
+                newMomentDates.open_date = moment(oldMomentDates.reduced_scoring_date);
+            }
+
+            if(oldMomentDates.reduced_scoring_date.isAfter(oldMomentDates.due_date)){
+                var oldRSDate = moment(oldMomentDates.reduced_scoring_date);
+                newMomentDates.due_date = oldRSDate.add("minutes",
+                        self.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
+            }
+
+            if(newMomentDates.due_date.isAfter(oldMomentDates.answer_date)){
+                newMomentDates.answer_date = moment(newMomentDates.due_date);
+            }
+        }
+
+        if(model.changed["answer_date"]){
+
+            if(oldMomentDates.answer_date.isBefore(oldMomentDates.due_date)){
+                newMomentDates.due_date = moment(oldMomentDates.answer_date);
+            }
+            if(oldMomentDates.answer_date.isBefore(oldMomentDates.reduced_scoring_date)){
+                var newDueDate = moment(newMomentDates.due_date);
+                newMomentDates.reduced_scoring_date = newDueDate.subtract("minutes",
+                    self.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
+            }
+            if(oldMomentDates.answer_date.isBefore(oldMomentDates.open_date)){
+                newMomentDates.open_date = moment(newMomentDates.reduced_scoring_date);
+            }
+
+        }
+
+
+        // convert the moments back to unix time
+        var newUnixDates = _(newMomentDates).chain().pairs().map(function(date) { 
+                    return [date[0],date[1].unix()]}).object().value();
+        if(! _.isEqual(oldUnixDates,newUnixDates)){
+
+            model.set(newUnixDates);
+        }
+    }
+
 });
 
    
