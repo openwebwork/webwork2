@@ -969,7 +969,7 @@ sub make_top_row {
 	<select id='library_selector' size=4 onchange='changeLibrary(\"mainform\", \"".$r->uri."\", this, \"view_problems_spinner\")'>"
 	;
 	print "<option value=\'browse_npl_library\'>National Problem Library</option>
-			<option value=\'browse_local\'>Local Problems</option>
+			<option value=\'browse_local\'>".$r->maketext("Local Problems")."</option>
 			<option value=\'edit_mysets\'>From this Course</option>
 			<option value=\'browse_setdefs\'>Set Definition Files</option>"
 	;

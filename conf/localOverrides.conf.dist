@@ -228,6 +228,12 @@ $problemDefaults{value} = 1;
 
 $problemDefaults{max_attempts} = -1;   
 
+# The default showMeAnother for a problem to use when using the 
+# Library Browser, Problem Editor or Hmwk Sets Editor to add problems to a set
+# or when this value is left blank in an imported set definition file.  Note that 
+# setting this to -1 disables the showMeAnother button
+$problemDefaults{showMeAnother} = -1;   
+
 ################################################################################
 # "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
 ################################################################################
@@ -254,7 +260,7 @@ $problemDefaults{max_attempts} = -1;
 # 	librarybrowsernojs    => 1,
  	librarybrowser1    => 1,
 # 	librarybrowser2    => 1,
- 	librarybrowser3    => 1,
+#	librarybrowser3    => 1,
 # 	
 #	pgproblemeditor1   => 1,
 	pgproblemeditor2   => 1,
@@ -334,6 +340,8 @@ $problemDefaults{max_attempts} = -1;
 ################################################################################
 # Achievement Facebook Integration
 ################################################################################
+
+#  Note:  This feature is out of date and no longer works with facebooks api
 
 ## Because of the way facebook works, in order to use facebook integration
 ## with webwork, you will need to create a facebook "app" specific to the 

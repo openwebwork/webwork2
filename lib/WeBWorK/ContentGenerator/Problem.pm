@@ -38,6 +38,7 @@ use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
 	ref2string makeTempDirectory path_is_subdir sortByName before after between);
 use WeBWorK::DB::Utils qw(global2user user2global);
+require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
@@ -79,6 +80,7 @@ use WeBWorK::AchievementEvaluator;
 #     redisplay - name of the "Redisplay Problem" button
 #     submitAnswers - name of "Submit Answers" button
 #     checkAnswers - name of the "Check Answers" button
+#     showMeAnother - name of the "Show me another" button
 #     previewAnswers - name of the "Preview Answers" button
 
 ################################################################################
@@ -182,6 +184,53 @@ sub can_useMathView {
     return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
 }
     
+
+sub can_showMeAnother {
+    # PURPOSE: subroutine to check if showMeAnother 
+    #          button should be allowed; note that this is done
+    #          *before* the check to see if showMeAnother is 
+    #          possible.
+	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce = $self->r->ce;
+
+    # if the showMeAnother button isn't enabled in the course configuration, 
+    # don't show it under any circumstances (not even for the instructor)
+    return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
+
+    # get the hash of information about showMeAnother
+	my %showMeAnother = %{ $self->{showMeAnother} };
+
+    if (after($Set->open_date)) {
+        # if $showMeAnother{TriesNeeded} is somehow not an integer, make it one, using the default value from course config
+        $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
+
+	    # if SMA is just not permitted for the problem, don't show it
+	    return 0 unless ($showMeAnother{TriesNeeded} > -1);
+
+        my $thisAttempt = $submitAnswers ? 1 : 0;
+	    my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
+
+        # if $showMeAnother{Count} is somehow not an integer, it probably means that the database was never
+	    # inititialized meaning that the student hasn't pushed it yet and it should be 0
+        $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
+
+        # if the student is *preview*ing or *check*ing their answer to SMA then showMeAnother{Count} IS ALLOWED
+        # to be equal to showMeAnother{MaxReps}
+        $showMeAnother{Count}-- if($showMeAnother{CheckAnswers} or $showMeAnother{Preview});
+
+	    # if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
+	    # not submitted enough answers yet or has used the SMA button too many times
+	    if ($attempts_used < $showMeAnother{TriesNeeded} 
+	        or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
+          return 0;
+        } else {
+          return 1;
+        }
+    } else {
+      # otherwise the set hasn't been opened yet, so we can't use showMeAnother 
+      return 0;}
+}
+
 # Reset the default in some cases
 sub set_showOldAnswers_default {
 	my ($self, $ce, $userName, $authz, $set) = @_;
@@ -203,160 +252,156 @@ sub set_showOldAnswers_default {
 # with some changes to the output format
 
 sub attemptResults {
-	my $self = shift;
-	my $r = $self->r;
-	my $pg = shift;
-	my $showAttemptAnswers = shift;
-	my $showCorrectAnswers = shift;
-	my $showAttemptResults = $showAttemptAnswers && shift;
-	my $showSummary = shift;
-	my $showAttemptPreview = shift || 0;
-	
-	my $ce = $self->r->ce;
-	
-	# for color coding the responses.
-	my @correct_ids = ();
-	my @incorrect_ids = ();
+my $self = shift;
+my $r = $self->r;
+my $pg = shift;
+my $showAttemptAnswers = shift;
+my $showCorrectAnswers = shift;
+my $showAttemptResults = $showAttemptAnswers && shift;
+my $showSummary = shift;
+my $showAttemptPreview = shift || 0;
+
+my $ce = $self->r->ce;
+
+# for color coding the responses.
+my @correct_ids = ();
+my @incorrect_ids = ();
 
 
-	my $problemResult = $pg->{result}; # the overall result of the problem
-	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
-	
-	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
-	
-	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
-	
-	# to make grabbing these options easier, we'll pull them out now...
-	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
-	
-	my $imgGen = WeBWorK::PG::ImageGenerator->new(
-		tempDir         => $ce->{webworkDirs}->{tmp},
-		latex	        => $ce->{externalPrograms}->{latex},
-		dvipng          => $ce->{externalPrograms}->{dvipng},
-		useCache        => 1,
-		cacheDir        => $ce->{webworkDirs}->{equationCache},
-		cacheURL        => $ce->{webworkURLs}->{equationCache},
-		cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
-		dvipng_align    => $imagesModeOptions{dvipng_align},
-		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
-	);
-	
-	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
+my $problemResult = $pg->{result}; # the overall result of the problem
+my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 
-	my $header;
-	#$header .= CGI::th("Part");
-	if ($showEvaluatedAnswers) {
-		$header .= $showAttemptAnswers ? CGI::th($r->maketext("Entered"))  : "";
-	}	
-	$header .= $showAttemptPreview ? CGI::th($r->maketext("Answer Preview"))  : "";
-	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct"))  : "";
-	$header .= $showAttemptResults ? CGI::th($r->maketext("Result"))   : "";
-	$header .= $showMessages       ? CGI::th($r->maketext("Messages")) : "";
-	my $fully = '';
-	my @tableRows = ( $header );
-	my $numCorrect = 0;
-	my $numBlanks  =0;
-	my $numEssay = 0;
-	my $tthPreambleCache;
-	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name}//'';
-		my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
-		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen)
-		                    	: "");
+my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 
-		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache)//'';
-		my $correctAnswer = $answerResult->{correct_ans}//'';
-		my $answerScore   = $answerResult->{score}//0;
-		my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
+my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
 
-		$answerMessage =~ s/\n/<BR>/g;
-		$numCorrect += $answerScore >= 1;
-		$numEssay += ($answerResult->{type}//'') eq 'essay';
-		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
+# to make grabbing these options easier, we'll pull them out now...
+my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
 
-		my $resultString;
-		my $resultCellClass = "";
-		if ($answerScore >= 1) {
-		    $resultString = $r->maketext("correct");
-		    $resultCellClass = "ResultsWithoutError";
-		    push @correct_ids,   $name if $answerScore == 1;
-		} elsif (($answerResult->{type}//'') eq 'essay') {
-		    $resultString =  $r->maketext("Ungraded"); 
-		    $self->{essayFlag} = 1;
-		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
-		    push @incorrect_ids, $name if $answerScore < 1;
-		    $resultString = $r->maketext("incorrect");
-		    $resultCellClass = "ResultsWithError"
-		} else {
-		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
-		    push @incorrect_ids, $name if $answerScore < 1;
-		}
-		
-		# need to capture auxiliary answers as well and identify their ids.
-		my $row;
-		#$row .= CGI::td($name);
-		if ($showEvaluatedAnswers) {
-		  $row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
-		}
-		$row .= $showAttemptPreview ? CGI::td({onmouseover=>qq!Tip('$studentAnswer',SHADOW, true, 
-		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
-		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
-		                    $self->nbsp($preview))       : "";
-		$row .= $showCorrectAnswers ? CGI::td({onmouseover=> qq!Tip('$correctAnswer',SHADOW, true, 
-		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
-		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
-		                  $self->nbsp($correctAnswerPreview)) : "";
-		$row .= $showAttemptResults ? CGI::td({class=>$resultCellClass},$self->nbsp($resultString))  : "";
-		if ($showMessages)
-                  {$row .= ($answerMessage ne "") ? CGI::td({class=>"FeedbackMessage"},$self->nbsp($answerMessage)) : 
-                                                    CGI::td($self->nbsp($answerMessage));}
-		push @tableRows, $row;
-	}
-	
-	# render equation images
-	$imgGen->render(refresh => 1);
-	
-#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
-#   FIXME  -- I left the old code in in case we have to back out.
-#	my $summary = "On this attempt, you answered $numCorrect out of "
-#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
-	my $summary = ""; 
-	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
-		if (scalar @answerNames == 1) {  #default messages
-				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("The answer above is correct."));
-				} elsif ($self->{essayFlag}) {
-				    $summary .= CGI::div($r->maketext("The answer will be graded later.", $fully));
-				 } else {
-					 $summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
-				 }
-		} else {
-				if ($numCorrect + $numEssay == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the [_1] answers above are correct.",  $numEssay ? "gradeable":""));
-				 } 
-				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
-				 elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
-					$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
-				 }
-				 if ($numBlanks > $numEssay) {
-					my $s = ($numBlanks>1)?'':'s';
-					$summary .= CGI::div({class=>"ResultsAlert"},$r->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
-				 }
-		}
-	} else {
-		$summary = $problemResult->{summary};   # summary has been defined by grader
-	}
-	
-	$self->{correct_ids}=[@correct_ids]       if @correct_ids;
-	$self->{incorrect_ids} = [@incorrect_ids] if @incorrect_ids;
+my $imgGen = WeBWorK::PG::ImageGenerator->new(
+tempDir => $ce->{webworkDirs}->{tmp},
+latex	=> $ce->{externalPrograms}->{latex},
+dvipng => $ce->{externalPrograms}->{dvipng},
+useCache => 1,
+cacheDir => $ce->{webworkDirs}->{equationCache},
+cacheURL => $ce->{webworkURLs}->{equationCache},
+cacheDB => $ce->{webworkFiles}->{equationCacheDB},
+dvipng_align => $imagesModeOptions{dvipng_align},
+dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
+);
 
-	return
-		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : '&nbsp;');
+my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
+
+my $header;
+#$header .= CGI::th("Part");
+if ($showEvaluatedAnswers) {
+$header .= $showAttemptAnswers ? CGI::th($r->maketext("Entered")) : "";
+}	
+$header .= $showAttemptPreview ? CGI::th($r->maketext("Answer Preview")) : "";
+$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct")) : "";
+$header .= $showAttemptResults ? CGI::th($r->maketext("Result")) : "";
+$header .= $showMessages ? CGI::th($r->maketext("Messages")) : "";
+my $fully = '';
+my @tableRows = ( $header );
+my $numCorrect = 0;
+my $numBlanks =0;
+my $numEssay = 0;
+my $tthPreambleCache;
+foreach my $name (@answerNames) {
+my $answerResult = $pg->{answers}->{$name}//'';
+my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
+my $preview = ($showAttemptPreview
+? $self->previewAnswer($answerResult, $imgGen)
+: "");
+
+my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache)//'';
+my $correctAnswer = $answerResult->{correct_ans}//'';
+my $answerScore = $answerResult->{score}//0;
+my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
+
+$answerMessage =~ s/\n/<BR>/g;
+$numCorrect += $answerScore >= 1;
+$numEssay += ($answerResult->{type}//'') eq 'essay';
+$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
+
+my $resultString;
+if ($answerScore >= 1) {
+$resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
+push @correct_ids, $name if $answerScore == 1;
+} elsif (($answerResult->{type}//'') eq 'essay') {
+$resultString = $r->maketext("Ungraded");
+$self->{essayFlag} = 1;
+} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
+push @incorrect_ids, $name if $answerScore < 1;
+$resultString = CGI::span({class=>"ResultsWithError"}, $r->maketext("incorrect"));
+} else {
+$resultString = $r->maketext("[_1]% correct", int($answerScore*100));
+push @incorrect_ids, $name if $answerScore < 1;
 }
 
+# need to capture auxiliary answers as well and identify their ids.
+my $row;
+#$row .= CGI::td($name);
+if ($showEvaluatedAnswers) {
+$row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
+}
+$row .= $showAttemptPreview ? CGI::td({onmouseover=>qq!Tip('$studentAnswer',SHADOW, true,
+DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false,
+BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+$self->nbsp($preview)) : "";
+$row .= $showCorrectAnswers ? CGI::td({onmouseover=> qq!Tip('$correctAnswer',SHADOW, true,
+DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false,
+BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+$self->nbsp($correctAnswerPreview)) : "";
+$row .= $showAttemptResults ? CGI::td($self->nbsp($resultString)) : "";
+#I'm pretty sure this message shouldn't have the message class
+#$row .= $showMessages ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
+$row .= $showMessages ? CGI::td($self->nbsp($answerMessage)) : "";
+push @tableRows, $row;
+}
+
+# render equation images
+$imgGen->render(refresh => 1);
+
+# my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
+my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
+# FIXME -- I left the old code in in case we have to back out.
+# my $summary = "On this attempt, you answered $numCorrect out of "
+# . scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
+my $summary = "";
+unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
+if (scalar @answerNames == 1) { #default messages
+if ($numCorrect == scalar @answerNames) {
+$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("The answer above is correct."));
+} elsif ($self->{essayFlag}) {
+$summary .= CGI::div($r->maketext("The answer will be graded later.", $fully));
+} else {
+$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
+}
+} else {
+if ($numCorrect + $numEssay == scalar @answerNames) {
+$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the [_1] answers above are correct.", $numEssay ? "gradeable":""));
+}
+#unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
+elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
+$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
+}
+if ($numBlanks > $numEssay) {
+my $s = ($numBlanks>1)?'':'s';
+$summary .= CGI::div({class=>"ResultsAlert"},$r->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
+}
+}
+} else {
+$summary = $problemResult->{summary}; # summary has been defined by grader
+}
+
+$self->{correct_ids}=[@correct_ids] if @correct_ids;
+$self->{incorrect_ids} = [@incorrect_ids] if @incorrect_ids;
+
+return
+CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
+. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : '&nbsp;');
+}
 
 # Note: previewAnswer is lifted into GatewayQuiz.pm
 
@@ -449,12 +494,13 @@ sub pre_header_initialize {
 		unless defined $effectiveUser;
 		
 	# obtain the merged set for $effectiveUser
-	my $set = $db->getMergedSet($effectiveUserName, $setName); # checked
+	my $set = $db->getMergedSet($effectiveUserName, $setName); 
 
-	$self->{isOpen} = (time >= $set->open_date && !(
-			   $ce->{options}{enableConditionalRelease} && 
-			   is_restricted($db, $set, $set->set_id, $effectiveUserName)))
-	    || $authz->hasPermissions($userName, "view_unopened_sets");
+	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || 
+	    ($setName eq "Undefined_Set" || 
+	     (time >= $set->open_date && !(
+		  $ce->{options}{enableConditionalRelease} && 
+		  is_restricted($db, $set, $set->set_id, $effectiveUserName))));
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
 
@@ -555,11 +601,11 @@ sub pre_header_initialize {
 		# then this is really an invalid problem (probably from a bad URL)
 		$self->{invalidProblem} = not (defined $sourceFilePath or $problem->source_file);
 		
-		# if the caller is asking to override the problem seed, do so
+        # if the caller is asking to override the problem seed, do so
 		my $problemSeed = $r->param("problemSeed");
 		if (defined $problemSeed) {
 			$problem->problem_seed($problemSeed);
-		}
+        }	
 
 		my $visiblityStateClass = ($set->visible) ? $r->maketext("font-visible") : $r->maketext("font-hidden");
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
@@ -583,12 +629,12 @@ sub pre_header_initialize {
 	##### form processing #####
 	
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode        = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
-	my $redisplay          = $r->param("redisplay");
-	my $submitAnswers      = $r->param("submitAnswers");
-	my $checkAnswers       = $r->param("checkAnswers");
-	my $previewAnswers     = $r->param("previewAnswers");
-	
+	my $displayMode               = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+	my $redisplay                 = $r->param("redisplay");
+	my $submitAnswers             = $r->param("submitAnswers");
+	my $checkAnswers              = $r->param("checkAnswers");
+	my $previewAnswers            = $r->param("previewAnswers");
+
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
 	$self->{displayMode}    = $displayMode;
@@ -604,7 +650,67 @@ sub pre_header_initialize {
 
 	# now that we've set all the necessary variables quit out if the set or problem is invalid
 	return if $self->{invalidSet} || $self->{invalidProblem};
-	
+
+    # a hash containing information for showMeAnother
+    #       active:        has the button been pushed?
+    #       CheckAnswers:  has the user clicked Check Answers while SMA is active
+    #       IsPossible:    checks to see if generating a new seed changes the problem (assume it is possible by default)
+    #       TriesNeeded:   the number of times the student needs to attempt the problem before the button is available
+    #       MaxReps:       the Maximum Number of times that showMeAnother can be clicked (specified in course configuration
+    #       options:       the options available when showMeAnother has been pushed (check answers, see solution (when available), see correct answer)
+    #                      these are set via check boxes from the configuration screen
+    #       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
+    #       Preview:       has the preview button been clicked while SMA is active?
+    #       DisplayChange: has a display change been made while SMA is active?
+    my %showMeAnother = (
+	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother} and ($problem->{showMeAnother}>-1)),
+            CheckAnswers => ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
+            IsPossible => 1,
+            TriesNeeded => $problem->{showMeAnother},
+            MaxReps => $ce->{pg}->{options}->{showMeAnotherMaxReps},
+            options => {
+                    checkAnswers  => ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+                    showSolutions => ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+                    showCorrect   => ('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+                    showHints     => ('SMAshowHints' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+                  },
+            Count => $problem->{showMeAnotherCount},
+            Preview => ($previewAnswers and $r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}), 
+            DisplayChange => ( $r->param("SMAdisplayChange") and $ce->{pg}->{options}->{enableShowMeAnother}), 
+          );
+
+    # if $showMeAnother{Count} is somehow not an integer, make it one
+    $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
+
+	if($showMeAnother{CheckAnswers}){
+        # check the new seed against the old seed - provided that 
+        # they are not the same, and that showMeAnother is enabled, together with 
+        # checkAnswers enabled then the student is entitled to check answers to a new version
+        # of the problem
+        #
+        # this is essentially the first part of an integrity check to make sure that the user
+        # hasn't simply put &showMeAnotherCheckAnswers=1 into the URL
+        my $newProblemSeed = $r->param("problemSeed");
+        my $oldProblemSeed = $problem->{problem_seed};
+
+	    if (defined $newProblemSeed) {
+	    	$problem->problem_seed($newProblemSeed);
+	    }
+
+        # showMeAnother{CheckAnswers} is only appropriate if a problemSeed is passed
+        # and if showMeAnother is enabled and if the problemSeed is not the original problemSeed
+        $showMeAnother{CheckAnswers} = (defined($r->param("problemSeed"))) ?                          
+                                        ($r->param("showMeAnotherCheckAnswers")                    
+                                        and $ce->{pg}->{options}->{enableShowMeAnother}            
+                                        and (($newProblemSeed != $oldProblemSeed) or ($authz->hasPermissions($userName, "modify_problem_sets"))) 
+                                        and ($showMeAnother{options}->{checkAnswers})):0;      
+    }
+
+
+    # store the showMeAnother hash for the check to see if the button can be used
+    # (this hash is updated and re-stored after the can, must, will hashes)
+	$self->{showMeAnother} = \%showMeAnother;
+
 	##### permissions #####
 
 	# what does the user want to do?
@@ -624,6 +730,7 @@ sub pre_header_initialize {
         useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
+		showMeAnother      => $showMeAnother{active},
 		getSubmitButton    => 1,
 	);
 
@@ -635,22 +742,126 @@ sub pre_header_initialize {
 		showSolutions      => 0,
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
 		checkAnswers       => 0,
+		showMeAnother      => 0,
 		getSubmitButton    => 0,
 	    useMathView        => 0,
 	);
 	 
 	# does the user have permission to use certain options?
 	my @args = ($user, $effectiveUser, $set, $problem);
+
 	my %can = (
-		showOldAnswers     => $self->can_showOldAnswers(@args),
-		showCorrectAnswers => $self->can_showCorrectAnswers(@args),
-		showHints          => $self->can_showHints(@args),
-		showSolutions      => $self->can_showSolutions(@args),
-		recordAnswers      => $self->can_recordAnswers(@args, 0),
-		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
-		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
-       	        useMathView           => $self->can_useMathView(@args)
+		showOldAnswers           => $self->can_showOldAnswers(@args),
+		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
+		showHints                => $self->can_showHints(@args),
+		showSolutions            => $self->can_showSolutions(@args),
+		recordAnswers            => $self->can_recordAnswers(@args, 0),
+		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
+		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
+		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
+        useMathView              => $self->can_useMathView(@args)
 	);
+
+    # if showMeAnother is active, then output a new problem in a new tab with a new seed
+    if ($showMeAnother{active} and $can{showMeAnother}) {
+          # store text of original problem for later comparison with text from problem with new seed
+          my $showMeAnotherOriginalPG = WeBWorK::PG->new(
+                $ce,
+                $effectiveUser,
+                $key,
+                $set,
+                $problem,
+                $set->psvn, # FIXME: this field should be removed
+                $formFields,
+                { # translation options
+                        displayMode     => $displayMode,
+                        showHints       => 0,
+                        showSolutions   => 0,
+                        refreshMath2img => 0,
+                        processAnswers  => 0,
+                        permissionLevel => $db->getPermissionLevel($userName)->permission,
+                        effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+                },
+          );
+
+          # change the problem seed
+          my $oldProblemSeed = $problem->{problem_seed};
+          my $newProblemSeed;
+
+          # check to see if changing the problem seed will change the problem 
+          for my $i (0..$ce->{pg}->{options}->{showMeAnotherGeneratesDifferentProblem}) {
+                do {$newProblemSeed = int(rand(10000))} until ($newProblemSeed != $oldProblemSeed ); 
+                $problem->{problem_seed} = $newProblemSeed;
+                my $showMeAnotherNewPG = WeBWorK::PG->new(
+                    $ce,
+                    $effectiveUser,
+                    $key,
+                    $set,
+                    $problem,
+                    $set->psvn, # FIXME: this field should be removed
+                    $formFields,
+                    { # translation options
+                            displayMode     => $displayMode,
+                            showHints       => 0,
+                            showSolutions   => 0,
+                            refreshMath2img => 0,
+                            processAnswers  => 0,
+                            permissionLevel => $db->getPermissionLevel($userName)->permission,
+                            effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+                    },
+                );
+
+                # check to see if we've found a new version
+                if ($showMeAnotherNewPG->{body_text} ne $showMeAnotherOriginalPG->{body_text}) {
+                      # if we've found a new version, then 
+                      # increment the counter detailing the number of times showMeAnother has been used
+                      # unless we're trying to check answers from the showMeAnother screen
+                      $showMeAnother{Count}++ unless($showMeAnother{CheckAnswers});
+
+                      # update the database (make sure to put the old problem seed back in)
+	                  $problem->{showMeAnotherCount}=$showMeAnother{Count};
+                      $problem->{problem_seed} = $oldProblemSeed;
+                      $db->putUserProblem($problem);
+
+                      # put the new problem seed back in
+                      $problem->{problem_seed} = $newProblemSeed;
+
+                      # make sure to switch on the possibility
+                      $showMeAnother{IsPossible} = 1;
+
+                      # exit the loop
+                      last;
+                    } else {
+                      # otherwise a new version was *not* found, and 
+                      # showMeAnother is not possible
+                      $showMeAnother{IsPossible} = 0;
+                    }
+                }
+
+    }
+
+    # if showMeAnother is active, then disable all other options
+    if ( ( $showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}) and $can{showMeAnother} ) {
+
+	        $can{showOldAnswers} = 0;
+	        $can{recordAnswers}  = 0;
+	        $can{checkAnswers}   = 0; # turned on if showMeAnother conditions met below
+	        $can{getSubmitButton}= 0;
+
+            # only show solution if showMeAnother has been clicked (or refreshed)
+            # less than the maximum amount allowed specified in Course Configuration, 
+            # and also make sure that showMeAnother is possible
+            if(($showMeAnother{Count}<=($showMeAnother{MaxReps}) or ($showMeAnother{MaxReps}==-1))
+                and $showMeAnother{IsPossible} )
+            {
+	          $can{showCorrectAnswers} = ($showMeAnother{options}->{showCorrect} and $showMeAnother{options}->{checkAnswers});
+	          $can{showHints}          = $showMeAnother{options}->{showHints};
+	          $can{showSolutions}      = $showMeAnother{options}->{showSolutions};
+	          $must{showSolutions}     = $showMeAnother{options}->{showSolutions};
+	          $can{checkAnswers}       = $showMeAnother{options}->{checkAnswers};
+            }
+      }
+
 	
 	# final values for options
 	my %will;
@@ -661,7 +872,7 @@ sub pre_header_initialize {
 	
 	##### sticky answers #####
 	
-	if (not ($submitAnswers or $previewAnswers or $checkAnswers) and $will{showOldAnswers}) {
+	if (not ($submitAnswers or $previewAnswers or $checkAnswers or $showMeAnother{active}) and $will{showOldAnswers}) {
 		# do this only if new answers are NOT being submitted
 		my %oldAnswers = decodeAnswers($problem->last_answer);
 		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
@@ -717,6 +928,7 @@ sub pre_header_initialize {
 	$self->{must} = \%must;
 	$self->{can}  = \%can;
 	$self->{will} = \%will;
+	$self->{showMeAnother} = \%showMeAnother;
 	$self->{pg} = $pg;
 }
 
@@ -849,6 +1061,13 @@ sub siblings {
 sub nav {
 	my ($self, $args) = @_;
 	my $r = $self->r;
+	my %can = %{ $self->{can} };
+	my %showMeAnother = %{ $self->{showMeAnother} };
+
+    # if showMeAnother or check answers from showMeAnother
+    # is active, then don't show the navigation bar
+	return "" if(($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}) and $can{showMeAnother});
+
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 
@@ -994,9 +1213,13 @@ sub output_form_start{
 sub output_problem_body{
 	my $self = shift;
 	my $pg = $self->{pg};
+	my %will = %{ $self->{will} };
+	my %showMeAnother = %{ $self->{showMeAnother} };
 
 	print "\n";
-	print CGI::div($pg->{body_text});
+	print CGI::div($pg->{body_text}) 
+		#ignore body if SMA was pushed and no new problem will be shown; otherwise original problem will be shown
+		unless ($showMeAnother{active} and (!$will{showMeAnother} or !$showMeAnother{IsPossible}));
 	return "";
 }
 
@@ -1089,11 +1312,16 @@ sub output_checkboxes{
 	my %can = %{ $self->{can} };
 	my %will = %{ $self->{will} };
 	my $ce = $r->ce;
+	my %showMeAnother = %{ $self->{showMeAnother} };
     my $showHintCheckbox      = $ce->{pg}->{options}->{show_hint_checkbox};
     my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
     my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
     my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
     #  warn "showHintCheckbox $showHintCheckbox  showSolutionCheckbox $showSolutionCheckbox";
+    #skip check boxes if SMA was pushed and no new problem will be shown
+    if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible})) 
+    {
+
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
@@ -1164,7 +1392,8 @@ sub output_checkboxes{
 	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
 		print CGI::br();
 	}
-	
+       
+    }
 	return "";
 }
 
@@ -1175,28 +1404,55 @@ sub output_checkboxes{
 sub output_submit_buttons{
 	my $self = shift;
 	my $r = $self->r;
+	my $ce = $self->r->ce;
 	my %can = %{ $self->{can} };
+	my %will = %{ $self->{will} };
+	my %showMeAnother = %{ $self->{showMeAnother} };
 	
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 
-	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
-	if ($can{checkAnswers}) {
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
-	}
-	if ($can{getSubmitButton}) {
-		if ($user ne $effectiveUser) {
-			# if acting as a student, make it clear that answer submissions will
-			# apply to the student's records, not the professor's.
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
-		} else {
-			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>""});
-			# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
-			# WTF???
-		}
-	}
-	
+    # skip buttons if SMA button has been pushed but there is no new problem shown
+    if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible})){
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
+        if ($can{checkAnswers}) {
+        	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
+        }
+        if ($can{getSubmitButton}) {
+        	if ($user ne $effectiveUser) {
+        		# if acting as a student, make it clear that answer submissions will
+        		# apply to the student's records, not the professor's.
+        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
+        	} else {
+        		#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
+        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>"this.form.target='_self'"});
+        		# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
+        		# WTF???
+        	}
+        }
+        if ($can{showMeAnother} and !($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview})) {
+            # only output showMeAnother button if we're not on the showMeAnother page (or checking answers)
+            print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"showMeAnother_id", 
+                                                              -input_attr=>{-onclick=>"this.form.target='_blank'",
+                                                                            -name=>"showMeAnother", 
+                                                                            -value=>$r->maketext("Show me another"),
+                                                                            class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", 
+                                                                            "data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")});
+        } else {
+            # if showMeAnother is available for the course, and for the current problem (but not yet
+            # because the student hasn't tried enough times) then gray it out; otherwise display nothing
+
+            # if $showMeAnother is somehow not an integer, make it one, using the default from the course configuration
+            $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
+            if($ce->{pg}->{options}->{enableShowMeAnother} and ($showMeAnother{TriesNeeded} >-1 ) and !($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview})){
+                my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
+                print CGI::span({class=>"gray_button set-id-tooltip",
+                                "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"",
+                                "data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
+                                }, $r->maketext("Show me another [_1]",$exhausted));
+              }
+            }
+    }
 	return "";
 }
 
@@ -1214,7 +1470,12 @@ sub output_score_summary{
 	my $pg = $self->{pg};
 	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
 	my $submitAnswers = $self->{submitAnswers};
+	my %will = %{ $self->{will} };
+	my %showMeAnother = %{ $self->{showMeAnother} };
 
+    # skip score summary if SMA has been pushed but there is no new problem to show
+    if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible}))
+    { 
 	# score summary
 	warn "num_correct =", $problem->num_correct,"num_incorrect=",$problem->num_incorrect 
 	        unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
@@ -1258,7 +1519,8 @@ sub output_score_summary{
 	}else {
 		print CGI::p($pg->{state}->{state_summary_msg});
 	}
-	
+
+    } 
 	return "";
 }
 
@@ -1428,9 +1690,11 @@ sub output_summary{
 	my $pg = $self->{pg};
 	my $submitAnswers = $self->{submitAnswers};
 	my %will = %{ $self->{will} };
+	my %can = %{ $self->{can} };
+	my %showMeAnother = %{ $self->{showMeAnother} };
 	my $checkAnswers = $self->{checkAnswers};
 	my $previewAnswers = $self->{previewAnswers};
-	
+
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
@@ -1438,7 +1702,10 @@ sub output_summary{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	
-	# attempt summary
+    # if $showMeAnother{Count} is somehow not an integer, make it one
+    $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
+	
+        # attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
 	# do I need to check $will{showCorrectAnswers} to make preflight work??
@@ -1452,6 +1719,12 @@ sub output_summary{
 	    print $results;
 	    
 	} elsif ($checkAnswers) {
+        if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
+            # if the student is checking answers to a new problem, give them a reminder that they are doing so
+            print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
+                                                                     will not be recorded, and you should remember to return to your original 
+                                                                     problem once you are done here.")),CGI::br();
+        }
 	    # print this if user previewed answers
 	    print CGI::div({class=>'ResultsAlert'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
@@ -1460,13 +1733,53 @@ sub output_summary{
 	    # show attempt results (correctness)
 	    # show attempt previews
 	} elsif ($previewAnswers) {
+        # if the student is previewing answers to a new problem, give them a reminder that they are doing so
+        if($showMeAnother{Preview} and $can{showMeAnother}){
+          print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently previewing answers to a different version of your problem - these 
+                                                                 will not be recorded, and you should remember to return to your original 
+                                                                 problem once you are done here.")),CGI::br();
+        }
 		# print this if user previewed answers
 		print CGI::div({class=>'ResultsAlert'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
 			# show attempt answers
 			# don't show correct answers
 			# don't show attempt results (correctness)
 			# show attempt previews
-	}
+    } elsif ( (($showMeAnother{active} and $showMeAnother{IsPossible}) or $showMeAnother{DisplayChange}) 
+                    and $can{showMeAnother}){
+        # the feedback varies a little bit if Check Answers is available or not
+        my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ? 
+                       "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
+        my $solutionShown;
+		# if showMeAnother has been clicked and a new version has been found, 
+        # give some details of what the student is seeing
+        if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
+            # check to see if a solution exists for this problem, and vary the feedback accordingly
+            if($pg->{flags}->{solutionExists}){
+                $solutionShown = ($showMeAnother{options}->{showSolutions}) ? ", complete with solution" : "";
+            } else {
+                my $viewCorrect = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers})) ? 
+                      ", but you can still view the correct answer":"";
+                $solutionShown = ($showMeAnother{options}->{showSolutions}) ? 
+                      ". There is no walk-through solution available for this problem$viewCorrect" : "";
+            }
+         } 
+		 print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem[_1]. [_2] ",$solutionShown,$checkAnswersAvailable)),CGI::br();
+		 print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
+     } elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
+        if($showMeAnother{Count}>=$showMeAnother{MaxReps}){
+            my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. 
+                                                                         [_2] Close this tab, and return to the original problem.",$showMeAnother{MaxReps},$solutionShown  )),CGI::br();
+        } elsif ($showMeAnother{Count}<$showMeAnother{TriesNeeded}) {
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You must attempt this problem [quant,_1,time,times] before Show Me Another is available.",$showMeAnother{TriesNeeded})),CGI::br();
+        }
+     } elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
+		# print this if showMeAnother has been clicked, but it is not possible to 
+        # find a new version of the problem
+		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem; 
+                       close this tab, and return to the original problem.")),CGI::br();
+    } 
 	
 	return "";
 }
@@ -1626,6 +1939,16 @@ sub output_hidden_info{
 	my $previewAnswers = $self->{previewAnswers};
 	my $checkAnswers   = $self->{checkAnswers};
 	my $showPartialCorrectAnswers = $self->{pg}->{flags}->{showPartialCorrectAnswers};
+	my %showMeAnother = %{ $self->{showMeAnother} };
+    my $problemSeed = $self->{problem}->{problem_seed};
+
+    # hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen
+    # it needs to send the seed from showMeAnother back to the screen
+    if($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}){
+	  	print CGI::hidden({name => "showMeAnotherCheckAnswers", id=>"showMeAnotherCheckAnswers_id", value => 1});
+        # output the problem seed from ShowMeAnother so that it can be used in Check Answers
+        print( CGI::hidden({name => "problemSeed", value  =>  $problemSeed}));
+    }
 	if($previewAnswers){  # never color previewed answers 
 		return "";
 	}

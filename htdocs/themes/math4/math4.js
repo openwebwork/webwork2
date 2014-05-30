@@ -6,8 +6,8 @@ $(function(){
     $('.classlist').addClass('table table-condensed classlist-table');
 
     // Try to format checkboxes better
-    $('input:checkbox').parent('label').addClass('checkbox').css('white-space','nowrap');
-    $('input:radio').parent('label').addClass('radio').css('white-space','nowrap');
+    $('input:checkbox').parent('label').addClass('checkbox');
+    $('input:radio').parent('label').addClass('radio');
 
     // Make grey_buttons disabled buttons
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
@@ -33,6 +33,27 @@ $(function(){
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
+
+    // Add a button to make the sidebar more dynamic for small screens
+    $('#toggle-sidebar').click(function (event) {
+	    event.preventDefault();
+	    $('#site-navigation').toggleClass('hidden');
+	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
+		.toggleClass('icon-chevron-right');
+	    $('#site-navigation').toggleClass('span2');
+	    $('#content').toggleClass('span10').toggleClass('span12');
+	});
+
+    if($(window).width() < 480) {
+	$('#toggle-sidebar').click();
+    }
+
+    // if no fish eye then collapse site-navigation 
+    if(!$('#site-links').html().match(/[^\s]/)) {
+	$('#site-navigation').removeClass('span2');
+	$('#content').removeClass('span10').addClass('span12');
+	$('#toggle-sidebar').addClass('hidden');
+    }
 
     // Makes the fisheye stuff bootstrap nav
     $('#site-navigation ul').addClass('nav nav-list');
@@ -143,6 +164,7 @@ $(function(){
     $('#editor').addClass('form-inline span9');
     $('#editor a').addClass('btn btn-small btn-info');
     $('#editor div').each(function () { $(this).html($(this).html().replace(/\|/g,"")); });
+    $('#editor label[class="radio"]').after('<br/>');
 
     //Achievement Editor
     $('#achievement-list').addClass('form-inline user-list-form');

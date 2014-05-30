@@ -9,4 +9,5 @@ library-subject-tree.json
 textbook-tree.json
 development.yml
 *~
-
+!tmp/README
+!htdocs/tmp/README

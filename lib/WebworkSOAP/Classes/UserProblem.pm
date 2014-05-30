@@ -8,6 +8,8 @@ package WebworkSOAP::Classes::UserProblem;
         _ATTR source_file   $string source_file
         _ATTR value         $string value
         _ATTR max_attempts  $string max_attempts
+        _ATTR showMeAnother  $string showMeAnother
+        _ATTR showMeAnotherCount  $string showMeAnotherCount
         _ATTR problem_seed  $string problem_seed
         _ATTR status        $string status
         _ATTR attempted     $string attempted
@@ -25,6 +27,8 @@ sub new {
     $self->{source_file} = SOAP::Data->type( 'string', $data->source_file );
     $self->{value} = SOAP::Data->type( 'string', $data->value );
     $self->{max_attempts} = SOAP::Data->type( 'string', $data->max_attempts );
+    $self->{showMeAnother} = SOAP::Data->type( 'string', $data->showMeAnother );
+    $self->{showMeAnotherCount} = SOAP::Data->type( 'string', $data->showMeAnotherCount );
     $self->{problem_seed} = SOAP::Data->type( 'string', $data->problem_seed );
     $self->{status} = SOAP::Data->type( 'string', $data->status );
     $self->{attempted} = SOAP::Data->type( 'string', $data->attempted );

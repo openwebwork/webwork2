@@ -169,10 +169,10 @@ sub dropdownRecordList {
 	);
 	
 	return CGI::div({-class=>"ScrollingRecordList"},
-		"Sort: ", CGI::popup_menu(%sort_popup_options), CGI::br(),
-		"Format: ", CGI::popup_menu(%format_popup_options), CGI::br(),
-		"Filter: ", CGI::scrolling_list(%filter_options), CGI::br(),
-		CGI::submit("$name!refresh", "Change Display Settings"), CGI::br(),
+		$r->maketext("Sort: "), CGI::popup_menu(%sort_popup_options), CGI::br(),
+		$r->maketext("Format: "), CGI::popup_menu(%format_popup_options), CGI::br(),
+		$r->maketext("Filter: "), CGI::scrolling_list(%filter_options), CGI::br(),
+		CGI::submit("$name!refresh", $->maketext("Change Display Settings")), CGI::br(),
 		CGI::scrolling_list(%list_options)
 	);
 }
