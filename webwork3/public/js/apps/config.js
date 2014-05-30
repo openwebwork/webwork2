@@ -179,7 +179,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             timeIcon.parent().on("click",".open-time-editor", function() {
                 timeIcon.popover("toggle");
             });
-            $el.children(".wwdate").datepicker();
+            $el.children(".wwdate").datepicker({changeMonth: true, changeYear: true});
         },
         updateMethod: 'html'
     });
