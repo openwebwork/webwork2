@@ -449,7 +449,8 @@ table.attemptResults th {
 
 table.attemptResults td.FeedbackMessage { background-color:#EDE275;} /* Harvest Gold */
 table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
-table.attemptResults td.ResultsWithError { background-color:#FF9494; color: inherit} /* error red */
+span.ResultsWithErrorInResultsTable { color: inherit; background-color: inherit; } 
+table.attemptResults td.ResultsWithError { background-color:#FF9494; color: #000000} /* error red */
 
 /*styles for the instructor comment box */
 
