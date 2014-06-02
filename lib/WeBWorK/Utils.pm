@@ -1389,7 +1389,7 @@ sub is_jitar_problem_closed {
 	$id = seq_to_jitar_id(@idSeq);
     } until ($db->existsUserProblem($userID,$setID,$id));
 
-    my $prob = $db->getMergedProblem($userID,$setID,$id);
+    $prob = $db->getMergedProblem($userID,$setID,$id);
 
     if (jitar_problem_adjusted_status($prob,$db) == 1 ||
 	jitar_problem_finished($prob,$db)) {
@@ -1429,18 +1429,32 @@ sub jitar_id_sort {
     }
 }
 
+# this will order an array of problems or problem ids so that it is 
+# in the correct jitar order:  1 1.1 1.2 2 3 etc...
 sub jitar_order_problems {
-    my @problemIDs = @_;
+    my @problems = @_;
  
     my %problemSeqs;
+    
+    # problem ID's is either the given array or the problem ids if the 
+    # array is actually problems.  
+    my @problemIDs = @problems;
+
+    if (ref($problems[0]) =~ /Problem/) {
+	@problemIDs = map {$_->problem_id} @problems;
+    }
 
     for (my $i=0; $i<=$#problemIDs; $i++) {
 	my @seq = jitar_id_to_seq($problemIDs[$i]);
 	$problemSeqs{$problemIDs[$i]} = \@seq;
     }
-
-    return sort {jitar_id_sort($problemSeqs{$a},$problemSeqs{$b})} @problemIDs;	
-   
+    
+    if (ref($problems[0]) =~ /Problem/) {
+	return sort {jitar_id_sort($problemSeqs{$a->problem_id},$problemSeqs{$b->problem_id})} @problems;
+    } else {
+	return sort {jitar_id_sort($problemSeqs{$a},$problemSeqs{$b})} @problems;
+    }
+    
 }
 
 # returns the adjusted status for a jitar problem. 
