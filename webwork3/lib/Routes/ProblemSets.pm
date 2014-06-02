@@ -22,6 +22,7 @@ use List::Util qw(first max );
 our @set_props = qw/set_id set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts source_file/;
+our @boolean_set_props = qw/visible enable_reduced_scoring/;
 
 ###
 #  return all problem sets (as objects) for course *course_id* 
@@ -32,7 +33,7 @@ our @problem_props = qw/problem_id flags value max_attempts source_file/;
 
 get '/courses/:course_id/sets' => sub {
 
-    checkPermissions(10,session->{user});
+    #checkPermissions(10,session->{user});
 
 
     my @globalSetNames = vars->{db}->listGlobalSets;
@@ -46,7 +47,7 @@ get '/courses/:course_id/sets' => sub {
         $set->{_id} = $set->{set_id};
     }
     
-    return convertArrayOfObjectsToHash(\@globalSets);
+    return convertArrayOfObjectsToHash(\@globalSets,\@boolean_set_props);
 };
 
 
@@ -62,20 +63,13 @@ get '/courses/:course_id/sets/:set_id' => sub {
     checkPermissions(10,session->{user});
 
     my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
-
     my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
-
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
-
-    my $setResults = convertObjectToHash($globalSet);
+    my $setResults = convertObjectToHash($globalSet,\@boolean_set_props);
 
     $setResults->{assigned_users} = \@userNamesFromDB;
-
     $setResults->{problems} = convertArrayOfObjectsToHash(\@problemsFromDB);
-
-
-
 
     return $setResults;
 };
@@ -91,11 +85,9 @@ get '/courses/:course_id/sets/:set_id' => sub {
 ##
 
 post '/courses/:course_id/sets/:set_id' => sub {
-    debug 'in post /courses/:course_id/sets/:set_id';
-
     checkPermissions(10);
 
-          # call validator directly instead
+  # call validator directly instead
 
     if (params->{set_id} !~ /^[\w\_.-]+$/) {
         send_error("The set name must only contain A-Za-z0-9_-.",403);
@@ -119,7 +111,7 @@ post '/courses/:course_id/sets/:set_id' => sub {
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
-    my $returnSet = convertObjectToHash($set);
+    my $returnSet = convertObjectToHash($set,\@boolean_set_props);
 
 
     $returnSet->{assigned_users} = params->{assigned_users};
@@ -132,8 +124,6 @@ post '/courses/:course_id/sets/:set_id' => sub {
 };
 
 put '/courses/:course_id/sets/:set_id' => sub {
-
-    debug 'in PUT /courses/:course_id/sets/:set_id';
 
     checkPermissions(10);
 
@@ -163,23 +153,9 @@ put '/courses/:course_id/sets/:set_id' => sub {
     ###
 
     my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
-
     my @usersToAdd = array_minus(@{params->{assigned_users}},@userNamesFromDB);
-
     my @usersToDelete = array_minus(@userNamesFromDB,@{params->{assigned_users}});
-
     my @test2 = grep{ not $_ ~~ @userNamesFromDB } @{params->{assigned_users}};
-
-    debug "usersToAdd";
-    debug \@usersToAdd;
-    debug "usersFromDB";
-    debug \@userNamesFromDB;
-    debug "assigned_users";
-    debug \@{params->{assigned_users}};
-    debug "test2";
-    debug \@test2;
-    debug "users to Delete";
-    debug \@usersToDelete;
 
     for my $user(@usersToAdd){
         addUserSet($user,params->{set_id});
@@ -193,19 +169,15 @@ put '/courses/:course_id/sets/:set_id' => sub {
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
     if(scalar(@problemsFromDB) == scalar(@{params->{problems}})){  # then perhaps the problems need to be reordered.
-        debug "reordering or reassigning problems";
         reorderProblems(params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
-        debug "adding global problems";
         addGlobalProblems(params->{set_id},params->{problems});
     } else { # problems have been deleted.  
-        debug "deleting problems";
         deleteProblems(params->{set_id},params->{problems});
     }
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
-    debug "Adding users to set " . params->{set_id};
     addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
 
 
@@ -215,7 +187,7 @@ put '/courses/:course_id/sets/:set_id' => sub {
     }
 
 
-    my $returnSet = convertObjectToHash($set);
+    my $returnSet = convertObjectToHash($set,\@boolean_set_props);
 
 
     $returnSet->{assigned_users} = params->{assigned_users};
@@ -245,7 +217,7 @@ del '/courses/:course_id/sets/:set_id' => sub {
     my $setToDelete = vars->{db}->getGlobalSet(param('set_id'));
 
     if(vars->{db}->deleteGlobalSet(param('set_id'))){
-        return convertObjectToHash($setToDelete);
+        return convertObjectToHash($setToDelete,\@boolean_set_props);
     } else {
         send_error("There was an error while trying to delete set " . param('set_id'),424);
     }
@@ -275,7 +247,7 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
     my @sets = ();
 
     foreach my $user_id (@userIDs){
-        my $userSet = convertObjectToHash(vars->{db}->getMergedSet($user_id,params->{set_id}));
+        my $userSet = convertObjectToHash(vars->{db}->getMergedSet($user_id,params->{set_id}),\@boolean_set_props);
         $userSet->{_id} = $user_id;
         push(@sets,$userSet);
     }
@@ -457,10 +429,10 @@ get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     checkPermissions(10,session->{user});
 
-    my $userSet = convertObjectToHash(vars->{db}->getUserSet(param('user_id'),param('set_id')));
+    my $userSet = convertObjectToHash(vars->{db}->getUserSet(param('user_id'),param('set_id')),\@boolean_set_props);
     $userSet->{_id} = params->{set_id}; # tells Backbone on the client that the data has been sent from the server. 
 
-    return convertObjectToHash($userSet);
+    return $userSet;
 
 };
 
@@ -491,7 +463,7 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     $userSet->{set_id} = params->{set_id};
     vars->{db}->addUserSet($userSet);
 
-    my $set = convertObjectToHash($userSet);
+    my $set = convertObjectToHash($userSet,\@boolean_set_props);
     $set->{_id} = params->{set_id};  # tells Backbone on the client that the data has been sent from the server. 
     return $set; 
 };
@@ -531,7 +503,7 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     vars->{db}->putUserSet($userSet);
 
 
-    return convertObjectToHash(vars->{db}->getMergedSet(params->{user_id},params->{set_id}));
+    return convertObjectToHash(vars->{db}->getMergedSet(params->{user_id},params->{set_id}),\@boolean_set_props);
 };
 
 
@@ -562,7 +534,7 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
                 . params->{set_id}. " in course " . params->{course_id},466);
     }
 
-    return convertObjectToHash($userSet);
+    return convertObjectToHash($userSet,\@boolean_set_props);
 };
 
 

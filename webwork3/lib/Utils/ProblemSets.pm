@@ -11,11 +11,12 @@ use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 
         createNewUserProblem getGlobalSet record_results);
+our @boolean_set_props = qw/visible enable_reduced_scoring/;
 
 sub getGlobalSet {
     my ($setName) = @_;
     my $set = vars->{db}->getGlobalSet($setName);
-    my $problemSet = convertObjectToHash($set);
+    my $problemSet = convertObjectToHash($set,\@boolean_set_props);
     my @users = vars->{db}->listSetUsers($setName);
     my @problems = vars->{db}->getAllGlobalProblems($setName);
 

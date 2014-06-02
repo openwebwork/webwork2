@@ -11,6 +11,7 @@ use Data::Dumper;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(getCourseSettings getAllSets getAllUsers);
 
+
 # get the course settings
 
 ## get all of the user information to send to the client via a script tag in the output_JS subroutine below
@@ -91,6 +92,12 @@ sub getCourseSettings {
 					$setting->{value} = $themes;	
 				}
 				$setting->{category} = $category;
+
+				## turn a 0/1 boolean into a false/true one.
+				if($setting->{type} eq 'boolean'){
+					$setting->{value} = $setting->{value} ? JSON::true : JSON::false;
+				}
+
 				push(@settings,$setting);
 			}
 		}

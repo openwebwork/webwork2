@@ -219,6 +219,30 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             }
     });
 
+    // need to include the yes/no or true/false in the template for I18n
+
+    Backbone.Stickit.addHandler({
+        selector: ".TF-boolean-select",
+        selectOptions: { collection : ["true","false"]},
+        onGet: function(val){
+            return val ? "true" : "false";
+        },
+        onSet: function(val){
+            return val==="true";
+        }
+    })
+
+    Backbone.Stickit.addHandler({
+        selector: ".yes-no-boolean-select",
+        selectOptions: { collection : ["yes","no"]},
+        onGet: function(val){
+            return val ? "yes" : "no";
+        },
+        onSet: function(val){
+            return val==="yes";
+        }
+    })
+
 
     return config;
 });

@@ -3,34 +3,37 @@
 
 package Utils::Convert;
 use base qw(Exporter);
+use Dancer ':syntax';
+use JSON;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(convertObjectToHash convertArrayOfObjectsToHash);
 
 
 ##  This converts an array of objects to an array of Hashes
+## the parameter $boolean_props is an array reference of properties that are boolean.
+## these will be converted to true/false (in the JSON sense).
 
 sub convertArrayOfObjectsToHash {
-    my $arr = shift;
+    my ($arr,$boolean_props) = @_;
 
-    
-    my @newArray = ();
-    foreach my $element (@{$arr}){
-        my $s = {};
-        for my $key (keys %{$element}){
-            $s->{$key} = $element->{$key};
-        }
-        push(@newArray,$s);
-    }
+    my @newArray = map { convertObjectToHash($_,$boolean_props) } @{$arr};
 
-    return \@newArray; 
-
+    return \@newArray;  
 }
 
 sub convertObjectToHash {
-    my $obj = shift;
+    my ($obj,$boolean_props) = @_;
     my $s = {};
+
+    $boolean_props = [] unless defined($boolean_props);
+
+
     for my $key (keys %{$obj}){
-        $s->{$key} = $obj->{$key};
+        if(grep(/^$key$/,@{$boolean_props})){
+            $s->{$key} = $obj->{$key} ? JSON::true : JSON::false;    
+        } else {
+            $s->{$key} = $obj->{$key};
+        }
     }
     
     return $s;
