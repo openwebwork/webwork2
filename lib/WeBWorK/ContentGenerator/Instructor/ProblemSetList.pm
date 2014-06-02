@@ -265,7 +265,7 @@ sub pre_header_initialize {
 		if ($scope eq "none") { 
 			return "No sets selected for scoring.";
 		} elsif ($scope eq "all") {
-			@setsToScore = @{ $r->param("allSetIDs") };
+		    @setsToScore = $db->listGlobalSets;
 		} elsif ($scope eq "visible") {
 			@setsToScore = @{ $r->param("visibleSetIDs") };
 		} elsif ($scope eq "selected") {
