@@ -147,9 +147,10 @@ sub body {
 	$globalUserID = $db->{set}->{params}->{globalUserID}
 		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
 
+	# there are two set detail pages.  If we were sent here from the second one
+	# there will be a parameter we can use to get back to that one from these links
 	my $detailPageType = 'instructor_set_detail';
-       
-	$detailPageType = $r->param('pageVersion') if ($r->param('pageVersion'));
+       	$detailPageType = $r->param('pageVersion') if ($r->param('pageVersion'));
 
 	foreach my $userRecord (@userRecords) {
 

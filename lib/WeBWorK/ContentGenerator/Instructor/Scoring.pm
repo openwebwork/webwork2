@@ -294,6 +294,7 @@ sub scoreSet {
 	
 	my $isJitarSet = $setRecord->assignment_type eq 'jitar';
 
+	# for jitar sets we only want the top level ids
 	if ($isJitarSet) {
 	    my @topLevelIDs;
 	    
@@ -441,7 +442,8 @@ sub scoreSet {
 			$UserProblems{$userID} = { %{$CurrUserProblems} };
 		}
 	} else {
-	    #for jitar sets we may not have all problems
+	    # for jitar sets @problemIDs will only be the top level ids, 
+	    # so we cant use getAllMergeduserProblems
 	    foreach my $userID (@sortedUserIDs) {
 		my @where = map {[$userID, $setID, $_]} @problemIDs;
 		my %CurrUserProblems = map { $_->problem_id => $_ }

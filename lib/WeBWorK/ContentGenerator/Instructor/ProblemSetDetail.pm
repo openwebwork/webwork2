@@ -1804,7 +1804,7 @@ sub body {
 
 
 	if ($isJitarSet) {
-	    print CGI::p(CGI::div({class=>"ResultsWithError"}, $r->maketext("You cannot use this version of Set Detail to edit just-in-type type sets.  You must use Set Detail 2.")));
+	    print CGI::p(CGI::div({class=>"ResultsWithError"}, $r->maketext("You cannot use this version of Set Detail to edit just-in-time type sets.  You must use Set Detail 2.")));
 	}
 
 	if ($forUsers) {

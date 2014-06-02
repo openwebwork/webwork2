@@ -1052,6 +1052,8 @@ sub path {
 	my $urlpath = $r->urlpath;
 	do {
 	    my $name = $urlpath->name;
+	    # If its a problemid fo ra jitar set (something which requires
+	    # a fair bit of checking, we need to print out the pretty id
 	    if ($urlpath->module eq 'WeBWorK::ContentGenerator::Problem') {
  		if ($urlpath->parent->name) {
  		    my $set = $r->db->getGlobalSet($urlpath->parent->name);
@@ -2205,9 +2207,10 @@ sub warningOutput($$) {
 	foreach my $warning (@warnings) {
 	    # This used to be commented out because it interfered with warnings
 	    # from PG.  But now PG has a seperate warning channel thats not
-	    # encoded.  
-	    #$warning = HTML::Entities::encode_entities($warning);  
+	    # encoded.  Since these warnings have html they
+	    # look better scrubbed
 
+	    #$warning = HTML::Entities::encode_entities($warning);  
 	    $warning = $scrubber->scrub($warning);
 
 	    $warning = CGI::li(CGI::code($warning));

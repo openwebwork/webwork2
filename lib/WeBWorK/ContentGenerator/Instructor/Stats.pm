@@ -270,7 +270,8 @@ sub displaySets {
 	
 	my $setStatsPage     = $urlpath->newFromModule($urlpath->module, $r, courseID=>$courseName,statType=>'sets',setID=>$setName);
 
-	# set up some jitar stuff
+	# set up some jitar stuff, specifically which problems
+	# are top level problems and how many are there. 
 	my $set = $db->getGlobalSet($setName);
 	my $isJitarSet = $set && $set->assignment_type eq 'jitar';
 	my %topLevelProblems;
@@ -431,6 +432,7 @@ sub displaySets {
 			my $status             = $problemRecord->status          || 0;
 			# sanity check that the status (score) is between 0 and 1
 			my $valid_status       = ($status >= 0 and $status <=1 ) ? 1 : 0;
+			# adjusted status only makes sense for jitar sets
 			my $adjusted_status = $isJitarSet ? jitar_problem_adjusted_status($problemRecord,$db) : '';
 	        
 	        ###################################################################

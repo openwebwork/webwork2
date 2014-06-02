@@ -48,6 +48,7 @@ sub title {
     my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
     my $problemID = $self->r->urlpath->arg("problemID");
     
+    # if its a problem page for a jitar set we print the pretty version of the id
     if ($problemID) {
 	my $set = $r->db->getGlobalSet($setID);
 	if ($set && $set->assignment_type eq 'jitar') {

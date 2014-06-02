@@ -663,6 +663,7 @@ sub addProblem {
 	my $set = $db->getGlobalSet($setName);
 	warn "record not found for global set $setName" unless $set;
 
+	# for jitar sets the next problem id is the next top level problem
 	if ($set->assignment_type eq 'jitar') {
 	    my @problemIDs = $db->listGlobalProblems($setName);
 	    @problemIDs = jitar_order_problems(@problemIDs);

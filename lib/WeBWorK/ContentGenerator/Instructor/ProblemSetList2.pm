@@ -2069,6 +2069,12 @@ sub readSetDef {
 		# Read and check list of problems for the set
 		#####################################################################
 
+
+		# NOTE:  There are now two versions of problemList, the first is an unlabeled
+		# list which may or may not contain a showMeAnother variable.  This is supported
+		# but the unlabeled list is hard to work with.  The new version prints a 
+		# labeled list of values similar to how its done for the set variables
+
 		if ($listType eq 'problemList') {
 
 		    
@@ -2124,6 +2130,8 @@ sub readSetDef {
 		    }
 		} else {
 		    
+		    # This is the new version, it looks for pairs of entries
+		    # of the form field name = value
 		    while (<SETFILENAME>) {
 		
 			chomp($line = $_);
@@ -2303,7 +2311,9 @@ SET:	foreach my $set (keys %filenames) {
 			$max_attempts =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
 
-			# only include showMeAnother if it has been enabled in the course configuration
+			# This is the new way of saving problem information
+			# the labelled list makes it easier to add variables and 
+			# easier to tell when they are missing
 			$problemList     .= "problem_start = \n";
 			$problemList     .= "source_file = $source_file\n";
 			$problemList     .= "value = $value\n";

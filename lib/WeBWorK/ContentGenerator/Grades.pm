@@ -507,6 +507,8 @@ sub grade_set {
 			}
 			
 			$status           = $problemRecord->status || 0;
+			# we need to get the adjusted jitar grade for our
+			# top level problems. 
 			if ($set->assignment_type eq 'jitar') {
 			    $status = jitar_problem_adjusted_status($problemRecord,$db);
 			}

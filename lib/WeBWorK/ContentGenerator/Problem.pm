@@ -1122,7 +1122,9 @@ sub siblings {
 		    }
 		}
 	    }
-	    
+
+	    # if its a jitar set we need to hide and disable links to hidden or restricted
+	    # problems.  
 	    if ($isJitarSet) {
 		
 		my @seq = jitar_id_to_seq($problemID);
@@ -1237,6 +1239,8 @@ sub nav {
 
 	my ($prevID, $nextID);
 
+	# for jitar sets finding the next or previous problem, and seeing if it
+	# is actually open is a bit more of a process. 
 	if (!$self->{invalidProblem}) {
 		my @problemIDs = $db->listUserProblems($eUserID, $setID);
 
@@ -1711,6 +1715,7 @@ sub output_score_summary{
 	    my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
 	    @problemIDs = jitar_order_problems(@problemIDs);
 
+	    # get some data 
 	    my @problemSeqs;
 	    my $index;
 	    for (my $i=0; $i<=$#problemIDs; $i++) {
@@ -1732,6 +1737,8 @@ sub output_score_summary{
 		$next_id++;
 	    }	
 
+	    # print information if this problem has open children and if the grade
+	    # for this problem can be replaced by the grades of its children
 	    if ( $hasChildren 
 		&& ($problem->num_incorrect >= $problem->att_to_open_children ||
 		    ($problem->max_attempts != -1 && 
@@ -1745,6 +1752,8 @@ sub output_score_summary{
 
 	    }
 
+	    # print information if this set has restricted progression and if you need
+	    # to finish this problem (and maybe its children) to proceed
 	    if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
 		if ($hasChildren) {
 		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its subproblems.',join('.',@{$problemSeqs[$next_id]}));
@@ -1752,6 +1761,8 @@ sub output_score_summary{
 		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
 		}
 	    }
+	    # print information if this problem counts towards the grade of its parent, 
+	    # if it doesn't (and its not a top level problem) then its grade doesnt matter. 
 	    if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
 		pop @seq;
 		print CGI::br().$r->maketext('The weighted average of this problem, along with others that have this message, can replace the score of problem [_1] if it is larger.',join('.',@seq));
@@ -1760,6 +1771,9 @@ sub output_score_summary{
 		print CGI::br().$r->maketext('This score for this problem does not count for the score of problem [_1] or for the set.',join('.',@seq));
 	    }
 
+	    # if the instructor has set this up, email the instructor a warning message if 
+	    # the student has run out of attempts on a top level problem and all of its children
+	    # and didn't get 100%
 	    if ($submitAnswers && ($set->email_instructor == 1 ||
 		($set->email_instructor == 2 && before($set->due_date)))) {
 		my $parentProb = $db->getMergedProblem($effectiveUser,$set->set_id,seq_to_jitar_id($seq[0]));

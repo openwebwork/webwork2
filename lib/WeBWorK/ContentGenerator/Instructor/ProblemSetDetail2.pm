@@ -887,10 +887,14 @@ sub proctoredFieldHTML {
 }
 
 # used to print nested lists for jitar sets
+# this is a recursive function which is used to print the tree structure
+# that jitar sets can have using nested unordered lists
 sub print_nested_list {
     my $nestedHash = shift;
     my $id = shift;
     
+    # this hash contains information about the problem at this node, which
+    # we print and then delete
     if (defined $nestedHash->{'row'}) {
 	print CGI::start_li({class=>"psd_list_row",id=>"psd_list_".$nestedHash->{'id'}});
 	print  $nestedHash->{'row'};
@@ -898,6 +902,8 @@ sub print_nested_list {
 	delete $nestedHash->{'id'}
     }
     
+    # any remaining keys are references to child nodes which need to be
+    # printed in a sub list.  
     my @keys = keys %$nestedHash;
     if (@keys) {
 	print CGI::start_ol();
@@ -942,7 +948,8 @@ sub handle_problem_numbers {
 	# we dont do anything unless a problem has been reordered or we were asked to
 	return "" unless $force; 
 
-	# get problems and store them in a hash.  We do this all at once because its not always clear 
+	# get problems and store them in a hash.  
+        # We do this all at once because its not always clear 
 	# what is overwriting what and when.  
 	# We try to keep things sane by only getting and storing things
 	# which have actually been reordered
@@ -964,7 +971,8 @@ sub handle_problem_numbers {
 	}
 	
 	# now go through and move problems around 		
-	# because of the way the reordering works we cant have any conflicts or holes
+	# because of the way the reordering works with the draggable
+	# js handler we cant have any conflicts or holes
 	foreach $j (keys %newProblemNumbers) {
 	    next if ($newProblemNumbers{$j} == $j);
 			 
@@ -2210,6 +2218,9 @@ sub body {
 	}
 	
 	if (scalar @problemIDList) {
+	    # create rows for problems.  This is done using divs instead of tables
+	    # the spacing and formatting is done via bootstrap.  Bootstrap classes are added
+	    # in the problemsetdetail2.js file
 
 	    print CGI::h2($r->maketext("Problems"));
 	    print CGI::div(CGI::div({id=>"psd_toolbar"}, CGI::a({href=>"#", id=>"psd_renumber"}, $r->maketext("Renumber Problems")).

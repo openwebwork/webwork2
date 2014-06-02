@@ -303,6 +303,7 @@ sub htmlWarningsList(@) {
 	    );
 
 	foreach my $warning (@warnings) {
+# these warnings can have html and look better if they are scrubbed
 #		$warning = htmlEscape($warning);
                 $warning = $scrubber->scrub($warning);
 		$warning = "<li><code>$warning</code></li>";

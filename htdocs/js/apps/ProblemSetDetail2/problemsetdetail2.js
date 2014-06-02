@@ -3,6 +3,8 @@ $(function() {
     //Problem set detail 2 
     $('#problemset_detail_list').addClass('container-fluid');
 
+    //This uses the nextedSortable jquery-ui module to drive the 
+    // problem list
     $('#psd_list').nestedSortable({
 	handle: 'span.pdr_handle',
 	placeholder: 'pdr_placeholder',
@@ -20,6 +22,7 @@ $(function() {
  
     });
 
+    // This adds soem bootstrap elements to the page to format it
     $('.problem_detail_row').addClass('well span11')
 	.wrap('<div class="row-fluid" />')
 	.after('<div class="span1" />');
@@ -27,6 +30,8 @@ $(function() {
     $('.pdr_block_1').addClass('span2');
     $('.pdr_block_2').addClass('span3');
     $('.pdr_block_3').addClass('span7');
+
+    $('#psd_toolbar').addClass('btn-group');
 
     $('.psd_view').addClass('btn btn-mini')
 	.html('<i class="icon-eye-open" />')
@@ -44,6 +49,7 @@ $(function() {
 
     $('.pdr_handle').append('<i class="icon-resize-vertical" />');
 
+    // This code controls the expand/collapse on the elements
     $('.pdr_collapse').prepend('<i class="icon-minus-sign"\>');
     $('.mjs-nestedSortable-collapsed .pdr_collapse').find('i:first')
 	.removeClass('icon-minus-sign')
@@ -54,6 +60,7 @@ $(function() {
 	$(this).children('i').toggleClass('icon-plus-sign').toggleClass('icon-minus-sign');
     })
 
+    // This is for the render buttons
     $('.pdr_render').click(function(event) {
 	event.preventDefault();
 	var id = this.id.match(/^pdr_render_(\d+)/)[1];
@@ -64,8 +71,6 @@ $(function() {
 	}
     });
 
-    $('#psd_toolbar').addClass('btn-group');
-
     $('#psd_render_all').addClass('btn').click(function (event) {
 	event.preventDefault();
 	$('.pdr_render').each(function () {
@@ -74,6 +79,7 @@ $(function() {
 	});
     });
 
+    // This is for collapsing and expanding the tree
     $('#psd_hide_all').addClass('btn').click(function (event) {
 	event.preventDefault();
 	$('.psr_render_area').html('');
@@ -92,6 +98,9 @@ $(function() {
     });
 
 
+    // This uses recursion to set the #prob_num_id fields to the 
+    // new position in the tree whenever the tree is updated or 
+    // the renumber button is clicked
     var recurse_on_heirarchy = function (heirarchy,array) {
 	for (var i=0; i < heirarchy.length; i++) {
 	    var id = heirarchy[i].id;
@@ -137,6 +146,7 @@ $(function() {
 
 });
 
+// This is the WeBWorK XML interface code for rendering problems
 var basicRequestObject = {
     "xml_command":"listLib",
     "pw":"",

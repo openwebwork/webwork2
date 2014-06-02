@@ -505,7 +505,7 @@ sub problemListRow($$$$$) {
 
 	# we only show the (adjusted status) for the top level JITAR problems
 	# since they are the only grades that count.  We have a seperate 
-	# column for child problems. 
+	# column for child problems whose grades count toward the parent
 	my $rawStatus = 0;
 	if ($isJitarSet && $problemLevel == 0) {
 	    $rawStatus = jitar_problem_adjusted_status($problem, $db);

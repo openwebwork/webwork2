@@ -548,6 +548,8 @@ sub addProblemToSet {
 	unless ($problemID) {
 
 	    my $set = $db->getGlobalSet($setName);
+	    # for jitar sets the new problem id is the one that
+	    # makes it a new top level problem 
 	    if ($set && $set->assignment_type eq 'jitar') {
 		my @problemIDs = $db->listGlobalProblems($setName);
 		my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);

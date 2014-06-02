@@ -1507,7 +1507,8 @@ sub add_problem_handler {
 	    
 	    my $set = $db->getGlobalSet($targetSetName);
 	    
-	    
+	    # for jitar sets new problems are put as top level
+	    # problems at the end
 	    if ($set->assignment_type eq 'jitar') {
 		my @problemIDs = $db->listGlobalProblems($targetSetName);
 		@problemIDs = jitar_order_problems(@problemIDs);
@@ -1984,7 +1985,8 @@ sub save_as_handler {
 				    
 		    my $set = $self->r->db->getGlobalSet($setName);
 		    
-		    
+		    # for jitar sets new problems are put as top level
+		    # problems at the end
 		    if ($set->assignment_type eq 'jitar') {
 			my @problemIDs = $self->r->db->listGlobalProblems($setName);
 			@problemIDs = jitar_order_problems(@problemIDs);

@@ -1285,7 +1285,10 @@ sub jitar_id_to_seq {
     return map {${$_}[1]} factor_exp($id);
 }
 
-# returns 0 if the problem is open and 1 if hidden
+# Takes in ($db, $userID, $setID, $problemID) and returns 1 if the 
+# problem is hidden.  The problem is hidden if the number of attempts
+# on the parent problem is greater than att_to_open_children, or if the user
+# has run out of attempts.  Everything is opened up after the due date
 
 sub is_jitar_problem_hidden {
     my ($db, $userID, $setID, $problemID) = @_;
@@ -1299,6 +1302,7 @@ sub is_jitar_problem_hidden {
 	return 0;
     }
 
+    # only makes sense for jitar sets
     return 0 unless ($mergedSet->assignment_type eq 'jitar');
 
     # the set opens everything up after the due date. 
@@ -1339,7 +1343,10 @@ sub is_jitar_problem_hidden {
 }
     
 
-# returns 0 if the problem is not restricted and 1 if it is 
+# takes in ($db, $userID, $setID, $problemID) and returns 1 if the jitar problem is closed
+# jitar problems are closed if the restrict_prob_progression variable is set on the set
+# and if the previous problem is closed, or hasn't been finished yet.  
+# The first problem in a level is always open. 
 
 sub is_jitar_problem_closed {
     my ($db, $userID, $setID, $problemID) = @_;
@@ -1390,11 +1397,11 @@ sub is_jitar_problem_closed {
     } until ($db->existsUserProblem($userID,$setID,$id));
 
     $prob = $db->getMergedProblem($userID,$setID,$id);
-
+    
     if (jitar_problem_adjusted_status($prob,$db) == 1 ||
 	jitar_problem_finished($prob,$db)) {
 	
-	# either the previous problem is 100% or we cant do better so this is open
+	# either the previous problem is 100% or is finished
 	return 0;
     } else {
 	
@@ -1405,25 +1412,36 @@ sub is_jitar_problem_closed {
 }
 
 
+# a helper method to sort jitar problems.  Takes two array references to 
+# the tree sequence and returns 0, 1, -1 like the comparison operator. 
 sub jitar_id_sort {
     my ($ar, $br) = @_;
 
+    # dereference the arrays
     my @a = @$ar;
     my @b = @$br;
 
+    # if the first index number is not the same then we order numerically 
+    # based off what the top level element is
     if ($a[0] != $b[0]) {
 	return ($a[0] <=> $b[0]);
     }
 
+    # get rid of the first index
     shift @a;
     shift @b;
 
+    # if neither sequence has any remaining indicies then all of 
+    # the indicies were the same so they are equal, otherwise
     if (!@a && !@b) {
 	return 0;
+    # if one sequence is empty then it is "larger than" the other since it
+    # is a parent
     } elsif (!@a) {
 	return -1;
     } elsif (!@b) {
 	return 1;
+    # of both still have elements then recursively call this subroutine
     } else {
 	return jitar_id_sort(\@a,\@b);
     }
@@ -1436,19 +1454,21 @@ sub jitar_order_problems {
  
     my %problemSeqs;
     
-    # problem ID's is either the given array or the problem ids if the 
-    # array is actually problems.  
+    # @problems can either be an array of ids or an array of problem objects
+    # so we need to check which it is and do the appropriate thing. 
     my @problemIDs = @problems;
 
     if (ref($problems[0]) =~ /Problem/) {
 	@problemIDs = map {$_->problem_id} @problems;
     }
 
+    # build a hash of tree index sequences for each problem 
     for (my $i=0; $i<=$#problemIDs; $i++) {
 	my @seq = jitar_id_to_seq($problemIDs[$i]);
 	$problemSeqs{$problemIDs[$i]} = \@seq;
     }
     
+    # sort the problems using jitar_id_sort
     if (ref($problems[0]) =~ /Problem/) {
 	return sort {jitar_id_sort($problemSeqs{$a->problem_id},$problemSeqs{$b->problem_id})} @problems;
     } else {
@@ -1479,9 +1499,10 @@ sub jitar_problem_adjusted_status {
 	my @seq = jitar_id_to_seq($id);
 
 	#check and see if this is a child
+	# it has to be one level deper
 	next unless $#seq == $#problemSeq+1;
 	
-	#oh no!! a goto!! 
+	# and it has to equal @seq up to the penultimate index
 	for (my $i = 0; $i<=$#problemSeq; $i++) {
 	    next ID unless $seq[$i] == $problemSeq[$i];
 	}
@@ -1491,6 +1512,7 @@ sub jitar_problem_adjusted_status {
 
 	die "Couldn't get problem $id for user ". $userProblem->user_id." and set ".$userProblem->set_id." from the database" unless $problem;
 
+	# skip if it doesnt
 	next unless $problem->counts_parent_grade();
 
 	# if it does count then add its adjusted status to the grading array
@@ -1519,9 +1541,9 @@ sub jitar_problem_adjusted_status {
 }
 
 
-# returns if the problem score is "locked".  This happens when the problem attempts have
+# returns 1 if the given problem is "finished"  This happens when the problem attempts have
 # been maxed out, and the attempts of any children with the "counts_to_parent_grade" also 
-# have their attemtps maxed out. 
+# have their attemtps maxed out.  (In other words if the grade can't be raised any more)
 
 sub jitar_problem_finished {
     my ($userProblem,  $db) = @_;
@@ -1530,7 +1552,8 @@ sub jitar_problem_finished {
     return 0 if ($userProblem->max_attempts == -1 ||
 	$userProblem->max_attempts < ($userProblem->num_correct + 
 				      $userProblem->num_incorrect));
-    # find children and do the check on them.      
+
+    # find children 
     my @problemSeq = jitar_id_to_seq($userProblem->problem_id);
 
     my @problemIDs = $db->listUserProblems($userProblem->user_id,$userProblem->set_id);
@@ -1540,7 +1563,6 @@ sub jitar_problem_finished {
 
 	#check and see if this is a child
 	next unless $#seq == $#problemSeq+1;
-	
 	for (my $i = 0; $i<=$#problemSeq; $i++) {
 	    next ID unless $seq[$i] = $problemSeq[$i];
 	}
@@ -1550,14 +1572,16 @@ sub jitar_problem_finished {
 
 	die "Couldn't get problem $id for user ".$userProblem->user_id." and set ".$userProblem->set_id." from the database" unless $problem;
 
+	# if this doesn't count then we dont need to worry about it
 	next unless $problem->counts_parent_grade();
 
-	#if it does then see if the problem is closed, if it isnt then the parent isnt closed
+	#if it does then see if the problem is finished
+	# if it isn't then the parent isnt finished either. 
 	return 0 unless jitar_problem_finished($problem,$db);
 
     }
 
-    # if we got here then all of the children are closed so 
+    # if we got here then the problem is closed
     return 1;
 }
 

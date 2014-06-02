@@ -750,7 +750,8 @@ sub displaySets {
 	my $problem_header = '';
 	# DBFIXME sort in database
 	my @list_problems = sort {$a<=> $b } $db->listGlobalProblems($setName );
-	
+
+	# for a jitar set we only get the top level problems
 	if($GlobalSet->assignment_type eq 'jitar') {
 	    my @topLevelProblems; 
 	    
