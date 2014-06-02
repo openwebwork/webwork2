@@ -336,7 +336,7 @@ sub attemptResults {
 		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
 		    push @incorrect_ids, $name if $answerScore < 1;
 		    $resultStringClass = "ResultsWithError";
-		    $resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $r->maketext("incorrect"));
+		    $resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $r->maketext("incorrect")); # If the latter class is defined, override the older red-on-white 
 		} else {
 		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
 		    push @incorrect_ids, $name if $answerScore < 1;
@@ -359,8 +359,8 @@ sub attemptResults {
 		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},$self->nbsp($resultString))  : "";
 		#I'm pretty sure this message shouldn't have the message class
 		#$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
-		my $FeedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
-		$row .= $showMessages       ? CGI::td({class=>$FeedbackMessageClass},$self->nbsp($answerMessage)) : "";
+		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
+		$row .= $showMessages       ? CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)) : "";
 		push @tableRows, $row;
 	}
 	
