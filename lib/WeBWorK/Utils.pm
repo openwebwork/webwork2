@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.83 2009/07/12 23:48:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -38,7 +38,7 @@ use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
-use Dancer;
+use Dancer qw(:script);
 
 use constant MKDIR_ATTEMPTS => 10;
 

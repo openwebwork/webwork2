@@ -205,6 +205,16 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             this.model = _set; 
             return this;
         },
+        bindings: { ".set-name" : "set_id",
+                    ".open-date" : "open_date",
+                    ".due-date" : "due_date",
+                    ".answer-date": "answer_date",
+                    ".prob-set-visible": "visible",
+                    ".reduced-credit": "enable_reduced_scoring",
+                    ".users-assigned": {
+                        observe: "assigned_users",
+                        onGet: function(value, options){ return value.length + "/" +this.users.size();}
+                    }
         bindings: { 
             ".set-name" : "set_id",
             ".open-date" : "open_date",

@@ -47,6 +47,9 @@ get '/courses/:course_id/settings/:setting_id' => sub {
 		foreach my $hash (@$oneConfig) {
 			if (ref($hash)=~/HASH/){
 				if ($hash->{var} eq params->{setting_id}){
+					if($hash->{type} eq 'boolean'){
+						$hash->{value} = $hash->{value} ? JSON::true : JSON::false;
+					}
 					return $hash;
 				}
 			}
