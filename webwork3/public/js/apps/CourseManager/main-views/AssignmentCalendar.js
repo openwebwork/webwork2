@@ -40,7 +40,11 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
             // show/hide the desired date types
 
-            
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                this.$(".assign-reduced-scoring").removeClass("hidden");
+            } else {
+                this.$(".assign-reduced-scoring").addClass("hidden");
+            }
 
             MainView.prototype.render.apply(this);
             this.stickit();
