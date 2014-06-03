@@ -79,11 +79,15 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			_(this.columnInfo).each(function (col){
 				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
-				if(col.colHeader){
-					headRow.append("<th data-class-name='" + className + "'>" + col.colHeader + "<span class='sort'></span></th>");
-				} else {
-					headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
-				}
+				var th = $("<th data-class-name='" + className + "'>").addClass(className)
+					.html(col.colHeader? col.colHeader: col.name + "<span class='sort'></span>");
+				headRow.append(th);
+				// if(col.colHeader){
+
+				// 	headRow.append("<th data-class-name='" + className + "'>" + col.colHeader + "<span class='sort'></span></th>");
+				// } else {
+				// 	headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
+				// }
 			});
 
 			this.updateTable();

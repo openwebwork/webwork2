@@ -13,7 +13,6 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         UserSetList, config){
 	var ProblemSetDetailsView = MainView.extend({
         className: "set-detail-view",
-        tagName: "div",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
         initialize: function (options) {
             MainView.prototype.initialize.call(this,options);
@@ -173,19 +172,18 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
 
     var DetailsView = Backbone.View.extend({
         initialize: function (options) {
-            _.bindAll(this,'render','setProblemSet');
+            _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate");
             this.users = options.users;
             this.settings = options.settings;
-
+            
 
         },
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
-            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==0
-                || parseInt(this.model.get("enable_reduced_scoring"))===0){
-                   this.$(".reduced-scoring-date").closest("tr").addClass("hidden")
-            }
-            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==0){
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                if(!this.model.get("enable_reduced_scoring"))
+                   this.$(".reduced-scoring-date").closest("tr").addClass("hidden") 
+            } else {
                 this.$(".reduced-scoring").closest("tr").addClass("hidden")   
             }
             if(this.model){
@@ -195,7 +193,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         events: {
             "click .assign-all-users": "assignAllUsers",
-            "change .reduced-scoring": "showHideReducedScoringDate"
+            //"change .reduced-scoring": "showHideReducedScoringDate"
         },
         assignAllUsers: function(){
             this.model.set({assigned_users: this.users.pluck("user_id")});
@@ -203,48 +201,33 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         setProblemSet: function(_set) {
             var self = this; 
             this.model = _set; 
+            this.model.on("change:enable_reduced_scoring",this.showHideReducedScoringDate);
             return this;
         },
-        bindings: { ".set-name" : "set_id",
-                    ".open-date" : "open_date",
-                    ".due-date" : "due_date",
-                    ".answer-date": "answer_date",
-                    ".prob-set-visible": "visible",
-                    ".reduced-credit": "enable_reduced_scoring",
-                    ".users-assigned": {
-                        observe: "assigned_users",
-                        onGet: function(value, options){ return value.length + "/" +this.users.size();}
-                    }
-        bindings: { 
+        bindings: {
             ".set-name" : "set_id",
             ".open-date" : "open_date",
             ".due-date" : "due_date",
             ".answer-date": "answer_date",
-            ".reduced-scoring-date": {observe: "reduced_scoring_date"},
-            ".prob-set-visible": {observe: "visible", selectOptions: {
-                collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
-            }},
-            ".reduced-scoring": {observe: "enable_reduced_scoring", updateModel: false, selectOptions: {
-                collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
-            }},
+            ".prob-set-visible": "visible",
+            ".reduced-scoring": "enable_reduced_scoring",
+            ".reduced-scoring-date": "reduced_scoring_date",
             ".users-assigned": {
                 observe: "assigned_users",
                 onGet: function(value, options){ return value.length + "/" +this.users.size();}
             }
         },
-        showHideReducedScoringDate: function(evt){
-            if($(evt.target).val()==="1") { // show reduced credit field
+        showHideReducedScoringDate: function(){
+            if(this.model.get("enable_reduced_scoring")) { // show reduced credit field
                 this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
 
-                // fill in a reduced_scoring_date if the field is empty.  
-                if(! this.model.get("reduced_scoring_date") || parseInt(this.model.get("reduced_scoring_date"))===0){
+                // fill in a reduced_scoring_date if the field is empty or 0. 
+                if(this.model.get("reduced_scoring_date")=="" || this.model.get("reduced_scoring_date")==0){
                     var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
                         this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
-                    
-                    this.model.set({reduced_scoring_date: rcDate.unix(), enable_reduced_scoring: "1"});
+                    this.model.set({reduced_scoring_date: rcDate.unix()});
                 }
             } else {
-                this.model.set({enable_reduced_scoring: "0"});
                 this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
             }
         }
@@ -365,8 +348,8 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         render: function () {
             var self = this;
-            var reducedScoring = this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")==1 
-                && this.problemSet.get("enable_reduced_scoring") == 1; 
+            var reducedScoring = this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") 
+                && this.problemSet.get("enable_reduced_scoring"); 
             this.tableSetup({show_reduced_scoring: reducedScoring});
             this.$el.html($("#loading-usersets-template").html());
             if (this.collection.size()>0){

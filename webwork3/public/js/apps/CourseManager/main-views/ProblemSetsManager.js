@@ -20,7 +20,8 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
 
             this.tableSetup();
 
-            this.headerInfo = { template: "#allSets-header", 
+            this.headerInfo = { 
+                template: "#allSets-header", 
                 events: {"click .add-problem-set-button": function () {
                                   self.addProblemSet();  
                                 }}
@@ -34,14 +35,15 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             "click .add-problem-set-button": "addProblemSet",
             'keyup input.filter-text' : 'filterProblemSets',
             'click button.clear-filter-button': 'clearFilterText',
-            //'change .enable-reduced-scoring': "hideShowReducedScoring"
         },
         hideShowReducedScoring: function(model){
-            if(model.get("enable_reduced_scoring")==1 && model.get("reduced_scoring_date")===""){
+            if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
                 var rcDate = moment.unix(model.get("due_date")).subtract(this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"))
                 model.set({reduced_scoring_date: rcDate.unix()})
             }
-            this.problemSetTable.refreshTable();
+            if(this.problemSetTable){
+                this.problemSetTable.refreshTable();
+            }
             this.$(".set-id a").truncate({width: 120});
         },
         render: function () {
@@ -52,6 +54,15 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
             this.$(".set-id a").truncate({width: 120});
+
+            // hide reduced credit items when not enabled. 
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
+                    .removeClass("hidden");
+            } else {
+                this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
+                    .addClass("hidden");
+            }
             MainView.prototype.render.apply(this);
             return this;
         },
