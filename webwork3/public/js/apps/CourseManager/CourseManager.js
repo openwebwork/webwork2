@@ -315,6 +315,10 @@ var CourseManager = WebPage.extend({
             }
         });
     },
+
+    // This ensures that dates selected from date pickers through the interface resets the dates around it 
+    // to ensure that are no date errors.  
+
     setDates: function(model){
         var self = this;
 

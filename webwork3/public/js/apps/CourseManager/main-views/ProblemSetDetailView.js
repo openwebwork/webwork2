@@ -343,6 +343,9 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
     var CustomizeUserAssignView = Backbone.View.extend({
         initialize: function(options){
             _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
+
+            // this.model is a clone of the parent ProblemSet.  It is used to save properties for multiple students.
+
             this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             _.extend(this,_(options).pick("users","settings","eventDispatcher"));
         },
