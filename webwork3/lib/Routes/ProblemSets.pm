@@ -33,7 +33,7 @@ our @boolean_set_props = qw/visible enable_reduced_scoring/;
 
 get '/courses/:course_id/sets' => sub {
 
-    #checkPermissions(10,session->{user});
+    checkPermissions(10,session->{user});
 
 
     my @globalSetNames = vars->{db}->listGlobalSets;

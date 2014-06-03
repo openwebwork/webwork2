@@ -3,7 +3,6 @@
 
 package Utils::Convert;
 use base qw(Exporter);
-use Dancer ':syntax';
 use JSON;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(convertObjectToHash convertArrayOfObjectsToHash);
