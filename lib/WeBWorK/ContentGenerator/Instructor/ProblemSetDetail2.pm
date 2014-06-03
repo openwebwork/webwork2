@@ -1621,6 +1621,22 @@ sub initialize {
 		#    for users)
 		foreach my $problemID ($r->param('deleteProblem')) {
 			$db->deleteGlobalProblem($setID, $problemID);
+
+			# if its a jitar set we have to delete all of the child problems
+			if ($setRecord->assignment_type eq 'jitar') {
+			    my @ids = $db->listGlobalProblems($setID);
+			    my @problemSeq = jitar_id_to_seq($problemID);
+			  ID: foreach my $id (@ids) {
+			      my @seq = jitar_id_to_seq($id);
+			      #check and see if this is a child
+			      next unless $#seq > $#problemSeq;
+			      for (my $i = 0; $i<=$#problemSeq; $i++) {
+				  next ID unless $seq[$i] == $problemSeq[$i];
+			      }
+			      $db->deleteGlobalProblem($setID,$id);
+			  }
+			    
+			}
 		}
 		
 		# Change problem_ids from regular style to jitar style if appropraite.  (not
@@ -1653,7 +1669,35 @@ sub initialize {
 		    
 		}
 		
-	
+		##################################################################
+		# reorder problems
+		##################################################################
+
+		my %newProblemNumbers = ();
+		
+		for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
+		    
+		    if ($setRecord->assignment_type eq 'jitar') {
+			my @idSeq;
+			my $id = $jj;
+			
+			next unless $r->param('prob_num_'.$id);
+			
+			unshift @idSeq, $r->param('prob_num_'.$id);
+			while (defined $r->param('prob_parent_id_'.$id)) {
+			    $id = $r->param('prob_parent_id_'.$id);
+			    unshift @idSeq, $r->param('prob_num_'.$id);
+			}
+			$newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
+			
+		    } else {
+			$newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
+		    }
+		}
+		
+		handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
+		
+
 		#####################################################################
 		# Add blank problem if needed
 		#####################################################################
@@ -1671,6 +1715,7 @@ sub initialize {
 			    #this strips off the depth 0 problem numbers if its a jitar set
 			}
 		    }
+
 		    my $targetProblemNumber = WeBWorK::Utils::max(@ids);
 
 		    if ($newBlankProblems >=1 and $newBlankProblems <= $MAX_NEW_PROBLEMS ) {
@@ -1976,34 +2021,9 @@ sub body {
 			)
 		);
 	}
-	
-	# handle renumbering of problems if necessary
+
 	print CGI::a({name=>"problems"}, "");
-
-	my %newProblemNumbers = ();
-
-	for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
-	    
-	    if ($isJitarSet) {
-		my @idSeq;
-		my $id = $jj;
-
-		next unless $r->param('prob_num_'.$id);
-
-		unshift @idSeq, $r->param('prob_num_'.$id);
-		while (defined $r->param('prob_parent_id_'.$id)) {
-		    $id = $r->param('prob_parent_id_'.$id);
-		    unshift @idSeq, $r->param('prob_num_'.$id);
-		}
-		$newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
-
-	    } else {
-		$newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
-	    }
-	}
 	
-	handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
-
 	my %properties = %{ FIELD_PROPERTIES() };
 
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};

@@ -281,34 +281,53 @@ table.classlist-table .tbody {
 }
 
 /* these are for indenting problems on jitar sets */
-.problem_set_table .nested-problem-1,
-.problem-list .nested-problem-1 {
+.problem_set_table .nested-problem-1 {
     margin-left: 15px;
 }
 
-.problem_set_table .nested-problem-2,
-.problem-list .nested-problem-2 {
+.problem_set_table .nested-problem-2 {
     margin-left: 30px;
 }
 
-.problem_set_table .nested-problem-3,
-.problem-list .nested-problem-3 {
+.problem_set_table .nested-problem-3 {
     margin-left: 45px;
 }
 
-.problem_set_table .nested-problem-4,
-.problem-list .nested-problem-4 {
+.problem_set_table .nested-problem-4 {
     margin-left: 60px;
 }
 
-.problem_set_table .nested-problem-5,
-.problem-list .nested-problem-5 {
+.problem_set_table .nested-problem-5 {
     margin-left: 75px;
 }
 
-.problem_set_table .nested-problem-6,
-.problem-list .nested-problem-6 {
+.problem_set_table .nested-problem-6 {
     margin-left: 90px;
+}
+
+/* these are for indenting problems on jitar sets */
+.problem-list .nested-problem-1 {
+    padding-left: 20px;
+}
+
+.problem-list .nested-problem-2 {
+    padding-left: 25px;
+}
+
+.problem-list .nested-problem-3 {
+    padding-left: 30px;
+}
+
+.problem-list .nested-problem-4 {
+    padding-left: 35px;
+}
+
+.problem-list .nested-problem-5 {
+    padding-left: 40px;
+}
+
+.problem-list .nested-problem-6 {
+    padding-left: 45px;
 }
 
 /* Info Box */
@@ -893,7 +912,17 @@ div.problem_sets_options {
     width: 10px;
     font-size:large;
     display: none;
+    font-weight: bold;
 }
+
+.psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:before {
+    content: '\2795';
+}
+
+.psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:before {
+    content: '\2796';
+}
+
 
 #psd_toolbar {
     margin-right:10px;

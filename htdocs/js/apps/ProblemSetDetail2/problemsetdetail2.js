@@ -50,14 +50,14 @@ $(function() {
     $('.pdr_handle').append('<i class="icon-resize-vertical" />');
 
     // This code controls the expand/collapse on the elements
-    $('.pdr_collapse').prepend('<i class="icon-minus-sign"\>');
-    $('.mjs-nestedSortable-collapsed .pdr_collapse').find('i:first')
-	.removeClass('icon-minus-sign')
-	.addClass('icon-plus-sign');
+//    $('.pdr_collapse').prepend('<i class="icon-minus-sign"\>');
+ //   $('.mjs-nestedSortable-collapsed .pdr_collapse').find('i:first')/
+//	.removeClass('icon-minus-sign')
+//	.addClass('icon-plus-sign');
 
     $('.pdr_collapse').on('click', function() {
 	$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
-	$(this).children('i').toggleClass('icon-plus-sign').toggleClass('icon-minus-sign');
+//	$(this).children('i').toggleClass('icon-plus-sign').toggleClass('icon-minus-sign');
     })
 
     // This is for the render buttons

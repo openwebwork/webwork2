@@ -1330,7 +1330,7 @@ sub is_jitar_problem_hidden {
 	
 	# the child problems are closed unless the number of incorrect attempts is above the 
 	# attempts to open children, or if they have exausted their max_attempts
-	if (($userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) ||
+	if (($userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) &&
 	    $userParentProb->num_incorrect() < $userParentProb->max_attempts()) {
 	    return 1;
 	}
@@ -1550,7 +1550,7 @@ sub jitar_problem_finished {
 
     # the problem is open if you can still make attempts
     return 0 if ($userProblem->max_attempts == -1 ||
-	$userProblem->max_attempts < ($userProblem->num_correct + 
+	$userProblem->max_attempts > ($userProblem->num_correct + 
 				      $userProblem->num_incorrect));
 
     # find children 
@@ -1564,7 +1564,7 @@ sub jitar_problem_finished {
 	#check and see if this is a child
 	next unless $#seq == $#problemSeq+1;
 	for (my $i = 0; $i<=$#problemSeq; $i++) {
-	    next ID unless $seq[$i] = $problemSeq[$i];
+	    next ID unless $seq[$i] == $problemSeq[$i];
 	}
 
 	#check to see if this counts towards the parent grade
@@ -1581,7 +1581,7 @@ sub jitar_problem_finished {
 
     }
 
-    # if we got here then the problem is closed
+    # if we got here then the problem is finished
     return 1;
 }
 

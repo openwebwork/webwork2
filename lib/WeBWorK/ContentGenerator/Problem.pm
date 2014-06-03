@@ -949,6 +949,10 @@ sub pre_header_initialize {
 	$self->{will} = \%will;
 	$self->{showMeAnother} = \%showMeAnother;
 	$self->{pg} = $pg;
+
+	#### process and log answers ####
+	$self->{scoreRecordedMessage} = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
+
 }
 
 sub warnings {
@@ -1052,9 +1056,6 @@ sub siblings {
 	my $eUserID = $r->param("effectiveUser");
 	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
 
-	my @where = map {[$eUserID, $setID, $_]} @problemIDs;
-	my @problemRecords = $db->getMergedProblems(@where);
-
 	my $isJitarSet = 0;
 
 	if ($setID) {
@@ -1065,6 +1066,9 @@ sub siblings {
 	    }
 	}
 	
+	my @where = map {[$eUserID, $setID, $_]} @problemIDs;
+	my @problemRecords = $db->getMergedProblems(@where);
+
 	# variables for the progress bar
 	my $num_of_problems  = 0;
 	my $problemList;
@@ -1092,15 +1096,6 @@ sub siblings {
 	    if($progressBarEnabled){
 		my $problemRecord = shift(@problemRecords);
 		$num_of_problems++;
-		# update with current information if available
-		if ($problemRecord->problem_id == $currentProblemID) {
-		    my $pg = $self->{pg};
-		    $problemRecord->status($pg->{state}->{recorded_score});
-		    $problemRecord->attempted(1);
-		    $problemRecord->num_correct($pg->{state}->{num_of_correct_ans});
-		    $problemRecord->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-		}
-
 		my $total_attempts = $problemRecord->num_correct+$problemRecord->num_incorrect;
 
                 # variables for the widths of the bars in the Progress Bar
@@ -1656,7 +1651,7 @@ sub output_score_summary{
 	my $set = $self->{set};
 	my $pg = $self->{pg};
 	my $effectiveUser = $r->param('effectiveUser') || $r->param('user');
-	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
+	my $scoreRecordedMessage = $self->{scoreRecordedMessage};
 	my $submitAnswers = $self->{submitAnswers};
 	my %will = %{ $self->{will} };
 	my %showMeAnother = %{ $self->{showMeAnother} };
