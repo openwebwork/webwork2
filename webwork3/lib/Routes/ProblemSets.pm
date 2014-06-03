@@ -495,13 +495,12 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     for my $key (@user_set_props) {
         my $globalValue = $globalSet->{$key} || "";
-        # debug $key . " : " . $globalValue . " : " . params->{$key};
-        # check to see if the value differs from the global value.  If so, set it. 
-        $userSet->{$key} = params->{$key} 
-            if ((defined(params->{$key}) && $globalValue ne params->{$key}) || $key eq "psvn" || $key eq "user_id");
+        # check to see if the value differs from the global value.  If so, set it else delete it. 
+        $userSet->{$key} = params->{$key} if defined(params->{$key});
+        delete $userSet->{$key} if $globalValue eq $userSet->{$key} && $key ne "set_id";
+
     }
     vars->{db}->putUserSet($userSet);
-
 
     return convertObjectToHash(vars->{db}->getMergedSet(params->{user_id},params->{set_id}),\@boolean_set_props);
 };
