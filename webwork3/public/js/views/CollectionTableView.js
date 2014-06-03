@@ -262,7 +262,10 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			var self = this;
 			_(this.columnInfo).each(function (col){
 				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
-				if(col.use_contenteditable){
+				if (col.datatype === "boolean"){
+					var select = $("<select>").addClass(classname).addClass("input-small");
+					self.$el.append($("<td>").append(select));
+				} else if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));
 				} else {
 					if (col.stickit_options && col.stickit_options.selectOptions){

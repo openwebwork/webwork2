@@ -196,12 +196,8 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                     ".open-date" : "open_date",
                     ".due-date" : "due_date",
                     ".answer-date": "answer_date",
-                    ".prob-set-visible": {observe: "visible", selectOptions: {
-                        collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
-                    }},
-                    ".reduced-credit": {observe: "enable_reduced_scoring", selectOptions: {
-                        collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
-                    }},
+                    ".prob-set-visible": "visible",
+                    ".reduced-credit": "enable_reduced_scoring",
                     ".users-assigned": {
                         observe: "assigned_users",
                         onGet: function(value, options){ return value.length + "/" +this.users.size();}

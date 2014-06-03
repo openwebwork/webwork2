@@ -117,10 +117,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                         return val.length;
                     }    
                 },
-                {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
-                        datatype: "string", stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
-                {name: "Visible", key: "visible", classname: "is-visible", datatype: "string",
-                        stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
+                {name: "Reduced Scoring", key: "enable_reduced_scoring", datatype: "boolean",
+                        classname: ["enable-reduced-scoring","yes-no-boolean-select"]},
+                {name: "Visible", key: "visible", classname: ["is-visible","yes-no-boolean-select"], datatype: "boolean"},
                 {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
