@@ -1330,11 +1330,13 @@ sub is_jitar_problem_hidden {
 	
 	# the child problems are closed unless the number of incorrect attempts is above the 
 	# attempts to open children, or if they have exausted their max_attempts
-	if (($userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) &&
-	    $userParentProb->num_incorrect() < $userParentProb->max_attempts()) {
+	# if att_to_open_children is -1 we just use max attempts
+	# if max_attempts is -1 then they are always less than max attempts
+	if (($userParentProb->att_to_open_children == -1 ||
+	      $userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) && 
+	    ($userParentProb->max_attempts == -1 || $userParentProb->num_incorrect() < $userParentProb->max_attempts())) {
 	    return 1;
 	}
-
 	pop @parentIDSeq;
     }
     

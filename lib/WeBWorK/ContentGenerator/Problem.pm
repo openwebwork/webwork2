@@ -1087,7 +1087,10 @@ sub siblings {
 	my @items;
 
 	foreach my $problemID (@problemIDs) {
-	    next if ($isJitarSet && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID));
+	    if ($isJitarSet && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID)) {
+		shift(@problemRecords) if $progressBarEnabled;
+		next;
+	    }
 
 	    my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, courseID => $courseID, setID => $setID, problemID => $problemID);
 	    my $link;
@@ -1098,8 +1101,13 @@ sub siblings {
 		$num_of_problems++;
 		my $total_attempts = $problemRecord->num_correct+$problemRecord->num_incorrect;
 
+		my $status = $problemRecord->status;
+		if ($isJitarSet) {
+		    $status = jitar_problem_adjusted_status($problemRecord,$db);
+		}
+		
                 # variables for the widths of the bars in the Progress Bar
-		if( $problemRecord->status ==1 ){
+		if( $status ==1 ){
 		    # correct
 		    $total_correct++;
 		    $status_symbol = " &#x2713;"; # checkmark
@@ -1735,7 +1743,7 @@ sub output_score_summary{
 	    # print information if this problem has open children and if the grade
 	    # for this problem can be replaced by the grades of its children
 	    if ( $hasChildren 
-		&& ($problem->num_incorrect >= $problem->att_to_open_children ||
+		&& (($problem->att_to_open_children != -1 && $problem->num_incorrect >= $problem->att_to_open_children) ||
 		    ($problem->max_attempts != -1 && 
 		     $problem->num_incorrect >= $problem->max_attempts))) {
 		print CGI::br().$r->maketext('This problem has open subproblems.  You can visit them by using the links to the left or visiting the set page.');
