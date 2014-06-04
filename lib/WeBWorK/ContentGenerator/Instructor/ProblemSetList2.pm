@@ -84,7 +84,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName jitar_id_to_seq seq_to_jitar_id);
 
 use WeBWorK::Utils::DatePickerScripts;
 
@@ -2188,9 +2188,15 @@ sub readSetDef {
 
 			    unless ($attToOpenChildren =~ /\d+/) {$attToOpenChildren = $att_to_open_children_default;}		
 			    $attToOpenChildren =~ s/[^\d-]*//g;
-					    
-			    unless ($problemID =~ /\d+/) {$problemID = '';}
-			    $problemID =~ s/[^\d-]*//g;
+					
+			    if ($assignmentType eq 'jitar') {
+				unless ($problemID =~ /[\d\.]+/) {$problemID = '';}
+				$problemID =~ s/[^\d\.-]*//g;
+				$problemID = seq_to_jitar_id(split(/\./,$problemID));
+			    } else {
+				unless ($problemID =~ /\d+/) {$problemID = '';}
+				$problemID =~ s/[^\d-]*//g;
+			    }
 
 			    # can't put continuation flag onto the first problem
 			    push(@problemData, {source_file    => $name,
@@ -2298,6 +2304,11 @@ SET:	foreach my $set (keys %filenames) {
 				next SET;
 			}
 			my $problem_id    = $problemRecord->problem_id();
+
+			if ($setRecord->assignment_type eq 'jitar') {
+			    $problem_id = join('.',jitar_id_to_seq($problem_id));
+			}
+
 			my $source_file   = $problemRecord->source_file();
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
