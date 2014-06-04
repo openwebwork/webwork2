@@ -588,22 +588,6 @@ sub body {
 		CGI::div({-class=>"tabbertab"},$divArrRef)
 		);
 	
-	my $selectAll =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_all", -input_attr=>{-name=>'check_all', -value=>$r->maketext('Select all sets'),
-	       onClick => "for (i in document.problemsetlist.elements)  { 
-	                       if (document.problemsetlist.elements[i].name =='selected_sets') { 
-	                           document.problemsetlist.elements[i].checked = true
-	                       }
-	                    }" });
-   	my $selectNone =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_none", -input_attr=>{-name=>'check_none', -value=>$r->maketext('Unselect all sets'),
-	       onClick => "for (i in document.problemsetlist.elements)  { 
-	                       if (document.problemsetlist.elements[i].name =='selected_sets') { 
-	                          document.problemsetlist.elements[i].checked = false
-	                       }
-	                    }" });
-	unless ($editMode or $exportMode) {
-		print $selectAll." ". $selectNone;
-	}
-	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 
 	########## print table
@@ -2415,24 +2399,17 @@ sub recordEditHTML {
 			$label = CGI::a({class=>"$visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $set_id) . $imageLink;
 		}
 		
-		push @tableCells, WeBWorK::CGI_labeled_input(
+		push @tableCells, CGI::input({
 			-type=>"checkbox",
 			-id=>$set_id."_id",
-			-label_text=>$label,
-			-input_attr=>$setSelected ?
-			{
-				-name => "selected_sets",
-				-value => $set_id,
-				-checked => "checked",
-				-class => "table_checkbox",
-			}
-			:
-			{
-				-name => "selected_sets",
-				-value => $set_id,
-				-class => "table_checkbox",
-			}
+			$setSelected ? ('checked','checked') : (),
+			-name => "selected_sets",
+			-value => $set_id,
+			-class => "table_checkbox",
+					     }
 		);
+
+		push @tableCells, $label;
 	}
 
 	# Problems link
@@ -2544,8 +2521,16 @@ sub printTableHTML {
 
 
 	my @tableHeadings = map { $fieldNames{$_} } @realFieldNames;
-	#shift @tableHeadings;   # removed "select" so there is no need to shift headings -- checkbox occurs in column.
 	
+	my $selectBox = CGI::input({
+	    type=>'checkbox',
+	    id=>'setlist-select-all',
+	    onClick => "selectall = document.getElementById('setlist-select-all'); for (i in document.problemsetlist.elements)  { if (document.problemsetlist.elements[i].name =='selected_sets') { document.problemsetlist.elements[i].checked = selectall.checked;}}",
+				   });
+
+	if (!($editMode or $exportMode)) {
+	    unshift @tableHeadings, $selectBox;
+	}	
 
 	# print the table
 	if ($editMode or $exportMode) {

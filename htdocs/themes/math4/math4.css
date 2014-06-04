@@ -218,9 +218,23 @@ ul.courses-list a:hover {
  * to scroll if you don't have that width, don't know how to fix it */
 table.classlist-table {
 /*	display: block; */
-	max-width: 95%; /* prevent it from violating container-fluid's padding,
+        max-width: 95%; /* prevent it from violating container-fluid's padding,
 					 only valid in a rare edge case */
 }
+
+.classlist-table td{
+	padding-right: 5px;
+}
+
+.classlist-table th{
+	padding-right: 5px;
+	padding-left: 5px;
+}
+
+.classlist-table label{
+	margin-left: 0px;
+}
+
 
 table.classlist-table .tbody {
     width: 100%;
@@ -228,7 +242,7 @@ table.classlist-table .tbody {
 
 /* Homework Sets */
 .problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
-	margin: 0.5em; /* keep the assignment buttons from crowding chkbox */
+    margin-top: 0px;
 }
 
 /* Info Box */
