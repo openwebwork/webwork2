@@ -112,6 +112,9 @@ $(function(){
     $('#config-form').addClass('form-inline');
     $('#config-form table').addClass('table table-bordered');
 
+    //Instructor Tools
+    $('#instructor-tools-form input').removeClass('btn-primary');
+
     //File Manager Configuration
     $('#FileManager').addClass('form-inline');
     $('#FileManager .btn').addClass('btn-small file-manager-btn').removeClass('btn-primary');
