@@ -61,7 +61,7 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             _(this.weeks).each(function(_week){
                 calendarTable.append((new CalendarRowView({week: _week, calendar: self})).render().el);
             });                        
-        
+            this.$(".month-name").text(this.weeks[0][0].format("MMMM YYYY"));
             this.$el.append(calendarTable.el);
             return this;   
         },

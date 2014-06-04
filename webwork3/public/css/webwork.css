@@ -67,6 +67,7 @@ border-top: solid 1px rgb(220, 220, 220);}
 
 .calendar-day {z-index: 5; height: 100px;}
 
+.month-name {font-size: 140%; font-weight: bold}
 .month-view {min-height: 100px;}
 .week-view {min-height: 200px;}
 
