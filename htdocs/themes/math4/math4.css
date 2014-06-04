@@ -245,6 +245,10 @@ table.classlist-table .tbody {
     margin-top: 0px;
 }
 
+.problem_set_table td a {
+    font-weight:bold;
+}
+
 /* Info Box */
 .info-box {
 	padding: 0.5em;
@@ -793,6 +797,12 @@ div.problem_sets_options {
 #set_table_id a.set-id-tooltip:hover {
     text-decoration: none;
     color: #000000;
+}
+
+
+.ScrollingRecordList > input[type='submit'] {
+    margin-top: 1ex;
+    margin-bottom: 2ex;
 }
 
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
