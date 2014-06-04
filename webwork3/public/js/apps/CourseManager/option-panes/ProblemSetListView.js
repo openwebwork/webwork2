@@ -61,8 +61,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             this.problemSets.setSortField($(evt.target).data("sortfield")).sort();
         },
         setMainView: function(view){
-            this.constructor.__super__.setMainView.call(this,view);  // Call  SidePane.setMainView();
-            this.$(".problem-set").draggable({disabled: true}).droppable({disabled: true});
+            SidePane.prototype.setMainView.call(this,view);  // Call  SidePane.setMainView();
+           /* this.$(".problem-set").draggable({disabled: true}).droppable({disabled: true});
             if(view instanceof AssignmentCalendar){
                 this.$(".problem-set").draggable({ 
                     disabled: false,  
@@ -90,18 +90,19 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                         set.addProblem(prob);
                     }
                 });
-            }
+            }*/
             return this;
         },
         setDragDrop: function(){
             var self = this;
 
             // The following allows a problem set (on the sidepane to be dragged onto the Calendar)
-            if(this.mainView.viewName==="Calendar"){
-                this.$(".problem-set").draggable({ 
+            if(this.mainView instanceof AssignmentCalendar){
+                this.$(".sidepane-problem-set").draggable({ 
                     disabled: false,  
                     revert: true, 
-                    scroll: false, 
+                    scroll: false,
+                    cancel: false, 
                     helper: "clone",
                     appendTo: "body",
                     cursorAt: {left: 10, top: 10}
@@ -109,8 +110,8 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             } else {
                 this.$(".problem-set.ui-draggable").draggable("destroy");
             }
-            if(this.mainView.viewName==="Library Browser"){
-                this.$(".problem-set").droppable({
+            if(this.mainView instanceof LibraryBrowser){
+                this.$(".sidepane-problem-set").droppable({
                     disabled: false,
                     hoverClass: "btn-info",
                     accept: ".problem",
@@ -137,7 +138,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
         className: "btn btn-default sidepane-problem-set",
         initialize: function(options) {
             _.bindAll(this,"render","showProblemSet");
-            this.$el.addClass("problem-set").addClass("btn btn-default btn-sm");
+            this.$el.addClass("btn btn-default btn-sm");
             this.template = options.template; 
             this.numUsers = options.numUsers;
             this.problemSets = options.problemSets;

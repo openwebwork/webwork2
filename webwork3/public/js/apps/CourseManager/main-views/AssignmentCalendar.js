@@ -74,7 +74,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                  
             this.$(".calendar-day").droppable({
                 hoverClass: "highlight-day",
-                accept: ".problem-set, .assign",
+                accept: ".sidepane-problem-set, .assign",
                 greedy: true,
                 drop: function(ev,ui) {
                     ev.stopPropagation();
