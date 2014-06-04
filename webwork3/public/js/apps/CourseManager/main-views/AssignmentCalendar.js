@@ -25,11 +25,10 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             return this;
     	},
     	render: function (){
-    		this.constructor.__super__.render.apply(this);
+    		CalendarView.prototype.render.apply(this);
             this.update();
 
     		this.$(".assign").popover({html: true});
-            this.$(".assign").truncate({width: 100});
             // set up the calendar to scroll correctly
             this.$(".calendar-container").height($(window).height()-160);
             MainView.prototype.render.apply(this);
@@ -44,7 +43,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     }
                 });
             });
-
+            this.$(".assign-calendar-name").truncate({width: 85});
             return this;
     	},
     	renderDay: function (day){
@@ -56,6 +55,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     assign.get("problemSet").attributes);
                 day.$el.append( new DateInfoBar({template: self.template, model: _model}).render().el);
             });
+
     	},
         getHelpTemplate: function (){
             return $("#calendar-help-template").html();
