@@ -11,6 +11,7 @@ use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use WeBWorK::Constants;
+use Data::Dumper;
 
 use base qw(Exporter);
 our @EXPORT    = ();
@@ -95,9 +96,18 @@ sub authenticate {
 		send_error("The session key has not been defined or is not correct.  You may need to authenticate again",401);	
 	}
 
-	# update the timestamp in the database so the user isn't logged out prematurely.
+	
 
 	my $key = vars->{db}->getKey(session 'user');
+
+	# check to see if the user has timed out
+	my $timeSinceLast =  time() - $key->{timestamp};
+	if($timeSinceLast > vars->{ce}->{sessionKeyTimeout}){
+		send_error("You're session has expired.",419);
+	}
+	debug $timeSinceLast;
+
+	# update the timestamp in the database so the user isn't logged out prematurely.
 	$key->{timestamp} = time();
 	vars->{db}->putKey($key);
 
@@ -112,19 +122,32 @@ sub authenticate {
 # this will build up the dancer session based on the ww2 session. 
 
 sub buildSession {
+	debug "in buildSession";
 	if (!defined(session 'user')) {
     	if (defined(params->{user})){
 	    	session user => params->{user};
     	}
 	}
 
+	debug "user now defined.";
+
 	if(! defined(session 'key') && defined(session 'user')){
 		my $key = vars ->{db}->getKey(session 'user');
+		if(! defined($key)){
+			$key = vars->{db}->newKey();
+			$key->{user_id} = session 'user';
+		}
 		session 'key' => $key->{key}; 
 		$key->{timestamp} = time();
-		vars->{db}->putKey($key);
+		if(vars->{db}->existsKey(session 'user')){
+			vars->{db}->putKey($key);			
+		} else {
+			vars->{db}->addKey($key);
+		}
 
 	}
+
+	debug "session key is defined.";
 
 	if (! defined(session 'permission') && defined(session 'user')){
 		my $permission = vars->{db}->getPermissionLevel(session 'user');
@@ -133,12 +156,8 @@ sub buildSession {
 }
 
 sub checkPermissions {
-
-	authenticate();
-
-	## include an override here as well
-
 	my $permissionLevel = shift;
+	authenticate();
 
 	if(session('permission') < $permissionLevel){send_error($PERMISSION_ERROR,403)}
 
