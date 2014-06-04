@@ -78,7 +78,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 greedy: true,
                 drop: function(ev,ui) {
                     ev.stopPropagation();
-                    if($(ui.draggable).hasClass("problem-set")){
+                    if($(ui.draggable).hasClass("sidepane-problem-set")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"all");
                     } else if ($(ui.draggable).hasClass("assign-open")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"open_date");
@@ -86,7 +86,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"due_date");
                     } else if ($(ui.draggable).hasClass("assign-answer")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"answer_date");
-                    }
+                    } 
 
                 }
             });
@@ -119,6 +119,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         render: function(){
             this.$el.html(this.template);
             this.$el.addClass("assign-"+this.model.get("assign_type"));
+            this.$el.data("setname",this.model.get("set_id"));
             this.stickit();
             return this;
         },
