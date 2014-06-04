@@ -9,15 +9,14 @@ package Routes::Course;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Dancer::Plugin::Ajax;
+use Dancer::Plugin::Ajax; 
 use Dancer::FileUtils qw /read_file_content path/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
 # use Utils::CourseUtils qw/getCourseSettings/;
-#use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
-use Routes::Authentication qw/buildSession/;
+use Routes::Authentication qw/buildSession checkPermissions authenticate/;
 use Data::Dumper;
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
@@ -298,29 +297,48 @@ get '/courses/:course_id/manager' =>  sub {
 
 	my @view_paths = (@main_view_paths,@sidepane_paths);
 
+	## check if the user passed in via the URL is the same as the session user.
+
+	if (session->{user} && params->{user} ne session->{user}) {
+		my $key = vars->{db}->getKey(session 'user');
+		vars->{db}->deleteKey(session 'user') if $key;
+		session->destroy; 
+	}
 
 
-	# two situations here.  Either
-	# 1) the user has already logged in and its safe to send all of the requisite data
-	# 2) the user hasn't already logged in and needs to pop open a login window.  
-
-	buildSession();
+	# three situations here.  Either
+	# 1) the user passed via the URL is not a member of the course
+	# 2) the user passed via the URL is not authorized for the manager. 
+	# 3) the user has already logged in and its safe to send all of the requisite data
+	# 4) the user hasn't already logged in and needs to pop open a login window.  
 
 	
+	#case 1)
 
+	if(! vars->{db}->existsUser(params->{user})){
+		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+		return;
+	}
+	
+	# case 2)
 
+	buildSession();
+    if ((session 'permission') < 10){
+    	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+		return;	
+    }
+	
 	my ($settings,$sets,$users);
 
-
+	# case 3) 
 	if(defined session->{user}){
 		$settings = getCourseSettings();
 		$sets = getAllSets();
 		$users = getAllUsers();
-	} else {
+	} else {  # case 4)
 		$settings = [];
 		$sets = [];
 		$users = [];
-		
 	}
 
 	my $theSession = convertObjectToHash(session);

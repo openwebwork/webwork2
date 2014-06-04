@@ -34,6 +34,15 @@ var CourseManager = WebPage.extend({
             this.requestLogin({success: this.loadData});
         }
 
+        $(document).ajaxError(function (e, xhr, options, error) {
+            if(xhr.status==419){
+                self.requestLogin({success: function(){
+                    self.loginPane.close();
+                }});
+            }
+        });
+
+
     },
     loadData: function (data) {
         var self = this;
