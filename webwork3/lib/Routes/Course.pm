@@ -19,6 +19,7 @@ use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
 use Routes::Authentication qw/buildSession checkPermissions authenticate/;
 use Data::Dumper;
 
+
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 
@@ -322,13 +323,14 @@ get '/courses/:course_id/manager' =>  sub {
 	# case 2)
 	
 	if(defined(params->{user})){
-		buildSession();
-	    if ((session 'permission') < 10){
-	    	#redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+		my $permission = vars->{db}->getPermissionLevel(params->{user});
+
+	    if ($permission->{permission} < 10){
+	    	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
 			return;	
 	    }
 	}
-	
+
 	my ($settings,$sets,$users);
 
 	# case 3) 

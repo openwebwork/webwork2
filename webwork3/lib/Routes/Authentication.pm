@@ -16,8 +16,6 @@ use Data::Dumper;
 use base qw(Exporter);
 our @EXPORT    = ();
 our @EXPORT_OK = qw(checkPermissions authenticate setCourseEnvironment buildSession);
-
-
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 ## the following routes is matched for any URL starting with /courses. It is used to load the 
@@ -70,10 +68,6 @@ sub authenticate {
 
 	## need to check that the session hasn't expired. 
 
-	
-	#debug "Checking to see if the user is defined.";
-	#debug session->{user};
-
     if (!defined(session 'user')) {
     	if (defined(params->{user})){
 	    	session user => params->{user};
@@ -82,30 +76,24 @@ sub authenticate {
     	}
 	}
 
-	if(! defined(session 'key')){
-		my $key = vars->{db}->getKey(session 'user');
-
-		if ($key->{key} eq params->{session_key}) {
-			session 'key'  => params->{session_key};
-		} 
-
-
-	}
+	my $key = vars->{db}->getKey(session 'user');
+	my $timeLastLoggedIn = $key->{timestamp} || 0; 
 
 	if(! defined(session 'key')){
-		send_error("The session key has not been defined or is not correct.  You may need to authenticate again",401);	
+		if(! defined($key)){
+			my $newKey = create_session(session 'user');
+			$key = vars->{db}->newKey(user_id=>(session 'user'), key=>$newKey);
+		}
+		session 'key' => $key->{key}; 
 	}
-
 	
 
-	my $key = vars->{db}->getKey(session 'user');
+	$key = vars->{db}->getKey(session 'user');
 
 	# check to see if the user has timed out
-	my $timeSinceLast =  time() - $key->{timestamp};
-	if($timeSinceLast > vars->{ce}->{sessionKeyTimeout}){
+	if(time() - $timeLastLoggedIn > vars->{ce}->{sessionKeyTimeout}){
 		send_error("You're session has expired.",419);
 	}
-	debug $timeSinceLast;
 
 	# update the timestamp in the database so the user isn't logged out prematurely.
 	$key->{timestamp} = time();
@@ -119,41 +107,6 @@ sub authenticate {
 	debug session;
 }
 
-# this will build up the dancer session based on the ww2 session. 
-
-sub buildSession {
-	debug "in buildSession";
-	if (!defined(session 'user')) {
-    	if (defined(params->{user})){
-	    	session user => params->{user};
-    	}
-	}
-
-	debug "user now defined.";
-
-	if(! defined(session 'key') && defined(session 'user')){
-		my $key = vars ->{db}->getKey(session 'user');
-		if(! defined($key)){
-			$key = vars->{db}->newKey();
-			$key->{user_id} = session 'user';
-		}
-		session 'key' => $key->{key}; 
-		$key->{timestamp} = time();
-		if(vars->{db}->existsKey(session 'user')){
-			vars->{db}->putKey($key);			
-		} else {
-			vars->{db}->addKey($key);
-		}
-
-	}
-
-	debug "session key is defined.";
-
-	if (! defined(session 'permission') && defined(session 'user')){
-		my $permission = vars->{db}->getPermissionLevel(session 'user');
-		session 'permission' => $permission->{permission};		
-	}
-}
 
 sub checkPermissions {
 	my $permissionLevel = shift;
@@ -161,4 +114,31 @@ sub checkPermissions {
 
 	if(session('permission') < $permissionLevel){send_error($PERMISSION_ERROR,403)}
 
+}
+
+### Note: this was copied from WeBWorK::Authen.pm
+
+# clobbers any existing session for this $userID
+# if $newKey is not specified, a random key is generated
+# the key is returned
+sub create_session {
+	my ($userID, $newKey) = @_;
+	my $timestamp = time;
+	unless ($newKey) {
+		my @chars = @{ vars->{ce}->{sessionKeyChars} };
+		my $length = vars->{ce}->{sessionKeyLength};
+		
+		srand;
+		$newKey = join ("", @chars[map rand(@chars), 1 .. $length]);
+	}
+	
+	my $Key = vars->{db}->newKey(user_id=>$userID, key=>$newKey, timestamp=>$timestamp);
+	# DBFIXME this should be a REPLACE
+	eval { vars->{db}->deleteKey($userID) };
+	vars->{db}->addKey($Key);
+
+	#if ($ce -> {session_management_via} eq "session_cookie"),
+	#    then the subroutine maybe_send_cookie should send a cookie.
+
+	return $newKey;
 }
