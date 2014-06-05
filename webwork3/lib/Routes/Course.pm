@@ -300,10 +300,14 @@ get '/courses/:course_id/manager' =>  sub {
 
 	## check if the user passed in via the URL is the same as the session user.
 
-	if (session->{user} && params->{user} ne session->{user}) {
-		my $key = vars->{db}->getKey(session 'user');
-		vars->{db}->deleteKey(session 'user') if $key;
-		session->destroy; 
+	if(session 'user'){
+		if (session->{user} && params->{user} ne session->{user}) {
+			my $key = vars->{db}->getKey(session 'user');
+			vars->{db}->deleteKey(session 'user') if $key;
+			session->destroy; 
+		}
+	} else {
+		session 'user' => params->{user} if defined(params->{user});
 	}
 
 	# three situations here.  Either
@@ -333,8 +337,11 @@ get '/courses/:course_id/manager' =>  sub {
 
 	my ($settings,$sets,$users);
 
+	debug session;
+
 	# case 3) 
 	if(defined session->{user}){
+		authenticate();
 		$settings = getCourseSettings();
 		$sets = getAllSets();
 		$users = getAllUsers();

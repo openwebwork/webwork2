@@ -27,12 +27,8 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 any ['get','put','post','delete'] => '/courses/*/**' => sub {
 
 	my ($courseID) = splat;
-	debug "In the uber /courses/:course_id route";
-
 	setCourseEnvironment($courseID);
-
 	pass;
-
 };
 
 any ['get','post'] => '/renderer/courses/*/**' => sub {
