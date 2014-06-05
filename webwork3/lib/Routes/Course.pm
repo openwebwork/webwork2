@@ -305,7 +305,6 @@ get '/courses/:course_id/manager' =>  sub {
 		session->destroy; 
 	}
 
-
 	# three situations here.  Either
 	# 1) the user passed via the URL is not a member of the course
 	# 2) the user passed via the URL is not authorized for the manager. 
@@ -315,18 +314,20 @@ get '/courses/:course_id/manager' =>  sub {
 	
 	#case 1)
 
-	if(! vars->{db}->existsUser(params->{user})){
+	if(defined(params->{user}) && ! vars->{db}->existsUser(params->{user})){
 		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
-		return;
+		return "user not enrolled in the course";
 	}
 	
 	# case 2)
-
-	buildSession();
-    if ((session 'permission') < 10){
-    	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
-		return;	
-    }
+	
+	if(defined(params->{user})){
+		buildSession();
+	    if ((session 'permission') < 10){
+	    	#redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+			return;	
+	    }
+	}
 	
 	my ($settings,$sets,$users);
 
