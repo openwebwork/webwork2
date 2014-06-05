@@ -12,29 +12,46 @@
         </div><!-- /input-group -->
       </div><!-- /.col-md-4 -->
     <div class="col-md-3 num-users"></div>
-    <div class="btn-group col-md-2">
-      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+    
+    <div class="col-md-5 btn-group btn-sm">
+    <div class="btn-group">
+      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
         Action on Selected
         <span class="caret"></span>
-      </a>
+      </button>
       <ul class="dropdown-menu">
         <li><a href="#" class="email-selected">Email Selected Students</a></li>
         <li><a href="#" class="password-selected">Change the Password of Selected Student</a></li>
         <li><a href="#" class="delete-selected">Delete Selected Students</a></li>
       </ul>
     </div>
-    <div class="btn-group col-md-2">
-      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-        Import or Export Students
+      <div class="btn-group">
+        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+          Import/Export Users
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a href="#" class="add-students-file-option">Add Students from a File</a></li>
+          <li><a href="#" class="add-students-man-option">Add Students Manually</a></li>
+          <li><a href="#" class="export-students-option">Export Students to a File</a></li>
+
+        </ul>
+        </div>
+        <div class="btn-group">
+      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+        Show Rows
         <span class="caret"></span>
-      </a>
+      </button>
       <ul class="dropdown-menu">
-        <li><a href="#" class="add-students-file-option">Add Students from a File</a></li>
-        <li><a href="#" class="add-students-man-option">Add Students Manually</a></li>
-        <li><a href="#" class="export-students-option">Export Students to a File</a></li>
+        <li><a href="#" class="show-rows" data-num="10">Show 10 rows</a></li>
+        <li><a href="#" class="show-rows" data-num="25">Show 25 rows</a></li>
+        <li><a href="#" class="show-rows" data-num="50">Show 50 rows</a></li>
+        <li><a href="#" class="show-rows" data-num="all">Show All rows</a></li>
 
       </ul>
     </div>
+    </div>
+        
 </div>
 <div id="users-table-container"></div>
 

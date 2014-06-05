@@ -133,7 +133,8 @@ var ClasslistView = MainView.extend({
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
 	    "click a.delete-selected": "deleteSelectedUsers",
-	    "change th[data-class-name='select-user'] input": "selectAll"
+	    "change th[data-class-name='select-user'] input": "selectAll",
+	    "click a.show-rows": "showRows"
 	},
 	takeAction: function(evt){
 		var user = this.users.findWhere({user_id: $(evt.target).closest("tr").children("td:nth-child(3)").text()});
@@ -193,6 +194,9 @@ var ClasslistView = MainView.extend({
 	},
 	selectAll: function (evt) {
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
+	},
+	showRows: function(evt){
+		console.log($(evt.target).data("num"));
 	},
 	tableSetup: function () {
             var self = this;
