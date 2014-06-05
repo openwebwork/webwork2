@@ -23,10 +23,10 @@ set serializer => 'JSON';
 
 hook 'before' => sub {
 
-    for my $key (keys(%{request->params})){
-    	my $value = defined(params->{$key}) ? params->{$key} : ''; 
-    	debug($key . " : " . $value);
-    } 
+    # for my $key (keys(%{request->params})){
+    # 	my $value = defined(params->{$key}) ? params->{$key} : ''; 
+    # 	debug($key . " : " . $value);
+    # } 
 
 };
 

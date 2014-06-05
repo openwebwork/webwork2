@@ -125,6 +125,7 @@ post '/courses/:course_id/sets/:set_id' => sub {
 
 put '/courses/:course_id/sets/:set_id' => sub {
 
+    debug 'in put /courses/:course_id/sets/:set_id';
     checkPermissions(10);
 
     send_error("The set name: " . param('set_id'). " does not exist.",404)
@@ -139,11 +140,14 @@ put '/courses/:course_id/sets/:set_id' => sub {
     my $set =  vars->{db}->getGlobalSet(params->{set_id}); 
 
     for my $key (@set_props) {
+        debug "$key: " . params->{$key};
         $set->{$key} = params->{$key} if defined(params->{$key});
     }
 
 
-    vars->{db}->putGlobalSet($set);
+    my $result = vars->{db}->putGlobalSet($set);
+
+    debug $result; 
 
 
     ##
@@ -155,7 +159,6 @@ put '/courses/:course_id/sets/:set_id' => sub {
     my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
     my @usersToAdd = array_minus(@{params->{assigned_users}},@userNamesFromDB);
     my @usersToDelete = array_minus(@userNamesFromDB,@{params->{assigned_users}});
-    my @test2 = grep{ not $_ ~~ @userNamesFromDB } @{params->{assigned_users}};
 
     for my $user(@usersToAdd){
         addUserSet($user,params->{set_id});
@@ -180,14 +183,16 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
 
+    ## why is this here?  it doesn't do anything.
 
     if (scalar(@usersToDelete)>0){
         debug "Deleting users to set " . params->{set_id};
         debug join("; ", @usersToDelete);
     }
 
+    my $setFromDB = vars->{db}->getGlobalSet(params->{set_id});
 
-    my $returnSet = convertObjectToHash($set,\@boolean_set_props);
+    my $returnSet = convertObjectToHash($setFromDB,\@boolean_set_props);
 
 
     $returnSet->{assigned_users} = params->{assigned_users};

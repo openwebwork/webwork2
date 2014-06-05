@@ -180,13 +180,8 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
-            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-                if(!this.model.get("enable_reduced_scoring"))
-                   this.$(".reduced-scoring-date").closest("tr").addClass("hidden") 
-            } else {
-                this.$(".reduced-scoring").closest("tr").addClass("hidden")   
-            }
             if(this.model){
+                this.showHideReducedScoringDate();
                 this.stickit();
             }
             return this;
@@ -201,7 +196,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         setProblemSet: function(_set) {
             var self = this; 
             this.model = _set; 
-            this.model.on("change:enable_reduced_scoring",this.showHideReducedScoringDate);
+            this.model.on("change:enable_reduced_scoring",this.render);
             return this;
         },
         bindings: {
