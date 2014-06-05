@@ -38,7 +38,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 $('[data-toggle="popover"]').each(function () {
                     //the 'is' for buttons that trigger popups
                     //the 'has' for icons within a button that triggers a popup
-                    if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
+                    if (!$(this).is(e.target) && $(this).has(e.target).length === 0 
+                                && $('.popover').has(e.target).length === 0) {
                         $(this).popover('hide');
                     }
                 });
@@ -95,7 +96,9 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
             this.$(".assign-due,.assign-open,.assign-answer").draggable({
                 revert: true,
-                start: function () {$(this).popover("destroy")}
+                start: function () {
+                    $(this).children(".show-set-popup-info").popover("destroy")
+                }
             });
         },
         setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
