@@ -17,6 +17,8 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSets = options.problemSets;
             this.users = options.users;
 
+            this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10;
+
             this.tableSetup();
 
             this.headerInfo = { template: "#allSets-header", 
@@ -41,6 +43,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
             this.$(".set-id a").truncate({width: 120});
+            this.showRows(this.pageSize);
             MainView.prototype.render.apply(this);
             return this;
         },
@@ -68,6 +71,21 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 this.problemSetTable.updatePaginator();
                 
             }
+        },  
+        showRows: function(evt){
+            this.pageSize = _.isString(evt) || _.isNumber(evt) ? evt : $(evt.target).data("num")
+            this.$(".show-rows i").addClass("not-visible");
+            if(_.isString(evt) || _.isNumber(evt)){
+                this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
+            } else {
+                $(evt.target).children("i").removeClass("not-visible");
+            }
+            if(this.pageSize==="all") {
+                this.problemSetTable.set({num_rows: this.users.length});
+            } else {
+                this.problemSetTable.set({num_rows: this.pageSize});
+            }
+            this.$(".set-id a").truncate({width: 120});
         },
         set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
             var self = this;
@@ -128,6 +146,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                         editable: false, datatype: "integer", use_contenteditable: false}
             ];
 
+        },
+        events: {
+            "click a.show-rows": "showRows"
         },
         getHelpTemplate: function () {
             return $("#problem-sets-manager-help-template").html();

@@ -20,6 +20,10 @@ a#view-header i {margin-left:1ex;}
 
 .dropdown-submenu a {width: 180px; overflow: hidden;}
 
+/* Classlist manager */
+
+.show-rows i {margin-right: 5px;}
+
 /* the num-users in the left-column */
 
 .num-users { margin-left: 2ex;}
