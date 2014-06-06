@@ -20,8 +20,13 @@ $(function(){
 	$(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); 
     });
 
-    // Turn summaries into popovers
-    $('a.table-summary').popover();
+    // Turn summaries and help boxes into popovers
+    $('a.table-summary').popover().click(function (event) {
+	event.preventDefault();
+    });
+    $('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
+	event.preventDefault();
+    }).html('<i class="icon-question-sign"/>');
 
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');

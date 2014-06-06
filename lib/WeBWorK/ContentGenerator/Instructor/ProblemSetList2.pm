@@ -1948,7 +1948,7 @@ sub readSetDef {
 			$line =~ s|(#.*)||;                              ## don't read past comments
 			unless ($line =~ /\S/) {next;}                   ## skip blank lines
 			$line =~ s|\s*$||;                               ## trim trailing spaces
-			$line =~ m|^\s*(\w+)\s*=\s*(.*)|;
+			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
 			
 			######################
 			# sanity check entries
@@ -2138,8 +2138,8 @@ sub readSetDef {
 			$line =~ s|(#.*)||;                              ## don't read past comments
 			unless ($line =~ /\S/) {next;}                   ## skip blank lines
 			$line =~ s|\s*$||;                               ## trim trailing spaces
-			$line =~ m|^\s*(\w+)\s*=\s*(.*)|;
-			
+			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
+
 			######################
 			# sanity check entries
 			######################
@@ -2325,7 +2325,7 @@ SET:	foreach my $set (keys %filenames) {
 			# This is the new way of saving problem information
 			# the labelled list makes it easier to add variables and 
 			# easier to tell when they are missing
-			$problemList     .= "problem_start = \n";
+			$problemList     .= "problem_start\n";
 			$problemList     .= "source_file = $source_file\n";
 			$problemList     .= "value = $value\n";
 			$problemList     .= "max_attempts = $max_attempts\n";
@@ -2333,7 +2333,7 @@ SET:	foreach my $set (keys %filenames) {
 			$problemList     .= "problem_id = $problem_id\n";
 			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
 			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
-			$problemList     .= "problem_end = \n"
+			$problemList     .= "problem_end\n"
 			
 		}
 
@@ -2388,7 +2388,7 @@ description       = $description
 restrictProbProgression = $restrictProbProgression
 emailInstructor   = $emailInstructor
 ${restrictFields}
-problemListV2     = 
+problemListV2 
 $problemList
 EOF
 

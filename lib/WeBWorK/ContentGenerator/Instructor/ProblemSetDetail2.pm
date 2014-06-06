@@ -178,6 +178,7 @@ use constant FIELD_PROPERTIES => {
 				#0 => "None Specified",
 				"" => "None Specified",
 		},
+                help_text => "This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field."
 	},
 	restricted_status => {
 		name      => "Score required for release",
@@ -308,6 +309,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "all",
                 default   => "0",
 		labels    => { '1' => "Yes", '0' => "No", },
+                help_text => "If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary",
 	},
 
 	email_instructor  => {
@@ -317,6 +319,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default   => "N",
 		labels    => { '1' => "Yes", '0' => "No", '2' => "Before Due Date"},
+                help_text => "If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%",
 	},
 
 	# in addition to the set fields above, there are a number of things
@@ -359,6 +362,7 @@ use constant FIELD_PROPERTIES => {
                  labels    => {
                       "-1" => "Never",
                  },
+                 help_text => "When a student has more attempts than is specified here they will be able to view another version of this problem.  The new version is guaranteed to be different or the feature will fail gracefully.  Depending on the course configuration students will be able to attempt this new version as many times as they want or see a worked out solution, if one exists."
         },
 	problem_seed => {
 		name      => "Seed",
@@ -413,7 +417,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	att_to_open_children  => {
-		name      => "Attempts to Open",
+		name      => "Att. to Open Children",
 		type      => "edit",
 		size      => 6,
 		override  => "any",
@@ -422,6 +426,7 @@ use constant FIELD_PROPERTIES => {
 				"-1" => "max attempts",
 				"0" => "always open",
 		},
+                help_text => "The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max attempts\" is specified here then child problems will only be available after a student runs out of attempts.",
 	},
 	counts_parent_grade  => {
 		name      => "Counts for Parent",
@@ -430,6 +435,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default   => "0",
 		labels    => { '1' => "Yes", '0' => "No", },
+                help_text => "If this flag is set then this problem will count towards the grade of its parent problem.  In general the adjusted status on a problem is the larger of the problem's status and the weighted average of the status of its child problems which have this flag enabled.",
 	},
 
 
@@ -723,7 +729,9 @@ sub FieldHTML {
 				value => $field,
 				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),
 		}) : "",
-		$r->maketext($properties{name}),
+		$r->maketext($properties{name}).
+		($properties{help_text} ? "&nbsp;".CGI::a({class=>'help-popup',href=>'#',
+						  'data-content'=>$properties{help_text},'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);

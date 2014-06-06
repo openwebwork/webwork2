@@ -125,6 +125,8 @@ $(function() {
 	}
     };
 
+    // this sets the prob_num fields so that the correct number is passed
+    // to WeBWorK as a parameter
     var set_prob_num_fields = function () {
 	var array = $('#psd_list').nestedSortable("toArray");
 	var heirarchy = $('#psd_list').nestedSortable("toHierarchy");
@@ -136,8 +138,43 @@ $(function() {
 	    $(this).html($(this).html().slice(0,-1));
 	    $(this).append('<i class="icon-resize-vertical" />');
 	});
+	disable_fields();
 
     };
+
+    // This enables and disables problem fields that don't make sense
+    // based on the position of the problem
+    var disable_fields = function () {
+
+	var array = $('#psd_list').nestedSortable("toArray");
+
+	$('.psd_list_row').each(function () {
+	    var id = this.id.match(/^psd_list_(\d+)/)[1];
+	    
+	    // If it has children then attempts to open is enabled
+	    var has_children = false;
+	    for (var i = 0; i < array.length; i++) {
+		if (!has_children && array[i].parent_id == id) {
+		    $('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').removeClass('hidden');
+		    has_children = true;
+		} else if (array[i].item_id == id) {
+		    // If its a top level problem counts_for_parent is disabled
+		    if (!array[i].parent_id) {
+			$('#problem\\.'+id+'\\.counts_parent_grade_id').parents('tr:first').addClass('hidden');
+		    } else {
+			$('#problem\\.'+id+'\\.counts_parent_grade_id').parents('tr:first').removeClass('hidden');
+		    }
+		    
+		}
+	    }
+	    if (!has_children) {
+		$('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').addClass('hidden');	
+	    }
+	});
+    }
+
+    //Actually run disabled fields on page load. 
+    disable_fields();
 
     $('#psd_list').on('sortupdate', set_prob_num_fields);
 
@@ -189,15 +226,15 @@ function init_webservice(command) {
 function render(id) {
     var ro = init_webservice('renderProblem');
     var templatedir = $('#template_dir').val();
-    if ($('[name="problem.'+id+'.problem_seed"]').length > 0) {
-	ro.problemSeed = $('[name="problem.'+id+'.problem_seed"]').val();
+    if ($('#problem\\.'+id+'\\.problem_seed').length > 0) {
+	ro.problemSeed = $('#problem\\.'+id+'\\.problem_seed').val();
     } else {
 	ro.problemSeed = 0;
     }
     var source_file
 
-    if ($('[name="problem.'+id+'.source_file"]').val()) {
-	source_file = $('[name="problem.'+id+'.source_file"]').val();
+    if ($('#problem\\.'+id+'\\.source_file').val()) {
+	source_file = $('#problem\\.'+id+'\\.source_file').val();
     } else {
 	source_file = $('#problem_'+id+'_default_source_file').val();
     }
