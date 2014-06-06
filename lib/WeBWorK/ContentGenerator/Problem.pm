@@ -1748,7 +1748,9 @@ sub output_score_summary{
 		     $problem->num_incorrect >= $problem->max_attempts))) {
 		print CGI::br().$r->maketext('This problem has open subproblems.  You can visit them by using the links to the left or visiting the set page.');
 
-		if (scalar(@children_counts_indexs) > 0) {
+		if (scalar(@children_counts_indexs) == 1) {
+		    print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the score of problem [_1].', join('.', @{$problemSeqs[$children_counts_indexs[0]]}));
+		} elsif (scalar(@children_counts_indexs) > 1) {
 		    print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
 		}
 		
@@ -1768,7 +1770,7 @@ sub output_score_summary{
 	    # if it doesn't (and its not a top level problem) then its grade doesnt matter. 
 	    if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
 		pop @seq;
-		print CGI::br().$r->maketext('The weighted average of this problem, along with others that have this message, can replace the score of problem [_1] if it is larger.',join('.',@seq));
+		print CGI::br().$r->maketext('The score for this problem can count towards score of problem [_1].',join('.',@seq));
 	    } elsif (scalar(@seq)!=1) {
 		pop @seq;
 		print CGI::br().$r->maketext('This score for this problem does not count for the score of problem [_1] or for the set.',join('.',@seq));
