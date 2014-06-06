@@ -204,14 +204,14 @@ var ClasslistView = MainView.extend({
                 stickit_options: {update: function($el, val, model, options) {
                     $el.html($("#checkbox-template").html());
                 }}, colHeader: "<input type='checkbox'></input>"},
-                {name: "Action", key: "action", "classname": "user-action",
+                /*{name: "Action", key: "action", "classname": "user-action",
             		stickit_options: { selectOptions: { 
             			collection: [{value: 0, label: "Select"},
             				{value: 1, label: "Delete User"},
             				{value: 2, label: "Act As User"},
             				{value: 3, label: "Change Password"},
             				{value: 4, label: "Email User"},
-            				{value: 5, label: "Student Progress"}]}}},
+            				{value: 5, label: "Student Progress"}]}}},*/
                 {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
                 {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets",
                 	stickit_options: {update: function($el, val, model, options) {
