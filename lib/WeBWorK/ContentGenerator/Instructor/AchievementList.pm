@@ -278,26 +278,6 @@ sub body {
 		$i++;
 	}
 	
-	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Select all',
-	       onClick => "for (i in document.achievementlist.elements)  { 
-	                       if (document.achievementlist.elements[i].name =='selected_achievements') { 
-	                           document.achievementlist.elements[i].checked = true
-	                       }
-	                    }" });
-   	my $selectNone =CGI::input({-type=>'button', -name=>'check_none', -value=>'Unselect all',
-	       onClick => "for (i in document.achievementlist.elements)  { 
-	                       if (document.achievementlist.elements[i].name =='selected_achievements') { 
-	                          document.achievementlist.elements[i].checked = false
-	                       }
-	                    }" });
-	unless ($editMode or $exportMode) {
-		print CGI::Tr({}, CGI::td({ colspan=>2, -align=>"center"},
-			$selectAll." ". $selectNone
-			)
-		);
-	}
-
-	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 
 	print CGI::end_div();
@@ -1236,11 +1216,17 @@ sub printTableHTML {
 	}
 	    
 
+	my $selectBox = CGI::input({
+	    type=>'checkbox',
+	    id=>'achievementlist-select-all',
+	    onClick => "selectall = document.getElementById('achievementlist-select-all'); for (i in document.achievementlist.elements)  { if (document.achievementlist.elements[i].name =='selected_achievements') { document.achievementlist.elements[i].checked = selectall.checked;}}",
+					   });
+
 	my @tableHeadings; 
 	    
 	#hardcoded headings.  making htis more modular would be good
 	if ($exportMode) {
-	    @tableHeadings = ("Select",
+	    @tableHeadings = ($selectBox,
 			      "Achievement ID",
 			      "Name");
 	} elsif ($editMode) {
@@ -1250,7 +1236,7 @@ sub printTableHTML {
 			      "Description <br> Evaluator File <br> Icon File"
 		);
 	} else {
-	    @tableHeadings = ("Select",
+	    @tableHeadings = ($selectBox,
 			      "Enabled",
 			      "Achievement ID",
 			      "Category",
