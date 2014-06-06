@@ -138,7 +138,7 @@ $(function(){
     $('.set-list-form input:button').addClass('btn btn-info');
     $('.set-list-form input:reset').addClass('btn btn-info');
     $('.set-list-form').wrapInner('<div />');
-    $('.set_table').addClass('small-table-text table table-condensed');
+    $('.set_table').addClass('small-table-text table-bordered table table-condensed');
     $('#show_hide').addClass('btn btn-info');
     $('#problem_set_form').addClass('form-inline');
     $('#user-set-form').addClass('form-inline user-assign-form');
