@@ -1504,7 +1504,7 @@ sub fieldEditHTML {
 		if ($type eq "status") {
 			my $status_name = $ce->status_abbrev_to_name($value);
 			if (defined $status_name) {
-				$value = "$status_name ($value)";
+				$value = "$status_name";
 			}
 		}
 		return $value;
