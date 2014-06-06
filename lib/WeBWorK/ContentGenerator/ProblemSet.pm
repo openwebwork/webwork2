@@ -452,6 +452,7 @@ sub body {
 sub problemListRow($$$$$) {
 	my ($self, $set, $problem, $db, $canScoreProblems, $isJitarSet) = @_;
 	my $r = $self->r;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
 	my $courseID = $urlpath->arg("courseID");
@@ -490,7 +491,7 @@ sub problemListRow($$$$$) {
 	}
 	
 	# if the problem is trestricted we show that it exists but its greyed out
-	if ($isJitarSet && is_jitar_problem_closed($db, $problem->user_id, $setID, $problemID)) {
+	if ($isJitarSet && !$authz->hasPermissions($problem->user_id, "view_unopened_sets") && is_jitar_problem_closed($db, $problem->user_id, $setID, $problemID)) {
 	    $interactive = CGI::span({class=>$linkClasses." disabled-problem"}, $r->maketext("Problem [_1]",$problemNumber));
 	} else {
 	    $interactive = CGI::a({-href=>$interactiveURL,-class=>$linkClasses}, $r->maketext("Problem [_1]",$problemNumber));

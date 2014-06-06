@@ -1046,6 +1046,7 @@ sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
 	# can't show sibling problems if the set is invalid
@@ -1137,7 +1138,7 @@ sub siblings {
 		    $class='nested-problem-'.$level;
 		}
 		
-		if (is_jitar_problem_closed($db, $eUserID, $setID, $problemID)) {
+		if (!$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_closed($db, $eUserID, $setID, $problemID)) {
 		    $link = CGI::a( {href=>'#', class=>$class.' disabled-problem'},  $r->maketext("Problem [_1]", join('.',@seq)));
 		} else {
 		    $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage, 
@@ -1227,6 +1228,7 @@ sub nav {
 	return "" if(($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}) and $can{showMeAnother});
 
 	my $db = $r->db;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
 	return "" if ( $self->{invalidSet} );
@@ -1270,8 +1272,9 @@ sub nav {
 
 		$prevID = $problemIDs[$curr_index-1] if $curr_index-1 >=0;
 		$nextID = $problemIDs[$curr_index+1] if $curr_index+1 <= $#problemIDs;
-		$nextID = '' if ($isJitarSet && $nextID &&
-				 is_jitar_problem_closed($db,$eUserID,$setID,$nextID));
+		$nextID = '' if ($isJitarSet && $nextID 
+				 && !$authz->hasPermissions($eUserID, "view_unopened_sets") 
+				 && is_jitar_problem_closed($db,$eUserID,$setID,$nextID));
 		    
 		
 	}
