@@ -31,15 +31,9 @@ var ClasslistView = MainView.extend({
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
 	     
+		this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10;  
 
-	    // Make sure the take Action menu item is reset
-	    $("button#help-link").click(function () {self.helpPane.open();});	  
-
-	    // Display the number of users shown
-	    //$("#usersShownInfo").html(this.editgrid.grid.getRowCount() + " of " + this.users.length + " users shown.");
-		
-	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation
-	  
+	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation	  
 	    this.users.each(function(model){
 	    	model.bind('validated:invalid', function(_model, errors) {
 			    console.log("running invalid");
@@ -68,7 +62,7 @@ var ClasslistView = MainView.extend({
     render: function(){
 	    this.$el.html($("#classlist-manager-template").html());
 	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
-                            paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+                            paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
         this.$el.append(this.userTable.el);
 
@@ -76,6 +70,7 @@ var ClasslistView = MainView.extend({
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
         this.clearFilterText();
+        this.showRows(this.pageSize);
         MainView.prototype.render.apply(this);
 	    return this;
     },  
@@ -136,7 +131,7 @@ var ClasslistView = MainView.extend({
 	    "change th[data-class-name='select-user'] input": "selectAll",
 	    "click a.show-rows": "showRows"
 	},
-	takeAction: function(evt){
+	/*takeAction: function(evt){
 		var user = this.users.findWhere({user_id: $(evt.target).closest("tr").children("td:nth-child(3)").text()});
 		switch($(evt.target).val()){
 			case "1": // delete user
@@ -159,7 +154,7 @@ var ClasslistView = MainView.extend({
 				break;
 		}
 		$(evt.target).val(0); // reset the select pulldown
-	},
+	}, */
 	addStudentsByFile: function () {
 		this.addStudentFileView.openDialog();
 	},
@@ -196,7 +191,18 @@ var ClasslistView = MainView.extend({
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
 	},
 	showRows: function(evt){
-		console.log($(evt.target).data("num"));
+		this.pageSize = _.isString(evt) || _.isNumber(evt) ? evt : $(evt.target).data("num")
+		this.$(".show-rows i").addClass("not-visible");
+		if(_.isString(evt) || _.isNumber(evt)){
+			this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
+		} else {
+			$(evt.target).children("i").removeClass("not-visible");
+		}
+		if(this.pageSize==="all") {
+			this.userTable.set({num_rows: this.users.length});
+		} else {
+			this.userTable.set({num_rows: this.pageSize});
+		}
 	},
 	tableSetup: function () {
             var self = this;

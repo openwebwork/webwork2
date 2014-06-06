@@ -25,6 +25,7 @@ body {  /* needed for the navigation bars top and bottom*/
 .current-page {font-weight: bold;}
 
 .hidden, .form-horizontal .hidden {display: none;}	
+.not-visible {visibility: hidden}
 
 /* the following is needed to get pop-up boxes to display correctly.*/
 

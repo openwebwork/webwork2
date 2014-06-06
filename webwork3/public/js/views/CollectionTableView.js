@@ -39,10 +39,14 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			if($(options.tablename).length>0){ // if the tablename was passed use it as the $el
 				this.$el=$(options.tablename);
 			}
-			// setup the paginator 
 			if(typeof(options.paginator.showPaginator)==="undefined"){
 				this.paginatorProp.showPaginator = true;	
 			}
+			// setup the paginator 
+			this.initializeTable();
+		},
+		initializeTable: function () {
+			
 			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
 				this.collection.size();
 			this.pageRange = _.range(this.pageSize);
@@ -151,6 +155,12 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			this.$(".paginator-row button").removeClass("current-page");
 			this.$(".numbered-page[data-page-num='"+this.currentPage+"']").addClass("current-page");
+
+			if(stop===1){
+				this.$(".paginator-row").addClass("hidden")
+			} else {
+				this.$(".paginator-row").removeClass("hidden")
+			}
 		},
 		filter: function(filterText) {
 			var filterText;
@@ -168,6 +178,14 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			}
 			this.showFiltered = true;
 			return this;
+		},
+		set: function(options){
+			if(options.num_rows){
+				this.paginatorProp.page_size = options.num_rows;
+				this.initializeTable();
+				this.updatePaginator();
+				this.render();
+			}
 		},
 		updateTable: function () {
 			var self = this;
