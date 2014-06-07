@@ -470,7 +470,7 @@ sub problemListRow($$$$$) {
 	}
 
 	# if the problem is closed we dont even print it
-	if ($isJitarSet && is_jitar_problem_hidden($db, $problem->user_id, $setID, $problemID)) {
+	if ($isJitarSet && !$authz->hasPermissions($problem->user_id, "view_unopened_sets") && is_jitar_problem_hidden($db, $problem->user_id, $setID, $problemID)) {
 	    return '';
 	}
 

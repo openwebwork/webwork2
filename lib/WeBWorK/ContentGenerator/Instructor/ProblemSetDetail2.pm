@@ -50,7 +50,7 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts s
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
-use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
+use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
 
 
 # we exclude the gateway set fields from the set field order, because they
@@ -318,7 +318,7 @@ use constant FIELD_PROPERTIES => {
 		choices   => [ qw(0 1 2) ],
 		override  => "any",
                 default   => "N",
-		labels    => { '1' => "Yes", '0' => "No", '2' => "Before Due Date"},
+		labels    => { '1' => "Yes", '0' => "No"},
                 help_text => "If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%",
 	},
 
@@ -548,7 +548,7 @@ sub FieldTable {
 		next if ( $field eq 'problem_seed'  &&
 			  ( $isGWset && $forUsers && ! $setVersion ) );
 
-		# skip teh Show Me Another value if SMA is not enabled
+		# skip the Show Me Another value if SMA is not enabled
 		next if ( $field eq 'showMeAnother' &&
 			  !$ce->{pg}->{options}->{enableShowMeAnother} );
 

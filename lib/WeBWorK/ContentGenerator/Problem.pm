@@ -1088,7 +1088,7 @@ sub siblings {
 	my @items;
 
 	foreach my $problemID (@problemIDs) {
-	    if ($isJitarSet && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID)) {
+	    if ($isJitarSet && !$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID)) {
 		shift(@problemRecords) if $progressBarEnabled;
 		next;
 	    }
@@ -1259,7 +1259,7 @@ sub nav {
 		    my @processedProblemIDs;
 		    foreach my $id (@problemIDs) {
 			push @processedProblemIDs, $id unless
-			    is_jitar_problem_hidden($db,$eUserID,$setID,$id);
+			    !$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_hidden($db,$eUserID,$setID,$id);
 		    }
 		    @problemIDs = @processedProblemIDs;
 		}
@@ -1724,6 +1724,8 @@ sub output_score_summary{
 	    # get some data 
 	    my @problemSeqs;
 	    my $index;
+	    # this sets of an array of the sequence assoicated to the 
+	    #problem_id
 	    for (my $i=0; $i<=$#problemIDs; $i++) {
 		$index = $i if ($problemIDs[$i] == $problem->problem_id);
 		my @seq = jitar_id_to_seq($problemIDs[$i]);
@@ -1735,11 +1737,16 @@ sub output_score_summary{
 	    my @children_counts_indexs;
 	    my $hasChildren = 0;
 
+	    # this does several things.  It finds the index of the next problem
+	    # at the same level as the current one.  It checks to see if there
+	    # are any children, and it finds which of those children count
+	    # toward the grade of this problem.  
+
 	    while ($next_id <= $#problemIDs && scalar(@{$problemSeqs[$index]}) < scalar(@{$problemSeqs[$next_id]})) {
 
 		my $childProblem = $db->getMergedProblem($effectiveUser,$set->set_id, $problemIDs[$next_id]);
 		$hasChildren = 1;
-		push @children_counts_indexs, $next_id if $childProblem->counts_parent_grade;
+		push @children_counts_indexs, $next_id if scalar(@{$problemSeqs[$index]}) + 1 == scalar(@{$problemSeqs[$next_id]}) && $childProblem->counts_parent_grade;
 		$next_id++;
 	    }	
 
@@ -1782,8 +1789,7 @@ sub output_score_summary{
 	    # if the instructor has set this up, email the instructor a warning message if 
 	    # the student has run out of attempts on a top level problem and all of its children
 	    # and didn't get 100%
-	    if ($submitAnswers && ($set->email_instructor == 1 ||
-		($set->email_instructor == 2 && before($set->due_date)))) {
+	    if ($submitAnswers && $set->email_instructor) {
 		my $parentProb = $db->getMergedProblem($effectiveUser,$set->set_id,seq_to_jitar_id($seq[0]));
 		warn("Couldn't find problem $seq[0] from set ".$set->set_id." in the database") unless $parentProb;
 
