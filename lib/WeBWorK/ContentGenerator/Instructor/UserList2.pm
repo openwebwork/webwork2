@@ -283,7 +283,7 @@ sub body {
 		$r->maketext("Login Name"), 
 		$r->maketext("First Name"), 
 		$r->maketext("Last Name"), 
-		$r->maketext("Email Address"), 
+		$r->maketext("Email"), 
 		$r->maketext("Student ID"), 
 		$r->maketext("Status"), 
 		$r->maketext("Section"), 
@@ -735,13 +735,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Sort by").": ",
 			-input_attr=>{
 				-name => "action.sort.primary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.primary"}->[0] || "last_name",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -759,13 +758,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Then by").": ",
 			-input_attr=>{
 				-name => "action.sort.secondary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.secondary"}->[0] || "first_name",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -783,13 +781,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Then by").": ",
 			-input_attr=>{
 				-name => "action.sort.ternary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.ternary"}->[0] || "user_id",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -819,7 +816,6 @@ sub sort_handler {
 				user_id		=> $r->maketext("Login Name"),
 				first_name	=> $r->maketext("First Name"),
 				last_name	=> $r->maketext("Last Name"),
-				email_address	=> $r->maketext("Email Address"),
 				student_id	=> $r->maketext("Student ID"),
 				status		=> $r->maketext("Enrollment Status"),
 				section		=> $r->maketext("Section"),
@@ -1495,7 +1491,7 @@ sub fieldEditHTML {
 		if ($value eq '&nbsp;') {
 			return $value;}
 		else {
-			return CGI::a({-href=>"mailto:$value"},$value);
+			return CGI::a({-href=>"mailto:$value"},$r->maketext('Email'));
 		}
 	}
 	
@@ -1830,7 +1826,7 @@ sub printTableHTML {
 			$r->maketext("Assigned Sets"),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'first_name', %current_state})}, $r->maketext('First Name')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'last_name', %current_state})}, $r->maketext('Last Name')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'email_address', %current_state})}, $r->maketext('Email Address')),
+			$r->maketext('Email'),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'student_id', %current_state})}, $r->maketext('Student ID')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'status', %current_state})}, $r->maketext('Status')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'section', %current_state})}, $r->maketext('Section')),
