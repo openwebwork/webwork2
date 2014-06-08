@@ -912,15 +912,15 @@ div.problem_sets_options {
     width: 10px;
     font-size:large;
     display: none;
-    font-weight: bold;
+    font-family: FontAwesome;
 }
 
-.psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:before {
-    content: '\2795';
+.psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
+    content: '\f055';
 }
 
-.psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:before {
-    content: '\2796';
+.psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
+    content: '\f056';
 }
 
 
