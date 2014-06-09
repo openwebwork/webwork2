@@ -389,7 +389,7 @@ sub setListRow {
 	    ( defined( $set->assignment_type() ) && 
 	      $set->assignment_type() eq 'proctored_gateway' );
 	my $display_name = $name;
-	$display_name =~ s/_/&nbsp;/g;
+	$display_name =~ s/_/ /g;
 # this is the link to the homework assignment, it has tooltip with the hw description 
 	my $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, "$display_name");
 	
