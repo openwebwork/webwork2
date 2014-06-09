@@ -283,7 +283,7 @@ sub body {
 		$r->maketext("Login Name"), 
 		$r->maketext("First Name"), 
 		$r->maketext("Last Name"), 
-		$r->maketext("Email"), 
+		$r->maketext("Email Address"), 
 		$r->maketext("Student ID"), 
 		$r->maketext("Status"), 
 		$r->maketext("Section"), 
@@ -1656,7 +1656,7 @@ sub recordEditHTML {
 					     }
 		    );
 
-		push @tableCells, $label,
+		push @tableCells, CGI::div({class=>'label-with-edit-icon'}, $label);
 		
 	}
 	
@@ -1826,7 +1826,7 @@ sub printTableHTML {
 			$r->maketext("Assigned Sets"),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'first_name', %current_state})}, $r->maketext('First Name')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'last_name', %current_state})}, $r->maketext('Last Name')),
-			$r->maketext('Email'),
+		        $r->maketext('Email Link'),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'student_id', %current_state})}, $r->maketext('Student ID')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'status', %current_state})}, $r->maketext('Status')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'section', %current_state})}, $r->maketext('Section')),

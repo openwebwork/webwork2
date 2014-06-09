@@ -1180,7 +1180,8 @@ sub recordEditHTML {
 		$fieldValue =~ s/ /&nbsp;/g;
 		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /enabled/;
 		if ($field =~ /achievement_id/) {
-		    $fieldValue .= " ".$imageLink;
+		    $fieldValue .= $imageLink;
+		    $fieldValue = CGI::div({class=>'label-with-edit-icon'},$fieldValue);
 		}
 		push @tableCells, CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	    }

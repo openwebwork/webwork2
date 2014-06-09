@@ -2398,7 +2398,7 @@ sub recordEditHTML {
 		if ($editMode) {
 			$label = CGI::a({href=>$problemListURL}, $prettySetID);
 		} else {		
-			$label = CGI::a({class=>"$visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $prettySetID) . $imageLink;
+			$label = CGI::a({class=>"set-label $visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $prettySetID) . $imageLink;
 		}
 		
 		push @tableCells, CGI::input({
@@ -2411,7 +2411,7 @@ sub recordEditHTML {
 					     }
 		);
 
-		push @tableCells, $label;
+		push @tableCells, CGI::div({class=>'label-with-edit-icon'},$label);
 	}
 
 	# Problems link

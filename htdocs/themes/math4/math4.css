@@ -216,6 +216,13 @@ ul.courses-list a:hover {
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you
  * to scroll if you don't have that width, don't know how to fix it */
+.label-with-edit-icon {
+    white-space:nowrap;
+}
+
+.label-with-edit-icon .set-label {
+    white-space:normal;
+}
 
 table.classlist-table {
 /*	display: block; */
