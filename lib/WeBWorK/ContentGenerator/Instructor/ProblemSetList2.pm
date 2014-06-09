@@ -1997,9 +1997,9 @@ sub readSetDef {
 			} elsif ( $item eq 'relaxRestrictIP' ) {
 			    $relaxRestrictIP = ( $value ) ? $value : 'No';
 			} elsif ( $item eq 'emailInstructor' ) {
-			    $emailInstructor = ( $value ) ? $value : 'No';
+			    $emailInstructor = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'restrictProbProgression' ) {
-			    $restrictProbProgression = ( $value ) ? $value : 'No';
+			    $restrictProbProgression = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'description' ) {
 			    $value =~ s/<n>/\n/g;
 			    $description = $value;

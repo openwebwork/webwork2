@@ -224,7 +224,6 @@ use constant FIELD_PROPERTIES => {
 		labels    => {	default => "homework",
 				gateway => "gateway/quiz",
 				proctored_gateway => "proctored gateway/quiz",
-				jitar => "just-in-time"
 		},
 	},
 	version_time_limit => {

@@ -1798,7 +1798,7 @@ sub readSetDef {
 			$line =~ s|(#.*)||;                              ## don't read past comments
 			unless ($line =~ /\S/) {next;}                   ## skip blank lines
 			$line =~ s|\s*$||;                               ## trim trailing spaces
-			$line =~ m|^\s*(\w+)\s*=\s*(.*)|;
+			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
 			
 			######################
 			# sanity check entries
@@ -1849,8 +1849,7 @@ sub readSetDef {
 			} elsif ($item eq 'problemList') {
 				last;
 			} elsif ($item eq 'problemListV2') {
-			    $self->addbadmessage( $self->r->maketext("Newer problem set def files must be imported using Hmwk Sets Editor2"));
-			    return;
+			    die $self->r->maketext("Newer problem set def files must be imported using Hmwk Sets Editor2");
 			} else {
 				warn "readSetDef error, can't read the line: ||$line||";
 			}

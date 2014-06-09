@@ -305,7 +305,7 @@ use constant FIELD_PROPERTIES => {
 	restrict_prob_progression => {
 		name      => "Restrict Problem Progression",
 		type      => "choose",
-		choices   => [ qw(1 0) ],
+		choices   => [ qw(0 1) ],
 		override  => "all",
                 default   => "0",
 		labels    => { '1' => "Yes", '0' => "No", },
@@ -315,9 +315,9 @@ use constant FIELD_PROPERTIES => {
 	email_instructor  => {
 		name      => "Email Instructor On Failed Attempt",
 		type      => "choose",
-		choices   => [ qw(0 1 2) ],
+		choices   => [ qw(0 1) ],
 		override  => "any",
-                default   => "N",
+                default   => "0",
 		labels    => { '1' => "Yes", '0' => "No"},
                 help_text => "If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%",
 	},
@@ -423,8 +423,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default => "always open",
 		labels    => {
-				"-1" => "max attempts",
-				"0" => "always open",
+				"-1" => "max att.",
 		},
                 help_text => "The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max attempts\" is specified here then child problems will only be available after a student runs out of attempts.",
 	},
@@ -708,7 +707,7 @@ sub FieldHTML {
 		foreach my $l (keys %labels){
 			$labels{$l} = $r->maketext($labels{$l});
 		}
-			
+
 		$inputType = CGI::popup_menu({
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
@@ -2504,7 +2503,6 @@ sub output_JS {
     	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.nestedSortable.js"}), CGI::end_script();
     	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
 
-    	
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }

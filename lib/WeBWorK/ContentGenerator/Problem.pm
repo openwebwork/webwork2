@@ -478,7 +478,7 @@ sub pre_header_initialize {
 	my $db = $r->db;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
-	
+
 	my $setName = $urlpath->arg("setID");
 	my $problemNumber = $r->urlpath->arg("problemID");
 	my $userName = $r->param('user');
@@ -1152,7 +1152,7 @@ sub siblings {
 							    showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", $problemID).($progressBarEnabled?$status_symbol:""));
 	    }
 	    
-	    push @items, CGI::li( $link);
+	    push @items, CGI::li({($progressBarEnabled && $currentProblemID eq $problemID ? ('class','currentProblem'):())},$link);
 	}
 	
 	# output the progress bar

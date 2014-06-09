@@ -389,7 +389,7 @@ sub initialize  {
 	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is protected! ".CGI::br().
-		"To edit this text you must first make a copy of this file using the 'Save as' action below.");
+		"To edit this text you must first make a copy of this file using the 'NewVersion' action.");
 
 	}
     if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
@@ -410,7 +410,7 @@ sub path {
 
 	if ($setName) {
 	    my $set = $r->db->getGlobalSet($setName);
-	    if ($set && $set->assignment_type eq 'jitar') {
+	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
 		$problemNumber = join('.',jitar_id_to_seq($problemNumber));
 	    }
 	}
@@ -1813,7 +1813,7 @@ sub save_as_form {  # calls the save_as_handler
 	my $set = $self->r->db->getGlobalSet($setID);
 
 	$prettyProbNum = join('.',jitar_id_to_seq($probNum)) 
-	    if ($set && $set->assignment_type eq 'jitar');
+	    if ($self->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
 
     my $replace_problem_in_set  = ($can_add_problem_to_set)?
 			 # CGI::input({

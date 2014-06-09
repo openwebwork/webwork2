@@ -49,15 +49,9 @@ $(function() {
 
     $('.pdr_handle').append('<i class="icon-resize-vertical" />');
 
-    // This code controls the expand/collapse on the elements
-//    $('.pdr_collapse').prepend('<i class="icon-minus-sign"\>');
- //   $('.mjs-nestedSortable-collapsed .pdr_collapse').find('i:first')/
-//	.removeClass('icon-minus-sign')
-//	.addClass('icon-plus-sign');
-
+    // The actual expand collapse icon is controlled by css
     $('.pdr_collapse').on('click', function() {
 	$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
-//	$(this).children('i').toggleClass('icon-plus-sign').toggleClass('icon-minus-sign');
     })
 
     // This is for the render buttons
@@ -81,12 +75,12 @@ $(function() {
 	});
     });
 
-    // This is for collapsing and expanding the tree
     $('#psd_hide_all').addClass('btn').click(function (event) {
 	event.preventDefault();
 	$('.psr_render_area').html('');
     });
 
+    // This is for collapsing and expanding the tree
     $('#psd_expand_all').addClass('btn').click(function (event) {
 	event.preventDefault();
 	$('li.psd_list_row').removeClass('mjs-nestedSortable-collapsed').addClass('mjs-nestedSortable-expanded');

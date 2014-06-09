@@ -73,6 +73,9 @@ $(function(){
     $('.viewOptions input:submit').addClass('btn-small');
     $('.facebookbox input:submit').addClass('btn-small');
 
+    //Problem page
+    $('.currentProblem').addClass('active');
+
     //Reformats the problem_set_table.  
     $('#problem-sets-form').addClass('form-inline');
     $('.body:has(.problem_set_table)').addClass('problem_set_body');

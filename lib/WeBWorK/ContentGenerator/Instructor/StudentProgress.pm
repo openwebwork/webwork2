@@ -1052,7 +1052,7 @@ sub grade_set {
 		
 		
 	# for jitar sets we only use the top level problems
-	if ($set->assignment_type eq 'jitar') {
+	if ($set->assignment_type && $set->assignment_type eq 'jitar') {
 	    my @topLevelProblems;
 	    foreach my $problem (@problemRecords) {
 		my @seq = jitar_id_to_seq($problem->problem_id);

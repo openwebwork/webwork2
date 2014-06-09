@@ -185,7 +185,8 @@ associated warnings.
 sub htmlMessage($$$@) {
 	my ($r, $warnings, $exception, @backtrace) = @_;
 	
-	$warnings = htmlEscape($warnings);
+	#warnings are scrubbed in htmlWarningsList
+	#$warnings = htmlEscape($warnings);
 	$exception = htmlEscape($exception);
 	
 	my @warnings = defined $warnings ? split m|&lt;br /&gt;|, $warnings : ();  #fragile
