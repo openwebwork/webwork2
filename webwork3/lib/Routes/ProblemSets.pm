@@ -197,6 +197,7 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     $returnSet->{assigned_users} = params->{assigned_users};
     $returnSet->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
+    $returnSet->{_id} = params->{set_id};
 
     return $returnSet;
 
