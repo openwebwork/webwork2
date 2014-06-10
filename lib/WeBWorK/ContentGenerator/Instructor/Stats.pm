@@ -488,6 +488,7 @@ sub displaySets {
 		
 		my $avg_num_attempts = ($num_of_problems) ? $total_num_of_attempts_for_set/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
+
 		
 		my $temp_hash         = {         user_id        => $studentRecord->user_id,
 		                                  last_name      => $studentRecord->last_name,
@@ -535,10 +536,12 @@ sub displaySets {
     my %attempts_percentiles_for_problem = ();
     my %problemPage                      = (); # link to the problem page
     foreach my $probID (@problemIDs) {
+	
     	$attempts_percentiles_for_problem{$probID} =   {
     		determine_percentiles([@brackets2], @{$attempts_list_for_problem{$probID}})
 
     	}; 
+
     	$problemPage{$probID} = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseName, setID => $setName, problemID => $probID);
 
@@ -607,7 +610,7 @@ for (my $i=0; $i<=$#problemIDs; $i++) {
     	sprintf("%0.0f",100*$correct_adjusted_answers_for_problem{$probID}/$number_of_students_attempting_problem{$probID})
     	: 0;  #avoid division by zero
 	$barheight = sprintf("%d", $percentcorrect * $plotwindowheight / 100 );
-	$barxpixel = $leftmargin + $i * ($barwidth + 2*$barsep) + $barsep;
+	$barxpixel = $leftmargin + $i * ($barwidth + 2*$barsep) + $barsep +3;
 	$barypixel = $topmargin + $plotwindowheight - $barheight;
 	$svg = $svg . "<rect id=\"adjbar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,51,136)\" /></a>\n";
     }
@@ -618,6 +621,7 @@ for (my $i=0; $i<=$#problemIDs; $i++) {
     $barheight = sprintf("%d", $percentcorrect * $plotwindowheight / 100 );
     $barxpixel = $leftmargin + $i * ($barwidth + 2*$barsep) + $barsep;
     $barypixel = $topmargin + $plotwindowheight - $barheight;
+    
     $problabelxpixel = $leftmargin + $i * $totalbarwidth + $barsep + sprintf("%d",$totalbarwidth/2);
     # $problabelypixel = $topmargin + $plotwindowheight - $barheight;
     $svg = $svg . "<a xlink:href=\"". $linkstring ."\" target=\"_blank\"><rect id=\"bar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,153,198)\" /><text id=\"problem". $probID ."\" x=\"". $problabelxpixel ."\" y=\"". $problabelypixel ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">". $prettyProblemIDs{$probID} ."</text></a>\n";	

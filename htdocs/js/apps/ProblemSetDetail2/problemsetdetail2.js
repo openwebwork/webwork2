@@ -4,7 +4,8 @@ $(function() {
     $('#problemset_detail_list').addClass('container-fluid');
 
     //This uses the nextedSortable jquery-ui module to drive the 
-    // problem list
+    // problem list, if its enabled
+
     $('#psd_list').nestedSortable({
 	handle: 'span.pdr_handle',
 	placeholder: 'pdr_placeholder',
@@ -19,8 +20,12 @@ $(function() {
 	isTree: true,
 	startCollapsed: true,
 	maxLevels: 7,
- 
+	
     });
+    
+    if ($('#psd_list').hasClass('disable_renumber')) {
+	$('#psd_list').nestedSortable({ disabled:true});
+    }
 
     // This adds soem bootstrap elements to the page to format it
     $('.problem_detail_row').addClass('well span11')
@@ -47,7 +52,11 @@ $(function() {
 	.html('<i class="icon-edit">')
 	.tooltip();
 
-    $('.pdr_handle').append('<i class="icon-resize-vertical" />');
+    if (!$('#psd_list').hasClass('disable_renumber')) {
+	$('.pdr_handle').append('<i class="icon-resize-vertical" />');
+    } else {
+	$('.pdr_handle').css('margin-right','5px');
+    }
 
     // The actual expand collapse icon is controlled by css
     $('.pdr_collapse').on('click', function() {
