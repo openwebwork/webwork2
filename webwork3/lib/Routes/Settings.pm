@@ -74,7 +74,11 @@ put '/courses/:course_id/settings/:setting_id' => sub {
 		foreach my $hash (@$oneConfig) {
 			if (ref($hash)=~/HASH/){
 				if ($hash->{var} eq params->{setting_id}){
-					$hash->{value} = params->{value};
+					if($hash->{type} eq 'boolean'){
+						$hash->{value} = $hash->{value} ? 1 : 0;
+					} else {
+						$hash->{value} = params->{value};
+					}
 					return writeConfigToFile(vars->{ce},$hash);
 				}
 			}
