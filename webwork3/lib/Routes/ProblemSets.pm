@@ -9,7 +9,7 @@ package ProblemSets;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Array::Utils qw(array_minus); 
@@ -17,7 +17,7 @@ use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 use Utils::CourseUtils qw/getCourseSettings/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
-use List::Util qw(first max );
+use List::Util qw/first max/;
 
 our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
@@ -125,7 +125,6 @@ post '/courses/:course_id/sets/:set_id' => sub {
 
 put '/courses/:course_id/sets/:set_id' => sub {
 
-    debug 'in put /courses/:course_id/sets/:set_id';
     checkPermissions(10);
 
     send_error("The set name: " . param('set_id'). " does not exist.",404)
@@ -133,22 +132,16 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     ####
     #
-    # Set up the global set for either a add (if new) or put (if old)
+    # set all the parameters sent from the client as new properties.
     #
     ##
-
+    my %allparams = params;
     my $set =  vars->{db}->getGlobalSet(params->{set_id}); 
-
-    for my $key (@set_props) {
-        debug "$key: " . params->{$key};
-        $set->{$key} = params->{$key} if defined(params->{$key});
+    my $setFromClient = convertBooleans(\%allparams,\@boolean_set_props);
+    for my $key (@set_props){
+        $set->{$key} = $setFromClient->{$key};
     }
-
-
     my $result = vars->{db}->putGlobalSet($set);
-
-    debug $result; 
-
 
     ##
     #
