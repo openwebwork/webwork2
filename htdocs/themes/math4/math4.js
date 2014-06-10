@@ -83,20 +83,10 @@ $(function(){
     if($('.problem_set_table th:contains("Test Score")').length > 0) {
 	$('.problem_set_table').addClass('small-table-text');
     }
-    $('.problem_set_table td label').each(function () {
-	if ($(this).children('a').length > 0) {
-	    return;
-	}
-	var kids = this.childNodes;
-        for (var i=0,len=kids.length;i<len;i++){
-            if (kids[i].nodeName == '#text'){
-                $(kids[i]).wrap('<div class="btn btn-small disabled" />');
-            }
-	}
-    });
 
     $('.problem_set_table td a').addClass('btn btn-primary btn-small').css('margin-right',10);
     $('.problem_set_table .disabled-problem').addClass('btn btn-small disabled');
+
     $('#hardcopy-form').addClass('form-inline');
 
     $('.problem_set_options input').addClass('btn btn-info');
@@ -123,7 +113,6 @@ $(function(){
     
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
-    $('#grades_table a').addClass('btn btn-primary');
 
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
@@ -134,10 +123,14 @@ $(function(){
     $('#config-form').addClass('form-inline');
     $('#config-form table').addClass('table table-bordered');
 
+    //Instructor Tools
+    $('#instructor-tools-form input').removeClass('btn-primary');
+
     //File Manager Configuration
     $('#FileManager').addClass('form-inline');
-    $('#FileManager .btn').addClass('btn-small file-manager-btn');
-
+    $('#FileManager .btn').addClass('btn-small file-manager-btn').removeClass('btn-primary');
+    $('#FileManager #Upload').addClass('btn-primary');
+    
     //Classlist Editor 1&2 configuration
     $('#classlist-form').addClass('form-inline user-list-form');
     $('.user-list-form input:button').addClass('btn btn-info');
@@ -158,7 +151,7 @@ $(function(){
     $('.set-list-form input:button').addClass('btn btn-info');
     $('.set-list-form input:reset').addClass('btn btn-info');
     $('.set-list-form').wrapInner('<div />');
-    $('.set_table').addClass('small-table-text table table-condensed');
+    $('.set_table').addClass('small-table-text table-bordered table table-condensed');
     $('#show_hide').addClass('btn btn-info');
     $('#problem_set_form').addClass('form-inline');
     $('#user-set-form').addClass('form-inline user-assign-form');
@@ -185,7 +178,8 @@ $(function(){
 
     //email page
     $('#send-mail-form').addClass('form-inline');
-    $('#send-mail-form .btn').addClass('btn-small');
+    $('#send-mail-form .btn').addClass('btn-small').removeClass('btn-primary');
+    $('#send-mail-form input[value="Send Email"]').addClass('btn-primary');
 
     //Score sets
     $('#scoring-form').addClass('form-inline');
@@ -194,11 +188,13 @@ $(function(){
     //Student progress and statistics
     $('table.progress-table').addClass('table table-bordered table-condensed');
     $('table.stats-table').addClass('table table-bordered');
-    $('.stats-table td a').addClass('btn btn-small btn-primary');
 
     //Library browser 1 tweaks
     $('#mainform ').addClass('form-inline');
     $('#mainform input:button').addClass('btn btn-primary');
+    $('#mainform input[type="submit"]').removeClass('btn-primary');
+    $('#mainform input[name="edit_local"]').addClass('btn-primary');    
+    $('#mainform input[name="new_local_set"]').addClass('btn-primary');
     $('#mainform .btn').addClass('btn-small');
     $('#mainform .InfoPanel select').addClass('input-xxlarge');
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
