@@ -225,11 +225,13 @@ sub body {
 	print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.", "data-original-title"=>"Homework Sets", "data-placement"=>"bottom"}, $r->maketext("Homework Sets")));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
+		    CGI::th(),
 		    CGI::th({-scope=>"col"},$nameHeader),
 		    CGI::th({-scope=>"col"},$statusHeader),
 	        );
 	} else {
 	    print CGI::Tr(
+		    CGI::th(),
 		    CGI::th({-scope=>"col"},$nameHeader),
 		    CGI::th({-scope=>"col"},$r->maketext("Test Score")),
 		    CGI::th({-scope=>"col"},$r->maketext("Test Date")),
@@ -387,7 +389,7 @@ sub setListRow {
 	    ( defined( $set->assignment_type() ) && 
 	      $set->assignment_type() eq 'proctored_gateway' );
 	my $display_name = $name;
-	$display_name =~ s/_/&nbsp;/g;
+	$display_name =~ s/_/ /g;
 # this is the link to the homework assignment, it has tooltip with the hw description 
 	my $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, "$display_name");
 	
@@ -405,9 +407,9 @@ sub setListRow {
 				$status = $r->maketext("completed.");
 			} elsif ( time() > $set->due_date() + 
 				  $self->r->ce->{gatewayGracePeriod} ) {
-				$status = $r->maketext("over time: closed.");
+				$status = $r->maketext("over time, closed.");
 			} else {
-				$status = $r->maketext("open: complete by [_1]",  
+				$status = $r->maketext("open, complete by [_1]",  
 					$self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
 			}
 			# we let people go back to old tests
@@ -447,7 +449,7 @@ sub setListRow {
 					$interactive = $r->maketext("[_1] test", $display_name);
 				}
 			} elsif ( $t < $set->due_date() && !@restricted ) {
-				$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
+				$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 				$setIsOpen = 1;
 				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 			} elsif ( $t < $set->due_date() && @restricted) {
@@ -499,7 +501,7 @@ sub setListRow {
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date && !@restricted) {
-			$status = $r->maketext("now open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
+			$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 			my $enable_reduced_scoring = $set->enable_reduced_scoring;
 			my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
 			if ($reducedScoringPeriod > 0 and $enable_reduced_scoring ) {
@@ -544,32 +546,26 @@ sub setListRow {
 	
 	if ($multiSet) {
 		if ( $gwtype < 2 ) {
-			$control = WeBWorK::CGI_labeled_input(
+		    $control = CGI::input({
 				-type=>"checkbox",
-				-id=>$name . ($gwtype ? ",v" . $set->version_id : ''),
-				-label_text=>$interactive,
-				-input_attr=>{
-					-name=>"selected_sets",
-					-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
-					}
-			);
+				-id=>$name . ($gwtype ? ",v" . $set->version_id : ''), 
+				-name=>"selected_sets",
+				-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
+					  });
 		} else {
-			$control = $interactive;
+		    $control = '';
 		}
 	} else {
 		if ( $gwtype < 2 ) {
 			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
-			$control = WeBWorK::CGI_labeled_input(
-				-type=>"radio",
-				-id=>$n,
-				-label_text=>$interactive,
-				-input_attr=>{
-					-name=>"selected_sets",
-					-value=>$n
-					}
-			);
+			$control = CGI::input({
+			    -type=>"radio",
+			    -id=>$n,
+			    -name=>"selected_sets",
+			    -value=>$n
+					      });
 		} else {
-			$control = $interactive;
+		    $control = '';
 		}
 	}
 
@@ -579,8 +575,8 @@ sub setListRow {
 	
 # check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {
-	    return CGI::Tr(CGI::td([
-			     $control,
+	    return CGI::Tr(CGI::td([ $control,
+			     $interactive,
 		             $status,
 	    ]));
 	} else {
@@ -619,6 +615,7 @@ sub setListRow {
 		}
 		return CGI::Tr(CGI::td([
 		                     $control,
+				     $interactive,
 		                     $score,
 		                     $startTime,
 		                     $status,
