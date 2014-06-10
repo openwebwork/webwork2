@@ -588,22 +588,6 @@ sub body {
 		CGI::div({-class=>"tabbertab"},$divArrRef)
 		);
 	
-	my $selectAll =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_all", -input_attr=>{-name=>'check_all', -value=>$r->maketext('Select all sets'),
-	       onClick => "for (i in document.problemsetlist.elements)  { 
-	                       if (document.problemsetlist.elements[i].name =='selected_sets') { 
-	                           document.problemsetlist.elements[i].checked = true
-	                       }
-	                    }" });
-   	my $selectNone =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_none", -input_attr=>{-name=>'check_none', -value=>$r->maketext('Unselect all sets'),
-	       onClick => "for (i in document.problemsetlist.elements)  { 
-	                       if (document.problemsetlist.elements[i].name =='selected_sets') { 
-	                          document.problemsetlist.elements[i].checked = false
-	                       }
-	                    }" });
-	unless ($editMode or $exportMode) {
-		print $selectAll." ". $selectNone;
-	}
-	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 
 	########## print table
@@ -2411,6 +2395,8 @@ sub recordEditHTML {
 	my $problems = $db->listGlobalProblems($Set->set_id);
 	
         my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
+	my $prettySetID = $Set->set_id;
+	$prettySetID =~ s/_/ /g;
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list2', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
@@ -2439,35 +2425,28 @@ sub recordEditHTML {
 	my $label_text="";
 	if ($editMode) {
 		# column not there
-		$label_text = CGI::a({href=>$problemListURL}, "$set_id");
+		$label_text = CGI::a({href=>$problemListURL}, $prettySetID);
 	} else {
 		# selection checkbox
 		# Set ID
 		my $label = "";
 		if ($editMode) {
-			$label = CGI::a({href=>$problemListURL}, "$set_id");
+			$label = CGI::a({href=>$problemListURL}, $prettySetID);
 		} else {		
-			$label = CGI::a({class=>"$visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $set_id) . $imageLink;
+			$label = CGI::a({class=>"set-label $visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $prettySetID) . $imageLink;
 		}
 		
-		push @tableCells, WeBWorK::CGI_labeled_input(
+		push @tableCells, CGI::input({
 			-type=>"checkbox",
 			-id=>$set_id."_id",
-			-label_text=>$label,
-			-input_attr=>$setSelected ?
-			{
-				-name => "selected_sets",
-				-value => $set_id,
-				-checked => "checked",
-				-class => "table_checkbox",
-			}
-			:
-			{
-				-name => "selected_sets",
-				-value => $set_id,
-				-class => "table_checkbox",
-			}
+			$setSelected ? ('checked','checked') : (),
+			-name => "selected_sets",
+			-value => $set_id,
+			-class => "table_checkbox",
+					     }
 		);
+
+		push @tableCells, CGI::div({class=>'label-with-edit-icon'},$label);
 	}
 
 	# Problems link
@@ -2591,14 +2570,22 @@ sub printTableHTML {
 
 
 	my @tableHeadings = map { $fieldNames{$_} } @realFieldNames;
-	#shift @tableHeadings;   # removed "select" so there is no need to shift headings -- checkbox occurs in column.
 	
+	my $selectBox = CGI::input({
+	    type=>'checkbox',
+	    id=>'setlist-select-all',
+	    onClick => "selectall = document.getElementById('setlist-select-all'); for (i in document.problemsetlist.elements)  { if (document.problemsetlist.elements[i].name =='selected_sets') { document.problemsetlist.elements[i].checked = selectall.checked;}}",
+				   });
+
+	if (!($editMode or $exportMode)) {
+	    unshift @tableHeadings, $selectBox;
+	}	
 
 	# print the table
 	if ($editMode or $exportMode) {
 		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY"). " This is a subset of all homework sets" });#"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Scoring Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	} else {
-		print CGI::start_table({-id=>"set_table_id", -border=>1, -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") }); #"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
+		print CGI::start_table({-id=>"set_table_id", -class=>"set_table", -summary=>$r->maketext("_PROBLEM_SET_SUMMARY") }); #"This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."});
 	}
 	
 	print CGI::caption($r->maketext("Set List"));
