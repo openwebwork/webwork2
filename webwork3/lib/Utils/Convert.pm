@@ -4,7 +4,6 @@
 package Utils::Convert;
 use base qw(Exporter);
 use JSON;
-use Dancer;
 use Data::Dumper;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(convertObjectToHash convertArrayOfObjectsToHash convertBooleans);

@@ -63,11 +63,10 @@ get '/courses/:course_id/settings/:setting_id' => sub {
 
 put '/courses/:course_id/settings/:setting_id' => sub {
 
-	debug session;
-
 	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
 
 	debug "in PUT /course/:course_id/settings/:setting_id";
+	debug request->params;
 
 	my $ConfigValues = getCourseSettingsWW2();
 	foreach my $oneConfig (@$ConfigValues) {
@@ -75,7 +74,7 @@ put '/courses/:course_id/settings/:setting_id' => sub {
 			if (ref($hash)=~/HASH/){
 				if ($hash->{var} eq params->{setting_id}){
 					if($hash->{type} eq 'boolean'){
-						$hash->{value} = $hash->{value} ? 1 : 0;
+						$hash->{value} = params->{value} ? 1 : 0;
 					} else {
 						$hash->{value} = params->{value};
 					}
@@ -139,6 +138,8 @@ sub writeConfigToFile {
 	my ($ce,$config) = @_;
 
 	my $filename = $ce->{courseDirs}->{root} . "/simple.conf";
+
+	debug $config;
 	debug("Write to file: " . $filename);
 
 		my $fileoutput = "#!perl
@@ -165,7 +166,6 @@ sub writeConfigToFile {
 		chomp $line;
 	 	if ($line =~ /^\$/) {
 	 		my ($var,$value) = ($line =~ /^\$(.*)\s+=\s+(.*);$/);
-	 		debug $var;
 	 		if ($var eq $config->{var}){ 
 	 			$fileoutput .= writeLine($config->{var},$config->{value});
 	 			$varFound = 1; 
@@ -196,6 +196,10 @@ sub writeConfigToFile {
 	if ($writeFileErrors){
 		return {error=>$writeFileErrors};
 	} else {
+		debug $config;
+		if($config->{type} eq 'boolean'){
+			$config->{value} = $config->{value} ? JSON::true : JSON::false;
+		}
 		return $config;
 	}
 }
