@@ -2072,6 +2072,19 @@ sub underscore2nbsp {
 	return $str;
 }
 
+=item underscore2sp($string)
+
+A copy of $string is returned with each underscore character replaced by a space entity.
+
+=cut
+
+sub underscore2sp {
+	my ($str) = @_;
+	return unless defined $str;
+	$str =~ s/_/ /g;
+	return $str;
+}
+
 =item errorOutput($error, $details)
 
 Used by Problem, ProblemSet, and Hardcopy to report errors encountered during

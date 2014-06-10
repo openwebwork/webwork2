@@ -361,7 +361,7 @@ sub body {
 		multiple => 1,
 	}, @GlobalSets);
 	
-	print CGI::start_form({method=>"get", action=>$r->uri()});
+	print CGI::start_form({method=>"get", id=>"instructor-tools-form", action=>$r->uri()});
 	print $self->hidden_authen_fields();
 	
 	print CGI::table({class=>"FormLayout"},

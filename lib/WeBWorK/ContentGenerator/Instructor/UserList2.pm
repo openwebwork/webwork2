@@ -547,23 +547,6 @@ sub body {
 
 	print CGI::start_div();
 
-	my $selectAll =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_all", -input_attr=>{-name=>'check_all', -class=>"button_input", -value=>$r->maketext('Select all users'),
-	       onClick => "for (i in document.userlist.elements)  { 
-	                       if (document.userlist.elements[i].name =='selected_users') { 
-	                           document.userlist.elements[i].checked = true
-	                       }
-	                    }" });
-   	my $selectNone =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_none", -input_attr=>{-name=>'check_none', -class=>"button_input", -value=>$r->maketext('Unselect all users'),
-	       onClick => "for (i in document.userlist.elements)  { 
-	                       if (document.userlist.elements[i].name =='selected_users') { 
-	                          document.userlist.elements[i].checked = false
-	                       }
-	                    }" });
-	unless ($editMode or $passwordMode) {
-		print $selectAll." ". $selectNone;
-	}
-
-	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 	print CGI::end_div();
 	# print CGI::end_table();
@@ -752,13 +735,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Sort by").": ",
 			-input_attr=>{
 				-name => "action.sort.primary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.primary"}->[0] || "last_name",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -776,13 +758,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Then by").": ",
 			-input_attr=>{
 				-name => "action.sort.secondary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.secondary"}->[0] || "first_name",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -800,13 +781,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Then by").": ",
 			-input_attr=>{
 				-name => "action.sort.ternary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.ternary"}->[0] || "user_id",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -836,7 +816,6 @@ sub sort_handler {
 				user_id		=> $r->maketext("Login Name"),
 				first_name	=> $r->maketext("First Name"),
 				last_name	=> $r->maketext("Last Name"),
-				email_address	=> $r->maketext("Email Address"),
 				student_id	=> $r->maketext("Student ID"),
 				status		=> $r->maketext("Enrollment Status"),
 				section		=> $r->maketext("Section"),
@@ -1512,7 +1491,7 @@ sub fieldEditHTML {
 		if ($value eq '&nbsp;') {
 			return $value;}
 		else {
-			return CGI::a({-href=>"mailto:$value"},$value);
+			return CGI::a({-href=>"mailto:$value"},$r->maketext('Email'));
 		}
 	}
 	
@@ -1521,7 +1500,7 @@ sub fieldEditHTML {
 		if ($type eq "status") {
 			my $status_name = $ce->status_abbrev_to_name($value);
 			if (defined $status_name) {
-				$value = "$status_name ($value)";
+				$value = "$status_name";
 			}
 		}
 		return $value;
@@ -1666,24 +1645,19 @@ sub recordEditHTML {
 			$label = CGI::a({href=>$changeEUserURL}, $User->user_id) . $imageLink;
 		}
 		
-		push @tableCells, WeBWorK::CGI_labeled_input(
-			-type=>"checkbox",
-			-id=>$User->user_id."_checkbox",
-			-label_text=>$label,
-			-input_attr=> $userSelected ?
-			{
-				-name => "selected_users",
-				-value => $User->user_id,
-				-checked => "checked",
-				-class=>"table_checkbox",
-			}
-			:
-			{
-				-name => "selected_users",
-				-value => $User->user_id,
-				-class=>"table_checkbox",
-			}
-		);
+		push @tableCells, CGI::input({
+		    -type=>"checkbox",
+		    -id=>$User->user_id."_checkbox",
+		    -label_text=>$label,
+		    -name => "selected_users",
+		    -value => $User->user_id,
+		    $userSelected ? ('checked', "checked") : (),
+		    -class=>"table_checkbox",
+					     }
+		    );
+
+		push @tableCells, CGI::div({class=>'label-with-edit-icon'}, $label);
+		
 	}
 	
 	# Act As
@@ -1839,14 +1813,20 @@ sub printTableHTML {
 			no_visible_users => "1"
 			);
 		}	
+
+		my $selectBox = CGI::input({
+		    type=>'checkbox',
+		    id=>'classlist-select-all',
+		    onClick => "selectall = document.getElementById('classlist-select-all'); for (i in document.userlist.elements)  { if (document.userlist.elements[i].name =='selected_users') { document.userlist.elements[i].checked = selectall.checked;}}",
+					   });
 		@tableHeadings = (
-			#"Select",
+                        $editMode or $passwordMode ? '' : $selectBox,
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'user_id', %current_state})}, $r->maketext('Login Name')),
 			$r->maketext("Login Status"), 
 			$r->maketext("Assigned Sets"),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'first_name', %current_state})}, $r->maketext('First Name')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'last_name', %current_state})}, $r->maketext('Last Name')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'email_address', %current_state})}, $r->maketext('Email Address')),
+		        $r->maketext('Email Link'),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'student_id', %current_state})}, $r->maketext('Student ID')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'status', %current_state})}, $r->maketext('Status')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'section', %current_state})}, $r->maketext('Section')),
