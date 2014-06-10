@@ -33,7 +33,7 @@ $(function(){
     $("#info-panel-right a:contains('[edit]')").text('Edit');
 
     // Add a button to make the sidebar more dynamic for small screens
-    $('#toggle-sidebar').click(function (event) {
+    $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
 	    event.preventDefault();
 	    $('#site-navigation').toggleClass('hidden');
 	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
