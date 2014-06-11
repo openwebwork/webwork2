@@ -115,6 +115,7 @@ $(function(){
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small btn-info');
     $('#problem-grader-form td').find('p:last').removeClass('essay-answer graded-answer');
+    $('#problem-grader-form .score-selector').addClass('input-min');
 
     //CourseConfiguration
     $('#config-form').addClass('form-inline');
