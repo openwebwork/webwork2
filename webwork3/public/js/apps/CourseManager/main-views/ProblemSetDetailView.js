@@ -13,7 +13,6 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         UserSetList, config){
 	var ProblemSetDetailsView = MainView.extend({
         className: "set-detail-view",
-        tagName: "div",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
         initialize: function (options) {
             MainView.prototype.initialize.call(this,options);
@@ -28,8 +27,9 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 problemSetView : new ProblemSetView({problemSet: this.problemSet, settings: this.settings, 
                             messageTemplate: this.messageTemplate}),
                 usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
-                propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet}),
-                customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet}),
+                propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet, settings: this.settings}),
+                customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet,
+                        eventDispatcher: this.eventDispatcher, settings: this.settings}),
                 unassignUsersView: new UnassignUserView({users:this.users})
             };
 
@@ -172,41 +172,66 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
 
     var DetailsView = Backbone.View.extend({
         initialize: function (options) {
-            _.bindAll(this,'render','setProblemSet');
+            _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate");
             this.users = options.users;
+            this.settings = options.settings;
+            
 
         },
         render: function () {
             this.$el.html($("#set-properties-tab-template").html());
             if(this.model){
+                this.showHideReducedScoringDate();
                 this.stickit();
             }
             return this;
         },
-        events: {"click .assign-all-users": "assignAllUsers"},
+        events: {
+            "click .assign-all-users": "assignAllUsers",
+            //"change .reduced-scoring": "showHideReducedScoringDate"
+        },
         assignAllUsers: function(){
             this.model.set({assigned_users: this.users.pluck("user_id")});
         },
         setProblemSet: function(_set) {
             var self = this; 
             this.model = _set; 
+            this.model.on("change:enable_reduced_scoring",this.render);
             return this;
         },
-        bindings: { ".set-name" : "set_id",
-                    ".open-date" : "open_date",
-                    ".due-date" : "due_date",
-                    ".answer-date": "answer_date",
-                    ".prob-set-visible": {observe: "visible", selectOptions: {
-                        collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
-                    }},
-                    ".reduced-credit": {observe: "enable_reduced_scoring", selectOptions: {
-                        collection : [{value: "0", label: "No"},{value: "1", label: "Yes"}]
-                    }},
-                    ".users-assigned": {
-                        observe: "assigned_users",
-                        onGet: function(value, options){ return value.length + "/" +this.users.size();}
-                    }
+        bindings: {
+            ".set-name" : "set_id",
+            ".open-date" : "open_date",
+            ".due-date" : "due_date",
+            ".answer-date": "answer_date",
+            ".prob-set-visible": "visible",
+            ".reduced-scoring": "enable_reduced_scoring",
+            ".reduced-scoring-date": "reduced_scoring_date",
+            ".users-assigned": {
+                observe: "assigned_users",
+                onGet: function(value, options){ return value.length + "/" +this.users.size();}
+            }
+        },
+        showHideReducedScoringDate: function(){
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") &&  
+                    this.model.get("enable_reduced_scoring")) { // show reduced credit field
+                this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
+
+                // fill in a reduced_scoring_date if the field is empty or 0. 
+                if(this.model.get("reduced_scoring_date")=="" || this.model.get("reduced_scoring_date")==0){
+                    var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
+                        this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
+                    this.model.set({reduced_scoring_date: rcDate.unix()});
                 }
+            } else {
+                this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
+            }
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                this.$(".reduced-scoring").closest("tr").removeClass("hidden")
+            } else {
+                this.$(".reduced-scoring").closest("tr").addClass("hidden")
+            }
+        }
 
     });
 
@@ -319,34 +344,48 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
     var CustomizeUserAssignView = Backbone.View.extend({
         initialize: function(options){
             _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
-            this.model = this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
-            this.users = options.users;
-            this.tableSetup();
 
-          
+            // this.model is a clone of the parent ProblemSet.  It is used to save properties for multiple students.
+
+            this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
+            _.extend(this,_(options).pick("users","settings","eventDispatcher"));
         },
         render: function () {
             var self = this;
+            var reducedScoring = this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") 
+                && this.problemSet.get("enable_reduced_scoring"); 
+            this.tableSetup({show_reduced_scoring: reducedScoring});
             this.$el.html($("#loading-usersets-template").html());
+
             if (this.collection.size()>0){
                 this.$el.html($("#customize-assignment-template").html());
                 (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
                         paginator: {showPaginator: false}, tablename: ".users-table"}))
                     .render().$el.addClass("table table-bordered table-condensed");
                 this.$el.append(this.userSetTable.el);
+
+                // show/hide the bottom row reduced-scoring
+                if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                    this.$(".reduced-scoring-date,.reduced-scoring-header").removeClass("hidden")
+                } else {
+                    this.$(".reduced-scoring-date,.reduced-scoring-header").addClass("hidden")
+                }
+
                 this.stickit();
             } else {
                 this.userSetList.fetch({success: function () {self.buildCollection(); self.render();}});
             }
         },
-        events: {"change .show-section,.show-recitation": "updateTable",
+        events: {
+            "change .show-section,.show-recitation": "updateTable",
             "click .save-changes": "saveChanges",
             "keyup .search-box": "filter",
             "change th[data-class-name='select-user'] input": "selectAllUsers"
         },
         bindings: { "#customize-problem-set-controls .open-date" : "open_date",
                     "#customize-problem-set-controls .due-date": "due_date",
-                    "#customize-problem-set-controls .answer-date": "answer_date"
+                    "#customize-problem-set-controls .answer-date": "answer_date",
+                    "#customize-problem-set-controls .reduced-scoring-date": "reduced_scoring_date"
         },
         selectAllUsers: function(evt){
             $("table.users-table input[type='checkbox']").prop("checked", $(evt.target).prop("checked"));
@@ -367,7 +406,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             _($(".select-user input:checked").siblings(".user-id").map(function(i,v) { 
                     return self.userSetList.findWhere({user_id: $(v).val()});
                 })).each(function(_model){
-                    _model.set(self.model.pick("open_date","due_date","answer_date"));
+                    _model.set(self.model.pick("open_date","due_date","answer_date","reduced_scoring_date"));
                 });
         },
         updateTable: function (){
@@ -394,8 +433,10 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation"));
             });
             this.collection.on({change: function(model){
+                console.log(moment.unix(model.get("reduced_scoring_date")).format("MM-DD-YYYY"));
                 self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date")).save();
             }});
+            this.setMessages();
 
             return this;
         },
@@ -429,6 +470,36 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                     this.cols.push({name: "Recitation", key: "recitation", classname: "recitation", editable: false,
                         datatype: "string"});
                 }
+                if(opts && opts.show_reduced_scoring){
+                    this.cols.splice(3,0,{name: "Reduced Scoring Date", key: "reduced_scoring_date", 
+                        classname: ["reduced-scoring-date","edit-datetime"], editable: true,
+                        datatype: "integer"});
+                }
+        },
+        messageTemplate: _.template($("#customize-users-messages-template").html()),
+        setMessages: function(){
+            var self = this;
+            this.userSetList.on({
+                change: function(_set){
+                    _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
+                },
+                sync: function(_set){
+                    _(_set.changingAttributes||{}).chain().keys().each(function(key){ 
+                        switch(key){
+                            default: 
+                                var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
+                                             : _set.changingAttributes[key];
+                                var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
+                                self.eventDispatcher.trigger("add-message",{type: "success", 
+                                    short: self.messageTemplate(
+                                        {type:"set_saved",opts:{set_id:_set.get("set_id"), user_id: _set.get("user_id")}}),
+                                    text: self.messageTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),
+                                        key: key, user_id: _set.get("user_id"),oldValue: _old, newValue: _new}})});
+                            }
+                        });
+                }
+            })
+
         }
 
     });

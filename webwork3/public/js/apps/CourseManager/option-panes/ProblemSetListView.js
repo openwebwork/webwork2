@@ -158,9 +158,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             ":el": { observe: ["enable_reduced_scoring","visible"],
                 update: function($el, vals, model, options) { 
                     if(vals[0]==0){
-                        $el.removeClass("set-reduced-credit");
+                        $el.removeClass("set-reduced-scoring");
                     } else {
-                        $el.addClass("set-reduced-credit");
+                        $el.addClass("set-reduced-scoring");
                     }
                     if(vals[1]==0){
                         $el.removeClass("set-visible");

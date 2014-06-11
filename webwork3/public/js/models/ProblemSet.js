@@ -15,8 +15,9 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
             open_date: "",
             due_date: "",
             answer_date: "",
-            visible: 0,
-            enable_reduced_scoring: 0,
+            reduced_scoring_date: "",
+            visible: false,
+            enable_reduced_scoring: false,
             assignment_type: "",
             attempts_per_version: -1,
             time_interval: 0,
@@ -40,6 +41,7 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
            open_date: "checkDates",
             due_date: "checkDates",
             answer_date: "checkDates",
+            reduced_scoring_date: "checkDates",
             set_id: {  
                 setNameValidator: 1 // uses your custom validator
             }
@@ -123,15 +125,36 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
         checkDates: function(value, attr, computedState){
             var openDate = moment.unix(computedState.open_date)
                 , dueDate = moment.unix(computedState.due_date)
-                , answerDate = moment.unix(computedState.answer_date);
+                , answerDate = moment.unix(computedState.answer_date)
+                , reducedScoringDate = moment.unix(computedState.reduced_scoring_date);
 
-            if(openDate.isAfter(dueDate)&&attr==="open_date"){ // only throw this error once  
-                this.trigger("set_date_error",{set_id: this.get("set_id"), type: "openDate_after_dueDate"});
+            // the following prevents the rest of the code from checking more than once per validation. 
+            // since there are 4 fields that use this method for validation, it gets called 4 times.     
+            this.numChecks = this.numChecks? this.numChecks+=1: 1;
+            if(this.numChecks==4){ delete this.numChecks;}
+            if(this.numChecks>1) { return;}
+
+            if(openDate.isAfter(dueDate)){ 
+                this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), date1: "open date",
+                        date2: "due date"},this);
                 return "open date is after due date";
             }
-            if (dueDate.isAfter(answerDate)&&attr==="answer_date"){// only throw this error once 
-                this.trigger("set_date_error",{set_id: this.get("set_id"), type: "dueDate_after_answerDate"});
+            if (dueDate.isAfter(answerDate)){
+                this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), date1: "due date",
+                        date2: "answer date"},this);
                 return "due date is after answer date";
+            }
+            if(computedState.enable_reduced_scoring==1){
+                if(reducedScoringDate.isAfter(dueDate)){
+                    this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), 
+                        date1: "reduced scoring date", date2: "due date"},this);
+                        return "reduced scoring date is after due date";       
+                }
+                if(openDate.isAfter(reducedScoringDate)){
+                    this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), date1: "open date",
+                        date2: "reduced scoring date"},this);
+                        return "due date is after reduced scoring date";       
+                }
             }
         }
     });

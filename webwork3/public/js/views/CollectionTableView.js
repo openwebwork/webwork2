@@ -79,11 +79,15 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			_(this.columnInfo).each(function (col){
 				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
-				if(col.colHeader){
-					headRow.append("<th data-class-name='" + className + "'>" + col.colHeader + "<span class='sort'></span></th>");
-				} else {
-					headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
-				}
+				var th = $("<th data-class-name='" + className + "'>").addClass(className)
+					.html(col.colHeader? col.colHeader: col.name + "<span class='sort'></span>");
+				headRow.append(th);
+				// if(col.colHeader){
+
+				// 	headRow.append("<th data-class-name='" + className + "'>" + col.colHeader + "<span class='sort'></span></th>");
+				// } else {
+				// 	headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
+				// }
 			});
 
 			this.updateTable();
@@ -186,6 +190,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				}
 			});
 		},
+		refreshTable: function (){
+			_(this.rowViews).each(function(row){row.refresh();});
+		},
 		getRowCount: function () {
 			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
 		},
@@ -262,7 +269,10 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			var self = this;
 			_(this.columnInfo).each(function (col){
 				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
-				if(col.use_contenteditable){
+				if (col.datatype === "boolean"){
+					var select = $("<select>").addClass(classname).addClass("input-small");
+					self.$el.append($("<td>").append(select));
+				} else if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));
 				} else {
 					if (col.stickit_options && col.stickit_options.selectOptions){
@@ -288,6 +298,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				this.model=_model;
 				this.stickit();
 			}
+		},
+		refresh: function(){
+			this.stickit();
 		},
 		events: {
 			"keypress td[contenteditable='true']": "returnHit"

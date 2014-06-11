@@ -31,8 +31,9 @@ function(Backbone, _,config){
                         opts = [];
                         break;
                     case "boolean":
-                        opts = [{label: "true", value: "1"}, {label: "false", value: "0"}];
-                        propHtml = "<select class='select-list'></select>";
+                        //opts = [{label: "true", value: true}, {label: "false", value: false}];
+                        opts = ["true","false"];
+                        propHtml = "<select class='select-list TF-boolean-select'></select>";
                         break;
                     case "checkboxlist":
                         propHtml = "<select multiple='multiple' class='select-list'></select>";

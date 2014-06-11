@@ -9,6 +9,8 @@ courses.dist
 library-directory-tree.json
 library-subject-tree.json
 textbook-tree.json
+development.yml
+production.yml
 *~
 !tmp/README
 !htdocs/tmp/README

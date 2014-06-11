@@ -12,26 +12,39 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
     var ProblemSetsManager = MainView.extend({
         initialize: function (options) {
             MainView.prototype.initialize.call(this,options);
-            _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText');  // include all functions that need the this object
+            _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText',
+                        'hideShowReducedScoring');  // include all functions that need the this object
             var self = this;
             this.problemSets = options.problemSets;
             this.users = options.users;
 
             this.tableSetup();
 
-            this.headerInfo = { template: "#allSets-header", 
+            this.headerInfo = { 
+                template: "#allSets-header", 
                 events: {"click .add-problem-set-button": function () {
                                   self.addProblemSet();  
                                 }}
             };
             this.problemSets.on("add",this.updateTable);
             this.problemSets.on("remove",this.updateTable);
+            this.problemSets.on("change:enable_reduced_scoring",this.hideShowReducedScoring);
             this.setMessages();
         },
         events: {
             "click .add-problem-set-button": "addProblemSet",
             'keyup input.filter-text' : 'filterProblemSets',
             'click button.clear-filter-button': 'clearFilterText',
+        },
+        hideShowReducedScoring: function(model){
+            if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
+                var rcDate = moment.unix(model.get("due_date")).subtract(this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"))
+                model.set({reduced_scoring_date: rcDate.unix()})
+            }
+            if(this.problemSetTable){
+                this.problemSetTable.refreshTable();
+            }
+            this.$(".set-id a").truncate({width: 120});
         },
         render: function () {
             this.$el.html($("#problem-set-manager-template").html());
@@ -41,6 +54,15 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
             this.$(".set-id a").truncate({width: 120});
+
+            // hide reduced credit items when not enabled. 
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
+                    .removeClass("hidden");
+            } else {
+                this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
+                    .addClass("hidden");
+            }
             MainView.prototype.render.apply(this);
             return this;
         },
@@ -95,8 +117,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                     stickit_options: {update: function($el, val, model, options) {
                         $el.html("<a href='#' class='goto-set' data-setname='"+val+"'>" + val + "</a>");
                         $el.children("a").on("click",function() {
-                            var set = self.problemSets.findWhere({set_id: $(this).data("setname")})
-                            set.trigger("show",set);
+                            self.eventDispatcher.trigger("show-problem-set",$(this).data("setname"));
                         });}
                     }
                 },
@@ -117,11 +138,12 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                         return val.length;
                     }    
                 },
-                {name: "Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
-                        datatype: "string", stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
-                {name: "Visible", key: "visible", classname: "is-visible", datatype: "string",
-                        stickit_options: { selectOptions: { collection: [{value: 0, label: "No"},{value: 1, label: "Yes"}]}}},
+                {name: "Reduced Scoring", key: "enable_reduced_scoring", datatype: "boolean",
+                        classname: ["enable-reduced-scoring","yes-no-boolean-select"]},
+                {name: "Visible", key: "visible", classname: ["is-visible","yes-no-boolean-select"], datatype: "boolean"},
                 {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
+                        editable: false, datatype: "integer", use_contenteditable: false},
+                {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: ["reduced-scoring-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
@@ -160,22 +182,25 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
 
                     }});
                 },
-                "change:due_date change:open_date change:answer_date": function(_set){
+                "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
                     self.assignmentDates.chain().filter(function(assign) { 
                             return assign.get("problemSet").get("set_id")===_set.get("set_id");})
                         .each(function(assign){
-                            assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")+"_date"))
+                            assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type").replace("-","_")+"_date"))
                                 .format("YYYY-MM-DD"));
                         });
                 },
                 "change:problems": function(_set){
                     _set.save();
                 },
-                "set_date_error": function(opt){
+                "set_date_error": function(_opts, model){
                     self.eventDispatcher.trigger("add-message",{type: "danger",
-                        short: self.messageTemplate({type: "date_set_error", opts: {set_id: opt.set_id}}),
-                        text: self.messageTemplate({type: opt.type, opts: {set_id: opt.set_id}})
+                        short: self.messageTemplate({type: "date_set_error", opts: _opts}),
+                        text: self.messageTemplate({type: "date_set_error", opts: _opts})
                     });
+                    _(model.changed).chain().keys().each(function(key) {
+                        model.set(key,model.changingAttributes[key]);
+                    })
                 },
                 change: function(_set){
                     _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
