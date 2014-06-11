@@ -213,7 +213,8 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             }
         },
         showHideReducedScoringDate: function(){
-            if(this.model.get("enable_reduced_scoring")) { // show reduced credit field
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") &&  
+                    this.model.get("enable_reduced_scoring")) { // show reduced credit field
                 this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
 
                 // fill in a reduced_scoring_date if the field is empty or 0. 
@@ -224,6 +225,11 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 }
             } else {
                 this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
+            }
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                this.$(".reduced-scoring").closest("tr").removeClass("hidden")
+            } else {
+                this.$(".reduced-scoring").closest("tr").addClass("hidden")
             }
         }
 
@@ -350,12 +356,21 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 && this.problemSet.get("enable_reduced_scoring"); 
             this.tableSetup({show_reduced_scoring: reducedScoring});
             this.$el.html($("#loading-usersets-template").html());
+
             if (this.collection.size()>0){
                 this.$el.html($("#customize-assignment-template").html());
                 (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
                         paginator: {showPaginator: false}, tablename: ".users-table"}))
                     .render().$el.addClass("table table-bordered table-condensed");
                 this.$el.append(this.userSetTable.el);
+
+                // show/hide the bottom row reduced-scoring
+                if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                    this.$(".reduced-scoring-date,.reduced-scoring-header").removeClass("hidden")
+                } else {
+                    this.$(".reduced-scoring-date,.reduced-scoring-header").addClass("hidden")
+                }
+
                 this.stickit();
             } else {
                 this.userSetList.fetch({success: function () {self.buildCollection(); self.render();}});
@@ -422,6 +437,7 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date")).save();
             }});
             this.setMessages();
+
             return this;
         },
         tableSetup: function (opts) {
