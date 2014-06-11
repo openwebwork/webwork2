@@ -148,6 +148,7 @@ $(function(){
 	label.prepend(this);
 	label.addClass('checkbox');
     });
+    $('#problem_set_form input[name="refresh"]').removeClass("btn-primary");
     
     //PG editor styling
     $('#editor').addClass('form-inline span9');

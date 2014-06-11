@@ -96,8 +96,8 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -244,11 +244,11 @@ use constant  FIELD_PROPERTIES => {
 		size => 10,
 		access => "readwrite",
 	},
-	hide_hint => {
-		type => "checked",
-		size => 4,
-		access => "readwrite",
-	}
+#	hide_hint => {
+#		type => "checked",
+#		size => 4,
+#		access => "readwrite",
+#	}
 };
 
 sub pre_header_initialize {

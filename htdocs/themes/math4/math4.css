@@ -860,9 +860,8 @@ table#grades_table pre{
     height:auto;
 }
 
-#problem_set_form .btn {
-    margin-left:.5ex;
-    margin-right:.5ex;
+#problem_set_form input[type="submit"] {
+    margin-right:1ex;
 } 
 
 #mainform .btn,
