@@ -4,8 +4,9 @@
 package Utils::Convert;
 use base qw(Exporter);
 use JSON;
+use Data::Dumper;
 our @EXPORT    = ();
-our @EXPORT_OK = qw(convertObjectToHash convertArrayOfObjectsToHash);
+our @EXPORT_OK = qw(convertObjectToHash convertArrayOfObjectsToHash convertBooleans);
 
 
 ##  This converts an array of objects to an array of Hashes
@@ -37,5 +38,16 @@ sub convertObjectToHash {
     
     return $s;
 }
+
+sub convertBooleans {
+    my ($obj,$boolean_props) = @_;
+
+    for my $key (@{$boolean_props}){
+            $obj->{$key} = $obj->{$key} ? 1: 0;
+    }
+
+    return $obj;
+}
+
 
 return 1;

@@ -9,7 +9,7 @@ package ProblemSets;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Array::Utils qw(array_minus); 
@@ -17,10 +17,10 @@ use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 use Utils::CourseUtils qw/getCourseSettings/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
-use List::Util qw(first max );
+use List::Util qw/first max/;
 
-our @set_props = qw/set_id set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
-our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
+our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor/;
+our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts source_file/;
 our @boolean_set_props = qw/visible enable_reduced_scoring/;
 
@@ -132,19 +132,16 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     ####
     #
-    # Set up the global set for either a add (if new) or put (if old)
+    # set all the parameters sent from the client as new properties.
     #
     ##
-
+    my %allparams = params;
     my $set =  vars->{db}->getGlobalSet(params->{set_id}); 
-
-    for my $key (@set_props) {
-        $set->{$key} = params->{$key} if defined(params->{$key});
+    my $setFromClient = convertBooleans(\%allparams,\@boolean_set_props);
+    for my $key (@set_props){
+        $set->{$key} = $setFromClient->{$key};
     }
-
-
-    vars->{db}->putGlobalSet($set);
-
+    my $result = vars->{db}->putGlobalSet($set);
 
     ##
     #
@@ -155,7 +152,6 @@ put '/courses/:course_id/sets/:set_id' => sub {
     my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
     my @usersToAdd = array_minus(@{params->{assigned_users}},@userNamesFromDB);
     my @usersToDelete = array_minus(@userNamesFromDB,@{params->{assigned_users}});
-    my @test2 = grep{ not $_ ~~ @userNamesFromDB } @{params->{assigned_users}};
 
     for my $user(@usersToAdd){
         addUserSet($user,params->{set_id});
@@ -180,18 +176,21 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
 
+    ## why is this here?  it doesn't do anything.
 
     if (scalar(@usersToDelete)>0){
         debug "Deleting users to set " . params->{set_id};
         debug join("; ", @usersToDelete);
     }
 
+    my $setFromDB = vars->{db}->getGlobalSet(params->{set_id});
 
-    my $returnSet = convertObjectToHash($set,\@boolean_set_props);
+    my $returnSet = convertObjectToHash($setFromDB,\@boolean_set_props);
 
 
     $returnSet->{assigned_users} = params->{assigned_users};
     $returnSet->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
+    $returnSet->{_id} = params->{set_id};
 
     return $returnSet;
 
@@ -495,13 +494,12 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     for my $key (@user_set_props) {
         my $globalValue = $globalSet->{$key} || "";
-        # debug $key . " : " . $globalValue . " : " . params->{$key};
-        # check to see if the value differs from the global value.  If so, set it. 
-        $userSet->{$key} = params->{$key} 
-            if ((defined(params->{$key}) && $globalValue ne params->{$key}) || $key eq "psvn" || $key eq "user_id");
+        # check to see if the value differs from the global value.  If so, set it else delete it. 
+        $userSet->{$key} = params->{$key} if defined(params->{$key});
+        delete $userSet->{$key} if $globalValue eq $userSet->{$key} && $key ne "set_id";
+
     }
     vars->{db}->putUserSet($userSet);
-
 
     return convertObjectToHash(vars->{db}->getMergedSet(params->{user_id},params->{set_id}),\@boolean_set_props);
 };

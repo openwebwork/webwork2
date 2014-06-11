@@ -126,6 +126,17 @@ sub nav {
 	return $self->navMacro($args, $tail, @links);
 }
 
+sub title {
+	my ($self) = @_;
+	my $r = $self->r;
+	# using the url arguments won't break if the set/problem are invalid
+	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
+
+	return $setID;
+
+
+}
+
 sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -334,7 +345,8 @@ sub body {
 
 	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
 	my $reduced_scoring_date = $set->reduced_scoring_date;
-	if ($reduced_scoring_date and $enable_reduced_scoring) {
+	if ($reduced_scoring_date and $enable_reduced_scoring
+	    and $reduced_scoring_date != $set->due_date) {
 		my $dueDate = $self->formatDateTime($set->due_date());
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
