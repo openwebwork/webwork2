@@ -20,7 +20,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 =head1 NAME
 
 WeBWorK::ContentGenerator::Instructor::Stats - Display statistics by user or
-homework set (including svg graphs).
+homework set (including sv graphs).
 
 =cut
 
@@ -627,6 +627,18 @@ for (my $i=0; $i<=$#problemIDs; $i++) {
     $svg = $svg . "<a xlink:href=\"". $linkstring ."\" target=\"_blank\"><rect id=\"bar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,153,198)\" /><text id=\"problem". $probID ."\" x=\"". $problabelxpixel ."\" y=\"". $problabelypixel ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">". $prettyProblemIDs{$probID} ."</text></a>\n";	
 }
 
+	# print a legend if its a jitar set
+	if ($isJitarSet) {
+	    $barxpixel = $barxpixel + $barwidth + 15;
+	    $barypixel = 55;
+	    $svg = $svg . "<rect id=\"legend1\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"10\" height=\"10\" fill=\"rgb(0,153,198)\" />\n";
+	    $svg = $svg . "<text id=\"legend1lab\" x=\"". ($barxpixel+15) ."\" y=\"". ($barypixel+10) ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"start\">".$r->maketext("Correct Status")."</text>";
+	    
+	    $barypixel = $barypixel - 15;
+	    $svg = $svg . "<rect id=\"legend2\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"10\" height=\"10\" fill=\"rgb(0,51,136)\" />\n";
+	    $svg = $svg . "<text id=\"legend2lab\" x=\"". ($barxpixel+15) ."\" y=\"". ($barypixel+10) ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"start\">".$r->maketext("Correct Adjusted Status")."</text>";
+	}
+	
 $svg = $svg . "</svg>";
 
 print CGI::p("$svg"); # insert SVG graph inside an html paragraph

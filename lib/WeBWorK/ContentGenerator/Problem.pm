@@ -515,7 +515,7 @@ sub pre_header_initialize {
 	    $isClosed = $isClosed || ($set->assignment_type() eq 'jitar' &&
 				      is_jitar_problem_hidden($db,$effectiveUserName,$set->set_id,$problemNumber));
 	    $isClosed = $isClosed || ($set->assignment_type() eq 'jitar' &&
-				      is_jitar_problem_closed($db,$effectiveUserName,$set->set_id,$problemNumber));
+				      is_jitar_problem_closed($db,$ce,$effectiveUserName,$set->set_id,$problemNumber));
 	}
 
 	# isOpen overrides $isClosed.  
@@ -1046,6 +1046,7 @@ sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
@@ -1138,7 +1139,7 @@ sub siblings {
 		    $class='nested-problem-'.$level;
 		}
 		
-		if (!$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_closed($db, $eUserID, $setID, $problemID)) {
+		if (!$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_closed($db, $ce, $eUserID, $setID, $problemID)) {
 		    $link = CGI::a( {href=>'#', class=>$class.' disabled-problem'},  $r->maketext("Problem [_1]", join('.',@seq)));
 		} else {
 		    $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage, 
@@ -1228,6 +1229,7 @@ sub nav {
 	return "" if(($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}) and $can{showMeAnother});
 
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
@@ -1274,7 +1276,7 @@ sub nav {
 		$nextID = $problemIDs[$curr_index+1] if $curr_index+1 <= $#problemIDs;
 		$nextID = '' if ($isJitarSet && $nextID 
 				 && !$authz->hasPermissions($eUserID, "view_unopened_sets") 
-				 && is_jitar_problem_closed($db,$eUserID,$setID,$nextID));
+				 && is_jitar_problem_closed($db,$ce, $eUserID,$setID,$nextID));
 		    
 		
 	}
@@ -1769,11 +1771,11 @@ sub output_score_summary{
 
 	    # print information if this set has restricted progression and if you need
 	    # to finish this problem (and maybe its children) to proceed
-	    if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
+	    if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
 		if ($hasChildren) {
-		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its subproblems.',join('.',@{$problemSeqs[$next_id]}));
+		    print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its subproblems.',join('.',@{$problemSeqs[$next_id]}));
 		} else {
-		    print CGI::br().$r->maketext('This set has restricted progression.  You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
+		    print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
 		}
 	    }
 	    # print information if this problem counts towards the grade of its parent, 
@@ -1796,7 +1798,6 @@ sub output_score_summary{
 		#email instructor with a message if the student didnt finish
 		if (jitar_problem_finished($parentProb,$db) &&
 		    jitar_problem_adjusted_status($parentProb,$db) != 1) {
-		    
 		     WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::jitar_send_warning_email($self,$parentProb);
 		}
 		

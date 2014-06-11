@@ -1345,15 +1345,15 @@ sub is_jitar_problem_hidden {
 }
     
 
-# takes in ($db, $userID, $setID, $problemID) and returns 1 if the jitar problem is closed
+# takes in ($db, $ce, $userID, $setID, $problemID) and returns 1 if the jitar problem is closed
 # jitar problems are closed if the restrict_prob_progression variable is set on the set
 # and if the previous problem is closed, or hasn't been finished yet.  
 # The first problem in a level is always open. 
 
 sub is_jitar_problem_closed {
-    my ($db, $userID, $setID, $problemID) = @_;
+    my ($db, $ce, $userID, $setID, $problemID) = @_;
 
-    die "Not enough arguments.  Use is_jitar_problem_closed(db,userID,setID,problemID)" unless ($db && $userID && $setID && $problemID);
+    die "Not enough arguments.  Use is_jitar_problem_closed(db,userID,setID,problemID)" unless ($db && $ce && $userID && $setID && $problemID);
 
     my $mergedSet = $db->getMergedSet($userID,$setID); 
 
@@ -1366,33 +1366,37 @@ sub is_jitar_problem_closed {
     return 0 unless ($mergedSet->assignment_type eq 'jitar' && $
 		     mergedSet->restrict_prob_progression());
 
-    # if we restrict problem progression then we need to check to see if the previous
-    # problem has been "completed" or, if we are the first problem in this level
+    # the set opens everything up after the due date. 
+    return 0 if (after($mergedSet->due_date));
+
 
     my $prob;
     my $id;
     my @idSeq = jitar_id_to_seq($problemID);
+    my @parentSeq = @idSeq;
 
-    do {
-	
-	# failsafe if we cant find aanything. 
-	return 0 unless @idSeq;
-
+    # problems are automatically closed if their parents are closed
+    #this means we cant find a previous problem to test against so we are open as long as the parent is open
+    pop(@parentSeq);
+    
+    #if we can't get a parent problem then this is a top level problem and we
+    # we just check the previous. 
+    if (@parentSeq) {
+	$id = seq_to_jitar_id(@parentSeq);
+	if (is_jitar_problem_closed($db,$ce,$userID,$setID,$id)) {
+	    return 1;
+	}
+    }
+    
+    # if the parent is open then we are open if the previous
+    # problem has been "completed" or, if we are the first problem in this level
+    
+    do {	
 	$idSeq[$#idSeq]--;
 	    
+	# in this case we are the first problem in the level
 	if ($idSeq[$#idSeq] == 0) {
-	    #this means we cant find a previous problem to test against so we are open as long as the parent is open
-	    pop(@idSeq);
-	    
-	    #if we can't get a parent problem then this one is open. 
-	    return 0 unless @idSeq;
-
-	    $id = seq_to_jitar_id(@idSeq);
-	    if (is_jitar_problem_closed($db,$userID,$setID,$id)) {
-		return 1;
-	    } else {
-		return 0
-	    }
+	    return 0;
 	}
 	
 	$id = seq_to_jitar_id(@idSeq);
@@ -1400,7 +1404,16 @@ sub is_jitar_problem_closed {
 
     $prob = $db->getMergedProblem($userID,$setID,$id);
     
-    if (jitar_problem_adjusted_status($prob,$db) == 1 ||
+    # we have to test against the target status in case the student
+    # is working in the reduced scoring period
+    my $targetStatus = 1;
+    if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
+	$mergedSet->enable_reduced_scoring && 
+	after($mergedSet->reduced_scoring_date)) {
+	$targetStatus = $ce->{pg}{ansEvalDefaults}{reducedScoringValue};
+    }	
+    
+    if (abs(jitar_problem_adjusted_status($prob,$db) - $targetStatus) < .001 ||
 	jitar_problem_finished($prob,$db)) {
 	
 	# either the previous problem is 100% or is finished

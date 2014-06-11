@@ -923,15 +923,6 @@ sub print_nested_list {
     print CGI::end_li();
 }
 
-# creates a popup menu of all possible problem numbers (for possible rearranging)
-sub problem_number_popup {
-	my $num = shift;
-	my $total = shift;
-	return (CGI::popup_menu(-name => "problem_num_$num",
-				-values => [1..$total],
-				-default => $num));
-}
-
 # handles rearrangement necessary after changes to problem ordering
 sub handle_problem_numbers {
 	my $self = shift;
@@ -2124,12 +2115,20 @@ sub body {
 	# Display Field for putting in a set description
 	####################################################################
 	print CGI::h4($r->maketext("Set Description"));
-	print CGI::textarea({name=>"set.$setID.description",
-			     id=>"set.$setID.description",
-			     value=>$setRecord->description(),
-			     rows=>5,
-			     cols=>62,});
-
+	if ($forOneUser) {
+	    print CGI::hidden({type=>'text',
+			      name=>"set.$setID.description",
+			      id=>"set.$setID.description",
+			      value=>$setRecord->description(),
+			     });
+	    print $setRecord->description ? $setRecord->description : $r->maketext("No Description");
+	} else {
+	    print CGI::textarea({name=>"set.$setID.description",
+				 id=>"set.$setID.description",
+				 value=>$setRecord->description(),
+				 rows=>5,
+				 cols=>62,});
+	}
 	print CGI::end_p();
 	
 	#####################################################################
@@ -2250,7 +2249,7 @@ sub body {
 	    # in the problemsetdetail2.js file
 
 	    print CGI::h2($r->maketext("Problems"));
-	    print CGI::div(CGI::div({id=>"psd_toolbar"}, CGI::a({href=>"#", id=>"psd_renumber"}, $r->maketext("Renumber Problems")).
+	    print CGI::div(CGI::div({id=>"psd_toolbar"}, ($forOneUser ? '' : CGI::a({href=>"#", id=>"psd_renumber"}, $r->maketext("Renumber Problems"))).
 		CGI::a({href=>"#", id=>"psd_render_all"},
 		       $r->maketext("Render All")).
 		CGI::a({href=>"#", id=>"psd_hide_all"},
@@ -2442,9 +2441,8 @@ sub body {
 # print final lines
 	    
 	    
-	    print CGI::p($r->maketext("Any time problem numbers are intentionally changed, the problems will always be renumbered consecutively, starting from one.  When deleting problems, gaps will be left in the numbering unless the box above is checked.  If you accidentally reorder the problems use the Reset Form butotn."));
+	    print CGI::p($r->maketext("Any time problem numbers are intentionally changed, the problems will always be renumbered consecutively, starting from one.  When deleting problems, gaps will be left in the numbering until you click Renumber Problems.  If you accidentally reorder the problems use the Reset Form button."));
 	    print CGI::p($r->maketext("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.")) if ($setRecord->open_date>time());
-	    print CGI::p($r->maketext("When changing problem numbers, we will move the problem to be [_1] the chosen number.",CGI::em($r->maketext("before"))));
 	    
 	} else {
 	    print CGI::p(CGI::b($r->maketext("This set doesn't contain any problems yet.")));
@@ -2500,6 +2498,12 @@ sub output_JS {
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+  print "\n";
+	print qq{
+           <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+           <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
+	print "\n";
     	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.nestedSortable.js"}), CGI::end_script();
     	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
 
