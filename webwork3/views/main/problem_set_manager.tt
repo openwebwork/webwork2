@@ -50,7 +50,8 @@ var messages = {
       + ". The open date must come before the due date";},
     dueDate_after_answerDate: function(opt){return "Error saving problem set " + opt.set_id 
       + ". The due date must come before the answer date";},
-    date_set_error: function(opt) { return "There was an error setting the date for " + opt.set_id},
+    date_set_error: function(opt) { return "The " + opt.date1 + " comes after " + opt.date2 + " for set " 
+      + opt.set_id + "."},
     set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
     set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
       + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
