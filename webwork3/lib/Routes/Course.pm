@@ -16,7 +16,7 @@ use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCours
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
 # use Utils::CourseUtils qw/getCourseSettings/;
-use Routes::Authentication qw/buildSession checkPermissions authenticate/;
+use Routes::Authentication qw/buildSession checkPermissions/;
 use Data::Dumper;
 
 
@@ -335,21 +335,21 @@ get '/courses/:course_id/manager' =>  sub {
 	    }
 	}
 
-	my ($settings,$sets,$users);
+	# case 4) 
+	my $settings = [];
+	my $sets = [];
+	my $users = [];
 
-	debug session;
 
 	# case 3) 
 	if(defined session->{user}){
-		authenticate();
-		$settings = getCourseSettings();
-		$sets = getAllSets();
-		$users = getAllUsers();
-	} else {  # case 4)
-		$settings = [];
-		$sets = [];
-		$users = [];
-	}
+		buildSession();
+		if(session 'logged_in'){
+			$settings = getCourseSettings();
+			$sets = getAllSets();
+			$users = getAllUsers();
+		}
+	} 
 
 	my $theSession = convertObjectToHash(session);
 	$theSession->{effectiveUser} = session->{user};

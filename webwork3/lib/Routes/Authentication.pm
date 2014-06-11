@@ -15,7 +15,7 @@ use Data::Dumper;
 
 use base qw(Exporter);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(checkPermissions authenticate setCourseEnvironment buildSession);
+our @EXPORT_OK = qw(checkPermissions setCourseEnvironment buildSession);
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 ## the following routes is matched for any URL starting with /courses. It is used to load the 
@@ -55,7 +55,7 @@ sub setCourseEnvironment {
 	$WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
 }
 
-sub authenticate {
+sub buildSession {
 
 	if(! vars->{db}){ 
 		send_error("The database object DB is not defined.  Make sure that you call setCourseEnvironment first.",404);
@@ -75,6 +75,8 @@ sub authenticate {
 	my $key = vars->{db}->getKey(session 'user');
 	my $timeLastLoggedIn = $key->{timestamp} || 0; 
 
+	debug $timeLastLoggedIn;
+
 	if(! defined(session 'key')){
 		if(! defined($key)){
 			my $newKey = create_session(session 'user');
@@ -86,9 +88,11 @@ sub authenticate {
 
 	$key = vars->{db}->getKey(session 'user');
 
+
 	# check to see if the user has timed out
 	if(time() - $timeLastLoggedIn > vars->{ce}->{sessionKeyTimeout}){
-		send_error("You're session has expired.",419);
+		session 'logged_in' => 0;
+		return;
 	}
 
 	# update the timestamp in the database so the user isn't logged out prematurely.
@@ -100,13 +104,17 @@ sub authenticate {
 		session 'permission' => $permission->{permission};		
 	}
 
-	debug session;
+	session 'logged_in' => 1;
+
 }
 
 
 sub checkPermissions {
 	my $permissionLevel = shift;
-	authenticate();
+	buildSession();
+	if (! session 'logged_in'){
+		send_error('You are no longer logged in.  You may need to reauthenticate.',419);
+	}
 
 	if(session('permission') < $permissionLevel){send_error($PERMISSION_ERROR,403)}
 

@@ -11,7 +11,7 @@ use WeBWorK::DB;
 use WeBWorK::Authen;
 
 ## note: Routes::Authenication must be passed first
-use Routes::Authentication qw/authenticate setCourseEnvironment/; 
+use Routes::Authentication qw/buildSession setCourseEnvironment/; 
 use Routes::Course;
 use Routes::Library;
 use Routes::ProblemSets;
@@ -41,9 +41,10 @@ post '/handshake' => sub {
 	setCourseEnvironment(params->{course_id});
 
 	debug session; 
-	authenticate();
-
-
+	buildSession();
+	if (! session 'logged_in'){
+		send_error('You are no longer logged in.  You may need to reauthenticate.',419);
+	}
 
 	return {msg => "If you get this message the handshaking between Dancer and WW2 worked."};
 };
@@ -133,21 +134,6 @@ sub checkCourse {
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 
 }
-
-#sub getCourseEnvironment {
-#	my $courseID = shift;
-#
-#	  return WeBWorK::CourseEnvironment->new({
-#	 	webwork_url         => "/Volumes/WW_test/opt/webwork/webwork2",
-#	 	webwork_dir         => "/Volumes/WW_test/opt/webwork/webwork2",
-#	 	pg_dir              => "/Volumes/WW_test/opt/webwork/pg",
-#	 	webwork_htdocs_url  => "/Volumes/WW_test/opt/webwork/webwork2_files",
-#	 	webwork_htdocs_dir  => "/Volumes/WW_test/opt/webwork/webwork2/htdocs",
-#	 	webwork_courses_url => "/Volumes/WW_test/opt/webwork/webwork2_course_files",
-#	 	webwork_courses_dir => "/Volumes/WW_test/opt/webwork/webwork2/courses",
-#	 	courseName          => $courseID,
-#	 });
-#}
 
 
 Dancer->dance;
