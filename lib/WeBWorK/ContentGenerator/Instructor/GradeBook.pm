@@ -29,6 +29,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
+use WeBWorK::ContentGenerator::Instructor::StudentProgress;
 #use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::Utils::Grades qw/list_set_versions/;
@@ -86,6 +87,7 @@ sub title {
 	}
 	return $string;
 }
+
 sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -106,9 +108,6 @@ sub siblings {
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
 	print CGI::h2("Student Progress");
-	#print CGI::start_ul({class=>"LinksMenu"});
-	#print CGI::start_li();
-	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
 	print CGI::start_ul();
 	foreach my $setID (@setIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::GradeBook", $r, 
@@ -125,6 +124,7 @@ sub siblings {
 	
 	return "";
 }
+
 sub body {
 	my $self       = shift;
 	my $r          = $self->r;
@@ -163,7 +163,6 @@ sub body {
 	} elsif( $type eq 'set') {
 		$self->displaySets($self->{setName});
 	} elsif ($type eq '') {
-		
 		$self->index;
 	} else {
 		warn "Don't recognize statistics display type: |$type|";
@@ -341,10 +340,6 @@ sub getStudentScores {
 # 		      $twoString totalRight $totalRight, total $total num_of_attempts $num_of_attempts 
 # 		      num_of_problems $num_of_problems setName $setName";
 
-		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
-		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
-		
-		$max_problems = ($max_problems<$num_of_problems)? $num_of_problems:$max_problems;
 		
 		# prettify versioned set display
 		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
@@ -353,27 +348,7 @@ sub getStudentScores {
 	
 	}
 
-	my $problem_header = "";
-	foreach (1 .. $max_problems) {
-		$problem_header .= &threeSpaceFill($_);
-	}
 	
-	my $table_header = join("\n",
-#		CGI::start_table({-border=>5,style=>'font-size:smaller',-id=>"grades_table"}),
-		CGI::start_table({style=>'font-size:smaller',-id=>"grades_table"}),
-		CGI::Tr({},
-			CGI::th($r->maketext('Set')),
-			CGI::th($r->maketext('Score')),
-			CGI::th($r->maketext('Out Of')),
-			#CGI::th({ -align=>'center', },'Ind'),  #  -- leave out indicator column
-			CGI::th($r->maketext('Problems').CGI::br().CGI::pre($problem_header)),
-			#CGI::th({ -align=>'center', },'Section'),
-			#CGI::th({ -align=>'center', },'Recitation'),
-			#CGI::th({ -align=>'center', },'login_name'),
-			#CGI::th({ -align=>'center', },'ID'),
-		)
-	);
-			
 	return @scores;
 }
 
@@ -448,10 +423,10 @@ sub index {
 				                                                     
 	}
 	print join("",
-		CGI::start_table({-border=>2, -cellpadding=>20}),
+		CGI::start_table({-class=>"gradebook",-border=>2}),
 		CGI::Tr({},
-			CGI::td('Student'),
-			CGI::td({-valign=>'top'}, [@setLinks]) 
+			CGI::td({-class=>"column-name"},'Student'),
+			CGI::td({-class=>"column-set",-valign=>'top'}, [@setLinks]) 
 		),
 		@studentLinks,
 		CGI::end_table(),
@@ -668,137 +643,6 @@ sub displaySets {
 			my $act_as_student_url = '';
 
 
-# 		
-# 			# add on the scores for this problem
-# 			if (defined($attempted) and $attempted) {
-# 				$number_of_students_attempting_problem{$probID}++;
-# 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-# 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-# 				$h_problemData{$probID}                               = $num_incorrect;
-# 				$total_num_of_attempts_for_set                       += $num_of_attempts;
-# 				$correct_answers_for_problem{$probID}                += $status;
-# 			}
-
-# 
-# 			# DBFIXME: to collect the problem records, we have 
-# 			#    to know which merge routines to call.  Should 
-# 			#    this really be an issue here?  That is, 
-# 			#    shouldn't the database deal with it invisibly 
-# 			#    by detecting what the problem types are?
-# 			# DBFIXME sort in database
-# 			my $userSet;
-# 			my @problemRecords = ();
-# 			if ( $setIsVersioned ) {
-# 				my ($setN,$vNum) = ($sN =~ /(.+),v(\d+)$/);
-# 				@problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllMergedProblemVersions( $student, $setN, $vNum );
-# 				# we'll also need information from the set
-# 				#    as we set up the display below, so get
-# 				#    the merged userset as well
-# 				$userSet = $db->getMergedSetVersion($studentRecord->user_id, $setN, $vNum);
-# 
-# 			} else {
-# 				@problemRecords = sort {$a->problem_id <=> $b->problem_id} $db->getAllMergedUserProblems( $student, $sN );
-# 			}
-# 			debug("End obtaining problem records for user $student set $sN");
-# 			my $num_of_problems = @problemRecords;
-# 			$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
-# 			########################################
-# 			# Notes for factoring the calculation in this loop.
-# 			#
-# 			# Inputs include:
-# 			#   @problemRecords  
-# 			# returns
-# 			#   $num_of_attempts
-# 			#   $status
-# 			# updates
-# 			#   $number_of_students_attempting_problem{$probID}++;
-# 			#   @{ $attempts_list_for_problem{$probID} }   
-# 			#   $number_of_attempts_for_problem{$probID}
-# 			#   $total_num_of_attempts_for_set
-# 			#   $correct_answers_for_problem{$probID}   
-# 			#    
-# 			#   $string (formatting output)
-# 			#   $twoString (more formatted output)
-# 			#   $longtwo (a combination of $string and $twostring)
-# 			#   $total
-# 			#   $totalRight
-# 			###################################
-#    
-# 			foreach my $problemRecord (@problemRecords) {
-# 				next unless ref($problemRecord);
-# 				# warn "Can't find record for problem $prob in set $setName for $student";
-# 				# FIXME check the legitimate reasons why a student record might not be defined
-# 				###########################################
-# 				# Grab data from the database
-# 				###########################################
-# 				# It's possible that 
-# 				# $problemRecord->num_correct or 
-# 				# $problemRecord->num_correct
-# 				# or $problemRecord->status is an empty 
-# 				# or blank string instead of 0.  
-# 				# The || clause fixes this and prevents 
-# 				# warning messages in the comparisons below.
-# 			
-# 				my $probID          = $problemRecord->problem_id;
-# 				my $attempted       = $problemRecord->attempted;
-# 				my $num_correct     = $problemRecord->num_correct     || 0;
-# 				my $num_incorrect   = $problemRecord->num_incorrect   || 0;
-# 				my $num_of_attempts = $num_correct + $num_incorrect;
-# 				# initialize the number of correct answers 
-# 				# for this problem if the value has not been 
-# 				# defined.
-# 				$correct_answers_for_problem{$probID} = 0 
-# 					unless defined($correct_answers_for_problem{$probID});
-# 
-# 				## This doesn't work - Fix it
-# 				my $probValue = $problemRecord->value;
-# 				# set default problem value here
-# 				# FIXME?? set defaults here?
-# 				$probValue = 1 unless defined($probValue) and 
-# 					$probValue ne "";  
-# 			
-# 				my $status  = $problemRecord->status || 0;
-# 
-# 				# sanity check that the status (score) is 
-# 				# between 0 and 1
-# 				my $valid_status = ($status>=0 && $status<=1)?1:0;
-# 
-# 				###########################################
-# 				# Determine the string $longStatus which 
-# 				# will display the student's current score
-# 				###########################################
-# 				my $longStatus = '';
-# 				if (!$attempted){
-# 					$longStatus     = '.';
-# 				} elsif   ($valid_status) {
-# 					$longStatus     = int(100*$status+.5);
-# 					$longStatus='C' if ($longStatus==100);
-# 				} else	{
-# 					$longStatus 	= 'X';
-# 				}
-# 			
-# 				$string     .= threeSpaceFill($longStatus);
-# 				$twoString  .= threeSpaceFill($num_incorrect);
-# 
-# 				$total      += $probValue;
-# 				$totalRight += round_score($status*$probValue) 
-# 					if $valid_status;
-# 			
-# 				# add on the scores for this problem
-# 				if (defined($attempted) and $attempted) {
-# 					$number_of_students_attempting_problem{$probID}++;
-# 					push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-# 					$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-# 					$h_problemData{$probID}                               = $num_incorrect;
-# 					$total_num_of_attempts_for_set                       += $num_of_attempts;
-# 					$correct_answers_for_problem{$probID}                += $status;
-# 				}
-# 			
-# 			}  # end of problem record loop
-            
-            
-			# for versioned tests we might be displaying the 
-			# test date and test time
 			my $dateOfTest = '';
 			my $testTime = '';
 			if ( $setIsVersioned ) {
