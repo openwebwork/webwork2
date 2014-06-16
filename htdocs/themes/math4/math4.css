@@ -837,7 +837,7 @@ table#grades_table pre{
 }
 
 #mainform i.icon-random {
-    cursor: hand;
+    cursor: pointer;
 }
 
 #send-mail-form input,
