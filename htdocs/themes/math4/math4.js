@@ -83,6 +83,7 @@ $(function(){
     $('#problemMainForm').addClass('problem-main-form form-inline');
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
+    $('.answerComments').addClass('well');
 
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
 	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
