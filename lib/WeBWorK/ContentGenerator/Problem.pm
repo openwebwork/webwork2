@@ -1359,11 +1359,11 @@ sub output_comments{
 	my $setID          = $urlpath->arg("setID");
 	my $problemID      = $urlpath->arg("problemID");
 	my $key = $r->param('key');
-	my $userID           = $r->param('user');
+	my $eUserID          = $r->param('effectiveUser');
 	my $displayMode   = $self->{displayMode};
 	my $authz = $r->authz;
 	
-	my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID); 
+	my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $eUserID, $setID, $problemID); 
 
 	#if there is a comment then render it and print it 
 	if ($userPastAnswerID) {
@@ -1373,7 +1373,7 @@ sub output_comments{
 		    my $comment = $userPastAnswer->comment_string;
 		    $comment = CGI::escapeHTML($comment);
 		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-		    my $user = $db->getUser($userID);
+		    my $user = $db->getUser($eUserID);
 
 		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
