@@ -1227,7 +1227,7 @@ sub printTableHTML {
 	    
 	#hardcoded headings.  making htis more modular would be good
 	if ($exportMode) {
-	    @tableHeadings = ($selectBox,
+	    @tableHeadings = ('',
 			      "Achievement ID",
 			      "Name");
 	} elsif ($editMode) {

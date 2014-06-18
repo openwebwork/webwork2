@@ -17,7 +17,7 @@ $(function(){
 
     // replace pencil gifs by something prettier
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
-    $('img[src$="question_mark.png"]').replaceWith('<i class="icon-question-sign" style="font-size:16px"/>');
+    $('img[src$="question_mark.png"]').replaceWith('<i class="icon-question-sign" style="font-size:16px; margin-right:5px"/>');
 
     // Turn summaries into popovers
     $('a.table-summary').popover();
