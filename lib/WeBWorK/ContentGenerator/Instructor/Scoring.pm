@@ -164,7 +164,7 @@ sub body {
 					CGI::td({},
 						CGI::checkbox({ -name=>'includeIndex',
 										-value=>1,
-										-label=>$r->maketext('Include Index'),
+										-label=>$r->maketext('Include Success Index'),
 										-checked=>0,
 									   },
 						),

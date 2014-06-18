@@ -178,6 +178,7 @@ $(function(){
     //Student progress and statistics
     $('table.progress-table').addClass('table table-bordered table-condensed');
     $('table.stats-table').addClass('table table-bordered');
+    $('#sp-gateway-form').addClass('well');
 
     //Library browser 1 tweaks
     $('#mainform ').addClass('form-inline');

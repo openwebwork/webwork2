@@ -664,18 +664,18 @@ sub print_form {
 			#show available macros
 				CGI::popup_menu(
 						-name=>'dummyName',
-						-values=>['', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION','$STATUS', '$EMAIL', '$LOGIN', '$COL[3]', '$COL[-1]'],
+						-values=>['', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION','$STATUS', '$EMAIL', '$LOGIN', '$COL[n]', '$COL[-1]'],
 						-labels=>{''=>'list of insertable macros',
 							'$SID'=>'$SID - Student ID',
 							'$FN'=>'$FN - First name',
 							'$LN'=>'$LN - Last name',
 							'$SECTION'=>'$SECTION',
 							'$RECITATION'=>'$RECITATION',
-							'$STATUS'=>'$STATUS - C, Audit, Drop, etc.',
+							'$STATUS'=>'$STATUS - Enrolled, Drop, etc.',
 							'$EMAIL'=>'$EMAIL - Email address',
 							'$LOGIN'=>'$LOGIN - Login',
-							'$COL[3]'=>'$COL[3] - 3rd col',
-							'$COL[-1]'=>'$COL[-1] - Last column'
+							'$COL[n]'=>'$COL[n] - nth colum of merge file',
+							'$COL[-1]'=>'$COL[-1] - Last column of merge file'
 							}
 				), "\n",
 			),

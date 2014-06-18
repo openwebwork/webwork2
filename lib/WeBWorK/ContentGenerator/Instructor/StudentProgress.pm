@@ -762,7 +762,7 @@ sub displaySets {
 		print $self->hidden_authen_fields();
 
 #	    $verSelectors = CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
-		print CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
+		print CGI::p({'id'=>'sp-gateway-form','style'=>'background-color:#eeeeee;color:black;'},
 			     "Display options: Show ",
 			     CGI::hidden(-name=>'returning', -value=>'1'),
 			     CGI::checkbox(-name=>'show_best_only', -value=>'1', 
