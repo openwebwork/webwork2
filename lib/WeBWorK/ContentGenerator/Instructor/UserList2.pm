@@ -1823,7 +1823,7 @@ sub printTableHTML {
 		my $selectBox = CGI::input({
 		    type=>'checkbox',
 		    id=>'classlist-select-all',
-		    onClick => "selectall = document.getElementById('classlist-select-all'); for (i in document.userlist.elements)  { if (document.userlist.elements[i].name =='selected_users') { document.userlist.elements[i].checked = selectall.checked;}}",
+		    onClick => "\$('input[name=\"selected_users\"]').attr('checked',\$('#classlist-select-all').is(':checked'));"
 					   });
 		@tableHeadings = (
                         $editMode or $passwordMode ? '' : $selectBox,

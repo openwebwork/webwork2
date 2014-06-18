@@ -1220,8 +1220,8 @@ sub printTableHTML {
 	my $selectBox = CGI::input({
 	    type=>'checkbox',
 	    id=>'achievementlist-select-all',
-	    onClick => "selectall = document.getElementById('achievementlist-select-all'); for (i in document.achievementlist.elements)  { if (document.achievementlist.elements[i].name =='selected_achievements') { document.achievementlist.elements[i].checked = selectall.checked;}}",
-					   });
+	    onClick => "\$('input[name=\"selected_achievements\"]').attr('checked',\$('#achievementlist-select-all').is(':checked'));"
+				   });
 
 	my @tableHeadings; 
 	    

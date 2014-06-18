@@ -2527,7 +2527,7 @@ sub printTableHTML {
 	my $selectBox = CGI::input({
 	    type=>'checkbox',
 	    id=>'setlist-select-all',
-	    onClick => "selectall = document.getElementById('setlist-select-all'); for (i in document.problemsetlist.elements)  { if (document.problemsetlist.elements[i].name =='selected_sets') { document.problemsetlist.elements[i].checked = selectall.checked;}}",
+	    onClick => "\$('input[name=\"selected_sets\"]').attr('checked',\$('#setlist-select-all').is(':checked'));"	
 				   });
 
 	if (!($editMode or $exportMode)) {
