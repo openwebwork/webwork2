@@ -1499,12 +1499,21 @@ sub add_problem_handler {
 		#################################################
 		# Set up redirect Problem.pm
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
-			courseID  => $courseName, 
-			setID     => $targetSetName, 
-			problemID => $targetProblemNumber, 
-		);
+		my $problemPage;
+		# we need to know if the set is a gateway set to determine the redirect
+		my $globalSet = $self->r->db->getGlobalSet( $setName );
+
+		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
+			courseID => $courseName, setID => "Undefined_Set");
+		}  else {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
+									courseID => $courseName, setID => $targetSetName, problemID => $targetProblemNumber
+			);
+		}
+
 		my $relativeSourceFilePath = $self->getRelativeSourceFilePath($sourceFilePath);
+
 		$viewURL = $self->systemLink($problemPage,
 				params => {
 					displayMode        => $displayMode,
