@@ -125,8 +125,7 @@ use Fcntl;
 # 
 
 #hiding add_problem option to see if its needed
-#use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
-use constant ACTION_FORMS => [qw(view  save save_as revert)]; 
+use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
 use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
 view        => "View",
 add_problem => "Append",
@@ -1518,9 +1517,9 @@ sub add_problem_handler {
 		$self->{file_type}   = 'problem'; # change file type to problem -- if it's not already that
 
 		#################################################
-		# Set up redirect Problem.pm
+		# Set up redirect to problem editor page. 
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
+		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
 			courseID  => $courseName, 
 			setID     => $targetSetName, 
 			problemID => $targetProblemNumber, 
