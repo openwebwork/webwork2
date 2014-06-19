@@ -2520,10 +2520,12 @@ sub manage_location_form {
 						  @locationIDs],
 					-labels=>{selected_locations => "locations selected below",
 						  "" => "no location"}) .
-			CGI::span({-style=>"color:#C33;"}, "  Confirm: ") . 
+			CGI::br() .
+			CGI::start_span({-class=>"ResultsWithError"}).
 			CGI::checkbox({-name=>"delete_confirm",
 				       -value=>"true",
-				       -label=>""}) ) );
+				       -label=>"Confirm"}).
+			CGI::end_span()));
 	print CGI::end_table();
 
 	print CGI::p({}, CGI::submit(-name=>"manage_locations", -value=>"Take Action!"));
