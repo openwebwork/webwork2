@@ -79,10 +79,10 @@ sub title {
 	my $type                = $self->{type};
 	my $string              = $r->maketext("Student Progress for")." ".$self->{ce}->{courseName}." ";
 	if ($type eq 'student') {
-		$string             .= "student ".$self->{studentName};
+		$string             .= $r->maketext("student")." ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
 		$string             .= $r->maketext("set")." ".$self->{setName};
-		$string             .= ".&nbsp;&nbsp;&nbsp; Due ". $self->formatDateTime($self->{set_due_date});
+		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ". $self->formatDateTime($self->{set_due_date});
 	}
 	return $string;
 }
@@ -150,8 +150,8 @@ sub body {
 		my $email = $studentRecord->email_address;
 		
 		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			"Section: ", $studentRecord->section, CGI::br(),
-			"Recitation: ", $studentRecord->recitation, CGI::br();
+			$r->maketext("Section").": ", $studentRecord->section, CGI::br(),
+			$r->maketext("Recitation").": ", $studentRecord->recitation, CGI::br();
 		
 		if ($authz->hasPermissions($user, "become_student")) {
 			my $act_as_student_url = $self->systemLink($courseHomePage,
@@ -193,9 +193,9 @@ sub index {
 	my $user = $r->param("user");
 	
 	my (@viewable_sections, @viewable_recitations);
-	if (defined @{$ce->{viewable_sections}->{$user}})
+	if (defined $ce->{viewable_sections}->{$user})
 		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined @{$ce->{viewable_recitations}->{$user}})
+	if (defined $ce->{viewable_recitations}->{$user})
 		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
 	if (@viewable_sections or @viewable_recitations){
 		foreach my $studentL (@studentList){
@@ -367,9 +367,9 @@ sub displaySets {
 	my @myUsers;
 	my $ActiveUser = $r->param("user");
 	my (@viewable_sections, @viewable_recitations);
-	if (defined @{$ce->{viewable_sections}->{$user}})
+	if (defined $ce->{viewable_sections}->{$user})
 		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined @{$ce->{viewable_recitations}->{$user}})
+	if (defined $ce->{viewable_recitations}->{$user})
 		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
 	if (@viewable_sections or @viewable_recitations){
 		foreach my $student (@userRecords){
@@ -762,7 +762,7 @@ sub displaySets {
 		print $self->hidden_authen_fields();
 
 #	    $verSelectors = CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
-		print CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
+		print CGI::p({'id'=>'sp-gateway-form','style'=>'background-color:#eeeeee;color:black;'},
 			     "Display options: Show ",
 			     CGI::hidden(-name=>'returning', -value=>'1'),
 			     CGI::checkbox(-name=>'show_best_only', -value=>'1', 
@@ -798,18 +798,14 @@ sub displaySets {
 	print
 #		CGI::br(),
 		CGI::br(),
-		CGI::p({},'A period (.) indicates a problem has not been attempted, a &quot;C&quot; indicates 
-		a problem has been answered 100% correctly, and a number from 0 to 99 
-		indicates the percentage of partial credit earned. The number on the 
-		second line gives the number of incorrect attempts.  ',
+		CGI::p({},$r->maketext('A period (.) indicates a problem has not been attempted, a &quot;C&quot; indicates a problem has been answered 100% correctly, and a number from 0 to 99 indicates the percentage of partial credit earned. The number on the second line gives the number of incorrect attempts.'),
 #		'The success indicator,' ,CGI::i('Ind'),', for each student is calculated as',
 #		CGI::br(),
 #		'100*(totalNumberOfCorrectProblems / totalNumberOfProblems)^2 / (AvgNumberOfAttemptsPerProblem)',CGI::br(),
 #		'or 0 if there are no attempts.'
 		),
 		CGI::br(),
-		"Click on a student's name to see the student's version of the homework set. &nbsp; &nbsp;&nbsp;
-		Click heading to sort table. ",
+		$r->maketext("Click on a student's name to see the student's version of the homework set. Click heading to sort table."),
 		CGI::br(),
 		CGI::br(),
 		defined($primary_sort_method_name) ?" Entries are sorted by $display_sort_method_name{$primary_sort_method_name}":'',
@@ -834,8 +830,8 @@ sub displaySets {
 			$r->maketext("Out Of"),
 #			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %past_sort_methods})},'Ind'),
 			$r->maketext("Problems").CGI::br().$problem_header,
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},'Section'),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},'Recitation'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},$r->maketext('Section')),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},$r->maketext('Recitation')),
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %past_sort_methods})},'Login Name'),
 			])
 

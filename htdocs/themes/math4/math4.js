@@ -5,6 +5,10 @@ $(function(){
     $('.nav_button').addClass('btn btn-primary');
     $('.classlist').addClass('table table-condensed classlist-table');
 
+    // Try to format checkboxes better
+    $('input:checkbox').parent('label').addClass('checkbox');
+    $('input:radio').parent('label').addClass('radio');
+
     // Make grey_buttons disabled buttons
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
     
@@ -13,6 +17,7 @@ $(function(){
 
     // replace pencil gifs by something prettier
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
+    $('img[src$="question_mark.png"]').replaceWith('<i class="icon-question-sign" style="font-size:16px; margin-right:5px"/>');
 
     // Turn summaries into popovers
     $('a.table-summary').popover();
@@ -27,6 +32,27 @@ $(function(){
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
+
+    // Add a button to make the sidebar more dynamic for small screens
+    $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
+	    event.preventDefault();
+	    $('#site-navigation').toggleClass('hidden');
+	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
+		.toggleClass('icon-chevron-right');
+	    $('#site-navigation').toggleClass('span2');
+	    $('#content').toggleClass('span10').toggleClass('span11');
+	});
+
+    if($(window).width() < 480) {
+	$('#toggle-sidebar').click();
+    }
+
+    // if no fish eye then collapse site-navigation 
+    if(!$('#site-links').html().match(/[^\s]/)) {
+	$('#site-navigation').removeClass('span2');
+	$('#content').removeClass('span10').addClass('span11');
+	$('#toggle-sidebar').addClass('hidden');
+    }
 
     // Makes the fisheye stuff bootstrap nav
     $('#site-navigation ul').addClass('nav nav-list');
@@ -48,7 +74,7 @@ $(function(){
     if($('.problem_set_table th:contains("Test Score")').length > 0) {
 	$('.problem_set_table').addClass('small-table-text');
     }
-    $('.problem_set_table td a').addClass('btn btn-primary btn-small');
+
     $('#hardcopy-form').addClass('form-inline');
 
     $('.problem_set_options input').addClass('btn btn-info');
@@ -58,6 +84,7 @@ $(function(){
     $('#problemMainForm').addClass('problem-main-form form-inline');
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
+    $('.answerComments').addClass('well');
 
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
 	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
@@ -75,7 +102,6 @@ $(function(){
     
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
-    $('#grades_table a').addClass('btn btn-primary');
 
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
@@ -86,10 +112,14 @@ $(function(){
     $('#config-form').addClass('form-inline');
     $('#config-form table').addClass('table table-bordered');
 
+    //Instructor Tools
+    $('#instructor-tools-form input').removeClass('btn-primary');
+
     //File Manager Configuration
     $('#FileManager').addClass('form-inline');
-    $('#FileManager .btn').addClass('btn-small file-manager-btn');
-
+    $('#FileManager .btn').addClass('btn-small file-manager-btn').removeClass('btn-primary');
+    $('#FileManager #Upload').addClass('btn-primary');
+    
     //Classlist Editor 1&2 configuration
     $('#classlist-form').addClass('form-inline user-list-form');
     $('.user-list-form input:button').addClass('btn btn-info');
@@ -110,7 +140,7 @@ $(function(){
     $('.set-list-form input:button').addClass('btn btn-info');
     $('.set-list-form input:reset').addClass('btn btn-info');
     $('.set-list-form').wrapInner('<div />');
-    $('.set_table').addClass('small-table-text table table-condensed');
+    $('.set_table').addClass('small-table-text table-bordered table table-condensed');
     $('#show_hide').addClass('btn btn-info');
     $('#problem_set_form').addClass('form-inline');
     $('#user-set-form').addClass('form-inline user-assign-form');
@@ -120,11 +150,13 @@ $(function(){
 	label.prepend(this);
 	label.addClass('checkbox');
     });
+    $('#problem_set_form input[name="refresh"]').removeClass("btn-primary");
     
     //PG editor styling
     $('#editor').addClass('form-inline span9');
     $('#editor a').addClass('btn btn-small btn-info');
     $('#editor div').each(function () { $(this).html($(this).html().replace(/\|/g,"")); });
+    $('#editor label[class="radio"]').after('<br/>');
 
     //Achievement Editor
     $('#achievement-list').addClass('form-inline user-list-form');
@@ -136,7 +168,8 @@ $(function(){
 
     //email page
     $('#send-mail-form').addClass('form-inline');
-    $('#send-mail-form .btn').addClass('btn-small');
+    $('#send-mail-form .btn').addClass('btn-small').removeClass('btn-primary');
+    $('#send-mail-form input[value="Send Email"]').addClass('btn-primary');
 
     //Score sets
     $('#scoring-form').addClass('form-inline');
@@ -145,11 +178,14 @@ $(function(){
     //Student progress and statistics
     $('table.progress-table').addClass('table table-bordered table-condensed');
     $('table.stats-table').addClass('table table-bordered');
-    $('.stats-table td a').addClass('btn btn-small btn-primary');
+    $('#sp-gateway-form').addClass('well');
 
     //Library browser 1 tweaks
     $('#mainform ').addClass('form-inline');
     $('#mainform input:button').addClass('btn btn-primary');
+    $('#mainform input[type="submit"]').removeClass('btn-primary');
+    $('#mainform input[name="edit_local"]').addClass('btn-primary');    
+    $('#mainform input[name="new_local_set"]').addClass('btn-primary');
     $('#mainform .btn').addClass('btn-small');
     $('#mainform .InfoPanel select').addClass('input-xxlarge');
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');

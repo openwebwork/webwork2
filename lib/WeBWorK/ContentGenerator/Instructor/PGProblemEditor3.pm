@@ -125,8 +125,7 @@ use Fcntl;
 # 
 
 #hiding add_problem option to see if its needed
-#use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
-use constant ACTION_FORMS => [qw(view  save save_as revert)]; 
+use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
 use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
 view        => "View",
 add_problem => "Append",
@@ -391,13 +390,13 @@ sub initialize  {
 	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is protected! ".CGI::br().
-		"To edit this text you must first make a copy of this file using the 'Save as' action below.");
+		"To edit this text you must first make a copy of this file using the 'NewVersion' action below.");
 
 	}
     if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 #    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
     	$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is a blank problem! ".CGI::br()."To edit this text you must  
-                           use the 'Save AS' action below to save it to another file.");
+                           use the 'NewVersion' action below to save it to another file.");
     }
 	
 }
@@ -682,7 +681,9 @@ EOF
 # 		),
 		CGI::p(
 			CGI::textarea(
-				-name => 'problemContents', -default => $problemContents,
+				-name => 'problemContents', 
+			        -class => 'latexentryfield',
+			        -default => $problemContents,
 				-rows => $rows, -cols => $columns, -override => 1,
 			),
 		);
@@ -740,7 +741,7 @@ EOF
 				# Check permissions
 				#next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
 				my $actionForm = "${actionID}_form";
-				my $newWindow = ($actionID =~ m/^(view|add_problem|save)$/)? 1: 0;
+				my $newWindow = 0;
 				my $onChange = "setRadio($i,$newWindow)";
 				my %actionParams = $self->getActionParams($actionID);
 				my $line_contents = $self->$actionForm($onChange, %actionParams);
@@ -1008,7 +1009,7 @@ sub getFilePaths {
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
 			$self->addbadmessage("This is a blank problem template file and can not be edited directly. "
-			                     ."Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
+			                     ."Use the 'NewVersion' action below to create a local copy of the file and add it to the current problem set."
 			);
 			last CASE;
 		};
@@ -1516,9 +1517,9 @@ sub add_problem_handler {
 		$self->{file_type}   = 'problem'; # change file type to problem -- if it's not already that
 
 		#################################################
-		# Set up redirect Problem.pm
+		# Set up redirect to problem editor page. 
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
+		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
 			courseID  => $courseName, 
 			setID     => $targetSetName, 
 			problemID => $targetProblemNumber, 
@@ -2063,7 +2064,19 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
+
+	if ($ce->{options}->{PGMathView}) {
+	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	}
 	
+	return "";
+}
+
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
 	return "";
 }
 

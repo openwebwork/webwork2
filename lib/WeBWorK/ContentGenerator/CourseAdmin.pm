@@ -410,26 +410,26 @@ sub body {
 		           add_dbLayout=>'sql_single', 
 		           add_templates_course => $ce->{siteDefaults}->{default_templates_course} ||""}
 		           )}, 
-		           "Add Course"
+		           $r->maketext("Add Course")
 		),
 		" | ",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"rename_course"})}, "Rename Course"),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"rename_course"})}, $r->maketext("Rename Course")),
 		" | ",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"delete_course"})}, "Delete Course"),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"delete_course"})}, $r->maketext("Delete Course")),
 		" | ",
-		# CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"export_database"})}, "Export Database"),
+		# CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"export_database"})}, $r->maketext("Export Database")),
 		# " | ",
-		# CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, "Import Database"),
+		# CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, $r->maketext("Import Database")),
 		# " | ",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"archive_course"})}, "Archive Course"),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"archive_course"})}, $r->maketext("Archive Course")),
 		 "|",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"unarchive_course"})}, "Unarchive Course"),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"unarchive_course"})}, $r->maketext("Unarchive Course")),
 		 "|",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"upgrade_course"})}, "Upgrade courses"),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"upgrade_course"})}, $r->maketext("Upgrade courses")),
 		 "|",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"manage_locations"})}, "Manage Locations"),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"manage_locations"})}, $r->maketext("Manage Locations")),
 		 "|",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"hide_inactive_course"})}, "Hide Inactive courses"),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"hide_inactive_course"})}, $r->maketext("Hide Inactive courses")),
 		CGI::hr(),
 		$methodMessage,
 		
@@ -460,7 +460,7 @@ sub body {
 				CGI::p(" The webwork server must be able to write to these directories. Please correct the permssion errors.") ;
 			}
 	
-		print CGI::h2("Courses");
+		print CGI::h2($r->maketext("Courses"));
 	
 		print CGI::start_ol();
 		
@@ -2520,10 +2520,12 @@ sub manage_location_form {
 						  @locationIDs],
 					-labels=>{selected_locations => "locations selected below",
 						  "" => "no location"}) .
-			CGI::span({-style=>"color:#C33;"}, "  Confirm: ") . 
+			CGI::br() .
+			CGI::start_span({-class=>"ResultsWithError"}).
 			CGI::checkbox({-name=>"delete_confirm",
 				       -value=>"true",
-				       -label=>""}) ) );
+				       -label=>"Confirm"}).
+			CGI::end_span()));
 	print CGI::end_table();
 
 	print CGI::p({}, CGI::submit(-name=>"manage_locations", -value=>"Take Action!"));

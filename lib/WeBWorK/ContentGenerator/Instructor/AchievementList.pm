@@ -278,26 +278,6 @@ sub body {
 		$i++;
 	}
 	
-	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Select all',
-	       onClick => "for (i in document.achievementlist.elements)  { 
-	                       if (document.achievementlist.elements[i].name =='selected_achievements') { 
-	                           document.achievementlist.elements[i].checked = true
-	                       }
-	                    }" });
-   	my $selectNone =CGI::input({-type=>'button', -name=>'check_none', -value=>'Unselect all',
-	       onClick => "for (i in document.achievementlist.elements)  { 
-	                       if (document.achievementlist.elements[i].name =='selected_achievements') { 
-	                          document.achievementlist.elements[i].checked = false
-	                       }
-	                    }" });
-	unless ($editMode or $exportMode) {
-		print CGI::Tr({}, CGI::td({ colspan=>2, -align=>"center"},
-			$selectAll." ". $selectNone
-			)
-		);
-	}
-
-	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 
 	print CGI::end_div();
@@ -526,7 +506,6 @@ sub score_handler {
 	
 	if ($scope eq "none") { 
 		@achievementsToScore = ();
-		return "No achievements selected for scoring.";
 	} elsif ($scope eq "all") {
 		@achievementsToScore = @{ $self->{allAchievementIDs} };
 	} elsif ($scope eq "selected") {
@@ -552,8 +531,7 @@ sub score_handler {
 	#print out header info
 	print SCORE "username, last name, first name, section, achievement level, achievement score, ";
 	
-	my @achievementIDs = $db->listAchievements;
-	my @achievements = $db->getAchievements(@achievementIDs);
+	my @achievements = $db->getAchievements(@achievementsToScore);
 	@achievements = sortAchievements(@achievements);
 
 	foreach my $achievement (@achievements) {
@@ -579,6 +557,7 @@ sub score_handler {
 	foreach my $userRecord (@userRecords) {
 	    my $user_id = $userRecord->user_id;
 	    next unless $db->existsGlobalUserAchievement($user_id);
+	    next if ($userRecord->{status} eq 'D' || $userRecord->{status} eq 'A');
 	    print SCORE "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
 	    my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
 	    my $level_id = $globalUserAchievement->level_achievement_id;
@@ -601,8 +580,14 @@ sub score_handler {
 	}
 	
 	close SCORE;
-		    
-	return CGI::div({class=>"ResultsWithoutError"},  "Achievement scores saved to $scoreFileName")
+
+	# Include a download link
+	#
+	my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::FileManager", $r, courseID => $courseName);
+	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {action=>"View", files => "${courseName}_achievement_scores.csv", pwd=>"scoring"});
+	
+	
+	return CGI::div({class=>"ResultsWithoutError"},  "Achievement scores saved to ".CGI::a({href=>$fileManagerURL},$scoreFileName));
 }
 
 
@@ -898,7 +883,7 @@ sub saveExport_handler {
 	my $urlpath = $r->urlpath;
 	my $courseName = $urlpath->arg("courseID");
 
-	my @achievementIDsToExport = @{ $self->{selectedAchievementIDs} };
+	my @achievementIDsToExport = $r->param("selected_export") ;
 
 	#get file path
 	my $FileName = $courseName."_achievements.axp";
@@ -1064,13 +1049,12 @@ sub recordEditHTML {
 	    # selection checkbox
 	    push @tableCells, CGI::checkbox(
 		-type => "checkbox",
-		-name => "selected_achievements",
+		-name => "selected_export",
+		-checked => $achievementSelected,
 		-value => $achievement_id,
 		-label => "",
-		-checked => $achievementSelected,
 					    );
-	
-    
+
 	    my @fields = ("achievement_id", "name");
 	    
 	    foreach my $field (@fields) {
@@ -1196,7 +1180,8 @@ sub recordEditHTML {
 		$fieldValue =~ s/ /&nbsp;/g;
 		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /enabled/;
 		if ($field =~ /achievement_id/) {
-		    $fieldValue .= " ".$imageLink;
+		    $fieldValue .= $imageLink;
+		    $fieldValue = CGI::div({class=>'label-with-edit-icon'},$fieldValue);
 		}
 		push @tableCells, CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	    }
@@ -1222,7 +1207,7 @@ sub printTableHTML {
 	my $editMode                = $options{editMode};
 	my $exportMode              = $options{exportMode};
 	my %selectedAchievementIDs          = map { $_ => 1 } @{ $options{selectedAchievementIDs} };
-	
+
 	# names of headings:
 
 	if ($editMode and not %selectedAchievementIDs) {
@@ -1232,11 +1217,17 @@ sub printTableHTML {
 	}
 	    
 
+	my $selectBox = CGI::input({
+	    type=>'checkbox',
+	    id=>'achievementlist-select-all',
+	    onClick => "\$('input[name=\"selected_achievements\"]').attr('checked',\$('#achievementlist-select-all').is(':checked'));"
+				   });
+
 	my @tableHeadings; 
 	    
 	#hardcoded headings.  making htis more modular would be good
 	if ($exportMode) {
-	    @tableHeadings = ("Select",
+	    @tableHeadings = ('',
 			      "Achievement ID",
 			      "Name");
 	} elsif ($editMode) {
@@ -1246,7 +1237,7 @@ sub printTableHTML {
 			      "Description <br> Evaluator File <br> Icon File"
 		);
 	} else {
-	    @tableHeadings = ("Select",
+	    @tableHeadings = ($selectBox,
 			      "Enabled",
 			      "Achievement ID",
 			      "Category",
@@ -1275,6 +1266,7 @@ sub printTableHTML {
 			    $Achievement->achievement_id}
 		);
 	}
+
 	
 	print CGI::end_table();
 	#########################################

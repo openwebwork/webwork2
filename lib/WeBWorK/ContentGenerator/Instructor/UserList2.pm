@@ -547,23 +547,6 @@ sub body {
 
 	print CGI::start_div();
 
-	my $selectAll =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_all", -input_attr=>{-name=>'check_all', -class=>"button_input", -value=>$r->maketext('Select all users'),
-	       onClick => "for (i in document.userlist.elements)  { 
-	                       if (document.userlist.elements[i].name =='selected_users') { 
-	                           document.userlist.elements[i].checked = true
-	                       }
-	                    }" });
-   	my $selectNone =WeBWorK::CGI_labeled_input(-type=>'button', -id=>"select_none", -input_attr=>{-name=>'check_none', -class=>"button_input", -value=>$r->maketext('Unselect all users'),
-	       onClick => "for (i in document.userlist.elements)  { 
-	                       if (document.userlist.elements[i].name =='selected_users') { 
-	                          document.userlist.elements[i].checked = false
-	                       }
-	                    }" });
-	unless ($editMode or $passwordMode) {
-		print $selectAll." ". $selectNone;
-	}
-
-	print WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear_entries", -input_attr=>{-value=>$r->maketext("Clear"), -class=>"button_input"});
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 	print CGI::end_div();
 	# print CGI::end_table();
@@ -697,7 +680,8 @@ sub filter_handler {
 	
 	my $r = $self->r;
 	my $db = $r->db;
-	
+	my $ce = $r->ce;
+
 	my $result;
 	
 	my $scope = $actionParams->{"action.filter.scope"}->[0];
@@ -716,13 +700,18 @@ sub filter_handler {
 		my $field = $actionParams->{"action.filter.field"}->[0];
 		my @userRecords = $db->getUsers(@{$self->{allUserIDs}});
 		my @userIDs;
+		my %permissionLabels = reverse %{$ce->{userRoles}};
 		foreach my $record (@userRecords) {
 			next unless $record;
 
 			# add permission level to user record hash so we can match it if necessary
+			# also change permission level and status to their text
+			# labels
 			if ($field eq "permission") {
 				my $permissionLevel = $db->getPermissionLevel($record->user_id);
-        	                $record->{permission} = $permissionLevel->permission;
+        	                $record->{permission} = $permissionLabels{$permissionLevel->permission};
+			} elsif ($field eq 'status') {
+			    $record->{status} = $ce->status_abbrev_to_name($record->{status});
 			}
 			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
 		}
@@ -752,13 +741,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Sort by").": ",
 			-input_attr=>{
 				-name => "action.sort.primary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.primary"}->[0] || "last_name",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -776,13 +764,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Then by").": ",
 			-input_attr=>{
 				-name => "action.sort.secondary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.secondary"}->[0] || "first_name",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -800,13 +787,12 @@ sub sort_form {
 			-label_text=>$r->maketext("Then by").": ",
 			-input_attr=>{
 				-name => "action.sort.ternary",
-				-values => [qw(user_id first_name last_name email_address student_id status section recitation comment permission)],
+				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
 				-default => $actionParams{"action.sort.ternary"}->[0] || "user_id",
 				-labels => {
 					user_id		=> $r->maketext("Login Name"),
 					first_name	=> $r->maketext("First Name"),
 					last_name	=> $r->maketext("Last Name"),
-					email_address	=> $r->maketext("Email Address"),
 					student_id	=> $r->maketext("Student ID"),
 					status		=> $r->maketext("Enrollment Status"),
 					section		=> $r->maketext("Section"),
@@ -836,7 +822,6 @@ sub sort_handler {
 				user_id		=> $r->maketext("Login Name"),
 				first_name	=> $r->maketext("First Name"),
 				last_name	=> $r->maketext("Last Name"),
-				email_address	=> $r->maketext("Email Address"),
 				student_id	=> $r->maketext("Student ID"),
 				status		=> $r->maketext("Enrollment Status"),
 				section		=> $r->maketext("Section"),
@@ -1512,7 +1497,7 @@ sub fieldEditHTML {
 		if ($value eq '&nbsp;') {
 			return $value;}
 		else {
-			return CGI::a({-href=>"mailto:$value"},$value);
+			return CGI::a({-href=>"mailto:$value"},$r->maketext('Email'));
 		}
 	}
 	
@@ -1521,7 +1506,7 @@ sub fieldEditHTML {
 		if ($type eq "status") {
 			my $status_name = $ce->status_abbrev_to_name($value);
 			if (defined $status_name) {
-				$value = "$status_name ($value)";
+				$value = "$status_name";
 			}
 		}
 		return $value;
@@ -1666,24 +1651,19 @@ sub recordEditHTML {
 			$label = CGI::a({href=>$changeEUserURL}, $User->user_id) . $imageLink;
 		}
 		
-		push @tableCells, WeBWorK::CGI_labeled_input(
-			-type=>"checkbox",
-			-id=>$User->user_id."_checkbox",
-			-label_text=>$label,
-			-input_attr=> $userSelected ?
-			{
-				-name => "selected_users",
-				-value => $User->user_id,
-				-checked => "checked",
-				-class=>"table_checkbox",
-			}
-			:
-			{
-				-name => "selected_users",
-				-value => $User->user_id,
-				-class=>"table_checkbox",
-			}
-		);
+		push @tableCells, CGI::input({
+		    -type=>"checkbox",
+		    -id=>$User->user_id."_checkbox",
+		    -label_text=>$label,
+		    -name => "selected_users",
+		    -value => $User->user_id,
+		    $userSelected ? ('checked', "checked") : (),
+		    -class=>"table_checkbox",
+					     }
+		    );
+
+		push @tableCells, CGI::div({class=>'label-with-edit-icon'}, $label);
+		
 	}
 	
 	# Act As
@@ -1769,7 +1749,7 @@ sub recordEditHTML {
 		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 	
-	return CGI::Tr({}, CGI::td({nowrap=>1}, \@tableCells));
+	return CGI::Tr({}, CGI::td(\@tableCells));
 }
 
 sub printTableHTML {
@@ -1839,14 +1819,20 @@ sub printTableHTML {
 			no_visible_users => "1"
 			);
 		}	
+
+		my $selectBox = CGI::input({
+		    type=>'checkbox',
+		    id=>'classlist-select-all',
+		    onClick => "\$('input[name=\"selected_users\"]').attr('checked',\$('#classlist-select-all').is(':checked'));"
+					   });
 		@tableHeadings = (
-			#"Select",
+                        $editMode or $passwordMode ? '' : $selectBox,
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'user_id', %current_state})}, $r->maketext('Login Name')),
 			$r->maketext("Login Status"), 
 			$r->maketext("Assigned Sets"),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'first_name', %current_state})}, $r->maketext('First Name')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'last_name', %current_state})}, $r->maketext('Last Name')),
-			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'email_address', %current_state})}, $r->maketext('Email Address')),
+		        $r->maketext('Email Link'),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'student_id', %current_state})}, $r->maketext('Student ID')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'status', %current_state})}, $r->maketext('Status')),
 			CGI::a({href => $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName,} ), params=>{labelSortMethod=>'section', %current_state})}, $r->maketext('Section')),
@@ -1861,9 +1847,9 @@ sub printTableHTML {
         
 	# print the table
 	if ($editMode or $passwordMode) {
-		print CGI::start_table({-nowrap=>0, id=>"classlist-table", -class=>"classlist-table set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });# "A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
+		print CGI::start_table({id=>"classlist-table", -class=>"classlist-table set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });# "A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
 	} else {
-		print CGI::start_table({-border=>1, -nowrap=>1, -id=>"classlist-table", -class=>"classlist-table set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });#"A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
+		print CGI::start_table({-border=>1, -id=>"classlist-table", -class=>"classlist-table set_table", -summary=>$r->maketext("_USER_TABLE_SUMMARY") });#"A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user."});
 	}
 	
 	print CGI::caption($r->maketext("Users List"));

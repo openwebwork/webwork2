@@ -745,7 +745,7 @@ sub make_top_row {
 																 ($browse_which eq "browse_$lib")? (-disabled=>1): ())
 			if (-d "$ce->{courseDirs}{templates}/$lib");
 	}
-	$libs = CGI::br()."or Problems from".$libs if $libs ne '';
+	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
 
 	my $these_widths = "width: 24ex";
 
@@ -787,9 +787,9 @@ sub make_top_row {
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		"Browse ",
 		CGI::submit(-name=>"browse_npl_library", -value=>"National Problem Library", -style=>$these_widths, @dis1),
-		CGI::submit(-name=>"browse_local", -value=>"Local Problems", -style=>$these_widths, @dis2),
-		CGI::submit(-name=>"browse_mysets", -value=>"From This Course", -style=>$these_widths, @dis3),
-		CGI::submit(-name=>"browse_setdefs", -value=>"Set Definition Files", -style=>$these_widths, @dis4),
+		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
+		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),
+		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>$these_widths, @dis4),
 		$libs,
 	));
 
@@ -1321,7 +1321,7 @@ sub body {
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		print "User $userName returned " . 
-			$authz->hasPermissions($user, "modify_problem_sets") . 
+			$authz->hasPermissions($userName, "modify_problem_sets") . 
 	" for permission";
 		return(CGI::div({class=>'ResultsWithError'},
 		CGI::em("You are not authorized to access the Instructor tools.")));

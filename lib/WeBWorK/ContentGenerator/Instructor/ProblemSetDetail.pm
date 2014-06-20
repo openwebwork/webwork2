@@ -221,6 +221,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "4",
 		override  => "any",
+		default   => "0",
 #		labels    => {	"" => 0 },  # I'm not sure this is quite right
 		convertby => 60,
 	},
@@ -236,6 +237,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "3",
 		override  => "any",
+		default   => "0",
 #		labels    => {	"" => 1 },
 	},
 	time_interval => {
@@ -243,6 +245,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
                 size      => "5",
 		override  => "any",
+		default   => "0",
 #		labels    => {	"" => 0 },
 		convertby => 60,
 	},
@@ -2223,6 +2226,7 @@ sub body {
 			),CGI::input({
 					name=>"add_n_problems",
 					size=>2,
+					type=>'text',
 					value=>1 },
 					$r->maketext("blank problem template(s) to end of homework set")
 			);

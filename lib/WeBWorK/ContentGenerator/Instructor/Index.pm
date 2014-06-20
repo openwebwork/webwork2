@@ -314,9 +314,9 @@ sub body {
 	
 	my (@viewable_sections,@viewable_recitations);
 	
-	if (defined @{$ce->{viewable_sections}->{$user}})
+	if (defined $ce->{viewable_sections}->{$user})
 		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined @{$ce->{viewable_recitations}->{$user}})
+	if (defined $ce->{viewable_recitations}->{$user})
 		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
 
 	if (@viewable_sections or @viewable_recitations){
@@ -361,7 +361,7 @@ sub body {
 		multiple => 1,
 	}, @GlobalSets);
 	
-	print CGI::start_form({method=>"get", action=>$r->uri()});
+	print CGI::start_form({method=>"get", id=>"instructor-tools-form", action=>$r->uri()});
 	print $self->hidden_authen_fields();
 	
 	print CGI::table({class=>"FormLayout"},

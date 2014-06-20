@@ -29,6 +29,12 @@
 	clear:both;
 	border: none; /* 1px solid grey; */
 }
+
+a.table-summary,
+a.table-summary:visited {
+    color:black;
+    text-decoration:none;
+}
 .table-input {
 	width:15em;
     font-size:75%;
@@ -309,7 +315,7 @@ clear: both;
 } 
 
 #mainform i.icon-random {
-    cursor: hand;
+    cursor: pointer;
 }
 
 /*Relative Positioning -- a alternate style for the loginstatus which uses relative positioning.  Tested, but was decided that it didn't work great. Feel free to uncomment if you want to try it out.*/
@@ -415,6 +421,14 @@ clear: both;
 }
 #content h1 { margin: .4ex 0; } /* for crappy MSIE */
 
+/* Library Browser*/
+.library-browser-table td {
+	padding-top: 0.2em;
+	padding-bottom: 0.2em;
+}
+.library-browser-table .table-separator {
+	border-bottom: 1px solid #ccc;
+}
 
 #footer {
 	/* white-space: nowrap; */
@@ -653,16 +667,19 @@ table th {font-size:75%}
 /*The styles here correctly align the table elements in the set table*/
 .set_table{
 	margin-right: 5px;
+	border: 1px solid black;
 }
 
 .set_table td{
 	padding-right: 5px;
+	border: 1px solid black;
 }
 
 .set_table th{
 	text-align: center;
 	padding-right: 5px;
 	padding-left: 5px;
+	border: 1px solid black;
 }
 
 .set_table label{
@@ -851,7 +868,7 @@ span.gray_button{
 
 #pg_editor_frame_id{
     width:95%;
-    height:390px;
+    height:590px;
     overflow:scroll;
 }
 
@@ -863,6 +880,7 @@ span.gray_button{
 #render-modal .modal-body {
     height:95%;
     width:95%;
+    max-height:600px;
 }
 
 /*These are styles for the table of problem sets, found on the Homework Sets page.  Most are simple alignment changes which makes it so everything isn't bunched up together.*/
@@ -936,12 +954,3 @@ table#grades_table th {
     text-align:center;
 }
 
-#render-modal.modal {
-    width:1024px;
-    left:25%;
-}
-
-#render-modal .modal-body {
-    height:95%;
-    width:95%;
-}

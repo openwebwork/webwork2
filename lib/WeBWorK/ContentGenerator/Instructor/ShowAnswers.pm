@@ -83,7 +83,7 @@ sub body {
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
 	my $renderAnswers = 0;
 	# Figure out if MathJax is available
-	if (('MathJax' ~~ @{$ce->{pg}->{displayModes}})) {
+	if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
 	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
 	    $renderAnswers = 1;
 	}
@@ -105,7 +105,7 @@ sub body {
 	    
 	    print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
 	    $self->hidden_authen_fields;
-	    print CGI::submit(-name => 'action', -value=>'Past Answers for')," &nbsp; ",
+	    print CGI::submit(-name => 'action', -value=>$r->maketext('Past Answers for'))," &nbsp; ",
 	    " &nbsp;".$r->maketext('User:')." &nbsp;",
 	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 ),
 	    " &nbsp;".$r->maketext('Set:')." &nbsp;",
@@ -177,8 +177,7 @@ sub body {
 		
 	    }
 
-	    return CGI::span({class=>'ResultsWithError'}, $r->maketext('No users have sets matching the given set id.'))
-	    unless @setNames;
+	    next unless @setNames;
 
 	    foreach my $setName (@setNames) {
 	
@@ -210,8 +209,8 @@ sub body {
 		    my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
 		    
 		    print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
-		    print CGI::h3("Past Answers for $studentUser, set $setName, problem $problemNumber" );
-		    print "No entries for $studentUser set $setName, problem $problemNumber" unless @pastAnswerIDs;
+		    print CGI::h3($r->maketext("Past Answers for [_1], set [_2], problem [_3]" ,$studentUser, $setName, $problemNumber));
+		    print $r->maketext("No entries for [_1], set [_2], problem [_3]", $studentUser, $setName, $problemNumber) unless @pastAnswerIDs;
 		    
 		    # changed this to use the db for the past answers.  
 		    

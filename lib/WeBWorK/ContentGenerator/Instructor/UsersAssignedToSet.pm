@@ -54,19 +54,19 @@ sub initialize {
 
 	if (defined $r->param('assignToAll')) {
 		debug("assignSetToAllUsers($setID)");
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems have been assigned to all current users."));
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Problems have been assigned to all current users.")));
 		$self->assignSetToAllUsers($setID);
 		debug("done assignSetToAllUsers($setID)");
 	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
 		%selectedUsers = ( $globalUserID => 1 );
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for all students have been unassigned."));
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Problems for all students have been unassigned.")));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
-	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Problems for selected students have been reassigned."));
+	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Problems for selected students have been reassigned.")));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param("unassignFromAll")) {
 	   # no action taken
-	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, "No action taken"));
+	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, $r->maketext("No action taken")));
 	}
 	
 	if ($doAssignToSelected) {
@@ -121,19 +121,15 @@ sub body {
 	print CGI::start_form({id=>"user-set-form", name=>"user-set-form", method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
 	 
 	print CGI::p(
-		    CGI::submit({name=>"assignToAll", value => "Assign to All Current Users"}), CGI::i("This action can take a long time if there are many students.")
+		    CGI::submit({name=>"assignToAll", value => $r->maketext("Assign to All Current Users")}), CGI::i($r->maketext("This action can take a long time if there are many students."))
 		  ),
-		  CGI::div({-style=>"color:red"}, "Do not uncheck students, unless you know what you are doing.",CGI::br(),
-	           "There is NO undo for unassigning students. "),
-	      CGI::p("When you unassign
-				        by unchecking a student's name, you destroy all
-				        of the data for homework set ".CGI::b($setID)." for this student. You will then need to
-				        reassign the set to these students and they will receive new versions of the problems.
-				        Make sure this is what you want to do before unchecking students."
+		  CGI::div({-style=>"color:red"}, $r->maketext("Do not uncheck students, unless you know what you are doing."),CGI::br(),
+	           $r->maketext("There is NO undo for unassigning students.")),
+	      CGI::p($r->maketext("When you unassign by unchecking a student's name, you destroy all of the data for homework set [_1] for this student. You will then need to reassign the set to these students and they will receive new versions of the problems. Make sure this is what you want to do before unchecking students.", CGI::b($setID))
 	);
 				        
 	print CGI::start_table({});
-	print CGI::Tr({-valign=>"top"}, CGI::th(["Assigned","Login Name","&nbsp;","Student Name","&nbsp;","Section","&nbsp;","Due Date"]));
+	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Assigned"),$r->maketext("Login Name"),"&nbsp;",$r->maketext("Student Name"),"&nbsp;",$r->maketext("Section"),"&nbsp;",$r->maketext("Due Date")]));
 	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	# get user records
@@ -195,7 +191,7 @@ sub body {
 						                         params =>{editForUser=> $user}
 						)},
 						"",
-						"Edit data for $user"
+						$r->maketext("Edit data for ").$user
 					))
 					: ()
 				),
@@ -205,7 +201,7 @@ sub body {
 	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
 	print CGI::end_table();
 	print $self->hidden_authen_fields;
-	print CGI::submit({name=>"assignToSelected", value=>"Save"});
+	print CGI::submit({name=>"assignToSelected", value=>$r->maketext("Save")});
 	print CGI::p( CGI::hr(),
 				  CGI::div( {class=>'ResultsWithError'},
 						"There is NO undo for this function.  
@@ -213,7 +209,7 @@ sub body {
 				        a student using this button, or by unchecking their name, you destroy all
 				        of the data for homework set $setID for this student.",
 						CGI::br(),
-						CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
+						CGI::submit({name=>"unassignFromAll", value=>$r->maketext("Unassign from All Users")}),
 						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow unassign'}),
 				  ),
 				  CGI::hr(),

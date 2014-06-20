@@ -389,13 +389,13 @@ sub initialize  {
 	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is protected! ".CGI::br().
-		"To edit this text you must first make a copy of this file using the 'Save as' action below.");
+		"To edit this text you must first make a copy of this file using the 'NewVersion' action below.");
 
 	}
     if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 #    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
     	$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is a blank problem! ".CGI::br()."To edit this text you must  
-                           use the 'Save AS' action below to save it to another file.");
+                           use the 'NewVersion' action below to save it to another file.");
     }
 	
 }
@@ -624,18 +624,25 @@ sub body {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script type="text/javascript" src="$site_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::script(<<EOF);
- 		function setTarget(inWindow) {
-		  document.getElementById("newWindow").checked = inWindow;
-		  updateTarget();
+	function setTarget(inWindow) {
+	    document.getElementById("newWindow").checked = inWindow;
+	    updateTarget();
+	}
+	function updateTarget() {
+	    var inWindow = document.getElementById("newWindow").checked;
+	    if (inWindow) {
+		if (document.getElementById("save_as_form_id").checked) {
+		    document.getElementById("editor").target = "WW_New_Edit";
+		} else {
+		    document.getElementById("editor").target = "WW_View";
 		}
-		function updateTarget() {
-		  var inWindow = document.getElementById("newWindow").checked;
-		  document.getElementById("editor").target = (inWindow? "WW_View": "");
-		}
-		function setRadio(i,nw) {
-		  document.getElementById('action'+i).checked = true;
-		  setTarget(nw);
-		}
+	    } else {
+		document.getElementById("editor").target = "";
+	    }
+	}
+	function setRadio(i,nw) {
+	    setTarget(nw);
+	}
 EOF
 	
 
@@ -670,7 +677,7 @@ EOF
 # 		),
 		CGI::p(
 			CGI::textarea(
-				-name => 'problemContents', -default => $problemContents,
+				-name => 'problemContents', -default => $problemContents, -class => 'latexentryfield',
 				-rows => $rows, -cols => $columns, -override => 1,
 			),
 		);
@@ -980,7 +987,7 @@ sub getFilePaths {
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
 			$self->addbadmessage("This is a blank problem template file and can not be edited directly. "
-			                     ."Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
+			                     ."Use the 'NewVersion' action below to create a local copy of the file and add it to the current problem set."
 			);
 			last CASE;
 		};
@@ -1492,12 +1499,21 @@ sub add_problem_handler {
 		#################################################
 		# Set up redirect Problem.pm
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
-			courseID  => $courseName, 
-			setID     => $targetSetName, 
-			problemID => $targetProblemNumber, 
-		);
+		my $problemPage;
+		# we need to know if the set is a gateway set to determine the redirect
+		my $globalSet = $self->r->db->getGlobalSet( $setName );
+
+		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
+			courseID => $courseName, setID => "Undefined_Set");
+		}  else {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
+									courseID => $courseName, setID => $targetSetName, problemID => $targetProblemNumber
+			);
+		}
+
 		my $relativeSourceFilePath = $self->getRelativeSourceFilePath($sourceFilePath);
+
 		$viewURL = $self->systemLink($problemPage,
 				params => {
 					displayMode        => $displayMode,
@@ -2031,7 +2047,19 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
-	
+
+	if ($ce->{options}->{PGMathView}) {
+	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	}
+
+	return "";
+}
+
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
 	return "";
 }
 

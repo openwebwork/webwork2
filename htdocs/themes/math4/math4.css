@@ -103,6 +103,24 @@ ul.nav li a:hover {
         overflow: hidden;
 }
 
+#breadcrumb-row {
+    margin-top:1ex;
+}
+
+#toggle-sidebar {
+    float:left;
+    height:20px;
+    padding-top:8px;
+    padding-bottom:8px;
+}
+
+#breadcrumb-navigation {
+    float:left;
+    display:inline-block;
+    width:90%;
+    width:calc(100% - 35px);
+}
+
 /* Main Content */
 .body {
 	display: inline-block;
@@ -201,9 +219,17 @@ ul.courses-list a:hover {
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you
  * to scroll if you don't have that width, don't know how to fix it */
+.label-with-edit-icon {
+    white-space:nowrap;
+}
+
+.label-with-edit-icon .set-label {
+    white-space:normal;
+}
+
 table.classlist-table {
 /*	display: block; */
-	max-width: 95%; /* prevent it from violating container-fluid's padding,
+        max-width: 95%; /* prevent it from violating container-fluid's padding,
 					 only valid in a rare edge case */
 }
 
@@ -213,7 +239,11 @@ table.classlist-table .tbody {
 
 /* Homework Sets */
 .problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
-	margin: 0.5em; /* keep the assignment buttons from crowding chkbox */
+    margin-top: 0px;
+}
+
+.problem_set_table td a {
+    font-weight:bold;
 }
 
 /* Info Box */
@@ -766,6 +796,12 @@ div.problem_sets_options {
     color: #000000;
 }
 
+
+.ScrollingRecordList > input[type='submit'] {
+    margin-top: 1ex;
+    margin-bottom: 2ex;
+}
+
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 /*BUG FIXES*/
 
@@ -801,7 +837,7 @@ table#grades_table pre{
 }
 
 #mainform i.icon-random {
-    cursor: hand;
+    cursor: pointer;
 }
 
 #send-mail-form input,
@@ -824,9 +860,8 @@ table#grades_table pre{
     height:auto;
 }
 
-#problem_set_form .btn {
-    margin-left:.5ex;
-    margin-right:.5ex;
+#problem_set_form input[type="submit"] {
+    margin-right:1ex;
 } 
 
 #mainform .btn,
