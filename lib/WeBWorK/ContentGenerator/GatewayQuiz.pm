@@ -2232,13 +2232,15 @@ sub body {
 	# print answer inspection button
 	if ($authz->hasPermissions($user, "view_answers")) {
 	    my $hiddenFields = $self->hidden_authen_fields;
+	    my $firstProb = $startProb+1;
+	    my $lastProb = $endProb+1;
 	    $hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
 		my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, courseID => $ce->{courseName});
 		my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
 		print "\n", CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
 			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$ce->{courseName}), "\n",
-			CGI::hidden(-name => 'problemID', -value=>($startProb+1)), "\n",
+			CGI::hidden(-name => 'problemID', -value=>"$firstProb - $lastProb"), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$setVName), "\n",
 			CGI::hidden(-name => 'studentUser',    -value=>$effectiveUser), "\n",
 			CGI::p(

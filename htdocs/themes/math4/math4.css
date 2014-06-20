@@ -109,13 +109,16 @@ ul.nav li a:hover {
 
 #toggle-sidebar {
     float:left;
-    margin-top:3px;
+    height:20px;
+    padding-top:8px;
+    padding-bottom:8px;
 }
 
 #breadcrumb-navigation {
     float:left;
     display:inline-block;
     width:90%;
+    width:calc(100% - 35px);
 }
 
 /* Main Content */
@@ -835,7 +838,7 @@ table#grades_table pre{
 }
 
 #mainform i.icon-random {
-    cursor: hand;
+    cursor: pointer;
 }
 
 #send-mail-form input,
@@ -858,9 +861,8 @@ table#grades_table pre{
     height:auto;
 }
 
-#problem_set_form .btn {
-    margin-left:.5ex;
-    margin-right:.5ex;
+#problem_set_form input[type="submit"] {
+    margin-right:1ex;
 } 
 
 #mainform .btn,

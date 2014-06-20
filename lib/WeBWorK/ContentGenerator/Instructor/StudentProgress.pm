@@ -193,9 +193,9 @@ sub index {
 	my $user = $r->param("user");
 	
 	my (@viewable_sections, @viewable_recitations);
-	if (defined @{$ce->{viewable_sections}->{$user}})
+	if (defined $ce->{viewable_sections}->{$user})
 		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined @{$ce->{viewable_recitations}->{$user}})
+	if (defined $ce->{viewable_recitations}->{$user})
 		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
 	if (@viewable_sections or @viewable_recitations){
 		foreach my $studentL (@studentList){
@@ -367,9 +367,9 @@ sub displaySets {
 	my @myUsers;
 	my $ActiveUser = $r->param("user");
 	my (@viewable_sections, @viewable_recitations);
-	if (defined @{$ce->{viewable_sections}->{$user}})
+	if (defined $ce->{viewable_sections}->{$user})
 		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined @{$ce->{viewable_recitations}->{$user}})
+	if (defined $ce->{viewable_recitations}->{$user})
 		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
 	if (@viewable_sections or @viewable_recitations){
 		foreach my $student (@userRecords){
@@ -762,7 +762,7 @@ sub displaySets {
 		print $self->hidden_authen_fields();
 
 #	    $verSelectors = CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
-		print CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
+		print CGI::p({'id'=>'sp-gateway-form','style'=>'background-color:#eeeeee;color:black;'},
 			     "Display options: Show ",
 			     CGI::hidden(-name=>'returning', -value=>'1'),
 			     CGI::checkbox(-name=>'show_best_only', -value=>'1', 

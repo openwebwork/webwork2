@@ -680,7 +680,8 @@ sub filter_handler {
 	
 	my $r = $self->r;
 	my $db = $r->db;
-	
+	my $ce = $r->ce;
+
 	my $result;
 	
 	my $scope = $actionParams->{"action.filter.scope"}->[0];
@@ -699,13 +700,18 @@ sub filter_handler {
 		my $field = $actionParams->{"action.filter.field"}->[0];
 		my @userRecords = $db->getUsers(@{$self->{allUserIDs}});
 		my @userIDs;
+		my %permissionLabels = reverse %{$ce->{userRoles}};
 		foreach my $record (@userRecords) {
 			next unless $record;
 
 			# add permission level to user record hash so we can match it if necessary
+			# also change permission level and status to their text
+			# labels
 			if ($field eq "permission") {
 				my $permissionLevel = $db->getPermissionLevel($record->user_id);
-        	                $record->{permission} = $permissionLevel->permission;
+        	                $record->{permission} = $permissionLabels{$permissionLevel->permission};
+			} elsif ($field eq 'status') {
+			    $record->{status} = $ce->status_abbrev_to_name($record->{status});
 			}
 			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
 		}
@@ -1743,7 +1749,7 @@ sub recordEditHTML {
 		push @tableCells, CGI::div({class=>$statusClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 	
-	return CGI::Tr({}, CGI::td( \@tableCells));
+	return CGI::Tr({}, CGI::td(\@tableCells));
 }
 
 sub printTableHTML {
@@ -1817,7 +1823,7 @@ sub printTableHTML {
 		my $selectBox = CGI::input({
 		    type=>'checkbox',
 		    id=>'classlist-select-all',
-		    onClick => "selectall = document.getElementById('classlist-select-all'); for (i in document.userlist.elements)  { if (document.userlist.elements[i].name =='selected_users') { document.userlist.elements[i].checked = selectall.checked;}}",
+		    onClick => "\$('input[name=\"selected_users\"]').attr('checked',\$('#classlist-select-all').is(':checked'));"
 					   });
 		@tableHeadings = (
                         $editMode or $passwordMode ? '' : $selectBox,
