@@ -916,3 +916,9 @@ table#grades_table pre{
     min-height:35px;
     min-width:43px;
 }
+
+/* GradeBook */
+.gradebook td {
+ 	padding: 5px;
+}
+
