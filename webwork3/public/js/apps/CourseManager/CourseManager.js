@@ -31,7 +31,15 @@ var CourseManager = WebPage.extend({
         if(this.session.user&&this.session.logged_in==1){
             this.startManager();
         } else {
-            this.requestLogin({success: this.loadData});
+            this.requestLogin({success: function (data) {
+                // save the new session key and reload the page.  
+                self.session.key = data.session_key;
+                window.location.href=config.urlPrefix+"courses/"+config.courseSettings.course_id+"/manager?"
+                    + $.param(_(self.session).pick("user","key"));
+            }});
+
+            //    this.loadData
+            //});
         }
 
         $(document).ajaxError(function (e, xhr, options, error) {

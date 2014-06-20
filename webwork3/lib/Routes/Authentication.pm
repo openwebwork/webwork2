@@ -75,18 +75,19 @@ sub buildSession {
 	my $key = vars->{db}->getKey(session 'user');
 	my $timeLastLoggedIn = $key->{timestamp} || 0; 
 
-	debug $timeLastLoggedIn;
-
 	if(! defined(session 'key')){
 		if(! defined($key)){
+			debug "making a new key";
 			my $newKey = create_session(session 'user');
 			$key = vars->{db}->newKey(user_id=>(session 'user'), key=>$newKey);
 		}
 		session 'key' => $key->{key}; 
 	}
-	
 
-	$key = vars->{db}->getKey(session 'user');
+	if(!defined(params->{key}) || (session 'key') ne params->{key}){
+		session 'logged_in' => 0;
+		return;
+	}
 
 
 	# check to see if the user has timed out
@@ -105,6 +106,8 @@ sub buildSession {
 	}
 
 	session 'logged_in' => 1;
+
+
 
 }
 
