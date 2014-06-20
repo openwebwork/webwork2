@@ -1,44 +1,21 @@
-#WeBWorK Development
-This is a rough draft of our developer instructions, so parts of it are likely missing or wrong. Any corrections/additions are welcome
+#Welcome to WeBWorK
 
-We're trying to follow [git flow](http://nvie.com/posts/a-successful-git-branching-model/) so it would be a good idea for developers to read up on it 
-and [install](https://github.com/nvie/gitflow/wiki/Installation) the commandline tools.  
-We're working on getting our own, more specific, documentation up about our desired development flow.
+WeBWorK is an open-source online homework system for math and sciences courses. WeBWorK is supported by the MAA and the NSF and comes with an Open Problem Library (OPL) of over 30,000 homework problems. Problems in the OPL target most lower division undergraduate math courses and some advanced courses. Supported courses include college algebra, discrete mathematics, probability and statistics, single and multivariable calculus, differential equations, linear algebra and complex analysis.  Find out more at the main WeBWorK [webpage](http://webwork.maa.org).
 
-Here are the basics to get you set up developing.
+## Information for Users
 
-First create an account/login to github.  Head to the https://github.com/openwebwork/webwork2 and click **fork**.
+New users interested in getting started with their own WeBWorK server, or instructors looking to learn more about how to use WeBWorK in their classes, should take a look at one of the following resources: 
+*  [WeBWorK wiki](http://webwork.maa.org/wiki/Main_Page) - The main WeBWorK wiki
+  *  [Instructors](http://webwork.maa.org/wiki/Instructors) - Information for Instructors
+  *  [Problem Authors](http://webwork.maa.org/wiki/Authors) - Information for Problem Authors
+*  [WW_Install](http://github.com/aubreyja/ww_install) - Information for using the WW_install script
+*  [Forum](http://webwork.maa.org/moodle/mod/forum/index.php?id=3) - The WeBWorK Forum
+*  [Frequently Asked Questions](https://github.com/openwebwork/webwork2/wiki/Frequently-Asked-Questions) - A list of frequently asked questions.  
 
-Once that's done, clone your newly forked repo to your local computer and add openwebwork as an upstream.
+##Information For Developers
 
-```
-git remote add upstream git://github.com/openwebwork/webwork2.git
-```
-
-I'd also recomend making sure the develop branch is pulled down from openwebwork and ready to push up to your github repo.
-
-```
-git checkout -b develop upstream/develop
-git branch --set-upstream develop origin/develop
-```
-
-This will let you keep your version up to date with the official one.
-
-The rest of these instructions will assume your using the [git flow commandline](https://github.com/nvie/gitflow/wiki/Command-Line-Arguments).. if you're not, there are equivilant commands in pure git.
-
-First get your local repo ready for git flow
-
-```
-git flow init
-```
-
-Here are the basics for working on a new feature
-
-```
-git flow feature start <name>
-```
-
-then make your changes, and when ready push everything up to your github for people to see `git push origin`.
-
-When your feature is stable (or close) you can issue a pull requst on github from your feature branch to the openwebwork/webwork2 develop branch.
-Including a comment stating what the feature is and any more information would be great.
+People interested in developing new features for WeBWorK should take a look at the following resources.  People interested in developing new problems for WeBWorK should visit [Problem Authors](http://webwork.maa.org/wiki/Authors).
+*  [First Time Setup](https://github.com/openwebwork/webwork2/wiki/First-Time-Setup) - Setting up your clone of this github repo for the first time.  
+*  [Coding and Workflow](https://github.com/openwebwork/webwork2/wiki/Coding-and-Workflow) -  Our suggested workflow processes.  Following this will make it much easier to get code accepted into the repo. 
+*  [Creating Pull Requests](https://github.com/openwebwork/webwork2/wiki/Creating-Pull-Requests) - Instructions on how to submit a pull request. 
+*  [More Information](https://github.com/openwebwork/webwork2/wiki/) - Our Github wiki has additional information for developers, including information about WeBWorK3. 
