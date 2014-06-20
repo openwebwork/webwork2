@@ -58,12 +58,9 @@ sub setCourseEnvironment {
 sub buildSession {
 
 	my ($userID,$sessKey) = @_;
-
 	if(! vars->{db}){ 
 		send_error("The database object DB is not defined.  Make sure that you call setCourseEnvironment first.",404);
 	}
-
-	debug (session 'user');
 
 	## need to check that the session hasn't expired. 
 
@@ -78,9 +75,6 @@ sub buildSession {
 	my $key = vars->{db}->getKey(session 'user');
 	my $timeLastLoggedIn = 0; 
 
-	debug $timeLastLoggedIn;
-	debug $key;
-	debug defined($key);
 	if(defined($key)){
 		$timeLastLoggedIn = $key->{timestamp};
 	} else {
@@ -108,7 +102,6 @@ sub buildSession {
 	$key->{timestamp} = time();
 	session 'timestamp' => $key->{timestamp};
 
-	debug session;
 	vars->{db}->putKey($key);
 
 	if (! defined(session 'permission')){
@@ -125,7 +118,10 @@ sub buildSession {
 
 sub checkPermissions {
 	my $permissionLevel = shift;
-	buildSession();
+	my $userID = session 'user';
+	my $key = session 'key';
+
+	buildSession($userID,$key);
 	if (! session 'logged_in'){
 		send_error('You are no longer logged in.  You may need to reauthenticate.',419);
 	}

@@ -310,10 +310,6 @@ get '/courses/:course_id/manager' =>  sub {
 	$userID = params->{user} if defined(params->{user});
 	$sessKey = params->{key} if defined(params->{key});
 
-	debug $userID;
-	debug $sessKey;
-
-
 	## check if the user passed in via the URL is the same as the session user.
 
 	if(session 'user'){
