@@ -848,7 +848,9 @@ sub sendCookie {
 	my $cookie = WeBWorK::Cookie->new($r,
 		-name    => "WeBWorKCourseAuthen.$courseID",
  		-value   => "$userID\t$key\t$timestamp",
-		-path    => $ce->{webworkURLRoot},
+ 		-path    => "/",
+ 		# This is now changed so that both webwork2 and webwork3 can use the same cookie.
+		#-path    => "$ce->{webworkURLRoot}",
 		-secure  => 0,
 	);
 

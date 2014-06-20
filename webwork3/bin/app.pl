@@ -85,6 +85,8 @@ post '/courses/:course_id/login' => sub {
 post '/courses/:course_id/logout' => sub {
 	my $deleteKey = vars->{db}->deleteKey(session 'user');
 	my $sessionDestroy = session->destroy;
+	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id};
+	cookie $cookieName => "";
 	return {logged_in=>0};
 };
 

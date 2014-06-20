@@ -57,44 +57,58 @@ sub setCourseEnvironment {
 
 sub buildSession {
 
+	my ($userID,$sessKey) = @_;
+
 	if(! vars->{db}){ 
 		send_error("The database object DB is not defined.  Make sure that you call setCourseEnvironment first.",404);
 	}
 
+	debug (session 'user');
 
 	## need to check that the session hasn't expired. 
 
     if (!defined(session 'user')) {
-    	if (defined(params->{user})){
-	    	session user => params->{user};
+    	if (defined($userID)){
+	    	session user => $userID;
     	} else {
     		send_error("The user is not defined. You may need to authenticate again",401);	
     	}
 	}
 
 	my $key = vars->{db}->getKey(session 'user');
-	my $timeLastLoggedIn = $key->{timestamp} || 0; 
+	my $timeLastLoggedIn = 0; 
 
-	if(! defined($key)){
+	debug $timeLastLoggedIn;
+	debug $key;
+	debug defined($key);
+	if(defined($key)){
+		$timeLastLoggedIn = $key->{timestamp};
+	} else {
 		debug "making a new key";
 		my $newKey = create_session(session 'user');
 		$key = vars->{db}->newKey(user_id=>(session 'user'), key=>$newKey);
 	}
+
 	session 'key' => $key->{key};
-	if(!defined(params->{key}) || (session 'key') ne params->{key}){
+
+	if((session 'key') ne $sessKey){
 		session 'logged_in' => 0;
+		session 'timestamp' => 0;
 		return;
 	}
-
 
 	# check to see if the user has timed out
 	if(time() - $timeLastLoggedIn > vars->{ce}->{sessionKeyTimeout}){
 		session 'logged_in' => 0;
+		session 'timestamp' => 0;
 		return;
 	}
 
 	# update the timestamp in the database so the user isn't logged out prematurely.
 	$key->{timestamp} = time();
+	session 'timestamp' => $key->{timestamp};
+
+	debug session;
 	vars->{db}->putKey($key);
 
 	if (! defined(session 'permission')){

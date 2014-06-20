@@ -298,16 +298,32 @@ get '/courses/:course_id/manager' =>  sub {
 
 	my @view_paths = (@main_view_paths,@sidepane_paths);
 
+	my $userID = "";
+	my $sessKey = "";
+	my $ts = "";
+	my $cookies = Dancer::Cookies->cookies;
+	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id};
+	my $courseCookie = $cookies->{$cookieName};
+
+	($userID,$sessKey,$ts) = split(/\t/,$courseCookie->value) if defined($courseCookie);
+
+	$userID = params->{user} if defined(params->{user});
+	$sessKey = params->{key} if defined(params->{key});
+
+	debug $userID;
+	debug $sessKey;
+
+
 	## check if the user passed in via the URL is the same as the session user.
 
 	if(session 'user'){
-		if (session->{user} && params->{user} ne session->{user}) {
+		if (session->{user} && $userID ne session->{user}) {
 			my $key = vars->{db}->getKey(session 'user');
 			vars->{db}->deleteKey(session 'user') if $key;
 			session->destroy; 
 		}
 	} else {
-		session 'user' => params->{user} if defined(params->{user});
+		session 'user' => $userID;
 	}
 
 	# three situations here.  Either
@@ -319,21 +335,19 @@ get '/courses/:course_id/manager' =>  sub {
 	
 	#case 1)
 
-	if(defined(params->{user}) && ! vars->{db}->existsUser(params->{user})){
+	if(! vars->{db}->existsUser($userID)){
 		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
 		return "user not enrolled in the course";
 	}
 	
 	# case 2)
 	
-	if(defined(params->{user})){
-		my $permission = vars->{db}->getPermissionLevel(params->{user});
+	my $permission = vars->{db}->getPermissionLevel($userID);
 
-	    if ($permission->{permission} < 10){
-	    	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
-			return;	
-	    }
-	}
+    if ($permission->{permission} < 10){
+    	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+		return;	
+    }
 
 	# case 4) 
 	my $settings = [];
@@ -343,7 +357,7 @@ get '/courses/:course_id/manager' =>  sub {
 
 	# case 3) 
 	if(defined session->{user}){
-		buildSession();
+		buildSession($userID,$sessKey);
 		if(session 'logged_in'){
 			$settings = getCourseSettings();
 			$sets = getAllSets();
@@ -353,6 +367,10 @@ get '/courses/:course_id/manager' =>  sub {
 
 	my $theSession = convertObjectToHash(session);
 	$theSession->{effectiveUser} = session->{user};
+
+	# set the ww2 style cookie to save session info for work in both ww2 and ww3.  
+
+	cookie $cookieName => "$userID\t". (session 'key') . "\t" . (session 'timestamp');
 
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
 		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),
