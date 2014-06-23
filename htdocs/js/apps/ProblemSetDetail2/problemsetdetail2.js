@@ -27,37 +27,6 @@ $(function() {
 	$('#psd_list').nestedSortable({ disabled:true});
     }
 
-    // This adds soem bootstrap elements to the page to format it
-    $('.problem_detail_row').addClass('well span11')
-	.wrap('<div class="row-fluid" />')
-	.after('<div class="span1" />');
-
-    $('.pdr_block_1').addClass('span2');
-    $('.pdr_block_2').addClass('span3');
-    $('.pdr_block_3').addClass('span7');
-
-    $('#psd_toolbar').addClass('btn-group');
-
-    $('.psd_view').addClass('btn btn-mini')
-	.html('<i class="icon-eye-open" />')
-	.tooltip();
-    $('.psd_edit').addClass('btn btn-mini')
-	.html('<i class="icon-pencil" />')
-	.tooltip();
-    $('.pdr_render').addClass('btn btn-mini')
-	.html('<i class="icon-picture" />')
-	.tooltip();
-
-    $('.pdr_grader').addClass('btn btn-mini')
-	.html('<i class="icon-edit">')
-	.tooltip();
-
-    if (!$('#psd_list').hasClass('disable_renumber')) {
-	$('.pdr_handle').append('<i class="icon-resize-vertical" />');
-    } else {
-	$('.pdr_handle').css('margin-right','5px');
-    }
-
     // The actual expand collapse icon is controlled by css
     $('.pdr_collapse').on('click', function() {
 	$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');

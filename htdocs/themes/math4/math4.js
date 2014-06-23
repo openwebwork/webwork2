@@ -218,6 +218,39 @@ $(function(){
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
 
+    //Problem Set Detail 2  (the page doesn't render properly without some sort
+    // of css to format the divs. This does that.)
+    // This adds soem bootstrap elements to the page to format it
+    $('.problem_detail_row').addClass('well span11')
+	.wrap('<div class="row-fluid" />')
+	.after('<div class="span1" />');
+
+    $('.pdr_block_1').addClass('span2');
+    $('.pdr_block_2').addClass('span3');
+    $('.pdr_block_3').addClass('span7');
+    
+    $('#psd_toolbar').addClass('btn-group');
+    
+    $('.psd_view').addClass('btn btn-mini')
+	.html('<i class="icon-eye-open" />')
+	.tooltip();
+    $('.psd_edit').addClass('btn btn-mini')
+	.html('<i class="icon-pencil" />')
+	.tooltip();
+    $('.pdr_render').addClass('btn btn-mini')
+	.html('<i class="icon-picture" />')
+	.tooltip();
+
+    $('.pdr_grader').addClass('btn btn-mini')
+	.html('<i class="icon-edit">')
+	.tooltip();
+
+    if (!$('#psd_list').hasClass('disable_renumber')) {
+	$('.pdr_handle').append('<i class="icon-resize-vertical" />');
+    } else {
+	$('.pdr_handle').css('margin-right','5px');
+    }
+
     // the datepicker uses addOnLoadEvent, so if this function isn't defined,
     // we dont have to worry about the datepicker.
     if (typeof(addOnLoadEvent) === 'function') {
