@@ -16,9 +16,8 @@ $(function(){
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
 
     // replace pencil gifs by something prettier
-    $('td a:has(img[src$="edit.gif"])').each(function () { 
-	$(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); 
-    });
+    $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
+    $('img[src$="question_mark.png"]').replaceWith('<i class="icon-question-sign" style="font-size:16px; margin-right:5px"/>');
 
     // Turn summaries and help boxes into popovers
     $('a.table-summary').popover().click(function (event) {
@@ -40,13 +39,13 @@ $(function(){
     $("#info-panel-right a:contains('[edit]')").text('Edit');
 
     // Add a button to make the sidebar more dynamic for small screens
-    $('#toggle-sidebar').click(function (event) {
+    $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
 	    event.preventDefault();
 	    $('#site-navigation').toggleClass('hidden');
 	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
 		.toggleClass('icon-chevron-right');
 	    $('#site-navigation').toggleClass('span2');
-	    $('#content').toggleClass('span10').toggleClass('span12');
+	    $('#content').toggleClass('span10').toggleClass('span11');
 	});
 
     if($(window).width() < 480) {
@@ -56,7 +55,7 @@ $(function(){
     // if no fish eye then collapse site-navigation 
     if(!$('#site-links').html().match(/[^\s]/)) {
 	$('#site-navigation').removeClass('span2');
-	$('#content').removeClass('span10').addClass('span12');
+	$('#content').removeClass('span10').addClass('span11');
 	$('#toggle-sidebar').addClass('hidden');
     }
 
@@ -93,6 +92,7 @@ $(function(){
     $('#problemMainForm').addClass('problem-main-form form-inline');
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
+    $('.answerComments').addClass('well');
 
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
 	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
@@ -159,6 +159,7 @@ $(function(){
 	label.prepend(this);
 	label.addClass('checkbox');
     });
+    $('#problem_set_form input[name="refresh"]').removeClass("btn-primary");
     
     //PG editor styling
     $('#editor').addClass('form-inline span9');
@@ -186,6 +187,7 @@ $(function(){
     //Student progress and statistics
     $('table.progress-table').addClass('table table-bordered table-condensed');
     $('table.stats-table').addClass('table table-bordered');
+    $('#sp-gateway-form').addClass('well');
 
     //Library browser 1 tweaks
     $('#mainform ').addClass('form-inline');

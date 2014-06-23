@@ -389,13 +389,13 @@ sub initialize  {
 	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is protected! ".CGI::br().
-		"To edit this text you must first make a copy of this file using the 'NewVersion' action.");
+		"To edit this text you must first make a copy of this file using the 'NewVersion' action below.");
 
 	}
     if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 #    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
     	$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is a blank problem! ".CGI::br()."To edit this text you must  
-                           use the 'Save AS' action below to save it to another file.");
+                           use the 'NewVersion' action below to save it to another file.");
     }
 	
 }
@@ -1006,7 +1006,7 @@ sub getFilePaths {
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
 			$self->addbadmessage("This is a blank problem template file and can not be edited directly. "
-			                     ."Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
+			                     ."Use the 'NewVersion' action below to create a local copy of the file and add it to the current problem set."
 			);
 			last CASE;
 		};
@@ -1535,12 +1535,21 @@ sub add_problem_handler {
 		#################################################
 		# Set up redirect Problem.pm
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
-			courseID  => $courseName, 
-			setID     => $targetSetName, 
-			problemID => $targetProblemNumber, 
-		);
+		my $problemPage;
+		# we need to know if the set is a gateway set to determine the redirect
+		my $globalSet = $self->r->db->getGlobalSet( $setName );
+
+		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
+			courseID => $courseName, setID => "Undefined_Set");
+		}  else {
+			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
+									courseID => $courseName, setID => $targetSetName, problemID => $targetProblemNumber
+			);
+		}
+
 		my $relativeSourceFilePath = $self->getRelativeSourceFilePath($sourceFilePath);
+
 		$viewURL = $self->systemLink($problemPage,
 				params => {
 					displayMode        => $displayMode,

@@ -97,8 +97,8 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible hide_hint enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
 
 # permissions needed to perform a given action
@@ -245,11 +245,11 @@ use constant  FIELD_PROPERTIES => {
 		size => 10,
 		access => "readwrite",
 	},
-	hide_hint => {
-		type => "checked",
-		size => 4,
-		access => "readwrite",
-	}
+#	hide_hint => {
+#		type => "checked",
+#		size => 4,
+#		access => "readwrite",
+#	}
 };
 
 sub pre_header_initialize {
@@ -757,7 +757,7 @@ sub sort_form {
 			-label_text=>$r->maketext("Sort by").": ",
 			-input_attr=>{
 				-name => "action.sort.primary",
-				-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
+				-values => [qw(set_id open_date due_date answer_date visible)],
 				-default => $actionParams{"action.sort.primary"}->[0] || "due_date",
 				-labels => {
 					set_id		=> $r->maketext("Set Name"),
@@ -2713,7 +2713,7 @@ sub printTableHTML {
 	my $selectBox = CGI::input({
 	    type=>'checkbox',
 	    id=>'setlist-select-all',
-	    onClick => "selectall = document.getElementById('setlist-select-all'); for (i in document.problemsetlist.elements)  { if (document.problemsetlist.elements[i].name =='selected_sets') { document.problemsetlist.elements[i].checked = selectall.checked;}}",
+	    onClick => "\$('input[name=\"selected_sets\"]').attr('checked',\$('#setlist-select-all').is(':checked'));"	
 				   });
 
 	if (!($editMode or $exportMode)) {

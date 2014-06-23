@@ -1563,7 +1563,7 @@ sub body {
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		print "User $userName returned " . 
-			$authz->hasPermissions($user, "modify_problem_sets") . 
+			$authz->hasPermissions($userName, "modify_problem_sets") . 
 	" for permission";
 		return(CGI::div({class=>'ResultsWithError'},
 		CGI::em("You are not authorized to access the Instructor tools.")));

@@ -188,10 +188,9 @@ sub body {
 				CGI::checkbox({
 						type=>"checkbox",
 						name=>"selected",
-						checked=>(
-							defined($userAchievement)
-							? "on" : ""
-						    ), value=>$user,
+						(defined($userAchievement) ? 
+						    ('checked',1) : ()),
+						value=>$user,
 						label=>"",
 					      })
 			      ),CGI::td({},[

@@ -265,7 +265,7 @@ sub pre_header_initialize {
 		if ($scope eq "none") { 
 			return "No sets selected for scoring.";
 		} elsif ($scope eq "all") {
-			@setsToScore = @{ $r->param("allSetIDs") };
+		    @setsToScore = $db->listGlobalSets;
 		} elsif ($scope eq "visible") {
 			@setsToScore = @{ $r->param("visibleSetIDs") };
 		} elsif ($scope eq "selected") {
@@ -755,7 +755,7 @@ sub sort_form {
 		$r->maketext("Primary sort").": ",
 		CGI::popup_menu(
 			-name => "action.sort.primary",
-			-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
+			-values => [qw(set_id open_date due_date answer_date visible)],
 			-default => $actionParams{"action.sort.primary"}->[0] || "due_date",
 			-labels => {
 				set_id		=> $r->maketext("Set Name"),

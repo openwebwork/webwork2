@@ -81,7 +81,7 @@ $(document).ready(function() {
 	/* define the button and place it */
 	var button = $('<a>', {href : '#', class : 'btn', style : 'margin-left : 2ex; vertical-align : top'})
 	    .html('<i class="icon-pencil"></i>')
-	$(input).parent().append(button);
+	$(input).after(button);
 	options = { renderingMode : 'LATEX',
 		    decoratedTextBoxAsInput : false,
 		    autocomplete : false,

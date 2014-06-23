@@ -125,8 +125,7 @@ use Fcntl;
 # 
 
 #hiding add_problem option to see if its needed
-#use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
-use constant ACTION_FORMS => [qw(view  save save_as revert)]; 
+use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
 use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
 view        => "View",
 add_problem => "Append",
@@ -391,13 +390,13 @@ sub initialize  {
 	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
 		$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is protected! ".CGI::br().
-		"To edit this text you must first make a copy of this file using the 'NewVersion' action.");
+		"To edit this text you must first make a copy of this file using the 'NewVersion' action below.");
 
 	}
     if ($inputFilePath =~/$BLANKPROBLEM$/ && $file_type ne 'blank_problem') {
 #    	$self->addbadmessage("This file '$inputFilePath' is a blank problem! ".CGI::br()."To edit this text you must  
     	$self->addbadmessage("The file '".$self->shortPath($inputFilePath)."' is a blank problem! ".CGI::br()."To edit this text you must  
-                           use the 'Save AS' action below to save it to another file.");
+                           use the 'NewVersion' action below to save it to another file.");
     }
 	
 }
@@ -1029,7 +1028,7 @@ sub getFilePaths {
 		($file_type eq 'blank_problem') and do {
 			$editFilePath = $ce->{webworkFiles}->{screenSnippets}->{blankProblem};
 			$self->addbadmessage("This is a blank problem template file and can not be edited directly. "
-			                     ."Use the 'Save as' action below to create a local copy of the file and add it to the current problem set."
+			                     ."Use the 'NewVersion' action below to create a local copy of the file and add it to the current problem set."
 			);
 			last CASE;
 		};
@@ -1551,9 +1550,9 @@ sub add_problem_handler {
 		$self->{file_type}   = 'problem'; # change file type to problem -- if it's not already that
 
 		#################################################
-		# Set up redirect Problem.pm
+		# Set up redirect to problem editor page. 
 		#################################################
-		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
+		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
 			courseID  => $courseName, 
 			setID     => $targetSetName, 
 			problemID => $targetProblemNumber, 
