@@ -304,8 +304,9 @@ get '/courses/:course_id/manager' =>  sub {
 	my $cookies = Dancer::Cookies->cookies;
 	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id};
 	my $courseCookie = $cookies->{$cookieName};
+	my $cookieValue = $courseCookie->value;
 
-	($userID,$sessKey,$ts) = split(/\t/,$courseCookie->value) if defined($courseCookie);
+	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);
 
 	$userID = params->{user} if defined(params->{user});
 	$sessKey = params->{key} if defined(params->{key});
@@ -322,21 +323,28 @@ get '/courses/:course_id/manager' =>  sub {
 		session 'user' => $userID;
 	}
 
-	# three situations here.  Either
-	# 1) the user passed via the URL is not a member of the course
-	# 2) the user passed via the URL is not authorized for the manager. 
-	# 3) the user has already logged in and its safe to send all of the requisite data
-	# 4) the user hasn't already logged in and needs to pop open a login window.  
+	# a few situations here.  Either
+	# 1) no userID exists 
+	# 2) the user passed via the URL is not a member of the course
+	# 3) the user passed via the URL is not authorized for the manager. 
+	# 4) the user has already logged in and its safe to send all of the requisite data
+	# 5) the user hasn't already logged in and needs to pop open a login window.  
 
 	
 	#case 1)
 
+	if(! defined($userID)){
+		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+		return;
+	}
+
+	# case 2) 
 	if(! vars->{db}->existsUser($userID)){
 		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
 		return "user not enrolled in the course";
 	}
 	
-	# case 2)
+	# case 3)
 	
 	my $permission = vars->{db}->getPermissionLevel($userID);
 
@@ -345,13 +353,13 @@ get '/courses/:course_id/manager' =>  sub {
 		return;	
     }
 
-	# case 4) 
+	# case 5) 
 	my $settings = [];
 	my $sets = [];
 	my $users = [];
 
 
-	# case 3) 
+	# case 4) 
 	if(defined session->{user}){
 		buildSession($userID,$sessKey);
 		if(session 'logged_in'){

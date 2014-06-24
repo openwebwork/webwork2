@@ -111,6 +111,9 @@ sub buildSession {
 
 	session 'logged_in' => 1;
 
+	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id};
+
+	cookie $cookieName => (session 'user') . "\t". (session 'key') . "\t" . (session 'timestamp');
 
 
 }
