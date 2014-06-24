@@ -10,3 +10,224 @@
  * your modifactions here.  (Similar to how localOverrides.conf works.) 
  */
 
+a {
+  color: #003388;
+}
+
+a:hover,
+a:focus {
+  color: #0088cc;
+}
+
+.btn-primary {
+  color: #ffffff;
+  background-color: #002188;
+  background-image: none;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.btn-primary.disabled,
+.btn-primary[disabled] {
+  color: #ffffff;
+  background-color: #000688;
+}
+
+.btn-primary:active,
+.btn-primary.active {
+  background-color: #000455 \9;
+}
+
+.nav-list > .active > a,
+.nav-list > .active > a:hover,
+.nav-list > .active > a:focus {
+  color: #ffffff;
+  background-color: #003388;
+}
+
+#masthead {
+	background-color: #003388;
+}
+
+.webwork_logo {
+	background-color: #1048ae;
+}
+
+#masthead a {
+	color: white;
+}
+
+#loginstatus {
+	color: white;
+}
+
+#site-links ul {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+ul.nav li a:hover {
+	background: #e1e1e1;	
+}
+
+
+h2.page-title {
+	border-bottom: 1px solid #ccc;
+}
+
+.breadcrumb {
+	border: 1px solid #e6e6e6;
+}
+
+ul.courses-list a {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+ul.courses-list a:hover {
+	background: #038;
+	color: white;
+}
+
+.info-box {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+.info-box h2, .info-box h3, .info-box h4, .info-box h5, .info-box h6 {
+	background: #038;
+	color: white;
+}
+
+#InfoPanel {
+    background-color: #fff;
+}
+
+div.RenderSolo { 
+    background-color: #E0E0E0; 
+    color: black; 
+}
+
+div.AuthorComment { 
+    background-color: #00E0E0; 
+    color: black; 
+}
+
+div.WarningMessage { 
+    background-color: #FF9494; 
+}
+
+div.ResultsWithoutError { 
+    color: inherit; 
+    background-color: #8F8; 
+} 
+
+div.ResultsWithError { 
+    color: #FF9494; 
+    background-color: inherit; 
+} 
+
+div.ResultsAlert { 
+    color: #F60; 
+    background-color: inherit; 
+} 
+
+div.showMeAnotherBox { 
+    background-color: #EDE275; 
+    border: 2px solid #FDD017; 
+} 
+
+label.WarningMessage { 
+    background-color: #FF9494; 
+}
+
+label.ResultsWithoutError { 
+    color: inherit; 
+    background-color: #8F8; } 
+
+label.ResultsWithError { 
+    color: #FF9494; 
+    background-color: inherit; 
+}
+
+label.ResultsAlert { 
+    color: #F60; 
+    background-color: inherit; 
+} 
+
+span.WarningMessage { 
+    background-color: #FF9494; 
+}
+
+span.ResultsWithoutError { 
+    color: inherit; 
+    background-color: #8F8; 
+} 
+
+span.ResultsWithError { 
+    color: #FF9494; 
+    background-color: inherit; 
+} 
+
+span.ResultsAlert { 
+    color: #F60; 
+    background-color: inherit; 
+} 
+
+span.correct { 
+    color: inherit; 
+    background-color: #8F8; 
+}
+
+span.incorrect { 
+    color: #FF9494; 
+    background-color: inherit; 
+}
+
+span.unattempted { 
+    color: inherit; 
+    background-color: #88ECFF;
+}
+
+input.correct   { 
+    color:inherit; 
+    background-color: #8F8; 
+} 
+
+input.incorrect { 
+    color:inherit; 
+    background-color: #FF9494; } 
+
+table.attemptResults th {
+	color: inherit;
+	background-color: #DDDDDD;
+}
+
+.answerComments {
+    border-color: gray;
+    background-color: #E8E8E8;
+}
+
+.RenderSolo hr,
+.problem-content hr {
+  border-top-color: rgb(22,22,22);
+}
+
+.parsehilight { 
+    color: inherit; 
+    background-color: yellow; 
+}
+
+.temporaryFile { 
+    color: #F60; b
+    ackground-color: inherit; 
+}
+
+#editor{
+	background-color: #FFFFFF;
+}
+
+
+
