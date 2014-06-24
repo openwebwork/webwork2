@@ -34,7 +34,9 @@ addOnLoadEvent( function () {
 	} 
 	else if ($('#save_as_form_id').attr('checked')
 		 || ($('#revert_form_id').length > 0 &&
-		     $('#revert_form_id').attr('checked')) )
+		     $('#revert_form_id').attr('checked')) 
+		 || ($('#add_problem_form_id').length > 0 &&
+		     $('#add_problem_form_id').attr('checked')))
 	{
 	    target = "";
 	}

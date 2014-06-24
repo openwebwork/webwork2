@@ -33,7 +33,7 @@ var mv_categories =
 		    PG:"-"
 		},
 		{
-		    text:'\\(a\\times b\\)',
+		    text:'\\(a\\cdot b\\)',
 		    autocomp : false,
 		    tooltip:"multiplication",
 		    helpurl:"multiplication.html",
