@@ -29,6 +29,9 @@
 <link href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
+<!--#if exists="math4-overrides.css"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4-overrides.css"/>
+<!--#endif-->
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 
 <script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->"></script>
@@ -312,6 +315,10 @@ var tabberOptions = {manualStartup:true};
 </div>
 
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
+<!--#if exists="math4-overrides.js"-->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4-overrides.js"></script>	
+<!--#endif-->
+
 
 </body>
 </html>

@@ -1355,6 +1355,21 @@ sub if_warnings {
 	}
 }
 
+=item if_exists
+
+Returns true if the specified file exists in the current theme directory
+and false otherwise
+
+=cut
+
+sub if_exists {
+	my ($self, $arg) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	return -e $ce->{webworkDirs}{themes}.'/'.$ce->{defaultTheme}.'/'.$arg;
+}
+
 =back
 
 =cut
