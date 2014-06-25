@@ -255,7 +255,11 @@ var CourseManager = WebPage.extend({
     },
     changeView: function (_name,state){
         if(this.currentView){
+            // destroy any popovers on the view
+            $('[data-toggle="popover"]').popover("destroy")
             this.currentView.remove();
+            
+
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(_name);
