@@ -208,6 +208,22 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                         model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
                 })
             });
+            var info = "";
+            switch (model.get("assign_type")){
+                case "due":
+                    info = "D";
+                    break;
+                case "reduced-scoring":
+                    info = "R";
+                    break;
+                case "answer":
+                    info = "A";
+                    break;
+                case "open":
+                    info = "O";
+                    break;
+            }
+            $el.text(info);
         },
         updateMethod: 'html'
     });
