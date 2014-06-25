@@ -10,28 +10,6 @@
  * your modifactions here.  (Similar to how localOverrides.conf works.) 
  */
 
-/*  These are the "main" colors of the theme.  Use search/replace to override
- *  them.  
- *  Theme Green #324F35
- *  Theme Light #618265
- *  Dark Green #519951
- *  Light Green #88FF88
- *  Dark Red #FF9494
- *  Light Red #CC7676
- *  Dark Yellow #BDB45E
- *  Light Yellow #EDE275
- */
-
-/* Gotchas:  By default using this file removes much of the "dynamic"
- * elements of bootstrap, like grading on the buttons, or a slighlty different
- * highlight color on the buttons. This is done for ease of configuratoin.  
- * If you copy the code in htdocs/js/vendor/bootstrap/css/bootstrap.css
- * you could get these features working again with effort.  
- * 
- * Using this file also changes some of the math4 colors to be more uniform.  
- * This is to make as few colors as possible for ease of changing the
- */
-
 /* Color for links and link hover */
 a {
   color: #324F35;
@@ -56,7 +34,7 @@ a:focus {
 .btn-primary.disabled,
 .btn-primary[disabled] {
   color: #ffffff;
-  background-color: #324F35;
+  background-color: #466049;
 }
 
 /* Colors for the light blue buttons */
@@ -72,7 +50,7 @@ a:focus {
 .btn-info.disabled,
 .btn-info[disabled] {
   color: #ffffff;
-  background-color: #618265;
+  background-color: #708e74;
 }
 
 /* colors for the masthead */
