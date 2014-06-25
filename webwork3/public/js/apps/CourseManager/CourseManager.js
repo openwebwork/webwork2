@@ -82,7 +82,7 @@ var CourseManager = WebPage.extend({
         // Build the menu.  Should we make a View for this?  
 
         var menuItemTemplate = _.template($("#main-menu-item-template").html());
-        var ul = $("#menu-navbar-collapse .manager-menu");
+        var ul = $(".manager-menu");
         _(this.mainViewList.viewInfo.main_views).each(function(item){
             ul.append(menuItemTemplate({name: item.name}));
         })
@@ -115,11 +115,12 @@ var CourseManager = WebPage.extend({
         })        
 
         // load the previous state of the app or set it to the Calendar
-        var state = this.loadState();
+        this.appState = this.loadState();
 
-        if(state){
-            this.changeView(state.view,state);
+        if(this.appState){
+            this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
         } else {
+            this.appState = {index: void 0, states: []};
             this.changeView("Calendar",{});    
         }        
 
@@ -133,6 +134,8 @@ var CourseManager = WebPage.extend({
             "logout": this.logout,
             "stop-acting": this.stopActing,
             "show-help": function() { self.changeSidePane("Help")},
+            "forward-page": function() {self.goForward()},
+            "back-page": function() {self.goBack()},
         });
 
         this.users.on({"act_as_user": function(model){
@@ -259,18 +262,57 @@ var CourseManager = WebPage.extend({
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(_name);
-        (this.currentView = this.mainViewList.getViewByName(_name)).setElement(this.$(".main"))
-            .setState(state).render();
-        this.changeSidePane(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
+        this.currentView = this.mainViewList.getViewByName(_name);
+        this.defaultSidepane = this.mainViewList.getDefaultSidepane(_name);
+        if(this.currentView){
+            this.currentView.setElement(this.$(".main")).setState(state).render();
+        }
+        if(this.defaultSidepane){
+            this.changeSidePane(this.defaultSidepane);   
+        }
         this.saveState();
     },
     saveState: function() {
+        if(!this.currentView){
+            return;
+        }
         var state = this.currentView.getState();
         state.view = this.currentView.viewName;
-        window.localStorage.setItem("ww3_cm_state",JSON.stringify(state));
+        if(typeof(this.appState.index) !== "undefined"){
+            if(this.appState.states[this.appState.index].view===state.view){
+                this.appState.states[this.appState.index] = state;
+            } else {
+                this.appState.index++;
+                this.appState.states[this.appState.index]=state;
+                this.appState.states.splice(this.appState.index+1,Number.MAX_VALUE); // delete the end of the states array. 
+            }
+        } else {
+            this.appState.index = 0;
+            this.appState.states = [state];
+        }
+        window.localStorage.setItem("ww3_cm_state",JSON.stringify(this.appState));
+        // change the navigation button states
+        if(this.appState.index>0){
+            this.navigationBar.$(".back-button").removeAttr("disabled")
+        } else {
+            this.navigationBar.$(".back-button").attr("disabled","disabled");
+        }
+        if(this.appState.index<this.appState.states.length-1){
+            this.navigationBar.$(".forward-button").removeAttr("disabled")
+        } else {
+            this.navigationBar.$(".forward-button").attr("disabled","disabled");
+        }
     },
     loadState: function () {
         return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
+    },
+    goBack: function () {
+        this.appState.index--;
+        this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
+    },
+    goForward: function () {
+        this.appState.index++;
+        this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
     },
     logout: function(){
         var self = this;

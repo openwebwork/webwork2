@@ -15,10 +15,15 @@ define(main_view_paths,function(module,Backbone){
 			})
 		},
 		getViewByName: function(_name){
-			return _(this.views).findWhere({name: _name}).view;
+			var view = _(this.views).findWhere({name: _name})
+			return view? view.view : null;
 		},
 		getSidepaneByName: function(_name){
 			return _name===""? null :  _(this.sidepanes).findWhere({name: _name}).view;
+		},
+		getDefaultSidepane: function(_name){
+			var view = _(this.views).findWhere({name: _name});
+			return view ? view.default_sidepane : null;
 		}
 	});
 
