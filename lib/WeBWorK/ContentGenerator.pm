@@ -1219,7 +1219,14 @@ sub url {
 	my $name = $args->{name};
 	
 	if ($type eq "webwork") {
+	    # we have to build this here (and not in say defaults.conf) because
+	    # defaultTheme will chage as late as simple.conf
+	    if ($name eq "theme") {
+		return $ce->{webworkURLs}->{htdocs}.'/themes/'.$ce->{defaultTheme};
+	    } else {
+
 		return $ce->{webworkURLs}->{$name};
+	    }
 	} elsif ($type eq "course") {
 		return $ce->{courseURLs}->{$name};
 	} else {
@@ -1366,7 +1373,6 @@ sub if_exists {
 	my ($self, $arg) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-
 	return -e $ce->{webworkDirs}{themes}.'/'.$ce->{defaultTheme}.'/'.$arg;
 }
 

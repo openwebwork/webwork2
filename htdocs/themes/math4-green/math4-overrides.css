@@ -12,8 +12,8 @@
 
 /*  These are the "main" colors of the theme.  Use search/replace to override
  *  them.  
- *  Dark Blue #003388
- *  Light Blue #0088CC
+ *  Theme Green #324F35
+ *  Theme Light #618265
  *  Dark Green #519951
  *  Light Green #88FF88
  *  Dark Red #FF9494
@@ -34,18 +34,18 @@
 
 /* Color for links and link hover */
 a {
-  color: #003388;
+  color: #324F35;
 }
 
 a:hover,
 a:focus {
-  color: #0088CC;
+  color: #618265;
 }
 
 /* Color for the dark blue buttons */
 .btn-primary {
   color: #ffffff;
-  background-color: #003388;
+  background-color: #324F35;
   background-image: none;
 }
 
@@ -56,13 +56,13 @@ a:focus {
 .btn-primary.disabled,
 .btn-primary[disabled] {
   color: #ffffff;
-  background-color: #003388;
+  background-color: #324F35;
 }
 
 /* Colors for the light blue buttons */
 .btn-info {
   color: #ffffff;
-  background-color: #0088CC;
+  background-color: #618265;
   background-image: none;
 }
 .btn-info:hover,
@@ -72,18 +72,18 @@ a:focus {
 .btn-info.disabled,
 .btn-info[disabled] {
   color: #ffffff;
-  background-color: #0088CC;
+  background-color: #618265;
 }
 
 /* colors for the masthead */
 #masthead {
-    background-color: #003388;
+    background-color: #324F35;
 }
 
 /* Color for the background of the webwork logo */
 .webwork_logo {
-    background-color: #003388;
-    border-color: #003388;
+    background-color: #324F35;
+    border-color: #324F35;
 }
 
 #masthead a {
@@ -108,7 +108,7 @@ a:focus {
 .nav-list > .active > a:hover,
 .nav-list > .active > a:focus {
     color: #ffffff;
-    background-color: #003388;
+    background-color: #324F35;
 }
 
 ul.nav li a:hover {
@@ -132,7 +132,7 @@ ul.courses-list a {
 }
 
 ul.courses-list a:hover {
-	background: #003388;
+	background: #324F35;
 	color: white;
 }
 
@@ -143,7 +143,7 @@ ul.courses-list a:hover {
 }
 
 .info-box h2, .info-box h3, .info-box h4, .info-box h5, .info-box h6 {
-	background: #003388;
+	background: #324F35;
 	color: white;
 }
 
