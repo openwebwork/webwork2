@@ -2,7 +2,7 @@
 <html>
 <head>
 <title>WeBWorK 3</title>
-<link rel='stylesheet' href='/webwork2_files/themes/jquery-ui-themes/smoothness/jquery-ui.css' type='text/css' media='screen'>
+<link rel='stylesheet' href='/webwork3/js/bower_components/jquery-ui/themes/smoothness/jquery-ui.css' type='text/css' media='screen'>
 <link rel="stylesheet" type="text/css" href="/webwork3/js/bower_components/bootstrap/dist/css/bootstrap.css">
 <link rel='stylesheet' href='/webwork3/js/bower_components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
 <link rel='stylesheet' type="text/css" href="/webwork3/css/course-manager.css">
