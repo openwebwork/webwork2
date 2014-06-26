@@ -28,6 +28,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             return this;
     	},
     	render: function (){
+            var time1 = moment();
     		CalendarView.prototype.render.apply(this);
             this.update();
 
@@ -61,6 +62,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
             this.$(".assign-calendar-name").truncate({width: 85});
             this.stickit();
+           console.log(moment().diff(time1));
             return this;
     	},
         bindings: {
