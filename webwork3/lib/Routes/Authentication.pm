@@ -111,9 +111,13 @@ sub buildSession {
 
 	session 'logged_in' => 1;
 
-	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id};
+	my $courseCookie = Dancer::Cookie->new(
+		name => "WeBWorKCourseAuthen." . params->{course_id},
+		value => (session 'user') . "\t". (session 'key') . "\t" . (session 'timestamp'),
+		domain => vars->{ce}->{server_root_url}
+		);
 
-	cookie $cookieName => (session 'user') . "\t". (session 'key') . "\t" . (session 'timestamp');
+	cookie $courseCookie;
 
 
 }

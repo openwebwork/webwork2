@@ -304,7 +304,7 @@ get '/courses/:course_id/manager' =>  sub {
 	my $cookies = Dancer::Cookies->cookies;
 	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id};
 	my $courseCookie = $cookies->{$cookieName};
-	my $cookieValue = $courseCookie->value;
+	my $cookieValue = $courseCookie->value if defined($courseCookie);
 
 	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);
 
@@ -374,7 +374,10 @@ get '/courses/:course_id/manager' =>  sub {
 
 	# set the ww2 style cookie to save session info for work in both ww2 and ww3.  
 
-	cookie $cookieName => "$userID\t". (session 'key') . "\t" . (session 'timestamp');
+	$courseCookie->domain(vars->{ce}->{server_root_url});
+	$courseCookie->value("$userID\t". (session 'key') . "\t" . (session 'timestamp'));
+
+	cookie $courseCookie;
 
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
 		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),
