@@ -12,7 +12,7 @@
 
 /* Color for links and link hover */
 a {
-  color: #324F35;
+  color: #283F2B;
 }
 
 a:hover,
@@ -23,7 +23,7 @@ a:focus {
 /* Color for the dark blue buttons */
 .btn-primary {
   color: #ffffff;
-  background-color: #324F35;
+  background-color: #283F2B;
   background-image: none;
 }
 
@@ -34,7 +34,7 @@ a:focus {
 .btn-primary.disabled,
 .btn-primary[disabled] {
   color: #ffffff;
-  background-color: #466049;
+  background-color: #324F36;
 }
 
 /* Colors for the light blue buttons */
@@ -55,13 +55,13 @@ a:focus {
 
 /* colors for the masthead */
 #masthead {
-    background-color: #324F35;
+    background-color: #283F2B;
 }
 
 /* Color for the background of the webwork logo */
 .webwork_logo {
-    background-color: #324F35;
-    border-color: #324F35;
+    background-color: #283F2B;
+    border-color: #283F2B;
 }
 
 #masthead a {
@@ -86,7 +86,7 @@ a:focus {
 .nav-list > .active > a:hover,
 .nav-list > .active > a:focus {
     color: #ffffff;
-    background-color: #324F35;
+    background-color: #283F2B;
 }
 
 ul.nav li a:hover {
@@ -110,7 +110,7 @@ ul.courses-list a {
 }
 
 ul.courses-list a:hover {
-	background: #324F35;
+	background: #283F2B;
 	color: white;
 }
 
@@ -121,7 +121,7 @@ ul.courses-list a:hover {
 }
 
 .info-box h2, .info-box h3, .info-box h4, .info-box h5, .info-box h6 {
-	background: #324F35;
+	background: #283F2B;
 	color: white;
 }
 
