@@ -14,9 +14,8 @@
 $(function () {
 
 /* This changes the WeBWorK Logo on the top left to a new image */
-    $('.webwork_logo a img').attr('src','/webwork2_files/images/webwork_transparent_logo_small.png');
+//    $('.webwork_logo a img').attr('src','new-path-here');
 
 /* This changes the MAA Logo on the top to a new image */
-    $('.maa_logo a img').attr('src','/webwork2_files/images/maa_logo_small.png');
-
+//    $('.maa_logo a img').attr('src','new-path-here');
 });
