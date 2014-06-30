@@ -879,7 +879,9 @@ sub killCookie {
 		-name => "WeBWorKCourseAuthen.$courseID",
 		-value => "\t",
 		-expires => $expires,
-		-path => $ce->{webworkURLRoot},
+		# change the following to "/" to have better compatibility between ww2 and ww3
+		#-path => $ce->{webworkURLRoot},
+		-path => "/",
 		-secure => 0,
 	);
  	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
