@@ -9,7 +9,7 @@
 */
 
 define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config','views/SidePane',
-           'main-views/AssignmentCalendar', 'views/ModalView','main-views/LibraryBrowser', 'jquery-truncate'], 
+           'main-views/AssignmentCalendar', 'views/ModalView','main-views/LibraryBrowser'], 
 function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalendar,ModalView,LibraryBrowser){
 	
     var ProblemSetListView = SidePane.extend({
@@ -38,7 +38,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                         numUsers: self.users.length, problemSets: self.problemSets,
                         eventDispatcher: self.mainView.eventDispatcher})).render().el);
             });
-            if(ul.width()>this.$el.width()){
+/*            if(ul.width()>this.$el.width()){
                 this.$(".sidepane-problem-set").each(function(i,v){
                     var setNameSize = $(v).children(".set-name").width();
                     var numUsersSize = $(v).children(".num-users").width();
@@ -46,7 +46,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                         $(v).children(".set-name").truncate({width: self.$el.width()-numUsersSize-25});
                     }
                 })
-            }
+            } */
 
            // move the HTML below to the template file.
             if (this.problemSets.size() === 0 ) {

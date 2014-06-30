@@ -153,16 +153,20 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-        $(window).on("beforeunload", function () {
-            if(self.session.logged_in!==0){ // if the user didn't just log out. 
-                return self.messageTemplate({type: "leave_page"});
-            }
-         }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
+        // this ensures that the rerender call only occurs once every 500 ms.  Importantly when the window is resized. 
+
+        var renderMainPane = _.debounce(function(evt){ 
             self.currentView.render();
             if(self.currentSidePane && self.currentSidePane.sidePane){
                 self.currentSidePane.sidePane.render();
             }
-         })
+        },500);
+
+        $(window).on("beforeunload", function () {
+            if(self.session.logged_in!==0){ // if the user didn't just log out. 
+                return self.messageTemplate({type: "leave_page"});
+            }
+         }).on("resize",renderMainPane);
 
         // Add a link to WW2 via the main menu.
 

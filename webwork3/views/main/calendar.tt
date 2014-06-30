@@ -76,6 +76,7 @@
 <script type="text/template" id="calendar-date-bar">
   <span class="assign-calendar-name"></span>
   <span class="assign-info show-set-popup-info" data-toggle="popover"></span>
+  <div style="clear: both;"></div>
 </script>
 
 

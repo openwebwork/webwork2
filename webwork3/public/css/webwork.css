@@ -85,13 +85,18 @@ border-top: solid 1px rgb(220, 220, 220);}
 
 .assign-not-visible {background-color: darkgray;}
 
-.assign-calendar-name {font-size: 90%;}
+.assign-calendar-name {font-size: 90%; 
+	width: 80px;   
+	display: block;
+	white-space: nowrap;
+  	overflow: hidden;
+ 	text-overflow: ellipsis;
+ 	float: left;
+  }
 
 .assign-info {cursor: pointer;}
 
 .assign {text-align: center;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
 	border-radius: 5px;
 	cursor: move;
 	border: 1px gray solid;
@@ -101,5 +106,13 @@ border-top: solid 1px rgb(220, 220, 220);}
 
 .calendar-button-row {margin: 5px; text-align: center;}
 
-.show-set-popup-info {color: white; background-color: black; border-radius: 4px; padding: 0px 2px;}
+.show-set-popup-info {
+	font-size:80%;
+	color: white; 
+	background-color: black; 
+	border-radius: 4px; 
+	margin: 2px;
+	padding: 0px 2px;
+	float: right;
+}
 

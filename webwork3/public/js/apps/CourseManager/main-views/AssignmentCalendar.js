@@ -28,19 +28,19 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             return this;
     	},
     	render: function (){
-            var time1 = moment();
     		CalendarView.prototype.render.apply(this);
             this.update();
 
     		this.$(".assign").popover({html: true});
             // set up the calendar to scroll correctly
+
+
             this.$(".calendar-container").height($(window).height()-160);
             $('.show-date-types input, .show-date-types label').click(function(e) {
                 e.stopPropagation();
             });
 
             // show/hide the desired date types
-
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
                 this.$(".assign-reduced-scoring").removeClass("hidden");
             } else {
@@ -60,9 +60,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     }
                 });
             });
-            this.$(".assign-calendar-name").truncate({width: 85});
+
             this.stickit();
-           console.log(moment().diff(time1));
             return this;
     	},
         bindings: {
