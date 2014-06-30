@@ -156,8 +156,10 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             }
             this.$el.html(str);
             this.$el.attr("data-date",this.model.format("YYYY-MM-DD"));
-            if (this.calendar.date.month()===this.model.month()){
+            if (Math.abs(this.model.month()-this.calendar.date.month()) %2 == 0){
                 this.$el.addClass("this-month");
+            } else {
+                this.$el.addClass("that-month");
             }
             if (this.today.isSame(this.model,"day")){
                 this.$el.addClass("today");

@@ -74,6 +74,7 @@ border-top: solid 1px rgb(220, 220, 220);}
 .week-view {min-height: 200px;}
 
 .this-month {background-color: lightyellow}
+.that-month {background-color: aliceblue;}
 .today {background-color: pink}
 .highlight-day { border: 2px solid black; background-color: lightblue;}
 
