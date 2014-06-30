@@ -153,6 +153,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         initialize: function(options){
             this.template = options.template;
             this.model = new Backbone.Model(options.model);
+            this.model.set("assign_time",moment.unix(this.model.get(this.model.get("assign_type")+"_date"))
+                    .format("hh:mm A"));
         },
         render: function(){
             this.$el.html(this.template);
