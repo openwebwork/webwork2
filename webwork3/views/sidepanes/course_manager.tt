@@ -40,5 +40,5 @@
 
 
 <script type="text/template" id="set-view-template">
-<span class="set-name"></span><span class="num-users"></span>
+<span class="set-name"></span><span title="assigned users/total users; num. probs." class="num-users"></span>
 </script>
