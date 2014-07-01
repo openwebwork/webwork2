@@ -85,9 +85,16 @@ post '/courses/:course_id/logout' => sub {
 
 	my $deleteKey = vars->{db}->deleteKey(session 'user');
 	my $sessionDestroy = session->destroy;
-	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id}; 
-	cookie $cookieName => "", expires => "-1 hour";
-	cookie "dancer.session" => "", expires => "-1 hour";
+
+	my $hostname = vars->{ce}->{server_root_url};
+	$hostname =~ s/https?:\/\///;
+
+	if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
+		cookie "WeBWorKCourseAuthen." . params->{course_id} => $cookieValue, domain=>$hostname, expires => "-1 hour";
+	} else {
+		cookie "WeBWorKCourseAuthen." . params->{course_id} => $cookieValue, expires => "-1 hour";
+	}
+
 	return {logged_in=>0};
 };
 
