@@ -303,11 +303,6 @@ get '/courses/:course_id/manager' =>  sub {
 	my $ts = "";
 	my $cookieValue = cookie "WeBWorKCourseAuthen." . params->{course_id};
 
-	my $cookies = cookies; 
-	debug $cookies; 
-	debug params->{course_id};
-	debug $cookieValue;
-
 	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);
 
 	$userID = params->{user} if defined(params->{user});
@@ -321,48 +316,41 @@ get '/courses/:course_id/manager' =>  sub {
 			vars->{db}->deleteKey(session 'user') if $key;
 			session->destroy; 
 		}
-	} else {
+	} elsif ($userID ne '') {
 		session 'user' => $userID;
+	} else {
+		session->destroy;
 	}
 
 	# a few situations here.  Either
-	# 1) no userID exists 
-	# 2) the user passed via the URL is not a member of the course
-	# 3) the user passed via the URL is not authorized for the manager. 
+	# 1) the user passed via the URL is not a member of the course
+	# 2) the user passed via the URL is not authorized for the manager. 
+	# 3) the user hasn't already logged in and needs to pop open a login window.  
 	# 4) the user has already logged in and its safe to send all of the requisite data
-	# 5) the user hasn't already logged in and needs to pop open a login window.  
+	# 
 
 	
-	#case 1)
+	# case 1)
 
-	if(! defined($userID)){
-		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
-		return;
-	}
-
-	# case 2) 
-	if(! vars->{db}->existsUser($userID)){
+	if($userID ne "" && ! vars->{db}->existsUser($userID)){
 		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
 		return "user not enrolled in the course";
 	}
-	
-	# case 3)
-	
-	my $permission = vars->{db}->getPermissionLevel($userID);
 
-    if ($permission->{permission} < 10){
+	# case 2)
+	
+    if ($userID ne "" && vars->{db}->getPermissionLevel($userID)->{permission} < 10){
     	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
 		return;	
     }
 
-	# case 5) 
+	# case 3) 
 	my $settings = [];
 	my $sets = [];
 	my $users = [];
 
-
 	# case 4) 
-	if(defined session->{user}){
+	if(session 'user') {
 		buildSession($userID,$sessKey);
 		if(session 'logged_in'){
 			$settings = getCourseSettings();
@@ -376,7 +364,10 @@ get '/courses/:course_id/manager' =>  sub {
 
 	# set the ww2 style cookie to save session info for work in both ww2 and ww3.  
 
-	setCookie();
+	if(session && session 'user'){
+		setCookie();	
+	}
+	
 	
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
 		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),

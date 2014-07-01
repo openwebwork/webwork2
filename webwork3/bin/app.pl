@@ -52,8 +52,6 @@ post '/handshake' => sub {
 
 post '/courses/:course_id/login' => sub {
 
-	debug "in login";
-
 	my $authen = new WeBWorK::Authen(vars->{ce});
 	$authen->set_params({
 			user => params->{user},
@@ -71,6 +69,7 @@ post '/courses/:course_id/login' => sub {
 
 		my $permission = vars->{db}->getPermissionLevel(session->{user});
 		session permission => $permission->{permission};
+		session timestamp => time();
 
 		setCookie();
 
@@ -83,7 +82,7 @@ post '/courses/:course_id/login' => sub {
 
 
 post '/courses/:course_id/logout' => sub {
-	debug "in logout";
+
 	my $deleteKey = vars->{db}->deleteKey(session 'user');
 	my $sessionDestroy = session->destroy;
 	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id}; 
