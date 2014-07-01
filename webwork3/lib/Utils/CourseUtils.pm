@@ -3,7 +3,7 @@
 
 package Utils::CourseUtils;
 use base qw(Exporter);
-use Dancer;
+use Dancer ':syntax';
 #use Dancer::Plugin::Database;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::ProblemSets qw/getGlobalSet/;

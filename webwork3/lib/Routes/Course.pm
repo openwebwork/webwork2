@@ -16,7 +16,7 @@ use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCours
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
 # use Utils::CourseUtils qw/getCourseSettings/;
-use Routes::Authentication qw/buildSession checkPermissions/;
+use Routes::Authentication qw/buildSession checkPermissions setCookie/;
 use Data::Dumper;
 
 
@@ -301,10 +301,12 @@ get '/courses/:course_id/manager' =>  sub {
 	my $userID = "";
 	my $sessKey = "";
 	my $ts = "";
-	my $cookies = Dancer::Cookies->cookies;
-	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id};
-	my $courseCookie = $cookies->{$cookieName};
-	my $cookieValue = $courseCookie->value if defined($courseCookie);
+	my $cookieValue = cookie "WeBWorKCourseAuthen." . params->{course_id};
+
+	my $cookies = cookies; 
+	debug $cookies; 
+	debug params->{course_id};
+	debug $cookieValue;
 
 	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);
 
@@ -367,18 +369,15 @@ get '/courses/:course_id/manager' =>  sub {
 			$sets = getAllSets();
 			$users = getAllUsers();
 		}
-	} 
+	}
 
 	my $theSession = convertObjectToHash(session);
 	$theSession->{effectiveUser} = session->{user};
 
 	# set the ww2 style cookie to save session info for work in both ww2 and ww3.  
 
-	$courseCookie->domain(vars->{ce}->{server_root_url});
-	$courseCookie->value("$userID\t". (session 'key') . "\t" . (session 'timestamp'));
-
-	cookie $courseCookie;
-
+	setCookie();
+	
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
 		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),
 		main_views=>to_json($config),pagename=>"Course Manager"},

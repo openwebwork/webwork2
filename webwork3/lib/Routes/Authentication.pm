@@ -15,7 +15,7 @@ use Data::Dumper;
 
 use base qw(Exporter);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(checkPermissions setCourseEnvironment buildSession);
+our @EXPORT_OK = qw(checkPermissions setCourseEnvironment buildSession setCookie);
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 ## the following routes is matched for any URL starting with /courses. It is used to load the 
@@ -111,15 +111,7 @@ sub buildSession {
 
 	session 'logged_in' => 1;
 
-	my $courseCookie = Dancer::Cookie->new(
-		name => "WeBWorKCourseAuthen." . params->{course_id},
-		value => (session 'user') . "\t". (session 'key') . "\t" . (session 'timestamp'),
-		domain => vars->{ce}->{server_root_url}
-		);
-
-	cookie $courseCookie;
-
-
+	setCookie();
 }
 
 
@@ -162,4 +154,24 @@ sub create_session {
 	#    then the subroutine maybe_send_cookie should send a cookie.
 
 	return $newKey;
+}
+
+
+###
+#
+# This sets the cookie in the WW2 style to allow for seamless transfer back and forth. 
+
+sub setCookie {
+		my $cookieValue = (session 'user') . "\t". (session 'key') . "\t" . (session 'timestamp');
+
+		my $hostname = vars->{ce}->{server_root_url};
+		$hostname =~ s/https?:\/\///;
+
+		if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
+			cookie "WeBWorKCourseAuthen." . params->{course_id} => $cookieValue, domain=>$hostname;
+		} else {
+			cookie "WeBWorKCourseAuthen." . params->{course_id} => $cookieValue;
+		}
+
+
 }

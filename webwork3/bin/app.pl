@@ -11,7 +11,7 @@ use WeBWorK::DB;
 use WeBWorK::Authen;
 
 ## note: Routes::Authenication must be passed first
-use Routes::Authentication qw/buildSession setCourseEnvironment/; 
+use Routes::Authentication qw/buildSession setCourseEnvironment setCookie/; 
 use Routes::Course;
 use Routes::Library;
 use Routes::ProblemSets;
@@ -52,18 +52,16 @@ post '/handshake' => sub {
 
 post '/courses/:course_id/login' => sub {
 
-	# setCourseEnvironment(params->{course_id});
+	debug "in login";
 
 	my $authen = new WeBWorK::Authen(vars->{ce});
 	$authen->set_params({
-		user => params->{user},
-		password => params->{password},
-		key => params->{session_key}
+			user => params->{user},
+			password => params->{password},
+			key => params->{session_key}
 		});
 
 	my $result = $authen->verify();
-
-	my $out = {};
 
 	if($result){
 		my $key = $authen->create_session(params->{user});
@@ -72,7 +70,9 @@ post '/courses/:course_id/login' => sub {
 		session key => $key;
 
 		my $permission = vars->{db}->getPermissionLevel(session->{user});
-		session permission => $permission->{permission};		
+		session permission => $permission->{permission};
+
+		setCookie();
 
 		return {session_key=>$key, user=>params->{user},logged_in=>1};
 
@@ -83,11 +83,12 @@ post '/courses/:course_id/login' => sub {
 
 
 post '/courses/:course_id/logout' => sub {
+	debug "in logout";
 	my $deleteKey = vars->{db}->deleteKey(session 'user');
 	my $sessionDestroy = session->destroy;
 	my $cookieName = "WeBWorKCourseAuthen." . params->{course_id}; 
-	cookie $cookieName => "";
-	cookie "dancer.session" => "";
+	cookie $cookieName => "", expires => "-1 hour";
+	cookie "dancer.session" => "", expires => "-1 hour";
 	return {logged_in=>0};
 };
 
