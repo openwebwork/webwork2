@@ -9,16 +9,16 @@ package Routes::Course;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Dancer::Plugin::Ajax;
+use Dancer::Plugin::Ajax; 
 use Dancer::FileUtils qw /read_file_content path/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
 # use Utils::CourseUtils qw/getCourseSettings/;
-#use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
-use Routes::Authentication qw/buildSession/;
+use Routes::Authentication qw/buildSession checkPermissions setCookie/;
 use Data::Dumper;
+
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
@@ -298,34 +298,80 @@ get '/courses/:course_id/manager' =>  sub {
 
 	my @view_paths = (@main_view_paths,@sidepane_paths);
 
+	my $userID = "";
+	my $sessKey = "";
+	my $ts = "";
+	my $cookieValue = cookie "WeBWorKCourseAuthen." . params->{course_id};
 
+	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);
 
-	# two situations here.  Either
-	# 1) the user has already logged in and its safe to send all of the requisite data
-	# 2) the user hasn't already logged in and needs to pop open a login window.  
+	$userID = params->{user} if defined(params->{user});
+	$sessKey = params->{key} if defined(params->{key});
 
-	buildSession();
+	## check if the user passed in via the URL is the same as the session user.
+
+	if(session 'user'){
+		if (session->{user} && $userID ne session->{user}) {
+			my $key = vars->{db}->getKey(session 'user');
+			vars->{db}->deleteKey(session 'user') if $key;
+			session->destroy; 
+		}
+	} elsif ($userID ne '') {
+		session 'user' => $userID;
+	} else {
+		session->destroy;
+	}
+
+	# a few situations here.  Either
+	# 1) the user passed via the URL is not a member of the course
+	# 2) the user passed via the URL is not authorized for the manager. 
+	# 3) the user hasn't already logged in and needs to pop open a login window.  
+	# 4) the user has already logged in and its safe to send all of the requisite data
+	# 
 
 	
+	# case 1)
 
+	if($userID ne "" && ! vars->{db}->existsUser($userID)){
+		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+		return "user not enrolled in the course";
+	}
 
-	my ($settings,$sets,$users);
+	# case 2)
+	
+    if ($userID ne "" && vars->{db}->getPermissionLevel($userID)->{permission} < 10){
+    	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+		return;	
+    }
 
+	# case 3) 
+	my $settings = [];
+	my $sets = [];
+	my $users = [];
 
-	if(defined session->{user}){
-		$settings = getCourseSettings();
-		$sets = getAllSets();
-		$users = getAllUsers();
-	} else {
-		$settings = [];
-		$sets = [];
-		$users = [];
-		
+	# case 4) 
+	if(session 'user') {
+
+		buildSession($userID,$sessKey);
+		if(session 'logged_in'){
+			$settings = getCourseSettings();
+			$sets = getAllSets();
+			$users = getAllUsers();
+		} else {
+			session->destroy();
+		}
 	}
 
 	my $theSession = convertObjectToHash(session);
 	$theSession->{effectiveUser} = session->{user};
 
+	# set the ww2 style cookie to save session info for work in both ww2 and ww3.  
+
+	if(session && session 'user'){
+		setCookie();	
+	}
+	
+	
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
 		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),
 		main_views=>to_json($config),pagename=>"Course Manager"},
