@@ -35,6 +35,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			this.showFiltered = false;
 			this.columnInfo = options.columnInfo;
 			this.paginatorProp = options.paginator;
+			this.tableClasses = options.classes; 
 			this.setColumns(options.columnInfo);
 			if($(options.tablename).length>0){ // if the tablename was passed use it as the $el
 				this.$el=$(options.tablename);
@@ -46,13 +47,13 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			this.initializeTable();
 		},
 		initializeTable: function () {
-			
+
 			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
 				this.collection.size();
 			this.pageRange = _.range(this.pageSize);
 			this.currentPage = 0;
 			this.rowViews = [];
-			this.$el.addClass(options.classes);
+			this.$el.addClass(this.tableClasses);
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},

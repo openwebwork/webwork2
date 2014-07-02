@@ -19,7 +19,13 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
 
             this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10;
 
+            
             this.tableSetup();
+
+            this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
+                    classes: "problem-set-manager-table",
+                    paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+
 
             this.headerInfo = { 
                 template: "#allSets-header", 
@@ -50,8 +56,6 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
         },
         render: function () {
             this.$el.html($("#problem-set-manager-template").html());
-            this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
-                                paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
