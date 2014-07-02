@@ -4,8 +4,7 @@
  */
 
 define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','config','apps/util',
-    'views/ModalView','models/ProblemSet','models/AssignmentDate',
-    'jquery-truncate'], 
+    'views/ModalView','models/ProblemSet','models/AssignmentDate'], 
     function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemSet,AssignmentDate){
 
     
@@ -22,6 +21,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
 
 
             this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
+                    classes: "problem-set-manager-table",
                     paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
 
             this.problemSetTable.on("page-changed",function(num){
@@ -68,7 +68,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
-            this.$(".set-id a").truncate({width: 120});
+            //this.$(".set-id a").truncate({width: 120});
 
             // hide reduced credit items when not enabled. 
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
