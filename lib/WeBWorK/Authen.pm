@@ -848,7 +848,9 @@ sub sendCookie {
 	my $cookie = WeBWorK::Cookie->new($r,
 		-name    => "WeBWorKCourseAuthen.$courseID",
  		-value   => "$userID\t$key\t$timestamp",
-		-path    => $ce->{webworkURLRoot},
+ 		-path    => "/",
+ 		# This is now changed so that both webwork2 and webwork3 can use the same cookie.
+		#-path    => "$ce->{webworkURLRoot}",
 		-secure  => 0,
 	);
 
@@ -877,7 +879,9 @@ sub killCookie {
 		-name => "WeBWorKCourseAuthen.$courseID",
 		-value => "\t",
 		-expires => $expires,
-		-path => $ce->{webworkURLRoot},
+		# change the following to "/" to have better compatibility between ww2 and ww3
+		#-path => $ce->{webworkURLRoot},
+		-path => "/",
 		-secure => 0,
 	);
  	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {

@@ -15,7 +15,7 @@ use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::LibraryUtils qw/list_pg_files searchLibrary getProblemTags render/;
 use Utils::ProblemSets qw/record_results/;
-use Routes::Authentication qw/checkPermissions authenticate setCourseEnvironment/;
+use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use WeBWorK::PG::Local;

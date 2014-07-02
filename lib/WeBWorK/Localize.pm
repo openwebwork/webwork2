@@ -115,10 +115,10 @@ page contains a table containing the student usernames and their information.
 },
 "_ACHIEVEMENTS_EDITOR_DESCRIPTION" => q{
 This is the Achievement Editor.  It is used to edit the achievements available to students.  Please keep in mind the following facts: 
--The achievements are always sorted by category and then by name.
--Achievments are displayed, and evaluated, in the order they are listed.
--The \"secret\" category always comes first and creates achievements which are not visible to students until they are earned.
--The \"level\" category is used for the achievements associated to a users level.;
+The achievements are always sorted by category and then by name.
+Achievments are displayed, and evaluated, in the order they are listed.
+The "secret" category always comes first and creates achievements which are not visible to students until they are earned.
+The "level" category is used for the achievements associated to a users level.
 },
 "_REDUCED_CREDIT_MESSAGE_1" => q{
 This assignment has a Reduced Credit Period that begins [_1] and
