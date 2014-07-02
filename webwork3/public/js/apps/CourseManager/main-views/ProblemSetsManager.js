@@ -12,7 +12,6 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
     var ProblemSetsManager = MainView.extend({
         initialize: function (options) {
             MainView.prototype.initialize.call(this,options);
-            _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText');  // include all functions that need the this object
             _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText',
                         'hideShowReducedScoring');  // include all functions that need the this object
             var self = this;
@@ -38,6 +37,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             "click .add-problem-set-button": "addProblemSet",
             'keyup input.filter-text' : 'filterProblemSets',
             'click button.clear-filter-button': 'clearFilterText',
+            "click a.show-rows": "showRows"
         },
         hideShowReducedScoring: function(model){
             if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
@@ -57,7 +57,11 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
             this.$(".set-id a").truncate({width: 120});
-
+            this.isReducedScoringEnabled();
+            MainView.prototype.render.apply(this);
+            return this;
+        },
+        isReducedScoringEnabled: function (){
             // hide reduced credit items when not enabled. 
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
                 this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
@@ -66,8 +70,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
                     .addClass("hidden");
             }
-            MainView.prototype.render.apply(this);
-            return this;
+
         },
         getState: function () {
             return {};
@@ -107,6 +110,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             } else {
                 this.problemSetTable.set({num_rows: this.pageSize});
             }
+            this.isReducedScoringEnabled();
             this.$(".set-id a").truncate({width: 120});
         },
         set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
@@ -169,9 +173,6 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                         editable: false, datatype: "integer", use_contenteditable: false}
             ];
 
-        },
-        events: {
-            "click a.show-rows": "showRows"
         },
         getHelpTemplate: function () {
             return $("#problem-sets-manager-help-template").html();
