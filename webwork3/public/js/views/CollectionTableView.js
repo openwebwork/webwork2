@@ -50,7 +50,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
 				this.collection.size();
-			this.pageRange = _.range(this.pageSize);
+			this.pageRange = this.pageSize==="all"? _.range(this.collection.length) : _.range(this.pageSize);
 			this.currentPage = 0;
 			this.rowViews = [];
 			this.$el.addClass(this.tableClasses);
