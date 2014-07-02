@@ -351,11 +351,14 @@ get '/courses/:course_id/manager' =>  sub {
 
 	# case 4) 
 	if(session 'user') {
+
 		buildSession($userID,$sessKey);
 		if(session 'logged_in'){
 			$settings = getCourseSettings();
 			$sets = getAllSets();
 			$users = getAllUsers();
+		} else {
+			session->destroy();
 		}
 	}
 
