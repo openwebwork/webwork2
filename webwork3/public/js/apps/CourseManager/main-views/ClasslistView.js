@@ -27,6 +27,14 @@ var ClasslistView = MainView.extend({
             
         this.users.on({"add": this.addUser,"change": this.changeUser,"sync": this.syncUserMessage,
     					"remove": this.removeUser});
+	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
+                            paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+
+	    this.userTable.on("page-changed",function(num){
+	    	self.currentPage = num;
+	    	self.eventDispatcher.trigger("save-state");
+	    })
+
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
@@ -67,8 +75,6 @@ var ClasslistView = MainView.extend({
 
     render: function(){
 	    this.$el.html($("#classlist-manager-template").html());
-	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
-                            paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
         this.$el.append(this.userTable.el);
 
@@ -76,11 +82,16 @@ var ClasslistView = MainView.extend({
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
         this.clearFilterText();
+        this.userTable.setPageNumber(this.currentPage||0);
         MainView.prototype.render.apply(this);
 	    return this;
     },  
     getState: function () {
-        return {};
+        return {pageNum: this.currentPage};
+    },
+    setState: function (state) {
+    	this.currentPage = state ? parseInt(state.pageNum) : 0;
+    	return this;
     },
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
@@ -133,7 +144,8 @@ var ClasslistView = MainView.extend({
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
 	    "click a.delete-selected": "deleteSelectedUsers",
-	    "change th[data-class-name='select-user'] input": "selectAll"
+	    "change th[data-class-name='select-user'] input": "selectAll",
+	    
 	},
 	takeAction: function(evt){
 		var user = this.users.findWhere({user_id: $(evt.target).closest("tr").children("td:nth-child(3)").text()});

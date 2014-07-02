@@ -201,7 +201,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				"click .prev-page": "prevPage",
 				"click .numbered-page": "gotoPage",
 				"click .next-page": "nextPage",
-				"click .last-page": "lastPage"},
+				"click .last-page": "lastPage",
+				"click button.paginator-page": "pageChanged"
+		},
 		sortTable: function(evt){
 			var self = this;
 			var sort = _(this.columnInfo).find(function(col){
@@ -245,12 +247,21 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 		},
 		firstPage: function() { this.gotoPage(0);},
 		prevPage: function() {if(this.currentPage>0) {this.gotoPage(this.currentPage-1);}},
-		nextPage: function() {if(this.currentPage<this.maxPages){this.gotoPage(this.currentPage+1);}},
+		nextPage: function() {
+			if(this.currentPage<this.maxPages){this.gotoPage(this.currentPage+1);}
+		},
 		lastPage: function() {this.gotoPage(this.maxPages-1);},
 		gotoPage: function(arg){
 			this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
 			this.pageRange = _.range(this.currentPage*this.pageSize,
 				(this.currentPage+1)*this.pageSize>this.collection.size()? this.collection.size():(this.currentPage+1)*this.pageSize);
+			this.render();
+		},
+		pageChanged: function(){
+			this.trigger("page-changed",this.currentPage);
+		},
+		setPageNumber: function(num){
+			this.currentPage = num;
 			this.render();
 		}
 
