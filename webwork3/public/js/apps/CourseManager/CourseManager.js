@@ -28,11 +28,29 @@ var CourseManager = WebPage.extend({
                 dateSettings: dateSettings}) : null;
 
         _.extend(config.courseSettings,{course_id: module.config().course_id,user: this.session.user});
-        if(this.session.user){
+        if(this.session.user&&this.session.logged_in==1){
             this.startManager();
         } else {
-            this.requestLogin({success: this.loadData});
+            this.requestLogin({success: function (data) {
+                // save the new session key and reload the page.  
+                self.session.key = data.session_key;
+                window.location.reload();
+                /*window.location.href=config.urlPrefix+"courses/"+config.courseSettings.course_id+"/manager?"
+                    + $.param(_(self.session).pick("user","key")); */
+            }});
+
+            //    this.loadData
+            //});
         }
+
+        $(document).ajaxError(function (e, xhr, options, error) {
+            if(xhr.status==419){
+                self.requestLogin({success: function(){
+                    self.loginPane.close();
+                }});
+            }
+        });
+
 
     },
     loadData: function (data) {
@@ -50,8 +68,6 @@ var CourseManager = WebPage.extend({
             this.problemSets.fetch({success: function(){self.checkData("problemSets")}});
             this.settings.fetch({success: function(){self.checkData("settings")}});
             this.users.fetch({success: function(){self.checkData("users")}});
-
-            
         } else { // send an error
             this.loginPane.$(".message").html(this.messageTemplate({type: "bad_password"}));
         }
@@ -59,13 +75,10 @@ var CourseManager = WebPage.extend({
     // wait for all of the data to get loaded in, close the login window, then start the Course Manager. 
     checkData: function(name) {
         this.data_loaded[name] = true;
-        console.log(_(this.data_loaded).chain().values().every(_.identity).value());
         if(_(this.data_loaded).chain().values().every(_.identity).value()){
             this.closeLogin();
-
             // make sure the dateSettings are properly stored:
             this.problemSets.dateSettings = util.pluckDateSettings(this.settings);
-
             this.startManager();
         }
     },
