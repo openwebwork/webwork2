@@ -20,6 +20,16 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
 
             this.tableSetup();
 
+
+            this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
+                    paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+
+            this.problemSetTable.on("page-changed",function(num){
+                self.currentPage = num;
+                self.eventDispatcher.trigger("save-state");
+            })
+
+
             this.headerInfo = { 
                 template: "#allSets-header", 
                 events: {"click .add-problem-set-button": function () {
@@ -36,6 +46,13 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             'keyup input.filter-text' : 'filterProblemSets',
             'click button.clear-filter-button': 'clearFilterText',
         },
+        getState: function () {
+            return {pageNum: this.currentPage};
+        },
+        setState: function (state) {
+            this.currentPage = state ? parseInt(state.pageNum) : 0;
+            return this;
+        },
         hideShowReducedScoring: function(model){
             if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
                 var rcDate = moment.unix(model.get("due_date")).subtract(this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"))
@@ -48,8 +65,6 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
         },
         render: function () {
             this.$el.html($("#problem-set-manager-template").html());
-            this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
-                                paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
@@ -63,11 +78,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
                     .addClass("hidden");
             }
+            this.problemSetTable.setPageNumber(this.currentPage||0);
             MainView.prototype.render.apply(this);
             return this;
-        },
-        getState: function () {
-            return {};
         },
         updateTable: function() {
             if(this.problemSetTable){

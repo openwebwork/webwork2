@@ -256,13 +256,22 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			this.pageRange = _.range(this.currentPage*this.pageSize,
 				(this.currentPage+1)*this.pageSize>this.collection.size()? this.collection.size():(this.currentPage+1)*this.pageSize);
 			this.render();
+			if(this.currentPage==0){
+				this.$("button.first-page,button.prev-page").attr("disabled","disabled");
+			} else {
+				this.$("button.first-page,button.prev-page").removeAttr("disabled");
+			}
+			if(this.currentPage==this.maxPages-1){
+				this.$("button.last-page,button.next-page").attr("disabled","disabled");
+			} else {
+				this.$("button.last-page,button.next-page").removeAttr("disabled");
+			}
 		},
 		pageChanged: function(){
 			this.trigger("page-changed",this.currentPage);
 		},
 		setPageNumber: function(num){
-			this.currentPage = num;
-			this.render();
+			this.gotoPage(num);
 		}
 
 
