@@ -52,6 +52,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			this.pageRange = _.range(this.pageSize);
 			this.currentPage = 0;
 			this.rowViews = [];
+			this.$el.addClass(options.classes);
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},
@@ -167,6 +168,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			}
 		},
 		filter: function(filterText) {
+			if(this.currentPage != 0){
+				this.gotoPage(0);
+			}
 			var filterText;
 			if(filterText===""){
 				this.showFiltered = false;

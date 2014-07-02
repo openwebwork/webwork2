@@ -4,8 +4,7 @@
  */
 
 define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','config','apps/util',
-    'views/ModalView','models/ProblemSet','models/AssignmentDate',
-    'jquery-truncate'], 
+    'views/ModalView','models/ProblemSet','models/AssignmentDate'], 
     function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemSet,AssignmentDate){
 
     
@@ -56,12 +55,14 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
-            this.$(".set-id a").truncate({width: 120});
+            //this.$(".set-id a").truncate({width: 120});
             this.isReducedScoringEnabled();
             MainView.prototype.render.apply(this);
             return this;
         },
         isReducedScoringEnabled: function (){
+            //this.$(".set-id a").truncate({width: 120});
+
             // hide reduced credit items when not enabled. 
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
                 this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
@@ -111,7 +112,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 this.problemSetTable.set({num_rows: this.pageSize});
             }
             this.isReducedScoringEnabled();
-            this.$(".set-id a").truncate({width: 120});
+            //this.$(".set-id a").truncate({width: 120});
         },
         set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
             var self = this;
