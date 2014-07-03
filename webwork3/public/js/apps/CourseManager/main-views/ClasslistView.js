@@ -219,7 +219,11 @@ var ClasslistView = MainView.extend({
             				{value: 4, label: "Email User"},
             				{value: 5, label: "Student Progress"}]}}},*/
                 {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
-                {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets",
+                {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
+                	value: function(model){
+                		return self.problemSets.filter(function(_set) { 
+                				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
+               		},
                 	stickit_options: {update: function($el, val, model, options) {
                 		$el.html(self.problemSets.filter(function(_set) { 
                 				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length + "/"

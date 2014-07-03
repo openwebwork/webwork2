@@ -23,6 +23,11 @@
 Other options:
 	pageSize: the number of rows in a visible table (or -1 for all rows shown.)
 
+
+Sorting: 
+   The table will sort unless the datatype field is not set.  It will sort both ascending and descending. 
+   Currently only "integer" and "string" data is set. 
+   If you want to sort on a different piece of data, you need to specify the key (field) where the data is stored. 
  */
 
 
@@ -73,6 +78,14 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				if(typeof col.stickit_options != 'undefined'){
 					_.extend(obj["."+col.classname],col.stickit_options);
 					col.use_contenteditable = col.editable;
+				}
+				if(col.value && _.isFunction(col.value)) { // then the value is calculated.
+					self.collection.each(function(_model){
+						if(!_model._extra){
+							_model._extra= {};
+						}
+						_model._extra[col.key]=col.value.apply(this,[_model]);
+					})
 				}
 				_.extend(self.bindings, obj);
 			});
@@ -256,24 +269,56 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			var sortFunction = sort.sort_function || function(val) { return val;};
 
+			if(typeof(sort.datatype)==="undefined"){
+				console.error("You need to define a datatype to sort");
+				return;
+			}
 
 			/* Need a more robust comparator function. */
 			this.collection.comparator = function(model1,model2) { 
+				var value1 = typeof(model1.get(sort.key)) === "undefined" ? model1._extra[sort.key] : model1.get(sort.key);
+				var value2 = typeof(model2.get(sort.key)) === "undefined" ? model2._extra[sort.key] : model2.get(sort.key);
 				switch(sort.datatype){
 					case "string":
-						if (sortFunction(model1.get(sort.key))===sortFunction(model2.get(sort.key))) {return 0;}
+						if (sortFunction(value1,model1)===sortFunction(value2,model2))
+							return 0;
+						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)? -1: 1);
+						break;
+					case "integer":
+						if(parseInt(sortFunction(value1,model1))===parseInt(sortFunction(value2,model2))){return 0;}
+					    return self.sortInfo.direction*(parseInt(sortFunction(value1,model1))<parseInt(sortFunction(value2,model2))? -1:1);
+						break;
+					case "boolean":
+						if(sortFunction(value1,model1)===sortFunction(value2,model2)){ return 0;}
+						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)?-1:1);
+						break;
+					case "number":
+						if(parseFloat(sortFunction(value1,model1))===parseFloat(sortFunction(value2,model2))){return 0;}
+					    return self.sortInfo.direction*(parseFloat(sortFunction(value1,model1))<parseFloat(sortFunction(value2,model2))? -1:1);
+						break;
+				} 
+
+			};
+
+
+
+			/* Need a more robust comparator function. */
+			/*this.collection.comparator = function(model1,model2) { 
+				switch(sort.datatype){
+					case "string":
+						if (sortFunction(model1.get(sort.sort_key))===sortFunction(model2.get(sort.sort_key))) {return 0;}
 						return self.sortInfo.direction*
-							(sortFunction(model1.get(sort.key))<sortFunction(model2.get(sort.key))? -1: 1);
+							(sortFunction(model1.get(sort.sort_key))<sortFunction(model2.get(sort.sort_key))? -1: 1);
 					break;
 					case "integer":
-						if(parseInt(sortFunction(model1.get(sort.key)))===parseInt(sortFunction(model2.get(sort.key)))){return 0;}
+						if(parseInt(sortFunction(model1.get(sort.sort_key)))===parseInt(sortFunction(model2.get(sort.sort_key)))){return 0;}
 					    return self.sortInfo.direction* 
-					    	(parseInt(sortFunction(model1.get(sort.key)))<parseInt(sortFunction(model2.get(sort.key)))? -1:1);
+					    	(parseInt(sortFunction(model1.get(sort.sort_key)))<parseInt(sortFunction(model2.get(sort.sort_key)))? -1:1);
 
 					break;
 				} 
 				
-			};
+			}; */
 			this.collection.sort();
 			this.render();
 		},

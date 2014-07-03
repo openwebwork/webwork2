@@ -168,7 +168,11 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: ["reduced-scoring-date","edit-datetime"], 
-                        editable: false, datatype: "integer", use_contenteditable: false},
+                        editable: false, datatype: "integer", use_contenteditable: false,
+                        sort_function: function(val,model){
+                            return model.get("enable_reduced_scoring") ? val : 0;
+                        }
+                    },
                 {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Answer Date", key: "answer_date", classname: ["answer-date","edit-datetime"], 
