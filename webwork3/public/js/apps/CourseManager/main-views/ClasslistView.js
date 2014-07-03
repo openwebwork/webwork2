@@ -30,8 +30,7 @@ var ClasslistView = MainView.extend({
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
-	     
-		this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10;  
+	      
 
 	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation	  
 	    this.users.each(function(model){
@@ -60,6 +59,7 @@ var ClasslistView = MainView.extend({
     },
 
     render: function(){
+    	this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10; 
 	    this.$el.html($("#classlist-manager-template").html());
 	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
                             paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});

@@ -19,6 +19,10 @@
  	        be passed in.
  	-  _sortFxn: is a function that returns a value to be sorted on.   
 
+
+Other options:
+	pageSize: the number of rows in a visible table (or -1 for all rows shown.)
+
  */
 
 
@@ -50,7 +54,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
 				this.collection.size();
-			this.pageRange = this.pageSize==="all"? _.range(this.collection.length) : _.range(this.pageSize);
+			this.pageRange = this.pageSize > 0 ?  _.range(this.pageSize) : _.range(this.collection.length) ;
 			this.currentPage = 0;
 			this.rowViews = [];
 			this.$el.addClass(this.tableClasses);
@@ -97,12 +101,18 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			});
 
 			this.updateTable();
-			for(i=0;i<this.pageSize;i++){
-				if(this.rowViews[i]){
-					tbody.append(self.rowViews[i].render().el);
+			if(this.pageSize >0){
+				for(i=0;i<this.pageSize;i++){
+					if(this.rowViews[i]){
+						tbody.append(self.rowViews[i].render().el);
+					}
 				}
-
+			} else {
+				_(this.rowViews).each(function(row){
+					tbody.append(row.render().el);
+				});
 			}
+
 			if(this.paginatorProp.showPaginator){
 				this.$el.append($("<tr class='paginator-row'>"));
 				this.updatePaginator();
@@ -167,6 +177,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			} else {
 				this.$(".paginator-row").removeClass("hidden")
 			}
+			this.delegateEvents();
 		},
 		filter: function(filterText) {
 			if(this.currentPage != 0){

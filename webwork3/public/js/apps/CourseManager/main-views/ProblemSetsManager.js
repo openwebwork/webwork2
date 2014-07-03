@@ -19,23 +19,18 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
 
             this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10;
 
-            
+
             this.tableSetup();
 
             this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
                     classes: "problem-set-manager-table",
-                    paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+                    paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});
 
-
-            this.headerInfo = { 
-                template: "#allSets-header", 
-                events: {"click .add-problem-set-button": function () {
-                                  self.addProblemSet();  
-                                }}
-            };
-            this.problemSets.on("add",this.updateTable);
-            this.problemSets.on("remove",this.updateTable);
-            this.problemSets.on("change:enable_reduced_scoring",this.hideShowReducedScoring);
+            this.problemSets.on({
+                "add": this.updateTable,
+                "remove": this.updateTable,
+                "change:enable_reduced_scoring":this.hideShowReducedScoring
+            });
             this.setMessages();
         },
         events: {
@@ -55,12 +50,14 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.$(".set-id a").truncate({width: 120});
         },
         render: function () {
+            this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}");
             this.$el.html($("#problem-set-manager-template").html());
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
             //this.$(".set-id a").truncate({width: 120});
             this.isReducedScoringEnabled();
+            this.showRows(this.pageSize);
             MainView.prototype.render.apply(this);
             return this;
         },
@@ -103,14 +100,14 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             }
         },  
         showRows: function(evt){
-            this.pageSize = _.isString(evt) || _.isNumber(evt) ? evt : $(evt.target).data("num")
+            this.pageSize = _.isNumber(evt) ? evt : $(evt.target).data("num");
             this.$(".show-rows i").addClass("not-visible");
             if(_.isString(evt) || _.isNumber(evt)){
                 this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
             } else {
                 $(evt.target).children("i").removeClass("not-visible");
             }
-            if(this.pageSize==="all") {
+            if(this.pageSize < 0) {
                 this.problemSetTable.set({num_rows: this.users.length});
             } else {
                 this.problemSetTable.set({num_rows: this.pageSize});

@@ -21,7 +21,7 @@
         <li><a href="#" class="show-rows" data-num="10"><i class="fa fa-check"></i>Show 10 rows</a></li>
         <li><a href="#" class="show-rows" data-num="25"><i class="fa fa-check not-visible"></i>Show 25 rows</a></li>
         <li><a href="#" class="show-rows" data-num="50"><i class="fa fa-check not-visible"></i>Show 50 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="all"><i class="fa fa-check not-visible"></i>Show All rows</a></li>
+        <li><a href="#" class="show-rows" data-num="-1"><i class="fa fa-check not-visible"></i>Show All rows</a></li>
 
       </ul>
     </div>
