@@ -93,7 +93,7 @@ sub scoring_info {
 	my $merge_file         = "report_grades_data.csv";
 	my $delimiter            = ',';
 	my $scoringDirectory    = $ce->{courseDirs}->{scoring};
-	return "There is no additional grade information. The spreadsheet file $filePath cannot be found." unless -e "$scoringDirectory/$merge_file";
+	return $r->maketext("There is no additional grade information. The spreadsheet file [_1] cannot be found.", $filePath) unless -e "$scoringDirectory/$merge_file";
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my $text;
 	my $header = '';
@@ -278,7 +278,7 @@ sub displayStudentStats {
 			if ( @{$setVersionsByID{$setName}} ) {
 				next;
 			} else {
-				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2nbsp($setID)), 
+				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)), 
 						     CGI::td({colspan=>4}, CGI::em("No versions of this assignment have been taken."))) );
 				next;
 			}
@@ -289,7 +289,7 @@ sub displayStudentStats {
 		     ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
 		       ( $set->hide_score eq 'Y' || 
 			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
-			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2nbsp("${setID}_(test_" . $set->version_id . ")")), 
+			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(test_" . $set->version_id . ")")), 
 					     CGI::td({colspan=>4}, CGI::em("Display of scores for this set is not allowed."))) );
 			next;
 		}
@@ -341,7 +341,7 @@ sub displayStudentStats {
 		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
 	
 		push @rows, CGI::Tr({},
-			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2nbsp($setName))),
+			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
 			#CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator -- leave this out

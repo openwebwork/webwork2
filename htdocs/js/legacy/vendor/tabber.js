@@ -398,6 +398,9 @@ tabberObj.prototype.tabShow = function(tabberIndex)
   
   var radio = div.getElementsByTagName("input")[0];
   radio.checked = true;
+  if (radio.onclick) {
+      radio.onclick();
+  }
 
   /* Remove classTabHide from the div */
   div.className = div.className.replace(this.REclassTabHide, '');
@@ -486,6 +489,9 @@ function radioSelect(){
 	var id = title.toLowerCase() + "_id";
 	var radio = document.getElementById(id);
 	radio.setAttribute("checked", "checked");
+        if (radio.onclick) {
+           radio.onclick();
+        }
 }
 
 
@@ -541,4 +547,7 @@ function radioSelect(){
 	var id = title.toLowerCase() + "_id";
 	var radio = document.getElementById(id);
 	radio.setAttribute("checked", "checked");
+        if (radio.onclick) {
+           radio.onclick();
+        }
 }

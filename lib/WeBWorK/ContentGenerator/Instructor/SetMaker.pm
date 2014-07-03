@@ -206,7 +206,7 @@ sub next_prob_group {
 	return -1 if($ind >= $len-1);
 	my $mlt= $pgfiles[$ind]->{morelt} || 0;
 	return $ind+1 if($mlt == 0);
-	while($ind<$len and ($pgfiles[$ind]->{morelt} || 0) == $mlt) {
+	while($ind<$len and defined($pgfiles[$ind]->{morelt}) and $pgfiles[$ind]->{morelt} == $mlt) {
 		$ind++;
 	}
 	return -1 if($ind==$len);
@@ -502,7 +502,7 @@ sub browse_library_panel1 {
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 		CGI::start_table(),
 			CGI::Tr({},
-				CGI::td(["Chapter:",
+				CGI::td([$r->maketext("Chapter:"),
 					CGI::popup_menu(-name=> 'library_chapters', 
 					                -values=>\@chaps,
 					                -default=> $chapter_selected,
@@ -510,7 +510,7 @@ sub browse_library_panel1 {
 					),
 					CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
 			CGI::Tr({},
-				CGI::td("Section:"),
+				CGI::td($r->maketext("Section:")),
 				CGI::td({-colspan=>2},
 					CGI::popup_menu(-name=> 'library_sections', 
 					                -values=>\@sects,
@@ -810,7 +810,7 @@ sub make_top_row {
 																 ($browse_which eq "browse_$lib")? (-disabled=>1): ())
 			if (-d "$ce->{courseDirs}{templates}/$lib");
 	}
-	$libs = CGI::br()."or Problems from".$libs if $libs ne '';
+	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
 
 	my $these_widths = "width: 24ex";
 
@@ -1006,9 +1006,9 @@ sub make_data_row {
 		my $numchild = scalar(@{$sourceFileData->{children}});
 		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
-		$mltstart = "<table style='border:1px solid black' width='100%'><tr><td>\n";
+		$mltstart = "<tr><td><table id='mlt-table$cnt' style='border:1px solid black' width='100%'><tr><td>\n";
 	}
-	$mltend = "</td></tr></table>\n" if($mltnumleft==0);
+	$mltend = "</td></tr></table></td></tr>\n" if($mltnumleft==0);
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
 
@@ -1030,9 +1030,9 @@ sub make_data_row {
 
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
+	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
-        $mltstart,
 		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
 		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
 		      -value=>"Add",
@@ -1051,9 +1051,9 @@ sub make_data_row {
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
-		CGI::div($problem_output),
-        $mltend
+		CGI::div($problem_output)
 	));
+	print $mltend;
 }
 
 sub clear_default {
@@ -1505,7 +1505,8 @@ sub pre_header_initialize {
 
 
 sub title {
-	return "Library Browser";
+	my ($self) = @_;
+	return $self->r->maketext("Library Browser");
 }
 
 # hide view options panel since it distracts from SetMaker's built-in view options
@@ -1534,7 +1535,7 @@ sub head {
   print "\n";
 	print qq{
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+		   <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
   print "\n";
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
@@ -1562,7 +1563,7 @@ sub body {
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		print "User $userName returned " . 
-			$authz->hasPermissions($user, "modify_problem_sets") . 
+			$authz->hasPermissions($userName, "modify_problem_sets") . 
 	" for permission";
 		return(CGI::div({class=>'ResultsWithError'},
 		CGI::em("You are not authorized to access the Instructor tools.")));

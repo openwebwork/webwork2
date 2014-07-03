@@ -2223,6 +2223,7 @@ sub body {
 			),CGI::input({
 					name=>"add_n_problems",
 					size=>2,
+					type=>'text',
 					value=>1 },
 					$r->maketext("blank problem template(s) to end of homework set")
 			);

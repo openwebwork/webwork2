@@ -624,18 +624,25 @@ sub body {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script type="text/javascript" src="$site_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::script(<<EOF);
- 		function setTarget(inWindow) {
-		  document.getElementById("newWindow").checked = inWindow;
-		  updateTarget();
+	function setTarget(inWindow) {
+	    document.getElementById("newWindow").checked = inWindow;
+	    updateTarget();
+	}
+	function updateTarget() {
+	    var inWindow = document.getElementById("newWindow").checked;
+	    if (inWindow) {
+		if (document.getElementById("save_as_form_id").checked) {
+		    document.getElementById("editor").target = "WW_New_Edit";
+		} else {
+		    document.getElementById("editor").target = "WW_View";
 		}
-		function updateTarget() {
-		  var inWindow = document.getElementById("newWindow").checked;
-		  document.getElementById("editor").target = (inWindow? "WW_View": "");
-		}
-		function setRadio(i,nw) {
-		  document.getElementById('action'+i).checked = true;
-		  setTarget(nw);
-		}
+	    } else {
+		document.getElementById("editor").target = "";
+	    }
+	}
+	function setRadio(i,nw) {
+	    setTarget(nw);
+	}
 EOF
 	
 
@@ -670,7 +677,7 @@ EOF
 # 		),
 		CGI::p(
 			CGI::textarea(
-				-name => 'problemContents', -default => $problemContents,
+				-name => 'problemContents', -default => $problemContents, -class => 'latexentryfield',
 				-rows => $rows, -cols => $columns, -override => 1,
 			),
 		);
@@ -2031,7 +2038,19 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
-	
+
+	if ($ce->{options}->{PGMathView}) {
+	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	}
+
+	return "";
+}
+
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
 	return "";
 }
 

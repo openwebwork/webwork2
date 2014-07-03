@@ -10,6 +10,8 @@ $(function(){
     $('#pg_editor_frame_id').on('load', function () {
 	$('#pg_editor_frame_id').contents().find('#site-navigation')
 	    .addClass('hidden-desktop hidden-tablet');
+	$('#pg_editor_frame_id').contents().find('#content')
+	    .removeClass('span10').addClass('span12');
     });
 });
 
@@ -24,7 +26,11 @@ addOnLoadEvent( function () {
 	var inWindow = $("#newWindow").attr('checked');
 	var target = "pg_editor_frame";
 	if (inWindow) {
-	    target = "WW_View";
+	    if ($('#save_as_form_id').attr('checked')) {
+		target = "WW_New_Edit";
+	    } else {
+		target = "WW_View";
+	    }
 	} 
 	else if ($('#save_as_form_id').attr('checked')
 		 || ($('#revert_form_id').length > 0 &&

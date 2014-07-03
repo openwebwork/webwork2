@@ -201,6 +201,8 @@ sub checkForAchievements {
 			$cheevoMessage .= CGI::end_div();
 	    }
 	    
+	    # this feature doesn't really work anymore because
+	    # of a change in facebooks api
 	    #if facebook integration is enables then create a facebook popup
 	    if ($ce->{allowFacebooking}&& $globalUserAchievement->facebooker) {
 			$cheevoMessage .= CGI::div({id=>'fb-root'},'');

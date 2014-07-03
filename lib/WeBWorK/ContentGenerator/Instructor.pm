@@ -581,15 +581,15 @@ sub userCountMessage {
 	
 	my $message;
 	if ($count == 0) {
-		$message = CGI::em("no students");
+		$message = CGI::em($self->r->maketext("no students"));
 	} elsif ($count == $numUsers) {
-		$message = "all students";
+		$message = $self->r->maketext("all students");
 	} elsif ($count == 1) {
-		$message = "1 student";
+		$message = $self->r->maketext("1 student");
 	} elsif ($count > $numUsers || $count < 0) {
 		$message = CGI::em("an impossible number of users: $count out of $numUsers");
 	} else {
-		$message = "$count students out of $numUsers";
+		$message = $self->r->maketext("[_1] students out of [_2]", $count, $numUsers);
 	}
 	
 	return $message;
@@ -597,18 +597,19 @@ sub userCountMessage {
 
 sub setCountMessage {
 	my ($self, $count, $numSets) = @_;
-	
+	my $r = $self->r;
+
 	my $message;
 	if ($count == 0) {
-		$message = CGI::em("no sets");
+		$message = CGI::em($r->maketext("no sets"));
 	} elsif ($count == $numSets) {
-		$message = "all sets";
+		$message = $r->maketext("all sets");
 	} elsif ($count == 1) {
-		$message = "1 set";
+		$message = "1 ".$r->maketext("set");
 	} elsif ($count > $numSets || $count < 0) {
 		$message = CGI::em("an impossible number of sets: $count out of $numSets");
 	} else {
-		$message = "$count sets";
+		$message = $count." ".$r->maketext("sets");
 	}
 	
 	return $message;
