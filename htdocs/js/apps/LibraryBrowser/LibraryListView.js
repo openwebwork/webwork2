@@ -18,9 +18,8 @@ define(['Backbone', 'underscore', './LibraryView'], function(Backbone, _, Librar
             //'change .list': 'lib_selected'
         },
 
-        initialize:function (options) {
+        initialize:function () {
             var self = this;
-            this.name = options.name;
             this.model.on("reset", this.render, this);
             this.model.on("add", this.addOne, this);
             this.model.on('alert', function(message){alert(message);}, this);
@@ -43,8 +42,8 @@ define(['Backbone', 'underscore', './LibraryView'], function(Backbone, _, Librar
             if(self.model.syncing){
                 self.$el.addClass("syncing white");
             }
-            this.$el.html(this.template({name: this.name}));
-            self.$("."+this.name+".list").on('change', function(event){self.lib_selected(event)});
+            this.$el.html(this.template({name: this.options.name}));
+            self.$("."+this.options.name+".list").on('change', function(event){self.lib_selected(event)});
             this.addAll();
             return this;
         },
@@ -54,7 +53,7 @@ define(['Backbone', 'underscore', './LibraryView'], function(Backbone, _, Librar
             var option = document.createElement("option")
             option.value = lib.cid;
             option.innerHTML = lib.get('name');
-            this.$('.'+this.name + '.list').append(option);//what's the null?
+            this.$('.'+this.options.name + '.list').append(option);//what's the null?
         },
 
         addAll: function(){
@@ -63,17 +62,17 @@ define(['Backbone', 'underscore', './LibraryView'], function(Backbone, _, Librar
                 //should show number of problems in the bar
                 this.model.each(function(lib){self.addOne(lib)});
             } else {
-                this.$('.'+this.name+".list").css("display", "none");
+                this.$('.'+this.options.name+".list").css("display", "none");
             }
         },
 
         lib_selected:function (event) {
             var self = this;
             self.$el.removeClass("syncing white");
-            var selectedLib = this.model.get(event.target.value);
+            var selectedLib = this.model.getByCid(event.target.value);
             if(selectedLib){
                 var view = new LibraryListView({model:selectedLib.get('children'), name: selectedLib.cid});
-                this.$('.'+this.name+".children").html(view.render().el);
+                this.$('.'+this.options.name+".children").html(view.render().el);
                 libToLoad = selectedLib;
             }
         }
