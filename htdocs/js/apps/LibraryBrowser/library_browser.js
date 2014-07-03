@@ -27,7 +27,7 @@ require.config({
         "tabs": "/webwork2_files/js/legacy/vendor/ui.tabs.closable", //ok
         //this is important:
         "config":"/webwork2_files/js/apps/LibraryBrowser/config", // ok
-        "bootstrap":            "/webwork2_files/js/components/bootstrap/docs/assets/js/bootstrap",
+        "bootstrap":            "/webwork2_files/js/vendor/bootstrap/js/bootstrap",
          "moment":               "/webwork2_files/js/components/moment/moment",
     },
     //urlArgs: "bust=" +  (new Date()).getTime(),

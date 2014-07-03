@@ -109,7 +109,7 @@ sub head {
     print qq!<script data-main="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser" src="$webwork_htdocs_url/js/vendor/requirejs/require.js"></script>!;
 
   print qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/library_browser.css" />!;
-  print qq!<link href="$webwork_htdocs_url/themes/jquery-ui-themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>!;
+  print qq!<link href="$webwork_htdocs_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>!;
   #print qq!<script>window.addEventListener("load", setup, false);</script>!;
   return "";
 }
