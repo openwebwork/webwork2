@@ -59,7 +59,7 @@ var ClasslistView = MainView.extend({
     },
 
     render: function(){
-    	this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10; 
+    	this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}"); 
 	    this.$el.html($("#classlist-manager-template").html());
 	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
                             paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});
@@ -190,20 +190,20 @@ var ClasslistView = MainView.extend({
 	selectAll: function (evt) {
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
 	},
-	showRows: function(evt){
-		this.pageSize = _.isString(evt) || _.isNumber(evt) ? evt : $(evt.target).data("num")
-		this.$(".show-rows i").addClass("not-visible");
-		if(_.isString(evt) || _.isNumber(evt)){
-			this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
-		} else {
-			$(evt.target).children("i").removeClass("not-visible");
-		}
-		if(this.pageSize==="all") {
-			this.userTable.set({num_rows: this.users.length});
-		} else {
-			this.userTable.set({num_rows: this.pageSize});
-		}
-	},
+    showRows: function(evt){
+        this.pageSize = _.isNumber(evt) ? evt : $(evt.target).data("num");
+        this.$(".show-rows i").addClass("not-visible");
+        if(_.isString(evt) || _.isNumber(evt)){
+            this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
+        } else {
+            $(evt.target).children("i").removeClass("not-visible");
+        }
+        if(this.pageSize < 0) {
+            this.userTable.set({num_rows: this.users.length});
+        } else {
+            this.userTable.set({num_rows: this.pageSize});
+        }
+    },
 	tableSetup: function () {
             var self = this;
             this.cols = [{name: "Select", key: "select_row", classname: "select-user", 

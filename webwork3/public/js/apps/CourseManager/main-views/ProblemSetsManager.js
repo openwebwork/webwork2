@@ -108,7 +108,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 $(evt.target).children("i").removeClass("not-visible");
             }
             if(this.pageSize < 0) {
-                this.problemSetTable.set({num_rows: this.users.length});
+                this.problemSetTable.set({num_rows: this.problemSets.length});
             } else {
                 this.problemSetTable.set({num_rows: this.pageSize});
             }
