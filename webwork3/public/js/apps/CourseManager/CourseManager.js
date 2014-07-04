@@ -34,9 +34,8 @@ var CourseManager = WebPage.extend({
             this.requestLogin({success: function (data) {
                 // save the new session key and reload the page.  
                 self.session.key = data.session_key;
-                window.location.reload();
-                /*window.location.href=config.urlPrefix+"courses/"+config.courseSettings.course_id+"/manager?"
-                    + $.param(_(self.session).pick("user","key")); */
+                //window.location.reload();
+                window.location.href=config.urlPrefix+"courses/"+config.courseSettings.course_id+"/manager";
             }});
 
             //    this.loadData

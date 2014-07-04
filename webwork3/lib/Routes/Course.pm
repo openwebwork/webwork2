@@ -287,7 +287,7 @@ post '/courses/:course_id/session' => sub {
 
 get '/courses/:course_id/manager' =>  sub {
 
-	# read the course manager configuration file
+	# read the course manager configuration file to set up the main and side panes
 
 	my $configFilePath = path(config->{webwork_dir},"webwork3","public","js","apps","CourseManager","config.json");
 	my $fileContents = read_file_content($configFilePath);
@@ -298,15 +298,51 @@ get '/courses/:course_id/manager' =>  sub {
 
 	my @view_paths = (@main_view_paths,@sidepane_paths);
 
+	# a few situations here.  Either
+	# 1) the user is logged in and info stored as a cookie
+	# 2) the user is logged in and info stored on the URL
+	# 3) the user passed via the URL is not a member of the course
+	# 4) the user passed via the URL is not authorized for the manager. 
+    # 5) the user hasn't already logged in and needs to pop open a login window.  
+	# 6) the user has already logged in and its safe to send all of the requisite data
+	# 
+
+
+
 	my $userID = "";
 	my $sessKey = "";
 	my $ts = "";
 	my $cookieValue = cookie "WeBWorKCourseAuthen." . params->{course_id};
 
+
+	# case 1) 
 	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);
 
-	$userID = params->{user} if defined(params->{user});
-	$sessKey = params->{key} if defined(params->{key});
+	debug "case 1";
+    # case 2)
+	if(! defined($cookieValue)){
+		$userID = params->{user} if defined(params->{user});
+		$sessKey = params->{key} if defined(params->{key});
+	}
+
+	debug "case 2";
+
+	# check if the cookie user/key pair matches the params user/key pair
+	#
+	#    if not, set params to make sure that the login screen is popped open
+
+	if(defined($cookieValue) && defined(params->{user}) && defined(params->{key})){
+		if($userID ne params->{user} || $sessKey ne params->{key}){
+			session->destroy;
+			$userID = '';
+			$sessKey = '';
+		}
+	}
+
+	debug "case 3";
+
+	debug session;
+
 
 	## check if the user passed in via the URL is the same as the session user.
 
@@ -322,34 +358,32 @@ get '/courses/:course_id/manager' =>  sub {
 		session->destroy;
 	}
 
-	# a few situations here.  Either
-	# 1) the user passed via the URL is not a member of the course
-	# 2) the user passed via the URL is not authorized for the manager. 
-	# 3) the user hasn't already logged in and needs to pop open a login window.  
-	# 4) the user has already logged in and its safe to send all of the requisite data
-	# 
+	debug session;
+
+	debug "case 4";
 
 	
 	# case 1)
 
 	if($userID ne "" && ! vars->{db}->existsUser($userID)){
-		redirect  vars->{ce}->{server_root_url} .'/webwork2/';
-		return "user not enrolled in the course";
+		session->destroy;
+		$userID = '';
+		$sessKey = '';
 	}
 
 	# case 2)
 	
     if ($userID ne "" && vars->{db}->getPermissionLevel($userID)->{permission} < 10){
     	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
-		return;	
+		return "You don't have access to this page.";	
     }
 
-	# case 3) 
+	# case 5) 
 	my $settings = [];
 	my $sets = [];
 	my $users = [];
 
-	# case 4) 
+	# case 6) 
 	if(session 'user') {
 
 		buildSession($userID,$sessKey);
