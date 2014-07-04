@@ -315,6 +315,8 @@ get '/courses/:course_id/manager' =>  sub {
 	my $cookieValue = cookie "WeBWorKCourseAuthen." . params->{course_id};
 
 
+	debug $cookieValue;
+
 	# case 1) 
 	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);
 
@@ -374,7 +376,7 @@ get '/courses/:course_id/manager' =>  sub {
 	# case 2)
 	
     if ($userID ne "" && vars->{db}->getPermissionLevel($userID)->{permission} < 10){
-    	redirect  vars->{ce}->{server_root_url} .'/webwork2/';
+    	redirect  vars->{ce}->{server_root_url} .'/webwork2/' . params->{course_id};
 		return "You don't have access to this page.";	
     }
 
