@@ -115,11 +115,6 @@ ul.nav li a:hover {
 	background: #e1e1e1;	
 }
 
-/* The main title for each page */
-h2.page-title {
-	border-bottom: 1px solid #ccc;
-}
-
 /* The breadcrumb nav */
 .breadcrumb {
 	border: 1px solid #e6e6e6;
