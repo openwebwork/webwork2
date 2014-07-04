@@ -119,4 +119,12 @@ ul.courses-list a:hover {
 }
 
 
+/* Achievement bar coloring */
+.levelinnerbar {
+    background-color:#708e74;
+}
+
+.cheevoinnerbar {
+    background-color:#708e74;
+}
 

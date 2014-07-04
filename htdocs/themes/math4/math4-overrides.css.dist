@@ -298,5 +298,11 @@ span.ResultsWithErrorInResultsTable {
     background-color: #FFFFFF;
 }
 
+/* Achievement bar coloring */
+.levelinnerbar {
+    background-color: #0088CC;
+}
 
-
+.cheevoinnerbar {
+    background-color: #0088CC;
+}
