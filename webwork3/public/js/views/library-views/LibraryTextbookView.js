@@ -12,15 +12,15 @@ function(Backbone, _,LibraryView,LibraryTreeView, ProblemList,config){
     	},
 
         loadProblems: function(_path){
-            var p = _path.split("/");
-            // split the 2nd slot into title/author
-            var title = p[1].split(" - ")[0];
-            var author = p[1].split(" - ")[1];
-            var path = p[0]+"/author/" + author + "/title/" + title;
+
+            // split the _path into title/author
+            var title = _path[0].split(" - ")[0];
+            var author = _path[0].split(" - ")[1];
+            var path = "textbooks/author/" + author + "/title/" + title;
             var j;
             var sNames = ["chapter","section"]; 
-            for(j=2;j<p.length;j++){
-                path += "/" + sNames[j-2] + "/" + p[j];
+            for(j=1;j<_path.length;j++){
+                path += "/" + sNames[j-1] + "/" + _path[j];
             }
             path += "/problems";
 
