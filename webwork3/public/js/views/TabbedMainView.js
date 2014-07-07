@@ -34,16 +34,18 @@ define(['backbone','underscore','views/MainView'],
 			}
 
 			// test to make sure this works
-			this.$(".set-details-tab a:first").tab("show");
 			MainView.prototype.render.call(this);
 		},
 		additionalEvents: {
 	          	"show.bs.tab a[data-toggle='tab']": "changeView",
 		},
-      	changeView: function(evt){
-            this.currentViewName = _.isString(evt)? evt: $(evt.target).data("view");
+      	changeView: function(options){
+            this.currentViewName = _.isString(options)? options: $(options.target).data("view");
 			this.views[this.currentViewName].setElement(this.$("#tab"+this.viewNames.indexOf(this.currentViewName)))
 				.render();
+			if(_.isString(options)){ // was triggered other than a tab change.
+				this.$(".set-details-tab a:first").tab("show");
+			}
             this.eventDispatcher.trigger("save-state");
 		},
         setState: function(state){

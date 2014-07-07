@@ -25,6 +25,10 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
                 customizeUserAssignView : new CustomizeUserAssignView({users: options.users,
                         eventDispatcher: this.eventDispatcher, settings: options.settings})
             };
+            this.views.problemsView.on("page-changed",function(num){
+                self.eventDispatcher.trigger("save-state");
+            })
+
             options.tabs = ".set-details-tab";
             options.tabContent = ".set-details-tab-content";
             this.model = new Backbone.Model({set_id: ""});
@@ -44,10 +48,11 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
         render: function(){
             this.$el.html($("#HW-detail-template").html());
             this.stickit();
+            TabbedMainView.prototype.render.call(this);
             var tabNum = _(this.views).keys().indexOf(this.currentViewName);
             this.$(".set-details-tab a:eq("+ tabNum+")").tab("show");
             this.views[this.currentViewName].render();
-            TabbedMainView.prototype.render.call(this);
+            
         },
         getHelpTemplate: function () {
             if(this.currentView instanceof DetailsView){
@@ -81,8 +86,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
                 state.set_id = this.model.get("set_id");
             }
             if(this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].getState)){
-                console.log(this.views[this.currentViewName].getState());
-                //_.extend(state, )
+                _.extend(state,this.views[this.currentViewName].getState());
             }
             console.log("in ProblemSetDetailsView.getState");
             return state;
@@ -92,6 +96,11 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
             if(_state && _state.set_id){
                 this.model.set("set_id",_state.set_id);
                 this.changeProblemSet(_state.set_id);
+                this.currentViewName = _state.subview;
+            }
+            if(_state && this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].setState)){
+                console.log(_state);
+                this.views[this.currentViewName].setState(_state);
             }
             TabbedMainView.prototype.setState.call(this,_state);
             return this;
@@ -104,6 +113,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
             _(this.views).chain().keys().each(function(view){
                 self.views[view].setProblemSet(self.problemSet);
             });
+            this.views.problemsView.currentPage = 0; // make sure that the problems start on a new page. 
             this.changeView("propertiesView");
             this.loadProblems();
             return this;
