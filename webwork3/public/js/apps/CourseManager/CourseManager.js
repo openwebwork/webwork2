@@ -130,7 +130,7 @@ var CourseManager = WebPage.extend({
         // load the previous state of the app or set it to the Calendar
         this.appState = this.loadState();
 
-        if(this.appState){
+        if(this.appState && this.appState.states && this.appState.index){
             this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
         } else {
             this.appState = {index: void 0, states: []};
