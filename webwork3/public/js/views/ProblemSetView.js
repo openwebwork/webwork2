@@ -1,6 +1,7 @@
 define(['backbone', 'views/ProblemListView'], 
     function(Backbone, ProblemListView) {
     	var ProblemSetView = ProblemListView.extend({
+            viewName: "Problems",
     		initialize: function (options) {
     			this.headerTemplate = "#problem-set-header";
     			this.viewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showEditTool: true,

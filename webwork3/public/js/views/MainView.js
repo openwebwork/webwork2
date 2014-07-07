@@ -40,7 +40,12 @@ define(['backbone'],function(Backbone){
 		},
 		getState: function(){
 			console.error("The getState() function must be overriden");
-		}
+		},
+		additionalEvents: {},
+		originalEvents: {},
+		events : function() {
+	      	return _.extend({},this.originalEvents,this.additionalEvents);
+	   }
 	});
 
 	return MainView;

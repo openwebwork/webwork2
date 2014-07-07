@@ -192,9 +192,14 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 }
             }
         },
+        getState: function () {
+            return {pageNum: this.currentPage};
+        },
         setProblemSet: function(_set) {
             this.model = _set; 
-            this.set({problems: this.model.get("problems")});
+            if(this.model){
+                this.set({problems: this.model.get("problems")});                
+            }
             return this;
         },
         addProblemView: function (prob){
