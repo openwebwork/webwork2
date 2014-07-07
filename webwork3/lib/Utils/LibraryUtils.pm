@@ -4,7 +4,7 @@
 package Utils::LibraryUtils;
 use base qw(Exporter);
 use Path::Class qw/file dir/;
-use Dancer;
+use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use Data::Dumper;
 use WeBWorK::GeneralUtils qw(readDirectory);

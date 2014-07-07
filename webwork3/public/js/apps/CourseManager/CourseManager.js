@@ -28,11 +28,29 @@ var CourseManager = WebPage.extend({
                 dateSettings: dateSettings}) : null;
 
         _.extend(config.courseSettings,{course_id: module.config().course_id,user: this.session.user});
-        if(this.session.user){
+        if(this.session.user&&this.session.logged_in==1){
             this.startManager();
         } else {
-            this.requestLogin({success: this.loadData});
+            this.requestLogin({success: function (data) {
+                // save the new session key and reload the page.  
+                self.session.key = data.session_key;
+                window.location.reload();
+                /*window.location.href=config.urlPrefix+"courses/"+config.courseSettings.course_id+"/manager?"
+                    + $.param(_(self.session).pick("user","key")); */
+            }});
+
+            //    this.loadData
+            //});
         }
+
+        $(document).ajaxError(function (e, xhr, options, error) {
+            if(xhr.status==419){
+                self.requestLogin({success: function(){
+                    self.loginPane.close();
+                }});
+            }
+        });
+
 
     },
     loadData: function (data) {
@@ -50,8 +68,6 @@ var CourseManager = WebPage.extend({
             this.problemSets.fetch({success: function(){self.checkData("problemSets")}});
             this.settings.fetch({success: function(){self.checkData("settings")}});
             this.users.fetch({success: function(){self.checkData("users")}});
-
-            
         } else { // send an error
             this.loginPane.$(".message").html(this.messageTemplate({type: "bad_password"}));
         }
@@ -59,13 +75,10 @@ var CourseManager = WebPage.extend({
     // wait for all of the data to get loaded in, close the login window, then start the Course Manager. 
     checkData: function(name) {
         this.data_loaded[name] = true;
-        console.log(_(this.data_loaded).chain().values().every(_.identity).value());
         if(_(this.data_loaded).chain().values().every(_.identity).value()){
             this.closeLogin();
-
             // make sure the dateSettings are properly stored:
             this.problemSets.dateSettings = util.pluckDateSettings(this.settings);
-
             this.startManager();
         }
     },
@@ -156,16 +169,20 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-        $(window).on("beforeunload", function () {
-            if(self.session.logged_in!==0){ // if the user didn't just log out. 
-                return self.messageTemplate({type: "leave_page"});
-            }
-         }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
+        // this ensures that the rerender call only occurs once every 500 ms.  Importantly when the window is resized. 
+
+        var renderMainPane = _.debounce(function(evt){ 
             self.currentView.render();
             if(self.currentSidePane && self.currentSidePane.sidePane){
                 self.currentSidePane.sidePane.render();
             }
-         })
+        },500);
+
+        $(window).on("beforeunload", function () {
+            if(self.session.logged_in!==0){ // if the user didn't just log out. 
+                return self.messageTemplate({type: "leave_page"});
+            }
+         }).on("resize",renderMainPane);
 
         // Add a link to WW2 via the main menu.
 
@@ -258,7 +275,11 @@ var CourseManager = WebPage.extend({
     },
     changeView: function (_name,state){
         if(this.currentView){
+            // destroy any popovers on the view
+            $('[data-toggle="popover"]').popover("destroy")
             this.currentView.remove();
+            
+
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(_name);
@@ -350,8 +371,7 @@ var CourseManager = WebPage.extend({
                     date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
             self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
                     date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-            if(self.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")  
-                    && parseInt(_set.get("reduced_scoring_date"))>0) {
+            if(parseInt(_set.get("reduced_scoring_date"))>0) {
                 self.assignmentDateList.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
                     date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
             }

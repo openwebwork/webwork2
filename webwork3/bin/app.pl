@@ -11,7 +11,7 @@ use WeBWorK::DB;
 use WeBWorK::Authen;
 
 ## note: Routes::Authenication must be passed first
-use Routes::Authentication qw/authenticate setCourseEnvironment/; 
+use Routes::Authentication qw/buildSession setCourseEnvironment setCookie/; 
 use Routes::Course;
 use Routes::Library;
 use Routes::ProblemSets;
@@ -41,9 +41,10 @@ post '/handshake' => sub {
 	setCourseEnvironment(params->{course_id});
 
 	debug session; 
-	authenticate();
-
-
+	buildSession();
+	if (! session 'logged_in'){
+		send_error('You are no longer logged in.  You may need to reauthenticate.',419);
+	}
 
 	return {msg => "If you get this message the handshaking between Dancer and WW2 worked."};
 };
@@ -51,18 +52,14 @@ post '/handshake' => sub {
 
 post '/courses/:course_id/login' => sub {
 
-	# setCourseEnvironment(params->{course_id});
-
 	my $authen = new WeBWorK::Authen(vars->{ce});
 	$authen->set_params({
-		user => params->{user},
-		password => params->{password},
-		key => params->{session_key}
+			user => params->{user},
+			password => params->{password},
+			key => params->{session_key}
 		});
 
 	my $result = $authen->verify();
-
-	my $out = {};
 
 	if($result){
 		my $key = $authen->create_session(params->{user});
@@ -71,7 +68,10 @@ post '/courses/:course_id/login' => sub {
 		session key => $key;
 
 		my $permission = vars->{db}->getPermissionLevel(session->{user});
-		session permission => $permission->{permission};		
+		session permission => $permission->{permission};
+		session timestamp => time();
+
+		setCookie();
 
 		return {session_key=>$key, user=>params->{user},logged_in=>1};
 
@@ -82,8 +82,19 @@ post '/courses/:course_id/login' => sub {
 
 
 post '/courses/:course_id/logout' => sub {
+
 	my $deleteKey = vars->{db}->deleteKey(session 'user');
 	my $sessionDestroy = session->destroy;
+
+	my $hostname = vars->{ce}->{server_root_url};
+	$hostname =~ s/https?:\/\///;
+
+	if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
+		cookie "WeBWorKCourseAuthen." . params->{course_id} => "", domain=>$hostname, expires => "-1 hour";
+	} else {
+		cookie "WeBWorKCourseAuthen." . params->{course_id} => "", expires => "-1 hour";
+	}
+
 	return {logged_in=>0};
 };
 
@@ -133,21 +144,6 @@ sub checkCourse {
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 
 }
-
-#sub getCourseEnvironment {
-#	my $courseID = shift;
-#
-#	  return WeBWorK::CourseEnvironment->new({
-#	 	webwork_url         => "/Volumes/WW_test/opt/webwork/webwork2",
-#	 	webwork_dir         => "/Volumes/WW_test/opt/webwork/webwork2",
-#	 	pg_dir              => "/Volumes/WW_test/opt/webwork/pg",
-#	 	webwork_htdocs_url  => "/Volumes/WW_test/opt/webwork/webwork2_files",
-#	 	webwork_htdocs_dir  => "/Volumes/WW_test/opt/webwork/webwork2/htdocs",
-#	 	webwork_courses_url => "/Volumes/WW_test/opt/webwork/webwork2_course_files",
-#	 	webwork_courses_dir => "/Volumes/WW_test/opt/webwork/webwork2/courses",
-#	 	courseName          => $courseID,
-#	 });
-#}
 
 
 Dancer->dance;
