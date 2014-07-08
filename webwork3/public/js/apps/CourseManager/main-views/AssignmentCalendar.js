@@ -24,7 +24,12 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             this.problemSets.on({sync: this.render});
             
             this.model = new DateTypeModel();
-            this.model.on({change: this.showHideAssigns})
+            this.model.on({
+                "change:reduced_scoring_date change:answer_date change:due_date change:open_date": this.showHideAssigns,
+                "change": function () {
+                    self.eventDispatcher.trigger("save-state");
+                }
+            })
             return this;
     	},
     	render: function (){
@@ -61,6 +66,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 });
             });
 
+            this.model.set("first_day",this.first_day.format("YYYY-MM-DD"));
             this.stickit();
             return this;
     	},
@@ -90,7 +96,14 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             return this;
         },
         getState: function () {
-            return {};
+            return this.model.attributes;
+        },
+        setState: function(_state){
+            if(_state){
+                this.model.set(_state);
+                this.set({first_day: _state.first_day});
+            }
+            return this;
         },
         update:  function (){
             var self = this;
@@ -174,7 +187,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 answer_date: true,
                 due_date: true,
                 reduced_scoring_date: true,
-                open_date: true 
+                open_date: true,
+                first_day: ""
             }
     });
 

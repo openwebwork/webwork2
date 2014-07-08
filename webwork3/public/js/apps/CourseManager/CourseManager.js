@@ -108,7 +108,7 @@ var CourseManager = WebPage.extend({
 
         this.mainViewList.getViewByName("Calendar")
             .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
-            .dispatcher.on("calendar-change",self.updateCalendar);
+            .on("calendar-change",self.updateCalendar);
 
         this.mainViewList.getViewByName("Problem Sets Manager")
             .set({assignmentDates: this.assignmentDateList});
@@ -130,7 +130,9 @@ var CourseManager = WebPage.extend({
         // load the previous state of the app or set it to the Calendar
         this.appState = this.loadState();
 
-        if(this.appState && this.appState.states && this.appState.index){
+        if(this.appState && typeof(this.appState)!=="undefined" && 
+                this.appState.states && typeof(this.appState.states)!=="undefined" && 
+                typeof(this.appState.index)!=="undefined"){
             this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
         } else {
             this.appState = {index: void 0, states: []};
