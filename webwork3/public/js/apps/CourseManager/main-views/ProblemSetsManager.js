@@ -17,6 +17,9 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSets = options.problemSets;
             this.users = options.users;
 
+            this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10;
+
+
             this.tableSetup();
 
 
@@ -36,15 +39,18 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                                   self.addProblemSet();  
                                 }}
             };
-            this.problemSets.on("add",this.updateTable);
-            this.problemSets.on("remove",this.updateTable);
-            this.problemSets.on("change:enable_reduced_scoring",this.hideShowReducedScoring);
+            this.problemSets.on({
+                "add": this.updateTable,
+                "remove": this.updateTable,
+                "change:enable_reduced_scoring":this.hideShowReducedScoring
+            });
             this.setMessages();
         },
         events: {
             "click .add-problem-set-button": "addProblemSet",
             'keyup input.filter-text' : 'filterProblemSets',
             'click button.clear-filter-button': 'clearFilterText',
+            "click a.show-rows": "showRows"
         },
         getState: function () {
             return {pageNum: this.currentPage};
@@ -64,12 +70,18 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.$(".set-id a").truncate({width: 120});
         },
         render: function () {
+            this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}");
             this.$el.html($("#problem-set-manager-template").html());
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
             //this.$(".set-id a").truncate({width: 120});
-
+            this.isReducedScoringEnabled();
+            this.showRows(this.pageSize);
+            MainView.prototype.render.apply(this);
+            return this;
+        },
+        isReducedScoringEnabled: function (){
             // hide reduced credit items when not enabled. 
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
                 this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
@@ -79,7 +91,6 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                     .addClass("hidden");
             }
             this.problemSetTable.setPageNumber(this.currentPage||0);
-            MainView.prototype.render.apply(this);
             return this;
         },
         updateTable: function() {
@@ -103,6 +114,22 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 this.problemSetTable.updatePaginator();
                 
             }
+        },  
+        showRows: function(evt){
+            this.pageSize = _.isNumber(evt) ? evt : $(evt.target).data("num");
+            this.$(".show-rows i").addClass("not-visible");
+            if(_.isString(evt) || _.isNumber(evt)){
+                this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
+            } else {
+                $(evt.target).children("i").removeClass("not-visible");
+            }
+            if(this.pageSize < 0) {
+                this.problemSetTable.set({num_rows: this.problemSets.length});
+            } else {
+                this.problemSetTable.set({num_rows: this.pageSize});
+            }
+            this.isReducedScoringEnabled();
+            //this.$(".set-id a").truncate({width: 120});
         },
         set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
             var self = this;
@@ -157,7 +184,11 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: ["reduced-scoring-date","edit-datetime"], 
-                        editable: false, datatype: "integer", use_contenteditable: false},
+                        editable: false, datatype: "integer", use_contenteditable: false,
+                        sort_function: function(val,model){
+                            return model.get("enable_reduced_scoring") ? val : 0;
+                        }
+                    },
                 {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Answer Date", key: "answer_date", classname: ["answer-date","edit-datetime"], 

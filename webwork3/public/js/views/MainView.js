@@ -12,6 +12,7 @@ define(['backbone'],function(Backbone){
 		},
 		render: function() {
 			var self = this;
+			console.log("in MainView.render");
 			this.$el.prepend($("#open-close-view-template").html());
 			// since this won't happen automatically in Backbone's delegate events, call the click event directly. 
 			this.$(".open-close-view").off("click").on("click", function(){
