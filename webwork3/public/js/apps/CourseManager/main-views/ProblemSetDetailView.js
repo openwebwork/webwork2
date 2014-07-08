@@ -48,11 +48,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
         render: function(){
             this.$el.html($("#HW-detail-template").html());
             this.stickit();
-            TabbedMainView.prototype.render.call(this);
-            var tabNum = _(this.views).keys().indexOf(this.currentViewName);
-            this.$(".set-details-tab a:eq("+ tabNum+")").tab("show");
-            this.views[this.currentViewName].render();
-            
+            TabbedMainView.prototype.render.call(this);            
         },
         getHelpTemplate: function () {
             if(this.currentView instanceof DetailsView){
@@ -85,22 +81,13 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
             if(this.model.get("set_id")){
                 state.set_id = this.model.get("set_id");
             }
-            if(this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].getState)){
-                _.extend(state,this.views[this.currentViewName].getState());
-            }
-            console.log("in ProblemSetDetailsView.getState");
             return state;
         },
         setState: function(_state){
-            console.log("in ProblemSetDetailsView.setState");
             if(_state && _state.set_id){
                 this.model.set("set_id",_state.set_id);
                 this.changeProblemSet(_state.set_id);
                 this.currentViewName = _state.subview;
-            }
-            if(_state && this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].setState)){
-                console.log(_state);
-                this.views[this.currentViewName].setState(_state);
             }
             TabbedMainView.prototype.setState.call(this,_state);
             return this;

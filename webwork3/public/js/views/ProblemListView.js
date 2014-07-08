@@ -88,9 +88,9 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.maxPages = Math.ceil(this.problems.length / this.pageSize);
             var start =0,
                 stop = this.maxPages;
-            if(this.maxPages>10){
-                start = (this.currentPage-7 <0)?0:this.currentPage-7;
-                stop = start+10<this.maxPages?start+10 : this.maxPages;
+            if(this.maxPages>8){
+                start = (this.currentPage-4 <0)?0:this.currentPage-4;
+                stop = start+8<this.maxPages?start+8 : this.maxPages;
             }
             if(this.maxPages>1){
                 this.$(".problem-paginator").html(_.template($("#paginator-template").html(),

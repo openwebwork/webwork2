@@ -1,6 +1,7 @@
 define(['backbone', 'underscore','views/library-views/LibraryView','views/library-views/LibraryTreeView'], 
 function(Backbone, _,LibraryView,LibraryTreeView){
     var LibraryDirectoryView = LibraryView.extend({
+        viewName: "By Directory",
     	initialize: function(options){
     		LibraryView.prototype.initialize.apply(this,[options]);
             var self = this;

@@ -7,11 +7,15 @@ define(main_view_paths,function(module,Backbone){
 			_.extend(options,{viewName: ""})
 			this.viewInfo = module.config().main_views;
 			this.views = _(mainViews).map(function(view,i){
-				options.viewName = self.viewInfo.main_views[i].name;
-				return _.extend({view: new view(options)},self.viewInfo.main_views[i]);
+				var opts = {};
+				_.extend(opts,options);
+				opts.viewName = self.viewInfo.main_views[i].name;
+				return _.extend({view: new view(opts)},self.viewInfo.main_views[i]);
 			});
 			this.sidepanes = _(sidepanes).map(function(sp,i){
-				return _.extend({view: new sp(options)},self.viewInfo.sidepanes[i]);
+				var opts = {};
+				_.extend(opts,options);
+				return _.extend({view: new sp(opts)},self.viewInfo.sidepanes[i]);
 			})
 		},
 		getViewByName: function(_name){

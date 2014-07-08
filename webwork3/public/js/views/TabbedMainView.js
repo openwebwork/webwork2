@@ -32,8 +32,15 @@ define(['backbone','underscore','views/MainView'],
 			} else {
 				this.$el.append(tabContent);
 			}
+			if(typeof(this.currentViewName)==="undefined"){
+				this.currentViewName = _(this.views).keys()[0];
+			}
 
-			// test to make sure this works
+            var tabNum = _(this.views).keys().indexOf(this.currentViewName);
+            this.$((this.tabs || "" ) + " a:eq("+ tabNum+")").tab("show");
+            this.views[this.currentViewName].render();
+
+
 			MainView.prototype.render.call(this);
 		},
 		additionalEvents: {
@@ -53,11 +60,20 @@ define(['backbone','underscore','views/MainView'],
             if(state){
                 this.currentViewName =  state.subview || this.viewNames[0];
             }
+            if(state && this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].setState)){
+                this.views[this.currentViewName].setState(state);
+            }
+
             return this;
         },
         getState: function(){
         	console.log("in TabbedMainView.getState");
-            return {subview: this.currentViewName};
+        	var state = {subview: this.currentViewName};
+            if(this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].getState)){
+                _.extend(state,this.views[this.currentViewName].getState());
+            }
+
+            return state;
         },
 
 
