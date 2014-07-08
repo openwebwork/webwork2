@@ -69,8 +69,8 @@ var ClasslistView = MainView.extend({
     render: function(){
     	this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}"); 
 	    this.$el.html($("#classlist-manager-template").html());
-	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
-                            paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});
+	    /*this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
+                            paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});*/
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
         this.$el.append(this.userTable.el);
 
