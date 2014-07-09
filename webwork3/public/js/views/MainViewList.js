@@ -28,6 +28,10 @@ define(main_view_paths,function(module,Backbone){
 		getDefaultSidepane: function(_name){
 			var view = _(this.views).findWhere({name: _name});
 			return view ? view.default_sidepane : null;
+		},
+		getOtherSidepanes: function(_name){
+			var view = _(this.views).findWhere({name: _name});
+			return view ? view.other_sidepanes : null;
 		}
 	});
 

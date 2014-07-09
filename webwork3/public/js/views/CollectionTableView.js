@@ -369,13 +369,13 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			_(this.columnInfo).each(function (col){
 				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
 				if (col.datatype === "boolean"){
-					var select = $("<select>").addClass(classname).addClass("input-small");
+					var select = $("<select>").addClass(classname).addClass("input-sm form-control");
 					self.$el.append($("<td>").append(select));
 				} else if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));
 				} else {
 					if (col.stickit_options && col.stickit_options.selectOptions){
-						var select = $("<select>").addClass("input-small").addClass(classname);
+						var select = $("<select>").addClass("input-sm form-control").addClass(classname);
 						self.$el.append($("<td>").append(select));
 					} else {
 						self.$el.append($("<td>").addClass(classname));

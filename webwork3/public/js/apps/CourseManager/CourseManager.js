@@ -2,21 +2,18 @@
    This is the base javascript code for the Homework Manager.  This sets up the View and ....
   
 */
-define(['module','backbone', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
-    'views/MainViewList',
-    'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config','apps/util','jquery-ui','bootstrap'
-    ], 
-function(module, Backbone, _, UserList, ProblemSetList, SettingList,MainViewList,
+define(['module','backbone','views/SidePane', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
+    'views/MainViewList', 'models/AssignmentDate','models/AssignmentDateList','views/WebPage',
+    'config','apps/util','jquery-ui','bootstrap'], 
+function(module, Backbone, SidePane, _, UserList, ProblemSetList, SettingList,MainViewList,
     AssignmentDate,AssignmentDateList,WebPage,config,util){
 var CourseManager = WebPage.extend({
-    tagName: "div",
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
 	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidePane","stopActing",
             "changeView","changeSidePane","loadData","checkData","saveState","logout","setDates");  // include all functions that need the this object
 	    var self = this;
-
         this.render();
         this.eventDispatcher = _.clone(Backbone.Events);
         this.session = (module.config().session)? module.config().session : {};
@@ -98,6 +95,8 @@ var CourseManager = WebPage.extend({
         var ul = $(".manager-menu");
         _(this.mainViewList.viewInfo.main_views).each(function(item){
             ul.append(menuItemTemplate({name: item.name}));
+            item.other_sidepanes[item.other_sidepanes.length] = "Help";
+            item.other_sidepanes[item.other_sidepanes.length] = "All Messages";
         })
 
         // can't we just pull this from the settings when needed.  Why do we need another variable. 
@@ -222,6 +221,11 @@ var CourseManager = WebPage.extend({
         $("#sidepane-container").removeClass("hidden");
         $("#main-view").removeClass("col-md-12").addClass("col-md-9");
         self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
+        if(this.currentSidePane && (typeof(this.currentSidePane.sidePane)==="undefined" ||
+             !(this.currentSidePane.sidePane instanceof SidePane))) {
+                this.changeSidePane(this.mainViewList.getOtherSidepanes(this.currentView.viewName)[0]);
+        }
+        this.currentSidePane.sidePane.render();
     },
     closeSidePane: function (){
         this.currentSidePane.isOpen = false;
@@ -264,8 +268,7 @@ var CourseManager = WebPage.extend({
 
             var menuItemTemplate = _.template($("#main-menu-item-template").html());
             var ul = this.$(".sidepane-menu .dropdown-menu").empty();
-            var sidePanes = ["Help"].concat(mainViewInfo.other_sidepanes);
-            _(sidePanes).each(function(_name){
+            _(mainViewInfo.other_sidepanes).each(function(_name){
                 ul.append(menuItemTemplate({name: _name}));
             })
 
@@ -290,7 +293,7 @@ var CourseManager = WebPage.extend({
         if(this.currentView){
             this.currentView.setElement(this.$(".main")).setState(state).render();
         }
-        if(this.defaultSidepane){
+        if(typeof(this.defaultSidepane)!=="undefined"){
             this.changeSidePane(this.defaultSidepane);   
         }
         this.saveState();

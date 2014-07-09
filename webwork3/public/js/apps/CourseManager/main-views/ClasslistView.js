@@ -72,7 +72,7 @@ var ClasslistView = MainView.extend({
 	    /*this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
                             paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});*/
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
-        this.$el.append(this.userTable.el);
+        this.$(".users-table-container").append(this.userTable.el);
 
         // set up some styling
         this.userTable.$(".paginator-row td").css("text-align","center");

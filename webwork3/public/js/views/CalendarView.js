@@ -58,7 +58,8 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         events: {"click .previous-week": "viewPreviousWeek",
             "click .next-week": "viewNextWeek",
             "click .view-week": "showWeekView",
-            "click .view-month": "showMonthView"
+            "click .view-month": "showMonthView",
+            "click .goto-today": "gotoToday"
         },
         viewPreviousWeek: function (){
             this.first_day = moment(this.first_day).subtract("days",7);
@@ -85,6 +86,14 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             this.render();
             this.trigger("calendar-change");
         }, 
+        gotoToday: function () {
+            var firstOfMonth = moment(this.date).date(1);
+            this.first_day = (this.calendarType==="month")?
+                moment(firstOfMonth).date(1).add("days",-1*firstOfMonth.date(1).day()):
+                moment(this.date).add("days",-1*firstOfMonth.day());
+            this.render();
+            this.trigger("calendar-change");
+        },
         renderDay: function(){
             // this is called from the CalendarDayView.render() to be useful, this should be overridden in the subclass
         },
