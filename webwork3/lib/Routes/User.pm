@@ -184,7 +184,7 @@ get '/courses/:course_id/users/loginstatus' => sub {
 	my @status = map {
 		my $key = vars->{db}->getKey($_);
 		{ user_id=>$_, 
-			login_status => ($key and time <= $key->timestamp()+vars->{ce}->{sessionKeyTimeout}) ? JSON::true : JSON::false}
+			logged_in => ($key and time <= $key->timestamp()+vars->{ce}->{sessionKeyTimeout}) ? JSON::true : JSON::false}
 	} @users;
 
 	return \@status;

@@ -72,7 +72,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			this.bindings = {};
 			_(this.columnInfo).each(function(col){ 
 				var obj = {};
-				obj["."+col.classname] = {observe: col.key}; // set it up for stickit format
+				obj["."+col.classname] = {observe: col.key.split(" ")}; // set it up for stickit format
 				
 				if(typeof col.use_contenteditable == 'undefined'){ col.use_contenteditable=true;}
 				if(typeof col.stickit_options != 'undefined'){
@@ -105,12 +105,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				var th = $("<th data-class-name='" + className + "'>").addClass(className)
 					.html(col.colHeader? col.colHeader: col.name + "<span class='sort'></span>");
 				headRow.append(th);
-				// if(col.colHeader){
-
-				// 	headRow.append("<th data-class-name='" + className + "'>" + col.colHeader + "<span class='sort'></span></th>");
-				// } else {
-				// 	headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
-				// }
 			});
 
 			this.updateTable();
@@ -302,25 +296,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			};
 
-
-
-			/* Need a more robust comparator function. */
-			/*this.collection.comparator = function(model1,model2) { 
-				switch(sort.datatype){
-					case "string":
-						if (sortFunction(model1.get(sort.sort_key))===sortFunction(model2.get(sort.sort_key))) {return 0;}
-						return self.sortInfo.direction*
-							(sortFunction(model1.get(sort.sort_key))<sortFunction(model2.get(sort.sort_key))? -1: 1);
-					break;
-					case "integer":
-						if(parseInt(sortFunction(model1.get(sort.sort_key)))===parseInt(sortFunction(model2.get(sort.sort_key)))){return 0;}
-					    return self.sortInfo.direction* 
-					    	(parseInt(sortFunction(model1.get(sort.sort_key)))<parseInt(sortFunction(model2.get(sort.sort_key)))? -1:1);
-
-					break;
-				} 
-				
-			}; */
 			this.collection.sort();
 			this.render();
 		},

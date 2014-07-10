@@ -161,7 +161,7 @@ label {font-weight: bold; display: inline; margin-right: 20px;}
 #selectalldiv {display: inline; margin-left: 25px; margin-right: 25px;}
 #filterdiv {display: inline;}
 
-.logged-in {font-weight: bold; font-style: italic; font-color: darkgreen;}
+.logged-in {font-weight: bold; font-style: italic; color: darkgreen;}
 
 /* All Messages Sidepane */
 

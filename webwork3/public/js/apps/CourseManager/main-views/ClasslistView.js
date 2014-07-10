@@ -108,7 +108,9 @@ var ClasslistView = MainView.extend({
     		return;
     	}
     	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
-    	_user.save();
+    	if(!_(_.keys(_user.changed)).contains("logged_in")){
+	    	_user.save();    		
+    	}
     },
     removeUser: function(_user){
     	var self = this;
@@ -231,17 +233,9 @@ var ClasslistView = MainView.extend({
                 stickit_options: {update: function($el, val, model, options) {
                     $el.html($("#checkbox-template").html());
                 }}, colHeader: "<input type='checkbox'></input>"},
-                /*{name: "Action", key: "action", "classname": "user-action",
-            		stickit_options: { selectOptions: { 
-            			collection: [{value: 0, label: "Select"},
-            				{value: 1, label: "Delete User"},
-            				{value: 2, label: "Act As User"},
-            				{value: 3, label: "Change Password"},
-            				{value: 4, label: "Email User"},
-            				{value: 5, label: "Student Progress"}]}}},*/
-                {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
+                {name: "Login Name", key: "user_id logged_in", classname: "login-name", datatype: "string",
                 	stickit_options: {update: function($el,val,model,options){
-                		$el.text(val);
+                		$el.text(val[0]);
                 		if(model.get("logged_in")){
                 			$el.addClass("logged-in");
                 		} else {
@@ -317,11 +311,11 @@ var ClasslistView = MainView.extend({
                 success: function(data){
                 	_(data).each(function(st){
                 		var user = self.users.findWhere({user_id: st.user_id});
-                		user.set("logged_in",st.login_status);
+                		user.set("logged_in",st.logged_in);
                 	})
                 }});
 
-		}, 5000);
+		}, 30000);
 	},
 	stopLoginStatus: function(){
 		window.clearTimeout(this.loginStatusTimer);
