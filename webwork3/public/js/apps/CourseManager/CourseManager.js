@@ -276,6 +276,7 @@ var CourseManager = WebPage.extend({
             .setState(state).render();
         this.changeSidePane(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
         this.saveState();
+        this.eventDispatcher.trigger("view-change",_name);
     },
     saveState: function() {
         var state = this.currentView.getState();

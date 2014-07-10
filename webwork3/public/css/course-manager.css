@@ -83,7 +83,7 @@ border-radius: 5px;}
 	border: 1px dashed black; background: lightgray;
 }
 
-/* Classlist styles */
+/* Classlist Manager styles */
 
 #man_student_table {border: 1px solid black; border-collapse: collapse; width: 95%; }
 #man_student_table th{ border: 1px solid black; background: lightgray; }
@@ -137,6 +137,8 @@ label {font-weight: bold; display: inline; margin-right: 20px;}
 #testButton {margin-left: 25px; margin-right: 25px;}
 #selectalldiv {display: inline; margin-left: 25px; margin-right: 25px;}
 #filterdiv {display: inline;}
+
+.logged-in {font-weight: bold; font-style: italic; font-color: darkgreen;}
 
 /* All Messages Sidepane */
 

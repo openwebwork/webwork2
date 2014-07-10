@@ -13,7 +13,8 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
             status: "C", //enrolled
             section: "",
             recitation: "",
-            comment: ""
+            comment: "",
+            logged_in: false
         },
         validation: { 
             user_id: {pattern: "loginname"},

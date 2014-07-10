@@ -63,8 +63,16 @@ var ClasslistView = MainView.extend({
 
         this.passwordPane = new ChangePasswordView({users: this.users});
         this.emailPane = new EmailStudentsView({users: this.users}); 
-    },
 
+        // query the server every 15 seconds (parameter?) for login status only when the View is visible
+        this.eventDispatcher.on("view-change",function(viewName){
+        	if(viewName==="Classlist Manager"){
+        		self.checkLoginStatus();
+        	} else {
+        		self.stopLoginStatus();
+        	}
+        })
+    },
     render: function(){
 	    this.$el.html($("#classlist-manager-template").html());
 	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
@@ -208,7 +216,16 @@ var ClasslistView = MainView.extend({
             				{value: 3, label: "Change Password"},
             				{value: 4, label: "Email User"},
             				{value: 5, label: "Student Progress"}]}}},
-                {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
+                {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
+                	stickit_options: {update: function($el,val,model,options){
+                		$el.text(val);
+                		if(model.get("logged_in")){
+                			$el.addClass("logged-in");
+                		} else {
+                			$el.removeClass("logged-in");
+                		}
+                	}}
+            	},
                 {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets",
                 	stickit_options: {update: function($el, val, model, options) {
                 		$el.html(self.problemSets.filter(function(_set) { 
@@ -264,6 +281,23 @@ var ClasslistView = MainView.extend({
 	    	self.users.remove($.makeArray(_users));
 			this.userTable.render();
 	    }
+	},
+	checkLoginStatus: function () {
+		var self = this;
+		this.loginStatusTimer = window.setInterval(function(){
+	        $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/loginstatus",
+                type: "GET",
+                success: function(data){
+                	_(data).each(function(st){
+                		var user = self.users.findWhere({user_id: st.user_id});
+                		user.set("logged_in",st.login_status);
+                	})
+                }});
+
+		}, 5000);
+	},
+	stopLoginStatus: function(){
+		window.clearTimeout(this.loginStatusTimer);
 	},
 	changedPasswordSelected: function(){
 		alert("Changing Passwords isn't implemented yet.")
