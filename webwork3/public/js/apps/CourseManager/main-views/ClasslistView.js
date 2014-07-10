@@ -154,30 +154,6 @@ var ClasslistView = MainView.extend({
 	    "change th[data-class-name='select-user'] input": "selectAll",
 	    "click a.show-rows": "showRows"
 	},
-	/*takeAction: function(evt){
-		var user = this.users.findWhere({user_id: $(evt.target).closest("tr").children("td:nth-child(3)").text()});
-		switch($(evt.target).val()){
-			case "1": // delete user
-				this.deleteUsers([user]);
-				break;
-			case "2": // act as user
-				user.trigger("act_as_user",user);
-				//location.href = "/webwork2/" + config.courseSettings.course_id + "/?effectiveUser=" + 
-				//	user.get("user_id");
-				break;
-			case "3": // change password
-				alert("Change the password not yet supported");
-				break;
-			case "4": // Email user
-				alert("Email the user not supported yet.");
-				break;
-			case "5": // student progress
-				location.href = "/webwork2/" + config.courseSettings.course_id + "/instructor/progress/student/"
-					+ user.get("user_id");
-				break;
-		}
-		$(evt.target).val(0); // reset the select pulldown
-	}, */
 	addStudentsByFile: function () {
 		this.addStudentFileView.openDialog();
 	},
@@ -257,8 +233,24 @@ var ClasslistView = MainView.extend({
 	            	stickit_options: {events: ['blur']}},
                 {name: "Last Name", key: "last_name", classname: "last-name", editable: true, datatype: "string",
             		stickit_options: {events: ['blur']}},
-                {name: "Email", key: "email_address", classname: "email",  editable: true, datatype: "string",
-            		stickit_options: {events: ['blur']}},
+                {name: "Email", key: "email_address", classname: "email", datatype: "string",
+            		stickit_options: {
+            			update: function($el,val,model,options){
+            				// Perhaps this can go into config.js as a Stickit Handler.
+            				var address = $("<a>").attr("href","mailto:"+val).text("email");
+            				var popoverHTML = "<input class='edit-email' value='"+ val +"'></input>"
+            					+ "<button class='close-popover btn btn-default btn-sm'>Save and Close</button>";
+            				var edit = $("<a>").attr("href","#").text("edit")
+            					.attr("data-toggle","popover")
+            					.attr("data-title","Edit Email Address")
+            					.popover({html: true, content: popoverHTML});
+            				$el.html(address).append("&nbsp;&nbsp;").append(edit);
+            				$el.delegate(".close-popover","click",function(){
+            					model.set("email_address",$el.find(".edit-email").val());
+            					edit.popover("hide");
+            				})
+            			}
+            		}},
                 {name: "Student ID", key: "student_id", classname: "student-id",  editable: true, datatype: "string",
             		stickit_options: {events: ['blur']}},
                 {name: "Status", key: "status", classname: "status",  editable: true, datatype: "string",

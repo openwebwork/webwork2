@@ -46,21 +46,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             number: /^\d*(\.\d*)?$/,
             loginname: /^[\w\d\_]+$/
         },
-        /* 
-        This is an object of all of the main views, default side pans and optional side panes.  
-
-        Put this into a configuration file. 
-        
-        main_views: {
-            "calendar": {default_side: "problemSets",optional_sides: []},
-            "setDetails": {default_side: "problemSets",optional_sides: []},
-            "allSets": {default_side: "hide-sidebar",optional_sides: []},
-            "importExport": {default_side: "hide-sidebar",optional_sides: []},
-            "libraryBrowser": {default_side: "libraryOptions",optional_sides: []},
-            "settings": {default_side: "hide-sidebar",optional_sides: []},
-            "classlist": {default_side: "hide-sidebar",optional_sides: []},
-            "studentProgress": {default_side: "hide-sidebar",optional_sides: []},
-        } */
     } 
 
     config.messageTemplate= _.template($("#general-messages").html());
