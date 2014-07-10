@@ -2,26 +2,18 @@
 
 <script type="text/template" id="student-progress-template">
 <div class="row">
-<div class="col-md-5">Student Progress for 
-  <div class="btn-group">
-    <button class="btn btn-default dropdown-toggle progress-menu-header" data-toggle="dropdown">
-    <span class="name">Select Set...</span>
-    <span class="caret"></span>
-    </button>
-    <ul class="dropdown-menu progress-menu" role="menu">
-    </ul>
+  <div class="col-md-2">Progress for</div>
+  <div class="col-md-2">
+    <select class="progress-student-select form-control"></select> 
+    <select class="progress-set-select form-control hidden"></select>
   </div>
-</div>
-<div class="pull-right">Show Progress for 
-  <div class="btn-group">
-    <button class="btn btn-default dropdown-toggle progress-type" data-toggle="dropdown">
-    <span class="type-name">Sets</span>
-    <span class="caret"></span>
-    </button>
-    <ul class="dropdown-menu change-display-type" role="menu">
-      <li><a href="#">Sets</a></li>
-      <li><a href="#">Users</a></li>
-    </ul>
+
+
+
+  <div class="col-md-2 col-md-offset-2">Progress type</div>
+  <div class="col-md-2">
+    <select class="progress-type form-control"></select> 
+  </div>
 </div>
 </script>
 

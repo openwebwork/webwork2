@@ -19,6 +19,15 @@
  	        be passed in.
  	-  _sortFxn: is a function that returns a value to be sorted on.   
 
+
+Other options:
+	pageSize: the number of rows in a visible table (or -1 for all rows shown.)
+
+
+Sorting: 
+   The table will sort unless the datatype field is not set.  It will sort both ascending and descending. 
+   Currently only "integer" and "string" data is set. 
+   If you want to sort on a different piece of data, you need to specify the key (field) where the data is stored. 
  */
 
 
@@ -35,19 +44,25 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			this.showFiltered = false;
 			this.columnInfo = options.columnInfo;
 			this.paginatorProp = options.paginator;
+			this.tableClasses = options.classes; 
 			this.setColumns(options.columnInfo);
 			if($(options.tablename).length>0){ // if the tablename was passed use it as the $el
 				this.$el=$(options.tablename);
 			}
-			// setup the paginator 
 			if(typeof(options.paginator.showPaginator)==="undefined"){
 				this.paginatorProp.showPaginator = true;	
 			}
+			// setup the paginator 
+			this.initializeTable();
+		},
+		initializeTable: function () {
+
 			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
 				this.collection.size();
-			this.pageRange = _.range(this.pageSize);
+			this.pageRange = this.pageSize > 0 ?  _.range(this.pageSize) : _.range(this.collection.length) ;
 			this.currentPage = 0;
 			this.rowViews = [];
+			this.$el.addClass(this.tableClasses);
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},
@@ -63,6 +78,14 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				if(typeof col.stickit_options != 'undefined'){
 					_.extend(obj["."+col.classname],col.stickit_options);
 					col.use_contenteditable = col.editable;
+				}
+				if(col.value && _.isFunction(col.value)) { // then the value is calculated.
+					self.collection.each(function(_model){
+						if(!_model._extra){
+							_model._extra= {};
+						}
+						_model._extra[col.key]=col.value.apply(this,[_model]);
+					})
 				}
 				_.extend(self.bindings, obj);
 			});
@@ -91,12 +114,18 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			});
 
 			this.updateTable();
-			for(i=0;i<this.pageSize;i++){
-				if(this.rowViews[i]){
-					tbody.append(self.rowViews[i].render().el);
+			if(this.pageSize >0){
+				for(i=0;i<this.pageSize;i++){
+					if(this.rowViews[i]){
+						tbody.append(self.rowViews[i].render().el);
+					}
 				}
-
+			} else {
+				_(this.rowViews).each(function(row){
+					tbody.append(row.render().el);
+				});
 			}
+
 			if(this.paginatorProp.showPaginator){
 				this.$el.append($("<tr class='paginator-row'>"));
 				this.updatePaginator();
@@ -155,8 +184,18 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			this.$(".paginator-row button").removeClass("current-page");
 			this.$(".numbered-page[data-page-num='"+this.currentPage+"']").addClass("current-page");
+
+			if(stop===1){
+				this.$(".paginator-row").addClass("hidden")
+			} else {
+				this.$(".paginator-row").removeClass("hidden")
+			}
+			this.delegateEvents();
 		},
 		filter: function(filterText) {
+			if(this.currentPage != 0){
+				this.gotoPage(0);
+			}
 			var filterText;
 			if(filterText===""){
 				this.showFiltered = false;
@@ -172,6 +211,14 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			}
 			this.showFiltered = true;
 			return this;
+		},
+		set: function(options){
+			if(options.num_rows){
+				this.paginatorProp.page_size = options.num_rows;
+				this.initializeTable();
+				this.updatePaginator();
+				this.render();
+			}
 		},
 		updateTable: function () {
 			var self = this;
@@ -201,7 +248,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				"click .prev-page": "prevPage",
 				"click .numbered-page": "gotoPage",
 				"click .next-page": "nextPage",
-				"click .last-page": "lastPage"},
+				"click .last-page": "lastPage",
+				"click button.paginator-page": "pageChanged"
+		},
 		sortTable: function(evt){
 			var self = this;
 			var sort = _(this.columnInfo).find(function(col){
@@ -222,36 +271,86 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			var sortFunction = sort.sort_function || function(val) { return val;};
 
+			if(typeof(sort.datatype)==="undefined"){
+				console.error("You need to define a datatype to sort");
+				return;
+			}
 
 			/* Need a more robust comparator function. */
 			this.collection.comparator = function(model1,model2) { 
+				var value1 = typeof(model1.get(sort.key)) === "undefined" ? model1._extra[sort.key] : model1.get(sort.key);
+				var value2 = typeof(model2.get(sort.key)) === "undefined" ? model2._extra[sort.key] : model2.get(sort.key);
 				switch(sort.datatype){
 					case "string":
-						if (sortFunction(model1.get(sort.key))===sortFunction(model2.get(sort.key))) {return 0;}
+						if (sortFunction(value1,model1)===sortFunction(value2,model2))
+							return 0;
+						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)? -1: 1);
+						break;
+					case "integer":
+						if(parseInt(sortFunction(value1,model1))===parseInt(sortFunction(value2,model2))){return 0;}
+					    return self.sortInfo.direction*(parseInt(sortFunction(value1,model1))<parseInt(sortFunction(value2,model2))? -1:1);
+						break;
+					case "boolean":
+						if(sortFunction(value1,model1)===sortFunction(value2,model2)){ return 0;}
+						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)?-1:1);
+						break;
+					case "number":
+						if(parseFloat(sortFunction(value1,model1))===parseFloat(sortFunction(value2,model2))){return 0;}
+					    return self.sortInfo.direction*(parseFloat(sortFunction(value1,model1))<parseFloat(sortFunction(value2,model2))? -1:1);
+						break;
+				} 
+
+			};
+
+
+
+			/* Need a more robust comparator function. */
+			/*this.collection.comparator = function(model1,model2) { 
+				switch(sort.datatype){
+					case "string":
+						if (sortFunction(model1.get(sort.sort_key))===sortFunction(model2.get(sort.sort_key))) {return 0;}
 						return self.sortInfo.direction*
-							(sortFunction(model1.get(sort.key))<sortFunction(model2.get(sort.key))? -1: 1);
+							(sortFunction(model1.get(sort.sort_key))<sortFunction(model2.get(sort.sort_key))? -1: 1);
 					break;
 					case "integer":
-						if(parseInt(sortFunction(model1.get(sort.key)))===parseInt(sortFunction(model2.get(sort.key)))){return 0;}
+						if(parseInt(sortFunction(model1.get(sort.sort_key)))===parseInt(sortFunction(model2.get(sort.sort_key)))){return 0;}
 					    return self.sortInfo.direction* 
-					    	(parseInt(sortFunction(model1.get(sort.key)))<parseInt(sortFunction(model2.get(sort.key)))? -1:1);
+					    	(parseInt(sortFunction(model1.get(sort.sort_key)))<parseInt(sortFunction(model2.get(sort.sort_key)))? -1:1);
 
 					break;
 				} 
 				
-			};
+			}; */
 			this.collection.sort();
 			this.render();
 		},
 		firstPage: function() { this.gotoPage(0);},
 		prevPage: function() {if(this.currentPage>0) {this.gotoPage(this.currentPage-1);}},
-		nextPage: function() {if(this.currentPage<this.maxPages){this.gotoPage(this.currentPage+1);}},
+		nextPage: function() {
+			if(this.currentPage<this.maxPages){this.gotoPage(this.currentPage+1);}
+		},
 		lastPage: function() {this.gotoPage(this.maxPages-1);},
 		gotoPage: function(arg){
 			this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
 			this.pageRange = _.range(this.currentPage*this.pageSize,
 				(this.currentPage+1)*this.pageSize>this.collection.size()? this.collection.size():(this.currentPage+1)*this.pageSize);
 			this.render();
+			if(this.currentPage==0){
+				this.$("button.first-page,button.prev-page").attr("disabled","disabled");
+			} else {
+				this.$("button.first-page,button.prev-page").removeAttr("disabled");
+			}
+			if(this.currentPage==this.maxPages-1){
+				this.$("button.last-page,button.next-page").attr("disabled","disabled");
+			} else {
+				this.$("button.last-page,button.next-page").removeAttr("disabled");
+			}
+		},
+		pageChanged: function(){
+			this.trigger("page-changed",this.currentPage);
+		},
+		setPageNumber: function(num){
+			this.gotoPage(num);
 		}
 
 
@@ -270,13 +369,13 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			_(this.columnInfo).each(function (col){
 				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
 				if (col.datatype === "boolean"){
-					var select = $("<select>").addClass(classname).addClass("input-small");
+					var select = $("<select>").addClass(classname).addClass("input-sm form-control");
 					self.$el.append($("<td>").append(select));
 				} else if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));
 				} else {
 					if (col.stickit_options && col.stickit_options.selectOptions){
-						var select = $("<select>").addClass("input-small").addClass(classname);
+						var select = $("<select>").addClass("input-sm form-control").addClass(classname);
 						self.$el.append($("<td>").append(select));
 					} else {
 						self.$el.append($("<td>").addClass(classname));

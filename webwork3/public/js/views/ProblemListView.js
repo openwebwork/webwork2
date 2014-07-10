@@ -52,7 +52,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         render: function() {
             this.$el.html(_.template($("#problem-list-template").html(),{show_undo: this.viewAttrs.show_undo}));
-            this.updatePaginator().gotoPage(0);
+            this.updatePaginator().gotoPage(this.currentPage || 0);
             if(this.libraryView && this.libraryView.libProblemListView){
                 this.libraryView.libraryProblemsView.highlightCommonProblems();
             }
@@ -88,9 +88,9 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.maxPages = Math.ceil(this.problems.length / this.pageSize);
             var start =0,
                 stop = this.maxPages;
-            if(this.maxPages>10){
-                start = (this.currentPage-7 <0)?0:this.currentPage-7;
-                stop = start+10<this.maxPages?start+10 : this.maxPages;
+            if(this.maxPages>8){
+                start = (this.currentPage-4 <0)?0:this.currentPage-4;
+                stop = start+8<this.maxPages?start+8 : this.maxPages;
             }
             if(this.maxPages>1){
                 this.$(".problem-paginator").html(_.template($("#paginator-template").html(),
@@ -153,12 +153,12 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
             this.pageRange = _.range(this.currentPage*this.pageSize,
                 (this.currentPage+1)*this.pageSize>this.problems.size()? this.problems.size():(this.currentPage+1)*this.pageSize);
-            //if(this.maxPages>15){
-                this.updatePaginator();
-            //}
+            
+            this.updatePaginator();       
             this.renderProblems();
             this.$(".problem-paginator button").removeClass("current-page");
             this.$(".problem-paginator button[data-page='" + this.currentPage + "']").addClass("current-page");
+            this.trigger("page-changed",this.currentPage);
             return this;
         },
         /* when the "new" button is clicked open up the simple editor. */
@@ -192,9 +192,19 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 }
             }
         },
+        getState: function () {
+            return {pageNum: this.currentPage};
+        },
+        setState: function (_state){
+            if(_state && _state.pageNum){
+                this.currentPage = _state.pageNum;
+            }
+        },
         setProblemSet: function(_set) {
             this.model = _set; 
-            this.set({problems: this.model.get("problems")});
+            if(this.model){
+                this.set({problems: this.model.get("problems")});                
+            }
             return this;
         },
         addProblemView: function (prob){

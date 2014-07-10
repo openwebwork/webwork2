@@ -8,6 +8,13 @@
  
 <div class="tab-content">
   <div class="tab-pane active" id="import-tab">
+  </div>
+
+  <div class="tab-pane" id="export-tab">This has yet to be implemented</div>
+  </div> 
+</script>
+
+<script type="text/template" id="import-sets-template">
   <div class="row">
    <div class="col-md-5 form-horizontal"> Select Files: <input type="file" id="import-from-file" multiple></div>
    <div class="col-md-4 form-horizontal">
@@ -32,10 +39,7 @@
 
     </div>
     </div>
-  </div>
 
-  <div class="tab-pane" id="export-tab">This has yet to be implemented</div>
-  </div> 
 </script>
 
 <script type="text/template" id='import-problem-set-row-template'>

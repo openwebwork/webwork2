@@ -5,7 +5,7 @@ define(['backbone', 'views/ProblemListView','config'],
 	            this.viewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true, 
                     problem_seed: 1, showRefreshTool: true, showViewTool: true, showHideTool: true, 
                     deletable: false, draggable: true, show_undo: false};
-                _.extend(this,_(options).pluck("allProblemSets","libraryView","settings","type"));
+                _.extend(this,_(options).pick("allProblemSets","libraryView","settings","type"));
                 this.libraryView = options.libraryView;
                 ProblemListView.prototype.initialize.apply(this,[options]); 
     		},
@@ -30,15 +30,6 @@ define(['backbone', 'views/ProblemListView','config'],
                             });
                         }
                     });
-/*                    _(pathsInLibrary).each(function(path,i){
-                        if(self.problemViews[i].rendered){
-                            self.problemViews[i].highlight(_(pathsInCommon).contains(path));
-                        } else {
-                            self.problemViews[i].model.once("rendered", function(v) {
-                                v.highlight(_(pathsInCommon).contains(path));
-                            });
-                        }
-                    });*/
                 }
             }
     	});

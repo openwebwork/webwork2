@@ -55,26 +55,35 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
                     this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
                 }
                 this.stickit(this.fields, this.bindings);
+                this.changeLibrary(this.fields);
             }
             
             return this; 
     	},
         events: { "click .load-library-button": "selectLibrary"},
         changeLibrary: function(model){
-            var i, level = parseInt(_(model.changed).keys()[0].split("level")[1])
-                , first = _(model.values()).compact().length;
-            for(i=(level+1);i<4;i++){
-                this.fields.set("level"+i,"");
+            if(typeof(this.libraryTree.get("tree"))==="undefined" || _(model.changed).keys().length===0){
+                return;
             }
-            for(i=first;i<4;i++){
-                this.$(".library-level-"+(i+1)).addClass("hidden");  // hide all other levels. 
-            }
-            var branch = this.branchOfTree(_(model.attributes).values());
-            this.libraryLevel[level+1] = branch.branches;
+            var keys = _(model.changed).keys();
+            var last = keys[keys.length-1];
+            var level = parseInt(last.split("level")[1]);
+            var i;
 
-            if(branch.branches.length>0){
-                this.$(".library-level-"+(level+1)).removeClass("hidden");  // show the next level in the tree
+
+            for(i=0;i<level+1;i++){
+                var arr = _(model.attributes).values().slice(0,i+1);
+                var branch = this.branchOfTree(arr);
+                this.libraryLevel[i+1] = branch.branches;
             }
+
+            for(i=0;i<4;i++){
+                this.$(".library-level-"+i).addClass("hidden");  // hide all levels. 
+            }
+            for(i=0;i<level+2;i++){
+                this.$(".library-level-"+i).removeClass("hidden");  // show needed levels.
+            }
+
             this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
             this.unstickit(this.fields);
             this.stickit(this.fields,this.bindings);

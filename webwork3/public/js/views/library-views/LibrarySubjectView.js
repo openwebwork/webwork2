@@ -1,6 +1,7 @@
 define(['backbone', 'underscore','views/library-views/LibraryView','views/library-views/LibraryTreeView','bootstrap'], 
 function(Backbone, _,LibraryView,LibraryTreeView){
     var LibrarySubjectView = LibraryView.extend({
+        viewName: "By Subject",
     	initialize: function(options){
             var self = this;
     		LibraryView.prototype.initialize.apply(this,[options]);
@@ -14,7 +15,7 @@ function(Backbone, _,LibraryView,LibraryTreeView){
                         .popover({title: "Error", content: self.messageTemplate({type: "library_not_selected"})})
                         .popover("show");
                 }
-            });          
+            });        
     	},
     	loadProblems: function(_dirs){
             if(this.libraryTreeView.fields.validate()){

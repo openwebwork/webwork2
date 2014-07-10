@@ -7,18 +7,31 @@ define(main_view_paths,function(module,Backbone){
 			_.extend(options,{viewName: ""})
 			this.viewInfo = module.config().main_views;
 			this.views = _(mainViews).map(function(view,i){
-				options.viewName = self.viewInfo.main_views[i].name;
-				return _.extend({view: new view(options)},self.viewInfo.main_views[i]);
+				var opts = {};
+				_.extend(opts,options);
+				opts.viewName = self.viewInfo.main_views[i].name;
+				return _.extend({view: new view(opts)},self.viewInfo.main_views[i]);
 			});
 			this.sidepanes = _(sidepanes).map(function(sp,i){
-				return _.extend({view: new sp(options)},self.viewInfo.sidepanes[i]);
+				var opts = {};
+				_.extend(opts,options);
+				return _.extend({view: new sp(opts)},self.viewInfo.sidepanes[i]);
 			})
 		},
 		getViewByName: function(_name){
-			return _(this.views).findWhere({name: _name}).view;
+			var view = _(this.views).findWhere({name: _name})
+			return view? view.view : null;
 		},
 		getSidepaneByName: function(_name){
 			return _name===""? null :  _(this.sidepanes).findWhere({name: _name}).view;
+		},
+		getDefaultSidepane: function(_name){
+			var view = _(this.views).findWhere({name: _name});
+			return view ? view.default_sidepane : null;
+		},
+		getOtherSidepanes: function(_name){
+			var view = _(this.views).findWhere({name: _name});
+			return view ? view.other_sidepanes : null;
 		}
 	});
 

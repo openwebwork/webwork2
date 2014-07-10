@@ -20,6 +20,10 @@ a#view-header i {margin-left:1ex;}
 
 .dropdown-submenu a {width: 180px; overflow: hidden;}
 
+/* Classlist manager */
+
+.show-rows i {margin-right: 5px;}
+
 /* the num-users in the left-column */
 
 .num-users { margin-left: 2ex;}
@@ -38,6 +42,16 @@ a#view-header i {margin-left:1ex;}
 
 
 /*.lib-problem-viewer { overflow: scroll;}*/
+
+
+/* Styles for the Problem Set Manager */
+
+.problem-set-manager-table td.set-id {
+	max-width: 110px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 
 
 
@@ -91,7 +105,16 @@ border-radius: 5px;}
 #man_student_table td { border: 1px solid black; height: 2.5ex;}
 #man_student_table input {width: 10ex;}
 
-table.usersTableClass td input {margin: 0px; padding: 0px; font-size: 12px; height: 20px;}
+.users-table-container table {table-layout: fixed}
+
+.users-table-container table th.select-user {width: 25px;}
+.users-table-container table th.section {width: 75px;}
+.users-table-container table th.recitation {width: 75px;}
+.users-table-container table th.assigned-sets {width: 75px;}
+.users-table-container table td.first-name {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;}
 
 textarea#emailText {width: 95%;}
 
@@ -144,4 +167,15 @@ label {font-weight: bold; display: inline; margin-right: 20px;}
 
 /*.messages-list {overflow: auto; height: 100%;}*/
 .messages-list li { border: 1px solid; border-radius: 5px; padding: 5px; margin-bottom: 5px;}
+
+/* Problem Set List sidepane */
+
+.prob-set-list-container .set-name {
+	width: 120px;   
+	display: block;
+	white-space: nowrap;
+  	overflow: hidden;
+ 	text-overflow: ellipsis;
+ 	float: left;
+}
 

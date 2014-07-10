@@ -2,21 +2,18 @@
    This is the base javascript code for the Homework Manager.  This sets up the View and ....
   
 */
-define(['module','backbone', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
-    'views/MainViewList',
-    'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config','apps/util','jquery-ui','bootstrap'
-    ], 
-function(module, Backbone, _, UserList, ProblemSetList, SettingList,MainViewList,
+define(['module','backbone','views/SidePane', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
+    'views/MainViewList', 'models/AssignmentDate','models/AssignmentDateList','views/WebPage',
+    'config','apps/util','jquery-ui','bootstrap'], 
+function(module, Backbone, SidePane, _, UserList, ProblemSetList, SettingList,MainViewList,
     AssignmentDate,AssignmentDateList,WebPage,config,util){
 var CourseManager = WebPage.extend({
-    tagName: "div",
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
 	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidePane","stopActing",
             "changeView","changeSidePane","loadData","checkData","saveState","logout","setDates");  // include all functions that need the this object
 	    var self = this;
-
         this.render();
         this.eventDispatcher = _.clone(Backbone.Events);
         this.session = (module.config().session)? module.config().session : {};
@@ -95,9 +92,11 @@ var CourseManager = WebPage.extend({
         // Build the menu.  Should we make a View for this?  
 
         var menuItemTemplate = _.template($("#main-menu-item-template").html());
-        var ul = $("#menu-navbar-collapse .manager-menu");
+        var ul = $(".manager-menu");
         _(this.mainViewList.viewInfo.main_views).each(function(item){
             ul.append(menuItemTemplate({name: item.name}));
+            item.other_sidepanes[item.other_sidepanes.length] = "Help";
+            item.other_sidepanes[item.other_sidepanes.length] = "All Messages";
         })
 
         // can't we just pull this from the settings when needed.  Why do we need another variable. 
@@ -108,7 +107,7 @@ var CourseManager = WebPage.extend({
 
         this.mainViewList.getViewByName("Calendar")
             .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
-            .dispatcher.on("calendar-change",self.updateCalendar);
+            .on("calendar-change",self.updateCalendar);
 
         this.mainViewList.getViewByName("Problem Sets Manager")
             .set({assignmentDates: this.assignmentDateList});
@@ -128,11 +127,14 @@ var CourseManager = WebPage.extend({
         })        
 
         // load the previous state of the app or set it to the Calendar
-        var state = this.loadState();
+        this.appState = this.loadState();
 
-        if(state){
-            this.changeView(state.view,state);
+        if(this.appState && typeof(this.appState)!=="undefined" && 
+                this.appState.states && typeof(this.appState.states)!=="undefined" && 
+                typeof(this.appState.index)!=="undefined"){
+            this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
         } else {
+            this.appState = {index: void 0, states: []};
             this.changeView("Calendar",{});    
         }        
 
@@ -146,6 +148,8 @@ var CourseManager = WebPage.extend({
             "logout": this.logout,
             "stop-acting": this.stopActing,
             "show-help": function() { self.changeSidePane("Help")},
+            "forward-page": function() {self.goForward()},
+            "back-page": function() {self.goBack()},
         });
 
         this.users.on({"act_as_user": function(model){
@@ -166,16 +170,20 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-        $(window).on("beforeunload", function () {
-            if(self.session.logged_in!==0){ // if the user didn't just log out. 
-                return self.messageTemplate({type: "leave_page"});
-            }
-         }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
+        // this ensures that the rerender call only occurs once every 500 ms.  Importantly when the window is resized. 
+
+        var renderMainPane = _.debounce(function(evt){ 
             self.currentView.render();
             if(self.currentSidePane && self.currentSidePane.sidePane){
                 self.currentSidePane.sidePane.render();
             }
-         })
+        },500);
+
+        $(window).on("beforeunload", function () {
+            if(self.session.logged_in!==0){ // if the user didn't just log out. 
+                return self.messageTemplate({type: "leave_page"});
+            }
+         }).on("resize",renderMainPane);
 
         // Add a link to WW2 via the main menu.
 
@@ -213,6 +221,11 @@ var CourseManager = WebPage.extend({
         $("#sidepane-container").removeClass("hidden");
         $("#main-view").removeClass("col-md-12").addClass("col-md-9");
         self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
+        if(this.currentSidePane && (typeof(this.currentSidePane.sidePane)==="undefined" ||
+             !(this.currentSidePane.sidePane instanceof SidePane))) {
+                this.changeSidePane(this.mainViewList.getOtherSidepanes(this.currentView.viewName)[0]);
+        }
+        this.currentSidePane.sidePane.render();
     },
     closeSidePane: function (){
         this.currentSidePane.isOpen = false;
@@ -255,8 +268,7 @@ var CourseManager = WebPage.extend({
 
             var menuItemTemplate = _.template($("#main-menu-item-template").html());
             var ul = this.$(".sidepane-menu .dropdown-menu").empty();
-            var sidePanes = ["Help"].concat(mainViewInfo.other_sidepanes);
-            _(sidePanes).each(function(_name){
+            _(mainViewInfo.other_sidepanes).each(function(_name){
                 ul.append(menuItemTemplate({name: _name}));
             })
 
@@ -268,23 +280,66 @@ var CourseManager = WebPage.extend({
     },
     changeView: function (_name,state){
         if(this.currentView){
+            // destroy any popovers on the view
+            $('[data-toggle="popover"]').popover("destroy")
             this.currentView.remove();
+            
+
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(_name);
-        (this.currentView = this.mainViewList.getViewByName(_name)).setElement(this.$(".main"))
-            .setState(state).render();
-        this.changeSidePane(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
+        this.currentView = this.mainViewList.getViewByName(_name);
+        this.defaultSidepane = this.mainViewList.getDefaultSidepane(_name);
+        if(this.currentView){
+            this.currentView.setElement(this.$(".main")).setState(state).render();
+        }
+        if(typeof(this.defaultSidepane)!=="undefined"){
+            this.changeSidePane(this.defaultSidepane);   
+        }
         this.saveState();
         this.eventDispatcher.trigger("view-change",_name);
     },
     saveState: function() {
+        if(!this.currentView){
+            return;
+        }
         var state = this.currentView.getState();
         state.view = this.currentView.viewName;
-        window.localStorage.setItem("ww3_cm_state",JSON.stringify(state));
+        if(typeof(this.appState.index) !== "undefined"){
+            if(this.appState.states[this.appState.index].view===state.view){
+                this.appState.states[this.appState.index] = state;
+            } else {
+                this.appState.index++;
+                this.appState.states[this.appState.index]=state;
+                this.appState.states.splice(this.appState.index+1,Number.MAX_VALUE); // delete the end of the states array. 
+            }
+        } else {
+            this.appState.index = 0;
+            this.appState.states = [state];
+        }
+        window.localStorage.setItem("ww3_cm_state",JSON.stringify(this.appState));
+        // change the navigation button states
+        if(this.appState.index>0){
+            this.navigationBar.$(".back-button").removeAttr("disabled")
+        } else {
+            this.navigationBar.$(".back-button").attr("disabled","disabled");
+        }
+        if(this.appState.index<this.appState.states.length-1){
+            this.navigationBar.$(".forward-button").removeAttr("disabled")
+        } else {
+            this.navigationBar.$(".forward-button").attr("disabled","disabled");
+        }
     },
     loadState: function () {
         return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
+    },
+    goBack: function () {
+        this.appState.index--;
+        this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
+    },
+    goForward: function () {
+        this.appState.index++;
+        this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
     },
     logout: function(){
         var self = this;
@@ -322,8 +377,7 @@ var CourseManager = WebPage.extend({
                     date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
             self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
                     date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-            if(self.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")  
-                    && parseInt(_set.get("reduced_scoring_date"))>0) {
+            if(parseInt(_set.get("reduced_scoring_date"))>0) {
                 self.assignmentDateList.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
                     date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
             }

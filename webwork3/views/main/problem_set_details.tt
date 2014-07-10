@@ -3,33 +3,15 @@
 
 <script type="text/template" id="HW-detail-template">
 <div class="row">
-  <div class="col-md-3 header-set-name">
-    <div class="problem-set-name-menu" class="btn-group btn-group-lg">
-         <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-          <span class="set-name">Select Set...</span>
-          <i class="fa fa-chevron-down"></i>
-        </a>
-        <ul class="dropdown-menu">
-        </ul>
-      </div>
+  <div class="col-md-2 header-set-name">
+    <select class="problem-set-name form-control"></select>
   </div>
-<div><ul class="nav nav-tabs" id="problem-set-tabs">
-  <li class="active"><a href="#property-tab" data-toggle="tab" data-view="propertiesView">Properties</a></li>
-  <li><a href="#problem-list-tab" data-toggle="tab" data-view="problemSetView">Problems</a></li>
-  <li><a href="#user-assign-tab" data-toggle="tab" data-view="usersAssignedView">Assign to Users</a></li>
-  <li><a href="#user-unassign-tab" data-toggle="tab" data-view="unassignUsersView">Unassign Users</a></li>
-  <li><a href="#user-customize-tab" data-toggle="tab" data-view="customizeUserAssignView">Customize</a></li>
-</ul>
+<div class="set-details-tab">
 </div>
 </div>
 
-<div class="tab-content">
-  <div class="tab-pane active" id="property-tab" data-view="propertiesView"></div>
-  <div class="tab-pane" id="problem-list-tab" data-view="problemListView"></div>
-  <div class="tab-pane" id="user-assign-tab" data-view="usersAssignedView"></div>
-  <div class="tab-pane" id="user-customize-tab" data-view="customizeUserAssignView"></div>
-  <div class="tab-pane" id="user-unassign-tab" data-view="unassignUsersView"></div>
-</div> 
+<div class="set-details-tab-content">
+</div>
 </script>
 
 <script type="text/template" id="problem-set-name-template">
