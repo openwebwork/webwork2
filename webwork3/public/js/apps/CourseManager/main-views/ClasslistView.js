@@ -239,7 +239,16 @@ var ClasslistView = MainView.extend({
             				{value: 3, label: "Change Password"},
             				{value: 4, label: "Email User"},
             				{value: 5, label: "Student Progress"}]}}},*/
-                {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
+                {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
+                	stickit_options: {update: function($el,val,model,options){
+                		$el.text(val);
+                		if(model.get("logged_in")){
+                			$el.addClass("logged-in");
+                		} else {
+                			$el.removeClass("logged-in");
+                		}
+                	}}
+            	},
                 {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
                 	value: function(model){
                 		return self.problemSets.filter(function(_set) { 
