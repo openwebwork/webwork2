@@ -111,6 +111,7 @@ border-radius: 5px;}
 .users-table-container table th.section {width: 75px;}
 .users-table-container table th.recitation {width: 75px;}
 .users-table-container table th.assigned-sets {width: 75px;}
+.users-table-container table th.email {width: 75px;}
 .users-table-container table td.first-name {
 	white-space: nowrap;
 	overflow: hidden;

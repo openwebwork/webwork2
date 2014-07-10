@@ -237,17 +237,27 @@ var ClasslistView = MainView.extend({
             		stickit_options: {
             			update: function($el,val,model,options){
             				// Perhaps this can go into config.js as a Stickit Handler.
+            				// in addition, a lot of this needs to go into templates for I18N
             				var address = $("<a>").attr("href","mailto:"+val).text("email");
             				var popoverHTML = "<input class='edit-email' value='"+ val +"'></input>"
             					+ "<button class='close-popover btn btn-default btn-sm'>Save and Close</button>";
             				var edit = $("<a>").attr("href","#").text("edit")
             					.attr("data-toggle","popover")
             					.attr("data-title","Edit Email Address")
-            					.popover({html: true, content: popoverHTML});
-            				$el.html(address).append("&nbsp;&nbsp;").append(edit);
-            				$el.delegate(".close-popover","click",function(){
+            					.popover({html: true, content: popoverHTML})
+            					.on("shown.bs.popover",function (){
+            						$el.find(".edit-email").focus();
+            					});
+            				function saveEmail(){
             					model.set("email_address",$el.find(".edit-email").val());
             					edit.popover("hide");
+            				}
+            				$el.html(address).append("&nbsp;&nbsp;").append(edit);
+            				$el.delegate(".close-popover","click",saveEmail);
+            				$el.delegate(".edit-email","keyup",function(evt){
+            					if(evt.keyCode==13){
+            						saveEmail();
+            					}
             				})
             			}
             		}},
