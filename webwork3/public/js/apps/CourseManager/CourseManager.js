@@ -184,7 +184,8 @@ var CourseManager = WebPage.extend({
 
         // Add a link to WW2 via the main menu.
 
-        this.navigationBar.$(".manager-menu").append("<li class='ww2-link'><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
+        this.navigationBar.$(".manager-menu").append("<li class='ww2-link'>"+
+            "<a href='/webwork2/"+config.courseSettings.course_id+"''><span class='wwlogo'>W</span>WeBWorK2</a></li>");
         this.delegateEvents();
     },
     events: {
