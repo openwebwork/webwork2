@@ -22,7 +22,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
                 problemsView : new ProblemSetView({settings: options.settings, messageTemplate: this.messageTemplate}),
                 assignUsersView : new AssignUsersView({users: options.users}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: options.users,
-                        eventDispatcher: this.eventDispatcher, settings: options.settings})
+                        eventDispatcher: options.eventDispatcher, settings: options.settings})
             };
             this.views.problemsView.on("page-changed",function(num){
                 self.eventDispatcher.trigger("save-state");
@@ -125,6 +125,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
                 _userSetList.on(
                 {
                     change: function(_userSet){
+                        console.log(_userSet.changed);
                         _userSet.changingAttributes=_.pick(_userSet._previousAttributes,_.keys(_userSet.changed));
                         _userSet.save();
                     },
@@ -296,7 +297,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
 
 
     var CustomizeUserAssignView = Backbone.View.extend({
-        viewName: "Customize Users",
+        viewName: "Overrides",
         initialize: function(options){
             _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
 
@@ -374,7 +375,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
             if(_set){
                 this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
                 this.userSetList = new UserSetList([],{problemSet: this.model,type: "users"});
-                this.userSetList.on("change:due_date change:answer_date change:open_date", function(model){
+                this.userSetList.on("change:due_date change:answer_date change:open_date change:reduced_scoring_date", function(model){
                     model.save();
                 });
             }
@@ -390,8 +391,9 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
                 model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation"));
             });
             this.collection.on({change: function(model){
-                console.log(moment.unix(model.get("reduced_scoring_date")).format("MM-DD-YYYY"));
-                self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date")).save();
+                // since the collection contains more information than the userSetList,
+                // find the user that changed and set the dates.  
+                self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date","reduced_scoring_date"));
             }});
             this.setMessages();
 
@@ -452,6 +454,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
                                         {type:"set_saved",opts:{set_id:_set.get("set_id"), user_id: _set.get("user_id")}}),
                                     text: self.messageTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),
                                         key: key, user_id: _set.get("user_id"),oldValue: _old, newValue: _new}})});
+                                delete _set.changingAttributes[key];
                             }
                         });
                 }
