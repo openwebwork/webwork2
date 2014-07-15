@@ -35,9 +35,6 @@ var CourseManager = WebPage.extend({
                 /*window.location.href=config.urlPrefix+"courses/"+config.courseSettings.course_id+"/manager?"
                     + $.param(_(self.session).pick("user","key")); */
             }});
-
-            //    this.loadData
-            //});
         }
 
         $(document).ajaxError(function (e, xhr, options, error) {
@@ -94,7 +91,7 @@ var CourseManager = WebPage.extend({
         var menuItemTemplate = _.template($("#main-menu-item-template").html());
         var ul = $(".manager-menu");
         _(this.mainViewList.viewInfo.main_views).each(function(item){
-            ul.append(menuItemTemplate({name: item.name}));
+            ul.append(menuItemTemplate({name: item.name, icon: item.icon}));
             item.other_sidepanes[item.other_sidepanes.length] = "Help";
             item.other_sidepanes[item.other_sidepanes.length] = "All Messages";
         })
