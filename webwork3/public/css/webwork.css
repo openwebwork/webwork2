@@ -10,6 +10,12 @@ body {  /* needed for the navigation bars top and bottom*/
 
 .breadcrumb {padding: 2px 15px ;} 
 
+/* Turn off the borders on a bootstrap table */
+
+.borderless td, .borderless th {border: none !important}
+
+
+
 .sortable-placeholder {border: 1px solid black; background-color: lightyellow;}
 
 .ui-datepicker {z-index: 1200 !important;} /* To ensure that it floats above the nav bar */
@@ -117,4 +123,5 @@ border-top: solid 1px rgb(220, 220, 220);}
 	padding: 0px 2px;
 	float: right;
 }
+
 

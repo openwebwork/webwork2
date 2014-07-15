@@ -19,31 +19,23 @@
 </script>
 
 <script type="text/template" id="assign-users-template">
-  <h4>Problem Set: <%=setname%></h4>
-  <p>The following list of users are those currently not assigned to this Problem Set.  Select those you wish
-  to assign to the problem set.  If the user is not able to be selected, then that user is already 
-  assigned to this set. </p>
-  <table class="table">
+  <p>The list on the left is the list of users assigned to this problem set.  The set on the right are those that
+  are not currently assigned.  Select users on the left or right columns to move them to the other column. </p>
+  <table class="table borderless">
     <tbody>
-      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
-         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
-         <tr><td><button class="btn btn-default assign-button">Assign Selected Users</button></td></tr>
+      <tr><th>Assigned Users</th><th></th><th>Unassigned Users</th></tr>
+      <tr><td rowspan="2"><select size="20" class="form-control assigned-user-list" multiple="multiple"></select></td>
+         <td><button class="btn btn-default unassign-users-btn">Unassign <i class="fa fa-chevron-right">
+            </i></button></td>
+         <td rowspan="2"><select size="20" class="form-control unassigned-user-list" multiple="multiple"></select></td></tr>
+         <tr><td><button class="btn btn-default assign-users-btn"><i class="fa fa-chevron-left"></i>Assign</button>
+         </td></tr>
     </tbody> 
   </table>
 </script>
 
-<script type="text/template" id="unassign-users-template">
-<h4>Problem Set: <%=setname%></h4>
-  <p>The following list of users are those currently assigned to this Problem Set.  Select those you wish
-  to unassign from the problem set.  If the user is not able to be selected, then that user is not 
-  assigned to this set. </p>
-  <table class="table">
-    <tbody>
-      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
-         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
-         <tr><td><button class="btn btn-default unassign-button">Unassign Selected Users</button></td></tr>
-    </tbody>
-  </table>
+<script type="text/template" id="assigned-user-list-user-template">
+  <option value="<%=user_id%>"><%=first_name%> <%=last_name%></option>
 </script>
 
 

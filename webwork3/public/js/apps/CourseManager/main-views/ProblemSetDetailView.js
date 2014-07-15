@@ -20,8 +20,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
             this.views = options.views = {
                 propertiesView : new DetailsView({users: options.users, settings: options.settings}),
                 problemsView : new ProblemSetView({settings: options.settings, messageTemplate: this.messageTemplate}),
-                usersAssignedView : new AssignUsersView({users: options.users}),
-                unassignUsersView: new UnassignUserView({users: options.users}),
+                assignUsersView : new AssignUsersView({users: options.users}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: options.users,
                         eventDispatcher: this.eventDispatcher, settings: options.settings})
             };
@@ -217,118 +216,84 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
 	var AssignUsersView = Backbone.View.extend({
         viewName: "Assign Users",
         initialize: function (options) {
-            _.bindAll(this,'render','selectAll','assignUsers','setProblemSet');
+            //_.bindAll(this,'render','selectAll','assignUsers','setProblemSet');
             this.users = options.users;
-            this.userList = this.users.map(function(user){ 
-                return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
+            this.model = new Backbone.Model({assigned_users: [], unassigned_users: []});
         },
 
 
         render: function() {
-            if(this.model){
-                this.$el.html(_.template($("#assign-users-template").html(),{setname: this.model.get("set_id")}));
-                this.stickit();
-            }
+            this.$el.html($("#assign-users-template").html());
+            this.update();
             return this;
         },
-         events: {  "click .assign-button": "assignUsers",
-                    "click .select-all": "selectAll"
+         events: {  
+            "click .assign-users-btn": "assignUsers",
+            "click .unassign-users-btn": "unassignUsers",
+            "click .select-all": "selectAll"
         },
-        bindings: { ".user-list": {observe: "assigned_users", 
-            selectOptions: { collection: "this.userList", disabledCollection: "this.originalAssignedUsers"},   
+/*        bindings: { 
+            ".assigned-user-list": {observe: "assigned_users", selectOptions: { collection: function () {
+                var self = this;
+                var out = _(this.users.filter(function(user) { 
+                        return _(self.model.get("assigned_users")).contains(user.get("user_id"));}))
+                    .map(function(user){ 
+                        return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
+                return out;
+            }}},
+            ".unassigned-user-list": {observe: "unassigned_users", selectOptions: { collection: function () {
+                var self = this;
+                var out = _(this.users.filter(function(user) { 
+                        return _(self.model.get("unassigned_users")).contains(user.get("user_id"));}))
+                    .map(function(user){ 
+                        return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
+                return out;
+            }}},  
+        }, */
+        update: function (){
+            var self = this;
+            if(typeof(this.problemSet)==="undefined"){
+                return;
             }
+            var assignedUsers = this.problemSet.get("assigned_users");
+            var unassignedUsers = _(this.users.pluck("user_id")).difference(assignedUsers);
+            var assignedSelect = this.$(".assigned-user-list").empty();
+            var unassignedSelect = this.$(".unassigned-user-list").empty();
+            var userTemplate = _.template($("#assigned-user-list-user-template").html());
+            _(assignedUsers).each(function(userID){
+                assignedSelect.append(userTemplate(self.users.findWhere({user_id: userID}).attributes));
+            });
+            _(unassignedUsers).each(function(userID){
+                unassignedSelect.append(userTemplate(self.users.findWhere({user_id: userID}).attributes));
+            });
         },
         setProblemSet: function(_set) {
             var self = this; 
             this.problemSet = _set;
             if(_set){
-                this.model = new ProblemSet(_set.attributes);
-                this.model.set("assigned_users",[]);
-                this.updateModel();
-                this.problemSet.on("change", function(){
-                    self.updateModel();
-                    self.render();
-                });
+                this.render();
+                this.problemSet.on("change",function(_set){
+                    console.log(_set);
+                })
             }
-
             return this;
-        },
-        updateModel: function () {
-            this.originalAssignedUsers = this.problemSet.get("assigned_users");
-            this.originalUnassignedUsers = _(this.users.pluck("user_id")).difference(this.originalAssignedUsers);
         },
         selectAll: function (){
             this.model.set("assigned_users",this.$(".select-all").prop("checked")?
                             this.originalUnassignedUsers: []);
         },
         assignUsers: function(){
-            this.problemSet.set("assigned_users",_(this.originalAssignedUsers).union(this.model.get("assigned_users")));
-        }
-    });
-
-
-   
-
-    var UnassignUserView = Backbone.View.extend({
-        viewName: "Unassign Users",
-        initialize: function (options) {
-            _.bindAll(this,'render','selectAll','unassignUsers','setProblemSet');
-            this.users = options.users;
-            this.userList = this.users.map(function(user){ 
-                return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
-        },
-
-
-        render: function() {
-            if(this.model){
-                this.$el.html(_.template($("#unassign-users-template").html(),{setname: this.model.get("set_id")}))
-                this.stickit();            
-            }
-            return this;
-        },
-         events: {  "click .unassign-button": "unassignUsers",
-                    "click .select-all": "selectAll"
-        },
-        bindings: { ".user-list": {observe: "assigned_users", 
-            selectOptions: { collection: "this.userList", disabledCollection: "this.unassignedUsers"},   
-            }
-        },
-        setProblemSet: function(_set) {
-            var self = this; 
-            this.problemSet = _set; 
-            if(_set){
-                this.model = new ProblemSet(_set.attributes);
-                this.model.set("assigned_users",[]);
-                this.updateModel();
-                this.problemSet.on("change", function(){
-                    self.updateModel();
-                    self.render();
-                });
-            }
-
-            return this;
-        },
-        updateModel: function () {
-            this.originalAssignedUsers = this.problemSet.get("assigned_users");
-            this.unassignedUsers = _(this.users.pluck("user_id")).difference(this.originalAssignedUsers);
-        },
-        selectAll: function (){
-            this.model.set("assigned_users",this.$(".select-all").prop("checked")?
-                            this.originalAssignedUsers: []);
+            var selectedUnassignedUsers = this.$(".unassigned-user-list").val();
+            this.problemSet.set("assigned_users", _(this.problemSet.get("assigned_users")).union(selectedUnassignedUsers));
+            this.update();
         },
         unassignUsers: function(){
-            var self = this;
-            var currentUsers = _(this.originalAssignedUsers).difference(this.model.get("assigned_users"));
-            var confirmDelete = confirm(this.messageTemplate({type: "unassign_users", 
-                    opts: {users: this.model.get("assigned_users").join(", ")}}));
-            if (confirmDelete){
-                this.problemSet.set("assigned_users",currentUsers);
-                this.problemSet.save();
-            }
+            var selectedAssignedUsers = this.$(".assigned-user-list").val();
+            this.problemSet.set("assigned_users",_(this.problemSet.get("assigned_users")).difference(selectedAssignedUsers));
+            this.update();
         }
     });
 
-    // Trying a new UI for this View
 
     var CustomizeUserAssignView = Backbone.View.extend({
         viewName: "Customize Users",

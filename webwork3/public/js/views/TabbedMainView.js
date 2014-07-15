@@ -67,7 +67,6 @@ define(['backbone','underscore','views/MainView'],
             return this;
         },
         getState: function(){
-        	console.log("in TabbedMainView.getState");
         	var state = {subview: this.currentViewName};
             if(this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].getState)){
                 _.extend(state,this.views[this.currentViewName].getState());
