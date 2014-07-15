@@ -279,23 +279,24 @@ var CourseManager = WebPage.extend({
         this.openCloseSidePane("open");
     },
     changeView: function (_name,state){
+        var defaultSidePane; 
         if(this.currentView){
             // destroy any popovers on the view
             $('[data-toggle="popover"]').popover("destroy")
             this.currentView.remove();
-            
-
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(_name);
         this.currentView = this.mainViewList.getViewByName(_name);
-        this.defaultSidepane = this.mainViewList.getDefaultSidepane(_name);
-        if(this.currentView){
-            this.currentView.setElement(this.$(".main")).setState(state).render();
+        if(typeof(this.currentView)==="undefined"){
+            this.currentView = this.mainViewList.getViewByName("Calendar");
+            defaultSidePane = _(this.mainViewList.viewInfo.main_views).findWhere({name: "Calendar"}).default_sidepane;
+        } 
+        if(typeof(this.defaultSidepane)==="undefined"){
+            defaultSidepane = _(this.mainViewList.viewInfo.main_views).findWhere({name: this.currentView.viewName}).default_sidepane;
         }
-        if(typeof(this.defaultSidepane)!=="undefined"){
-            this.changeSidePane(this.defaultSidepane);   
-        }
+        this.currentView.setElement(this.$(".main")).setState(state).render();
+        this.changeSidePane(defaultSidepane);
         this.saveState();
     },
     saveState: function() {
