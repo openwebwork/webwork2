@@ -771,7 +771,7 @@ sub killSession {
 		$self -> killCookie();
 	}
 
-	my $userID = $r -> {user_id};
+	my $userID = $r -> param("user");
 	if (defined($userID)) {
 		 $db -> deleteKey($userID);
 	}

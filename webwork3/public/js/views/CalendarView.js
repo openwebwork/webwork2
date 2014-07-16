@@ -35,10 +35,15 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         },
         render: function () {
             var self = this;            
+
+            // remove any popups that exist already.  
+            this.$(".show-set-popup-info").popover("destroy")
+
             for(var i = 0; i<this.numberOfWeeks; i++){
                 this.weekViews[i] = new WeekView({first_day: moment(this.first_day).add("days",7*i),
                     calendar: this});
             }
+            
 
             this.$el.html(_.template($("#calendar-template").html()));
             var calendarHead = this.$("#calendar-table thead");
