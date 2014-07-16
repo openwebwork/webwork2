@@ -284,8 +284,11 @@ var CourseManager = WebPage.extend({
             this.currentView = this.mainViewList.getViewByName("Calendar");
             defaultSidePane = _(this.mainViewList.viewInfo.main_views).findWhere({name: "Calendar"}).default_sidepane;
         } 
+        if(typeof(this.defaultSidepane)==="undefined"){
+            defaultSidepane = _(this.mainViewList.viewInfo.main_views).findWhere({name: this.currentView.viewName}).default_sidepane;
+        }
         this.currentView.setElement(this.$(".main")).setState(state).render();
-        this.changeSidePane(defaultSidePane);
+        this.changeSidePane(defaultSidepane);
         this.saveState();
     },
     saveState: function() {

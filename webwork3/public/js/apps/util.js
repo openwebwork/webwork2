@@ -102,14 +102,9 @@ var util = {
         // now process the problemList
     },
     pluckDateSettings: function(settings){
-        var dateVars = ["pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"];
-        var values = settings.chain().filter(function(_set){
-            return _(dateVars).contains(_set.get("var"))
-        })
-            .map(function(_set){ 
-                return _set.get("value")
-            }).value();
-        return _.object(dateVars,values);
+        return settings.chain().map(function(_s) { return [_s.get("var"),_s.get("value")]})
+            .object().pick("pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"
+                                ,"pg{ansEvalDefaults}{reducedScoringPeriod}").value();
     }
 }
 
