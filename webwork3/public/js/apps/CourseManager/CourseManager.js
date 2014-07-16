@@ -201,7 +201,8 @@ var CourseManager = WebPage.extend({
             "save-state": this.saveState,
             "show-problem-set": this.showProblemSetDetails,
             "add-message": this.messagePane.addMessage,
-            "open-close-sidepane": this.openCloseSidePane
+            "open-close-sidepane": this.openCloseSidePane,
+            "show-help": function() { self.changeSidePane("Help")},
         });
     },
     render: function(){

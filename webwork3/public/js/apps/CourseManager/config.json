@@ -51,27 +51,33 @@
 	"sidepanes": [
 	{
 		"name": "Problem Sets",
-		"path": "option-panes/ProblemSetListView"
+		"path": "option-panes/ProblemSetListView",
+		"id": "problemSets"
 	},
 	{
 		"name": "Users",
-		"path": "option-panes/UserListView"
+		"path": "option-panes/UserListView",
+		"id": "userlist"
 	},
 	{
 		"name": "Library Options",
-		"path": "option-panes/LibraryOptionsView"
+		"path": "option-panes/LibraryOptionsView",
+		"id": "libraryOptions"
 	},
 	{
 		"name": "Problem List Options",
-		"path": "option-panes/ProblemListOptionsSidePane"
+		"path": "option-panes/ProblemListOptionsSidePane",
+		"id": "problemListOptions"
 	},
 	{
 		"name": "Help",
-		"path": "option-panes/HelpSidePane"
+		"path": "option-panes/HelpSidePane",
+		"id": "help"
 	},
 	{	
 		"name": "All Messages",
-		"path": "option-panes/AllMessagesSidePane"
+		"path": "option-panes/AllMessagesSidePane",
+		"id": "allMessages"
 	}
 	]
 }

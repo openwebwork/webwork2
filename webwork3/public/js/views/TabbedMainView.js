@@ -53,6 +53,9 @@ define(['backbone','underscore','views/MainView'],
 			if(_.isString(options)){ // was triggered other than a tab change.
 				this.$(".set-details-tab a:first").tab("show");
 			}
+			if(this.optionPane && this.optionPane.id==="help"){
+				this.eventDispatcher.trigger("show-help");
+			}
             this.eventDispatcher.trigger("save-state");
 		},
         setState: function(state){

@@ -13,7 +13,7 @@ define(main_view_paths,function(module,Backbone){
 				return _.extend({view: new view(opts)},self.viewInfo.main_views[i]);
 			});
 			this.sidepanes = _(sidepanes).map(function(sp,i){
-				var opts = {};
+				var opts = {id: self.viewInfo.sidepanes[i].id};
 				_.extend(opts,options);
 				return _.extend({view: new sp(opts)},self.viewInfo.sidepanes[i]);
 			})

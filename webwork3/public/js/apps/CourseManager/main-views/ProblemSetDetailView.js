@@ -51,12 +51,15 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
             TabbedMainView.prototype.render.call(this);            
         },
         getHelpTemplate: function () {
-            if(this.currentView instanceof DetailsView){
-                return $("#problem-set-details-help-template").html();
-            } else if(this.currentView instanceof ProblemSetView){
-                return $("#problem-set-view-help-template").html();
-            } else if(this.currentView instanceof CustomizeUserAssignView){
-                return $("#customize-assignment-help-template").html();
+            switch(this.currentViewName){
+                case "propertiesView":
+                    return $("#problem-set-details-help-template").html();
+                case "problemsView":
+                    return $("#problem-set-view-help-template").html();
+                case "customizeUserAssignView":
+                    return $("#customize-assignment-help-template").html();
+                case "assignUsersView":
+                    return $("#problem-set-assign-users-help-template").html();
             }
         },
         originalEvents: {
@@ -331,7 +334,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
     // Trying a new UI for this View
 
     var CustomizeUserAssignView = Backbone.View.extend({
-        viewName: "Customize Users",
+        viewName: "Student Overrides",
         initialize: function(options){
             _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
 
