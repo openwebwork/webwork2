@@ -166,16 +166,20 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-        $(window).on("beforeunload", function () {
-            if(self.session.logged_in!==0){ // if the user didn't just log out. 
-                return self.messageTemplate({type: "leave_page"});
-            }
-         }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
+        // this ensures that the rerender call only occurs once every 500 ms.  Importantly when the window is resized. 
+
+        var renderMainPane = _.debounce(function(evt){ 
             self.currentView.render();
             if(self.currentSidePane && self.currentSidePane.sidePane){
                 self.currentSidePane.sidePane.render();
             }
-         })
+        },500);
+
+        $(window).on("beforeunload", function () {
+            if(self.session.logged_in!==0){ // if the user didn't just log out. 
+                return self.messageTemplate({type: "leave_page"});
+            }
+         }).on("resize",renderMainPane);
 
         // Add a link to WW2 via the main menu.
 
@@ -267,14 +271,24 @@ var CourseManager = WebPage.extend({
         this.openCloseSidePane("open");
     },
     changeView: function (_name,state){
+        var defaultSidePane; 
         if(this.currentView){
+            // destroy any popovers on the view
+            $('[data-toggle="popover"]').popover("destroy")
             this.currentView.remove();
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(_name);
-        (this.currentView = this.mainViewList.getViewByName(_name)).setElement(this.$(".main"))
-            .setState(state).render();
-        this.changeSidePane(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
+        this.currentView = this.mainViewList.getViewByName(_name);
+        if(typeof(this.currentView)==="undefined"){
+            this.currentView = this.mainViewList.getViewByName("Calendar");
+            defaultSidePane = _(this.mainViewList.viewInfo.main_views).findWhere({name: "Calendar"}).default_sidepane;
+        } 
+        if(typeof(this.defaultSidepane)==="undefined"){
+            defaultSidepane = _(this.mainViewList.viewInfo.main_views).findWhere({name: this.currentView.viewName}).default_sidepane;
+        }
+        this.currentView.setElement(this.$(".main")).setState(state).render();
+        this.changeSidePane(defaultSidepane);
         this.saveState();
     },
     saveState: function() {
@@ -321,8 +335,7 @@ var CourseManager = WebPage.extend({
                     date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
             self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
                     date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-            if(self.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")  
-                    && parseInt(_set.get("reduced_scoring_date"))>0) {
+            if(parseInt(_set.get("reduced_scoring_date"))>0) {
                 self.assignmentDateList.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
                     date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
             }

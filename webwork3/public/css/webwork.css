@@ -28,6 +28,8 @@ body {  /* needed for the navigation bars top and bottom*/
 
 .hidden, .form-horizontal .hidden {display: none;}	
 
+.no-borders {border: none;}
+
 /* the following is needed to get pop-up boxes to display correctly.*/
 
 /*.view-pane, .view-pane .tab-content {height: 100%;}*/
@@ -67,10 +69,12 @@ border-top: solid 1px rgb(220, 220, 220);}
 
 .calendar-day {z-index: 5; height: 100px;}
 
+.month-name {font-size: 140%; font-weight: bold}
 .month-view {min-height: 100px;}
 .week-view {min-height: 200px;}
 
 .this-month {background-color: lightyellow}
+.that-month {background-color: aliceblue;}
 .today {background-color: pink}
 .highlight-day { border: 2px solid black; background-color: lightblue;}
 
@@ -82,13 +86,18 @@ border-top: solid 1px rgb(220, 220, 220);}
 
 .assign-not-visible {background-color: darkgray;}
 
-.assign-calendar-name {font-size: 90%;}
+.assign-calendar-name {font-size: 90%; 
+	width: 80px;   
+	display: block;
+	white-space: nowrap;
+  	overflow: hidden;
+ 	text-overflow: ellipsis;
+ 	float: left;
+  }
 
 .assign-info {cursor: pointer;}
 
 .assign {text-align: center;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
 	border-radius: 5px;
 	cursor: move;
 	border: 1px gray solid;
@@ -97,4 +106,14 @@ border-top: solid 1px rgb(220, 220, 220);}
 #calendar-table th {border: 1px solid black;}
 
 .calendar-button-row {margin: 5px; text-align: center;}
+
+.show-set-popup-info {
+	font-size:80%;
+	color: white; 
+	background-color: black; 
+	border-radius: 4px; 
+	margin: 2px;
+	padding: 0px 2px;
+	float: right;
+}
 

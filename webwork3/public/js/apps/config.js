@@ -115,7 +115,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
 
       },
       updateMethod: 'html',
-      //update: function($el, val, model, options) { $el.val(val); }
       onGet: function(val) { 
 
         var theDate = config.parseWWDate(val);
@@ -196,6 +195,41 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         }
       
     });
+
+    Backbone.Stickit.addHandler({
+        selector: '.show-set-popup-info',
+        update: function($el, val, model, options){
+            var popoverHTML = model.get("popupTemplate")(model.attributes);
+            var _title = model.get("assign_type").replace("_"," ") + " Date";
+            $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true, 
+                        content: popoverHTML, container: "body"});
+            $el.on("shown.bs.popover",function(){
+                $("a.goto-problem-set-button[data-setname='"+model.get("set_id")+"']").off()
+                    .on("click",function(evt){
+                        $el.popover("hide");
+                        model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
+                })
+            });
+            var info = "";
+            switch (model.get("assign_type")){
+                case "due":
+                    info = "D";
+                    break;
+                case "reduced-scoring":
+                    info = "R";
+                    break;
+                case "answer":
+                    info = "A";
+                    break;
+                case "open":
+                    info = "O";
+                    break;
+            }
+            $el.text(info);
+        },
+        updateMethod: 'html'
+    });
+
 
     Backbone.Stickit.addHandler({
         selector: '.select-with-disables',

@@ -8,7 +8,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     function(Backbone, _, moment,MainView, CalendarView,config) {
 	
     var AssignmentCalendar = CalendarView.extend({
-    	template: _.template($("#calendar-date-bar").html()),
+        template: this.$("#calendar-date-bar").html(),
+        popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
         headerInfo: {template: "#calendar-header", events: 
                 { "click .previous-week": "viewPreviousWeek",
                     "click .next-week": "viewNextWeek",
@@ -30,8 +31,10 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		CalendarView.prototype.render.apply(this);
             this.update();
 
+
     		this.$(".assign").popover({html: true});
-            this.$(".assign").truncate({width: 100});
+
+
             // set up the calendar to scroll correctly
             this.$(".calendar-container").height($(window).height()-160);
             $('.show-date-types input, .show-date-types label').click(function(e) {
@@ -39,7 +42,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
 
             // show/hide the desired date types
-
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
                 this.$(".assign-reduced-scoring").removeClass("hidden");
             } else {
@@ -47,7 +49,21 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             }
 
             MainView.prototype.render.apply(this);
+
+            // hides any popover clicked outside.
+            $('body').on('click', function (e) {
+                $('[data-toggle="popover"]').each(function () {
+                    //the 'is' for buttons that trigger popups
+                    //the 'has' for icons within a button that triggers a popup
+                    if (!$(this).is(e.target) && $(this).has(e.target).length === 0 
+                                && $('.popover').has(e.target).length === 0) {
+                        $(this).popover('hide');
+                    }
+                });
+            });
+
             this.stickit();
+            this.showHideAssigns(this.model);
             return this;
     	},
         bindings: {
@@ -60,12 +76,12 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		var self = this;
             var assignments = this.assignmentDates.where({date: day.model.format("YYYY-MM-DD")});
             _(assignments).each(function(assign){
-                day.$el.append(self.template({classes: "assign assign-" + assign.get("type"), 
-                    setname: assign.get("problemSet").get("set_id"), 
-                    assignedUsers: assign.get("problemSet").get("assigned_users").length, 
-                    totalUsers: self.users.length, visibleToStudents: assign.get("problemSet").get("visible"),
-                    showName: true}));
+                var _model = _.extend({assign_type: assign.get("type"),total_users: self.users.length,
+                    eventDispatcher: self.eventDispatcher,popupTemplate: self.popupTemplate},
+                    assign.get("problemSet").attributes);
+                day.$el.append( new DateInfoBar({template: self.template, model: _model}).render().el);
             });
+
     	},
         getHelpTemplate: function (){
             return $("#calendar-help-template").html();
@@ -84,11 +100,11 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                  
             this.$(".calendar-day").droppable({
                 hoverClass: "highlight-day",
-                accept: ".problem-set, .assign",
+                accept: ".sidepane-problem-set, .assign",
                 greedy: true,
                 drop: function(ev,ui) {
                     ev.stopPropagation();
-                    if($(ui.draggable).hasClass("problem-set")){
+                    if($(ui.draggable).hasClass("sidepane-problem-set")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"all");
                     } else if ($(ui.draggable).hasClass("assign-open")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"open_date");
@@ -107,7 +123,9 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
             this.$(".assign-due,.assign-open,.assign-answer,.assign-reduced-scoring").draggable({
                 revert: true,
-                start: function () {$(this).popover("destroy")}
+                start: function () {
+                    $(this).children(".show-set-popup-info").popover("destroy")
+                }
             });
         },
         showHideAssigns: function(model){
@@ -130,6 +148,28 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
         }
 
+    });
+
+    var DateInfoBar = Backbone.View.extend({
+        className: "assign",
+        initialize: function(options){
+            this.template = options.template;
+            this.model = new Backbone.Model(options.model);
+            var assignType = this.model.get("assign_type").replace("-","_") + "_date";
+            this.model.set("assign_time",moment.unix(this.model.get(assignType))
+                    .format("hh:mm A"));
+        },
+        render: function(){
+            this.$el.html(this.template);
+            this.$el.addClass("assign-"+this.model.get("assign_type"));
+            this.$el.data("setname",this.model.get("set_id"));
+            this.stickit();
+            return this;
+        },
+        bindings: {
+            ".assign-calendar-name": "set_id",
+            ".assign-info": "set_id"  // this seems to be a hack to get stickit to add the handler. 
+        }
     });
 
     var DateTypeModel = Backbone.Model.extend({

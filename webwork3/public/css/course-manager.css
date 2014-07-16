@@ -143,3 +143,14 @@ label {font-weight: bold; display: inline; margin-right: 20px;}
 /*.messages-list {overflow: auto; height: 100%;}*/
 .messages-list li { border: 1px solid; border-radius: 5px; padding: 5px; margin-bottom: 5px;}
 
+/* Problem Set List sidepane */
+
+.prob-set-list-container .set-name {
+	width: 120px;   
+	display: block;
+	white-space: nowrap;
+  	overflow: hidden;
+ 	text-overflow: ellipsis;
+ 	float: left;
+}
+
