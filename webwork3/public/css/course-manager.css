@@ -20,6 +20,10 @@ a#view-header i {margin-left:1ex;}
 
 .dropdown-submenu a {width: 180px; overflow: hidden;}
 
+/* Classlist manager */
+
+.show-rows i {margin-right: 5px;}
+
 /* the num-users in the left-column */
 
 .num-users { margin-left: 2ex;}
@@ -38,6 +42,16 @@ a#view-header i {margin-left:1ex;}
 
 
 /*.lib-problem-viewer { overflow: scroll;}*/
+
+
+/* Styles for the Problem Set Manager */
+
+.problem-set-manager-table td.set-id {
+	max-width: 110px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 
 
 
@@ -83,7 +97,7 @@ border-radius: 5px;}
 	border: 1px dashed black; background: lightgray;
 }
 
-/* Classlist styles */
+/* Classlist Manager styles */
 
 #man_student_table {border: 1px solid black; border-collapse: collapse; width: 95%; }
 #man_student_table th{ border: 1px solid black; background: lightgray; }

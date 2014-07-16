@@ -37,11 +37,15 @@ function(Backbone, _,config){
                         break;
                     case "checkboxlist":
                         propHtml = "<select multiple='multiple' class='select-list'></select>";
-                        opts = _(setting.get('values')).map(function(opt){ return {label: opt, value: opt}; } );
+                        var labels = setting.get("labels");
+                        opts = _(setting.get('values')).map(function(opt){ 
+                            return {label: labels? labels[opt] : opt, value: opt}; } );                        
                         break;
                     case "popuplist": 
                         propHtml = "<select class='select-list'></select>";
-                        opts = _(setting.get('values')).map(function(opt){ return {label: opt, value: opt}; } );
+                        var labels = setting.get("labels");
+                        opts = _(setting.get('values')).map(function(opt){ 
+                            return {label: labels? labels[opt] : opt, value: opt}; } );                        
                         break;
                     case "permission":
                         propHtml = "<select class='select-list'></select>";

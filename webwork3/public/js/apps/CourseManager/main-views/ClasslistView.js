@@ -30,16 +30,9 @@ var ClasslistView = MainView.extend({
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
-	     
+	      
 
-	    // Make sure the take Action menu item is reset
-	    $("button#help-link").click(function () {self.helpPane.open();});	  
-
-	    // Display the number of users shown
-	    //$("#usersShownInfo").html(this.editgrid.grid.getRowCount() + " of " + this.users.length + " users shown.");
-		
-	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation
-	  
+	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation	  
 	    this.users.each(function(model){
 	    	model.bind('validated:invalid', function(_model, errors) {
 			    console.log("running invalid");
@@ -66,9 +59,10 @@ var ClasslistView = MainView.extend({
     },
 
     render: function(){
+    	this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}"); 
 	    this.$el.html($("#classlist-manager-template").html());
 	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
-                            paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+                            paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
         this.$el.append(this.userTable.el);
 
@@ -76,6 +70,7 @@ var ClasslistView = MainView.extend({
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
         this.clearFilterText();
+        this.showRows(this.pageSize);
         MainView.prototype.render.apply(this);
 	    return this;
     },  
@@ -133,9 +128,10 @@ var ClasslistView = MainView.extend({
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
 	    "click a.delete-selected": "deleteSelectedUsers",
-	    "change th[data-class-name='select-user'] input": "selectAll"
+	    "change th[data-class-name='select-user'] input": "selectAll",
+	    "click a.show-rows": "showRows"
 	},
-	takeAction: function(evt){
+	/*takeAction: function(evt){
 		var user = this.users.findWhere({user_id: $(evt.target).closest("tr").children("td:nth-child(3)").text()});
 		switch($(evt.target).val()){
 			case "1": // delete user
@@ -158,7 +154,7 @@ var ClasslistView = MainView.extend({
 				break;
 		}
 		$(evt.target).val(0); // reset the select pulldown
-	},
+	}, */
 	addStudentsByFile: function () {
 		this.addStudentFileView.openDialog();
 	},
@@ -194,22 +190,40 @@ var ClasslistView = MainView.extend({
 	selectAll: function (evt) {
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
 	},
+    showRows: function(evt){
+        this.pageSize = _.isNumber(evt) ? evt : $(evt.target).data("num");
+        this.$(".show-rows i").addClass("not-visible");
+        if(_.isString(evt) || _.isNumber(evt)){
+            this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
+        } else {
+            $(evt.target).children("i").removeClass("not-visible");
+        }
+        if(this.pageSize < 0) {
+            this.userTable.set({num_rows: this.users.length});
+        } else {
+            this.userTable.set({num_rows: this.pageSize});
+        }
+    },
 	tableSetup: function () {
             var self = this;
             this.cols = [{name: "Select", key: "select_row", classname: "select-user", 
                 stickit_options: {update: function($el, val, model, options) {
                     $el.html($("#checkbox-template").html());
                 }}, colHeader: "<input type='checkbox'></input>"},
-                {name: "Action", key: "action", "classname": "user-action",
+                /*{name: "Action", key: "action", "classname": "user-action",
             		stickit_options: { selectOptions: { 
             			collection: [{value: 0, label: "Select"},
             				{value: 1, label: "Delete User"},
             				{value: 2, label: "Act As User"},
             				{value: 3, label: "Change Password"},
             				{value: 4, label: "Email User"},
-            				{value: 5, label: "Student Progress"}]}}},
+            				{value: 5, label: "Student Progress"}]}}},*/
                 {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
-                {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets",
+                {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
+                	value: function(model){
+                		return self.problemSets.filter(function(_set) { 
+                				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
+               		},
                 	stickit_options: {update: function($el, val, model, options) {
                 		$el.html(self.problemSets.filter(function(_set) { 
                 				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length + "/"
