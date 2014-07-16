@@ -369,8 +369,8 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			_(this.columnInfo).each(function (col){
 				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
 				if (col.datatype === "boolean"){
-					var select = $("<select>").addClass(classname).addClass("input-sm form-control");
-					self.$el.append($("<td>").append(select));
+					var select = $("<input type='checkbox'>").addClass(classname);
+					self.$el.append($("<td align='center'>").append(select));
 				} else if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));
 				} else {
