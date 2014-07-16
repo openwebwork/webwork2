@@ -200,7 +200,9 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         selector: '.show-set-popup-info',
         update: function($el, val, model, options){
             var popoverHTML = model.get("popupTemplate")(model.attributes);
-            $el.popover({title: model.get("set_id"), html: true, content: popoverHTML, container: "body"});
+            var _title = model.get("assign_type").replace("_"," ") + " Date";
+            $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true, 
+                        content: popoverHTML, container: "body"});
             $el.on("shown.bs.popover",function(){
                 $("a.goto-problem-set-button[data-setname='"+model.get("set_id")+"']").off()
                     .on("click",function(evt){

@@ -47,8 +47,9 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         },
         render: function () {
             var self = this;
-            // The collection is a array of rows containing the day of the current month.
             
+            // remove any popups that exist already.  
+            this.$(".show-set-popup-info").popover("destroy")
 
             this.$el.html(_.template($("#calendar-template").html()));
             var calendarHead = this.$("#calendar-table thead");

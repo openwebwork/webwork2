@@ -31,10 +31,11 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		CalendarView.prototype.render.apply(this);
             this.update();
 
+
     		this.$(".assign").popover({html: true});
+
+
             // set up the calendar to scroll correctly
-
-
             this.$(".calendar-container").height($(window).height()-160);
             $('.show-date-types input, .show-date-types label').click(function(e) {
                 e.stopPropagation();
@@ -62,6 +63,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
 
             this.stickit();
+            this.showHideAssigns(this.model);
             return this;
     	},
         bindings: {
@@ -153,7 +155,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         initialize: function(options){
             this.template = options.template;
             this.model = new Backbone.Model(options.model);
-            this.model.set("assign_time",moment.unix(this.model.get(this.model.get("assign_type")+"_date"))
+            var assignType = this.model.get("assign_type").replace("-","_") + "_date";
+            this.model.set("assign_time",moment.unix(this.model.get(assignType))
                     .format("hh:mm A"));
         },
         render: function(){

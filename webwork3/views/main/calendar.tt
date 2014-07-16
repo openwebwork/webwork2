@@ -15,7 +15,7 @@
   <div class="col-md-2">
     <div class="btn-group">
       <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-        Assign. Types <span class="caret"></span>
+        Date Types <span class="caret"></span>
       </button>
       <ul class="dropdown-menu show-date-types" role="menu">
         <li><div class="checkbox assign-open">
@@ -63,7 +63,9 @@
 <tr><td>Time Assigned:</td><td><%=assign_time%></td></tr>
 <tr><td>Users Assigned:</td><td><%=assigned_users.length%>/<%=total_users%></td></tr>
 <tr><td style="padding-right: 5px">Visible To Students:</td><td><%=(visible=="1")?"Yes":"No"%></td></tr>
-<tr><td>Reduced Scoring:</td><td><%=(enable_reduced_scoring=="1")?"Yes":"No"%></td></tr>
+<%if(enable_reduced_scoring) {%>
+  <tr><td>Reduced Scoring:</td><td><%=(enable_reduced_scoring=="1")?"Yes":"No"%></td></tr>
+<%}%>
 <tr><td colspan="2"><a href="#" class="goto-problem-set-button" data-setname="<%=set_id%>">Visit Problem Set</a></td></tr>
 </table>
 </script>
