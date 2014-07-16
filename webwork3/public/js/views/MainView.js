@@ -1,11 +1,7 @@
 define(['backbone'],function(Backbone){
 	var MainView = Backbone.View.extend({
 		initialize: function(options){
-			this.viewName = options.viewName;
-			this.settings = options.settings;
-			this.users = options.users;
-			this.problemSets = options.problemSets;
-			this.eventDispatcher = options.eventDispatcher;
+			_(this).extend(_(options).pick("id","viewName","settings","users","problemSets","eventDispatcher"))
 		},
 		setParentView: function(parentView){
 			this.parentView = parentView;
