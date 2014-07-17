@@ -17,19 +17,26 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSets = options.problemSets;
             this.users = options.users;
 
-            this.pageSize = this.settings.getSettingValue("ww3{pageSize}") || 10;
+            this.state = new Backbone.Model({filter_text: "", page_number: 0, 
+                    page_size: this.settings.getSettingValue("ww3{pageSize}") || 10});
 
+            this.state.on({
+                change: function(){self.eventDispatcher.trigger("save-state");},
+                "change:filter_text": function () {
+                    self.filterProblemSets();
+                }
+            });
 
             this.tableSetup();
 
 
             this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
                     classes: "problem-set-manager-table",
-                    paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
+                    paginator: {page_size: this.state.get("page_size"), button_class: "btn btn-default", 
+                                    row_class: "btn-group"}});
 
             this.problemSetTable.on("page-changed",function(num){
-                self.currentPage = num;
-                self.eventDispatcher.trigger("save-state");
+                self.state.set("page_number",num);
                 self.isReducedScoringEnabled();
             })
 
@@ -49,15 +56,18 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
         },
         events: {
             "click .add-problem-set-button": "addProblemSet",
-            'keyup input.filter-text' : 'filterProblemSets',
+            //'keyup input.filter-text' : 'filterProblemSets',
             'click button.clear-filter-button': 'clearFilterText',
             "click a.show-rows": "showRows"
         },
         getState: function () {
-            return {pageNum: this.currentPage};
+            console.log(this.state.attributes);
+            return this.state.attributes;
         },
-        setState: function (state) {
-            this.currentPage = state ? parseInt(state.pageNum) : 0;
+        setState: function (_state) {
+            if(_state){
+                this.state.set(_state);
+            }
             return this;
         },
         hideShowReducedScoring: function(model){
@@ -71,15 +81,19 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             //this.$(".set-id a").truncate({width: 120});
         },
         render: function () {
-            this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}");
             this.$el.html($("#problem-set-manager-template").html());
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
+            this.showRows(this.state.get("page_size"));
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
-            this.showRows(this.pageSize);
+            this.problemSetTable.filter(this.state.get("filter_text"));
+            this.problemSetTable.gotoPage(this.state.get("page_number"));
             MainView.prototype.render.apply(this);
+            this.stickit(this.state,this.bindings);
             return this;
         },
+        bindings: { ".filter-text": "filter_text"},
+
         isReducedScoringEnabled: function (){
             // hide reduced credit items when not enabled. 
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
@@ -115,17 +129,17 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             }
         },  
         showRows: function(evt){
-            this.pageSize = _.isNumber(evt) ? evt : $(evt.target).data("num");
+            this.state.set("page_size", _.isNumber(evt) ? evt : $(evt.target).data("num"));
             this.$(".show-rows i").addClass("not-visible");
             if(_.isString(evt) || _.isNumber(evt)){
                 this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
             } else {
                 $(evt.target).children("i").removeClass("not-visible");
             }
-            if(this.pageSize < 0) {
+            if(this.state.get("page_size") < 0) {
                 this.problemSetTable.set({num_rows: this.problemSets.length});
             } else {
-                this.problemSetTable.set({num_rows: this.pageSize});
+                this.problemSetTable.set({num_rows: this.state.get("page_size")});
             }
             this.isReducedScoringEnabled();
             //this.$(".set-id a").truncate({width: 120});
@@ -136,14 +150,16 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 self[key] = opts[key];
             });
         },
-        filterProblemSets: function (evt) {
-            this.problemSetTable.filter($(evt.target).val()).render();
+        filterProblemSets: function () {
+            this.state.set("page_number",0);
+            this.problemSetTable.filter(this.state.get("filter_text")).render();
             this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
         },
         clearFilterText: function () {
-            $("input.filter-text").val("");
+            this.state.set("filter_text","");
+            /*$("input.filter-text").val("");
             this.problemSetTable.filter("").render();
-            this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
+            this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");*/
         },
         tableSetup: function () {
             var self = this;

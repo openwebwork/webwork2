@@ -239,6 +239,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 		},
 		refreshTable: function (){
 			_(this.rowViews).each(function(row){row.refresh();});
+			return this;
 		},
 		getRowCount: function () {
 			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
