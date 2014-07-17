@@ -142,14 +142,29 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
         },
         showHideAssigns: function(model){
-            _(_(model.changed).keys()).each(function(key){
-                var type = key.split(/_date/)[0].replace("_","-");
-                if(model.changed[key]){
-                    $(".assign.assign-"+type).removeClass("hidden");
+            // define the mapping between fields in the model and assignment classes. 
+            var obj = {
+                reduced_scoring_date: "assign-reduced-scoring",
+                due_date: "assign-due",
+                open_date: "assign-open",
+                answer_date: "assign-answer"
+            }
+            var keys;
+            if(_(model.changed).chain().keys().contains("first_day").value()){
+                return;
+            }
+            if(_.isEqual(model.changed,{})){
+               keys = ["answer_date","open_date","reduced_scoring_date","due_date"]; 
+            } else {
+               keys = _(model.changed).chain().keys().without("view","first_day").value();
+            }
+            _(keys).each(function(key){
+                if(model.get(key)){
+                    $(".assign." + obj[key]).removeClass("hidden");
                 } else {
-                    $(".assign.assign-"+type).addClass("hidden");
+                    $(".assign."+obj[key]).addClass("hidden");
                 }
-            })
+            });
         },
         setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
             var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
