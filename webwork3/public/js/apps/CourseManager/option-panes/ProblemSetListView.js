@@ -24,9 +24,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             this.settings = options.settings;
 
             this.problemSets.on("add remove sort",this.render);
-            console.log(this.problemSets.pluck("set_id"));
-            console.log(this.problemSets.pluck("enable_reduced_scoring"));
-            console.log(this.problemSets.pluck("visible"));
         },
         render: function ()
         {
@@ -84,10 +81,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                     accept: ".problem",
                     tolerance: "pointer",
                     drop: function( evt, ui ) { 
-                        console.log("Adding a Problem to HW set " + $(evt.target).data("setname"));
-                        console.log($(ui.draggable).data("path"));
                         var source = $(ui.draggable).data("source");
-                        console.log(source);
                         var set = self.problemSets.findWhere({set_id: $(evt.target).data("setname")})
                         var prob = self.mainView.views[source].problemList
                                             .findWhere({source_file: $(ui.draggable).data("path")});
