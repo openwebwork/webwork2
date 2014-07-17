@@ -56,7 +56,6 @@ define(['backbone','underscore','views/MainView'],
             this.eventDispatcher.trigger("save-state");
 		},
         setState: function(state){
-        	console.log("in TabbedMainView.setState");
             if(state){
                 this.currentViewName =  state.subview || this.viewNames[0];
             }
@@ -67,7 +66,6 @@ define(['backbone','underscore','views/MainView'],
             return this;
         },
         getState: function(){
-        	console.log("in TabbedMainView.getState");
         	var state = {subview: this.currentViewName};
             if(this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].getState)){
                 _.extend(state,this.views[this.currentViewName].getState());
