@@ -21,8 +21,12 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             this.setViewTemplate = $("#set-view-template").html();
             this.problemSets = options.problemSets; 
             this.users = options.users; 
+            this.settings = options.settings;
 
             this.problemSets.on("add remove sort",this.render);
+            console.log(this.problemSets.pluck("set_id"));
+            console.log(this.problemSets.pluck("enable_reduced_scoring"));
+            console.log(this.problemSets.pluck("visible"));
         },
         render: function ()
         {
@@ -36,17 +40,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             this.problemSets.each(function (_model) {
                 ul.append((new ProblemSetView({model: _model, template: self.setViewTemplate,
                         numUsers: self.users.length, problemSets: self.problemSets,
-                        eventDispatcher: self.mainView.eventDispatcher})).render().el);
+                        eventDispatcher: self.mainView.eventDispatcher,
+                        settings: self.settings})).render().el);
             });
-/*            if(ul.width()>this.$el.width()){
-                this.$(".sidepane-problem-set").each(function(i,v){
-                    var setNameSize = $(v).children(".set-name").width();
-                    var numUsersSize = $(v).children(".num-users").width();
-                    if(setNameSize+numUsersSize>self.$el.width()){
-                        $(v).children(".set-name").truncate({width: self.$el.width()-numUsersSize-25});
-                    }
-                })
-            } */
 
            // move the HTML below to the template file.
             if (this.problemSets.size() === 0 ) {
@@ -62,35 +58,6 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
         },
         setMainView: function(view){
             SidePane.prototype.setMainView.call(this,view);  // Call  SidePane.setMainView();
-           /* this.$(".problem-set").draggable({disabled: true}).droppable({disabled: true});
-            if(view instanceof AssignmentCalendar){
-                this.$(".problem-set").draggable({ 
-                    disabled: false,  
-                    revert: true, 
-                    scroll: false, 
-                    helper: "clone",
-                    appendTo: "body",
-                    cursorAt: {left: 10, top: 10}
-                });
-            } 
-            if(view instanceof LibraryBrowser){
-                this.$(".problem-set").droppable({
-                    disabled: false,
-                    hoverClass: "btn-info",
-                    accept: ".problem",
-                    tolerance: "pointer",
-                    drop: function( evt, ui ) { 
-                        console.log("Adding a Problem to HW set " + $(evt.target).data("setname"));
-                        console.log($(ui.draggable).data("path"));
-                        var source = $(ui.draggable).data("source");
-                        console.log(source);
-                        var set = self.problemSets.findWhere({set_id: $(evt.target).data("setname")})
-                        var prob = self.views.libraryBrowser.views[source].problemList
-                                            .findWhere({source_file: $(ui.draggable).data("path")});
-                        set.addProblem(prob);
-                    }
-                });
-            }*/
             return this;
         },
         setDragDrop: function(){
@@ -143,6 +110,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
             this.numUsers = options.numUsers;
             this.problemSets = options.problemSets;
             this.eventDispatcher = options.eventDispatcher;
+            this.settings = options.settings;
         },
         render: function(){
             this.$el.html(this.template);
@@ -157,15 +125,18 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                         + ";" + vals[1].length + ")"; }},  // prints the assigned users and the number of problems.
             ":el": { observe: ["enable_reduced_scoring","visible"],
                 update: function($el, vals, model, options) { 
-                    if(vals[0]==0){
-                        $el.removeClass("set-reduced-scoring");
-                    } else {
+                    if(vals[0]){
                         $el.addClass("set-reduced-scoring");
-                    }
-                    if(vals[1]==0){
-                        $el.removeClass("set-visible");
                     } else {
-                        $el.addClass("set-visible");
+                        $el.removeClass("set-reduced-scoring");
+                    }
+                    if(vals[1]){
+                        $el.addClass("set-visible").removeClass("set-not-visible");
+                    } else {
+                        $el.addClass("set-not-visible").removeClass("set-visible");
+                    }
+                    if(! this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")) {
+                        $el.removeClass("set-reduced-scoring");
                     }
                 }}
 
