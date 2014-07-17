@@ -30,6 +30,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSetTable.on("page-changed",function(num){
                 self.currentPage = num;
                 self.eventDispatcher.trigger("save-state");
+                self.isReducedScoringEnabled();
             })
 
 
@@ -67,7 +68,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             if(this.problemSetTable){
                 this.problemSetTable.refreshTable();
             }
-            this.$(".set-id a").truncate({width: 120});
+            //this.$(".set-id a").truncate({width: 120});
         },
         render: function () {
             this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}");
@@ -75,8 +76,6 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
             this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
             this.$el.append(this.problemSetTable.el);
             this.problemSets.trigger("hide-show-all-sets","hide");
-            //this.$(".set-id a").truncate({width: 120});
-            this.isReducedScoringEnabled();
             this.showRows(this.pageSize);
             MainView.prototype.render.apply(this);
             return this;
@@ -90,7 +89,7 @@ define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','
                 this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
                     .addClass("hidden");
             }
-            this.problemSetTable.setPageNumber(this.currentPage||0);
+            //this.problemSetTable.setPageNumber(this.currentPage||0);
             return this;
         },
         updateTable: function() {
