@@ -170,8 +170,8 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-        // this ensures that the rerender call only occurs once every 500 ms.  Importantly when the window is resized. 
-
+        // this ensures that the rerender call on resizing the window only occurs once every 500 ms.  
+        
         var renderMainPane = _.debounce(function(evt){ 
             self.currentView.render();
             if(self.currentSidePane && self.currentSidePane.sidePane){
@@ -179,11 +179,7 @@ var CourseManager = WebPage.extend({
             }
         },500);
 
-        $(window).on("beforeunload", function () {
-            if(self.session.logged_in!==0){ // if the user didn't just log out. 
-                return self.messageTemplate({type: "leave_page"});
-            }
-         }).on("resize",renderMainPane);
+        $(window).on("resize",renderMainPane);
 
         // Add a link to WW2 via the main menu.
 
