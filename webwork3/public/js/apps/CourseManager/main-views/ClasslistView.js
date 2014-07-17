@@ -31,7 +31,8 @@ var ClasslistView = MainView.extend({
 	    	self.state.set("page_number",num);
 	    })
 
-	    this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10});
+	    this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10}
+	    	,{silent: true}); // silent: true, so it doesn't trigger a save right away
         this.state.on({
             change: function(){self.eventDispatcher.trigger("save-state");},
             "change:filter_text": function () {

@@ -171,7 +171,7 @@ var CourseManager = WebPage.extend({
         }});
 
         // this ensures that the rerender call on resizing the window only occurs once every 500 ms.  
-        
+
         var renderMainPane = _.debounce(function(evt){ 
             self.currentView.render();
             if(self.currentSidePane && self.currentSidePane.sidePane){
@@ -295,14 +295,40 @@ var CourseManager = WebPage.extend({
         this.changeSidePane(defaultSidepane);
         this.saveState();
     },
+    /***
+     * 
+     * The following save the current state of the interface
+     *
+     *  {
+     *      main_view: "name_of_current_view",
+     *      main_view_state: {} an object returned from the view
+     *      sidebar: "name_of_sidebar",
+     *      sidebar_state: {}  an object returned from the sidebar
+     *  }
+     *
+     *  The entire state corresponds to an array of states as described above and an index on 
+     *  the current state that you are in.  
+     *
+     *  Travelling forward and backwards in the array is how the forward/back works. 
+     *
+     ***/
+
+
     saveState: function() {
         if(!this.currentView){
             return;
         }
-        var state = this.currentView.getState();
-        state.view = this.currentView.viewName;
+        
+        var state = {
+            main_view: this.currentView.name, 
+            main_view_state: this.currentView.getState(),
+            sidebar: this.currentView.optionPane.name,
+            sidebar_state: this.currentView.optionPane.getState()
+        };
+
+        
         if(typeof(this.appState.index) !== "undefined"){
-            if(this.appState.states[this.appState.index].view===state.view){
+            if(this.appState.states[this.appState.index].main_view === state.main_view){
                 this.appState.states[this.appState.index] = state;
             } else {
                 this.appState.index++;

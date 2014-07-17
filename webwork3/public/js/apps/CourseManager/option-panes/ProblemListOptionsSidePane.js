@@ -1,6 +1,7 @@
 define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config){
 	var ProblemListOptionsSidePane = SidePane.extend({
     initialize: function(options){
+        SidePane.prototype.initialize.apply(this,[options]);
         this.problemSets = options.problemSets; 
         this.settings = options.settings;
         var LibraryOptions = Backbone.Model.extend({});

@@ -1,6 +1,7 @@
 define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config){
 	var AllMesagesSidePane = SidePane.extend({
 		initialize: function(options){
+			SidePane.prototype.initialize.apply(this,[options]);
 			this.messages = options.messages;
 			_(this).bindAll("render");
 		},

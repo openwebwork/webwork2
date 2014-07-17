@@ -15,6 +15,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
     var ProblemSetListView = SidePane.extend({
 
     	initialize: function (options){
+            SidePane.prototype.initialize.apply(this,[options]);
     		_.bindAll(this,"render");
             var self = this;
 

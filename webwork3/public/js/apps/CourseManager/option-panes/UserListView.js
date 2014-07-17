@@ -4,6 +4,7 @@ define(['backbone','views/SidePane','stickit'], function(Backbone,SidePane){
 	var UserListView = SidePane.extend({
 		template: _.template($("#user-template").html()),
 		initialize: function(options) {
+			SidePane.prototype.initialize.apply(this,[options]);
 			this.users = options.users;
 		},
 		rowTemplate: $("#user-list-row-template"),
