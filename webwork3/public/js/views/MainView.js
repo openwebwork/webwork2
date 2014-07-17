@@ -6,6 +6,7 @@ define(['backbone'],function(Backbone){
 			this.users = options.users;
 			this.problemSets = options.problemSets;
 			this.eventDispatcher = options.eventDispatcher;
+			this.state = new Backbone.Model({});
 		},
 		setParentView: function(parentView){
 			this.parentView = parentView;
@@ -34,13 +35,17 @@ define(['backbone'],function(Backbone){
 		getHelpTemplate: function () { 
 			return $("#help-sidepane-template").html();
 		},
-		// the follow should be overriden in each view to set the current state of the view.
-		setState: function(state){
-			return this;
-		},
-		getState: function(){
-			console.error("The getState() function must be overriden");
-		},
+		// the follow can be overridden if the state is not stored in a Backbone Model called this.state.
+		getState: function () {
+            return this.state.attributes;
+        },
+        setState: function (_state) {
+            if(_state){
+                this.state.set(_state);
+            }
+            return this;
+        },
+
 		additionalEvents: {},
 		originalEvents: {},
 		events : function() {
