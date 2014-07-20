@@ -8,14 +8,14 @@
 *
 */
 
-define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config','views/SidePane',
+define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config','views/Sidebar',
            'main-views/AssignmentCalendar', 'views/ModalView','main-views/LibraryBrowser'], 
-function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalendar,ModalView,LibraryBrowser){
+function(Backbone, _,ProblemSetList,ProblemSet,config,Sidebar,AssignmentCalendar,ModalView,LibraryBrowser){
 	
-    var ProblemSetListView = SidePane.extend({
+    var ProblemSetListView = Sidebar.extend({
 
     	initialize: function (options){
-            SidePane.prototype.initialize.apply(this,[options]);
+            Sidebar.prototype.initialize.apply(this,[options]);
     		_.bindAll(this,"render");
             var self = this;
 
@@ -29,7 +29,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
         render: function ()
         {
             var self = this;
-            if(!this.mainView){ // if this isn't a sidepane 
+            if(!this.mainView){ // if this isn't a sidebar 
                 return;
             }
             this.$el.html($("#problem-set-list-template").html());
@@ -47,23 +47,19 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                 $("#set-list:nth-child(1)").after("<div id='zeroShown'>0 of 0 Sets Shown</div>")
             }
             this.setDragDrop();
-            SidePane.prototype.render.apply(this);
+            Sidebar.prototype.render.apply(this);
             return this;
         },
         events: {"click a.sort-problem-set-option": "resort"},
         resort: function(evt){
             this.problemSets.setSortField($(evt.target).data("sortfield")).sort();
         },
-        setMainView: function(view){
-            SidePane.prototype.setMainView.call(this,view);  // Call  SidePane.setMainView();
-            return this;
-        },
         setDragDrop: function(){
             var self = this;
 
-            // The following allows a problem set (on the sidepane to be dragged onto the Calendar)
+            // The following allows a problem set (on the sidebar to be dragged onto the Calendar)
             if(this.mainView instanceof AssignmentCalendar){
-                this.$(".sidepane-problem-set").draggable({ 
+                this.$(".sidebar-problem-set").draggable({ 
                     disabled: false,  
                     revert: true, 
                     scroll: false,
@@ -76,7 +72,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
                 this.$(".problem-set.ui-draggable").draggable("destroy");
             }
             if(this.mainView instanceof LibraryBrowser){
-                this.$(".sidepane-problem-set").droppable({
+                this.$(".sidebar-problem-set").droppable({
                     disabled: false,
                     hoverClass: "btn-info",
                     accept: ".problem",
@@ -97,7 +93,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,SidePane,AssignmentCalenda
 
     var ProblemSetView = Backbone.View.extend({
         tagName: "button",
-        className: "btn btn-default sidepane-problem-set",
+        className: "btn btn-default sidebar-problem-set",
         initialize: function(options) {
             _.bindAll(this,"render","showProblemSet");
             this.$el.addClass("btn btn-default btn-sm");

@@ -1,12 +1,13 @@
 define(['backbone'],function(Backbone){
 	var MainView = Backbone.View.extend({
 		initialize: function(options){
-			this.viewName = options.viewName;
-			this.settings = options.settings;
-			this.users = options.users;
-			this.problemSets = options.problemSets;
-			this.eventDispatcher = options.eventDispatcher;
+			var self = this;
+			_(this).extend(_(options).pick("settings","users","problemSets","eventDispatcher","info"));
 			this.state = new Backbone.Model({});
+			this.state.on("change",function(){
+				console.log("state changing");
+				self.eventDispatcher.trigger("save-state");
+			})
 		},
 		setParentView: function(parentView){
 			this.parentView = parentView;
@@ -15,30 +16,35 @@ define(['backbone'],function(Backbone){
 			var self = this;
 			this.$el.prepend($("#open-close-view-template").html());
 			// since this won't happen automatically in Backbone's delegate events, call the click event directly. 
-			this.$(".open-close-view").off("click").on("click", function(){
-				self.eventDispatcher.trigger("open-close-sidepane");
-			})
+			this.$(".open-view-button").off("click").on("click", function(){
+				self.eventDispatcher.trigger("open-sidebar");
+			});
+			this.$(".close-view-button").off("click").on("click", function(){
+				self.eventDispatcher.trigger("close-sidebar");
+			});
 			return this;
 		},
-		setSidePane: function(pane){
-			if(typeof(pane)==="undefined"){
+		setSidebar: function(_sidebar){
+			if(typeof(_sidebar)==="undefined"){
 				return;
 			}
 			var self = this;
-			this.optionPane = pane;
+			this.optionPane = _sidebar;
 			this.stopListening(this.optionPane);
-			_(this.sidepaneEvents).chain().keys().each(function(event){
-				self.listenTo(self.optionPane,event,self.sidepaneEvents[event]);
+			_(this.sidebarEvents).chain().keys().each(function(event){
+				self.listenTo(self.optionPane,event,self.sidebarEvents[event]);
 			});
 		},
 		// returns a defualt help template. This should be overriden to return a more helpful template. 
 		getHelpTemplate: function () { 
-			return $("#help-sidepane-template").html();
+			return $("#help-sidebar-template").html();
 		},
 		// the follow can be overridden if the state is not stored in a Backbone Model called this.state.
 		getState: function () {
+			console.log(this.state.attributes);
             return this.state.attributes;
         },
+		// the follow can be overridden if the state is not stored in a Backbone Model called this.state.
         setState: function (_state) {
             if(_state){
                 this.state.set(_state);

@@ -15,13 +15,9 @@ var ProblemSetsManager = MainView.extend({
                     'hideShowReducedScoring');  // include all functions that need the this object
         var self = this;
 
-        this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10});
-        this.state.on({
-            change: function(){self.eventDispatcher.trigger("save-state");},
-            "change:filter_text": function () {
-                self.filterUsers();
-            }
-        });
+        this.state.set({filter_text: "", page_number: 0, 
+                page_size: this.settings.getSettingValue("ww3{pageSize}") || 10},{silent: true})
+            .on("change:filter_text", function () {self.filterUsers();});
 
         this.tableSetup();
 
@@ -67,6 +63,7 @@ var ProblemSetsManager = MainView.extend({
         //this.$(".set-id a").truncate({width: 120});
     },
     render: function () {
+        console.log(this.state.attributes);
         this.$el.html($("#problem-set-manager-template").html());
         this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
         this.showRows(this.state.get("page_size"));
@@ -114,21 +111,27 @@ var ProblemSetsManager = MainView.extend({
             
         }
     },  
-    showRows: function(evt){
-        this.state.set("page_size", _.isNumber(evt) ? evt : $(evt.target).data("num"));
-        this.$(".show-rows i").addClass("not-visible");
-        if(_.isString(evt) || _.isNumber(evt)){
-            this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
+    showRows: function(arg){
+        var pageSize;
+        if(_.isNumber(arg)){
+            pageSize = arg
+        } else if(_.isString(arg)){
+            pageSize = parseInt(arg);
         } else {
-            $(evt.target).children("i").removeClass("not-visible");
+            pageSize = $(arg.target).data("num");
         }
+        this.state.set("page_size", pageSize);
+        this.$(".show-rows i").addClass("not-visible");
+        this.$(".show-rows[data-num='"+pageSize+"'] i").removeClass("not-visible")
+
+        //$(evt.target).children("i").removeClass("not-visible");
+
         if(this.state.get("page_size") < 0) {
             this.problemSetTable.set({num_rows: this.problemSets.length});
         } else {
             this.problemSetTable.set({num_rows: this.state.get("page_size")});
         }
         this.isReducedScoringEnabled();
-        //this.$(".set-id a").truncate({width: 120});
     },
     set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
         var self = this;
@@ -141,6 +144,7 @@ var ProblemSetsManager = MainView.extend({
         if(this.state.get("filter_text").length>0){
             this.state.set("page_number",0);
         }
+        // this next statement doesn't set the problem sets. 
         this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
     },
     clearFilterText: function () {

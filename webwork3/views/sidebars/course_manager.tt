@@ -18,7 +18,7 @@
 
 
 <script type="text/template" id="problem-set-list-template">
-  <div class="problem-set-list-sidepane">
+  <div class="problem-set-list-sidebar">
         <div class="btn-group">
           <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
             Sort By <span class="caret"></span>

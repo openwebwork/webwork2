@@ -40,7 +40,7 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
         getHelpTemplate: function(){
             return $("#library-help-template").html();
         },
-        sidepaneEvents: {
+        sidebarEvents: {
             "change-display-mode": function(evt) { this.views[this.currentViewName].changeDisplayMode(evt) },
             "change-target-set": function(opt) { 
                 this.views[this.currentViewName].setTargetSet(_.isString(opt)? opt: $(opt.target).val());

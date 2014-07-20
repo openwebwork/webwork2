@@ -65,7 +65,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
         originalEvents: {
 
         }, 
-        sidepaneEvents: {
+        sidebarEvents: {
             "change-display-mode": function(evt) { 
                 if(_.isFunction(this.views[this.currentViewName].changeDisplayMode)){
                     this.views[this.currentViewName].changeDisplayMode(evt);

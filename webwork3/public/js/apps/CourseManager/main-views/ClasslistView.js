@@ -33,14 +33,7 @@ var ClasslistView = MainView.extend({
 
 	    this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10}
 	    	,{silent: true}); // silent: true, so it doesn't trigger a save right away
-        this.state.on({
-            change: function(){self.eventDispatcher.trigger("save-state");},
-            "change:filter_text": function () {
-                self.filterUsers();
-            }
-        });
-
-	    
+        this.state.on("change:filter_text", function () {self.filterUsers();});
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });

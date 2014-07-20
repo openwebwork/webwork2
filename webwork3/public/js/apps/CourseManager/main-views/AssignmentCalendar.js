@@ -22,14 +22,9 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		_.bindAll(this,"render","renderDay","update","showHideAssigns");
 
             this.problemSets.on({sync: this.render});
-            
-            this.model = new DateTypeModel();
-            this.model.on({
-                "change:reduced_scoring_date change:answer_date change:due_date change:open_date": this.showHideAssigns,
-                "change": function () {
-                    self.eventDispatcher.trigger("save-state");
-                }
-            })
+            this.state.on("change:reduced_scoring_date change:answer_date change:due_date change:open_date",
+                    this.showHideAssigns);
+        this.state.on("change",this.render);
             return this;
     	},
     	render: function (){
@@ -67,9 +62,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 });
             });
 
-            this.model.set("first_day",this.first_day.format("YYYY-MM-DD"));
-            this.stickit();
-            this.showHideAssigns(this.model);
+            this.stickit(this.state,this.bindings);
+            this.showHideAssigns(this.state);
             return this;
     	},
         bindings: {
@@ -92,32 +86,17 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         getHelpTemplate: function (){
             return $("#calendar-help-template").html();
         },
-        // perhaps this should go in the MainView class
-        set: function (options) {
-            CalendarView.prototype.set.call(this,options);
-            return this;
-        },
-        getState: function () {
-            return this.model.attributes;
-        },
-        setState: function(_state){
-            if(_state){
-                this.model.set(_state);
-                this.set({first_day: _state.first_day});
-            }
-            return this;
-        },
         update:  function (){
             var self = this;
             // The following allows each day in the calendar to allow a problem set to be dropped on. 
                  
             this.$(".calendar-day").droppable({
                 hoverClass: "highlight-day",
-                accept: ".sidepane-problem-set, .assign",
+                accept: ".sidebar-problem-set, .assign",
                 greedy: true,
                 drop: function(ev,ui) {
                     ev.stopPropagation();
-                    if($(ui.draggable).hasClass("sidepane-problem-set")){
+                    if($(ui.draggable).hasClass("sidebar-problem-set")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"all");
                     } else if ($(ui.draggable).hasClass("assign-open")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"open_date");
@@ -198,16 +177,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             ".assign-calendar-name": "set_id",
             ".assign-info": "set_id"  // this seems to be a hack to get stickit to add the handler. 
         }
-    });
-
-    var DateTypeModel = Backbone.Model.extend({
-        defaults: {
-                answer_date: true,
-                due_date: true,
-                reduced_scoring_date: true,
-                open_date: true,
-                first_day: ""
-            }
     });
 
 	return AssignmentCalendar;

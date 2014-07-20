@@ -2,7 +2,7 @@
 <script src="/webwork3/js/apps/require-config.js"></script>
 
 <!-- The follow script sets up the MainViewList, which contains all of the main views for the application.
-   This allows to load a configuration file instead of hard coding each of the views and sidepanes. -->
+   This allows to load a configuration file instead of hard coding each of the views and sidebars. -->
 <script type="text/javascript">
 var main_view_paths = [%main_view_paths%];
 main_view_paths.unshift("module","backbone");
@@ -22,23 +22,26 @@ main_view_paths.unshift("module","backbone");
   <div class="row" id="main-row">  
     <div class="col-md-9" id="main-view">
     </div>
-    <div class="col-md-3 well" id="sidepane-container">
-      <div class="dropdown sidepane-menu">
+    <div class="col-md-3 well" id="sidebar-container">
+      <div class="dropdown sidebar-menu">
         <h3 class="dropdown-toggle" data-toggle="dropdown">
-          <span class="sidepane-name"></span>
+          <span class="sidebar-name"></span>
           <span class="caret"></span>
         </h3>
         <ul class="dropdown-menu" role="menu">
         </ul>
     </div>
-    <div class="sidepane-content">
+    <div class="sidebar-content">
     </div>
     </div>  
   </div>
 </div>
 
 <script type="text/template" id="open-close-view-template">
-<span class="pull-right"><button class="btn btn-default btn-sm open-close-view"><i class="fa fa-chevron-right"></i></button></span>
+<span class="pull-right">
+  <button class="btn btn-default btn-sm open-view-button hidden"><i class="fa fa-chevron-left"></i></button>
+  <button class="btn btn-default btn-sm close-view-button"><i class="fa fa-chevron-right"></i></button>
+  </span>
 </script>
 
 
@@ -256,7 +259,7 @@ at the bottom of the screen and click "Save Changes". </p>
 </script>
 
 
-<script type="text/template" id="help-sidepane-template">
+<script type="text/template" id="help-sidebar-template">
 <p class="bg-info">This is where the help goes. </p>
 </script>
 
@@ -280,4 +283,4 @@ at the bottom of the screen and click "Save Changes". </p>
 
 [% INCLUDE main/student_progress.tt %]
 
-[% INCLUDE sidepanes/course_manager.tt %]
+[% INCLUDE sidebars/course_manager.tt %]
