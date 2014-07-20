@@ -16,7 +16,7 @@ var CourseManager = WebPage.extend({
 	    var self = this;
 
         var s = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
-        console.log(s.states[0].main_view_state);
+        console.log(s.states[s.index].main_view_state);
 
         this.render();
         this.session = (module.config().session)? module.config().session : {};

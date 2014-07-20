@@ -40,7 +40,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         if(this.appState && typeof(this.appState)!=="undefined" && 
                 this.appState.states && typeof(this.appState.states)!=="undefined" && 
                 typeof(this.appState.index)!=="undefined"){
-            this.changeView(this.appState.states[this.appState.index].view,
+            this.changeView(this.appState.states[this.appState.index].main_view,
                 this.appState.states[this.appState.index].main_view_state);            
         } else {
             this.appState = {index: void 0, states: []};
@@ -133,10 +133,12 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         this.openSidebar();
     },
     changeView: function (_id,state){ 
-        if(this.currentView){
+        if(_id){
             // destroy any popovers on the view
             $('[data-toggle="popover"]').popover("destroy")
-            this.currentView.remove();
+            if(this.currentView){
+                this.currentView.remove();
+            }
             this.currentView = this.mainViewList.getView(_id);
         } else {
             this.currentView = this.mainViewList.views[0];
@@ -207,11 +209,11 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     },
     goBack: function () {
         this.appState.index--;
-        this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
+        this.changeView(this.appState.states[this.appState.index].main_view,this.appState.states[this.appState.index].main_view_state);            
     },
     goForward: function () {
         this.appState.index++;
-        this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
+        this.changeView(this.appState.states[this.appState.index].main_view,this.appState.states[this.appState.index].main_view_state);            
     },
     logout: function(){
         var self = this;

@@ -31,11 +31,13 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
 
             options.tabs = ".set-details-tab";
             options.tabContent = ".set-details-tab-content";
-            this.model = new Backbone.Model({set_id: ""});
-            this.model.on("change:set_id", function() {
-                self.changeProblemSet(self.model.get("set_id"));
+            TabbedMainView.prototype.initialize.call(this,options);
+            this.state.set({set_id:""},{silent: true});
+            this.state.on("change:set_id", function() {
+                console.log(self.state.attributes);
+                self.changeProblemSet(self.state.get("set_id"));
             })
-            TabbedMainView.prototype.initialize.call(this,options)
+
         },
         bindings: {
             ".problem-set-name": {observe: "set_id", selectOptions: {
@@ -47,7 +49,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
         },
         render: function(){
             this.$el.html($("#HW-detail-template").html());
-            this.stickit();
+            this.stickit(this.state,this.bindings);
             TabbedMainView.prototype.render.call(this);            
         },
         getHelpTemplate: function () {
@@ -79,7 +81,7 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
                     this.views[this.currentViewName].toggleShowPath(evt);
             }},
         },
-        getState: function () {
+/*        getState: function () {
             var state = TabbedMainView.prototype.getState.call(this);
             if(this.model.get("set_id")){
                 state.set_id = this.model.get("set_id");
@@ -94,18 +96,18 @@ define(['backbone','underscore','views/TabbedMainView','views/ProblemSetView','m
             }
             TabbedMainView.prototype.setState.call(this,_state);
             return this;
-        },
+        }, */
         changeProblemSet: function (setName)
         {
             var self = this;
-            this.model.set("set_id",setName);
+            this.state.set("set_id",setName);
         	this.problemSet = this.problemSets.findWhere({set_id: setName});
             _(this.views).chain().keys().each(function(view){
                 self.views[view].setProblemSet(self.problemSet);
             });
             this.views.problemsView.currentPage = 0; // make sure that the problems start on a new page. 
-            this.changeView("propertiesView");
             this.loadProblems();
+            this.views[this.state.get("subview")].render();
             return this;
         },
         loadProblems: function () {

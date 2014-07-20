@@ -32,13 +32,13 @@ define(['backbone','underscore','views/MainView'],
 			} else {
 				this.$el.append(tabContent);
 			}
-			if(typeof(this.currentViewName)==="undefined"){
-				this.currentViewName = _(this.views).keys()[0];
+			if(this.state.get("subview")===""){
+				this.state.set("subview",_(this.views).keys()[0]);
 			}
 
-            var tabNum = _(this.views).keys().indexOf(this.currentViewName);
+            var tabNum = _(this.views).keys().indexOf(this.state.get("subview"));
             this.$((this.tabs || "" ) + " a:eq("+ tabNum+")").tab("show");
-            this.views[this.currentViewName].render();
+            this.views[this.state.get("subview")].render();
 
 
 			MainView.prototype.render.call(this);
@@ -47,8 +47,8 @@ define(['backbone','underscore','views/MainView'],
 	          	"show.bs.tab a[data-toggle='tab']": "changeView",
 		},
       	changeView: function(options){
-            this.currentViewName = _.isString(options)? options: $(options.target).data("view");
-			this.views[this.currentViewName].setElement(this.$("#tab"+this.viewNames.indexOf(this.currentViewName)))
+            var subviewName = _.isString(options)? options: $(options.target).data("view");
+			this.views[subviewName].setElement(this.$("#tab"+this.viewNames.indexOf(subviewName)))
 				.render();
 			if(_.isString(options)){ // was triggered other than a tab change.
 				this.$(".set-details-tab a:first").tab("show");
@@ -56,9 +56,9 @@ define(['backbone','underscore','views/MainView'],
 			if(this.optionPane && this.optionPane.id==="help"){
 				this.eventDispatcher.trigger("show-help");
 			}
-            this.eventDispatcher.trigger("save-state");
+			this.state.set("subview",subviewName);
 		},
-        setState: function(state){
+/*        setState: function(state){
             if(state){
                 this.currentViewName =  state.subview || this.viewNames[0];
             }
@@ -75,7 +75,7 @@ define(['backbone','underscore','views/MainView'],
             }
 
             return state;
-        },
+        }, */
 
 
 	});
