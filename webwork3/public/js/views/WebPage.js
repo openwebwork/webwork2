@@ -167,7 +167,6 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
      *
      ***/
     saveState: function() {
-        console.log("saving the state");
         if(!this.currentView){
             return;
         }
@@ -179,9 +178,6 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             sidebar_state: this.currentSidebar? this.currentSidebar.getState() : {}
         };
 
-        console.log(state);
-
-        
         if(typeof(this.appState.index) !== "undefined"){
             if(this.appState.states[this.appState.index].main_view === state.main_view){
                 this.appState.states[this.appState.index] = state;

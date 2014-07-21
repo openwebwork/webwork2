@@ -9,7 +9,7 @@ define(['backbone', 'underscore','views/library-views/LibraryView','models/Probl
 function(Backbone, _,LibraryView,ProblemList,config){
     var LibrarySearchView = LibraryView.extend({
         className: "lib-browser",
-        viewName: "Search",
+        tabName: "Search",
     	initialize: function (options){
             this.constructor.__super__.initialize.apply(this,[options]);
             _.bindAll(this,"search","showResults","checkForEnter");

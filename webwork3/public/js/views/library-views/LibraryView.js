@@ -4,39 +4,46 @@
 *  
 */ 
 
-define(['backbone', 'underscore','config', 'views/library-views/LibraryProblemsView','models/ProblemList'], 
-function(Backbone, _,config, LibraryProblemsView, ProblemList){
-    var LibraryView = Backbone.View.extend({
+define(['backbone', 'underscore','config','views/TabView','views/library-views/LibraryProblemsView','models/ProblemList'], 
+function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
+    var LibraryView = TabView.extend({
         className: "library-view",
     	initialize: function (options){
     		var self = this;
             _.bindAll(this,'addProblem','loadProblems','showProblems','changeDisplayMode');
-            this.allProblemSets = options.problemSets;
-            this.libBrowserType = options.libBrowserType;
-            this.settings = options.settings;
-            this.eventDispatcher = options.eventDispatcher;
-            this.messageTemplate = options.messageTemplate;
-            this.rendered = false;
+            _(this).extend(_(options).pick("problemSets","libBrowserType","settings","eventDispatcher","messageTemplate"));
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this, messageTemplate: this.messageTemplate,
-                 allProblemSets: this.allProblemSets, settings: this.settings}); 
-            this.libraryProblemsView.on("page-changed",function(num){
-                self.eventDispatcher.trigger("save-state");
-            }) 
+                     allProblemSets: this.allProblemSets, settings: this.settings})
+                .on("page-changed",function(num){
+                    self.tabState.set("page_num",num);
+                });
+            TabView.prototype.initialize.apply(this,[options]);
+            this.tabState.set({library_path: "", page_num: 1, rendered: false},{silent: true});
     	},
     	events: {   
             "change .target-set": "resetDisplayModes"
         }, 
     	render: function (){
-            var self = this;
+            var self = this, i;
             var modes = this.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
+
+            // load the values stored in this.tabState;
+
+
     		this.$el.html(_.template($("#library-view-template").html(), 
-                    {displayModes: modes, sets: this.allProblemSets.pluck("set_id")}));
+                    {displayModes: modes, sets: this.problemSets.pluck("set_id")}));
             if(this.libraryTreeView){
-                this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
+ 
+                var _fields = {};
+                for(i=0;i<4;i++){
+                    _fields["level"+i] = this.tabState.get("library_path")[i];
+                }
+                this.libraryTreeView.fields.set(_fields,{silent: true});
                 this.libraryTreeView.fields.on("change",function(model){
-                    self.eventDispatcher.trigger("save-state");
+                    self.tabState.set("library_path",model.values());
                 });
+                this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
             }
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
             if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size() >0){
@@ -46,15 +53,9 @@ function(Backbone, _,config, LibraryProblemsView, ProblemList){
             }
             return this;
     	},
-        getState: function (){
-            return {fields: this.libraryTreeView ? this.libraryTreeView.fields.attributes : "", 
-                rendered: this.rendered, pageNum: this.libraryProblemsView.currentPage};
-        },
-        setState: function(_state){
-            if(_state && _state.fields){
-                this.libraryTreeView.fields.set(_state.fields);
-                this.rendered = _state.rendered;
-                this.libraryProblemsView.currentPage = _state.pageNum;
+        set: function(options){
+            if(options.tabState){
+                this.tabState = options.tabState;
             }
         },
         changeDisplayMode:function(evt){

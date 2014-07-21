@@ -3,7 +3,7 @@ define(['backbone', 'underscore','views/library-views/LibraryView','views/librar
 function(Backbone, _,LibraryView,LibraryTreeView, ProblemList,config){
     var LibraryTextbookView = LibraryView.extend({
         className: "lib-browser",
-        viewName: "Textbooks",
+        tabName: "Textbooks",
     	initialize: function (options){
             LibraryView.prototype.initialize.apply(this,[options]);
             this.libraryTreeView = new LibraryTreeView({type: options.libBrowserType,allProblemSets: options.problemSets,

@@ -28,14 +28,12 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
                 search :  new LibrarySearchView(_.extend(_.clone(viewOptions),{libBrowserType: "search"})),
             };
             options.views.setDefinition.viewName = "Set Defn. files";
-            TabbedMainView.prototype.initialize.call(this,options)
-    	},
-        events: {"show.bs.tab a[data-toggle='tab']": "changeView"},
-    	render: function (){
-            this.$el.empty();
-        	//this.$el.html(_.template($("#library-browser-template").html()));
-            TabbedMainView.prototype.render.call(this);            
-            return this;
+            TabbedMainView.prototype.initialize.call(this,options);
+
+            // make sure each of the subviews has the this.state variable
+            _(options.views).chain().keys().each(function(subview){
+                options.views[subview].set({state: self.state});
+            })
     	},
         getHelpTemplate: function(){
             return $("#library-help-template").html();

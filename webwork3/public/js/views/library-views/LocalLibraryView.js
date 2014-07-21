@@ -9,7 +9,7 @@ define(['backbone', 'underscore','views/library-views/LibraryView','models/Probl
 function(Backbone, _, LibraryView,ProblemList,config,Problem){
     var LocalLibraryView = LibraryView.extend({
         className: "lib-browser",
-        viewName: "Local Problems",
+        tabName: "Local Problems",
     	initialize: function (options){
             //_.bindAll(this,"showResults","showProblems","buildMenu");
             _(this).bindAll("buildMenu");
