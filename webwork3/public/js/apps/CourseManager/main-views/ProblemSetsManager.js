@@ -17,7 +17,7 @@ var ProblemSetsManager = MainView.extend({
 
         this.state.set({filter_text: "", page_number: 0, 
                 page_size: this.settings.getSettingValue("ww3{pageSize}") || 10},{silent: true})
-            .on("change:filter_text", function () {self.filterUsers();});
+            .on("change:filter_text", function () {self.filterProblemSets();});
 
         this.tableSetup();
 
