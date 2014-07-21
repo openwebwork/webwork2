@@ -27,7 +27,7 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
                 setDefinition : new LocalLibraryView(_.extend(_.clone(viewOptions),{libBrowserType: "setDefinition"})),
                 search :  new LibrarySearchView(_.extend(_.clone(viewOptions),{libBrowserType: "search"})),
             };
-            options.views.setDefinition.viewName = "Set Defn. files";
+            options.views.setDefinition.tabName = "Set Defn. files";
             TabbedMainView.prototype.initialize.call(this,options);
 
             // make sure each of the subviews has the this.state variable

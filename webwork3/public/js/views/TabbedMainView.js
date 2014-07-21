@@ -9,7 +9,7 @@ define(['backbone','underscore','views/MainView'],
 	var TabbedMainView = MainView.extend({
 		initialize: function (options){
 			_(this).bindAll("changeTab");
-			_(this).extend(_(options).pick("views","tabs","tabContent"));
+			_(this).extend(_(options).pick("views","tabs","tabContent","template"));
 			this.tabNames = _(options.views).keys();
 			MainView.prototype.initialize.call(this,options);
 
@@ -18,8 +18,13 @@ define(['backbone','underscore','views/MainView'],
 			this.state.set({tab_name: "", tab_states: _tabStates},{silent: true});
 		},
 		render: function(){
+			console.log("in TabbedMainView.render");
 			var self = this;
-			this.$el.empty();
+			if(this.template){
+				this.$el.html(this.template);
+			} else {
+				this.$el.empty();
+			}
 			// Build up the bootstrap tab system. 
 			var tabs = $("<ul>").addClass("nav nav-tabs").attr("role","tablist");
 			var tabContent = $("<div>").addClass("tab-content");
@@ -48,7 +53,7 @@ define(['backbone','underscore','views/MainView'],
 
             var tabNum = _(this.views).keys().indexOf(this.state.get("tab_name"));
             this.$((this.tabs || "" ) + " a:eq("+ tabNum+")").tab("show");
-            this.views[this.state.get("tab_name")].render();
+            //this.views[this.state.get("tab_name")].render();
 
 
 			MainView.prototype.render.call(this);
@@ -76,9 +81,11 @@ define(['backbone','underscore','views/MainView'],
 		setState: function(_state){
 			var self = this;
 			MainView.prototype.setState.apply(this,[_state]);
-			_(_state.tab_states).chain().keys().each(function(st){
-				self.views[st].tabState.set(_state.tab_states[st],{silent: true});
-			});
+			if(_state){
+				_(_state.tab_states).chain().keys().each(function(st){
+					self.views[st].tabState.set(_state.tab_states[st],{silent: true});
+				});
+			}
 			return this;
 		}
 

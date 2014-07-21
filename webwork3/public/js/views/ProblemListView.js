@@ -21,18 +21,15 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
 
         initialize: function(options){
             var self = this;
-            _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");
-            
-            this.settings  = options.settings;
+            _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");  
+            _(this).extend(_(options).pick("settings","problemSet","messageTemplate"));
             this.problems = options.problems ? options.problems : new ProblemList();
             this.problemSet = options.problemSet; 
             this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
             this.pageSize = 10; // this should be a parameter.
             this.pageRange = _.range(this.pageSize);
-            this.currentPage = 1;
-            this.messageTemplate = options.messageTemplate;
+            this.currentPage = 0;
             _.extend(this.viewAttrs,{type: options.type});
-            _.extend(this,Backbone.Events);
         },
         set: function(opts){
             this.problems = opts.problems; 
@@ -46,7 +43,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             // start with showing 10 (pageSize) problems
             this.maxProblemIndex = (this.problems.length > this.pageSize)?
                     this.pageSize : this.problems.length;
-
+            this.pageRange = _.range(this.maxProblemIndex);
             this.problemViews = [];
             return this;
         },
@@ -203,7 +200,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         setProblemSet: function(_set) {
             this.model = _set; 
             if(this.model){
-                this.set({problems: this.model.get("problems")});                
+                this.set({problemSet: this.model, problems: this.model.get("problems")});                
             }
             return this;
         },
