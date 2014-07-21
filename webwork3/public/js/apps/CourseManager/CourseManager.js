@@ -15,9 +15,6 @@ var CourseManager = WebPage.extend({
         //    "changeView","changeSidebar","loadData","checkData","saveState","logout","setDates");  // include all functions that need the this object
 	    var self = this;
 
-        var s = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
-        console.log(s.states[s.index].main_view_state);
-
         this.render();
         this.session = (module.config().session)? module.config().session : {};
         this.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;

@@ -33,9 +33,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     */
 
     postInitialize: function () {
-        // load the previous state of the app or set it to the Calendar (should be the first main_view)
+
+        // load the previous state of the app or set it to the first main_view
         this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
-        console.log(this.appState);
 
         if(this.appState && typeof(this.appState)!=="undefined" && 
                 this.appState.states && typeof(this.appState.states)!=="undefined" && 

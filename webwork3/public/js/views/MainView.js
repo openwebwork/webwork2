@@ -13,7 +13,6 @@ define(['backbone'],function(Backbone){
 			this.parentView = parentView;
 		},
 		render: function() {
-			console.log("in MainView.render");
 			var self = this;
 			this.$el.prepend($("#open-close-view-template").html());
 			// since this won't happen automatically in Backbone's delegate events, call the click event directly. 

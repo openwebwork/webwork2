@@ -86,7 +86,6 @@ var ProblemSetsManager = MainView.extend({
             this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
                 .addClass("hidden");
         }
-        //this.problemSetTable.setPageNumber(this.currentPage||0);
         return this;
     },
     updateTable: function() {
