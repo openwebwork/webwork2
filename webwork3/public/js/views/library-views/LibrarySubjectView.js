@@ -20,15 +20,15 @@ function(Backbone, _,LibraryView,LibraryTreeView){
                 }
             });        
     	},
-    	loadProblems: function(_dirs){
+    	loadProblems: function(){
             if(this.libraryTreeView.fields.validate()){
                 console.log("Error!");
                 return;
             } 
     		path = "";
-    		if (_dirs[0]) {path += "/subjects/" + _dirs[0];}
-	        if (_dirs[1]) {path += "/chapters/" + _dirs[1];}
-            if (_dirs[2]) {path += "/sections/" + _dirs[2];}
+    		if (this.libraryTreeView.fields.get("level0")) {path += "/subjects/" + this.libraryTreeView.fields.get("level0");}
+	        if (this.libraryTreeView.fields.get("level1")) {path += "/chapters/" + this.libraryTreeView.fields.get("level1");}
+            if (this.libraryTreeView.fields.get("level2")) {path += "/sections/" + this.libraryTreeView.fields.get("level2");}
     		LibraryView.prototype.loadProblems.apply(this,[path]);
     	}
 

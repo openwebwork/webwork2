@@ -11,10 +11,12 @@ define(['backbone', 'views/ProblemListView','config'],
                 ProblemListView.prototype.initialize.apply(this,[options]); 
     		},
             render: function(){
-                  ProblemListView.prototype.render.apply(this);
-                  this.libraryView.libraryProblemsView.on("page-changed",this.highlightCommonProblems);
-                  this.highlightCommonProblems();
-                  this.$(".prob-list-container").height($(window).height()-((this.maxPages==1) ? 200: 250))
+                this.libraryView.libraryProblemsView.set({current_page: this.libraryView.tabState.get("page_num")});
+                ProblemListView.prototype.render.apply(this);
+                //this.libraryView.libraryProblemsView.set({current_page: this.libraryView.tabState.get("page_num")});
+                this.libraryView.libraryProblemsView.on("page-changed",this.highlightCommonProblems);
+                this.highlightCommonProblems();
+                this.$(".prob-list-container").height($(window).height()-((this.maxPages==1) ? 200: 250))
             },
             highlightCommonProblems: function () {
                 var self = this;

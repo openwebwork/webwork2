@@ -32,11 +32,16 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             _.extend(this.viewAttrs,{type: options.type});
         },
         set: function(opts){
-            this.problems = opts.problems; 
-            this.problems.off("remove").on("remove",this.deleteProblem);
-            if(opts.problemSet){
-                this.problemSet = opts.problemSet;
-                this.problems.problemSet = opts.problemSet;
+            if(opts.problems){
+                this.problems = opts.problems; 
+                this.problems.off("remove").on("remove",this.deleteProblem);
+                if(opts.problemSet){
+                    this.problemSet = opts.problemSet;
+                    this.problems.problemSet = opts.problemSet;
+                }
+            }
+            if(opts.current_page){
+                this.currentPage = opts.current_page || 0;
             }
             this.viewAttrs.type = opts.type || "set";
             this.viewAttrs.displayMode = this.settings.getSettingValue("pg{options}{displayMode}");
@@ -190,14 +195,6 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 if(this.undoStack.length==0){
                     this.$(".undo-delete-button").attr("disabled","disabled");
                 }
-            }
-        },
-        getState: function () {
-            return {pageNum: this.currentPage};
-        },
-        setState: function (_state){
-            if(_state && _state.pageNum){
-                this.currentPage = _state.pageNum;
             }
         },
         setProblemSet: function(_set) {

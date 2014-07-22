@@ -31,7 +31,6 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
     		this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.problemSets.pluck("set_id")}));
             if(this.libraryTreeView){
- 
                 var _fields = {};
                 for(i=0;i<4;i++){
                     _fields["level"+i] = this.tabState.get("library_path")[i];
@@ -43,6 +42,9 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
                 this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
             }
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
+            if(this.tabState.get("rendered")){
+                this.loadProblems();
+            }
             return this;
     	},
         set: function(options){
@@ -71,10 +73,11 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
             problemSet.addProblem(model);
         },
         showProblems: function () {
-            this.rendered = true;
+            this.tabState.set("rendered",true);
             this.$(".load-library-button").button("reset");  
             this.libraryProblemsView.set({problems: this.problemList, type:this.libBrowserType})
-                    .updatePaginator().gotoPage(this.libraryProblemsView.currentPage).highlightCommonProblems();
+                    //.updatePaginator().highlightCommonProblems();
+                    .updatePaginator().gotoPage(this.tabState.get("page_num")).highlightCommonProblems();
         },
     	loadProblems: function (_path){   
             this.$(".load-library-button").button("loading"); 	
