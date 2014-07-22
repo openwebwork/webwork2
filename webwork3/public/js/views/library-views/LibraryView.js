@@ -18,7 +18,7 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
                     self.tabState.set("page_num",num);
                 });
             TabView.prototype.initialize.apply(this,[options]);
-            this.tabState.set({library_path: "", page_num: 0, rendered: false},{silent: true});
+            this.tabState.set({library_path: "", page_num: 0, rendered: false, page_size: 10},{silent: true});
     	},
     	events: {   
             "change .target-set": "resetDisplayModes"
@@ -78,8 +78,7 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
         },
     	loadProblems: function (_path){   
             this.$(".load-library-button").button("loading"); 	
-			this.problemList = new ProblemList();
-            _(this.problemList).extend({path: _path, type: this.libBrowserType})
+            _(this.problemList = new ProblemList()).extend({path: _path, type: this.libBrowserType})
             this.problemList.fetch({success: this.showProblems});
     	}
     });

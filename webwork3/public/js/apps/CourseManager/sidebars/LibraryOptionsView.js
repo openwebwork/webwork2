@@ -8,7 +8,7 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
             add: this.AddProblemSet, sync: function(_set){               
                 self.$(".select-target-option").val(_set.get("set_id"));
                 self.state.set({new_problem_set: "",target_set: _set.get("set_id")});
-                self.trigger("change-target-set",self.model.get("target_set"));
+                self.trigger("change-target-set",self.state.get("target_set"));
                 self.render();
             },
             remove: function(_set){

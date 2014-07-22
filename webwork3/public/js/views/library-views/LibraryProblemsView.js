@@ -2,6 +2,7 @@ define(['backbone', 'views/ProblemListView','config'],
     function(Backbone, ProblemListView,config) {
     	var LibraryProblemsView = ProblemListView.extend({
     		initialize: function (options) {
+                _(this).bindAll("highlightCommonProblems");
 	            this.viewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true, 
                     problem_seed: 1, showRefreshTool: true, showViewTool: true, showHideTool: true, 
                     deletable: false, draggable: true, show_undo: false};
@@ -11,6 +12,7 @@ define(['backbone', 'views/ProblemListView','config'],
     		},
             render: function(){
                   ProblemListView.prototype.render.apply(this);
+                  this.libraryView.libraryProblemsView.on("page-changed",this.highlightCommonProblems);
                   this.highlightCommonProblems();
                   this.$(".prob-list-container").height($(window).height()-((this.maxPages==1) ? 200: 250))
             },
@@ -21,7 +23,8 @@ define(['backbone', 'views/ProblemListView','config'],
                         .problems.pluck("source_file");
                     var pathsInLibrary = this.problems.pluck("source_file");
                     var pathsInCommon = _.intersection(pathsInLibrary,pathsInTargetSet);
-                    _(self.problemViews).each(function(pv,i){
+                    _(this.pageRange).each(function(i){
+                        var pv = self.problemViews[i];
                         if(pv.rendered){
                             pv.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
                         } else {
