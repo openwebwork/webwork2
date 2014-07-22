@@ -49,6 +49,9 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         render: function() {
             this.$el.html(_.template($("#problem-list-template").html(),{show_undo: this.viewAttrs.show_undo}));
+            _(this.problemViews).each(function(pv){
+                pv.rendered = false;  
+            })
             this.updatePaginator().gotoPage(this.currentPage || 0);
             if(this.libraryView && this.libraryView.libProblemListView){
                 this.libraryView.libraryProblemsView.highlightCommonProblems();

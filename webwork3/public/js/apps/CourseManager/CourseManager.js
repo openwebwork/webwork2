@@ -11,8 +11,7 @@ var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
-	    //_.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","stopActing",
-        //    "changeView","changeSidebar","loadData","checkData","saveState","logout","setDates");  // include all functions that need the this object
+        _(this).bindAll("showProblemSetDetails","changeView","stopActing","logout");
 	    var self = this;
 
         this.render();
@@ -188,8 +187,8 @@ var CourseManager = WebPage.extend({
     },
     showProblemSetDetails: function(setName){
         if (this.objectDragging) return;
-        this.changeView("Problem Set Details",{});        
-        this.mainViewList.getViewByName("Problem Set Details").changeProblemSet(setName).render();
+        this.changeView("problemSetDetails",{});        
+        this.mainViewList.getView("problemSetDetails").changeProblemSet(setName).render();
     },
 
     stopActing: function (){

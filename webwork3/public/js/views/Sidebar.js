@@ -1,9 +1,8 @@
 define(['backbone'],function(Backbone){
 	var Sidebar = Backbone.View.extend({
 		initialize: function(options){
-			this.state = new Backbone.Model({});
+			this.state = new Backbone.Model({is_open: false});
 			this.info = options.info;
-			this.info.isOpen = false;
 		},
 		setMainView: function(view){
 			this.mainView = view;

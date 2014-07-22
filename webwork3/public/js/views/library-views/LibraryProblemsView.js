@@ -5,7 +5,7 @@ define(['backbone', 'views/ProblemListView','config'],
 	            this.viewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true, 
                     problem_seed: 1, showRefreshTool: true, showViewTool: true, showHideTool: true, 
                     deletable: false, draggable: true, show_undo: false};
-                _.extend(this,_(options).pick("allProblemSets","libraryView","settings","type"));
+                _.extend(this,_(options).pick("problemSets","libraryView","settings","type"));
                 this.libraryView = options.libraryView;
                 ProblemListView.prototype.initialize.apply(this,[options]); 
     		},
@@ -17,7 +17,7 @@ define(['backbone', 'views/ProblemListView','config'],
             highlightCommonProblems: function () {
                 var self = this;
                 if(this.libraryView.targetSet){ 
-                    var pathsInTargetSet = this.libraryView.allProblemSets.findWhere({set_id: this.libraryView.targetSet})
+                    var pathsInTargetSet = this.libraryView.problemSets.findWhere({set_id: this.libraryView.targetSet})
                         .problems.pluck("source_file");
                     var pathsInLibrary = this.problems.pluck("source_file");
                     var pathsInCommon = _.intersection(pathsInLibrary,pathsInTargetSet);

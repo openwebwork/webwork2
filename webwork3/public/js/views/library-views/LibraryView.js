@@ -13,7 +13,7 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
             _.bindAll(this,'addProblem','loadProblems','showProblems','changeDisplayMode');
             _(this).extend(_(options).pick("problemSets","libBrowserType","settings","eventDispatcher","messageTemplate"));
             this.libraryProblemsView = new LibraryProblemsView({libraryView: this, messageTemplate: this.messageTemplate,
-                     allProblemSets: this.allProblemSets, settings: this.settings})
+                     problemSets: this.problemSets, settings: this.settings})
                 .on("page-changed",function(num){
                     self.tabState.set("page_num",num);
                 });
@@ -27,9 +27,6 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
             var self = this, i;
             var modes = this.settings.getSettingValue("pg{displayModes}").slice(0); // slice makes a copy of the array.
             modes.push("None");
-
-            // load the values stored in this.tabState;
-
 
     		this.$el.html(_.template($("#library-view-template").html(), 
                     {displayModes: modes, sets: this.problemSets.pluck("set_id")}));
@@ -46,11 +43,6 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
                 this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
             }
             this.libraryProblemsView.setElement(this.$(".problems-container")).render();
-            if (this.libraryProblemsView.problems && this.libraryProblemsView.problems.size() >0){
-                this.libraryProblemsView.renderProblems();
-            } else if(this.libraryProblemsView.problems && this.rendered){
-                this.libraryTreeView.selectLibrary();
-            }
             return this;
     	},
         set: function(options){
@@ -70,7 +62,7 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
             this.libraryProblemsView.highlightCommonProblems();
         },
         addProblem: function(model){
-            var problemSet = this.allProblemSets.findWhere({set_id: this.targetSet});
+            var problemSet = this.problemSets.findWhere({set_id: this.targetSet});
             if(!problemSet){
                 this.$(".target-set").css("background-color","rgba(255,0,0,0.4)")
                     .popover({placement: "bottom",content: this.messageTemplate({type:"select_target_set"})}).popover("show");
@@ -86,11 +78,8 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
         },
     	loadProblems: function (_path){   
             this.$(".load-library-button").button("loading"); 	
-    		console.log(_path);
-            var self = this;
 			this.problemList = new ProblemList();
-            this.problemList.path=_path;
-            this.problemList.type = this.libBrowserType;
+            _(this.problemList).extend({path: _path, type: this.libBrowserType})
             this.problemList.fetch({success: this.showProblems});
     	}
     });

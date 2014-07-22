@@ -39,20 +39,20 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
             return $("#library-help-template").html();
         },
         sidebarEvents: {
-            "change-display-mode": function(evt) { this.views[this.currentViewName].changeDisplayMode(evt) },
+            "change-display-mode": function(evt) { this.views[this.state.get("tab_name")].changeDisplayMode(evt) },
             "change-target-set": function(opt) { 
-                this.views[this.currentViewName].setTargetSet(_.isString(opt)? opt: $(opt.target).val());
+                this.views[this.state.get("tab_name")].setTargetSet(_.isString(opt)? opt: $(opt.target).val());
             }, 
             "add-problem-set": function(_set_name){
                 var _set = new ProblemSet({set_id: _set_name},this.dateSettings);
                 _set.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
-               this.views[this.currentViewName].allProblemSets.add(_set); 
+               this.views[this.state.get("tab_name")].allProblemSets.add(_set); 
             },
             "show-hide-tags": function(show_hide_button) {
-                this.views[this.currentViewName].libraryProblemsView.toggleTags(show_hide_button);
+                this.views[this.state.get("tab_name")].libraryProblemsView.toggleTags(show_hide_button);
             },
             "show-hide-path": function(button) {
-                this.views[this.currentViewName].libraryProblemsView.toggleShowPath(button);
+                this.views[this.state.get("tab_name")].libraryProblemsView.toggleShowPath(button);
             },
             "goto-problem-set": function(_setName){
                 this.eventDispatcher.trigger("show-problem-set",_setName);
