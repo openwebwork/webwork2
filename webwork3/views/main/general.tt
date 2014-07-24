@@ -50,6 +50,7 @@
 <i class="<%=icon%>"></i>
 <%}%>
 <%=name%></a></li>
+<li><a href="#" onclick="return false;" class="link" data-id="<%=id%>"><%=name%></a></li>
 </script>
 
 

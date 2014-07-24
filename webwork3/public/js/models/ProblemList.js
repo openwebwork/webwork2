@@ -26,11 +26,29 @@ define(['backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                 return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.setName 
                 + "/problems"; 
             } else if (this.type=="subjects") { // this is a set of problems from a library. 
-                return config.urlPrefix + "Library" + this.path + "/problems";
+                var _path = "";
+                if (this.path[0]) {_path += "/subjects/" + this.path[0];}
+                if (this.path[1]) {_path += "/chapters/" + this.path[1];}
+                if (this.path[2]) {_path += "/sections/" + this.path[2];}
+                return config.urlPrefix + "Library" + _path + "/problems";
             }  else if (this.type=="directories"){
-                return config.urlPrefix+"Library/directories/"+this.path +"?course_id=" + config.courseSettings.course_id;
+                return config.urlPrefix+"Library/directories/"+this.path.join("/") +"?course_id=" + config.courseSettings.course_id;
             }  else if (this.type==="textbooks"){
-                return config.urlPrefix+this.path; 
+                var title = this.path[0].split(" - ")[0];
+                var author = this.path[0].split(" - ")[1];
+                var _path = "textbooks/author/" + author + "/title/" + title;
+                var j;
+                var sNames = ["chapter","section"]; 
+                for(j=1;j<this.path.length;j++){
+                    if(this.path[j]){
+                        _path += "/" + sNames[j-1] + "/" + this.path[j];
+                    }
+                }
+                _path += "/problems";
+
+                console.log(_path)
+
+                return config.urlPrefix+_path; 
             } else if (this.type=="localLibrary"){
                 return config.urlPrefix+"courses/" +config.courseSettings.course_id + "/Library/local";
             } else if (this.type=="setDefinition"){

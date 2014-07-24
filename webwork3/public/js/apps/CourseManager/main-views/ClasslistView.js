@@ -16,10 +16,7 @@ var ClasslistView = MainView.extend({
 		_.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
 		var self = this;
     	
-		// this.users is a UserList 
-
-    	this.users = options.users;
-    	this.problemSets = options.problemSets;
+		
 		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.tableSetup();
@@ -31,10 +28,12 @@ var ClasslistView = MainView.extend({
                             paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
 
 	    this.userTable.on("page-changed",function(num){
-	    	self.currentPage = num;
-	    	self.eventDispatcher.trigger("save-state");
+	    	self.state.set("page_number",num);
 	    })
 
+	    this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10}
+	    	,{silent: true}); // silent: true, so it doesn't trigger a save right away
+        this.state.on("change:filter_text", function () {self.filterUsers();});
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
@@ -69,31 +68,23 @@ var ClasslistView = MainView.extend({
     render: function(){
     	this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}"); 
 	    this.$el.html($("#classlist-manager-template").html());
-	    /*this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
-                            paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});*/
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
         this.$(".users-table-container").append(this.userTable.el);
-
         // set up some styling
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
-        this.clearFilterText();
+      
         this.showRows(this.pageSize);
-        this.userTable.setPageNumber(this.currentPage||0);
+        this.filterUsers();
+        this.userTable.gotoPage(this.state.get("page_number"));
         MainView.prototype.render.apply(this);
+        this.stickit(this.state,this.bindings);
 	    return this;
     },  
-    getState: function () {
-        return {pageNum: this.currentPage};
-    },
-    setState: function (state) {
-    	this.currentPage = state ? parseInt(state.pageNum) : 0;
-    	return this;
-    },
+    bindings: { ".filter-text": "filter_text"},
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
     	_user.save();
-
     },
     changeUser: function(_user){
     	if(_(_user.changingAttributes).has("user_added") || _.keys(_user.changed)[0]==="action"){
@@ -144,30 +135,6 @@ var ClasslistView = MainView.extend({
 	    "change th[data-class-name='select-user'] input": "selectAll",
 	    "click a.show-rows": "showRows"
 	},
-	/*takeAction: function(evt){
-		var user = this.users.findWhere({user_id: $(evt.target).closest("tr").children("td:nth-child(3)").text()});
-		switch($(evt.target).val()){
-			case "1": // delete user
-				this.deleteUsers([user]);
-				break;
-			case "2": // act as user
-				user.trigger("act_as_user",user);
-				//location.href = "/webwork2/" + config.courseSettings.course_id + "/?effectiveUser=" + 
-				//	user.get("user_id");
-				break;
-			case "3": // change password
-				alert("Change the password not yet supported");
-				break;
-			case "4": // Email user
-				alert("Email the user not supported yet.");
-				break;
-			case "5": // student progress
-				location.href = "/webwork2/" + config.courseSettings.course_id + "/instructor/progress/student/"
-					+ user.get("user_id");
-				break;
-		}
-		$(evt.target).val(0); // reset the select pulldown
-	}, */
 	addStudentsByFile: function () {
 		this.addStudentFileView.openDialog();
 	},
@@ -191,15 +158,16 @@ var ClasslistView = MainView.extend({
         	templateOptions: {url: _url, filename: _filename, mimetype: _mimetype}});
         modalView.render().open();
 	},	
-	filterUsers: function (evt) {
-		this.userTable.filter($(evt.target).val()).render();
-	    this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
-	},
-	clearFilterText: function () {
-		$("input.filter-text").val("");
-		this.userTable.filter("").render();
-		this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
-	},
+	filterUsers: function () {
+        this.userTable.filter(this.state.get("filter_text")).render();
+        if(this.state.get("filter_text").length>0){
+            this.state.set("page_number",0);
+        }
+        this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
+    },
+    clearFilterText: function () {
+        this.state.set("filter_text","");
+    },
 	selectAll: function (evt) {
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
 	},
@@ -223,14 +191,6 @@ var ClasslistView = MainView.extend({
                 stickit_options: {update: function($el, val, model, options) {
                     $el.html($("#checkbox-template").html());
                 }}, colHeader: "<input type='checkbox'></input>"},
-                /*{name: "Action", key: "action", "classname": "user-action",
-            		stickit_options: { selectOptions: { 
-            			collection: [{value: 0, label: "Select"},
-            				{value: 1, label: "Delete User"},
-            				{value: 2, label: "Act As User"},
-            				{value: 3, label: "Change Password"},
-            				{value: 4, label: "Email User"},
-            				{value: 5, label: "Student Progress"}]}}},*/
                 {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
                 {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
                 	value: function(model){

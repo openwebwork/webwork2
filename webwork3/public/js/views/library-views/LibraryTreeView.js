@@ -36,25 +36,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
 
             } else {
                 this.$(".throbber").remove();
-                if(this.libraryLevel[0].length===0){
-                    this.libraryLevel[0] = _(this.libraryTree.get("tree")).map(function(subj) {
-                        return {label: subj.name, value: subj.name};
-                    });                    
-                }
-
                 this.$(".library-tree-left").html($("#library-select-template").html());
-
-                for(i=1;i<4;i++){
-                    if(this.libraryLevel[i].length>0){
-                        this.$(".library-level-"+i).removeClass("hidden");
-                    }
-                }
-                if(_(this.fields.values()).without("").length>0){
-                    branch = this.branchOfTree(_(this.fields.attributes).values()); 
-                    // the following needs to go into a template.
-                    this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
-                }
-                this.stickit(this.fields, this.bindings);
                 this.changeLibrary(this.fields);
             }
             
@@ -62,29 +44,35 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
     	},
         events: { "click .load-library-button": "selectLibrary"},
         changeLibrary: function(model){
-            if(typeof(this.libraryTree.get("tree"))==="undefined" || _(model.changed).keys().length===0){
+            if(typeof(this.libraryTree.get("tree"))==="undefined" || _(model).keys().length===0){
                 return;
             }
-            var keys = _(model.changed).keys();
+            var keys = _(model.attributes).chain().values().compact().value();
             var last = keys[keys.length-1];
-            var level = parseInt(last.split("level")[1]);
+            var level = keys.length;
             var i;
 
 
-            for(i=0;i<level+1;i++){
-                var arr = _(model.attributes).values().slice(0,i+1);
-                var branch = this.branchOfTree(arr);
+            var numFiles, arr, branch = this.branchOfTree([]);
+            this.libraryLevel[0] = branch.branches;
+            for(i=0;i<level;i++){
+                arr = _(model.attributes).values().slice(0,i+1);
+                branch = this.branchOfTree(arr);
                 this.libraryLevel[i+1] = branch.branches;
+                numFiles = branch.num_files;
             }
 
             for(i=0;i<4;i++){
                 this.$(".library-level-"+i).addClass("hidden");  // hide all levels. 
             }
-            for(i=0;i<level+2;i++){
+            for(i=0;i<level+1;i++){
                 this.$(".library-level-"+i).removeClass("hidden");  // show needed levels.
             }
+            if(this.libraryLevel[level].length==0){
+                this.$(".library-level-"+level).addClass("hidden");
+            }
 
-            this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
+            this.$(".load-library-button").text(numFiles? "Load " + numFiles + " problems": "Load");  
             this.unstickit(this.fields);
             this.stickit(this.fields,this.bindings);
         },
@@ -97,10 +85,12 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
             this.parent.dispatcher.trigger("load-problems",this.libraryTree.header+path.join("/"));
         },
         branchOfTree: function(path){
+            var tree = this.libraryTree.get("tree");
             if(_(path).compact().length ===0){
-                return {branches: []};
+                return {branches: _(tree).pluck("name"), 
+                        num_files: _(tree).reduce(function(i,j) { return i+parseInt(j.num_files);},0) };
             }
-            var currentBranch=this.libraryTree.get("tree");
+            var currentBranch=tree;
             var numFiles;
             _(path).each(function(p,i){
                 if(p.length>0){
