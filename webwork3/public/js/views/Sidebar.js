@@ -1,8 +1,12 @@
 define(['backbone'],function(Backbone){
 	var Sidebar = Backbone.View.extend({
 		initialize: function(options){
+			var self = this;
+			_(this).extend(_(options).pick("eventDispatcher","info"));
 			this.state = new Backbone.Model({is_open: false});
-			this.info = options.info;
+			this.state.on("change",function(){
+				self.eventDispatcher.trigger("save-state");
+			});
 		},
 		setMainView: function(view){
 			this.mainView = view;

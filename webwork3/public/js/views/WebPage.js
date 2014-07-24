@@ -40,11 +40,15 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         if(this.appState && typeof(this.appState)!=="undefined" && 
                 this.appState.states && typeof(this.appState.states)!=="undefined" && 
                 typeof(this.appState.index)!=="undefined"){
-            this.changeView(this.appState.states[this.appState.index].main_view,
-                this.appState.states[this.appState.index].main_view_state);            
+
+            var currentState = this.appState.states[this.appState.index];
+            this.changeView(currentState.main_view,currentState.main_view_state);
+            this.changeSidebar(currentState.sidebar,currentState.sidebar_state);
         } else {
             this.appState = {index: void 0, states: []};
-            this.changeView("calendar",{});    
+            this.changeView(this.mainViewList.views[0].info.id,{});
+            var _sidebarID = this.mainViewList.getDefaultSidebar(this.currentView.info.id);
+            this.changeSidebar(_sidebarID);
         }
         
     },
@@ -71,7 +75,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.changeSidebar(this.mainViewList.getOtherSidebars(this.currentView.info.id)[0]);
             return;
         }
-        this.currentSidebar.info.isOpen = true;
+        this.currentSidebar.state.set("is_open",true);
         this.currentSidebar.$el.parent().removeClass("hidden");
         this.currentView.$el.parent().removeClass("col-md-12").addClass("col-md-9");
         this.$(".close-view-button").removeClass("hidden");
@@ -80,7 +84,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     },
     closeSidebar: function (){
         if(this.currentSidebar){
-            this.currentSidebar.info.isOpen = false;    
+            this.currentSidebar.state.set("is_open",false);    
         }
         $("#sidebar-container").addClass("hidden");
         $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
@@ -88,7 +92,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         this.$(".close-view-button").addClass("hidden");
 
     },
-    changeSidebar: function(arg){
+    changeSidebar: function(arg,_state){
         var id, self = this;
         if(this.currentSidebar){
             this.currentSidebar.remove();
@@ -109,6 +113,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         }
 
         this.currentSidebar = this.mainViewList.getSidebar(id);
+        if(_state){
+            this.currentSidebar.state.set(_state);
+        }
 
         if(this.currentSidebar){
             this.$(".sidebar-menu .sidebar-name").text(this.currentSidebar.info.name);
@@ -124,7 +131,10 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             var ul = this.$(".sidebar-menu .dropdown-menu").empty();
             _(this.mainViewList.getOtherSidebars(this.currentView.info.id)).each(function(_id){
                 ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
-            })
+            });
+            _(this.mainViewList.getCommonSidebars()).each(function(_id){
+                ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
+            });
 
 
 
@@ -146,7 +156,6 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         $("#main-view").html("<div class='main'></div>");
         
         this.currentView.setElement(this.$(".main")).setState(state).render();
-        this.changeSidebar(this.mainViewList.getDefaultSidebar(this.currentView.info.id));
         this.saveState();
     },
     /***

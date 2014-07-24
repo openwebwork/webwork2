@@ -13,6 +13,7 @@ define(main_view_paths,function(module,Backbone){
 	var sidebarClasses = Array.prototype.slice.call(arguments,module.config().main_views.main_views.length+2);
 	var mainViews = module.config().main_views.main_views;
 	var sidebars = module.config().main_views.sidebars;
+	var commonSidebars = module.config().main_views.common_sidebars;
 
 	/** the mainViewClasses and sidebarClasses are the actual Backbone.View objects (classes) for the main views and sidebars 
 	 * the mainViews and sidebars variables are arrays of objects in the file config.json
@@ -32,6 +33,7 @@ define(main_view_paths,function(module,Backbone){
 				_.extend(opts,options,{info: _(_sidebar).pick("name","id")});
 				return new sidebarClasses[i](opts); 
 			})
+			this.commonSidebars = commonSidebars;
 		},
 		getView: function(_id){
 			return _(this.views).find(function(v) { return v.info.id===_id});
@@ -46,6 +48,9 @@ define(main_view_paths,function(module,Backbone){
 		getOtherSidebars: function(_id){
 			var view = this.getView(_id);
 			return view ? view.info.other_sidebars : null;
+		},
+		getCommonSidebars: function () {
+			return this.commonSidebars;
 		}
 	});
 

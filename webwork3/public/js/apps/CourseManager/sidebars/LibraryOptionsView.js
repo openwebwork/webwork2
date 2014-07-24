@@ -19,7 +19,7 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
         this.settings = options.settings;
 
         this.state.set({display_option: this.settings.getSettingValue("pg{options}{displayMode}"),
-            target_set: "", new_problem_set: "", problemSets: this.problemSets},{silent: true});
+            target_set: "", new_problem_set: ""},{silent: true});
         this.state.validation = {
             new_problem_set: function(value, attr, computedState) {
                 if(_(computedState.problemSets.pluck("set_id")).contains(value)){

@@ -13,8 +13,6 @@ function(Backbone, _,LibraryView,ProblemList,config){
     	initialize: function (options){
             this.constructor.__super__.initialize.apply(this,[options]);
             _.bindAll(this,"search","showResults","checkForEnter");
-           /* this.libraryProblemsView = new LibraryProblemsView({type: "search", libraryView: this, 
-                                            allProblemSets: this.allProblemSets, settings: this.settings});*/
     	},
         events: function(){
             return _.extend({},LibraryView.prototype.events,{

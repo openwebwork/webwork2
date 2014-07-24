@@ -79,8 +79,9 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
                     //.updatePaginator().highlightCommonProblems();
                     .updatePaginator().gotoPage(this.tabState.get("page_num")).highlightCommonProblems();
         },
-    	loadProblems: function (_path){   
+    	loadProblems: function (){   
             this.$(".load-library-button").button("loading"); 	
+            var _path = this.libraryTreeView.fields.values();
             _(this.problemList = new ProblemList()).extend({path: _path, type: this.libBrowserType})
             this.problemList.fetch({success: this.showProblems});
     	}

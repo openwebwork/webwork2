@@ -16,17 +16,7 @@ function(Backbone, _,LibraryView,LibraryTreeView){
                         .popover("show");
                 }
             });
-        },
-    	loadProblems: function(_dirs){
-           if(this.libraryTreeView.fields.validate()){
-                console.log("Error!");
-                return;
-            } 
- 
-    		LibraryView.prototype.loadProblems.apply(this,[_dirs.join("/")]);
-    	}
-
-
+        }
     });
 
     return LibraryDirectoryView;

@@ -87,5 +87,6 @@
 		"path": "sidebars/AllMessagesSidebar",
 		"id": "allMessages"
 	}
-	]
+	],
+	"common_sidebars": ["help","allMessages"]
 }
