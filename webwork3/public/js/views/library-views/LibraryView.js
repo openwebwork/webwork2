@@ -37,6 +37,7 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
                 }
                 this.libraryTreeView.fields.set(_fields,{silent: true});
                 this.libraryTreeView.fields.on("change",function(model){
+                    self.libraryProblemsView.reset();
                     self.tabState.set("library_path",model.values());
                 });
                 this.libraryTreeView.setElement(this.$(".library-tree-container")).render();

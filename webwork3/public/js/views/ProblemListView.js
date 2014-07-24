@@ -79,7 +79,12 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
             this.updatePaginator();
             this.updateNumProblems();
-        }, 
+        },
+        /* Clear the problems and rerender */ 
+        reset: function (){
+            this.problemViews = [];
+            this.set({problems: new ProblemList()}).render();
+        },
         updateNumProblems: function () {
             if (this.problems.size()>0){
                 this.$(".num-problems").html(this.messageTemplate({type: "problems_shown", 

@@ -68,6 +68,9 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
             for(i=0;i<level+1;i++){
                 this.$(".library-level-"+i).removeClass("hidden");  // show needed levels.
             }
+            if(this.libraryLevel[level].length==0){
+                this.$(".library-level-"+level).addClass("hidden");
+            }
 
             this.$(".load-library-button").text(numFiles? "Load " + numFiles + " problems": "Load");  
             this.unstickit(this.fields);

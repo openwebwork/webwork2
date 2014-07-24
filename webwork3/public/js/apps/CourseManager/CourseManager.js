@@ -11,7 +11,7 @@ var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
-        _(this).bindAll("showProblemSetDetails","changeView","stopActing","logout");
+        _(this).bindAll("showProblemSetDetails","changeViewAndSidebar","stopActing","logout");
 	    var self = this;
 
         this.render();
@@ -137,7 +137,7 @@ var CourseManager = WebPage.extend({
         this.problemSets.on("change:due_date change:reduced_scoring_date change:open_date change:answer_date",this.setDates);
                 
         this.navigationBar.on({
-            "change-view": this.changeView,
+            "change-view": this.changeViewAndSidebar,
             "logout": this.logout,
             "stop-acting": this.stopActing,
             "show-help": function() { self.changeSidebar("Help")},
@@ -190,7 +190,10 @@ var CourseManager = WebPage.extend({
         this.changeView("problemSetDetails",{});        
         this.mainViewList.getView("problemSetDetails").changeProblemSet(setName).render();
     },
-
+    changeViewAndSidebar: function(_view){
+        this.changeView(_view);
+        this.changeSidebar(this.mainViewList.getDefaultSidebar(_view));
+    },
     stopActing: function (){
         var self = this;
         this.session.effectiveUser = this.session.user;
