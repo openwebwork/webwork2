@@ -34,10 +34,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         if(this.appState && typeof(this.appState)!=="undefined" && 
                 this.appState.states && typeof(this.appState.states)!=="undefined" && 
                 typeof(this.appState.index)!=="undefined"){
-
-            var currentState = this.appState.states[this.appState.index];
-            this.changeView(currentState.main_view,currentState.main_view_state);
-            this.changeSidebar(currentState.sidebar,currentState.sidebar_state);
+            this.updateViewAndSidebar({save_state: false});
         } else {
             this.appState = {index: void 0, states: []};
             this.changeView(this.mainViewList.views[0].info.id,{});
@@ -91,7 +88,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             if(otherSidebars[0]){ 
                 this.changeSidebar([0]);
             } else {
-                this.changeSidebar("help");
+                this.changeSidebar("help",{is_open: true});
             }
             return;
         }
@@ -113,7 +110,6 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
 
     },
     changeSidebar: function(arg,_state){
-        console.log("changing the sidebar");
         var id, set_sidebar_to_open, self = this;
         if(this.currentSidebar){
             this.currentSidebar.remove();
@@ -126,6 +122,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         } else if (_.isObject(arg)){
             id = $(arg.target).data("id");
             set_sidebar_to_open = true; // this is used to make sure the sidebar opens on changing the view.
+                                        // seems like there could be a cleaner way to do this.
         }
 
         if (id==="" || typeof(id)==="undefined"){
@@ -167,19 +164,17 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         _(this.mainViewList.getCommonSidebars()).each(function(_id){
             ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
         });
+        // if(set_sidebar_to_open){
+        //     this.currentSidebar.state("is_open")
+        // }
 
         if(this.currentSidebar.state.get("is_open") || set_sidebar_to_open){
             this.openSidebar();            
         } else {
             this.closeSidebar();
         }
-
-
-
-        console.log("the sidebar has been changed");
     },
     changeView: function (_id,state){ 
-        console.log("changing the view");
         if(_id){
             // destroy any popovers on the view
             $('[data-toggle="popover"]').popover("destroy")
@@ -208,11 +203,10 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
      *  The entire state corresponds to an array of states as described above and an index on 
      *  the current state that you are in.  
      *
-     *  Travelling forward and backwards in the array is how the forward/back works. 
+     *  Traveling forward and backwards in the array is how the forward/back works. 
      *
      ***/
     saveState: function() {
-        console.log("saving the state");
         if(!this.currentView){
             return;
         }
@@ -221,8 +215,10 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             main_view: this.currentView.info.id, 
             main_view_state: this.currentView.getState(),
             sidebar: this.currentSidebar ? this.currentSidebar.info.id: "",
-            sidebar_state: this.currentSidebar? this.currentSidebar.getState() : {}
+            sidebar_state: this.currentSidebar? this.currentSidebar.getState() : {},
+            sidebar_open: this.currentSidebar ? this.currentSidebar.getState().is_open : false
         };
+
 
         if(typeof(this.appState.index) !== "undefined"){
             if(this.appState.states[this.appState.index].main_view === state.main_view){
@@ -236,6 +232,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.appState.index = 0;
             this.appState.states = [state];
         }
+
         window.localStorage.setItem("ww3_cm_state",JSON.stringify(this.appState));
         // change the navigation button states
         if(this.appState.index>0){
@@ -251,17 +248,19 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     },
     goBack: function () {
         this.appState.index--;
-        var currentState = this.appState.states[this.appState.index];
-        this.changeView(currentState.main_view,currentState.main_view_state);
-        this.changeSidebar(currentState.sidebar,currentState.sidebar_state);
-        this.saveState();
+        this.updateViewAndSidebar({save_state: true});
     },
     goForward: function () {
         this.appState.index++;
+        this.updateViewAndSidebar({save_state: true});
+    },
+    updateViewAndSidebar: function (options) {
         var currentState = this.appState.states[this.appState.index];
         this.changeView(currentState.main_view,currentState.main_view_state);
-        this.changeSidebar(currentState.sidebar,currentState.sidebar_state);
-        this.saveState();
+        this.changeSidebar(currentState.sidebar,_.extend(currentState.sidebar_state,{is_open: currentState.sidebar_open}));
+        if(options.save_state){
+            this.saveState();            
+        }
     },
     logout: function(){
         var self = this;
@@ -293,7 +292,6 @@ var LoginView = ModalView.extend({
         return this;
     },
     login: function (options) {
-        console.log("logging in");
         var loginData = {user: this.$(".login-name").val(), password: this.$(".login-password").val()};
         $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/login",
                 data: loginData,
