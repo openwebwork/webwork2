@@ -22,24 +22,20 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		_.bindAll(this,"render","renderDay","update","showHideAssigns");
 
             this.problemSets.on({sync: this.render});
-            
-            this.model = new DateTypeModel();
-            this.model.on({
-                "change:reduced_scoring_date change:answer_date change:due_date change:open_date": this.showHideAssigns,
-                "change": function () {
-                    self.eventDispatcher.trigger("save-state");
-                }
-            })
+            this.state.on("change:reduced_scoring_date change:answer_date change:due_date change:open_date",
+                    this.showHideAssigns);
+        this.state.on("change",this.render);
             return this;
     	},
     	render: function (){
     		CalendarView.prototype.render.apply(this);
             this.update();
 
+
     		this.$(".assign").popover({html: true});
+
+
             // set up the calendar to scroll correctly
-
-
             this.$(".calendar-container").height($(window).height()-160);
             $('.show-date-types input, .show-date-types label').click(function(e) {
                 e.stopPropagation();
@@ -66,8 +62,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 });
             });
 
-            this.model.set("first_day",this.first_day.format("YYYY-MM-DD"));
-            this.stickit();
+            this.stickit(this.state,this.bindings);
+            this.showHideAssigns(this.state);
             return this;
     	},
         bindings: {
@@ -90,32 +86,17 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         getHelpTemplate: function (){
             return $("#calendar-help-template").html();
         },
-        // perhaps this should go in the MainView class
-        set: function (options) {
-            CalendarView.prototype.set.call(this,options);
-            return this;
-        },
-        getState: function () {
-            return this.model.attributes;
-        },
-        setState: function(_state){
-            if(_state){
-                this.model.set(_state);
-                this.set({first_day: _state.first_day});
-            }
-            return this;
-        },
         update:  function (){
             var self = this;
             // The following allows each day in the calendar to allow a problem set to be dropped on. 
                  
             this.$(".calendar-day").droppable({
                 hoverClass: "highlight-day",
-                accept: ".sidepane-problem-set, .assign",
+                accept: ".sidebar-problem-set, .assign",
                 greedy: true,
                 drop: function(ev,ui) {
                     ev.stopPropagation();
-                    if($(ui.draggable).hasClass("sidepane-problem-set")){
+                    if($(ui.draggable).hasClass("sidebar-problem-set")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"all");
                     } else if ($(ui.draggable).hasClass("assign-open")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"open_date");
@@ -140,14 +121,29 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
         },
         showHideAssigns: function(model){
-            _(_(model.changed).keys()).each(function(key){
-                var type = key.split(/_date/)[0].replace("_","-");
-                if(model.changed[key]){
-                    $(".assign.assign-"+type).removeClass("hidden");
+            // define the mapping between fields in the model and assignment classes. 
+            var obj = {
+                reduced_scoring_date: "assign-reduced-scoring",
+                due_date: "assign-due",
+                open_date: "assign-open",
+                answer_date: "assign-answer"
+            }
+            var keys;
+            if(_(model.changed).chain().keys().contains("first_day").value()){
+                return;
+            }
+            if(_.isEqual(model.changed,{})){
+               keys = ["answer_date","open_date","reduced_scoring_date","due_date"]; 
+            } else {
+               keys = _(model.changed).chain().keys().without("view","first_day").value();
+            }
+            _(keys).each(function(key){
+                if(model.get(key)){
+                    $(".assign." + obj[key]).removeClass("hidden");
                 } else {
-                    $(".assign.assign-"+type).addClass("hidden");
+                    $(".assign."+obj[key]).addClass("hidden");
                 }
-            })
+            });
         },
         setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
             var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
@@ -166,7 +162,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         initialize: function(options){
             this.template = options.template;
             this.model = new Backbone.Model(options.model);
-            this.model.set("assign_time",moment.unix(this.model.get(this.model.get("assign_type")+"_date"))
+            var assignType = this.model.get("assign_type").replace("-","_") + "_date";
+            this.model.set("assign_time",moment.unix(this.model.get(assignType))
                     .format("hh:mm A"));
         },
         render: function(){
@@ -180,16 +177,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             ".assign-calendar-name": "set_id",
             ".assign-info": "set_id"  // this seems to be a hack to get stickit to add the handler. 
         }
-    });
-
-    var DateTypeModel = Backbone.Model.extend({
-        defaults: {
-                answer_date: true,
-                due_date: true,
-                reduced_scoring_date: true,
-                open_date: true,
-                first_day: ""
-            }
     });
 
 	return AssignmentCalendar;

@@ -97,12 +97,15 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
             var _dueDate = theDueDate? moment(theDueDate): moment()
             , timeAssignDue = moment(this.dateSettings["pg{timeAssignDue}"],"hh:mmA")
             , assignOpenPriorToDue = this.dateSettings["pg{assignOpenPriorToDue}"]
-            , answerAfterDueDate = this.dateSettings["pg{answersOpenAfterDueDate}"]; 
+            , answerAfterDueDate = this.dateSettings["pg{answersOpenAfterDueDate}"]
+            , reducedScoringPeriod = this.dateSettings["pg{ansEvalDefaults}{reducedScoringPeriod}"]; 
 
             _dueDate.hours(timeAssignDue.hours()).minutes(timeAssignDue.minutes());
             var _openDate = moment(_dueDate).subtract(parseInt(assignOpenPriorToDue),"minutes")
-            , _answerDate = moment(_dueDate).add(parseInt(answerAfterDueDate),"minutes");
-            this.set({due_date: _dueDate.unix(), open_date: _openDate.unix(), answer_date: _answerDate.unix()});
+                , _answerDate = moment(_dueDate).add(parseInt(answerAfterDueDate),"minutes")
+                , _reducedScoringDate = moment(_dueDate).subtract(parseInt(reducedScoringPeriod),"minutes");
+            this.set({due_date: _dueDate.unix(), open_date: _openDate.unix(), answer_date: _answerDate.unix(),
+                        reduced_scoring_date: _reducedScoringDate.unix()});
             return this;
         },
         addProblem: function (prob) {  

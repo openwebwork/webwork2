@@ -1,16 +1,16 @@
-define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config){
-	var ProblemListOptionsSidePane = SidePane.extend({
+define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
+	var ProblemListOptionsSidebar = Sidebar.extend({
     initialize: function(options){
+        Sidebar.prototype.initialize.apply(this,[options]);
         this.problemSets = options.problemSets; 
         this.settings = options.settings;
-        var LibraryOptions = Backbone.Model.extend({});
-        this.model = new LibraryOptions({display_option: this.settings.getSettingValue("pg{options}{displayMode}"),
-            target_set: "", new_problem_set: ""});
+        this.state.set({display_option: this.settings.getSettingValue("pg{options}{displayMode}"),
+            target_set: "", new_problem_set: ""},{silent: true});
         _.extend(this,Backbone.Events);
     },
     render: function(){
         this.$el.html($("#problem-list-options-template").html());
-        this.stickit();
+        this.stickit(this.state,this.bindings);
         return this;
     }, 
     bindings: {".problem-display-option": {observe: "display_option", selectOptions: {
@@ -28,5 +28,5 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
     }
 });
 
-return ProblemListOptionsSidePane;
+return ProblemListOptionsSidebar;
 })

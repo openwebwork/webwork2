@@ -16,10 +16,7 @@ var ClasslistView = MainView.extend({
 		_.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
 		var self = this;
     	
-		// this.users is a UserList 
-
-    	this.users = options.users;
-    	this.problemSets = options.problemSets;
+		
 		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.tableSetup();
@@ -31,10 +28,12 @@ var ClasslistView = MainView.extend({
                             paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
 
 	    this.userTable.on("page-changed",function(num){
-	    	self.currentPage = num;
-	    	self.eventDispatcher.trigger("save-state");
+	    	self.state.set("page_number",num);
 	    })
 
+	    this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10}
+	    	,{silent: true}); // silent: true, so it doesn't trigger a save right away
+        this.state.on("change:filter_text", function () {self.filterUsers();});
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
@@ -77,31 +76,23 @@ var ClasslistView = MainView.extend({
     render: function(){
     	this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}"); 
 	    this.$el.html($("#classlist-manager-template").html());
-	    /*this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
-                            paginator: {page_size: this.pageSize, button_class: "btn btn-default", row_class: "btn-group"}});*/
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
         this.$(".users-table-container").append(this.userTable.el);
-
         // set up some styling
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
-        this.clearFilterText();
+      
         this.showRows(this.pageSize);
-        this.userTable.setPageNumber(this.currentPage||0);
+        this.filterUsers();
+        this.userTable.gotoPage(this.state.get("page_number"));
         MainView.prototype.render.apply(this);
+        this.stickit(this.state,this.bindings);
 	    return this;
     },  
-    getState: function () {
-        return {pageNum: this.currentPage};
-    },
-    setState: function (state) {
-    	this.currentPage = state ? parseInt(state.pageNum) : 0;
-    	return this;
-    },
+    bindings: { ".filter-text": "filter_text"},
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
     	_user.save();
-
     },
     changeUser: function(_user){
     	if(_(_user.changingAttributes).has("user_added") || _.keys(_user.changed)[0]==="action"){
@@ -177,15 +168,16 @@ var ClasslistView = MainView.extend({
         	templateOptions: {url: _url, filename: _filename, mimetype: _mimetype}});
         modalView.render().open();
 	},	
-	filterUsers: function (evt) {
-		this.userTable.filter($(evt.target).val()).render();
-	    this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
-	},
-	clearFilterText: function () {
-		$("input.filter-text").val("");
-		this.userTable.filter("").render();
-		this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
-	},
+	filterUsers: function () {
+        this.userTable.filter(this.state.get("filter_text")).render();
+        if(this.state.get("filter_text").length>0){
+            this.state.set("page_number",0);
+        }
+        this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
+    },
+    clearFilterText: function () {
+        this.state.set("filter_text","");
+    },
 	selectAll: function (evt) {
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
 	},

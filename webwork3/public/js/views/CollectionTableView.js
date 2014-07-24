@@ -233,6 +233,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 		},
 		refreshTable: function (){
 			_(this.rowViews).each(function(row){row.refresh();});
+			return this;
 		},
 		getRowCount: function () {
 			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
@@ -320,16 +321,11 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			} else {
 				this.$("button.last-page,button.next-page").removeAttr("disabled");
 			}
+			return this;
 		},
 		pageChanged: function(){
 			this.trigger("page-changed",this.currentPage);
-		},
-		setPageNumber: function(num){
-			this.gotoPage(num);
 		}
-
-
-
 	});
 
 	var TableRowView = Backbone.View.extend({

@@ -9,28 +9,27 @@ var SettingsView = MainView.extend({
         MainView.prototype.initialize.call(this,options);
         var self = this;
         _.bindAll(this,'render');
-        
+
         this.categories = this.settings.chain().pluck("attributes").pluck("category")
             .unique().difference("timezone").value();
+
+        this.state.set({category: this.categories[0]},{silent: true});
         this.setMessages();
      }, 
      events: {
         "shown.bs.tab a[data-toggle='tab']": "changeSettingTab"
      },
      render: function () {
-        this.currentCategory = this.currentCategory || "General";
-        // get all of the categories except for timezone (include it somewhere?)
-        this.currentCategory = this.currentCategory || this.categories[0];
-        MainView.prototype.render.apply(this);
         this.$el.html(_.template($("#settings-template").html(),{categories: this.categories}));
-        this.changeSettingTab(this.currentCategory);
+        this.changeSettingTab(this.state.get("category"));
+        MainView.prototype.render.apply(this);
         return this;
 
      },
      changeSettingTab: function(evt){
-        this.currentCategory = _.isString(evt)? evt : $(evt.target).text();
-        var settings = this.settings.where({category: this.currentCategory});
-        var settingNum = this.categories.indexOf(this.currentCategory);
+        this.state.set("category",_.isString(evt)? evt : $(evt.target).text());
+        var settings = this.settings.where({category: this.state.get("category")});
+        var settingNum = this.categories.indexOf(this.state.get("category"));
         this.$("#setting-tab"+settingNum).empty().append((new WWSettingsView({settings: settings})).render().el);
         this.$(".settings-tabs li:eq("+settingNum+") a").tab("show")
         this.eventDispatcher.trigger("save-state");
@@ -38,15 +37,6 @@ var SettingsView = MainView.extend({
      getHelpTemplate: function (){
         return $("#settings-help-template").html();
      },
-     getState: function () {
-        return {subview: this.currentCategory};
-     },
-     setState: function(state){
-        if(state){
-            this.currentCategory = state.subview;
-        }
-        return this;
-    },
      setMessages: function () {
         var self = this; 
                 /* Set the events for the settings */

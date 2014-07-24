@@ -8,18 +8,29 @@ define(['backbone','underscore','views/MainView'],
     function(Backbone, _,MainView){
 	var TabbedMainView = MainView.extend({
 		initialize: function (options){
-			_(this).bindAll("changeView");
-			_(this).extend(_(options).pick("views","tabs","tabContent"));
-			this.viewNames = _(options.views).keys();
+			_(this).bindAll("changeTab");
+			_(this).extend(_(options).pick("views","tabs","tabContent","template"));
+			this.tabNames = _(options.views).keys();
 			MainView.prototype.initialize.call(this,options);
+
+			// set up the state of the tabs
+			var _tabStates = _.object(this.viewNames,_(this.tabNames).map(function(n){return ""}));
+			this.state.set({tab_name: "", tab_states: _tabStates},{silent: true});
 		},
 		render: function(){
+			console.log("in TabbedMainView.render");
 			var self = this;
+			if(this.template){
+				this.$el.html(this.template);
+			} else {
+				this.$el.empty();
+			}
+			// Build up the bootstrap tab system. 
 			var tabs = $("<ul>").addClass("nav nav-tabs").attr("role","tablist");
 			var tabContent = $("<div>").addClass("tab-content");
-			_(this.viewNames).each(function(view,i){
+			_(this.tabNames).each(function(name,i){
 				tabs.append($("<li>").append($("<a>").attr("href","#tab"+i).attr("role","tab").attr("data-toggle","tab")
-					.attr("data-view",view).text(self.views[view].viewName)));
+					.attr("data-tabname",name).text(self.views[name].tabName)));
 				tabContent.append($("<div>").addClass("tab-pane").attr("id","tab"+i));
 			})
 			if(this.tabs){
@@ -32,50 +43,51 @@ define(['backbone','underscore','views/MainView'],
 			} else {
 				this.$el.append(tabContent);
 			}
-			if(typeof(this.currentViewName)==="undefined"){
-				this.currentViewName = _(this.views).keys()[0];
+			if(this.state.get("tab_name")===""){
+				this.state.set("tab_name",_(this.views).keys()[0]);
 			}
 
-            var tabNum = _(this.views).keys().indexOf(this.currentViewName);
+			_(this.tabNames).each(function(name,i){
+				self.views[name].setElement($("#tab"+i));
+			});
+
+            var tabNum = _(this.views).keys().indexOf(this.state.get("tab_name"));
             this.$((this.tabs || "" ) + " a:eq("+ tabNum+")").tab("show");
-            this.views[this.currentViewName].render();
+            //this.views[this.state.get("tab_name")].render();
 
 
 			MainView.prototype.render.call(this);
+			this.delegateEvents();
 		},
 		additionalEvents: {
-	          	"show.bs.tab a[data-toggle='tab']": "changeView",
+	          	"show.bs.tab a[data-toggle='tab']": "changeTab",
 		},
-      	changeView: function(options){
-            this.currentViewName = _.isString(options)? options: $(options.target).data("view");
-			this.views[this.currentViewName].setElement(this.$("#tab"+this.viewNames.indexOf(this.currentViewName)))
-				.render();
+      	changeTab: function(options){
+            var _tabName = _.isString(options)? options: $(options.target).data("tabname");
+			this.views[_tabName].setElement(this.$("#tab"+this.tabNames.indexOf(_tabName))).render();
 			if(_.isString(options)){ // was triggered other than a tab change.
 				this.$(".set-details-tab a:first").tab("show");
 			}
-            this.eventDispatcher.trigger("save-state");
+			if(this.sidebar && this.sidebar.info.id==="help"){
+				this.eventDispatcher.trigger("show-help");
+			}
+			console.log("in changeTab: " + _tabName);
+			this.state.set("tab_name",_tabName);
 		},
-        setState: function(state){
-        	console.log("in TabbedMainView.setState");
-            if(state){
-                this.currentViewName =  state.subview || this.viewNames[0];
-            }
-            if(state && this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].setState)){
-                this.views[this.currentViewName].setState(state);
-            }
-
-            return this;
-        },
-        getState: function(){
-        	console.log("in TabbedMainView.getState");
-        	var state = {subview: this.currentViewName};
-            if(this.views[this.currentViewName] && _.isFunction(this.views[this.currentViewName].getState)){
-                _.extend(state,this.views[this.currentViewName].getState());
-            }
-
-            return state;
-        },
-
+		getState: function () {
+			this.state.get("tab_states")[this.state.get("tab_name")]=this.views[this.state.get("tab_name")].tabState.attributes;
+			return MainView.prototype.getState.apply(this);
+		},
+		setState: function(_state){
+			var self = this;
+			MainView.prototype.setState.apply(this,[_state]);
+			if(_state){
+				_(_state.tab_states).chain().keys().each(function(st){
+					self.views[st].tabState.set(_state.tab_states[st],{silent: true});
+				});
+			}
+			return this;
+		}
 
 	});
 	return TabbedMainView;

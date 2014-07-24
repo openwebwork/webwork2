@@ -2,20 +2,19 @@
    This is the base javascript code for the Homework Manager.  This sets up the View and ....
   
 */
-define(['module','backbone','views/SidePane', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
+define(['module','backbone','views/Sidebar', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
     'views/MainViewList', 'models/AssignmentDate','models/AssignmentDateList','views/WebPage',
     'config','apps/util','jquery-ui','bootstrap'], 
-function(module, Backbone, SidePane, _, UserList, ProblemSetList, SettingList,MainViewList,
+function(module, Backbone, Sidebar, _, UserList, ProblemSetList, SettingList,MainViewList,
     AssignmentDate,AssignmentDateList,WebPage,config,util){
 var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
-	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidePane","stopActing",
-            "changeView","changeSidePane","loadData","checkData","saveState","logout","setDates");  // include all functions that need the this object
+        _(this).bindAll("showProblemSetDetails","changeViewAndSidebar","stopActing","logout");
 	    var self = this;
+
         this.render();
-        this.eventDispatcher = _.clone(Backbone.Events);
         this.session = (module.config().session)? module.config().session : {};
         this.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;
         this.users = (module.config().users) ? new UserList(module.config().users) : null;
@@ -29,15 +28,11 @@ var CourseManager = WebPage.extend({
             this.startManager();
         } else {
             this.requestLogin({success: function (data) {
-                // save the new session key and reload the page.  
-                self.session.key = data.session_key;
-                window.location.reload();
-                /*window.location.href=config.urlPrefix+"courses/"+config.courseSettings.course_id+"/manager?"
-                    + $.param(_(self.session).pick("user","key")); */
-            }});
-
-            //    this.loadData
-            //});
+                    // save the new session key and reload the page.  
+                    self.session.key = data.session_key;
+                    window.location.reload();
+                }
+            });
         }
 
         $(document).ajaxError(function (e, xhr, options, error) {
@@ -45,6 +40,15 @@ var CourseManager = WebPage.extend({
                 self.requestLogin({success: function(){
                     self.loginPane.close();
                 }});
+            }
+        });
+
+        // This is the way that general messages are handled in the app
+
+        this.eventDispatcher.on({
+            "show-problem-set": this.showProblemSetDetails,
+            "change-view": function () {
+                self.navigationBar.setPaneName(_name);
             }
         });
 
@@ -82,61 +86,32 @@ var CourseManager = WebPage.extend({
     startManager: function () {
         var self = this;
         this.navigationBar.setLoginName(this.session.user);
-        this.currentSidePane = {};
         
-        this.mainViewList = new MainViewList({settings: this.settings, users: this.users, 
-                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher});
-
+        // put all of the dates in the problem sets in a better data structure for calendar rendering.
         this.buildAssignmentDates();
+        this.setMainViewList(new MainViewList({settings: this.settings, users: this.users, 
+                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher}));
+        
 
-        // Build the menu.  Should we make a View for this?  
-
-        var menuItemTemplate = _.template($("#main-menu-item-template").html());
-        var ul = $(".manager-menu");
-        _(this.mainViewList.viewInfo.main_views).each(function(item){
-            ul.append(menuItemTemplate({name: item.name}));
-            item.other_sidepanes[item.other_sidepanes.length] = "Help";
-            item.other_sidepanes[item.other_sidepanes.length] = "All Messages";
-        })
-
-        // can't we just pull this from the settings when needed.  Why do we need another variable. 
-        config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
-    
-        _(this.views).chain().keys().each(function(key){ self.views[key].setParentView(self)});
-
-
-        this.mainViewList.getViewByName("Calendar")
+        // set up some of the main views with additional information.
+        
+        this.mainViewList.getView("calendar")
             .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
             .on("calendar-change",self.updateCalendar);
 
-        this.mainViewList.getViewByName("Problem Sets Manager")
-            .set({assignmentDates: this.assignmentDateList});
-
-
-        this.mainViewList.getSidepaneByName("All Messages")
-            .set({messages: this.messagePane.messages});
-
-
-        // Build the options menu.  Should we make a View for this?  
-
-        this.setMessages();  
-
+        this.mainViewList.getView("problemSetsManager").set({assignmentDates: this.assignmentDateList});
+        this.mainViewList.getSidebar("allMessages").set({messages: this.messagePane.messages});
+        this.mainViewList.getSidebar("help").parent = this;
+        
+        this.postInitialize();
+        
+        // can't we just pull this from the settings when needed.  Why do we need another variable. 
+        config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
+    
         // this will automatically save (sync) any change made to a problem set.
         this.problemSets.on("change",function(_set){
             _set.save();
         })        
-
-        // load the previous state of the app or set it to the Calendar
-        this.appState = this.loadState();
-
-        if(this.appState && typeof(this.appState)!=="undefined" && 
-                this.appState.states && typeof(this.appState.states)!=="undefined" && 
-                typeof(this.appState.index)!=="undefined"){
-            this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
-        } else {
-            this.appState = {index: void 0, states: []};
-            this.changeView("Calendar",{});    
-        }        
 
         // The following is useful in many different views, so is defined here. 
         // It adjusts dates to ensure that they aren't illegal.
@@ -144,10 +119,10 @@ var CourseManager = WebPage.extend({
         this.problemSets.on("change:due_date change:reduced_scoring_date change:open_date change:answer_date",this.setDates);
                 
         this.navigationBar.on({
-            "change-view": this.changeView,
+            "change-view": this.changeViewAndSidebar,
             "logout": this.logout,
             "stop-acting": this.stopActing,
-            "show-help": function() { self.changeSidePane("Help")},
+            "show-help": function() { self.changeSidebar("Help")},
             "forward-page": function() {self.goForward()},
             "back-page": function() {self.goBack()},
         });
@@ -170,189 +145,29 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-        // this ensures that the rerender call only occurs once every 500 ms.  Importantly when the window is resized. 
-
-        var renderMainPane = _.debounce(function(evt){ 
-            self.currentView.render();
-            if(self.currentSidePane && self.currentSidePane.sidePane){
-                self.currentSidePane.sidePane.render();
-            }
-        },500);
-
-        $(window).on("beforeunload", function () {
-            if(self.session.logged_in!==0){ // if the user didn't just log out. 
-                return self.messageTemplate({type: "leave_page"});
-            }
-         }).on("resize",renderMainPane);
 
         // Add a link to WW2 via the main menu.
 
         this.navigationBar.$(".manager-menu").append("<li class='ww2-link'><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
         this.delegateEvents();
+
+
     },
+    // move this to WebPage.js  (need to deal with the parent-child events)
     events: {
-        "click .sidepane-menu a.link": "changeSidePane"
-    },
-
-    // can a lot of this be handled by the individual views?  
-
-    setMessages: function (){
-        var self = this; 
-
-        // This is the way that general messages are handled in the app
-
-        this.eventDispatcher.on({
-            "save-state": this.saveState,
-            "show-problem-set": this.showProblemSetDetails,
-            "add-message": this.messagePane.addMessage,
-            "open-close-sidepane": this.openCloseSidePane
-        });
-    },
-    render: function(){
-        WebPage.prototype.render.apply(this);  // Call  WebPage.render();
+        "click .sidebar-menu a.link": "changeSidebar"
     },
     showProblemSetDetails: function(setName){
         if (this.objectDragging) return;
-        this.changeView("Problem Set Details",{});        
-        this.mainViewList.getViewByName("Problem Set Details").changeProblemSet(setName).render();
+        this.changeView("problemSetDetails",{set_id: setName});        
+        this.changeSidebar("problemSets",{});
+
     },
-    openSidePane: function (){
-        this.currentSidePane.isOpen = true;
-        $("#sidepane-container").removeClass("hidden");
-        $("#main-view").removeClass("col-md-12").addClass("col-md-9");
-        self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
-        if(this.currentSidePane && (typeof(this.currentSidePane.sidePane)==="undefined" ||
-             !(this.currentSidePane.sidePane instanceof SidePane))) {
-                this.changeSidePane(this.mainViewList.getOtherSidepanes(this.currentView.viewName)[0]);
-        }
-        this.currentSidePane.sidePane.render();
-    },
-    closeSidePane: function (){
-        this.currentSidePane.isOpen = false;
-        $("#sidepane-container").addClass("hidden");
-        $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
-        self.$(".open-close-view i").removeClass("fa-chevron-right").addClass("fa-chevron-left");
-    },
-    openCloseSidePane: function (str) {
-        if(str==="close"){
-            this.closeSidePane();
-        } else if (str==="open"){
-            this.openSidePane();
-        } else if (this.currentSidePane.isOpen) {
-            this.closeSidePane();
-        } else if (! this.currentSidePane.isOpen){
-            this.openSidePane();
-        }
-    },
-    changeSidePane: function(_name){
-        var name = _.isString(_name) ? _name : $(_name.target).data("name");
-        if(this.currentSidePane && this.currentSidePane.sidePane){
-            this.currentSidePane.sidePane.remove();
-        }
-        var mainViewInfo = _(this.mainViewList.views).findWhere({name: this.currentView.viewName});
-        if ((name==="")){
-            this.openCloseSidePane("close");
-            return;
-        }
-        this.currentSidePane.sidePane = this.mainViewList.getSidepaneByName(name);
-
-        if(this.currentSidePane.sidePane){
-            this.$(".sidepane-menu .sidepane-name").text(name);
-            if (! $("#sidepane-container .sidepane-content").length){
-                $("#sidepane-container").append("<div class='sidepane-content'></div>");
-            }
-            this.currentSidePane.sidePane.setMainView(this.currentView)
-                .setElement(this.$(".sidepane-content")).render();
-
-            // set the side pane options for the main view
-
-            var menuItemTemplate = _.template($("#main-menu-item-template").html());
-            var ul = this.$(".sidepane-menu .dropdown-menu").empty();
-            _(mainViewInfo.other_sidepanes).each(function(_name){
-                ul.append(menuItemTemplate({name: _name}));
-            })
-
-
-
-        }
-        this.currentView.setSidePane(this.currentSidePane.sidePane);
-        this.openCloseSidePane("open");
-    },
-    changeView: function (_name,state){
-        if(this.currentView){
-            // destroy any popovers on the view
-            $('[data-toggle="popover"]').popover("destroy")
-            this.currentView.remove();
-            
-
-        }
-        $("#main-view").html("<div class='main'></div>");
-        this.navigationBar.setPaneName(_name);
-        this.currentView = this.mainViewList.getViewByName(_name);
-        this.defaultSidepane = this.mainViewList.getDefaultSidepane(_name);
-        if(this.currentView){
-            this.currentView.setElement(this.$(".main")).setState(state).render();
-        }
-        if(typeof(this.defaultSidepane)!=="undefined"){
-            this.changeSidePane(this.defaultSidepane);   
-        }
+    changeViewAndSidebar: function(_view){
+        this.changeView(_view);
+        this.changeSidebar(this.mainViewList.getDefaultSidebar(_view),{is_open: true});
         this.saveState();
         this.eventDispatcher.trigger("view-change",_name);
-    },
-    saveState: function() {
-        if(!this.currentView){
-            return;
-        }
-        var state = this.currentView.getState();
-        state.view = this.currentView.viewName;
-        if(typeof(this.appState.index) !== "undefined"){
-            if(this.appState.states[this.appState.index].view===state.view){
-                this.appState.states[this.appState.index] = state;
-            } else {
-                this.appState.index++;
-                this.appState.states[this.appState.index]=state;
-                this.appState.states.splice(this.appState.index+1,Number.MAX_VALUE); // delete the end of the states array. 
-            }
-        } else {
-            this.appState.index = 0;
-            this.appState.states = [state];
-        }
-        window.localStorage.setItem("ww3_cm_state",JSON.stringify(this.appState));
-        // change the navigation button states
-        if(this.appState.index>0){
-            this.navigationBar.$(".back-button").removeAttr("disabled")
-        } else {
-            this.navigationBar.$(".back-button").attr("disabled","disabled");
-        }
-        if(this.appState.index<this.appState.states.length-1){
-            this.navigationBar.$(".forward-button").removeAttr("disabled")
-        } else {
-            this.navigationBar.$(".forward-button").attr("disabled","disabled");
-        }
-    },
-    loadState: function () {
-        return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
-    },
-    goBack: function () {
-        this.appState.index--;
-        this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
-    },
-    goForward: function () {
-        this.appState.index++;
-        this.changeView(this.appState.states[this.appState.index].view,this.appState.states[this.appState.index]);            
-    },
-    logout: function(){
-        var self = this;
-        var conf = confirm("Do you want to log out?");
-        if(conf){
-            $.ajax({method: "POST", 
-                url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/logout", 
-                success: function (data) {
-                    self.session.logged_in = data.logged_in;
-                    location.href="/webwork2";
-                }
-            });
-        }
     },
     stopActing: function (){
         var self = this;
