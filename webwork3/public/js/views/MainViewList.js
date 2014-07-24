@@ -25,7 +25,7 @@ define(main_view_paths,function(module,Backbone){
 			var self = this;
 			this.views = _(mainViews).map(function(view,i){
 				var opts = {};
-				_.extend(opts,options,{info: _(view).pick("name","id","default_sidebar","other_sidebars")});
+				_.extend(opts,options,{info: _(view).pick("name","id","default_sidebar","other_sidebars","icon")});
 				return new mainViewClasses[i](opts);
 			});
 			this.sidebars = _(sidebars).map(function(_sidebar,i){

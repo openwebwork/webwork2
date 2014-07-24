@@ -21,7 +21,6 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 propertiesView : new DetailsView({users: options.users, settings: options.settings}),
                 problemsView : new ShowProblemsView({settings: options.settings, messageTemplate: this.messageTemplate}),
                 usersAssignedView : new AssignUsersView({users: options.users}),
-                unassignUsersView: new UnassignUserView({users: options.users}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: options.users,
                         eventDispatcher: options.eventDispatcher, settings: options.settings})
             };

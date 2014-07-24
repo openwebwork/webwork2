@@ -47,7 +47,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         var menuItemTemplate = _.template($("#main-menu-item-template").html());
         var ul = $(".manager-menu");
         _(this.mainViewList.views).each(function(_view){
-            ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id}));
+            ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id,icon: _view.info.icon}));
         });
 
         // this ensures that the rerender call on resizing the window only occurs once every 500 ms.  
@@ -185,8 +185,8 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         } else {
             this.currentView = this.mainViewList.views[0];
         }
+        this.navigationBar.setPaneName(this.currentView.info.name);
         $("#main-view").html("<div class='main'></div>");
-        
         this.currentView.setElement(this.$(".main")).setState(state).render();
     },
     /***
