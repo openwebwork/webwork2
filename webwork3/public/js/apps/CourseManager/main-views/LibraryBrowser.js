@@ -39,7 +39,9 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
             return $("#library-help-template").html();
         },
         sidebarEvents: {
-            "change-display-mode": function(evt) { this.views[this.state.get("tab_name")].changeDisplayMode(evt) },
+            "change-display-mode": function(evt) { 
+                this.views[this.state.get("tab_name")].changeDisplayMode(evt) 
+            },
             "change-target-set": function(opt) { 
                 this.views[this.state.get("tab_name")].setTargetSet(_.isString(opt)? opt: $(opt.target).val());
             }, 
@@ -52,6 +54,7 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
                 this.views[this.state.get("tab_name")].libraryProblemsView.toggleTags(show_hide_button);
             },
             "show-hide-path": function(button) {
+                console.log(button);
                 this.views[this.state.get("tab_name")].libraryProblemsView.toggleShowPath(button);
             },
             "goto-problem-set": function(_setName){

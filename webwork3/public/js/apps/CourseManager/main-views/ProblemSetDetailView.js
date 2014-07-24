@@ -55,7 +55,7 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
             }
         },
         getHelpTemplate: function () {
-            switch(this.currentViewName){
+            switch(this.state.get("tab_name")){
                 case "propertiesView":
                     return $("#problem-set-details-help-template").html();
                 case "problemsView":
@@ -68,16 +68,16 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
         },
         sidebarEvents: {
             "change-display-mode": function(evt) { 
-                if(_.isFunction(this.views[this.currentViewName].changeDisplayMode)){
-                    this.views[this.currentViewName].changeDisplayMode(evt);
+                if(_.isFunction(this.views[this.state.get("tab_name")].changeDisplayMode)){
+                    this.views[this.state.get("tab_name")].changeDisplayMode(evt);
                 }},
             "show-hide-tags": function(evt){
-                if(_.isFunction(this.views[this.currentViewName].toggleTags)){
-                    this.views[this.currentViewName].toggleTags(evt);
+                if(_.isFunction(this.views[this.state.get("tab_name")].toggleTags)){
+                    this.views[this.state.get("tab_name")].toggleTags(evt);
             }},
             "show-hide-path": function(evt){
-                if(_.isFunction(this.views[this.currentViewName].toggleShowPath)){
-                    this.views[this.currentViewName].toggleShowPath(evt);
+                if(_.isFunction(this.views[this.state.get("tab_name")].toggleShowPath)){
+                    this.views[this.state.get("tab_name")].toggleShowPath(evt);
             }},
         },
         changeProblemSet: function (setName)
@@ -142,7 +142,6 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
             _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate");
             this.users = options.users;
             this.settings = options.settings;
-            TabView.prototype.initialize.apply(this,[options]);
             TabView.prototype.initialize.apply(this,[options]);
         },
         render: function(){
@@ -222,6 +221,15 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
         set: function(options){
             this.problemSetView.set(options);
             return this;
+        },
+        changeDisplayMode: function(evt){
+            this.problemSetView.changeDisplayMode(evt);
+        },
+        toggleTags: function(evt){
+            this.problemSetView.toggleTags(evt);
+        },
+        toggleShowPath: function(evt){
+            this.problemSetView.toggleShowPath(evt);
         }
     })
 

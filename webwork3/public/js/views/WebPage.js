@@ -19,21 +19,15 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             "add-message": this.messagePane.addMessage,
             "open-sidebar": this.openSidebar,
             "close-sidebar": this.closeSidebar,
-            // "change-view": function () {
-            //     self.navigationBar.setPaneName(_name);
-            // },
             "show-help": function() { self.changeSidebar("Help")},
         });
+
     },
     setMainViewList: function(_list){
         this.mainViewList = _list;
     },
-    /*
-    * This should be called after the login has been verified.
-    */
-
     postInitialize: function () {
-
+        var self = this;
         // load the previous state of the app or set it to the first main_view
         this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
 
@@ -50,6 +44,27 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             var _sidebarID = this.mainViewList.getDefaultSidebar(this.currentView.info.id);
             this.changeSidebar(_sidebarID);
         }
+
+        // build the menu
+
+        var menuItemTemplate = _.template($("#main-menu-item-template").html());
+        var ul = $(".manager-menu");
+        _(this.mainViewList.views).each(function(_view){
+            ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id}));
+        });
+
+        // this ensures that the rerender call on resizing the window only occurs once every 500 ms.  
+
+        var renderMainPane = _.debounce(function(evt){ 
+            self.currentView.render();
+            if(self.currentSidebar){
+                self.currentSidebar.render();
+            }
+        },250);
+
+        $(window).on("resize",renderMainPane);
+
+
         
     },
     render: function () {
@@ -72,7 +87,12 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     },
     openSidebar: function (){
         if(! this.currentSidebar){
-            this.changeSidebar(this.mainViewList.getOtherSidebars(this.currentView.info.id)[0]);
+            var otherSidebars = this.mainViewList.getOtherSidebars(this.currentView.info.id);
+            if(otherSidebars[0]){ 
+                this.changeSidebar([0]);
+            } else {
+                this.changeSidebar("help");
+            }
             return;
         }
         this.currentSidebar.state.set("is_open",true);
@@ -93,7 +113,8 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
 
     },
     changeSidebar: function(arg,_state){
-        var id, self = this;
+        console.log("changing the sidebar");
+        var id, set_sidebar_to_open, self = this;
         if(this.currentSidebar){
             this.currentSidebar.remove();
         }
@@ -104,6 +125,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             id = arg.info.id;
         } else if (_.isObject(arg)){
             id = $(arg.target).data("id");
+            set_sidebar_to_open = true; // this is used to make sure the sidebar opens on changing the view.
         }
 
         if (id==="" || typeof(id)==="undefined"){
@@ -117,32 +139,47 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.currentSidebar.state.set(_state);
         }
 
-        if(this.currentSidebar){
-            this.$(".sidebar-menu .sidebar-name").text(this.currentSidebar.info.name);
-            if (! $("#sidebar-container .sidebar-content").length){
-                $("#sidebar-container").append("<div class='sidebar-content'></div>");
-            }
-            this.currentSidebar.setMainView(this.currentView)
-                .setElement(this.$(".sidebar-content")).render();
-
-            // set the side pane options for the main view
-
-            var menuItemTemplate = _.template($("#main-menu-item-template").html());
-            var ul = this.$(".sidebar-menu .dropdown-menu").empty();
-            _(this.mainViewList.getOtherSidebars(this.currentView.info.id)).each(function(_id){
-                ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
-            });
-            _(this.mainViewList.getCommonSidebars()).each(function(_id){
-                ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
-            });
+        // for all views, don't listen to sidebar events:
+        _(this.mainViewList.views).each(function(view){
+            view.stopListening(this.currentSidebar);
+        });
+        // then register sidebar events for this view
+        _(this.currentView.sidebarEvents).chain().keys().each(function(event){
+            self.currentView.listenTo(self.currentSidebar,event,self.currentView.sidebarEvents[event]);
+        });
 
 
+        // set up the possible options and render the sidebar
 
+        this.$(".sidebar-menu .sidebar-name").text(this.currentSidebar.info.name);
+        if (! $("#sidebar-container .sidebar-content").length){
+            $("#sidebar-container").append("<div class='sidebar-content'></div>");
         }
-        this.currentView.setSidebar(this.currentSidebar);
-        this.openSidebar();
+        this.currentSidebar.setElement(this.$(".sidebar-content")).render();
+
+        // set the side pane options for the main view
+
+        var menuItemTemplate = _.template($("#main-menu-item-template").html());
+        var ul = this.$(".sidebar-menu .dropdown-menu").empty();
+        _(this.mainViewList.getOtherSidebars(this.currentView.info.id)).each(function(_id){
+            ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
+        });
+        _(this.mainViewList.getCommonSidebars()).each(function(_id){
+            ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
+        });
+
+        if(this.currentSidebar.state.get("is_open") || set_sidebar_to_open){
+            this.openSidebar();            
+        } else {
+            this.closeSidebar();
+        }
+
+
+
+        console.log("the sidebar has been changed");
     },
     changeView: function (_id,state){ 
+        console.log("changing the view");
         if(_id){
             // destroy any popovers on the view
             $('[data-toggle="popover"]').popover("destroy")
@@ -156,7 +193,6 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         $("#main-view").html("<div class='main'></div>");
         
         this.currentView.setElement(this.$(".main")).setState(state).render();
-        this.saveState();
     },
     /***
      * 
@@ -176,6 +212,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
      *
      ***/
     saveState: function() {
+        console.log("saving the state");
         if(!this.currentView){
             return;
         }
@@ -214,11 +251,17 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     },
     goBack: function () {
         this.appState.index--;
-        this.changeView(this.appState.states[this.appState.index].main_view,this.appState.states[this.appState.index].main_view_state);            
+        var currentState = this.appState.states[this.appState.index];
+        this.changeView(currentState.main_view,currentState.main_view_state);
+        this.changeSidebar(currentState.sidebar,currentState.sidebar_state);
+        this.saveState();
     },
     goForward: function () {
         this.appState.index++;
-        this.changeView(this.appState.states[this.appState.index].main_view,this.appState.states[this.appState.index].main_view_state);            
+        var currentState = this.appState.states[this.appState.index];
+        this.changeView(currentState.main_view,currentState.main_view_state);
+        this.changeSidebar(currentState.sidebar,currentState.sidebar_state);
+        this.saveState();
     },
     logout: function(){
         var self = this;

@@ -45,7 +45,7 @@
 <!-- template for building the main menu and option pane menu -->
 
 <script type="text/template" id="main-menu-item-template">
-<li><a href="#" class="link" data-id="<%=id%>"><%=name%></a></li>
+<li><a href="#" onclick="return false;" class="link" data-id="<%=id%>"><%=name%></a></li>
 </script>
 
 

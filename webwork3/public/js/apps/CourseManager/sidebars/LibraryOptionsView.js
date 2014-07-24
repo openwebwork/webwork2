@@ -5,7 +5,7 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
         var self = this;
         this.problemSets = options.problemSets;
         this.problemSets.on({
-            add: this.AddProblemSet, sync: function(_set){               
+            add: this.addProblemSet, sync: function(_set){               
                 self.$(".select-target-option").val(_set.get("set_id"));
                 self.state.set({new_problem_set: "",target_set: _set.get("set_id")});
                 self.trigger("change-target-set",self.state.get("target_set"));
@@ -34,6 +34,7 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
         this.stickit(this.state,this.bindings);
         if(this.state.get("target_set")){
             this.$(".goto-problem-set-button").removeAttr("disabled");
+            this.trigger("change-target-set",this.state.get("target_set"));  
         }
 
         return this;

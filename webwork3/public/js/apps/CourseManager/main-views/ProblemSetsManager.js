@@ -48,7 +48,6 @@ var ProblemSetsManager = MainView.extend({
     },
     events: {
         "click .add-problem-set-button": "addProblemSet",
-        //'keyup input.filter-text' : 'filterProblemSets',
         'click button.clear-filter-button': 'clearFilterText',
         "click a.show-rows": "showRows"
     },

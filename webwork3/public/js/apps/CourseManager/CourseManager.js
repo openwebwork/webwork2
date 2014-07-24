@@ -101,31 +101,13 @@ var CourseManager = WebPage.extend({
 
         this.mainViewList.getView("problemSetsManager").set({assignmentDates: this.assignmentDateList});
         this.mainViewList.getSidebar("allMessages").set({messages: this.messagePane.messages});
+        this.mainViewList.getSidebar("help").parent = this;
         
         this.postInitialize();
         
-        
-        
-
-        // Build the menu.  Should we make a View for this?  
-
-        var menuItemTemplate = _.template($("#main-menu-item-template").html());
-        var ul = $(".manager-menu");
-        _(this.mainViewList.views).each(function(_view){
-            ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id}));
-            _view.info.other_sidebars[_view.info.other_sidebars.length] = "help";
-            _view.info.other_sidebars[_view.info.other_sidebars.length] = "allMessages";
-        });
-
-
         // can't we just pull this from the settings when needed.  Why do we need another variable. 
         config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
-        _(this.views).chain().keys().each(function(key){ self.views[key].setParentView(self)});
-
-
-
-
         // this will automatically save (sync) any change made to a problem set.
         this.problemSets.on("change",function(_set){
             _set.save();
@@ -163,16 +145,6 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-        // this ensures that the rerender call on resizing the window only occurs once every 500 ms.  
-
-        var renderMainPane = _.debounce(function(evt){ 
-            self.currentView.render();
-            if(self.currentSidebar && self.currentSidebar.sidebar){
-                self.currentSidebar.sidebar.render();
-            }
-        },500);
-
-        $(window).on("resize",renderMainPane);
 
         // Add a link to WW2 via the main menu.
 
@@ -187,8 +159,9 @@ var CourseManager = WebPage.extend({
     },
     showProblemSetDetails: function(setName){
         if (this.objectDragging) return;
-        this.changeView("problemSetDetails",{});        
-        this.mainViewList.getView("problemSetDetails").changeProblemSet(setName).render();
+        this.changeView("problemSetDetails",{set_id: setName});        
+        this.changeSidebar("problemSets",{});
+
     },
     changeViewAndSidebar: function(_view){
         this.changeView(_view);

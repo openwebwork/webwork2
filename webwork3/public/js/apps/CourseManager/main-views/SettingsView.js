@@ -20,9 +20,9 @@ var SettingsView = MainView.extend({
         "shown.bs.tab a[data-toggle='tab']": "changeSettingTab"
      },
      render: function () {
-        MainView.prototype.render.apply(this);
         this.$el.html(_.template($("#settings-template").html(),{categories: this.categories}));
         this.changeSettingTab(this.state.get("category"));
+        MainView.prototype.render.apply(this);
         return this;
 
      },

@@ -17,28 +17,20 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,Sidebar,AssignmentCalendar
     	initialize: function (options){
             Sidebar.prototype.initialize.apply(this,[options]);
     		_.bindAll(this,"render");
-            var self = this;
-
+            _(this).extend(_(options).pick("problemSets","users","settings"));
             this.setViewTemplate = $("#set-view-template").html();
-            this.problemSets = options.problemSets; 
-            this.users = options.users; 
-            this.settings = options.settings;
-
             this.problemSets.on("add remove sort",this.render);
         },
         render: function ()
         {
             var self = this;
-            if(!this.mainView){ // if this isn't a sidebar 
-                return;
-            }
             this.$el.html($("#problem-set-list-template").html());
             var ul = this.$(".btn-group-vertical");
             //var ul = this.$(".prob-set-container ul");
             this.problemSets.each(function (_model) {
                 ul.append((new ProblemSetView({model: _model, template: self.setViewTemplate,
                         numUsers: self.users.length, problemSets: self.problemSets,
-                        eventDispatcher: self.mainView.eventDispatcher,
+                        eventDispatcher: self.eventDispatcher,
                         settings: self.settings})).render().el);
             });
 

@@ -6,10 +6,7 @@ define(['backbone'],function(Backbone){
 			this.state = new Backbone.Model({});
 			this.state.on("change",function(){
 				self.eventDispatcher.trigger("save-state");
-			})
-		},
-		setParentView: function(parentView){
-			this.parentView = parentView;
+			});
 		},
 		render: function() {
 			var self = this;
@@ -22,17 +19,6 @@ define(['backbone'],function(Backbone){
 				self.eventDispatcher.trigger("close-sidebar");
 			});
 			return this;
-		},
-		setSidebar: function(_sidebar){
-			if(typeof(_sidebar)==="undefined"){
-				return;
-			}
-			var self = this;
-			this.optionPane = _sidebar;
-			this.stopListening(this.optionPane);
-			_(this.sidebarEvents).chain().keys().each(function(event){
-				self.listenTo(self.optionPane,event,self.sidebarEvents[event]);
-			});
 		},
 		// returns a defualt help template. This should be overriden to return a more helpful template. 
 		getHelpTemplate: function () { 
