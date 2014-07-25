@@ -7,8 +7,8 @@
   * 
   */
 
-define(['backbone', 'underscore','config','models/ProblemSet','models/UserProblemList'], 
-    function(Backbone, _,config,ProblemSet,UserProblemList){
+define(['backbone', 'underscore','config','models/ProblemSet','models/UserProblemList','apps/util'], 
+    function(Backbone, _,config,ProblemSet,UserProblemList,util){
     var UserSet = Backbone.Model.extend({
         defaults: {
             user_id: "",
@@ -19,6 +19,7 @@ define(['backbone', 'underscore','config','models/ProblemSet','models/UserProble
             open_date: "",
             due_date: "",
             answer_date: "",
+            reduced_scoring_date: "",
             visible: false,
             enable_reduced_scoring: false,
             assignment_type: "",
@@ -51,6 +52,7 @@ define(['backbone', 'underscore','config','models/ProblemSet','models/UserProble
             if(data.problems){
                 data.problems = new UserProblemList(data.problems,{user_id: data.user_id,set_id: data.set_id});
             }
+            data = util.parseAsIntegers(data,["open_date","reduced_scoring_date","due_date","answer_date"]);
             return data;
         }
     });

@@ -23,7 +23,7 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 usersAssignedView : new AssignUsersView({users: options.users}),
                 unassignUsersView: new UnassignUserView({users: options.users}),
                 customizeUserAssignView : new CustomizeUserAssignView({users: options.users,
-                        eventDispatcher: this.eventDispatcher, settings: options.settings})
+                        eventDispatcher: options.eventDispatcher, settings: options.settings})
             };
             this.views.problemsView.on("page-changed",function(num){
                 self.eventDispatcher.trigger("save-state");

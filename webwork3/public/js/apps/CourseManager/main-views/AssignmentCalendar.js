@@ -11,6 +11,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 	
     var AssignmentCalendar = CalendarView.extend({
         template: this.$("#calendar-date-bar").html(),
+        messageTemplate: _.template($("#calendar-messages").html()),
         popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
     	initialize: function (options) {
             var self = this;
@@ -155,7 +156,9 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             this.selectedUsers = _users;
             if(this.selectedUsers.length==0){
                 this.collection = this.problemSets;
+                this.buildAssignmentDates();
                 this.render();
+                return;
             }
             if(typeof(this.userCalendars)==="undefined"){
                 this.userCalendars = {};
@@ -169,32 +172,85 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     userCalendarsFetched++;
                 }
             });
-            if(userCalendarsFetched==this.selectedUsers.length){
+            if(this.selectedUsers.length > 0 && userCalendarsFetched==this.selectedUsers.length){
                 this.displayUserSets();
             }
         },
+        /* From all of the selected users, 
+         *   1) find all those with common sets 
+         *   2) make sure the dates on all sets are equal
+         *   and only shown those sets with both
+         */
         displayUserSets: function(){
             var self = this
-                , commonSets = this.problemSets.pluck("set_id");
+                , commonSets = this.problemSets.pluck("set_id")
+                , fields = ["enable_reduced_scoring","reduced_scoring_date","answer_date","open_date","due_date"]
+                , sent = {}
+                , received = {};
+            // find all sets in common with all selected users
             _(this.selectedUsers).each(function(_userID){
                 commonSets = _(self.userCalendars[_userID].pluck("set_id")).intersection(commonSets);
+                self.userCalendars[_userID].off().on({
+                    sync: function(model){
+                        if(model instanceof UserSetList){return;} // which occurs on a fetch
+                        received[_userID] = true;
+                        if(_(sent).isEqual(received)){
+                            self.render(); 
+                            var _key = _(model.changingAttributes).keys()[0]
+                            var obj = { 
+                                set_id: model.get("set_id"),
+                                key: _key,
+                                oldValue: moment.unix(model.changingAttributes[_key]).format("MM-DD-YYYY [at] hh:mmA"),
+                                newValue: moment.unix(model.get(_key)).format("MM-DD-YYYY [at] hh:mmA")
+                            };
+                            self.showUserSetSavedMessage(obj);   
+                        }
+                    },
+                    request: function(){
+                        sent[_userID]=true;
+                    },             
+                    change: function(_userSet){
+                        _userSet.changingAttributes=_.pick(_userSet._previousAttributes,_.keys(_userSet.changed));
+                    }
+                });
             })
             this.collection = new ProblemSetList([],{date_settings: this.problemSets.date_settings});
-            _(commonSets).each(function(setID){
-                var attrs = self.problemSets.findWhere({set_id: setID})
-                    .pick("set_id","reduced_scoring_date","answer_date","open_date","due_date");
-                self.collection.add(new ProblemSet(attrs));
-            })
-            this.buildAssignmentDates();
-            this.collection.on(
-                {change: function(model){
-                        var _dates =model.pick("reduced_scoring_date","answer_date","open_date","due_date"); 
-                        _(self.selectedUsers).each(function(userID){
-                            self.userCalendars.kandrea.findWhere({set_id: model.get("set_id")}).set(_dates).save();
-                        })},
-                    sync: self.render
+            // eliminate sets with dates that aren't the same as the rest of the sets
+            _(commonSets).each(function(_setID){
+                var _dates =_.object(fields,["","","","",""]);
+                var tmp = [];
+                _(self.selectedUsers).each(function(_userID){
+                    var fieldDates = _(self.userCalendars[_userID].findWhere({set_id: _setID}).pick(fields)).values();
+                    tmp.push(fieldDates);
                 });
+                var tmp2 = _(_.zip.apply(_,tmp)).map(function(arr) { return _.uniq(arr)});  // transposed tmp
+                // if all of the dates are equal, then add this set to the collection.
+                if(_(tmp2).chain().map(function(arr) { return arr.length==1;}).every(_.identity).value()){
+                    var attrs = _.extend({set_id: _setID},_.object(fields,_.zip.apply(_,tmp2)[0]));
+                    self.collection.add(new ProblemSet(attrs));
+                }
+            });
+            this.buildAssignmentDates();
+            this.collection.on("change", function(model){
+                        sent =  {};
+                        received = {};
+                        console.log("changing the collection");
+                        console.log(model);
+                        var _dates =model.pick("reduced_scoring_date","answer_date","open_date","due_date"); 
+                        _(self.selectedUsers).each(function(_userID){
+                            self.userCalendars[_userID].findWhere({set_id: model.get("set_id")}).set(_dates).save();
+                        })
+                    });
+
             this.render();
+        },
+        showUserSetSavedMessage: function(options){
+            this.eventDispatcher.trigger("add-message",{type: "success", 
+                    short: this.messageTemplate({type:"set_saved",opts:{setname:options.set_id, 
+                        users: this.selectedUsers}}),
+                    text: this.messageTemplate({type:"set_saved_details",opts:{setname: options.set_id,key: options.key,
+                        oldValue: options.oldValue, newValue: options.newValue,
+                        users: this.selectedUsers }})});
         },
         showHideAssigns: function(model){
             // define the mapping between fields in the model and assignment classes. 

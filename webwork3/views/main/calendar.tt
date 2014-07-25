@@ -95,3 +95,16 @@
 
 </script>
 
+<script type="text/template" id="calendar-messages">
+<%
+var messages = {
+    set_saved: function(opt){ return "Set " + opt.setname + " saved for users " + opt.users.join(", ");},
+    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
+      + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + " for users " 
+      + opt.users.join(", ") + ".";},
+}
+print(messages[type](typeof(opts)=="undefined"?{}:opts))
+%>
+
+</script>
+

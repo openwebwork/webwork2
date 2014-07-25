@@ -9,7 +9,8 @@
  */
 
 
-define(['backbone','models/UserSet','config'], function(Backbone, UserSet,config){
+define(['backbone','underscore','models/UserSet','config'], 
+    function(Backbone,_, UserSet,config){
     var UserSetList = Backbone.Collection.extend({
         model: UserSet,
         initialize: function (models,options) {
