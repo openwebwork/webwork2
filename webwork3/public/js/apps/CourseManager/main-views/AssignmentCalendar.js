@@ -130,7 +130,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                         date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
                 self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
                         date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-                if(parseInt(_set.get("reduced_scoring_date"))>0) {
+                if(parseInt(_set.get("reduced_scoring_date"))>0 && _set.get("enable_reduced_scoring")) {
                     self.assignmentDates.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
                         date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
                 }
