@@ -574,6 +574,9 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
 
     my @userSetNames = vars->{db}->listUserSets(param('user_id'));
     my @userSets = vars->{db}->getMergedSets(map { [params->{user_id}, $_]} @userSetNames);
+    for my $set (@userSets){
+        $set->{_id} = $set->{set_id};  # helpful for backbone models on the client side
+    }
     
     return convertArrayOfObjectsToHash(\@userSets);
 };

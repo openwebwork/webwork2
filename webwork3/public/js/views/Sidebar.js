@@ -3,6 +3,7 @@ define(['backbone'],function(Backbone){
 		initialize: function(options){
 			var self = this;
 			_(this).extend(_(options).pick("eventDispatcher","info"));
+			_.extend(this,Backbone.Events);
 			this.state = new Backbone.Model({is_open: false});
 			this.state.on("change",function(){
 				self.eventDispatcher.trigger("save-state");

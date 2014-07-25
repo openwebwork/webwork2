@@ -4,7 +4,7 @@
 		"name": "Calendar",
 		"path": "main-views/AssignmentCalendar",
 		"default_sidebar": "problemSets",
-		"other_sidebars": ["problemSets", "userlist"],
+		"other_sidebars": ["problemSets", "userCalendar"],
 		"id": "calendar"
 	},
 	{
@@ -66,6 +66,11 @@
 		"name": "Users",
 		"path": "sidebars/UserListView",
 		"id": "userlist"
+	},
+	{
+		"name": "Users' Calendars",
+		"path": "sidebars/UserCalendarSidebar",
+		"id": "userCalendar"
 	},
 	{
 		"name": "Library Options",

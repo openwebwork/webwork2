@@ -4,27 +4,26 @@
   */
 
 
-define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView','config'], 
-    function(Backbone, _, moment,MainView, CalendarView,config) {
+define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView','models/UserSetList',
+    'models/ProblemSetList','models/ProblemSet','models/AssignmentDateList','models/AssignmentDate', 'config'], 
+    function(Backbone, _, moment,MainView, CalendarView,UserSetList,ProblemSetList,ProblemSet,
+        AssignmentDateList,AssignmentDate,config) {
 	
     var AssignmentCalendar = CalendarView.extend({
         template: this.$("#calendar-date-bar").html(),
         popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
-        headerInfo: {template: "#calendar-header", events: 
-                { "click .previous-week": "viewPreviousWeek",
-                    "click .next-week": "viewNextWeek",
-                    "click .view-week": "showWeekView",
-                    "click .view-month": "showMonthView"}
-        },
     	initialize: function (options) {
             var self = this;
             CalendarView.prototype.initialize.call(this,options);
-    		_.bindAll(this,"render","renderDay","update","showHideAssigns");
+    		_.bindAll(this,"render","renderDay","update","showHideAssigns","fetchUserCalendars");
 
-            this.problemSets.on({sync: this.render});
+            this.collection = this.problemSets;
+            this.collection.on({sync: this.render});
+
             this.state.on("change:reduced_scoring_date change:answer_date change:due_date change:open_date",
                     this.showHideAssigns);
-        this.state.on("change",this.render);
+            this.state.on("change",this.render);
+            this.buildAssignmentDates();
             return this;
     	},
     	render: function (){
@@ -120,6 +119,83 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 }
             });
         },
+        // This travels through all of the assignments and determines the days that assignment dates fall
+        buildAssignmentDates: function () {
+            var self = this;
+            this.assignmentDates = new AssignmentDateList();
+            this.collection.each(function(_set){
+                self.assignmentDates.add(new AssignmentDate({type: "open", problemSet: _set,
+                        date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+                self.assignmentDates.add(new AssignmentDate({type: "due", problemSet: _set,
+                        date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+                self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
+                        date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+                if(parseInt(_set.get("reduced_scoring_date"))>0) {
+                    self.assignmentDates.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
+                        date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
+                }
+            });
+            this.collection.on({remove:  function (_set){
+                    // update the assignmentDates to delete the proper assignments
+                    self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
+                        return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
+                },
+                "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
+                    self.assignmentDates.chain().filter(function(assign) { 
+                            return assign.get("problemSet").get("set_id")===_set.get("set_id");})
+                        .each(function(assign){
+                            assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type").replace("-","_")+"_date"))
+                                .format("YYYY-MM-DD"));
+                        });
+            } });
+    
+        },
+        fetchUserCalendars: function(_users){
+            var self = this, userCalendarsFetched = 0;
+            this.selectedUsers = _users;
+            if(this.selectedUsers.length==0){
+                this.collection = this.problemSets;
+                this.render();
+            }
+            if(typeof(this.userCalendars)==="undefined"){
+                this.userCalendars = {};
+            }
+
+            _(this.selectedUsers).each(function(_userID){
+                if(! _(self.userCalendars).has(_userID)){
+                    (self.userCalendars[_userID] = new UserSetList([],{type: "sets", user: _userID}))
+                            .fetch({success: function() {self.fetchUserCalendars(self.selectedUsers)}});
+                } else {
+                    userCalendarsFetched++;
+                }
+            });
+            if(userCalendarsFetched==this.selectedUsers.length){
+                this.displayUserSets();
+            }
+        },
+        displayUserSets: function(){
+            var self = this
+                , commonSets = this.problemSets.pluck("set_id");
+            _(this.selectedUsers).each(function(_userID){
+                commonSets = _(self.userCalendars[_userID].pluck("set_id")).intersection(commonSets);
+            })
+            this.collection = new ProblemSetList([],{date_settings: this.problemSets.date_settings});
+            _(commonSets).each(function(setID){
+                var attrs = self.problemSets.findWhere({set_id: setID})
+                    .pick("set_id","reduced_scoring_date","answer_date","open_date","due_date");
+                self.collection.add(new ProblemSet(attrs));
+            })
+            this.buildAssignmentDates();
+            this.collection.on(
+                {change: function(model){
+                        var _dates =model.pick("reduced_scoring_date","answer_date","open_date","due_date"); 
+                        _(self.selectedUsers).each(function(userID){
+                            self.userCalendars.kandrea.findWhere({set_id: model.get("set_id")}).set(_dates).save();
+                        })},
+                    sync: self.render
+                });
+            this.render();
+        },
         showHideAssigns: function(model){
             // define the mapping between fields in the model and assignment classes. 
             var obj = {
@@ -146,14 +222,17 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
         },
         setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
-            var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
+            var problemSet = this.collection.findWhere({set_id: _setName.toString()});
             if(type==="all") {
                 problemSet.setDefaultDates(_date).save({success: this.update()});
             } else {
                 problemSet.setDate(type,moment(_date,"YYYY-MM-DD").unix());
             }
 
-        }
+        },
+        sidebarEvents: {
+            "selected-users-changed": function(arg) {this.fetchUserCalendars(arg);}
+        },
 
     });
 

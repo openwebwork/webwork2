@@ -30,7 +30,7 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
             options.views.setDefinition.tabName = "Set Defn. files";
             TabbedMainView.prototype.initialize.call(this,options);
 
-            // make sure each of the subviews has the this.state variable
+            // make sure each of the tabs has the this.state variable
             _(options.views).chain().keys().each(function(subview){
                 options.views[subview].set({state: self.state});
             })

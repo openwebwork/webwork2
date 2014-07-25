@@ -221,20 +221,8 @@ var ProblemSetsManager = MainView.extend({
                         short: self.messageTemplate({type:"set_removed",opts:{setname: _set.get("set_id")}}),
                         text: self.messageTemplate({type: "set_removed_details",opts:{setname: _set.get("set_id")}})});
                            
-                   // update the assignmentDates to delete the proper assignments
-
-                    self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
-                        return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
 
                 }});
-            },
-            "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
-                self.assignmentDates.chain().filter(function(assign) { 
-                        return assign.get("problemSet").get("set_id")===_set.get("set_id");})
-                    .each(function(assign){
-                        assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type").replace("-","_")+"_date"))
-                            .format("YYYY-MM-DD"));
-                    });
             },
             "change:problems": function(_set){
                 _set.save();

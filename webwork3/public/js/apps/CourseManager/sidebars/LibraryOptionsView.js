@@ -27,7 +27,6 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
                 }
             }
         };
-        _.extend(this,Backbone.Events);
     },
     render: function(){
         this.$el.html($("#library-options-template").html());

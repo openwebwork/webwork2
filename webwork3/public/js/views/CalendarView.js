@@ -12,7 +12,6 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         className: "calendar",
         initialize: function (options){
             MainView.prototype.initialize.call(this,options);
-            //this.constructor.__super__.constructor.__super__.initialize.apply(this, options);
             _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');  // include all functions that need the this object
     	    
             if (! this.date){
@@ -34,7 +33,7 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
                 reduced_scoring_date: true,
                 open_date: true,
                 first_day: firstDay.format("YYYY-MM-DD"),
-                calendarType: "month"
+                calendar_type: "month"
             }, {silent: true});
 
             this.weekViews = []; // array of CalendarWeekViews
