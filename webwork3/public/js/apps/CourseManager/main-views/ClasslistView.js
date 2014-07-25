@@ -65,8 +65,8 @@ var ClasslistView = MainView.extend({
         this.emailPane = new EmailStudentsView({users: this.users}); 
 
         // query the server every 15 seconds (parameter?) for login status only when the View is visible
-        this.eventDispatcher.on("view-change",function(viewName){
-        	if(viewName==="Classlist Manager"){
+        this.eventDispatcher.on("view-change",function(viewID){
+        	if(viewID==="classlist"){
         		self.checkLoginStatus();
         	} else {
         		self.stopLoginStatus();
@@ -309,7 +309,7 @@ var ClasslistView = MainView.extend({
                 	})
                 }});
 
-		}, 30000);
+		}, 15000);
 	},
 	stopLoginStatus: function(){
 		window.clearTimeout(this.loginStatusTimer);

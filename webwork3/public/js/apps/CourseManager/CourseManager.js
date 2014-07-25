@@ -167,7 +167,6 @@ var CourseManager = WebPage.extend({
         this.changeView(_view);
         this.changeSidebar(this.mainViewList.getDefaultSidebar(_view),{is_open: true});
         this.saveState();
-        this.eventDispatcher.trigger("view-change",_name);
     },
     stopActing: function (){
         var self = this;

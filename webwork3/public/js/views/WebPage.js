@@ -185,9 +185,10 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         } else {
             this.currentView = this.mainViewList.views[0];
         }
+        this.navigationBar.setPaneName(this.currentView.info.name);
         $("#main-view").html("<div class='main'></div>");
-        
         this.currentView.setElement(this.$(".main")).setState(state).render();
+        this.eventDispatcher.trigger("view-change",this.currentView.info.id);
     },
     /***
      * 
