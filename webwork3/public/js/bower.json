@@ -12,7 +12,7 @@
     "jquery-1.9": "jquery#1.9.*",
     "jquery": "2.1.1",
     "jquery-ui": "1.11.0",
-    "requirejs": "2.1.11",
+    "requirejs": "2.1.14",
     "bootstrap-2": "bootstrap#2.*",
     "bootstrap": "3.1.1",
     "backbone": "1.1.2",
