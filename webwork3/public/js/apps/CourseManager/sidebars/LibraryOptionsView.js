@@ -3,6 +3,7 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
     initialize: function(options){
         Sidebar.prototype.initialize.apply(this,[options]);
         var self = this;
+        _(this).bindAll("addProblemSet");
         this.problemSets = options.problemSets;
         this.problemSets.on({
             add: this.addProblemSet, sync: function(_set){               
