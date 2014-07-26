@@ -62,7 +62,7 @@
           <h1>Getting started</h1>
           <h2>Here&rsquo;s how to get dancing:</h2>
                     
-          <h3><a href="#" id="about_env_link">About your application's environment</a></h3>
+          <h3><a href="#" onclick="return false" id="about_env_link">About your application's environment</a></h3>
 
           <div id="about-content" style="display: none;">
             <table>

@@ -67,7 +67,7 @@
 <%if(enable_reduced_scoring) {%>
   <tr><td>Reduced Scoring:</td><td><%=(enable_reduced_scoring=="1")?"Yes":"No"%></td></tr>
 <%}%>
-<tr><td colspan="2"><a href="#" class="goto-problem-set-button" data-setname="<%=set_id%>">Visit Problem Set</a></td></tr>
+<tr><td colspan="2"><a href="#" onclick="return false" class="goto-problem-set-button" data-setname="<%=set_id%>">Visit Problem Set</a></td></tr>
 </table>
 </script>
 

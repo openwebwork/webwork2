@@ -18,7 +18,7 @@
 </script>
 
 <script type="text/template" id="progress-menu-item">
-<li><a href="#" data-name="<%=name%>"><%=name%></a></li>
+<li><a href="#" onclick="return false" data-name="<%=name%>"><%=name%></a></li>
 </script>
 
 

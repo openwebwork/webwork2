@@ -8,23 +8,32 @@
           <span class="input-group-btn">
             <button class="btn btn-default clear-filter-button" type="button"><i class="fa fa-times"></i></button>
           </span>
-        </div><!-- /input-group -->
-      </div><!-- /.col-md-4 -->
+        </div>
+      </div>
 
     <div class="pull-right btn-group">
       <div class="btn-group">
-      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-        Show Rows
-        <span class="caret"></span>
-      </button>
-      <ul class="dropdown-menu">
-        <li><a href="#" class="show-rows" data-num="10"><i class="fa fa-check"></i>Show 10 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="25"><i class="fa fa-check not-visible"></i>Show 25 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="50"><i class="fa fa-check not-visible"></i>Show 50 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="-1"><i class="fa fa-check not-visible"></i>Show All rows</a></li>
+        <button class="btn btn-default dropdown-toggle" onclick="return false" data-toggle="dropdown" 
+            href="#">Action on Selected
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a onclick="return false" href="#" class="change-set-props">Change Set Properties</a></li>
+        </ul>
+      </div>
 
-      </ul>
-    </div>
+      <div class="btn-group">
+        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">Show Rows
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a href="#" onclick="return false" class="show-rows" data-num="10"><i class="fa fa-check"></i>Show 10 rows</a></li>
+          <li><a href="#" onclick="return false" class="show-rows" data-num="25"><i class="fa fa-check not-visible"></i>Show 25 rows</a></li>
+          <li><a href="#" onclick="return false" class="show-rows" data-num="50"><i class="fa fa-check not-visible"></i>Show 50 rows</a></li>
+          <li><a href="#" onclick="return false" class="show-rows" data-num="-1"><i class="fa fa-check not-visible"></i>Show All rows</a></li>
+
+        </ul>
+      </div>
 
       <button class="btn btn-default add-problem-set-button">Add Problem Set</button>
     </div>

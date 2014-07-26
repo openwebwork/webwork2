@@ -12,7 +12,7 @@
   </nav>
 [% content %]
 <div class="navbar-fixed-bottom navbar navbar-other" id="footer">
-Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_version %]
+Powered by <a href="#" onclick="return false" href="http://perldancer.org/">Dancer</a> [% dancer_version %]
 </div>
 
 <script type="text/template" id="login-template">
@@ -52,7 +52,7 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
         <a style="margin-left: 0px" class="navbar-brand main-view-name"></a>
       </li>
       <li class="dropdown">
-        <a href="#" href="#" class="dropdown-toggle" data-toggle="dropdown">MENU<b class="caret"></b></a>
+        <a href="#" onclick="return false" class="dropdown-toggle" data-toggle="dropdown">MENU<b class="caret"></b></a>
       <ul class="dropdown-menu manager-menu">
       </ul>        
     </li>
@@ -71,12 +71,12 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
           <li><button class="btn btn-default btn-sm navbar-btn logout-button" data-toggle="dropdown">
                 <span class="glyphicon glyphicon-log-out"></span></button>
                 <ul class="dropdown-menu" role="menu">
-                  <li><a class="logout-link" href="#">Logout</a></li>
-                  <li class="stop-acting-li disabled"><a class="stop-acting-link" href="#">Stop Acting as User</a></li>
+                  <li><a class="logout-link" href="#"  onclick="return false">Logout</a></li>
+                  <li class="stop-acting-li disabled"><a class="stop-acting-link" href="#"  onclick="return false">Stop Acting as User</a></li>
                 </ul>
           </li>
           <li><a href="https://github.com/openwebwork/webwork2/issues/new" target="_blank">Bugs!</a></li>
-          <li><a href="#" class="main-help-button">Help</a></li>
+          <li><a href="#" onclick="return false" class="main-help-button">Help</a></li>
       </ul>
       </div><!-- /.navbar-collapse -->
 
