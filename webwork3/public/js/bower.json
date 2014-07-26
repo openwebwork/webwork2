@@ -11,7 +11,7 @@
     "jquery-1.8": "jquery#1.8.*",
     "jquery-1.9": "jquery#1.9.*",
     "jquery": "2.1.1",
-    "jquery-ui": "1.10.4",
+    "jquery-ui": "1.11.0",
     "requirejs": "2.1.11",
     "bootstrap-2": "bootstrap#2.*",
     "bootstrap": "3.1.1",
