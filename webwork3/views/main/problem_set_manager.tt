@@ -18,7 +18,8 @@
           <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
-          <li><a onclick="return false" href="#" class="change-set-props">Change Set Properties</a></li>
+          <li><a onclick="return false" href="#" class="change-set-props" data-toggle="modal">Change Set Properties</a></li>
+          <li><a onclick="return false" href="#" class="delete-sets-button">Delete Sets</a></li>
         </ul>
       </div>
 
@@ -38,6 +39,42 @@
       <button class="btn btn-default add-problem-set-button">Add Problem Set</button>
     </div>
   </div>
+  <div class="modal-container">
+  </div>
+</script>
+
+<script type="text/template"  id="change-set-props-template">
+<!-- Modal -->
+<div class="modal fade change-set-props-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="myModalLabel">Change Properties for Multiple Sets</h4>
+      </div>
+      <div class="modal-body">
+        <p>To change the desired dates and other properties below then click "Save Changes".</p>
+        <table class="table">
+          <tbody>
+          <tr><td class="header">Set Names</td><td class="set-names"></td></tr>
+          <tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
+          <tr><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
+          <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
+          <tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
+          <tr><td class="header">Problem Set Visible to Users</td>
+            <td><select class='prob-set-visible input-small yes-no-boolean-select'> </select></td></tr>
+          <tr><td class="header">Reduced Scoring Enabled</td>
+            <td><select class='reduced-scoring input-small yes-no-boolean-select'></select></td></tr>
+          </tbody>
+          </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
 </script>
 
 <script type="text/template" id="add-hw-set-template">
@@ -99,7 +136,7 @@ var messages = {
     setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
     setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
                                 opt.oldValue + " to " + opt.newValue + "."},
- 
+    empty_selected_sets_error: function () { return "You must select at least one set.";}
 }
 print(messages[type](typeof(opts)=="undefined"?{}:opts))
 %>

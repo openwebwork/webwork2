@@ -12,15 +12,14 @@ var ProblemSetsManager = MainView.extend({
     initialize: function (options) {
         MainView.prototype.initialize.call(this,options);
         _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText',
-                    'hideShowReducedScoring');  // include all functions that need the this object
+                    'hideShowReducedScoring','deleteSets');  // include all functions that need the this object
         var self = this;
 
-        this.state.set({filter_text: "", page_number: 0, 
+        this.state.set({filter_text: "", page_number: 0, set_prop_modal_open: false,
                 page_size: this.settings.getSettingValue("ww3{pageSize}") || 10},{silent: true})
             .on("change:filter_text", function () {self.filterProblemSets();});
 
         this.tableSetup();
-
 
         this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
                 classes: "problem-set-manager-table",
@@ -31,14 +30,9 @@ var ProblemSetsManager = MainView.extend({
             self.state.set("page_number",num);
             self.isReducedScoringEnabled();
         })
+        var dateSettings = util.pluckDateSettings(this.settings);
+        this.changeSetPropView = new ChangeSetPropertiesView({date_settings: dateSettings});
 
-
-        this.headerInfo = { 
-            template: "#allSets-header", 
-            events: {"click .add-problem-set-button": function () {
-                              self.addProblemSet();  
-                            }}
-        };
         this.problemSets.on({
             "add": this.updateTable,
             "remove": this.updateTable,
@@ -49,7 +43,9 @@ var ProblemSetsManager = MainView.extend({
     events: {
         "click .add-problem-set-button": "addProblemSet",
         'click button.clear-filter-button': 'clearFilterText',
-        "click a.show-rows": "showRows"
+        "click a.show-rows": "showRows",
+        "click a.change-set-props": "showChangeProps",
+        "click a.delete-sets-button": "deleteSets"
     },
     hideShowReducedScoring: function(model){
         if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
@@ -59,10 +55,8 @@ var ProblemSetsManager = MainView.extend({
         if(this.problemSetTable){
             this.problemSetTable.refreshTable();
         }
-        //this.$(".set-id a").truncate({width: 120});
     },
     render: function () {
-        console.log(this.state.attributes);
         this.$el.html($("#problem-set-manager-template").html());
         this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
         this.showRows(this.state.get("page_size"));
@@ -70,12 +64,28 @@ var ProblemSetsManager = MainView.extend({
         this.problemSets.trigger("hide-show-all-sets","hide");
         this.problemSetTable.filter(this.state.get("filter_text"));
         this.problemSetTable.gotoPage(this.state.get("page_number"));
+        if(this.state.get("set_prop_modal_open")){
+            this.changeSetPropView.show();
+        }
         MainView.prototype.render.apply(this);
         this.stickit(this.state,this.bindings);
         return this;
     },
     bindings: { ".filter-text": "filter_text"},
-
+    showChangeProps: function () {
+        var setIDs = this.getSelectedSets();
+        if(setIDs.length>0){
+            
+            this.$(".modal-container").html(this.changeSetPropView.render().el);
+            this.changeSetPropView.show();
+            this.state.set("set_prop_modal_open",true);
+        } else {
+            this.eventDispatcher.trigger("add-message",{type: "danger",
+                    short: this.messageTemplate({type: "empty_selected_sets_error"}),
+                    text: this.messageTemplate({type: "empty_selected_sets_error"})
+                });
+        }
+    },
     isReducedScoringEnabled: function (){
         // hide reduced credit items when not enabled. 
         if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
@@ -89,8 +99,10 @@ var ProblemSetsManager = MainView.extend({
     },
     updateTable: function() {
         if(this.problemSetTable){
-            this.problemSetTable.render();
+            this.problemSetTable.refreshTable().updateTable().updatePaginator()
+                .filter(this.state.get("filter_text")).render();
         }
+        return;
     },
     addProblemSet: function (){
         var dateSettings = util.pluckDateSettings(this.settings);
@@ -100,13 +112,23 @@ var ProblemSetsManager = MainView.extend({
             this.addProblemSetView.setModel(new ProblemSet({},dateSettings)).render().open();
         }
     },
-    deleteSet: function(set){
-        var del = confirm("Are you sure you want to delete the set " + set.get("set_id") + "?");
-        if(del){
-            this.problemSets.remove(set);
-            this.problemSetTable.updateTable();
-            this.problemSetTable.updatePaginator();
-            
+    getSelectedSets: function () {
+        return $.makeArray(this.$("tbody td.select-problem-set input[type='checkbox']:checked").map(function(i,v) {
+            return $(v).closest("tr").children("td.set-id").text();}));
+    },
+    deleteSets: function(){
+        var sets = this.getSelectedSets()
+            , self = this
+            , del;
+        if (sets.length==0){
+
+        } else {
+            del = confirm("Are you sure you want to delete the set" + (sets.length==1?" ":"s ") + sets.join(", ") + "?");
+            if(del){
+                _(sets).each(function(_set){
+                    self.problemSets.remove(_set);                
+                });
+            }
         }
     },  
     showRows: function(arg){
@@ -150,14 +172,14 @@ var ProblemSetsManager = MainView.extend({
     },
     tableSetup: function () {
         var self = this;
-        this.cols = [{name: "Delete", key: "delete", classname: "delete-set", 
-            stickit_options: {update: function($el, val, model, options) {
-                $el.html($("#delete-button-template").html());
-                $el.children(".btn").on("click",function() {self.deleteSet(model);});
-            }}},
+        this.cols = [
+            {name: "Select", key: "select_row", classname: "select-problem-set", 
+                stickit_options: {update: function($el, val, model, options) {
+                    $el.html($("#checkbox-template").html());
+                }}, colHeader: "<input type='checkbox'></input>"},
             {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
                 stickit_options: {update: function($el, val, model, options) {
-                    $el.html("<a href='#' class='goto-set' data-setname='"+val+"'>" + val + "</a>");
+                    $el.html("<a href='#' onclick='return false' class='goto-set' data-setname='"+val+"'>" + val + "</a>");
                     $el.children("a").on("click",function() {
                         self.eventDispatcher.trigger("show-problem-set",$(this).data("setname"));
                     });}
@@ -170,12 +192,7 @@ var ProblemSetsManager = MainView.extend({
                 sort_function: function(val){ return val.length;}
                 },
             {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
-                stickit_options: {
-                    update: function($el,val,model,options){
-                        $el.html("<a href='/webwork2/" + config.courseSettings.course_id +"/" +
-                                model.get("set_id") + "/'>" + val.length + "</a>")
-                    }},
-
+                stickit_options: { onGet: function(val) { return val.length}},
                 sort_function: function(val){
                     return val.length;
                 }    
@@ -335,9 +352,31 @@ var ProblemSetsManager = MainView.extend({
             }
         });
     }
-    
-    
-    
+});
+
+var ChangeSetPropertiesView = Backbone.View.extend({
+    initialize: function(options){
+        this.setNames = options.set_names;
+        this.model = new ProblemSet({},options.date_settings);
+        this.model.setDefaultDates();
+    },
+    render: function(){
+        this.$el.html($("#change-set-props-template").html());
+        this.stickit();
+        return this;
+    },
+    show: function(){
+        this.$(".change-set-props-modal").modal("show");
+    },
+    bindings: {
+            ".set-name" : "set_id",
+            ".open-date" : "open_date",
+            ".due-date" : "due_date",
+            ".answer-date": "answer_date",
+            ".prob-set-visible": "visible",
+            ".reduced-scoring": "enable_reduced_scoring",
+            ".reduced-scoring-date": "reduced_scoring_date"
+    }
 });
 
 var AddProblemSetView = ModalView.extend({

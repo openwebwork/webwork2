@@ -191,6 +191,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				this.$(".paginator-row").removeClass("hidden")
 			}
 			this.delegateEvents();
+			return this;
 		},
 		filter: function(filterText) {
 			if(this.currentPage != 0){
@@ -236,6 +237,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 					}
 				}
 			});
+			return this;
 		},
 		refreshTable: function (){
 			_(this.rowViews).each(function(row){row.refresh();});
