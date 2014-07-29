@@ -38,8 +38,12 @@
       <%=body%>
       </div>
       <div class="modal-footer">
+        <%if(buttons){
+          print(buttons)
+        } else {%>
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary action-button"><%=action_button_text%></button>
+        <%}%>
       </div>
     </div>
   </div>

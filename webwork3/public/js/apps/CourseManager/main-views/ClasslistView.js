@@ -19,7 +19,14 @@ var ClasslistView = MainView.extend({
 		
 		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
-	    this.tableSetup();
+	    this.addStudentManView.on("modal-opened",function (){
+            self.state.set("man_user_modal_open",true);
+        }).on("modal-closed",function(){
+            self.state.set("man_user_modal_open",false);
+            self.render(); // for some reason the checkboxes don't stay checked. 
+        })
+
+        this.tableSetup();
 	    
             
         this.users.on({"add": this.addUser,"change": this.changeUser,"sync": this.syncUserMessage,
@@ -31,8 +38,8 @@ var ClasslistView = MainView.extend({
 	    	self.state.set("page_number",num);
 	    })
 
-	    this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10}
-	    	,{silent: true}); // silent: true, so it doesn't trigger a save right away
+	    this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+            man_user_modal_open: false}	,{silent: true}); // silent: true, so it doesn't trigger a save right away
         this.state.on("change:filter_text", function () {self.filterUsers();});
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
@@ -77,7 +84,11 @@ var ClasslistView = MainView.extend({
         this.showRows(this.pageSize);
         this.filterUsers();
         this.userTable.gotoPage(this.state.get("page_number"));
+        
         MainView.prototype.render.apply(this);
+        if(this.state.get("man_user_modal_open")){
+            this.addStudentManView.setElement(this.$(".modal-container")).render();
+        }
         this.stickit(this.state,this.bindings);
 	    return this;
     },  
@@ -119,16 +130,13 @@ var ClasslistView = MainView.extend({
 		                	key: key, oldValue: _user.changingAttributes[key], newValue: _user.get(key)}})});
 	    	}
     	});
-   },
-
-    // I think some of these should go into EditGrid.js
+    },
     events: {
 	    "click .add-students-file-option": "addStudentsByFile",
 	    "click .add-students-man-option": "addStudentsManually",
 	    "click .export-students-option": "exportStudents",
 		'keyup input.filter-text' : 'filterUsers',
 	    'click button.clear-filter-button': 'clearFilterText',
-	    'change .user-action': 'takeAction',
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
 	    "click a.delete-selected": "deleteSelectedUsers",
@@ -139,7 +147,7 @@ var ClasslistView = MainView.extend({
 		this.addStudentFileView.openDialog();
 	},
 	addStudentsManually: function () {
-		this.addStudentManView.openDialog();
+		this.addStudentManView.setElement(this.$(".modal-container")).render();
 	},
 	exportStudents: function () {
 	    var textFileContent = "";

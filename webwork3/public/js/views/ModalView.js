@@ -16,20 +16,29 @@ define(['backbone','underscore'], function(Backbone, _){
  	    initialize: function (options) {
             var self = this;
             _.bindAll(this,"render");
-
+            this.modal_size = options.modal_size;
             this.templateOptions = {
                 header: options.modal_header, 
                 body: options.modal_body, 
-                action_button_text: options.modal_action_button_text};
+                action_button_text: options.modal_action_button_text,
+                buttons: options.modal_buttons
+            };
             _(this).extend(Backbone.Events);
         },
-        events: {
+        parentEvents: {
             "shown.bs.modal": function () { this.trigger("modal-opened");},
-            "hidden.bs.modal": function() { this.trigger("modal-closed");}
+            "hidden.bs.modal": function() { 
+                this.trigger("modal-closed");
+                }
+        },
+        childEvents: {},
+        events: function (){
+            return _({}).extend(this.childEvents,this.parentEvents);
         },
         render: function () {
             var self = this; 
             this.$el.html(this.template(this.templateOptions));
+            this.$(".modal-dialog").addClass(this.modal_size)
             this.$(".modal").modal();
             return this;
         },

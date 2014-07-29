@@ -54,7 +54,7 @@
         
 </div>
 <div class="users-table-container table-responsive"></div>
-
+<div class="modal-container"></div>
 </script>
 
 <script type="text/template" id="classlist-table-template">
@@ -116,25 +116,43 @@
 <p>
 <a href="<%=url%>" download="<%=filename%>">Save the classlist file</a>
 </script>
-<script type="text/template" id="add_student_man_dialog_content">
-    <div id='error-pane-add-man'></div>
-        <p>Add students below in the designated boxes.  If you leave the password field blank then the student will be given their <em>student id</em>
-            as the initial password. </p>
-            <div id='man_student_list'><%= content %></div>
-            <div id="manDialogTableFooter">
-            <button id="import_stud_button">Import Students</button>
-            <button id="add_more_button">Add Another Blank Line</button>
-            </div>
-</script>
 <script type="text/template" id="manual-import-template">
-    <table id='man_student_table' class="table table-bordered"><thead><tr><td>Delete</td>
-    <td>Login Name</td><td>First Name</td><td>Last Name</td><td>Email</td><td>Student Id</td><td>Status</td>
-    <td>Section</td><td>Recitation</td>
-    <td>Comment</td><td>Permission Level</td><td>Password</td></tr></thead><tbody></tbody></table>
-    <button class="btn btn-default" id="import-stud-button">Import Students</button>
-    <button class="btn btn-default" id="add-more-button">Add Another Row</button>
-    <button class="btn btn-default" id="cancel-import">Cancel Import</button>
+    <table class="table table-bordered user-table">
+    <thead>
+    <th>Login Name</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Student Id</th></tr>
+    </thead><tbody>
+    <tr>
+      <td><input class="form-control user-id"></td>
+      <td><input class="form-control first-name"></td>
+      <td><input class="form-control last-name"></td>
+      <td><input class="form-control email"></td>
+      <td><input class="form-control student-id"></td>
+    </tr>
+    <tr>
+      <td class='header'>Status</td class='header'>
+      <td class='header'>Section</td class='header'>
+      <td class='header'>Recitation</td class='header'>
+      <td class='header'>Comment</td class='header'>
+      <td class='header'>Permission Level</td class='header'><td class='header'>Password</td class='header'>
+    </tr>
+    <tr>
+      <td><input class="form-control status"></td>
+      <td><input class="form-control section"></td>
+      <td><input class="form-control recitation"></td>
+      <td><input class="form-control comment"></td>
+      <td><select class="form-control permission"></select></td>
+      <td><input class="form-control password"></td>
+  </tr>
+
+    </tbody></table>
+    <div class="message-pane"></div>
 </script>
+<script type="text/template" id="manual-import-buttons">
+    <button class="btn btn-default add-more-button">Save Student and Add Another</button>
+    <button class="btn btn-default cancel-import-button" data-dismiss="modal">Cancel Import</button>
+    <button class="btn btn-primary action-button">Save Student and Close</button>
+</script>
+
 <script type="text/template" id="passwordDialogText">
     Change the password of the users below:
     <table id="userPassTable">
@@ -153,22 +171,6 @@
     
 </script>
 
-
-<script type="text/template" id="user-row-template">
-    <td><button class="btn btn-default btn-sm delete-button"><i class="fa fa-trash-o"></i></button</td>
-    <td><input class="user-id"></td>
-    <td><input class="first-name"></td>
-    <td><input class="last-name"></td>
-    <td><input class="email"></td>
-    <td><input class="student-id"></td>
-    <td><input class="status"></td>
-    <td><input class="section"></td>
-    <td><input class="recitation"></td>
-    <td><input class="comment"></td>
-    <td><select class="permission span2"></select></td>
-    <td><input class="password"></td>
-</script>
-
 <script type="text/template" id="change-password-row-template">
   <td class="first-name"></td><td class="last-name"></td><td class="user-id"></td>
   <td><input type='text' size='10' class='new-password'></input></td>
@@ -184,7 +186,10 @@ var messages = {
     user_added_details: function(opt){ return "A user with login name " + opt.username + " was added to the course.";},
     user_removed: function(opt){ return "User " + opt.username + " was removed.";},
     user_removed_details: function(opt){ return "The user with login name " + opt.username + " was removed from the course.";},
-    csv_file_needed: function() { return "You must upload a csv or lst (classlist) file."}
+    csv_file_needed: function() { return "You must upload a csv or lst (classlist) file."},
+    man_user_added: function(opt){ return "The users with login names " + opt.users.join(", ") + " will be added "
+    "to the course when you close this dialog."},
+    user_already_exists: function (opt) { return "The user with login name " + opt.user_id + " is already enrolled in the course."}
 };
 print(messages[type](typeof(opts)=="undefined"?{}:opts));
 %>

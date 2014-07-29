@@ -285,7 +285,7 @@ var LoginView = ModalView.extend({
         _.bindAll(this,"login");
 
         _(options).extend({
-            modal_header: "Add Problem Set to Course",
+            modal_header: "Login to Course",
             modal_body: _.template($("#login-template").html(),{message: options.messageTemplate({type: "relogin"})}),
             modal_action_button_text: "Login"
         })

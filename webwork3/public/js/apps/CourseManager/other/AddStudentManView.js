@@ -1,104 +1,87 @@
 // This is the View for the dialog for addings students manually    
 
-define(['backbone', 'underscore','models/User','models/UserList','config','stickit'], 
-	function(Backbone, _, User, UserList, config){	
-	var AddStudentManView = Backbone.View.extend({
+define(['backbone', 'underscore','models/User','models/UserList','views/ModalView', 'config','stickit'], 
+	function(Backbone, _, User, UserList,ModalView,config){	
+	var AddStudentManView = ModalView.extend({
 		id: "addStudManDialog",	    
 		initialize: function(options){
 		    var self=this;
-		    _.bindAll(this, 'render','importStudents','addStudent','openDialog','closeDialog'); // every function that uses 'this' as the current object should be in here
-		    this.courseUsers = options.users; 
-		    this.$el.dialog({autoOpen: false, modal: true, title: "Add Students by Hand",
-							width: (0.95*window.innerWidth), height: (0.60*window.innerHeight) });
-		},
-		rowTemplate: $("#user-row-template").html(),
-		events: {
-		    "click button#import-stud-button": "importStudents",
-		    "click button#add-more-button": "addStudent",
-		    "click button#cancel-import": "closeDialog"
-		},
-		openDialog: function () { 
-			var self = this;
-			this.$el.dialog("open");
-			this.collection = new UserList([new User()]);  // add a single blank user to the collection of students to import.		    		    
-			this.collection.on({add: this.render, remove: this.render}).courseUsers = this.courseUsers;
-			this.render();
-		},
-		closeDialog: function () {this.$el.dialog("close");},
-		render: function(){
-			var self = this;
-		    this.$el.html($("#manual-import-template").html());
-		    var table = this.$("table#man_student_table tbody");
-		    this.collection.each(function(user){ 
-			    table.append(new UserRowView({model: user, rowTemplate: self.rowTemplate}).render().el);
-		    });
-		},
-		importStudents: function(){  // validate each student data then if successful upload to the server.
-		    var self = this;
-		    var usersValid = this.collection.map(function(model){ return model.isValid(true);});
-		    if (_.all(usersValid, _.identity)) { 
-		    	this.closeDialog();
-		    	this.collection.each(function(_user) {
-		    		_user.id = void 0; // to ensure that it is a new user. 
-		    		self.courseUsers.add(_user);
-		    	});
-			}
-		},
-		addStudent: function (){ 
-			var user = new User()
-			user.id="temp"+(this.collection.length+1); // to make sure a unique id is generated. 
-			this.collection.add(user);
-		}
-    });
-
-	var UserRowView = Backbone.View.extend({
-        tagName: "tr",
-        initialize: function (options) {
-        	var self = this;
-            _.bindAll(this,'render');
-        	this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
+		    _.bindAll(this, 'render','saveAndClose','saveAndAddStudent'); // every function that uses 'this' as the current object should be in here
+		    _(this).extend(_(options).pick("users","messageTemplate"));
+		    this.collection = new UserList();
+		    this.model = new User();
+		    this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
         		{"user_id": ".user-id", "email_address": ".email"});
-		    this.rowTemplate = options.rowTemplate;
-		    Backbone.Validation.bind(this, {
+
+		    
+            _(options).extend({
+            	modal_size: "modal-lg",
+	            modal_header: "Add Users to Course",
+	            modal_body: $("#manual-import-template").html(),
+	            modal_buttons: $("#manual-import-buttons").html()
+	        })
+	        this.setValidation();
+            ModalView.prototype.initialize.apply(this,[options]);
+		},
+		childEvents: {
+		    "click .action-button": "saveAndClose",
+		    "click .add-more-button": "saveAndAddStudent",
+		},
+		setValidation: function (){
+			var self = this;
+			Backbone.Validation.bind(this, {
 		    	invalid: function(view,attr,error){
 		    		self.$(self.invBindings[attr]).popover({placement: "right", content: error})
                     	.popover("show").addClass("error");
+		    	},
+		    	valid: function(view,attr){
+		    		self.$(self.invBindings[attr]).popover("destroy").removeClass("error");
 		    	}
 		    });
-        },
-        render: function () {
-            this.$el.html(this.rowTemplate);
-            this.stickit();
-            return this; 
-	    },       
-    	bindings : { ".student-id": "student_id",
-    				".last-name": "last_name",    		
-    				".first-name": "first_name",
-    				".status": "status",
-    				".comment": "comment",
-    				".status": "status",
-    				".recitation": "recitation",
-    				".email": {observe: "email_address", setOptions: {silent:true}},
-    				".user-id": {observe: "user_id", setOptions: {silent:true}},
-    				".password": "password",
-    				".permission": { 
-    					observe: "permission",
-    					selectOptions: { collection: function() { return config.permissions;}}
-    				}
-    			},
-        events: {
-		    'click .delete-button': 'removeRow'
 		},
-		removeRow: function () { 
-			console.log("in removeRow");
-			this.model.collection.remove(this.model); 
+		render: function(){
+			var self = this;
+			ModalView.prototype.render.apply(this);
+			this.stickit();
+		},
+    	bindings : { ".student-id": "student_id",
+			".last-name": "last_name",    		
+			".first-name": "first_name",
+			".status": "status",
+			".comment": "comment",
+			".status": "status",
+			".recitation": "recitation",
+			".email": {observe: "email_address", setOptions: {silent:true}},
+			".user-id": {observe: "user_id", setOptions: {silent:true}},
+			".password": "password",
+			".permission": { 
+				observe: "permission",
+				selectOptions: { collection: function() { return config.permissions;}}
+			}
+		},
 
-			this.$el.remove();	
+		saveAndClose: function(){ 
+			this.saveAndAddStudent();
+			this.users.add(this.collection.models);
+			this.collection.reset();
+			this.close();		    
+		},
+		saveAndAddStudent: function (){ 
+			if(this.users.findWhere({user_id: this.model.get("user_id")})){
+				this.$(".message-pane").addClass("alert-error").html(this.messageTemplate({type:"user_already_exists",
+								opts: {user_id: this.model.get("user_id")}}));
+			}
+			if(this.model.isValid(true)){
+				this.collection.add(new User(this.model.attributes));
+				this.$(".message-pane").addClass("alert-info").html(this.messageTemplate({type: "man_user_added",
+								opts: {users: this.collection.pluck("user_id")}}));
+				
+				this.model = new User();
+				this.setValidation();
+				this.stickit();
+			}
 		}
-
     });
-
-
     return AddStudentManView;
 
 });
