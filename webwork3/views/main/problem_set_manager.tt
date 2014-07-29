@@ -63,12 +63,15 @@
 <script type="text/template" id="add-hw-set-template">
   <div class="add-problem-set-dialog-content">
   <p>A new homework set with the name below will be created.  In addition, it will be assigned to you 
-  (user: <%= name %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
-  <table><tr>
+  (user: <%= users %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
+  <table style="table-layout-fixed; width: 100%"><tr>
     <td>Homework Set Name:</td>
     <td><input type='text' size='20' class='problem-set-name'></td>
     </tr>
-    <tr><td  colcol-md-="2" class="problem-set-name-error" style="color: red"></td></tr>
+    <tr><td  colspan="2" class="problem-set-name-error" style="color: red"></td></tr>
+    <tr> 
+    <td>Assign to All Users</td><td><input type='checkbox' class="assign-to-all-users"></td>
+    </tr>
     </table>
     </div>
 

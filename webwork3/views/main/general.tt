@@ -39,7 +39,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary save-changes-button"><%=save_button_text%></button>
+        <button type="button" class="btn btn-primary action-button"><%=action_button_text%></button>
       </div>
     </div>
   </div>
@@ -158,7 +158,8 @@
     loading_data: function(){ return "The page is now loading...";},
     openDate_after_dueDate: function(){return "The open date must come before the due date";},
     dueDate_after_answerDate: function(){return "The due date must come before the answer date.";},
-
+    set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
+    set_name_already_exists: function(opts) {return "The set with name " + opts.set_id + " has already been used in this course.";}
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
   

@@ -3,10 +3,10 @@
   
 */
 define(['module','backbone','views/Sidebar', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
-    'views/MainViewList', 'models/AssignmentDate','models/AssignmentDateList','views/WebPage',
+    'views/MainViewList', 'models/AssignmentDate','models/AssignmentDateList','views/WebPage', 'moment',
     'config','apps/util','jquery-ui','bootstrap'], 
 function(module, Backbone, Sidebar, _, UserList, ProblemSetList, SettingList,MainViewList,
-    AssignmentDate,AssignmentDateList,WebPage,config,util){
+    AssignmentDate,AssignmentDateList,WebPage,moment,config,util){
 var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){

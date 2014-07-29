@@ -4,8 +4,8 @@
  */
 
 define(['backbone', 'underscore','views/MainView', 'views/CollectionTableView','config','apps/util',
-    'views/ModalView','models/ProblemSet','models/AssignmentDate'], 
-function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemSet,AssignmentDate){
+    'views/ModalView','models/ProblemSet','models/AssignmentDate','moment'], 
+function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemSet,AssignmentDate,moment){
 
 
 var ProblemSetsManager = MainView.extend({
@@ -120,11 +120,8 @@ var ProblemSetsManager = MainView.extend({
     },
     addProblemSet: function (){
         var dateSettings = util.pluckDateSettings(this.settings);
-        if (! this.addProblemSetView){
-            (this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets,dateSettings: dateSettings})).render();
-        } else {
-            this.addProblemSetView.setModel(new ProblemSet({},dateSettings)).render().open();
-        }
+        this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets,dateSettings: dateSettings})
+            .setElement(this.$(".modal-container")).render();
     },
     selectAll: function(evt){
         this.$("td.select-problem-set input").prop("checked",$(evt.target).prop("checked"));
@@ -398,12 +395,11 @@ var ChangeSetPropertiesView = ModalView.extend({
                 self.$(".reduced-scoring-date").closest("tr").addClass("hidden");
             }
         });
-        _(this).extend(Backbone.Events);
 
         _(options).extend({
             modal_header: "Change Properties for Multiple Sets",
             modal_body: $("#change-set-props-template").html(),
-            modal_save_button_text: "Save Changes"
+            modal_action_button_text: "Save Changes"
         })
 
         ModalView.prototype.initialize.apply(this,[options]);
@@ -430,7 +426,7 @@ var ChangeSetPropertiesView = ModalView.extend({
             ".reduced-scoring-date": "reduced_scoring_date"
     },
     events: {
-        "click .save-changes-button": "saveChanges"
+        "click .action-button": "saveChanges"
     },
     saveChanges: function(){
         var self = this;
@@ -444,19 +440,22 @@ var ChangeSetPropertiesView = ModalView.extend({
 
 var AddProblemSetView = ModalView.extend({
     initialize: function (options) {
-        _.bindAll(this,"render","addNewSet");
+        _.bindAll(this,"render","addNewSet","validateName");
         this.model = new ProblemSet({},options.dateSettings);
+        this.model.problemSets = options.problemSets; 
+        this.problemSets = options.problemSets;
 
-        _.extend(options, {template: $("#add-hw-set-template").html(), 
-            templateOptions: {name: config.courseSettings.user},
-            buttons: {text: "Add New Set", click: this.addNewSet}});
-        this.constructor.__super__.initialize.apply(this,[options]); 
+        _(options).extend({
+            modal_header: "Add Problem Set to Course",
+            modal_body: _.template($("#add-hw-set-template").html(),{users: [config.courseSettings.user]}),
+            modal_action_button_text: "Add New Set"
+        })
 
-        this.problemSets = options.problemSets; 
+        ModalView.prototype.initialize.apply(this,[options]);
     },
     render: function () {
-        this.constructor.__super__.render.apply(this); 
-
+        ModalView.prototype.render.apply(this);
+        this.stickit();
         return this;
     },
     setModel: function(_model){
@@ -464,34 +463,38 @@ var AddProblemSetView = ModalView.extend({
         return this;
     },
     bindings: {".problem-set-name": "set_id"},
-    events: {"keyup .problem-set-name": "validateName"},
+    events: {
+        "keyup .problem-set-name": "validateName",
+        "click .action-button": "addNewSet"
+    },
     validateName: function(evt){
-        if (evt.keyCode==13){
+        if (evt && evt.keyCode==13){
             this.addNewSet();
         }
-        var errorMsg = this.model.preValidate("set_id",$(evt.target).val());
+        var errorMsg = this.model.preValidate("set_id",this.model.get("set_id"));
+        if(this.model.problemSets.findWhere({set_id: this.model.get("set_id")}))
+            errorMsg = config.messageTemplate({type:"set_name_already_exists",opts: {set_id: this.model.get("set_id")}});
+
         if(errorMsg){
             this.$(".problem-set-name").css("background","rgba(255,0,0,0.5)");
             this.$(".problem-set-name-error").html(errorMsg);
+            this.$(".action-button").attr("disabled","disabled")
+            return false;
         } else {
             this.$(".problem-set-name").css("background","none");
             this.$(".problem-set-name-error").html("");
+            this.$(".action-button").removeAttr("disabled");
+            return true;
         }
     },
     addNewSet: function() {
-        // need to validate here. 
-        /*
-        var errorMessage = this.model.preValidate('set_id', setname);
-        if (errorMessage){
-            this.$("#new-set-modal .modal-body").append("<div style='color:red'>The name of the set must contain only letters numbers, '.', _ and no spaces are allowed.");
-            return;
-        }  */
-        
-        this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
-        console.log(this.model.attributes);
-        console.log("adding new set");
-        this.problemSets.add(this.model);
-        this.close();
+        var valid = this.validateName();
+        if(valid){
+
+            this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
+            this.problemSets.add(this.model);
+            this.close();
+        }
     }
 
 });
