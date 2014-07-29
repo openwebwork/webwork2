@@ -144,7 +144,7 @@ var ClasslistView = MainView.extend({
 	    "click a.show-rows": "showRows"
 	},
 	addStudentsByFile: function () {
-		this.addStudentFileView.openDialog();
+		this.addStudentFileView.setElement(this.$(".modal-container")).render();
 	},
 	addStudentsManually: function () {
 		this.addStudentManView.setElement(this.$(".modal-container")).render();

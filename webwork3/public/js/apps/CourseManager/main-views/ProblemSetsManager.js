@@ -409,10 +409,6 @@ var ChangeSetPropertiesView = ModalView.extend({
         this.$(".set-names").text(this.setNames.join(", "));
         this.stickit();
     },
-    events: {
-        "shown.bs.modal": function () { this.trigger("modal-opened");},
-        "hidden.bs.modal": function() { this.trigger("modal-closed");}
-    },
     set: function(options){
         this.setNames = options.set_names;
         return this;
@@ -425,7 +421,8 @@ var ChangeSetPropertiesView = ModalView.extend({
             ".reduced-scoring": "enable_reduced_scoring",
             ".reduced-scoring-date": "reduced_scoring_date"
     },
-    events: {
+    // this is added to the parentEvents in ModalView to create the entire events object. 
+    childEvents: {
         "click .action-button": "saveChanges"
     },
     saveChanges: function(){
@@ -463,7 +460,7 @@ var AddProblemSetView = ModalView.extend({
         return this;
     },
     bindings: {".problem-set-name": "set_id"},
-    events: {
+    childEvents: {
         "keyup .problem-set-name": "validateName",
         "click .action-button": "addNewSet"
     },

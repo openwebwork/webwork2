@@ -1,26 +1,30 @@
     // This is the View for the dialog for addings students manually    
 
-define(['backbone', 'underscore','models/User','models/UserList','config','../../util'], 
-	function(Backbone, _,User,UserList,config,util){	
-	    var AddStudentFileView = Backbone.View.extend({
+define(['backbone', 'underscore','models/User','models/UserList','views/ModalView', 'config','../../util'], 
+	function(Backbone, _,User,UserList,ModalView,config,util){	
+	    var AddStudentFileView = ModalView.extend({
 		tagName: "div",
 		id: "addStudFileDialog",
 	    
 		initialize: function(options){
-		    _.bindAll(this, 'render','importStudents','openDialog','closeDialog','validateColumn'); // every function that uses 'this' as the current object should be in here
-		    this.messageTemplate = options.messageTemplate;
+		    _.bindAll(this, 'render','importStudents','validateColumn'); // every function that uses 'this' as the current object should be in here
+		    _(this).extend(_(options).pick("users","messageTemplate"));
 		    this.collection = new UserList();
 		    this.model = new User();
 		    this.model.collection = this.collection; // helps with the validation. 
 		    Backbone.Validation.bind(this);
-		    this.users = options.users;
-		    this.render();
-		    
-		    this.$el.dialog({autoOpen: false, modal: true, title: "Add Students from a File",
-							width: (0.95*window.innerWidth), height: (0.85*window.innerHeight) });
+
+            _(options).extend({
+            	modal_size: "modal-lg",
+	            modal_header: "Add Users from a File",
+	            modal_body: $("#add_student_file_dialog_content").html(),
+	            modal_buttons: $("#import-file-buttons").html()
+	        })
+	        //this.setValidation();
+            ModalView.prototype.initialize.apply(this,[options]);
 		},
-		events: {
-		    "click button#importStudFromFileButton": "importStudents",
+		childEvents: {
+		    "click .import-students-button": "importStudents",
 		    "change input#files": "readFile",
 		    "change input#useLST" : "setHeadersForLST",
 		    "change input#useFirst" : "useFirstRow",
@@ -28,7 +32,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 		    "change select.colHeader": "validateColumn",
 		    "change #selectAllASW":  "selectAll",
 		    "click	.close-button": "closeErrorPane",
-		    "click  .cancel-button": "closeDialog",
+		    "click  .cancel-button": "close",
 		    "click  .import-help-button": "showImportHelp",
 		    "click  .help-pane button": "closeHelpPane"
 		},
@@ -43,13 +47,10 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 			this.$(".error-pane-text").text(errorMessage);
 		},
 		showImportHelp: function () {
-			this.$(".help-pane").show("slow");
+			this.$(".help-pane").removeClass("hidden").show("slow");
 		},
-		openDialog: function () { this.$el.dialog("open");},
-		closeDialog: function () {this.$el.dialog("close");},
 		render: function(){
-		    var self = this;
-		    this.$el.html($("#add_student_file_dialog_content").html());
+			ModalView.prototype.render.apply(this);
 		    return this; 
 		},
 		readFile: function(evt){
@@ -95,7 +96,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 				var re=new RegExp("\.lst$","i");
 				if (re.test(self.file.name)){self.setHeadersForLST();}
 
-				$("#importStudFromFileButton").removeClass("disabled");
+				self.$(".import-students-button").removeClass("disabled");
 				self.$(".reload-file").removeClass("disabled");
 				self.delegateEvents();
 			}
@@ -147,9 +148,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 				self.users.add(user);
 			
 		    });
-		    
-
-		this.closeDialog();
+		    this.close();
 		},
 		useFirstRow: function (){
 		    var self = this; 	    

@@ -40,7 +40,6 @@ define(['backbone', 'underscore','models/User','models/UserList','views/ModalVie
 		    });
 		},
 		render: function(){
-			var self = this;
 			ModalView.prototype.render.apply(this);
 			this.stickit();
 		},
