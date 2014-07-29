@@ -64,13 +64,13 @@
 
 <script type="text/template" id="add_student_file_dialog_content">
 
-<div id="impFromFileInstructions" class="container">
-  <div class="error-pane alert alert-danger">
+<div>
+  <div class="error-pane alert alert-danger hidden">
     <button class="btn btn-danger btn-xs close-button"><i class="fa fa-times"></i></button>
     <div class="error-pane-text"></div>
   </div>
-  <div class="help-pane alert alert-info">
-    <button class="btn btn-info btn-xs close-button"><i class="fa fa-times"></i>
+  <div class="help-pane alert alert-info hidden">
+    <button class="btn btn-info btn-xs close-button" style="float: right"><i class="fa fa-times"></i>
     </button>
     <div class="help-pane-text">
     <p>To import students from a file, there are a few simple steps:</p>
@@ -95,12 +95,6 @@
     <div class="col-md-4">
       <label for="files">Select file:</label><input class="btn" type="file" id="files" name="files" />
     </div>
-    <div class="col-md-4 btn-group btn-sm">
-      <button class="reload-file btn btn-default disabled">Reload File</button>
-      <button class="btn btn-default disabled" id="importStudFromFileButton">Import Students</button>
-      <button class="cancel-button btn btn-default">Cancel</button>
-      <button class="import-help-button btn btn-default">Help</button>
-    </div>
     <div class="col-md-4">
         <div class="checkbox">
             <label>Use First Row for Headers<input type="checkbox" id="useFirst"></input></label>
@@ -110,12 +104,19 @@
         
   <div id="studentTable"></div></p>
 </script>
+<script type="text/template" id="import-file-buttons">
+  <button class="import-help-button btn btn-default">Help</button>
+  <button class="reload-file btn btn-default disabled">Reload File</button>
+  <button class="cancel-button btn btn-default">Cancel</button>
+  <button class="btn btn-default disabled import-students-button">Import Students</button>
+</script>
 
 <script type="text/template" id="export-to-file-template">
 <p>Click on the classlist link below will save the classlist file to your computer. </p>
 <p>
 <a href="<%=url%>" download="<%=filename%>">Save the classlist file</a>
 </script>
+
 <script type="text/template" id="manual-import-template">
     <table class="table table-bordered user-table">
     <thead>
