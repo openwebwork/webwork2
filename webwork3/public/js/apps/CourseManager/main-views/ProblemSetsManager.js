@@ -15,7 +15,9 @@ var ProblemSetsManager = MainView.extend({
                     'hideShowReducedScoring','deleteSets');  // include all functions that need the this object
         var self = this;
 
-        this.state.set({filter_text: "", page_number: 0, set_prop_modal_open: false,
+
+
+        this.state.set({filter_text: "", page_number: 0, set_prop_modal_open: false, selected_sets : [],
                 page_size: this.settings.getSettingValue("ww3{pageSize}") || 10},{silent: true})
             .on("change:filter_text", function () {self.filterProblemSets();});
 
@@ -31,7 +33,12 @@ var ProblemSetsManager = MainView.extend({
             self.isReducedScoringEnabled();
         })
         var dateSettings = util.pluckDateSettings(this.settings);
-        this.changeSetPropView = new ChangeSetPropertiesView({date_settings: dateSettings});
+        this.changeSetPropView = new ChangeSetPropertiesView({date_settings: dateSettings,problemSets: this.problemSets});
+        this.changeSetPropView.on("modal-opened",function (){
+            self.state.set("set_prop_modal_open",true);
+        }).on("modal-closed",function(){
+            self.state.set("set_prop_modal_open",false);
+        })
 
         this.problemSets.on({
             "add": this.updateTable,
@@ -45,7 +52,8 @@ var ProblemSetsManager = MainView.extend({
         'click button.clear-filter-button': 'clearFilterText',
         "click a.show-rows": "showRows",
         "click a.change-set-props": "showChangeProps",
-        "click a.delete-sets-button": "deleteSets"
+        "click a.delete-sets-button": "deleteSets",
+        "change td.select-problem-set input[type='checkbox']": "updateSelectedSets"
     },
     hideShowReducedScoring: function(model){
         if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
@@ -57,6 +65,7 @@ var ProblemSetsManager = MainView.extend({
         }
     },
     render: function () {
+        var self = this;
         this.$el.html($("#problem-set-manager-template").html());
         this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
         this.showRows(this.state.get("page_size"));
@@ -64,21 +73,24 @@ var ProblemSetsManager = MainView.extend({
         this.problemSets.trigger("hide-show-all-sets","hide");
         this.problemSetTable.filter(this.state.get("filter_text"));
         this.problemSetTable.gotoPage(this.state.get("page_number"));
-        if(this.state.get("set_prop_modal_open")){
-            this.changeSetPropView.show();
-        }
         MainView.prototype.render.apply(this);
         this.stickit(this.state,this.bindings);
+        _(this.state.get("selected_sets")).each(function(setID){
+            self.$("td:contains("+setID+")").closest("tr").find("input[type='checkbox']").prop("checked",true);
+        });
+        if(this.state.get("set_prop_modal_open")){
+            this.changeSetPropView.setElement(this.$(".modal-container"))
+                .set({set_names: this.state.get("selected_sets")}).render();
+        }
+
         return this;
     },
     bindings: { ".filter-text": "filter_text"},
-    showChangeProps: function () {
+    showChangeProps: function(){
         var setIDs = this.getSelectedSets();
         if(setIDs.length>0){
-            
-            this.$(".modal-container").html(this.changeSetPropView.render().el);
-            this.changeSetPropView.show();
-            this.state.set("set_prop_modal_open",true);
+            this.changeSetPropView.setElement(this.$(".modal-container"))
+                .set({set_names: this.state.get("selected_sets")}).render();
         } else {
             this.eventDispatcher.trigger("add-message",{type: "danger",
                     short: this.messageTemplate({type: "empty_selected_sets_error"}),
@@ -111,6 +123,13 @@ var ProblemSetsManager = MainView.extend({
         } else {
             this.addProblemSetView.setModel(new ProblemSet({},dateSettings)).render().open();
         }
+    },
+    updateSelectedSets: function (evt){
+        var selectedSets = this.state.get("selected_sets")
+            , setID = $(evt.target).closest("tr").children("td.set-id").text();
+        this.state.set("selected_sets",$(evt.target).prop("checked")?_(selectedSets).union([setID]):
+                                            _(selectedSets).without(setID));
+        console.log(this.state.get("selected_sets"));
     },
     getSelectedSets: function () {
         return $.makeArray(this.$("tbody td.select-problem-set input[type='checkbox']:checked").map(function(i,v) {
@@ -356,26 +375,58 @@ var ProblemSetsManager = MainView.extend({
 
 var ChangeSetPropertiesView = Backbone.View.extend({
     initialize: function(options){
-        this.setNames = options.set_names;
+        var self = this;
+        this.problemSets = options.problemSets;
         this.model = new ProblemSet({},options.date_settings);
+        this.model.show_reduced_scoring=true;
         this.model.setDefaultDates();
+        this.model.on("change:enable_reduced_scoring",function(){
+            if(self.model.get("enable_reduced_scoring")){
+                self.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
+                // set the reduced_scoring_date to be the custom amount of time before the due_date
+                self.model.set("reduced_scoring_date", 
+                    moment.unix(self.model.get("due_date"))
+                        .subtract(self.model.dateSettings["pg{ansEvalDefaults}{reducedScoringPeriod}"],"minutes")
+                        .unix());
+            } else {
+                self.$(".reduced-scoring-date").closest("tr").addClass("hidden");
+            }
+        });
+        _(this).extend(Backbone.Events);
     },
     render: function(){
         this.$el.html($("#change-set-props-template").html());
         this.stickit();
+        this.$(".set-names").text(this.setNames.join(", "));
+        this.$(".change-set-props-modal").modal();
         return this;
     },
-    show: function(){
-        this.$(".change-set-props-modal").modal("show");
+    events: {
+        "shown.bs.modal": function () { this.trigger("modal-opened");},
+        "hidden.bs.modal": function() { this.trigger("modal-closed");}
+    },
+    set: function(options){
+        this.setNames = options.set_names;
+        return this;
     },
     bindings: {
-            ".set-name" : "set_id",
             ".open-date" : "open_date",
             ".due-date" : "due_date",
             ".answer-date": "answer_date",
             ".prob-set-visible": "visible",
             ".reduced-scoring": "enable_reduced_scoring",
             ".reduced-scoring-date": "reduced_scoring_date"
+    },
+    events: {
+        "click .save-changes-button": "saveChanges"
+    },
+    saveChanges: function(){
+        var self = this;
+        _(this.setNames).each(function(setID){
+            self.problemSets.findWhere({set_id: setID})
+                .set(self.model.pick("open_date","due_date","answer_date","visible","enable_reduced_scoring","reduced_scoring_date"));
+        })
+        this.$(".change-set-props-modal").modal("hide");
     }
 });
 

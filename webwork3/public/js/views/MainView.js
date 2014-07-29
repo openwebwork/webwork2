@@ -11,6 +11,13 @@ define(['backbone'],function(Backbone){
 		render: function() {
 			var self = this;
 			this.$el.prepend($("#open-close-view-template").html());
+
+			//If any modals exist, remove the backdrops.
+			
+			$(".modal-backdrop").remove()
+			// I think the following just needs to work with the parent-child backbone events via the 
+			// additionalEvents, originalEvents below. 
+
 			// since this won't happen automatically in Backbone's delegate events, call the click event directly. 
 			this.$(".open-view-button").off("click").on("click", function(){
 				self.eventDispatcher.trigger("open-sidebar");

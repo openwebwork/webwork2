@@ -46,7 +46,7 @@
 <script type="text/template"  id="change-set-props-template">
 <!-- Modal -->
 <div class="modal fade change-set-props-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
@@ -58,7 +58,7 @@
           <tbody>
           <tr><td class="header">Set Names</td><td class="set-names"></td></tr>
           <tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
-          <tr><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
+          <tr class="hidden"><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
           <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
           <tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
           <tr><td class="header">Problem Set Visible to Users</td>
@@ -70,7 +70,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-primary save-changes-button">Save changes</button>
       </div>
     </div>
   </div>
