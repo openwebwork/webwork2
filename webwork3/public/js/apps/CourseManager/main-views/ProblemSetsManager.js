@@ -38,6 +38,7 @@ var ProblemSetsManager = MainView.extend({
             self.state.set("set_prop_modal_open",true);
         }).on("modal-closed",function(){
             self.state.set("set_prop_modal_open",false);
+            self.render(); // for some reason the checkboxes don't stay checked. 
         })
 
         this.problemSets.on({
@@ -134,7 +135,6 @@ var ProblemSetsManager = MainView.extend({
             , setID = $(evt.target).closest("tr").children("td.set-id").text();
         this.state.set("selected_sets",$(evt.target).prop("checked")?_(selectedSets).union([setID]):
                                             _(selectedSets).without(setID));
-        console.log(this.state.get("selected_sets"));
     },
     getSelectedSets: function () {
         return $.makeArray(this.$("tbody td.select-problem-set input[type='checkbox']:checked").map(function(i,v) {
