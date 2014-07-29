@@ -112,6 +112,12 @@ var util = {
         return settings.chain().map(function(_s) { return [_s.get("var"),_s.get("value")]})
             .object().pick("pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"
                                 ,"pg{ansEvalDefaults}{reducedScoringPeriod}").value();
+    },
+        // this parses the fields in obj as integers.
+    parseAsIntegers: function(obj,fields){
+        var values = _(obj).chain().pick(fields).values().map(function(d) {return d?parseInt(d):d;}).value();
+        _.extend(obj,_.object(fields,values));
+        return obj;
     }
 }
 

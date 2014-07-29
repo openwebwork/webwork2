@@ -3,8 +3,8 @@
  * of problems.  More specifially, it also contains a Problem List of type "Problem Set".  
  *
  * */
-define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'], 
-        function(Backbone, _,moment,ProblemList,Problem,config){
+define(['backbone', 'underscore','moment','./ProblemList','./Problem','config','apps/util'], 
+        function(Backbone, _,moment,ProblemList,Problem,config,util){
 
 
     var ProblemSet = Backbone.Model.extend({
@@ -86,6 +86,7 @@ define(['backbone', 'underscore','moment','./ProblemList','./Problem','config'],
                 this.problems.set(response.problems);
                 this.attributes.problems = this.problems;
             }
+            response = util.parseAsIntegers(data,["open_date","reduced_scoring_date","due_date","answer_date"]);
             return _.omit(response, 'problems');
         },
         url: function () {
