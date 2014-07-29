@@ -53,7 +53,8 @@ var ProblemSetsManager = MainView.extend({
         "click a.show-rows": "showRows",
         "click a.change-set-props": "showChangeProps",
         "click a.delete-sets-button": "deleteSets",
-        "change td.select-problem-set input[type='checkbox']": "updateSelectedSets"
+        "change td.select-problem-set input[type='checkbox']": "updateSelectedSets",
+        "change th input[type='checkbox']": "selectAll"
     },
     hideShowReducedScoring: function(model){
         if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
@@ -123,6 +124,10 @@ var ProblemSetsManager = MainView.extend({
         } else {
             this.addProblemSetView.setModel(new ProblemSet({},dateSettings)).render().open();
         }
+    },
+    selectAll: function(evt){
+        this.$("td.select-problem-set input").prop("checked",$(evt.target).prop("checked"));
+        this.state.set("selected_sets",this.getSelectedSets());
     },
     updateSelectedSets: function (evt){
         var selectedSets = this.state.get("selected_sets")
