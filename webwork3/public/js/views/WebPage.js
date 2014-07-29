@@ -70,6 +70,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         // I don't think we're using this anymore. 
         //this.$el.prepend(this.messagePane.render().el);
         this.navigationBar = new NavigationBar({el: $(".navbar-fixed-top")}).render();
+        this.loginPane.setElement($(".login-container"));
     },
     closeLogin: function () {
         this.loginPane.close();
@@ -282,21 +283,23 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
 var LoginView = ModalView.extend({
     initialize: function (options) {
         _.bindAll(this,"login");
-        var tempOptions = _.extend(options || {} , {template: $("#login-template").html(), 
-                        templateOptions: {message: options.messageTemplate({type: "relogin"})},
-                        buttons: {text: "Login", click: this.login}});
-        this.constructor.__super__.initialize.apply(this,[tempOptions]);
+
+        _(options).extend({
+            modal_header: "Add Problem Set to Course",
+            modal_body: _.template($("#login-template").html(),{message: options.messageTemplate({type: "relogin"})}),
+            modal_action_button_text: "Login"
+        })
+
+        ModalView.prototype.initialize.apply(this,[options]);
     },
-    render: function () {
-        this.constructor.__super__.render.apply(this); 
-        return this;
-    },
+    events: {"click .action-button": "login"},
     login: function (options) {
         var loginData = {user: this.$(".login-name").val(), password: this.$(".login-password").val()};
         $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/login",
                 data: loginData,
                 type: "POST",
                 success: this.loginOptions.success});
+        this.close();
     }
 
 });

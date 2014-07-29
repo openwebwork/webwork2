@@ -14,6 +14,9 @@
 <div class="navbar-fixed-bottom navbar navbar-other" id="footer">
 Powered by <a href="#" onclick="return false" href="http://perldancer.org/">Dancer</a> [% dancer_version %]
 </div>
+<div class="login-container"></div>
+</body>
+
 
 <script type="text/template" id="login-template">
 <div class="message"> <%=message%></div>
@@ -85,5 +88,5 @@ Powered by <a href="#" onclick="return false" href="http://perldancer.org/">Danc
 </script>
 
 
-</body>
+
 </html>
