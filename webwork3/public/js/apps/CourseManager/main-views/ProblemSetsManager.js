@@ -378,10 +378,11 @@ var ProblemSetsManager = MainView.extend({
     }
 });
 
-var ChangeSetPropertiesView = Backbone.View.extend({
+var ChangeSetPropertiesView = ModalView.extend({
     initialize: function(options){
         var self = this;
         this.problemSets = options.problemSets;
+        this.setNames = [];
         this.model = new ProblemSet({},options.date_settings);
         this.model.show_reduced_scoring=true;
         this.model.setDefaultDates();
@@ -398,13 +399,19 @@ var ChangeSetPropertiesView = Backbone.View.extend({
             }
         });
         _(this).extend(Backbone.Events);
+
+        _(options).extend({
+            modal_header: "Change Properties for Multiple Sets",
+            modal_body: $("#change-set-props-template").html(),
+            modal_save_button_text: "Save Changes"
+        })
+
+        ModalView.prototype.initialize.apply(this,[options]);
     },
-    render: function(){
-        this.$el.html($("#change-set-props-template").html());
-        this.stickit();
+    render: function (){
+        ModalView.prototype.render.apply(this);
         this.$(".set-names").text(this.setNames.join(", "));
-        this.$(".change-set-props-modal").modal();
-        return this;
+        this.stickit();
     },
     events: {
         "shown.bs.modal": function () { this.trigger("modal-opened");},
