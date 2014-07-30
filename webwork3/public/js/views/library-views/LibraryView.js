@@ -18,7 +18,6 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
                     self.tabState.set("page_num",num);
                 });
             TabView.prototype.initialize.apply(this,[options]);
-            this.tabState.set({library_path: "", page_num: 0, rendered: false, page_size: 10},{silent: true});
     	},
     	events: {   
             "change .target-set": "resetDisplayModes"
@@ -48,6 +47,9 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
             }
             return this;
     	},
+        getDefaultState: function () {
+            return {library_path: "", page_num: 0, rendered: false, page_size: 10};
+        },
         set: function(options){
             if(options.tabState){
                 this.tabState = options.tabState;

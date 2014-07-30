@@ -12,13 +12,8 @@ define(['backbone','underscore','views/MainView'],
 			_(this).extend(_(options).pick("views","tabs","tabContent","template"));
 			this.tabNames = _(options.views).keys();
 			MainView.prototype.initialize.call(this,options);
-
-			// set up the state of the tabs
-			var _tabStates = _.object(this.viewNames,_(this.tabNames).map(function(n){return ""}));
-			this.state.set({tab_name: "", tab_states: _tabStates},{silent: true});
 		},
 		render: function(){
-			console.log("in TabbedMainView.render");
 			var self = this;
 			if(this.template){
 				this.$el.html(this.template);
@@ -71,7 +66,6 @@ define(['backbone','underscore','views/MainView'],
 			if(this.sidebar && this.sidebar.info.id==="help"){
 				this.eventDispatcher.trigger("show-help");
 			}
-			console.log("in changeTab: " + _tabName);
 			this.state.set("tab_name",_tabName);
 		},
 		getState: function () {
@@ -87,7 +81,11 @@ define(['backbone','underscore','views/MainView'],
 				});
 			}
 			return this;
-		}
+		},
+	    getDefaultState: function () {
+	    	return {tab_name: this.tabNames[0], tab_states:  _.object(this.tabNames,_(this.tabNames).map(function(n){return ""})) };
+	    }
+
 
 	});
 	return TabbedMainView;

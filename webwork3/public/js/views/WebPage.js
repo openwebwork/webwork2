@@ -39,7 +39,8 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.appState = {index: void 0, states: []};
             this.changeView(this.mainViewList.views[0].info.id,{});
             var _sidebarID = this.mainViewList.getDefaultSidebar(this.currentView.info.id);
-            this.changeSidebar(_sidebarID);
+            this.changeSidebar(_sidebarID,{is_open: true});
+            this.saveState();
         }
 
         // build the menu

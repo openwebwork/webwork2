@@ -15,9 +15,7 @@ var ProblemSetsManager = MainView.extend({
                     'hideShowReducedScoring');  // include all functions that need the this object
         var self = this;
 
-        this.state.set({filter_text: "", page_number: 0, 
-                page_size: this.settings.getSettingValue("ww3{pageSize}") || 10},{silent: true})
-            .on("change:filter_text", function () {self.filterProblemSets();});
+        this.state.on("change:filter_text", function () {self.filterProblemSets();});
 
         this.tableSetup();
 
@@ -75,7 +73,9 @@ var ProblemSetsManager = MainView.extend({
         return this;
     },
     bindings: { ".filter-text": "filter_text"},
-
+    getDefaultState: function () {
+        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10};
+    },
     isReducedScoringEnabled: function (){
         // hide reduced credit items when not enabled. 
         if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){

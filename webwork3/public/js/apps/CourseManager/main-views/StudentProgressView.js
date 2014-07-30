@@ -8,7 +8,6 @@ var StudentProgressView = MainView.extend({
 		_(this).bindAll("buildTable","render","changeDisplay");
 		MainView.prototype.initialize.call(this,options);
 		this.tableSetup();
-		this.state.set({set_id: "", user_id: "", type: "users", page_num: 0},{silent: true});
 		this.state.on({
 			"change:type": this.changeDisplay, 
 			"change:set_id change:user_id": this.buildTable,
@@ -51,6 +50,9 @@ var StudentProgressView = MainView.extend({
 				return this.problemSets.pluck("set_id");
 			}, 
 			defaultOption: {value: null, label: "Select Set..."}}}
+	},
+	getDefaultState: function () {
+		return {set_id: "", user_id: "", type: "users", page_num: 0};
 	},
 	changeDisplay: function(){
 		this.$(".collection-table").remove();

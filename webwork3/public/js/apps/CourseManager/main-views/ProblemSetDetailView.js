@@ -32,7 +32,6 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
             options.tabContent = ".set-details-tab-content";
             options.template = $("#HW-detail-template").html();
             TabbedMainView.prototype.initialize.call(this,options);
-            this.state.set({set_id:""},{silent: true});
             this.state.on("change:set_id", function() {
                 console.log(self.state.attributes);
                 self.changeProblemSet(self.state.get("set_id"));
@@ -65,6 +64,9 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 case "assignUsersView":
                     return $("#problem-set-assign-users-help-template").html();
             }
+        },
+        getDefaultState: function() {
+            return {set_id: ""};
         },
         sidebarEvents: {
             "change-display-mode": function(evt) { 
@@ -199,7 +201,8 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
             } else {
                 this.$(".reduced-scoring").closest("tr").addClass("hidden")
             }
-        }
+        },
+        getDefaultState: function () { return {};}
 
     });
 
@@ -230,7 +233,8 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
         },
         toggleShowPath: function(evt){
             this.problemSetView.toggleShowPath(evt);
-        }
+        },
+        getDefaultState: function () { return {};},
     })
 
 	var AssignUsersView = TabView.extend({
@@ -283,7 +287,8 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
         },
         assignUsers: function(){
             this.problemSet.set("assigned_users",_(this.originalAssignedUsers).union(this.model.get("assigned_users")));
-        }
+        },        
+        getDefaultState: function () { return {};}
     });
 
 
@@ -346,7 +351,8 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 this.problemSet.set("assigned_users",currentUsers);
                 this.problemSet.save();
             }
-        }
+        },       
+        getDefaultState: function () { return {};}
     });
 
     // Trying a new UI for this View
@@ -517,7 +523,8 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 }
             })
 
-        }
+        },        
+        getDefaultState: function () { return {};}
 
     });
         

@@ -8,6 +8,10 @@ define(['backbone'],function(Backbone){
 				console.log("TabView state changing");
 				self.eventDispatcher.trigger("save-state");
 			})
+			this.tabState.set(this.getDefaultState(),{silent: true});
+		},
+		getDefaultState: function () {
+			console.error("getDefaultState needs to be overridden for tab name " + this.name);
 		}
 	});
 	return TabView;
