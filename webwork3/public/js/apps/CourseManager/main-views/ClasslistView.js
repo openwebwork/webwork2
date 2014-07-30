@@ -29,8 +29,9 @@ var ClasslistView = MainView.extend({
 
 	    this.userTable.on("page-changed",function(num){
 	    	self.state.set("page_number",num);
-	    })
-
+	    }).on("table-sorted",function(info){
+            self.state.set({sort_class: info.classname, sort_direction: info.direction});
+        })
 	    this.state.on("change:filter_text", function () {self.filterUsers();});
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
@@ -77,11 +78,17 @@ var ClasslistView = MainView.extend({
         this.userTable.gotoPage(this.state.get("page_number"));
         MainView.prototype.render.apply(this);
         this.stickit(this.state,this.bindings);
+
+        console.log(this.state.attributes);
+        if(this.state.get("sort_class")&&this.state.get("sort_direction")){
+            this.userTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
+        }
 	    return this;
     },  
     bindings: { ".filter-text": "filter_text"},
     getDefaultState: function () {
-        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10};
+        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+                    sort_class: "", sort_direction: ""};
     },
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};

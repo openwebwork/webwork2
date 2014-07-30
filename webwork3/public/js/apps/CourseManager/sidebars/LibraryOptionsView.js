@@ -19,7 +19,12 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
         this.settings = options.settings;
 
         this.state.set({display_option: this.settings.getSettingValue("pg{options}{displayMode}"),
-            target_set: "", new_problem_set: ""},{silent: true});
+                target_set: "", new_problem_set: "", show_path: false, show_tags: false},{silent: true})
+            .on("change:show_path",function(){
+                self.trigger("show-hide-path",self.state.get("show_path"))
+            }).on("change:show_tags",function(){
+                self.trigger("show-hide-tags",self.state.get("show_tags"));
+            });
         this.state.validation = {
             new_problem_set: function(value, attr, computedState) {
                 if(_(computedState.problemSets.pluck("set_id")).contains(value)){
@@ -27,7 +32,10 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
                 }
             }
         };
+
+        // put this in Sidebar?
         _.extend(this,Backbone.Events);
+
     },
     render: function(){
         this.$el.html($("#library-options-template").html());
@@ -50,7 +58,14 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
             collection: function () { return this.problemSets.pluck("set_id"); },
             defaultOption: {label: "Select Target...", value: null}
         }},
-        ".add-problem-set-option": "new_problem_set"
+        ".add-problem-set-option": "new_problem_set",
+        ".show-hide-tags-button": {observe: "show_tags", update: function($el, val, model, options){
+            $el.text(val?"Hide Tags":"Show Tags");
+        }},
+        ".show-hide-path-button": {observe: "show_path", update: function($el, val, model, options){
+            $el.text(val?"Hide Path":"Show Path");
+        }}
+
     },
     events: {
         "change .problem-display-option": function (evt) { this.trigger("change-display-mode", evt);},
@@ -72,8 +87,10 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
                 this.trigger("add-problem-set",this.state.get("new_problem_set"));
             }
         },
-        "click .show-hide-tags-button" : function (evt) {this.trigger("show-hide-tags",$(evt.target))},
-        "click .show-hide-path-button" : function (evt) {this.trigger("show-hide-path",$(evt.target))},
+        "click .show-hide-tags-button" : function (evt) {
+            this.state.set("show_tags", ! this.state.get("show_tags"));},
+        "click .show-hide-path-button" : function (evt) {
+            this.state.set("show_path", ! this.state.get("show_path"));},
         "click .goto-problem-set-button": function (){ this.trigger("goto-problem-set",this.state.get("target_set"))}
     },
     addProblemSet: function(_set){

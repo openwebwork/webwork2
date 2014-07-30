@@ -165,9 +165,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         _(this.mainViewList.getCommonSidebars()).each(function(_id){
             ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
         });
-        // if(set_sidebar_to_open){
-        //     this.currentSidebar.state("is_open")
-        // }
+        this.currentView.sidebar = this.currentSidebar;
 
         if(this.currentSidebar.state.get("is_open") || set_sidebar_to_open){
             this.openSidebar();            
@@ -260,6 +258,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         var currentState = this.appState.states[this.appState.index];
         this.changeView(currentState.main_view,currentState.main_view_state);
         this.changeSidebar(currentState.sidebar,_.extend(currentState.sidebar_state,{is_open: currentState.sidebar_open}));
+        this.currentView.sidebar = this.currentSidebar;
         if(options.save_state){
             this.saveState();            
         }

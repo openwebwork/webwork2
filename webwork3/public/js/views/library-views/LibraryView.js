@@ -18,6 +18,12 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
                     self.tabState.set("page_num",num);
                 });
             TabView.prototype.initialize.apply(this,[options]);
+            this.tabState.on("change:show_path",function(){
+                self.libraryProblemsView.showPath(self.tabState.get("show_path"));
+            }).on("change:show_tags",function(){
+                self.libraryProblemsView.showTags(self.tabState.get("show_tags"));
+            })
+
     	},
     	events: {   
             "change .target-set": "resetDisplayModes"
@@ -41,19 +47,15 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
                 });
                 this.libraryTreeView.setElement(this.$(".library-tree-container")).render();
             }
-            this.libraryProblemsView.setElement(this.$(".problems-container")).render();
+            this.libraryProblemsView.setElement(this.$(".problems-container"));
             if(this.tabState.get("rendered")){
+                this.libraryProblemsView.render();
                 this.loadProblems();
             }
             return this;
     	},
         getDefaultState: function () {
-            return {library_path: "", page_num: 0, rendered: false, page_size: 10};
-        },
-        set: function(options){
-            if(options.tabState){
-                this.tabState = options.tabState;
-            }
+            return {library_path: "", page_num: 0, rendered: false, page_size: 10, show_path: false, show_tags: false};
         },
         changeDisplayMode:function(evt){
             this.libraryProblemsView.changeDisplayMode(evt);
@@ -77,10 +79,11 @@ function(Backbone, _,config,TabView,LibraryProblemsView, ProblemList){
         },
         showProblems: function () {
             this.tabState.set("rendered",true);
-            this.$(".load-library-button").button("reset");  
+            // I18N
+            this.$(".load-library-button").button("reset").text("Load " + this.problemList.length + " problems");  
             this.libraryProblemsView.set({problems: this.problemList, type:this.libBrowserType})
-                    //.updatePaginator().highlightCommonProblems();
-                    .updatePaginator().gotoPage(this.tabState.get("page_num")).highlightCommonProblems();
+                    .updatePaginator().gotoPage(this.tabState.get("page_num")).highlightCommonProblems()
+                    .showPath(this.tabState.get("show_path")).showTags(this.tabState.get("show_tags"));
         },
     	loadProblems: function (){   
             this.$(".load-library-button").button("loading"); 	
