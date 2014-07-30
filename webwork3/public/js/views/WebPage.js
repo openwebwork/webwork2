@@ -42,6 +42,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.changeSidebar(_sidebarID,{is_open: true});
             this.saveState();
         }
+        this.enableBackForwardButtons();
 
         // build the menu
 
@@ -234,7 +235,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         }
 
         window.localStorage.setItem("ww3_cm_state",JSON.stringify(this.appState));
-        // change the navigation button states
+        this.enableBackForwardButtons();
+    },
+    enableBackForwardButtons: function () {  // change the navigation button states
         if(this.appState.index>0){
             this.navigationBar.$(".back-button").removeAttr("disabled")
         } else {
