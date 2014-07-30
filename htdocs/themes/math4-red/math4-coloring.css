@@ -1,0 +1,128 @@
+/* This is the coloring file for the red version of math4
+ * this file is tracked by git and changes here will be overwritten
+ * If you would like to alter this theme, make a copy of math4-overrides.css
+ * in this directory and put your changes there. 
+ */
+
+/* Color for links and link hover */
+a {
+  color: #880000;
+}
+
+a:hover,
+a:focus {
+  color: #990000;
+}
+
+/* Color for the dark blue buttons */
+.btn-primary {
+  color: #ffffff;
+  background-color: #880000;
+  background-image: none;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.btn-primary.disabled,
+.btn-primary[disabled] {
+  color: #ffffff;
+  background-color: #990000;
+}
+
+/* Colors for the light blue buttons */
+.btn-info {
+  color: #ffffff;
+  background-color: #CC3300;
+  background-image: none;
+}
+.btn-info:hover,
+.btn-info:focus,
+.btn-info:active,
+.btn-info.active,
+.btn-info.disabled,
+.btn-info[disabled] {
+  color: #ffffff;
+  background-color: #d14719;
+}
+
+/* colors for the masthead */
+#masthead {
+    background-color: #880000;
+}
+
+/* Color for the background of the webwork logo */
+.webwork_logo {
+    background-color: #880000;
+    border-color: #880000;
+}
+
+#masthead a {
+    color: white;
+}
+
+#loginstatus {
+    color: white;
+}
+
+#loginstatus a {
+    color:black;
+}
+
+/* colors for the left hand nav list */
+#site-links ul {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+.nav-list > .active > a,
+.nav-list > .active > a:hover,
+.nav-list > .active > a:focus {
+    color: #ffffff;
+    background-color: #880000;
+}
+
+ul.nav li a:hover {
+	background: #e1e1e1;	
+}
+
+/* The breadcrumb nav */
+.breadcrumb {
+	border: 1px solid #e6e6e6;
+}
+
+/* The courses list coloring */
+ul.courses-list a {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+ul.courses-list a:hover {
+	background: #880000;
+	color: white;
+}
+
+/* Info box (right hand box) coloring */
+.info-box {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+.info-box h2, .info-box h3, .info-box h4, .info-box h5, .info-box h6 {
+	background: #880000;
+	color: white;
+}
+
+#InfoPanel {
+    background-color: #fffffff;
+}
+
+/* Achievement bar coloring */
+.levelinnerbar {
+    background-color: #0088CC;
+}
+
+.cheevoinnerbar {
+    background-color: #0088CC;
+}

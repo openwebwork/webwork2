@@ -1,1 +1,0 @@
-../../js/components/bootstrap/docs/assets/js/bootstrap.js
