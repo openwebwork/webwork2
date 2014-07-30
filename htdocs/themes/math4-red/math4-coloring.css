@@ -248,7 +248,7 @@ label.ResultsWithError {
 }
 
 td.ResultsWithError { 
-    background-color:#880000; 
+    background-color:#FF9494; 
     color: black;
 }
 
@@ -264,7 +264,7 @@ span.incorrect {
 
 input.incorrect { 
     color:inherit; 
-    background-color: #880000; 
+    background-color: #FF9494; 
 } 
 
 /* Other formatting for attempt results and the problem page */
@@ -301,9 +301,9 @@ span.ResultsWithErrorInResultsTable {
 
 /* Achievement bar coloring */
 .levelinnerbar {
-    background-color: #CC3300;
+    background-color: #0088CC;
 }
 
 .cheevoinnerbar {
-    background-color: #CC3300;
+    background-color: #0088CC;
 }
