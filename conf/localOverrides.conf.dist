@@ -251,11 +251,9 @@ $problemDefaults{showMeAnother} = -1;
  %showeditors = (
 # 	classlisteditor1   => 1,
  	classlisteditor2   => 1,
-	classlisteditor3   => 1,
 # 	
 # 	homeworkseteditor1 => 1,
  	homeworkseteditor2 => 1,
-	homeworkseteditor3 => 1,
 # 	
 # 	librarybrowsernojs    => 1,
  	librarybrowser1    => 1,
