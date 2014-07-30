@@ -186,6 +186,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.currentView = this.mainViewList.views[0];
         }
         $("#main-view").html("<div class='main'></div>");
+        this.navigationBar.setPaneName(this.currentView.info.name);
         
         this.currentView.setElement(this.$(".main")).setState(state).render();
     },
