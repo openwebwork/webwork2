@@ -45,7 +45,9 @@ sub parse_classlist($) {
 	
 	my (@records);
 
-	my $csv = Text::CSV->new({ binary => 1 }); # binary for utf8 compat
+  my $csv = Text::CSV->new({ binary => 1, allow_whitespace => 1 });
+	   # binary for utf8 compat, allow_whitespace to strip all whitespace from start and end of each field
+
 	
 	while (<$fh>) {
 		chomp;

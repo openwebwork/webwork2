@@ -762,9 +762,6 @@ sub links {
 					if $ce->{showeditors}->{classlisteditor1};
 				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{classlisteditor2};
-				print CGI::li(&$makelink("${pfx}UserList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor3};
-
 				
 				# Homework Set Editor
 				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
@@ -772,8 +769,6 @@ sub links {
 
 				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor2};
-				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{homeworkseteditor3};
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
@@ -794,20 +789,9 @@ sub links {
 					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 						if $ce->{showeditors}->{pgproblemeditor3};;
 	
-					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-						if $ce->{showeditors}->{simplepgeditor};;
 					    print CGI::end_ul();
 					    print CGI::end_li();
-					}
-					if (defined $problemID) {
-					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-							if $ce->{showeditors}->{simplepgeditor};;
-						print CGI::end_ul();
-					    print CGI::end_li();
-					}
-					
+					}					
 					print CGI::end_ul();
 				    print CGI::end_li();
 				}
