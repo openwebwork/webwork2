@@ -161,7 +161,7 @@ var CourseManager = WebPage.extend({
         if (this.objectDragging) return;
         this.changeView("problemSetDetails",{set_id: setName});        
         this.changeSidebar("problemSets",{});
-
+        this.saveState();
     },
     changeViewAndSidebar: function(_view){
         this.changeView(_view);
