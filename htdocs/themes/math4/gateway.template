@@ -25,6 +25,9 @@
 <link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/gateway.css"/>
+<!--#if exists="math4-coloring.css"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
+<!--#endif-->
 <!--#if exists="math4-overrides.css"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
 <!--#endif-->
