@@ -119,10 +119,9 @@ var CourseManager = WebPage.extend({
         this.problemSets.on("change:due_date change:reduced_scoring_date change:open_date change:answer_date",this.setDates);
                 
         this.navigationBar.on({
-            "change-view": this.changeViewAndSidebar,
             "logout": this.logout,
             "stop-acting": this.stopActing,
-            "show-help": function() { self.changeSidebar("Help")},
+            "show-help": function() { self.changeSidebar("help",{is_open: true})},
             "forward-page": function() {self.goForward()},
             "back-page": function() {self.goBack()},
         });

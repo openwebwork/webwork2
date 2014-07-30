@@ -19,7 +19,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             "add-message": this.messagePane.addMessage,
             "open-sidebar": this.openSidebar,
             "close-sidebar": this.closeSidebar,
-            "show-help": function() { self.changeSidebar("Help")},
+            "show-help": function() { self.changeSidebar("help")},
         });
 
     },
