@@ -1,36 +1,7 @@
-/* This is the override file for math4.css.  If you copy 
- * math4-overrides.css.dist to math4-overrides.css you can edit the
- * values contained in this file and they will override the css values 
- * normally used for math4.  This includes colors, padding, spacing, and
- * so on.  
- *
- * If you upgrade your machine this file will not be overwritten, however, the 
- * math4.css and math4-overrides.css.dist file may change.  If this happens it
- * may cause problems with your theme until your reconcile the changes with 
- * your modifactions here.  (Similar to how localOverrides.conf works.) 
- */
-
-/*  These are the "main" colors of the theme.  Use search/replace to override
- *  them.  
- *  Dark Blue #003388
- *  Light Blue #0088CC
- *  Dark Green #519951
- *  Light Green #88FF88
- *  Dark Red #FF9494
- *  Light Red #CC7676
- *  Dark Yellow #BDB45E
- *  Light Yellow #EDE275
- */
-
-
-/* Gotchas:  By default using this file removes much of the "dynamic"
- * elements of bootstrap, like grading on the buttons, or a slighlty different
- * highlight color on the buttons. This is done for ease of configuratoin.  
- * If you copy the code in htdocs/js/vendor/bootstrap/css/bootstrap.css
- * you could get these features working again with effort.  
- * 
- * Using this file also changes some of the math4 colors to be more uniform.  
- * This is to make as few colors as possible for ease of changing the
+/* This is the coloring file for the red version of math4
+ * this file is tracked by git and changes here will be overwritten
+ * If you would like to alter this theme, make a copy of math4-overrides.css
+ * in this directory and put your changes there. 
  */
 
 /* Color for links and link hover */
@@ -73,7 +44,7 @@ a:focus {
 .btn-info.disabled,
 .btn-info[disabled] {
   color: #ffffff;
-  background-color: #CC3300;
+  background-color: #d14719;
 }
 
 /* colors for the masthead */
@@ -145,158 +116,6 @@ ul.courses-list a:hover {
 
 #InfoPanel {
     background-color: #fffffff;
-}
-
-/* Problem rendering formatting */
-div.RenderSolo { 
-    background-color: #E0E0E0; 
-    color: black; 
-}
-
-/* problem tag blue color */
-div.AuthorComment { 
-    background-color: #00E0E0; 
-    color: black; 
-}
-
-.RenderSolo hr,
-.problem-content hr {
-  border-top-color: rgb(22,22,22);
-}
-
-/* Colors for "neutral" messages */
-div.WarningMessage { 
-    background-color: #EDE275; 
-}
-
-div.showMeAnotherBox { 
-    background-color: #EDE275; 
-    border-color: #EDE275; 
-} 
-
-label.WarningMessage { 
-    background-color: #EDE275; 
-}
-
-span.ResultsAlert { 
-    color: #BDB45E; 
-    background-color: inherit; 
-} 
-
-div.ResultsAlert { 
-    color: #BDB45E; 
-    background-color: inherit; 
-} 
-
-label.ResultsAlert {
-    color: #BDB45E; 
-    background-color: inherit; 
-} 
-
-span.WarningMessage { 
-    background-color: #EDE275; 
-}
-
-span.unattempted { 
-    color: inherit; 
-    background-color: #EDE275;
-}
-
-td.FeedbackMessage { 
-    background-color:#EDE275;
-} 
-
-/* Colors for "green" messages */
-div.ResultsWithoutError { 
-    color: #519951; 
-    background-color: inherit; 
-} 
-
-td.ResultsWithoutError { 
-    background-color:#88FF88;
-}
-
-label.ResultsWithoutError { 
-    color: #519951; 
-    background-color: inherit; 
-} 
-
-span.ResultsWithoutError { 
-    color: #519951; 
-    background-color: inherit; 
-} 
-
-span.correct { 
-    color: inherit; 
-    background-color: #88FF88; 
-}
-
-input.correct	{ 
-    color:inherit; 
-    background-color: #88FF88; 
-} 
-
-/* Colors for "red" messages */
-div.ResultsWithError { 
-    color: #CC7676; 
-    background-color: inherit; 
-} 
-
-label.ResultsWithError { 
-    color: #CC7676; 
-    background-color: inherit; 
-}
-
-td.ResultsWithError { 
-    background-color:#FF9494; 
-    color: black;
-}
-
-span.ResultsWithError { 
-    color: #CC7676; 
-    background-color: inherit; 
-} 
-
-span.incorrect { 
-    color: #CC7676; 
-    background-color: inherit; 
-}
-
-input.incorrect { 
-    color:inherit; 
-    background-color: #FF9494; 
-} 
-
-/* Other formatting for attempt results and the problem page */
-table.attemptResults th {
-	color: inherit;
-	background-color: #DDDDDD;
-}
-
-span.ResultsWithErrorInResultsTable { 
-    color: inherit; 
-    background-color: inherit; } 
-
-/* Comment coloration */
-.answerComments {
-    border-color: gray;
-    background-color: #E8E8E8;
-}
-
-/* highlights mistakes */
-.parsehilight { 
-    color: inherit; 
-    background-color: #EDE275; 
-}
-
-/* Misc */
-.temporaryFile { 
-    color: #FF6600; b
-    background-color: inherit; 
-}
-
-#editor{
-    background-color: #FFFFFF;
 }
 
 /* Achievement bar coloring */
