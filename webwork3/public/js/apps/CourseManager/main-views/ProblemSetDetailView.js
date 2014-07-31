@@ -17,13 +17,14 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         initialize: function(options){
             var self = this;
 
+            var opts = _(options).pick("users","settings","eventDispatcher");
+
             this.views = options.views = {
-                propertiesView : new DetailsView({users: options.users, settings: options.settings}),
-                problemsView : new ShowProblemsView({settings: options.settings, messageTemplate: this.messageTemplate}),
-                usersAssignedView : new AssignUsersView({users: options.users}),
-                unassignUsersView: new UnassignUserView({users: options.users}),
-                customizeUserAssignView : new CustomizeUserAssignView({users: options.users,
-                        eventDispatcher: this.eventDispatcher, settings: options.settings})
+                propertiesView : new DetailsView(opts),
+                problemsView : new ShowProblemsView(_.extend({},opts,{messageTemplate: this.messageTemplate})),
+                usersAssignedView : new AssignUsersView(opts),
+                unassignUsersView: new UnassignUserView(opts),
+                customizeUserAssignView : new CustomizeUserAssignView(opts)
             };
             this.views.problemsView.on("page-changed",function(num){
                 self.eventDispatcher.trigger("save-state");
@@ -33,11 +34,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             options.template = $("#HW-detail-template").html();
             TabbedMainView.prototype.initialize.call(this,options);
             this.state.on("change:set_id", function() {
-                console.log(self.state.attributes);
                 self.changeProblemSet(self.state.get("set_id"));
             })
-
-            console.log(this.state.attributes);
 
         },
         bindings: {
@@ -72,14 +70,12 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 if(_.isFunction(this.views[this.state.get("tab_name")].changeDisplayMode)){
                     this.views[this.state.get("tab_name")].changeDisplayMode(evt);
                 }},
-            "show-hide-tags": function(evt){
-                if(_.isFunction(this.views[this.state.get("tab_name")].toggleTags)){
-                    this.views[this.state.get("tab_name")].toggleTags(evt);
-            }},
-            "show-hide-path": function(evt){
-                if(_.isFunction(this.views[this.state.get("tab_name")].toggleShowPath)){
-                    this.views[this.state.get("tab_name")].toggleShowPath(evt);
-            }},
+            "show-hide-tags": function(_show){
+                this.views[this.state.get("tab_name")].tabState.set("show_tags",_show);
+            },
+            "show-hide-path": function(_show){
+                this.views[this.state.get("tab_name")].tabState.set("show_path",_show);
+            },
         },
         changeProblemSet: function (setName)
         {
@@ -208,11 +204,16 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
     var ShowProblemsView = TabView.extend({
         tabName: "Problems",
         initialize: function (options) {
+            var self = this;
             this.problemSetView = new ProblemSetView({settings: options.settings, messageTemplate: options.messageTemplate});
             TabView.prototype.initialize.apply(this,[options]);
+            this.tabState.on("change:show_path",function(){
+                self.problemSetView.showPath(self.tabState.get("show_path"));
+            }).on("change:show_tags",function(){
+                self.problemSetView.showTags(self.tabState.get("show_tags"));
+            });
         },
         render: function (){
-            console.log("in ShowProblemsView.render");
             this.problemSetView.setElement(this.$el);
             this.problemSetView.render();
         },
@@ -221,19 +222,16 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             return this;
         },
         set: function(options){
-            this.problemSetView.set(options);
+            this.problemSetView.set(_.extend({},options,this.tabState.pick("show_path","show_tags")));
             return this;
         },
         changeDisplayMode: function(evt){
             this.problemSetView.changeDisplayMode(evt);
         },
-        toggleTags: function(evt){
-            this.problemSetView.toggleTags(evt);
+        getDefaultState: function () {
+            return {set_id: "", library_path: "", page_num: 0, rendered: false, page_size: 10, show_path: false, show_tags: false};
         },
-        toggleShowPath: function(evt){
-            this.problemSetView.toggleShowPath(evt);
-        },
-        getDefaultState: function () { return {set_id: ""};}
+
     })
 
 	var AssignUsersView = TabView.extend({
@@ -455,7 +453,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation"));
             });
             this.collection.on({change: function(model){
-                console.log(moment.unix(model.get("reduced_scoring_date")).format("MM-DD-YYYY"));
                 self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date")).save();
             }});
             this.setMessages();

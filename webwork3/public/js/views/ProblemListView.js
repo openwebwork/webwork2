@@ -45,6 +45,9 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             if(opts.current_page){
                 this.currentPage = opts.current_page || 0;
             }
+            if(opts.show_path|| opts.show_tags){
+                _(this).extend(_(opts).pick("show_path","show_tags"))
+            }
             this.viewAttrs.type = opts.type || "set";
             this.viewAttrs.displayMode = this.settings.getSettingValue("pg{options}{displayMode}");
             // start with showing 10 (pageSize) problems
