@@ -437,6 +437,7 @@ sub body {
 	
 	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
 	
+	print $self->upgrade_notification();
 	
 	my @errors = @{$self->{errors}};
 	
@@ -3176,6 +3177,84 @@ Check the ownership and permissions of the course's directory, e.g $coursesDir/$
 }
 
 
+sub upgrade_notification {
+    my $self = shift;
+    my $r = $self->r;
+    my $ce = $r->ce;
+
+    my $git = $ce->{externalPrograms}->{git};
+    my $WeBWorKRemote = $ce->{gitWeBWorKRemoteName};
+    my $WeBWorKBranch = $ce->{gitWeBWorKBranchName};
+    my $PGRemote = $ce->{gitPGRemoteName};
+    my $PGBranch = $ce->{gitPGBranchName};
+    my $LibraryRemote = $ce->{gitPGRemoteName};
+    my $LibraryBranch = $ce->{gitPGBranchName};
+
+    my $upgradeMessage = '';
+    my $output;
+
+    # Check if WeBWorK is behind its remote version
+    chdir($ce->{webwork_dir});
+    `$git fetch $WeBWorKRemote`;
+    $output = `$git status -uno`;
+    
+    if ($output =~ /branch is behind/) {
+	# If WeBWorK is behind check to see if there is a new version 
+	$output = `$git diff $WeBWorKBranch:VERSION $WeBWorKRemote/$WeBWorKBranch:VERSION`;
+
+	if ($output) {
+	    $output =~ /\+\$WW_VERSION\s+=\s+['"](\S+)['"]/;
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('A new version, [_1], of WeBWorK is available.', $1)));
+	} else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
+	}
+    }
+
+    # Check if PG is behind its remote version
+    chdir($ce->{pg_dir});
+    $output = `$git fetch $PGRemote`;
+    $output = `$git status -uno`;
+    
+    if ($output =~ /branch is behind/) {
+	# If PG is behind check to see if there is a new version 
+	$output = `$git diff $PGBranch:VERSION $PGRemote/$PGBranch:VERSION`;
+	warn($output);
+	if ($output) {
+	    $output =~ /\+\$PG_VERSION\s+=\s+['"](\S+)['"]/;
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('A new version, [_1], of PG is available.', $1)));
+	} else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
+	}
+    }
+
+    # Check to see if the OPL_update script has been run 
+    chdir($ce->{problemLibrary}{root});
+
+    my $jsonfile = $ce->{webworkDirs}{htdocs}.'/DATA/'.$ce->{problemLibrary}{tree};
+    # If no json file then the OPL script needs to be run
+    unless (-e $jsonfile) {
+	$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is no library tree file for the library, you will need to run OPL-update.')));
+    # otherwise we need to check to see if the date on the tree file
+    # is after the date on the last commit in the library
+    } else {
+	my $lastcommit = `git log -1 --pretty=format:%at`;
+	my $opldate = stat($jsonfile)->[9];
+	
+	if ($lastcommit > $opldate) {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('The library index is older than the library, you need to run OPL-update.')));
+	}
+    }
+
+    chdir($ce->{webwork_dir});
+
+    if ($upgradeMessage) {
+	$upgradeMessage = CGI::Tr(CGI::th($r->maketext('The following upgrades are available for your WeBWorK system:'))).$upgradeMessage;
+	return CGI::center(CGI::table({class=>"admin-messagebox"},$upgradeMessage));
+    } else {
+	return '';
+    }
+
+}
 
 ################################################################################
 #   registration forms added by Mike Gage 5-5-2008
@@ -3195,8 +3274,7 @@ sub display_registration_form {
 	return 0  if $registeredQ or $register_site or $registration_subDisplay;     #otherwise return registration form
 	return  q! 
 	<center>
-	<table class="messagebox" style="background-color:#FFFFCC;width:60%">
-	<tr><td>
+	<table class="admin-messagebox"><tr><td>
 	!,
 	CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
 	CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using
