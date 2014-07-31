@@ -7,9 +7,9 @@
  **/
 
 
-define(['backbone','underscore','views/TabbedMainView','views/TabView','views/ProblemSetView','models/ProblemList',
-    'views/CollectionTableView','models/ProblemSet','models/UserSetList', 'config','bootstrap'], 
-    function(Backbone, _,TabbedMainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
+define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView','views/ProblemSetView',
+    'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList', 'config','bootstrap'], 
+    function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
         UserSetList, config){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
@@ -36,6 +36,8 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 console.log(self.state.attributes);
                 self.changeProblemSet(self.state.get("set_id"));
             })
+
+            console.log(this.state.attributes);
 
         },
         bindings: {
@@ -64,9 +66,6 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 case "assignUsersView":
                     return $("#problem-set-assign-users-help-template").html();
             }
-        },
-        getDefaultState: function() {
-            return {set_id: ""};
         },
         sidebarEvents: {
             "change-display-mode": function(evt) { 
@@ -202,7 +201,7 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 this.$(".reduced-scoring").closest("tr").addClass("hidden")
             }
         },
-        getDefaultState: function () { return {};}
+        getDefaultState: function () { return {set_id: ""};}
 
     });
 
@@ -234,7 +233,7 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
         toggleShowPath: function(evt){
             this.problemSetView.toggleShowPath(evt);
         },
-        getDefaultState: function () { return {};},
+        getDefaultState: function () { return {set_id: ""};}
     })
 
 	var AssignUsersView = TabView.extend({
@@ -288,7 +287,7 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
         assignUsers: function(){
             this.problemSet.set("assigned_users",_(this.originalAssignedUsers).union(this.model.get("assigned_users")));
         },        
-        getDefaultState: function () { return {};}
+        getDefaultState: function () { return {set_id: ""};}
     });
 
 
@@ -352,7 +351,7 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
                 this.problemSet.save();
             }
         },       
-        getDefaultState: function () { return {};}
+        getDefaultState: function () { return {set_id: ""};}
     });
 
     // Trying a new UI for this View
@@ -524,7 +523,7 @@ define(['backbone','underscore','views/TabbedMainView','views/TabView','views/Pr
             })
 
         },        
-        getDefaultState: function () { return {};}
+        getDefaultState: function () { return {set_id: ""};}
 
     });
         

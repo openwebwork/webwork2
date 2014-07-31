@@ -5,6 +5,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     className: "webwork-container",
     messageTemplate: _.template($("#general-messages").html()),
     initialize: function (options) {
+        var self = this;
     	_.bindAll(this,"closeLogin","openSidebar","closeSidebar","changeSidebar","changeView"
                         ,"saveState");
         this.currentView = void 0;
@@ -64,6 +65,18 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         $(window).on("resize",renderMainPane);
 
 
+        this.navigationBar.on({
+            "change-view": function(id) {
+                self.changeView(id,self.mainViewList.getView(id).getDefaultState());
+                self.changeSidebar(self.mainViewList.getView(id).info.default_sidebar,{is_open: true});
+                self.currentView.sidebar = self.currentSidebar;
+                self.saveState();
+            },
+            "logout": this.logout,
+            "show-help": function() { self.changeSidebar("help",{is_open: true})},
+            "forward-page": function() {self.goForward()},
+            "back-page": function() {self.goBack()},
+        });
         
     },
     render: function () {
