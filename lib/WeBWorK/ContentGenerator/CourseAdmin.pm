@@ -3196,15 +3196,15 @@ sub upgrade_notification {
     # Check if WeBWorK is behind its remote version
     chdir($ce->{webwork_dir});
     `$git fetch $WeBWorKRemote`;
-    $output = `$git status -uno`;
+    $output = `$git log $WeBWorKBranch..$WeBWorKRemote/$WeBWorKBranch`;
     
-    if ($output =~ /branch is behind/) {
+    if ($output) {
 	# If WeBWorK is behind check to see if there is a new version 
 	$output = `$git diff $WeBWorKBranch:VERSION $WeBWorKRemote/$WeBWorKBranch:VERSION`;
 
 	if ($output) {
-	    $output =~ /\+\$WW_VERSION\s+=\s+['"](\S+)['"]/;
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('A new version, [_1], of WeBWorK is available.', $1)));
+	    $output =~ /\+\$WW_VERSION\s*=\s*['"](\S+)['"]/;
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('A new release, version [_1], of WeBWorK is available.', $1)));
 	} else {
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
 	}
@@ -3213,15 +3213,15 @@ sub upgrade_notification {
     # Check if PG is behind its remote version
     chdir($ce->{pg_dir});
     $output = `$git fetch $PGRemote`;
-    $output = `$git status -uno`;
-    
-    if ($output =~ /branch is behind/) {
+    $output = `$git log $PGBranch..$PGRemote/$PGBranch`;
+    warn($output);
+    if ($output) {
 	# If PG is behind check to see if there is a new version 
 	$output = `$git diff $PGBranch:VERSION $PGRemote/$PGBranch:VERSION`;
 	warn($output);
 	if ($output) {
-	    $output =~ /\+\$PG_VERSION\s+=\s+['"](\S+)['"]/;
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('A new version, [_1], of PG is available.', $1)));
+	    $output =~ /\+\$PG_VERSION\s*=\s*['"](\S+)['"]/;
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('A new release, version [_1], of PG is available.', $1)));
 	} else {
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
 	}
