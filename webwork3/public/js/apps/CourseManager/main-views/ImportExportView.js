@@ -1,48 +1,22 @@
-define(['backbone', 'underscore','views/MainView', 'apps/util','models/ProblemSetList','models/ProblemSet','config','bootstrap'], 
-	function(Backbone, _,MainView, util,ProblemSetList,ProblemSet,config){
+define(['backbone', 'underscore','views/TabbedMainView','views/TabView', 'apps/util','models/ProblemSetList',
+	'models/ProblemSet','config','bootstrap'], 
+	function(Backbone, _,TabbedMainView,TabView, util,ProblemSetList,ProblemSet,config){
 
-var ImportExportView = MainView.extend({
+var ImportExportView = TabbedMainView.extend({
     initialize: function (options){
-    	MainView.prototype.initialize.call(this,options);
-    	var self = this;
-        _.bindAll(this,"render");
-        this.problemSets = options.problemSets;
-        this.subviews = {
-        	import: new ImportView({problemSets: this.problemSets, settings: this.settings}),
-        	export: new ExportView()
-        };
+    	
+    	var opts = _(options).pick("settings","users","problemSets","eventDispatcher");
 
-    },
-    render: function () {
-    	var self = this;
-        this.$el.html($("#import-export-template").html());
-        _(this.subviews).chain().keys().each(function(key){
-        	self.subviews[key].setElement(self.$("#"+key+"-tab"));
-        });
-        this.$("a[href='#"+this.subviewName+"-tab']").tab("show");
-        this.subviews[this.subviewName].render();
-        MainView.prototype.render.apply(this);
-        return this;
-    },
-    getState: function () {
-        return {subview: this.subviewName};
-    },
-    setState: function(state){
-        this.subviewName = state? state.subview : "import";
-        return this;
-    },
-    events: {
-    	"shown.bs.tab a[data-toggle='tab']": "changeTab"
-    },
-    changeTab: function(evt){
-    	this.subviewName = $(evt.target).attr("href").match(/#(\w+)-tab/)[1];
-    	this.subviews[this.subviewName].render();
-    	this.eventDispatcher.trigger("save-state");
+        options.views = {
+        	import: new ImportView(opts),
+        	export: new ExportView(opts)
+        };
+        TabbedMainView.prototype.initialize.call(this,options);
     }
 });
 
-var ImportView = Backbone.View.extend({
-	name: "import",
+var ImportView = TabView.extend({
+	tabName: "Import Problem Sets",
 	initialize: function(options){
 		this.problemSets = options.problemSets;
 		this.settings = options.settings;
@@ -52,6 +26,7 @@ var ImportView = Backbone.View.extend({
     		self.checkSetNames();
     		_set.id=_set.get("set_id");
     	});
+    	TabView.prototype.initialize.call(this,options);
 	},
 	render: function(){
 		this.$el.html($("#import-sets-template").html());
@@ -177,20 +152,24 @@ var ImportView = Backbone.View.extend({
 
 	        reader.readAsText(file);
 	    });
-    }
+    },
+    getDefaultState: function () { return {};}
 });
 
-var ExportView = Backbone.View.extend({
-	name: "export",
+var ExportView = TabView.extend({
+	tabName: "Export Problem Sets",
 	render: function(){
+		this.$el.html($("#export-view-template").html())
 		return this;
-	}
+	},
+    getDefaultState: function () { return {};}
 })
 
 var ProblemSetRowView = Backbone.View.extend({
     tagName: "tr",
     initialize: function(options){
     	this.problemSets = options.problemSets;
+    	
     },
     render: function(){
         this.$el.html($("#import-problem-set-row-template").html());

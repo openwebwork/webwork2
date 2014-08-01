@@ -15,9 +15,7 @@ var ProblemSetsManager = MainView.extend({
                     'hideShowReducedScoring');  // include all functions that need the this object
         var self = this;
 
-        this.state.set({filter_text: "", page_number: 0, 
-                page_size: this.settings.getSettingValue("ww3{pageSize}") || 10},{silent: true})
-            .on("change:filter_text", function () {self.filterProblemSets();});
+        this.state.on("change:filter_text", function () {self.filterProblemSets();});
 
         this.tableSetup();
 
@@ -30,6 +28,8 @@ var ProblemSetsManager = MainView.extend({
         this.problemSetTable.on("page-changed",function(num){
             self.state.set("page_number",num);
             self.isReducedScoringEnabled();
+        }).on("table-sorted",function(info){
+            self.state.set({sort_class: info.classname, sort_direction: info.direction});
         })
 
 
@@ -62,7 +62,6 @@ var ProblemSetsManager = MainView.extend({
         //this.$(".set-id a").truncate({width: 120});
     },
     render: function () {
-        console.log(this.state.attributes);
         this.$el.html($("#problem-set-manager-template").html());
         this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
         this.showRows(this.state.get("page_size"));
@@ -72,10 +71,17 @@ var ProblemSetsManager = MainView.extend({
         this.problemSetTable.gotoPage(this.state.get("page_number"));
         MainView.prototype.render.apply(this);
         this.stickit(this.state,this.bindings);
+        if(this.state.get("sort_class")&&this.state.get("sort_direction")){
+            this.problemSetTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
+        }
+
         return this;
     },
     bindings: { ".filter-text": "filter_text"},
-
+    getDefaultState: function () {
+        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+            sort_class: "", sort_direction: ""};
+    },
     isReducedScoringEnabled: function (){
         // hide reduced credit items when not enabled. 
         if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){

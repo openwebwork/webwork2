@@ -6,14 +6,12 @@ define(['backbone','underscore','config','views/WWSettingsView','views/MainView'
 var SettingsView = MainView.extend({
     messageTemplate : _.template($("#settings-messages-template").html()),
     initialize: function (options) {
-        MainView.prototype.initialize.call(this,options);
-        var self = this;
-        _.bindAll(this,'render');
-
-        this.categories = this.settings.chain().pluck("attributes").pluck("category")
+        this.categories = options.settings.chain().pluck("attributes").pluck("category")
             .unique().difference("timezone").value();
 
-        this.state.set({category: this.categories[0]},{silent: true});
+        MainView.prototype.initialize.call(this,options);
+
+
         this.setMessages();
      }, 
      events: {
@@ -25,6 +23,9 @@ var SettingsView = MainView.extend({
         MainView.prototype.render.apply(this);
         return this;
 
+     },
+     getDefaultState: function () {
+        return {category: this.categories[0]};
      },
      changeSettingTab: function(evt){
         this.state.set("category",_.isString(evt)? evt : $(evt.target).text());
