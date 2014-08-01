@@ -76,40 +76,47 @@
 <script type="text/template" id="problem-template">
 <div class="loading btn-sm">Problem Loading...<i class="fa fa-spinner fa-spin"></i></div>
 <div class="handle row">
-<%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-arrows-v"></i></a></div><%}%>
-<%if(draggable){%>
-  <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
-<%}%>
-<%if(showPoints){%>
-<div class="col-md-3 form-">
-    <label class="control-label">Value: 
-      <input type="text" class="prob-value input-small"></label>
+  <%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-arrows-v"></i></a></div><%}%>
+  <%if(draggable){%>
+    <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
+  <%}%>
+  <%if(showPoints){%>
+  <div class="col-md-3 form-">
+      <label class="control-label">Value: 
+        <input type="text" class="prob-value input-small"></label>
+    </div>
+  <%}%>
+
+  <div class="col-md-4 btn-group btn-group-sm">
+  <%if(showAddTool){%><a class="btn btn-default add-problem" href="#" title="add to target set">
+    <i class="fa fa-plus"></i></a><%}%>
+  <%if(showEditTool){%><a class="btn btn-default" target="WW_editor" href="#" title="edit">
+      <i class="fa fa-pencil"></i></a><%}%>
+    <%if(showRefreshTool){%>
+      <a onclick="return false;" href="#"  class="btn btn-default refresh-problem" title="randomize">
+      <i class="fa fa-refresh"></i></a>
+    <%}%>    
+    <%if(showViewTool){%><a onclick="return false;" class="btn btn-default" target="WW_view" href='#' title="view problem">
+      <i class="fa fa-eye"></i></a><%}%>    
+    <%if(showHideTool){%>
+      <a href="#" onclick="return false;" class="btn btn-default hide-problem link" title="hide problem">
+      <i class="fa fa-times"></i></a>
+    <%}%>
+    <%if(deletable){ %>
+      <a href="#" onclick="return false;" class="remove-problem btn btn-default" title="delete problem">
+        <i class="fa fa-trash-o"></i></a>
+    <%}%>
+  <a href="#" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
+  <a href="#" class="btn btn-default path-button" title="show/hide path"><i class="fa fa-file"></i></a>
   </div>
-<%}%>
 
-<div class="col-md-4 btn-group btn-group-sm">
-<%if(showAddTool){%><a class="btn btn-default add-problem" href="#" title="add to target set">
-  <i class="fa fa-plus"></i></a><%}%>
-<%if(showEditTool){%><a class="btn btn-default" target="WW_editor" href="#" title="edit">
-    <i class="fa fa-pencil"></i></a><%}%>
-<%if(showRefreshTool){%><a href="#"  class="btn btn-default refresh-problem" title="randomize">
-      <i class="fa fa-refresh"></i></a><%}%>    
-<%if(showViewTool){%><a class="btn btn-default" target="WW_view" href='#' title="view problem">
-    <i class="fa fa-eye"></i></a><%}%>    
-<%if(showHideTool){%><a href="#" class="btn btn-default hide-problem link" title="hide problem">
-    <i class="fa fa-times"></i></a><%}%>
-<%if(deletable){ %><a  href="#" class="remove-problem btn btn-default" title="delete problem">
-    <i class="fa fa-trash-o"></i></span><%}%>
-<a href="#" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
-</div>
-
-<div class="col-md-2 btn-group btn-group-sm">
-<button class="btn btn-sm btn-success highlight-problem hidden" title="This problem is in the target set.">
-  <i class="fa fa-bullseye fa-lg"></i></button>
-</div>
-</div>
-<div class="problem-tags">
-<table class="table table-condensed table-bordered"><tbody>
+  <div class="col-md-2 btn-group btn-group-sm">
+  <button class="btn btn-sm btn-success highlight-problem hidden" title="This problem is in the target set.">
+    <i class="fa fa-bullseye fa-lg"></i></button>
+  </div>
+  </div>
+  <div class="problem-tags">
+  <table class="table table-condensed table-bordered"><tbody>
 <tr class="hidden path-row"><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
 <td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
 <tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>

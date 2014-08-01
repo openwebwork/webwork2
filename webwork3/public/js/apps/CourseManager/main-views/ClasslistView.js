@@ -29,11 +29,10 @@ var ClasslistView = MainView.extend({
 
 	    this.userTable.on("page-changed",function(num){
 	    	self.state.set("page_number",num);
-	    })
-
-	    this.state.set({filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10}
-	    	,{silent: true}); // silent: true, so it doesn't trigger a save right away
-        this.state.on("change:filter_text", function () {self.filterUsers();});
+	    }).on("table-sorted",function(info){
+            self.state.set({sort_class: info.classname, sort_direction: info.direction});
+        })
+	    this.state.on("change:filter_text", function () {self.filterUsers();});
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
@@ -66,7 +65,6 @@ var ClasslistView = MainView.extend({
     },
 
     render: function(){
-    	this.pageSize = this.pageSize || this.settings.getSettingValue("ww3{pageSize}"); 
 	    this.$el.html($("#classlist-manager-template").html());
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
         this.$(".users-table-container").append(this.userTable.el);
@@ -74,14 +72,22 @@ var ClasslistView = MainView.extend({
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
       
-        this.showRows(this.pageSize);
+        this.showRows(this.state.get("page_size"));
         this.filterUsers();
         this.userTable.gotoPage(this.state.get("page_number"));
         MainView.prototype.render.apply(this);
         this.stickit(this.state,this.bindings);
+
+        if(this.state.get("sort_class")&&this.state.get("sort_direction")){
+            this.userTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
+        }
 	    return this;
     },  
     bindings: { ".filter-text": "filter_text"},
+    getDefaultState: function () {
+        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+                    sort_class: "", sort_direction: ""};
+    },
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
     	_user.save();
@@ -172,17 +178,13 @@ var ClasslistView = MainView.extend({
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
 	},
     showRows: function(evt){
-        this.pageSize = _.isNumber(evt) ? evt : $(evt.target).data("num");
+        this.state.set("page_size", _.isNumber(evt) || _.isString(evt) ? parseInt(evt) : $(evt.target).data("num"));
         this.$(".show-rows i").addClass("not-visible");
-        if(_.isString(evt) || _.isNumber(evt)){
-            this.$(".show-rows[data-num='"+evt+"'] i").removeClass("not-visible")
-        } else {
-            $(evt.target).children("i").removeClass("not-visible");
-        }
-        if(this.pageSize < 0) {
+        this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible")
+        if(this.state.get("page_size") < 0) {
             this.userTable.set({num_rows: this.users.length});
         } else {
-            this.userTable.set({num_rows: this.pageSize});
+            this.userTable.set({num_rows: this.state.get("page_size")});
         }
     },
 	tableSetup: function () {

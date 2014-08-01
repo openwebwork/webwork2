@@ -105,12 +105,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				var th = $("<th data-class-name='" + className + "'>").addClass(className)
 					.html(col.colHeader? col.colHeader: col.name + "<span class='sort'></span>");
 				headRow.append(th);
-				// if(col.colHeader){
-
-				// 	headRow.append("<th data-class-name='" + className + "'>" + col.colHeader + "<span class='sort'></span></th>");
-				// } else {
-				// 	headRow.append("<th data-class-name='" + className + "'>" + col.name + "<span class='sort'></span></th>");
-				// }
 			});
 
 			this.updateTable();
@@ -131,8 +125,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				this.updatePaginator();
 			}
 
-			if(this.sortInfo){
-				this.$("th[data-class-name='"+ this.sortInfo.classname+ "'] .sort")
+			if(this.sortInfo && ! _.isEqual(this.sortInfo,{})){
+				this.$("th."+ (_.isArray(this.sortInfo.classname) ? this.sortInfo.classname[0]: this.sortInfo.classname)
+							+ " .sort")
 					.html("<i class='fa fa-long-arrow-" + (this.sortInfo.direction >0 ? "down": "up") + "'></i>" );
 			}
 
@@ -253,21 +248,35 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				"click button.paginator-page": "pageChanged"
 		},
 		sortTable: function(evt){
-			var self = this;
-			var sort = _(this.columnInfo).find(function(col){
-				return (_.isArray(col.classname)? col.classname[0] : col.classname ) == $(evt.target).data("class-name");
+			var self = this
+				, sort 
+				, sortField = evt.sort_info? evt.sort_info.sort_class : $(evt.target).data("class-name");
+
+			if(typeof(sortField)==="undefined"){
+				return;
+			}
+
+			sort = _(this.columnInfo).find(function(col){
+				return (_.isArray(col.classname)? col.classname[0] : col.classname ) == sortField;
 			});
-			
 			if(typeof(sort)=="undefined"){ // The user clicked on the select all button.
 				return;
 			}
 
-			if(this.sortInfo && this.sortInfo.key==sort.key){
-				this.sortInfo.direction = -1*this.sortInfo.direction;
-			} else {
-				this.sortInfo = {key: sort.key, direction: 1, 
-						classname: _.isArray(sort.classname)? sort.classname[0] : sort.classname};
+
+			if(evt.sort_info && evt.sort_info.sort_direction && evt.sort_info.sort_class){
+				this.sortInfo = {key: sort.key, direction: evt.sort_info.sort_direction, classname: sort.classname};
+			}	else {
+				if(this.sortInfo && this.sortInfo.key==sort.key){
+					this.sortInfo.direction = -1*this.sortInfo.direction;
+				} else {
+					this.sortInfo = {key: sort.key, direction: 1, 
+							classname: _.isArray(sort.classname)? sort.classname[0] : sort.classname};
+				}
+				this.trigger("table-sorted",this.sortInfo);
 			}
+
+
 			// determine the sort Function
 
 			var sortFunction = sort.sort_function || function(val) { return val;};
@@ -302,26 +311,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				} 
 
 			};
-
-
-
-			/* Need a more robust comparator function. */
-			/*this.collection.comparator = function(model1,model2) { 
-				switch(sort.datatype){
-					case "string":
-						if (sortFunction(model1.get(sort.sort_key))===sortFunction(model2.get(sort.sort_key))) {return 0;}
-						return self.sortInfo.direction*
-							(sortFunction(model1.get(sort.sort_key))<sortFunction(model2.get(sort.sort_key))? -1: 1);
-					break;
-					case "integer":
-						if(parseInt(sortFunction(model1.get(sort.sort_key)))===parseInt(sortFunction(model2.get(sort.sort_key)))){return 0;}
-					    return self.sortInfo.direction* 
-					    	(parseInt(sortFunction(model1.get(sort.sort_key)))<parseInt(sortFunction(model2.get(sort.sort_key)))? -1:1);
-
-					break;
-				} 
-				
-			}; */
 			this.collection.sort();
 			this.render();
 		},

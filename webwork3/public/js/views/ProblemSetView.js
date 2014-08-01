@@ -3,9 +3,8 @@ define(['backbone', 'views/ProblemListView'],
     	var ProblemSetView = ProblemListView.extend({
             viewName: "Problems",
     		initialize: function (options) {
-    			this.viewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showEditTool: true,
-                    showRefreshTool: true, showViewTool: true, showHideTool: false, deletable: true, draggable: false,
-                    problem_seed: 1, show_undo: true};
+    			this.viewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showEditTool: true, problem_seed: 1,
+                    showRefreshTool: true, showViewTool: true, showHideTool: false, deletable: true, draggable: false};
                 this.problemSet = options.problemSet;
                 options.type = "problem_set";
                 ProblemListView.prototype.initialize.apply(this,[options]);
