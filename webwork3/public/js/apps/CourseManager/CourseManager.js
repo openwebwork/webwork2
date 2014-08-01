@@ -115,12 +115,7 @@ var CourseManager = WebPage.extend({
         this.problemSets.on("change:due_date change:reduced_scoring_date change:open_date change:answer_date",this.setDates);
                 
         this.navigationBar.on({
-            "change-view": this.changeViewAndSidebar,
-            "logout": this.logout,
             "stop-acting": this.stopActing,
-            "show-help": function() { self.changeSidebar("Help")},
-            "forward-page": function() {self.goForward()},
-            "back-page": function() {self.goBack()},
         });
 
         this.users.on({"act_as_user": function(model){
@@ -157,10 +152,10 @@ var CourseManager = WebPage.extend({
         if (this.objectDragging) return;
         this.changeView("problemSetDetails",{set_id: setName});        
         this.changeSidebar("problemSets",{});
-
+        this.saveState();
     },
     changeViewAndSidebar: function(_view){
-        this.changeView(_view);
+        this.changeView(_view,this.mainViewList.getView(_view).getDefaultState());
         this.changeSidebar(this.mainViewList.getDefaultSidebar(_view),{is_open: true});
         this.saveState();
     },

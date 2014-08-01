@@ -20,21 +20,27 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
             var viewOptions = {problemSets: options.problemSets,settings: options.settings, 
                     messageTemplate: this.messageTemplate, eventDispatcher: options.eventDispatcher};
             options.views = {
-                subjects : new LibrarySubjectView(_.extend(_.clone(viewOptions),{libBrowserType: "subjects"})),
-                directories : new LibraryDirectoryView(_.extend(_.clone(viewOptions),{libBrowserType: "directories"})),
-                textbooks : new LibraryTextbookView(_.extend(_.clone(viewOptions),{libBrowserType: "textbooks"})),
-                localLibrary : new LocalLibraryView(_.extend(_.clone(viewOptions),{libBrowserType: "localLibrary"})),
-                setDefinition : new LocalLibraryView(_.extend(_.clone(viewOptions),{libBrowserType: "setDefinition"})),
-                search :  new LibrarySearchView(_.extend(_.clone(viewOptions),{libBrowserType: "search"})),
+                subjects : new LibrarySubjectView(_.extend({},viewOptions,{libBrowserType: "subjects"})),
+                directories : new LibraryDirectoryView(_.extend({},viewOptions,{libBrowserType: "directories"})),
+                textbooks : new LibraryTextbookView(_.extend({},viewOptions,{libBrowserType: "textbooks"})),
+                localLibrary : new LocalLibraryView(_.extend({},viewOptions,{libBrowserType: "localLibrary"})),
+                setDefinition : new LocalLibraryView(_.extend({},viewOptions,{libBrowserType: "setDefinition"})),
+                search :  new LibrarySearchView(_.extend({},viewOptions,{libBrowserType: "search"})),
             };
             options.views.setDefinition.tabName = "Set Defn. files";
             TabbedMainView.prototype.initialize.call(this,options);
 
             // make sure each of the tabs has the this.state variable
-            _(options.views).chain().keys().each(function(subview){
-                options.views[subview].set({state: self.state});
-            })
+            // _(options.views).chain().keys().each(function(subview){
+            //     options.views[subview].set({state: self.state});
+            // })
     	},
+        changeTab: function(options){
+            TabbedMainView.prototype.changeTab.apply(this,[options]);
+            if(this.sidebar){
+                this.sidebar.state.set(this.views[this.state.get("tab_name")].tabState.pick("show_tags","show_path"));
+            }
+        },
         getHelpTemplate: function(){
             return $("#library-help-template").html();
         },
@@ -50,12 +56,11 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
                 _set.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
                this.views[this.state.get("tab_name")].allProblemSets.add(_set); 
             },
-            "show-hide-tags": function(show_hide_button) {
-                this.views[this.state.get("tab_name")].libraryProblemsView.toggleTags(show_hide_button);
+            "show-hide-tags": function(_show) {
+                this.views[this.state.get("tab_name")].tabState.set("show_tags",_show);
             },
-            "show-hide-path": function(button) {
-                console.log(button);
-                this.views[this.state.get("tab_name")].libraryProblemsView.toggleShowPath(button);
+            "show-hide-path": function(_show) {
+                this.views[this.state.get("tab_name")].tabState.set("show_path",_show);
             },
             "goto-problem-set": function(_setName){
                 this.eventDispatcher.trigger("show-problem-set",_setName);

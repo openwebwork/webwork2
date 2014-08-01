@@ -5,6 +5,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     className: "webwork-container",
     messageTemplate: _.template($("#general-messages").html()),
     initialize: function (options) {
+        var self = this;
     	_.bindAll(this,"closeLogin","openSidebar","closeSidebar","changeSidebar","changeView"
                         ,"saveState");
         this.currentView = void 0;
@@ -19,7 +20,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             "add-message": this.messagePane.addMessage,
             "open-sidebar": this.openSidebar,
             "close-sidebar": this.closeSidebar,
-            "show-help": function() { self.changeSidebar("Help")},
+            "show-help": function() { self.changeSidebar("help")},
         });
 
     },
@@ -39,8 +40,10 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.appState = {index: void 0, states: []};
             this.changeView(this.mainViewList.views[0].info.id,{});
             var _sidebarID = this.mainViewList.getDefaultSidebar(this.currentView.info.id);
-            this.changeSidebar(_sidebarID);
+            this.changeSidebar(_sidebarID,{is_open: true});
+            this.saveState();
         }
+        this.enableBackForwardButtons();
 
         // build the menu
 
@@ -62,6 +65,18 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         $(window).on("resize",renderMainPane);
 
 
+        this.navigationBar.on({
+            "change-view": function(id) {
+                self.changeView(id,self.mainViewList.getView(id).getDefaultState());
+                self.changeSidebar(self.mainViewList.getView(id).info.default_sidebar,{is_open: true});
+                self.currentView.sidebar = self.currentSidebar;
+                self.saveState();
+            },
+            "logout": this.logout,
+            "show-help": function() { self.changeSidebar("help",{is_open: true})},
+            "forward-page": function() {self.goForward()},
+            "back-page": function() {self.goBack()},
+        });
         
     },
     render: function () {
@@ -164,9 +179,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         _(this.mainViewList.getCommonSidebars()).each(function(_id){
             ul.append(menuItemTemplate({id: _id, name: self.mainViewList.getSidebar(_id).info.name}));
         });
-        // if(set_sidebar_to_open){
-        //     this.currentSidebar.state("is_open")
-        // }
+        this.currentView.sidebar = this.currentSidebar;
 
         if(this.currentSidebar.state.get("is_open") || set_sidebar_to_open){
             this.openSidebar();            
@@ -186,6 +199,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.currentView = this.mainViewList.views[0];
         }
         $("#main-view").html("<div class='main'></div>");
+        this.navigationBar.setPaneName(this.currentView.info.name);
         
         this.currentView.setElement(this.$(".main")).setState(state).render();
     },
@@ -234,7 +248,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         }
 
         window.localStorage.setItem("ww3_cm_state",JSON.stringify(this.appState));
-        // change the navigation button states
+        this.enableBackForwardButtons();
+    },
+    enableBackForwardButtons: function () {  // change the navigation button states
         if(this.appState.index>0){
             this.navigationBar.$(".back-button").removeAttr("disabled")
         } else {
@@ -258,6 +274,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         var currentState = this.appState.states[this.appState.index];
         this.changeView(currentState.main_view,currentState.main_view_state);
         this.changeSidebar(currentState.sidebar,_.extend(currentState.sidebar_state,{is_open: currentState.sidebar_open}));
+        this.currentView.sidebar = this.currentSidebar;
         if(options.save_state){
             this.saveState();            
         }

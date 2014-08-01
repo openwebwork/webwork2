@@ -7,6 +7,7 @@ define(['backbone'],function(Backbone){
 			this.state.on("change",function(){
 				self.eventDispatcher.trigger("save-state");
 			});
+			this.state.set(this.getDefaultState(), {silent: true});
 		},
 		render: function() {
 			var self = this;
@@ -41,7 +42,10 @@ define(['backbone'],function(Backbone){
 		originalEvents: {},
 		events : function() {
 	      	return _.extend({},this.originalEvents,this.additionalEvents);
-	   }
+	    },
+	    getDefaultState: function () {
+	    	console.error("getDefaultState() for " + this.info.name + " needs to be overridden");
+	    }
 	});
 
 	return MainView;

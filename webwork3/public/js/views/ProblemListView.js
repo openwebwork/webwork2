@@ -29,6 +29,8 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.pageSize = 10; // this should be a parameter.
             this.pageRange = _.range(this.pageSize);
             this.currentPage = 0;
+            this.show_tags = false;
+            this.show_path = false; 
             _.extend(this.viewAttrs,{type: options.type});
         },
         set: function(opts){
@@ -42,6 +44,9 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
             if(opts.current_page){
                 this.currentPage = opts.current_page || 0;
+            }
+            if(opts.show_path|| opts.show_tags){
+                _(this).extend(_(opts).pick("show_path","show_tags"))
             }
             this.viewAttrs.type = opts.type || "set";
             this.viewAttrs.displayMode = this.settings.getSettingValue("pg{options}{displayMode}");
@@ -77,8 +82,11 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                                                 placeholder: "sortable-placeholder",axis: "y",
                                                 stop: this.reorder});
             }
+            this.showPath(this.show_path);
+            this.showTags(this.show_tags);
             this.updatePaginator();
             this.updateNumProblems();
+            return this;
         },
         /* Clear the problems and rerender */ 
         reset: function (){
@@ -125,35 +133,15 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.viewAttrs.displayMode = $(evt.target).val();
             this.renderProblems();
         },
-        toggleShowPath: function(path_button){
-            if(path_button.text()==="Show Path"){
-                path_button.button("hide");
-                this.$(".path-row").removeClass("hidden");
-            } else {
-                path_button.button("reset");
-                this.$(".path-row").addClass("hidden");
-            }
+        showPath: function(_show){
+            this.show_path = _show;
+            _(this.problemViews).each(function(pv){ pv.set({show_path: _show})});
+            return this;
         },
-        toggleTags: function (tag_button) {
-            if(tag_button.text()==="Show Tags"){
-                tag_button.button("hide");
-                _(this.problemViews).each(function(pv){
-                    if(!pv.tagsLoaded){
-                        pv.$(".loading-row").removeClass("hidden");
-                        pv.$(".tag-row").addClass("hidden");
-                        pv.model.loadTags({success: function (data){
-                            pv.$(".loading-row").addClass("hidden");
-                            pv.$(".tag-row").removeClass("hidden");
-                            pv.stickit();
-                            pv.tagsLoaded=true;
-                        }});
-                    }
-                });
-            } else {
-                tag_button.button("reset");
-                this.$(".tag-row").addClass("hidden");
-            }
-            
+        showTags: function (_show) {
+            this.show_tags = _show;
+            _(this.problemViews).each(function(pv){ pv.set({show_tags: _show})});
+            return this;
         },
         firstPage: function() { this.gotoPage(0);},
         prevPage: function() {if(this.currentPage>0) {this.gotoPage(this.currentPage-1);}},

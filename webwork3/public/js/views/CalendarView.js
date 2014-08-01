@@ -17,24 +17,6 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             if (! this.date){
                 this.date = moment();  // today!
             }
-            var firstDay
-            if(options.first_day){
-                firstDay = options.first_day;
-            } else {
-                var firstOfMonth = moment(this.date).date(1);
-                firstDay = this.state.get("calendar_type")==="month"?
-                    moment(firstOfMonth).date(1).subtract("days",firstOfMonth.date(1).day()):
-                    moment().subtract("days",moment().day());
-            }
-
-            this.state.set({
-                answer_date: true,
-                due_date: true,
-                reduced_scoring_date: true,
-                open_date: true,
-                first_day: firstDay.format("YYYY-MM-DD"),
-                calendar_type: "month"
-            }, {silent: true});
 
             this.weekViews = []; // array of CalendarWeekViews
             return this;
@@ -73,6 +55,18 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             "click .view-week": "showWeekView",
             "click .view-month": "showMonthView",
             "click .goto-today": "gotoToday"
+        },
+        getDefaultState: function () {
+            var firstOfMonth = moment(this.date||moment()).date(1)
+                , firstDay = moment(firstOfMonth).subtract("days",firstOfMonth.date(1).day());
+            return {
+                answer_date: true,
+                due_date: true,
+                reduced_scoring_date: true,
+                open_date: true,
+                first_day: firstDay.format("YYYY-MM-DD"),
+                calendar_type: "month"
+            };
         },
         viewPreviousWeek: function (){
             this.state.set("first_day",moment(this.state.get("first_day")).subtract("days",7).format("YYYY-MM-DD"));
