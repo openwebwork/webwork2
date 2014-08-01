@@ -437,6 +437,8 @@ sub body {
 	
 	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
 	
+	print $self->upgrade_notification();
+		    
 	my @errors = @{$self->{errors}};
 	
 	
@@ -459,8 +461,6 @@ sub body {
 				CGI::p(" The webwork server must be able to write to these directories. Please correct the permssion errors.") ;
 			}
 	
-		print $self->upgrade_notification();
-		    
 		print CGI::h2($r->maketext("Courses"));
 	
 		print CGI::start_ol();
@@ -3181,6 +3181,7 @@ sub upgrade_notification {
     my $self = shift;
     my $r = $self->r;
     my $ce = $r->ce;
+    my $db = $r->db;
 
     my $git = $ce->{externalPrograms}->{git};
     my $WeBWorKRemote = $ce->{gitWeBWorKRemoteName};
@@ -3190,6 +3191,12 @@ sub upgrade_notification {
 
     return unless ($git && $WeBWorKRemote && $WeBWorKBranch &&
 		   $PGRemote && $PGBranch);
+
+    #return if the last upgrade check was within the last 24 hours
+    my $lastUpgradeCheck = $db->getSettingValue('lastUpgradeCheck') || 0;
+
+    return if (($lastUpgradeCheck+86400) > time());
+    $db->setSettingValue('lastUpgradeCheck', time());
 
     my $upgradeMessage = '';
     my $output;
