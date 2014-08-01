@@ -1126,13 +1126,23 @@ associated with the current request.
 sub title {
 	my ($self, $args) = @_;
 	my $r = $self->r;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+
+	if (defined($urlpath->arg("courseID")) &&
+	    $urlpath->name eq $urlpath->arg("courseID") &&
+	    $db->settingExists('courseTitle')) {
+	    print $db->getSettingValue('courseTitle');
+	} else {
 	
-	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
-	#print underscore2nbsp($r->urlpath->name);
-	my $name = $r->urlpath->name;
-	# $name =~ s/_/ /g;
-	print $name;
-	#print "<!-- END " . __PACKAGE__ . "::title -->\n";
+	    #print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
+	    #print underscore2nbsp($r->urlpath->name);
+	    my $name = $urlpath->name;
+	    # $name =~ s/_/ /g;
+	    print $name;
+	    #print "<!-- END " . __PACKAGE__ . "::title -->\n";
+	}
 	
 	return "";
 }

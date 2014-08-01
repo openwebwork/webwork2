@@ -825,7 +825,13 @@ sub do_add_course {
 	if ($add_templates_course ne "") {
 		$optional_arguments{templatesFrom} = $add_templates_course;
 	}
-	
+	if ($add_courseTitle ne "") {
+		$optional_arguments{courseTitle} = $add_courseTitle;
+	}
+	if ($add_courseInstitution ne "") {
+		$optional_arguments{courseInstitution} = $add_courseInstitution;
+	}
+
 	eval {
 		addCourse(
 			courseID      => $add_courseID,
