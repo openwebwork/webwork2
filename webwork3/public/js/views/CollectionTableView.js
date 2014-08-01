@@ -92,6 +92,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			return this;
 		},
 		render: function () {
+			console.log("in CollectionTableView.render");
 			var self = this, i;
 			this.$el.empty();
 
