@@ -38,8 +38,11 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                      ],
     
 
-        permissions : [{value: -5, label: "guest"},{value: 0, label: "student"},{value: 2, label: "login proctor"}, 
-                        {value: 3, label: "T.A."},{value: 10, label: "professor"}, {value: 20, label: "administrator"}],
+        permissions : [{value: "-5", label: "guest"},{value: "0", label: "student"},{value: "2", label: "login proctor"}, 
+                        {value: "3", label: "T.A."},{value: "10", label: "professor"}, {value: "20", label: "administrator"}],
+
+        enrollment_statuses: [{value: "A", label: "Audit"},{value: "C", label: "Enrolled"},
+                    {value: "P", label: "Proctor"}, {value: "D", label: "Drop"}],
 
         regexp : {
             wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,

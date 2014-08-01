@@ -5,9 +5,9 @@
 
 define(['backbone','views/MainView','models/UserList','config','views/CollectionTableView',
 			'../other/AddStudentManView','../other/AddStudentFileView','models/ProblemSetList','views/ModalView',
-			'views/ChangePasswordView','views/EmailStudentsView','bootstrap'], 
+			'views/ChangePasswordView','views/EmailStudentsView','config','bootstrap'], 
 function(Backbone,MainView,UserList,config,CollectionTableView, AddStudentManView,AddStudentFileView,
-				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView){
+				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView,config){
 var ClasslistView = MainView.extend({
 	msgTemplate: _.template($("#classlist-messages").html()),
 	initialize: function (options) {
@@ -205,7 +205,7 @@ var ClasslistView = MainView.extend({
                 }}, colHeader: "<input type='checkbox'></input>"},
                 {name: "Login Name", key: "user_id logged_in", classname: "login-name", datatype: "string",
                 	stickit_options: {update: function($el,val,model,options){
-                		$el.text(val[0]);
+                		$el.text(model.get("user_id"));
                 		if(model.get("logged_in")){
                 			$el.addClass("logged-in");
                 		} else {
@@ -257,8 +257,8 @@ var ClasslistView = MainView.extend({
             		}},
                 {name: "Student ID", key: "student_id", classname: "student-id",  editable: true, datatype: "string",
             		stickit_options: {events: ['blur']}},
-                {name: "Status", key: "status", classname: "status",  editable: true, datatype: "string",
-            		stickit_options: {events: ['blur']}},
+                {name: "Status", key: "status", classname: "status",
+            		stickit_options: { selectOptions: { collection: config.enrollment_statuses }}},
                 {name: "Section", key: "section", classname: "section",  editable: true, datatype: "string",
             		stickit_options: {events: ['blur']}},
             	{name: "Recitation", key: "recitation", classname: "recitation",  editable: true, datatype: "string",
@@ -266,14 +266,7 @@ var ClasslistView = MainView.extend({
             	{name: "Comment", key: "comment", classname: "comment",  editable: true, datatype: "string",
             		stickit_options: {events: ['blur']}},
             	{name: "Permission", key: "permission", classname: "permission",
-            		stickit_options: { selectOptions: { 
-            			collection: [{value: "-5", label: "guest"},
-            				{value: "0", label: "Student"},
-            				{value: "2", label: "login proctor"},
-            				{value: "3", label: "grade proctor"},
-            				{value: "5", label: "T.A."},
-            				{value: "10", label: "Professor"},
-            				{value: "20", label: "Admininistrator"}]}}
+            		stickit_options: { selectOptions: { collection: config.permissions }}
             }];
 	},
 	getSelectedUsers: function () {
