@@ -48,7 +48,21 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         },
         displayFloat: function(val,digits){
             return Math.round(val*Math.pow(10,digits))/Math.pow(10,digits);
+        },
+        setDate: function(evt){
+            var newDate = moment(evt.data.$el.children(".wwdate").val(),"MM/DD/YYYY");
+            var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
+            theDate.year(newDate.year()).months(newDate.months()).date(newDate.date());
+            evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
+        },
+        setTime: function(evt,timeStr){
+            var time = timeStr || evt.data.$el.find(".wwtime").text();
+            var newDate = moment(time,"hh:mmA"); 
+            var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
+            theDate.hours(newDate.hours()).minutes(newDate.minutes());
+            evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
         }
+
     } 
 
     config.messageTemplate= _.template($("#general-messages").html());
@@ -140,19 +154,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                 $el.html(_.template($("#edit-date-time-template").html(),{date: moment.unix(val).format("MM/DD/YYYY")}));        
             }
             
-            var setDate = function(evt){
-                var newDate = moment(evt.data.$el.children(".wwdate").val(),"MM/DD/YYYY");
-                var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
-                theDate.year(newDate.year()).months(newDate.months()).date(newDate.date());
-                evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
-            };
-            var setTime = function(evt,timeStr){
-                var newDate = moment(timeStr,"hh:mmA");
-                var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
-                theDate.hours(newDate.hours()).minutes(newDate.minutes());
-                evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
-            };
-
+            
             var popoverHTML = _.template($("#time-popover-template").html(),
                         {time : moment.unix(model.get(options.observe)).format("h:mm a")});
             var timeIcon = $el.children(".open-time-editor");
@@ -162,14 +164,37 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                              model: model, options: options},
                 function (evt) {
                     timeIcon.popover("hide");
-                    setTime(evt,$(this).siblings(".wwtime").val());
+                    config.setTime(evt,$(this).siblings(".wwtime").val());
             });
             timeIcon.parent().delegate(".cancel-time-button","click",{},function(){timeIcon.popover("hide");});
-            $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, setDate);
-            $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, setTime);
+            $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, config.setDate);
+            $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, config.setTime);
             timeIcon.parent().on("click",".open-time-editor", function() {
                 timeIcon.popover("toggle");
             });
+            $el.children(".wwdate").datepicker({changeMonth: true, changeYear: true});
+        },
+        updateMethod: 'html'
+    });
+
+    Backbone.Stickit.addHandler({
+        selector: '.edit-datetime-showtime',
+        update: function($el, val, model, options){
+            // hide this for sets in which the reduced_scoring date should not be shown. 
+            if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring") 
+                    && ! model.show_reduced_scoring){
+                $el.html("");
+            } else {
+                $el.html(_.template($("#edit-date-time2-template").html(),{date: moment.unix(val).format("MM/DD/YYYY")}));        
+            }
+            $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, config.setDate);
+            $el.children(".wwtime").text(moment.unix(model.get(options.observe)).format("h:mm a"))
+                    .on("blur",{"$el": $el, "model": model, "options": options}, config.setTime)
+                    .on("keydown",function(evt){
+                        if(evt.keyCode==13){
+                            evt.preventDefault();
+                            $(evt.target).blur();
+                        }});
             $el.children(".wwdate").datepicker({changeMonth: true, changeYear: true});
         },
         updateMethod: 'html'

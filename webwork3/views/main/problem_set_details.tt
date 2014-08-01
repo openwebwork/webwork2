@@ -159,9 +159,10 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 
 
 <script type="text/template" id="set-properties-tab-template">
-<table class="table">
+<table class="table" style="table-layout:fixed">
 <tbody>
-<tr><td class="header">Set Name</td><td class="set-name"></td></tr>
+<tr><td class="header">Set Name</td><td class="set-name"></td>
+  <td><label type="checkbox">Show Time <input type="checkbox" class="show-time-toggle"></label></td></tr>
 <tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
 <tr><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
 <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>

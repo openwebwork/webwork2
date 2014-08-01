@@ -131,9 +131,9 @@ var ProblemSetsManager = MainView.extend({
     },
     updateSelectedSets: function (evt){
         var selectedSets = this.state.get("selected_sets")
-            , setID = $(evt.target).closest("tr").children("td.set-id").text();
-        this.state.set("selected_sets",$(evt.target).prop("checked")?_(selectedSets).union([setID]):
-                                            _(selectedSets).without(setID));
+            , setID = $(evt.target).closest("tr").children("td.set-id").text()
+            , sets = $(evt.target).prop("checked")?_(selectedSets).union([setID]):_(selectedSets).without(setID);
+        this.state.set("selected_sets",_.compact(sets)); // compact removes empty set id's which pop up from time to time
     },
     getSelectedSets: function () {
         return $.makeArray(this.$("tbody td.select-problem-set input[type='checkbox']:checked").map(function(i,v) {
@@ -269,6 +269,7 @@ var ProblemSetsManager = MainView.extend({
                 }});
             },
             "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
+                _set.adjustDates();
                 self.assignmentDates.chain().filter(function(assign) { 
                         return assign.get("problemSet").get("set_id")===_set.get("set_id");})
                     .each(function(assign){
@@ -380,6 +381,7 @@ var ProblemSetsManager = MainView.extend({
 var ChangeSetPropertiesView = ModalView.extend({
     initialize: function(options){
         var self = this;
+        _(this).bindAll("saveChanges");
         this.problemSets = options.problemSets;
         this.setNames = [];
         this.model = new ProblemSet({},options.date_settings);
@@ -396,6 +398,8 @@ var ChangeSetPropertiesView = ModalView.extend({
             } else {
                 self.$(".reduced-scoring-date").closest("tr").addClass("hidden");
             }
+        }).on("change:open_date change:due_date change:reduced_scoring_date change:answer_date", function (){
+            self.model.adjustDates();
         });
 
         _(options).extend({

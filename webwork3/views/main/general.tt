@@ -10,6 +10,9 @@
 <script type="text/template" id="edit-date-time-template">
 <input class='wwdate' size='12' value='<%=date%>'><span class='open-time-editor'><i class='fa fa-clock-o'></i></span>
 </script>
+<script type="text/template" id="edit-date-time2-template">
+<input class='wwdate' size='12' value='<%=date%>'><span>&nbsp;at&nbsp;</span><span style="inline-block" class="wwtime" contenteditable="true"></span>
+</script>
 
 <!-- Some general templates that are used throughout the WW3 interface -->
 

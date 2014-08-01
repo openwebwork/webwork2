@@ -136,22 +136,32 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
     var DetailsView = TabView.extend({
         tabName: "Set Details",
         initialize: function (options) {
+            var self = this;
             _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate");
             this.users = options.users;
             this.settings = options.settings;
             TabView.prototype.initialize.apply(this,[options]);
+            this.tabState.on("change:show_time",function (val){
+                self.showTime(self.tabState.get("show_time"));
+                self.stickit();
+            });
         },
         render: function(){
             if(this.model){
                 this.$el.html($("#set-properties-tab-template").html());
                 this.showHideReducedScoringDate();
+                this.showTime(this.tabState.get("show_time"));
+                this.$(".show-time-toggle").prop("checked",this.tabState.get("show_time"));
                 this.stickit();
             }
             return this;
         },
         events: {
             "click .assign-all-users": "assignAllUsers",
-            //"change .reduced-scoring": "showHideReducedScoringDate"
+            "change .show-time-toggle": function(evt){
+                console.log("checked");
+                this.tabState.set("show_time",$(evt.target).prop("checked"));
+            },
         },
         assignAllUsers: function(){
             this.model.set({assigned_users: this.users.pluck("user_id")});
@@ -197,7 +207,16 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.$(".reduced-scoring").closest("tr").addClass("hidden")
             }
         },
-        getDefaultState: function () { return {set_id: ""};}
+        showTime: function(_show){
+            if(_show){
+                self.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
+                    .addClass("edit-datetime-showtime").removeClass("edit-datetime");
+            } else {
+                self.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
+                    .removeClass("edit-datetime-showtime").addClass("edit-datetime");
+            }
+        },
+        getDefaultState: function () { return {set_id: "", show_time: false};}
 
     });
 
