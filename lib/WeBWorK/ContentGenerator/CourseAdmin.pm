@@ -3187,8 +3187,9 @@ sub upgrade_notification {
     my $WeBWorKBranch = $ce->{gitWeBWorKBranchName};
     my $PGRemote = $ce->{gitPGRemoteName};
     my $PGBranch = $ce->{gitPGBranchName};
-    my $LibraryRemote = $ce->{gitPGRemoteName};
-    my $LibraryBranch = $ce->{gitPGBranchName};
+
+    return unless ($git && $WeBWorKRemote && $WeBWorKBranch &&
+		   $PGRemote && $PGBranch);
 
     my $upgradeMessage = '';
     my $output;
@@ -3211,8 +3212,32 @@ sub upgrade_notification {
 
     $output = `$git branch --contains $commit`;
 
-    if ($commit ne '-1' && $output !~ /\*\ $WeBWorKBranch/) {    
-	$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
+    if ($commit ne '-1' && $output !~ /\s+$WeBWorKBranch\s*\n/) {    
+	# There are upgrades, we need to figure out if its a 
+	# new version or not
+	$output = `$git ls-remote --tags $WeBWorKRemote`;
+	@lines = split /\n/, $output;
+	my $newversion = 0;
+
+	foreach my $line (@lines) {
+	    next unless $line =~ /\/tags\/WeBWorK-/;
+	    $line =~ /^(\w+)/;
+	    $commit = $1;
+	    $output = `$git branch --contains $commit`;
+	    if ($output !~ /\s+$WeBWorKBranch\s*\n/) {
+		# There is a version tag which contains a commit that
+		# isn't in the current branch so there must
+		# be a new version
+		$newversion = 1;
+		last;
+	    }
+	}
+	
+	if ($newversion) {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of WeBWorK available.')));
+	} else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
+	}
     } 
 
     # Check if there is an updated version of pg available
@@ -3231,8 +3256,33 @@ sub upgrade_notification {
 
     warn("Couldn't find PG Branch $PGBranch in remote $PGRemote") if $commit eq -1;
     $output = `$git branch --contains $commit`;
-    if ($commit ne '-1' && $output !~ /\*\ $PGBranch/) {    
-	$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
+
+    if ($commit ne '-1' && $output !~ /\s+$PGBranch\s*\n/) {    
+	# There are upgrades, we need to figure out if its a 
+	# new version or not
+	$output = `$git ls-remote --tags $PGRemote`;
+	@lines = split /\n/, $output;
+	my $newversion = 0;
+
+	foreach my $line (@lines) {
+	    next unless $line =~ /\/tags\/PG-/;
+	    $line =~ /^(\w+)/;
+	    $commit = $1;
+	    $output = `$git branch --contains $commit`;
+	    if ($output !~ /\s+$PGBranch\s*\n/) {
+		# There is a version tag which contains a commit that
+		# isn't in the current branch so there must
+		# be a new version
+		$newversion = 1;
+		last;
+	    }
+	}
+	
+	if ($newversion) {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of PG available.')));
+	} else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
+	}
     } 
 
     # Check to see if the OPL_update script has been run 
