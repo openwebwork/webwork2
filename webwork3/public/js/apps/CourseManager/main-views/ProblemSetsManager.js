@@ -15,11 +15,7 @@ var ProblemSetsManager = MainView.extend({
                     'hideShowReducedScoring','deleteSets');  // include all functions that need the this object
         var self = this;
 
-
-
-        this.state.set({filter_text: "", page_number: 0, set_prop_modal_open: false, selected_sets : [],
-                page_size: this.settings.getSettingValue("ww3{pageSize}") || 10},{silent: true})
-            .on("change:filter_text", function () {self.filterProblemSets();});
+        this.state.on("change:filter_text", function () {self.filterProblemSets();});
 
         this.tableSetup();
 
@@ -31,6 +27,8 @@ var ProblemSetsManager = MainView.extend({
         this.problemSetTable.on("page-changed",function(num){
             self.state.set("page_number",num);
             self.isReducedScoringEnabled();
+        }).on("table-sorted",function(info){
+            self.state.set({sort_class: info.classname, sort_direction: info.direction});
         })
         var dateSettings = util.pluckDateSettings(this.settings);
         this.changeSetPropView = new ChangeSetPropertiesView({date_settings: dateSettings,problemSets: this.problemSets});
@@ -99,6 +97,10 @@ var ProblemSetsManager = MainView.extend({
                     text: this.messageTemplate({type: "empty_selected_sets_error"})
                 });
         }
+    },
+    getDefaultState: function () {
+        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+            sort_class: "", sort_direction: ""};
     },
     isReducedScoringEnabled: function (){
         // hide reduced credit items when not enabled. 

@@ -12,13 +12,8 @@ define(['backbone','underscore','views/MainView'],
 			_(this).extend(_(options).pick("views","tabs","tabContent","template"));
 			this.tabNames = _(options.views).keys();
 			MainView.prototype.initialize.call(this,options);
-
-			// set up the state of the tabs
-			var _tabStates = _.object(this.viewNames,_(this.tabNames).map(function(n){return ""}));
-			this.state.set({tab_name: "", tab_states: _tabStates},{silent: true});
 		},
 		render: function(){
-			console.log("in TabbedMainView.render");
 			var self = this;
 			if(this.template){
 				this.$el.html(this.template);
@@ -47,14 +42,8 @@ define(['backbone','underscore','views/MainView'],
 				this.state.set("tab_name",_(this.views).keys()[0]);
 			}
 
-			_(this.tabNames).each(function(name,i){
-				self.views[name].setElement($("#tab"+i));
-			});
-
             var tabNum = _(this.views).keys().indexOf(this.state.get("tab_name"));
             this.$((this.tabs || "" ) + " a:eq("+ tabNum+")").tab("show");
-            //this.views[this.state.get("tab_name")].render();
-
 
 			MainView.prototype.render.call(this);
 			this.delegateEvents();
@@ -68,10 +57,11 @@ define(['backbone','underscore','views/MainView'],
 			if(_.isString(options)){ // was triggered other than a tab change.
 				this.$(".set-details-tab a:first").tab("show");
 			}
+
+			// how do we know there is a "help" sidebar? 
 			if(this.sidebar && this.sidebar.info.id==="help"){
 				this.eventDispatcher.trigger("show-help");
 			}
-			console.log("in changeTab: " + _tabName);
 			this.state.set("tab_name",_tabName);
 		},
 		getState: function () {
@@ -87,7 +77,16 @@ define(['backbone','underscore','views/MainView'],
 				});
 			}
 			return this;
-		}
+		},
+	    getDefaultState: function () {
+	    	var _tabStates={}
+	    		, self = this;
+	    	_(this.tabNames).each(function(name){
+	    		_tabStates[name] = self.views[name].getDefaultState();
+	    	})
+	    	return {tab_name: this.tabNames[0], tab_states:  _tabStates};
+	    }
+
 
 	});
 	return TabbedMainView;
