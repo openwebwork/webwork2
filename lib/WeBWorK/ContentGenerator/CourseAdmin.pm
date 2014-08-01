@@ -437,8 +437,6 @@ sub body {
 	
 	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
 	
-	print $self->upgrade_notification();
-	
 	my @errors = @{$self->{errors}};
 	
 	
@@ -461,6 +459,8 @@ sub body {
 				CGI::p(" The webwork server must be able to write to these directories. Please correct the permssion errors.") ;
 			}
 	
+		print $self->upgrade_notification();
+		    
 		print CGI::h2($r->maketext("Courses"));
 	
 		print CGI::start_ol();
