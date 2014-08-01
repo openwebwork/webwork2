@@ -3193,39 +3193,47 @@ sub upgrade_notification {
     my $upgradeMessage = '';
     my $output;
 
-    # Check if WeBWorK is behind its remote version
+    # Check if there is an updated version of webwork available
     chdir($ce->{webwork_dir});
-    `$git fetch $WeBWorKRemote`;
-    $output = `$git log $WeBWorKBranch..$WeBWorKRemote/$WeBWorKBranch`;
-    
-    if ($output) {
-	# If WeBWorK is behind check to see if there is a new version 
-	$output = `$git diff $WeBWorKBranch:VERSION $WeBWorKRemote/$WeBWorKBranch:VERSION`;
+    $output = `$git ls-remote $WeBWorKRemote`;
+    my @lines = split /\n/, $output;
+    my $commit=-1;
 
-	if ($output) {
-	    $output =~ /\+\$WW_VERSION\s*=\s*['"](\S+)['"]/;
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('A new release, version [_1], of WeBWorK is available.', $1)));
-	} else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
+    foreach my $line (@lines) {
+	if ($line =~ /refs\/heads\/$WeBWorKBranch/) {
+	    $line =~ /^(\w+)/;
+	    $commit = $1;
+	    last;
 	}
     }
 
-    # Check if PG is behind its remote version
+    warn("Couldn't find WeBWorK Branch $WeBWorKBranch in remote $WeBWorKRemote") if $commit eq '-1';
+
+    $output = `$git branch --contains $commit`;
+
+    if ($commit ne '-1' && $output !~ /\*\ $WeBWorKBranch/) {    
+	$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
+    } 
+
+    # Check if there is an updated version of pg available
     chdir($ce->{pg_dir});
-    $output = `$git fetch $PGRemote`;
-    $output = `$git log $PGBranch..$PGRemote/$PGBranch`;
-    warn($output);
-    if ($output) {
-	# If PG is behind check to see if there is a new version 
-	$output = `$git diff $PGBranch:VERSION $PGRemote/$PGBranch:VERSION`;
-	warn($output);
-	if ($output) {
-	    $output =~ /\+\$PG_VERSION\s*=\s*['"](\S+)['"]/;
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('A new release, version [_1], of PG is available.', $1)));
-	} else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
+    $output = `$git ls-remote $PGRemote`;
+    @lines = split /\n/, $output;
+    $commit='-1';
+
+    foreach my $line (@lines) {
+	if ($line =~ /refs\/heads\/$PGBranch/) {
+	    $line =~ /^(\w+)\s+/;
+	    $commit = $1;
+	    last;
 	}
     }
+
+    warn("Couldn't find PG Branch $PGBranch in remote $PGRemote") if $commit eq -1;
+    $output = `$git branch --contains $commit`;
+    if ($commit ne '-1' && $output !~ /\*\ $PGBranch/) {    
+	$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
+    } 
 
     # Check to see if the OPL_update script has been run 
     chdir($ce->{problemLibrary}{root});
