@@ -159,7 +159,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         events: {
             "click .assign-all-users": "assignAllUsers",
             "change .show-time-toggle": function(evt){
-                console.log("checked");
                 this.tabState.set("show_time",$(evt.target).prop("checked"));
             },
         },
@@ -209,12 +208,13 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         showTime: function(_show){
             if(_show){
-                self.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
+                this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
                     .addClass("edit-datetime-showtime").removeClass("edit-datetime");
             } else {
-                self.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
+                this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
                     .removeClass("edit-datetime-showtime").addClass("edit-datetime");
             }
+            
         },
         getDefaultState: function () { return {set_id: "", show_time: false};}
 

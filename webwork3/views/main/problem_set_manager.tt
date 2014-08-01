@@ -10,8 +10,11 @@
           </span>
         </div>
       </div>
-
+    <div class="col-md-2">
+    <label type="checkbox">Show Time <input type="checkbox" class="show-time-toggle"></label>
+    </div>
     <div class="pull-right btn-group">
+
       <div class="btn-group">
         <button class="btn btn-default dropdown-toggle" onclick="return false" data-toggle="dropdown" 
             href="#">Action on Selected

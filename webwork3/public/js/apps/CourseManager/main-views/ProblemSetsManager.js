@@ -15,7 +15,10 @@ var ProblemSetsManager = MainView.extend({
                     'hideShowReducedScoring','deleteSets');  // include all functions that need the this object
         var self = this;
 
-        this.state.on("change:filter_text", function () {self.filterProblemSets();});
+        this.state.on("change:filter_text", function () {self.filterProblemSets();})
+            .on("change:show_time",function(){
+                self.showTime(self.state.get("show_time"));
+            })
 
         this.tableSetup();
 
@@ -53,7 +56,7 @@ var ProblemSetsManager = MainView.extend({
         "click a.change-set-props": "showChangeProps",
         "click a.delete-sets-button": "deleteSets",
         "change td.select-problem-set input[type='checkbox']": "updateSelectedSets",
-        "change th input[type='checkbox']": "selectAll"
+        "change th input[type='checkbox']": "selectAll",
     },
     hideShowReducedScoring: function(model){
         if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
@@ -82,10 +85,14 @@ var ProblemSetsManager = MainView.extend({
             this.changeSetPropView.setElement(this.$(".modal-container"))
                 .set({set_names: this.state.get("selected_sets")}).render();
         }
+        this.showTime(this.state.get("show_time"));
 
         return this;
     },
-    bindings: { ".filter-text": "filter_text"},
+    bindings: { 
+        ".filter-text": "filter_text",
+        ".show-time-toggle": "show_time"
+    },
     showChangeProps: function(){
         var setIDs = this.getSelectedSets();
         if(setIDs.length>0){
@@ -98,9 +105,19 @@ var ProblemSetsManager = MainView.extend({
                 });
         }
     },
+    showTime: function(_show){
+        if(_show){
+            this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
+                .addClass("edit-datetime-showtime").removeClass("edit-datetime");
+        } else {
+            this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
+                .removeClass("edit-datetime-showtime").addClass("edit-datetime");
+        }
+        this.problemSetTable.refreshTable();
+    },
     getDefaultState: function () {
         return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
-            sort_class: "", sort_direction: ""};
+            sort_class: "", sort_direction: "", show_time: false};
     },
     isReducedScoringEnabled: function (){
         // hide reduced credit items when not enabled. 
