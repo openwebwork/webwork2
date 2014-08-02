@@ -2,23 +2,19 @@
    This is the base javascript code for the Homework Manager.  This sets up the View and ....
   
 */
-define(['module','backbone', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
-    'views/MainViewList',
-    'models/AssignmentDate','models/AssignmentDateList','views/WebPage','config','apps/util','jquery-ui','bootstrap'
-    ], 
-function(module, Backbone, _, UserList, ProblemSetList, SettingList,MainViewList,
+define(['module','backbone','views/Sidebar', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',  
+    'views/MainViewList', 'models/AssignmentDate','models/AssignmentDateList','views/WebPage',
+    'config','apps/util','jquery-ui','bootstrap'], 
+function(module, Backbone, Sidebar, _, UserList, ProblemSetList, SettingList,MainViewList,
     AssignmentDate,AssignmentDateList,WebPage,config,util){
 var CourseManager = WebPage.extend({
-    tagName: "div",
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
         WebPage.prototype.initialize.apply(this,{el: this.el});
-	    _.bindAll(this, 'render', 'setMessages',"showProblemSetDetails","openCloseSidePane","stopActing",
-            "changeView","changeSidePane","loadData","checkData","saveState","logout","setDates");  // include all functions that need the this object
+        _(this).bindAll("showProblemSetDetails","changeViewAndSidebar","stopActing","logout");
 	    var self = this;
 
         this.render();
-        this.eventDispatcher = _.clone(Backbone.Events);
         this.session = (module.config().session)? module.config().session : {};
         this.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;
         this.users = (module.config().users) ? new UserList(module.config().users) : null;
@@ -32,14 +28,11 @@ var CourseManager = WebPage.extend({
             this.startManager();
         } else {
             this.requestLogin({success: function (data) {
-                // save the new session key and reload the page.  
-                self.session.key = data.session_key;
-                //window.location.reload();
-                window.location.href=config.urlPrefix+"courses/"+config.courseSettings.course_id+"/manager";
-            }});
-
-            //    this.loadData
-            //});
+                    // save the new session key and reload the page.  
+                    self.session.key = data.session_key;
+                    window.location.reload();
+                }
+            });
         }
 
         $(document).ajaxError(function (e, xhr, options, error) {
@@ -47,6 +40,15 @@ var CourseManager = WebPage.extend({
                 self.requestLogin({success: function(){
                     self.loginPane.close();
                 }});
+            }
+        });
+
+        // This is the way that general messages are handled in the app
+
+        this.eventDispatcher.on({
+            "show-problem-set": this.showProblemSetDetails,
+            "change-view": function () {
+                self.navigationBar.setPaneName(_name);
             }
         });
 
@@ -84,56 +86,32 @@ var CourseManager = WebPage.extend({
     startManager: function () {
         var self = this;
         this.navigationBar.setLoginName(this.session.user);
-        this.currentSidePane = {};
         
-        this.mainViewList = new MainViewList({settings: this.settings, users: this.users, 
-                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher});
-
+        // put all of the dates in the problem sets in a better data structure for calendar rendering.
         this.buildAssignmentDates();
+        this.setMainViewList(new MainViewList({settings: this.settings, users: this.users, 
+                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher}));
+        
 
-        // Build the menu.  Should we make a View for this?  
+        // set up some of the main views with additional information.
+        
+        this.mainViewList.getView("calendar")
+            .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
+            .on("calendar-change",self.updateCalendar);
 
-        var menuItemTemplate = _.template($("#main-menu-item-template").html());
-        var ul = $("#menu-navbar-collapse .manager-menu");
-        _(this.mainViewList.viewInfo.main_views).each(function(item){
-            ul.append(menuItemTemplate({name: item.name}));
-        })
-
+        this.mainViewList.getView("problemSetsManager").set({assignmentDates: this.assignmentDateList});
+        this.mainViewList.getSidebar("allMessages").set({messages: this.messagePane.messages});
+        this.mainViewList.getSidebar("help").parent = this;
+        
+        this.postInitialize();
+        
         // can't we just pull this from the settings when needed.  Why do we need another variable. 
         config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
-        _(this.views).chain().keys().each(function(key){ self.views[key].setParentView(self)});
-
-
-        this.mainViewList.getViewByName("Calendar")
-            .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
-            .dispatcher.on("calendar-change",self.updateCalendar);
-
-        this.mainViewList.getViewByName("Problem Sets Manager")
-            .set({assignmentDates: this.assignmentDateList});
-
-
-        this.mainViewList.getSidepaneByName("All Messages")
-            .set({messages: this.messagePane.messages});
-
-
-        // Build the options menu.  Should we make a View for this?  
-
-        this.setMessages();  
-
         // this will automatically save (sync) any change made to a problem set.
         this.problemSets.on("change",function(_set){
             _set.save();
         })        
-
-        // load the previous state of the app or set it to the Calendar
-        var state = this.loadState();
-
-        if(state){
-            this.changeView(state.view,state);
-        } else {
-            this.changeView("Calendar",{});    
-        }        
 
         // The following is useful in many different views, so is defined here. 
         // It adjusts dates to ensure that they aren't illegal.
@@ -141,10 +119,7 @@ var CourseManager = WebPage.extend({
         this.problemSets.on("change:due_date change:reduced_scoring_date change:open_date change:answer_date",this.setDates);
                 
         this.navigationBar.on({
-            "change-view": this.changeView,
-            "logout": this.logout,
             "stop-acting": this.stopActing,
-            "show-help": function() { self.changeSidePane("Help")},
         });
 
         this.users.on({"act_as_user": function(model){
@@ -165,137 +140,28 @@ var CourseManager = WebPage.extend({
             });
         }});
 
-        $(window).on("beforeunload", function () {
-            if(self.session.logged_in!==0){ // if the user didn't just log out. 
-                return self.messageTemplate({type: "leave_page"});
-            }
-         }).on("resize",function(){ // if the window is resized, rerender the view and sidepane
-            self.currentView.render();
-            if(self.currentSidePane && self.currentSidePane.sidePane){
-                self.currentSidePane.sidePane.render();
-            }
-         })
 
         // Add a link to WW2 via the main menu.
 
         this.navigationBar.$(".manager-menu").append("<li class='ww2-link'><a href='/webwork2/"+config.courseSettings.course_id+"''>WeBWorK2</a></li>");
         this.delegateEvents();
+
+
     },
+    // move this to WebPage.js  (need to deal with the parent-child events)
     events: {
-        "click .sidepane-menu a.link": "changeSidePane"
-    },
-
-    // can a lot of this be handled by the individual views?  
-
-    setMessages: function (){
-        var self = this; 
-
-        // This is the way that general messages are handled in the app
-
-        this.eventDispatcher.on({
-            "save-state": this.saveState,
-            "show-problem-set": this.showProblemSetDetails,
-            "add-message": this.messagePane.addMessage,
-            "open-close-sidepane": this.openCloseSidePane
-        });
-    },
-    render: function(){
-        WebPage.prototype.render.apply(this);  // Call  WebPage.render();
+        "click .sidebar-menu a.link": "changeSidebar"
     },
     showProblemSetDetails: function(setName){
         if (this.objectDragging) return;
-        this.changeView("Problem Set Details",{});        
-        this.mainViewList.getViewByName("Problem Set Details").changeProblemSet(setName).render();
-    },
-    openSidePane: function (){
-        this.currentSidePane.isOpen = true;
-        $("#sidepane-container").removeClass("hidden");
-        $("#main-view").removeClass("col-md-12").addClass("col-md-9");
-        self.$(".open-close-view i").removeClass("fa-chevron-left").addClass("fa-chevron-right");
-    },
-    closeSidePane: function (){
-        this.currentSidePane.isOpen = false;
-        $("#sidepane-container").addClass("hidden");
-        $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
-        self.$(".open-close-view i").removeClass("fa-chevron-right").addClass("fa-chevron-left");
-    },
-    openCloseSidePane: function (str) {
-        if(str==="close"){
-            this.closeSidePane();
-        } else if (str==="open"){
-            this.openSidePane();
-        } else if (this.currentSidePane.isOpen) {
-            this.closeSidePane();
-        } else if (! this.currentSidePane.isOpen){
-            this.openSidePane();
-        }
-    },
-    changeSidePane: function(_name){
-        var name = _.isString(_name) ? _name : $(_name.target).data("name");
-        if(this.currentSidePane && this.currentSidePane.sidePane){
-            this.currentSidePane.sidePane.remove();
-        }
-        var mainViewInfo = _(this.mainViewList.views).findWhere({name: this.currentView.viewName});
-        if ((name==="")){
-            this.openCloseSidePane("close");
-            return;
-        }
-        this.currentSidePane.sidePane = this.mainViewList.getSidepaneByName(name);
-
-        if(this.currentSidePane.sidePane){
-            this.$(".sidepane-menu .sidepane-name").text(name);
-            if (! $("#sidepane-container .sidepane-content").length){
-                $("#sidepane-container").append("<div class='sidepane-content'></div>");
-            }
-            this.currentSidePane.sidePane.setMainView(this.currentView)
-                .setElement(this.$(".sidepane-content")).render();
-
-            // set the side pane options for the main view
-
-            var menuItemTemplate = _.template($("#main-menu-item-template").html());
-            var ul = this.$(".sidepane-menu .dropdown-menu").empty();
-            var sidePanes = ["Help"].concat(mainViewInfo.other_sidepanes);
-            _(sidePanes).each(function(_name){
-                ul.append(menuItemTemplate({name: _name}));
-            })
-
-
-
-        }
-        this.currentView.setSidePane(this.currentSidePane.sidePane);
-        this.openCloseSidePane("open");
-    },
-    changeView: function (_name,state){
-        if(this.currentView){
-            this.currentView.remove();
-        }
-        $("#main-view").html("<div class='main'></div>");
-        this.navigationBar.setPaneName(_name);
-        (this.currentView = this.mainViewList.getViewByName(_name)).setElement(this.$(".main"))
-            .setState(state).render();
-        this.changeSidePane(_(this.mainViewList.viewInfo.main_views).findWhere({name: _name}).default_sidepane);
+        this.changeView("problemSetDetails",{set_id: setName});        
+        this.changeSidebar("problemSets",{});
         this.saveState();
     },
-    saveState: function() {
-        var state = this.currentView.getState();
-        state.view = this.currentView.viewName;
-        window.localStorage.setItem("ww3_cm_state",JSON.stringify(state));
-    },
-    loadState: function () {
-        return JSON.parse(window.localStorage.getItem("ww3_cm_state"));
-    },
-    logout: function(){
-        var self = this;
-        var conf = confirm("Do you want to log out?");
-        if(conf){
-            $.ajax({method: "POST", 
-                url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/logout", 
-                success: function (data) {
-                    self.session.logged_in = data.logged_in;
-                    location.href="/webwork2";
-                }
-            });
-        }
+    changeViewAndSidebar: function(_view){
+        this.changeView(_view,this.mainViewList.getView(_view).getDefaultState());
+        this.changeSidebar(this.mainViewList.getDefaultSidebar(_view),{is_open: true});
+        this.saveState();
     },
     stopActing: function (){
         var self = this;
@@ -320,8 +186,7 @@ var CourseManager = WebPage.extend({
                     date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
             self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
                     date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-            if(self.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")  
-                    && parseInt(_set.get("reduced_scoring_date"))>0) {
+            if(parseInt(_set.get("reduced_scoring_date"))>0) {
                 self.assignmentDateList.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
                     date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
             }

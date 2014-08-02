@@ -40,17 +40,23 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
     <!-- Brand and toggle get grouped for better mobile display -->
       <div class="navbar-header">
         <a class="navbar-brand">WW3</a>
-        <a class="navbar-brand main-view-name"></a>
-      </div> 
+      </div>
+      <ul class="nav navbar-nav">
+      <li>
+        <div class="btn-group">
+        <button class="back-button btn btn-default navbar-btn" disabled><i class="fa fa-arrow-left"></i></button>
+        <button class="forward-button btn btn-default navbar-btn" disabled><i class="fa fa-arrow-right"></i></button>
+        </div>
+      </li>
+      <li>
+        <span style="margin-left: 0px" class="navbar-brand main-view-name"></span>
+      </li>
+      <li class="dropdown">
+        <a href="#" href="#" class="dropdown-toggle" data-toggle="dropdown">MENU<b class="caret"></b></a>
+      <ul class="dropdown-menu manager-menu">
+      </ul>        
+    </li>
 
-      
-      <div class="collapse navbar-collapse" id="menu-navbar-collapse">
-        <ul class="nav navbar-nav">
-          <li class="dropdown">
-            <a href="#" href="#" class="dropdown-toggle" data-toggle="dropdown">MENU<b class="caret"></b></a>
-          <ul class="dropdown-menu manager-menu">
-          </ul>        
-        </li>
         <li>
           <p class="nav-text" id="short-message">
           </p>

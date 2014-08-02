@@ -14,40 +14,26 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             MainView.prototype.initialize.call(this,options);
             //this.constructor.__super__.constructor.__super__.initialize.apply(this, options);
             _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');  // include all functions that need the this object
-    	    this.dispatcher = _.clone(Backbone.Events);  // include a dispatch to manage calendar changes. 
-        
-            this.calendarType = options.calendarType || "month";
-
+    	    
             if (! this.date){
                 this.date = moment();  // today!
             }
 
-            // build up the initial calendar.  
-
-            var firstOfMonth = moment(this.date).date(1);
-            var firstDayOfCalendar = (this.calendarType==="month")?
-                    moment(firstOfMonth).date(1).add("days",-1*firstOfMonth.date(1).day()):
-                    moment(this.date).add("days",-1*firstOfMonth.day());
-
-            this.createCalendar(firstDayOfCalendar,(this.calendarType==="month")?6:2);  // instead of hard coding this make these parameters. 
-            
+            this.weekViews = []; // array of CalendarWeekViews
             return this;
         },
-        createCalendar: function(firstDayOfCalendar,numberOfWeeks){
-            var theWeek = [];
-            this.weeks = [];
-            
-            for(var i = 0; i<numberOfWeeks; i++){
-                theWeek = [];
-                for(var j = 0; j < 7; j++){
-                 theWeek.push(moment(firstDayOfCalendar).add("days",j+7*i));
-                }
-                this.weeks.push(theWeek);
-            }
-        },
         render: function () {
-            var self = this;
-            // The collection is a array of rows containing the day of the current month.
+            var self = this;            
+
+            // remove any popups that exist already.  
+            this.$(".show-set-popup-info").popover("destroy")
+
+            var numberOfWeeks = this.state.get("calendar_type")==="month"? 6 : 2; 
+            this.weekViews = [];
+            for(var i = 0; i<numberOfWeeks; i++){
+                this.weekViews[i] = new WeekView({first_day: moment(this.state.get("first_day")).add("days",7*i),
+                    calendar: this});
+            }
             
 
             this.$el.html(_.template($("#calendar-template").html()));
@@ -58,85 +44,82 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             }
             var calendarTable = this.$('#calendar-table tbody');
 
-            _(this.weeks).each(function(_week){
-                calendarTable.append((new CalendarRowView({week: _week, calendar: self})).render().el);
+            _(this.weekViews).each(function(_week){
+                calendarTable.append(_week.render().el);
             });                        
-        
+            this.$(".month-name").text(moment(this.state.get("first_day")).format("MMMM YYYY"));
             this.$el.append(calendarTable.el);
             return this;   
         },
         events: {"click .previous-week": "viewPreviousWeek",
             "click .next-week": "viewNextWeek",
             "click .view-week": "showWeekView",
-            "click .view-month": "showMonthView"},
+            "click .view-month": "showMonthView",
+            "click .goto-today": "gotoToday"
+        },
+        getDefaultState: function () {
+            var firstOfMonth = moment(this.date||moment()).date(1)
+                , firstDay = moment(firstOfMonth).subtract("days",firstOfMonth.date(1).day());
+            return {
+                answer_date: true,
+                due_date: true,
+                reduced_scoring_date: true,
+                open_date: true,
+                first_day: firstDay.format("YYYY-MM-DD"),
+                calendar_type: "month"
+            };
+        },
         viewPreviousWeek: function (){
-            var firstDate = moment(this.weeks[0][0]).subtract("days",7)
-              , theWeek = [];
-            for(var i=0;i<7;i++){
-                theWeek.push(moment(firstDate).add("days",i));
-            }
-            this.weeks.splice(0,0,theWeek);
-            this.weeks.pop();
-            this.render();
-            this.dispatcher.trigger("calendar-change");
+            this.state.set("first_day",moment(this.state.get("first_day")).subtract("days",7).format("YYYY-MM-DD"));
         },
         viewNextWeek: function() {
-            var lastDate = moment(this.weeks[this.weeks.length-1][0]).add("days",7)
-              , theWeek = [];
-            for(var i=0;i<7;i++){
-                theWeek.push(moment(lastDate).add("days",i));
-            }
-            this.weeks.splice(0,1);
-            this.weeks.push(theWeek);
-            this.render();
-            this.dispatcher.trigger("calendar-change");
+            this.state.set("first_day",moment(this.state.get("first_day")).add("days",7).format("YYYY-MM-DD"));
         },
         showWeekView: function () {
-            this.calendarType="week";
-            if (this.weeks.length===2) {return;}
-            var today = moment();
-            this.createCalendar(today.subtract("days",today.day()),2);
-            this.render();
-            this.dispatcher.trigger("calendar-change");
+            this.state.set("calendar_type","week");
         },
         showMonthView: function () {
-            if(this.weeks.length===6){return;}
-            this.calendarType = "month";
-            this.createCalendar(moment(this.weeks[0][0]).subtract("days",14),6);            
-            this.render();
-            this.dispatcher.trigger("calendar-change");
+            this.state.set("calendar_type","month");
         }, 
+        gotoToday: function () {
+            var firstOfMonth = moment().date(1);
+            var firstDay = this.state.get("calendar_type")==="month"?
+                moment(firstOfMonth).date(1).subtract("days",firstOfMonth.date(1).day()):
+                moment().subtract("days",moment().day());
+            this.state.set("first_day",firstDay);
+            this.trigger("calendar-change");
+        },
         renderDay: function(){
             // this is called from the CalendarDayView.render() to be useful, this should be overridden in the subclass
         },
         set: function(options){
-            this.assignmentDates = options.assignmentDates;
-            this.viewType = options.viewType;
-            this.reducedScoringMinutes = options.reducedScoringMinutes;
+            _(this).extend(_(options).pick("assignmentDates","viewType","reducedScoringMinutes","first_day"));
             return this;
         }
     });
 
-    var CalendarRowView = Backbone.View.extend({  // This displays a row of the Calendar
+    var WeekView = Backbone.View.extend({  // This displays a row of the Calendar
         tagName: "tr",
         className: "calendar-row",
         initialize: function (options){
-            _.bindAll(this, 'render');  // include all functions that need the this object
-            this.week = options.week;
-            this.calendar = options.calendar;
+            this.first_day = options.first_day;  // the first day of the week.  
+            this.days = []; // an array of DayViews;
+            var i;
+            for(i=0;i<7;i++){
+                this.days[i] = new DayView({model: moment(this.first_day).add("days",i),
+                    calendar: options.calendar});
+            }
         },
         render: function () {
             var self = this;
-            _(this.week).each(function(date) {
-                var calendarDay = new CalendarDayView({model: date, calendar: self.calendar});
-                self.$el.append(calendarDay.render().el);
+            _(this.days).each(function(day) {
+                self.$el.append(day.render().el);
             });
-
             return this;
-            }
+        }
     });
 
-    var CalendarDayView = Backbone.View.extend({ // This displays a day in the Calendar
+    var DayView = Backbone.View.extend({ // This displays a day in the Calendar
         tagName: "td",
         className: "calendar-day",
         initialize: function (options){
@@ -156,8 +139,10 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             }
             this.$el.html(str);
             this.$el.attr("data-date",this.model.format("YYYY-MM-DD"));
-            if (this.calendar.date.month()===this.model.month()){
+            if (Math.abs(this.model.month()-this.calendar.date.month()) %2 == 0){
                 this.$el.addClass("this-month");
+            } else {
+                this.$el.addClass("that-month");
             }
             if (this.today.isSame(this.model,"day")){
                 this.$el.addClass("today");

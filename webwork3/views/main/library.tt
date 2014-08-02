@@ -1,7 +1,7 @@
 <!-- Templates for the Library Browser -->
 
 <script type="text/template" id="library-browser-template">
-<ul class="nav nav-tabs" id="library-browser-tabs">
+<!--<ul class="nav nav-tabs" id="library-browser-tabs">
   <li class="active"><a href="#library-subjects-tab" data-toggle="tab">By Subject</a></li>
   <li><a href="#library-directories-tab" data-toggle="tab">By Directory</a></li>
   <li><a href="#library-textbooks-tab" data-toggle="tab">Textbooks</a></li>
@@ -17,7 +17,7 @@
   <div class="tab-pane" id="library-local-tab"></div>
   <div class="tab-pane" id="set-definition-tab"></div>
   <div class="tab-pane" id="library-search-tab"></div>
-</div> 
+</div>  -->
 
 
 </script>

@@ -13,7 +13,7 @@ var util = {
         
         var lines = strData.split("\n");
         var newData = [];
-        var poundPattern = new RegExp("^\\s*#");
+        var poundPattern = /^\s*#/;
         _(lines).each(function(line) {if (! (poundPattern.test(line))) {newData.push(line);}});
         
         var updatedData = newData.join("\n");
@@ -34,6 +34,10 @@ var util = {
                 } else {
                         var strMatchedValue = arrMatches[ 3 ];
                 }
+                // the following is a hack in that if the file starts with , then it doesn't read the first line correctly. 
+                if(arr[0].length===0 && arrMatches.input.indexOf(strDelimiter)===0){
+                    arr[arr.length-1].push("");
+                }
                 arr[ arr.length - 1 ].push( strMatchedValue );
         }
 
@@ -46,6 +50,9 @@ var util = {
         }
         str += "</thead><tbody><tr><td colspan='" + (arr[0].length+1) + "' style='padding: 0px;'><div class='inner'><table id='inner-table'><tbody>"
         for (var i in arr){
+            if(arr[i].length===1){
+                break;
+            }
             str += "<tr id='row" + i + "'><td><input  id='cbrow" + i + "' type='checkbox' class='selRow'></input></td>";
             for (var j in arr[i]){
                 str += "<td class='column" + j + "'>" + arr[i][j] + "</td>";
@@ -102,14 +109,9 @@ var util = {
         // now process the problemList
     },
     pluckDateSettings: function(settings){
-        var dateVars = ["pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"];
-        var values = settings.chain().filter(function(_set){
-            return _(dateVars).contains(_set.get("var"))
-        })
-            .map(function(_set){ 
-                return _set.get("value")
-            }).value();
-        return _.object(dateVars,values);
+        return settings.chain().map(function(_s) { return [_s.get("var"),_s.get("value")]})
+            .object().pick("pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"
+                                ,"pg{ansEvalDefaults}{reducedScoringPeriod}").value();
     }
 }
 

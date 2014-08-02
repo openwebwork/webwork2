@@ -46,21 +46,9 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             number: /^\d*(\.\d*)?$/,
             loginname: /^[\w\d\_]+$/
         },
-        /* 
-        This is an object of all of the main views, default side pans and optional side panes.  
-
-        Put this into a configuration file. 
-        
-        main_views: {
-            "calendar": {default_side: "problemSets",optional_sides: []},
-            "setDetails": {default_side: "problemSets",optional_sides: []},
-            "allSets": {default_side: "hide-sidebar",optional_sides: []},
-            "importExport": {default_side: "hide-sidebar",optional_sides: []},
-            "libraryBrowser": {default_side: "libraryOptions",optional_sides: []},
-            "settings": {default_side: "hide-sidebar",optional_sides: []},
-            "classlist": {default_side: "hide-sidebar",optional_sides: []},
-            "studentProgress": {default_side: "hide-sidebar",optional_sides: []},
-        } */
+        displayFloat: function(val,digits){
+            return Math.round(val*Math.pow(10,digits))/Math.pow(10,digits);
+        }
     } 
 
     config.messageTemplate= _.template($("#general-messages").html());
@@ -115,7 +103,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
 
       },
       updateMethod: 'html',
-      //update: function($el, val, model, options) { $el.val(val); }
       onGet: function(val) { 
 
         var theDate = config.parseWWDate(val);
@@ -196,6 +183,41 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         }
       
     });
+
+    Backbone.Stickit.addHandler({
+        selector: '.show-set-popup-info',
+        update: function($el, val, model, options){
+            var popoverHTML = model.get("popupTemplate")(model.attributes);
+            var _title = model.get("assign_type").replace("_"," ") + " Date";
+            $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true, 
+                        content: popoverHTML, container: "body"});
+            $el.on("shown.bs.popover",function(){
+                $("a.goto-problem-set-button[data-setname='"+model.get("set_id")+"']").off()
+                    .on("click",function(evt){
+                        $el.popover("hide");
+                        model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
+                })
+            });
+            var info = "";
+            switch (model.get("assign_type")){
+                case "due":
+                    info = "D";
+                    break;
+                case "reduced-scoring":
+                    info = "R";
+                    break;
+                case "answer":
+                    info = "A";
+                    break;
+                case "open":
+                    info = "O";
+                    break;
+            }
+            $el.text(info);
+        },
+        updateMethod: 'html'
+    });
+
 
     Backbone.Stickit.addHandler({
         selector: '.select-with-disables',

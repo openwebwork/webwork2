@@ -6,11 +6,13 @@ define(['backbone'], function(Backbone){
 			return this;
 		},
 		events: {
-			"click .manager-menu a.link": function(evt){this.trigger("change-view",$(evt.target).data("name"))},
+			"click .manager-menu a.link": function(evt){this.trigger("change-view",$(evt.target).data("id"))},
 			"click .main-help-button": function(evt){
 				this.trigger("show-help")},
 			"click .logout-link": function(evt){ this.trigger("logout")},
 			"click .stop-acting-link": function(evt){ this.trigger("stop-acting")},
+			"click .forward-button": function(){ this.trigger("forward-page")},
+			"click .back-button": function(){ this.trigger("back-page")},
 		},
 		setPaneName: function(name){
 			this.$(".main-view-name").text(name);

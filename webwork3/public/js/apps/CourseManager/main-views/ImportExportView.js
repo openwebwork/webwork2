@@ -1,40 +1,38 @@
-define(['backbone', 'underscore','views/MainView', 'apps/util','models/ProblemSetList','models/ProblemSet','config','bootstrap'], 
-	function(Backbone, _,MainView, util,ProblemSetList,ProblemSet,config){
+define(['backbone', 'underscore','views/TabbedMainView','views/TabView', 'apps/util','models/ProblemSetList',
+	'models/ProblemSet','config','bootstrap'], 
+	function(Backbone, _,TabbedMainView,TabView, util,ProblemSetList,ProblemSet,config){
 
-var ImportExportView = MainView.extend({
+var ImportExportView = TabbedMainView.extend({
     initialize: function (options){
-    	MainView.prototype.initialize.call(this,options);
-    	var self = this;
-        _.bindAll(this,"render");
-        this.problemSets = options.problemSets;
+    	
+    	var opts = _(options).pick("settings","users","problemSets","eventDispatcher");
+
+        options.views = {
+        	import: new ImportView(opts),
+        	export: new ExportView(opts)
+        };
+        TabbedMainView.prototype.initialize.call(this,options);
+    }
+});
+
+var ImportView = TabView.extend({
+	tabName: "Import Problem Sets",
+	initialize: function(options){
+		this.problemSets = options.problemSets;
+		this.settings = options.settings;
         this.problemSetsToImport = new ProblemSetList([],{dateSettings: util.pluckDateSettings(this.settings)});
         this.rowViews=[];
         this.problemSetsToImport.on("change:name",function (_set) {
     		self.checkSetNames();
     		_set.id=_set.get("set_id");
     	});
-    },
-    render: function () {
-        this.$el.html($("#import-export-template").html());
-        this.$(".date-shift-input").datepicker();
-        MainView.prototype.render.apply(this);
-        return this;
-    },
-    getState: function () {
-        return {};
-    },
-
-    renderSets: function () {
-    	self = this;
-        this.$(".import-table").removeClass("hidden");
-        var table = this.$(".import-table table tbody").empty();
-        this.problemSetsToImport.each(function(_set,i){
-        	self.rowViews[i] = (new ProblemSetRowView({model: _set,problemSets: self.problemSets})).render(); 
-            table.append(self.rowViews[i].el);
-        });
-        this.checkSetNames();
-        return this;
-    },
+    	TabView.prototype.initialize.call(this,options);
+	},
+	render: function(){
+		this.$el.html($("#import-sets-template").html());
+		this.$(".date-shift-input").datepicker();
+		return this;
+	},
     events: {"change #import-from-file": "loadSetDefinition",
 			"change .date-shift-checkbox": "toggleDateShift",
 			"change .select-all-checkbox": "selectAll",
@@ -47,6 +45,18 @@ var ImportExportView = MainView.extend({
 			this.shiftDates();
 		}
 	},
+	renderSets: function () {
+    	self = this;
+        this.$(".import-table").removeClass("hidden");
+        var table = this.$(".import-table table tbody").empty();
+        this.problemSetsToImport.each(function(_set,i){
+        	self.rowViews[i] = (new ProblemSetRowView({model: _set,problemSets: self.problemSets})).render(); 
+            table.append(self.rowViews[i].el);
+        });
+        this.checkSetNames();
+        return this;
+    },
+
 	checkSetNames: function () {
 		var self = this
 			, valid =[];
@@ -142,14 +152,24 @@ var ImportExportView = MainView.extend({
 
 	        reader.readAsText(file);
 	    });
-    }
-
+    },
+    getDefaultState: function () { return {};}
 });
+
+var ExportView = TabView.extend({
+	tabName: "Export Problem Sets",
+	render: function(){
+		this.$el.html($("#export-view-template").html())
+		return this;
+	},
+    getDefaultState: function () { return {};}
+})
 
 var ProblemSetRowView = Backbone.View.extend({
     tagName: "tr",
     initialize: function(options){
     	this.problemSets = options.problemSets;
+    	
     },
     render: function(){
         this.$el.html($("#import-problem-set-row-template").html());

@@ -101,7 +101,7 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 			}
 		},
 		selectAll: function () {
-			$(".selRow").attr("checked",$("#selectAllASW").is(":checked"));
+			this.$(".selRow").prop("checked",this.$("#selectAllASW").is(":checked"));
 		},
 		importStudents: function () {  // PLS:  Still need to check if student import is sucessful, like making sure that user_id is valid (not repeating, ...)
 		    // First check to make sure that the headers are not repeated.
@@ -218,20 +218,13 @@ define(['backbone', 'underscore','models/User','models/UserList','config','../..
 		},
 		setHeadersForLST: function(){
 		    var self = this;
-		    self.errorPane.clear();
-
 		    _(config.userProps).each(function (prop,i) {
-			var col = $("select#col"+i);
-			col.val(prop.longName);
-			self.updateHeaders(col); });
-		    }
+				var col = $("select#col"+i);
+				col.val(prop.longName);
+				self.validateColumn(prop.longName);
+			});
+	    }
 	});
-		/* appendRow: function(user){
-		    var tableRow = new UserRowView({model: user});
-		    $("table#man_student_table tbody",this.el).append(tableRow.el);
-		}, */
-
-    
     return AddStudentFileView;
 
 });

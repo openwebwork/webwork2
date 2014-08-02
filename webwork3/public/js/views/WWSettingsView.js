@@ -33,18 +33,22 @@ function(Backbone, _,config){
                     case "boolean":
                         //opts = [{label: "true", value: true}, {label: "false", value: false}];
                         opts = ["true","false"];
-                        propHtml = "<select class='select-list TF-boolean-select'></select>";
+                        propHTML = "<select class='select-list TF-boolean-select'></select>";
                         break;
                     case "checkboxlist":
-                        propHtml = "<select multiple='multiple' class='select-list'></select>";
-                        opts = _(setting.get('values')).map(function(opt){ return {label: opt, value: opt}; } );
+                        propHTML = "<select multiple='multiple' class='select-list'></select>";
+                        var labels = setting.get("labels");
+                        opts = _(setting.get('values')).map(function(opt){ 
+                            return {label: labels? labels[opt] : opt, value: opt}; } );                        
                         break;
                     case "popuplist": 
-                        propHtml = "<select class='select-list'></select>";
-                        opts = _(setting.get('values')).map(function(opt){ return {label: opt, value: opt}; } );
+                        propHTML = "<select class='select-list'></select>";
+                        var labels = setting.get("labels");
+                        opts = _(setting.get('values')).map(function(opt){ 
+                            return {label: labels? labels[opt] : opt, value: opt}; } );                        
                         break;
                     case "permission":
-                        propHtml = "<select class='select-list'></select>";
+                        propHTML = "<select class='select-list'></select>";
                         opts = _(config.permissions).map(function(perm){ return {label: perm.label, value: perm.label}});
                         break;
                 }
@@ -59,7 +63,7 @@ function(Backbone, _,config){
                     case "popuplist":
                     case "permission":
                         table.append((new SelectSettingView({model: setting, theOptions: opts,rowTemplate: self.rowTemplate,
-                                                                    prop_html: propHtml})).render().el);
+                                                                    prop_html: propHTML})).render().el);
                         break;
 
                 }
