@@ -1,9 +1,10 @@
 
-define(['backbone','views/SidePane','stickit'], function(Backbone,SidePane){
+define(['backbone','views/Sidebar','stickit'], function(Backbone,Sidebar){
     
-	var UserListView = SidePane.extend({
+	var UserListView = Sidebar.extend({
 		template: _.template($("#user-template").html()),
 		initialize: function(options) {
+			Sidebar.prototype.initialize.apply(this,[options]);
 			this.users = options.users;
 		},
 		rowTemplate: $("#user-list-row-template"),
@@ -18,7 +19,7 @@ define(['backbone','views/SidePane','stickit'], function(Backbone,SidePane){
 			if(ul.width()>this.$el.width()){
 				ul.width(this.$el.width());
 			}
-			SidePane.prototype.render.apply(this);
+			Sidebar.prototype.render.apply(this);
             return this;
 		}
 	});

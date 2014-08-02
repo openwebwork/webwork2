@@ -7,130 +7,93 @@
  **/
 
 
-define(['backbone','underscore','views/MainView','views/ProblemSetView','models/ProblemList','views/CollectionTableView',
-    'models/ProblemSet','models/UserSetList', 'config','bootstrap'], 
-    function(Backbone, _,MainView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
+define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView','views/ProblemSetView',
+    'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList', 'config','bootstrap'], 
+    function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
         UserSetList, config){
-	var ProblemSetDetailsView = MainView.extend({
+	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
-        initialize: function (options) {
-            MainView.prototype.initialize.call(this,options);
-            _.bindAll(this,'render','changeProblemSet','updateNumberOfProblems','loadProblems');
+        initialize: function(options){
             var self = this;
-            this.users = options.users; 
-            this.allProblemSets = options.problemSets;
-            this.problemSet = this.model;
-            this.eventDispatcher = options.eventDispatcher;
-            
-            this.views = {
-                problemSetView : new ProblemSetView({problemSet: this.problemSet, settings: this.settings, 
-                            messageTemplate: this.messageTemplate}),
-                usersAssignedView : new AssignUsersView({problemSet: this.problemSet, users: this.users}),
-                propertiesView : new DetailsView({users: this.users, problemSet: this.problemSet, settings: this.settings}),
-                customizeUserAssignView : new CustomizeUserAssignView({users: this.users, problemSet: this.problemSet,
-                        eventDispatcher: this.eventDispatcher, settings: this.settings}),
-                unassignUsersView: new UnassignUserView({users:this.users})
+
+            var opts = _(options).pick("users","settings","eventDispatcher");
+
+            this.views = options.views = {
+                propertiesView : new DetailsView(opts),
+                problemsView : new ShowProblemsView(_.extend({},opts,{messageTemplate: this.messageTemplate})),
+                usersAssignedView : new AssignUsersView(opts),
+                unassignUsersView: new UnassignUserView(opts),
+                customizeUserAssignView : new CustomizeUserAssignView(opts)
             };
+            this.views.problemsView.on("page-changed",function(num){
+                self.eventDispatcher.trigger("save-state");
+            })
+            options.tabs = ".set-details-tab";
+            options.tabContent = ".set-details-tab-content";
+            options.template = $("#HW-detail-template").html();
+            TabbedMainView.prototype.initialize.call(this,options);
+            this.state.on("change:set_id", function() {
+                self.changeProblemSet(self.state.get("set_id"));
+            })
 
-            this.views.problemSetView.on("update-num-problems",this.updateNumberOfProblems);
-            this.setMessages();
         },
-        render: function () {
-            var self = this;
-            this.$el.html($("#HW-detail-template").html());
-
-            this.currentView =  this.currentView || this.views.propertiesView;
-            this.currentViewName = this.currentViewName || "propertiesView";
-            this.eventDispatcher.trigger("save-state");
-
-
-            this.views.problemSetView.setElement($("#problem-list-tab"));
-            this.views.usersAssignedView.setElement($("#user-assign-tab"));
-            this.views.propertiesView.setElement($("#property-tab"));
-            this.views.customizeUserAssignView.setElement($("#user-customize-tab")); 
-            this.views.unassignUsersView.setElement($("#user-unassign-tab"));  
-
-            // fill the pulldown menu with all of the set names:
-
-            var ul = this.$(".problem-set-name-menu .dropdown-menu");
-            var setNameTemplate = _.template($("#problem-set-name-template").html());
-            this.allProblemSets.each(function(_set) {
-                ul.append(setNameTemplate({setname: _set.get("set_id")}));
-            });
-
-            this.changeView(this.currentViewName);
-
-            if(this.problemSet){
-                this.changeProblemSet(this.problemSet.get("set_id"));
+        bindings: {
+            ".problem-set-name": {observe: "set_id", selectOptions: {
+                collection: function () {
+                    return this.problemSets.pluck("set_id");
+                },
+                defaultOption: {label: "Select Set...", value: ""}
+            }}
+        },
+        render: function(){
+            TabbedMainView.prototype.render.call(this);            
+            this.stickit(this.state,this.bindings);
+            if(this.state.get("set_id")){
+                this.changeProblemSet(this.state.get("set_id"));
             }
-            MainView.prototype.render.apply(this);
-            return this;   
-        },
-        setState: function(state){
-            if(state){
-                this.currentViewName =  state.subview || "problemSetView";
-                this.currentView = this.views[this.currentViewName];
-                this.problemSet = this.allProblemSets.findWhere({set_id: state.set_id});
-            }
-            return this;
-        },
-        getState: function(){
-            return {subview: this.currentViewName, set_id: this.problemSet ? this.problemSet.get("set_id") : ""};
         },
         getHelpTemplate: function () {
-            if(this.currentView instanceof DetailsView){
-                return $("#problem-set-details-help-template").html();
-            } else if(this.currentView instanceof ProblemSetView){
-                return $("#problem-set-view-help-template").html();
-            } else if(this.currentView instanceof CustomizeUserAssignView){
-                return $("#customize-assignment-help-template").html();
+            switch(this.state.get("tab_name")){
+                case "propertiesView":
+                    return $("#problem-set-details-help-template").html();
+                case "problemsView":
+                    return $("#problem-set-view-help-template").html();
+                case "customizeUserAssignView":
+                    return $("#customize-assignment-help-template").html();
+                case "assignUsersView":
+                    return $("#problem-set-assign-users-help-template").html();
             }
         },
-        events: {
-            "shown.bs.tab #problem-set-tabs a[data-toggle='tab']": "changeView",
-            "click .set-name-target": function(evt){
-                this.changeProblemSet($(evt.target).text());
-            }
-        },
-        sidepaneEvents: {
+        sidebarEvents: {
             "change-display-mode": function(evt) { 
-                if(_.isFunction(this.views[this.currentViewName].changeDisplayMode)){
-                    this.views[this.currentViewName].changeDisplayMode(evt);
+                if(_.isFunction(this.views[this.state.get("tab_name")].changeDisplayMode)){
+                    this.views[this.state.get("tab_name")].changeDisplayMode(evt);
                 }},
-            "show-hide-tags": function(evt){
-                if(_.isFunction(this.views[this.currentViewName].toggleTags)){
-                    this.views[this.currentViewName].toggleTags(evt);
-            }},
-            "show-hide-path": function(evt){
-                if(_.isFunction(this.views[this.currentViewName].toggleShowPath)){
-                    this.views[this.currentViewName].toggleShowPath(evt);
-            }},
-        },
-        changeView: function(evt){
-            this.currentViewName = _.isString(evt)? evt: $(evt.target).data("view")
-            this.currentView = this.views[this.currentViewName];
-            if(this.problemSet){
-                this.currentView.setProblemSet(this.problemSet).render();
-            }
-            if($(evt.target).data("view")==="customizeUserAssignView"){
-                this.allProblemSets.trigger("show-help");
-            }
-            this.eventDispatcher.trigger("save-state");
-            $("#problem-set-tabs a[data-view='"+ this.currentViewName+"']").tab("show");  // shows the properties tab
+            "show-hide-tags": function(_show){
+                this.views[this.state.get("tab_name")].tabState.set("show_tags",_show);
+            },
+            "show-hide-path": function(_show){
+                this.views[this.state.get("tab_name")].tabState.set("show_path",_show);
+            },
         },
         changeProblemSet: function (setName)
         {
-        	this.problemSet = this.allProblemSets.findWhere({set_id: setName});
-            this.$(".problem-set-name-menu .set-name").text(setName).truncate({width: 150});
-            this.changeView("propertiesView");
+            var self = this;
+            this.state.set("set_id",setName);
+        	this.problemSet = this.problemSets.findWhere({set_id: setName});
+            _(this.views).chain().keys().each(function(view){
+                self.views[view].setProblemSet(self.problemSet);
+            });
+            this.views.problemsView.currentPage = 0; // make sure that the problems start on a new page. 
             this.loadProblems();
+            this.views[this.state.get("tab_name")].render();
             return this;
         },
         loadProblems: function () {
             var self = this;
             if(this.problemSet.get("problems")){ // have the problems been fetched yet? 
-                this.views.problemSetView.set({problems: this.problemSet.get("problems"),
+                this.views.problemsView.set({problems: this.problemSet.get("problems"),
                     problemSet: this.problemSet});
             } else {
                 this.problemSet.set("problems",ProblemList({setName: this.problemSet.get("set_id")}))
@@ -170,17 +133,17 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         }
     });
 
-    var DetailsView = Backbone.View.extend({
+    var DetailsView = TabView.extend({
+        tabName: "Set Details",
         initialize: function (options) {
             _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate");
             this.users = options.users;
             this.settings = options.settings;
-            
-
+            TabView.prototype.initialize.apply(this,[options]);
         },
-        render: function () {
-            this.$el.html($("#set-properties-tab-template").html());
+        render: function(){
             if(this.model){
+                this.$el.html($("#set-properties-tab-template").html());
                 this.showHideReducedScoringDate();
                 this.stickit();
             }
@@ -196,7 +159,9 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         setProblemSet: function(_set) {
             var self = this; 
             this.model = _set; 
-            this.model.on("change:enable_reduced_scoring",this.render);
+            if(this.model){
+                this.model.on("change:enable_reduced_scoring",this.render);
+            }
             return this;
         },
         bindings: {
@@ -231,22 +196,60 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
             } else {
                 this.$(".reduced-scoring").closest("tr").addClass("hidden")
             }
-        }
+        },
+        getDefaultState: function () { return {set_id: ""};}
 
     });
 
-	var AssignUsersView = Backbone.View.extend({
+    var ShowProblemsView = TabView.extend({
+        tabName: "Problems",
+        initialize: function (options) {
+            var self = this;
+            this.problemSetView = new ProblemSetView({settings: options.settings, messageTemplate: options.messageTemplate});
+            TabView.prototype.initialize.apply(this,[options]);
+            this.tabState.on("change:show_path",function(){
+                self.problemSetView.showPath(self.tabState.get("show_path"));
+            }).on("change:show_tags",function(){
+                self.problemSetView.showTags(self.tabState.get("show_tags"));
+            });
+        },
+        render: function (){
+            this.problemSetView.setElement(this.$el);
+            this.problemSetView.render();
+        },
+        setProblemSet: function(_set){
+            this.problemSetView.setProblemSet(_set);
+            return this;
+        },
+        set: function(options){
+            this.problemSetView.set(_.extend({},options,this.tabState.pick("show_path","show_tags")));
+            return this;
+        },
+        changeDisplayMode: function(evt){
+            this.problemSetView.changeDisplayMode(evt);
+        },
+        getDefaultState: function () {
+            return {set_id: "", library_path: "", page_num: 0, rendered: false, page_size: 10, show_path: false, show_tags: false};
+        },
+
+    })
+
+	var AssignUsersView = TabView.extend({
+        tabName: "Assign Users",
         initialize: function (options) {
             _.bindAll(this,'render','selectAll','assignUsers','setProblemSet');
             this.users = options.users;
             this.userList = this.users.map(function(user){ 
                 return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
+            TabView.prototype.initialize.apply(this,[options]);
         },
 
 
         render: function() {
-            this.$el.html(_.template($("#assign-users-template").html(),{setname: this.model.get("set_id")}));
-            this.stickit();
+            if(this.model){
+                this.$el.html(_.template($("#assign-users-template").html(),{setname: this.model.get("set_id")}));
+                this.stickit();
+            }
             return this;
         },
          events: {  "click .assign-button": "assignUsers",
@@ -258,14 +261,16 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         setProblemSet: function(_set) {
             var self = this; 
-            this.problemSet = _set; 
-            this.model = new ProblemSet(_set.attributes);
-            this.model.set("assigned_users",[]);
-            this.updateModel();
-            this.problemSet.on("change", function(){
-                self.updateModel();
-                self.render();
-            });
+            this.problemSet = _set;
+            if(_set){
+                this.model = new ProblemSet(_set.attributes);
+                this.model.set("assigned_users",[]);
+                this.updateModel();
+                this.problemSet.on("change", function(){
+                    self.updateModel();
+                    self.render();
+                });
+            }
 
             return this;
         },
@@ -279,24 +284,29 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         assignUsers: function(){
             this.problemSet.set("assigned_users",_(this.originalAssignedUsers).union(this.model.get("assigned_users")));
-        }
+        },        
+        getDefaultState: function () { return {set_id: ""};}
     });
 
 
    
 
-    var UnassignUserView = Backbone.View.extend({
+    var UnassignUserView = TabView.extend({
+        tabName: "Unassign Users",
         initialize: function (options) {
             _.bindAll(this,'render','selectAll','unassignUsers','setProblemSet');
             this.users = options.users;
             this.userList = this.users.map(function(user){ 
                 return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
+            TabView.prototype.initialize.apply(this,[options]);
         },
 
 
         render: function() {
-            this.$el.html(_.template($("#unassign-users-template").html(),{setname: this.model.get("set_id")}))
-            this.stickit();
+            if(this.model){
+                this.$el.html(_.template($("#unassign-users-template").html(),{setname: this.model.get("set_id")}))
+                this.stickit();            
+            }
             return this;
         },
          events: {  "click .unassign-button": "unassignUsers",
@@ -309,13 +319,15 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         setProblemSet: function(_set) {
             var self = this; 
             this.problemSet = _set; 
-            this.model = new ProblemSet(_set.attributes);
-            this.model.set("assigned_users",[]);
-            this.updateModel();
-            this.problemSet.on("change", function(){
-                self.updateModel();
-                self.render();
-            });
+            if(_set){
+                this.model = new ProblemSet(_set.attributes);
+                this.model.set("assigned_users",[]);
+                this.updateModel();
+                this.problemSet.on("change", function(){
+                    self.updateModel();
+                    self.render();
+                });
+            }
 
             return this;
         },
@@ -336,12 +348,14 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 this.problemSet.set("assigned_users",currentUsers);
                 this.problemSet.save();
             }
-        }
+        },       
+        getDefaultState: function () { return {set_id: ""};}
     });
 
     // Trying a new UI for this View
 
-    var CustomizeUserAssignView = Backbone.View.extend({
+    var CustomizeUserAssignView = TabView.extend({
+        tabName: "Student Overrides",
         initialize: function(options){
             _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
 
@@ -349,9 +363,13 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
 
             this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             _.extend(this,_(options).pick("users","settings","eventDispatcher"));
+            TabView.prototype.initialize.apply(this,[options]);
         },
         render: function () {
             var self = this;
+            if(! this.model){
+                return;
+            }
             var reducedScoring = this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") 
                 && this.problemSet.get("enable_reduced_scoring"); 
             this.tableSetup({show_reduced_scoring: reducedScoring});
@@ -416,11 +434,13 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
         },
         setProblemSet: function(_set) {
             this.problemSet = _set;  // this is the globalSet
-            this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
-            this.userSetList = new UserSetList([],{problemSet: this.model,type: "users"});
-            this.userSetList.on("change:due_date change:answer_date change:open_date", function(model){
-                model.save();
-            });
+            if(_set){
+                this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
+                this.userSetList = new UserSetList([],{problemSet: this.model,type: "users"});
+                this.userSetList.on("change:due_date change:answer_date change:open_date", function(model){
+                    model.save();
+                });
+            }
 
             // make a new collection that merges the UserSetListOfUsers and the userList 
             this.collection = new Backbone.Collection();
@@ -433,7 +453,6 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation"));
             });
             this.collection.on({change: function(model){
-                console.log(moment.unix(model.get("reduced_scoring_date")).format("MM-DD-YYYY"));
                 self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date")).save();
             }});
             this.setMessages();
@@ -500,7 +519,8 @@ define(['backbone','underscore','views/MainView','views/ProblemSetView','models/
                 }
             })
 
-        }
+        },        
+        getDefaultState: function () { return {set_id: ""};}
 
     });
         

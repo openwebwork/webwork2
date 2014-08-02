@@ -2,11 +2,12 @@
 
 <script type="text/template" id="calendar-template">
 <div class="row">
-  <div class="col-md-3 month-name"></div>
-    <div class="col-md-6" style="text-align: center">
+  <div class="col-md-2 month-name"></div>
+    <div class="col-md-7" style="text-align: center">
     <div class="calendar-button-row btn-group btn-group-sm">
       <button type="button" class="previous-week btn btn-default"><i class="fa fa-chevron-left"></i>Previous Week</button>
       <button type="button" class="view-month btn btn-default">Month View</button>
+      <button type="button" class="goto-today btn btn-default">Today</button>
       <button type="button" class="view-week btn btn-default">Week View</button>
       <button type="button" class="next-week btn btn-default">Next Week<i class="fa fa-chevron-right"></i></button>
     </div>

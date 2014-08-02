@@ -53,7 +53,7 @@
     </div>
         
 </div>
-<div id="users-table-container"></div>
+<div class="users-table-container table-responsive"></div>
 
 </script>
 

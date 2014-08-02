@@ -1,6 +1,7 @@
-define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config){
-	var AllMesagesSidePane = SidePane.extend({
+define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
+	var AllMesagesSidebar = Sidebar.extend({
 		initialize: function(options){
+			Sidebar.prototype.initialize.apply(this,[options]);
 			this.messages = options.messages;
 			_(this).bindAll("render");
 		},
@@ -19,7 +20,7 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
 	        	ul.append(new MessageView({model: message}).render().el);
 	        })
 
-	        SidePane.prototype.render.apply(this);
+	        Sidebar.prototype.render.apply(this);
 	        return this;
 
 	    }
@@ -35,5 +36,5 @@ define(['backbone','views/SidePane', 'config'],function(Backbone,SidePane,config
 
 	});
 
-	return AllMesagesSidePane;
+	return AllMesagesSidebar;
 });

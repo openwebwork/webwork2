@@ -36,46 +36,43 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
 
             } else {
                 this.$(".throbber").remove();
-                if(this.libraryLevel[0].length===0){
-                    this.libraryLevel[0] = _(this.libraryTree.get("tree")).map(function(subj) {
-                        return {label: subj.name, value: subj.name};
-                    });                    
-                }
-
                 this.$(".library-tree-left").html($("#library-select-template").html());
-
-                for(i=1;i<4;i++){
-                    if(this.libraryLevel[i].length>0){
-                        this.$(".library-level-"+i).removeClass("hidden");
-                    }
-                }
-                if(_(this.fields.values()).without("").length>0){
-                    branch = this.branchOfTree(_(this.fields.attributes).values()); 
-                    // the following needs to go into a template.
-                    this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
-                }
-                this.stickit(this.fields, this.bindings);
+                this.changeLibrary(this.fields);
             }
             
             return this; 
     	},
         events: { "click .load-library-button": "selectLibrary"},
         changeLibrary: function(model){
-            var i, level = parseInt(_(model.changed).keys()[0].split("level")[1])
-                , first = _(model.values()).compact().length;
-            for(i=(level+1);i<4;i++){
-                this.fields.set("level"+i,"");
+            if(typeof(this.libraryTree.get("tree"))==="undefined" || _(model).keys().length===0){
+                return;
             }
-            for(i=first;i<4;i++){
-                this.$(".library-level-"+(i+1)).addClass("hidden");  // hide all other levels. 
-            }
-            var branch = this.branchOfTree(_(model.attributes).values());
-            this.libraryLevel[level+1] = branch.branches;
+            var keys = _(model.attributes).chain().values().compact().value();
+            var last = keys[keys.length-1];
+            var level = keys.length;
+            var i;
 
-            if(branch.branches.length>0){
-                this.$(".library-level-"+(level+1)).removeClass("hidden");  // show the next level in the tree
+
+            var numFiles, arr, branch = this.branchOfTree([]);
+            this.libraryLevel[0] = branch.branches;
+            for(i=0;i<level;i++){
+                arr = _(model.attributes).values().slice(0,i+1);
+                branch = this.branchOfTree(arr);
+                this.libraryLevel[i+1] = branch.branches;
+                numFiles = branch.num_files;
             }
-            this.$(".load-library-button").text(branch.num_files? "Load " +branch.num_files + " problems": "Load");  
+
+            for(i=0;i<4;i++){
+                this.$(".library-level-"+i).addClass("hidden");  // hide all levels. 
+            }
+            for(i=0;i<level+1;i++){
+                this.$(".library-level-"+i).removeClass("hidden");  // show needed levels.
+            }
+            if(this.libraryLevel[level].length==0){
+                this.$(".library-level-"+level).addClass("hidden");
+            }
+
+            this.$(".load-library-button").text(numFiles? "Load " + numFiles + " problems": "Load");  
             this.unstickit(this.fields);
             this.stickit(this.fields,this.bindings);
         },
@@ -88,10 +85,12 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
             this.parent.dispatcher.trigger("load-problems",this.libraryTree.header+path.join("/"));
         },
         branchOfTree: function(path){
+            var tree = this.libraryTree.get("tree");
             if(_(path).compact().length ===0){
-                return {branches: []};
+                return {branches: _(tree).pluck("name"), 
+                        num_files: _(tree).reduce(function(i,j) { return i+parseInt(j.num_files);},0) };
             }
-            var currentBranch=this.libraryTree.get("tree");
+            var currentBranch=tree;
             var numFiles;
             _(path).each(function(p,i){
                 if(p.length>0){

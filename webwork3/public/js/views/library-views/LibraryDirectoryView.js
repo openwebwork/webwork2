@@ -1,6 +1,7 @@
 define(['backbone', 'underscore','views/library-views/LibraryView','views/library-views/LibraryTreeView'], 
 function(Backbone, _,LibraryView,LibraryTreeView){
     var LibraryDirectoryView = LibraryView.extend({
+        tabName: "By Directory",
     	initialize: function(options){
     		LibraryView.prototype.initialize.apply(this,[options]);
             var self = this;
@@ -15,17 +16,7 @@ function(Backbone, _,LibraryView,LibraryTreeView){
                         .popover("show");
                 }
             });
-        },
-    	loadProblems: function(_dirs){
-           if(this.libraryTreeView.fields.validate()){
-                console.log("Error!");
-                return;
-            } 
- 
-    		LibraryView.prototype.loadProblems.apply(this,[_dirs.join("/")]);
-    	}
-
-
+        }
     });
 
     return LibraryDirectoryView;

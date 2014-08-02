@@ -105,7 +105,16 @@ border-radius: 5px;}
 #man_student_table td { border: 1px solid black; height: 2.5ex;}
 #man_student_table input {width: 10ex;}
 
-table.usersTableClass td input {margin: 0px; padding: 0px; font-size: 12px; height: 20px;}
+.users-table-container table {table-layout: fixed}
+
+.users-table-container table th.select-user {width: 25px;}
+.users-table-container table th.section {width: 75px;}
+.users-table-container table th.recitation {width: 75px;}
+.users-table-container table th.assigned-sets {width: 75px;}
+.users-table-container table td.first-name {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;}
 
 textarea#emailText {width: 95%;}
 
