@@ -269,6 +269,8 @@ at the bottom of the screen and click "Save Changes". </p>
 
 [% INCLUDE main/calendar.tt %]
 
+[% INCLUDE main/user_settings.tt %]
+
 [% INCLUDE main/classlist.tt %]
 
 [% INCLUDE main/library.tt %]

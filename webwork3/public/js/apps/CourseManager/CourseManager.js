@@ -100,6 +100,7 @@ var CourseManager = WebPage.extend({
             .on("calendar-change",self.updateCalendar);
 
         this.mainViewList.getView("problemSetsManager").set({assignmentDates: this.assignmentDateList});
+        this.mainViewList.getView("userSettings").set({user_id: this.session.user});
         this.mainViewList.getSidebar("allMessages").set({messages: this.messagePane.messages});
         this.mainViewList.getSidebar("help").parent = this;
         

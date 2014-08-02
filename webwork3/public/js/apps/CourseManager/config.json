@@ -8,6 +8,13 @@
 		"id": "calendar"
 	},
 	{
+		"name": "User Settings",
+		"path": "views/UserSettingsView",
+		"default_sidebar": "",
+		"other_sidebars": [],
+		"id": "userSettings"
+	},
+	{
 		"name": "Problem Set Details",
 		"path": "main-views/ProblemSetDetailView",
 		"default_sidebar": "problemSets",

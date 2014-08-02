@@ -1,0 +1,12 @@
+<script type="text/template" id="user-settings-template">
+ <table class="table">
+<tbody>
+<tr><td class="header">User Name</td><td class="user-id"></td></tr>
+<tr><td class="header">Email</td><td><input type="text" class="form-control email"></td></tr>
+<tr><td></td><td class="col-md-4"><button class="btn btn-default change-email-button">Change Email</button></td></tr>
+<tr><td class="header">Password</td><td><input type="text" class="form-control password"></td></tr>
+<tr><td></td><td><button class="btn btn-default change-password-button">Change Password</button></td></tr>
+<tr><td>WeBWorK3 saves your history as you navigate the different views/pages.  You may need to reset this if odd behavior occurs. </td><td><button class="btn btn-default reset-history-button">Reset History</button></td></tr>
+</tbody>
+</table>
+</script>
