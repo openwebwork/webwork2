@@ -18,6 +18,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             var self = this;
             _.bindAll(this,"fetch","addProblem","removeProblem");
             _.extend(this,options);
+            this.defaultRequestObject = {};
             this.on("remove",this.removeProblem);
             if (this.type){   // this prevents the fetch if the ProblemList comes from the Browse object. 
                 this.fetch(); 
@@ -33,16 +34,17 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             var requestObject = {};
             switch(this.type){
                 case "Problem Set":
-                    console.log("fetching problems for Problem Set " + this.setName);
-                    requestObject = {xml_command: "listSetProblems", set_id: this.setName};
+                    console.log("fetching problems for Problem Set " + this.defaultRequestObject.set);
+                    requestObject = {xml_command: "listSetProblems", set_id: this.defaultRequestObject.set};
                     break;
                 case "Library Problems":
-                    var pathParts = this.path.split("/");
-                    switch(pathParts[0]){
+                    var pathParts = this.defaultRequestObject.library_name.split('/');
+                    console.log(pathParts);
+                    switch(pathParts[1]){
                         case "Library":
-                            console.log("Fetching Library: " + this.path);
+                            console.log("Fetching Library: " + this.defaultRequestObject.library_name);
                             requestObject = {  xml_command: "listLib", command: "files",
-                                    maxdepth: 0, library_name: this.path + "/"};
+                                    maxdepth: 0, library_name: this.defaultRequestObject.library_name};
                             break;
                         case "Subjects":
                             console.log("fetching subjects");
@@ -54,13 +56,12 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                         }
                     break;
             }
-
             _.defaults(requestObject, config.requestObject);
             $.get(config.webserviceURL, requestObject,function (data) {
                 var response = $.parseJSON(data);
                 var problems = response.result_data;
-                console.log('Loading Problems');
-                console.log(response);
+                //console.log('Loading Problems');
+                //console.log(response);
     
                 var newProblems = new Array();
                 for (var i = 0; i < problems.length; i++) {
@@ -68,7 +69,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                         newProblems.push(new Problem({path:problems[i],place: i}));
                     }
                 } 
-                console.log(self);
+                //console.log(self);
                 self.reset(newProblems);
                 self.trigger("fetchSuccess");
             });
