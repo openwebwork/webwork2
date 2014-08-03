@@ -1528,7 +1528,7 @@ sub head {
   print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
+  #print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
 	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/legacy/Base64.js"}), CGI::end_script();

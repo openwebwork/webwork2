@@ -46,7 +46,7 @@
     }
 </style>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
-<script src="<!--#url type="webwork" name="htdocs"-->/js/lib/delete-me/jquery/jquery-1.7.2.min.js"></script><!-- FIXMEJS-->
+<script src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script><!-- FIXMEJS-->
 <script src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
