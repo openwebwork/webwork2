@@ -229,7 +229,9 @@ var ClasslistView = MainView.extend({
             			update: function($el,val,model,options){
             				// Perhaps this can go into config.js as a Stickit Handler.
             				// in addition, a lot of this needs to go into templates for I18N
-            				var address = $("<a>").attr("href","mailto:"+val).text("email");
+            				var address = (val=="")?$("<span>"):$("<a>").attr("href","mailto:"+val);
+                            address.text("email");  // I18N
+
             				var popoverHTML = "<input class='edit-email' value='"+ val +"'></input>"
             					+ "<button class='close-popover btn btn-default btn-sm'>Save and Close</button>";
             				var edit = $("<a>").attr("href","#").text("edit")
