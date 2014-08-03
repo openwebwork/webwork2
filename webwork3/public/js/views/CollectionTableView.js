@@ -92,7 +92,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			return this;
 		},
 		render: function () {
-			console.log("in CollectionTableView.render");
 			var self = this, i;
 			this.$el.empty();
 
@@ -136,7 +135,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 		},
 		updatePaginator: function() {
 			// render the paginator
-
 			if (this.showFiltered){
 				this.maxPages = Math.ceil(this.filteredCollection.length/this.paginatorProp.page_size);
 			} else {
@@ -214,7 +212,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				this.paginatorProp.page_size = options.num_rows;
 				this.initializeTable();
 				this.updatePaginator();
-				this.render();
 			}
 		},
 		updateTable: function () {
@@ -327,7 +324,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
 			this.pageRange = _.range(this.currentPage*this.pageSize,
 				(this.currentPage+1)*this.pageSize>this.collection.size()? this.collection.size():(this.currentPage+1)*this.pageSize);
-			this.render();
 			if(this.currentPage==0){
 				this.$("button.first-page,button.prev-page").attr("disabled","disabled");
 			} else {

@@ -69,7 +69,6 @@ var ProblemSetsManager = MainView.extend({
     },
     render: function () {
         var self = this;
-        console.log("in ProblemSetsManager.render");
         this.$el.html($("#problem-set-manager-template").html());
         this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
         this.$el.append(this.problemSetTable.el);
@@ -86,6 +85,10 @@ var ProblemSetsManager = MainView.extend({
             this.changeSetPropView.setElement(this.$(".modal-container"))
                 .set({set_names: this.state.get("selected_sets")}).render();
         }
+        if(this.state.get("sort_class")&&this.state.get("sort_direction")){
+            this.problemSetTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
+        }
+
         this.showTime(this.state.get("show_time"));
 
         this.isReducedScoringEnabled();
@@ -191,6 +194,7 @@ var ProblemSetsManager = MainView.extend({
         } else {
             this.problemSetTable.set({num_rows: this.state.get("page_size")});
         }
+        this.problemSetTable.render();
         this.isReducedScoringEnabled();
     },
     set: function(opts){  // sets a general parameter (Perhaps put this in MainView)

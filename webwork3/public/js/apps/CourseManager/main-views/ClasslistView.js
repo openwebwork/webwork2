@@ -48,8 +48,6 @@ var ClasslistView = MainView.extend({
 	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation	  
 	    this.users.each(function(model){
 	    	model.bind('validated:invalid', function(_model, errors) {
-			    console.log("running invalid");
-			    console.log(errors);
 			    var row; 
 			    self.$("td.user-id").each(function(i,v){
 			    	if($(v).text()===_model.get("user_id")){
@@ -173,7 +171,7 @@ var ClasslistView = MainView.extend({
         modalView.render().open();
 	},	
 	filterUsers: function () {
-        this.userTable.filter(this.state.get("filter_text")).render();
+        this.userTable.filter(this.state.get("filter_text"));
         if(this.state.get("filter_text").length>0){
             this.state.set("page_number",0);
         }
@@ -194,6 +192,7 @@ var ClasslistView = MainView.extend({
         } else {
             this.userTable.set({num_rows: this.state.get("page_size")});
         }
+        this.userTable.render();
     },
 	tableSetup: function () {
             var self = this;
