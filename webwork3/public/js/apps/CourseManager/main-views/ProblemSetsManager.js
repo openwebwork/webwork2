@@ -78,9 +78,6 @@ var ProblemSetsManager = MainView.extend({
         this.problemSetTable.gotoPage(this.state.get("page_number"));
         MainView.prototype.render.apply(this);
         this.stickit(this.state,this.bindings);
-        _(this.state.get("selected_sets")).each(function(setID){
-            self.$("td:contains("+setID+")").closest("tr").find("input[type='checkbox']").prop("checked",true);
-        });
         if(this.state.get("set_prop_modal_open")){
             this.changeSetPropView.setElement(this.$(".modal-container"))
                 .set({set_names: this.state.get("selected_sets")}).render();
@@ -88,8 +85,12 @@ var ProblemSetsManager = MainView.extend({
         if(this.state.get("sort_class")&&this.state.get("sort_direction")){
             this.problemSetTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
         }
-
         this.showTime(this.state.get("show_time"));
+        _(this.state.get("selected_sets")).each(function(setID){
+            self.$("td:contains("+setID+")").closest("tr").find("input[type='checkbox']").prop("checked",true);
+        });
+
+        
 
         this.isReducedScoringEnabled();
         return this;
@@ -122,7 +123,7 @@ var ProblemSetsManager = MainView.extend({
     },
     getDefaultState: function () {
         return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
-            sort_class: "", sort_direction: "", show_time: false};
+            sort_class: "", sort_direction: "", show_time: false, selected_sets: []};
     },
     isReducedScoringEnabled: function (){
         // hide reduced credit items when not enabled. 
