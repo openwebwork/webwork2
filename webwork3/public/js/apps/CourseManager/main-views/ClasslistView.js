@@ -64,7 +64,7 @@ var ClasslistView = MainView.extend({
         this.emailPane = new EmailStudentsView({users: this.users}); 
 
         // query the server every 15 seconds (parameter?) for login status only when the View is visible
-        this.eventDispatcher.on("view-change",function(viewID){
+        this.eventDispatcher.on("change-view",function(viewID){
         	if(viewID==="classlist"){
         		self.checkLoginStatus();
         	} else {

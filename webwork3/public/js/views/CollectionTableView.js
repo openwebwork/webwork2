@@ -280,7 +280,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			// determine the sort Function
 
-			var sortFunction = sort.sort_function || function(val) { console.log(val); return val;};
+			var sortFunction = sort.sort_function || function(val) {return val;};
 
 			if(typeof(sort.datatype)==="undefined"){
 				console.error("You need to define a datatype to sort");

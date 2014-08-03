@@ -24,6 +24,10 @@ a#view-header i {margin-left:1ex;}
 
 .show-rows i {margin-right: 5px;}
 
+/* make the login status column narrower */
+
+th.logged-in-status {width: 40px;}
+
 /* the num-users in the left-column */
 
 .num-users { margin-left: 2ex;}
