@@ -11,7 +11,8 @@ var UserSettingsView = MainView.extend({
         return this;
 	},
 	events: {
-		"click .change-email-button": function() {this.user.set("email_address",$(".email").val());}
+		"click .change-email-button": function() {this.user.set("email_address",$(".email").val());},
+		"click .reset-history-button": function () { localStorage.removeItem("ww3_cm_state");},
 	},
 	bindings: {
 		".user-id": "user_id",
