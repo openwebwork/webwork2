@@ -203,16 +203,13 @@ var ClasslistView = MainView.extend({
                 stickit_options: {update: function($el, val, model, options) {
                     $el.html($("#checkbox-template").html());
                 }}, colHeader: "<input type='checkbox'></input>"},
-                {name: "Login Name", key: "user_id logged_in", classname: "login-name", datatype: "string",
-                	stickit_options: {update: function($el,val,model,options){
-                		$el.text(model.get("user_id"));
-                		if(model.get("logged_in")){
-                			$el.addClass("logged-in");
-                		} else {
-                			$el.removeClass("logged-in");
-                		}
-                	}}
-            	},
+                {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
+                    editable: false },
+                {name: "LS", key: "logged_in",classname:"logged-in-status", datatype: "none", editable: false,
+                    stickit_options: {update: function($el, val, model, options) {
+                        $el.html(val?"<i class='fa fa-circle' style='color: green'></i>":"")
+                    }}
+                },
                 {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
                 	value: function(model){
                 		return self.problemSets.filter(function(_set) { 

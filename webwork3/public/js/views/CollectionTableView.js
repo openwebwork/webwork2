@@ -280,7 +280,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			// determine the sort Function
 
-			var sortFunction = sort.sort_function || function(val) { return val;};
+			var sortFunction = sort.sort_function || function(val) { console.log(val); return val;};
 
 			if(typeof(sort.datatype)==="undefined"){
 				console.error("You need to define a datatype to sort");
@@ -292,11 +292,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				var value1 = typeof(model1.get(sort.key)) === "undefined" ? model1._extra[sort.key] : model1.get(sort.key);
 				var value2 = typeof(model2.get(sort.key)) === "undefined" ? model2._extra[sort.key] : model2.get(sort.key);
 				switch(sort.datatype){
-					case "string":
-						if (sortFunction(value1,model1)===sortFunction(value2,model2))
-							return 0;
-						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)? -1: 1);
-						break;
 					case "integer":
 						if(parseInt(sortFunction(value1,model1))===parseInt(sortFunction(value2,model2))){return 0;}
 					    return self.sortInfo.direction*(parseInt(sortFunction(value1,model1))<parseInt(sortFunction(value2,model2))? -1:1);
@@ -308,6 +303,12 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 					case "number":
 						if(parseFloat(sortFunction(value1,model1))===parseFloat(sortFunction(value2,model2))){return 0;}
 					    return self.sortInfo.direction*(parseFloat(sortFunction(value1,model1))<parseFloat(sortFunction(value2,model2))? -1:1);
+						break;
+					case "string":
+					default:
+						if (sortFunction(value1,model1)===sortFunction(value2,model2))
+							return 0;
+						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)? -1: 1);
 						break;
 				} 
 
