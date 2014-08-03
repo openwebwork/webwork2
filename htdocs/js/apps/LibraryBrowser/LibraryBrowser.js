@@ -1,5 +1,4 @@
-define(['Backbone', 'underscore','config', './LibraryListView', './SetListView', 'LibraryList', 'SetList','../../lib/views/WebPage'], 
-    function(Backbone, _, config, LibraryListView, SetListView, LibraryList, SetList,WebPage){
+define(['Backbone', 'underscore', './LibraryListView', './SetListView', 'LibraryList', 'SetList'], function(Backbone, _, LibraryListView, SetListView, LibraryList, SetList){
 	//Since many of the views we'll define will all want to post alerts and messages to the same place
     //we define a global template and alert function for them.
     var alert_template = _.template('<div class="alert <%= classes %> fade in"><a class="close" data-dismiss="alert" href="#">×</a><%= message %></div>');
@@ -13,7 +12,7 @@ define(['Backbone', 'underscore','config', './LibraryListView', './SetListView',
         //setTimeout(function(){$(".alert").alert('close')}, 5000);
     };
 	//The APP!! yay!!
-    var LibraryBrowser = WebPage.extend({
+    var LibraryBrowser = Backbone.View.extend({
         //el:$('#app_box'),
         tagName:'div',
         events:{
@@ -115,9 +114,6 @@ define(['Backbone', 'underscore','config', './LibraryListView', './SetListView',
             
             //var browserView = new BrowseListView({model: this.browser});
             //this.$("#Browser").append(browserView.render().el);
-            this.setUpNavMenu();  // reformats the navigation menu. 
-            $("#webwork_navigation ul h2").remove(); // for some research the nav menu it's rendering correctly. this is a hack
-            
         },
 
         undo:function () {
