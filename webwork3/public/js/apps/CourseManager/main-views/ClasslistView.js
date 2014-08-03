@@ -224,7 +224,7 @@ var ClasslistView = MainView.extend({
 	            	stickit_options: {events: ['blur']}},
                 {name: "Last Name", key: "last_name", classname: "last-name", editable: true, datatype: "string",
             		stickit_options: {events: ['blur']}},
-                {name: "Email", key: "email_address", classname: "email", datatype: "string",
+                {name: "Email", key: "email_address", classname: "email", sortable: false,
             		stickit_options: {
             			update: function($el,val,model,options){
             				// Perhaps this can go into config.js as a Stickit Handler.

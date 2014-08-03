@@ -53,7 +53,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				this.paginatorProp.showPaginator = true;	
 			}
 			// setup the paginator 
-			this.initializeTable();
+				this.initializeTable();
 		},
 		initializeTable: function () {
 
@@ -260,7 +260,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			sort = _(this.columnInfo).find(function(col){
 				return (_.isArray(col.classname)? col.classname[0] : col.classname ) == sortField;
 			});
-			if(typeof(sort)=="undefined"){ // The user clicked on the select all button.
+			if(typeof(sort)=="undefined" || !sort.sortable){ // The user clicked on the select all button.
 				return;
 			}
 
