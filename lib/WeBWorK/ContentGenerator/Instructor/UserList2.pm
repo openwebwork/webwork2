@@ -374,7 +374,7 @@ sub body {
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
 			print CGI::p(
-			    CGI::div({-style=>"color:green"}, $r->maketext("Result of last action performed: [_1]", CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)))),
+			    CGI::div({class=>"ResultsWithoutError"}, $r->maketext("Result of last action performed: [_1]", CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)))),
 				CGI::hr()
 			);
 		} else {
