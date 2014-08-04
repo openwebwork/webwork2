@@ -39,7 +39,7 @@
 <div class="input-group">
       <input type="text" class="form-control user-calendar-filter" placeholder="Filter">
       <span class="input-group-btn">
-        <button class="btn btn-default user-calendar-eraser-button"><i class="fa fa-eraser"></i></button>
+        <button class="btn btn-default user-calendar-eraser-button"><i class="fa fa-times"></i></button>
         <button class="btn btn-default user-calendar-help-button"><i class="fa fa-question"></i></button>
       </span>
     </div>
