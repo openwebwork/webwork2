@@ -68,12 +68,16 @@ sub body {
 	my $authz         = $r->authz;
 	my $root          = $ce->{webworkURLs}->{root};
 	my $courseName    = $urlpath->arg('courseID');  
-	my $setNameRegExp       = $r->param('setID');     # these are passed in the search args in this case
-	my $problemNumberRegExp = $r->param('problemID');
+	my $setNameRegExp       = $r->param('setID') || '*';     # these are passed in the search args in this case
+	my $problemNumberRegExp = $r->param('problemID') || '*';
 	my $user          = $r->param('user');
 	my $key           = $r->param('key');
-	my $studentUserRegExp   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
-	
+	my $studentUserRegExp;
+	if ( defined($r->param('studentUser'))) {
+	    $studentUserRegExp   = $r->param('studentUser') || '*';
+	} else {
+	    $studentUserRegExp = '*';
+	}
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
 
 	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
@@ -178,14 +182,14 @@ sub body {
 	    }
 
 	    next unless @setNames;
-
+	  
 	    foreach my $setName (@setNames) {
 	
 		my @problemNumbers;
 
 		# search for matching problems
 		my @allProblems = $db->listUserProblems($studentUser, $setName);
-
+		next unless @allProblems;
 		foreach my $problem (@allProblems) {
 
 		    foreach my $numberRange (@numberRanges) {
@@ -195,7 +199,7 @@ sub body {
 				push (@problemNumbers, $problem);
 			    }
 			    # in this case the number is a singlton
-			} elsif ($numberRange == $problem) {
+			} elsif ($numberRange eq '*' || $numberRange == $problem) {
 			    push (@problemNumbers, $problem);
 			}
 		    }
@@ -205,7 +209,7 @@ sub body {
 		    unless @problemNumbers;
 		
 		foreach my $problemNumber (@problemNumbers) {
-    
+		    
 		    my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
 		    
 		    print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
