@@ -124,6 +124,12 @@ ul.nav li a:hover {
 	background: #e1e1e1;	
 }
 
+#site-links h2 {
+    margin-top:0;
+    margin-bottom:0;
+    font-size:13px;
+}
+
 #site-navigation .info-box {
 	margin-top: 0.5em;
 }
@@ -635,7 +641,6 @@ div.NoFontMessage {
 /*General styles for table captions*/
 table caption{
 	font-weight: bold;
-	text-decoration: underline;
 }
 
 /*Styling the content that is found in the login page.*/

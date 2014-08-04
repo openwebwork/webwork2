@@ -694,7 +694,7 @@ sub links {
 	
 	print CGI::start_ul();
 	print CGI::start_li({class => "nav-header"});
-	print $r->maketext("Main Menu");
+	print CGI::h2($r->maketext("Main Menu"));
 	print CGI::end_li();
 	print CGI::start_li(); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});

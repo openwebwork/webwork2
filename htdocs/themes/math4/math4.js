@@ -19,9 +19,6 @@ $(function(){
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
     $('img[src$="question_mark.png"]').replaceWith('<i class="icon-question-sign" style="font-size:16px; margin-right:5px"></a>');
 
-    // Turn summaries into popovers
-    $('a.table-summary').popover().click(function (event) {event.preventDefault();});
-
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');
     
@@ -74,6 +71,7 @@ $(function(){
     if($('.problem_set_table th:contains("Test Score")').length > 0) {
 	$('.problem_set_table').addClass('small-table-text');
     }
+    $('.problem_set_table a.hardcopy-link').html('<i class="icon-download"/i>');
 
     $('#hardcopy-form').addClass('form-inline');
 
