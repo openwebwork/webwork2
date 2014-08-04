@@ -171,7 +171,7 @@ var ClasslistView = MainView.extend({
         modalView.render().open();
 	},	
 	filterUsers: function () {
-        this.userTable.filter(this.state.get("filter_text"));
+        this.userTable.filter(this.state.get("filter_text")).render();
         if(this.state.get("filter_text").length>0){
             this.state.set("page_number",0);
         }
