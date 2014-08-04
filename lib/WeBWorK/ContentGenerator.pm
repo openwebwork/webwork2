@@ -1130,12 +1130,14 @@ sub title {
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 
+	# If the urlpath name is the courseID, and if the course has
+	# a course title then display that instead. 
 	if (defined($urlpath->arg("courseID")) &&
 	    $urlpath->name eq $urlpath->arg("courseID") &&
 	    $db->settingExists('courseTitle')) {
 	    print $db->getSettingValue('courseTitle');
 	} else {
-	
+	    # just display the urlpath name
 	    #print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
 	    #print underscore2nbsp($r->urlpath->name);
 	    my $name = $urlpath->name;

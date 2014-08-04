@@ -820,7 +820,9 @@ sub do_add_course {
 	}
 	
 	push @{$courseOptions{PRINT_FILE_NAMES_FOR}}, map { $_->[0]->user_id } @users;
-	
+
+	# include any optional arguments, including a template course and the 
+	# course title and course institution. 
 	my %optional_arguments;
 	if ($add_templates_course ne "") {
 		$optional_arguments{templatesFrom} = $add_templates_course;
@@ -3208,6 +3210,9 @@ sub upgrade_notification {
     my $output;
 
     # Check if there is an updated version of webwork available
+    # this is done by using ls-remote to get the commit sha at the 
+    # head of the remote branch and looking to see if that sha is in
+    # the local copy
     chdir($ce->{webwork_dir});
     $output = `$git ls-remote $WeBWorKRemote`;
     my @lines = split /\n/, $output;
@@ -3228,6 +3233,11 @@ sub upgrade_notification {
     if ($commit ne '-1' && $output !~ /\s+$WeBWorKBranch\s*\n/) {    
 	# There are upgrades, we need to figure out if its a 
 	# new version or not
+	# This is done by using ls-remote to get the commit sha's
+	# at the heads of the remote tags.  
+	# Tags of the form WeBWorK-x.y are release tags.  If there is
+	# an sha there which isn't in the local branch then there must
+	# be a newer version. 
 	$output = `$git ls-remote --tags $WeBWorKRemote`;
 	@lines = split /\n/, $output;
 	my $newversion = 0;
@@ -3254,6 +3264,9 @@ sub upgrade_notification {
     } 
 
     # Check if there is an updated version of pg available
+    # this is done by using ls-remote to get the commit sha at the 
+    # head of the remote branch and looking to see if that sha is in
+    # the local copy
     chdir($ce->{pg_dir});
     $output = `$git ls-remote $PGRemote`;
     @lines = split /\n/, $output;
@@ -3273,6 +3286,11 @@ sub upgrade_notification {
     if ($commit ne '-1' && $output !~ /\s+$PGBranch\s*\n/) {    
 	# There are upgrades, we need to figure out if its a 
 	# new version or not
+	# This is done by using ls-remote to get the commit sha's
+	# at the heads of the remote tags.  
+	# Tags of the form WeBWorK-x.y are release tags.  If there is
+	# an sha there which isn't in the local branch then there must
+	# be a newer version. 
 	$output = `$git ls-remote --tags $PGRemote`;
 	@lines = split /\n/, $output;
 	my $newversion = 0;
@@ -3298,9 +3316,11 @@ sub upgrade_notification {
 	}
     } 
 
-    # Check to see if the OPL_update script has been run 
+    # Check to see if the OPL_update script has been run more recently
+    # than the last pull of the library. 
     chdir($ce->{problemLibrary}{root});
 
+    # this json file is (re)-created every time OPL-update is run. 
     my $jsonfile = $ce->{webworkDirs}{htdocs}.'/DATA/'.$ce->{problemLibrary}{tree};
     # If no json file then the OPL script needs to be run
     unless (-e $jsonfile) {
