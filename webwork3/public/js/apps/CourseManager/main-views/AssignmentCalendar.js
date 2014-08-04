@@ -31,7 +31,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		CalendarView.prototype.render.apply(this);
             this.update();
 
-
+            this.$(".users-container").addClass("hidden"); // hides the container lisiting the users for the Users' Calendar
     		this.$(".assign").popover({html: true});
 
 
@@ -214,6 +214,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     }
                 });
             })
+
             this.collection = new ProblemSetList([],{date_settings: this.problemSets.date_settings});
             // eliminate sets with dates that aren't the same as the rest of the sets
             _(commonSets).each(function(_setID){
@@ -230,6 +231,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     self.collection.add(new ProblemSet(attrs));
                 }
             });
+            console.log(commonSets);
             this.buildAssignmentDates();
             this.collection.on("change", function(model){
                         sent =  {};
@@ -243,6 +245,9 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     });
 
             this.render();
+            this.$(".users-container").removeClass("hidden").text(this.messageTemplate({type: "user_calendar_list", 
+                    opts: {users: this.selectedUsers}}));
+
         },
         showUserSetSavedMessage: function(options){
             this.eventDispatcher.trigger("add-message",{type: "success", 
