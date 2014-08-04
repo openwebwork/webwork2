@@ -61,6 +61,10 @@ var tabberOptions = {manualStartup:true};
 	<!--#output_JS-->
 <!--#endif-->
 
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<!--#if exists="math4-overrides.js"-->
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
+<!--#endif-->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 
@@ -317,12 +321,6 @@ var tabberOptions = {manualStartup:true};
 <div id="footer" role="contentinfo">
 	<!--#footer-->
 </div>
-
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
-<!--#if exists="math4-overrides.js"-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
-<!--#endif-->
-
 
 </body>
 </html>

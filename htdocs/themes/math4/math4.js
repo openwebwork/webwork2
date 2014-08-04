@@ -20,7 +20,7 @@ $(function(){
     $('img[src$="question_mark.png"]').replaceWith('<i class="icon-question-sign" style="font-size:16px; margin-right:5px"/>');
 
     // Turn summaries into popovers
-    $('a.table-summary').popover();
+    $('a.table-summary').popover().click(function (event) {event.preventDefault();});
 
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');
