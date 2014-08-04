@@ -73,6 +73,7 @@ var tabberOptions = {manualStartup:true};
 </head>
 
 <body>
+<!--<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>-->
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
 <!--#endif-->

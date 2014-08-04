@@ -16,7 +16,7 @@
  *  Light Blue #0088CC
  *  Dark Green #519951
  *  Light Green #88FF88
- *  Dark Red #FF9494
+ *  Dark Red #bf5454
  *  Light Red #CC7676
  *  Dark Yellow #BDB45E
  *  Light Yellow #EDE275
@@ -247,7 +247,7 @@ label.ResultsWithError {
 }
 
 td.ResultsWithError { 
-    background-color:#FF9494; 
+    background-color:#bf5454; 
     color: black;
 }
 
@@ -263,7 +263,7 @@ span.incorrect {
 
 input.incorrect { 
     color:inherit; 
-    background-color: #FF9494; 
+    background-color: #bf5454; 
 } 
 
 /* Other formatting for attempt results and the problem page */
