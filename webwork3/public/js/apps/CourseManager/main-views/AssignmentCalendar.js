@@ -153,8 +153,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         },
         fetchUserCalendars: function(_users){
             var self = this, userCalendarsFetched = 0;
-            this.selectedUsers = _users;
-            if(this.selectedUsers.length==0){
+            this.state.set("selected_users",_users);
+            if(this.state.get("selected_users").length==0){  // show the calendar of the global sets
                 this.collection = this.problemSets;
                 this.buildAssignmentDates();
                 this.render();
@@ -164,15 +164,15 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 this.userCalendars = {};
             }
 
-            _(this.selectedUsers).each(function(_userID){
+            _(this.state.get("selected_users")).each(function(_userID){
                 if(! _(self.userCalendars).has(_userID)){
                     (self.userCalendars[_userID] = new UserSetList([],{type: "sets", user: _userID}))
-                            .fetch({success: function() {self.fetchUserCalendars(self.selectedUsers)}});
+                            .fetch({success: function() {self.fetchUserCalendars(self.state.get("selected_users"))}});
                 } else {
                     userCalendarsFetched++;
                 }
             });
-            if(this.selectedUsers.length > 0 && userCalendarsFetched==this.selectedUsers.length){
+            if(this.state.get("selected_users").length > 0 && userCalendarsFetched==this.state.get("selected_users").length){
                 this.displayUserSets();
             }
         },
@@ -188,7 +188,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 , sent = {}
                 , received = {};
             // find all sets in common with all selected users
-            _(this.selectedUsers).each(function(_userID){
+            _(this.state.get("selected_users")).each(function(_userID){
                 commonSets = _(self.userCalendars[_userID].pluck("set_id")).intersection(commonSets);
                 self.userCalendars[_userID].off().on({
                     sync: function(model){
@@ -220,7 +220,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             _(commonSets).each(function(_setID){
                 var _dates =_.object(fields,["","","","",""]);
                 var tmp = [];
-                _(self.selectedUsers).each(function(_userID){
+                _(self.state.get("selected_users")).each(function(_userID){
                     var fieldDates = _(self.userCalendars[_userID].findWhere({set_id: _setID}).pick(fields)).values();
                     tmp.push(fieldDates);
                 });
@@ -228,10 +228,16 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 // if all of the dates are equal, then add this set to the collection.
                 if(_(tmp2).chain().map(function(arr) { return arr.length==1;}).every(_.identity).value()){
                     var attrs = _.extend({set_id: _setID},_.object(fields,_.zip.apply(_,tmp2)[0]));
-                    self.collection.add(new ProblemSet(attrs));
+                    var userSet = new ProblemSet(attrs);
+                    self.collection.add(userSet);
+                    console.log(_setID);
+                    console.log(attrs);
+                    var globalSet = self.problemSets.findWhere({set_id: _setID});
+                    globalSet.isGlobal = true;
+                    self.collection.add(globalSet);
+
                 }
             });
-            console.log(commonSets);
             this.buildAssignmentDates();
             this.collection.on("change", function(model){
                         sent =  {};
@@ -239,23 +245,23 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                         console.log("changing the collection");
                         console.log(model);
                         var _dates =model.pick("reduced_scoring_date","answer_date","open_date","due_date"); 
-                        _(self.selectedUsers).each(function(_userID){
+                        _(self.state.get("selected_users")).each(function(_userID){
                             self.userCalendars[_userID].findWhere({set_id: model.get("set_id")}).set(_dates).save();
                         })
                     });
 
             this.render();
             this.$(".users-container").removeClass("hidden").text(this.messageTemplate({type: "user_calendar_list", 
-                    opts: {users: this.selectedUsers}}));
+                    opts: {users: this.state.get("selected_users")}}));
 
         },
         showUserSetSavedMessage: function(options){
             this.eventDispatcher.trigger("add-message",{type: "success", 
                     short: this.messageTemplate({type:"set_saved",opts:{setname:options.set_id, 
-                        users: this.selectedUsers}}),
+                        users: this.state.get("selected_users")}}),
                     text: this.messageTemplate({type:"set_saved_details",opts:{setname: options.set_id,key: options.key,
                         oldValue: options.oldValue, newValue: options.newValue,
-                        users: this.selectedUsers }})});
+                        users: this.state.get("selected_users") }})});
         },
         showHideAssigns: function(model){
             // define the mapping between fields in the model and assignment classes. 
