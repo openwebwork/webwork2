@@ -384,10 +384,10 @@ sub body {
 	if (@problemNumbers) {
 		# UPDATE - ghe3
 		# This table now contains a summary, a caption, and scope variables for the columns.
-		print CGI::start_table({-class=>"problem_set_table"});
-		print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.","data-original-title"=>"Problems", "data-placement"=>"bottom"}, "Problems"));
-		print CGI::Tr({},
-
+	    print CGI::start_table({-class=>"problem_set_table", -summary=>$r->maketext("This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.")});
+	    print CGI::caption($r->maketext("Problems"));
+	    print CGI::Tr({},
+			      
 			CGI::th($r->maketext("Name")),
 			CGI::th($r->maketext("Attempts")),
 			CGI::th($r->maketext("Remaining")),
