@@ -120,14 +120,6 @@ put '/courses/:course_id/users/:user_id' => sub {
 	vars->{db}->putUser($user);
 	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing. 
 
-    # update the password
-
-    my $password;
-    if (defined(params->{new_password})){ #update existing user
-    	my $password->{password} = cryptPassword(params->{new_password});
-    	vars->{db}->putPassword($password);
-    }
-
     my $permission = vars->{db}->getPermissionLevel(params->{user_id});
 	
 	if(params->{permission} != $permission->{permission}){
@@ -141,6 +133,8 @@ put '/courses/:course_id/users/:user_id' => sub {
 	return $u;
 
 };
+
+
 ###
 #
 #  create a new user user_id in course *course_id*
@@ -171,6 +165,31 @@ del '/courses/:course_id/users/:user_id' => sub {
 	}
 
 };
+
+# set a new password for user :user_id in course :course_id
+
+post '/courses/:course_id/users/:user_id/password' => sub {
+	#
+	# if the user is not a professor, check that the current password is correct.
+	#
+	if(session->{permission} < 10 and session->{user} ne params->{user_id}){
+		send_error("You don't have the permission to change another password");
+	}
+
+	my $password = vars->{db}->getPassword(params->{user_id});
+	if(crypt(params->{old_password}, $password->password) eq $password->password){
+		debug "setting a new password.";
+    	$password->{password} = cryptPassword(params->{new_password});
+    	vars->{db}->putPassword($password);
+	} else {
+		debug "The old passwod was wrong.";
+		send_error("The password for user " . params->{user_id} . " is incorrect.",404);
+	}
+
+	return {message=>"success"};
+
+};
+
 
 ####
 #

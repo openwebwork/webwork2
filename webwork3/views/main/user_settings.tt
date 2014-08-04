@@ -4,9 +4,28 @@
 <tr><td class="header">User Name</td><td class="user-id"></td></tr>
 <tr><td class="header">Email</td><td><input type="text" class="form-control email"></td></tr>
 <tr><td></td><td class="col-md-4"><button class="btn btn-default change-email-button">Change Email</button></td></tr>
-<tr><td class="header">Password</td><td><input type="text" class="form-control password"></td></tr>
-<tr><td></td><td><button class="btn btn-default change-password-button">Change Password</button></td></tr>
+<tr><td class="header">Password</td><td>
+	<button class="btn btn-default change-password-button" data-hide-text="Hide Password">Change Password</button></td></tr>
+<tr class="password-row hidden"><td>Old Password</td><td><input type="password" class="form-control old-password"></td></tr>
+<tr class="password-row hidden"><td>New Password</td><td><input type="password" class="form-control new-password"></td></tr>
+<tr class="password-row hidden"><td>Confirm New Password</td><td><input type="password" class="form-control confirm-password"></td></tr>
+<tr class="password-row hidden"><td></td><td><button class="btn btn-primary submit-password-button">Submit New Password</button></td></tr>
 <tr><td>WeBWorK3 saves your history as you navigate the different views/pages.  You may need to reset this if odd behavior occurs. </td><td><button class="btn btn-default reset-history-button">Reset History</button></td></tr>
 </tbody>
 </table>
+</script>
+
+<script type="text/template" id="user-settings-help-template">
+	<p>You can change the email and password here.  In addition, WeBWorK stores your history in a file stored on your
+	computer.  You can clear this by clicking the "Clear History" button. </p>
+</script>
+
+<script type="text/template" id="user-settings-messages-template">
+<%
+var messages = {
+    password_saved: function(opt){return "The password for user " + opt.user_id + "  has been updated.";},
+}
+print(messages[type](typeof(opts)=="undefined"?{}:opts))
+%>
+
 </script>

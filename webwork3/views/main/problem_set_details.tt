@@ -194,11 +194,11 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 
 <script type="text/template" id="problem-set-details-help-template">
 <h4>Problem Set Properties Help</h4>
-              <ul>
-                <li>The basic properties (open, due and answer dates) as well as visibility and reduced credit.</li>
-                <li>To change any of the dates, click on the date and select (or type) in a new one.</li>
-                <li>To change the time of the open, due or answer dates, click on the clock and type in a new time.</li>
-              </ul>
+  <ul>
+    <li>The basic properties (open, due and answer dates) as well as visibility and reduced credit.</li>
+    <li>To change any of the dates, click on the date and select (or type) in a new one.</li>
+    <li>To change the time of the open, due or answer dates, click on the clock and type in a new time.</li>
+  </ul>
 </script>
 
 <script type="text/template" id="problem-set-view-help-template">
