@@ -17,7 +17,7 @@
  *  Dark Green #519951
  *  Light Green #88FF88
  *  Dark Red #bf5454
- *  Light Red #CC7676
+ *  Light Red #D69191
  *  Dark Yellow #BDB45E
  *  Light Yellow #EDE275
  */
@@ -33,6 +33,11 @@
  */
 
 /* Color for links and link hover */
+.btn:focus,
+a:focus {
+    outline-color:#aaaa00;
+}
+
 a {
   color: #003388;
 }
@@ -237,12 +242,12 @@ input.correct	{
 
 /* Colors for "red" messages */
 div.ResultsWithError { 
-    color: #CC7676; 
+    color: #D69191; 
     background-color: inherit; 
 } 
 
 label.ResultsWithError { 
-    color: #CC7676; 
+    color: #D69191; 
     background-color: inherit; 
 }
 
@@ -252,12 +257,12 @@ td.ResultsWithError {
 }
 
 span.ResultsWithError { 
-    color: #CC7676; 
+    color: #D69191; 
     background-color: inherit; 
 } 
 
 span.incorrect { 
-    color: #CC7676; 
+    color: #D69191; 
     background-color: inherit; 
 }
 
