@@ -45,15 +45,16 @@ sub initialize {
 	my $setName = $urlpath->arg("setID");
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
-	$self->{displayMode}  = $r->param('displayMode') || $r->ce->{pg}->{options}->{displayMode};
 	
 
 	my $user            = $db->getUser($userName); # checked
 	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
 	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
-	
+
 	die "user $user (real user) not found."  unless $user;
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
+
+	$self->{displayMode}  = $user->displayMode ? $user->displayMode :  $r->ce->{pg}->{options}->{displayMode};
 
 	# FIXME: some day it would be nice to take out this code and consolidate the two checks
 	
@@ -302,8 +303,6 @@ sub info {
 	#print CGI::end_div();
 	return "";
 }
-
-sub options { shift->optionsMacro }
 
 sub body {
 	my ($self) = @_;

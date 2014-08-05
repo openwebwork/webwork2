@@ -79,6 +79,11 @@ input[type="checkbox"] {
 	vertical-align: center;
 }
 
+.webwork_logo a,
+.maa_logo a {
+    display:block;
+}
+
 #masthead a {
 	color: white;
 }

@@ -1004,7 +1004,7 @@ sub pre_header_initialize {
         # [This section lifted from Problem.pm] ##############################
 
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode      = $r->param("displayMode") || 
+	my $displayMode      = $User->displayMode || 
 		$ce->{pg}->{options}->{displayMode};
 	my $redisplay        = $r->param("redisplay");
 	my $submitAnswers    = $r->param("submitAnswers");
@@ -1040,8 +1040,8 @@ sub pre_header_initialize {
 
 	# what does the user want to do?
 	my %want = 
-	    (showOldAnswers     => $r->param("showOldAnswers") || 
-				   $ce->{pg}->{options}->{showOldAnswers},
+	    (showOldAnswers     => $User->showOldAnswers ne '' ?
+	     $User->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers},
 	     showCorrectAnswers => ($r->param("showCorrectAnswers") || 
  	                       	   $ce->{pg}->{options}->{showCorrectAnswers}) &&
                                    ($submitAnswers || $checkAnswers),
@@ -1264,27 +1264,6 @@ sub nav {
 	my $tail = "";
 	
 	return $self->navMacro($args, $tail, @links);
-}
-
-sub options {
-	my ($self) = @_;
-	#warn "doing options in GatewayQuiz";
-	
-	# don't show options if we don't have anything to show
-	return if $self->{invalidSet} or $self->{invalidProblem};
-	return unless $self->{isOpen};
-	
-	my $displayMode = $self->{displayMode};
-	my %can = %{ $self->{can} };
-	
-	my @options_to_show = "displayMode";
-	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
-	push @options_to_show, "showHints" if $can{showHints};
-	push @options_to_show, "showSolutions" if $can{showSolutions};
-	
-	return $self->optionsMacro(
-		options_to_show => \@options_to_show,
-	);
 }
 
 sub body {

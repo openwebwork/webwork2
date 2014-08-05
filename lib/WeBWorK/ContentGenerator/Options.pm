@@ -35,6 +35,7 @@ use WeBWorK::Localize;
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
+	my $ce = $r->ce;
 	my $db = $r->db;
 	my $authz = $r->authz;
 	
@@ -173,8 +174,71 @@ sub body {
 			unless $changeOptions and $newA; # avoid double message
 	}
 	
+
+	
+	print CGI::h2($r->maketext("Change Display Options"));
+
+	if ($changeOptions) {
+	    $EUser->displayMode($r->param('displayMode'));
+	    $EUser->showOldAnswers($r->param('showOldAnswers'));
+	    $EUser->useMathView($r->param('useMathView'));
+	    
+	    eval { $db->putUser($EUser) };
+	    if ($@) {
+		print CGI::div({class=>"ResultsWithError"},
+			       CGI::p($r->maketext("Couldn't save your display options: [_1]",$@)),
+		    );
+	    } else {
+		print CGI::div({class=>"ResultsWithoutError"},
+			       CGI::p($r->maketext("Your display options have been saved.")),
+		    );
+	    }
+	}
+
+	my $result = '';
+	my $curr_displayMode = $EUser->displayMode || $ce->{pg}->{options}->{displayMode};
+	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+	my @active_modes = grep { exists $display_modes{$_} } @{$ce->{pg}->{displayModes}};
+
+	if (@active_modes > 1) {
+	    $result .= $r->maketext("View equations as").":";
+	    $result .= CGI::br();
+	    $result .= CGI::radio_group(
+		-name => "displayMode",
+		-values => \@active_modes,
+		-default => $curr_displayMode,
+		-linebreak=>'true',
+		);
+	    $result .= CGI::br();
+	}
+
+	my $curr_showOldAnswers = $EUser->showOldAnswers ne '' ? $EUser->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers};
+	$result .= $r->maketext("Show saved answers?");
+	$result .= CGI::br();
+	$result .= CGI::radio_group(
+	    -name => "showOldAnswers",
+	    -values => [1,0],
+	    -default => $curr_showOldAnswers,
+	    -labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+	    );
+	$result .= CGI::br();
+	
+	# Note, 0 is a legal value, so we can't use || in setting this
+	my $curr_useMathView = $EUser->useMathView ne '' ?
+	    $EUser->useMathView : $ce->{pg}->{options}->{useMathView};
+	$result .= $r->maketext("Use Equation Editor?");
+	$result .= CGI::br();
+	$result .= CGI::radio_group(
+	    -name => "useMathView",
+	    -values => [1,0],
+	    -default => $curr_useMathView,
+	    -labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+	    );
+	$result .= CGI::br();
+	
+	print CGI::p($result);
 	print CGI::br();
-	print CGI::submit("changeOptions", $r->maketext("Change User Options"));
+	print CGI::submit("changeOptions", $r->maketext("Change User Settings"));
 	print CGI::end_form();
 	
 	return "";

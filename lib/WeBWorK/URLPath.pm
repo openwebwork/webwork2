@@ -310,7 +310,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Logout',
 	},
 	options => {
-		name    => 'Password/Email',
+		name    => 'User Settings',
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^options/|,

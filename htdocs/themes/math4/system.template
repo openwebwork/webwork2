@@ -83,7 +83,7 @@ var tabberOptions = {manualStartup:true};
 <!-- Header -->
 <div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
-		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to courses page" />WeBWorK</a>
 	</div>
 	<div class="span4 maa_logo">
 		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
