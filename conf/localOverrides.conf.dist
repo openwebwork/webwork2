@@ -72,6 +72,11 @@ $language = "en";
 # Default screen header files
 ################################################################################
 
+# This is the site_info file.  You should consider changing this to point
+# to a file which is not tracked by git
+$webworkFiles{site_info} = "$webworkDirs{htdocs}/site_info.txt";
+
+
 # The setHeader preceeds each set in hardcopy output. It is a PG file.
 # This is the default file which is used if a specific files is not selected
 
