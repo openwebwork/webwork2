@@ -30,8 +30,8 @@ define(['Backbone', 'underscore', 'config', 'Library'], function(Backbone, _, co
             this.on('syncing', function(value){self.syncing = value});
         },
     
+
         fetch: function(){
-    
     
             var self = this;
     
@@ -51,12 +51,40 @@ define(['Backbone', 'underscore', 'config', 'Library'], function(Backbone, _, co
     
                     var newLibs = new Array();
     
-                    //should be either an object of a comma separated list
+                    //should be either an object or a comma-separated list
                     var libraries = _.isArray(response.result_data)?response.result_data:_.isObject(response.result_data)?_.keys(response.result_data):response.result_data.split(",")
     
                     _(libraries).each(function(lib) {
                         newLibs.push({name:lib, path: self.url +"/"+lib})
                     });
+                    newLibs.sort(function(a, b) {
+			// Based on sortByName in Utils.pm, except that it
+			// distinguishes x1b from x01b, etc.
+			var str1 = a.name;
+			var str2 = b.name;
+			var s1alph, s1num, s2alph, s2num;
+
+			while (str1 != '' && str2 != '') {
+			    str1 = str1.replace(/^(\D*)(\d*)/,
+				    function(match, $1, $2) {
+				s1alph = $1;
+				s1num = $2;
+				return '';
+			    });
+			    str2 = str2.replace(/^(\D*)(\d*)/,
+				    function(match, $1, $2) {
+				s2alph = $1;
+				s2num = $2;
+				return '';
+			    });
+			    if (s1alph != s2alph)
+				return s1alph < s2alph ? -1 : 1;
+			    if (s1num != s2num)
+				return s1num - s2num
+				    || s1num.length - s2num.length;
+			}
+			return str1 != '' ? 1 : str2 != '' ? -1 : 0;
+		    });
                     self.reset(newLibs);
     
                    // self.trigger("alert", response.server_response);//self.trigger('alert', {message: "string", type: "error, success, warning"});
