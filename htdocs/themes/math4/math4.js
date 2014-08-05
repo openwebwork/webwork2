@@ -1,4 +1,6 @@
 $(function(){
+    // Focus ona  results with error if one is around and focussable. 
+    $('.ResultsWithError').first().focus();
 
     // Turn submit inputs into buttons
     $('input:submit').addClass('btn btn-primary');

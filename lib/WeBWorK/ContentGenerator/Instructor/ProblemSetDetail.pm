@@ -1682,11 +1682,6 @@ sub checkFile ($) {
 	return $r->maketext("This source file is not a plain file!");
 }
 
-# don't show view options -- we provide display mode controls for headers/problems separately
-sub options {
-    return "";
-}
-
 #Make sure restrictor sets exist
 sub check_sets {
 	my ($self,$db,$sets_string) = @_;

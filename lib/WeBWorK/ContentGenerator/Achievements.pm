@@ -303,7 +303,7 @@ sub body {
 			$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 			}
 	
-			print CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
+			print CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'});
 			print CGI::start_div({class=>'cheevotextbox'});
 			print CGI::h3($achievement->name);
 			print CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");

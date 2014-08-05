@@ -403,7 +403,7 @@ sub attemptResults {
 	$self->{incorrect_ids} = [@incorrect_ids] if @incorrect_ids;
 
 	return
-    CGI::h2($r->maketext("Attempt Results")) .
+    CGI::h3($r->maketext("Attempt Results")) .
 		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
 		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : '&nbsp;');
 }

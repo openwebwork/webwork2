@@ -14,8 +14,13 @@
  */
  
 /* Bootstrap overrides */
-.btn:focus,
 a:focus {
+    outline-style:solid;
+    outline-color:#aaaa00;
+    outline-width:1px;
+}
+
+.btn:focus {
     outline-style:solid;
     outline-color:#aaaa00;
     outline-width:2px;
@@ -29,16 +34,18 @@ input[type="checkbox"] {
     margin-right:.25em;
 }
 
-/* Banner */
-#masthead {
-	background-color: #038;
-	margin: 0;
-	padding: 0;
-	padding: 5px;
+legend {
+    margin-bottom: 5px;
+    font-size:18px;
 }
 
 .container-fluid {
 	padding: 0.5em;
+}
+
+/* Basic elements */
+.required-field {
+    color:red;
 }
 
 .sr-only {
@@ -72,7 +79,14 @@ input[type="checkbox"] {
  border: 0 none;
 }
 
-/* Basic elements */
+/* Banner */
+#masthead {
+	background-color: #038;
+	margin: 0;
+	padding: 0;
+	padding: 5px;
+}
+
 .webwork_logo {
 	background-color: #1048ae;
 	font-size: 1.6em;
@@ -291,6 +305,10 @@ table.classlist-table .tbody {
 
 .problem_set_table td a {
     font-weight:bold;
+}
+
+.problem_set_table .hardcopy-link {
+    font-size:16px;
 }
 
 /* Info Box */

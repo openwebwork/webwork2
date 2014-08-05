@@ -1553,8 +1553,6 @@ This function has been depreciated
 
 =cut
 
-sub options { shift->optionsMacro }
-
 sub optionsMacro {
     return '';
 }

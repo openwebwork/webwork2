@@ -679,12 +679,13 @@ sub filter_form {
 			WeBWorK::CGI_labeled_input(
 				-type=>"text",
 				-id=>"filter_text",
-				-label_text=>$r->maketext("Match on what? (separate multiple IDs with commas)").": ",
+				-label_text=>$r->maketext("Match on what? (separate multiple IDs with commas)").CGI::span({class=>"required-field"},'*').": ",
 				-input_attr=>{
 					-name => "action.filter.set_ids",
 					-value => $actionParams{"action.filter.set_ids"}->[0] || "",,
 					-width => "50",
 					-onchange => $onChange,
+					'aria-required' => 'true',
 				}
 			), CGI::span({-id=>"filter_err_msg", -class=>"ResultsWithError"}, $r->maketext("Please enter in a value to match in the filter field.")),
 			),
@@ -1158,12 +1159,13 @@ sub create_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"create_text",
-			-label_text=>$r->maketext("Name the new set").": ",
+			-label_text=>$r->maketext("Name the new set").CGI::span({class=>"required-field"},'*').": ",
 			-input_attr=>{
 				-name => "action.create.name",
 				-value => $actionParams{"action.create.name"}->[0] || "",
 				-width => "50",
 				-onchange => $onChange,
+				-'aria-required'=>'true',
 			}
 		),
 		CGI::br(),

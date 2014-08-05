@@ -338,16 +338,16 @@ sub getTableParams {
 #form for edition achievements
 sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
-
+	my $r = $self->r;
 	return join("",
-		"Edit ",
+		$r->maketext("Edit "),
 		CGI::popup_menu(
 			-name => "action.edit.scope",
 			-values => [qw(all selected)],
 			-default => $actionParams{"action.edit.scope"}->[0] || "selected",
 			-labels => {
-				all => "all achievements",
-				selected => "selected achievements",
+				all => $r->maketext("all achievements"),
+				selected => $r->maketext("selected achievements"),
 			},
 			-onchange => $onChange,
 		),
@@ -375,27 +375,28 @@ sub edit_handler {
 #form for assigning achievemetns to users
 sub assign_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
 
 	return join("",
-		"Assign ",
+		    $r->maketext("Assign "),
 		CGI::popup_menu(
 			-name => "action.assign.scope",
 			-values => [qw(all selected)],
 			-default => $actionParams{"action.assign.scope"}->[0] || "selected",
 			-labels => {
-				all => "all achievements",
-				selected => "selected achievements",
+				all => $r->maketext("all achievements"),
+				selected => $r->maketext("selected achievements"),
 			},
 			-onchange => $onChange,
 		),
-		" to all users, create global data, and ",
+		    $r->maketext(" to all users, create global data, and "),
    		CGI::popup_menu(
 			-name => "action.assign.overwrite",
 			-values => [qw(everything new_only)],
 			-default => $actionParams{"action.assign.overwrite"}->[0] || "new_only",
 			-labels => {
-				everything => "overwrite all data",
-				new_only => "preserve existing data",
+				everything => $r->maketext("overwrite all data"),
+				new_only => $r->maketext("preserve existing data"),
 			},
 			-onchange => $onChange,
 		),
@@ -472,17 +473,18 @@ sub assign_handler {
 #form for scoring
 sub score_form {
 	my ($self, $onChange, %actionParams) = @_;
+	my $r = $self->r;
 
 	return join ("",
-		"Score ",
+		$r->maketext("Score "),
 		CGI::popup_menu(
 			-name => "action.score.scope",
 			-values => [qw(none all selected)],
 			-default => $actionParams{"action.score.scope"}->[0] || "none",
 			-labels => {
-				none => "no achievements.",
-				all => "all achievements.",
-				selected => "selected achievements.",
+				none => $r->maketext("no achievements."),
+				all => $r->maketext("all achievements."),
+				selected => $r->maketext("selected achievements."),
 			},
 			-onchange => $onChange,
 		),
@@ -594,21 +596,21 @@ sub score_handler {
 #form for delete action
 sub delete_form {
 	my ($self, $onChange, %actionParams) = @_;
-
+	my $r = $self->r;
 	return join("",
 		CGI::div({class=>"ResultsWithError"}, 
-			"Delete ",
+			$r->maketext("Delete "),
 			CGI::popup_menu(
 				-name => "action.delete.scope",
 				-values => [qw(none selected)],
 				-default => "none", #  don't make it easy to delete # $actionParams{"action.delete.scope"}->[0] || "none",
 				-labels => {
-					none => "no achievements.",
-					selected => "selected achievements.",
+					none => $r->maketext("no achievements."),
+					selected => $r->maketext("selected achievements."),
 				},
 				-onchange => $onChange,
 			),
-			CGI::em(" Deletion destroys all achievement-related data and is not undoable!"),
+			CGI::em($r->maketext(" Deletion destroys all achievement-related data and is not undoable!")),
 		)
 	);
 }
@@ -656,7 +658,7 @@ sub create_form {
 
 	my $r      = $self->r;
 	
-	return "Create a new achievement with ID: ", 
+	return $r->maketext("Create a new achievement with ID").CGI::span({class=>"required-field"},'*').': '.
 		CGI::textfield(
 			-name => "action.create.id",
 			-value => $actionParams{"action.create.name"}->[0] || "",
@@ -726,22 +728,22 @@ sub import_form {
 	my $user = $r->param('user');
 
 	return join(" ",
-		"Import achievements from ",
+		$r->maketext("Import achievements from "),
 		CGI::popup_menu(
 			-name => "action.import.source",
 			-values => [ "", $self->getAxpList() ],
-			-labels => { "" => "the following file" },
+			-labels => { "" => $r->maketext("the following file") },
 			-default => $actionParams{"action.import.source"}->[0] || "",
 		        -onchange => $onChange,
 		),
-		    "assigning the achievements to " .
+		    $r->maketext("assigning the achievements to ") .
 		    CGI::popup_menu(
 			-name => "action.import.assign",
 			-value => [qw(none all)],
 			-default => $actionParams{"action.import.assign"}->[0] || "none",
 			-labels => {
-			    all => "all current users.",
-			    none => "no users.",
+			    all => $r->maketext("all current users."),
+			    none => $r->maketext("no users."),
 			},
 			-onchange => $onChange,
 		   ) );
@@ -817,16 +819,16 @@ sub import_handler {
 #form for exporting 
 sub export_form {
 	my ($self, $onChange, %actionParams) = @_;
-
+	my $r = $self->r;
 	return join("",
-		"Export ",
+		$r->maketext("Export "),
 		CGI::popup_menu(
 			-name => "action.export.scope",
 			-values => [qw(all selected)],
 			-default => $actionParams{"action.export.scope"}->[0] || "selected",
 			-labels => {
-				all => "all achievements",
-				selected => "selected achievements",
+			    all => $r->maketext("all achievements"),
+			    selected => $r->maketext("selected achievements"),
 			},
 			-onchange => $onChange,
 		),
@@ -857,7 +859,7 @@ sub export_handler {
 #form and hanlder for leaving the export page
 sub cancelExport_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Abandon export";
+	return $self->r->maketext("Abandon export");
 }
 
 sub cancelExport_handler {
@@ -872,7 +874,7 @@ sub cancelExport_handler {
 #handler and form for actually exporting
 sub saveExport_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Export selected achievements.";
+	return $self->r->maketext("Export selected achievements.");
 }
 
 sub saveExport_handler {
@@ -929,7 +931,7 @@ sub saveExport_handler {
 #form and handler for cancelling edits
 sub cancelEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Abandon changes";
+	return $self->r->maketext("Abandon changes");
 }
 
 sub cancelEdit_handler {
@@ -944,7 +946,7 @@ sub cancelEdit_handler {
 #form and handler for saving edits
 sub saveEdit_form {
 	my ($self, $onChange, %actionParams) = @_;
-	return "Save changes";
+	return $self->r->maketext("Save changes");
 }
 
 sub saveEdit_handler {
@@ -1188,7 +1190,7 @@ sub recordEditHTML {
 
 	    push @tableCells, CGI::a({href=>$userEditorURL}, "$users/$totalUsers");
 
-	    push @tableCells, CGI::a({href=>$editorURL}, "Edit Evaluator");
+	    push @tableCells, CGI::a({href=>$editorURL}, $r->maketext("Edit Evaluator"));
 
 	}
 
@@ -1228,22 +1230,28 @@ sub printTableHTML {
 	#hardcoded headings.  making htis more modular would be good
 	if ($exportMode) {
 	    @tableHeadings = ('',
-			      "Achievement ID",
-			      "Name");
+			      $r->maketext("Achievement ID"),
+			      $r->maketext("Name"));
 	} elsif ($editMode) {
-	    @tableHeadings = ("Icon",
-			      "Achievement ID <br> Name <br> Category",
-			      "Enabled <br> Points <br> Counter",
-			      "Description <br> Evaluator File <br> Icon File"
+	    @tableHeadings = ($r->maketext("Icon"),
+			      $r->maketext("Achievement ID").CGI::br().
+			      $r->maketext("Name").CGI::br().
+			      $r->maketext("Category"),
+			      $r->maketext("Enabled").CGI::br().
+			      $r->maketext("Points").CGI::br().
+			      $r->maketext("Counter"),
+			      $r->maketext("Description").CGI::br().
+			      $r->maketext("Evaluator File").CGI::br().
+			      $r->maketext("Icon File")
 		);
 	} else {
 	    @tableHeadings = ($selectBox,
-			      "Enabled",
-			      "Achievement ID",
-			      "Category",
-			      "Name",
-			      "Edit <br> Users",
-			      "Edit <br> Evaluator"
+			      $r->maketext("Enabled"),
+			      $r->maketext("Achievement ID"),
+			      $r->maketext("Category"),
+			      $r->maketext("Name"),
+			      $r->maketext("Edit").CGI::br().$r->maketext("Users"),
+			      $r->maketext("Edit").CGI::br().$r->maketext("Evaluator")
 		);
 	}
 	
