@@ -1235,7 +1235,6 @@ sub head {
         my ($self) = @_;
         my $ce = $self->r->ce;
         my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-
         return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
 }
 

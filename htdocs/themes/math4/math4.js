@@ -48,7 +48,7 @@ $(function(){
     }
 
     // if no fish eye then collapse site-navigation 
-    if(!$('#site-links').html().match(/[^\s]/)) {
+    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
 	$('#site-navigation').removeClass('span2');
 	$('#content').removeClass('span10').addClass('span11');
 	$('#toggle-sidebar').addClass('hidden');
@@ -105,7 +105,7 @@ $(function(){
 
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
-    $('#problem-grader-form input:button').addClass('btn btn-small btn-info');
+    $('#problem-grader-form input:button').addClass('btn btn-small');
     $('#problem-grader-form td').find('p:last').removeClass('essay-answer graded-answer');
 
     //CourseConfiguration

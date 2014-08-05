@@ -25,6 +25,7 @@ API.
 
 use strict;
 use warnings;
+use WeBWorK::Debug;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
 use WeBWorK::Utils::RestrictedClosureClass;
@@ -77,6 +78,8 @@ sub defineProblemEnvir {
 	) = @_;
 	
 	my %envir;
+
+	debug("in WEBWORK::PG");
 	
 	# ----------------------------------------------------------------------
 	
@@ -87,8 +90,12 @@ sub defineProblemEnvir {
 	# Vital state information
 	# ADDED: displayModeFailover, displayHintsQ, displaySolutionsQ,
 	#        refreshMath2img, texDisposition
+
+	# pstaab: changed the next line from
 	
-	$envir{psvn}                = $set->psvn;
+	#$envir{psvn}                = $set->psvn;
+	# to
+	$envir{psvn}                = $psvn;
 	$envir{psvnNumber}          = "psvnNumber-is-deprecated-Please-use-psvn-Instead"; #FIXME
 	$envir{probNum}             = $problem->problem_id;
 	$envir{questionNumber}      = $envir{probNum};
@@ -162,8 +169,9 @@ sub defineProblemEnvir {
 	$envir{problemValue}        = $problem->value;
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $ce->{courseName};
-	$envir{enable_reduced_scoring} = $set->enable_reduced_scoring;
+	$envir{enable_reduced_scoring} = $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
 	$envir{language}            = $ce->{language};
+	$envir{reducedScoringDate} = $set->reduced_scoring_date;
 	
 	# Student Information
 	# ADDED: studentID
@@ -195,6 +203,7 @@ sub defineProblemEnvir {
 	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
 	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
 	$envir{externalCheckUrl}     = $ce->{externalPrograms}->{checkurl};
+	$envir{externalCurlCommand}          = $ce->{externalPrograms}->{curlCommand};
 	# Directories and URLs
 	# REMOVED: courseName
 	# ADDED: dvipngTempDir

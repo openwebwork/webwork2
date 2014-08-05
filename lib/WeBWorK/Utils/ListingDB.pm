@@ -355,7 +355,7 @@ Here, we search on all known fields out of r
 
 sub getDBListings {
 	my $r = shift;
-	my $amcounter = shift;
+	my $amcounter = shift;  # 0-1 if I am a counter.
 	my $ce = $r->ce;
 	my %tables = getTables($ce);
 	my $subj = $r->param('library_subjects') || "";

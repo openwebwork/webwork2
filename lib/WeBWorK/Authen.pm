@@ -379,7 +379,7 @@ sub get_credentials {
 			$self->{password} = $r->param("passwd");
 			$self->{login_type} = "normal";
 			$self->{credential_source} = "params";
-			debug("params user '", $self->{user_id}, "' password '", $self->{password}, "' key '", $self->{session_key}, "'");
+			debug("params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
 			return 1;
 		} elsif (defined $cookieKey) {
 			$self->{user_id} = $cookieUser;
@@ -408,7 +408,7 @@ sub get_credentials {
 		$self->{password} = $r->param("passwd");
 		$self->{login_type} = "normal";
 		$self->{credential_source} = "params";
-		debug("params user '", $self->{user_id}, "' password '", $self->{password}, "' key '", $self->{session_key}, "'");
+		debug("params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
 		return 1;
 	}
 	
@@ -610,7 +610,7 @@ sub set_params {
 	$r->param("key", $self->{session_key});
 	$r->param("passwd", "");
 	
-	debug("params user='", $r->param("user"), "' key='", $r->param("key"), "' passwd='", $r->param("passwd"), "'");
+	debug("params user='", $r->param("user"), "' key='", $r->param("key"), "'");
 }
 
 ################################################################################
