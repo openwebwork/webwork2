@@ -83,10 +83,10 @@ var tabberOptions = {manualStartup:true};
 <!-- Header -->
 <div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
-		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to courses page" />WeBWorK</a>
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="to courses page" />WeBWorK</a>
 	</div>
 	<div class="span4 maa_logo">
-		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="to MAA (Mathematical Association of America) main web site" /></a>
 	</div>
 	<div id="loginstatus" class="offset3 span3">
 		<!--#loginstatus-->
@@ -121,11 +121,11 @@ var tabberOptions = {manualStartup:true};
 	<div id="breadcrumb-row" class="row-fluid">
 	  <div class="span12">
 	  <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
-	  <span id="toggle-sidebar-icon" class="icon icon-chevron-left" data-alt="toggle sidebar"></span></a>
+	  <span id="toggle-sidebar-icon" class="icon icon-chevron-left" data-alt="close sidebar"></span></a>
 
 	    <div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
 	      <ul class="breadcrumb">
-		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+		<!--#path style="bootstrap" text="<li><span aria-hidden='true' class='divider'>/</span></li>"-->
 	      </ul>
 	    </div>
 	</div></div>

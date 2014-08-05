@@ -901,7 +901,7 @@ sub links {
 			
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li({class=>'divider'},"");
+				print CGI::li({class=>'divider', 'aria-hidden'=>'true'},"");
 				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
 	

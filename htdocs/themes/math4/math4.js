@@ -32,13 +32,20 @@ $(function(){
 
     // Add a button to make the sidebar more dynamic for small screens
     $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
-	    event.preventDefault();
-	    $('#site-navigation').toggleClass('hidden');
-	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
-		.toggleClass('icon-chevron-right');
-	    $('#site-navigation').toggleClass('span2');
-	    $('#content').toggleClass('span10').toggleClass('span11');
-	});
+	event.preventDefault();
+	var toggleIcon = $('#toggle-sidebar-icon');
+	$('#site-navigation').toggleClass('hidden');
+	toggleIcon.toggleClass('icon-chevron-left')
+	    .toggleClass('icon-chevron-right');
+	$('#site-navigation').toggleClass('span2');
+	$('#content').toggleClass('span10').toggleClass('span11');
+	if (toggleIcon.attr('data-alt') == 'close sidebar') {
+	    toggleIcon.attr('data-alt','open sidebar');
+	} else {
+	    toggleIcon.attr('data-alt','close sidebar');
+	}
+	   
+    });
 
     if($(window).width() < 480) {
 	$('#toggle-sidebar').click();
