@@ -16,15 +16,15 @@ $(function(){
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
 
     // replace pencil gifs by something prettier
-    $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
-    $('img[src$="question_mark.png"]').replaceWith('<i class="icon-question-sign" style="font-size:16px; margin-right:5px"></a>');
+    $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <span class='icon icon-pencil' data-alt='edit'></span>")); });
+    $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
 
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');
     
     // Changes links in masthead
     $('#loginstatus a').addClass('btn btn-small');
-    $('#loginstatus a').append(' <i class="icon-signout"></i>');
+    $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>');
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
@@ -71,7 +71,7 @@ $(function(){
     if($('.problem_set_table th:contains("Test Score")').length > 0) {
 	$('.problem_set_table').addClass('small-table-text');
     }
-    $('.problem_set_table a.hardcopy-link').html('<i class="icon-download"/i>');
+    $('.problem_set_table a.hardcopy-link').html('<span class="icon icon-download" data-alt="download hardcopy"></span>');
 
     $('#hardcopy-form').addClass('form-inline');
 
@@ -214,5 +214,32 @@ $(function(){
 	    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
 	});
     }
+
+    /* Glyphicon accessibility */
+    jQuery('span.icon').each(function() {
+        /*
+	 * The glyphicon needs to be formatted as follows.
+	 * <span class="icon icon-close" data-alt="close"></span>
+	 *
+	 * The script takes the contents of the data-alt attribute and presents it as alternative content for screen reader users.
+	 *
+	 */
+        $(this).attr('aria-hidden', 'true'); // hide the pseudo-element from screen readers
+        var alt = jQuery(this).data('alt') // get the data-alt attribute
+        var textSize = jQuery(this).css('font-size'); // get the font size of the glyphicon
+        // if the data-alt attribute exists, write the contents of the attributwe
+        if (typeof alt !== "undefined") {
+            // if the glyphicon font is loaded, write the contents of the data-alt to off-screen screen reader only text
+            // and size the "hidden" text to be the same size as the glyphicon
+            if ($(this).css('font-family') == 'FontAwesome') {
+                $(this).after('<span style="font-size:'+ textSize +'" class="sr-only-glyphicon">' + alt + '</span>');
+
+            } else { // if the glyphicon font is NOT loaded, write the contents of the data-alt to on-screen text because the font is not displaying correctly
+                $(this).after('<span>' + alt + '</span>');
+                $(this).addClass('sr-only'); // make the failing glyphicon hidden off screen so it will not confuse users
+            }
+        }
+    });
+    
 });    
 
