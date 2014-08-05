@@ -356,7 +356,7 @@ sub attemptResults {
 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                  $self->nbsp($correctAnswerPreview)) : "";
-		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},$self->nbsp($resultString))  : "";
+		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},CGI::a({href=>"javascript:document.getElementById(\"$name\").focus()"},$self->nbsp($resultString)))  : "";
 		#I'm pretty sure this message shouldn't have the message class
 		#$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
 		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
@@ -403,6 +403,7 @@ sub attemptResults {
 	$self->{incorrect_ids} = [@incorrect_ids] if @incorrect_ids;
 
 	return
+    CGI::h2($r->maketext("Attempt Results")) .
 		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
 		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : '&nbsp;');
 }
