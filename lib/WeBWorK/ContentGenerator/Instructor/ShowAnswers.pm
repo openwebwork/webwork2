@@ -69,7 +69,7 @@ sub body {
 	my $root          = $ce->{webworkURLs}->{root};
 	my $courseName    = $urlpath->arg('courseID');  
 	my $setNameRegExp       = $r->param('setID') || '*';     # these are passed in the search args in this case
-	my $problemNumberRegExp = $r->param('problemID') || '*';
+	my $problemNumberRegExp = $r->param('problemID') || '*'; # blank entries count as *'s 
 	my $user          = $r->param('user');
 	my $key           = $r->param('key');
 	my $studentUserRegExp;

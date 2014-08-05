@@ -16,7 +16,7 @@ function color_in() {
 	for (var j = 0; j<length_i; j++) {
 		var id = incorrect_elem[j].getAttribute('value');
 		var input_elem = document.getElementById(id.substr(0, id.indexOf('_')));
-	    input_elem.className= input_elem.className + " incorrect";
+	        input_elem.className= input_elem.className + " incorrect";
 	}
 }
 

@@ -437,18 +437,18 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/bf5454/error_red*/
+div.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red *//
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-div.ResultsWithError { color: #bf5454; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/bf5454/error_red*/
+div.ResultsWithError { color: #bf5454; background-color: inherit; } /* red */
 div.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
 div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px} /* bright gold border and harvest gold background*/
-label.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/bf5454/error_red*/
+label.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red */
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-label.ResultsWithError { color: #bf5454; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/bf5454/error_red*/
+label.ResultsWithError { color: #bf5454; background-color: inherit; } /* red*/
 label.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
-span.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/bf5454/error_red*/
+span.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red*/
 span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-span.ResultsWithError { color: #bf5454; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/bf5454/error_red*/
+span.ResultsWithError { color: #bf5454; background-color: inherit; } /* red*/
 span.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
 span.incorrect { color: #bf5454; background-color: inherit; } /* red */
@@ -464,7 +464,7 @@ input.correct { /* green */
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
     
     color:inherit; 
-} /* green */
+}
 
 input.incorrect { /* red */
   border-color: rgba(191, 84, 84, 0.8);
@@ -476,7 +476,7 @@ input.incorrect { /* red */
   -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
   box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
     color:inherit; 
-} /* red */
+}
 
 .results-popover {
     cursor : pointer;
@@ -534,7 +534,7 @@ table.attemptResults th {
 table.attemptResults td.FeedbackMessage { background-color:#EDE275;} /* Harvest Gold */
 table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
 span.ResultsWithErrorInResultsTable { color: inherit; background-color: inherit; } /* used to override the older red on white span */ 
-table.attemptResults td.ResultsWithError { background-color:#D69191; color: #000000} /* error red */
+table.attemptResults td.ResultsWithError { background-color:#D69191; color: #000000} /* red */
 
 /*styles for the instructor comment box */
 

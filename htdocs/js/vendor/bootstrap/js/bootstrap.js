@@ -2287,4 +2287,5 @@
     if ($this.data('typeahead')) return
     $this.typeahead($this.data())
   })
+
 }(window.jQuery);
