@@ -40,11 +40,11 @@ $(document).ready(function() {
 
 	/* define the button and place it */
 	var button = $('<a>', {href : '#', class : 'btn codeshard-btn', style : 'margin-right : .5ex'})
-	    .html('<i class="icon-th"></i>')
+	    .html('<span class="icon icon-th" data-alt="Equation Editor"></span>')
 	$(input).parent().append(button);
 
 	/* generate the mathviewer */
-	var mviewer = new MathViewer(input,button,'.problem-content');
+	var mviewer = new MathViewer(input,button,$(input).parent('.input-append'));
 	mviewer.initialize();
 
 	/* set mviewer behavior specific to problem inputs */
@@ -80,7 +80,7 @@ $(document).ready(function() {
 
 	/* define the button and place it */
 	var button = $('<a>', {href : '#', class : 'btn', style : 'margin-left : 2ex; vertical-align : top'})
-	    .html('<i class="icon-pencil"></i>')
+	    .html('<span class="icon icon-pencil" data-alt="Equation Editor"></span>')
 	$(input).after(button);
 	options = { renderingMode : 'LATEX',
 		    decoratedTextBoxAsInput : false,
@@ -162,7 +162,8 @@ function MathViewer(field,button,container,userOptions) {
 
 	/* create the title bar with dropdown menue and move/close buttons */
 	popupttl.append($('<div>', {class : 'navbar-inner'})
-			.append('<a class="brand" href="#">'+mathView_translator[7]/*Equation Editor*/+'</a>')
+			.append($('<a class="brand" href="#">'+mathView_translator[7]/*Equation Editor*/+'</a>')
+				.click(function (event) {event.preventDefault();}))
 			.append($('<ul>', {class : "nav"})
 				.append($('<li>', {class : "dropdown"})
 					.append('<a href="#" class="dropdown-toggle" data-toggle="dropdown">'
@@ -170,7 +171,7 @@ function MathViewer(field,button,container,userOptions) {
 					.append(dropdown)))
 			.append($('<ul>', {class : "nav pull-right"})
 				.append($('<li>')
-					.append('<a href="#"><i class="icon-remove"></i></a>').click(function () {
+					.append('<a href="#"><span class="icon icon-remove" data-alt="close"></i></a>').click(function () {
 					    me.button.popover('hide');
 					    return false;
 					}))));
@@ -299,7 +300,9 @@ function MathViewer(field,button,container,userOptions) {
 	    var className = 'opImg' + catCount + i;
 	    /* creates a li for each operator/button in the category */
 	    thisTabList.append($('<li>', {class : 'mvspan3'})
-			       .append($('<a>', {class : 'mvthumbnail text-center'})
+			       .append($('<a>', {href : '#', class : 'mvthumbnail text-center'})
+				       .click(function (event) {
+					   event.preventDefault(); })
 				       .append(value.text)
 				       .tooltip({trigger : 'hover',
 						 delay : {show :500, hide:100},
@@ -317,7 +320,7 @@ function MathViewer(field,button,container,userOptions) {
 	
 	dropdown.append($('<li>')
 			.append($('<a>', {href : '#mvtab'+viewerIndex+catCount,
-					  'data-toggle' : 'tab'})
+					  'data-toggle' : 'tab',})
 				.append(catValue.text)));
     };
    
