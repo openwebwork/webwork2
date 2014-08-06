@@ -5,8 +5,9 @@
 
 
 define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView','models/UserSetList',
+    'models/UserSet',
     'models/ProblemSetList','models/ProblemSet','models/AssignmentDateList','models/AssignmentDate', 'config'], 
-    function(Backbone, _, moment,MainView, CalendarView,UserSetList,ProblemSetList,ProblemSet,
+    function(Backbone, _, moment,MainView, CalendarView,UserSetList,UserSet, ProblemSetList,ProblemSet,
         AssignmentDateList,AssignmentDate,config) {
 	
     var AssignmentCalendar = CalendarView.extend({
@@ -79,7 +80,12 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 var _model = _.extend({assign_type: assign.get("type"),total_users: self.users.length,
                     eventDispatcher: self.eventDispatcher,popupTemplate: self.popupTemplate},
                     assign.get("problemSet").attributes);
-                day.$el.append( new DateInfoBar({template: self.template, model: _model}).render().el);
+                var bar = new DateInfoBar({template: self.template, model: _model});
+                day.$el.append( bar.render().el);
+                console.log(assign.get("problemSet") instanceof UserSet);
+                if(! (assign.get("problemSet") instanceof UserSet)){
+                    bar.$el.addClass("global-set");
+                }
             });
 
     	},
@@ -113,12 +119,19 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
             // The following allows an assignment date (due, open) to be dropped on the calendar
 
-            this.$(".assign-due,.assign-open,.assign-answer,.assign-reduced-scoring").draggable({
-                revert: true,
-                start: function () {
-                    $(this).children(".show-set-popup-info").popover("destroy")
-                }
-            });
+            if(this.state.get("selected_users").length==0){
+                this.$(".assign").draggable({
+                    revert: true,
+                    start: function () {$(this).children(".show-set-popup-info").popover("destroy")
+                    }
+                });
+            } else {
+                this.$(".assign:not(.global-set)").draggable({
+                    revert: true,
+                    start: function () {$(this).children(".show-set-popup-info").popover("destroy")
+                    }
+                });
+            }
         },
         // This travels through all of the assignments and determines the days that assignment dates fall
         buildAssignmentDates: function () {
@@ -227,14 +240,12 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 var tmp2 = _(_.zip.apply(_,tmp)).map(function(arr) { return _.uniq(arr)});  // transposed tmp
                 // if all of the dates are equal, then add this set to the collection.
                 if(_(tmp2).chain().map(function(arr) { return arr.length==1;}).every(_.identity).value()){
-                    var attrs = _.extend({set_id: _setID},_.object(fields,_.zip.apply(_,tmp2)[0]));
-                    var userSet = new ProblemSet(attrs);
-                    self.collection.add(userSet);
-                    console.log(_setID);
-                    console.log(attrs);
                     var globalSet = self.problemSets.findWhere({set_id: _setID});
-                    globalSet.isGlobal = true;
-                    self.collection.add(globalSet);
+                    var attrs = _.extend(globalSet.attributes,_.object(fields,_.zip.apply(_,tmp2)[0]));
+                    var userSet = new UserSet(attrs);
+                    userSet.id = userSet.get("user_id") +":"+userSet.get("set_id");
+                    self.collection.add(userSet);
+                    self.collection.add(new ProblemSet(globalSet.attributes));
 
                 }
             });

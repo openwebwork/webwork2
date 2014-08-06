@@ -104,6 +104,8 @@ border-top: solid 1px rgb(220, 220, 220);}
 	border: 1px gray solid;
 	margin: 1px;}
 
+.global-set {cursor: default;}
+
 #calendar-table th {border: 1px solid black;}
 
 .calendar-button-row {margin: 5px; text-align: center;}
