@@ -282,14 +282,10 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 open_date: "assign-open",
                 answer_date: "assign-answer"
             }
-            var keys;
-            if(_(model.changed).chain().keys().contains("first_day").value()){
-                return;
-            }
-            if(_.isEqual(model.changed,{})){
-               keys = ["answer_date","open_date","reduced_scoring_date","due_date"]; 
-            } else {
-               keys = _(model.changed).chain().keys().without("view","first_day").value();
+
+            var keys = ["answer_date","open_date","reduced_scoring_date","due_date"]; 
+            if(! this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                keys = _(keys).without("reduced_scoring_date");
             }
             _(keys).each(function(key){
                 if(model.get(key)){

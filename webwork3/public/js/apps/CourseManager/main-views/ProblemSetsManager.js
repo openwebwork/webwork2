@@ -62,19 +62,20 @@ var ProblemSetsManager = MainView.extend({
         //this.$(".set-id a").truncate({width: 120});
     },
     render: function () {
+        console.log("in ProblemSetsManager.render");
         this.$el.html($("#problem-set-manager-template").html());
         this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
-        this.showRows(this.state.get("page_size"));
         this.$el.append(this.problemSetTable.el);
         this.problemSets.trigger("hide-show-all-sets","hide");
         this.problemSetTable.filter(this.state.get("filter_text"));
+        this.showRows(this.state.get("page_size"));
         this.problemSetTable.gotoPage(this.state.get("page_number"));
         MainView.prototype.render.apply(this);
         this.stickit(this.state,this.bindings);
         if(this.state.get("sort_class")&&this.state.get("sort_direction")){
             this.problemSetTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
         }
-
+        this.isReducedScoringEnabled();
         return this;
     },
     bindings: { ".filter-text": "filter_text"},
@@ -127,8 +128,6 @@ var ProblemSetsManager = MainView.extend({
         this.state.set("page_size", pageSize);
         this.$(".show-rows i").addClass("not-visible");
         this.$(".show-rows[data-num='"+pageSize+"'] i").removeClass("not-visible")
-
-        //$(evt.target).children("i").removeClass("not-visible");
 
         if(this.state.get("page_size") < 0) {
             this.problemSetTable.set({num_rows: this.problemSets.length});
