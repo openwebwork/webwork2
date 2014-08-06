@@ -54,12 +54,15 @@ $mail{feedbackRecipients}    = [
 ###############################################################################
 # This is where you put your remote and branch for your main WeBWorK and PG
 # github repositories.  If you don't use github or if you want to disable
-# this feature set these variables to the empty string. 
+# this feature for a compnent (e.g. Library) 
+# set these variables to the empty string. 
 
 $gitWeBWorKRemoteName = "origin";
 $gitWeBWorKBranchName = "master";
 $gitPGRemoteName = "origin";
 $gitPGBranchName = "master";
+$gitLibraryRemoteName = "";
+$gitLibraryBranchName = "";
 
 ################################################################################
 # Theme

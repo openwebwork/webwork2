@@ -437,8 +437,6 @@ sub body {
 	
 	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
 	
-	print $self->upgrade_notification();
-		    
 	my @errors = @{$self->{errors}};
 	
 	
@@ -461,6 +459,8 @@ sub body {
 				CGI::p(" The webwork server must be able to write to these directories. Please correct the permssion errors.") ;
 			}
 	
+		print $self->upgrade_notification();
+
 		print CGI::h2($r->maketext("Courses"));
 	
 		print CGI::start_ol();
@@ -3196,130 +3196,157 @@ sub upgrade_notification {
     my $WeBWorKBranch = $ce->{gitWeBWorKBranchName};
     my $PGRemote = $ce->{gitPGRemoteName};
     my $PGBranch = $ce->{gitPGBranchName};
+    my $LibraryRemote = $ce->{gitLibraryRemoteName};
+    my $LibraryBranch = $ce->{gitLibraryBranchName};
 
-    return unless ($git && $WeBWorKRemote && $WeBWorKBranch &&
-		   $PGRemote && $PGBranch);
-
-    #return if the last upgrade check was within the last 24 hours
-    my $lastUpgradeCheck = $db->getSettingValue('lastUpgradeCheck') || 0;
-
-    return if (($lastUpgradeCheck+86400) > time());
-    $db->setSettingValue('lastUpgradeCheck', time());
+    # we can tproceed unless we have git; 
+    return unless $git;
 
     my $upgradeMessage = '';
     my $output;
+    my @lines;
+    my $commit;
 
+    if ($WeBWorKRemote && $WeBWorKBranch) {
     # Check if there is an updated version of webwork available
     # this is done by using ls-remote to get the commit sha at the 
     # head of the remote branch and looking to see if that sha is in
     # the local copy
-    chdir($ce->{webwork_dir});
-    $output = `$git ls-remote $WeBWorKRemote`;
-    my @lines = split /\n/, $output;
-    my $commit=-1;
-
-    foreach my $line (@lines) {
-	if ($line =~ /refs\/heads\/$WeBWorKBranch/) {
-	    $line =~ /^(\w+)/;
-	    $commit = $1;
-	    last;
-	}
-    }
-
-    warn("Couldn't find WeBWorK Branch $WeBWorKBranch in remote $WeBWorKRemote") if $commit eq '-1';
-
-    $output = `$git branch --contains $commit`;
-
-    if ($commit ne '-1' && $output !~ /\s+$WeBWorKBranch\s*\n/) {    
-	# There are upgrades, we need to figure out if its a 
-	# new version or not
-	# This is done by using ls-remote to get the commit sha's
-	# at the heads of the remote tags.  
-	# Tags of the form WeBWorK-x.y are release tags.  If there is
-	# an sha there which isn't in the local branch then there must
-	# be a newer version. 
-	$output = `$git ls-remote --tags $WeBWorKRemote`;
+	chdir($ce->{webwork_dir});
+	$output = `$git ls-remote $WeBWorKRemote`;
 	@lines = split /\n/, $output;
-	my $newversion = 0;
-
+	$commit=-1;
+	
 	foreach my $line (@lines) {
-	    next unless $line =~ /\/tags\/WeBWorK-/;
-	    $line =~ /^(\w+)/;
-	    $commit = $1;
-	    $output = `$git branch --contains $commit`;
-	    if ($output !~ /\s+$WeBWorKBranch\s*\n/) {
-		# There is a version tag which contains a commit that
-		# isn't in the current branch so there must
-		# be a new version
-		$newversion = 1;
+	    if ($line =~ /refs\/heads\/$WeBWorKBranch/) {
+		$line =~ /^(\w+)/;
+		$commit = $1;
 		last;
 	    }
 	}
 	
-	if ($newversion) {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of WeBWorK available.')));
-	} else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
-	}
-    } 
-
-    # Check if there is an updated version of pg available
-    # this is done by using ls-remote to get the commit sha at the 
-    # head of the remote branch and looking to see if that sha is in
-    # the local copy
-    chdir($ce->{pg_dir});
-    $output = `$git ls-remote $PGRemote`;
-    @lines = split /\n/, $output;
-    $commit='-1';
-
-    foreach my $line (@lines) {
-	if ($line =~ /refs\/heads\/$PGBranch/) {
-	    $line =~ /^(\w+)\s+/;
-	    $commit = $1;
-	    last;
-	}
+	warn("Couldn't find WeBWorK Branch $WeBWorKBranch in remote $WeBWorKRemote") if $commit eq '-1';
+	
+	$output = `$git branch --contains $commit`;
+	
+	if ($commit ne '-1' && $output !~ /\s+$WeBWorKBranch\s*\n/) {    
+	    # There are upgrades, we need to figure out if its a 
+	    # new version or not
+	    # This is done by using ls-remote to get the commit sha's
+	    # at the heads of the remote tags.  
+	    # Tags of the form WeBWorK-x.y are release tags.  If there is
+	    # an sha there which isn't in the local branch then there must
+	    # be a newer version. 
+	    $output = `$git ls-remote --tags $WeBWorKRemote`;
+	    @lines = split /\n/, $output;
+	    my $newversion = 0;
+	    
+	    foreach my $line (@lines) {
+		next unless $line =~ /\/tags\/WeBWorK-/;
+		$line =~ /^(\w+)/;
+		$commit = $1;
+		$output = `$git branch --contains $commit`;
+		if ($output !~ /\s+$WeBWorKBranch\s*\n/) {
+		    # There is a version tag which contains a commit that
+		    # isn't in the current branch so there must
+		    # be a new version
+		    $newversion = 1;
+		    last;
+		}
+	    }
+	    
+	    if ($newversion) {
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of WeBWorK available.')));
+	    } else {
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
+	    }
+	} 
     }
 
-    warn("Couldn't find PG Branch $PGBranch in remote $PGRemote") if $commit eq -1;
-    $output = `$git branch --contains $commit`;
-
-    if ($commit ne '-1' && $output !~ /\s+$PGBranch\s*\n/) {    
-	# There are upgrades, we need to figure out if its a 
-	# new version or not
-	# This is done by using ls-remote to get the commit sha's
-	# at the heads of the remote tags.  
-	# Tags of the form WeBWorK-x.y are release tags.  If there is
-	# an sha there which isn't in the local branch then there must
-	# be a newer version. 
-	$output = `$git ls-remote --tags $PGRemote`;
+    if ($PGRemote && $PGBranch) {
+	# Check if there is an updated version of pg available
+	# this is done by using ls-remote to get the commit sha at the 
+	# head of the remote branch and looking to see if that sha is in
+	# the local copy
+	chdir($ce->{pg_dir});
+	$output = `$git ls-remote $PGRemote`;
 	@lines = split /\n/, $output;
-	my $newversion = 0;
-
+	$commit='-1';
+	
 	foreach my $line (@lines) {
-	    next unless $line =~ /\/tags\/PG-/;
-	    $line =~ /^(\w+)/;
-	    $commit = $1;
-	    $output = `$git branch --contains $commit`;
-	    if ($output !~ /\s+$PGBranch\s*\n/) {
-		# There is a version tag which contains a commit that
-		# isn't in the current branch so there must
-		# be a new version
-		$newversion = 1;
+	    if ($line =~ /refs\/heads\/$PGBranch/) {
+		$line =~ /^(\w+)\s+/;
+		$commit = $1;
 		last;
 	    }
 	}
 	
-	if ($newversion) {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of PG available.')));
-	} else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
+	warn("Couldn't find PG Branch $PGBranch in remote $PGRemote") if $commit eq -1;
+	$output = `$git branch --contains $commit`;
+	
+	if ($commit ne '-1' && $output !~ /\s+$PGBranch\s*\n/) {    
+	    # There are upgrades, we need to figure out if its a 
+	    # new version or not
+	    # This is done by using ls-remote to get the commit sha's
+	    # at the heads of the remote tags.  
+	    # Tags of the form WeBWorK-x.y are release tags.  If there is
+	    # an sha there which isn't in the local branch then there must
+	    # be a newer version. 
+	    $output = `$git ls-remote --tags $PGRemote`;
+	    @lines = split /\n/, $output;
+	    my $newversion = 0;
+	    
+	    foreach my $line (@lines) {
+		next unless $line =~ /\/tags\/PG-/;
+		$line =~ /^(\w+)/;
+		$commit = $1;
+		$output = `$git branch --contains $commit`;
+		if ($output !~ /\s+$PGBranch\s*\n/) {
+		    # There is a version tag which contains a commit that
+		    # isn't in the current branch so there must
+		    # be a new version
+		    $newversion = 1;
+		    last;
+		}
+	    }
+	    
+	    if ($newversion) {
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of PG available.')));
+	    } else {
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
+	    }
+	} 
+    }
+
+    chdir($ce->{problemLibrary}{root}); 
+    if ($LibraryRemote && $LibraryBranch) {
+	# Check if there is an updated version of the OPL available
+	# this is done by using ls-remote to get the commit sha at the 
+	# head of the remote branch and looking to see if that sha is in
+	# the local copy
+	$output = `$git ls-remote $LibraryRemote`;
+	@lines = split /\n/, $output;
+	$commit='-1';
+	
+	foreach my $line (@lines) {
+	    if ($line =~ /refs\/heads\/$LibraryBranch/) {
+		$line =~ /^(\w+)\s+/;
+		$commit = $1;
+		last;
+	    }
+	}
+	
+	warn("Couldn't find Library Branch $LibraryBranch in remote $LibraryRemote") if $commit eq -1;
+
+	$output = `$git branch --contains $commit`;
+
+	if ($commit ne '-1' && $output !~ /\s+$LibraryBranch\s*\n/) {    
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for the Open Problem Library.')));
 	}
     } 
 
     # Check to see if the OPL_update script has been run more recently
     # than the last pull of the library. 
-    chdir($ce->{problemLibrary}{root});
-
     # this json file is (re)-created every time OPL-update is run. 
     my $jsonfile = $ce->{webworkDirs}{htdocs}.'/DATA/'.$ce->{problemLibrary}{tree};
     # If no json file then the OPL script needs to be run
