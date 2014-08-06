@@ -82,7 +82,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     assign.get("problemSet").attributes);
                 var bar = new DateInfoBar({template: self.template, model: _model});
                 day.$el.append( bar.render().el);
-                console.log(assign.get("problemSet") instanceof UserSet);
                 if(! (assign.get("problemSet") instanceof UserSet)){
                     bar.$el.addClass("global-set");
                 }
@@ -241,7 +240,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 // if all of the dates are equal, then add this set to the collection.
                 if(_(tmp2).chain().map(function(arr) { return arr.length==1;}).every(_.identity).value()){
                     var globalSet = self.problemSets.findWhere({set_id: _setID});
-                    var attrs = _.extend(globalSet.attributes,_.object(fields,_.zip.apply(_,tmp2)[0]));
+                    var attrs = _.extend({user_id: "_all"}, globalSet.attributes,_.object(fields,_.zip.apply(_,tmp2)[0]));
                     var userSet = new UserSet(attrs);
                     userSet.id = userSet.get("user_id") +":"+userSet.get("set_id");
                     self.collection.add(userSet);
@@ -255,9 +254,10 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                         received = {};
                         console.log("changing the collection");
                         console.log(model);
+                        console.log(model instanceof UserSet);
                         var _dates =model.pick("reduced_scoring_date","answer_date","open_date","due_date"); 
                         _(self.state.get("selected_users")).each(function(_userID){
-                            self.userCalendars[_userID].findWhere({set_id: model.get("set_id")}).set(_dates).save();
+                            self.userCalendars[_userID].findWhere({set_id: model.get("set_id")}).save(_dates);
                         })
                     });
 
