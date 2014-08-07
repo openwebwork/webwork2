@@ -35,7 +35,7 @@ use WeBWorK::Debug;
 use WeBWorK::Utils qw(runtime_use readDirectory pretty_print_rh);
 use UUID::Tiny qw(create_uuid_as_string);
 #use WeBWorK::Utils::DBUpgrade;
-use PGcore; # for not_null() macro
+use PGUtil; # for not_null() macro
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(
@@ -618,7 +618,7 @@ sub archiveCourse {
 	my $data_dir = $ce->{courseDirs}{DATA};
 	my $dump_dir = "$data_dir/mysqldump";
 	my $archive_path;
-	if ( PGcore::not_null( $options{archive_path} ) ) {
+	if ( PGUtil::not_null( $options{archive_path} ) ) {
 		$archive_path = $options{archive_path};
 	} else {
 		$archive_path = $ce->{webworkDirs}{courses} . "/$courseID.tar.gz";
