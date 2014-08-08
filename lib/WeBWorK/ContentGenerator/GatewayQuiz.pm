@@ -1924,7 +1924,7 @@ sub body {
 			if ( $can{showScore} ) {
 				my $scMsg = "Your recorded score on this " .
 					"(test number $versionNumber) is " .
-					"$recordedScore/$totPossible";
+					tidy_score($recordedScore)."/$totPossible";
 				if ( $exceededAllowedTime && 
 				     $recordedScore == 0 ) {
 					$scMsg .= ", because you exceeded " .
