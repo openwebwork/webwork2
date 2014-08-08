@@ -47,6 +47,15 @@ sub templateName {
 	return "gateway";
 }
 
+# small utility to round scores to 5 decimal places
+
+sub tidy_score {
+	my $s = shift;
+	$s = sprintf("%.5f", $s);
+	$s =~ s/0+$// if $s =~ /\./;
+	$s =~ s/\.$//;
+	return $s;
+}
 
 ################################################################################
 # "can" methods
@@ -1495,11 +1504,11 @@ sub body {
 			# next, store the state in the database if that makes 
 			#    sense
 			if ( $submitAnswers && $will{recordAnswers} ) {
-  $problems[$i]->status($pg_results[$i]->{state}->{recorded_score});
+  $problems[$i]->status(tidy_score($pg_results[$i]->{state}->{recorded_score}));
   $problems[$i]->attempted(1);
   $problems[$i]->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $problems[$i]->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
-  $pureProblem->status($pg_results[$i]->{state}->{recorded_score});
+  $pureProblem->status(tidy_score($pg_results[$i]->{state}->{recorded_score}));
   $pureProblem->attempted(1);
   $pureProblem->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $pureProblem->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
@@ -1734,11 +1743,16 @@ sub body {
 			my $pScore = 0;
 			my $numParts = 0;
 			if ( ref( $pg ) ) {  # then we have a pg object
-				foreach (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
-					$pScore += $pg->{answers}->{$_}->{score};
-					$numParts++;
-				}
-				$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
+###
+				#foreach (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
+				#	$pScore += $pg->{answers}->{$_}->{score};
+				#	$numParts++;
+				#}
+				#$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
+				$pScore = $pg->{result}->{score};
+				$probStatus[$i] = $pScore;
+				$numParts = 1;
+###
 
 			} else {
 				# if we don't have a pg object, use any known 
@@ -1780,6 +1794,7 @@ sub body {
 
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
+	$attemptScore = tidy_score($attemptScore);
 	if ( $submitAnswers ) {
 		# the distinction between $can{recordAnswers} and ! $can{} has 
 		#    been dealt with above and recorded in @scoreRecordedMessage
@@ -1827,8 +1842,9 @@ sub body {
 		if ( $set->attempts_per_version > 1 && $attemptNumber > 1 &&
 		     $recordedScore != $attemptScore && $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
+			my $recScore = tidy_score($recordedScore);
 			print "The recorded score for this test is ",
-				"$recordedScore/$totPossible.";
+				"$recScore/$totPossible.";
 			print CGI::end_div();
 		}
 
@@ -1839,8 +1855,9 @@ sub body {
 					  "recorded) submission is ",
 					  "$attemptScore/$totPossible."), 
 				CGI::br();
+			my $recScore = tidy_score($recordedScore);
 			print "The recorded score for this test is " .
-				"$recordedScore/$totPossible.  ";
+				"$recScore/$totPossible.  ";
 			print CGI::end_div();
 		}
 	}
