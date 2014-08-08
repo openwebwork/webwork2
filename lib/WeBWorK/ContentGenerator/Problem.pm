@@ -1398,7 +1398,7 @@ sub output_submit_buttons{
 
     # skip buttons if SMA button has been pushed but there is no new problem shown
     if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible})){
-        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
         }

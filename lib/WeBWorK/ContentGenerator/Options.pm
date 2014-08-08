@@ -160,8 +160,8 @@ sub body {
 	if ($authz->hasPermissions($userID, "change_email_address")) {
 		print CGI::table({class=>"FormLayout"},
 			CGI::Tr({},
-				CGI::td(CGI::label($r->maketext("[_1]'s Current Address",$e_user_name))),
-				CGI::td($EUser->email_address),
+				CGI::td(CGI::label({'for' => 'currAddress'},$r->maketext("[_1]'s Current Address",$e_user_name))),
+				CGI::td(CGI::input({ type=>"text", readonly=>"true", name=>"currAddress", value=>$EUser->email_address})),
 			),
 			CGI::Tr({},
 				CGI::td(CGI::label({'for'=>'newAddress'},$r->maketext("[_1]'s New Address",$e_user_name))),

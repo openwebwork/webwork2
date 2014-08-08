@@ -139,7 +139,7 @@ var tabberOptions = {manualStartup:true};
 
 	<!--#if can="nav" can="message"--> 
 	<div class="row-fluid">
-	  <div class="problem-nav span3" role="navigation" aria-label="question navigation">
+	  <div class="problem-nav span3" role="navigation" aria-label="problem navigation">
 	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
 	<!--#if can="nav"-->
 		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->

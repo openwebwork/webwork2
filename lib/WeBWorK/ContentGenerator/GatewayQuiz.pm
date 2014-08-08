@@ -2026,11 +2026,11 @@ sub body {
 			}
 			push( @$pageRow, CGI::td(CGI::b(' ] ')) );
 			unshift( @$probRow, ' &nbsp; ' );
-			$jumpLinks = CGI::table( CGI::Tr(@$pageRow), 
+			$jumpLinks = CGI::table( {role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
 						 CGI::Tr( CGI::td($probRow) ) );
 		} else {
 			unshift( @$probRow, CGI::b('Jump to: ') );
-			$jumpLinks = CGI::table( CGI::Tr( CGI::td($probRow) ) );
+			$jumpLinks = CGI::table({role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr( CGI::td($probRow) ) );
 		}
 	
 		print $jumpLinks,"\n";
@@ -2085,19 +2085,16 @@ sub body {
 				print CGI::start_div({class=>"gwProblem"});
 				my $i1 = $i+1;
 				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
-				my $points = ($pv > 1) ? 
-					" (" . $pv . " points)" : 
-					" (1 point)";
 				print CGI::a({-href=>"#", -id=>"prob$i"},"");
-				print CGI::strong("Problem $problemNumber."), 
-					"$points\n", $recordMessage;
+				print CGI::h3("Problem $problemNumber."), 
+					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
 				       CGI::b("Note: ") : "", 
 				       CGI::i($pg->{result}->{msg}));
 				print CGI::p({class=>"gwPreview"}, 
 					     CGI::a({-href=>"$jsprevlink"}, 
-						    "preview problems"));
+						    "preview answers"));
 
 				print $resultsTable if $resultsTable; 
 
