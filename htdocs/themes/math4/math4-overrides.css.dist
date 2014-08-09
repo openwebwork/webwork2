@@ -226,19 +226,14 @@ label.ResultsWithoutError {
 } 
 
 span.ResultsWithoutError { 
-    color: #519951; 
-    background-color: inherit; 
+    color: inherit; 
+    background-color:#88FF88;
 } 
 
 span.correct { 
     color: inherit; 
     background-color: #88FF88; 
 }
-
-input.correct	{ 
-    color:inherit; 
-    background-color: #88FF88; 
-} 
 
 /* Colors for "red" messages */
 div.ResultsWithError { 
@@ -265,11 +260,6 @@ span.incorrect {
     color: #D69191; 
     background-color: inherit; 
 }
-
-input.incorrect { 
-    color:inherit; 
-    background-color: #BF5454; 
-} 
 
 /* Other formatting for attempt results and the problem page */
 table.attemptResults th {

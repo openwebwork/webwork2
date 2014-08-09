@@ -568,12 +568,6 @@ table.attemptResults td.ResultsWithError { background-color:#D69191; color: #000
     background-color: #E8E8E8;
 }
 
-.gwProblem h3 {
- display: inline;
- font-size: 16px;
- margin-right: 5px;
-}
-
 /* Make hr a black line for problem render areas so that
  * it can be used for fractions
  */

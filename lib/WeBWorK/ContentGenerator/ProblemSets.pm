@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile sortByName path_is_subdir is_restricted);
+use WeBWorK::Utils qw(after readFile sortByName path_is_subdir is_restricted);
 use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
@@ -561,7 +561,7 @@ sub setListRow {
 		    $control = '';
 		}
 	} else {
-		if ( $gwtype < 2 ) {
+		if ( $gwtype < 2 && after($set->open_date)) {
 			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
 			my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, courseID => $courseName, setID => $urlname);
 			

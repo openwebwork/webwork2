@@ -284,7 +284,7 @@ sub displayStudentStats {
 				next;
 			} else {
 				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)), 
-						     CGI::td({colspan=>4}, CGI::em("No versions of this assignment have been taken."))) );
+						     CGI::td({colspan=>($max_problems+2)}, CGI::em("No versions of this assignment have been taken."))) );
 				next;
 			}
 		}
@@ -385,7 +385,8 @@ sub displayStudentStats {
 
 	my $problem_header = "";
 	foreach (1 .. $max_problems) {
-		$problem_header .= CGI::th({scope=>'col'},$_);
+		$problem_header .= CGI::th({scope=>'col'},
+					   &threeSpaceFill($_));
 	}
 	
 	my $table_header = join("\n",

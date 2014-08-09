@@ -161,7 +161,7 @@ sub body {
 		print CGI::table({class=>"FormLayout"},
 			CGI::Tr({},
 				CGI::td(CGI::label({'for' => 'currAddress'},$r->maketext("[_1]'s Current Address",$e_user_name))),
-				CGI::td(CGI::input({ type=>"text", readonly=>"true", name=>"currAddress", value=>$EUser->email_address})),
+				CGI::td(CGI::input({ type=>"text", readonly=>"true", id=>"currAddress", name=>"currAddress", value=>$EUser->email_address})),
 			),
 			CGI::Tr({},
 				CGI::td(CGI::label({'for'=>'newAddress'},$r->maketext("[_1]'s New Address",$e_user_name))),
@@ -196,6 +196,8 @@ sub body {
 	}
 
 	my $result = '';
+
+	
 	my $curr_displayMode = $EUser->displayMode || $ce->{pg}->{options}->{displayMode};
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 	my @active_modes = grep { exists $display_modes{$_} } @{$ce->{pg}->{displayModes}};
@@ -213,31 +215,35 @@ sub body {
 	    $result .= CGI::br();
 	}
 
-	my $curr_showOldAnswers = $EUser->showOldAnswers ne '' ? $EUser->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers};
-	$result .= CGI::start_fieldset();
-	$result .= CGI::legend($r->maketext("Show saved answers?"));
-	$result .= CGI::radio_group(
-	    -name => "showOldAnswers",
-	    -values => [1,0],
-	    -default => $curr_showOldAnswers,
-	    -labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
-	    );
-	$result .= CGI::end_fieldset();
-	$result .= CGI::br();
-	
-	# Note, 0 is a legal value, so we can't use || in setting this
-	my $curr_useMathView = $EUser->useMathView ne '' ?
-	    $EUser->useMathView : $ce->{pg}->{options}->{useMathView};
-	$result .= CGI::start_fieldset();
-	$result .= CGI::legend($r->maketext("Use Equation Editor?"));
-	$result .= CGI::radio_group(
-	    -name => "useMathView",
-	    -values => [1,0],
-	    -default => $curr_useMathView,
-	    -labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
-	    );
-	$result .= CGI::end_fieldset();
-	$result .= CGI::br();
+	if ($authz->hasPermissions($userID,"can_show_old_answers_by_default")) {
+	    my $curr_showOldAnswers = $EUser->showOldAnswers ne '' ? $EUser->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers};
+	    $result .= CGI::start_fieldset();
+	    $result .= CGI::legend($r->maketext("Show saved answers?"));
+	    $result .= CGI::radio_group(
+		-name => "showOldAnswers",
+		-values => [1,0],
+		-default => $curr_showOldAnswers,
+		-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+		);
+	    $result .= CGI::end_fieldset();
+	    $result .= CGI::br();
+	}
+
+	if ($ce->{pg}{specialPGEnvironmentVars}{MathView}) {
+	    # Note, 0 is a legal value, so we can't use || in setting this
+	    my $curr_useMathView = $EUser->useMathView ne '' ?
+		$EUser->useMathView : $ce->{pg}->{options}->{useMathView};
+	    $result .= CGI::start_fieldset();
+	    $result .= CGI::legend($r->maketext("Use Equation Editor?"));
+	    $result .= CGI::radio_group(
+		-name => "useMathView",
+		-values => [1,0],
+		-default => $curr_useMathView,
+		-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+		);
+	    $result .= CGI::end_fieldset();
+	    $result .= CGI::br();
+	}
 	
 	print CGI::p($result);
 	print CGI::br();

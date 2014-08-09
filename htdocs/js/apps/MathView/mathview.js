@@ -166,15 +166,19 @@ function MathViewer(field,button,container,userOptions) {
 				.click(function (event) {event.preventDefault();}))
 			.append($('<ul>', {class : "nav"})
 				.append($('<li>', {class : "dropdown"})
-					.append('<a href="#" class="dropdown-toggle" data-toggle="dropdown">'
+					.append('<a href="#" id="menu'+viewerIndex+'" class="dropdown-toggle" data-toggle="dropdown">'
 						+'Operations <b class="caret"></b></a>')
 					.append(dropdown)))
 			.append($('<ul>', {class : "nav pull-right"})
 				.append($('<li>')
-					.append('<a href="#"><span class="icon icon-remove" data-alt="close"></i></a>').click(function () {
+					.append($('<a>',{href :"#", id : 'close'+viewerIndex})
+						.append($('<span>', {class :"icon icon-remove"}))
+						.click(function () {
 					    me.button.popover('hide');
 					    return false;
-					}))));
+						}))
+					.append($('<span>', {class:"sr-only-glyphicon", style:"font-size:14px"}).html("close editor")))));
+
 	/* put the categories content into the main popop div, 
 	   activate the tabs, 
 	   and put the preview div in place 
@@ -321,7 +325,10 @@ function MathViewer(field,button,container,userOptions) {
 	dropdown.append($('<li>')
 			.append($('<a>', {href : '#mvtab'+viewerIndex+catCount,
 					  'data-toggle' : 'tab',})
-				.append(catValue.text)));
+				.append(catValue.text)
+				.click(function () {
+				    $('#menu'+viewerIndex).focus();
+				})));
     };
    
     /* enables an autocomplete feature for the input */

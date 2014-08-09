@@ -69,6 +69,14 @@ div.gwProblem {
         padding: 3px;
         border: solid black 1px;
 }
+
+.gwProblem h3 {
+ display: inline;
+ font-size: 16px;
+ margin-right: 5px;
+}
+
+
 div.gwSoln {
 /*      background-color: #e0e0ff; */
         background-color: transparent;

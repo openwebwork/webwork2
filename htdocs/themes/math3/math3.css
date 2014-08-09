@@ -475,12 +475,6 @@ clear: both;
 	font-size:100%;
 }
 
-.gwProblem h3 {
- display: inline;
- font-size: 16px;
- margin-right: 5px;
-}
-
 .problem-content {
   margin-left:auto;
   margin-right:auto;
@@ -964,9 +958,23 @@ table#grades_table pre{
 
 table#grades_table {
     border:1px solid black;
+    border-collapse: collapse;
 }
 
 table#grades_table th {
     text-align:center;
+    border: 1px solid black;
+}
+
+table#grades_table td {
+    border: 1px solid black;
+    padding: 2px;
+    min-width: 20px;
+    text-align:center;
+}
+
+span.required-field {
+    color:red;
+    margin-left: 0px;
 }
 
