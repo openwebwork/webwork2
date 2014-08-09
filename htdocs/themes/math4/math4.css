@@ -578,6 +578,10 @@ table.attemptResults td.ResultsWithError { background-color:#D69191; color: #000
   border-top-color: rgb(22,22,22);
 }
 
+.problem-content label {
+    font-size: 14px;
+}
+
 /* override above settings in tables used to display ans_array results */
 table.attemptResults td td,
 table.attemptResults td th,
