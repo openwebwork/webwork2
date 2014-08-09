@@ -223,6 +223,12 @@ $(function(){
 	});
     }
 
+    /* For accessibility we need to change single answer aria labels to 
+       "answer" and not "answer 1" */
+    if ($('.codeshard').length == 1) {
+	$('.codeshard').attr('aria-label','answer');
+    }
+
     /* Glyphicon accessibility */
     jQuery('span.icon').each(function() {
         /*
