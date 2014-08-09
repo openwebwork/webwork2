@@ -21,14 +21,13 @@ use WeBWorK::DB;
 use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::CourseEnvironment;
 
-package CGI;
-
-sub br { print '';}
-
 ##########################
-# update one course
+# update admin course
 ##########################
 my $upgrade_courseID = 'admin';
+
+die('You need to set the WEBWORK_ROOT environment variable.\n') 
+    unless($ENV{WEBWORK_ROOT});
 
 my $ce2 = new WeBWorK::CourseEnvironment({
     webwork_dir => $ENV{WEBWORK_ROOT},
@@ -58,5 +57,5 @@ foreach my $table_name (@tables_to_alter) {	#warn "do_upgrade_course: adding new
 if ($update_error_msg) {
     print $pudate_error_msg.'\n';
 } else {
-    print 'Admin Course Updated Sucessfully';
+    print 'Admin Course Updated Sucessfully\n';
 }

@@ -189,7 +189,7 @@ sub body {
 		my $levelpercentage = int(100*$globalUserAchievements->achievement_points/$globalUserAchievements->next_level_points);
 		$levelpercentage = $levelpercentage <= 100 ? $levelpercentage : 100;
 
-		print CGI::start_div({class=>'levelouterbar'});
+		print CGI::start_div({class=>'levelouterbar', title=>$r->maketext("[_1]% Complete", $levelpercentage), 'aria-label'=>$r->maketext("[_1]% Complete",$levelpercentage)});
 		print CGI::div({class=>'levelinnerbar', style=>"width:$levelpercentage\%"},'');
 		print CGI::end_div();	
 		print CGI::end_div();
@@ -313,7 +313,7 @@ sub body {
 			$userCounter = 0 unless ($userAchievement->counter);
 			my $percentage = int(100*$userCounter/$achievement->max_counter);
 			$percentage = $percentage <= 100 ? $percentage : 100;
-			print CGI::start_div({class=>'cheevoouterbar'});
+			print CGI::start_div({class=>'cheevoouterbar', title=>$r->maketext("[_1]% Complete", $percentage), 'aria-label'=>$r->maketext("[_1]% Complete",$percentage)});
 			print CGI::div({class=>'cheevoinnerbar', style=>sprintf("width:%i%%;", $percentage)},'');
 			print CGI::end_div();	
 			}	

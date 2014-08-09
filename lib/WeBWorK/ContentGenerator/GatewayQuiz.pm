@@ -343,61 +343,43 @@ sub attemptResults {
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 
-	my %resultsData = ();
-	$resultsData{'Entered'}  = CGI::td({-class=>"label"}, "Your answer parses as:");
-	$resultsData{'Preview'}  = CGI::td({-class=>"label"}, "Your answer previews as:");
-	$resultsData{'Correct'}  = CGI::td({-class=>"label"}, "The correct answer is:");
-	$resultsData{'Results'}  = CGI::td({-class=>"label"}, "Result:");
-	$resultsData{'Messages'} = CGI::td({-class=>"label"}, "Messages:");
+	my @rows;
+	my @row;
+	
+	push @row, CGI::th({scope=>"col"},$r->maketext('Entered')) if $showAttemptAnswers;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Answer Preview')) if $showAttemptPreview;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Correct')) if $showCorrectAnswers;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Result')) if $showAttemptResults;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Messages')) if $showMessages;
 
-	my %resultsRows = ();
-	foreach ( qw( Entered Preview Correct Results Messages ) ) {
-	    $resultsRows{$_} = "";
-	}
+	push @rows, CGI::Tr(@row);
 
 	my $answerScore = 0;
 	my $numCorrect = 0;
 	my $numAns = 0;
 	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name};
-		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
-		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen)
-		                    	: "");
-		my $correctAnswer = $answerResult->{correct_ans};
-		$answerScore   = $answerResult->{score};
-		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
-		$numCorrect += $answerScore > 0;
+	    @row = ();
+	    my $answerResult  = $pg->{answers}->{$name};
+	    my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+	    my $preview       = ($showAttemptPreview
+				 ? $self->previewAnswer($answerResult, $imgGen)
+				 : "");
+	    my $correctAnswer = $answerResult->{correct_ans};
+	    $answerScore   = $answerResult->{score};
+	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
+	    #FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
+	    $numCorrect += $answerScore > 0;
 		my $resultString = $answerScore == 1 ? "correct" : "incorrect";
-		
-		# get rid of the goofy prefix on the answer names (supposedly, the format
-		# of the answer names is changeable. this only fixes it for "AnSwEr"
-		#$name =~ s/^AnSwEr//;
-		
-		my $pre = $numAns ? CGI::td("&nbsp;") : "";
-
-		$resultsRows{'Entered'} .= $showAttemptAnswers ? 
-		    CGI::Tr( $pre . $resultsData{'Entered'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($studentAnswer))) : "";
-		$resultsData{'Entered'} = '';
-		$resultsRows{'Preview'} .= $showAttemptPreview ? 
-		    CGI::Tr( $pre . $resultsData{'Preview'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($preview)) ) : "";
-		$resultsData{'Preview'} = '';
-		$resultsRows{'Correct'} .= $showCorrectAnswers ? 
-		    CGI::Tr( $pre . $resultsData{'Correct'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($correctAnswer)) ) : "";
-		$resultsData{'Correct'} = '';
-		$resultsRows{'Results'} .= $showAttemptResults ? 
-		    CGI::Tr( $pre . $resultsData{'Results'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($resultString)) )  : "";
-		$resultsData{'Results'} = '';
-		$resultsRows{'Messages'} .= $showMessages ? 
-		    CGI::Tr( $resultsData{'Messages'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($answerMessage)) ) : "";
-
-		$numAns++;
+	    
+	    
+	    push @row, CGI::td({scope=>"col"},$self->nbsp($studentAnswer)) if $showAttemptAnswers;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($preview)) if $showAttemptPreview;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($correctAnswer)) if $showCorrectAnswers;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($resultString)) if $showAttemptResults;
+	    push @row, CGI::td({scope=>"col"},  $self->nbsp($answerMessage)) if $showMessages;
+	    
+	    push @rows, CGI::Tr(@row);
+	    $numAns++;
 	}
 	
 	# render equation images
@@ -427,13 +409,8 @@ sub attemptResults {
 	}
 	
 	return
-#	    CGI::table({-class=>"attemptResults"}, $resultsRows{'Entered'}, 
-	    CGI::table({-class=>"gwAttemptResults"}, $resultsRows{'Entered'}, 
-		       $resultsRows{'Preview'}, $resultsRows{'Correct'}, 
-		       $resultsRows{'Results'}, $resultsRows{'Messages'}) .
+	    CGI::table({-class=>"gwAttemptResults"}, @rows).
 	    ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
-#		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-#		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
 
 # *BeginPPM* ###################################################################

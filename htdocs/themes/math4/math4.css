@@ -179,7 +179,7 @@ ul.nav li a:hover {
     float:left;
     display:inline-block;
     width:90%;
-    width:calc(100% - 35px);
+    width:calc(100% - 40px);
 }
 
 /* Main Content */

@@ -261,6 +261,11 @@ sub displayStudentStats {
 	
 	my @rows;
 	my $max_problems=0;
+
+	foreach my $setName (@allSetIDs) {
+	    my $num_of_problems = $db->countGlobalProblems($setName);
+	    $max_problems = ($max_problems<$num_of_problems)? $num_of_problems:$max_problems;
+	}
 	
 	foreach my $setName (@allSetIDs)   {
 		my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
@@ -328,14 +333,38 @@ sub displayStudentStats {
            $num_of_problems
            )   = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
 
+		$string =~ s/&nbsp;/ /g;
+		$twoString =~ s/&nbsp;/ /g;
+		my @prob_scores = $string =~ /.{3}/g;
+		my @prob_att = $twoString =~ /.{3}/g;
+
+		my @cgi_prob_scores = ();
+
+		for (my $i = 0; $i < $max_problems; $i++) {
+		    my $score = defined($prob_scores[$i]) ? 
+			$prob_scores[$i] :  '&nbsp;';
+		    my $class = '';
+		    if ($score =~ /C\s*/) {
+			$score = '&nbsp;C&nbsp;';
+			$class = "correct";
+		    } elsif ($score =~ /\.\s*/) {
+			$score = '&nbsp;.&nbsp;';
+			$class = "unattempted";
+		    }
+		    my $att = defined($prob_att[$i]) ?
+			$prob_att[$i] : '&nbsp;';
+		    $cgi_prob_scores[$i] = CGI::td(
+                              CGI::span({class=>$class},$score).
+					CGI::br().
+					$att);
+		}
+
 # 		warn "status $status  longStatus $longStatus string $string twoString 
 # 		      $twoString totalRight $totalRight, total $total num_of_attempts $num_of_attempts 
 # 		      num_of_problems $num_of_problems setName $setName";
 
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
-		
-		$max_problems = ($max_problems<$num_of_problems)? $num_of_problems:$max_problems;
 		
 		# prettify versioned set display
 		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
@@ -345,7 +374,7 @@ sub displayStudentStats {
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
 			#CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator -- leave this out
-			CGI::td("<pre>$string\n$twoString</pre>"), # problems
+			@cgi_prob_scores     # problems
 			#CGI::td($studentRecord->section),
 			#CGI::td($studentRecord->recitation),
 			#CGI::td($studentRecord->user_id),			
@@ -356,27 +385,21 @@ sub displayStudentStats {
 
 	my $problem_header = "";
 	foreach (1 .. $max_problems) {
-		$problem_header .= &threeSpaceFill($_);
+		$problem_header .= CGI::th({scope=>'col'},$_);
 	}
 	
 	my $table_header = join("\n",
 #		CGI::start_table({-border=>5,style=>'font-size:smaller',-id=>"grades_table"}),
 		CGI::start_table({style=>'font-size:smaller',-id=>"grades_table"}),
 		CGI::Tr({},
-			CGI::th($r->maketext('Set')),
-			CGI::th($r->maketext('Score')),
-			CGI::th($r->maketext('Out Of')),
-			#CGI::th({ -align=>'center', },'Ind'),  #  -- leave out indicator column
-			CGI::th($r->maketext('Problems').CGI::br().CGI::pre($problem_header)),
-			#CGI::th({ -align=>'center', },'Section'),
-			#CGI::th({ -align=>'center', },'Recitation'),
-			#CGI::th({ -align=>'center', },'login_name'),
-			#CGI::th({ -align=>'center', },'ID'),
-		)
+			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Set')),
+			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Score')),
+			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Out Of')),
+			CGI::th({colspan=>$max_problems,scope=>'col'},$r->maketext('Problems')
+			)),
+		CGI::Tr({}, $problem_header)
 	);
-	
-
-	
+		
 	print $table_header;
 	print @rows;
 	print CGI::end_table();

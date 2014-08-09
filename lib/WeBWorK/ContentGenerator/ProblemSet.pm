@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted between);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -115,16 +115,7 @@ sub nav {
 	my $problemSetsPage = $urlpath->parent;
 	
 	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("navUp"));
-	# CRAP ALERT: this line relies on the hacky options() implementation in ContentGenerator.
-	# we need to find a better way to do this -- long range dependencies like this are dangerous!
-	#my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
-	# here is a hack to get some functionality back, but I don't even think it's that important to
-	# have this, since there are SO MANY PLACES where we lose the displayMode, etc.
-	# (oh boy, do we need a session table in the database!)
-	my $displayMode = $r->param("displayMode") || "";
-	my $showOldAnswers = $r->param("showOldAnswers") || "";
-	my $tail = "&displayMode=$displayMode&showOldAnswers=$showOldAnswers";
-	return $self->navMacro($args, $tail, @links);
+	return $self->navMacro($args, '', @links);
 }
 
 sub title {
@@ -132,9 +123,16 @@ sub title {
 	my $r = $self->r;
 	# using the url arguments won't break if the set/problem are invalid
 	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
+	
+	my $title = $setID;
+	my $set = $r->db->getGlobalSet($setID);
+	if (defined($set) && between($set->open_date, $set->due_date)) {
+	    $title .= ' - '.$r->maketext("Due [_1]", 
+	         $self->formatDateTime($set->due_date,undef,
+				       $r->ce->{studentDateDisplayFormat}));
+	}
 
-	return $setID;
-
+	return $title;
 
 }
 

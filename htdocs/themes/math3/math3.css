@@ -934,6 +934,7 @@ div.problem_sets_options {
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 table.problem_set_table{
 	margin-top: 30px;
+	margin-bottom: 20px;
 	#width: 640px;
 	text-align: left;
 	float: left;
@@ -944,6 +945,13 @@ table.problem_set_table th{
 table.problem_set_table td{
 	padding-right: 30px;
 /*	text-align:center; */
+}
+table.problem_set_table a{
+    font-size:100%;
+}
+table.problem_set_table .icon-download {
+    font-size:1.2em;
+    text-decoration:none;
 }
 div.problem_set_options {
 	clear: both;

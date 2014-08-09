@@ -41,10 +41,10 @@ $(function(){
 	    .toggleClass('icon-chevron-right');
 	$('#site-navigation').toggleClass('span2');
 	$('#content').toggleClass('span10').toggleClass('span11');
-	if (toggleIcon.attr('data-alt') == 'close sidebar') {
-	    toggleIcon.attr('data-alt','open sidebar');
+	if (toggleIcon.next('.sr-only-glyphicon').html() == 'close sidebar') {
+	    toggleIcon.next('.sr-only-glyphicon').html('open sidebar');
 	} else {
-	    toggleIcon.attr('data-alt','close sidebar');
+	    toggleIcon.next('.sr-only-glyphicon').html('close sidebar');
 	}
 	   
     });
@@ -80,7 +80,6 @@ $(function(){
     if($('.problem_set_table th:contains("Test Score")').length > 0) {
 	$('.problem_set_table').addClass('small-table-text');
     }
-    $('.problem_set_table a.hardcopy-link').html('<span class="icon icon-download" data-alt="download hardcopy"></span>');
 
     $('#hardcopy-form').addClass('form-inline');
 

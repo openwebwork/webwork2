@@ -120,9 +120,9 @@ var tabberOptions = {manualStartup:true};
 	<!-- Breadcrumb -->
 	<div id="breadcrumb-row" class="row-fluid">
 	  <div class="span12">
-	  <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
-	  <span id="toggle-sidebar-icon" class="icon icon-chevron-left" data-alt="close sidebar"></span></a>
-
+	    <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
+	      <span id="toggle-sidebar-icon" class="icon icon-chevron-left" data-alt="close sidebar"></span></a>
+	    
 	    <div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
 	      <ul class="breadcrumb">
 		<!--#path style="bootstrap" text="<li><span aria-hidden='true' class='divider'>/</span></li>"-->
