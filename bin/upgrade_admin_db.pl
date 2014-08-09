@@ -16,6 +16,9 @@
 # Artistic License for more details.
 ################################################################################
 
+BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n') 
+	   unless($ENV{WEBWORK_ROOT});}
+
 use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::DB;
 use WeBWorK::Utils::CourseIntegrityCheck;
@@ -25,9 +28,6 @@ use WeBWorK::CourseEnvironment;
 # update admin course
 ##########################
 my $upgrade_courseID = 'admin';
-
-die('You need to set the WEBWORK_ROOT environment variable.\n') 
-    unless($ENV{WEBWORK_ROOT});
 
 my $ce2 = new WeBWorK::CourseEnvironment({
     webwork_dir => $ENV{WEBWORK_ROOT},
@@ -55,7 +55,8 @@ foreach my $table_name (@tables_to_alter) {	#warn "do_upgrade_course: adding new
 }
 
 if ($update_error_msg) {
-    print $pudate_error_msg.'\n';
+    $update_error_msg =~ s/<br \/>/\n/g;
+    print $update_error_msg."\n";
 } else {
-    print 'Admin Course Updated Sucessfully\n';
+    print "Admin Course Up to Date\n";
 }
