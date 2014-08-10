@@ -471,7 +471,7 @@ span.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
 span.incorrect { color: #bf5454; background-color: inherit; } /* red */
 span.unattempted { color: inherit; background-color: #88ECFF;}
-input.correct { /* green */
+input.correct[type="text"]{ /* green */
     border-color: rgba(81,153,81, 0.8);
     outline: 0;
     outline: thin dotted \9;
@@ -484,7 +484,7 @@ input.correct { /* green */
     color:inherit; 
 }
 
-input.incorrect { /* red */
+input.incorrect[type="text"] { /* red */
   border-color: rgba(191, 84, 84, 0.8);
   outline: 0;
   outline: thin dotted \9;
