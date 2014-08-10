@@ -33,7 +33,7 @@ function color_inputs() {
     for (i = 0, m = inputs.length; i < m; i++) {
 	input = inputs[i];
 	if (!input.hidden && input.name === input.id) {
-	    name = input.name.replace(/^(MaTrIx|MuLtIaNsWeR)_/,"").replace(/(_\d+)+$/,"");
+	    name = input.name.replace(/^(MaTrIx_MuLtIaNsWeR|MaTrIx|MuLtIaNsWeR)_/,"").replace(/(_\d+)+$/,"");
 	    if (name !== input.name && className[name]) addClass(input,className[name]);
 	}
     }

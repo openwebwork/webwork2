@@ -609,7 +609,7 @@ sub setListRow {
 					}
 					$possible += $pval;
 				}
-				$score = "$score/$possible";
+				$score = sprintf("%.4g/%d",$score,$possible);
 			} else {
 				$score = "n/a";
 			}
