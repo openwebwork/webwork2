@@ -322,6 +322,10 @@ sub attemptResults {
 	
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 
+	# for color coding the responses.
+	my @correct_ids = ();
+	my @incorrect_ids = ();
+
   # present in ver 1.10; why is this checked here?
 	#	return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the homework set that contains it is not yet open."))
 	#	unless $self->{isOpen};
@@ -358,6 +362,8 @@ sub attemptResults {
 	my $answerScore = 0;
 	my $numCorrect = 0;
 	my $numAns = 0;
+	my $numBlanks = 0;
+	my $numEssay = 0;
 	foreach my $name (@answerNames) {
 		my $answerResult  = $pg->{answers}->{$name};
 		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
@@ -365,75 +371,110 @@ sub attemptResults {
 		                    	? $self->previewAnswer($answerResult, $imgGen)
 		                    	: "");
 		my $correctAnswer = $answerResult->{correct_ans};
-		$answerScore   = $answerResult->{score};
+		$answerScore = $answerResult->{score};
 		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
 		$numCorrect += $answerScore > 0;
-		my $resultString = $answerScore == 1 ? "correct" : "incorrect";
-		
-		# get rid of the goofy prefix on the answer names (supposedly, the format
-		# of the answer names is changeable. this only fixes it for "AnSwEr"
-		#$name =~ s/^AnSwEr//;
-		
+		$numEssay += ($answerResult->{type}//'') eq 'essay';
+		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
+
+		my $resultString;
+		if ($answerScore >= 1) {
+		    $resultString = $r->maketext("correct");
+		    push @correct_ids, $name;
+		} elsif (($answerResult->{type}//'') eq 'essay') {
+		    $resultString =  $r->maketext("Ungraded");
+		    $self->{essayFlag} = 1;
+		} elsif (defined($answerScore) and $answerScore == 0) {
+		    $resultString = $r->maketext("incorrect");
+		    push @incorrect_ids, $name;
+		} else {
+		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
+		    push @incorrect_ids, $name;
+		}
+
 		my $pre = $numAns ? CGI::td("&nbsp;") : "";
 
-		$resultsRows{'Entered'} .= $showAttemptAnswers ? 
-		    CGI::Tr( $pre . $resultsData{'Entered'} . 
+		$resultsRows{'Entered'} .= $showAttemptAnswers ?
+		    CGI::Tr( $pre . $resultsData{'Entered'} .
 			     CGI::td({-class=>"output"}, $self->nbsp($studentAnswer))) : "";
 		$resultsData{'Entered'} = '';
-		$resultsRows{'Preview'} .= $showAttemptPreview ? 
-		    CGI::Tr( $pre . $resultsData{'Preview'} . 
+		$resultsRows{'Preview'} .= $showAttemptPreview ?
+		    CGI::Tr( $pre . $resultsData{'Preview'} .
 			     CGI::td({-class=>"output"}, $self->nbsp($preview)) ) : "";
 		$resultsData{'Preview'} = '';
-		$resultsRows{'Correct'} .= $showCorrectAnswers ? 
-		    CGI::Tr( $pre . $resultsData{'Correct'} . 
+		$resultsRows{'Correct'} .= $showCorrectAnswers ?
+		    CGI::Tr( $pre . $resultsData{'Correct'} .
 			     CGI::td({-class=>"output"}, $self->nbsp($correctAnswer)) ) : "";
 		$resultsData{'Correct'} = '';
-		$resultsRows{'Results'} .= $showAttemptResults ? 
-		    CGI::Tr( $pre . $resultsData{'Results'} . 
+		$resultsRows{'Results'} .= $showAttemptResults ?
+		    CGI::Tr( $pre . $resultsData{'Results'} .
 			     CGI::td({-class=>"output"}, $self->nbsp($resultString)) )  : "";
 		$resultsData{'Results'} = '';
-		$resultsRows{'Messages'} .= $showMessages ? 
-		    CGI::Tr( $resultsData{'Messages'} . 
+		$resultsRows{'Messages'} .= $showMessages ?
+		    CGI::Tr( $resultsData{'Messages'} .
 			     CGI::td({-class=>"output"}, $self->nbsp($answerMessage)) ) : "";
 
 		$numAns++;
 	}
-	
+
 	# render equation images
 	$imgGen->render(refresh => 1);
-	
-#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
-#   FIXME  -- I left the old code in in case we have to back out.
-#	my $summary = "On this attempt, you answered $numCorrect out of "
-#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 
-	my $summary = ""; 
+	my $summary = "";
 	if (scalar @answerNames == 1) { #Here there is just one answer blank
-			if ($answerScore == 1) { #The student might be totally right
-				$summary .= CGI::div({class=>"gwCorrect"},"This answer is correct.");
-			 } elsif ($answerScore && $answerScore < 1) { #The student might be partially right
-				$summary .= CGI::div({class=>"gwIncorrect"},"Part of this answer is NOT correct.");
-			 } else { #The student might be completely wrong.
-			 	 $summary .= CGI::div({class=>"gwIncorrect"},"This answer is NOT correct.");
-			 }
+		if ($numCorrect == 1) { #The student might be totally right
+			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext("This answer is correct."));
+		} elsif ($self->{essayFlag}) {
+			$summary .= $r->maketext("The answer will be graded later.");
+		} elsif ($answerScore > 0 && $answerScore < 1) { #The student might be partially right
+			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT completely correct."));
+		} else { #The student might be completely wrong.
+		 	 $summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT correct."));
+		}
 	} else {
-			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({class=>"gwCorrect"},"All of these answers are correct.");
-			 } else {
-			 	 $summary .= CGI::div({class=>"gwIncorrect"},"At least one of these answers is NOT correct.");
-			 }
+		if ($numCorrect + $numEssay == scalar @answerNames) {
+			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext(
+				$numEssay ? "All of the gradeable answers are correct." :
+					    "All of the answers are correct."));
+		} elsif ($numBlanks + $numEssay != scalar(@answerNames)) {
+			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext(
+				$answerScore > 0 && $answerScore < 1 ?
+				      "At least one of these answers is NOT completely correct." :
+				      "At least one of these answers is NOT correct."));
+		}
 	}
-	
+
+	$self->{correct_ids}   = [@correct_ids];
+	$self->{incorrect_ids} = [@incorrect_ids];
+
 	return
-#	    CGI::table({-class=>"attemptResults"}, $resultsRows{'Entered'}, 
-	    CGI::table({-class=>"gwAttemptResults"}, $resultsRows{'Entered'}, 
-		       $resultsRows{'Preview'}, $resultsRows{'Correct'}, 
+#	    CGI::table({-class=>"attemptResults"}, $resultsRows{'Entered'},
+	    CGI::table({-class=>"gwAttemptResults"}, $resultsRows{'Entered'},
+		       $resultsRows{'Preview'}, $resultsRows{'Correct'},
 		       $resultsRows{'Results'}, $resultsRows{'Messages'}) .
 	    ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
 #		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
 #		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
+}
+
+sub handle_input_colors {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $site_url = $ce->{webworkURLs}{htdocs};
+
+	return if $self->{previewAnswers};  # don't color previewed answers
+	my $showPartialCorrectAnswers = $self->{pg}{flags}{showPartialCorrectAnswers};
+
+	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript"}),
+	        "color_inputs([\n  '",
+		  join("',\n  '",@{$self->{correct_ids}}),
+	        "'\n],[\n  '",
+                  join("',\n  '",@{$self->{incorrect_ids}}),
+	        "']\n);",
+	      CGI::end_script();
 }
 
 # *BeginPPM* ###################################################################
@@ -2154,6 +2195,9 @@ sub body {
 # 	    print CGI::hidden({-name=>$probid, -value=>$probval}), "\n";
 			}
 		}
+
+		$self->handle_input_colors;
+
 		print CGI::div($jumpLinks, "\n");
 		print "\n",CGI::hr(), "\n";
 
