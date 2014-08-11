@@ -34,6 +34,15 @@ use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
 
+# utility for formatting gateway scores
+sub tidy_score {
+	my $s = shift;
+	$s = sprintf("%.5f", $s);
+	$s =~ s/0+$// if $s =~ /\./;
+	$s =~ s/\.$//;
+	return $s;
+}
+
 sub info {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -607,7 +616,7 @@ sub setListRow {
 					}
 					$possible += $pval;
 				}
-				$score = "$score/$possible";
+				$score = tidy_score($score)."/$possible";
 			} else {
 				$score = "n/a";
 			}
