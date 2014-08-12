@@ -292,7 +292,7 @@ use constant FIELD_PROPERTIES => {
 		labels    => { 'N:' => 'Yes', 'Y:N' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'Y:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
 	},
 	hide_work         => {
-		name      => "Show Student Work on Finished Tests",
+		name      => "Show Problems on Finished Tests",
 		type      => "choose",
 		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
