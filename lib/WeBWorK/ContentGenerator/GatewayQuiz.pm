@@ -470,9 +470,9 @@ sub handle_input_colors {
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript"}),
 	        "color_inputs([\n  '",
-		  join("',\n  '",@{$self->{correct_ids}}),
+		  join("',\n  '",@{$self->{correct_ids}||[]}),
 	        "'\n],[\n  '",
-                  join("',\n  '",@{$self->{incorrect_ids}}),
+                  join("',\n  '",@{$self->{incorrect_ids}||[]}),
 	        "']\n);",
 	      CGI::end_script();
 }
