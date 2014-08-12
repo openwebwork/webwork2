@@ -308,7 +308,8 @@ sub attemptResults {
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
-	
+	my $colorAnswers = $showAttemptResults;
+
 	my $r = $self->{r};
 	my $setName = $r->urlpath->arg("setID");
 	my $ce = $self->{ce};
@@ -380,16 +381,16 @@ sub attemptResults {
 		my $resultString;
 		if ($answerScore >= 1) {
 		    $resultString = $r->maketext("correct");
-		    push @{$self->{correct_ids}}, $name;
+		    push @{$self->{correct_ids}}, $name if $colorAnswers;
 		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded");
 		    $self->{essayFlag} = 1;
 		} elsif (defined($answerScore) and $answerScore == 0) {
 		    $resultString = $r->maketext("incorrect");
-		    push @{$self->{incorrect_ids}}, $name;
+		    push @{$self->{incorrect_ids}}, $name if $colorAnswers;
 		} else {
 		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
-		    push @{$self->{incorrect_ids}}, $name;
+		    push @{$self->{incorrect_ids}}, $name if $colorAnswers;
 		}
 
 		my $pre = $numAns ? CGI::td("&nbsp;") : "";
@@ -461,7 +462,6 @@ sub handle_input_colors {
 	my $site_url = $ce->{webworkURLs}{htdocs};
 
 	return if $self->{previewAnswers};  # don't color previewed answers
-	my $showPartialCorrectAnswers = $self->{pg}{flags}{showPartialCorrectAnswers};
 
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
