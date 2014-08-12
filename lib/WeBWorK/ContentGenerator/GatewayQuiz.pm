@@ -323,8 +323,8 @@ sub attemptResults {
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 
 	# for color coding the responses.
-	my @correct_ids = ();
-	my @incorrect_ids = ();
+	$self->{correct_ids} = [] unless $self->{correct_ids};
+	$self->{incorrect_ids} = [] unless $self->{incorrect_ids};
 
   # present in ver 1.10; why is this checked here?
 	#	return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the homework set that contains it is not yet open."))
@@ -380,16 +380,16 @@ sub attemptResults {
 		my $resultString;
 		if ($answerScore >= 1) {
 		    $resultString = $r->maketext("correct");
-		    push @correct_ids, $name;
+		    push @{$self->{correct_ids}}, $name;
 		} elsif (($answerResult->{type}//'') eq 'essay') {
 		    $resultString =  $r->maketext("Ungraded");
 		    $self->{essayFlag} = 1;
 		} elsif (defined($answerScore) and $answerScore == 0) {
 		    $resultString = $r->maketext("incorrect");
-		    push @incorrect_ids, $name;
+		    push @{$self->{incorrect_ids}}, $name;
 		} else {
 		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
-		    push @incorrect_ids, $name;
+		    push @{$self->{incorrect_ids}}, $name;
 		}
 
 		my $pre = $numAns ? CGI::td("&nbsp;") : "";
@@ -444,9 +444,6 @@ sub attemptResults {
 		}
 	}
 
-	$self->{correct_ids}   = [@correct_ids];
-	$self->{incorrect_ids} = [@incorrect_ids];
-
 	return
 #	    CGI::table({-class=>"attemptResults"}, $resultsRows{'Entered'},
 	    CGI::table({-class=>"gwAttemptResults"}, $resultsRows{'Entered'},
@@ -469,11 +466,11 @@ sub handle_input_colors {
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript"}),
-	        "color_inputs([\n  '",
-		  join("',\n  '",@{$self->{correct_ids}||[]}),
-	        "'\n],[\n  '",
-                  join("',\n  '",@{$self->{incorrect_ids}||[]}),
-	        "']\n);",
+	        "color_inputs([\n  ",
+		  join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
+	        "\n],[\n  ",
+                  join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
+	        "]\n);",
 	      CGI::end_script();
 }
 

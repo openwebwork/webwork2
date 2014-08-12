@@ -1792,11 +1792,11 @@ sub output_summary{
         if ($checkAnswers or $showPartialCorrectAnswers) { # color answers when partialCorrectAnswers is set
                                                            # or when checkAnswers is submitted
 	    print CGI::start_script({type=>"text/javascript"}),
-	            "addOnLoadEvent(function () {color_inputs([\n  '",
-		      join("',\n  '",@{$self->{correct_ids}||[]}),
-	            "'\n],[\n  '",
-		      join("',\n  '",@{$self->{incorrect_ids}||[]}),
-	            "']\n)});",
+	            "addOnLoadEvent(function () {color_inputs([\n  ",
+		      join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
+	            "\n],[\n  ",
+		      join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
+	            "]\n)});",
 	          CGI::end_script();
 	}
     }
