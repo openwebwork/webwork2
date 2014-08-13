@@ -79,6 +79,9 @@ var ClasslistView = MainView.extend({
       
         this.showRows(this.state.get("page_size"));
         this.filterUsers();
+        if(this.state.get("sort_class")&&this.state.get("sort_direction")){
+            this.userTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
+        }
         this.userTable.gotoPage(this.state.get("page_number"));
         
         MainView.prototype.render.apply(this);
@@ -87,9 +90,6 @@ var ClasslistView = MainView.extend({
         }
         this.stickit(this.state,this.bindings);
 
-        if(this.state.get("sort_class")&&this.state.get("sort_direction")){
-            this.userTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
-        }
 	    return this;
     },  
     bindings: { ".filter-text": "filter_text"},
@@ -139,13 +139,19 @@ var ClasslistView = MainView.extend({
 	    "click .add-students-file-option": "addStudentsByFile",
 	    "click .add-students-man-option": "addStudentsManually",
 	    "click .export-students-option": "exportStudents",
-		'keyup input.filter-text' : 'filterUsers',
+		'keyup input.filter-text' : function(){  
+            this.filterUsers();
+            this.userTable.render();
+        },
 	    'click button.clear-filter-button': 'clearFilterText',
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
 	    "click a.delete-selected": "deleteSelectedUsers",
 	    "change th[data-class-name='select-user'] input": "selectAll",
-	    "click a.show-rows": "showRows"
+	    "click a.show-rows": function(evt){ 
+            this.showRows(evt);
+            this.userTable.render();
+        }
 	},
 	addStudentsByFile: function () {
 		this.addStudentFileView.setElement(this.$(".modal-container")).render();
@@ -171,7 +177,7 @@ var ClasslistView = MainView.extend({
         modalView.render().open();
 	},	
 	filterUsers: function () {
-        this.userTable.filter(this.state.get("filter_text")).render();
+        this.userTable.filter(this.state.get("filter_text"));
         if(this.state.get("filter_text").length>0){
             this.state.set("page_number",0);
         }
@@ -179,6 +185,7 @@ var ClasslistView = MainView.extend({
     },
     clearFilterText: function () {
         this.state.set("filter_text","");
+        this.userTable.render();
     },
 	selectAll: function (evt) {
 		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
