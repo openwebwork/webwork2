@@ -30,6 +30,7 @@ var ProblemSetsManager = MainView.extend({
             self.isReducedScoringEnabled();
         }).on("table-sorted",function(info){
             self.state.set({sort_class: info.classname, sort_direction: info.direction});
+            self.isReducedScoringEnabled();
         })
 
 
@@ -49,7 +50,14 @@ var ProblemSetsManager = MainView.extend({
     events: {
         "click .add-problem-set-button": "addProblemSet",
         'click button.clear-filter-button': 'clearFilterText',
-        "click a.show-rows": "showRows"
+        "click a.show-rows": function(evt){ 
+            this.showRows(evt);
+            this.problemSetTable.render();
+        },
+        "click a.change-set-props": "showChangeProps",
+        "click a.delete-sets-button": "deleteSets",
+        "change td.select-problem-set input[type='checkbox']": "updateSelectedSets",
+        "change th input[type='checkbox']": "selectAll",
     },
     hideShowReducedScoring: function(model){
         if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
@@ -187,7 +195,7 @@ var ProblemSetsManager = MainView.extend({
             },
             {name: "Reduced Scoring", key: "enable_reduced_scoring", datatype: "boolean",
                     classname: ["enable-reduced-scoring","yes-no-boolean-select"]},
-            {name: "Visible", key: "visible", classname: ["is-visible","yes-no-boolean-select"], datatype: "boolean"},
+            {name: "Visible", key: "visible", classname: ["visible","yes-no-boolean-select"], datatype: "boolean"},
             {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
                     editable: false, datatype: "integer", use_contenteditable: false},
             {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: ["reduced-scoring-date","edit-datetime"], 
@@ -345,9 +353,76 @@ var ProblemSetsManager = MainView.extend({
     
 });
 
+var ChangeSetPropertiesView = ModalView.extend({
+    initialize: function(options){
+        var self = this;
+        _(this).bindAll("saveChanges");
+        _(this).extend(_(options).pick("problemSets","settings"));
+        this.setNames = [];
+        this.model = new ProblemSet({},util.pluckDateSettings(this.settings));
+        this.model.show_reduced_scoring=true;
+        this.model.setDefaultDates();
+        this.model.on("change:enable_reduced_scoring",function(){
+            if(self.model.get("enable_reduced_scoring")){
+                self.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
+                // set the reduced_scoring_date to be the custom amount of time before the due_date
+                self.model.set("reduced_scoring_date", 
+                    moment.unix(self.model.get("due_date"))
+                        .subtract(self.model.dateSettings["pg{ansEvalDefaults}{reducedScoringPeriod}"],"minutes")
+                        .unix());
+            } else {
+                self.$(".reduced-scoring-date").closest("tr").addClass("hidden");
+            }
+        }).on("change:open_date change:due_date change:reduced_scoring_date change:answer_date", function (){
+            self.model.adjustDates();
+        });
+
+        _(options).extend({
+            modal_header: "Change Properties for Multiple Sets",
+            modal_body: $("#change-set-props-template").html(),
+            modal_action_button_text: "Save Changes"
+        })
+
+        ModalView.prototype.initialize.apply(this,[options]);
+    },
+    render: function (){
+        ModalView.prototype.render.apply(this);
+        this.$(".set-names").text(this.setNames.join(", "));
+        if(!this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+            this.$(".reduced-scoring").closest("tr").addClass("hidden");
+        }
+        this.stickit();
+    },
+    set: function(options){
+        this.setNames = options.set_names;
+        return this;
+    },
+    bindings: {
+            ".open-date" : "open_date",
+            ".due-date" : "due_date",
+            ".answer-date": "answer_date",
+            ".prob-set-visible": "visible",
+            ".reduced-scoring": "enable_reduced_scoring",
+            ".reduced-scoring-date": "reduced_scoring_date"
+    },
+    // this is added to the parentEvents in ModalView to create the entire events object. 
+    childEvents: {
+        "click .action-button": "saveChanges"
+    },
+    saveChanges: function(){
+        var self = this;
+        _(this.setNames).each(function(setID){
+            self.problemSets.findWhere({set_id: setID})
+                .set(self.model.pick("open_date","due_date","answer_date","visible","enable_reduced_scoring","reduced_scoring_date"));
+        })
+        this.$(".change-set-props-modal").modal("hide");
+    }
+});
+
 var AddProblemSetView = ModalView.extend({
     initialize: function (options) {
-        _.bindAll(this,"render","addNewSet");
+        _.bindAll(this,"render","addNewSet","validateName");
+        this.settings = options.settings;
         this.model = new ProblemSet({},options.dateSettings);
 
         _.extend(options, {template: $("#add-hw-set-template").html(), 
@@ -358,7 +433,8 @@ var AddProblemSetView = ModalView.extend({
         this.problemSets = options.problemSets; 
     },
     render: function () {
-        this.constructor.__super__.render.apply(this); 
+        ModalView.prototype.render.apply(this);
+        this.stickit();
 
         return this;
     },

@@ -51,6 +51,16 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         },
         displayFloat: function(val,digits){
             return Math.round(val*Math.pow(10,digits))/Math.pow(10,digits);
+        },
+        sortIcons: {
+            "string1": "fa fa-sort-alpha-asc",
+            "string-1": "fa fa-sort-alpha-desc",
+            "integer1": "fa fa-sort-numeric-asc",
+            "integer-1": "fa fa-sort-numeric-desc",
+            "boolean1": "fa fa-sort-amount-asc",
+            "boolean-1": "fa fa-sort-amount-desc", 
+            "none1": "fa fa-sort-amount-asc",
+            "none-1": "fa fa-sort-amount-desc"
         }
     } 
 
