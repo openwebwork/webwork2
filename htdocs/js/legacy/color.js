@@ -7,9 +7,7 @@
  * Edited by dpvc 2014-08
  */
 
-function color_inputs() {
-    var correct = document.getElementsByName('correct_ids');
-    var incorrect = document.getElementsByName('incorrect_ids');
+function color_inputs(correct,incorrect) {
     var className = {};
     var i, m, inputs, input, name;
     var addClass = function (input,name) {
@@ -17,16 +15,14 @@ function color_inputs() {
 	    if (input.className == "") {input.className = name} else {input.className += " "+name}
 	}
     };
-    
+
     for (i = 0, m = correct.length; i < m; i++) {
-	name = correct[i].value.replace(/_.*/,""); // remove _val from name.  Why is it there?
-	addClass(document.getElementById(name),"correct");
-	className[name] = "correct";
+	addClass(document.getElementById(correct[i]),"correct");
+	className[correct[i]] = "correct";
     }
     for (i = 0, m = incorrect.length; i < m; i++) {
-	name = incorrect[i].value.replace(/_.*/,""); // remove _val from name.  Why is it there?
-	addClass(document.getElementById(name),"incorrect");
-	className[name] = "incorrect";
+	addClass(document.getElementById(incorrect[i]),"incorrect");
+	className[incorrect[i]] = "incorrect";
     }
     
     inputs = document.getElementsByTagName("input");
@@ -38,5 +34,3 @@ function color_inputs() {
 	}
     }
 }
-
-addOnLoadEvent(color_inputs);

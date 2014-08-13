@@ -47,6 +47,15 @@ sub templateName {
 	return "gateway";
 }
 
+# small utility to round scores to 5 decimal places
+
+sub tidy_score {
+	my $s = shift;
+	$s = sprintf("%.5f", $s);
+	$s =~ s/0+$// if $s =~ /\./;
+	$s =~ s/\.$//;
+	return $s;
+}
 
 ################################################################################
 # "can" methods
@@ -308,7 +317,8 @@ sub attemptResults {
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
-	
+	my $colorAnswers = $showAttemptResults;
+
 	my $r = $self->{r};
 	my $setName = $r->urlpath->arg("setID");
 	my $ce = $self->{ce};
@@ -321,6 +331,10 @@ sub attemptResults {
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
+
+	# for color coding the responses.
+	$self->{correct_ids} = [] unless $self->{correct_ids};
+	$self->{incorrect_ids} = [] unless $self->{incorrect_ids};
 
   # present in ver 1.10; why is this checked here?
 	#	return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the homework set that contains it is not yet open."))
@@ -357,7 +371,10 @@ sub attemptResults {
 	my $answerScore = 0;
 	my $numCorrect = 0;
 	my $numAns = 0;
+	my $numBlanks = 0;
+	my $numEssay = 0;
 	foreach my $name (@answerNames) {
+
 	    @row = ();
 	    my $answerResult  = $pg->{answers}->{$name};
 	    my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
@@ -365,12 +382,26 @@ sub attemptResults {
 				 ? $self->previewAnswer($answerResult, $imgGen)
 				 : "");
 	    my $correctAnswer = $answerResult->{correct_ans};
-	    $answerScore   = $answerResult->{score};
+	    $answerScore = $answerResult->{score};
 	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-	    #FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
 	    $numCorrect += $answerScore > 0;
-		my $resultString = $answerScore == 1 ? "correct" : "incorrect";
+	    $numEssay += ($answerResult->{type}//'') eq 'essay';
+	    $numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
 	    
+	    my $resultString;
+	    if ($answerScore >= 1) {
+		$resultString = $r->maketext("correct");
+		push @{$self->{correct_ids}}, $name if $colorAnswers;
+	    } elsif (($answerResult->{type}//'') eq 'essay') {
+		$resultString =  $r->maketext("Ungraded");
+		$self->{essayFlag} = 1;
+	    } elsif (defined($answerScore) and $answerScore == 0) {
+		$resultString = $r->maketext("incorrect");
+		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
+	    } else {
+		$resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
+		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
+	    }
 	    
 	    push @row, CGI::td({scope=>"col"},$self->nbsp($studentAnswer)) if $showAttemptAnswers;
 	    push @row, CGI::td({scope=>"col"}, $self->nbsp($preview)) if $showAttemptPreview;
@@ -380,37 +411,60 @@ sub attemptResults {
 	    
 	    push @rows, CGI::Tr(@row);
 	    $numAns++;
+
 	}
-	
+
 	# render equation images
 	$imgGen->render(refresh => 1);
-	
-#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
-#   FIXME  -- I left the old code in in case we have to back out.
-#	my $summary = "On this attempt, you answered $numCorrect out of "
-#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 
-	my $summary = ""; 
+	my $summary = "";
 	if (scalar @answerNames == 1) { #Here there is just one answer blank
-			if ($answerScore == 1) { #The student might be totally right
-				$summary .= CGI::div({class=>"gwCorrect"},"This answer is correct.");
-			 } elsif ($answerScore && $answerScore < 1) { #The student might be partially right
-				$summary .= CGI::div({class=>"gwIncorrect"},"Part of this answer is NOT correct.");
-			 } else { #The student might be completely wrong.
-			 	 $summary .= CGI::div({class=>"gwIncorrect"},"This answer is NOT correct.");
-			 }
+		if ($numCorrect == 1) { #The student might be totally right
+			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext("This answer is correct."));
+		} elsif ($self->{essayFlag}) {
+			$summary .= $r->maketext("The answer will be graded later.");
+		} elsif ($answerScore > 0 && $answerScore < 1) { #The student might be partially right
+			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT completely correct."));
+		} else { #The student might be completely wrong.
+		 	 $summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT correct."));
+		}
 	} else {
-			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({class=>"gwCorrect"},"All of these answers are correct.");
-			 } else {
-			 	 $summary .= CGI::div({class=>"gwIncorrect"},"At least one of these answers is NOT correct.");
-			 }
+		if ($numCorrect + $numEssay == scalar @answerNames) {
+			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext(
+				$numEssay ? "All of the gradeable answers are correct." :
+					    "All of the answers are correct."));
+		} elsif ($numBlanks + $numEssay != scalar(@answerNames)) {
+			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext(
+				$answerScore > 0 && $answerScore < 1 ?
+				      "At least one of these answers is NOT completely correct." :
+				      "At least one of these answers is NOT correct."));
+		}
 	}
-	
+
 	return
+
 	    CGI::table({-class=>"gwAttemptResults"}, @rows).
+
 	    ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
+}
+
+sub handle_input_colors {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $site_url = $ce->{webworkURLs}{htdocs};
+
+	return if $self->{previewAnswers};  # don't color previewed answers
+
+	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript"}),
+	        "color_inputs([\n  ",
+		  join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
+	        "\n],[\n  ",
+                  join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
+	        "]\n);",
+	      CGI::end_script();
 }
 
 # *BeginPPM* ###################################################################
@@ -1451,11 +1505,11 @@ sub body {
 			# next, store the state in the database if that makes 
 			#    sense
 			if ( $submitAnswers && $will{recordAnswers} ) {
-  $problems[$i]->status($pg_results[$i]->{state}->{recorded_score});
+  $problems[$i]->status(tidy_score($pg_results[$i]->{state}->{recorded_score}));
   $problems[$i]->attempted(1);
   $problems[$i]->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $problems[$i]->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
-  $pureProblem->status($pg_results[$i]->{state}->{recorded_score});
+  $pureProblem->status(tidy_score($pg_results[$i]->{state}->{recorded_score}));
   $pureProblem->attempted(1);
   $pureProblem->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $pureProblem->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
@@ -1690,11 +1744,16 @@ sub body {
 			my $pScore = 0;
 			my $numParts = 0;
 			if ( ref( $pg ) ) {  # then we have a pg object
-				foreach (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
-					$pScore += $pg->{answers}->{$_}->{score};
-					$numParts++;
-				}
-				$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
+###
+				#foreach (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
+				#	$pScore += $pg->{answers}->{$_}->{score};
+				#	$numParts++;
+				#}
+				#$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
+				$pScore = $pg->{result}->{score};
+				$probStatus[$i] = $pScore;
+				$numParts = 1;
+###
 
 			} else {
 				# if we don't have a pg object, use any known 
@@ -1736,6 +1795,7 @@ sub body {
 
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
+	$attemptScore = tidy_score($attemptScore);
 	if ( $submitAnswers ) {
 		# the distinction between $can{recordAnswers} and ! $can{} has 
 		#    been dealt with above and recorded in @scoreRecordedMessage
@@ -1783,8 +1843,9 @@ sub body {
 		if ( $set->attempts_per_version > 1 && $attemptNumber > 1 &&
 		     $recordedScore != $attemptScore && $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
+			my $recScore = tidy_score($recordedScore);
 			print "The recorded score for this test is ",
-				"$recordedScore/$totPossible.";
+				"$recScore/$totPossible.";
 			print CGI::end_div();
 		}
 
@@ -1795,8 +1856,9 @@ sub body {
 					  "recorded) submission is ",
 					  "$attemptScore/$totPossible."), 
 				CGI::br();
+			my $recScore = tidy_score($recordedScore);
 			print "The recorded score for this test is " .
-				"$recordedScore/$totPossible.  ";
+				"$recScore/$totPossible.  ";
 			print CGI::end_div();
 		}
 	}
@@ -1863,7 +1925,7 @@ sub body {
 			if ( $can{showScore} ) {
 				my $scMsg = "Your recorded score on this " .
 					"(test number $versionNumber) is " .
-					"$recordedScore/$totPossible";
+					tidy_score($recordedScore)."/$totPossible";
 				if ( $exceededAllowedTime && 
 				     $recordedScore == 0 ) {
 					$scMsg .= ", because you exceeded " .
@@ -2107,6 +2169,9 @@ sub body {
 # 	    print CGI::hidden({-name=>$probid, -value=>$probval}), "\n";
 			}
 		}
+
+		$self->handle_input_colors;
+
 		print CGI::div($jumpLinks, "\n");
 		print "\n",CGI::hr(), "\n";
 

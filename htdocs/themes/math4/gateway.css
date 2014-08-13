@@ -119,8 +119,8 @@ table.gwAttemptResults {
     border: solid black 1px;
 }
 
-table.gwAttemptResults th,
-table.gwAttemptResults td {
+table.gwAttemptResults>tbody>tr>th,
+table.gwAttemptResults>tbody>tr>td {
 	padding: 5px;
 	border: solid black 1px;
 	background-color: #eeeeee;
