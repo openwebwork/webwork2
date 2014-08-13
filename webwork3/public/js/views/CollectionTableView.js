@@ -232,7 +232,6 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				this.paginatorProp.page_size = options.num_rows;
 				this.initializeTable();
 				this.updatePaginator();
-				this.render();
 			}
 		},
 		updateTable: function () {
@@ -259,13 +258,16 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 		getRowCount: function () {
 			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
 		},
-		events: {"click th": "sortTable",
-				"click .first-page": "firstPage",
-				"click .prev-page": "prevPage",
-				"click .numbered-page": "gotoPage",
-				"click .next-page": "nextPage",
-				"click .last-page": "lastPage",
-				"click button.paginator-page": "pageChanged"
+		events: {
+			"click th": function (evt) {
+				this.sortTable(evt).render();
+			},
+			"click .first-page": "firstPage",
+			"click .prev-page": "prevPage",
+			"click .numbered-page": "gotoPage",
+			"click .next-page": "nextPage",
+			"click .last-page": "lastPage",
+			"click button.paginator-page": "pageChanged"
 		},
 		sortTable: function(evt){
 			var self = this
@@ -335,7 +337,7 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			};
 			this.collection.sort();
-			this.render();
+			return this;
 		},
 		firstPage: function() { this.gotoPage(0);},
 		prevPage: function() {if(this.currentPage>0) {this.gotoPage(this.currentPage-1);}},
