@@ -179,7 +179,7 @@ var ClasslistView = MainView.extend({
         if(this.state.get("filter_text").length>0){
             this.state.set("page_number",0);
         }
-        this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
+        this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
     },
     clearFilterText: function () {
         this.state.set("filter_text","");
@@ -198,75 +198,82 @@ var ClasslistView = MainView.extend({
         }
     },
 	tableSetup: function () {
-            var self = this;
-            this.cols = [{name: "Select", key: "select_row", classname: "select-user", 
+        var self = this;
+        this.cols = [{name: "Select", key: "select_row", classname: "select-user", 
+            stickit_options: {update: function($el, val, model, options) {
+                $el.html($("#checkbox-template").html());
+            }}, colHeader: "<input type='checkbox'></input>"},
+            {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
+                editable: false},
+            {name: "LS", key: "logged_in",classname:"logged-in-status", datatype: "none", editable: false,
+                title: "Logged in status",
                 stickit_options: {update: function($el, val, model, options) {
-                    $el.html($("#checkbox-template").html());
-                }}, colHeader: "<input type='checkbox'></input>"},
-                {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
-                    editable: false },
-                {name: "LS", key: "logged_in",classname:"logged-in-status", datatype: "none", editable: false,
-                    stickit_options: {update: function($el, val, model, options) {
-                        $el.html(val?"<i class='fa fa-circle' style='color: green'></i>":"")
-                    }}
-                },
-                {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
-                	value: function(model){
-                		return self.problemSets.filter(function(_set) { 
-                				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
-               		},
-                	stickit_options: {update: function($el, val, model, options) {
-                		$el.html(self.problemSets.filter(function(_set) { 
-                				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length + "/"
-                		+ self.problemSets.size()); }
-                }},
-                {name: "First Name", key: "first_name", classname: "first-name", editable: true, datatype: "string",
-	            	stickit_options: {events: ['blur']}},
-                {name: "Last Name", key: "last_name", classname: "last-name", editable: true, datatype: "string",
-            		stickit_options: {events: ['blur']}},
-                {name: "Email", key: "email_address", classname: "email", sortable: false,
-            		stickit_options: {
-            			update: function($el,val,model,options){
-            				// Perhaps this can go into config.js as a Stickit Handler.
-            				// in addition, a lot of this needs to go into templates for I18N
-            				var address = (val=="")?$("<span>"):$("<a>").attr("href","mailto:"+val);
-                            address.text("email");  // I18N
+                    $el.html(val?"<i class='fa fa-circle' style='color: green'></i>":"")
+                }}
+            },
+            {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
+            	value: function(model){
+            		return self.problemSets.filter(function(_set) { 
+            				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
+           		},
+            	stickit_options: {update: function($el, val, model, options) {
+            		$el.html(self.problemSets.filter(function(_set) { 
+            				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length + "/"
+            		+ self.problemSets.size()); }
+            }},
+            {name: "First Name", key: "first_name", classname: "first-name", editable: true, datatype: "string",
+            	stickit_options: {events: ['blur']}},
+            {name: "Last Name", key: "last_name", classname: "last-name", editable: true, datatype: "string",
+        		stickit_options: {events: ['blur']}},
+            {name: "Email", key: "email_address", classname: "email", sortable: false,
+        		stickit_options: {
+        			update: function($el,val,model,options){
+        				// Perhaps this can go into config.js as a Stickit Handler.
+        				// in addition, a lot of this needs to go into templates for I18N
+        				var address = (val=="")?$("<span>"):$("<a>").attr("href","mailto:"+val);
+                        address.text("email");  // I18N
 
-            				var popoverHTML = "<input class='edit-email' value='"+ val +"'></input>"
-            					+ "<button class='close-popover btn btn-default btn-sm'>Save and Close</button>";
-            				var edit = $("<a>").attr("href","#").text("edit")
-            					.attr("data-toggle","popover")
-            					.attr("data-title","Edit Email Address")
-            					.popover({html: true, content: popoverHTML})
-            					.on("shown.bs.popover",function (){
-            						$el.find(".edit-email").focus();
-            					});
-            				function saveEmail(){
-            					model.set("email_address",$el.find(".edit-email").val());
-            					edit.popover("hide");
-            				}
-            				$el.html(address).append("&nbsp;&nbsp;").append(edit);
-            				$el.delegate(".close-popover","click",saveEmail);
-            				$el.delegate(".edit-email","keyup",function(evt){
-            					if(evt.keyCode==13){
-            						saveEmail();
-            					}
-            				})
-            			}
-            		}},
-                {name: "Student ID", key: "student_id", classname: "student-id",  editable: true, datatype: "string",
-            		stickit_options: {events: ['blur']}},
-                {name: "Status", key: "status", classname: "status",
-            		stickit_options: { selectOptions: { collection: config.enrollment_statuses }}},
-                {name: "Section", key: "section", classname: "section",  editable: true, datatype: "string",
-            		stickit_options: {events: ['blur']}},
-            	{name: "Recitation", key: "recitation", classname: "recitation",  editable: true, datatype: "string",
-            		stickit_options: {events: ['blur']}},
-            	{name: "Comment", key: "comment", classname: "comment",  editable: true, datatype: "string",
-            		stickit_options: {events: ['blur']}},
-            	{name: "Permission", key: "permission", classname: "permission",
-            		stickit_options: { selectOptions: { collection: config.permissions }}
-            }];
+        				var popoverHTML = "<input class='edit-email' value='"+ val +"'></input>"
+        					+ "<button class='close-popover btn btn-default btn-sm'>Save and Close</button>";
+        				var edit = $("<a>").attr("href","#").text("edit")
+        					.attr("data-toggle","popover")
+        					.attr("data-title","Edit Email Address")
+        					.popover({html: true, content: popoverHTML})
+        					.on("shown.bs.popover",function (){
+        						$el.find(".edit-email").focus();
+        					});
+        				function saveEmail(){
+        					model.set("email_address",$el.find(".edit-email").val());
+        					edit.popover("hide");
+        				}
+        				$el.html(address).append("&nbsp;&nbsp;").append(edit);
+        				$el.delegate(".close-popover","click",saveEmail);
+        				$el.delegate(".edit-email","keyup",function(evt){
+        					if(evt.keyCode==13){
+        						saveEmail();
+        					}
+        				})
+        			}
+        		}},
+            {name: "Student ID", key: "student_id", classname: "student-id",  editable: true, datatype: "string",
+        		stickit_options: {events: ['blur']}},
+            {name: "Status", key: "status", classname: "status", datatype: "string",
+                value: function(model){
+                    return _(config.enrollment_statuses).findWhere({value: model.get("status")}).label;
+                },
+        		stickit_options: { selectOptions: { collection: config.enrollment_statuses }}},
+            {name: "Section", key: "section", classname: "section",  editable: true, datatype: "string",
+        		stickit_options: {events: ['blur']}},
+        	{name: "Recitation", key: "recitation", classname: "recitation",  editable: true, datatype: "string",
+        		stickit_options: {events: ['blur']}},
+        	{name: "Comment", key: "comment", classname: "comment",  editable: true, datatype: "string",
+        		stickit_options: {events: ['blur']}},
+        	{name: "Permission", key: "permission", classname: "permission", datatype: "string",
+                value: function(model){
+                    return _(config.permissions).findWhere({value: model.get("permission")}).label;
+                },
+        		stickit_options: { selectOptions: { collection: config.permissions }}
+        }];
 	},
 	getSelectedUsers: function () {
 		var self = this;

@@ -87,6 +87,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 						_model._extra[col.key]=col.value.apply(this,[_model]);
 					})
 				}
+				if(typeof(col.datatype)!=="undefined"){
+					col.sortable = true;
+				}
 				_.extend(self.bindings, obj);
 			});
 			return this;
@@ -105,6 +108,9 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
 				var th = $("<th data-class-name='" + className + "'>").addClass(className)
 					.html(col.colHeader? col.colHeader: col.name + "<span class='sort'></span>");
+				if(col.title){
+					th.attr("title",col.title);
+				}
 				headRow.append(th);
 			});
 
@@ -127,9 +133,22 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			}
 
 			if(this.sortInfo && ! _.isEqual(this.sortInfo,{})){
+				var type = _(this.columnInfo).findWhere({classname: this.sortInfo.classname}).datatype;
+				var iconClass; 
+				switch(type){
+					case "string": 
+						iconClass = (this.sortInfo.direction >0 ) ? "fa-sort-alpha-asc" : "fa-sort-alpha-desc";
+						break;
+					case "integer":
+						iconClass = (this.sortInfo.direction >0 ) ? "fa-sort-numeric-asc" : "fa-sort-numeric-desc";
+						break;
+					default:
+						iconClass = (this.sortInfo.direction >0 ) ? "fa-sort-amount-asc" : "fa-sort-amount-desc";
+				}
+
 				this.$("th."+ (_.isArray(this.sortInfo.classname) ? this.sortInfo.classname[0]: this.sortInfo.classname)
 							+ " .sort")
-					.html("<i class='fa fa-long-arrow-" + (this.sortInfo.direction >0 ? "down": "up") + "'></i>" );
+					.html("<i class='fa " + iconClass +"'></i>" );
 			}
 
 			return this;
@@ -289,8 +308,10 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 
 			/* Need a more robust comparator function. */
 			this.collection.comparator = function(model1,model2) { 
-				var value1 = typeof(model1.get(sort.key)) === "undefined" ? model1._extra[sort.key] : model1.get(sort.key);
-				var value2 = typeof(model2.get(sort.key)) === "undefined" ? model2._extra[sort.key] : model2.get(sort.key);
+				var value1 = typeof(model1.get(sort.key)) === "undefined" || model1._extra[sort.key] 
+						? model1._extra[sort.key] : model1.get(sort.key);
+				var value2 = typeof(model2.get(sort.key)) === "undefined" || model2._extra[sort.key] 
+						? model2._extra[sort.key] : model2.get(sort.key);
 				switch(sort.datatype){
 					case "integer":
 						if(parseInt(sortFunction(value1,model1))===parseInt(sortFunction(value2,model2))){return 0;}
