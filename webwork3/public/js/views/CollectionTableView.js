@@ -94,44 +94,39 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 		render: function () {
 			var self = this, i;
 			this.$el.empty();
-
-			// set up the HTML for the table header
-			var headRow = $("<tr>");
 			var tbody = $("<tbody>");
-			this.$el.append($("<thead>").append(headRow)).append(tbody);
-
-			_(this.columnInfo).each(function (col){
-				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
-				var th = $("<th data-class-name='" + className + "'>").addClass(className)
-					.html(col.colHeader? col.colHeader: col.name + "<span class='sort'></span>");
-				headRow.append(th);
-			});
+			this.$el.append($("<thead>").append(this.tableHeader())).append(tbody);
 
 			this.updateTable();
-			if(this.pageSize >0){
-				for(i=0;i<this.pageSize;i++){
-					if(this.rowViews[i]){
-						tbody.append(self.rowViews[i].render().el);
-					}
-				}
-			} else {
-				_(this.rowViews).each(function(row){
-					tbody.append(row.render().el);
-				});
-			}
-
 			if(this.paginatorProp.showPaginator){
 				this.$el.append($("<tr class='paginator-row'>"));
 				this.updatePaginator();
 			}
 
+
+			return this;
+		},
+		tableHeader: function () {
+						// set up the HTML for the table header
+			var headRow = $("<tr>");
+
+			_(this.columnInfo).each(function (col){
+				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
+				var th = $("<th data-class-name='" + className + "'>").addClass(className)
+					.html(col.colHeader? col.colHeader: col.name + "<span class='sort'></span>");
+				console.log(th.html());
+				headRow.append(th);
+			});
+
 			if(this.sortInfo && ! _.isEqual(this.sortInfo,{})){
-				this.$("th."+ (_.isArray(this.sortInfo.classname) ? this.sortInfo.classname[0]: this.sortInfo.classname)
+				headRow.find("th."+ (_.isArray(this.sortInfo.classname) ? this.sortInfo.classname[0]: this.sortInfo.classname)
 							+ " .sort")
 					.html("<i class='fa fa-long-arrow-" + (this.sortInfo.direction >0 ? "down": "up") + "'></i>" );
 			}
 
-			return this;
+			console.log(headRow.html());
+
+			return headRow; 
 		},
 		updatePaginator: function() {
 			// render the paginator
@@ -230,6 +225,18 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 					}
 				}
 			});
+			var tbody = this.$("tbody").empty();
+			if(this.pageSize >0){
+				for(i=0;i<this.pageSize;i++){
+					if(this.rowViews[i]){
+						tbody.append(self.rowViews[i].render().el);
+					}
+				}
+			} else {
+				_(this.rowViews).each(function(row){
+					tbody.append(row.render().el);
+				});
+			}
 			return this;
 		},
 		refreshTable: function (){

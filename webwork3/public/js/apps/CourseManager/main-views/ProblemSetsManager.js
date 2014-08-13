@@ -33,8 +33,7 @@ var ProblemSetsManager = MainView.extend({
         }).on("table-sorted",function(info){
             self.state.set({sort_class: info.classname, sort_direction: info.direction});
         })
-        var dateSettings = util.pluckDateSettings(this.settings);
-        this.changeSetPropView = new ChangeSetPropertiesView({date_settings: dateSettings,problemSets: this.problemSets});
+        this.changeSetPropView = new ChangeSetPropertiesView({settings: this.settings,problemSets: this.problemSets});
         this.changeSetPropView.on("modal-opened",function (){
             self.state.set("set_prop_modal_open",true);
         }).on("modal-closed",function(){
@@ -52,7 +51,10 @@ var ProblemSetsManager = MainView.extend({
     events: {
         "click .add-problem-set-button": "addProblemSet",
         'click button.clear-filter-button': 'clearFilterText',
-        "click a.show-rows": "showRows",
+        "click a.show-rows": function(evt){ 
+            this.showRows(evt);
+            this.problemSetTable.render();
+        },
         "click a.change-set-props": "showChangeProps",
         "click a.delete-sets-button": "deleteSets",
         "change td.select-problem-set input[type='checkbox']": "updateSelectedSets",
@@ -195,7 +197,6 @@ var ProblemSetsManager = MainView.extend({
         } else {
             this.problemSetTable.set({num_rows: this.state.get("page_size")});
         }
-        this.problemSetTable.render();
         this.isReducedScoringEnabled();
     },
     set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
@@ -404,9 +405,9 @@ var ChangeSetPropertiesView = ModalView.extend({
     initialize: function(options){
         var self = this;
         _(this).bindAll("saveChanges");
-        this.problemSets = options.problemSets;
+        _(this).extend(_(options).pick("problemSets","settings"));
         this.setNames = [];
-        this.model = new ProblemSet({},options.date_settings);
+        this.model = new ProblemSet({},util.pluckDateSettings(this.settings));
         this.model.show_reduced_scoring=true;
         this.model.setDefaultDates();
         this.model.on("change:enable_reduced_scoring",function(){
@@ -435,6 +436,9 @@ var ChangeSetPropertiesView = ModalView.extend({
     render: function (){
         ModalView.prototype.render.apply(this);
         this.$(".set-names").text(this.setNames.join(", "));
+        if(!this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+            this.$(".reduced-scoring").closest("tr").addClass("hidden");
+        }
         this.stickit();
     },
     set: function(options){
@@ -466,6 +470,7 @@ var ChangeSetPropertiesView = ModalView.extend({
 var AddProblemSetView = ModalView.extend({
     initialize: function (options) {
         _.bindAll(this,"render","addNewSet","validateName");
+        this.settings = options.settings;
         this.model = new ProblemSet({},options.dateSettings);
         this.model.problemSets = options.problemSets; 
         this.problemSets = options.problemSets;
@@ -481,6 +486,7 @@ var AddProblemSetView = ModalView.extend({
     render: function () {
         ModalView.prototype.render.apply(this);
         this.stickit();
+
         return this;
     },
     setModel: function(_model){
