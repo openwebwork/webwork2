@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
+use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -2329,7 +2329,10 @@ sub body {
 		$problemFile =~ s|\.\.||g;
 		# warn of repeat problems
 		if (defined $shownYet{$problemFile}) {
-		    $repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $shownYet{$problemFile});
+		    my $prettyID = $shownYet{$problemFile};
+		    $prettyID = join('.',jitar_id_to_seq($prettyID)) if
+			$isJitarSet;
+		    $repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $prettyID);
 		} else {
 		    $shownYet{$problemFile} = $problemID;
 		    $repeatFile = "";
@@ -2427,14 +2430,14 @@ sub body {
 		}
 
 		# now use recursion to print the nested lists
-		print CGI::start_ol({id=>"psd_list", $forUsers ? ('class','disable_renumber') : ()});
+		print CGI::start_ol({id=>"psd_list", after($setRecord->open_date) || $forUsers ? ('class','disable_renumber') : ()});
 		foreach my $id (sort {$a <=> $b} keys %$nestedIDHash) {
 		    print_nested_list($nestedIDHash->{$id});
 		}
 		print CGI::end_ol();
 
 	    } else {
-		print CGI::start_ol({id=>"psd_list", $forUsers ? ('class','disable_renumber') : () });
+		print CGI::start_ol({id=>"psd_list", after($setRecord->open_date) || $forUsers ? ('class','disable_renumber') : () });
 		for (my $i=0; $i<=$#problemIDList; $i++) {
 		    print CGI::li({class=>"psd_list_row mjs-nestedSortable-no-nesting", id=>"psd_list_".$problemIDList[$i]} , $problemRow[$i]);
 		}
