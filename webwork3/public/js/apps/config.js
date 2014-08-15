@@ -76,16 +76,11 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         setNameValidator: function(value, attr, customValue, model) {
             if(!Backbone.Validation.patterns["setname"].test(value))
                 return config.msgTemplate({type:"set_name_error"});
-            },
-        checkLogin: function(value,attr,customValue,model){
-            if(!value.match(config.regexp.loginname)){
-                return "Value must be a valid login name"; // add to messageTemplate
-            }
-            if(model.collection.courseUsers && model.collection.courseUsers.findWhere({user_id: value})){
-                return "The user with login " + value + " already exists in this course.";
             }
         }
-
+    });
+    _.extend(Backbone.Validation.messages, {
+        loginname: "The login name is not valid (you can only use the characters a-z,A-Z, 1-9, . and _)"
     });
 
     _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);  
