@@ -38,8 +38,11 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                      ],
     
 
-        permissions : [{value: -5, label: "guest"},{value: 0, label: "student"},{value: 2, label: "login proctor"}, 
-                        {value: 3, label: "T.A."},{value: 10, label: "professor"}, {value: 20, label: "administrator"}],
+        permissions : [{value: "-5", label: "guest"},{value: "0", label: "student"},{value: "2", label: "login proctor"}, 
+                        {value: "3", label: "T.A."},{value: "10", label: "professor"}, {value: "20", label: "administrator"}],
+
+        enrollment_statuses: [{value: "A", label: "Audit"},{value: "C", label: "Enrolled"},
+                    {value: "P", label: "Proctor"}, {value: "D", label: "Drop"}],
 
         regexp : {
             wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,
@@ -61,6 +64,16 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
             theDate.hours(newDate.hours()).minutes(newDate.minutes());
             evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
+        },
+        sortIcons: {
+            "string1": "fa fa-sort-alpha-asc",
+            "string-1": "fa fa-sort-alpha-desc",
+            "integer1": "fa fa-sort-numeric-asc",
+            "integer-1": "fa fa-sort-numeric-desc",
+            "boolean1": "fa fa-sort-amount-asc",
+            "boolean-1": "fa fa-sort-amount-desc", 
+            "none1": "fa fa-sort-amount-asc",
+            "none-1": "fa fa-sort-amount-desc"
         }
 
     } 
@@ -76,17 +89,12 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
     _.extend(Backbone.Validation.validators, {
         setNameValidator: function(value, attr, customValue, model) {
             if(!Backbone.Validation.patterns["setname"].test(value))
-                return config.messageTemplate({type:"set_name_error"});
-            },
-        checkLogin: function(value,attr,customValue,model){
-            if(!value.match(config.regexp.loginname)){
-                return "Value must be a valid login name"; // add to messageTemplate
+                return config.msgTemplate({type:"set_name_error"});
             }
-            if(model.collection.courseUsers && model.collection.courseUsers.findWhere({user_id: value})){
-                return "The user with login " + value + " already exists in this course.";
-            }
-        }
-
+        });
+    
+    _.extend(Backbone.Validation.messages, {
+        loginname: "The login name is not valid (you can only use the characters a-z,A-Z, 1-9, . and _)"
     });
 
     _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);  

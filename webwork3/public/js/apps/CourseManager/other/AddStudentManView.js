@@ -31,7 +31,9 @@ define(['backbone', 'underscore','models/User','models/UserList','views/ModalVie
 			var self = this;
 			Backbone.Validation.bind(this, {
 		    	invalid: function(view,attr,error){
-		    		self.$(self.invBindings[attr]).popover({placement: "right", content: error})
+		    		console.log(error);
+		    		self.$(self.invBindings[attr]).popover("destroy")
+		    			.popover({placement: "right", content: error})
                     	.popover("show").addClass("error");
 		    	},
 		    	valid: function(view,attr){
@@ -44,19 +46,22 @@ define(['backbone', 'underscore','models/User','models/UserList','views/ModalVie
 			this.stickit();
 		},
     	bindings : { ".student-id": "student_id",
-			".last-name": "last_name",    		
-			".first-name": "first_name",
-			".status": "status",
-			".comment": "comment",
-			".status": "status",
-			".recitation": "recitation",
-			".email": {observe: "email_address", setOptions: {silent:true}},
-			".user-id": {observe: "user_id", setOptions: {silent:true}},
-			".password": "password",
-			".permission": { 
-				observe: "permission",
-				selectOptions: { collection: function() { return config.permissions;}}
-			}
+    				".last-name": "last_name",    		
+    				".first-name": "first_name",
+    				".status": "status",
+    				".comment": "comment",
+    				".status": "status",
+    				".recitation": "recitation",
+    				".email": {observe: "email_address",events: ["blur"]},
+    				".user-id": {observe: "user_id",events: ["blur"]},
+    				".password": "password",
+    				".permission": { 
+    					observe: "permission",
+    					selectOptions: { collection: function() { return config.permissions;}}
+    				}
+    			},
+        events: {
+		    'click .delete-button': 'removeRow'
 		},
 
 		saveAndClose: function(){ 
