@@ -40,6 +40,11 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			var self = this;
 			_.bindAll(this,"render","sortTable","filter");
 			this.collection = options.collection;
+			this.collection.on("add",function(model){
+				_(self.columnInfo).each(function(col){
+					self.updateValues(model,col);
+				})
+			})
 			this.filteredCollection = [];
 			this.showFiltered = false;
 			this.columnInfo = options.columnInfo;
@@ -53,7 +58,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				this.paginatorProp.showPaginator = true;	
 			}
 			// setup the paginator 
-				this.initializeTable();
+			this.initializeTable();
 		},
 		initializeTable: function () {
 
@@ -79,20 +84,24 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 					_.extend(obj["."+col.classname],col.stickit_options);
 					col.use_contenteditable = col.editable;
 				}
-				if(col.value && _.isFunction(col.value)) { // then the value is calculated.
-					self.collection.each(function(_model){
-						if(!_model._extra){
-							_model._extra= {};
-						}
-						_model._extra[col.key]=col.value.apply(this,[_model]);
-					})
-				}
+				self.collection.each(function(_model){
+					self.updateValues(_model,col);
+				});
 				if(typeof(col.datatype)!=="undefined"){
 					col.sortable = true;
 				}
 				_.extend(self.bindings, obj);
 			});
 			return this;
+		},
+		// Add an _extra field to the collection for some columns. 
+		updateValues: function(_model,col){
+			if(col.value && _.isFunction(col.value)) { // then the value is calculated.
+				if(!_model._extra){
+					_model._extra= {};
+				}
+				_model._extra[col.key]=col.value.apply(this,[_model]);	
+			}
 		},
 		render: function () {
 			console.log("in CollectionTableView.render");
@@ -125,16 +134,6 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 						return _.isArray(obj.classname)? obj.classname[0]===self.sortInfo.classname 
 									: obj.classname===self.sortInfo.classname ;}).datatype;
 					var iconClass = config.sortIcons[type+self.sortInfo.direction];
-					/*switch(type){
-						case "string": 
-							iconClass = (self.sortInfo.direction >0 ) ? "fa-sort-alpha-asc" : "fa-sort-alpha-desc";
-							break;
-						case "integer":
-							iconClass = (self.sortInfo.direction >0 ) ? "fa-sort-numeric-asc" : "fa-sort-numeric-desc";
-							break;
-						default:
-							iconClass = (self.sortInfo.direction >0 ) ? "fa-sort-amount-asc" : "fa-sort-amount-desc";
-					}	*/
 					spanIcon = "<i class='fa " + iconClass + "'></i>";
 				}
 				var th = $("<th data-class-name='" + className + "'>").addClass(className)

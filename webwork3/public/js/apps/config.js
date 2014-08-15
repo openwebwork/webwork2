@@ -77,8 +77,8 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             if(!Backbone.Validation.patterns["setname"].test(value))
                 return config.msgTemplate({type:"set_name_error"});
             }
-        }
-    });
+        });
+    
     _.extend(Backbone.Validation.messages, {
         loginname: "The login name is not valid (you can only use the characters a-z,A-Z, 1-9, . and _)"
     });
