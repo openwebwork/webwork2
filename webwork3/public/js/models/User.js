@@ -9,7 +9,7 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
             student_id: "",
             user_id: "",
             email_address: "",
-            permission: 0, //student
+            permission: "0", //student
             status: "C", //enrolled
             section: "",
             recitation: "",
