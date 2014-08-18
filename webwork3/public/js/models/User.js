@@ -32,7 +32,9 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
             if(!this.get("user_id").match(config.regexp.loginname)){
                 return "The login name is not valid (you can only use the characters a-z,A-Z, 1-9, . and _)"; // add to messageTemplate
             }
-            if(this.collection.courseUsers && this.collection.courseUsers.findWhere({user_id: this.get("user_id")})){
+        },
+        userExists: function(users){
+            if(users.findWhere({user_id: this.get("user_id")})){
                 return "The user with login " + this.get("user_id") + " already exists in this course.";
             }
         }

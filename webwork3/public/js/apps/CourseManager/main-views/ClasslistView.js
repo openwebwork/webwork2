@@ -16,7 +16,6 @@ var ClasslistView = MainView.extend({
 		_.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
 		var self = this;
     	
-		
 		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.addStudentManView.on("modal-opened",function (){
@@ -31,15 +30,20 @@ var ClasslistView = MainView.extend({
             
         this.users.on({"add": this.addUser,"change": this.changeUser,"sync": this.syncUserMessage,
     					"remove": this.removeUser});
-	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
+	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, row_id_field: "user_id",
                             paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
 
-	    this.userTable.on("page-changed",function(num){
-	    	self.state.set("page_number",num);
-	    }).on("table-sorted",function(info){
-            self.state.set({sort_class: info.classname, sort_direction: info.direction});
-        })
-	    this.state.on("change:filter_text", function () {self.filterUsers();});
+	    this.userTable.on({
+            "page-changed": function(num){ 
+                self.state.set("current_page",num);
+                self.update();},
+	        "table-sorted": function(info){
+                self.state.set({sort_class: info.classname, sort_direction: info.direction});},
+            "selected-row-changed": function(rowIDs){
+                self.state.set({selected_rows: rowIDs});
+        }});
+
+	    this.state.on("change:filter_string", function () {self.filterUsers();});
 	    	    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
@@ -84,26 +88,27 @@ var ClasslistView = MainView.extend({
         // set up some styling
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
-      
-        this.showRows(this.state.get("page_size"));
-        this.filterUsers();
-        if(this.state.get("sort_class")&&this.state.get("sort_direction")){
-            this.userTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
-        }
-        this.userTable.gotoPage(this.state.get("page_number"));
         
+        var opts = this.state.pick("page_size","filter_string","current_page","selected_rows");
+        if(this.state.get("sort_class")&&this.state.get("sort_direction")){
+            _.extend(opts,{sort_info: this.state.pick("sort_direction","sort_class")});
+        }
+        this.showRows(this.state.get("page_size"));
+        this.userTable.set(opts).updateTable();
+        this.stickit(this.state,this.bindings);
+
         MainView.prototype.render.apply(this);
         if(this.state.get("man_user_modal_open")){
             this.addStudentManView.setElement(this.$(".modal-container")).render();
         }
-        this.stickit(this.state,this.bindings);
+        this.update();
 
 	    return this;
     },  
-    bindings: { ".filter-text": "filter_text"},
+    bindings: { ".filter-text": "filter_string"},
     getDefaultState: function () {
-        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
-                    sort_class: "", sort_direction: ""};
+        return {filter_string: "", current_page: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+                    sort_class: "", sort_direction: "", selected_rows: []};
     },
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
@@ -152,15 +157,15 @@ var ClasslistView = MainView.extend({
 		'keyup input.filter-text' : function(){  
             this.filterUsers();
             this.userTable.render();
+            this.update();
         },
 	    'click button.clear-filter-button': 'clearFilterText',
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
-	    "click a.delete-selected": "deleteSelectedUsers",
-	    "change th[data-class-name='select-user'] input": "selectAll",
+	    "click a.delete-selected": "deleteUsers",
 	    "click a.show-rows": function(evt){ 
             this.showRows(evt);
-            this.userTable.render();
+            this.userTable.updateTable();
         }
 	},
 	addStudentsByFile: function () {
@@ -187,36 +192,29 @@ var ClasslistView = MainView.extend({
         modalView.render().open();
 	},	
 	filterUsers: function () {
-        this.userTable.filter(this.state.get("filter_text"));
-        if(this.state.get("filter_text").length>0){
-            this.state.set("page_number",0);
+        this.userTable.set(this.state.pick("filter_string"));
+        if(this.state.get("filter_string").length>0){
+            this.state.set("current_page",0);
+            this.userTable.updateTable();
         }
         this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
     },
     clearFilterText: function () {
-        this.state.set("filter_text","");
-        this.userTable.render();
+        this.state.set("filter_string","");
+        this.userTable.set({filter_string: ""}).render();
     },
-	selectAll: function (evt) {
-		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
-	},
-    showRows: function(evt){
-        this.state.set("page_size", _.isNumber(evt) || _.isString(evt) ? parseInt(evt) : $(evt.target).data("num"));
+    update: function (){
+        $("tr[data-row-id='profa'] select.permission").attr("disabled","disabled");
+    },
+    showRows: function(arg){
+        this.state.set("page_size", _.isNumber(arg) || _.isString(arg) ? parseInt(arg) : $(arg.target).data("num"));
         this.$(".show-rows i").addClass("not-visible");
         this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible")
-        if(this.state.get("page_size") < 0) {
-            this.userTable.set({num_rows: this.users.length});
-        } else {
-            this.userTable.set({num_rows: this.state.get("page_size")});
-        }
-        this.userTable.render();
+        this.userTable.set({page_size: this.state.get("page_size") <0 ? this.users.length: this.state.get("page_size")});
     },
 	tableSetup: function () {
         var self = this;
-        this.cols = [{name: "Select", key: "select_row", classname: "select-user", 
-            stickit_options: {update: function($el, val, model, options) {
-                $el.html($("#checkbox-template").html());
-            }}, colHeader: "<input type='checkbox'></input>"},
+        this.cols = [{name: "Select", key: "_select_row", classname: "select-user"},
             {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
                 editable: false},
             {name: "LS", key: "logged_in",classname:"logged-in-status", datatype: "none", editable: false,
@@ -289,27 +287,23 @@ var ClasslistView = MainView.extend({
         		stickit_options: { selectOptions: { collection: config.permissions }}
         }];
 	},
-	getSelectedUsers: function () {
-		var self = this;
-		return $("tbody td:nth-child(1) input[type='checkbox']:checked").map(function(i,v) { 
-				return self.users.findWhere({user_id: $(v).closest("tr").children("td.login-name").text()}); 
-			});
-	}, 
-	deleteSelectedUsers: function(){
-		this.deleteUsers(this.getSelectedUsers());
-	},
-	deleteUsers: function(_users){ // need to put the string below in the template file
-		if(_users.length === 0){
+	deleteUsers: function(){
+		var userIDs = this.userTable.getVisibleSelectedRows();
+        console.log(userIDs);
+		if(userIDs.length === 0){
 			alert("You haven't selected any users to delete.");
 			return;
 		}
+        var usersToDelete = this.users.filter(function(u){ return _(userIDs).contains(u.get("user_id"));});
 		var self = this
 	    	, str = "Do you wish to delete the following students: " + 
-	    			_(_users).map(function (user) {return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
+	    			_(usersToDelete).map(function (user) {
+                        return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
 		    , del = confirm(str);
 	    if (del){
-	    	self.users.remove($.makeArray(_users));
-			this.userTable.render();
+	    	this.users.remove(usersToDelete);
+			this.userTable.updateTable();
+            this.state.set("selected_rows",[]);
 	    }
 	},
 	checkLoginStatus: function () {
@@ -341,7 +335,7 @@ var ClasslistView = MainView.extend({
 		alert("Emailing students is not implemented yet");
 	},
 	emailStudents: function(rows){
-	    this.emailPane.users = this.getSelectedUsers();
+	    this.emailPane.users = this.state.get("selected_rows")
 	    this.emailPane.render();
 	    this.emailPane.$el.dialog("open");
     }, 
