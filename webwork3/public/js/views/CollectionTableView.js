@@ -182,9 +182,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			_(this.rowViews).each(function(row){row.refresh();});
 			return this;
 		},
-		updatePaginator: function() {
-			// render the paginator
-			console.log("in updatePaginator");
+		updatePaginator: function() {   // render the paginator
 			if (this.filter_string.length>0){
 				this.maxPages = Math.ceil(this.filteredCollection.length/this.page_size);
 			} else {
@@ -308,8 +306,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		},
 		getVisibleSelectedRows: function (){ // returns only the selected rows on the current page. 
 			var self = this;
-			var allUsers = $.makeArray(this.$("tr").map(function(i,v){ return self.$(v).data("row-id");}));
-			return _.intersection(allUsers, this.selectedRows);
+			var visibleRows = $.makeArray(this.$("tr").map(function(i,v){ return self.$(v).data("row-id");}));
+			return _.intersection(visibleRows, this.selectedRows);
 		},
 		sortTable: function(evt){
 			var self = this

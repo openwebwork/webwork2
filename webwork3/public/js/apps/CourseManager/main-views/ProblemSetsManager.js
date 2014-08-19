@@ -11,29 +11,41 @@ function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemS
 var ProblemSetsManager = MainView.extend({
     initialize: function (options) {
         MainView.prototype.initialize.call(this,options);
-        _.bindAll(this, 'render','addProblemSet','updateTable','filterProblemSets','clearFilterText',
+        _.bindAll(this, 'render','addProblemSet','clearFilterText',
                     'hideShowReducedScoring','deleteSets');  // include all functions that need the this object
         var self = this;
 
-        this.state.on("change:filter_text", function () {self.filterProblemSets();})
-            .on("change:show_time",function(){
+        this.state.on({
+            "change:filter_string": function () {
+                self.problemSetTable.set(self.state.pick("filter_string")).updateTable();
+                self.$(".num-users").html(self.problemSetTable.getRowCount() + " of " 
+                        + self.problemSets.length + " users shown.");
+                self.update();
+            },
+            "change:show_time": function(){
                 self.showTime(self.state.get("show_time"));
-            })
+            }
+        });
 
         this.tableSetup();
 
         this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
-                classes: "problem-set-manager-table",
+                classes: "problem-set-manager-table", row_id_field: "set_id",
                 paginator: {page_size: this.state.get("page_size"), button_class: "btn btn-default", 
                                 row_class: "btn-group"}});
 
-        this.problemSetTable.on("page-changed",function(num){
-            self.state.set("page_number",num);
-            self.isReducedScoringEnabled();
-        }).on("table-sorted",function(info){
-            self.state.set({sort_class: info.classname, sort_direction: info.direction});
-            self.isReducedScoringEnabled();
-        })
+        this.problemSetTable.on({
+            "page-changed":function(num){
+                self.state.set("page_number",num);
+                self.update();},
+            "table-sorted":function(info){
+                self.state.set({sort_class: info.classname, sort_direction: info.direction});
+                self.update();},
+            "selected-row-changed": function(rowIDs){
+                self.state.set({selected_rows: rowIDs})
+                console.log(self.state.attributes)}
+        });
+        
         this.changeSetPropView = new ChangeSetPropertiesView({settings: this.settings,problemSets: this.problemSets});
         this.changeSetPropView.on("modal-opened",function (){
             self.state.set("set_prop_modal_open",true);
@@ -75,38 +87,46 @@ var ProblemSetsManager = MainView.extend({
         this.$el.html($("#problem-set-manager-template").html());
         this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
         this.$el.append(this.problemSetTable.el);
-        this.problemSets.trigger("hide-show-all-sets","hide");
-        this.problemSetTable.filter(this.state.get("filter_text"));
-        this.showRows(this.state.get("page_size"));
-        this.problemSetTable.gotoPage(this.state.get("page_number"));
-        MainView.prototype.render.apply(this);
-        this.stickit(this.state,this.bindings);
-        if(this.state.get("set_prop_modal_open")){
-            this.changeSetPropView.setElement(this.$(".modal-container"))
-                .set({set_names: this.state.get("selected_sets")}).render();
-        }
+        var opts = this.state.pick("page_size","filter_string","current_page","selected_rows");
         if(this.state.get("sort_class")&&this.state.get("sort_direction")){
-            this.problemSetTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
+            _.extend(opts,{sort_info: this.state.pick("sort_direction","sort_class")});
         }
-        this.showTime(this.state.get("show_time"));
-        _(this.state.get("selected_sets")).each(function(setID){
-            self.$("td:contains("+setID+")").closest("tr").find("input[type='checkbox']").prop("checked",true);
-        });
+        this.showRows(this.state.get("page_size"));
+        this.problemSetTable.set(opts).updateTable();
+        this.stickit(this.state,this.bindings);
 
+        this.problemSets.trigger("hide-show-all-sets","hide");
         
 
-        this.isReducedScoringEnabled();
+        MainView.prototype.render.apply(this);
+        
+        if(this.state.get("set_prop_modal_open")){
+            this.changeSetPropView.setElement(this.$(".modal-container"))
+                .set({set_names: this.problemSetTable.getVisibleSelectedRows()}).render();
+        }
+        this.showTime(this.state.get("show_time"));        
+        this.update();
+        return this;
+    },
+    update: function (){
+        if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+            this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
+                .removeClass("hidden");
+        } else {
+            this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
+                .addClass("hidden");
+        }
         return this;
     },
     bindings: { 
-        ".filter-text": "filter_text",
+        ".filter-text": "filter_string",
         ".show-time-toggle": "show_time"
     },
     showChangeProps: function(){
-        var setIDs = this.getSelectedSets();
+        var setIDs = this.getVisibleSelectedRows();
         if(setIDs.length>0){
             this.changeSetPropView.setElement(this.$(".modal-container"))
-                .set({set_names: this.state.get("selected_sets")}).render();
+                .set({set_names: setIDs}).render();
         } else {
             this.eventDispatcher.trigger("add-message",{type: "danger",
                     short: this.messageTemplate({type: "empty_selected_sets_error"}),
@@ -125,56 +145,36 @@ var ProblemSetsManager = MainView.extend({
         this.problemSetTable.refreshTable();
     },
     getDefaultState: function () {
-        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
-            sort_class: "", sort_direction: "", show_time: false, selected_sets: []};
-    },
-    isReducedScoringEnabled: function (){
-        // hide reduced credit items when not enabled. 
-        if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-            this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
-                .removeClass("hidden");
-        } else {
-            this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
-                .addClass("hidden");
-        }
-        return this;
-    },
-    updateTable: function() {
-        if(this.problemSetTable){
-            this.problemSetTable.refreshTable().updateTable().updatePaginator()
-                .filter(this.state.get("filter_text")).render();
-        }
-        return;
+        return {filter_string: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+            sort_class: "", sort_direction: "", show_time: false, selected_rows: []};
     },
     addProblemSet: function (){
         var dateSettings = util.pluckDateSettings(this.settings);
         this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets,dateSettings: dateSettings})
             .setElement(this.$(".modal-container")).render();
     },
-    selectAll: function(evt){
-        this.$("td.select-problem-set input").prop("checked",$(evt.target).prop("checked"));
-        this.state.set("selected_sets",this.getSelectedSets());
-    },
     updateSelectedSets: function (evt){
-        var selectedSets = this.state.get("selected_sets")
+        var selectedSets = this.problemSetTable.getVisibleSelectedRows()
             , setID = $(evt.target).closest("tr").children("td.set-id").text()
             , sets = $(evt.target).prop("checked")?_(selectedSets).union([setID]):_(selectedSets).without(setID);
-        this.state.set("selected_sets",_.compact(sets)); // compact removes empty set id's which pop up from time to time
+        this.state.set("selected_rows",_.compact(sets)); // compact removes empty set id's which pop up from time to time
     },
     getSelectedSets: function () {
         return $.makeArray(this.$("tbody td.select-problem-set input[type='checkbox']:checked").map(function(i,v) {
             return $(v).closest("tr").children("td.set-id").text();}));
     },
     deleteSets: function(){
-        var sets = this.getSelectedSets()
+        var setIDs = this.problemSetTable.getVisibleSelectedRows()
             , self = this
             , del;
-        if (sets.length==0){
-
+        var setsToDelete = this.problemSets.filter(function(u){ return _(setIDs).contains(u.get("set_id"));});
+        if (setIDs.length==0){
+            alert("You haven't selected any sets to delete."); //I18N
+            return;
         } else {
-            del = confirm("Are you sure you want to delete the set" + (sets.length==1?" ":"s ") + sets.join(", ") + "?");
+            del = confirm("Are you sure you want to delete the set" + (setIDs.length==1?" ":"s ") + setIDs.join(", ") + "?");
             if(del){
-                _(sets).each(function(_set){
+                _(setIDs).each(function(_set){
                     self.problemSets.remove(_set);                
                 });
             }
@@ -198,7 +198,7 @@ var ProblemSetsManager = MainView.extend({
         } else {
             this.problemSetTable.set({num_rows: this.state.get("page_size")});
         }
-        this.isReducedScoringEnabled();
+        this.update();
     },
     set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
         var self = this;
@@ -206,24 +206,12 @@ var ProblemSetsManager = MainView.extend({
             self[key] = opts[key];
         });
     },
-    filterProblemSets: function () {
-        this.problemSetTable.filter(this.state.get("filter_text")).render();
-        if(this.state.get("filter_text").length>0){
-            this.state.set("page_number",0);
-        }
-        // this next statement doesn't set the problem sets. 
-        this.$(".num-users").html(this.problemSetTable.getRowCount() + " of " + this.problemSets.length + " users shown.");
-    },
     clearFilterText: function () {
-        this.state.set("filter_text","");
+        this.state.set("filter_string","");
     },
     tableSetup: function () {
         var self = this;
-        this.cols = [
-            {name: "Select", key: "select_row", classname: "select-problem-set", 
-                stickit_options: {update: function($el, val, model, options) {
-                    $el.html($("#checkbox-template").html());
-                }}, colHeader: "<input type='checkbox'></input>"},
+        this.cols = [{name: "Select", key: "_select_row", classname: "select-set"},
             {name: "Set Name", key: "set_id", classname: "set-id", editable: false, datatype: "string",
                 stickit_options: {update: function($el, val, model, options) {
                     $el.html("<a href='#' onclick='return false' class='goto-set' data-setname='"+val+"'>" + val + "</a>");
@@ -289,7 +277,8 @@ var ProblemSetsManager = MainView.extend({
 
                     self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
                         return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
-
+                    self.problemSetTable.updateTable();
+                    self.update();
                 }});
             },
             "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
@@ -354,7 +343,7 @@ var ProblemSetsManager = MainView.extend({
                                 date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
                             self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
                                 date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-
+                            self.problemSetTable.updateTable();
                             break;    
                         default:
                             var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
