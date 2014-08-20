@@ -1,3 +1,4 @@
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -903,7 +904,8 @@ sub pretty_print_rh($) {
 
 sub cryptPassword($) {
 	my ($clearPassword) = @_;
-	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
+	#Use an MD5 salt to force crypt to use MD5 and allow for longer passwords. 
+	my $salt = '$1$'.join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64, rand 64, rand 64, rand 64, rand 64, rand 64, rand 64]);
 	my $cryptPassword = crypt($clearPassword, $salt);
 	return $cryptPassword;
 }
