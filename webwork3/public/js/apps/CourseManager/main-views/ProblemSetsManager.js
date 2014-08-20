@@ -66,7 +66,7 @@ var ProblemSetsManager = MainView.extend({
         'click button.clear-filter-button': 'clearFilterText',
         "click a.show-rows": function(evt){ 
             this.showRows(evt);
-            this.problemSetTable.render();
+            this.problemSetTable.updateTable();
         },
         "click a.change-set-props": "showChangeProps",
         "click a.delete-sets-button": "deleteSets",
@@ -181,7 +181,13 @@ var ProblemSetsManager = MainView.extend({
         }
     },  
     showRows: function(arg){
-        var pageSize;
+        this.state.set("page_size", _.isNumber(arg) || _.isString(arg) ? parseInt(arg) : $(arg.target).data("num"));
+        this.$(".show-rows i").addClass("not-visible");
+        this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible")
+        this.problemSetTable.set({page_size: this.state.get("page_size") <0 
+                ? this.problemSets.length: this.state.get("page_size")});
+
+/*        var pageSize;
         if(_.isNumber(arg)){
             pageSize = arg
         } else if(_.isString(arg)){
@@ -198,7 +204,7 @@ var ProblemSetsManager = MainView.extend({
         } else {
             this.problemSetTable.set({num_rows: this.state.get("page_size")});
         }
-        this.update();
+        this.update();*/
     },
     set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
         var self = this;
