@@ -291,6 +291,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				this.trigger("table-sorted",this.sortInfo);				
 			} else if ($(evt.target).hasClass("_select_row")){
 				this.$("input._select_row[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
+				this.selectedRows = $.makeArray($("tr[data-row-id]").map(function(i,v){ return $(v).data("row-id");}));
+				this.trigger("selected-row-changed",this.selectedRows);	
 			}
 		},
 		selectRow: function (evt){

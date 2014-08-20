@@ -42,8 +42,7 @@ var ProblemSetsManager = MainView.extend({
                 self.state.set({sort_class: info.classname, sort_direction: info.direction});
                 self.update();},
             "selected-row-changed": function(rowIDs){
-                self.state.set({selected_rows: rowIDs})
-                console.log(self.state.attributes)}
+                self.state.set({selected_rows: rowIDs});}
         });
         
         this.changeSetPropView = new ChangeSetPropertiesView({settings: this.settings,problemSets: this.problemSets});
@@ -186,25 +185,6 @@ var ProblemSetsManager = MainView.extend({
         this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible")
         this.problemSetTable.set({page_size: this.state.get("page_size") <0 
                 ? this.problemSets.length: this.state.get("page_size")});
-
-/*        var pageSize;
-        if(_.isNumber(arg)){
-            pageSize = arg
-        } else if(_.isString(arg)){
-            pageSize = parseInt(arg);
-        } else {
-            pageSize = $(arg.target).data("num");
-        }
-        this.state.set("page_size", pageSize);
-        this.$(".show-rows i").addClass("not-visible");
-        this.$(".show-rows[data-num='"+pageSize+"'] i").removeClass("not-visible")
-
-        if(this.state.get("page_size") < 0) {
-            this.problemSetTable.set({num_rows: this.problemSets.length});
-        } else {
-            this.problemSetTable.set({num_rows: this.state.get("page_size")});
-        }
-        this.update();*/
     },
     set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
         var self = this;
@@ -265,7 +245,7 @@ var ProblemSetsManager = MainView.extend({
                     add: function(prob){ self.addProblemEvent(prob,_set)},
                     sync: function(prob){ self.syncProblemEvent(prob,_set)},
                 });
-                _set.changingAttributes={add: ""};
+                _set._network={add: ""};
             },
             remove: function(_set){
                 _set.destroy({success: function() {
@@ -333,6 +313,19 @@ var ProblemSetsManager = MainView.extend({
                                 short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}), 
                                 text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})}); 
                             break;
+                        
+                        default:
+                            var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
+                                         : _set.changingAttributes[key];
+                            var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
+                            self.eventDispatcher.trigger("add-message",{type: "success", 
+                                short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
+                                text: self.messageTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),key: key,
+                                    oldValue: _old, newValue: _new}})});
+                    } // switch 
+                }); // .each
+                _(_set._network).chain().keys().each(function(key){ 
+                    switch(key){
                         case "add":
                             self.eventDispatcher.trigger("add-message",{type: "success", 
                                 short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
@@ -343,18 +336,11 @@ var ProblemSetsManager = MainView.extend({
                                 date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
                             self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
                                 date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-                            self.problemSetTable.updateTable();
+                            self.problemSetTable.set({filter_string: self.state.get("filter_string")}).updateTable();
+                            delete _set._network;
                             break;    
-                        default:
-                            var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
-                                         : _set.changingAttributes[key];
-                            var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
-                            self.eventDispatcher.trigger("add-message",{type: "success", 
-                                short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
-                                text: self.messageTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),key: key,
-                                    oldValue: _old, newValue: _new}})});
-                    } // switch 
-            }); // .each
+                    }
+                });
             } // sync
         }); // this.problemSets.on
 
@@ -374,7 +360,7 @@ var ProblemSetsManager = MainView.extend({
                 newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}}
             }
     },
-     addProblemEvent: function(prob,_set){
+    addProblemEvent: function(prob,_set){
         _set.changingAttributes={"problem_added": ""};
     },
     syncProblemEvent: function(prob,_set){

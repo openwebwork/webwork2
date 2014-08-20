@@ -89,7 +89,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
     _.extend(Backbone.Validation.validators, {
         setNameValidator: function(value, attr, customValue, model) {
             if(!Backbone.Validation.patterns["setname"].test(value))
-                return config.msgTemplate({type:"set_name_error"});
+                return config.messageTemplate({type:"set_name_error"});
             }
         });
     

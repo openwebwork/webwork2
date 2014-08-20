@@ -26,7 +26,7 @@ var ProblemSet = Backbone.Model.extend({
         version_creation_time: 0,
         problem_randorder: 0,
         version_last_attempt_time: 0,
-        problems_per_page: 1,
+        problems_per_page: 0,
         hide_score: "N",
         hide_score_by_problem: "N",
         hide_work: "N",
@@ -43,40 +43,17 @@ var ProblemSet = Backbone.Model.extend({
         answer_date: "checkDates",
         reduced_scoring_date: "checkDates",
         set_id: {  
-            setNameValidator: 1 // uses your custom validator
+            setNameValidator: 1 // uses a custom validator
         }
     },
-    descriptions:  {
-        set_id: "Homework Set Name",
-        set_header: "Header File for Homework Set",
-        hardcopy_header: "Header File for A Hardcopy of the Homework Set",
-        open_date: "Date and Time that the Homework Set opens",
-        due_date: "Date and Time that the Homework Set is due",
-        answer_date: "Date and time that the answers are made available",
-        visible: "Visible to Students",
-        enable_reduced_scoring: "Is reduced scoring available?",
-        assignment_type: "Type of the Assignment",
-        attempts_per_version: "Number of Attempts Per Version",
-        time_interval: "Time Interval for something???",
-        versions_per_interval: "Versions per Interval ???",
-        version_time_limit: "Version Time Limit",
-        version_creation_time: "Version Creation Time",
-        problem_randorder: "View Problems in a Random Order",
-        version_last_attempt_time: "Version last attempt time????",
-        problems_per_page: "Number of Problems Per Page",
-        hide_score: "Hide the Score to the Student",
-        hide_score_by_problem: "Hide the Score by Problem?",
-        hide_work: "Hide the Work?",
-        time_limit_cap: "Time Limit Cap???",
-        restrict_ip: "Restrict by IP Address???",
-        relax_restrict_ip: "Relax Restrict IP???",
-        restricted_login_proctor: "Restricted to Login Proctor"
-    },
+    integerFields: ["open_date","reduced_scoring_date","due_date","answer_date",
+                    "problem_randorder","attempts_per_version","version_creation_time","version_time_limit",
+                    "problems_per_page","versions_per_interval","version_last_attempt_time","time_interval"],
     idAttribute: "_id",
     initialize: function (opts,dateSettings) {
         _.bindAll(this,"addProblem");
         this.dateSettings = dateSettings;
-        opts = util.parseAsIntegers(opts,["open_date","reduced_scoring_date","due_date","answer_date"]);
+        opts = util.parseAsIntegers(opts,this.integerFields);
         var pbs = (opts && opts.problems) ? opts.problems : [];
         this.problems = new ProblemList(pbs);
         this.attributes.problems = this.problems;
@@ -88,7 +65,7 @@ var ProblemSet = Backbone.Model.extend({
             this.problems.set(response.problems);
             this.attributes.problems = this.problems;
         }
-        response = util.parseAsIntegers(response,["open_date","reduced_scoring_date","due_date","answer_date"]);
+        response = util.parseAsIntegers(response,this.integerFields);
         return _.omit(response, 'problems');
     },
     url: function () {
