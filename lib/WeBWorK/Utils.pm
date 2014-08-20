@@ -904,8 +904,12 @@ sub pretty_print_rh($) {
 
 sub cryptPassword($) {
 	my ($clearPassword) = @_;
-	#Use an MD5 salt to force crypt to use MD5 and allow for longer passwords. 
-	my $salt = '$1$'.join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64, rand 64, rand 64, rand 64, rand 64, rand 64, rand 64]);
+	#Use an SHA512 salt with 16 digits 
+	my $salt = '$6$';
+	for (my $i=0; $i<16; $i++) {
+	    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
+	}
+
 	my $cryptPassword = crypt($clearPassword, $salt);
 	return $cryptPassword;
 }
