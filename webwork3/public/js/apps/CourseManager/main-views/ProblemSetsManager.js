@@ -228,24 +228,18 @@ var ProblemSetsManager = MainView.extend({
                 },
             {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
                 stickit_options: { onGet: function(val) { return val.length}},
-                sort_function: function(val){
-                    return val.length;
-                }    
-            },
+                sort_function: function(val){return val.length;}},
             {name: "Reduced Scoring", key: "enable_reduced_scoring", datatype: "boolean",
-                    classname: ["enable-reduced-scoring","yes-no-boolean-select"]},
-            {name: "Visible", key: "visible", classname: ["visible","yes-no-boolean-select"], datatype: "boolean"},
-            {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
+                    classname: "enable-reduced-scoring yes-no-boolean-select"},
+            {name: "Visible", key: "visible", classname: "visible yes-no-boolean-select", datatype: "boolean"},
+            {name: "Open Date", key: "open_date", classname: "open-date edit-datetime", 
                     editable: false, datatype: "integer", use_contenteditable: false},
-            {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: ["reduced-scoring-date","edit-datetime"], 
+            {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: "reduced-scoring-date edit-datetime", 
                     editable: false, datatype: "integer", use_contenteditable: false,
-                    sort_function: function(val,model){
-                        return model.get("enable_reduced_scoring") ? val : 0;
-                    }
-                },
-            {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
+                    sort_function: function(val,model){return model.get("enable_reduced_scoring") ? val : 0;}},
+            {name: "Due Date", key: "due_date", classname: "due-date edit-datetime", 
                     editable: false, datatype: "integer", use_contenteditable: false},
-            {name: "Answer Date", key: "answer_date", classname: ["answer-date","edit-datetime"], 
+            {name: "Answer Date", key: "answer_date", classname: "answer-date edit-datetime", 
                     editable: false, datatype: "integer", use_contenteditable: false}
         ];
 

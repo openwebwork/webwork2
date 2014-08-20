@@ -77,11 +77,12 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			this.bindings = {};
 			_(this.columnInfo).each(function(col){ 
 				var obj = {};
-				obj["."+col.classname] = {observe: col.key}; // set it up for stickit format
+				var classname = / +/.test(col.classname) ? col.classname.split(/ +/)[0] : col.classname;
+				obj["."+classname] = {observe: col.key}; // set it up for stickit format
 				
 				if(typeof col.use_contenteditable == 'undefined'){ col.use_contenteditable=true;}
 				if(typeof col.stickit_options != 'undefined'){
-					_.extend(obj["."+col.classname],col.stickit_options);
+					_.extend(obj["."+classname],col.stickit_options);
 					col.use_contenteditable = col.editable;
 				}
 				self.collection.each(function(_model){
@@ -116,21 +117,17 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			var headRow = $("<tr>");
 
 			_(this.columnInfo).each(function (col){
-				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
 				if(col.key==="_select_row"){
-					col.colHeader = "<input type='checkbox' class='_select_row' data-class-name='"+className+"'>";
+					col.colHeader = "<input type='checkbox' class='_select_row' data-key-name='"+col.key+"'>";
 				}
 				
 				var spanIcon = ""; 
-				if(self.sortInfo && ! _.isEqual(self.sortInfo,{}) && self.sortInfo.classname == className){
-					//var type = _(self.columnInfo).findWhere({classname: self.sortInfo.classname}).datatype;
-					var type = _(self.columnInfo).find(function(obj){ 
-						return _.isArray(obj.classname)? obj.classname[0]===self.sortInfo.classname 
-									: obj.classname===self.sortInfo.classname ;}).datatype;
+				if(self.sortInfo && ! _.isEqual(self.sortInfo,{}) && self.sortInfo.key == col.key){
+					var type = _(self.columnInfo).findWhere({key: col.key}).datatype;
 					var iconClass = config.sortIcons[type+self.sortInfo.direction];
 					spanIcon = "<i class='fa " + iconClass + "'></i>";
 				}
-				var th = $("<th data-class-name='" + className + "'>").addClass(className)
+				var th = $("<th data-key-name='" + col.key + "'>").addClass(col.classname)
 					.html(col.colHeader? col.colHeader: col.name + spanIcon);
 				if(col.title){
 					th.attr("title",col.title);
@@ -288,7 +285,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			"change input._select_row": "selectRow"
 		},
 		headerClicked: function (evt) {
-			if(_(this.columnInfo).findWhere({classname: $(evt.target).data("class-name")}).sortable){
+			var target = $(evt.target).is("i") ? $(evt.target).parent() : $(evt.target); 
+			if(_(this.columnInfo).findWhere({key: target.data("key-name")}).sortable){
 				this.sortTable(evt).render();
 				this.trigger("table-sorted",this.sortInfo);				
 			} else if ($(evt.target).hasClass("_select_row")){
@@ -312,28 +310,25 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		sortTable: function(evt){
 			var self = this
 				, sort 
-				, sortField = evt.sort_class || $(evt.target).data("class-name");
+				, sortKey = evt.sort_key || $(evt.target).data("key-name") || $(evt.target).parent().data("key-name");
 
-			if(typeof(sortField)==="undefined"){
+			if(typeof(sortKey)==="undefined"){
 				return this;
 			}
 
-			sort = _(this.columnInfo).find(function(col){
-				return (_.isArray(col.classname)? col.classname[0] : col.classname ) == sortField;
-			});
+			sort = _(this.columnInfo).findWhere({key: sortKey});
 			if(typeof(sort)=="undefined" || !sort.sortable){ // The user clicked on the select all button.
 				return this;
 			}
 
 
-			if(evt.sort_direction && evt.sort_class){
-				this.sortInfo = {key: sort.key, direction: evt.sort_direction, classname: sort.classname};
+			if(evt.sort_direction && evt.sort_key){
+				this.sortInfo = {key: sort.key, direction: evt.sort_direction};
 			}	else {
 				if(this.sortInfo && this.sortInfo.key==sort.key){
 					this.sortInfo.direction = -1*this.sortInfo.direction;
 				} else {
-					this.sortInfo = {key: sort.key, direction: 1, 
-							classname: _.isArray(sort.classname)? sort.classname[0] : sort.classname};
+					this.sortInfo = {key: sort.key, direction: 1};
 				}
 			}
 
@@ -420,21 +415,20 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			var self = this;
 			this.$el.attr("data-row-id",this.rowID);
 			_(this.columnInfo).each(function (col){
-				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
 				if (col.datatype === "boolean"){
-					var select = $("<select>").addClass(classname).addClass("input-sm form-control");
+					var select = $("<select>").addClass(col.classname).addClass("input-sm form-control");
 					self.$el.append($("<td>").append(select));
 				} else if(col.key==="_select_row"){
 					var cb = $("<input type='checkbox' class='_select_row'>");
 					self.$el.append($("<td>").append(cb));
 				} else if(col.use_contenteditable){
-					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));
+					self.$el.append($("<td>").addClass(col.classname).attr("contenteditable",col.editable));
 				} else {
 					if (col.stickit_options && col.stickit_options.selectOptions){
-						var select = $("<select>").addClass("input-sm form-control").addClass(classname);
+						var select = $("<select>").addClass("input-sm form-control").addClass(col.classname);
 						self.$el.append($("<td>").append(select));
 					} else {
-						self.$el.append($("<td>").addClass(classname));
+						self.$el.append($("<td>").addClass(col.classname));
 					}
 				}
 			});
