@@ -16,6 +16,50 @@
 # Artistic License for more details.
 ##############################################################################
 
+# This script dumps the course information from all unarchived courses into
+# a single csv file.  The csv file has the following columns. 
+#
+# ID Info
+# 0 - Answer ID hash
+# 1 - Course ID hash
+# 2 - Student ID hash
+# 3 - Set ID hash
+# 4 - Problem ID hash
+# User Info
+# 5 - Permission Level
+# 6 - Final Status
+# Set Info
+# 7 - Set type
+# 8 - Open Date (unix time)
+# 9 - Due Date (unix time)
+# 10 - Answer Date (unix time)
+# 11 - Final Set Grade (percentage)
+# Problem Info
+# 12 - Problem Path
+# 13 - Problem Value
+# 14 - Problem Max Attempts
+# 15 - Problem Seed
+# 16 - Attempted
+# 17 - Final Incorrect Attempts
+# 18 - Final Correct Attempts
+# 19 - Final Status
+# OPL Info 
+# 20 - Subject
+# 21 - Chapter
+# 22 - Section
+# 23 - Keywords
+# Answer Info
+# 24 - Answer timestamp (unix time)
+# 25 - Attempt Number
+# 26 - Raw status of attempt (percentage of correct blanks)
+# 27 - Status of attempt (post computed may be blank)
+# 28 - Number of Answer Blanks
+# 29/30 etc... - The following columns will come in pairs.  The first will be 
+#                the text of the answer contained in the answer blank
+#                and the second will be the binary 0/1 status of the answer
+#                blank.  There will be as many pairs as answer blanks. 
+
+
 use strict; 
 
 BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
@@ -71,7 +115,8 @@ my $OUT;
 open($OUT,">$output_file") || die("Couldn't open file $output_file");
 
 # set up various variables and utilities that we will need
-my ($ce, $db, @wheres);
+my ($ce, $db, @wheres, @lines);
+my $max_answer_blanks = 0;
 my $csv = new Text::CSV->new ( { binary => 1 } ) 
     or die "Cannot use CSV: ".Text::CSV->error_diag ();
 $csv->eol("\n");
@@ -89,55 +134,21 @@ my %permissionLabels = reverse %{$ce->{userRoles}};
 
 # this is our row array and is the main structure
 my @row;
-# ID Info
-# 0 - Answer ID hash
-# 1 - Course ID hash
-# 2 - Student ID hash
-# 3 - Set ID hash
-# 4 - Problem ID hash
-# User Info
-# 5 - Permission Level
-# 6 - Final Status
-# Set Info
-# 7 - Set type
-# 8 - Open Date (unix time)
-# 9 - Due Date (unix time)
-# 10 - Answer Date (unix time)
-# 11 - Final Set Grade (percentage)
-# Problem Info
-# 12 - Problem Path
-# 13 - Problem Value
-# 14 - Problem Max Attempts
-# 15 - Problem Seed
-# 16 - Attempted
-# 17 - Final Incorrect Attempts
-# 18 - Final Correct Attempts
-# 19 - Final Status
-# OPL Info 
-# 20 - Subject
-# 21 - Chapter
-# 22 - Section
-# 23 - Keywords
-# Answer Info
-# 24 - Answer timestamp (unix time)
-# 25 - Attempt Number
-# 26 - Raw status of attempt (percentage of correct blanks)
-# 27 - Status of attempt (post computed may be blank)
-# 28 - Number of Answer Blanks
-# 29/30 etc... - The following columns will come in pairs.  The first will be 
-#                the text of the answer contained in the answer blank
-#                and the second will be the binary 0/1 status of the answer
-#                blank.  There will be as many pairs as answer blanks. 
 
 # go through courses
 foreach my $courseID (@courses) {
-    next if $courseID eq 'admin';
+    next if $courseID eq 'admin' || $courseID eq 'modelCourse';
 
     $ce = new WeBWorK::CourseEnvironment({
 	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName => $courseID,
 					 });
     $db = new WeBWorK::DB($ce->{dbLayout});
+
+    unless (defined($ce) && defined($db)) {
+	warn("Unable to load up database for $courseID");
+	next;
+    }
     
     my $templateDir = $ce->{courseDirs}->{templates};
     
@@ -147,7 +158,7 @@ foreach my $courseID (@courses) {
     
     my @userIDs = $db->listUsers();
     my @users = $db->getUsers(@userIDs);
-    
+
     # go through users
     foreach my $user (@users) {
 	my $userID = $user->user_id;
@@ -217,7 +228,7 @@ foreach my $courseID (@courses) {
 		    $row[20] = $tags->{DBsubject};
 		    $row[21] = $tags->{DBchapter};
 		    $row[22] = $tags->{DBsection};
-		    $row[23] = $tags->{KEYWORDS};
+		    $row[23] = join(',',@{$tags->{keywords}});
 		}
 
 		my @answerIDs = $db->listProblemPastAnswers($courseID,$userID,
@@ -232,7 +243,7 @@ foreach my $courseID (@courses) {
 		    my $answerID = $answer->answer_id;
 		    my $sAnswerID = sha256_hex($answerID.salt());
 		    $attempt_number++;
-		    
+
 		    # if the source file changed redo that info
 		    if ($row[12] != $answer->source_file) {
 			$row[12] = $answer->source_file;
@@ -242,7 +253,7 @@ foreach my $courseID (@courses) {
 			    $row[20] = $tags->{DBsubject};
 			    $row[21] = $tags->{DBchapter};
 			    $row[22] = $tags->{DBsection};
-			    $row[23] = $tags->{KEYWORDS};
+			    $row[23] = join(',',@{$tags->{keywords}});
 			}
 		    }
 		    
@@ -251,17 +262,19 @@ foreach my $courseID (@courses) {
 		    $row[24] = $answer->timestamp;
 		    $row[25] = $attempt_number;
 		    
-		    my @scores = split('',$answer->scores);
-		    my @answers = split("\t",$answer->answer_string);
+		    my @scores = split('',$answer->scores,-1);
+		    my @answers = split("\t",$answer->answer_string,-1);
 
 		    # if the number of scores isn't the same as the number of
 		    # answers we should skip
 		    if ($#scores != $#answers) {
 			next;
 		    }
-		    
 		    my $num_blanks = scalar(@scores);
 		    
+		    $max_answer_blanks = $num_blanks 
+			if ($num_blanks > $max_answer_blanks);
+
 		    # compute the raw status
 		    my $score = 0;
 		    foreach (@scores) {
@@ -275,18 +288,64 @@ foreach my $courseID (@courses) {
 		    $row[28] = $num_blanks;
 		    
 		    for (my $i=0; $i<$num_blanks; $i++) {
-			$row[28+2*$i] = $answers[$i];
-			$row[28+2*$i+1] = $scores[$i];
+			$row[29+2*$i] = $answers[$i];
+			$row[30+2*$i] = $scores[$i];
 		    }
-			
-		    # Actually print the dang row
-		    $csv->print($OUT,\@row);
-		    
+
+		    #form the csv string
+		    $csv->combine(@row) || warn("Couldn't form CSV line");
+		    push @lines, $csv->string();
 		}
 	    }
 	}
     }
 }
+
+
+
+$row[0] = 'Answer ID hash';
+$row[1] = 'Course ID hash';
+$row[2] = 'Student ID hash';
+$row[3] = 'Set ID hash';
+$row[4] = 'Problem ID hash';
+$row[5] = 'Permission Level';
+$row[6] = 'Final Status';
+$row[7] = 'Set Type';
+$row[8] = 'Open Date';
+$row[9] = 'Due Date';
+$row[10] = 'Answer Date';
+$row[11] = 'Final Set Grade';
+$row[12] = 'Problem Path';
+$row[13] = 'Problem Value';
+$row[14] = 'Problem Max Attempts';
+$row[15] = 'Problem Seed';
+$row[16] = 'Attempted';
+$row[17] = 'Final Incorrect Attempts';
+$row[18] = 'Final Correct Attepts';
+$row[19] = 'Final Status';
+$row[20] = 'OPL Subject';
+$row[21] = 'OPL Chapter';
+$row[22] = 'OPL Section';
+$row[23] = 'OPL Keywords';
+$row[24] = 'Answer Timestamp';
+$row[25] = 'Attempt Number';
+$row[26] = 'Raw Status of Attempt';
+$row[27] = 'Status of Attempt';
+$row[28] = 'Number of Answer Blanks';
+
+for (my $i = 1; $i <= $max_answer_blanks; $i++) {
+    $row[27+2*$i] = "Answer $i Value";
+    $row[28+2*$i] = "Answer $i Status";
+}
+
+#Actually print the file
+$csv->print($OUT,\@row) || die("Couldn't Print Headers");
+
+foreach my $line (@lines) {
+    print $OUT $line;
+}
+
+close($OUT) or die("Couldn't close $output_file");
 
 if ($zip_result) {
     `gzip $output_file`;
