@@ -228,7 +228,8 @@ foreach my $courseID (@courses) {
 		    $row[20] = $tags->{DBsubject};
 		    $row[21] = $tags->{DBchapter};
 		    $row[22] = $tags->{DBsection};
-		    $row[23] = join(',',@{$tags->{keywords}});
+		    $row[23] = defined($tags->{keywords}) ? 
+			join(',',@{$tags->{keywords}}) : '';
 		}
 
 		my @answerIDs = $db->listProblemPastAnswers($courseID,$userID,
@@ -253,7 +254,8 @@ foreach my $courseID (@courses) {
 			    $row[20] = $tags->{DBsubject};
 			    $row[21] = $tags->{DBchapter};
 			    $row[22] = $tags->{DBsection};
-			    $row[23] = join(',',@{$tags->{keywords}});
+			    $row[23] = defined($tags->{keywords}) ? 
+				join(',',@{$tags->{keywords}}) : '';
 			}
 		    }
 		    
