@@ -148,8 +148,7 @@ var ProblemSetsManager = MainView.extend({
             sort_class: "", sort_direction: "", show_time: false, selected_rows: []};
     },
     addProblemSet: function (){
-        var dateSettings = util.pluckDateSettings(this.settings);
-        this.addProblemSetView = new AddProblemSetView({problemSets: this.problemSets,dateSettings: dateSettings})
+        this.addProblemSetView = new AddProblemSetView(_(this).pick("settings","users","problemSets"))
             .setElement(this.$(".modal-container")).render();
     },
     updateSelectedSets: function (evt){
@@ -512,10 +511,9 @@ var ChangeSetPropertiesView = ModalView.extend({
 var AddProblemSetView = ModalView.extend({
     initialize: function (options) {
         _.bindAll(this,"render","addNewSet","validateName");
-        this.settings = options.settings;
+        _(this).extend(_(options).pick("settings","problemSets","users"))
         this.model = new ProblemSet({},options.dateSettings);
         this.model.problemSets = options.problemSets; 
-        this.problemSets = options.problemSets;
 
         _(options).extend({
             modal_header: "Add Problem Set to Course",
@@ -535,7 +533,9 @@ var AddProblemSetView = ModalView.extend({
         this.model = _model;
         return this;
     },
-    bindings: {".problem-set-name": "set_id"},
+    bindings: {
+        ".problem-set-name": "set_id"
+    },
     childEvents: {
         "keyup .problem-set-name": "validateName",
         "click .action-button": "addNewSet"
@@ -563,8 +563,9 @@ var AddProblemSetView = ModalView.extend({
     addNewSet: function() {
         var valid = this.validateName();
         if(valid){
-
-            this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
+            var users = this.$(".assign-to-all-users").prop("checked") ? 
+                this.users.pluck("user_id") : [config.courseSettings.user]; 
+            this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",users);
             this.problemSets.add(this.model);
             this.close();
         }
