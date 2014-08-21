@@ -66,6 +66,7 @@ var ProblemSetsManager = MainView.extend({
         "click a.show-rows": function(evt){ 
             this.showRows(evt);
             this.problemSetTable.updateTable();
+            this.update();
         },
         "click a.change-set-props": "showChangeProps",
         "click a.delete-sets-button": "deleteSets",

@@ -11,7 +11,7 @@
 <input class='wwdate' size='12' value='<%=date%>'><span class='open-time-editor'><i class='fa fa-clock-o'></i></span>
 </script>
 <script type="text/template" id="edit-date-time2-template">
-<input class='wwdate' size='12' value='<%=date%>'><span>&nbsp;at&nbsp;</span><span style="inline-block" class="wwtime" contenteditable="true"></span>
+<input class='wwdate' size='12' value='<%=date%>'><span><br>&nbsp;at&nbsp;</span><span style="inline-block" class="wwtime" contenteditable="true"></span>
 </script>
 
 <!-- Some general templates that are used throughout the WW3 interface -->
@@ -170,7 +170,8 @@
     openDate_after_dueDate: function(){return "The open date must come before the due date";},
     dueDate_after_answerDate: function(){return "The due date must come before the answer date.";},
     set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
-    set_name_already_exists: function(opts) {return "The set with name " + opts.set_id + " has already been used in this course.";}
+    set_name_already_exists: function(opts) {return "The set with name " + opts.set_id + " has already been used in this course.";},
+    time_error: function () { return "The time must be in 12-hour format, like 12:34pm"}
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
   

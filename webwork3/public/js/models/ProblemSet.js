@@ -53,7 +53,7 @@ var ProblemSet = Backbone.Model.extend({
     initialize: function (opts,dateSettings) {
         _.bindAll(this,"addProblem");
         this.dateSettings = dateSettings;
-        opts = util.parseAsIntegers(opts,this.integerFields);
+        _(this.attributes).extend(_(util.parseAsIntegers(opts,this.integerFields)).pick(this.integerFields));
         var pbs = (opts && opts.problems) ? opts.problems : [];
         this.problems = new ProblemList(pbs);
         this.attributes.problems = this.problems;

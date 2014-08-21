@@ -47,7 +47,8 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         regexp : {
             wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,
             number: /^\d*(\.\d*)?$/,
-            loginname: /^[\w\d\_]+$/
+            loginname: /^[\w\d\_]+$/,
+            time12: /^(0?[1-9]|1[0-2]):([0-5]\d)\s*([aApP])[mM]$/
         },
         displayFloat: function(val,digits){
             return Math.round(val*Math.pow(10,digits))/Math.pow(10,digits);
@@ -60,10 +61,21 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         },
         setTime: function(evt,timeStr){
             var time = timeStr || evt.data.$el.find(".wwtime").text();
-            var newDate = moment(time,"hh:mmA"); 
-            var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
-            theDate.hours(newDate.hours()).minutes(newDate.minutes());
-            evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
+            var timeParse = config.regexp.time12.exec(time);
+            if(timeParse){
+                var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
+                var newDate = moment(time,"hh:mmA");             
+                theDate.hours(newDate.hours()).minutes(newDate.minutes());
+                evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
+                console.log(evt.data.model);
+                evt.data.$el.popover("destroy");
+                evt.data.$el.removeAttr("style");
+            } else {
+                evt.data.$el.css("background","rgba(255,0,0,0.5)")
+                var errorMessage = config.messageTemplate({type: "time_error"})
+                evt.data.$el.popover({title: "Error", content: errorMessage, placement: "left"}).popover("show");
+            }
+            
         },
         sortIcons: {
             "string1": "fa fa-sort-alpha-asc",
