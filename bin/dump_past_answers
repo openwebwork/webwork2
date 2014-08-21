@@ -1,0 +1,303 @@
+#!/usr/bin/perl
+
+##############################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/bin/wwdb,v 1.13 2006/01/25 23:13:45 sh002i Exp $
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
+# Artistic License for more details.
+##############################################################################
+
+use strict; 
+
+BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
+	   unless($ENV{WEBWORK_ROOT});}
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::DB;
+use WeBWorK::Utils::CourseIntegrityCheck;
+use WeBWorK::CourseEnvironment;
+use WeBWorK::Utils::CourseManagement qw/listCourses/;
+use WeBWorK::Utils::Tags;
+use WeBWorK::PG;
+
+use mod_perl2;
+use Text::CSV;
+use Digest::SHA qw(sha256_hex);
+
+# Deal with options
+my $output_file;
+my $zip_result = 0;
+
+while (@ARGV) {
+    $_ = shift;
+    if (/-h|--help/) {
+	print <<EOL;
+	dump_past_answers -z -f output_file.csv
+	    
+	    -f, --file output_file.csv
+	    The name of the csv file to create
+	    
+	    -z, --zip
+	    Whether or not to gzip the resulting file. 
+	    
+EOL
+	    exit 0;
+    } elsif (/-z|--zip/) {
+	$zip_result=1;
+    } elsif (/-f|--file/) {
+	$output_file = shift;
+    } else {
+	warn("Unknown option (ignored): $_");
+    }
+}
+    
+# define and open the output file. 
+if (!$output_file) {
+    my @date = localtime();
+    my $mon = $date[4]+1;
+    my $year = $date[5]+1900;
+    $output_file = "past-answers-$mon-$date[3]-$year.csv";
+}
+
+my $OUT;
+open($OUT,">$output_file") || die("Couldn't open file $output_file");
+
+# set up various variables and utilities that we will need
+my ($ce, $db, @wheres);
+my $csv = new Text::CSV->new ( { binary => 1 } ) 
+    or die "Cannot use CSV: ".Text::CSV->error_diag ();
+$csv->eol("\n");
+
+$ce = new WeBWorK::CourseEnvironment({
+    webwork_dir => $ENV{WEBWORK_ROOT},
+				     });
+
+my $pg_dir = $ce->{pg_dir};
+eval "use lib '$pg_dir/lib'"; 
+die $@ if $@;
+
+my @courses = listCourses($ce);
+my %permissionLabels = reverse %{$ce->{userRoles}};
+
+# this is our row array and is the main structure
+my @row;
+# ID Info
+# 0 - Answer ID hash
+# 1 - Course ID hash
+# 2 - Student ID hash
+# 3 - Set ID hash
+# 4 - Problem ID hash
+# User Info
+# 5 - Permission Level
+# 6 - Final Status
+# Set Info
+# 7 - Set type
+# 8 - Open Date (unix time)
+# 9 - Due Date (unix time)
+# 10 - Answer Date (unix time)
+# 11 - Final Set Grade (percentage)
+# Problem Info
+# 12 - Problem Path
+# 13 - Problem Value
+# 14 - Problem Max Attempts
+# 15 - Problem Seed
+# 16 - Attempted
+# 17 - Final Incorrect Attempts
+# 18 - Final Correct Attempts
+# 19 - Final Status
+# OPL Info 
+# 20 - Subject
+# 21 - Chapter
+# 22 - Section
+# 23 - Keywords
+# Answer Info
+# 24 - Answer timestamp (unix time)
+# 25 - Attempt Number
+# 26 - Raw status of attempt (percentage of correct blanks)
+# 27 - Status of attempt (post computed may be blank)
+# 28 - Number of Answer Blanks
+# 29/30 etc... - The following columns will come in pairs.  The first will be 
+#                the text of the answer contained in the answer blank
+#                and the second will be the binary 0/1 status of the answer
+#                blank.  There will be as many pairs as answer blanks. 
+
+# go through courses
+foreach my $courseID (@courses) {
+    next if $courseID eq 'admin';
+
+    $ce = new WeBWorK::CourseEnvironment({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+	courseName => $courseID,
+					 });
+    $db = new WeBWorK::DB($ce->{dbLayout});
+    
+    my $templateDir = $ce->{courseDirs}->{templates};
+    
+    my $sCourseID = sha256_hex($courseID.salt());
+    
+    $row[1] = $sCourseID;
+    
+    my @userIDs = $db->listUsers();
+    my @users = $db->getUsers(@userIDs);
+    
+    # go through users
+    foreach my $user (@users) {
+	my $userID = $user->user_id;
+	my $sUserID = sha256_hex($userID.salt());
+	
+	# get user specific info
+	$row[2] = $sUserID;
+	my $permissionLevel = $db->getPermissionLevel($userID);
+	$row[5] = $permissionLabels{$permissionLevel->permission};
+	$row[6] = $ce->status_abbrev_to_name($user->{status});
+	
+	my @setIDs = $db->listUserSets($userID);
+	@wheres = map {[$userID,$_]} @setIDs;
+	my @sets = $db->getMergedSets(@wheres);
+	
+	# go through sets
+	foreach my $set (@sets) {
+	    # skip gateways unless its a particular version
+	    if ($set->assignment_type =~ /gateway/ &&
+		$set->set_id !~ /,v\d+$/) {
+		next;
+	    }
+	    
+	    my $setID = $set->set_id;
+	    my $sSetID = sha256_hex($setID.salt());
+	    
+	    # get set specific info
+	    $row[3] = $sSetID;
+	    $row[7] = $set->assignment_type;
+	    $row[8] = $set->open_date;
+	    $row[9] = $set->due_date;
+	    $row[10] = $set->answer_date;
+	    
+	    my @problemIDs = $db->listUserProblems($userID,$setID);
+	    @wheres = map {[$userID, $setID, $_]} @problemIDs;
+	    my @problems = $db->getMergedProblems(@wheres);
+	    
+	    # compute set score
+	    my $total = 0;
+	    my $correct = 0;
+	    foreach my $problem (@problems) {
+		$total += $problem->value();
+		$correct += $problem->value*$problem->status;
+	    }
+	    $row[11] = $total ? $correct/$total:0;
+	    
+	    # go through each problem
+	    foreach my $problem (@problems) {
+		my $problemID = $problem->problem_id;
+		my $sProblemID = sha256_hex($problemID.salt());
+
+		# print problem specific info
+		$row[4] = $sProblemID;
+		$row[12] = $problem->source_file;
+		$row[13] = $problem->value;
+		$row[14] = $problem->max_attempts;
+		$row[15] = $problem->problem_seed;
+		$row[16] = $problem->attempted;
+		$row[17] = $problem->num_incorrect;
+		$row[18] = $problem->num_correct;
+		$row[19] = $problem->status;
+		
+		# get OPL data
+		my $file = $templateDir.'/'.$problem->source_file();
+		if (-e $file) {
+		    my $tags = WeBWorK::Utils::Tags->new($file);
+		    $row[20] = $tags->{DBsubject};
+		    $row[21] = $tags->{DBchapter};
+		    $row[22] = $tags->{DBsection};
+		    $row[23] = $tags->{KEYWORDS};
+		}
+
+		my @answerIDs = $db->listProblemPastAnswers($courseID,$userID,
+							    $setID,$problemID);
+		my @answers = $db->getPastAnswers(\@answerIDs);
+		
+		# go through attempts
+		my $attempt_number = 0;
+		foreach my $answer (@answers) {
+		    #reset the row length because it can change;
+		    @row = splice(@row,0,28);
+		    my $answerID = $answer->answer_id;
+		    my $sAnswerID = sha256_hex($answerID.salt());
+		    $attempt_number++;
+		    
+		    # if the source file changed redo that info
+		    if ($row[12] != $answer->source_file) {
+			$row[12] = $answer->source_file;
+			$file = $templateDir.'/'.$answer->source_file();
+			if (-e $file) {
+			    my $tags = WeBWorK::Utils::Tags->new($file);
+			    $row[20] = $tags->{DBsubject};
+			    $row[21] = $tags->{DBchapter};
+			    $row[22] = $tags->{DBsection};
+			    $row[23] = $tags->{KEYWORDS};
+			}
+		    }
+		    
+		    # input answer specific info
+		    $row[0] = $sAnswerID;
+		    $row[24] = $answer->timestamp;
+		    $row[25] = $attempt_number;
+		    
+		    my @scores = split('',$answer->scores);
+		    my @answers = split("\t",$answer->answer_string);
+
+		    # if the number of scores isn't the same as the number of
+		    # answers we should skip
+		    if ($#scores != $#answers) {
+			next;
+		    }
+		    
+		    my $num_blanks = scalar(@scores);
+		    
+		    # compute the raw status
+		    my $score = 0;
+		    foreach (@scores) {
+			$score += $_;
+		    }
+		    
+		    $row[26] = $num_blanks ? $score/$num_blanks : 0;
+		    
+		    # we leave the computed status blank for now. 
+		    
+		    $row[28] = $num_blanks;
+		    
+		    for (my $i=0; $i<$num_blanks; $i++) {
+			$row[28+2*$i] = $answers[$i];
+			$row[28+2*$i+1] = $scores[$i];
+		    }
+			
+		    # Actually print the dang row
+		    $csv->print($OUT,\@row);
+		    
+		}
+	    }
+	}
+    }
+}
+
+if ($zip_result) {
+    `gzip $output_file`;
+}
+
+sub salt() {
+    my $salt = '';
+    for (my $i=0; $i<16; $i++) {
+	$salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
+    }
+    return $salt;
+}
+
+1;
