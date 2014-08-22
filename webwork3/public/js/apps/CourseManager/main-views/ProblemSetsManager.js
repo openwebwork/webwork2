@@ -17,6 +17,7 @@ var ProblemSetsManager = MainView.extend({
 
         this.state.on({
             "change:filter_string": function () {
+                console.log(self.state.get("filter_string"))
                 self.problemSetTable.set(self.state.pick("filter_string")).updateTable();
                 self.$(".num-users").html(self.problemSetTable.getRowCount() + " of " 
                         + self.problemSets.length + " users shown.");
