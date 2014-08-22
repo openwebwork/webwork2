@@ -53,6 +53,13 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         displayFloat: function(val,digits){
             return Math.round(val*Math.pow(10,digits))/Math.pow(10,digits);
         },
+        showClass:function(opts){
+            if(opts.state){
+                opts.els.removeClass(opts.class)
+            } else {
+                opts.els.addClass(opts.class)
+            }
+        },
         setDate: function(evt){
             var newDate = moment(evt.data.$el.children(".wwdate").val(),"MM/DD/YYYY");
             var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));

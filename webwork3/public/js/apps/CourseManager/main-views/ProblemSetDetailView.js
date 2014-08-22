@@ -389,9 +389,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             if(! this.model){
                 return;
             }
-            var reducedScoring = this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") 
-                && this.problemSet.get("enable_reduced_scoring"); 
-            this.tableSetup({show_reduced_scoring: reducedScoring});
+            this.tableSetup();
             this.$el.html($("#loading-usersets-template").html());
             this.tabState.on({
                 "change:filter_string": function(){
@@ -415,7 +413,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                     ".show-recitation": "show_recitation"
                 });
             } else {
-                this.userSetList.fetch({success: function () {self.buildCollection(); self.render();}});
+                this.userSetList.fetch({success: function () {self.buildCollection().render();}});
             }
         },
         events: {
@@ -465,9 +463,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             config.showClass({state: this.tabState.get("show_section"), els: this.$(".section"), class: "hidden"})
             config.showClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), class: "hidden"})
             config.showClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
-                els: this.$(".reduced-scoring-date,.reduced-scoring-header"), class: "hidden"})
+                els: this.$(".reduced-scoring-date,.reduced-scoring-header"), class: "hidden"});
+            this.userSetTable.refreshTable();
         },
-        tableSetup: function (opts) {
+        tableSetup: function () {
             var self = this;
             this.cols = [{name: "Select", key: "_select_row", classname: "select-set"},
                 {name: "Student", key: "user_id", classname: "student",
@@ -477,8 +476,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                     }}},
                 {name: "Open Date", key: "open_date", classname: "open-date edit-datetime", 
                         editable: false, datatype: "integer", use_contenteditable: false},
-                {name: "Reduced Scoring Date", key: "reduced_scoring_date", 
-                        classname: "reduced-scoring-date edit-datetime", editable: true, datatype: "integer"},
+                {name: "Reduced Scoring Date", key: "reduced_scoring_date", classname: "reduced-scoring-date edit-datetime", 
+                        editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Due Date", key: "due_date", classname: "due-date edit-datetime", 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Answer Date", key: "answer_date", classname: "answer-date edit-datetime", 
