@@ -102,9 +102,12 @@ The results will be dispayed below.  To search for section 2 type "section:2" an
 
 <script type="text/template" id="customize-assignment-template">
 <div class="form-inline" role="form">
-  <div class="form-group">
-    <label class="sr-only" for="ca-search-box">Search</label>
-    <input type="search" class="form-control search-box" id="ca-search-box" placeholder="Search">
+  <div class="input-group">
+    <label class="sr-only" for="ca-search-box">Filter</label>
+    <input type="text" id="ca-search-box" class="form-control filter-text" placeholder="Filter">
+    <span class="input-group-btn">
+      <button class="btn btn-default clear-filter-button" type="button"><i class="fa fa-times"></i></button>
+    </span>
   </div>
   <div class="checkbox">
     <label>
@@ -195,11 +198,11 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 
 <script type="text/template" id="problem-set-details-help-template">
 <h4>Problem Set Properties Help</h4>
-              <ul>
-                <li>The basic properties (open, due and answer dates) as well as visibility and reduced credit.</li>
-                <li>To change any of the dates, click on the date and select (or type) in a new one.</li>
-                <li>To change the time of the open, due or answer dates, click on the clock and type in a new time.</li>
-              </ul>
+  <ul>
+    <li>The basic properties (open, due and answer dates) as well as visibility and reduced credit.</li>
+    <li>To change any of the dates, click on the date and select (or type) in a new one.</li>
+    <li>To change the time of the open, due or answer dates, click on the clock and type in a new time.</li>
+  </ul>
 </script>
 
 <script type="text/template" id="problem-set-view-help-template">

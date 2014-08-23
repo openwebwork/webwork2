@@ -39,19 +39,18 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		initialize: function (options) {
 			var self = this;
 			_.bindAll(this,"render","sortTable");
-			this.collection = options.collection;
+			this.original_collection = this.collection; 
+			this.collection = new Backbone.Collection();
 			this.collection.on("add",function(model){
 				_(self.columnInfo).each(function(col){
-					self.updateValues(model,col);
+					//self.updateValues(model,col);
 				})
-			})
+			});
+			_(this).extend(_(options).pick("columnInfo","row_id_field","page_size"))
 			this.filteredCollection = new Backbone.Collection();
 			this.filter_string = "";
-			this.columnInfo = options.columnInfo;
-			this.row_id_field = options.row_id_field;
 			this.selectedRows = [];  // keep track of the rows that are selected. 
 			this.paginatorProp = options.paginator;
-			this.page_size = options.page_size || this.collection.length;
 			this.tableClasses = options.classes; 
 			this.setColumns(options.columnInfo);
 			if($(options.tablename).length>0){ // if the tablename was passed use it as the $el
@@ -60,14 +59,37 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			if(typeof(options.paginator.showPaginator)==="undefined"){
 				this.paginatorProp.showPaginator = true;	
 			}
-			// setup the paginator 
 			this.initializeTable();
 		},
 		initializeTable: function () {
-			this.pageRange = this.page_size > 0 ?  _.range(this.page_size) : _.range(this.collection.length) ;
+			var self = this;
+			this.original_collection.each(function(_model){
+				var model = new Backbone.Model();
+				_(self.columnInfo).each(function(col){
+					var value;
+					if(_.isFunction(col.value)){
+						value = col.value(_model);
+					} else if(_model.get(col.key)){
+						value = _model.get(col.key)
+					}
+					switch(col.datatype){
+						case "integer": 
+							model.set(col.key,parseInt(value));
+							break;
+						case "string": 
+							model.set(col.key,(typeof(value)==="undefined") ? "" : ""+value);
+							break;
+						case "boolean":
+						default: 
+							model.set(col.key,typeof(value)==="undefined" ? "" : value);
+					}
+					self.collection.add(model);
+				})
+			});
+			this.pageRange = this.page_size > 0 ?  _.range(this.page_size) : _.range(this.original_collection.length) ;
 			this.currentPage = 0;
 			this.rowViews = [];
-			this.$el.addClass(this.tableClasses);
+
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},
@@ -80,7 +102,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				var classname = / +/.test(col.classname) ? col.classname.split(/ +/)[0] : col.classname;
 				obj["."+classname] = {observe: col.key}; // set it up for stickit format
 				
-				if(typeof col.use_contenteditable == 'undefined'){ col.use_contenteditable=true;}
+				if(typeof col.use_contenteditable == 'undefined'){ col.use_contenteditable=false;}
 				if(typeof col.stickit_options != 'undefined'){
 					_.extend(obj["."+classname],col.stickit_options);
 					col.use_contenteditable = col.editable;
@@ -95,20 +117,12 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			});
 			return this;
 		},
-		// Add an _extra field to the collection for some columns. 
-		updateValues: function(_model,col){
-			if(col.value && _.isFunction(col.value)) { // then the value is calculated.
-				if(!_model._extra){
-					_model._extra= {};
-				}
-				_model._extra[col.key]=col.value.apply(this,[_model]);	
-			}
-		},
 		render: function () {
 			var self = this, i;
 			this.$el.empty().append($("<thead>")).append($("<tbody>"));
 			this.updateHeader();
 			this.updateTable();
+			this.$el.addClass(this.tableClasses);
 			return this;
 		},
 		updateHeader: function () {
@@ -265,9 +279,12 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				this.currentPage = options.current_page;
 			
 			}
-			this.pageRange = _.range(this.currentPage*this.page_size,
-				(this.currentPage+1)*this.page_size>this.collection.size()? this.collection.size():(this.currentPage+1)*this.page_size);
-
+			if(this.page_size>0){
+				this.pageRange = _.range(this.currentPage*this.page_size,
+					(this.currentPage+1)*this.page_size>this.collection.size()? this.collection.size():(this.currentPage+1)*this.page_size);
+			} else {
+				this.pageRange = _.range(0,this.collection.length);
+			}
 
 			return this;
 		},
@@ -342,39 +359,20 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				console.error("You need to define a datatype to sort");
 				return this;
 			}
-			var comparator = function(model1,model2) { 
-				var value1 = typeof(model1.get(sort.key)) === "undefined" || (model1._extra && model1._extra[sort.key])
-						? model1._extra[sort.key] : model1.get(sort.key);
-				var value2 = typeof(model2.get(sort.key)) === "undefined" || (model2._extra && model2._extra[sort.key])
-						? model2._extra[sort.key] : model2.get(sort.key);
-				switch(sort.datatype){
-					case "integer":
-						if(parseInt(sortFunction(value1,model1))===parseInt(sortFunction(value2,model2))){return 0;}
-					    return self.sortInfo.direction*(parseInt(sortFunction(value1,model1))<parseInt(sortFunction(value2,model2))? -1:1);
-						break;
-					case "boolean":
-						if(sortFunction(value1,model1)===sortFunction(value2,model2)){ return 0;}
-						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)?-1:1);
-						break;
-					case "number":
-						if(parseFloat(sortFunction(value1,model1))===parseFloat(sortFunction(value2,model2))){return 0;}
-					    return self.sortInfo.direction*(parseFloat(sortFunction(value1,model1))<parseFloat(sortFunction(value2,model2))? -1:1);
-						break;
-					case "string":
-					default:
-						if (sortFunction(value1,model1)===sortFunction(value2,model2))
-							return 0;
-						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)? -1: 1);
-						break;
-				} 
-
-			};
 			if(this.filter_string.length>0){
-				this.filteredCollection.comparator = comparator;
+				this.filteredCollection.comparator = sort.key;
 				this.filteredCollection.sort();
+				if(self.sortInfo.direction<0){
+					this.filteredCollection.models = this.filteredCollection.models.reverse();
+				}
+	
 			} else {
-				this.collection.comparator = comparator;
+				//this.collection.comparator = comparator;
+				this.collection.comparator = sort.key;
 				this.collection.sort();	
+				if(self.sortInfo.direction<0){
+					this.collection.models = this.collection.models.reverse();
+				}
 			}
 			this.updateHeader();
 			return this;
@@ -425,13 +423,13 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 					self.$el.append($("<td>").append(cb));
 				} else if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(col.classname).attr("contenteditable",col.editable));
+				} else if(col.display) {
+					self.$el.append($("<td>").text(col.display(self.model.get(col.key))));
+				} else if (col.stickit_options && col.stickit_options.selectOptions){
+					var select = $("<select>").addClass("input-sm form-control").addClass(col.classname);
+					self.$el.append($("<td>").append(select));
 				} else {
-					if (col.stickit_options && col.stickit_options.selectOptions){
-						var select = $("<select>").addClass("input-sm form-control").addClass(col.classname);
-						self.$el.append($("<td>").append(select));
-					} else {
-						self.$el.append($("<td>").addClass(col.classname));
-					}
+					self.$el.append($("<td>").addClass(col.classname));
 				}
 			});
 			if(this.model){

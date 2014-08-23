@@ -208,14 +208,12 @@ var ProblemSetsManager = MainView.extend({
                 }
             },
             {name: "Users Assign.", key: "assigned_users", classname: "users-assigned", editable: false, datatype: "integer",
-                stickit_options: {onGet: function(val){
-                    return val.length + "/" + self.users.length;
-                }},
-                sort_function: function(val){ return val.length;}
+                value: function(model){ return model.get("assigned_users").length;},
+                display: function(val){
+                    return val+ "/" + self.users.length;}
                 },
             {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
-                stickit_options: { onGet: function(val) { return val.length}},
-                sort_function: function(val){return val.length;}},
+                value: function(model){ return model.get("problems").length}},
             {name: "Reduced Scoring", key: "enable_reduced_scoring", datatype: "boolean",
                     classname: "enable-reduced-scoring yes-no-boolean-select"},
             {name: "Visible", key: "visible", classname: "visible yes-no-boolean-select", datatype: "boolean"},

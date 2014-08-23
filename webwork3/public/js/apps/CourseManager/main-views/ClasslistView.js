@@ -228,11 +228,10 @@ var ClasslistView = MainView.extend({
             		return self.problemSets.filter(function(_set) { 
             				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
            		},
-            	stickit_options: {update: function($el, val, model, options) {
-            		$el.html(self.problemSets.filter(function(_set) { 
-            				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length + "/"
-            		+ self.problemSets.size()); }
-            }},
+                display: function(val){
+                    return val + "/" + self.problemSets.length;
+                }
+            },
             {name: "First Name", key: "first_name", classname: "first-name", editable: true, datatype: "string",
             	stickit_options: {events: ['blur']}},
             {name: "Last Name", key: "last_name", classname: "last-name", editable: true, datatype: "string",

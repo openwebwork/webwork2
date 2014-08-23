@@ -402,13 +402,13 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             if (this.collection.size()>0){
                 this.$el.html($("#customize-assignment-template").html());
                 (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
-                        paginator: {showPaginator: false}, tablename: ".users-table"}))
+                        paginator: {showPaginator: false}, tablename: ".users-table", page_size: -1}))
                     .render().$el.addClass("table table-bordered table-condensed");
                 this.$el.append(this.userSetTable.el);
                 this.update();
                 this.stickit();
                 this.stickit(this.tabState,{
-                    ".search-box": "filter_string",
+                    ".filter-text": "filter_string",
                     ".show-section": "show_section",
                     ".show-recitation": "show_recitation"
                 });
@@ -418,6 +418,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         events: {
             "click .save-changes": "saveChanges",
+            "click .clear-filter-button": function () { 
+                this.tabState.set("filter_string", "");
+                this.userSetTable.set({filter_string: ""}).updateTable();
+            }
         },
         bindings: { "#customize-problem-set-controls .open-date" : "open_date",
                     "#customize-problem-set-controls .due-date": "due_date",
@@ -469,11 +473,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         tableSetup: function () {
             var self = this;
             this.cols = [{name: "Select", key: "_select_row", classname: "select-set"},
-                {name: "Student", key: "user_id", classname: "student",
-                    stickit_options: {update: function($el,val,model,options){
-                        var user = self.users.findWhere({user_id: val});
-                        $el.html(_.template($("#user-name-template").html(),user.attributes));
-                    }}},
+                {name: "Student", key: "user_id", classname: "student", datatype: "string",
+                    value: function(model){ 
+                        var user = self.users.findWhere({user_id: model.get("user_id")});
+                        return _.template($("#user-name-template").html(),user.attributes)}},
                 {name: "Open Date", key: "open_date", classname: "open-date edit-datetime", 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Reduced Scoring Date", key: "reduced_scoring_date", classname: "reduced-scoring-date edit-datetime", 
