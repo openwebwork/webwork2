@@ -20,9 +20,18 @@ BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
 	   unless($ENV{WEBWORK_ROOT});}
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+
+BEGIN {
+    my $ce = new WeBWorK::CourseEnvironment({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+					    });
+    my $pg_dir = $ce->{pg_dir};
+    eval "use lib '$pg_dir/lib'";
+}
+
 use WeBWorK::DB;
 use WeBWorK::Utils::CourseIntegrityCheck;
-use WeBWorK::CourseEnvironment;
 
 ##########################
 # update admin course
