@@ -52,13 +52,15 @@ body {  /* needed for the navigation bars top and bottom*/
 .navbar-other {background-color: #f8f8f8;
 border-top: solid 1px rgb(220, 220, 220);}
 
-/*.ww-help {position: absolute; top: 70px; bottom: 70px; overflow: auto; z-index: 100}*/
 
 #main {padding-left: 10px;}
 
 .no-bullets {list-style-type: none; padding-left: 0}
 
-/* .form-group {margin-top: 50px;} */
+/* For Collection tables */
+
+.sortable-table th {cursor: pointer;}
+
 
 /* Calendar related styles: */
 

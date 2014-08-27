@@ -218,12 +218,13 @@ var ClasslistView = MainView.extend({
             {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
                 editable: false},
             {name: "LS", key: "logged_in",classname:"logged-in-status", datatype: "none", editable: false,
-                title: "Logged in status",
+                title: "Logged in status", searchable: false,
                 stickit_options: {update: function($el, val, model, options) {
                     $el.html(val?"<i class='fa fa-circle' style='color: green'></i>":"")
                 }}
             },
             {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
+                searchable: false, 
             	value: function(model){
             		return self.problemSets.filter(function(_set) { 
             				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
@@ -269,7 +270,7 @@ var ClasslistView = MainView.extend({
             {name: "Student ID", key: "student_id", classname: "student-id",  editable: true, datatype: "string",
         		stickit_options: {events: ['blur']}},
             {name: "Status", key: "status", classname: "status", datatype: "string",
-                value: function(model){
+                search_value: function(model){
                     return _(config.enrollment_statuses).findWhere({value: model.get("status")}).label;
                 },
         		stickit_options: { selectOptions: { collection: config.enrollment_statuses }}},
@@ -280,7 +281,7 @@ var ClasslistView = MainView.extend({
         	{name: "Comment", key: "comment", classname: "comment",  editable: true, datatype: "string",
         		stickit_options: {events: ['blur']}},
         	{name: "Permission", key: "permission", classname: "permission", datatype: "string",
-                value: function(model){
+                search_value: function(model){
                     return _(config.permissions).findWhere({value: ""+model.get("permission")}).label;  // the ""+ is needed to stringify the permission level
                 },
         		stickit_options: { selectOptions: { collection: config.permissions }}

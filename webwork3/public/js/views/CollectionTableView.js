@@ -6,27 +6,32 @@
  * The following must also be passed into the View:
  *  
  * columnInfo:  An array of {name: _name, key: _key, editable: boolean, classnames: _classnames,
- 		datatype: _datatype, binding: _binding} where 
+ 		datatype: _datatype, searchable: _searchable, binding: _binding} where 
  	-  _name will be the header of the column
  	-  _key is the field name of the model 
  	-  _editable is a boolean for whether or not the column is editable
  	-  _classnames will assign the td element in the table those classnames.  It can be either a string or an
  			array of strings.
  	-  _datatype will be the type of data for the column.  This is important for sorting.
+ 	-  _searchable (a boolean) whether or not the value should be available in search/filter
+ 	-  _search_function (function) to be used to set the value of the searchable field instead of the field itself. 
  	-  _use_contenteditable: boolean  (this uses the contenteditable attribute whenever a column is editable. Set to 
  	         false if you don't want to use this or true or nothing to use it.)
  	-  _stickit_options: is an stickit bindings object.  You don't need to define observe because the classname will 
  	        be passed in.
  	-  _sortFxn: is a function that returns a value to be sorted on.   
 
+Required options:
+	- row_id_field: the field from the collections model that acts like an id.  
 
 Other options:
 	page_size: the number of rows in a visible table (or -1 for all rows shown.)
+	table_classes: a string consisting of all classes to be set on the table.  
 
 
 Sorting: 
    The table will sort unless the datatype field is not set.  It will sort both ascending and descending. 
-   Currently only "integer" and "string" data is set. 
+   Currently only "integer" and "string" data is set, however boolean data sorts as expected as well. 
    If you want to sort on a different piece of data, you need to specify the key (field) where the data is stored. 
  */
 
@@ -35,26 +40,22 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 
 	var CollectionTableView = Backbone.View.extend({
 		tagName: "table",
-		className: "collection-table",
 		initialize: function (options) {
 			var self = this;
 			_.bindAll(this,"render","sortTable");
 			this.original_collection = this.collection; 
 			this.collection = new Backbone.Collection();
-			this.collection.on("add",function(model){
-				_(self.columnInfo).each(function(col){
-					//self.updateValues(model,col);
-				})
-			});
-			_(this).extend(_(options).pick("columnInfo","row_id_field","page_size"))
+			_(this).extend(_(options).pick("columnInfo","row_id_field","page_size","table_classes"))
 			this.filteredCollection = new Backbone.Collection();
 			this.filter_string = "";
 			this.selectedRows = [];  // keep track of the rows that are selected. 
 			this.paginatorProp = options.paginator;
-			this.tableClasses = options.classes; 
 			this.setColumns(options.columnInfo);
 			if($(options.tablename).length>0){ // if the tablename was passed use it as the $el
 				this.$el=$(options.tablename);
+			}
+			if(typeof(this.row_id_field)==="undefined"){
+				console.error("The option row_id_field must be passed to the table");
 			}
 			if(typeof(options.paginator.showPaginator)==="undefined"){
 				this.paginatorProp.showPaginator = true;	
@@ -72,6 +73,14 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 					} else if(_model.get(col.key)){
 						value = _model.get(col.key)
 					}
+					if(col.searchable){
+						var v = _.isFunction(col.search_value) ? col.search_value(_model) : value; 
+						if(typeof(v)!=="undefined"){
+							model.set("_searchable_fields",
+								typeof(model.get("_searchable_fields"))==="undefined"? v : 
+								model.get("_searchable_fields")+";" + v); 	
+						}
+					}
 					switch(col.datatype){
 						case "integer": 
 							model.set(col.key,parseInt(value));
@@ -83,9 +92,23 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 						default: 
 							model.set(col.key,typeof(value)==="undefined" ? "" : value);
 					}
-					self.collection.add(model);
 				})
+				self.collection.add(model);
 			});
+
+			// this connects the collection in the table to the original collection so changes can be made automatically. 
+			this.collection.on("change",function(model){
+				var id = model.get(self.row_id_field);
+				var original_model = self.original_collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+				original_model.set(model.changed);
+			});
+
+			this.original_collection.on("change",function(model){
+				var id = model.get(self.row_id_field);
+				var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+				_model.set(model.changed);
+			})
+
 			this.pageRange = this.page_size > 0 ?  _.range(this.page_size) : _.range(this.original_collection.length) ;
 			this.currentPage = 0;
 			this.rowViews = [];
@@ -93,9 +116,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},
-		setColumns: function(columnInfo){
+		setColumns: function(){
 			var self = this;
-			this.columnInfo = columnInfo;
 			this.bindings = {};
 			_(this.columnInfo).each(function(col){ 
 				var obj = {};
@@ -113,6 +135,15 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				if(typeof(col.datatype)!=="undefined"){
 					col.sortable = true;
 				}
+				if(typeof(col.searchable)==="undefined"){
+					col.searchable = true;
+				}
+				if(col.key==="_select_row"){
+					col.searchable = false; 
+				}
+				if(typeof(col.show_column)==="undefined"){
+					col.show_column = true;
+				}
 				_.extend(self.bindings, obj);
 			});
 			return this;
@@ -122,7 +153,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			this.$el.empty().append($("<thead>")).append($("<tbody>"));
 			this.updateHeader();
 			this.updateTable();
-			this.$el.addClass(this.tableClasses);
+			this.$el.addClass("sortable-table").addClass(this.table_classes);
 			return this;
 		},
 		updateHeader: function () {
@@ -146,7 +177,9 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				if(col.title){
 					th.attr("title",col.title);
 				}
-				headRow.append(th);
+				if(col.show_column){
+					headRow.append(th);	
+				}
 			});
 			this.$("thead").html(headRow);
 		},
@@ -271,7 +304,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		        } else if (this.filter_string.length>0) {
 					filterRE = new RegExp(this.filter_string,"i");
 					this.filteredCollection.reset(this.collection.filter(function(model){
-						return _(model.attributes).values().join(";").search(filterRE) > -1;
+						return model.get("_searchable_fields").search(filterRE) > -1;
 					}));
 				}
 			}
@@ -351,16 +384,15 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				}
 			}
 
-			// determine the sort Function
-
-			var sortFunction = sort.sort_function || function(val) {return val;};
-
 			if(typeof(sort.datatype)==="undefined"){
 				console.error("You need to define a datatype to sort");
 				return this;
 			}
+
+			var comp = _.isFunction(sort.search_value) ? sort.search_value : sort.key;
+
 			if(this.filter_string.length>0){
-				this.filteredCollection.comparator = sort.key;
+				this.filteredCollection.comparator = comp;
 				this.filteredCollection.sort();
 				if(self.sortInfo.direction<0){
 					this.filteredCollection.models = this.filteredCollection.models.reverse();
@@ -368,7 +400,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 	
 			} else {
 				//this.collection.comparator = comparator;
-				this.collection.comparator = sort.key;
+				this.collection.comparator = comp;
 				this.collection.sort();	
 				if(self.sortInfo.direction<0){
 					this.collection.models = this.collection.models.reverse();
@@ -415,7 +447,9 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			var self = this;
 			this.$el.attr("data-row-id",this.rowID);
 			_(this.columnInfo).each(function (col){
-				if (col.datatype === "boolean"){
+				if(!col.show_column){
+
+				} else if (col.datatype === "boolean"){
 					var select = $("<select>").addClass(col.classname).addClass("input-sm form-control");
 					self.$el.append($("<td>").append(select));
 				} else if(col.key==="_select_row"){

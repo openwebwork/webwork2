@@ -383,6 +383,13 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             _.extend(this,_(options).pick("users","settings","eventDispatcher"));
             TabView.prototype.initialize.apply(this,[options]);
+            this.tabState.on({
+                "change:filter_string": function(){
+                    console.log(self.tabState.changed);
+                    self.userSetTable.set(self.tabState.pick("filter_string")).updateTable();},
+                "change:show_section change:show_recitation": function(){
+                    self.update();}
+                });
         },
         render: function () {
             var self = this;
@@ -391,19 +398,11 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             }
             this.tableSetup();
             this.$el.html($("#loading-usersets-template").html());
-            this.tabState.on({
-                "change:filter_string": function(){
-                    console.log(self.tabState.changed);
-                    self.userSetTable.set(self.tabState.pick("filter_string")).updateTable();},
-                "change:show_section change:show_recitation": function(){
-                    self.update();}
-                });
-
             if (this.collection.size()>0){
                 this.$el.html($("#customize-assignment-template").html());
                 (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
-                        paginator: {showPaginator: false}, tablename: ".users-table", page_size: -1}))
-                    .render().$el.addClass("table table-bordered table-condensed");
+                        paginator: {showPaginator: false}, tablename: ".users-table", page_size: -1,
+                        row_id_field: "user_id", table_classes: "table table-bordered table-condensed"})).render();
                 this.$el.append(this.userSetTable.el);
                 this.update();
                 this.stickit();
@@ -441,8 +440,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             if(_set){
                 this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
                 this.userSetList = new UserSetList([],{problemSet: this.model,type: "users"});
-                this.userSetList.on("change:due_date change:answer_date change:open_date", function(model){
-                    model.save();
+                this.userSetList.on("change:due_date change:answer_date change:reduced_scoring_date change:open_date"
+                    , function(model){ model.save();
                 });
             }
 
@@ -457,7 +456,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation"));
             });
             this.collection.on({change: function(model){
-                self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date")).save();
+                self.userSetList.findWhere({user_id: model.get("user_id")})
+                    .set(model.pick("open_date","due_date","answer_date","enable_reduced_scoring")).save();
             }});
             this.setMessages();
 
@@ -486,7 +486,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 {name: "Answer Date", key: "answer_date", classname: "answer-date edit-datetime", 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Section", key: "section", classname: "section", editable: false, datatype: "string"},
-                {name: "Recitation", key: "recitation", classname: "recitation", editable: false,datatype: "string"}];
+                {name: "Recitation", key: "recitation", classname: "recitation", editable: false,datatype: "string"},
+                {name: "Enable Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
+                    editable: false, datatype: "boolean", show_column: false}
+                ];
                 
         },
         messageTemplate: _.template($("#customize-users-messages-template").html()),

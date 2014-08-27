@@ -31,13 +31,15 @@ var ProblemSetsManager = MainView.extend({
         this.tableSetup();
 
         this.problemSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.problemSets, 
-                classes: "problem-set-manager-table", row_id_field: "set_id",
+                classes: "problem-set-manager-table", row_id_field: "set_id", 
+                table_classes: "problem-set-manager-table table table-bordered table-condensed",
                 paginator: {page_size: this.state.get("page_size"), button_class: "btn btn-default", 
                                 row_class: "btn-group"}});
 
         this.problemSetTable.on({
             "page-changed":function(num){
-                self.state.set("page_number",num);
+                self.state.set("current_page",num);
+                console.log(self.state.attributes);
                 self.update();},
             "table-sorted":function(info){
                 self.state.set({sort_class: info.classname, sort_direction: info.direction});
@@ -86,7 +88,7 @@ var ProblemSetsManager = MainView.extend({
     render: function () {
         var self = this;
         this.$el.html($("#problem-set-manager-template").html());
-        this.problemSetTable.render().$el.addClass("table table-bordered table-condensed");
+        this.problemSetTable.render();
         this.$el.append(this.problemSetTable.el);
         var opts = this.state.pick("page_size","filter_string","current_page","selected_rows");
         if(this.state.get("sort_class")&&this.state.get("sort_direction")){
@@ -124,7 +126,7 @@ var ProblemSetsManager = MainView.extend({
         ".show-time-toggle": "show_time"
     },
     showChangeProps: function(){
-        var setIDs = this.getVisibleSelectedRows();
+        var setIDs = this.problemSetTable.getVisibleSelectedRows();
         if(setIDs.length>0){
             this.changeSetPropView.setElement(this.$(".modal-container"))
                 .set({set_names: setIDs}).render();
@@ -146,7 +148,7 @@ var ProblemSetsManager = MainView.extend({
         this.problemSetTable.refreshTable();
     },
     getDefaultState: function () {
-        return {filter_string: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+        return {filter_string: "", current_page: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
             sort_class: "", sort_direction: "", show_time: false, selected_rows: []};
     },
     addProblemSet: function (){
