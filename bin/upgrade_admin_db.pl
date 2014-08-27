@@ -56,8 +56,8 @@ my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
 
 my ($tables_ok,$dbStatus) = $CIchecker->checkCourseTables($upgrade_courseID);
 my @schema_table_names = keys %$dbStatus;  # update tables missing from database;
-my @tables_to_create = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A} @schema_table_names;	
-my @tables_to_alter  = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B} @schema_table_names;
+my @tables_to_create = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A()} @schema_table_names;	
+my @tables_to_alter  = grep {$dbStatus->{$_}->[0] == WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B()} @schema_table_names;
 $update_error_msg = $CIchecker->updateCourseTables($upgrade_courseID, [@tables_to_create]);
 foreach my $table_name (@tables_to_alter) {	#warn "do_upgrade_course: adding new fields to table $table_name in course $upgrade_courseID";
     $update_error_msg .= $CIchecker->updateTableFields($upgrade_courseID, $table_name);
