@@ -146,7 +146,7 @@
   </tr>
 
     </tbody></table>
-    <div class="message-pane"></div>
+    <div class="message-pane alert"></div>
 </script>
 <script type="text/template" id="manual-import-buttons">
     <button class="btn btn-default add-more-button">Save Student and Add Another</button>
