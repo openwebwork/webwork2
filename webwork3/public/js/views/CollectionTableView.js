@@ -65,49 +65,38 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		initializeTable: function () {
 			var self = this;
 			this.original_collection.each(function(_model){
-				var model = new Backbone.Model();
-				_(self.columnInfo).each(function(col){
-					var value;
-					if(_.isFunction(col.value)){
-						value = col.value(_model);
-					} else if(_model.get(col.key)){
-						value = _model.get(col.key)
-					}
-					if(col.searchable){
-						var v = _.isFunction(col.search_value) ? col.search_value(_model) : value; 
-						if(typeof(v)!=="undefined"){
-							model.set("_searchable_fields",
-								typeof(model.get("_searchable_fields"))==="undefined"? v : 
-								model.get("_searchable_fields")+";" + v); 	
-						}
-					}
-					switch(col.datatype){
-						case "integer": 
-							model.set(col.key,parseInt(value));
-							break;
-						case "string": 
-							model.set(col.key,(typeof(value)==="undefined") ? "" : ""+value);
-							break;
-						case "boolean":
-						default: 
-							model.set(col.key,typeof(value)==="undefined" ? "" : value);
-					}
-				})
-				self.collection.add(model);
+				self.updateRow(_model);
 			});
 
 			// this connects the collection in the table to the original collection so changes can be made automatically. 
-			this.collection.on("change",function(model){
-				var id = model.get(self.row_id_field);
-				var original_model = self.original_collection.find(function(_m){ return _m.get(self.row_id_field)===id});
-				original_model.set(model.changed);
+			this.collection.on({
+				change: function(model){
+					var id = model.get(self.row_id_field);
+					var original_model = self.original_collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+					original_model.set(model.changed);
+				},
+				remove: function(model){
+					var id = model.get(self.row_id_field);
+					var original_model = self.original_collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+					self.original_collection.remove(original_model);
+				}
 			});
 
-			this.original_collection.on("change",function(model){
-				var id = model.get(self.row_id_field);
-				var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
-				_model.set(model.changed);
-			})
+			this.original_collection.on({
+				change: function(model){
+					var id = model.get(self.row_id_field);
+					var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+					_model.set(model.changed);
+				},
+				add: function(model){
+					self.updateRow(model);
+				},
+				remove: function(model){
+					var id = model.get(self.row_id_field);
+					var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+					self.collection.remove(_model);
+				}
+			});
 
 			this.pageRange = this.page_size > 0 ?  _.range(this.page_size) : _.range(this.original_collection.length) ;
 			this.currentPage = 0;
@@ -115,6 +104,37 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 
 
 			this.sortInfo = {};  //stores the sort column and sort direction
+		},
+		updateRow: function(_model){
+			var model = new Backbone.Model();
+			_(this.columnInfo).each(function(col){
+				var value;
+				if(_.isFunction(col.value)){
+					value = col.value(_model);
+				} else if(_model.get(col.key)){
+					value = _model.get(col.key)
+				}
+				if(col.searchable){
+					var v = _.isFunction(col.search_value) ? col.search_value(_model) : value; 
+					if(typeof(v)!=="undefined"){
+						model.set("_searchable_fields",
+							typeof(model.get("_searchable_fields"))==="undefined"? v : 
+							model.get("_searchable_fields")+";" + v); 	
+					}
+				}
+				switch(col.datatype){
+					case "integer": 
+						model.set(col.key,parseInt(value));
+						break;
+					case "string": 
+						model.set(col.key,(typeof(value)==="undefined") ? "" : ""+value);
+						break;
+					case "boolean":
+					default: 
+						model.set(col.key,typeof(value)==="undefined" ? "" : value);
+				}
+			})
+			this.collection.add(model);
 		},
 		setColumns: function(){
 			var self = this;
@@ -438,10 +458,14 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 	var TableRowView = Backbone.View.extend({
 		tagName: "tr",
 		initialize: function (options) {
+			var self = this;
 			_.bindAll(this,"render");
 			this.bindings = options.bindings;
 			this.columnInfo = options.columnInfo;
 			this.rowID = options.rowID;
+			this.model.on("remove",function(model){
+				self.remove();
+			});
 		},
 		render: function () {
 			var self = this;
