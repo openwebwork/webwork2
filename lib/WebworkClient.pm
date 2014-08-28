@@ -143,10 +143,10 @@ sub xmlrpcCall {
 	        #->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
 		#-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
 		-> proxy(($self->url).'/'.REQUEST_URI);
-	    $transporter->transport->ssl_opts(verify_hostname=>0);
 	};
 	print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
-			
+	# turn of verification of the ssl cert 
+	$transporter->transport->ssl_opts(verify_hostname=>0);
 			
     if ($UNIT_TESTS_ON) {
         print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->{url},"\n";
