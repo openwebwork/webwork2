@@ -667,6 +667,7 @@ sub pre_header_initialize {
     #       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
     #       Preview:       has the preview button been clicked while SMA is active?
     #       DisplayChange: has a display change been made while SMA is active?
+    my %SMAoptions = map {$_ => 1} @{$ce->{pg}->{options}->{showMeAnother}};
     my %showMeAnother = (
 	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother} and ($problem->{showMeAnother}>-1)),
             CheckAnswers => ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
@@ -674,10 +675,10 @@ sub pre_header_initialize {
             TriesNeeded => $problem->{showMeAnother},
             MaxReps => $ce->{pg}->{options}->{showMeAnotherMaxReps},
             options => {
-                    checkAnswers  => (grep 'SMAcheckAnswers', @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showSolutions => (grep 'SMAshowSolutions', @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showCorrect   => (grep 'SMAshowCorrect', @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showHints     => (grep 'SMAshowHints', @{$ce->{pg}->{options}->{showMeAnother}}),
+		checkAnswers  => exists($SMAoptions{'SMAcheckAnswers'}),
+		showSolutions => exists($SMAoptions{'SMAshowSolutions'}),
+		showCorrect   => exists($SMAoptions{'SMAshowCorrect'}),
+		showHints     => exists($SMAoptions{'SMAshowHints'}),
                   },
             Count => $problem->{showMeAnotherCount},
             Preview => ($previewAnswers and $r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}), 
@@ -864,9 +865,12 @@ sub pre_header_initialize {
 	          $can{showSolutions}      = $showMeAnother{options}->{showSolutions};
 	          $must{showSolutions}     = $showMeAnother{options}->{showSolutions};
 	          $can{checkAnswers}       = $showMeAnother{options}->{checkAnswers};
+		  # rig the nubmer of attempts to show hints if showing hitns
+		  if ($can{showHints}) {
+		      $problem->num_incorrect(1000);
+		  }
             }
       }
-
 	
 	# final values for options
 	my %will;
