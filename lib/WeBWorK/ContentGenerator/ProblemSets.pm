@@ -431,8 +431,9 @@ sub setListRow {
 					# reset the link
 					$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 				} else {
-					$control = "";
-										$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description()}, $r->maketext("Take [_1] test", $display_name));
+				    $interactive = $r->maketext("Take [_1] test", $display_name);
+				    $control = "";
+		
 				}
 			} elsif ( $t < $set->open_date() && @restricted ) {
 				my $restriction = ($set->restricted_status)*100;
@@ -450,7 +451,7 @@ sub setListRow {
 							      $r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
-					$interactive = $r->maketext("[_1] test", $display_name);
+					$interactive = $r->maketext("Take [_1] test", $display_name);
 				}
 			} elsif ( $t < $set->due_date() && !@restricted ) {
 				$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
@@ -473,7 +474,7 @@ sub setListRow {
 							      $r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
-					$interactive = $r->maketext("[_1] test", $display_name);
+					$interactive = $r->maketext("Take [_1] test", $display_name);
 				}
 			} else {
 				$status = $r->maketext("Closed");
