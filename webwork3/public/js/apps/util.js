@@ -41,26 +41,7 @@ var util = {
                 arr[ arr.length - 1 ].push( strMatchedValue );
         }
 
-        var str = "<table id='sTable'><thead><td><input  id='selectAllASW' type='checkbox'></input></td>";
-        for (var k = 0; k < arr[0].length; k++){
-            str += "<td><select class='colHeader' id='col" + k + "'>";
-            for (var i=0; i< headers.length; i++){
-            str += "<option>" + headers[i] + "</option>";}
-            str += "</select></td>";
-        }
-        str += "</thead><tbody><tr><td colspan='" + (arr[0].length+1) + "' style='padding: 0px;'><div class='inner'><table id='inner-table'><tbody>"
-        for (var i in arr){
-            if(arr[i].length===1){
-                break;
-            }
-            str += "<tr id='row" + i + "'><td><input  id='cbrow" + i + "' type='checkbox' class='selRow'></input></td>";
-            for (var j in arr[i]){
-                str += "<td class='column" + j + "'>" + arr[i][j] + "</td>";
-            }
-            str += "</tr>"
-        }
-        str += "</tbody></table></div></td></tr></tbody></table>";
-        return str;
+        return arr; 
      },
      readSetDefinitionFile: function(file){
         var self = this;

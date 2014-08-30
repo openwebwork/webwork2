@@ -125,7 +125,7 @@ textarea#emailText {width: 95%;}
 
 table#sTable {border: 1px solid black; border-collapse: collapse; margin:0 auto;}
 table#sTable thead td:nth-child(1) {border: 1px solid black; width:17px;}
-table#sTable thead td {border: 1px solid black; 175px;}
+table#sTable thead td {border: 1px solid black; 125px;}
 div#studentTable {width: 100%; overflow-x: auto;}
 	    
 table#inner-table {border: none; padding: 0px; margin: 0px; border-collapse: collapse;}
@@ -134,7 +134,7 @@ table#inner-table td {border: 1px solid black; word-break:break-all;}
 	   
 div.inner {overflow-y: auto;  height: 400px;}
 
-table#sTable select {width: 150px;}
+table#sTable select {width: 125px;}
 
 .error {background-color: pink;}
 

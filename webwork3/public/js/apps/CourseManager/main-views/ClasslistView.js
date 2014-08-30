@@ -5,9 +5,9 @@
 
 define(['backbone','views/MainView','models/UserList','models/User','config','views/CollectionTableView',
 			'models/ProblemSetList','views/ModalView',
-			'views/ChangePasswordView','views/EmailStudentsView','config','bootstrap'], 
+			'views/ChangePasswordView','views/EmailStudentsView','config','apps/util','moment','bootstrap'], 
 function(Backbone,MainView,UserList,User,config,CollectionTableView,
-				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView,config){
+				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView,config,util,moment){
 var ClasslistView = MainView.extend({
 	msgTemplate: _.template($("#classlist-messages").html()),
 	initialize: function (options) {
@@ -175,8 +175,7 @@ var ClasslistView = MainView.extend({
 		this.addStudentManView.setElement(this.$(".modal-container")).render();
 	},
 	exportStudents: function () {
-	    var textFileContent = "";
-	    textFileContent += _(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";}).join(",") + "\n";
+	    var textFileContent = _(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";}).join(",") + "\n";
 	    
         // Write out the user Props
         this.users.each(function(user){
@@ -187,9 +186,13 @@ var ClasslistView = MainView.extend({
 	    var blob = new Blob([textFileContent], {type:_mimetype});
         var _url = URL.createObjectURL(blob);
         var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY") + ".csv";
-        var modalView = new ModalView({template: $("#export-to-file-template").html(), 
-        	templateOptions: {url: _url, filename: _filename, mimetype: _mimetype}});
-        modalView.render().open();
+        var modalView = new ModalView({
+            modal_size: "modal-lg",
+            modal_buttons: $("#close-button-template").html(),
+            modal_header: "Export Users",
+            modal_body: $("#export-to-file-template").html()});
+        this.$el.append(modalView.render().el);
+        //modalView.render().open();
 	},	
 	filterUsers: function () {
         this.userTable.set(this.state.pick("filter_string"));
@@ -506,13 +509,16 @@ var AddStudentFileView = ModalView.extend({
                 headers.splice(0,0,"");
                 // Parse the CSV file
                 
-                var str = util.CSVToHTMLTable(content,headers);
+                //var str = util.CSVToHTMLTable(content,headers);
+                var arr = util.CSVToHTMLTable(content,headers);
+
+                $("#studentTable").html(_.template($("#imported-from-file-table").html(),{array: arr, headers: headers}))
 
                 // build the table and set it up to scroll nicely.      
-                $("#studentTable").html(str);
-                $("div.inner").width(25+($("#sTable thead td").length)*175);
-                $("#inner-table td").width($("#sTable thead td:nth-child(2)").width()+4)
-                $("#inner-table td:nth-child(1)").width($("#sTable thead td:nth-child(1)").width())
+                //$("#studentTable").html(str);
+                $("div.inner").width(25+($("#studentTable table thead td").length)*125);
+                $("#inner-table td").width($("#studentTable table thead td:nth-child(2)").width()+4)
+                $("#inner-table td:nth-child(1)").width($("#studentTable table thead td:nth-child(1)").width())
 
                 // test if it is a classlist file and then set the headers appropriately
                 

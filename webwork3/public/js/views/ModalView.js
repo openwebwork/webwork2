@@ -27,9 +27,7 @@ define(['backbone','underscore'], function(Backbone, _){
         },
         parentEvents: {
             "shown.bs.modal": function () { this.trigger("modal-opened");},
-            "hidden.bs.modal": function() { 
-                this.trigger("modal-closed");
-                }
+            "hidden.bs.modal": function() { this.trigger("modal-closed");}
         },
         childEvents: {},
         events: function (){

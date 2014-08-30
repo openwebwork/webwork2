@@ -104,6 +104,39 @@
         
   <div id="studentTable"></div></p>
 </script>
+
+<script type="text/template" id="imported-from-file-table">
+<table>
+  <thead><td><input  id='selectAllASW' type='checkbox'></input></td>
+    <%for (var k = 0; k < array[0].length; k++){
+      print("<td><select class='colHeader form-control input-sm' id='col" + k + "'>");
+      for (var i=0; i< headers.length; i++){
+        print("<option>" + headers[i] + "</option>")
+      }
+      print("</select></td>");
+    }%>
+  </thead>
+
+  <tbody><tr><td colspan=<%print(array[0].length+1)%> style='padding: 0px;'>
+  <div class='inner'>
+    <table id='inner-table'>
+      <tbody>
+      <% for (var i in array){
+            if(array[i].length===1){
+                break;
+            }
+            print("<tr id='row" + i + "'><td><input  id='cbrow" + i + "' type='checkbox' class='selRow'></input></td>");
+            for (var j in array[i]){
+                print("<td class='column" + j + "'>" + array[i][j] + "</td>");
+            }
+            print("</tr>");
+        } %>
+      </tbody>
+    </table>
+  </div>
+</table>
+</script>
+
 <script type="text/template" id="import-file-buttons">
   <button class="import-help-button btn btn-default">Help</button>
   <button class="reload-file btn btn-default disabled">Reload File</button>
@@ -153,6 +186,9 @@
     <button class="btn btn-default cancel-import-button" data-dismiss="modal">Cancel Import</button>
     <button class="btn btn-primary action-button">Save Student and Close</button>
 </script>
+<script type="text/template" id="close-button-template">
+<button class="btn btn-primary cancel-import-button" data-dismiss="modal">Close</button>
+</script>
 
 <script type="text/template" id="passwordDialogText">
     Change the password of the users below:
@@ -162,7 +198,6 @@
     <tbody> 
 </tbody>
 </table>
-    
 </script>
 
 <script type="text/template" id="emailStudentTemplate">
