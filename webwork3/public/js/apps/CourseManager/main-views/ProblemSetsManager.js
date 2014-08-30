@@ -478,8 +478,10 @@ var ChangeSetPropertiesView = ModalView.extend({
         this.$(".set-names").text(this.setNames.join(", "));
         if(!this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
             this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
+            this.$(".reduced-scoring").closest("tr").addClass("hidden");
         } else {
             this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
+            this.$(".reduced-scoring").closest("tr").removeClass("hidden");
         }
         this.stickit();
     },
