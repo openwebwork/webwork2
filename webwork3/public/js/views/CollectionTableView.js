@@ -95,6 +95,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 					var id = model.get(self.row_id_field);
 					var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
 					self.collection.remove(_model);
+					self.filteredCollection.remove(_model);
 				}
 			});
 

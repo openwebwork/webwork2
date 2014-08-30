@@ -152,8 +152,13 @@ var ProblemSetsManager = MainView.extend({
             sort_class: "", sort_direction: "", show_time: false, selected_rows: []};
     },
     addProblemSet: function (){
-        this.addProblemSetView = new AddProblemSetView(_(this).pick("settings","users","problemSets"))
-            .setElement(this.$(".modal-container")).render();
+        var self = this;
+        var problemSetView = new AddProblemSetView(_(this).pick("settings","users","problemSets"))
+                    .setElement(this.$(".modal-container")).render()
+                    .on("modal-closed",function(){
+                        self.update();
+                    })
+
     },
     updateSelectedSets: function (evt){
         var selectedSets = this.problemSetTable.getVisibleSelectedRows()
@@ -179,6 +184,7 @@ var ProblemSetsManager = MainView.extend({
                 _(setIDs).each(function(_set){
                     self.problemSets.remove(_set);                
                 });
+                this.update();
             }
         }
     },  
