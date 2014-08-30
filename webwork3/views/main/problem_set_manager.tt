@@ -55,10 +55,8 @@
     <tr class="hidden"><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
     <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
     <tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
-    <tr><td class="header">Problem Set Visible to Users</td>
-      <td><select class='prob-set-visible input-small yes-no-boolean-select'> </select></td></tr>
-    <tr><td class="header">Reduced Scoring Enabled</td>
-      <td><select class='reduced-scoring input-small yes-no-boolean-select'></select></td></tr>
+    <tr><td class="header">Problem Set Visible to Users</td><td><input type="checkbox" class='prob-set-visible'></td></tr>
+    <tr><td class="header">Reduced Scoring Enabled</td><td><input type="checkbox" class='reduced-scoring'></td></tr>
     </tbody>
   </table>
 </script>

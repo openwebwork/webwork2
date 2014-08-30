@@ -129,7 +129,6 @@ function(Backbone, _,config){
 
     var CheckboxSettingView = SettingView.extend({
         initialize: function(options){
-            console.log(options);
             var theBindings = { ".true-false": "value"};
             options.bindings = options.bindings? _.extend(options.bindings,theBindings) : theBindings;
             SettingView.prototype.initialize.apply(this,[options]);

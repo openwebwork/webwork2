@@ -11,8 +11,7 @@ function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemS
 var ProblemSetsManager = MainView.extend({
     initialize: function (options) {
         MainView.prototype.initialize.call(this,options);
-        _.bindAll(this, 'render','addProblemSet','clearFilterText',
-                    'hideShowReducedScoring','deleteSets');  // include all functions that need the this object
+        _.bindAll(this, 'render','addProblemSet','clearFilterText','deleteSets','update');  // include all functions that need the this object
         var self = this;
 
         this.state.on({
@@ -57,9 +56,9 @@ var ProblemSetsManager = MainView.extend({
         })
 
         this.problemSets.on({
-            "add": this.updateTable,
-            "remove": this.updateTable,
-            "change:enable_reduced_scoring":this.hideShowReducedScoring
+            "add": this.update,
+            "remove": this.update,
+            "change:enable_reduced_scoring":this.update
         });
         this.setMessages();
     },
@@ -75,15 +74,6 @@ var ProblemSetsManager = MainView.extend({
         "click a.delete-sets-button": "deleteSets",
         "change td.select-problem-set input[type='checkbox']": "updateSelectedSets",
         "change th input[type='checkbox']": "selectAll",
-    },
-    hideShowReducedScoring: function(model){
-        if(model.get("enable_reduced_scoring") && model.get("reduced_scoring_date")===""){
-            var rcDate = moment.unix(model.get("due_date")).subtract(this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"))
-            model.set({reduced_scoring_date: rcDate.unix()})
-        }
-        if(this.problemSetTable){
-            this.problemSetTable.refreshTable();
-        }
     },
     render: function () {
         var self = this;
@@ -119,6 +109,7 @@ var ProblemSetsManager = MainView.extend({
             this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
                 .addClass("hidden");
         }
+        this.problemSetTable.refreshTable();
         return this;
     },
     bindings: { 
@@ -486,12 +477,33 @@ var ChangeSetPropertiesView = ModalView.extend({
         ModalView.prototype.render.apply(this);
         this.$(".set-names").text(this.setNames.join(", "));
         if(!this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-            this.$(".reduced-scoring").closest("tr").addClass("hidden");
+            this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
+        } else {
+            this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
         }
         this.stickit();
     },
     set: function(options){
+        var self = this;
         this.setNames = options.set_names;
+        // get the common properties of the problem sets and set the model to these.
+        this.selectedSets = this.problemSets.filter(function(_set){
+            return _(self.setNames).contains(_set.get("set_id"));
+        });
+        var timeDue = this.settings.getSettingValue("pg{timeAssignDue}");
+        var today = moment(moment().format("MM/DD/YYYY")+" " + timeDue,"MM/DD/YYYY hh:mmA");
+        var dateTypes = ["open_date","reduced_scoring_date","due_date","answer_date"];
+        var dateValues = _(dateTypes).map(function(prop){
+            var values = _(self.selectedSets).chain().pluck("attributes").pluck(prop).value();
+            // find the mean date of all of the selected dates
+            var values2 = parseInt(_.reduce(values, function(num1, num2){ return num1 + num2; }, 0)/values.length);
+            return moment.unix(values2).hours(today.hours()).minutes(today.minutes()).unix();
+        });
+        var RS_and_visible = ["enable_reduced_scoring","visible"];
+        var RV_values = _(RS_and_visible).map(function(v){
+            return _(self.selectedSets).chain().pluck("attributes").pluck(v).every().value();
+        });
+        this.model.set(_.extend(_.object(dateTypes,dateValues),_.object(RS_and_visible,RV_values)));
         return this;
     },
     bindings: {
