@@ -10,7 +10,7 @@
           </span>
         </div>
       </div>
-    <div class="col-md-2">
+    <div class="col-md-2" style="padding: 5px">
     <label type="checkbox">Show Time <input type="checkbox" class="show-time-toggle"></label>
     </div>
     <div class="pull-right btn-group">
