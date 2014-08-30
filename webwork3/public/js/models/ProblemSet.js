@@ -160,6 +160,9 @@ var ProblemSet = Backbone.Model.extend({
         var mins_a_d = dates1.answer_date.diff(dates1.due_date,'minutes');
         var mins_d_r = dates1.due_date.diff(dates1.reduced_scoring_date,'minutes');
         var mins_r_o = dates1.reduced_scoring_date.diff(dates1.open_date,'minutes');
+        if(mins_a_d < 0) {mins_a_d=0;}
+        if(mins_d_r < 0){mins_d_r=0;}
+        if(mins_r_o < 0){mins_r_o=0;}
 
         if(this.changed.answer_date){
             if(dates2.answer_date.isBefore(dates2.due_date)){
