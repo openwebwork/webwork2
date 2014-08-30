@@ -19,31 +19,21 @@
 </script>
 
 <script type="text/template" id="assign-users-template">
-  <h4>Problem Set: <%=setname%></h4>
-  <p>The following list of users are those currently not assigned to this Problem Set.  Select those you wish
-  to assign to the problem set.  If the user is not able to be selected, then that user is already 
-  assigned to this set. </p>
-  <table class="table">
+  <table class="table borderless">
     <tbody>
-      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
-         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
-         <tr><td><button class="btn btn-default assign-button">Assign Selected Users</button></td></tr>
+      <tr><th>Assigned Users</th><th></th><th>Unassigned Users</th></tr>
+      <tr><td rowspan="2"><select size="20" class="form-control assigned-user-list" multiple="multiple"></select></td>
+         <td><button class="btn btn-default unassign-users-btn">Unassign <i class="fa fa-chevron-right">
+            </i></button></td>
+         <td rowspan="2"><select size="20" class="form-control unassigned-user-list" multiple="multiple"></select></td></tr>
+         <tr><td align='right'><button class="btn btn-default assign-users-btn"><i class="fa fa-chevron-left"></i>Assign</button>
+         </td></tr>
     </tbody> 
   </table>
 </script>
 
-<script type="text/template" id="unassign-users-template">
-<h4>Problem Set: <%=setname%></h4>
-  <p>The following list of users are those currently assigned to this Problem Set.  Select those you wish
-  to unassign from the problem set.  If the user is not able to be selected, then that user is not 
-  assigned to this set. </p>
-  <table class="table">
-    <tbody>
-      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
-         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
-         <tr><td><button class="btn btn-default unassign-button">Unassign Selected Users</button></td></tr>
-    </tbody>
-  </table>
+<script type="text/template" id="assigned-user-list-user-template">
+  <option value="<%=user_id%>"><%=first_name%> <%=last_name%></option>
 </script>
 
 
@@ -91,13 +81,6 @@
 </ul>
 </script>
 
-<script type="text/template" id="customize-assignment-help-template">
-<h4>Help For Customize to Users</h4>
-<p>The students listed are only those that are assigned to this set.  To change an individual date/time, click on 
-the desired date and change it.  To make changes to two or more students, select those students, change the date/time
-at the bottom of the screen and click "Save Changes".  You can filter down the results by typing in the "search" box.  
-The results will be dispayed below.  To search for section 2 type "section:2" and similar with recitations.   </p>
-</script>
 
 
 <script type="text/template" id="customize-assignment-template">
@@ -171,9 +154,9 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
 <tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
 <tr><td class="header">Problem Set Visible to Users</td>
-  <td><select class='prob-set-visible input-small yes-no-boolean-select'> </select></td></tr>
+  <td><input type='checkbox' class='prob-set-visible'></td></tr>
 <tr><td class="header">Reduced Scoring Enabled</td>
-  <td><select class='reduced-scoring input-small yes-no-boolean-select'></select></td></tr>
+  <td><input type='checkbox' class='reduced-scoring'></select></td></tr>
 <tr><td class="header">Users Assigned</td><td class="users-assigned"></td>
 <td><button class="assign-all-users btn btn-default">Assign to All Users</td></tr>
 
@@ -181,35 +164,56 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 </table>
 </script>
 
-<script type="text/template" id="assign-users-template">
-  <h4>Problem Set: <%=setname%></h4>
-  <p>The following list of users are those currently not assigned to this Problem Set.  Select those you wish
-  to assign to the problem set.  If the user is not able to be selected, then that user is already 
-  assigned to this set. </p>
-  <table class="table">
-    <tbody>
-      <tr><td rowcol-md-="3"><select size="12" class="user-list select-with-disables" multiple="multiple"></select></td>
-         <td><label type="checkbox inline"><input type="checkbox" class="select-all"> Select All</label></td></tr>
-         <tr><td><button class="btn btn-default assign-button">Assign Selected Users</button></td></tr>
-    </tbody> 
-  </table>
+<!-- Help Templates -->
+
+<script type="text/template" id="customize-assignment-help-template">
+<h4>Student Overrides</h4>
+<p>The students listed are only those that are assigned to this set.  To change an individual date/time, click on 
+the desired date and change it.  To make changes to two or more students:
+<ul><li> select the checkboxes of the students</li>
+<li> change the date/time at the bottom of the screen </li>
+<li> click "Save Changes".  </li>
+</ul>
+
+You can filter down the results by typing in the "search" box.  
+The results will be dispayed below.  To search for section 2 type "section:2" or type "recitation:3" to find all students in recitation 3.</p>
 </script>
 
 
 <script type="text/template" id="problem-set-details-help-template">
-<h4>Problem Set Properties Help</h4>
+<h4>Problem Set Properties</h4>
   <ul>
-    <li>The basic properties (open, due and answer dates) as well as visibility and reduced credit.</li>
+    <li>The basic properties (open, due and answer dates) as well as visibility and reduced scoring.</li>
     <li>To change any of the dates, click on the date and select (or type) in a new one.</li>
     <li>To change the time of the open, due or answer dates, click on the clock and type in a new time.</li>
+    <li>One can easily assign this set to all users, but the "Assign to All Users" button.
   </ul>
 </script>
 
+<script type="text/template" id="problem-set-assign-users-help-template">
+<p>The list on the left is those users assigned to this set.  The list on the right are those that are not.</p>
+<p>To assign specific users:
+<ol>
+<li>Select the users on the "unassigned" (right) list</li>
+<li>Click the "Assign" button</li>
+<li>Those students will now move from the unassigned to assigned list.</li>
+</ol>
+</p>
+<p>To unassign specific users:
+<ol>
+<li>Select the users on the "assigned" (left) list</li>
+<li>Click the "UnAssign" button</li>
+<li>Those students will now move from the assigned to unassigned list.</li>
+</ol>
+</p>
+
+</script>
+
 <script type="text/template" id="problem-set-view-help-template">
-<h4>Problems Help</h4>
+<h4>Problems</h4>
   <ul>
     <li>The problems will load dynamically.  You can view the tags on all problems with the "View Tags" button.</li>
-    <li>To reorder problems, click the <button class="btn btn-default btn-sm"><i class="fa fa-resize-vertical"></i></button> and drag to a new position in the list. </li>
+    <li>To reorder problems, click the <button class="btn btn-default btn-sm"><i class="fa fa-arrows-v"></i></button> and drag to a new position in the list. </li>
     <li>To remove a problem, click the <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button> button. You can undo the delete by clicking the "Undo Delete button". </li>
     <li>To view a problem with a new random seed, click the <button class="btn btn-default btn-sm"><i class="fa fa-refresh"></i></button> button.</li>
     <li>To change the value (or weight) of a problem, type in a new value and it will be updated automatically.</li>
@@ -221,7 +225,8 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <%
 var messages = {
     set_saved: function(opt){return "The set " + opt.set_id + " for user " + opt.user_id + " has been saved.";},
-    set_saved_details: function(opt){return "The set " + opt.set_id + " for user " + opt.user_id + " has been saved.";},
+    set_saved_details: function(opt){return "The value of " + opt.key + " has changed from " + opt.oldValue + " to " +
+        opt.newValue + " for user " + opt.user_id + " and set " + opt.setname;},
 }
 print(messages[type](typeof(opts)=="undefined"?{}:opts))
 %>

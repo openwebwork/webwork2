@@ -218,7 +218,7 @@ var ProblemSetsManager = MainView.extend({
                 value: function(model){ return model.get("problems").length}},
             {name: "Reduced Scoring", key: "enable_reduced_scoring", datatype: "boolean",
                     classname: "enable-reduced-scoring yes-no-boolean-select"},
-            {name: "Visible", key: "visible", classname: "visible yes-no-boolean-select", datatype: "boolean"},
+            {name: "Visible", key: "visible", classname: "is-visible", datatype: "boolean"},
             {name: "Open Date", key: "open_date", classname: "open-date edit-datetime", 
                     editable: false, datatype: "integer", use_contenteditable: false},
             {name: "Red. Scoring Date", key: "reduced_scoring_date", classname: "reduced-scoring-date edit-datetime", 

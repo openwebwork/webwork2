@@ -23,7 +23,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 propertiesView : new DetailsView(opts),
                 problemsView : new ShowProblemsView(_.extend({},opts,{messageTemplate: this.messageTemplate})),
                 usersAssignedView : new AssignUsersView(opts),
-                unassignUsersView: new UnassignUserView(opts),
                 customizeUserAssignView : new CustomizeUserAssignView(opts)
             };
             this.views.problemsView.on("page-changed",function(num){
@@ -251,127 +250,67 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             return {set_id: "", library_path: "", page_num: 0, rendered: false, page_size: 10, show_path: false, show_tags: false};
         },
 
-    })
+    });
 
-	var AssignUsersView = TabView.extend({
+var AssignUsersView = Backbone.View.extend({
         tabName: "Assign Users",
         initialize: function (options) {
-            _.bindAll(this,'render','selectAll','assignUsers','setProblemSet');
             this.users = options.users;
-            this.userList = this.users.map(function(user){ 
-                return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
             TabView.prototype.initialize.apply(this,[options]);
         },
-
-
         render: function() {
-            if(this.model){
-                this.$el.html(_.template($("#assign-users-template").html(),{setname: this.model.get("set_id")}));
-                this.stickit();
-            }
+            this.$el.html($("#assign-users-template").html());
+            this.update();
             return this;
         },
-         events: {  "click .assign-button": "assignUsers",
-                    "click .select-all": "selectAll"
+         events: {  
+            "click .assign-users-btn": "assignUsers",
+            "click .unassign-users-btn": "unassignUsers",
+            "click .select-all": "selectAll"
         },
-        bindings: { ".user-list": {observe: "assigned_users", 
-            selectOptions: { collection: "this.userList", disabledCollection: "this.originalAssignedUsers"},   
+        update: function (){
+            var self = this;
+            if(typeof(this.problemSet)==="undefined"){
+                return;
             }
+            var assignedUsers = this.problemSet.get("assigned_users");
+            var unassignedUsers = _(this.users.pluck("user_id")).difference(assignedUsers);
+            var assignedSelect = this.$(".assigned-user-list").empty();
+            var unassignedSelect = this.$(".unassigned-user-list").empty();
+            var userTemplate = _.template($("#assigned-user-list-user-template").html());
+            _(assignedUsers).each(function(userID){
+                assignedSelect.append(userTemplate(self.users.findWhere({user_id: userID}).attributes));
+            });
+            _(unassignedUsers).each(function(userID){
+                unassignedSelect.append(userTemplate(self.users.findWhere({user_id: userID}).attributes));
+            });
         },
         setProblemSet: function(_set) {
             var self = this; 
             this.problemSet = _set;
             if(_set){
-                this.model = new ProblemSet(_set.attributes);
-                this.model.set("assigned_users",[]);
-                this.updateModel();
-                this.problemSet.on("change", function(){
-                    self.updateModel();
-                    self.render();
-                });
+                this.render();
             }
-
             return this;
         },
-        updateModel: function () {
-            this.originalAssignedUsers = this.problemSet.get("assigned_users");
-            this.originalUnassignedUsers = _(this.users.pluck("user_id")).difference(this.originalAssignedUsers);
-        },
         selectAll: function (){
-            this.model.set("assigned_users",this.$(".select-all").prop("checked")?
+            this.tabState.set("assigned_users",this.$(".select-all").prop("checked")?
                             this.originalUnassignedUsers: []);
         },
         assignUsers: function(){
-            this.problemSet.set("assigned_users",_(this.originalAssignedUsers).union(this.model.get("assigned_users")));
-        },        
-        getDefaultState: function () { return {set_id: ""};}
-    });
-
-
-   
-
-    var UnassignUserView = TabView.extend({
-        tabName: "Unassign Users",
-        initialize: function (options) {
-            _.bindAll(this,'render','selectAll','unassignUsers','setProblemSet');
-            this.users = options.users;
-            this.userList = this.users.map(function(user){ 
-                return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
-            TabView.prototype.initialize.apply(this,[options]);
-        },
-
-
-        render: function() {
-            if(this.model){
-                this.$el.html(_.template($("#unassign-users-template").html(),{setname: this.model.get("set_id")}))
-                this.stickit();            
-            }
-            return this;
-        },
-         events: {  "click .unassign-button": "unassignUsers",
-                    "click .select-all": "selectAll"
-        },
-        bindings: { ".user-list": {observe: "assigned_users", 
-            selectOptions: { collection: "this.userList", disabledCollection: "this.unassignedUsers"},   
-            }
-        },
-        setProblemSet: function(_set) {
-            var self = this; 
-            this.problemSet = _set; 
-            if(_set){
-                this.model = new ProblemSet(_set.attributes);
-                this.model.set("assigned_users",[]);
-                this.updateModel();
-                this.problemSet.on("change", function(){
-                    self.updateModel();
-                    self.render();
-                });
-            }
-
-            return this;
-        },
-        updateModel: function () {
-            this.originalAssignedUsers = this.problemSet.get("assigned_users");
-            this.unassignedUsers = _(this.users.pluck("user_id")).difference(this.originalAssignedUsers);
-        },
-        selectAll: function (){
-            this.model.set("assigned_users",this.$(".select-all").prop("checked")?
-                            this.originalAssignedUsers: []);
+            var selectedUnassignedUsers = this.$(".unassigned-user-list").val();
+            this.problemSet.set("assigned_users", _(this.problemSet.get("assigned_users")).union(selectedUnassignedUsers));
+            this.update();
         },
         unassignUsers: function(){
-            var self = this;
-            var currentUsers = _(this.originalAssignedUsers).difference(this.model.get("assigned_users"));
-            var confirmDelete = confirm(this.messageTemplate({type: "unassign_users", 
-                    opts: {users: this.model.get("assigned_users").join(", ")}}));
-            if (confirmDelete){
-                this.problemSet.set("assigned_users",currentUsers);
-                this.problemSet.save();
-            }
-        },       
-        getDefaultState: function () { return {set_id: ""};}
+            var selectedAssignedUsers = this.$(".assigned-user-list").val();
+            this.problemSet.set("assigned_users",_(this.problemSet.get("assigned_users")).difference(selectedAssignedUsers));
+            this.update();
+        },
+        getDefaultState: function () {
+            return {assigned_users: [], unassigned_users: []};
+        }
     });
-
-    // Trying a new UI for this View
 
     var CustomizeUserAssignView = TabView.extend({
         tabName: "Student Overrides",

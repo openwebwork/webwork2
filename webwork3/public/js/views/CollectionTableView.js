@@ -474,8 +474,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				if(!col.show_column){
 
 				} else if (col.datatype === "boolean"){
-					var select = $("<select>").addClass(col.classname).addClass("input-sm form-control");
-					self.$el.append($("<td>").append(select));
+					var checkbox = $("<input type='checkbox'>").addClass(classname);
+					self.$el.append($("<td align='center'>").append(checkbox));
 				} else if(col.key==="_select_row"){
 					var cb = $("<input type='checkbox' class='_select_row'>");
 					self.$el.append($("<td>").append(cb));
