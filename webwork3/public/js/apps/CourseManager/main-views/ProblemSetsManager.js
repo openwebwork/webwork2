@@ -113,10 +113,10 @@ var ProblemSetsManager = MainView.extend({
     },
     update: function (){
         if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-            this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
+            this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
                 .removeClass("hidden");
         } else {
-            this.$("td:has(select.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
+            this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
                 .addClass("hidden");
         }
         return this;
@@ -217,7 +217,7 @@ var ProblemSetsManager = MainView.extend({
             {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
                 value: function(model){ return model.get("problems").length}},
             {name: "Reduced Scoring", key: "enable_reduced_scoring", datatype: "boolean",
-                    classname: "enable-reduced-scoring yes-no-boolean-select"},
+                    classname: "enable-reduced-scoring"},
             {name: "Visible", key: "visible", classname: "is-visible", datatype: "boolean"},
             {name: "Open Date", key: "open_date", classname: "open-date edit-datetime", 
                     editable: false, datatype: "integer", use_contenteditable: false},

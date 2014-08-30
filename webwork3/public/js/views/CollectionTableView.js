@@ -361,7 +361,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				this.trigger("table-sorted",this.sortInfo);				
 			} else if ($(evt.target).hasClass("_select_row")){
 				this.$("input._select_row[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
-				this.selectedRows = $.makeArray($("tr[data-row-id]").map(function(i,v){ return $(v).data("row-id");}));
+				this.selectedRows = $.makeArray(this.$("tr[data-row-id]:has(input._select_row:checked)")
+					.map(function(i,v){ return $(v).data("row-id");}));
 				this.trigger("selected-row-changed",this.selectedRows);	
 			}
 		},
@@ -474,7 +475,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				if(!col.show_column){
 
 				} else if (col.datatype === "boolean"){
-					var checkbox = $("<input type='checkbox'>").addClass(classname);
+					var checkbox = $("<input type='checkbox'>").addClass(col.classname);
 					self.$el.append($("<td align='center'>").append(checkbox));
 				} else if(col.key==="_select_row"){
 					var cb = $("<input type='checkbox' class='_select_row'>");
