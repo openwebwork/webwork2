@@ -30,13 +30,12 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     postInitialize: function () {
         var self = this;
         // load the previous state of the app or set it to the first main_view
-        this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
 
-        if(this.appState && typeof(this.appState)!=="undefined" && 
-                this.appState.states && typeof(this.appState.states)!=="undefined" && 
-                typeof(this.appState.index)!=="undefined"){
+        try {
+            this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
             this.updateViewAndSidebar({save_state: false});
-        } else {
+        } catch(err) {
+            console.log(err);
             this.appState = {index: void 0, states: []};
             this.changeView(this.mainViewList.views[0].info.id,{});
             var _sidebarID = this.mainViewList.getDefaultSidebar(this.currentView.info.id);
