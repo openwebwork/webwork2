@@ -305,6 +305,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			if(options.page_size){
 				this.page_size = options.page_size;
 				this.currentPage = 0;
+				this.paginatorProp.showPaginator = this.page_size > 0; 
 			}
 			if(options.sort_info){
 				this.sortTable(options.sort_info);
@@ -334,6 +335,9 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			
 			}
 			if(this.page_size>0){
+				if(this.currentPage*this.page_size>this.collection.length){
+					this.currentPage = 0; 
+				}
 				this.pageRange = _.range(this.currentPage*this.page_size,
 					(this.currentPage+1)*this.page_size>this.collection.size()? this.collection.size():(this.currentPage+1)*this.page_size);
 			} else {

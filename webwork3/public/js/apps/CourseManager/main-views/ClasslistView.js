@@ -212,8 +212,8 @@ var ClasslistView = MainView.extend({
     showRows: function(arg){
         this.state.set("page_size", _.isNumber(arg) || _.isString(arg) ? parseInt(arg) : $(arg.target).data("num"));
         this.$(".show-rows i").addClass("not-visible");
-        this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible")
-        this.userTable.set({page_size: this.state.get("page_size") <0 ? this.users.length: this.state.get("page_size")});
+        this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible");
+        this.userTable.set({page_size: this.state.get("page_size")});
     },
 	tableSetup: function () {
         var self = this;

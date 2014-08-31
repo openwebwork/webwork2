@@ -183,8 +183,7 @@ var ProblemSetsManager = MainView.extend({
         this.state.set("page_size", _.isNumber(arg) || _.isString(arg) ? parseInt(arg) : $(arg.target).data("num"));
         this.$(".show-rows i").addClass("not-visible");
         this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible")
-        this.problemSetTable.set({page_size: this.state.get("page_size") <0 
-                ? this.problemSets.length: this.state.get("page_size")});
+        this.problemSetTable.set({page_size: this.state.get("page_size")});
     },
     set: function(opts){  // sets a general parameter (Perhaps put this in MainView)
         var self = this;
