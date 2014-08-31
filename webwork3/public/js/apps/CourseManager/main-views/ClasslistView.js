@@ -192,11 +192,12 @@ var ClasslistView = MainView.extend({
 	    var blob = new Blob([textFileContent], {type:_mimetype});
         var _url = URL.createObjectURL(blob);
         var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY") + ".csv";
+        var body = _.template($("#export-to-file-template").html(),{url: _url, filename: _filename});
         var modalView = new ModalView({
             modal_size: "modal-lg",
             modal_buttons: $("#close-button-template").html(),
             modal_header: "Export Users",
-            modal_body: $("#export-to-file-template").html()});
+            modal_body: body});
         this.$el.append(modalView.render().el);
         //modalView.render().open();
 	},	

@@ -326,7 +326,6 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		            containsColon.shift();  // remove the first element of the array
 		            this.filteredCollection.reset(this.collection.where(_.object([containsColon])));
 		        } else if (this.filter_string.length>0) {
-		        	this.currentPage = 0;
 					filterRE = new RegExp(this.filter_string,"i");
 					this.filteredCollection.reset(this.collection.filter(function(model){
 						return model.get("_searchable_fields").search(filterRE) > -1;
