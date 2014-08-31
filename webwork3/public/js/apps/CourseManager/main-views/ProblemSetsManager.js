@@ -129,13 +129,8 @@ var ProblemSetsManager = MainView.extend({
         }
     },
     showTime: function(_show){
-        if(_show){
-            this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
-                .addClass("edit-datetime-showtime").removeClass("edit-datetime");
-        } else {
-            this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
-                .removeClass("edit-datetime-showtime").addClass("edit-datetime");
-        }
+        config.changeClass({state: _show, els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date"), 
+                remove_class: "edit-datetime", add_class: "edit-datetime-showtime"})
         this.problemSetTable.refreshTable();
     },
     getDefaultState: function () {
