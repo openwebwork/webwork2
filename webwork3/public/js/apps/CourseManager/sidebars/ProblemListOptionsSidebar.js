@@ -36,6 +36,9 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
 
     },
     events: {
+        "click .undo-delete-button": function(){
+            this.trigger("undo-problem-delete");
+        },
         "change .problem-display-option": function (evt) { this.trigger("change-display-mode", evt);},
         "click .show-hide-tags-button" : function (evt) {
             this.state.set("show_tags", ! this.state.get("show_tags"));},

@@ -8,9 +8,10 @@
 
 
 define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView','views/ProblemSetView',
-    'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList', 'config','bootstrap'], 
+    'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList','sidebars/ProblemListOptionsSidebar',
+    'config','bootstrap'], 
     function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
-        UserSetList, config){
+        UserSetList,ProblemListOptionsSidebar, config){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
@@ -21,7 +22,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
 
             this.views = options.views = {
                 propertiesView : new DetailsView(opts),
-                problemsView : new ShowProblemsView(_.extend({},opts,{messageTemplate: this.messageTemplate})),
+                problemsView : new ShowProblemsView(_.extend({messageTemplate: this.messageTemplate, parent: this},opts)),
                 usersAssignedView : new AssignUsersView(opts),
                 customizeUserAssignView : new CustomizeUserAssignView(opts)
             };
@@ -75,6 +76,14 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             "show-hide-path": function(_show){
                 this.views[this.state.get("tab_name")].tabState.set("show_path",_show);
             },
+            "undo-problem-delete": function(){
+                this.views.problemsView.problemSetView.undoDelete();
+                this.views.problemsView.problemSetView.updateNumProblems();
+                if(this.views.problemsView.problemSetView.undoStack.length==0 && 
+                    this.sidebar instanceof ProblemListOptionsSidebar){
+                        this.sidebar.$(".undo-delete-button").attr("disabled","disabled");
+                }
+            }
         },
         changeProblemSet: function (setName)
         {
@@ -223,6 +232,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         tabName: "Problems",
         initialize: function (options) {
             var self = this;
+            _(this).bindAll("setProblemSet");
+            this.parent = options.parent;
             this.problemSetView = new ProblemSetView({settings: options.settings, messageTemplate: options.messageTemplate});
             TabView.prototype.initialize.apply(this,[options]);
             this.tabState.on("change:show_path",function(){
@@ -236,7 +247,11 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.problemSetView.render();
         },
         setProblemSet: function(_set){
+            var self = this;
             this.problemSetView.setProblemSet(_set);
+            this.problemSetView.problemSet.on("problem-deleted",function(p){
+                self.parent.sidebar.$(".undo-delete-button").removeAttr("disabled");
+            })
             return this;
         },
         set: function(options){
@@ -304,8 +319,12 @@ var AssignUsersView = Backbone.View.extend({
         },
         unassignUsers: function(){
             var selectedAssignedUsers = this.$(".assigned-user-list").val();
-            this.problemSet.set("assigned_users",_(this.problemSet.get("assigned_users")).difference(selectedAssignedUsers));
-            this.update();
+            var conf = confirm("Do you want to unassign the users: " + selectedAssignedUsers.join(", ") + "?" 
+                + " All data will be removed and this cannot be undone.");
+            if(conf){
+                this.problemSet.set("assigned_users",_(this.problemSet.get("assigned_users")).difference(selectedAssignedUsers));
+                this.update();                
+            }
         },
         getDefaultState: function () {
             return {assigned_users: [], unassigned_users: []};
@@ -316,7 +335,7 @@ var AssignUsersView = Backbone.View.extend({
         tabName: "Student Overrides",
         initialize: function(options){
             _.bindAll(this,"render","saveChanges","buildCollection","setProblemSet");
-
+            var self = this;
             // this.model is a clone of the parent ProblemSet.  It is used to save properties for multiple students.
 
             this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
@@ -324,9 +343,10 @@ var AssignUsersView = Backbone.View.extend({
             TabView.prototype.initialize.apply(this,[options]);
             this.tabState.on({
                 "change:filter_string": function(){
-                    console.log(self.tabState.changed);
-                    self.userSetTable.set(self.tabState.pick("filter_string")).updateTable();},
-                "change:show_section change:show_recitation": function(){
+                    self.userSetTable.set(self.tabState.pick("filter_string")).updateTable();
+                    self.update();
+                },
+                "change:show_section change:show_recitation change:show_time": function(){
                     self.update();}
                 });
         },
@@ -342,13 +362,24 @@ var AssignUsersView = Backbone.View.extend({
                 (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
                         paginator: {showPaginator: false}, tablename: ".users-table", page_size: -1,
                         row_id_field: "user_id", table_classes: "table table-bordered table-condensed"})).render();
+                this.userSetTable.set(this.tabState.pick("selected_rows"))
+                    .on({
+                        "selected-row-changed": function(rowIDs){
+                            self.tabState.set({selected_rows: rowIDs});
+                            }, 
+                        "table-sorted": function (){
+                            self.update();
+                            }
+                        })
+                    .updateTable();
                 this.$el.append(this.userSetTable.el);
                 this.update();
                 this.stickit();
                 this.stickit(this.tabState,{
                     ".filter-text": "filter_string",
                     ".show-section": "show_section",
-                    ".show-recitation": "show_recitation"
+                    ".show-recitation": "show_recitation",
+                    ".show-time": "show_time"
                 });
             } else {
                 this.userSetList.fetch({success: function () {self.buildCollection().render();}});
@@ -359,6 +390,7 @@ var AssignUsersView = Backbone.View.extend({
             "click .clear-filter-button": function () { 
                 this.tabState.set("filter_string", "");
                 this.userSetTable.set({filter_string: ""}).updateTable();
+                this.update();
             }
         },
         bindings: { "#customize-problem-set-controls .open-date" : "open_date",
@@ -368,9 +400,9 @@ var AssignUsersView = Backbone.View.extend({
         },
         saveChanges: function (){
             var self = this;
-            _($(".select-user input:checked").siblings(".user-id").map(function(i,v) { 
-                    return self.userSetList.findWhere({user_id: $(v).val()});
-                })).each(function(_model){
+            _(this.userSetTable.getVisibleSelectedRows()).chain().map(function(_userID) { 
+                    return self.userSetList.findWhere({user_id: _userID});
+                }).each(function(_model){
                     _model.set(self.model.pick("open_date","due_date","answer_date","reduced_scoring_date"));
                 });
         },
@@ -392,7 +424,7 @@ var AssignUsersView = Backbone.View.extend({
             var self = this;
             this.collection.reset(this.userSetList.models);
             this.collection.each(function(model){
-                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation"));
+                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation","first_name","last_name"));
             });
             this.collection.on({change: function(model){
                 self.userSetList.findWhere({user_id: model.get("user_id")})
@@ -403,19 +435,21 @@ var AssignUsersView = Backbone.View.extend({
             return this;
         },
         update: function () {
-            config.showClass({state: this.tabState.get("show_section"), els: this.$(".section"), class: "hidden"})
-            config.showClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), class: "hidden"})
-            config.showClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
-                els: this.$(".reduced-scoring-date,.reduced-scoring-header"), class: "hidden"});
+            config.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"), remove_class: "hidden"})
+            config.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), remove_class: "hidden"})
+            config.changeClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+                els: this.$(".reduced-scoring-date,.reduced-scoring-header"), remove_class: "hidden"});
+            config.changeClass({state: this.tabState.get("show_time"), remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
+                els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")})
             this.userSetTable.refreshTable();
+            this.stickit();
         },
         tableSetup: function () {
             var self = this;
             this.cols = [{name: "Select", key: "_select_row", classname: "select-set"},
-                {name: "Student", key: "user_id", classname: "student", datatype: "string",
-                    value: function(model){ 
-                        var user = self.users.findWhere({user_id: model.get("user_id")});
-                        return _.template($("#user-name-template").html(),user.attributes)}},
+                {name: "User ID", key: "user_id", classname: "user-id", show_column: false},
+                {name: "First Name", key: "first_name", classname: "first-name", datatype: "string"},
+                {name: "Last Name", key: "last_name", classname: "last-name", datatype: "string"},
                 {name: "Open Date", key: "open_date", classname: "open-date edit-datetime", 
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Reduced Scoring Date", key: "reduced_scoring_date", classname: "reduced-scoring-date edit-datetime", 
@@ -456,7 +490,8 @@ var AssignUsersView = Backbone.View.extend({
             })
 
         },        
-        getDefaultState: function () { return {set_id: "", filter_string: "", show_recitation: false, show_section: false};}
+        getDefaultState: function () { return {set_id: "", filter_string: "", show_recitation: false, show_section: false,
+                show_time: false, selected_rows: []};}
 
     });
         

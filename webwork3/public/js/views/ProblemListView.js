@@ -185,9 +185,6 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 this.updatePaginator();
                 this.gotoPage(this.currentPage);
                 this.problemSet.trigger("change:problems",this.problemSet);
-                if(this.undoStack.length==0){
-                    this.$(".undo-delete-button").attr("disabled","disabled");
-                }
             }
         },
         setProblemSet: function(_set) {
@@ -211,6 +208,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.problemSet.changingAttributes = 
                 {"problem_deleted": {setname: this.problemSet.get("set_id"), problem_id: problem.get("problem_id")}};
             this.problemSet.trigger("change:problems",this.problemSet);
+            this.problemSet.trigger("problem-deleted",problem);
             this.undoStack.push(problem);
             this.gotoPage(this.currentPage);
             this.$(".undo-delete-button").removeAttr("disabled");
