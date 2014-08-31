@@ -7,8 +7,8 @@
   * 
   */
 
-define(['backbone', 'underscore','config','models/ProblemSet','models/UserProblemList'], 
-    function(Backbone, _,config,ProblemSet,UserProblemList){
+define(['backbone', 'underscore','config','models/ProblemSet','models/UserProblemList','apps/util'], 
+    function(Backbone, _,config,ProblemSet,UserProblemList,util){
     var UserSet = Backbone.Model.extend({
         defaults: {
             user_id: "",
@@ -42,16 +42,28 @@ define(['backbone', 'underscore','config','models/ProblemSet','models/UserProble
             restricted_login_proctor: "",
             hide_hint:"" 
         },
+        integerFields: ["open_date","reduced_scoring_date","due_date","answer_date",
+                    "problem_randorder","attempts_per_version","version_creation_time","version_time_limit",
+                    "problems_per_page","versions_per_interval","version_last_attempt_time","time_interval"],
         idAttribute: "_id",
+        initialize: function(opts){
+            if(_.isObject(opts)){
+                _(this.attributes).extend(_(util.parseAsIntegers(opts,this.integerFields)).pick(this.integerFields));    
+            }
+            var pbs = (opts && opts.problems) ? opts.problems : [];
+            this.problems = new UserProblemList(pbs,{user_id: this.get("user_id")});
+            this.attributes.problems = this.problems;
+        },
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") +
             "/sets/" + this.get("set_id");
         },
-        parse: function(data){
-            if(data.problems){
-                data.problems = new UserProblemList(data.problems,{user_id: data.user_id,set_id: data.set_id});
+        parse: function(response){
+            if(response.problems){
+                response.problems = new UserProblemList(response.problems,{user_id: data.user_id,set_id: data.set_id});
             }
-            return data;
+            response = util.parseAsIntegers(response,this.integerFields);
+            return response;
         }
     });
 
