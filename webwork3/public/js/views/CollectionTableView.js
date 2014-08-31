@@ -136,6 +136,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				}
 			})
 			this.collection.add(model);
+			this.trigger("table-changed");
 		},
 		setColumns: function(){
 			var self = this;
@@ -241,6 +242,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				this.updatePaginator();
 			}
 			this.delegateEvents(); // why is this needed?
+			this.trigger("table-changed");
 			return this;
 		},
 		refreshTable: function (){
@@ -324,6 +326,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		            containsColon.shift();  // remove the first element of the array
 		            this.filteredCollection.reset(this.collection.where(_.object([containsColon])));
 		        } else if (this.filter_string.length>0) {
+		        	this.currentPage = 0;
 					filterRE = new RegExp(this.filter_string,"i");
 					this.filteredCollection.reset(this.collection.filter(function(model){
 						return model.get("_searchable_fields").search(filterRE) > -1;
@@ -347,7 +350,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			return this;
 		},
 		getRowCount: function () {
-			return (this.filter_string.length>0)? this.filteredCollection.length : this.collection.length;
+			return this.rowViews.length;
+			//return (this.filter_string.length>0)? this.filteredCollection.length : this.collection.length;
 		},
 		events: {
 			"click th": "headerClicked",

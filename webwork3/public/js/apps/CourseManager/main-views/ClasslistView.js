@@ -36,15 +36,25 @@ var ClasslistView = MainView.extend({
 	    this.userTable.on({
             "page-changed": function(num){ 
                 self.state.set("current_page",num);
-                self.update();},
+                self.update();
+            },
 	        "table-sorted": function(info){
-                self.state.set({sort_class: info.classname, sort_direction: info.direction});},
+                self.state.set({sort_class: info.classname, sort_direction: info.direction});
+            },
             "selected-row-changed": function(rowIDs){
                 self.state.set({selected_rows: rowIDs});
-        }});
+            },
+            "table-changed": function(){  // I18N
+                self.$(".num-users").html(self.userTable.getRowCount() + " of " + self.users.length + " users shown.");
+            }
+        });
 
-	    this.state.on("change:filter_string", function () {self.filterUsers();});
-	    	    
+	    this.state.on("change:filter_string", function () {
+            self.state.set("current_page",0);
+            self.userTable.set(self.state.pick("filter_string","current_page"));
+            self.userTable.updateTable();
+        });
+    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
 	      
@@ -96,6 +106,7 @@ var ClasslistView = MainView.extend({
         this.showRows(this.state.get("page_size"));
         this.userTable.set(opts).updateTable();
         this.stickit(this.state,this.bindings);
+
 
         MainView.prototype.render.apply(this);
         if(this.state.get("man_user_modal_open")){
@@ -154,11 +165,6 @@ var ClasslistView = MainView.extend({
 	    "click .add-students-file-option": "addStudentsByFile",
 	    "click .add-students-man-option": "addStudentsManually",
 	    "click .export-students-option": "exportStudents",
-		'keyup input.filter-text' : function(){  
-            this.filterUsers();
-            this.userTable.render();
-            this.update();
-        },
 	    'click button.clear-filter-button': 'clearFilterText',
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
@@ -194,17 +200,8 @@ var ClasslistView = MainView.extend({
         this.$el.append(modalView.render().el);
         //modalView.render().open();
 	},	
-	filterUsers: function () {
-        this.userTable.set(this.state.pick("filter_string"));
-        if(this.state.get("filter_string").length>0){
-            this.state.set("current_page",0);
-            this.userTable.updateTable();
-        }
-        this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
-    },
     clearFilterText: function () {
         this.state.set("filter_string","");
-        this.userTable.set({filter_string: ""}).render();
     },
     update: function (){
         $("tr[data-row-id='profa'] select.permission").attr("disabled","disabled");
