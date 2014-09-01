@@ -82,6 +82,7 @@ package WebworkClient;
 #use Crypt::SSLeay;  # needed for https
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
+use WeBWorK::CourseEnvironment;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -278,43 +279,31 @@ sub setInputTable_for_listLib {
 }
 sub setInputTable {
 	my $self = shift;
+	my $webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
+	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir});
+ 	die "Can't create seed course environment for webwork in $webwork_dir" unless ref($seed_ce);
+
+	my @modules_to_evaluate;
+	my @extra_packages_to_load;
+	my @modules = @{ $seed_ce->{pg}->{modules} };
+
+	foreach my $module_packages_ref (@modules) {
+		my ($module, @extra_packages) = @$module_packages_ref;
+		# the first item is the main package
+		push @modules_to_evaluate, $module;
+		# the remaining items are "extra" packages
+		push @extra_packages_to_load, @extra_packages;
+	}
+
 	my $out = {
 		pw          =>   $self->{password},
 		library_name =>  'Library',
 		command      =>  'renderProblem',
 		answer_form_submitted   => 1,
 		course                  => $self->{course},
-		extra_packages_to_load  => [qw( AlgParserWithImplicitExpand Expr
-		                                ExprWithImplicitExpand AnswerEvaluator
-		                                AnswerEvaluatorMaker 
-		)],
+		extra_packages_to_load  => [@extra_packages_to_load],
 		mode                    => $self->{displayMode},
-		modules_to_evaluate     => [ qw( 
-Exporter
-DynaLoader								
-GD
-WWPlot
-Fun
-Circle
-Label								
-PGrandom
-Units
-Hermite
-List								
-Match
-Multiple
-Select							
-AlgParser
-AnswerHash							
-Fraction
-VectorField							
-Complex1
-Complex							
-MatrixReal1 Matrix							
-Distributions
-Regression
-
-		)], 
+		modules_to_evaluate     => [@modules_to_evaluate],
 		envir                   => $self->environment(),
 		problem_state           => {
 		
@@ -442,7 +431,7 @@ sub formatRenderedLibraries {
 		$result .= "$key";
 		$result .= $rh_result{$key};
 	}
-    return $result;
+	return $result;
 }
 
 sub formatRenderedProblem {

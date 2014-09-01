@@ -365,6 +365,9 @@ sub renderProblem {
 ##################################################
 # Other initializations
 ##################################################
+	my $displayMode = $rh->{displayMode} ? $rh->{displayMode} : 
+	    $rh->{envir}->{displayMode};
+
 	my $translationOptions = {
 		displayMode     => $rh->{envir}->{displayMode},
 		showHints	    => $rh->{envir}->{showHints},

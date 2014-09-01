@@ -331,37 +331,7 @@ sub standard_input {
 		library_name 			=>  'Library',
 		command      			=>  'all',
 		answer_form_submitted   =>   1,
-		extra_packages_to_load  => [qw( AlgParserWithImplicitExpand Expr
-		                                ExprWithImplicitExpand AnswerEvaluator
-		                                AnswerEvaluatorMaker 
-		)],
 		mode                    => 'images',
-		modules_to_evaluate     => [ qw( 
-Exporter
-DynaLoader								
-GD
-WWPlot
-Fun
-Circle
-Label								
-PGrandom
-Units
-Hermite
-List								
-Match
-Multiple
-Select							
-AlgParser
-AnswerHash							
-Fraction
-VectorField							
-Complex1
-Complex							
-MatrixReal1 Matrix							
-Distributions
-Regression
-
-		)], 
 		envir                   => {displayMode=>DISPLAYMODE,
 					    problemValue => -1, 
 					    fileName => ''},

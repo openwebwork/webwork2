@@ -2263,7 +2263,8 @@ sub body {
 		($isJitarSet ? CGI::a({href=>"#", id=>"psd_collapse_all"},
 		       $r->maketext("Collapse All")) : '')).
 		       CGI::span($r->maketext("Display Mode:")) . 
-			      CGI::popup_menu(-name => "problem.displaymode", 
+			      CGI::popup_menu(-name => "problem.displaymode",
+					      -id => "problem_displaymode",
 					      -values => \@active_modes, -default => $default_problem_mode));
 		
 

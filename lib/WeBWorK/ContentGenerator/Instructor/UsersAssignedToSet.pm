@@ -149,7 +149,7 @@ sub body {
 
 	# there are two set detail pages.  If we were sent here from the second one
 	# there will be a parameter we can use to get back to that one from these links
-	my $detailPageType = 'instructor_set_detail';
+	my $detailPageType = 'instructor_set_detail2';
        	$detailPageType = $r->param('pageVersion') if ($r->param('pageVersion'));
 
 	foreach my $userRecord (@userRecords) {

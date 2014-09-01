@@ -218,8 +218,9 @@ function render(id) {
     ro.set = ro.problemSource;
     ro.showHints = 1;
     ro.showSolutions = 1;
-    var displayMode = $('[name="problem.displayMode"]').val();
     ro.noprepostambles = 1;
+    var displayMode = $('#problem_displaymode').val();
+    ro.displayMode = displayMode;
     $.post(basicWebserviceURL, ro, function (data) {
 	var response = data;
 	// Give nicer file not found error
@@ -233,7 +234,7 @@ function render(id) {
 	$('#psr_render_area_'+id).html(response);
 	// run typesetter depending on the displaymode
 	if(displayMode=='MathJax')
-	    MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
+	    MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
 	if(displayMode=='jsMath')
 	    jsMath.ProcessBeforeShowing(el);
 	
