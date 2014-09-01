@@ -399,8 +399,8 @@ sub attemptResults {
 		$summary = $problemResult->{summary};   # summary has been defined by grader
 	}
 	
-	$self->{correct_ids}=[@correct_ids]       if @correct_ids;
-	$self->{incorrect_ids} = [@incorrect_ids] if @incorrect_ids;
+	$self->{correct_ids}   = [@correct_ids];
+	$self->{incorrect_ids} = [@incorrect_ids];
 
 	return
 		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
@@ -1416,7 +1416,7 @@ sub output_problem_body{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
 	print "\n";
-	print CGI::div($pg->{body_text}) 
+	print CGI::div($pg->{body_text})
 		#ignore body if SMA was pushed and no new problem will be shown; otherwise original problem will be shown
 		unless ($showMeAnother{active} and (!$will{showMeAnother} or !$showMeAnother{IsPossible}));
 	return "";
@@ -1982,6 +1982,7 @@ sub output_summary{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 	my $checkAnswers = $self->{checkAnswers};
 	my $previewAnswers = $self->{previewAnswers};
+	my $showPartialCorrectAnswers = $self->{pg}{flags}{showPartialCorrectAnswers};
 
 	my $r = $self->r;
 	my $ce = $r->ce;
@@ -2036,40 +2037,53 @@ sub output_summary{
     } elsif ( (($showMeAnother{active} and $showMeAnother{IsPossible}) or $showMeAnother{DisplayChange}) 
                     and $can{showMeAnother}){
         # the feedback varies a little bit if Check Answers is available or not
-        my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ? 
+        my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ?
                        "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
         my $solutionShown;
-		# if showMeAnother has been clicked and a new version has been found, 
+		# if showMeAnother has been clicked and a new version has been found,
         # give some details of what the student is seeing
         if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
             # check to see if a solution exists for this problem, and vary the feedback accordingly
             if($pg->{flags}->{solutionExists}){
                 $solutionShown = ($showMeAnother{options}->{showSolutions}) ? ", complete with solution" : "";
             } else {
-                my $viewCorrect = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers})) ? 
+                my $viewCorrect = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers})) ?
                       ", but you can still view the correct answer":"";
-                $solutionShown = ($showMeAnother{options}->{showSolutions}) ? 
+                $solutionShown = ($showMeAnother{options}->{showSolutions}) ?
                       ". There is no walk-through solution available for this problem$viewCorrect" : "";
             }
-         } 
+         }
 		 print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem[_1]. [_2] ",$solutionShown,$checkAnswersAvailable)),CGI::br();
 		 print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
      } elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
         if($showMeAnother{Count}>=$showMeAnother{MaxReps}){
             my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. 
+		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem.
                                                                          [_2] Close this tab, and return to the original problem.",$showMeAnother{MaxReps},$solutionShown  )),CGI::br();
         } elsif ($showMeAnother{Count}<$showMeAnother{TriesNeeded}) {
 		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You must attempt this problem [quant,_1,time,times] before Show Me Another is available.",$showMeAnother{TriesNeeded})),CGI::br();
         }
      } elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
-		# print this if showMeAnother has been clicked, but it is not possible to 
+		# print this if showMeAnother has been clicked, but it is not possible to
         # find a new version of the problem
-		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem; 
+		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem;
                        close this tab, and return to the original problem.")),CGI::br();
-    } 
-	
-	return "";
+    }
+
+
+    if (!$previewAnswers) {    # only color answers if not previewing
+        if ($checkAnswers or $showPartialCorrectAnswers) { # color answers when partialCorrectAnswers is set
+                                                           # or when checkAnswers is submitted
+	    print CGI::start_script({type=>"text/javascript"}),
+	            "addOnLoadEvent(function () {color_inputs([\n  ",
+		      join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
+	            "\n],[\n  ",
+		      join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
+	            "]\n)});",
+	          CGI::end_script();
+	}
+    }
+    return "";
 }
 
 # prints the achievement message if there is one
@@ -2222,45 +2236,19 @@ sub output_email_instructor{
 
 # outputs the hidden fields required for the form
 
-sub output_hidden_info{
-	my $self = shift;
-	my $previewAnswers = $self->{previewAnswers};
-	my $checkAnswers   = $self->{checkAnswers};
-	my $showPartialCorrectAnswers = $self->{pg}->{flags}->{showPartialCorrectAnswers};
-	my %showMeAnother = %{ $self->{showMeAnother} };
+sub output_hidden_info {
+    my $self = shift;
+    my %showMeAnother = %{ $self->{showMeAnother} };
     my $problemSeed = $self->{problem}->{problem_seed};
 
     # hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen
     # it needs to send the seed from showMeAnother back to the screen
     if($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}){
-	  	print CGI::hidden({name => "showMeAnotherCheckAnswers", id=>"showMeAnotherCheckAnswers_id", value => 1});
+	print CGI::hidden({name => "showMeAnotherCheckAnswers", id=>"showMeAnotherCheckAnswers_id", value => 1});
         # output the problem seed from ShowMeAnother so that it can be used in Check Answers
         print( CGI::hidden({name => "problemSeed", value  =>  $problemSeed}));
     }
-	if($previewAnswers){  # never color previewed answers 
-		return "";
-	}
-	elsif (   ($checkAnswers  ) 
-	         or $showPartialCorrectAnswers )    { # color answers when partialCorrectAnswers is set
-	                                              # or when checkAnswers is submitted 
-		if(defined $self->{correct_ids}){
-			my $correctRef = $self->{correct_ids};
-			my @correct = @$correctRef;
-			foreach(@correct){
-				print CGI::hidden(-name=>"correct_ids", -value=>$_."_val");
-			}
-		}
-		if(defined $self->{incorrect_ids}){
-			my $incorrectRef = $self->{incorrect_ids};
-			my @incorrect = @$incorrectRef;
-			foreach(@incorrect){
-				print CGI::hidden(-name=>"incorrect_ids", -value=>$_."_val");
-			}
-		}
-		return "";
-	} else {
-		return "";
-	}
+    return "";
 }
 
 # output_JS subroutine
