@@ -78,7 +78,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             },
             "undo-problem-delete": function(){
                 this.views.problemsView.problemSetView.undoDelete();
-                this.views.problemsView.problemSetView.updateNumProblems();
+                this.views.problemsView.problemSetView.updateNumProblems()
                 if(this.views.problemsView.problemSetView.undoStack.length==0 && 
                     this.sidebar instanceof ProblemListOptionsSidebar){
                         this.sidebar.$(".undo-delete-button").attr("disabled","disabled");

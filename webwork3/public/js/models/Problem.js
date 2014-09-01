@@ -6,15 +6,15 @@ define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
      * @type {*}
      */
     var Problem = Backbone.Model.extend({
-        defaults:{  source_file:"",
-                //data: "",
-                problem_id: 0,
-                value: 1,
-                max_attempts: -1,
-                set_id: "",
-                flags: ""
-                //displayMode: "MathJax",  //this has been commented out.  it should be a property of the problem view, not the problem.
-                //problem_seed: 1
+        defaults:{  
+            source_file:"",
+            data: "",
+            problem_id: 0,
+            value: 1,
+            max_attempts: -1,
+            set_id: "",
+            flags: "",
+            problem_seed: 1
         },
         idAttribute: "source_file",
         url: function () {

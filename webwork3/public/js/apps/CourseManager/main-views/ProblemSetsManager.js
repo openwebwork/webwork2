@@ -11,7 +11,7 @@ function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemS
 var ProblemSetsManager = MainView.extend({
     initialize: function (options) {
         MainView.prototype.initialize.call(this,options);
-        _.bindAll(this, 'render','addProblemSet','clearFilterText','deleteSets','update');  // include all functions that need the this object
+        _.bindAll(this, 'render','addProblemSet','clearFilterText','deleteSets','update','syncProblemEvent');  // include all functions that need the this object
         var self = this;
 
         this.state.on({
@@ -347,21 +347,22 @@ var ProblemSetsManager = MainView.extend({
         });
     }, // setMessages
     changeProblemValueEvent: function (prob,_set){    // not sure this is actually working.
-        if(typeof(_set.changingAttributes.problem_added)==="undefined"){
-            _set.changingAttributes={"value_changed": {oldValue: prob._previousAttributes.value, 
-                newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}}
-            }
+        _set.changingAttributes={"value_changed": {oldValue: prob._previousAttributes.value, 
+            newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}};
+            
     },
     addProblemEvent: function(prob,_set){
         _set.changingAttributes={"problem_added": ""};
     },
     syncProblemEvent: function(prob,_set){
+        var self = this;
         _(_set.changingAttributes||{}).chain().keys().each(function(key){ 
             switch(key){
                 case "value_changed": 
-                    self.messagePane.addMessage({type: "success", 
-                        short: config.msgTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
-                        text: config.msgTemplate({type: "problems_values_details", opts: problems.changingAttributes[key]})});
+                    self.eventDispatcher.trigger("add-message",{type: "success", 
+                        short: self.messageTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
+                        text: self.messageTemplate({type: "problems_values_details", 
+                            opts: _.extend({set_id:_set.get("set_id")},_set.changingAttributes[key])})});
                     break;
                 
             }

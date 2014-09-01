@@ -130,8 +130,9 @@
   </div>
   <div class="problem-tags">
   <table class="table table-condensed table-bordered"><tbody>
-<tr class="hidden path-row"><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
-<td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
+<tr class="hidden path-row"><td>Problem Path:</td><td colspan="3" class="problem-path">
+<%if(source_file){ print(source_file);} %></td>
+<td>Seed:</td><td class="seed"><%if(problem_seed){ print(problem_seed);} %></td></tr>
 <tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
 <tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
 <td>Level:</td><td class="level-tag"></td></tr>

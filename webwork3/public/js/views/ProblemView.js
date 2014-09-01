@@ -129,11 +129,13 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
             ".DBsubject-tag": "subject",
             ".DBchapter-tag": "chapter",
             ".DBsection-tag": "section",
+            ".problem-path": "source_file",
+            ".seed": "problem_seed"
         },
         reloadWithRandomSeed: function (){
             var seed = Math.floor((Math.random()*10000));
             console.log("reloading with new seed " + seed);
-            this.model.set({data:"", problem_seed: seed},{silent: true});
+            this.model.set({data:"", problem_seed: seed});
             this.render();
         },
         showPath: function (_show){
