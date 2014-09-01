@@ -220,7 +220,7 @@ use constant FIELD_PROPERTIES => {
 		name      => "Assignment type",
 		type      => "choose",
 		override  => "all",
-		choices   => [qw( default gateway proctored_gateway jitar)],
+		choices   => [qw( default gateway proctored_gateway)],
 		labels    => {	default => "homework",
 				gateway => "gateway/quiz",
 				proctored_gateway => "proctored gateway/quiz",

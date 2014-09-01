@@ -205,8 +205,8 @@ function render(id) {
     }
     var source_file
 
-    if ($('#problem\\.'+id+'\\.source_file').val()) {
-	source_file = $('#problem\\.'+id+'\\.source_file').val();
+    if ($('#problem\\.'+id+'\\.source_file_id').val()) {
+	source_file = $('#problem\\.'+id+'\\.source_file_id').val();
     } else {
 	source_file = $('#problem_'+id+'_default_source_file').val();
     }
@@ -220,7 +220,15 @@ function render(id) {
     ro.noprepostambles = 1;
     $.post(basicWebserviceURL, ro, function (data) {
 	var response = data;
-	$('#psr_render_area_'+id).html(data);
+	// Give nicer file not found error
+	if (/No such file or directory at/i.test(response)) {
+	    response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('No Such File or Directory!');
+	}
+	if (/"server_response":"","result_data":""/i.test(response)) {
+	    response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('There was an error rendering this problem!');
+	}
+
+	$('#psr_render_area_'+id).html(response);
 	// run typesetter depending on the displaymode
 	if(displayMode=='MathJax')
 	    MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);

@@ -321,6 +321,7 @@ sub do {   # process and return result
            # $result->{output}->{foo} is defined for foo = courseID userID and session_key
 	my $self = shift;
 	my $result = shift;
+	
     $result->{session_key}  = $self->{session_key};
     $result->{userID}       = $self->{user_id};
     $result->{courseID}     = $self->{courseName};

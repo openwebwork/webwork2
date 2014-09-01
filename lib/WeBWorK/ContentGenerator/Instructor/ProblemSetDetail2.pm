@@ -2329,7 +2329,7 @@ sub body {
 		$problemFile =~ s|\.\.||g;
 		# warn of repeat problems
 		if (defined $shownYet{$problemFile}) {
-		    $repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $shownYet{$problemFile});
+		    $repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $isJitarSet ? jitar_id_to_seq($shownYet{$problemFile}) : $shownYet{$problemFile});
 		} else {
 		    $shownYet{$problemFile} = $problemID;
 		    $repeatFile = "";
