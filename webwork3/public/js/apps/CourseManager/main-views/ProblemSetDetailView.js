@@ -249,9 +249,11 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         setProblemSet: function(_set){
             var self = this;
             this.problemSetView.setProblemSet(_set);
-            this.problemSetView.problemSet.on("problem-deleted",function(p){
-                self.parent.sidebar.$(".undo-delete-button").removeAttr("disabled");
-            })
+            if(this.problemSetView.problemSet){
+                this.problemSetView.problemSet.on("problem-deleted",function(p){
+                    self.parent.sidebar.$(".undo-delete-button").removeAttr("disabled");
+                })    
+            }
             return this;
         },
         set: function(options){

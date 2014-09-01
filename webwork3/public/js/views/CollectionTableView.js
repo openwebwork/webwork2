@@ -65,7 +65,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		initializeTable: function () {
 			var self = this;
 			this.original_collection.each(function(_model){
-				self.updateRow(_model);
+				self.addRow(_model);
 			});
 
 			// this connects the collection in the table to the original collection so changes can be made automatically. 
@@ -85,11 +85,12 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			this.original_collection.on({
 				change: function(model){
 					var id = model.get(self.row_id_field);
-					var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
-					_model.set(model.changed);
+					//var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+					//_model.set(model.changed);
+					self.addRow(model,{add: false});
 				},
 				add: function(model){
-					self.updateRow(model);
+					self.addRow(model);
 				},
 				remove: function(model){
 					var id = model.get(self.row_id_field);
@@ -106,7 +107,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},
-		updateRow: function(_model){
+		addRow: function(_model,opts){
+			opts = opts || {add: true};
 			var model = new Backbone.Model();
 			_(this.columnInfo).each(function(col){
 				var value;
@@ -135,7 +137,12 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 						model.set(col.key,typeof(value)==="undefined" ? "" : value);
 				}
 			})
-			this.collection.add(model);
+			if(opts.add){
+				this.collection.add(model);	
+			} else {
+				var _model = this.collection.findWhere(_.object([[this.row_id_field,model.get(this.row_id_field)]]));
+				_model.set(model.attributes,{silent: true});
+			}
 			this.trigger("table-changed");
 		},
 		setColumns: function(){

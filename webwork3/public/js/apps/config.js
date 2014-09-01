@@ -74,7 +74,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                 var newDate = moment(time,"hh:mmA");             
                 theDate.hours(newDate.hours()).minutes(newDate.minutes());
                 evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
-                console.log(evt.data.model);
                 evt.data.$el.popover("destroy");
                 evt.data.$el.removeAttr("style");
             } else {

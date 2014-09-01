@@ -206,7 +206,7 @@ var ProblemSetsManager = MainView.extend({
                     return val+ "/" + self.users.length;}
                 },
             {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
-                value: function(model){ return model.get("problems").length}},
+                value: function(model){ return model.get("problems").length||0}},
             {name: "Reduced Scoring", key: "enable_reduced_scoring", datatype: "boolean",
                     classname: "enable-reduced-scoring"},
             {name: "Visible", key: "visible", classname: "is-visible", datatype: "boolean"},
