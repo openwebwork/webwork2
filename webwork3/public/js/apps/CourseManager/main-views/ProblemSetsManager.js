@@ -44,7 +44,10 @@ var ProblemSetsManager = MainView.extend({
                 self.state.set({sort_class: info.classname, sort_direction: info.direction});
                 self.update();},
             "selected-row-changed": function(rowIDs){
-                self.state.set({selected_rows: rowIDs});}
+                self.state.set({selected_rows: rowIDs});},   
+            "table-changed": function(){  // I18N
+                self.$(".num-sets").html(self.problemSetTable.getRowCount() + " of " + self.problemSets.length + " sets shown.");
+            }
         });
         
         this.changeSetPropView = new ChangeSetPropertiesView({settings: this.settings,problemSets: this.problemSets});
