@@ -38,7 +38,6 @@ var ProblemSetsManager = MainView.extend({
         this.problemSetTable.on({
             "page-changed":function(num){
                 self.state.set("current_page",num);
-                console.log(self.state.attributes);
                 self.update();},
             "table-sorted":function(info){
                 self.state.set({sort_class: info.classname, sort_direction: info.direction});
@@ -50,7 +49,7 @@ var ProblemSetsManager = MainView.extend({
             }
         });
         
-        this.changeSetPropView = new ChangeSetPropertiesView({settings: this.settings,problemSets: this.problemSets});
+        this.changeSetPropView = new ChangeSetPropertiesView({settings: this.settings,problemSets: this.problemSets, state: this.state});
         this.changeSetPropView.on("modal-opened",function (){
             self.state.set("set_prop_modal_open",true);
         }).on("modal-closed",function(){
@@ -105,13 +104,8 @@ var ProblemSetsManager = MainView.extend({
         return this;
     },
     update: function (){
-        if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-            this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
-                .removeClass("hidden");
-        } else {
-            this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")
-                .addClass("hidden");
-        }
+        config.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"), remove_class: "hidden",
+                els: this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")})
         this.problemSetTable.refreshTable();
         return this;
     },
@@ -377,7 +371,7 @@ var ChangeSetPropertiesView = ModalView.extend({
     initialize: function(options){
         var self = this;
         _(this).bindAll("saveChanges");
-        _(this).extend(_(options).pick("problemSets","settings"));
+        _(this).extend(_(options).pick("problemSets","settings","state"));
         this.setNames = [];
         this.model = new ProblemSet({},util.pluckDateSettings(this.settings));
         this.model.show_reduced_scoring=true;
@@ -408,79 +402,14 @@ var ChangeSetPropertiesView = ModalView.extend({
     render: function (){
         ModalView.prototype.render.apply(this);
         this.$(".set-names").text(this.setNames.join(", "));
-        if(!this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-            this.$(".reduced-scoring").closest("tr").addClass("hidden");
-        }
-        this.stickit();
-    },
-    set: function(options){
-        this.setNames = options.set_names;
-        return this;
-    },
-    bindings: {
-            ".open-date" : "open_date",
-            ".due-date" : "due_date",
-            ".answer-date": "answer_date",
-            ".prob-set-visible": "visible",
-            ".reduced-scoring": "enable_reduced_scoring",
-            ".reduced-scoring-date": "reduced_scoring_date"
-    },
-    // this is added to the parentEvents in ModalView to create the entire events object. 
-    childEvents: {
-        "click .action-button": "saveChanges"
-    },
-    saveChanges: function(){
-        var self = this;
-        _(this.setNames).each(function(setID){
-            self.problemSets.findWhere({set_id: setID})
-                .set(self.model.pick("open_date","due_date","answer_date","visible","enable_reduced_scoring","reduced_scoring_date"));
-        })
-        this.$(".change-set-props-modal").modal("hide");
-    }
-});
-
-var ChangeSetPropertiesView = ModalView.extend({
-    initialize: function(options){
-        var self = this;
-        _(this).bindAll("saveChanges");
-        _(this).extend(_(options).pick("problemSets","settings"));
-        this.setNames = [];
-        this.model = new ProblemSet({},util.pluckDateSettings(this.settings));
-        this.model.show_reduced_scoring=true;
-        this.model.setDefaultDates();
-        this.model.on("change:enable_reduced_scoring",function(){
-            if(self.model.get("enable_reduced_scoring")){
-                self.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
-                // set the reduced_scoring_date to be the custom amount of time before the due_date
-                self.model.set("reduced_scoring_date", 
-                    moment.unix(self.model.get("due_date"))
-                        .subtract(self.model.dateSettings["pg{ansEvalDefaults}{reducedScoringPeriod}"],"minutes")
-                        .unix());
-            } else {
-                self.$(".reduced-scoring-date").closest("tr").addClass("hidden");
-            }
-        }).on("change:open_date change:due_date change:reduced_scoring_date change:answer_date", function (){
-            self.model.adjustDates();
-        });
-
-        _(options).extend({
-            modal_header: "Change Properties for Multiple Sets",
-            modal_body: $("#change-set-props-template").html(),
-            modal_action_button_text: "Save Changes"
-        })
-
-        ModalView.prototype.initialize.apply(this,[options]);
-    },
-    render: function (){
-        ModalView.prototype.render.apply(this);
-        this.$(".set-names").text(this.setNames.join(", "));
-        if(!this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-            this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
-            this.$(".reduced-scoring").closest("tr").addClass("hidden");
-        } else {
-            this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
-            this.$(".reduced-scoring").closest("tr").removeClass("hidden");
-        }
+        config.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+            els: this.$(".reduced-scoring-date").closest("tr"), remove_class: "hidden"});
+        config.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+            els: this.$(".reduced-scoring").closest("tr"), remove_class: "hidden"});
+        config.changeClass({state: this.state.get("show_time"), add_class: "edit-datetime-showtime", remove_class: "edit-datetime",
+            els: this.$("td.open-date,td.reduced-scoring-date,td.answer-date,td.due-date")});
+        config.changeClass({state: this.model.get("enable_reduced_scoring"), remove_class: "hidden", 
+            els: this.$(".reduced-scoring-date").closest("tr"), remove_class: "hidden"});
         this.stickit();
     },
     set: function(options){

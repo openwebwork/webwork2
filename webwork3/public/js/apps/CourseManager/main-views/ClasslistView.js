@@ -371,7 +371,6 @@ var AddStudentManView = ModalView.extend({
         var self = this;
         Backbone.Validation.bind(this, {
             invalid: function(view,attr,error){
-                console.log(error);
                 self.$(self.invBindings[attr]).popover("destroy")
                     .popover({placement: "right", content: error})
                     .popover("show").addClass("error");
