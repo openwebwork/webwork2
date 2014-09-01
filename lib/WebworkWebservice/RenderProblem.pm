@@ -16,18 +16,12 @@
 # Artistic License for more details.
 ################################################################################
 
-
-
 package WebworkWebservice::RenderProblem;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
 
-my $debugXmlCode=1;  # turns on the filter for debugging XMLRPC and SOAP code
+my $debugXmlCode=0;  # turns on the filter for debugging XMLRPC and SOAP code
 local(*DEBUGCODE);
-
-
-
-
 
 use strict;
 use sigtrap;
@@ -58,10 +52,7 @@ our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PORT         = $WebworkWebservice::HOST_PORT;
 our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT"; 
 
-
-
-
-our $UNIT_TESTS_ON =1;
+our $UNIT_TESTS_ON =0;
 # 
 # #our $ce           = $WebworkWebservice::SeedCE;
 # # create a local course environment for some course
@@ -260,7 +251,9 @@ sub renderProblem {
 # data in the environment if necessary
 ###########################################
 	# determine the set name and the set problem number
-	my $setName       =  (defined($rh->{envir}->{setNumber}) )    ? $rh->{envir}->{setNumber}    : '';
+	my $setName       =  (defined($rh->{set_id}) ) ? $rh->{set_id} : 
+	    (defined($rh->{envir}->{setNumber}) ? $rh->{envir}->{setNumber}  : '');
+
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
 	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
 	$problemSeed = $rh->{problemSeed} || $problemSeed;
@@ -422,8 +415,8 @@ sub renderProblem {
 #       num_incorrect
 #   it doesn't seem that $effectiveUser, $set or $key is used in the subroutine
 #   except that it is passed on to defineProblemEnvironment
-
 	my $pg;
+
 	$pg = WebworkWebservice::RenderProblem->new(
 		$ce,
 		$effectiveUser,
@@ -439,7 +432,7 @@ sub renderProblem {
 #         }
 		
 	);
-  
+
     my ($internal_debug_messages, $pgwarning_messages, $pgdebug_messages);
     if (ref ($pg->{pgcore}) ) {
     	$internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
@@ -476,8 +469,9 @@ sub renderProblem {
 		open (DEBUGCODE, ">>$xmlDebugLog") || die "Can't open debug log $xmlDebugLog";
 		print DEBUGCODE "\n\nStart xml encoding\n";
 	}
-	
-	$out2->{answers} = xml_filter($out2->{answers}); # check this -- it might not be working correctly
+
+	$out2 = xml_filter($out2); # check this -- it might not be working correctly
+
 	##################
 	close(DEBUGCODE) if $debugXmlCode;
 	###################

@@ -2536,7 +2536,7 @@ sub recordEditHTML {
         my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $prettySetID = $Set->set_id;
 	$prettySetID =~ s/_/ /g;
-	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));
+	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail2', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list2', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
         my $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));

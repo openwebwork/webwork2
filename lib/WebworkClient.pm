@@ -134,7 +134,7 @@ sub xmlrpcCall {
 	$command   = 'listLibraries' unless defined $command;
 	  my $input2 = $self->setInputTable();
 	  $input = {%$input2, %$input};
-	
+
 	  my $requestResult; 
 	  eval {
 	  	$requestResult= TRANSPORT_METHOD
@@ -158,12 +158,11 @@ sub xmlrpcCall {
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $input) };
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
-	  	
+
 	  unless (ref($result) and $result->fault) {
-	  
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
-	  	}
+	  	} 
 		#print  pretty_print($result->result()),"\n";  #$result->result()
 		$self->{output}= $result->result();
 		return $result->result();
@@ -177,7 +176,7 @@ sub xmlrpcCall {
 			  "\nfaultstring:",
 			  $result->faultstring, "\nEnd error message\n"
 		  );
-		  return undef;
+		  return {text=>$result->faultstring};
 	  }
 }
 
