@@ -134,7 +134,7 @@ sub xmlrpcCall {
 	$command   = 'listLibraries' unless defined $command;
 	  my $input2 = $self->setInputTable();
 	  $input = {%$input2, %$input};
-	
+
 	  my $requestResult; 
 	  eval {
 	  	$requestResult= TRANSPORT_METHOD

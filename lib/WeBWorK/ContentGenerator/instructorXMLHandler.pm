@@ -173,7 +173,7 @@ sub pre_header_initialize {
 	$xmlrpc_client->{password}      = $XML_PASSWORD;
 	$xmlrpc_client->{course}        = $r->param('courseID');
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
-	
+
 	my $input = {#can I just use $->param? it looks like a hash
 
 		    pw                      => $r->param('pw') ||undef,
@@ -268,7 +268,7 @@ sub pre_header_initialize {
 	
 	my $std_input = standard_input();
 	$input = {%$std_input, %$input};
-	# Fix the environment display mode
+	# Fix the environment display mode and set id
 	$input->{envir}->{displayMode} = $input->{displayMode} if($input->{displayMode});
 	# Set environment variables for hints/solutions
 	$input->{envir}->{showHints} = $r->param('showHints') if($r->param('showHints'));
@@ -362,7 +362,9 @@ Distributions
 Regression
 
 		)], 
-		envir                   => environment(),
+		envir                   => {displayMode=>DISPLAYMODE,
+					    problemValue => -1, 
+					    fileName => ''},
 		problem_state           => {
 		
 			num_of_correct_ans  => 200, # we are picking phoney values so
@@ -377,72 +379,6 @@ Regression
 
 	$out;
 }
-
-sub environment {
-	my $envir = {
-		answerDate  => '4014438528',
-		CAPA_Graphics_URL=>'http://webwork-db.math.rochester.edu/capa_graphics/',
-		CAPA_GraphicsDirectory =>'/ww/webwork/CAPA/CAPA_Graphics/',
-		CAPA_MCTools=>'/ww/webwork/CAPA/CAPA_MCTools/',
-		CAPA_Tools=>'/ww/webwork/CAPA/CAPA_Tools/',
-		cgiDirectory=>'Not defined',
-		cgiURL => 'Not defined',
-		classDirectory=> 'Not defined',
-		courseName=>'Not defined',
-		courseScriptsDirectory=>'/ww/webwork/system/courseScripts/',
-		displayMode=>DISPLAYMODE,
-		dueDate=> '4014438528',
-		externalGif2EpsPath=>'not defined',
-		externalPng2EpsPath=>'not defined',
-		fileName=>'the XMLHandler environment->{fileName} should be set',
-		formattedAnswerDate=>'6/19/00',
-		formattedDueDate=>'6/19/00',
-		formattedOpenDate=>'6/19/00',
-		functAbsTolDefault=> 0.0000001,
-		functLLimitDefault=>0,
-		functMaxConstantOfIntegration=> 1000000000000.0,
-		functNumOfPoints=> 5,
-		functRelPercentTolDefault=> 0.000001,
-		functULimitDefault=>1,
-		functVarDefault=> 'x',
-		functZeroLevelDefault=> 0.000001,
-		functZeroLevelTolDefault=>0.000001,
-		htmlDirectory =>'/ww/webwork/courses/gage_course/html/',
-		htmlURL =>'http://webwork-db.math.rochester.edu/gage_course/',
-		inputs_ref => {
-				 AnSwEr1 => '',
-				 AnSwEr2 => '',
-				 AnSwEr3 => '',
-		},
-		macroDirectory=>'/ww/webwork/courses/gage_course/templates/macros/',
-		numAbsTolDefault=>0.0000001,
-		numFormatDefault=>'%0.13g',
-		numOfAttempts=> 0,
-		numRelPercentTolDefault => 0.0001,
-		numZeroLevelDefault =>0.000001,
-		numZeroLevelTolDefault =>0.000001,
-		openDate=> '3014438528',
-		PRINT_FILE_NAMES_FOR => [ ],
-		probFileName => 'probFileName should not be used --use fileName instead',
-		problemSeed  => 1234,
-		problemValue => -1,
-		probNum => 13,
-		psvn => 54321,
-		questionNumber => 1,
-		scriptDirectory => 'Not defined',
-		sectionName => 'Gage',
-		sectionNumber => 1,
-		sessionKey=> 'Not defined',
-		setNumber =>'MAAtutorial',
-		studentLogin =>'gage',
-		studentName => 'Mike Gage',
-		tempDirectory => '/ww/htdocs/tmp/gage_course/',
-		templateDirectory=>'/ww/webwork/courses/gage_course/templates/',
-		tempURL=>'http://webwork-db.math.rochester.edu/tmp/gage_course/',
-		webworkDocsURL => 'http://webwork.math.rochester.edu/webwork_gage_system_html',
-	};
-	$envir;
-};
 
 sub pretty_print_json { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);

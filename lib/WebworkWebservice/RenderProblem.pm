@@ -251,7 +251,9 @@ sub renderProblem {
 # data in the environment if necessary
 ###########################################
 	# determine the set name and the set problem number
-	my $setName       =  (defined($rh->{envir}->{setNumber}) )    ? $rh->{envir}->{setNumber}    : '';
+	my $setName       =  (defined($rh->{set_id}) ) ? $rh->{set_id} : 
+	    (defined($rh->{envir}->{setNumber}) ? $rh->{envir}->{setNumber}  : '');
+
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
 	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
 	$problemSeed = $rh->{problemSeed} || $problemSeed;
@@ -413,8 +415,8 @@ sub renderProblem {
 #       num_incorrect
 #   it doesn't seem that $effectiveUser, $set or $key is used in the subroutine
 #   except that it is passed on to defineProblemEnvironment
-
 	my $pg;
+
 	$pg = WebworkWebservice::RenderProblem->new(
 		$ce,
 		$effectiveUser,
@@ -430,7 +432,7 @@ sub renderProblem {
 #         }
 		
 	);
-  
+
     my ($internal_debug_messages, $pgwarning_messages, $pgdebug_messages);
     if (ref ($pg->{pgcore}) ) {
     	$internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;

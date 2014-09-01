@@ -158,7 +158,7 @@ sub initiate_session {
 	my $password     = $rh_input ->{password};
 	my $ce           = $class->create_course_environment($courseName);
 	my $db           = new WeBWorK::DB($ce->{dbLayout});
-	
+
 	my $language= $ce->{language} || "en";
 	my $language_handle = WeBWorK::Localize::getLoc($language) ;
 
@@ -462,6 +462,7 @@ sub renderProblem {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
+
     return $self->do( WebworkWebservice::RenderProblem::renderProblem($self,$in) ); 
 }
 

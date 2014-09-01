@@ -178,6 +178,7 @@ function init_webservice(command) {
   var myUser = $('#hidden_user').val();
   var myCourseID = $('#hidden_course_id').val();
   var mySessionKey = $('#hidden_key').val();
+  var mySetID = $('#hidden_set_id').val();
   var mydefaultRequestObject = {
         };
 
@@ -185,6 +186,7 @@ function init_webservice(command) {
     mydefaultRequestObject.user = myUser;
     mydefaultRequestObject.session_key = mySessionKey;
     mydefaultRequestObject.courseID = myCourseID;
+    mydefaultRequestObject.set_id = mySetID;
   } else {
     alert("missing hidden credentials: user "
       + myUser + " session_key " + mySessionKey+ " courseID "
