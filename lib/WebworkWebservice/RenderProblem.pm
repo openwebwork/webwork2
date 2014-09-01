@@ -373,7 +373,7 @@ sub renderProblem {
 		showHints	    => $rh->{envir}->{showHints},
 		showSolutions   => $rh->{envir}->{showSolutions},
  		refreshMath2img => $rh->{envir}->{showHints} || $rh->{envir}->{showSolutions},
- 		processAnswers  => 1,
+ 		processAnswers  => defined($rh->{processAnswers}) ? $rh->{processAnswers} : 1,
  		catchWarnings   => 1,
         # methods for supplying the source, 
         r_source        => $r_problem_source, # reference to a source file string.

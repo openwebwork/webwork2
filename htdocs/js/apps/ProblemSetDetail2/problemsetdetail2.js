@@ -219,6 +219,7 @@ function render(id) {
     ro.showHints = 1;
     ro.showSolutions = 1;
     ro.noprepostambles = 1;
+    ro.processAnswers = 0;
     var displayMode = $('#problem_displaymode').val();
     ro.displayMode = displayMode;
     $.post(basicWebserviceURL, ro, function (data) {
