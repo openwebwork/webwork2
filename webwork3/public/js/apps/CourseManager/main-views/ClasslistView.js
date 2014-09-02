@@ -584,7 +584,7 @@ var AddStudentFileView = ModalView.extend({
                 _(config.userProps).each(function(user,j){
                 var re = new RegExp(user.regexp,"i");
                 
-                $("#sTable thead td").each(function (i,head){
+                $("#studentTable thead td").each(function (i,head){
                     if (re.test($("#inner-table tr:nth-child(1) td:nth-child(" + (i+1) + ")").html())) {
                         $(".colHeader",head).val(user.longName);
                         self.validateColumn(user.longName);  // keep track of the location of the Login Name
@@ -592,7 +592,7 @@ var AddStudentFileView = ModalView.extend({
                 });
                 });
             } else {  // set the headers to blank. 
-                $("#sTable thead td").each(function (i,head){ $(".colheader",head).val("");});
+                $("#studentTable thead td").each(function (i,head){ $(".colheader",head).val("");});
                 $("#inner-table tr").css("background-color","none");
             }
         },
@@ -634,9 +634,12 @@ var AddStudentFileView = ModalView.extend({
                 var value = $(cell).html().trim(),
                     errorMessage = self.model.preValidate(changedProperty,value);
                 if ((errorMessage !== "") && (errorMessage !== false)) {
+                    self.$(".error-pane").removeClass("hidden")
                     self.$(".error-pane-text").html("Error for the " + headerName + " with value " +  value + ":  " + errorMessage)
                     self.$(".error-pane").show("slow");
                     $(cell).css("background-color","rgba(255,0,0,0.5)");
+                } else {
+                    self.$(".error-pane").addClass("hidden")
                 }
             });
              
