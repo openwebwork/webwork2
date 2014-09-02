@@ -20,7 +20,9 @@ var StudentProgressView = MainView.extend({
 		this.stickit(this.state,this.bindings);
 		if(this.collection){
 			this.changeDisplay();
+			var rowID = this.row_id_field === "users" ? "user_id" : "set_id";
 			this.progressTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
+						row_id_field: rowID,
 	                    paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}}).render();
 			this.progressTable.on("page-changed",function(num){
 	        			self.state.set({page_num: num});
@@ -110,19 +112,29 @@ var StudentProgressView = MainView.extend({
         this.cols = [
             {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
             {name: "Set Name", key: "set_id", classname: "set-id", datatype:"string"},
-            {name: "Score", key: "score", classname: "score", datatype: "integer", stickit_options: {
-            	update: function($el, val, model, options) {
-            		if(model.get("problems").size()===0){
-            			$el.html("");
-            			return;
-            		}
-        		 	var status = _(model.get("problems").pluck("status")
-        		 			.map(function(s) { return s===""?0:parseFloat(s);})).reduce(function(p,q) {return p+q;});
-					var total = _(model.get("problems").pluck("value")).reduce(function(p,q) { return parseFloat(p)+parseFloat(q);}); 
-            		$el.html(config.displayFloat(status,2) + "/" + total);
+            {name: "Score", key: "score", classname: "score", datatype: "real", 
+            	value: function(model){ 
+            		return _(model.get("problems").pluck("status")
+        		 			.map(function(s) { return s===""?0:parseFloat(s);})).reduce(function(p,q) {return p+q;},0);
+            	}, 
+            	display: function(val,model){
+            		var total = _(model.get("problems").pluck("value")).reduce(function(p,q) { return parseFloat(p)+parseFloat(q);},0); 
+            		return val + "/" + total;
             	}
-            }},
-            {name: "Problems", key: "problems", classname: "problems", datatype: "string", stickit_options: {
+            },
+
+           //  stickit_options: {
+           //  	update: function($el, val, model, options) {
+           //  		if(model.get("problems").size()===0){
+           //  			$el.html("");
+           //  			return;
+           //  		}
+        			// var total = _(model.get("problems").pluck("value")).reduce(function(p,q) { return parseFloat(p)+parseFloat(q);}); 
+           //  		$el.html(config.displayFloat(status,2) + "/" + total);
+           //  	}
+           //  }},
+            {name: "Problems", key: "problems", classname: "problems",
+            	nested: true, sortable: false, stickit_options: {
             	update: function($el, val, model, options) {
             		if(model.get("problems").size()===0){
             			$el.html("");

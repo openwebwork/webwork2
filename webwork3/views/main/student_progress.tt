@@ -2,7 +2,11 @@
 
 <script type="text/template" id="student-progress-template">
 <div class="row">
-  <div class="col-md-2">Progress for</div>
+  <div class="col-md-2">Progress type</div>
+  <div class="col-md-2">
+    <select class="progress-type form-control"></select> 
+  </div>
+  <div class="col-md-2 col-md-offset-2">Progress for</div>
   <div class="col-md-2">
     <select class="progress-student-select form-control"></select> 
     <select class="progress-set-select form-control hidden"></select>
@@ -10,10 +14,6 @@
 
 
 
-  <div class="col-md-2 col-md-offset-2">Progress type</div>
-  <div class="col-md-2">
-    <select class="progress-type form-control"></select> 
-  </div>
 </div>
 </script>
 
