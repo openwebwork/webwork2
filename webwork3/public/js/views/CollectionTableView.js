@@ -112,6 +112,11 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			var model = new Backbone.Model();
 			_(this.columnInfo).each(function(col){
 				var value;
+				if(col.nested){
+					model[col.key]=_model[col.key];
+					model.set(col.key,model[col.key]);
+				} 
+
 				if(_.isFunction(col.value)){
 					value = col.value(_model);
 				} else if(_model.get(col.key)){
@@ -125,16 +130,18 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 							model.get("_searchable_fields")+";" + v); 	
 					}
 				}
-				switch(col.datatype){
-					case "integer": 
-						model.set(col.key,parseInt(value));
-						break;
-					case "string": 
-						model.set(col.key,(typeof(value)==="undefined") ? "" : ""+value);
-						break;
-					case "boolean":
-					default: 
-						model.set(col.key,typeof(value)==="undefined" ? "" : value);
+				if(!col.nested){
+					switch(col.datatype){
+						case "integer": 
+							model.set(col.key,parseInt(value));
+							break;
+						case "string": 
+							model.set(col.key,(typeof(value)==="undefined") ? "" : ""+value);
+							break;
+						case "boolean":
+						default: 
+							model.set(col.key,typeof(value)==="undefined" ? "" : value);
+					}
 				}
 			})
 			if(opts.add){
@@ -166,6 +173,9 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				}
 				if(typeof(col.searchable)==="undefined"){
 					col.searchable = true;
+				}
+				if(typeof(col.nested)==="undefined"){
+					col.nested = false;
 				}
 				if(col.key==="_select_row"){
 					col.searchable = false; 
@@ -498,7 +508,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				} else if(col.use_contenteditable){
 					self.$el.append($("<td>").addClass(col.classname).attr("contenteditable",col.editable));
 				} else if(col.display) {
-					self.$el.append($("<td>").text(col.display(self.model.get(col.key))));
+					self.$el.append($("<td>").text(col.display(self.model.get(col.key),self.model)));
 				} else if (col.stickit_options && col.stickit_options.selectOptions){
 					var select = $("<select>").addClass("input-sm form-control").addClass(col.classname);
 					self.$el.append($("<td>").append(select));
