@@ -13,7 +13,6 @@ define(['backbone','models/UserSet','config'], function(Backbone, UserSet,config
     var UserSetList = Backbone.Collection.extend({
         model: UserSet,
         initialize: function (models,options) {
-            console.log("in UserSetList.initialize");
             this.problemSet = options ? options.problemSet : null;
             this.user = options ? options.user : null;
             this.type = options ? options.type : "";
