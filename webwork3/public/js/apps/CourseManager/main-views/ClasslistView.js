@@ -555,6 +555,7 @@ var AddStudentFileView = ModalView.extend({
             var requiredHeaders = ["First Name","Last Name", "Login Name"];
             var containedHeaders = _(sortedHeads).intersection(requiredHeaders).sort();
             if (! _.isEqual(requiredHeaders,containedHeaders)) {
+                self.$(".error-pane").removeClass("hidden")
                 this.$(".error-pane-text").html("There must be the following fields imported: " + requiredHeaders.join(", "))
                 this.$(".error-pane").show("slow");
                 return;
@@ -601,9 +602,11 @@ var AddStudentFileView = ModalView.extend({
                 , self = this
                 , headers = this.$(".colHeader").map(function (i,col) { return $(col).val();})
                 , loginCol = _(headers).indexOf("Login Name")
-                , changedProperty = _(config.userProps).findWhere({longName: headerName}).shortName
+                , changedProperty = _(config.userProps).findWhere({longName: headerName})
                 , colNumber = _(this.$(".colHeader option:selected").map(function(i,v) { return $(v).val()})).indexOf(headerName);
-            
+            if(typeof(changedProperty)==="undefined"){
+                return; 
+            }
 
             // Detect where the Login Name column is in the table and show duplicate entries of users.           
             if (loginCol < 0 ) { 
