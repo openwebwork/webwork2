@@ -49,7 +49,7 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
             "add-problem-set": function(_set_name){
                 var _set = new ProblemSet({set_id: _set_name},this.dateSettings);
                 _set.setDefaultDates(moment().add(10,"days")).set("assigned_users",[config.courseSettings.user]);
-               this.views[this.state.get("tab_name")].allProblemSets.add(_set); 
+               this.views[this.state.get("tab_name")].problemSets.add(_set); 
             },
             "show-hide-tags": function(_show) {
                 this.views[this.state.get("tab_name")].tabState.set("show_tags",_show);

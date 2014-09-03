@@ -528,7 +528,14 @@ var AddStudentFileView = ModalView.extend({
             }
         },
         selectAll: function () {
+            var self = this;
             this.$(".selRow").prop("checked",this.$("#selectAllASW").is(":checked"));
+            if(this.$("#useFirst").prop("checked")){
+                this.$("#cbrow0").prop("checked",false);
+            }
+            _($.makeArray($(".colHeader").map(function(i,v) { return $(v).val();}))).chain().compact().each(function(col){
+                self.validateColumn(col);
+            })
         },
         importStudents: function () {  // PLS:  Still need to check if student import is sucessful, like making sure that user_id is valid (not repeating, ...)
             // First check to make sure that the headers are not repeated.
@@ -632,8 +639,7 @@ var AddStudentFileView = ModalView.extend({
              
              // Validate the user property in the changed Header
              
-                 
-            $("tbody td.column" + colNumber).each(function(i,cell){
+            this.$("input.selRow:checked").map(function(i,v) { return $(v).closest("tr").children(".column" + colNumber);}).each(function(i,cell){
                 var value = $(cell).html().trim(),
                     errorMessage = self.model.preValidate(changedProperty,value);
                 if ((errorMessage !== "") && (errorMessage !== false)) {

@@ -28,7 +28,7 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
             });
         this.state.validation = {
             new_problem_set: function(value, attr, computedState) {
-                if(_(computedState.problemSets.pluck("set_id")).contains(value)){
+                if(_(self.problemSets.pluck("set_id")).contains(value)){
                     return "The problem set " + value + " already exists.";
                 }
             }
