@@ -252,8 +252,9 @@ sub pre_header_initialize {
             overrides				=> $r->param('overrides') || undef,
 			showHints				=> $r->param('showHints') || 0,
 			showSolutions			=> $r->param('showSolutions') || 0,
-		    processAnswers => $r->param('processAnswers') || 0,
+		    processAnswers => defined($r->param('processAnswers')) ? $r->param('processAnswers') : 1,
 	};
+
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
 		   format_hash_ref($input);

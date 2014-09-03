@@ -350,6 +350,7 @@ function randomize(filepath, el) {
   if($("input[name='showSolutions']").is(':checked')) { showsoln = 1;}
   ro.showHints = showhint;
   ro.showSolutions = showsoln;
+  ro.processAnswers = 0;
   var displayMode = $('[name="original_displayMode"]').val();
   if(displayMode != 'None') {
     ro.displayMode = displayMode;
