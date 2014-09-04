@@ -1758,7 +1758,7 @@ sub readSetDef {
 
 	my $setName = '';
 
-	if ($fileName =~ m|^set([.\w-]+)\.def$|) {
+	if ($fileName =~ m|set([.\w-]+)\.def$|) {
 		$setName = $1;
 	} else {
 		$self->addbadmessage( 

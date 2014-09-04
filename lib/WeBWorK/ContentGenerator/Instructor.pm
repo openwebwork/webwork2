@@ -654,8 +654,17 @@ sub getCSVList {
 sub getDefList {
 	my ($self) = @_;
 	my $ce = $self->{ce};
-	my $dir = $ce->{courseDirs}->{templates};
-	return $self->read_dir($dir, qr/.*\.def/);
+	my @dirs = @{$ce->{courseDirs}->{setdefinitions}};
+        my @setdefs = ();
+        foreach my $dir (@dirs) {
+	   my @dirfiles = $self->read_dir($dir, qr/.*\.def/);
+           my @dirpath = split($ce->{courseDirs}->{templates}, $dir); #string for the part of the file path that follows the templates path
+           $dirfiles[$_] = $dirpath[-1].'/'.$dirfiles[$_] for 0..$#dirfiles;
+	   $dirfiles[$_] =~ s/^\/*//g for 0..$#dirfiles;
+           @setdefs = (@setdefs, @dirfiles);
+	}
+	return @setdefs;
+        
 }
 
 sub getScoringFileList {
