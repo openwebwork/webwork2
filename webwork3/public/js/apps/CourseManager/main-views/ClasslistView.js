@@ -264,6 +264,7 @@ var ClasslistView = MainView.extend({
         		stickit_options: {events: ['blur']}},
             {name: "Status", key: "status", classname: "status", datatype: "string",
                 value: function(model){
+                    console.log(model.get("user_id"));
                     return _(config.enrollment_statuses).findWhere({value: model.get("status")}).label;
                 },
         		stickit_options: { selectOptions: { collection: config.enrollment_statuses }}},
