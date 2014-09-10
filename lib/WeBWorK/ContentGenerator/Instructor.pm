@@ -654,7 +654,7 @@ sub getCSVList {
 sub getDefList {
 	my ($self) = @_;
 	my $ce = $self->{ce};
-	my @dirs = @{$ce->{courseDirs}->{setdefinitions}};
+	my @dirs = @{$ce->{coursePaths}->{setdefinitions}};
         my @setdefs = ();
         foreach my $dir (@dirs) {
 	   my @dirfiles = $self->read_dir($dir, qr/.*\.def/);
