@@ -173,7 +173,7 @@ del '/courses/:course_id/users/:user_id' => sub {
 
 ####
 #
-# Gets the status (logged in or not) of all users.  Usefull for the classlist manager.
+# Gets the status (logged in or not) of all users.  Useful for the classlist manager.
 #
 ####
 

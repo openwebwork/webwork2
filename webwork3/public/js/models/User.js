@@ -21,12 +21,27 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
             email_address: {pattern: "email", required: false}
         }, 
         idAttribute: "_id",
+        initialize: function(attrs,opts){
+            this.set(this.parse(attrs));
+        },
         url: function () {
             return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id");
         },
         toCSVString: function (){
             var self = this;
             return (config.userProps.map(function(prop){return self.get(prop.shortName);})).join(",") + "\n";
+        },
+        parse: function(response){
+            // check the response.  Perhaps an error should be thrown a valid value isn't sent from the server. 
+            if(response && response.status){
+                _(config.enrollment_statuses).each(function(enr){
+                    if(_(enr.abbrs).contains(response.status)){
+                        response.status = enr.value;        
+                    }
+                })
+                
+            }
+            return response;
         },
         checkLogin: function(){
             if(!this.get("user_id").match(config.regexp.loginname)){
