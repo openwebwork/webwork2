@@ -129,17 +129,22 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 answer_date: "assign-answer"
             }
 
-            var keys = ["answer_date","open_date","reduced_scoring_date","due_date"]; 
+            var keys = _(obj).keys();
             if(! this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
                 keys = _(keys).without("reduced_scoring_date");
             }
             _(keys).each(function(key){
-                if(model.get(key)){
-                    $(".assign." + obj[key]).removeClass("hidden");
-                } else {
-                    $(".assign."+obj[key]).addClass("hidden");
+                config.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
+            });
+
+            // hide the reduced credit sets that shouldn't be visible. 
+            this.problemSets.chain().each(function(_set) { 
+                if(!_set.get("enable_reduced_scoring")){
+                    self.$(".assign-reduced-scoring span:contains("+_set.get("set_id")+")").closest(".assign")
+                        .addClass("hidden");
                 }
             });
+
         },
         setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
             var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
