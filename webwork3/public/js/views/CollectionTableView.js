@@ -31,7 +31,7 @@ Sorting:
  */
 
 
-define(['backbone', 'underscore','stickit'], function(Backbone, _){
+define(['backbone', 'underscore','config','stickit'], function(Backbone, _,config){
 
 	var CollectionTableView = Backbone.View.extend({
 		tagName: "table",
@@ -40,6 +40,11 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 			var self = this;
 			_.bindAll(this,"render","sortTable","filter");
 			this.collection = options.collection;
+			this.collection.on("add",function(model){
+				_(self.columnInfo).each(function(col){
+					self.updateValues(model,col);
+				})
+			})
 			this.filteredCollection = [];
 			this.showFiltered = false;
 			this.columnInfo = options.columnInfo;
@@ -79,36 +84,85 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 					_.extend(obj["."+col.classname],col.stickit_options);
 					col.use_contenteditable = col.editable;
 				}
-				if(col.value && _.isFunction(col.value)) { // then the value is calculated.
-					self.collection.each(function(_model){
-						if(!_model._extra){
-							_model._extra= {};
-						}
-						_model._extra[col.key]=col.value.apply(this,[_model]);
-					})
+				self.collection.each(function(_model){
+					self.updateValues(_model,col);
+				});
+				if(typeof(col.datatype)!=="undefined"){
+					col.sortable = true;
 				}
 				_.extend(self.bindings, obj);
 			});
 			return this;
 		},
+		// Add an _extra field to the collection for some columns. 
+		updateValues: function(_model,col){
+			if(col.value && _.isFunction(col.value)) { // then the value is calculated.
+				if(!_model._extra){
+					_model._extra= {};
+				}
+				_model._extra[col.key]=col.value.apply(this,[_model]);	
+			}
+		},
 		render: function () {
 			console.log("in CollectionTableView.render");
 			var self = this, i;
 			this.$el.empty();
-
-			// set up the HTML for the table header
-			var headRow = $("<tr>");
 			var tbody = $("<tbody>");
-			this.$el.append($("<thead>").append(headRow)).append(tbody);
+			this.$el.append($("<thead>").append(this.tableHeader())).append(tbody);
+
+			this.updateTable();
+			if(this.paginatorProp.showPaginator){
+				this.$el.append($("<tr class='paginator-row'>"));
+				this.updatePaginator();
+			}
+
+
+			return this;
+		},
+		tableHeader: function () {
+			var self = this;
+						// set up the HTML for the table header
+			var headRow = $("<tr>");
 
 			_(this.columnInfo).each(function (col){
 				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
+				
+				var spanIcon = ""; 
+				if(self.sortInfo && ! _.isEqual(self.sortInfo,{}) && self.sortInfo.classname == className){
+					//var type = _(self.columnInfo).findWhere({classname: self.sortInfo.classname}).datatype;
+					var type = _(self.columnInfo).find(function(obj){ 
+						return _.isArray(obj.classname)? obj.classname[0]===self.sortInfo.classname 
+									: obj.classname===self.sortInfo.classname ;}).datatype;
+					var iconClass = config.sortIcons[type+self.sortInfo.direction];
+					spanIcon = "<i class='fa " + iconClass + "'></i>";
+				}
 				var th = $("<th data-class-name='" + className + "'>").addClass(className)
-					.html(col.colHeader? col.colHeader: col.name + "<span class='sort'></span>");
+					.html(col.colHeader? col.colHeader: col.name + spanIcon);
+				if(col.title){
+					th.attr("title",col.title);
+				}
 				headRow.append(th);
 			});
 
-			this.updateTable();
+			return headRow; 
+		},
+		updateTable: function () {
+			var self = this;
+			this.rowViews = [];
+			_(this.pageRange).each(function(i,j){
+				if(self.showFiltered){ 
+					if(self.filteredCollection[i]){
+						self.rowViews[j] = new TableRowView({model: self.filteredCollection[i],columnInfo: self.columnInfo,
+							bindings: self.bindings});
+					}
+				} else {
+					if(self.collection.at(i)){
+						self.rowViews[j]=new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
+							bindings: self.bindings});
+					}
+				}
+			});
+			var tbody = this.$("tbody").empty();
 			if(this.pageSize >0){
 				for(i=0;i<this.pageSize;i++){
 					if(this.rowViews[i]){
@@ -120,18 +174,10 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 					tbody.append(row.render().el);
 				});
 			}
-
-			if(this.paginatorProp.showPaginator){
-				this.$el.append($("<tr class='paginator-row'>"));
-				this.updatePaginator();
-			}
-
-			if(this.sortInfo && ! _.isEqual(this.sortInfo,{})){
-				this.$("th."+ (_.isArray(this.sortInfo.classname) ? this.sortInfo.classname[0]: this.sortInfo.classname)
-							+ " .sort")
-					.html("<i class='fa fa-long-arrow-" + (this.sortInfo.direction >0 ? "down": "up") + "'></i>" );
-			}
-
+			return this;
+		},
+		refreshTable: function (){
+			_(this.rowViews).each(function(row){row.refresh();});
 			return this;
 		},
 		updatePaginator: function() {
@@ -213,40 +259,22 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				this.paginatorProp.page_size = options.num_rows;
 				this.initializeTable();
 				this.updatePaginator();
-				this.render();
 			}
-		},
-		updateTable: function () {
-			var self = this;
-			this.rowViews = [];
-			_(this.pageRange).each(function(i,j){
-				if(self.showFiltered){ 
-					if(self.filteredCollection[i]){
-						self.rowViews[j] = new TableRowView({model: self.filteredCollection[i],columnInfo: self.columnInfo,
-							bindings: self.bindings});
-					}
-				} else {
-					if(self.collection.at(i)){
-						self.rowViews[j]=new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
-							bindings: self.bindings});
-					}
-				}
-			});
-		},
-		refreshTable: function (){
-			_(this.rowViews).each(function(row){row.refresh();});
-			return this;
 		},
 		getRowCount: function () {
 			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
 		},
-		events: {"click th": "sortTable",
-				"click .first-page": "firstPage",
-				"click .prev-page": "prevPage",
-				"click .numbered-page": "gotoPage",
-				"click .next-page": "nextPage",
-				"click .last-page": "lastPage",
-				"click button.paginator-page": "pageChanged"
+		events: {
+			"click th": function (evt) {
+				this.sortTable(evt).render();
+				this.trigger("table-sorted",this.sortInfo);
+			},
+			"click .first-page": "firstPage",
+			"click .prev-page": "prevPage",
+			"click .numbered-page": "gotoPage",
+			"click .next-page": "nextPage",
+			"click .last-page": "lastPage",
+			"click button.paginator-page": "pageChanged"
 		},
 		sortTable: function(evt){
 			var self = this
@@ -254,14 +282,14 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 				, sortField = evt.sort_info? evt.sort_info.sort_class : $(evt.target).data("class-name");
 
 			if(typeof(sortField)==="undefined"){
-				return;
+				return this;
 			}
 
 			sort = _(this.columnInfo).find(function(col){
 				return (_.isArray(col.classname)? col.classname[0] : col.classname ) == sortField;
 			});
-			if(typeof(sort)=="undefined"){ // The user clicked on the select all button.
-				return;
+			if(typeof(sort)=="undefined" || !sort.sortable){ // The user clicked on the select all button.
+				return this;
 			}
 
 
@@ -274,29 +302,24 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 					this.sortInfo = {key: sort.key, direction: 1, 
 							classname: _.isArray(sort.classname)? sort.classname[0] : sort.classname};
 				}
-				this.trigger("table-sorted",this.sortInfo);
 			}
-
 
 			// determine the sort Function
 
-			var sortFunction = sort.sort_function || function(val) { return val;};
+			var sortFunction = sort.sort_function || function(val) {return val;};
 
 			if(typeof(sort.datatype)==="undefined"){
 				console.error("You need to define a datatype to sort");
-				return;
+				return this;
 			}
 
 			/* Need a more robust comparator function. */
 			this.collection.comparator = function(model1,model2) { 
-				var value1 = typeof(model1.get(sort.key)) === "undefined" ? model1._extra[sort.key] : model1.get(sort.key);
-				var value2 = typeof(model2.get(sort.key)) === "undefined" ? model2._extra[sort.key] : model2.get(sort.key);
+				var value1 = typeof(model1.get(sort.key)) === "undefined" || (model1._extra && model1._extra[sort.key])
+						? model1._extra[sort.key] : model1.get(sort.key);
+				var value2 = typeof(model2.get(sort.key)) === "undefined" || (model2._extra && model2._extra[sort.key])
+						? model2._extra[sort.key] : model2.get(sort.key);
 				switch(sort.datatype){
-					case "string":
-						if (sortFunction(value1,model1)===sortFunction(value2,model2))
-							return 0;
-						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)? -1: 1);
-						break;
 					case "integer":
 						if(parseInt(sortFunction(value1,model1))===parseInt(sortFunction(value2,model2))){return 0;}
 					    return self.sortInfo.direction*(parseInt(sortFunction(value1,model1))<parseInt(sortFunction(value2,model2))? -1:1);
@@ -309,11 +332,17 @@ define(['backbone', 'underscore','stickit'], function(Backbone, _){
 						if(parseFloat(sortFunction(value1,model1))===parseFloat(sortFunction(value2,model2))){return 0;}
 					    return self.sortInfo.direction*(parseFloat(sortFunction(value1,model1))<parseFloat(sortFunction(value2,model2))? -1:1);
 						break;
+					case "string":
+					default:
+						if (sortFunction(value1,model1)===sortFunction(value2,model2))
+							return 0;
+						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)? -1: 1);
+						break;
 				} 
 
 			};
 			this.collection.sort();
-			this.render();
+			return this;
 		},
 		firstPage: function() { this.gotoPage(0);},
 		prevPage: function() {if(this.currentPage>0) {this.gotoPage(this.currentPage-1);}},

@@ -59,9 +59,17 @@ define(['backbone', 'underscore','models/User','models/UserList','config','stick
         	this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
         		{"user_id": ".user-id", "email_address": ".email"});
 		    this.rowTemplate = options.rowTemplate;
+		    this.model.on("change",function(model){
+		    	model.isValid(true);
+		    })
 		    Backbone.Validation.bind(this, {
+		    	valid: function(view,attr){
+		    		self.$(self.invBindings[attr]).popover("hide").removeClass("error");
+		    	},
 		    	invalid: function(view,attr,error){
-		    		self.$(self.invBindings[attr]).popover({placement: "right", content: error})
+		    		console.log(error);
+		    		self.$(self.invBindings[attr]).popover("destroy")
+		    			.popover({placement: "right", content: error})
                     	.popover("show").addClass("error");
 		    	}
 		    });
@@ -78,8 +86,8 @@ define(['backbone', 'underscore','models/User','models/UserList','config','stick
     				".comment": "comment",
     				".status": "status",
     				".recitation": "recitation",
-    				".email": {observe: "email_address", setOptions: {silent:true}},
-    				".user-id": {observe: "user_id", setOptions: {silent:true}},
+    				".email": {observe: "email_address",events: ["blur"]},
+    				".user-id": {observe: "user_id",events: ["blur"]},
     				".password": "password",
     				".permission": { 
     					observe: "permission",

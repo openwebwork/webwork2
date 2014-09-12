@@ -169,6 +169,25 @@ del '/courses/:course_id/users/:user_id' => sub {
 	} else {
 		send_error("User with login " . param('user_id') . ' could not be deleted.',400);
 	}
+};
+
+####
+#
+# Gets the status (logged in or not) of all users.  Useful for the classlist manager.
+#
+####
+
+get '/courses/:course_id/users/loginstatus' => sub {
+	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+
+	my @users = vars->{db}->listUsers();
+	my @status = map {
+		my $key = vars->{db}->getKey($_);
+		{ user_id=>$_, 
+			logged_in => ($key and time <= $key->timestamp()+vars->{ce}->{sessionKeyTimeout}) ? JSON::true : JSON::false}
+	} @users;
+
+	return \@status;
 
 };
 
