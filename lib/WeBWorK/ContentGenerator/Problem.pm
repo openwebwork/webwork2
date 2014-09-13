@@ -1249,7 +1249,7 @@ sub output_score_summary{
 			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
 			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",sprintf("%.0f%%", $pg->{result}->{score} * 100)) . CGI::br():'',
 			$problem->attempted
-				? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
+				? $r->maketext("Your overall recorded score is [_1]. [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
 			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
 		));

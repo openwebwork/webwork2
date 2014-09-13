@@ -120,17 +120,6 @@ sub nav {
 	return $self->navMacro($args, $tail, @links);
 }
 
-sub title {
-	my ($self) = @_;
-	my $r = $self->r;
-	# using the url arguments won't break if the set/problem are invalid
-	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
-
-	return $setID;
-
-
-}
-
 sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -378,7 +367,7 @@ sub body {
 		# UPDATE - ghe3
 		# This table now contains a summary, a caption, and scope variables for the columns.
 		print CGI::start_table({-class=>"problem_set_table"});
-		print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.","data-original-title"=>"Problems", "data-placement"=>"bottom"}, "Problems"));
+		print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.","data-original-title"=>"Problems", "data-placement"=>"bottom"}, $r->maketext("Problems")));
 		print CGI::Tr({},
 
 			CGI::th($r->maketext("Name")),

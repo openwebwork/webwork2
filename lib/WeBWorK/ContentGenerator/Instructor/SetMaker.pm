@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -74,7 +74,7 @@ use constant SUCCESS => (1 << 2);
 my %problib;	## This is configured in defaults.config
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, 'achievements' => 1,
+	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, '.git' => 1,'achievements' => 1,
 );
 
 sub prepare_activity_entry {
@@ -206,7 +206,7 @@ sub next_prob_group {
 	return -1 if($ind >= $len-1);
 	my $mlt= $pgfiles[$ind]->{morelt} || 0;
 	return $ind+1 if($mlt == 0);
-	while($ind<$len and defined($pgfiles[$ind]->{morelt}) and $pgfiles[$ind]->{morelt} == $mlt) {
+	while($ind<$len and ($pgfiles[$ind]->{morelt} || 0) == $mlt) {
 		$ind++;
 	}
 	return -1 if($ind==$len);
@@ -502,7 +502,7 @@ sub browse_library_panel1 {
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 		CGI::start_table(),
 			CGI::Tr({},
-				CGI::td([$r->maketext("Chapter:"),
+				CGI::td(["Chapter:",
 					CGI::popup_menu(-name=> 'library_chapters', 
 					                -values=>\@chaps,
 					                -default=> $chapter_selected,
@@ -510,7 +510,7 @@ sub browse_library_panel1 {
 					),
 					CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
 			CGI::Tr({},
-				CGI::td($r->maketext("Section:")),
+				CGI::td("Section:"),
 				CGI::td({-colspan=>2},
 					CGI::popup_menu(-name=> 'library_sections', 
 					                -values=>\@sects,
@@ -657,9 +657,9 @@ sub browse_library_panel2adv {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching WeBWorK problems";
+		$count_line = $r->maketext("There are no matching WeBWorK problems");
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problems";
+		$count_line = $r->maketext("There are [_1] matching WeBWorK problems", $count_line);
 	}
 
 	# Formatting level checkboxes by hand
@@ -810,7 +810,7 @@ sub make_top_row {
 																 ($browse_which eq "browse_$lib")? (-disabled=>1): ())
 			if (-d "$ce->{courseDirs}{templates}/$lib");
 	}
-	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
+	$libs = CGI::br()."ou des problèmes de ".$libs if $libs ne '';
 
 	my $these_widths = "width: 24ex";
 
@@ -896,7 +896,7 @@ sub make_top_row {
 						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)) {
-		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:16ex",
+		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:22ex",
 		                         -value=>$r->maketext("Show all paths"),
 								 -id =>"toggle_paths",
 								 -onClick=>'return togglepaths()');
@@ -1006,9 +1006,9 @@ sub make_data_row {
 		my $numchild = scalar(@{$sourceFileData->{children}});
 		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
-		$mltstart = "<tr><td><table id='mlt-table$cnt' style='border:1px solid black' width='100%'><tr><td>\n";
+		$mltstart = "<table style='border:1px solid black' width='100%'><tr><td>\n";
 	}
-	$mltend = "</td></tr></table></td></tr>\n" if($mltnumleft==0);
+	$mltend = "</td></tr></table>\n" if($mltnumleft==0);
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
 
@@ -1030,12 +1030,12 @@ sub make_data_row {
 
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
-	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
+        $mltstart,
 		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
 		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
-		      -value=>"Add",
+		      -value=>$r->maketext("Add"),
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
@@ -1051,9 +1051,9 @@ sub make_data_row {
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
-		CGI::div($problem_output)
+		CGI::div($problem_output),
+        $mltend
 	));
-	print $mltend;
 }
 
 sub clear_default {
@@ -1505,8 +1505,7 @@ sub pre_header_initialize {
 
 
 sub title {
-	my ($self) = @_;
-	return $self->r->maketext("Library Browser");
+	return "Choisir des problèmes";
 }
 
 # hide view options panel since it distracts from SetMaker's built-in view options
@@ -1535,7 +1534,7 @@ sub head {
   print "\n";
 	print qq{
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-		   <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
   print "\n";
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
@@ -1563,7 +1562,7 @@ sub body {
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		print "User $userName returned " . 
-			$authz->hasPermissions($userName, "modify_problem_sets") . 
+			$authz->hasPermissions($user, "modify_problem_sets") . 
 	" for permission";
 		return(CGI::div({class=>'ResultsWithError'},
 		CGI::em("You are not authorized to access the Instructor tools.")));
@@ -1658,15 +1657,15 @@ sub body {
 	my ($next_button, $prev_button) = ("", "");
 	if ($first_index > 0) {
 		$prev_button = CGI::submit(-name=>"prev_page", -style=>"width:15ex",
-						 -value=>"Previous page");
+						 -value=>$r->maketext("Previous page"));
 	}
 	if ((1+$last_index)<scalar(@pg_files)) {
 		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
-						 -value=>"Next page");
+						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)>0) {
-		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." of ".CGI::span({-id=>'totalshown'}, $total_probs).
-			" shown.", $prev_button, " ", $next_button,
+		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." de ".CGI::span({-id=>'totalshown'}, $total_probs).
+			" affichés.", $prev_button, " ", $next_button,
 		);
 	}
 	#	 }

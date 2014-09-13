@@ -202,7 +202,7 @@ sub body {
 					),
 				),
 				CGI::Tr(CGI::td({colspan =>2,align=>'center'},
-					CGI::input({type=>'submit',value=>'Score selected set(s) and save to: ',name=>'score-sets'}),
+					CGI::input({type=>'submit', value=>$r->maketext('Score selected set(s) and save to:'), name=>'score-sets'}),
 					CGI::input({type=>'text', name=>'scoringFileName', size=>'40',value=>"$scoringFileName"})
 				)),
 			
@@ -214,7 +214,7 @@ sub body {
 	if ($authz->hasPermissions($user, "score_sets")) {
 		my @selected = $r->param('selectedSet');
 		if (@selected) {
-			print CGI::p($r->maketext("All of these files will also be made available for mail merge."));
+			print CGI::p("All of these files will also be made available for mail merge");
 		} 
 		foreach my $setID (@selected) {
 	
@@ -236,7 +236,7 @@ sub body {
 			}
 		}
 		if (-f "$scoringDir/$scoringFileName") {
-			print CGI::h2($r->maketext("Totals"));
+			print CGI::h2("Totals");
 			#print CGI::a({href=>"../scoringDownload/?getFile=${courseName}_totals.csv&".$self->url_authen_args}, "${courseName}_totals.csv");
 			print CGI::a({href=>$self->systemLink($scoringDownloadPage,
 					               params=>{getFile => "$scoringFileName" } )}, "$scoringFileName");

@@ -45,6 +45,7 @@ use strict;
 use warnings;
 use Carp;
 #use CGI qw(-nosticky *ul *li escapeHTML);
+use utf8;
 use WeBWorK::CGI;
 use WeBWorK::File::Scoring qw/parse_scoring_file/;
 use Date::Format;
@@ -468,7 +469,7 @@ sub header {
 	my $self = shift;
 	my $r = $self->r;
 	
-	$r->content_type("text/html; charset=utf-8");
+	$r->content_type("text/html; charset=UTF-8");
 	$r->send_http_header unless MP2;
 	return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 }
@@ -621,11 +622,13 @@ sub links {
 	# experimental subroutine for generating links, to clean up the rest of the
 	# code. ignore for now. (this is a closure over $self.)
 	my $makelink = sub {
+		use utf8;
 		my ($module, %options) = @_;
 		
 		my $urlpath_args = $options{urlpath_args} || {};
 		my $systemlink_args = $options{systemlink_args} || {};
-		my $text = HTML::Entities::encode_entities($options{text});
+		#my $text = HTML::Entities::encode_entities($options{text});
+		my $text = HTML::Entities::encode_entities($options{text},"<>&");
 		my $active = $options{active};
 		my %target = ($options{target} ? (target => $options{target}) : ());
 		
@@ -726,6 +729,7 @@ sub links {
 					print CGI::start_ul();
 					print CGI::start_li(); # $problemID
 					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $problemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);					
+					#print &$makelink("${pfx}Problem", text=>"Problème $problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
 					print CGI::end_li(); # end $problemID
 					print CGI::end_ul();
 				    print CGI::end_li();
@@ -811,6 +815,7 @@ sub links {
 				}
 				
 				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+				#print CGI::li(&$makelink("${pfx}SetMaker", text=>"Choisir des problèmes", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser1};
 				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser2};
@@ -2069,19 +2074,6 @@ sub underscore2nbsp {
 	my ($str) = @_;
 	return unless defined $str;
 	$str =~ s/_/&nbsp;/g;
-	return $str;
-}
-
-=item underscore2sp($string)
-
-A copy of $string is returned with each underscore character replaced by a space entity.
-
-=cut
-
-sub underscore2sp {
-	my ($str) = @_;
-	return unless defined $str;
-	$str =~ s/_/ /g;
 	return $str;
 }
 
