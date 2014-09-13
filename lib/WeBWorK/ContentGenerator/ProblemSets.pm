@@ -225,11 +225,13 @@ sub body {
 	print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.", "data-original-title"=>"Homework Sets", "data-placement"=>"bottom"}, $r->maketext("Homework Sets")));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
+		    CGI::th(),
 		    CGI::th({-scope=>"col"},$nameHeader),
 		    CGI::th({-scope=>"col"},$statusHeader),
 	        );
 	} else {
 	    print CGI::Tr(
+		    CGI::th(),
 		    CGI::th({-scope=>"col"},$nameHeader),
 		    CGI::th({-scope=>"col"},$r->maketext("Test Score")),
 		    CGI::th({-scope=>"col"},$r->maketext("Test Date")),
@@ -544,32 +546,26 @@ sub setListRow {
 	
 	if ($multiSet) {
 		if ( $gwtype < 2 ) {
-			$control = WeBWorK::CGI_labeled_input(
+		    $control = CGI::input({
 				-type=>"checkbox",
-				-id=>$name . ($gwtype ? ",v" . $set->version_id : ''),
-				-label_text=>$interactive,
-				-input_attr=>{
-					-name=>"selected_sets",
-					-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
-					}
-			);
+				-id=>$name . ($gwtype ? ",v" . $set->version_id : ''), 
+				-name=>"selected_sets",
+				-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
+					  });
 		} else {
-			$control = $interactive;
+		    $control = '';
 		}
 	} else {
 		if ( $gwtype < 2 ) {
 			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
-			$control = WeBWorK::CGI_labeled_input(
-				-type=>"radio",
-				-id=>$n,
-				-label_text=>$interactive,
-				-input_attr=>{
-					-name=>"selected_sets",
-					-value=>$n
-					}
-			);
+			$control = CGI::input({
+			    -type=>"radio",
+			    -id=>$n,
+			    -name=>"selected_sets",
+			    -value=>$n
+					      });
 		} else {
-			$control = $interactive;
+		    $control = '';
 		}
 	}
 
@@ -579,8 +575,8 @@ sub setListRow {
 	
 # check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {
-	    return CGI::Tr(CGI::td([
-			     $control,
+	    return CGI::Tr(CGI::td([ $control,
+			     $interactive,
 		             $status,
 	    ]));
 	} else {
@@ -619,6 +615,7 @@ sub setListRow {
 		}
 		return CGI::Tr(CGI::td([
 		                     $control,
+				     $interactive,
 		                     $score,
 		                     $startTime,
 		                     $status,
