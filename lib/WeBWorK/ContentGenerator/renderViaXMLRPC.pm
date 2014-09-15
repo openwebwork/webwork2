@@ -154,9 +154,11 @@ sub pre_header_initialize {
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
 	$xmlrpc_client->{displayMode}     = DISPLAYMODE();
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
-#	$xmlrpc_client->{password}        = $XML_PASSWORD;
+	$xmlrpc_client->{password}        = $XML_PASSWORD;
 	$xmlrpc_client->{session_key}     = $inputs_ref{session_key};
 	$xmlrpc_client->{courseID}        = $inputs_ref{courseID};
+	$xmlrpc_client->{outputformat}    = $inputs_ref{outputformat};
+	$xmlrpc_client->{sourceFilePath}  = $inputs_ref{sourceFilePath};
 	
 
 	$xmlrpc_client->{inputs_ref} = \%inputs_ref;
@@ -170,7 +172,7 @@ sub pre_header_initialize {
 	#
 	##############################
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $xmlrpc_client->{inputs_ref}) )    {
-		$self->{output} = $xmlrpc_client->formatRenderedProblem;
+			$self->{output} = $xmlrpc_client->formatRenderedProblem;
 	} else {
 		$self->{output} = $xmlrpc_client->{output};  # error report
 	}

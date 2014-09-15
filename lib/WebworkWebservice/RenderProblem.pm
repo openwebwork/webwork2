@@ -336,11 +336,12 @@ sub renderProblem {
 		$problemRecord->last_answer($lastAnswer);
 	}
 	# initialize problem source
+	# handle alias "path";
 	$rh->{sourceFilePath} = $rh->{path} unless defined $rh->{sourceFilePath};
 	if ($UNIT_TESTS_ON){
 			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
 			print STDERR "RenderProblem.pm: source file is ", $rh->{sourceFilePath},"\n";
-			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
+			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source}) and $rh->{source};
 	}	
 
 
@@ -354,12 +355,12 @@ sub renderProblem {
 		$problemRecord->source_file($rh->{envir}->{fileName}) if defined $rh->{envir}->{fileName};
   	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =~/\S/)  {
   	    $problemRecord->source_file($rh->{sourceFilePath});
-  	    warn "reading source from ", $rh->{sourceFilePath};
+  	    warn "reading source from ", $rh->{sourceFilePath} if $UNIT_TESTS_ON;
   	    $problem_source = WeBWorK::PG::IO::read_whole_file($ce->{courseDirs}->{templates}.'/'.$rh->{sourceFilePath});
   	    #warn "source is ", $problem_source;
   	    $r_problem_source = \$problem_source;
-  	}
-	$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
+		$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
+	}
 	if ($UNIT_TESTS_ON){
 			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
 			print STDERR "RenderProblem.pm: source file is ", $problemRecord->source_file,"\n";

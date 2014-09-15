@@ -457,6 +457,7 @@ sub formatRenderedProblem {
 	}
 	my $rh_answers        = $rh_result->{answers};
 	my $encodedSource     = $self->{encodedSource}||'encodedSourceIsMissing';
+	my $sourceFilePath    = $self->{sourceFilePath};
 	my $warnings          = '';
 	#################################################
 	# regular Perl warning messages generated with warn
@@ -494,20 +495,36 @@ sub formatRenderedProblem {
     
     my $fileName = $self->{input}->{envir}->{fileName} || "Can't find file name";
 	# collect answers
+	#####################################################
+	# determine whether any answers were submitted
+	# and create answer template if they have been
+	my $answerssubmitted =""; 
 	my $answerTemplate    = q{<hr>ANSWERS <table border="3" align="center">};
 	my $problemNumber     = 1;
     foreach my $key (sort  keys %{$rh_answers}) {
+        $answerssubmitted .= $rh_answers->{$key}->{original_student_ans};
     	$answerTemplate  .= $self->formatAnswerRow($rh_answers->{$key}, $problemNumber++);
     }
 	$answerTemplate      .= q{</table> <hr>};
+    $answerTemplate = "" unless $answerssubmitted;
+    #################################################
 
 	my $test = pretty_print($rh_result);
+	$self->{outputformats}={};
 	my $XML_URL      = $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
 	my $session_key      =  $rh_result->{session_key};
-	my $problemTemplate = <<ENDPROBLEMTEMPLATE;
+	
+	
+	
+	###########################
+	# Define problem templates
+	###########################
+	#FIXME -- this can be improved to use substitution trick 
+	# that way only the chosen problemTemplate will be interpolated
+	$self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 
 
 <html>
@@ -522,7 +539,7 @@ sub formatRenderedProblem {
 		    <form action="$FORM_ACTION_URL" method="post">
 			$problemText
 	       <input type="hidden" name="answersSubmitted" value="1"> 
-	       <input type="hidden" name="problemAddress" value="probSource"> 
+		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
 	       <input type="hidden" name="problemSeed" value="1234"> 
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
@@ -547,10 +564,43 @@ $internal_debug_messages
 
 ENDPROBLEMTEMPLATE
 
+	$self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 
 
-	$problemTemplate;
+<html>
+<head>
+<base href="$XML_URL">
+<title>$XML_URL WeBWorK Editor using host $XML_URL</title>
+</head>
+<body>
+		    $answerTemplate
+		    <form action="$FORM_ACTION_URL" method="post">
+			$problemText
+	       <input type="hidden" name="answersSubmitted" value="1"> 
+	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
+	       <input type="hidden" name="problemSource" value="$encodedSource"> 
+	       <input type="hidden" name="problemSeed" value="1234"> 
+	       <input type="hidden" name="pathToProblemFile" value="$fileName">
+	       <input type="hidden" name=courseName value="$courseID">
+	       <input type="hidden" name=courseID value="$courseID">
+	       <input type="hidden" name="userID" value="$userID">
+	       <input type="hidden" name="session_key" value="$session_key">
+	       <input type="hidden" name="outputformat" value="simple">
+	       <p><input type="submit" name="submit" value="submit answers"></p>
+	     </form>
+</body>
+</html>
+
+ENDPROBLEMTEMPLATE
+
+#  choose problem template
+    if (defined($self->{outputformats}->{$self->{outputformat}}) ) {
+    	return $self->{outputformats}->{$self->{outputformat}};
+    } else {
+    	return $self->{outputformats}->{standard};
+    }
 }
+
 
 
 1;
