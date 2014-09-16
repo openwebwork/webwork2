@@ -4,7 +4,7 @@
 
 /* update margins to reflect missing left column */
 #content {
-	margin: 1em 
+	margin: 1em 1em 1em 0; 
 }
 
 div.gwMessage { 
