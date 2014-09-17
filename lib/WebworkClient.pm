@@ -456,7 +456,7 @@ sub formatRenderedProblem {
 		$problemText       = "Unable to decode problem text",format_hash_ref($rh_result);
 	}
 	my $rh_answers        = $rh_result->{answers};
-	my $encodedSource     = $self->{encodedSource}||'encodedSourceIsMissing';
+	my $encodedSource     = $self->{encodedSource}||'';
 	my $sourceFilePath    = $self->{sourceFilePath};
 	my $warnings          = '';
 	#################################################
@@ -493,7 +493,7 @@ sub formatRenderedProblem {
     my $internal_debug_messages = $rh_result->{internal_debug_messages} || [];
     $internal_debug_messages = join("<br/>\n", @{ $internal_debug_messages  } );
     
-    my $fileName = $self->{input}->{envir}->{fileName} || "Can't find file name";
+    my $fileName = $self->{input}->{envir}->{fileName} || "";
 	# collect answers
 	#####################################################
 	# determine whether any answers were submitted
