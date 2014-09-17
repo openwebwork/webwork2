@@ -1670,7 +1670,7 @@ sub body {
 		);
 	}
 	#	 }
-	print CGI::endform(), "\n";
+	print CGI::end_form(), "\n";
 
 	return "";	
 }
