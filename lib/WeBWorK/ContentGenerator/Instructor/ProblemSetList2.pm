@@ -1186,6 +1186,7 @@ sub create_handler {
 	my $newSetID = $actionParams->{"action.create.name"}->[0];
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: no set name specified!")) unless $newSetID =~ /\S/;
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Set [_1] exists.  No set created", $newSetID)) if $db->existsGlobalSet($newSetID);
+	return CGI::div({class => "ResultsWithError"}, $r->maketext("You entered an invalid chracter, please make sure to not use spaces.")) if (index ($newSetID, " ") != -1); 
 	my $newSetRecord = $db->newGlobalSet;
 	my $oldSetID = $self->{selectedSetIDs}->[0];
 
