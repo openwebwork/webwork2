@@ -195,7 +195,7 @@ sub body {
 				push (@problemNumbers, $problem);
 			    }
 			    # in this case the number is a singlton
-			} elsif ($numberRange == $problem) {
+			} elsif ($numberRange eq "*" || $numberRange == $problem) {
 			    push (@problemNumbers, $problem);
 			}
 		    }
