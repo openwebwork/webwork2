@@ -631,7 +631,8 @@ sub body {
 	function updateTarget() {
 	    var inWindow = document.getElementById("newWindow").checked;
 	    if (inWindow) {
-		if (document.getElementById("save_as_form_id").checked) {
+		if (document.getElementById("save_as_form_id") && 
+		    document.getElementById("save_as_form_id").checked) {
 		    document.getElementById("editor").target = "WW_New_Edit";
 		} else {
 		    document.getElementById("editor").target = "WW_View";
