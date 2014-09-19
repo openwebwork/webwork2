@@ -73,7 +73,6 @@ my @modulesList = qw(
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
 	Mail::Sender
-        Math::Prime::Util
 	MIME::Base64
 	Net::IP
 	Net::LDAPS

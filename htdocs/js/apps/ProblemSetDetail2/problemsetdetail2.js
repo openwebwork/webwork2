@@ -19,7 +19,7 @@ $(function() {
 	tabSize: 30,
 	isTree: true,
 	startCollapsed: true,
-	maxLevels: 7,
+	maxLevels: 6,
 	
     });
     
