@@ -1485,48 +1485,11 @@ sub is_jitar_problem_closed {
 }
 
 
-# a helper method to sort jitar problems.  Takes two array references to 
-# the tree sequence and returns 0, 1, -1 like the comparison operator. 
-sub jitar_id_sort {
-    my ($ar, $br) = @_;
-
-    # dereference the arrays
-    my @a = @$ar;
-    my @b = @$br;
-
-    # if the first index number is not the same then we order numerically 
-    # based off what the top level element is
-    if ($a[0] != $b[0]) {
-	return ($a[0] <=> $b[0]);
-    }
-
-    # get rid of the first index
-    shift @a;
-    shift @b;
-
-    # if neither sequence has any remaining indicies then all of 
-    # the indicies were the same so they are equal, otherwise
-    if (!@a && !@b) {
-	return 0;
-    # if one sequence is empty then it is "larger than" the other since it
-    # is a parent
-    } elsif (!@a) {
-	return -1;
-    } elsif (!@b) {
-	return 1;
-    # of both still have elements then recursively call this subroutine
-    } else {
-	return jitar_id_sort(\@a,\@b);
-    }
-}
-
 # this will order an array of problems or problem ids so that it is 
 # in the correct jitar order:  1 1.1 1.2 2 3 etc...
 sub jitar_order_problems {
     my @problems = @_;
- 
-    my %problemSeqs;
-    
+
     # @problems can either be an array of ids or an array of problem objects
     # so we need to check which it is and do the appropriate thing. 
     my @problemIDs = @problems;
@@ -1535,17 +1498,11 @@ sub jitar_order_problems {
 	@problemIDs = map {$_->problem_id} @problems;
     }
 
-    # build a hash of tree index sequences for each problem 
-    for (my $i=0; $i<=$#problemIDs; $i++) {
-	my @seq = jitar_id_to_seq($problemIDs[$i]);
-	$problemSeqs{$problemIDs[$i]} = \@seq;
-    }
-    
-    # sort the problems using jitar_id_sort
+    # sort the problems
     if (ref($problems[0]) =~ /Problem/) {
-	return sort {jitar_id_sort($problemSeqs{$a->problem_id},$problemSeqs{$b->problem_id})} @problems;
+	return sort {$a->problem_id <=> $b->problem_id} @problems;
     } else {
-	return sort {jitar_id_sort($problemSeqs{$a},$problemSeqs{$b})} @problems;
+	return sort @problems;
     }
     
 }
