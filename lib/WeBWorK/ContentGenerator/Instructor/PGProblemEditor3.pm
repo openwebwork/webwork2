@@ -654,7 +654,8 @@ sub body {
 		  if (inWindow) {
 		      target = "WW_View";
 		  } 
-		  else if (document.getElementById('save_as_form_id').checked
+		  else if ((document.getElementById('save_as_form_id') &&
+			   document.getElementById('save_as_form_id').checked)
 		      || (document.getElementById('revert_form_id') && 
 			  document.getElementById('revert_form_id').checked ))
 		  {

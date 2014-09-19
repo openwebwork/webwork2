@@ -212,7 +212,7 @@ sub body {
 			print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
 		}
 	
-		print CGI::startform({-method=>"POST", -action=>$r->uri, -id=>"login_form"});
+		print CGI::start_form({-method=>"POST", -action=>$r->uri, -id=>"login_form"});
 
 	
 		# preserve the form data posted to the requested URI
@@ -264,7 +264,7 @@ sub body {
 		print CGI::br();
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-value=>$r->maketext("Continue")});
 		print CGI::br();
-#		print CGI::endform();
+#		print CGI::end_form();
 	
 		# figure out if there are any valid practice users
 		# DBFIXME do this with a WHERE clause
@@ -281,7 +281,7 @@ sub body {
 		# form for guest login (it cant' be two forms because of
 		#  duplicate ids
 		if (@allowedGuestUsers) {
-#			print CGI::startform({-method=>"POST", -action=>$r->uri});
+#			print CGI::start_form({-method=>"POST", -action=>$r->uri});
 		
 			# preserve the form data posted to the requested URI
 			my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
@@ -290,7 +290,7 @@ sub body {
 			print CGI::p($r->maketext("_GUEST_LOGIN_MESSAGE", CGI::b($r->maketext("Guest Login"))));
 			print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>$r->maketext("Guest Login")});
 	    
-	    		print CGI::endform();
+	    		print CGI::end_form();
 		}
 	}
 	return "";

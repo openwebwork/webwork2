@@ -2202,7 +2202,7 @@ sub output_past_answer_button{
 			CGI::p(
 				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",
-			CGI::endform();
+			CGI::end_form();
 	}
 	
 	return "";
