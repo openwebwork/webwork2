@@ -210,7 +210,7 @@ sub body {
 		  m:^Apache/(\d\.\d+\.\d+):) {
 		    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
 		}
-		
+
 		# If its apache 2.4 then the API has changed
 		if ($APACHE24) {
 		    $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
