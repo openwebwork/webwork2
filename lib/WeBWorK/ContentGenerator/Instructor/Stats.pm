@@ -559,6 +559,7 @@ my ($plotwindowwidth,$plotwindowheight) = ($numberofproblems*($barwidth+2*$barse
 if ( $plotwindowwidth < 450 ) { $plotwindowwidth = 450; }
 my $ylabelsep = 4; # pixels
 my ($imagewidth,$imageheight) = ($leftmargin+$plotwindowwidth+$rightmargin, $topmargin+$plotwindowheight+$bottommargin); # pixels
+$imagewidth+=200 if $isJitarSet;
 my ($titlexpixel,$titleypixel) = ($leftmargin + sprintf("%d",$plotwindowwidth/2), $topmargin-10); # pixels
 my ($xaxislabelxpixel,$xaxislabelypixel) = ($titlexpixel,$imageheight-5); # pixels
 my $yaxislabelxpixel = $leftmargin-4; # pixel
@@ -587,10 +588,10 @@ foreach my $i (0..5) {
 }
 
 my $yaxisruleypixel = 0;
-my $yaxisrulerightxpixel = $leftmargin + $plotwindowwidth;
+my $yaxisrulerightxpixel = $leftmargin + $plotwindowwidth - $rightmargin;
 foreach my $i (1..9) {
     $yaxisruleypixel = $topmargin + ($i * sprintf("%d",$plotwindowheight/10));
-    $svg = $svg . "<line id=\"yline90\"  x1=\"". $leftmargin ."\" y1=\"". $yaxisruleypixel ."\"  x2=\"". $yaxisrulerightxpixel ."\" y2=\"". $yaxisruleypixel ."\"  style=\"stroke:bbbbbb;stroke-width:1;stroke-opacity:1\" />\n";
+    $svg = $svg . "<line id=\"yline90\"  x1=\"". $leftmargin ."\" y1=\"". $yaxisruleypixel ."\"  x2=\"". $yaxisrulerightxpixel ."\" y2=\"". $yaxisruleypixel ."\"  style=\"stroke:#bbbbbb;stroke-width:1;stroke-opacity:1\" />\n";
 }
 
 my $linkstring = "";
@@ -624,12 +625,18 @@ for (my $i=0; $i<=$#problemIDs; $i++) {
     
     $problabelxpixel = $leftmargin + $i * $totalbarwidth + $barsep + sprintf("%d",$totalbarwidth/2);
     # $problabelypixel = $topmargin + $plotwindowheight - $barheight;
-    $svg = $svg . "<a xlink:href=\"". $linkstring ."\" target=\"_blank\"><rect id=\"bar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,153,198)\" /><text id=\"problem". $probID ."\" x=\"". $problabelxpixel ."\" y=\"". $problabelypixel ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">". $prettyProblemIDs{$probID} ."</text></a>\n";	
+    my $prettyID = $prettyProblemIDs{$probID};    
+
+    if (length($prettyID) > 4) {
+	$prettyID = '##';
+    }	
+
+    $svg = $svg . "<a xlink:href=\"". $linkstring ."\" target=\"_blank\"><rect id=\"bar". $probID ."\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"". $barwidth ."\" height=\"". $barheight ."\" fill=\"rgb(0,153,198)\" /><text id=\"problem". $probID ."\" x=\"". $problabelxpixel ."\" y=\"". $problabelypixel ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"middle\">". $prettyID ."</text></a>\n";	
 }
 
 	# print a legend if its a jitar set
 	if ($isJitarSet) {
-	    $barxpixel = $barxpixel + $barwidth + 15;
+	    $barxpixel = $leftmargin+$plotwindowwidth;
 	    $barypixel = 55;
 	    $svg = $svg . "<rect id=\"legend1\" x=\"". $barxpixel ."\" y=\"". $barypixel ."\" width=\"10\" height=\"10\" fill=\"rgb(0,153,198)\" />\n";
 	    $svg = $svg . "<text id=\"legend1lab\" x=\"". ($barxpixel+15) ."\" y=\"". ($barypixel+10) ."\" font-family=\"sans-serif\" font-size=\"12\" fill=\"black\" text-anchor=\"start\">".$r->maketext("Correct Status")."</text>";
