@@ -177,7 +177,8 @@ sub body {
 		
 	    }
 
-	    next unless @setNames;
+	    return CGI::span({class=>'ResultsWithError'}, $r->maketext('No users have sets matching the given set id.'))
+	    unless @setNames;
 
 	    foreach my $setName (@setNames) {
 	

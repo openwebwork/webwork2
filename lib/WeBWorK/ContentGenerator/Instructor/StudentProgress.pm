@@ -105,7 +105,7 @@ sub siblings {
 	                                        courseID => $courseID);
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2("Student Progress");
+	print CGI::h2($r->maketext("Student Progress"));
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
@@ -798,14 +798,14 @@ sub displaySets {
 	print
 #		CGI::br(),
 		CGI::br(),
-		CGI::p({},$r->maketext('A period (.) indicates a problem has not been attempted, a &quot;C&quot; indicates a problem has been answered 100% correctly, and a number from 0 to 99 indicates the percentage of partial credit earned. The number on the second line gives the number of incorrect attempts.'),
+		CGI::p({},$r->maketext("A period (.) indicates a problem has not been attempted, a \"C\" indicates a problem has been answered 100% correctly, and a number from 0 to 99 indicates the percentage of partial credit earned. The number on the second line gives the number of incorrect attempts.  "),
 #		'The success indicator,' ,CGI::i('Ind'),', for each student is calculated as',
 #		CGI::br(),
 #		'100*(totalNumberOfCorrectProblems / totalNumberOfProblems)^2 / (AvgNumberOfAttemptsPerProblem)',CGI::br(),
 #		'or 0 if there are no attempts.'
 		),
 		CGI::br(),
-		$r->maketext("Click on a student's name to see the student's version of the homework set. Click heading to sort table."),
+		$r->maketext("Click on a student's name to see the student's version of the homework set.    Click heading to sort table."),
 		CGI::br(),
 		CGI::br(),
 		defined($primary_sort_method_name) ?" Entries are sorted by $display_sort_method_name{$primary_sort_method_name}":'',
@@ -823,16 +823,16 @@ sub displaySets {
 	    print
 		CGI::start_table({-class=>"progress-table", -border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
-			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},$r->maketext('First')).
-			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},$r->maketext('Last')).CGI::br().
-			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'email_address', %past_sort_methods })},'Email'),
+			[$r->maketext("Name").CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},$r->maketext("First")).
+			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},$r->maketext("Last")).CGI::br().
+			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'email_address', %past_sort_methods })},$r->maketext("Email")),
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %past_sort_methods})},$r->maketext("Score")),
 			$r->maketext("Out Of"),
 #			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %past_sort_methods})},'Ind'),
 			$r->maketext("Problems").CGI::br().$problem_header,
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},$r->maketext('Section')),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},$r->maketext('Recitation')),
-			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %past_sort_methods})},'Login Name'),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %past_sort_methods})},$r->maketext("Section")),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %past_sort_methods})},$r->maketext("Recitation")),
+			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %past_sort_methods})},$r->maketext("Login Name")),
 			])
 
 		),
@@ -852,9 +852,9 @@ sub displaySets {
 		);
 		my %params = (%past_sort_methods, %display_options);
 	    my @columnHdrs = ();
-	    push( @columnHdrs, 'Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %params})},$r->maketext('First')).
+	    push( @columnHdrs, $r->maketext('Name').CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %params})},$r->maketext('First')).
 		  '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %params })},$r->maketext('Last')) );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %params})},'Score') );
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %params})},$r->maketext("Score")) );
 	    push( @columnHdrs, $r->maketext('Out Of') );
 	    push( @columnHdrs, 'Date' ) if ( $showColumns{ 'date' } );
 	    push( @columnHdrs, 'TestTime' ) if ( $showColumns{ 'testtime' } );
@@ -862,11 +862,11 @@ sub displaySets {
 #		if ( $showColumns{ 'index' } );
 	    push( @columnHdrs, $r->maketext("Problems").CGI::br().$problem_header )
 		if ( $showColumns{ 'problems' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %params})},'Section') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %params})},$r->maketext("Section")) )
 		if ( $showColumns{ 'section' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %params})},'Recitation') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %params})},$r->maketext("Recitation")) )
 		if ( $showColumns{ 'recit' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %params})},'Login Name') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %params})},$r->maketext("Login Name")) )
 		if ( $showColumns{ 'login' } );
 
 	    print CGI::start_table({-class=>"progress-table", -border=>5,style=>'font-size:smaller'}),

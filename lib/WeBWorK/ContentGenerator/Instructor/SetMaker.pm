@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -502,7 +502,7 @@ sub browse_library_panel1 {
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 		CGI::start_table(),
 			CGI::Tr({},
-				CGI::td([$r->maketext("Chapter:"),
+				CGI::td(["Chapter:",
 					CGI::popup_menu(-name=> 'library_chapters', 
 					                -values=>\@chaps,
 					                -default=> $chapter_selected,
@@ -510,7 +510,7 @@ sub browse_library_panel1 {
 					),
 					CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
 			CGI::Tr({},
-				CGI::td($r->maketext("Section:")),
+				CGI::td("Section:"),
 				CGI::td({-colspan=>2},
 					CGI::popup_menu(-name=> 'library_sections', 
 					                -values=>\@sects,
@@ -657,9 +657,9 @@ sub browse_library_panel2adv {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching WeBWorK problems";
+		$count_line = $r->maketext("There are no matching WeBWorK problems");
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problems";
+		$count_line = $r->maketext("There are [_1] matching WeBWorK problems", $count_line);
 	}
 
 	# Formatting level checkboxes by hand
@@ -896,7 +896,7 @@ sub make_top_row {
 						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)) {
-		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:16ex",
+		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:22ex",
 		                         -value=>$r->maketext("Show all paths"),
 								 -id =>"toggle_paths",
 								 -onClick=>'return togglepaths()');
@@ -1030,12 +1030,12 @@ sub make_data_row {
 
 	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
 
-	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
+        $mltstart,
 		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
 		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
-		      -value=>"Add",
+		      -value=>$r->maketext("Add"),
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
@@ -1535,7 +1535,7 @@ sub head {
   print "\n";
 	print qq{
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-		   <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
+           <script type="text/javascript" src="$webwork_htdocs_url/js/vendor/other/knowl.js"></script>};
   print "\n";
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
   print "\n";
@@ -1658,15 +1658,17 @@ sub body {
 	my ($next_button, $prev_button) = ("", "");
 	if ($first_index > 0) {
 		$prev_button = CGI::submit(-name=>"prev_page", -style=>"width:15ex",
-						 -value=>"Previous page");
+						 -value=>$r->maketext("Previous page"));
 	}
 	if ((1+$last_index)<scalar(@pg_files)) {
 		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
-						 -value=>"Next page");
+						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)>0) {
-		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." of ".CGI::span({-id=>'totalshown'}, $total_probs).
-			" shown.", $prev_button, " ", $next_button,
+		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1)).$r->maketext(" of ").CGI::span({-id=>'totalshown'}, $total_probs).
+			$r->maketext(" shown."), $prev_button, " ", $next_button,
+#		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." of ".CGI::span({-id=>'totalshown'}, $total_probs).
+	#		" shown.", $prev_button, " ", $next_button,
 		);
 	}
 	#	 }
