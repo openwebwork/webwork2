@@ -1036,33 +1036,33 @@ msgstr "Devoirs"
 #
 #: ContentGenerator/Problem.pm:1063
 msgid "Show Hints"
-msgstr "Afficher les indices"
+msgstr "Voir les indices"
 
 # avant: msgstr "Recourir à des indices"
 #
 #: ContentGenerator/Problem.pm:1370
 msgid "Show Past Answers"
-msgstr "Afficher les réponses précédentes"
+msgstr "Voir les réponses précédentes"
 
 #
 #: ContentGenerator/Problem.pm:1082
 msgid "Show Solutions"
-msgstr "Afficher les solutions"
+msgstr "Voir les solutions"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:645
 msgid "Show Which Users?"
-msgstr "Afficher quels utilisateurs?"
+msgstr "Voir quels utilisateurs?"
 
 #
 #: ContentGenerator/Problem.pm:1044
 msgid "Show correct answers"
-msgstr "Afficher les bonnes réponses"
+msgstr "Voir les bonnes réponses"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:683
 msgid "Show which sets?"
-msgstr "Afficher quels devoirs?"
+msgstr "Voir quels devoirs?"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:497
@@ -2784,7 +2784,7 @@ msgid "E-mail Instructor"
 msgstr "Envoyer un courriel à l'enseignant"
 
 #
-msgid "Send E-mail:"
+msgid "Send E-mail"
 msgstr "Envoyer"
 
 #
@@ -2945,7 +2945,7 @@ msgid "Orig. Lib. Browser"
 msgstr "Navig. orig. lib."
 
 msgid "Show saved answers?"
-msgstr "Montrer les réponses enregistrés ?"
+msgstr "Voir les réponses enregistrés ?"
 
 # /home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Problem.pm
 msgid "Ungraded"
@@ -3270,7 +3270,7 @@ msgid "set"
 msgstr "devoir"
 
 msgid "Act as:"
-msgstr "Est:"
+msgstr "Jouer le rôle de :"
 
 msgid "Out Of"
 msgstr "Sur un total de"
@@ -3281,25 +3281,23 @@ msgstr "Prénom"
 msgid "Last"
 msgstr "Nom de famille"
 
-#, fuzzy
 msgid ""
 "A period (.) indicates a problem has not been attempted, a \"C\" indicates a "
 "problem has been answered 100% correctly, and a number from 0 to 99 "
 "indicates the percentage of partial credit earned. The number on the second "
 "line gives the number of incorrect attempts.  "
 msgstr ""
-"A period (.) indicates a problem has not been attempted, a \"C\" indicates a "
-"problem has been answered 100% correctly, and a number from 0 to 99 "
-"indicates the percentage of partial credit earned. The number on the second "
-"line gives the number of incorrect attempts.  "
+"Un point (.) indique que le problème n'a pas été tenté, un \"C\" indique que "
+"le problème a été 100 % réussi et un nombre de 0 à 99 indique le pourcentage "
+"des points obtenus. Le nombre en dessous situé dans la deuxième ligne est le "
+"nombre d'essais erronés."
 
-#, fuzzy
 msgid ""
 "Click on a student's name to see the student's version of the homework "
 "set.    Click heading to sort table."
 msgstr ""
-"Click on a student's name to see the student's version of the homework "
-"set.    Click heading to sort table."
+"Cliquez sur le nom de l'étudiant pour voir sa version du devoir. Cliquez sur "
+"le titre de la colonne pour trier le tableau."
 
 # /home/francois/ExtractStrings/lib/WeBWorK/ContentGenerator/Instructor/UserList3.pm
 msgid "number of students not defined"
@@ -3861,7 +3859,7 @@ msgid ""
 "page."
 msgstr ""
 "Cet utilisateurs avec ce niveau de permission ou supérieur peuvent voir le "
-"\"Voir les anciennes réponses\" sur la page du problème."
+"\"Voir les réponses précédentes\" sur la page du problème."
 
 msgid ""
 "When viewing a problem, WeBWorK usually puts the previously submitted answer "
@@ -3968,7 +3966,6 @@ msgstr ""
 "vérivicateur de réponses sera utilisé par défaut."
 
 # traduire "grader"
-#, fuzzy
 msgid ""
 "The Reduced Credit Period (formally called the Reduced Scoring Period) is a "
 "period before the due date during which all additional work done by the "
@@ -4433,3 +4430,168 @@ msgstr "un très grand nombre de devoirs : %1 sur %2"
 #: $count
 msgid "%1 sets"
 msgstr "%1 devoirs"
+
+# ContentGenerator/CourseAdmin (413)
+msgid "Add Course"
+msgstr "Ajouter un cours"
+
+# ContentGenerator/CourseAdmin (416)
+msgid "Rename Course"
+msgstr "Renommer un cours"
+
+# ContentGenerator/CourseAdmin (418)
+msgid "Delete Course"
+msgstr "Supprimer un cours"
+
+# ContentGenerator/CourseAdmin (420)
+msgid "Export Database"
+msgstr "Exporter la base de données"
+
+# ContentGenerator/CourseAdmin (422)
+msgid "Import Database"
+msgstr "Importer la base de données"
+
+# ContentGenerator/CourseAdmin (424)
+msgid "Archive Course"
+msgstr "Archiver un cours"
+
+# ContentGenerator/CourseAdmin (426)
+msgid "Unarchive Course"
+msgstr "Désarchiver un cours"
+
+# ContentGenerator/CourseAdmin (428)
+msgid "Upgrade courses"
+msgstr "Mise à jour de cours"
+
+# ContentGenerator/CourseAdmin (430)
+msgid "Manage Locations"
+msgstr "Manage Locations"
+
+# ContentGenerator/CourseAdmin (432)
+msgid "Hide Inactive courses"
+msgstr "Cacher les cours inactifs"
+
+# ContentGenerator/Instructor/Scoring.pm (217)
+msgid "All of these files will also be made available for mail merge"
+msgstr ""
+"Tous ces fichiers seront également mis à disposition pour le publipostage"
+
+# ContentGenerator/Instructor/Scoring.pm (239)
+msgid "Totals"
+msgstr "Totaux"
+
+# ContentGenerator/Instructor/ShowAnswers.pm (108)
+msgid "Past Answers for"
+msgstr "Réponses précédentes pour"
+
+# ContentGenerator/Instructor/ShowAnswers.pm (108)
+msgid "User:"
+msgstr "Utilisateur :"
+
+msgid "Set:"
+msgstr "Devoir :"
+
+msgid "Problem:"
+msgstr "Problème :"
+
+# ContentGenerator/Instructor/ShowAnswers.pm (213)
+# $studentUser, $setName, $problemNumber
+msgid "Past Answers for %1, set %2, problem %3"
+msgstr "Réponses précédentes pour %1, devoir %2, problème %3"
+
+# ContentGenerator/Instructor/ShowAnswers.pm (214)
+# $studentUser, $setName, $problemNumber
+msgid "No entries for %1, set %2, problem %3"
+msgstr "Aucune donnée pour %1, devoir %2, problème %3"
+
+# ContentGenerator/Instructor/Stats.pm (524)
+msgid "Percentage of Active Students with Correct Answers"
+msgstr "Pourcentage d'étudiants actifs avec des bonnes réponses"
+
+# ContentGenerator/Instructor/Stats.pm (526)
+msgid "Problem Number"
+msgstr "Numéro du problème"
+
+# ContentGenerator/Instructor/Stats.pm (586)
+msgid "Problem #"
+msgstr "Problème #"
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (57)
+#, fuzzy
+msgid "Problems have been assigned to all current users."
+msgstr "Problems have been assigned to all current users."
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (62)
+#, fuzzy
+msgid "Problems for all students have been unassigned."
+msgstr "Problems for all students have been unassigned."
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (65)
+#, fuzzy
+msgid "Problems for selected students have been reassigned."
+msgstr "Problems for selected students have been reassigned."
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (69)
+#, fuzzy
+msgid "No action taken"
+msgstr "No action taken"
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (124)
+#, fuzzy
+msgid "Assign to All Current Users"
+msgstr "Assign to All Current Users"
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (124)
+#, fuzzy
+msgid "This action can take a long time if there are many students."
+msgstr "This action can take a long time if there are many students."
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (126)
+#, fuzzy
+msgid "Do not uncheck students, unless you know what you are doing."
+msgstr "Do not uncheck students, unless you know what you are doing."
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (127)
+#, fuzzy
+msgid "There is NO undo for unassigning students."
+msgstr "There is NO undo for unassigning students."
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (128)
+# $setID
+#, fuzzy
+msgid ""
+"When you unassign by unchecking a student's name, you destroy all of the "
+"data for homework set %1 for this student. You will then need to reassign "
+"the set to these students and they will receive new versions of the "
+"problems. Make sure this is what you want to do before unchecking students."
+msgstr ""
+"When you unassign by unchecking a student's name, you destroy all of the "
+"data for homework set %1 for this student. You will then need to reassign "
+"the set to these students and they will receive new versions of the "
+"problems. Make sure this is what you want to do before unchecking students."
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (132)
+msgid "Assigned"
+msgstr "Assigné"
+
+msgid "Student Name"
+msgstr "Nom de l'étudiant"
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (198)
+msgid "Edit data for "
+msgstr "Éditer les données pour "
+
+# ContentGenerator/Instructor/UsersAssignedToSet.pm (216)
+#, fuzzy
+msgid "Unassign from All Users"
+msgstr "Unassign from All Users"
+
+# ContentGenerator/Instructor/SetMaker.pm (1668)
+msgid " of "
+msgstr " de "
+
+msgid " shown."
+msgstr " affichés."
+
+msgid "Answer Log"
+msgstr "Historique des réponses"

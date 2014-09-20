@@ -79,10 +79,10 @@ sub title {
 	my $type                = $self->{type};
 	my $string              = $r->maketext("Student Progress for")." ".$self->{ce}->{courseName}." ";
 	if ($type eq 'student') {
-		$string             .= "student ".$self->{studentName};
+		$string             .= $r->maketext("student")." ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
 		$string             .= $r->maketext("set")." ".$self->{setName};
-		$string             .= ".&nbsp;&nbsp;&nbsp; Due ". $self->formatDateTime($self->{set_due_date});
+		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ". $self->formatDateTime($self->{set_due_date});
 	}
 	return $string;
 }
@@ -150,8 +150,8 @@ sub body {
 		my $email = $studentRecord->email_address;
 		
 		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			"Section: ", $studentRecord->section, CGI::br(),
-			"Recitation: ", $studentRecord->recitation, CGI::br();
+			$r->maketext("Section").": ", $studentRecord->section, CGI::br(),
+			$r->maketext("Recitation").": ", $studentRecord->recitation, CGI::br();
 		
 		if ($authz->hasPermissions($user, "become_student")) {
 			my $act_as_student_url = $self->systemLink($courseHomePage,

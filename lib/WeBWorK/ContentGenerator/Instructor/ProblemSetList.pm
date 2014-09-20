@@ -453,6 +453,7 @@ sub body {
 		$r->maketext("Due Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
+		$r->maketext("Reduced Credit Enabled") ,
 		$r->maketext("Restrict release by set(s)"),
 		$r->maketext("Score required for release"),
 		$r->maketext("Hide Hints from Students") 
