@@ -74,7 +74,7 @@ use constant SUCCESS => (1 << 2);
 my %problib;	## This is configured in defaults.config
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, '.git' => 1,'achievements' => 1,
+	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, 'achievements' => 1,
 );
 
 sub prepare_activity_entry {
@@ -206,7 +206,7 @@ sub next_prob_group {
 	return -1 if($ind >= $len-1);
 	my $mlt= $pgfiles[$ind]->{morelt} || 0;
 	return $ind+1 if($mlt == 0);
-	while($ind<$len and ($pgfiles[$ind]->{morelt} || 0) == $mlt) {
+	while($ind<$len and defined($pgfiles[$ind]->{morelt}) and $pgfiles[$ind]->{morelt} == $mlt) {
 		$ind++;
 	}
 	return -1 if($ind==$len);
@@ -1006,9 +1006,9 @@ sub make_data_row {
 		my $numchild = scalar(@{$sourceFileData->{children}});
 		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
-		$mltstart = "<table style='border:1px solid black' width='100%'><tr><td>\n";
+		$mltstart = "<tr><td><table id='mlt-table$cnt' style='border:1px solid black' width='100%'><tr><td>\n";
 	}
-	$mltend = "</td></tr></table>\n" if($mltnumleft==0);
+	$mltend = "</td></tr></table></td></tr>\n" if($mltnumleft==0);
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
 
@@ -1051,9 +1051,9 @@ sub make_data_row {
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
-		CGI::div($problem_output),
-        $mltend
+		CGI::div($problem_output)
 	));
+	print $mltend;
 }
 
 sub clear_default {
@@ -1563,7 +1563,7 @@ sub body {
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		print "User $userName returned " . 
-			$authz->hasPermissions($user, "modify_problem_sets") . 
+			$authz->hasPermissions($userName, "modify_problem_sets") . 
 	" for permission";
 		return(CGI::div({class=>'ResultsWithError'},
 		CGI::em("You are not authorized to access the Instructor tools.")));
