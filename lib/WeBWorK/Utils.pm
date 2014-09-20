@@ -1269,20 +1269,20 @@ sub grade_set {
 }	
 
 #takes a tree sequence and returns the jitar id
-#  This id is specially crafted number of the form, in binary
-#  AAAAAAAABBBBBBCCCCCCDDDDEEEEFFFF
+#  This id is specially crafted signed 32 bit integer of the form, in binary
+#  SAAAAAAABBBBBBCCCCCCDDDDEEEEFFFF
 #  Here A is the level 1 index, B is the level 2 index, and 
 #  C, D, E and F are the indexes for levels 3 through 6.  
 #  
-#  Note:  Level 1, 2 and 3 can have indexes up to 125, but for levels 4 through
-#         six you are limited to 15. (Level 1 can be extended to 256 if 
-#         the db is changed to use unsigned ints)
+#  Note:  Level 1 can contain indexes up to 125.  Levels 2 and 3 can contain 
+#         indxes up to 63.  For levels 4 through
+#         six you are limited to 15. 
 
 sub seq_to_jitar_id {
     my @seq = @_;
 
     die("Jitar index 1 must be between 1 and 125") unless 
-	(defined($seq[0]) && $seq[0] < 125);
+	(defined($seq[0]) && $seq[0] < 126);
 
     my $id = $seq[0];
     my $ind;
@@ -1292,31 +1292,25 @@ sub seq_to_jitar_id {
     #shift first index to first two bytes
     $id = $id << $JITAR_SHIFT[0]; 
  
-    #look for second index
-    if (defined($seq[1])) {
-	$ind = $seq[1];	
-	die("Jitar index 2 must be less than 125") unless $ind < 125;
-	
-	#shift index and or it with id to put it in right place
-	$ind = $ind << $JITAR_SHIFT[1];
-	$id = $id | $ind;
-    }
-
-    #look for second index
-    if (defined($seq[2])) {
-	$ind = $seq[2];	
-	die("Jitar index 3 must be less than 125") unless $ind < 125;
-	
-	#shift index and or it with id to put it in right place
-	$ind = $ind << $JITAR_SHIFT[2];
-	$id = $id | $ind;
+    #look for second and third index
+    for (my $i=1; $i<3; $i++) {
+	if (defined($seq[$i])) {
+	    $ind = $seq[$i];	
+	    die("Jitar index ".($i+1)." must be less than 63") 
+		unless $ind < 63;
+	    
+	    #shift index and or it with id to put it in right place
+	    $ind = $ind << $JITAR_SHIFT[$i];
+	    $id = $id | $ind;
+	}
     }
 
     #look for remaining 3 index's
     for (my $i=3; $i<6; $i++) {
 	if (defined($seq[$i])) {
 	    $ind = $seq[$i];	
-	    die("Jitar index $i must be less than 16") unless $ind < 16;
+	    die("Jitar index ".($i+1)." must be less than 16") 
+		unless $ind < 16;
 	    
 	    #shift index and or it with id to put it in right place
 	    $ind = $ind << $JITAR_SHIFT[$i];
