@@ -339,6 +339,7 @@ sub setListRow {
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $user = $r->param("user");
+	my $effectiveUser = $r->param("effectiveUser") || $user;
 	my $urlpath = $r->urlpath;
 	my $globalSet = $db->getGlobalSet($set->set_id);
 	$gwtype = 0 if ( ! defined( $gwtype ) );
@@ -346,7 +347,7 @@ sub setListRow {
 	
 	my $name = $set->set_id;
 	my @restricted = $ce->{options}{enableConditionalRelease} ?  
-	    is_restricted($db, $set, $name, $user) : ();
+	    is_restricted($db, $set, $name, $effectiveUser) : ();
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");
