@@ -97,9 +97,10 @@ sub initialize {
 	
 	##### permissions #####
 	
-	$self->{isOpen} = (time >= $set->open_date && !(
+	$self->{isOpen} = (time >= $set->open_date && (time >= $set->due_date 
+						       || !(
 			       $ce->{options}{enableConditionalRelease} && 
-			       is_restricted($db, $set, $set->set_id, $effectiveUserName)))
+			       is_restricted($db, $set, $set->set_id, $effectiveUserName))))
 	    || $authz->hasPermissions($userName, "view_unopened_sets");
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};

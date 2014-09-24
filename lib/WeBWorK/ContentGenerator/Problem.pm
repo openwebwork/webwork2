@@ -504,9 +504,9 @@ sub pre_header_initialize {
 
 	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || 
 	    ($setName eq "Undefined_Set" || 
-	     (time >= $set->open_date && !(
+	     (time >= $set->open_date && (time >= $set->due_date || !(
 		  $ce->{options}{enableConditionalRelease} && 
-		  is_restricted($db, $set, $set->set_id, $effectiveUserName))));
+		  is_restricted($db, $set, $set->set_id, $effectiveUserName)))));
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
 

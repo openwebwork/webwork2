@@ -39,7 +39,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers/;
+use WeBWorK::Utils qw/readFile decodeAnswers is_restricted/;
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -179,6 +179,8 @@ sub pre_header_initialize {
 		my $perm_viewhidden = $authz->hasPermissions($userID, "view_hidden_work");
 		my $perm_viewfromip = $authz->hasPermissions($userID, "view_ip_restricted_sets");
 		
+		my $perm_viewunopened =  $authz->hasPermissions($userID, "view_unopened_sets");
+
 		if (@setIDs > 1 and not $perm_multiset) {
 			$self->addbadmessage("You are not permitted to generate hardcopy for multiple sets. Please select a single set and try again.");
 			$validation_failed = 1;
@@ -215,6 +217,18 @@ sub pre_header_initialize {
 							$userSet = $db->getMergedSet($uid,$s);
 						}
 						$mergedSets{"$uid!$sid"} = $userSet;
+
+						if ( ! $perm_viewhidden && 						     
+						     ! (time >= $userSet->open_date && (time >= $userSet->due_date || !(
+										      $ce->{options}{enableConditionalRelease} && 
+											is_restricted($db, $userSet, $userSet->set_id, $userID))))) {
+						    $validation_failed = 1;
+						    $self->addbadmessage("You are not permitted to generate a hardcopy for an unopened set.");
+						    last;
+
+						}
+
+
 						if ( ! $perm_viewhidden &&
 						     defined( $userSet->hide_work ) &&
 						     ( $userSet->hide_work eq 'Y' ||

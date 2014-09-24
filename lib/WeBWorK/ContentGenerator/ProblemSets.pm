@@ -460,7 +460,7 @@ sub setListRow {
 				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 			} elsif ( $t < $set->due_date() && @restricted) {
 				my $restriction = ($set->restricted_status)*100;
-				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
+				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 		if(@restricted > 1) {
 		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
 		  foreach(0..$#restricted) {
@@ -522,6 +522,7 @@ sub setListRow {
 		my $restriction = ($set->restricted_status)*100;
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
+
 		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 
 		if(@restricted > 1) {
@@ -563,7 +564,8 @@ sub setListRow {
 		    $control = '';
 		}
 	} else {
-		if ( $gwtype < 2 && after($set->open_date)) {
+		if ( $gwtype < 2 && after($set->open_date) && 
+		    (!@restricted || after($set->due_date))) {
 			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
 			my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, courseID => $courseName, setID => $urlname);
 			
