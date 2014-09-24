@@ -1901,7 +1901,7 @@ sub body {
 	      print '</div>';
 	    #close problem_container
 	    print '</div>';
-	  print CGI::endform(), "\n";
+	  print CGI::end_form(), "\n";
 	  #close form-editor
 	print '</div>';
 	print '<div style="clear:both;"></div>';

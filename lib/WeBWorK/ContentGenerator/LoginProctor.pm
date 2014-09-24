@@ -235,7 +235,7 @@ sub body {
 	}
 
 	# start printing the form
-	print CGI::startform({-method=>"POST", -action=>$r->uri});
+	print CGI::start_form({-method=>"POST", -action=>$r->uri});
 	# write out the form data posted to the requested URI
 	my @fields_to_print = 
 	    grep { ! /^(user)|(effectiveUser)|(passwd)|(key)|(force_password_authen)|(proctor_user)|(proctor_key)|(proctor_password)$/ } $r->param();
@@ -290,7 +290,7 @@ sub body {
 	print CGI::end_table();
 	
 	print CGI::input({-type=>"submit", -value=>"Continue"});
-	print CGI::endform();
+	print CGI::end_form();
 	
 	return "";
 }

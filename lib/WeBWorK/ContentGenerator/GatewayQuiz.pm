@@ -1874,13 +1874,13 @@ sub body {
 		# dont print the timer if there is over 24 hours because its kind of silly
 		if ($timeLeft < 86400) {
 		    print CGI::div({-id=>"gwTimer"},"\n");
-		    print CGI::startform({-name=>"gwTimeData", -method=>"POST",
+		    print CGI::start_form({-name=>"gwTimeData", -method=>"POST",
 					  -action=>$r->uri});
 		    print CGI::hidden({-name=>"serverTime", -value=>$timeNow}), 
 		    "\n";
 		    print CGI::hidden({-name=>"serverDueTime", 
 				       -value=>$set->due_date()}), "\n";
-		    print CGI::endform();
+		    print CGI::end_form();
 		}
 		if ( $timeLeft < 1 && $timeLeft > 0 &&
 		     ! $authz->hasPermissions($user, "record_answers_when_acting_as_student")) {
@@ -1996,7 +1996,7 @@ sub body {
 	# else: we're not hiding answers
 	} else {
 
-		print CGI::startform({-name=>"gwquiz", -method=>"POST", 
+		print CGI::start_form({-name=>"gwquiz", -method=>"POST", 
 				      -action=>$action}), 
 			$self->hidden_authen_fields, 
 			$self->hidden_proctor_authen_fields;
@@ -2231,7 +2231,7 @@ sub body {
 				   -value  =>  $r->param("problemSeed")
 				  ))  if defined($r->param("problemSeed"));
 
-		print CGI::endform();
+		print CGI::end_form();
 	}
 
 	# finally, put in a show answers option if appropriate
@@ -2252,7 +2252,7 @@ sub body {
 			CGI::p(
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 				), "\n",
-			CGI::endform();
+			CGI::end_form();
 	}
 
 # debugging verbiage
@@ -2273,14 +2273,14 @@ sub body {
 #     my $root = $ce->{webworkURLs}->{root};
 #     my $courseName = $ce->{courseName};
 #     my $feedbackURL = "$root/$courseName/feedback/";
-#     print CGI::startform("POST", $feedbackURL),
+#     print CGI::start_form("POST", $feedbackURL),
 #           $self->hidden_authen_fields,
 #           CGI::hidden("module", __PACKAGE__),
 #           CGI::hidden("set",    $self->{set}->set_id),
 #           CGI::p({-align=>"right"},
 # 		 CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
 # 		 ),
-# 	  CGI::endform();
+# 	  CGI::end_form();
 	
 	return "";
 

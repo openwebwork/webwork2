@@ -1407,7 +1407,7 @@ sub body {
 					-value=>"Update Set"));
 	}
 	#	 }
-	print CGI::endform(), "\n";
+	print CGI::end_form(), "\n";
 
 	return "";	
 }

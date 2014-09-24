@@ -1609,7 +1609,7 @@ sub feedbackMacro_email {
 		$result .= CGI::hidden($key, $value) . "\n";
 	}
 	$result .= CGI::p(CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
-	$result .= CGI::endform() . "\n";
+	$result .= CGI::end_form() . "\n";
 	
 	return $result;
 }
@@ -1638,7 +1638,7 @@ sub feedbackMacro_form {
 		}
 	}
 	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
-	$result .= CGI::endform() . "\n";
+	$result .= CGI::end_form() . "\n";
 	
 	return $result;
 }

@@ -425,7 +425,7 @@ sub body {
 	#	CGI::p({-align=>"left"},
 	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
 	#	),
-	#	CGI::endform(),"\n";
+	#	CGI::end_form(),"\n";
 	
 	print CGI::start_div({-class=>"problem_set_options"});
 	print $self->feedbackMacro(

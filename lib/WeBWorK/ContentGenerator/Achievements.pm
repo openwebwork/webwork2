@@ -220,7 +220,7 @@ sub body {
 
 	    # Generate array of problem counts
 	    for (my $i=0; $i<=$#sets; $i++) {		
-		$setProblemCount[$i] = $db->countUserProblems($userID,$sets[$i]->set_id);
+		$setProblemCount[$i] = WeBWorK::Utils::max($db->listUserProblems($userID,$sets[$i]->set_id));
 	    }
 
 	    print CGI::h2("Items");
