@@ -218,7 +218,7 @@ sub pre_header_initialize {
 						}
 						$mergedSets{"$uid!$sid"} = $userSet;
 
-						if ( ! $perm_viewhidden && 						     
+						if ( ! $perm_viewunopened && 						     
 						     ! (time >= $userSet->open_date && (time >= $userSet->due_date || !(
 										      $ce->{options}{enableConditionalRelease} && 
 											is_restricted($db, $userSet, $userSet->set_id, $userID))))) {
