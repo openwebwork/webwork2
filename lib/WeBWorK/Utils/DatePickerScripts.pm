@@ -26,10 +26,17 @@ sub date_scripts {
 	my $bareName = 'set.'.$set->set_id;
         $bareName =~ s/\./\\\\\./g;
 
-	my $open_timezone = substr(formatDateTime($set->open_date, $display_tz), -3); 
-	my $due_timezone = substr(formatDateTime($set->due_date, $display_tz), -3); 
-	my $answer_timezone = substr(formatDateTime($set->answer_date, $display_tz), -3); 
-        	
+	my $date = formatDateTime($set->open_date, $display_tz);
+	$date =~ /\ ([A-Z]+)$/;	
+	my $open_timezone = $1;
+
+	$date = formatDateTime($set->due_date, $display_tz);
+	$date =~ /\ ([A-Z]+)$/;	
+	my $due_timezone = $1;
+
+	$date = formatDateTime($set->answer_date, $display_tz);
+	$date =~ /\ ([A-Z]+)$/;	
+	my $answer_timezone = $1;        	
 
 	my $reduced_credit_date_script_header = '';
 	my $reduced_credit_date_script = '';
@@ -48,7 +55,9 @@ sub date_scripts {
 	    my $default_hrs = floor($default_reduced_scoring_period/3600);
 	    my $default_min = floor(60*($default_reduced_scoring_period/3600 - $default_hrs));
 
-	    my $reduced_timezone = substr(formatDateTime($reduced_scoring_date, $display_tz), -3);     
+	    $date = formatDateTime($reduced_scoring_date, $display_tz);
+	    $date =~ /\ ([A-Z]+)$/;	
+	    my $reduced_timezone = $1;        	
 	    
 	    $reduced_credit_date_script_header = "var reduced_rule = \$('#' + name + '\\\\.reduced_scoring_date_id');";
 
