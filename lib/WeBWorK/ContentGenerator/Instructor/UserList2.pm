@@ -1008,6 +1008,10 @@ sub import_form {
 	my $r = $self->r;
 	
 	return join(" ",
+		$r->maketext('Upload the .lst file you would like to use if it is not in the drop-down list below'),
+		CGI::br(),
+		CGI::input({type=>"file",name=>"action.import.upload",id=>"file",size=>40}),
+		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_select_source",
@@ -1059,12 +1063,33 @@ sub import_form {
 sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
+	my $dir = "/opt/webwork/courses/admin/templates"; #shouldn't be hard coded...
 	
 	my $source = $actionParams->{"action.import.source"}->[0];
 	my $add = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
+	my $uploadIDhash = $actionParams->{"action.import.upload"}->[0];
+	my $name;
+	if ($uploadIDhash) {
+		my ($id,$hash) = split(/\s+/,$uploadIDhash);
+		my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+		$name = $upload->filename;
+		my $file;
+		$file = "$dir/$name";
+		my $fileData;
+		my $fh = $upload->fileHandle;
+		my @lines = <$fh>; $fileData = join('',@lines);
+		$upload->dispose;
+		$fileData =~ s/\r\n?/\n/g;
+		$self->addgoodmessage(">$file");
+		if (open(UPLOAD,">$file")) {print UPLOAD $fileData; close(UPLOAD)}
+		  else {$self->addbadmessage("Can't create file '$name': $!")}
+	    if (-e $file) {
+	      $self->addgoodmessage("file '$name' uploaded successfully");
+	    }
+	}
 	
-	my $fileName = $source;
+	my $fileName = $name; #$source;
 	my $createNew = $add eq "any";
 	my $replaceExisting;
 	my @replaceList;
