@@ -1267,7 +1267,9 @@ sub import_form {
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	my $ce = $r->ce;
-	my $display_tz = substr($self->formatDateTime(time), -3); 
+	my $date = $self->formatDateTime(time);
+	$date =~ /\ ([A-Z]+)$/;	
+	my $display_tz = $1;        	
 
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
