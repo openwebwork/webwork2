@@ -348,7 +348,7 @@ sub setListRow {
 	
 	my $name = $set->set_id;
 	my @restricted = $ce->{options}{enableConditionalRelease} ?  
-	    is_restricted($db, $set, $name, $effectiveUser) : ();
+	    is_restricted($db, $set, $effectiveUser) : ();
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");

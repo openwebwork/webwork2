@@ -219,9 +219,9 @@ sub pre_header_initialize {
 						$mergedSets{"$uid!$sid"} = $userSet;
 
 						if ( ! $perm_viewunopened && 						     
-						     ! (time >= $userSet->open_date && (time >= $userSet->due_date || !(
+						     ! (time >= $userSet->open_date && !(
 										      $ce->{options}{enableConditionalRelease} && 
-											is_restricted($db, $userSet, $userSet->set_id, $userID))))) {
+											is_restricted($db, $userSet, $userID)))) {
 						    $validation_failed = 1;
 						    $self->addbadmessage("You are not permitted to generate a hardcopy for an unopened set.");
 						    last;

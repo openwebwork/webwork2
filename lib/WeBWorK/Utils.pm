@@ -1087,10 +1087,14 @@ sub has_aux_files ($) { #  determine whether a question has auxiliary files
 }
 
 sub is_restricted {
-        my ($db, $set, $setName, $studentName) = @_;
-        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+        my ($db, $set, $studentName) = @_;
+	
+	# all sets open after the due date
+	return () if after($set->due_date());
+
+        my $setID = $set->set_id();
 	my @needed;
-	if ( $set and $set->restricted_release ) {
+	if ($set->restricted_release ) {
 	        my @proposed_sets = split(/\s*,\s*/,$set->restricted_release);
 		my $restriction =  $set->restricted_status  ||  0;
 		my @good_sets;

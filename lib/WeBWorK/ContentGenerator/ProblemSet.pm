@@ -97,10 +97,9 @@ sub initialize {
 	
 	##### permissions #####
 	
-	$self->{isOpen} = (time >= $set->open_date && (time >= $set->due_date 
-						       || !(
+	$self->{isOpen} = (time >= $set->open_date && !(
 			       $ce->{options}{enableConditionalRelease} && 
-			       is_restricted($db, $set, $set->set_id, $effectiveUserName))))
+			       is_restricted($db, $set, $effectiveUserName)))
 	    || $authz->hasPermissions($userName, "view_unopened_sets");
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};
@@ -161,11 +160,10 @@ sub siblings {
 				   $gs->assignment_type() !~ /gateway/} @setIDs;
 
 	} else {
-		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
-				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $gs, $gs->set_id(), $eUserID) : ();
-				   $gs->assignment_type() !~ /gateway/ && 
-				       ( defined($gs->visible()) ? $gs->visible() : 1 ) && 
-				       (after($gs->due_date) || !@restricted);
+		@setIDs    = grep {my $set = $db->getMergedSet($eUserID, $_); 
+				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $set, $eUserID) : ();
+				   $set->assignment_type() !~ /gateway/ && 
+				       ( defined($set->visible()) ? $set->visible() : 1 ) && !@restricted;
 				           }   @setIDs;
 	}
 
