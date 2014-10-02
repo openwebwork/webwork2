@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted between);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted between after);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -141,6 +141,7 @@ sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
@@ -161,8 +162,10 @@ sub siblings {
 
 	} else {
 		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
-				            $gs->assignment_type() !~ /gateway/ && 
-				            ( defined($gs->visible()) ? $gs->visible() : 1 )
+				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $gs, $gs->set_id(), $eUserID) : ();
+				   $gs->assignment_type() !~ /gateway/ && 
+				       ( defined($gs->visible()) ? $gs->visible() : 1 ) && 
+				       (after($gs->due_date) || !@restricted);
 				           }   @setIDs;
 	}
 
