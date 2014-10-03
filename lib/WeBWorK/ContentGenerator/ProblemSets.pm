@@ -381,9 +381,9 @@ sub setListRow {
 		if ( $gwtype == 1 );
 
   # the conditional here should be redundant.  ah well.
-	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
-	    ( defined( $set->assignment_type() ) && 
-	      $set->assignment_type() eq 'proctored_gateway' );
+#	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
+#	    ( defined( $set->assignment_type() ) && 
+#	      $set->assignment_type() eq 'proctored_gateway' );
 	my $display_name = $name;
 	$display_name =~ s/_/ /g;
 # this is the link to the homework assignment, it has tooltip with the hw description 
