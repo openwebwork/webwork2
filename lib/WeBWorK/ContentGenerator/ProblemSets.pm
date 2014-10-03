@@ -355,14 +355,10 @@ sub setListRow {
 				      courseID => $courseName, setID => $urlname);
 	} elsif( $set->assignment_type() !~ /proctored/ ) {
 
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r, 
-				      courseID => $courseName, setID => $urlname);
+ 	    $problemSetPage = $urlpath->newFromPath("/$courseName/quiz_mode/$urlname/", $r);
 	} else {
-
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r, 
-				      courseID => $courseName, setID => $urlname);
+ 	    $problemSetPage = $urlpath->newFromPath("/$courseName/proctored_quiz_mode/$urlname/", $r);
 	}
-
 	my $interactiveURL = $self->systemLink($problemSetPage,
 	                                       params=>{  displayMode => $self->{displayMode}, 
 													  showOldAnswers => $self->{will}->{showOldAnswers}
@@ -385,9 +381,9 @@ sub setListRow {
 		if ( $gwtype == 1 );
 
   # the conditional here should be redundant.  ah well.
-	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
-	    ( defined( $set->assignment_type() ) && 
-	      $set->assignment_type() eq 'proctored_gateway' );
+#	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
+#	    ( defined( $set->assignment_type() ) && 
+#	      $set->assignment_type() eq 'proctored_gateway' );
 	my $display_name = $name;
 	$display_name =~ s/_/ /g;
 # this is the link to the homework assignment, it has tooltip with the hw description 

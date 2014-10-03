@@ -1346,8 +1346,7 @@ sub view_handler {
 
 		my $problemPage;
 		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
-			courseID => $courseName, setID => "Undefined_Set");
+		    $problemPage = $self->r->urlpath->newFromPath("/$courseName/quiz_mode/Undefined_Set/", $r);
 		}  else {
 			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
 									courseID => $courseName, setID => $setName, problemID => $problemNumber
@@ -1505,8 +1504,7 @@ sub add_problem_handler {
 		my $globalSet = $self->r->db->getGlobalSet( $setName );
 
 		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
-			courseID => $courseName, setID => "Undefined_Set");
+		    $problemPage = $self->r->urlpath->newFromPath("/$courseName/quiz_mode/Undefined_Set/",$r);
 		}  else {
 			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
 									courseID => $courseName, setID => $targetSetName, problemID => $targetProblemNumber
@@ -1616,9 +1614,7 @@ sub save_handler {
 		my $globalSet = $self->r->db->getGlobalSet( $setName );
 		my $problemPage;
 		if ( defined( $globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
-			courseID => $courseName, setID => "Undefined_Set");
-			# courseID => $courseName, setID => $fullSetName);
+		    $problemPage = $self->r->urlpath->newFromPath("/$courseName/quiz_mode/Undefined_Set/",$r);
 		} else {
 			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
 									courseID => $courseName, setID => $setName, problemID => $problemNumber	);
