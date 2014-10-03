@@ -355,14 +355,10 @@ sub setListRow {
 				      courseID => $courseName, setID => $urlname);
 	} elsif( $set->assignment_type() !~ /proctored/ ) {
 
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r, 
-				      courseID => $courseName, setID => $urlname);
+ 	    $problemSetPage = $urlpath->newFromPath("/$courseName/quiz_mode/$urlname/", $r);
 	} else {
-
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r, 
-				      courseID => $courseName, setID => $urlname);
+ 	    $problemSetPage = $urlpath->newFromPath("/$courseName/proctored_quiz_mode/$urlname/", $r);
 	}
-
 	my $interactiveURL = $self->systemLink($problemSetPage,
 	                                       params=>{  displayMode => $self->{displayMode}, 
 													  showOldAnswers => $self->{will}->{showOldAnswers}
