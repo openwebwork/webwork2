@@ -907,9 +907,8 @@ sub write_log_entry {
 
 	# If its apache 2.4 then it has to also mod perl 2.0 or better
 	my $APACHE24 = 0;
-	if (MP2) {
-	    Apache2::ServerUtil::get_server_banner() =~ 
-		       m:^Apache/(\d\.\d+\.\d+):;
+	if (MP2 && Apache2::ServerUtil::get_server_banner() =~ 
+	  m:^Apache/(\d\.\d+\.\d+):) {
 	    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
 	}
 
