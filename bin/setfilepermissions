@@ -51,6 +51,7 @@ chomp($me);
 my $servergroup =  $ce->{server_groupID};
 
 my $wwroot = $ENV{WEBWORK_ROOT};
+my $pgroot = $ce->{pg_dir};
 
 # Course directories
 system("chown -R $me ".$ce->{webwork_courses_dir});
@@ -59,16 +60,34 @@ system("chmod -R g+w ".$ce->{webwork_courses_dir});
 system("chmod g+s ".$ce->{webwork_courses_dir});
 
 # Other special directories under webwork2
-for my $dir ( "DATA", "htdocs/tmp", "logs", "tmp" ) {
+for my $dir ( "DATA", "htdocs/tmp", "logs", "tmp", "conf", "lib/WeBWorK/DB/Record", "htdocs/themes" ) {
   system("chown -R $me $wwroot/$dir");
 	system("chgrp -R $servergroup $wwroot/$dir");
 	system("chmod -R g+w $wwroot/$dir");
 	system("chmod g+s $wwroot/$dir");
 }
 
+# Other special directories under pg
+for my $dir ( "macros" ) {
+  system("chown -R $me $pgroot/$dir");
+        system("chgrp -R $servergroup $pgroot/$dir");
+        system("chmod -R g+w $pgroot/$dir");
+        system("chmod g+s $pgroot/$dir");
+}
+
+# Individual files under webwork2
+for my $file ( "VERSION" ) {
+        system("chgrp $servergroup $wwroot/$file");
+}
+
+# Individual files under pg
+for my $file ( "VERSION" ) {
+        system("chgrp $servergroup $pgroot/$file");
+}
+
 # A special directory under pg (so the server can compile the chromatic program)
-system("chgrp $servergroup ".$ce->{pg_dir}."/lib/chromatic");
-system("chmod g+w ".$ce->{pg_dir}."/lib/chromatic");
+system("chgrp $servergroup $pgroot/lib/chromatic");
+system("chmod g+w $pgroot/lib/chromatic");
 
 # The server should not be able to write to the OPL (for most sites)
 
