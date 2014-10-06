@@ -59,11 +59,21 @@ system("chmod -R g+w ".$ce->{webwork_courses_dir});
 system("chmod g+s ".$ce->{webwork_courses_dir});
 
 # Other special directories under webwork2
-for my $dir ( "DATA", "htdocs/tmp", "logs", "tmp" ) {
+for my $dir ( "DATA", "htdocs/tmp", "logs", "tmp", "conf", "lib/WeBWorK/DB/Record", "htdocs/themes" ) {
   system("chown -R $me $wwroot/$dir");
 	system("chgrp -R $servergroup $wwroot/$dir");
 	system("chmod -R g+w $wwroot/$dir");
 	system("chmod g+s $wwroot/$dir");
+}
+
+# Individual files under webwork2
+for my $file ( "VERSION" ) {
+        system("chgrp $servergroup $wwroot/$dir");
+}
+
+# Individual files under pg
+for my $file ( "VERSION" ) {
+        system("chgrp $servergroup ".$ce->{pg_dir}."/$file");
 }
 
 # A special directory under pg (so the server can compile the chromatic program)
