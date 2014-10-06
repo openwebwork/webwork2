@@ -68,7 +68,7 @@ for my $dir ( "DATA", "htdocs/tmp", "logs", "tmp", "conf", "lib/WeBWorK/DB/Recor
 
 # Individual files under webwork2
 for my $file ( "VERSION" ) {
-        system("chgrp $servergroup $wwroot/$dir");
+        system("chgrp $servergroup $wwroot/$file");
 }
 
 # Individual files under pg
