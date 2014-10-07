@@ -1004,16 +1004,25 @@ sub add_handler {
 }
 
 sub import_form {
+	#This JS should probably go somewhere else
+	print CGI::script(<<EOF);
+		var fileSource = window.document.getElementById('import_select_source');
+    	var uploadElement = window.document.getElementById('file');
+    	fileSource.onchange = function() {
+    		if (fileSource.value === 'Upload a new .lst file') {
+    			uploadElement.style.display = 'block';
+  			} else {
+    			uploadElement.style.display = 'none';
+  			}
+		}
+EOF
+
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 	my $drop_down_values = [ $self->getCSVList() ];
 	unshift($drop_down_values, "Upload a new .lst file");
 
 	return join(" ",
-		$r->maketext('Upload the .lst file you would like to use if it is not in the drop-down list below'),
-		CGI::br(),
-		CGI::input({type=>"file",name=>"action.import.upload",id=>"file",size=>40}),
-		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_select_source",
@@ -1021,10 +1030,12 @@ sub import_form {
 			-input_attr=>{
 				-name => "action.import.source",
 				-values => $drop_down_values,
-				-default => "Upload a new .lst file",#$actionParams{"action.import.source"}->[0] || "",
-				-onchange => $onChange,#"$onChange; if($(self) === 'Upload a new .lst file') {$(input#file).slideDown();} else {$(input#file).slideUp();};",
+				-default => "Upload a new .lst file",
+				#-onchange => $onChange,
 			}
 		),
+		CGI::br(),
+		CGI::input({type=>"file",name=>"action.import.upload",id=>"file",size=>40}),
 		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
