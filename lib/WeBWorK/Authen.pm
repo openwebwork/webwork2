@@ -323,7 +323,7 @@ sub get_credentials {
 		my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
 		my @allowedGestUserIDs = map { $_->user_id } @allowedGuestUsers;
 		
-		foreach my $userID (@allowedGestUserIDs) {
+		foreach my $userID (List::Util::shuffle(@allowedGestUserIDs)) {
 			if (not $self->unexpired_session_exists($userID)) {
 				my $newKey = $self->create_session($userID);
 				$self->{initial_login} = 1;
@@ -907,9 +907,8 @@ sub write_log_entry {
 
 	# If its apache 2.4 then it has to also mod perl 2.0 or better
 	my $APACHE24 = 0;
-	if (MP2) {
-	    Apache2::ServerUtil::get_server_banner() =~ 
-		       m:^Apache/(\d\.\d+\.\d+):;
+	if (MP2 && Apache2::ServerUtil::get_server_banner() =~ 
+	  m:^Apache/(\d\.\d+\.\d+):) {
 	    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
 	}
 
