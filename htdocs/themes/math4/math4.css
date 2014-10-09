@@ -118,12 +118,15 @@ legend {
 }
 
 #loginstatus {
-    	padding-top:1ex;
+    	padding-top:.5ex;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
 	font-weight: normal;
 } 
+#loginstatus a.btn {
+    margin-bottom:.5ex;
+}
 
 #loginstatus a {
 	color: black;
