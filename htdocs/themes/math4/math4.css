@@ -598,7 +598,7 @@ table.attemptResults td.Message {
    padding: 2px 5px 2px 5px;
    width: auto;
 }
-.attemptResultsSummary { font-style: italic; }
+.attemptResultsSummary { margin-bottom: 10px; }
 .parsehilight { color: inherit; background-color: yellow; }
 
 .problem-main-form input {
