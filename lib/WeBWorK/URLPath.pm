@@ -132,6 +132,8 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_set_statistics_old           /$courseID/instructor/stats_old/set/$setID/
  instructor_user_statistics_old          /$courseID/instructor/stats_old/student/$userID/
  
+ instructor_gradebook                  /$courseID/instructor/gradebook/
+ 
  instructor_progress                  /$courseID/instructor/StudentProgress/
  instructor_set_progress              /$courseID/instructor/StudentProgress/set/$setID/
  instructor_user_progress             /$courseID/instructor/StudentProgress/student/$userID/
@@ -355,7 +357,7 @@ our %pathTypes = (
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_preflight instructor_statistics instructor_statistics_old
+			instructor_preflight instructor_statistics instructor_statistics_old instructor_gradebook
 			instructor_progress			
                         instructor_problem_grader
 		/ ],
@@ -775,6 +777,36 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::AchievementUserEditor',
 	},
 
+
+	################################################################################
+	
+	instructor_gradebook => {
+		name    => 'GradeBook',
+		parent  => 'instructor_tools',
+		kids    => [ qw/instructor_gradebook_set_progress instructor_gradebook_user_progress/ ],
+		match   => qr|^gradebook/|,
+		capture => [ qw// ],
+		produce => 'gradebook/',
+		display => 'WeBWorK::ContentGenerator::Instructor::GradeBook',
+	},
+	instructor_gradebook_set_progress => {
+		name    => 'GradeBook',
+		parent  => 'instructor_gradebook',
+		kids    => [ qw// ],
+		match   => qr|^(set)/([^/]+)/|,
+		capture => [ qw/statType setID/ ],
+		produce => 'set/$setID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::GradeBook',
+	},
+	instructor_gradebook_user_progress => {
+		name    => 'GradeBook',
+		parent  => 'instructor_gradebook',
+		kids    => [ qw// ],
+		match   => qr|^(student)/([^/]+)/|,
+		capture => [ qw/statType userID/ ],
+		produce => 'student/$userID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::GradeBook',
+	},	
 
 	################################################################################
 	
