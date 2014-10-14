@@ -34,23 +34,27 @@ $(function(){
     $("#info-panel-right a:contains('[edit]')").text('Edit');
 
     // Add a button to make the sidebar more dynamic for small screens
+    $('#content').removeClass();
     $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
 	    event.preventDefault();
-	    $('#site-navigation').toggleClass('hidden');
-	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
-		.toggleClass('icon-chevron-right');
-	    $('#site-navigation').toggleClass('span2');
-	    $('#content').toggleClass('span10').toggleClass('span11');
+	    $('#content').parent().toggleClass('sidemenu-toggled-on');
+	    $('#site-navigation').toggleClass('hidden'); 
+	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left').toggleClass('icon-chevron-right');
 	});
+    
+    var anwwx = $('#site-navigation').html();
+    $('#site-navigation').empty();
+	$('#content').parent().wrap('<div class="row-fluid-outer"></div>');
+    $('.row-fluid-outer').prepend('<div class="sidemenu-wrap"><div id="site-navigation">'+anwwx+'</div></div>');
+	$('#site-navigation').toggleClass('hidden');        
 
-    if($(window).width() < 480) {
+    if($(window).width() < 480) {   
 	$('#toggle-sidebar').click();
     }
-
+    
     // if no fish eye then collapse site-navigation 
     if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
 	$('#site-navigation').removeClass('span2');
-	$('#content').removeClass('span10').addClass('span11');
 	$('#toggle-sidebar').addClass('hidden');
     }
 
