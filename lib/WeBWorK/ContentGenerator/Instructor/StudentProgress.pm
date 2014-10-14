@@ -757,41 +757,43 @@ sub displaySets {
 # form header here, and make appropriate modifications
         my $verSelectors = '';
 	if ( $setIsVersioned ) {
-		print CGI::start_form({'method' => 'post', 
+	    print CGI::start_div({'id'=>'screen-options-wrap'});
+		print CGI::start_form({'method' => 'post', 'id'=>'sp-gateway-form',
 				       'action' => $self->systemLink($urlpath,authen=>0),'name' => 'StudentProgress'});
 		print $self->hidden_authen_fields();
-
-#	    $verSelectors = CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
-		print CGI::p({'id'=>'sp-gateway-form','style'=>'background-color:#eeeeee;color:black;'},
-			     "Display options: Show ",
-			     CGI::hidden(-name=>'returning', -value=>'1'),
+		   print CGI::start_div();		   
+			print	  CGI::h4("Display options: Show ");	
+			print   CGI::start_div({'class'=>'metabox-prefs'});	   
+			print     CGI::hidden(-name=>'returning', -value=>'1'),
 			     CGI::checkbox(-name=>'show_best_only', -value=>'1', 
 					   -checked=>$showBestOnly, 
-					   -label=>' only best scores; '),
+					   -label=>'only best scores'),
 #			     CGI::checkbox(-name=>'show_index', -value=>'1', 
 #					   -checked=>$showColumns{'index'},
 #					   -label=>' success indicator; '),
 			     CGI::checkbox(-name=>'show_date', -value=>'1', 
 					   -checked=>$showColumns{'date'},
-					   -label=>' test date; '),
+					   -label=>'test date'),
 			     CGI::checkbox(-name=>'show_testtime', -value=>'1', 
 					   -checked=>$showColumns{'testtime'},
-					   -label=>' test time; '),
+					   -label=>'test time'),
 			     CGI::checkbox(-name=>'show_problems', -value=>'1', 
 					   -checked=>$showColumns{'problems'},
-					   -label=>'problems;'), "\n", CGI::br(), "\n",
+					   -label=>'problems'),
 			     CGI::checkbox(-name=>'show_section', -value=>'1', 
 					   -checked=>$showColumns{'section'}, 
-					   -label=>' section #; '),
+					   -label=>'section #'),
 			     CGI::checkbox(-name=>'show_recitation', -value=>'1', 
 					   -checked=>$showColumns{'recit'},
-					   -label=>' recitation #; '),
+					   -label=>'recitation #'),
 			     CGI::checkbox(-name=>'show_login', -value=>'1', 
 					   -checked=>$showColumns{'login'}, 
-					   -label=>'login'), "\n", CGI::br(), "\n",
-			     CGI::submit(-value=>'Update Display'),
-			     );
+					   -label=>'login'), CGI::br();
+			print CGI::end_div();		    
+			print CGI::submit(-value=>'Update Display');	
+		print CGI::end_div();
 		print CGI::end_form();
+	  print CGI::end_div();
 	}
 
 #####################################################################################
