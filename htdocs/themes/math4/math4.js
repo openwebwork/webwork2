@@ -1,9 +1,10 @@
 $(function(){
-    // Focus ona  results with error if one is around and focussable. 
+    // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
     // Turn submit inputs into buttons
     $('input:submit').addClass('btn btn-primary');
+    $('input:submit').mousedown(function () {this.blur(); return false;});
     $('.nav_button').addClass('btn btn-primary');
     $('.classlist').addClass('table table-condensed classlist-table');
 
