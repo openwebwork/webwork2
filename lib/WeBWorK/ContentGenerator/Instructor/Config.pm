@@ -373,24 +373,24 @@ package configpopuplist;
 sub display_value {
 	my ($self, $val) = @_;
 	$val = 'ur' if not defined($val);
+
+	if ($self->{labels}->{$val}) {
+	    return join(CGI::br(), $self->{labels}->{$val});
+	}
+
 	return join(CGI::br(), $val);
 }
 
-# here r->param() returns an array, so we need a custom
-# version of convert_newval_source
+# if there are labels we need to make sure not to save the label of the value
+# version of comparison value
 
-# sub convert_newval_source {
-# 	my ($self, $newvalsource) = @_;
-#     my $inlinevarname = WeBWorK::ContentGenerator::Instructor::Config::inline_var($self->{var});
-#     my @newvals;
-#     if($newvalsource =~ /widget/) {
-#         @newvals = $self->{Module}->{r}->param($newvalsource);
-#     } else {
-#         my $newval = eval('$self->{Module}->{r}->{ce}->'. $inlinevarname);
-# 		@newvals = @$newval;
-#     }
-# 	return(@newvals);
-# }
+# Stringified version for comparison (with html param return value)
+sub comparison_value {
+	my ($self, $val) = @_;
+	return $val;
+}
+
+
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
@@ -410,10 +410,12 @@ sub save_string {
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
+
 	return CGI::popup_menu(
 		-name => $name,
 		-values => $self->{values},
 		-default => $default,
+	        -labels => $self->{labels},
 
 	);
 }

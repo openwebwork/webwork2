@@ -2,3 +2,6 @@
     padding: 20px;
     padding-top: 45px;
 }
+
+.no-bullets { list-style: none;}
+.help-hidden { display: none;}

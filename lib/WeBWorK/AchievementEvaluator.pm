@@ -143,6 +143,19 @@ sub checkForAchievements {
     $compartment->share(qw($problem @setProblems $localData $maxCounter 
              $globalData $counter $nextLevelPoints $set $achievementPoints $tags));
 
+
+    #load any preamble code
+    # this line causes the whole file to be read into one string
+    local $/;
+    my $preamble = '';
+    my $source;
+    if (-e 
+	"$ce->{courseDirs}->{achievements}/$ce->{achievementPreambleFile}") {
+	open(PREAMB, '<', "$ce->{courseDirs}->{achievements}/$ce->{achievementPreambleFile}");
+	$preamble = <PREAMB>;
+	close(PREAMB);
+    }
+
     #loop through the various achievements, see if they have been obtained, 
     foreach my $achievement (@achievements) {
 	#skip achievements not assigned, not enabled, and that are already earned
@@ -163,7 +176,16 @@ sub checkForAchievements {
 
 	#check the achievement using Safe
 	my $sourceFilePath = $ce->{courseDirs}->{achievements}.'/'.$achievement->test;
-	my $earned = $compartment->rdo($sourceFilePath);
+	if (-e $sourceFilePath) {
+	    open(SOURCE,'<',$sourceFilePath);
+	    $source = <SOURCE>;
+	    close(SOURCE);
+	} else {
+	    warn('Couldnt find achievement evaluator $sourceFilePath');
+	    next;
+	};
+
+	my $earned = $compartment->reval($preamble."\n".$source);
 	warn "There were errors in achievement $achievement_id\n".$@ if $@;
 
 	#if we have a new achievement then update achievement points

@@ -13,7 +13,7 @@
 package WebworkWebservice::SetActions;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
-use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime parseDateTime);
+use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 
 use strict;
@@ -22,7 +22,7 @@ use Carp;
 use WWSafe;
 #use Apache;
 use WeBWorK::Utils;
-use WeBWorK::Debug;
+use WeBWorK::Debug qw(debug);
 use JSON;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
@@ -56,6 +56,11 @@ sub listLocalSets{
   return $out;
 }
 
+###
+#
+#  This returns an array of problems (path,value,problem_id, which is weight)
+
+
 sub listLocalSetProblems{
 	my ($self, $params) = @_;
 
@@ -77,17 +82,20 @@ sub listLocalSetProblems{
 
   	@found_problems = $db->listGlobalProblems($setName);
 
-  	my @pg_files=();
+  	my @problems=();
   	for my $problem (@found_problems) {
 		my $problemRecord = $db->getGlobalProblem($setName, $problem); # checked
-		die "global $problem for set $setName not found." unless
-		$problemRecord;
-		push @pg_files, $templateDir.$problemRecord->source_file;
+		die "global $problem for set $setName not found." unless $problemRecord;
+		my $problem = {};
+		$problem->{path} = $templateDir.$problemRecord->source_file;
+		$problem->{problem_id} = $problemRecord->{problem_id};
+		$problem->{value} = $problemRecord->{value};
+		push @problems, $problem;
 
 	}
 	
   	my $out = {};
-  	$out->{ra_out} = \@pg_files;
+  	$out->{ra_out} = \@problems;
   	$out->{text} = encode_base64("Loaded Problems for set: " . $setName);
   	return $out;
 }
@@ -95,7 +103,7 @@ sub listLocalSetProblems{
 # This returns all problem sets of a course.
 
 sub getSets{
-  my $self = shift;
+  my ($self,$params) = @_;
   my $db = $self->{db};
   my @found_sets = $db->listGlobalSets;
   
@@ -103,11 +111,13 @@ sub getSets{
   
   # fix the timeDate  
  foreach my $set (@all_sets){
-	$set->{due_date} = formatDateTime($set->{due_date},'local');
-	$set->{open_date} = formatDateTime($set->{open_date},'local');
-	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+	#$set->{due_date} = formatDateTime($set->{due_date},'local');
+	#$set->{open_date} = formatDateTime($set->{open_date},'local');
+	#$set->{answer_date} = formatDateTime($set->{answer_date},'local');
+
+	my @users = $db->listSetUsers($set->{set_id});
+	$set->{assigned_users} = \@users;
   }
-  
   
   my $out = {};
   $out->{ra_out} = \@all_sets;
@@ -128,11 +138,11 @@ sub getUserSets{
   my @userSets = $db->getGlobalSets(@userSetNames);
   
   # fix the timeDate  
- foreach my $set (@userSets){
-	$set->{due_date} = formatDateTime($set->{due_date},'local');
-	$set->{open_date} = formatDateTime($set->{open_date},'local');
-	$set->{answer_date} = formatDateTime($set->{answer_date},'local');
-  }
+ # foreach my $set (@userSets){
+	# $set->{due_date} = formatDateTime($set->{due_date},'local');
+	# $set->{open_date} = formatDateTime($set->{open_date},'local');
+	# $set->{answer_date} = formatDateTime($set->{answer_date},'local');
+ #  }
   
   
   
@@ -165,42 +175,80 @@ sub getSet {
   }
 
 sub updateSetProperties {
-  my ($self, $params) = @_;
-  my $db = $self->{db};
-    
-  #note some of the parameters are coming in as yes or no and need to be converted to 1 or 0.  
+	my ($self, $params) = @_;
+	my $db = $self->{db};
 
-  my $set = $db->getGlobalSet($params->{set_id});
-  $set->set_header($params->{set_header});
-  $set->hardcopy_header($params->{hardcopy_header});
-  $set->open_date(parseDateTime($params->{open_date},"local"));
-  $set->due_date(parseDateTime($params->{due_date},"local"));
-  $set->answer_date(parseDateTime($params->{answer_date},"local"));
-  $set->visible(($params->{visible} eq "yes")?1:0);
-  $set->enable_reduced_scoring(($params->{enable_reduced_scoring} eq "yes")?1:0);
-  $set->assignment_type($params->{assignment_type});
-  $set->attempts_per_version($params->{attempts_per_version});
-  $set->time_interval($params->{time_interval});
-  $set->versions_per_interval($params->{versions_per_interval});
-  $set->version_time_limit($params->{version_time_limit});
-  $set->version_creation_time($params->{version_creation_time});
-  $set->problem_randorder($params->{problem_randorder});
-  $set->version_last_attempt_time($params->{version_last_attempt_time});
-  $set->problems_per_page($params->{problems_per_page});
-  $set->hide_score($params->{hide_score});
-  $set->hide_score_by_problem($params->{hide_score_by_problem});
-  $set->hide_work($params->{hide_work});
-  $set->time_limit_cap($params->{time_limit_cap});
-  $set->restrict_ip($params->{restrict_ip});
-  $set->relax_restrict_ip($params->{relax_restrict_ip});
-  $set->restricted_login_proctor($params->{restricted_login_proctor});
-  
-  $db->putGlobalSet($set);
-  
-  my $out = {};
-  $out->{ra_out} = $set;
-  $out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
-  return $out;
+	my $set = $db->getGlobalSet($params->{set_id});
+	$set->set_header($params->{set_header});
+	$set->hardcopy_header($params->{hardcopy_header});
+	$set->open_date($params->{open_date});
+	$set->due_date($params->{due_date});
+	$set->answer_date($params->{answer_date});
+	$set->visible($params->{visible});
+	$set->enable_reduced_scoring($params->{enable_reduced_scoring});
+	$set->assignment_type($params->{assignment_type});
+	$set->attempts_per_version($params->{attempts_per_version});
+	$set->time_interval($params->{time_interval});
+	$set->versions_per_interval($params->{versions_per_interval});
+	$set->version_time_limit($params->{version_time_limit});
+	$set->version_creation_time($params->{version_creation_time});
+	$set->problem_randorder($params->{problem_randorder});
+	$set->version_last_attempt_time($params->{version_last_attempt_time});
+	$set->problems_per_page($params->{problems_per_page});
+	$set->hide_score($params->{hide_score});
+	$set->hide_score_by_problem($params->{hide_score_by_problem});
+	$set->hide_work($params->{hide_work});
+	$set->time_limit_cap($params->{time_limit_cap});
+	$set->restrict_ip($params->{restrict_ip});
+	$set->relax_restrict_ip($params->{relax_restrict_ip});
+	$set->restricted_login_proctor($params->{restricted_login_proctor});
+
+	$db->putGlobalSet($set);
+
+	# Next update the assigned_users list
+
+	# first, get the current list of users. 
+
+	my @usersForTheSetBefore = $db->listSetUsers($params->{set_id});
+
+	debug(to_json(\@usersForTheSetBefore));
+
+	# then determine those currently in the list.
+
+	my @usersForTheSetNow = split(/,/,$params->{assigned_users});
+
+
+	# The following seems to work if there are only additions or subtractions from the assigned_users field.
+	# Perhaps a better way to do this is to check users that are new or missing and add or delete them. 
+
+	# if the number of users have grown, then add them.  
+
+	debug(to_json(\@usersForTheSetNow));
+
+	# determine users to be added
+
+	foreach my $user (@usersForTheSetNow) {
+		if (! grep( /^$user$/, @usersForTheSetBefore)) {
+			my $userSet = $db->newUserSet;
+			$userSet->user_id($user);
+			$userSet->set_id($params->{set_id});
+			$db->addUserSet($userSet);
+		}
+	}
+
+	# delete users that are in the set before but not now. 
+
+	foreach my $user (@usersForTheSetBefore){
+		if (! grep(/^$user$/,@usersForTheSetNow)){
+			$db->deleteUserSet($user, $params->{set_id});
+		}
+	}
+ 
+
+	my $out = {};
+	$out->{ra_out} = $set;
+	$out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
+	return $out;
 }
 
 sub listSetUsers {
@@ -216,46 +264,68 @@ sub listSetUsers {
 }
 
 sub createNewSet{
-	my $self = shift;
-	my $in = shift;
-	my $db = $self->{db};
-	my $out;
+	my ($self,$params) = @_;
+  	my $db = $self->{db};
+  	my $out;
+
+  	debug("in createNewSet");
+  	#debug(to_json($params));
 
 
-	if ($in->{new_set_name} !~ /^[\w .-]*$/) {
+	if ($params->{new_set_name} !~ /^[\w .-]*$/) {
 		$out->{text} = "need a different name";#not sure the best way to handle and error
 	} else {
-		my $newSetName = $in->{new_set_name};
+		my $newSetName = $params->{set_id};
 		# if we want to munge the input set name, do it here
 		$newSetName =~ s/\s/_/g;
-		#debug("local_sets was ", $r->param('local_sets'));
-		#$r->param('local_sets',$newSetName);  ## use of two parameter param
-		#debug("new value of local_sets is ", $r->param('local_sets'));
+
+
 		my $newSetRecord = $db->getGlobalSet($newSetName);
 		if (defined($newSetRecord)) {
             $out->{out}=encode_base64("Failed to create set, you may need to try another name."),
             $out->{ra_out} = {'success' => 'false'};
 		} else {			# Do it!
 			# DBFIXME use $db->newGlobalSet
-			$newSetRecord = $db->{set}->{record}->new();
+			# $newSetRecord = $db->{set}->{record}->new();
+
+			$newSetRecord = $db->newGlobalSet;
 			$newSetRecord->set_id($newSetName);
 			$newSetRecord->set_header("defaultHeader");
 			$newSetRecord->hardcopy_header("defaultHeader");
-			$newSetRecord->open_date(time()+60*60*24*7); # in one week
-			$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
-			$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
-			eval {$db->addGlobalSet($newSetRecord)};
+			$newSetRecord->open_date($params->{open_date});
+			$newSetRecord->due_date($params->{due_date});
+			$newSetRecord->answer_date($params->{answer_date});
+			$newSetRecord->visible($params->{visible});
+			$newSetRecord->enable_reduced_scoring($params->{enable_reduced_scoring});
+			$newSetRecord->assignment_type($params->{assignment_type});
+			$newSetRecord->attempts_per_version($params->{attempts_per_version});
+			$newSetRecord->time_interval($params->{time_interval});
+			$newSetRecord->versions_per_interval($params->{versions_per_interval});
+			$newSetRecord->version_time_limit($params->{version_time_limit});
+			$newSetRecord->version_creation_time($params->{version_creation_time});
+			$newSetRecord->problem_randorder($params->{problem_randorder});
+			$newSetRecord->version_last_attempt_time($params->{version_last_attempt_time});
+			$newSetRecord->problems_per_page($params->{problems_per_page});
+			$newSetRecord->hide_score($params->{hide_score});
+			$newSetRecord->hide_score_by_problem($params->{hide_score_by_problem});
+			$newSetRecord->hide_work($params->{hide_work});
+			$newSetRecord->time_limit_cap($params->{time_limit_cap});
+			$newSetRecord->restrict_ip($params->{restrict_ip});
+			$newSetRecord->relax_restrict_ip($params->{relax_restrict_ip});
+			$newSetRecord->restricted_login_proctor($params->{restricted_login_proctor});
+			
+			$db->addGlobalSet($newSetRecord);
 			if ($@) {
 				$out->{text} = encode_base64("Failed to create set, you may need to try another name.");
 				#$self->addbadmessage("Problem creating set $newSetName<br> $@");
 			} else {
-				my $selfassign = $in->{selfassign};
-				debug($selfassign);
+				my $selfassign = $params->{selfassign};
+				debug("selfassign: " . $selfassign);
 				$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
 				if($selfassign) {
-					debug("Assigning to user: " . $in->{user});
+					debug("Assigning to user: " . $params->{user});
 					my $userSet = $db->newUserSet;
-					$userSet->user_id($in->{user});
+					$userSet->user_id($params->{user});
 					$userSet->set_id($newSetName);
 					$db->addUserSet($userSet);
 				}
@@ -397,33 +467,6 @@ sub reorderProblems {
 
 	}
 
-	# Not sure if the userProblem also need to be reordered.  
-
-	# set the userProblems as well
-
-	# foreach my $user ($db->listSetUsers($setID)) {
-	# 	@allUserProblems = $db->getAllUserProblems($user,$setID);
-
-	# 	for (my $i = 0; $i < scalar(@allUserProblems); $i++){	
-	# 		foreach my $path (@problemList) {
-	# 			$path =~ s|^$topdir/*||;
-
-	# 			if($allUserProblems[$i]->{source_file} eq $path){
-
-	# 				if ($db->existsUserProblem($user,$setID,$i+1)){
-	# 					my $prob = $db->getUserProblem($user, $setID, $i+1);
-	# 		  	  		die " problem $index for set $setID and effective user $user not found"	unless $prob;
-	# 					$prob->problem_id($i+1);
-	# 				    $db->putUserProblem($prob);
-	# 			    } else {
-	# 			    	$db->deleteUserProblem($user,$setID,$problem->{problem_id});
-	# 			    	$problem->problem_id($i+1);
-	# 			    	$db->addUserProblem($problem);
-	# 			    }
-	# 			}
-	# 		}
-	# 	}
-	# }
 	my $out;
 
 	$out->{text} = encode_base64("Successfully reordered problems");
@@ -464,13 +507,17 @@ sub updateUserSet {
   	my ($self, $params) = @_;
   	my $db = $self->{db};
   	my @users = split(',',$params->{users});
+
+  	debug($params->{open_date});
+  	debug($params->{due_date});
+  	debug($params->{answer_date});
   	
   	foreach my $userID (@users) {
 		my $set = $db->getUserSet($userID,$params->{set_id});
 		if ($set){
 		    $set->open_date($params->{open_date});
-		    $set->due_date($params->{due_date});
-		    $set->answer_date($params->{answer_date});
+			$set->due_date($params->{due_date});
+			$set->answer_date($params->{answer_date});
 		  	$db->putUserSet($set);
 		} else {
 			my $newSet = $db->newUserSet;
@@ -491,6 +538,52 @@ sub updateUserSet {
   return $out;
 }
 
+=item getUserSets($setID)
+
+gets all user sets for set $setID
+
+=cut
+
+sub getUserSets {
+	my ($self,$params) = @_;
+	my $db = $self->{db};
+
+	my @setUserIDs = $db->listSetUsers($params->{set_id});
+
+	my @userData = ();
+
+	foreach my $user_id (@setUserIDs){
+		push(@userData,$db->getUserSet($user_id,$params->{set_id}))
+	}
+
+	my $out = {};
+	$out->{ra_out} = \@userData;
+	$out->{text} = encode_base64("Returning all users sets for set " . $params->{set_id});
+
+	return $out;
+}
+
+
+sub saveUserSets {
+	my ($self,$params) = @_;
+	my $db = $self->{db};
+	debug($params->{overrides});
+
+	my @overrides = @{from_json($params->{overrides})};
+	foreach my $override (@overrides){
+		my $set = $db->getUserSet($override->{user_id},$params->{set_id});
+		if ($override->{open_date}) {$set->{open_date} = $override->{open_date};}
+		if ($override->{due_date}) {$set->{due_date} = $override->{due_date};}
+		if ($override->{answer_date}) {$set->{answer_date} = $override->{answer_date};}
+		$db->putUserSet($set);
+	}
+
+	my $out = {};
+	$out->{ra_out} = "";
+	$out->{text} = encode_base64("Updating the overrides for set " . $params->{set_id});
+
+	return $out;
+}
 
 =item unassignSetFromUser($userID, $setID, $problemID)
 
@@ -549,48 +642,6 @@ sub assignAllSetsToUser {
 	return @results;
 }
 
-# sub assignProblemToAllSetUsers {
-# 	my $self = shift;
-# 	my $GlobalProblem = shift;
-# 	my $db = $self->{db};
-# 	my $setID = $GlobalProblem->set_id;
-# 	my @userIDs = $db->listSetUsers($setID);
-	
-# 	my @results;
-	
-# 	foreach my $userID (@userIDs) {
-# 		my @result = assignProblemToUser($self, $userID, $GlobalProblem);
-# 		push @results, @result if @result;
-# 	}
-	
-# 	return @results;
-# }
-
-# sub addProblemToSet {
-# 	my ($self,$params) = @_;
-# 	my $db = $self->{db};
-# 	my $value_default = $self->{ce}->{problemDefaults}->{value};
-# 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
-	
-
-
-# 	die "addProblemToSet called without specifying the set name." if $params->{set_id} eq "";
-# 	my $setName = $params->{set_id};
-
-# 	my $sourceFile = $params->{sourceFile} or die "addProblemToSet called without specifying the sourceFile.";
-
-
-# 	debug("In addProblemToSet");
-# 	debug("setName: $setName");
-# 	debug("sourceFile: $sourceFile");
-
-# 	# The rest of the arguments are optional
-	
-# #	my $value = $params{value} || $value_default;
-	
-# 	my $out->{text} = encode_base64("Problem added to ".$setName);
-# 	return $out;
-# }
 
 sub addProblem {
 	my ($self,$params) = @_;
@@ -605,11 +656,15 @@ sub addProblem {
 	my $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
-
+	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
+    # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
+	my $showMeAnotherCount = 0;	
+	
 	my $value = $value_default;
 	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
 
 	my $maxAttempts = $params->{maxAttempts} || $max_attempts_default;
+	my $showMeAnother = $params->{showMeAnother} || $showMeAnother_default;
 	my $problemID = $params->{problemID};
 
 	unless ($problemID) {
@@ -622,6 +677,8 @@ sub addProblem {
 	$problemRecord->source_file($file);
 	$problemRecord->value($value);
 	$problemRecord->max_attempts($maxAttempts);
+	$problemRecord->showMeAnother($showMeAnother);
+	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
 	$db->addGlobalProblem($problemRecord);
 
 	my @results; 
@@ -737,5 +794,4 @@ sub read_set_def {
 	@pg_files = map { $self->munge_pg_file_path($_, $filePathOrig) } @pg_files;
 	return(@pg_files);
 }
-
 

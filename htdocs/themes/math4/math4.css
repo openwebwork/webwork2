@@ -1,5 +1,3 @@
-
-
 /* WeBWorK Online Homework Delivery System
  * Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
  * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
@@ -14,7 +12,7 @@
  * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
  * Artistic License for more details.
  */
-
+ 
 /* Bootstrap overrides */
 .row-fluid [class*="span"] {
     min-height:0px;
@@ -63,12 +61,15 @@ input[type="checkbox"] {
 }
 
 #loginstatus {
-    	padding-top:1ex;
+    	padding-top:.5ex;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
 	font-weight: normal;
 } 
+#loginstatus a.btn {
+    margin-bottom:.5ex;
+}
 
 #loginstatus a {
 	color: black;
@@ -390,22 +391,23 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
-label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px} /* bright gold border and harvest gold background*/
+label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 label.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
-span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
+span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 span.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
 span.incorrect { color: #FF9494; background-color: inherit; } /* red */
 span.unattempted { color: inherit; background-color: #88ECFF;}
-input.correct   { color:inherit; background-color: #8F8; } /* green */
+input.correct { color:inherit; background-color: #8F8; } /* green */
 input.incorrect { color:inherit; background-color: #FF9494; } /* red */
 
 .results-popover {
@@ -450,6 +452,7 @@ table.attemptResults th {
 	border-style: inset; 
 	border-width: 1px; 
 	text-align: center; 
+	vertical-align: middle;
 	/*width: 15ex;*/ /* this was erroniously commented out with "#" */
 	padding: 2px 5px 2px 5px;
 	color: inherit;
@@ -459,6 +462,11 @@ table.attemptResults th {
 .attemptResults .popover {
     max-width: 100%;
 }
+
+table.attemptResults td.FeedbackMessage { background-color:#EDE275;} /* Harvest Gold */
+table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
+span.ResultsWithErrorInResultsTable { color: inherit; background-color: inherit; } /* used to override the older red on white span */ 
+table.attemptResults td.ResultsWithError { background-color:#FF9494; color: #000000} /* error red */
 
 /*styles for the instructor comment box */
 

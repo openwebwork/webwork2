@@ -185,8 +185,9 @@ function MathViewer(field,button,container,userOptions) {
 	tabContent.find('.tab-pane:first').addClass('active');
 
 	popupdiv.append($('<div>', {class : 'well well-small mviewerouter'})
-			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer'})));
-			
+			.append($('<p>', {id : 'mviewer'+viewerIndex, class : 'mviewer'})
+			       ));
+	
 	if (!this.options.decoratedTextBoxAsInput) {
 	    var insertbutton = $('<a>', {href : '#', class : 'btn btn-primary' }).html('Insert');
 	    popupdiv.append($('<div>',{class : 'mvinput'}).append(this.inputTextBox).append(insertbutton));
@@ -201,6 +202,8 @@ function MathViewer(field,button,container,userOptions) {
 	}
 
 	$('#mviewer'+viewerIndex).html(me.inputTextBox.val());
+
+	this.regenPreview();
 
 	/* set up the autocomplete feature */
 	if (this.options.autocomplete) {
@@ -255,12 +258,15 @@ function MathViewer(field,button,container,userOptions) {
     this.regenPreview = function() {
 	var text = me.inputTextBox.val();
 
+	/* This escapes any html in the input field, preventing xss */
+	text = $('<div>').text(text).html();
+
 	if (me.renderingMode == "LATEX") {
 	    $('#mviewer'+viewerIndex).html('\\(' + text + '\\)');
 	    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
 	} else if (me.renderingMode == "PGML") {
-		$('#mviewer'+viewerIndex).html("`" + text + "`");
-		MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
+	    $('#mviewer'+viewerIndex).html("`" + text + "`");
+	    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
 	} else
 	    console.log('Invalid Rendering Mode');
     };

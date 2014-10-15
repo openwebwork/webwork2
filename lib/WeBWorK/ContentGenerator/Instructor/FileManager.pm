@@ -601,7 +601,7 @@ sub Copy {
 		}
 	}
 
-	$self->Confirm($r->maketext("Copy file as:"),$original,"Copy");
+	$self->Confirm($r->maketext("Copy file as:"),uniqueName($dir,$original),"Copy");
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -626,7 +626,7 @@ sub Rename {
 		}
 	}
 
-	$self->Confirm($r->maketext("Rename file as:"),uniqueName($dir,$original),"Rename");
+	$self->Confirm($r->maketext("Rename file as:"),$original,"Rename");
 	print CGI::hidden({name=>"files",value=>$original});
 }
 

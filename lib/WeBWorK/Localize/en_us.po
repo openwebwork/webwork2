@@ -1,7 +1,7 @@
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_1"
-msgstr "This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3\% of the original."
+msgstr "This assignment has a Reduced Scoring Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3\% of the original."
 
 #
 msgid "_REQUEST_ERROR"
@@ -48,7 +48,11 @@ msgstr "This is the classlist editor page, where you can view and edit the recor
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_2"
+<<<<<<< HEAD
+msgstr "This assignment had a Reduced Scoring Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
+=======
 msgstr "This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
+>>>>>>> release/2.9
 
 #
 msgid "_LOGIN_MESSAGE"

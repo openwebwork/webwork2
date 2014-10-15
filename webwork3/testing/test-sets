@@ -1,0 +1,31 @@
+#!/bin/bash
+
+
+# This is a test of the Webwork RESTful webservice
+#
+# This document tests the User routes. 
+#
+# First, make sure that you have a user with instructor priviledges and a valid session key for a course
+
+INSTR=profa
+KEY=CG61YoBPdavGEYrO0lCfs13zb1rD9FoC
+COURSE=maa101
+
+# get all sets for the course
+
+echo "Testing GET /courses/$COURSE/sets"
+
+curl -X GET -d "user=$INSTR&course=$COURSE&session_key=$KEY" http://localhost/test/courses/$COURSE/sets
+
+# Create a new problem set called xyz123 with some standard values
+
+SET=xyz123
+
+echo "Testing POST /courses/$COURSE/sets/$SET"
+
+#OPEN_DATE='date -j -f "%a %b %d %T %Z %Y" "`date`" "+%s"'  # set it to right now
+OPEN_DATE=1375075134
+
+echo $OPEN_DATE
+
+curl -X POST -d "user=$INSTR&course=$COURSE&session_key=$KEY&open_date=$OPEN_DATE" http://localhost/test/courses/$COURSE/sets/$SET

@@ -102,6 +102,10 @@ Write @messages to the debugging log.
 
 sub debug {
 	my (@message) = undefstr("###UNDEF###", @_);
+
+	#print STDERR "in ww::debug\n";
+	#print STDERR $WeBWorK::Constants::WEBWORK_DIRECTORY . "\n";
+	#print STDERR $Logfile . "\n";
 	
 	if ($Enabled) {
 		my ($package, $filename, $line, $subroutine) = caller(1);

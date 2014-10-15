@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile sortByName path_is_subdir);
+use WeBWorK::Utils qw(readFile sortByName path_is_subdir is_restricted);
 use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
@@ -342,7 +342,8 @@ sub setListRow {
 	$tmplSet = $set if ( ! defined( $tmplSet ) );
 	
 	my $name = $set->set_id;
-	my @restricted =  is_restricted($db, $set, $name, $user);
+	my @restricted = $ce->{options}{enableConditionalRelease} ?  
+	    is_restricted($db, $set, $name, $user) : ();
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");
@@ -502,14 +503,14 @@ sub setListRow {
 		$interactive = $name unless $preOpenSets;
 	} elsif (time < $set->due_date && !@restricted) {
 			$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
-			my $enable_reduced_scoring = $set->enable_reduced_scoring;
-			my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
-			if ($reducedScoringPeriod > 0 and $enable_reduced_scoring ) {
-				my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
-				my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec,undef,$ce->{studentDateDisplayFormat});
-#				$status .= '. <FONT COLOR="#cc6600">Reduced Credit starts ' . $beginReducedScoringPeriod . '</FONT>';
-				$status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Credit Starts: [_1]", $beginReducedScoringPeriod));
-
+			my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+			my $reduced_scoring_date = $set->reduced_scoring_date;
+			if ($reduced_scoring_date and $enable_reduced_scoring
+			    and $reduced_scoring_date != $set->due_date) {
+			    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
+#				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
+			    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
+			    
 			}
 		$setIsOpen = 1;
 	} elsif (time < $set->due_date && @restricted) {
@@ -526,14 +527,15 @@ sub setListRow {
 		  }
 		 $status .= " to open this set."
 		}
-		my $enable_reduced_scoring = $set->enable_reduced_scoring;
-		my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
-		if ($reducedScoringPeriod > 0 and $enable_reduced_scoring ) {
-			my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
-			my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec,undef,$ce->{studentDateDisplayFormat});
-#				$status .= '. <FONT COLOR="#cc6600">Reduced Credit starts ' . $beginReducedScoringPeriod . '</FONT>';
-			$status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Credit Starts: [_1]", $beginReducedScoringPeriod));
 
+		my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+		my $reduced_scoring_date = $set->reduced_scoring_date;
+		if ($reduced_scoring_date and $enable_reduced_scoring) {
+		    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
+		    
+#				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
+		    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
+		    
 		}
 		$setIsOpen = 0;
 	} elsif (time < $set->answer_date) {
@@ -645,176 +647,6 @@ sub byUrgency {
 	}
 	return (  $a_parts[0] cmp  $b_parts[0] );
 }
-
-sub grade_set {
-        
-        my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
-
-        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
-
-		my $status = 0;
-		my $longStatus = '';
-		my $string     = '';
-		my $twoString  = '';
-		my $totalRight = 0;
-		my $total      = 0;
-		my $num_of_attempts = 0;
-	
-		debug("Begin collecting problems for set $setName");
-		# DBFIXME: to collect the problem records, we have to know 
-		#    which merge routines to call.  Should this really be an 
-		#    issue here?  That is, shouldn't the database deal with 
-		#    it invisibly by detecting what the problem types are?  
-		#    oh well.
-		
-		my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
-		my $num_of_problems  = @problemRecords || 0;
-		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
-
-		if ( $setIsVersioned ) {
-			@problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
-		}   # use versioned problems instead (assume that each version has the same number of problems.
-		
-		debug("End collecting problems for set $setName");
-
-	####################
-	# Resort records
-	#####################
-		@problemRecords = sort {$a->problem_id <=> $b->problem_id }  @problemRecords;
-		
-		# for gateway/quiz assignments we have to be careful about 
-		#    the order in which the problems are displayed, because
-		#    they may be in a random order
-		if ( $set->problem_randorder ) {
-			my @newOrder = ();
-			my @probOrder = (0..$#problemRecords);
-			# we reorder using a pgrand based on the set psvn
-			my $pgrand = PGrandom->new();
-			$pgrand->srand( $set->psvn );
-			while ( @probOrder ) { 
-				my $i = int($pgrand->rand(scalar(@probOrder)));
-				push( @newOrder, $probOrder[$i] );
-				splice(@probOrder, $i, 1);
-			}
-			# now $newOrder[i] = pNum-1, where pNum is the problem
-			#    number to display in the ith position on the test
-			#    for sorting, invert this mapping:
-			my %pSort = map {($newOrder[$_]+1)=>$_} (0..$#newOrder);
-
-			@problemRecords = sort {$pSort{$a->problem_id} <=> $pSort{$b->problem_id}} @problemRecords;
-		}
-		
-		
-    #######################################################
-	# construct header
-	
-		foreach my $problemRecord (@problemRecords) {
-			my $prob = $problemRecord->problem_id;
-			
-			unless (defined($problemRecord) ){
-				# warn "Can't find record for problem $prob in set $setName for $student";
-				# FIXME check the legitimate reasons why a student record might not be defined
-				next;
-			}
-			
-		    $status           = $problemRecord->status || 0;
-		    my  $attempted    = $problemRecord->attempted;
-			my $num_correct   = $problemRecord->num_correct || 0;
-			my $num_incorrect = $problemRecord->num_incorrect   || 0;
-			$num_of_attempts  += $num_correct + $num_incorrect;
-
-#######################################################
-			# This is a fail safe mechanism that makes sure that
-			# the problem is marked as attempted if the status has
-			# been set or if the problem has been attempted
-			# DBFIXME this should happen in the database layer, not here!
-			if (!$attempted && ($status || $num_correct || $num_incorrect )) {
-				$attempted = 1;
-				$problemRecord->attempted('1');
-				# DBFIXME: this is another case where it 
-				#    seems we shouldn't have to check for 
-				#    which routine to use here...
-				if ( $setIsVersioned ) {
-					$db->putProblemVersion($problemRecord);
-				} else {
-					$db->putUserProblem($problemRecord );
-				}
-			}
-######################################################			
-
-			# sanity check that the status (score) is 
-			# between 0 and 1
-			my $valid_status = ($status>=0 && $status<=1)?1:0;
-
-			###########################################
-			# Determine the string $longStatus which 
-			# will display the student's current score
-			###########################################			
-
-			if (!$attempted){
-				$longStatus     = '.';
-			} elsif   ($valid_status) {
-				$longStatus     = int(100*$status+.5);
-				$longStatus='C' if ($longStatus==100);
-			} else	{
-				$longStatus 	= 'X';
-			}
-
-			my $probValue     = $problemRecord->value;
-			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
-			$total           += $probValue;
-			$totalRight      += $status*$probValue if $valid_status;
-# 				
-# 			# initialize the number of correct answers 
-# 			# for this problem if the value has not been 
-# 			# defined.
-# 			$correct_answers_for_problem{$probID} = 0 
-# 				unless defined($correct_answers_for_problem{$probID});
-			
-# 				
-# 		# add on the scores for this problem
-# 			if (defined($attempted) and $attempted) {
-# 				$number_of_students_attempting_problem{$probID}++;
-# 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-# 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-# 				$h_problemData{$probID}                               = $num_incorrect;
-# 				$total_num_of_attempts_for_set                       += $num_of_attempts;
-# 				$correct_answers_for_problem{$probID}                += $status;
-# 			}
-
-		}  # end of problem record loop
-		return 0 unless $total;
-		my $percentage = $totalRight/$total;
-
-
-
-		#return($status,  $longStatus, $string, $twoString, $totalRight, $total, $num_of_attempts, $num_of_problems			);
-		return $percentage;
-}
-
-sub is_restricted {
-        my ($db, $set, $setName, $studentName) = @_;
-        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
-	my @needed;
-	if ( $set and $set->restricted_release ) {
-	        my @proposed_sets = split(/\s*,\s*/,$set->restricted_release);
-		my $restriction = $set->restricted_status;
-		my @good_sets;
-		foreach(@proposed_sets) {
-		  push @good_sets,$_ if $db->existsGlobalSet($_);
-		}
-		foreach(@good_sets) {
-	  	  my $restrictor =  $db->getGlobalSet($_);
-		  my $r_score = grade_set($db,$restrictor,$_, $studentName,0); 
-		  if($r_score < $restriction) {
-	  	    push @needed,$_;
-		  }
-		}
-	}
-	return unless @needed;
-	return @needed;
-}
-	
 
 sub check_sets {
 	my ($self,$db,$sets_string) = @_;

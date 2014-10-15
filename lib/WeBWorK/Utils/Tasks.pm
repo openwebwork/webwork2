@@ -128,13 +128,14 @@ sub fake_problem {
 	my $db = shift; 
 	my %options = @_;
 	my $problem = $db->newGlobalProblem(); 
-
 	#debug("In fake_problem");
 
 	$problem = global2user($db->{problem_user}->{record}, $problem); 
 	$problem->set_id(fakeSetName); 
 	$problem->value(""); 
 	$problem->max_attempts("-1"); 
+	$problem->showMeAnother("-1"); 
+	$problem->showMeAnotherCount("0"); 
  
 	$problem->problem_seed(0); 
 	$problem->problem_seed($options{'problem_seed'})
