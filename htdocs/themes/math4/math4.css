@@ -299,6 +299,18 @@ table.classlist-table .tbody {
     margin-bottom:0px;
 }
 
+/* Gateway Options */
+
+#sp-gateway-form{
+	background-color: #eeeeee;
+	color: black;
+}
+
+#sp-gateway-form label{
+    display: inline-block;
+	padding-right: 15px;    
+}
+
 /* Library Browser */
 .library-browser-table td {
 	padding-top: 0.2em;
