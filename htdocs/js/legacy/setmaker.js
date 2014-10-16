@@ -26,11 +26,11 @@ function nomsg() {
 }
 
 function goodmsg(msg) {
-  $(".Message").html('<div class="ResultsWithoutError">'+msg+"</div>");
+  alert(msg);
 }
 
 function badmsg(msg) {
-  $(".Message").html('<div class="ResultsWithError">'+msg+"</div>");
+  alert(msg);
 }
 
 

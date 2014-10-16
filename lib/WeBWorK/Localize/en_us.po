@@ -1,7 +1,17 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: Nick Lassonde <nlassonde@landmarkglobal.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_1"
-msgstr "This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3\% of the original."
+msgstr "This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3%% of the original."
 
 #
 msgid "_REQUEST_ERROR"
@@ -12,7 +22,7 @@ msgid "_HMWKSETS_EDITOR_DESCRIPTION"
 msgstr "This is the homework sets editor page where you can view and edit the homework sets that exist in this course and the problems that they contain. The top of the page contains forms which allow you to filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, publish homework sets, import/export sets from/to an external file, score sets, or create/delete sets.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table displaying the sets and several pieces of relevant information."
 
 msgid "_ANSWER_LOG_DESCRIPTION"
-msgstr "This is the past answer viewer.  Students can only see their answers, and they will not be able to see which parts are correct.  Instructors can view any users answers using the form below and the answers will be colored according to correctness.  You can use *, ? or | as wildcards in the user field or set field and you can use number ranges in the problem field."
+msgstr "This is the past answer viewer.  Students can only see their answers, and they will not be able to see which parts are correct.  Instructors can view any users' answers using the form below and the answers will be colored according to correctness.  You can use *, ? or | as wildcards in the user field or set field and you can use number ranges in the problem field."
 
 #
 msgid "_EXTERNAL_AUTH_MESSAGE"
@@ -48,7 +58,7 @@ msgstr "This is the classlist editor page, where you can view and edit the recor
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_2"
-msgstr "This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
+msgstr "This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3%% of the original."
 
 #
 msgid "_LOGIN_MESSAGE"
@@ -65,3 +75,4 @@ msgstr "Prev"
 #
 msgid "_GUEST_LOGIN_MESSAGE"
 msgstr "This course supports guest logins. Click %1 to log into this course as a guest."
+

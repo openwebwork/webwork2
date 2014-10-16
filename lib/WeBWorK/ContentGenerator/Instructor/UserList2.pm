@@ -1004,9 +1004,24 @@ sub add_handler {
 }
 
 sub import_form {
+	#This JS should probably go somewhere else
+	print CGI::script(<<EOF);
+		var fileSource = window.document.getElementById('import_select_source');
+    	var uploadElement = window.document.getElementById('file');
+    	fileSource.onchange = function() {
+    		if (fileSource.value === 'Upload a new .lst file') {
+    			uploadElement.style.display = 'block';
+  			} else {
+    			uploadElement.style.display = 'none';
+  			}
+		}
+EOF
+
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
-	
+	my $drop_down_values = [ $self->getCSVList() ];
+	unshift($drop_down_values, "Upload a new .lst file");
+
 	return join(" ",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1014,11 +1029,13 @@ sub import_form {
 			-label_text=>$r->maketext("Import users from what file?").": ",
 			-input_attr=>{
 				-name => "action.import.source",
-				-values => [ $self->getCSVList() ],
-				-default => $actionParams{"action.import.source"}->[0] || "",
-				-onchange => $onChange,
+				-values => $drop_down_values,
+				-default => "Upload a new .lst file",
+				#-onchange => $onChange,
 			}
 		),
+		CGI::br(),
+		CGI::input({type=>"file",name=>"action.import.upload",id=>"file",size=>40}),
 		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1059,12 +1076,38 @@ sub import_form {
 sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r = $self->r;
+	my $courseRoot = $self->{ce}{courseDirs}{root};
+	my $pwd = $self->{pwd};
+	my $dir = "$courseRoot/templates"; #templates shouldn't be hard coded...
 	
 	my $source = $actionParams->{"action.import.source"}->[0];
 	my $add = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
-	
-	my $fileName = $source;
+	my $uploadIDhash = $actionParams->{"action.import.upload"}->[0];
+	my $name;
+	if ($uploadIDhash && ($source eq "Upload a new .lst file")) {
+		my ($id,$hash) = split(/\s+/,$uploadIDhash);
+		my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+		$name = $upload->filename;
+		my $file;
+		$file = "$dir/$name";
+		my $fileData;
+		my $fh = $upload->fileHandle;
+		my @lines = <$fh>; $fileData = join('',@lines);
+		$upload->dispose;
+		$fileData =~ s/\r\n?/\n/g;
+		if (open(UPLOAD,">$file")) {print UPLOAD $fileData; close(UPLOAD)}
+		  else {$self->addbadmessage("Can't create file '$name': $!")}
+	    if (-e $file) {
+	      $self->addgoodmessage("file '$name' uploaded successfully");
+	    }
+	}
+	my $fileName;
+	if ($source eq "Upload a new .lst file") {
+		$fileName = $name;
+	} else {
+		$fileName = $source;
+	}
 	my $createNew = $add eq "any";
 	my $replaceExisting;
 	my @replaceList;

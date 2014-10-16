@@ -4,6 +4,21 @@ $(window).load(function() { $('#achievementModal').modal('show');
 			  });
 })
 
+window.onbeforeunload = function(e) {
+	window.unsubmittedAnswers = false;
+	$('input:text').each(function() {
+		if ($(this).val() != "") {
+			window.unsubmittedAnswers = true;
+		}
+	});
+
+	if (window.unsubmittedAnswers == true){
+		return "Stop";
+	} else {
+		return;
+	}
+}
+
 function submitAction() {
 
 }
