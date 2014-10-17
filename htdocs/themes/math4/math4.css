@@ -31,9 +31,7 @@ input[type="checkbox"] {
 }
 
 /* Bootstrap Overrides */
-.container-fluid {
-	padding: 0.5em;
-}
+
 
 .webwork_logo {
 	background-color: #1048ae;
@@ -936,3 +934,82 @@ table#grades_table pre{
     min-height:35px;
     min-width:43px;
 }
+
+/* Top Nav Bar */
+#wwadminbar * {
+	height: auto;
+	width: auto;
+	margin: 0;
+	padding: 0;
+	position: static;
+	text-shadow: none;
+	text-transform: none;
+	letter-spacing: normal;
+	-webkit-border-radius: 0;
+	border-radius: 0;
+	-webkit-box-sizing: content-box;
+	-moz-box-sizing: content-box;
+	box-sizing: content-box;
+	-webkit-transition: none;
+	transition: none;
+	-webkit-font-smoothing: subpixel-antialiased; /* Prevent Safari from switching to standard antialiasing on hover */
+}
+
+.container-fluid {
+  padding-top: 37px;
+}
+
+#wwadminbar {
+	direction: ltr;
+	color: #ccc;
+	height: 32px;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	/*min-width: 768px;*/
+	z-index: 99999;
+	background: #038;
+}
+
+#wwadminbar ul, #wwadminbar li{
+	background: 0 0;
+	clear: none;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	position: relative;
+	text-indent: 0;
+	z-index: 99999;
+}
+
+#wwadminbar li{
+	float: left;
+}
+
+#wwadminbar .ab-icon {
+  padding: 4px;
+}
+
+#ww-admin-bar-root-default {
+  float: left;
+}
+
+#ww-admin-bar-secondary-top {
+  float: right;
+}
+
+
+   #site-navigation{
+      position: absolute !important;
+      max-width: 104px !important;
+      left: -104px !important;
+   }
+  
+   #sidemenu-content-container.active #content {
+      padding-left: 10px !important;
+   }
+   #sidemenu-content-container.active {
+     position: relative !important;
+     left: 104px !important;
+   }

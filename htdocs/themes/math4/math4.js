@@ -33,20 +33,6 @@ $(function(){
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
 
-    // Add a button to make the sidebar more dynamic for small screens
-    $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
-	    event.preventDefault();
-	    $('#site-navigation').toggleClass('hidden');
-	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
-		.toggleClass('icon-chevron-right');
-	    $('#site-navigation').toggleClass('span2');
-	    $('#content').toggleClass('span10').toggleClass('span11');
-	});
-
-    if($(window).width() < 480) {
-	$('#toggle-sidebar').click();
-    }
-
     // if no fish eye then collapse site-navigation 
     if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
 	$('#site-navigation').removeClass('span2');
@@ -216,5 +202,63 @@ $(function(){
 	    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
 	});
     }
+
+$('#ww-admin-bar-loginstatus a').addClass('ab-item');
+
+var ANSM = {};
+ANSM.threshold = 768;
+ANSM.windowwidth = $(window).width();
+ANSM.ltthreshold = (ANSM.windowwidth < ANSM.threshold) ? 1 : 0;
+
+//Initial settings for sidemenu
+
+if(ANSM.ltthreshold){
+	$('#sidemenu-content-container').removeClass('active');
+	$('#site-navigation').addClass('hidden');
+	$('#toggle-sidebar').addClass('hidden');	
+} else {
+    $('#sidemenu-content-container').addClass('active');
+	$('#site-navigation').removeClass('hidden'); 
+	$('#toggle-sidebar').removeClass('hidden');	   
+}
+
+$('#toggle-sidemenu').click(function(event){
+	event.preventDefault();
+   	$('#sidemenu-content-container').toggleClass('active');
+	$('#site-navigation').toggleClass('hidden');
+	$('#toggle-sidebar-icon').toggleClass('icon-chevron-left').toggleClass('icon-chevron-right');
+	$('#site-navigation').toggleClass('span2');
+	$('#content').toggleClass('span10').toggleClass('span11');   	   	
+});
+
+$('#toggle-sidebar').removeClass('btn-primary').click(function(event){
+	event.preventDefault();
+   	$('#sidemenu-content-container').toggleClass('active');
+	$('#site-navigation').toggleClass('hidden');
+	$('#toggle-sidebar-icon').toggleClass('icon-chevron-left').toggleClass('icon-chevron-right');
+	$('#site-navigation').toggleClass('span2');
+	$('#content').toggleClass('span10').toggleClass('span11');   	
+});
+
+//Resize settings for sidemenu
+
+$(window).resize(function(){
+	ANSM.windowwidth = $(window).width();
+	if(ANSM.windowwidth < ANSM.threshold && !ANSM.ltthreshold){	
+	    $('#sidemenu-content-container').removeClass('active');
+		$('#site-navigation').addClass('hidden');
+		$('#toggle-sidebar').addClass('hidden');		
+		ANSM.ltthreshold = 1;
+	}else if(ANSM.windowwidth >= ANSM.threshold && ANSM.ltthreshold){	
+	    $('#sidemenu-content-container').addClass('active');
+		$('#site-navigation').removeClass('hidden'); 
+		$('#toggle-sidebar').removeClass('hidden');		
+		$('#site-navigation').addClass('span2');
+		$('#content').addClass('span10'); 				
+		ANSM.ltthreshold = 0;	
+	}
+});
+
+
 });    
 
