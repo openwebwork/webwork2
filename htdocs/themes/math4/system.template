@@ -76,6 +76,22 @@ var tabberOptions = {manualStartup:true};
 <!-- Bootstrap Fluid Layout Scaffolding start -->
 <div class="container-fluid">
 <!-- Header -->
+
+<div class="no-grav" id="wwadminbar">
+
+<ul id="ww-admin-bar-root-default">
+  <li>	  
+  	<a href="#" class="btn btn-primary btn ab-icon" id="toggle-sidemenu">
+  	  <i id="toggle-sidemenu-icon" class="icon-large icon-reorder"></i> 
+  	</a>
+  </li>
+  <li>WeBWorK</li>
+</ul>
+<ul id="ww-admin-bar-secondary-top">
+  <li id="loginstatus"><!--#loginstatus--></li>
+</ul>
+</div>
+
 <div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
 		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
@@ -83,13 +99,9 @@ var tabberOptions = {manualStartup:true};
 	<div class="span4 maa_logo">
 		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
 	</div>
-	<div id="loginstatus" class="offset3 span3">
-		<!--#loginstatus-->
-	</div>
 </div>
 
-<div class="row-fluid">
-
+<div class="row-fluid" id="sidemenu-content-container">
 <!-- Navigation -->
 <div id="site-navigation" class="span2" role="navigation" aria-label="main navigation">
   <!--#if can="links"-->
