@@ -47,7 +47,7 @@ Powered by <a href="#" href="http://perldancer.org/">Dancer</a> [% dancer_versio
       </button>
         <a class="navbar-brand">WW3</a>
       </div>
-    <div class="navbar-collapse collapse">
+    <div class="navbar-collapse collapse" id="navbar-inner-content">
       <ul class="nav navbar-nav">
       <li>
         <div class="btn-group">
