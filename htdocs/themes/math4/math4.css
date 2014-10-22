@@ -26,13 +26,17 @@ input[type="checkbox"] {
 #masthead {
 	background-color: #038;
 	margin: 0;
-	padding: 0;
 	padding: 5px;
+    width: calc(100% - 10px);	
 }
 
 /* Bootstrap Overrides */
 .container-fluid {
-	padding: 0.5em;
+	padding-top: 0.5em;
+}
+
+.fix-content-margin {
+   margin-left: 0px !important;
 }
 
 .webwork_logo {
@@ -937,6 +941,4 @@ table#grades_table pre{
     min-width:43px;
 }
 
-#content.span12.fix-content-margin {
-   margin-left: 0px !important;
-}
+

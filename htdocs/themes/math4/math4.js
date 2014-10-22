@@ -48,21 +48,19 @@ $(function(){
 	ANSM.ltthreshold = (ANSM.windowwidth < ANSM.threshold) ? 1 : 0;
 	//Initial settings for sidemenu
     if(ANSM.ltthreshold) {
-		$('#toggle-sidebar').click();
-    }	
+		$('#toggle-sidebar').click();		
+    }
 	
 	$(window).resize(function(){
 		ANSM.windowwidth = $(window).width();
 		if(ANSM.windowwidth < ANSM.threshold && !ANSM.ltthreshold){
 			$('#site-navigation').addClass('hidden');	
-			$('#masthead').addClass('span12');
 	    	$('#toggle-sidebar-icon').addClass('icon-chevron-left').removeClass('icon-chevron-right');	
 	    	$('#site-navigation').removeClass('span2');	
 	    	$('#content').removeClass('span10').addClass('span12').addClass('fix-content-margin');
 			ANSM.ltthreshold = 1;
 		}else if(ANSM.windowwidth >= ANSM.threshold && ANSM.ltthreshold){	
 			$('#site-navigation').removeClass('hidden'); 
-			$('#masthead').removeClass('span12');
 	    	$('#toggle-sidebar-icon').removeClass('icon-chevron-left').addClass('icon-chevron-right');		
 			$('#site-navigation').addClass('span2');
 			$('#content').addClass('span10').removeClass('span12').removeClass('fix-content-margin');
