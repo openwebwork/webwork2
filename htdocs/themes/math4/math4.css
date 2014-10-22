@@ -936,3 +936,7 @@ table#grades_table pre{
     min-height:35px;
     min-width:43px;
 }
+
+#content.span12.fix-content-margin {
+   margin-left: 0px !important;
+}
