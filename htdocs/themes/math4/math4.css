@@ -122,8 +122,6 @@ ul.nav li a:hover {
 #breadcrumb-navigation {
     float:left;
     display:inline-block;
-    width:90%;
-    width:calc(100% - 35px);
 }
 
 /* Main Content */

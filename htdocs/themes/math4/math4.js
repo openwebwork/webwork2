@@ -53,13 +53,14 @@ $(function(){
 	
 	$(window).resize(function(){
 		ANSM.windowwidth = $(window).width();
-		if(ANSM.windowwidth < ANSM.threshold && !ANSM.ltthreshold){
+		ANSM.is_logginpage = $('#toggle-sidebar').hasClass('hidden');
+		if(ANSM.windowwidth < ANSM.threshold && !ANSM.ltthreshold && !ANSM.is_logginpage){
 			$('#site-navigation').addClass('hidden');	
 	    	$('#toggle-sidebar-icon').addClass('icon-chevron-left').removeClass('icon-chevron-right');	
 	    	$('#site-navigation').removeClass('span2');	
 	    	$('#content').removeClass('span10').addClass('span12').addClass('fix-content-margin');
 			ANSM.ltthreshold = 1;
-		}else if(ANSM.windowwidth >= ANSM.threshold && ANSM.ltthreshold){	
+		}else if(ANSM.windowwidth >= ANSM.threshold && ANSM.ltthreshold && !ANSM.is_logginpage){	
 			$('#site-navigation').removeClass('hidden'); 
 	    	$('#toggle-sidebar-icon').removeClass('icon-chevron-left').addClass('icon-chevron-right');		
 			$('#site-navigation').addClass('span2');
