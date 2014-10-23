@@ -53,6 +53,10 @@ $(function(){
 	$('#content').removeClass('span10').addClass('span11');
 	$('#toggle-sidebar').addClass('hidden');
     }
+    
+    //Makes tables scrollable on small windows
+    $('table').wrap('<div class="table-container"></div>');
+    $('.table-container').css('overflow-x','scroll');
 
     // Makes the fisheye stuff bootstrap nav
     $('#site-navigation ul').addClass('nav nav-list');
