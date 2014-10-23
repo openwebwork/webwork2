@@ -96,6 +96,10 @@ input[type="checkbox"] {
     border:0px;
 }
 
+ul.nav.nav-list {
+  margin-top: 1ex;
+}
+
 ul.nav li a:hover {
 	background: #e1e1e1;	
 }
