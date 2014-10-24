@@ -664,6 +664,30 @@ table th {font-size:75%}
     white-space: normal;
 }
 
+/*Style for File Manager page */
+
+.fm-crd-buttons {
+	width: calc(30% - 30px);
+	float: left;
+	min-width: 100px;
+}
+
+.fm-directory {
+	width: calc(70% - 30px);
+	float:left;
+	min-width: 200px;
+	overflow-x: scroll;
+}
+
+.fm-directory #files{
+  width: 100%;
+  font-family: monospace;  
+}
+
+.fm-u-buttons{
+  clear:both;
+}
+
 /*Styles for the classlist editor page*/
 
 /*The styles here correctly align the table elements in the set table*/

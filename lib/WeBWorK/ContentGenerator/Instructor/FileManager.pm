@@ -300,7 +300,7 @@ EOF
 	# Directory menu and date/size checkbox
 	#
 	print CGI::start_div({-class => "row-fluid"});
-	print CGI::ul({-class => "span9",-style=>"list-style:none;"},
+	print CGI::ul({-class => "span9 nav nav-list",-style=>"list-style:none;"},
 		CGI::li(
 			CGI::input({type=>"submit", name=>"action", value => "^", ($isTop? (disabled=>1): ())}),
 			CGI::popup_menu(
@@ -327,10 +327,9 @@ EOF
 	my %button = (type=>"submit",name=>"action",style=>"width:100%;");
 	print CGI::start_div({-class => "row-fluid"});
 	print CGI::div({-class => "row-fluid"},
-	  CGI::div({-class => "span9"},
+	  CGI::div({-class => "nav nav-list fm-directory span9"},
 		CGI::scrolling_list(
 			-name => "files", id => "files",
-			-style => "font-family:monospace;",
 			-size => 17,
 			-class => "span12",
 			-multiple => 1,
@@ -340,7 +339,7 @@ EOF
 			-onChange => "checkFiles()"
 		),
 	  ),
-	  CGI::div({-class => "span3"},
+	  CGI::div({-class =>"span3 fm-crd-buttons"},
 		CGI::ul({-class => "nav nav-list"},
 			CGI::li(CGI::input({%button,value=>$r->maketext("View"),id=>"View"})),
 			CGI::li(CGI::input({%button,value=>$r->maketext("Edit"),id=>"Edit"})),
@@ -350,8 +349,6 @@ EOF
 			CGI::li(CGI::input({%button,value=>$r->maketext("Delete"),id=>"Delete"})),
 			CGI::li(CGI::input({%button,value=>$r->maketext("Make Archive"),id=>"MakeArchive"})),
 		),
-	  ),
-	  CGI::div({-class => "span3"},
 		CGI::ul({-class => "nav nav-list"},
 			CGI::li(CGI::input({%button,value=>$r->maketext("New File")})),
 			CGI::li(CGI::input({%button,value=>$r->maketext("New Folder")})),
@@ -363,24 +360,24 @@ EOF
 	#
 	# Upload button and checkboxes
 	#
-	print CGI::div({-class => "span10"},
-		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>$r->maketext("Upload"),id=>"Upload"}),
-		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
-		  CGI::br(),
-		  CGI::small(join(' &nbsp; ',"Format:",
-		    CGI::radio_group(-name=>'format', -value=>[$r->maketext('Text'),$r->maketext('Binary'),$r->maketext('Automatic')],
-				     -default=>$self->getFlag('format','Automatic')))),
+	print CGI::div({-class => "row-fluid fm-u-buttons"},
+		  CGI::ul({-class => "nav nav-list span9"},
+		  	CGI::li(CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>$r->maketext("Upload"),id=>"Upload"}),CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"})),
+		  	CGI::li(CGI::small(join(' &nbsp; ',"Format:", CGI::radio_group(-name=>'format', -value=>[$r->maketext('Text'),$r->maketext('Binary'),$r->maketext('Automatic')],
+				     -default=>$self->getFlag('format','Automatic'))))),
+		)
 	);
-	print CGI::div({-class => "span10"},
-		CGI::li(
-		  CGI::small(CGI::checkbox(-name=>'overwrite',-checked=>$self->getFlag('overwrite'),-value=>1,
+	print CGI::div({-class => "row-fluid"},
+		  CGI::ul({-class => "nav nav-list span9"},
+		  CGI::li(CGI::checkbox(-name=>'overwrite',-checked=>$self->getFlag('overwrite'),-value=>1,
 					   -label=>$r->maketext('Overwrite existing files silently'))),
-		  CGI::br(),
-		  CGI::small(CGI::checkbox(-name=>'unpack',-checked=>$self->getFlag('unpack'),-value=>1,
+		  CGI::ul({-class => "nav nav-list span9"},
+		  	CGI::li(CGI::checkbox(-name=>'unpack',-checked=>$self->getFlag('unpack'),-value=>1,
 					   -label=>$r->maketext('Unpack archives automatically'))),
-		  CGI::small(CGI::checkbox(-name=>'autodelete',-checked=>$self->getFlag('autodelete'),-value=>1,
+		  	CGI::li(CGI::checkbox(-name=>'autodelete',-checked=>$self->getFlag('autodelete'),-value=>1,
 					   -label=>$r->maketext('then delete them'))),
 		),
+	),
 	);
 
 	#

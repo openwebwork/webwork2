@@ -838,6 +838,16 @@ table#grades_table pre{
     margin-top:.5ex;
 }
 
+/* File Manager page */
+.fm-directory #files{
+  font-family: monospace;  
+}
+
+#file-manager #upload {
+	clear: both;
+}
+
+
 /*mainform is in the library browser*/
 .setlist-table,
 .setlist-table label,
