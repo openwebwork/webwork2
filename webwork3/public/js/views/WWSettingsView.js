@@ -11,7 +11,6 @@ function(Backbone, _,config){
             this.settings = options.settings;
             this.rowTemplate = _.template($("#row-setting-template").html());
             _(this.settings).each(function(setting){
-	            if(setting.get('var')=='ww3{pageSize}'){ setting.set('value',setting.get('value')+"");}            
                 setting.on("change", function (model) {
                     model.save();
                 });
