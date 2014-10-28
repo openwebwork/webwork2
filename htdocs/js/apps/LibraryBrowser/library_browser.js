@@ -28,7 +28,7 @@ require.config({
         //this is important:
         "config":"/webwork2_files/js/apps/LibraryBrowser/config", // ok
     },
-    urlArgs: "bust=" +  (new Date()).getTime(),
+    //urlArgs: "bust=" +  (new Date()).getTime(),
     waitSeconds: 15,
     shim: {
         //ui specific shims:

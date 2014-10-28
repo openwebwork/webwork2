@@ -83,6 +83,7 @@ $externalPrograms{gzip}  = "/bin/gzip";
 $externalPrograms{latex}    ="/usr/bin/latex";
 $externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
 $externalPrograms{dvipng}   ="/usr/bin//dvipng";
+$externalPrograms{tth}      ="/usr/bin/tth";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
@@ -99,7 +100,8 @@ $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 # url checker
 ####################################################
 
-$externalPrograms{checkurl} = "/usr/bin/lwp-request -d -mHEAD "; # or "/usr/local/bin/w3c -head "
+$externalPrograms{checkurl}     = "/usr/bin/lwp-request -d -mHEAD "; # or "/usr/local/bin/w3c -head "
+$externalPrograms{curlCommand}  = "/usr/bin/curl";
 
 ####################################################
 # image conversions utiltiies

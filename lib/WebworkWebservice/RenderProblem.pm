@@ -61,7 +61,7 @@ our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT";
 
 
 
-our $UNIT_TESTS_ON =0;
+our $UNIT_TESTS_ON =1;
 # 
 # #our $ce           = $WebworkWebservice::SeedCE;
 # # create a local course environment for some course
@@ -147,7 +147,7 @@ sub renderProblem {
     
 	#FIXME  put in check to make sure the course exists.
 	eval {
-		$ce           = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $courseName});
+		$ce = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $courseName});
 		$ce->{apache_root_url}= $HOSTURL;
 	# Create database object for this course
 		$db = WeBWorK::DB->new($ce->{dbLayout});
@@ -272,6 +272,15 @@ sub renderProblem {
 	my $problemAttempted = ($num_correct || $num_incorrect);
 	my $lastAnswer    = '';
 	
+	debug("setName: " . $setName);
+	debug("problemNumber: ". $problemNumber);
+	debug("problemSeed:" . $problemSeed);
+	debug("psvn: " . $psvn);
+	debug("problemStatus:" . $problemStatus);
+	debug("problemValue: " . $problemValue);
+
+
+
 	my $setRecord = $db->getMergedSet($effectiveUserName, $setName);
  	unless (defined($setRecord) and ref($setRecord) ) {
 		# if a User Set does not exist for this user and this set
@@ -381,7 +390,7 @@ sub renderProblem {
 	my $key        = $rh->{envir}->{key} || '';
 
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
-        local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
+    local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
 	
 	#check definitions
 	#warn "setRecord is ", WebworkWebservice::pretty_print_rh($setRecord);
@@ -718,8 +727,6 @@ sub new {
 # 	
 # 	return \%envir;
 # }
-
-
 
 
 1;

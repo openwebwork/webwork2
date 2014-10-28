@@ -703,7 +703,9 @@ sub links {
 	if (defined $courseID) {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
-			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+                        my $primaryMenuName = "Homework Sets";
+                        $primaryMenuName = "Course Administration" if ($ce->{courseName} eq 'admin');
+			print &$makelink("${pfx}ProblemSets", text=>$r->maketext($primaryMenuName), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::end_li();
 			if (defined $setID) {
 			    print CGI::start_li();
@@ -760,9 +762,6 @@ sub links {
 					if $ce->{showeditors}->{classlisteditor1};
 				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{classlisteditor2};
-				print CGI::li(&$makelink("${pfx}UserList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor3};
-
 				
 				# Homework Set Editor
 				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
@@ -770,8 +769,6 @@ sub links {
 
 				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor2};
-				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{homeworkseteditor3};
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
@@ -792,20 +789,9 @@ sub links {
 					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 						if $ce->{showeditors}->{pgproblemeditor3};;
 	
-					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-						if $ce->{showeditors}->{simplepgeditor};;
 					    print CGI::end_ul();
 					    print CGI::end_li();
-					}
-					if (defined $problemID) {
-					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-							if $ce->{showeditors}->{simplepgeditor};;
-						print CGI::end_ul();
-					    print CGI::end_li();
-					}
-					
+					}					
 					print CGI::end_ul();
 				    print CGI::end_li();
 				}
@@ -1217,7 +1203,14 @@ sub url {
 	my $name = $args->{name};
 	
 	if ($type eq "webwork") {
+	    # we have to build this here (and not in say defaults.conf) because
+	    # defaultTheme will chage as late as simple.conf
+	    if ($name eq "theme") {
+		return $ce->{webworkURLs}->{htdocs}.'/themes/'.$ce->{defaultTheme};
+	    } else {
+
 		return $ce->{webworkURLs}->{$name};
+	    }
 	} elsif ($type eq "course") {
 		return $ce->{courseURLs}->{$name};
 	} else {
@@ -1351,6 +1344,20 @@ sub if_warnings {
 	} else {
 		!$arg;
 	}
+}
+
+=item if_exists
+
+Returns true if the specified file exists in the current theme directory
+and false otherwise
+
+=cut
+
+sub if_exists {
+	my ($self, $arg) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	return -e $ce->{webworkDirs}{themes}.'/'.$ce->{defaultTheme}.'/'.$arg;
 }
 
 =back
@@ -1561,6 +1568,14 @@ method. The simplest way to to this is:
 sub optionsMacro {
 	my ($self, %options) = @_;
 	my $r = $self->r;
+    my %showMeAnother;
+    my $problemSeed;
+
+    # check if showMeAnother is defined
+    if($self->{showMeAnother}){
+        %showMeAnother = %{ $self->{showMeAnother} };
+        $problemSeed = $self->{problem}->{problem_seed};
+    }
 	
 	my @options_to_show = @{$options{options_to_show}} if exists $options{options_to_show};
 	@options_to_show = "displayMode" unless @options_to_show;  #FIXME -- I don't understant this -- type seems wrong
@@ -1626,6 +1641,16 @@ sub optionsMacro {
 		);
 		$result .= CGI::br();
 	}
+
+    # hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen
+    # it needs to send the seed from showMeAnother back to the screen
+    if($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}){
+	  	$result .= CGI::hidden({name => "showMeAnotherCheckAnswers", id=>"showMeAnotherCheckAnswers_id", value => 1});
+        # output the problem seed from ShowMeAnother so that it can be recycled in the refreshed screen
+        $result .= CGI::hidden({name => "problemSeed", value  =>  $problemSeed});
+        # tell showMeAnother that a display change has been made
+        $result .= CGI::hidden({name => "SMAdisplayChange", value  =>  1});
+    }
 
 	$result .= CGI::submit(-name=>"redisplay", -label=>$r->maketext("Apply Options"));
 	$result .= CGI::end_div();
@@ -1758,7 +1783,9 @@ sub hidden_fields {
 # 		my @values = $r->param($param);
 # 		$html .= CGI::hidden($param, @values);  #MEG
 # 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
-		my $value  = $r->param($param);
+
+	    my $value  = $r->param($param);
+
 #		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
 

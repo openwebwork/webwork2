@@ -32,8 +32,6 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
         {
             var self = this;
             var requestObject = {};
-            console.log("type here");
-            console.log(this.type);
             switch(this.type){
                 case "Problem Set":
                     console.log("fetching problems for Problem Set " + this.defaultRequestObject.set);
@@ -62,8 +60,8 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
             $.get(config.webserviceURL, requestObject,function (data) {
                 var response = $.parseJSON(data);
                 var problems = response.result_data;
-                console.log('Loading Problems');
-                console.log(response);
+                //console.log('Loading Problems');
+                //console.log(response);
     
                 var newProblems = new Array();
                 for (var i = 0; i < problems.length; i++) {
@@ -71,7 +69,7 @@ define(['Backbone', 'underscore','config','./Problem'], function(Backbone, _, co
                         newProblems.push(new Problem({path:problems[i],place: i}));
                     }
                 } 
-                console.log(self);
+                //console.log(self);
                 self.reset(newProblems);
                 self.trigger("fetchSuccess");
             });

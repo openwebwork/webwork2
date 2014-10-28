@@ -179,9 +179,19 @@ sub dispatch($) {
 	
 	debug("The raw params:\n");
 	foreach my $key ($r->param) {
+	    #make it so we dont debug plain text passwords
+	    my $vals;	    
+	    if ($key eq 'passwd'||
+		$key eq 'confirmPassword' ||
+		$key eq 'currPassword' ||
+		$key eq 'newPassword' || 
+		$key =~ /\.new_password/) {
+		$vals = '**********';
+	    } else {
 		my @vals = $r->param($key);
-		my $vals = join(", ", map { "'$_'" } @vals);
-		debug("\t$key => $vals\n");
+		$vals = join(", ", map { "'$_'" } @vals);
+	    }
+	    debug("\t$key => $vals\n");
 	}
 	
 	#mungeParams($r);
