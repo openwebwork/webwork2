@@ -1,0 +1,11 @@
+<!-- These are the student progress templates -->
+
+
+<script type="text/template" id="gradebook-template">
+</script>
+
+
+
+<script type="text/template" id="student-progress-help-template">
+<h4>GradeBook Help</h4>
+</script>

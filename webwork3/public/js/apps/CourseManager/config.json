@@ -29,6 +29,13 @@
 		"id": "problemSetsManager"
 	},
 	{
+		"name": "GradeBook",
+		"path": "main-views/GradeBookView",
+		"default_sidebar": "",
+		"other_sidebars": [],
+		"id": "gradebook"
+	},
+	{
 		"name": "Student Progress",
 		"path": "main-views/StudentProgressView",
 		"default_sidebar": "",

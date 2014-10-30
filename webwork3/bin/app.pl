@@ -14,6 +14,7 @@ use WeBWorK::Authen;
 use Routes::Authentication qw/buildSession setCourseEnvironment setCookie/; 
 use Routes::Course;
 use Routes::Library;
+use Routes::GradeBook;
 use Routes::ProblemSets;
 use Routes::User;
 use Routes::Settings;

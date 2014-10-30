@@ -281,6 +281,8 @@ at the bottom of the screen and click "Save Changes". </p>
 
 [% INCLUDE main/settings.tt %]
 
+[% INCLUDE main/gradebook.tt %]
+
 [% INCLUDE main/student_progress.tt %]
 
 [% INCLUDE sidebars/course_manager.tt %]
