@@ -11,8 +11,8 @@ var GradeBookView = MainView.extend({
 	},
 	render: function (){
 		var self = this;
-		this.$(".collection-table").remove();		
-		this.$el.html($("#gradebook-template").html());
+		this.$(".collection-table").remove();	
+		this.$el.html($("#gradebook-template").html());		
 		this.stickit(this.state,this.bindings);
 		if(this.collection){
 			this.progressTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
@@ -26,29 +26,17 @@ var GradeBookView = MainView.extend({
 	        // set up some styling
 	        this.progressTable.$(".paginator-row td").css("text-align","center");
 	        this.progressTable.$(".paginator-page").addClass("btn");
-	        this.showHideColumns();
 		} else {
-			this.buildTable();
+			console.log('There was no collection passed into CollectionTableView');
 		}
-		MainView.prototype.render.apply(this);
+		MainView.prototype.render.apply(this);	
 	    return this;
 	},
 	getDefaultState: function () {
-		return {set_id: "", user_id: "", type: "gradebook", page_num: 0};
-	},
-	showHideColumns: function () {
-		this.$(".login-name,.set-id").removeClass("hidden");
-        switch(this.state.get("type")){
-			case "users":
-				this.$(".login-name").addClass("hidden");
-				break;
-			case "sets":
-				this.$(".set-id").addClass("hidden");
-				break;
-		}
+		return {type: "gradebook", page_num: 0};
 	},
 	getHelpTemplate: function () {
-
+		//Help template goes here?
 	},
 	tableSetup: function () {
         var self = this;
@@ -57,15 +45,12 @@ var GradeBookView = MainView.extend({
         ];        
 		this.collection = new GradeBook([],{type: "gradebook",loadProblems: true});		
 		this.collection.fetch({success: function (data){
-			console.log(self.collection);
-			var admin_model = self.collection.get("admin");
-        	console.log(admin_model);			
+			var admin_model = self.collection.get("admin");		
         	var admin_model_keys = _.keys(admin_model['attributes']);
-        	setnames = _.without(admin_model_keys,'user_id');  
-       		var set_columns = _.each(setnames, function(name){
+        	var setnames = _.without(admin_model_keys,'user_id');  
+       		_.each(setnames, function(name){
        			self.cols.push({name: name.split('_')[0], key: name, classname: name, datatype: "integer"});
-       		});
-       		console.log(self.cols);		      	
+       		});	      	
 			self.render();}});
     }
 
