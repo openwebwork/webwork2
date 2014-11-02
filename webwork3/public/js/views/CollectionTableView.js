@@ -104,7 +104,6 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			}
 		},
 		render: function () {
-			console.log("in CollectionTableView.render");
 			var self = this, i;
 			this.$el.empty();
 			var tbody = $("<tbody>");

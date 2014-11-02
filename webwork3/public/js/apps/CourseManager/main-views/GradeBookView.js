@@ -6,8 +6,8 @@ var GradeBookView = MainView.extend({
 	initialize: function (options){
 		var self = this;
 		_(this).bindAll("buildTable","render","changeDisplay","tableSetup");	
-		MainView.prototype.initialize.call(this,options);	
-		console.log(options);		
+		MainView.prototype.initialize.call(this,options);		
+		this.state.set({type: 'gradebook'});
 		this.tableSetup();		
 		this.state.on({
 			"change:type": this.changeDisplay, 
@@ -18,21 +18,20 @@ var GradeBookView = MainView.extend({
 		var self = this;		
 		this.$el.html($("#gradebook-template").html());	
 		this.$el.prepend('<h1 class="title"></h1>');				
-		this.$('h1.title').after('<a class="gradebook-button"></a>');	
-		this.$('a.gradebook-button').addClass('hidden').html("<a href=# class='btn btn-default'>GradeBook</a>");			
-		this.stickit(this.state);			
+		this.$('h1.title').after('<a class="gradebook-button"></a>');		
+		this.$('a.gradebook-button').addClass('hidden').html("<a href=# class='btn btn-default'>GradeBook</a>");					
 		switch(self.state.get('type')){
 			case "gradebook":
-				$('h1.title').html('GradeBook');
-				$('a.gradebook-button').addClass('hidden');				
+				$('h1.title').html('GradeBook');	
+				$('a.gradebook-button').addClass('hidden');																
 				break;
 			case "sets":
 				$('h1.title').html(self.state.get('user_id'));
-				$('a.gradebook-button').removeClass('hidden');				
+				$('a.gradebook-button').removeClass('hidden');							
 				break;				
 			case "users":
 				$('h1.title').html(self.state.get('set_id'));				
-				$('a.gradebook-button').removeClass('hidden');				
+				$('a.gradebook-button').removeClass('hidden');								
 				break;
 		}				
 		if(this.collection){
@@ -52,20 +51,17 @@ var GradeBookView = MainView.extend({
 		}
 		MainView.prototype.render.apply(this);	
 		this.$('.gradebook-button').on("click", function(){
-			console.log('---button pressed----');
 		    self.state.set({type: 'gradebook'});
-			console.log(self.state.get('type'));		    
 		});			
 		this.progressTable.on("show-set-users", function(setname){
 			self.state.set({set_id: setname});
-			console.log(setname);
-			console.log(self.state.get('type'));
 		    self.state.set({type: "users"});
-		});			
+		});	
+		this.stickit(this.state);					
 	    return this;
 	},
 	getDefaultState: function () {
-		return {set_id: "", user_id: "", type: "gradebook", page_num: 0};
+		//return {set_id: "", user_id: "", type: "gradebook", page_num: 0};
 	},
 	changeDisplay: function(){
 		var self = this;
@@ -81,16 +77,13 @@ var GradeBookView = MainView.extend({
 	},	
 	buildTable: function () {
 		var self = this;
-		console.log(this.state.get("type"));
 		if (this.state.get("type")==="sets"){
 				(this.collection = new UserSetList([],{user: self.state.get("user_id"), type: "sets", loadProblems: true}))
 				.fetch({success: function(data){self.render();}});	
 		} else if (this.state.get("type")==="users"){
-			console.log(self.state.get("set_id"));	
 		var _set = this.problemSets.findWhere({set_id: this.state.get("set_id")});				
 				(this.collection = new UserSetList([],{problemSet: _set, type: "users", loadProblems: true}))
 					.fetch({success: function (data){self.render();}});	
-		console.log(this.collection);
 		} else if (this.state.get("type")==="gradebook"){				
 				this.collection = new GradeBook([],{type: "gradebook",loadProblems: true});		
 				this.collection.fetch({success: function (data){
@@ -107,18 +100,14 @@ var GradeBookView = MainView.extend({
 		//Help template goes here?
 	},	
 	tableSetup: function () {
-        var self = this;
-        console.log(self.state);        
+        var self = this; 
         switch(self.state.get('type')){
         	case "gradebook":
         		this.cols = [{name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
         		    stickit_options: {update: function($el, val, model, options) {
                     	$el.html("<a href='#' onclick='return false' class='goto-user' data-username='"+val+"'>" + val + "</a>");
                     	$el.children("a").on("click",function() {  
-                    		console.log(val);
-                    		console.log($(this).data('username'));
-                    		self.state.set({user_id: $(this).data('username')});
-                    		console.log(self.state);                    	               	                  	
+                    		self.state.set({user_id: $(this).data('username')});     	               	                  	
                     		self.state.set({type: "sets"});
                     	});}
                 	}
@@ -126,7 +115,6 @@ var GradeBookView = MainView.extend({
         		this.buildTable();        
 				break;
 			case "users":
-				console.log('users');
 				this.cols = [
             		{name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
             		{name: "Set Name", key: "set_id", classname: "set-id", datatype:"string"},
@@ -159,8 +147,6 @@ var GradeBookView = MainView.extend({
             	}
             }},
         ];
-        	console.log('---the columns----');
-        	console.log(this.cols);
                		this.buildTable();   
 			  break;	
 			case "sets":
