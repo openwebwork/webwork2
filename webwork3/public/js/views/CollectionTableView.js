@@ -138,6 +138,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				}
 				var th = $("<th data-class-name='" + className + "'>").addClass(className)
 					.html(col.colHeader? col.colHeader: col.name + spanIcon);
+					th.wrapInner("<a class='"+col.name+"' href=#>");
 				if(col.title){
 					th.attr("title",col.title);
 				}
@@ -268,6 +269,9 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			"click th": function (evt) {
 				this.sortTable(evt).render();
 				this.trigger("table-sorted",this.sortInfo);
+			},
+			"click th a": function (evt) {
+				this.trigger("show-set-users",evt.target.className);
 			},
 			"click .first-page": "firstPage",
 			"click .prev-page": "prevPage",

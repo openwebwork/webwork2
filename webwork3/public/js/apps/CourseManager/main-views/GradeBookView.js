@@ -5,19 +5,31 @@ function(Backbone, _,MainView,config,CollectionTableView,GradeBook,UserSetList){
 var GradeBookView = MainView.extend({
 	initialize: function (options){
 		var self = this;
-		_(this).bindAll("buildTable","render","changeDisplay");	
+		_(this).bindAll("buildTable","render","changeDisplay","tableSetup");	
 		MainView.prototype.initialize.call(this,options);	
 		console.log(options);		
-		this.tableSetup();			
+		this.tableSetup();		
 		this.state.on({
 			"change:type": this.changeDisplay, 
-			"change:set_id change:type": this.buildTable,
+			"change:type": this.tableSetup,
 		})	
 	},
 	render: function (){
 		var self = this;		
-		this.$el.html($("#gradebook-template").html());		
-		this.stickit(this.state);		
+		this.$el.html($("#gradebook-template").html());	
+		this.$el.prepend('<h1 class="title"></h1>');				
+		this.stickit(this.state);			
+		switch(self.state.get('type')){
+			case "gradebook":
+				$('h1.title').html(self.state.get('type'));
+				break;
+			case "sets":
+				$('h1.title').html(self.state.get('user_id'));
+				break;				
+			case "users":
+				$('h1.title').html(self.state.get('set_id'));				
+				break;
+		}				
 		if(this.collection){
 			this.progressTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
 	                    paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}}).render();
@@ -33,7 +45,13 @@ var GradeBookView = MainView.extend({
 		} else {
 			console.log('There was no collection passed into CollectionTableView');
 		}
-		MainView.prototype.render.apply(this);							
+		MainView.prototype.render.apply(this);				
+		this.progressTable.on("show-set-users", function(setname){
+			self.state.set({set_id: setname});
+			console.log(setname);
+			console.log(self.state.get('type'));
+		    self.state.set({type: "users"});
+		});			
 	    return this;
 	},
 	getDefaultState: function () {
@@ -58,8 +76,11 @@ var GradeBookView = MainView.extend({
 				(this.collection = new UserSetList([],{user: self.state.get("user_id"), type: "sets", loadProblems: true}))
 				.fetch({success: function(data){self.render();}});	
 		} else if (this.state.get("type")==="users"){
-				(this.collection = new UserSetList([],{problemSet: _set, type: "users",loadProblems: true}))
+			console.log(self.state.get("set_id"));	
+		var _set = this.problemSets.findWhere({set_id: this.state.get("set_id")});				
+				(this.collection = new UserSetList([],{problemSet: _set, type: "users", loadProblems: true}))
 					.fetch({success: function (data){self.render();}});	
+		console.log(this.collection);
 		} else if (this.state.get("type")==="gradebook"){				
 				this.collection = new GradeBook([],{type: "gradebook",loadProblems: true});		
 				this.collection.fetch({success: function (data){
@@ -77,8 +98,8 @@ var GradeBookView = MainView.extend({
 	},	
 	tableSetup: function () {
         var self = this;
-        console.log(this.state);        
-        switch(this.state.get('type')){
+        console.log(self.state);        
+        switch(self.state.get('type')){
         	case "gradebook":
         		this.cols = [{name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
         		    stickit_options: {update: function($el, val, model, options) {
@@ -128,6 +149,9 @@ var GradeBookView = MainView.extend({
             	}
             }},
         ];
+        	console.log('---the columns----');
+        	console.log(this.cols);
+               		this.buildTable();   
 			  break;	
 			case "sets":
 			this.cols = [
@@ -161,6 +185,7 @@ var GradeBookView = MainView.extend({
             	}
             }},
         	];
+                		this.buildTable();  	
 			  break;				  
     	}
     }
