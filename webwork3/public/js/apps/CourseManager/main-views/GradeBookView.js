@@ -18,16 +18,21 @@ var GradeBookView = MainView.extend({
 		var self = this;		
 		this.$el.html($("#gradebook-template").html());	
 		this.$el.prepend('<h1 class="title"></h1>');				
+		this.$('h1.title').after('<a class="gradebook-button"></a>');	
+		this.$('a.gradebook-button').addClass('hidden').html("<a href=# class='btn btn-default'>GradeBook</a>");			
 		this.stickit(this.state);			
 		switch(self.state.get('type')){
 			case "gradebook":
-				$('h1.title').html(self.state.get('type'));
+				$('h1.title').html('GradeBook');
+				$('a.gradebook-button').addClass('hidden');				
 				break;
 			case "sets":
 				$('h1.title').html(self.state.get('user_id'));
+				$('a.gradebook-button').removeClass('hidden');				
 				break;				
 			case "users":
 				$('h1.title').html(self.state.get('set_id'));				
+				$('a.gradebook-button').removeClass('hidden');				
 				break;
 		}				
 		if(this.collection){
@@ -45,7 +50,12 @@ var GradeBookView = MainView.extend({
 		} else {
 			console.log('There was no collection passed into CollectionTableView');
 		}
-		MainView.prototype.render.apply(this);				
+		MainView.prototype.render.apply(this);	
+		this.$('.gradebook-button').on("click", function(){
+			console.log('---button pressed----');
+		    self.state.set({type: 'gradebook'});
+			console.log(self.state.get('type'));		    
+		});			
 		this.progressTable.on("show-set-users", function(setname){
 			self.state.set({set_id: setname});
 			console.log(setname);
