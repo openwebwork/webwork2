@@ -89,7 +89,6 @@ var GradeBookView = MainView.extend({
 					if(admin_model){	
 	    	    	var admin_model_keys = _.keys(admin_model['attributes']);
     	    		var setnames = _.without(admin_model_keys,'user_id');  
-    	    		console.log(setnames);
     	    		setnames = setnames.sort(function(a, b){
     					if(a < b) return -1;
 					    if(a > b) return 1;
