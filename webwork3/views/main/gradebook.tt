@@ -1,7 +1,12 @@
 <!-- These are the student progress templates -->
 
-
 <script type="text/template" id="gradebook-template">
+<div class="row">
+  <div class="col-md-2">
+   <h1 class="title"></h1>
+	<a class = "btn btn-default gradebook-button">GradeBook</a>   
+  </div>
+</div>
 </script>
 
 

@@ -7,19 +7,18 @@ var GradeBookView = MainView.extend({
 		var self = this;
 		_(this).bindAll("buildTable","render","changeDisplay","tableSetup");	
 		MainView.prototype.initialize.call(this,options);		
+		_(options).extend({state: "gradebook"});
 		this.state.set({type: 'gradebook'});
-		this.tableSetup();		
+		this.changeDisplay();
+		this.tableSetup();				
 		this.state.on({
 			"change:type": this.changeDisplay, 
-			"change:type": this.tableSetup,
-		})	
+			"change:set_id change:user_id change:type": this.tableSetup,
+		});
 	},
 	render: function (){
 		var self = this;		
 		this.$el.html($("#gradebook-template").html());	
-		this.$el.prepend('<h1 class="title"></h1>');				
-		this.$('h1.title').after('<a class="gradebook-button"></a>');		
-		this.$('a.gradebook-button').addClass('hidden').html("<a href=# class='btn btn-default'>GradeBook</a>");					
 		switch(self.state.get('type')){
 			case "gradebook":
 				$('h1.title').html('GradeBook');	
@@ -46,6 +45,10 @@ var GradeBookView = MainView.extend({
 	        // set up some styling
 	        this.progressTable.$(".paginator-row td").css("text-align","center");
 	        this.progressTable.$(".paginator-page").addClass("btn");
+			this.progressTable.on("show-set-users", function(setname){		
+				self.state.set({set_id: setname});
+		    	self.state.set({type: "users"});					
+			});		        
 		} else {
 			console.log('There was no collection passed into CollectionTableView');
 		}
@@ -53,15 +56,11 @@ var GradeBookView = MainView.extend({
 		this.$('.gradebook-button').on("click", function(){
 		    self.state.set({type: 'gradebook'});
 		});			
-		this.progressTable.on("show-set-users", function(setname){
-			self.state.set({set_id: setname});
-		    self.state.set({type: "users"});
-		});	
 		this.stickit(this.state);					
 	    return this;
 	},
 	getDefaultState: function () {
-		//return {set_id: "", user_id: "", type: "gradebook", page_num: 0};
+		//return {set_id: this.state.get('set_id'), user_id: this.state.get('user_id'), type: this.state.get('type'), page_num: 0};
 	},
 	changeDisplay: function(){
 		var self = this;
@@ -87,13 +86,16 @@ var GradeBookView = MainView.extend({
 		} else if (this.state.get("type")==="gradebook"){				
 				this.collection = new GradeBook([],{type: "gradebook",loadProblems: true});		
 				this.collection.fetch({success: function (data){
-					var admin_model = self.collection.get("admin");		
+					var admin_model = self.collection.get("admin");	
+					if(admin_model){	
 	    	    	var admin_model_keys = _.keys(admin_model['attributes']);
     	    		var setnames = _.without(admin_model_keys,'user_id');  
        				_.each(setnames, function(name){
-	       				self.cols.push({name: name.split('_')[0], key: name, classname: name, datatype: "integer"});
+	       				self.cols.push({name: name.split('_')[0], key: name, classname: name, datatype: "integer",callback: 1});
 		       		});	      	
-				self.render();}});		
+				self.render();
+				}
+				}});		
 		}
 	},	
 	getHelpTemplate: function () {
@@ -117,7 +119,6 @@ var GradeBookView = MainView.extend({
 			case "users":
 				this.cols = [
             		{name: "Login Name", key: "user_id", classname: "login-name", datatype: "string"},
-            		{name: "Set Name", key: "set_id", classname: "set-id", datatype:"string"},
             		{name: "Score", key: "score", classname: "score", datatype: "integer", stickit_options: {
             			update: function($el, val, model, options) {
             				if(model.get("problems").size()===0){

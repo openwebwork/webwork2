@@ -6,7 +6,7 @@
  * The following must also be passed into the View:
  *  
  * columnInfo:  An array of {name: _name, key: _key, editable: boolean, classnames: _classnames,
- 		datatype: _datatype, binding: _binding} where 
+ 		datatype: _datatype, binding: _binding, callback: boolean} where 
  	-  _name will be the header of the column
  	-  _key is the field name of the model 
  	-  _editable is a boolean for whether or not the column is editable
@@ -137,7 +137,9 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				}
 				var th = $("<th data-class-name='" + className + "'>").addClass(className)
 					.html(col.colHeader? col.colHeader: col.name + spanIcon);
+				if(col.callback){
 					th.wrapInner("<a class='"+col.name+"' href=#>");
+				}
 				if(col.title){
 					th.attr("title",col.title);
 				}
