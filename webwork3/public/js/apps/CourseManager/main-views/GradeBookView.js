@@ -6,10 +6,10 @@ var GradeBookView = MainView.extend({
 	initialize: function (options){
 		var self = this;
 		_(this).bindAll("buildTable","render","changeDisplay","tableSetup");	
-		MainView.prototype.initialize.call(this,options);		
-		this.state.set({type: 'gradebook'});
+		MainView.prototype.initialize.call(this,options);	
+		this.state.set({type: 'gradebook'});	
 		this.changeDisplay();
-		this.tableSetup();				
+		this.tableSetup();			
 		this.state.on({
 			"change:type": this.changeDisplay, 
 			"change:set_id change:user_id change:type": this.tableSetup,
@@ -32,34 +32,34 @@ var GradeBookView = MainView.extend({
 				$('a.gradebook-button').removeClass('hidden');								
 				break;
 		}				
-		if(this.collection){
-			this.progressTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
-	                    paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}}).render();
-			this.progressTable.on("page-changed",function(num){
-	        			self.state.set({page_num: num});
-	        			self.showHideColumns();
-	        		}).gotoPage(this.state.get("page_num")).$el.addClass("table table-bordered table-condensed")
-			this.$el.append(this.progressTable.el);
+		this.progressTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
+                paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}}).render();
+		this.progressTable.on("page-changed",function(num){
+	        self.state.set({page_num: num});
+	        self.showHideColumns();
+	    }).gotoPage(this.state.get("page_num")).$el.addClass("table table-bordered table-condensed")
+		this.$el.append(this.progressTable.el);
 	
-	        // set up some styling
-	        this.progressTable.$(".paginator-row td").css("text-align","center");
-	        this.progressTable.$(".paginator-page").addClass("btn");
-			this.progressTable.on("show-set-users", function(setname){		
-				self.state.set({set_id: setname});
-		    	self.state.set({type: "users"});					
-			});		        
-		} else {
-			console.log('There was no collection passed into CollectionTableView');
-		}
+	    // set up some styling
+	    this.progressTable.$(".paginator-row td").css("text-align","center");
+	    this.progressTable.$(".paginator-page").addClass("btn");
+		this.progressTable.on("show-set-users", function(setname){		
+			self.state.set({set_id: setname});
+		   	self.state.set({type: "users"});					
+		});		        
 		MainView.prototype.render.apply(this);	
 		this.$('.gradebook-button').on("click", function(){
 		    self.state.set({type: 'gradebook'});
+		});		
+		// this resets the GradeBook to the gradebook state and triggers  
+		// the necessary functions to render the correct table.	
+		$(window).unload(function(){
+		    self.state.set({type: 'gradebook'});
 		});			
-		this.stickit(this.state);					
 	    return this;
 	},
 	getDefaultState: function () {
-		//return {set_id: "", user_id: "", type: "gradebook", page_num: 0};
+		return {page_num: 0};
 	},
 	changeDisplay: function(){
 		var self = this;
