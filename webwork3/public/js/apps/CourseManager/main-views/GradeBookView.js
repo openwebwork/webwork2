@@ -1,4 +1,4 @@
-//  This is the main view for the Student Progress Page.
+//  This is the main view for the GradeBook Page.
 
 define(['backbone', 'underscore','views/MainView','config','views/CollectionTableView','models/GradeBook','models/UserSetList'], 
 function(Backbone, _,MainView,config,CollectionTableView,GradeBook,UserSetList){
@@ -7,7 +7,6 @@ var GradeBookView = MainView.extend({
 		var self = this;
 		_(this).bindAll("buildTable","render","changeDisplay","tableSetup");	
 		MainView.prototype.initialize.call(this,options);		
-		_(options).extend({state: "gradebook"});
 		this.state.set({type: 'gradebook'});
 		this.changeDisplay();
 		this.tableSetup();				
@@ -60,7 +59,7 @@ var GradeBookView = MainView.extend({
 	    return this;
 	},
 	getDefaultState: function () {
-		//return {set_id: this.state.get('set_id'), user_id: this.state.get('user_id'), type: this.state.get('type'), page_num: 0};
+		//return {set_id: "", user_id: "", type: "gradebook", page_num: 0};
 	},
 	changeDisplay: function(){
 		var self = this;
@@ -90,8 +89,14 @@ var GradeBookView = MainView.extend({
 					if(admin_model){	
 	    	    	var admin_model_keys = _.keys(admin_model['attributes']);
     	    		var setnames = _.without(admin_model_keys,'user_id');  
+    	    		console.log(setnames);
+    	    		setnames = setnames.sort(function(a, b){
+    					if(a < b) return -1;
+					    if(a > b) return 1;
+					    return 0;
+					});
        				_.each(setnames, function(name){
-	       				self.cols.push({name: name.split('_')[0], key: name, classname: name, datatype: "integer",callback: 1});
+	       				self.cols.push({name: name.split('_')[0], key: name, classname: name, datatype: "integer",callback: 1});	       				
 		       		});	      	
 				self.render();
 				}
