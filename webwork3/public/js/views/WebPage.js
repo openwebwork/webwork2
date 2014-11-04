@@ -63,13 +63,24 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         },250);
 
         $(window).on("resize",renderMainPane);
+  		var WWRouter = Backbone.Router.extend({
+			routes: {
+			    ":id":      "manager-menu"
+			},
+			"manager-menu": function(id) {
+				self.changeViewAndSidebar(id);
+  			} 	  					
+  		});
 
+		this.wwrouter = new WWRouter;
+		Backbone.history.start();    
 
         this.navigationBar.on({
             "change-view": function(id) {
                 self.changeView(id,self.mainViewList.getView(id).getDefaultState());
                 self.changeSidebar(self.mainViewList.getView(id).info.default_sidebar,{is_open: true});
                 self.currentView.sidebar = self.currentSidebar;
+                self.wwrouter.navigate(id,{trigger: true});                
                 self.saveState();
             },
             "logout": this.logout,
