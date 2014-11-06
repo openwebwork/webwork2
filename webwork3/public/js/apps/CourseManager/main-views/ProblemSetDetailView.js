@@ -166,6 +166,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         bindings: {
             ".set-name" : "set_id",
+            ".description" : "description",
             ".open-date" : "open_date",
             ".due-date" : "due_date",
             ".answer-date": "answer_date",

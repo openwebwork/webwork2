@@ -162,6 +162,7 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <table class="table">
 <tbody>
 <tr><td class="header">Set Name</td><td class="set-name"></td></tr>
+<tr><td class="header">Description</td><td class="description" contenteditable="true"></td></tr>
 <tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
 <tr><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
 <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
