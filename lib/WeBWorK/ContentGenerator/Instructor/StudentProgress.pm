@@ -29,6 +29,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
+use WeBWorK::Utils qw(wwRound);
 #use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::Utils::Grades qw/list_set_versions/;
@@ -894,7 +895,7 @@ sub displaySets {
 		if ( ! $setIsVersioned ) {
 		    print CGI::Tr({},
 			CGI::td({},CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
-			CGI::td( sprintf("%0.2f",$rec->{score}) ), # score
+			CGI::td(wwRound(2,$rec->{score}) ), # score
 			CGI::td($rec->{total}), # out of 
 #			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
 			CGI::td($rec->{problemString}), # problems
@@ -924,7 +925,7 @@ sub displaySets {
 		    
 				# build columns to show
 				push(@cols, $nameEntry, 
-				     sprintf("%0.2f",$rec->{score}),
+				     wwRound(2,$rec->{score}),
 				     $rec->{total});
 				push(@cols, $self->nbsp($rec->{date})) 
 				    if ($showColumns{'date'});
@@ -1122,7 +1123,7 @@ sub grade_set {
 			if (!$attempted){
 				$longStatus     = '.';
 			} elsif   ($valid_status) {
-				$longStatus     =  int(100*$status+.5) ;
+				$longStatus     = 100*wwRound(2,$status);
 				$longStatus='C' if ($longStatus==100);
 			} else	{
 				$longStatus 	= 'X';
@@ -1134,7 +1135,7 @@ sub grade_set {
 			my $probValue   =  $problemRecord->value;
 			$probValue      =  1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total          += $probValue;
-			$totalRight     += round_score($status*$probValue) if $valid_status;
+			$totalRight     += $status*$probValue if $valid_status;
 				
 # 				
 # 			# initialize the number of correct answers 
@@ -1160,7 +1161,7 @@ sub grade_set {
 		
 		}  # end of problem record loop
 
-
+		$totalRight = wwRound(2,$totalRight);  # round the final total	
 
 		return($status,  
 			   $longStatus, 
@@ -1183,8 +1184,5 @@ sub threeSpaceFill {
 	else {return "## ";}
 }
 
-sub round_score{
-	return shift;
-}
 
 1;
