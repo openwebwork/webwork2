@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile sortByName path_is_subdir is_restricted);
+use WeBWorK::Utils qw(readFile sortByName path_is_subdir is_restricted wwRound);
 use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
@@ -289,7 +289,7 @@ sub body {
 	print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear", -input_attr=>{ -value=>$r->maketext("Clear")}).CGI::end_p();
 	print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"hardcopy",-input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}).CGI::end_p();
 	print CGI::end_div();
-	print CGI::endform();
+	print CGI::end_form();
 	
 	## feedback form url
 	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",  $r, courseID => $courseName);
@@ -310,7 +310,7 @@ sub body {
 	#	CGI::p({-align=>"left"},
 	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
 	#	),
-	#	CGI::endform(),"\n";
+	#	CGI::end_form(),"\n";
 	
 	print $self->feedbackMacro(
 		module => __PACKAGE__,
@@ -607,6 +607,7 @@ sub setListRow {
 					}
 					$possible += $pval;
 				}
+				$score = wwRound(2,$score);
 				$score = "$score/$possible";
 			} else {
 				$score = "n/a";
@@ -615,6 +616,7 @@ sub setListRow {
 			$startTime = '&nbsp;';
 			$score = $startTime;
 		}
+
 		return CGI::Tr(CGI::td([
 		                     $control,
 				     $interactive,

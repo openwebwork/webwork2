@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory list2hash max);
+use WeBWorK::Utils qw(readDirectory list2hash max wwRound);
 use WeBWorK::Localize;
 sub initialize {
 	my ($self) = @_;
@@ -532,7 +532,7 @@ sub grade_set {
 			if (!$attempted){
 				$longStatus     = '.';
 			} elsif   ($valid_status) {
-				$longStatus     = int(100*$status+.5);
+				$longStatus     = 100*wwRound(2,$status);
 				$longStatus='C' if ($longStatus==100);
 			} else	{
 				$longStatus 	= 'X';
@@ -543,7 +543,7 @@ sub grade_set {
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total           += $probValue;
-			$totalRight      += round_score($status*$probValue) if $valid_status;
+			$totalRight      += $status*$probValue if $valid_status;
 			
 # 				
 # 			# initialize the number of correct answers 
@@ -565,7 +565,7 @@ sub grade_set {
 
 		}  # end of problem record loop
 
-
+		$totalRight = wwRound(2,$totalRight);  # round the final total
 
 		return($status,  
 			   $longStatus, 
@@ -586,9 +586,6 @@ sub threeSpaceFill {
 	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
 	elsif (length($num)==2) {return "$num".'&nbsp;';}
 	else {return "## ";}
-}
-sub round_score{
-	return shift;
 }
 
 1;

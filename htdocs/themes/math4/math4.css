@@ -61,12 +61,15 @@ input[type="checkbox"] {
 }
 
 #loginstatus {
-    	padding-top:1ex;
+    	padding-top:.5ex;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
 	font-weight: normal;
 } 
+#loginstatus a.btn {
+    margin-bottom:.5ex;
+}
 
 #loginstatus a {
 	color: black;
@@ -301,6 +304,18 @@ table.classlist-table .tbody {
 
 .info-box form {
     margin-bottom:0px;
+}
+
+/* Gateway Options */
+
+#sp-gateway-form{
+	background-color: #eeeeee;
+	color: black;
+}
+
+#sp-gateway-form label{
+    display: inline-block;
+	padding-right: 15px;    
 }
 
 /* Library Browser */

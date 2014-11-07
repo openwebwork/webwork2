@@ -1,3 +1,4 @@
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -79,7 +80,7 @@ our @EXPORT_OK = qw(
 	ref2string
 	removeTempDirectory
 	runtime_use
-        sortAchievements
+	sortAchievements
 	sortByName
 	surePathToFile
 	textDateTime
@@ -89,8 +90,9 @@ our @EXPORT_OK = qw(
 	writeCourseLog
 	writeLog
 	writeTimingLogEntry
-        is_restricted
-        grade_set
+	wwRound
+	is_restricted
+	grade_set
 );
 
 =head1 FUNCTIONS
@@ -894,6 +896,15 @@ sub max(@) {
 	return defined $soFar ? $soFar : 0;
 }
 
+sub wwRound(@) {
+# usage wwRound($places,$float)
+# return $float rounded up to number of decimal places given by $places
+	my $places = shift;
+	my $float = shift;
+	my $factor = 10**$places;
+	return int($float*$factor+0.5)/$factor;
+}
+
 sub pretty_print_rh($) {
 	my $rh = shift;
 	foreach my $key (sort keys %{$rh})  {
@@ -903,7 +914,12 @@ sub pretty_print_rh($) {
 
 sub cryptPassword($) {
 	my ($clearPassword) = @_;
-	my $salt = join("", ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64, rand 64]);
+	#Use an SHA512 salt with 16 digits 
+	my $salt = '$6$';
+	for (my $i=0; $i<16; $i++) {
+	    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
+	}
+
 	my $cryptPassword = crypt($clearPassword, $salt);
 	return $cryptPassword;
 }
