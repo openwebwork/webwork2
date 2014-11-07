@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile sortByName path_is_subdir is_restricted);
+use WeBWorK::Utils qw(readFile sortByName path_is_subdir is_restricted wwRound);
 use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
@@ -607,6 +607,7 @@ sub setListRow {
 					}
 					$possible += $pval;
 				}
+				$score = wwRound(2,$score);
 				$score = "$score/$possible";
 			} else {
 				$score = "n/a";
@@ -615,6 +616,7 @@ sub setListRow {
 			$startTime = '&nbsp;';
 			$score = $startTime;
 		}
+
 		return CGI::Tr(CGI::td([
 		                     $control,
 				     $interactive,

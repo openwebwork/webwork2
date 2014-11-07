@@ -35,7 +35,7 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
 	ref2string makeTempDirectory path_is_subdir sortByName before after
-	between);  # use the ContentGenerator formatDateTime, not the version in Utils
+	between wwRound);  # use the ContentGenerator formatDateTime, not the version in Utils
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
@@ -48,14 +48,14 @@ sub templateName {
 }
 
 # small utility to round scores to 5 decimal places
-
-sub tidy_score {
-	my $s = shift;
-	$s = sprintf("%.5f", $s);
-	$s =~ s/0+$// if $s =~ /\./;
-	$s =~ s/\.$//;
-	return $s;
-}
+# use wwRound instead (akp 11/2014)
+#sub tidy_score {
+#	my $s = shift;
+#	$s = sprintf("%.5f", $s);
+#	$s =~ s/0+$// if $s =~ /\./;
+#	$s =~ s/\.$//;
+#	return $s;
+#}
 
 ################################################################################
 # "can" methods
@@ -1542,11 +1542,11 @@ sub body {
 			# next, store the state in the database if that makes 
 			#    sense
 			if ( $submitAnswers && $will{recordAnswers} ) {
-  $problems[$i]->status(tidy_score($pg_results[$i]->{state}->{recorded_score}));
+  $problems[$i]->status(wwRound(2,$pg_results[$i]->{state}->{recorded_score}));
   $problems[$i]->attempted(1);
   $problems[$i]->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $problems[$i]->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
-  $pureProblem->status(tidy_score($pg_results[$i]->{state}->{recorded_score}));
+  $pureProblem->status(wwRound(2,$pg_results[$i]->{state}->{recorded_score}));
   $pureProblem->attempted(1);
   $pureProblem->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $pureProblem->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
@@ -1832,7 +1832,7 @@ sub body {
 
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
-	$attemptScore = tidy_score($attemptScore);
+	$attemptScore = wwRound(2,$attemptScore);
 	if ( $submitAnswers ) {
 		# the distinction between $can{recordAnswers} and ! $can{} has 
 		#    been dealt with above and recorded in @scoreRecordedMessage
@@ -1880,7 +1880,7 @@ sub body {
 		if ( $set->attempts_per_version > 1 && $attemptNumber > 1 &&
 		     $recordedScore != $attemptScore && $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
-			my $recScore = tidy_score($recordedScore);
+			my $recScore = wwRound(2,$recordedScore);
 			print "The recorded score for this test is ",
 				"$recScore/$totPossible.";
 			print CGI::end_div();
@@ -1893,7 +1893,7 @@ sub body {
 					  "recorded) submission is ",
 					  "$attemptScore/$totPossible."), 
 				CGI::br();
-			my $recScore = tidy_score($recordedScore);
+			my $recScore = wwRound(2,$recordedScore);
 			print "The recorded score for this test is " .
 				"$recScore/$totPossible.  ";
 			print CGI::end_div();
@@ -1962,7 +1962,7 @@ sub body {
 			if ( $can{showScore} ) {
 				my $scMsg = "Your recorded score on this " .
 					"(test number $versionNumber) is " .
-					tidy_score($recordedScore)."/$totPossible";
+					wwRound(2,$recordedScore)."/$totPossible";
 				if ( $exceededAllowedTime && 
 				     $recordedScore == 0 ) {
 					$scMsg .= ", because you exceeded " .
