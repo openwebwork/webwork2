@@ -3355,11 +3355,13 @@ sub upgrade_notification {
     # otherwise we need to check to see if the date on the tree file
     # is after the date on the last commit in the library
     } else {
-	my $lastcommit = `git log -1 --pretty=format:%at`;
 	my $opldate = stat($jsonfile)->[9];
-	
-	if ($lastcommit > $opldate) {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('The library index is older than the library, you need to run OPL-update.')));
+	# skip this if the system doesnt support mtime
+	if ($opldate) {
+	    my $lastcommit = `git log -1 --pretty=format:%at`;
+	    if ($lastcommit > $opldate) {
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('The library index is older than the library, you need to run OPL-update.')));
+	    }
 	}
     }
 
