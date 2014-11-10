@@ -36,7 +36,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
-	ref2string makeTempDirectory path_is_subdir sortByName before after between);
+	ref2string makeTempDirectory path_is_subdir sortByName before after between wwRound);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -369,7 +369,7 @@ sub attemptResults {
 	$imgGen->render(refresh => 1);
 	
 #	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
+	my $scorePercent = wwRound(0, $problemResult->{score} * 100).'%';
 #   FIXME  -- I left the old code in in case we have to back out.
 #	my $summary = "On this attempt, you answered $numCorrect out of "
 #		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
@@ -1470,7 +1470,7 @@ sub output_score_summary{
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
-	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
+	my $lastScore = wwRound(0, $problem_status * 100).'%'; # Round to whole number
 	my $attemptsLeft = $problem->max_attempts - $attempts;
 	
 	my $setClosed = 0;
@@ -1498,7 +1498,7 @@ sub output_score_summary{
 		print CGI::p(join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
-			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",sprintf("%.0f%%", $pg->{result}->{score} * 100)) . CGI::br():'',
+			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
 			$problem->attempted
 				? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",

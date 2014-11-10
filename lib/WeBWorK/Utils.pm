@@ -80,7 +80,7 @@ our @EXPORT_OK = qw(
 	ref2string
 	removeTempDirectory
 	runtime_use
-        sortAchievements
+	sortAchievements
 	sortByName
 	surePathToFile
 	textDateTime
@@ -90,8 +90,9 @@ our @EXPORT_OK = qw(
 	writeCourseLog
 	writeLog
 	writeTimingLogEntry
-        is_restricted
-        grade_set
+	wwRound
+	is_restricted
+	grade_set
 );
 
 =head1 FUNCTIONS
@@ -893,6 +894,15 @@ sub max(@) {
 		}
 	}
 	return defined $soFar ? $soFar : 0;
+}
+
+sub wwRound(@) {
+# usage wwRound($places,$float)
+# return $float rounded up to number of decimal places given by $places
+	my $places = shift;
+	my $float = shift;
+	my $factor = 10**$places;
+	return int($float*$factor+0.5)/$factor;
 }
 
 sub pretty_print_rh($) {

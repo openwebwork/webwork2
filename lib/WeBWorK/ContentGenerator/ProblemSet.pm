@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted between after);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted wwRound between after);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -471,7 +471,7 @@ sub problemListRow($$$) {
 		: $problem->max_attempts - $attempts;
 	my $rawStatus = $problem->status || 0;
 	my $status;
-	$status = eval{ sprintf("%.0f%%", $rawStatus * 100)}; # round to whole number
+	$status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
 	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
 	                                  # FIXME  -- this may not cover all cases.
 	
