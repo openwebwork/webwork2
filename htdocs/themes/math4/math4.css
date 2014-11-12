@@ -26,13 +26,17 @@ input[type="checkbox"] {
 #masthead {
 	background-color: #038;
 	margin: 0;
-	padding: 0;
 	padding: 5px;
+    width: calc(100% - 10px);	
 }
 
 /* Bootstrap Overrides */
 .container-fluid {
-	padding: 0.5em;
+	padding-top: 0.5em;
+}
+
+.fix-content-margin {
+   margin-left: 0px !important;
 }
 
 .webwork_logo {
@@ -92,6 +96,10 @@ input[type="checkbox"] {
     border:0px;
 }
 
+ul.nav.nav-list {
+  margin-top: 1ex;
+}
+
 ul.nav li a:hover {
 	background: #e1e1e1;	
 }
@@ -118,8 +126,6 @@ ul.nav li a:hover {
 #breadcrumb-navigation {
     float:left;
     display:inline-block;
-    width:90%;
-    width:calc(100% - 35px);
 }
 
 /* Main Content */
@@ -936,3 +942,5 @@ table#grades_table pre{
     min-height:35px;
     min-width:43px;
 }
+
+
