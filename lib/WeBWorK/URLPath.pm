@@ -253,7 +253,7 @@ our %pathTypes = (
 		match   => qr|^proctored_quiz_mode/([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => 'proctored_quiz_mode/$setID/',
-		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
+		display => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
 	},
 	proctored_gateway_proctor_login => {
 		name    => 'Proctored Gateway Quiz $setID Proctor Login',
