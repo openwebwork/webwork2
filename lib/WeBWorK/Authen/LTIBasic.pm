@@ -450,10 +450,10 @@ sub authenticate
 				= $ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[0]}};
 			if ($nr > 1) {
 				for (my $j =1; $j < $nr; $j++) {
-					if ($LTI_webwork_permissionLevel 
-						< $ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[$j]}}) {
-						$LTI_webwork_permissionLevel 
-							= $ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[$j]}};
+					my $wwRole = $ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[$j]};
+					next unless defined $wwRole;
+					if ($LTI_webwork_permissionLevel < $ce -> {userRoles} -> {$wwRole}) {
+						$LTI_webwork_permissionLevel = $ce -> {userRoles} -> {$wwRole};
 					}	
 				}
 			}		
