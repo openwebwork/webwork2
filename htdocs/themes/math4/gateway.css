@@ -84,6 +84,11 @@ div.gwProblem
 	border: 1px solid #ddd;
 	border-radius: 3px;
 }
+.gwProblem h3 {
+ display: inline;
+ font-size: 16px;
+ margin-right: 5px;
+}
 
 /* Put space between the "Jump to: Problem ..." nav and the first problem */
 table + .gwProblem {
@@ -110,15 +115,13 @@ p.gwPreview {
 }
 
 table.gwAttemptResults {
-	border-width: 0px;
+    margin: 5px;
+    border: solid black 1px;
 }
-table.gwAttemptResults td.label {
-	font-weight: bold;
-	background-color: transparent;
-	color: navy;
-}
-table.gwAttemptResults td.output {
-	padding: 2px;
+
+table.gwAttemptResults>tbody>tr>th,
+table.gwAttemptResults>tbody>tr>td {
+	padding: 5px;
 	border: solid black 1px;
 	background-color: #eeeeee;
 }

@@ -357,17 +357,16 @@ sub attemptResults {
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 
-	my %resultsData = ();
-	$resultsData{'Entered'}  = CGI::td({-class=>"label"}, "Your answer parses as:");
-	$resultsData{'Preview'}  = CGI::td({-class=>"label"}, "Your answer previews as:");
-	$resultsData{'Correct'}  = CGI::td({-class=>"label"}, "The correct answer is:");
-	$resultsData{'Results'}  = CGI::td({-class=>"label"}, "Result:");
-	$resultsData{'Messages'} = CGI::td({-class=>"label"}, "Messages:");
+	my @rows;
+	my @row;
+	
+	push @row, CGI::th({scope=>"col"},$r->maketext('Entered')) if $showAttemptAnswers;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Answer Preview')) if $showAttemptPreview;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Correct')) if $showCorrectAnswers;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Result')) if $showAttemptResults;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Messages')) if $showMessages;
 
-	my %resultsRows = ();
-	foreach ( qw( Entered Preview Correct Results Messages ) ) {
-	    $resultsRows{$_} = "";
-	}
+	push @rows, CGI::Tr(@row);
 
 	my $answerScore = 0;
 	my $numCorrect = 0;
@@ -375,56 +374,44 @@ sub attemptResults {
 	my $numBlanks = 0;
 	my $numEssay = 0;
 	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name};
-		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
-		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen)
-		                    	: "");
-		my $correctAnswer = $answerResult->{correct_ans};
-		$answerScore = $answerResult->{score};
-		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-		$numCorrect += $answerScore > 0;
-		$numEssay += ($answerResult->{type}//'') eq 'essay';
-		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
 
-		my $resultString;
-		if ($answerScore >= 1) {
-		    $resultString = $r->maketext("correct");
-		    push @{$self->{correct_ids}}, $name if $colorAnswers;
-		} elsif (($answerResult->{type}//'') eq 'essay') {
-		    $resultString =  $r->maketext("Ungraded");
-		    $self->{essayFlag} = 1;
-		} elsif (defined($answerScore) and $answerScore == 0) {
-		    $resultString = $r->maketext("incorrect");
-		    push @{$self->{incorrect_ids}}, $name if $colorAnswers;
-		} else {
-		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
-		    push @{$self->{incorrect_ids}}, $name if $colorAnswers;
-		}
+	    @row = ();
+	    my $answerResult  = $pg->{answers}->{$name};
+	    my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+	    my $preview       = ($showAttemptPreview
+				 ? $self->previewAnswer($answerResult, $imgGen)
+				 : "");
+	    my $correctAnswer = $answerResult->{correct_ans};
+	    $answerScore = $answerResult->{score};
+	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
+	    $numCorrect += $answerScore > 0;
+	    $numEssay += ($answerResult->{type}//'') eq 'essay';
+	    $numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
+	    
+	    my $resultString;
+	    if ($answerScore >= 1) {
+		$resultString = $r->maketext("correct");
+		push @{$self->{correct_ids}}, $name if $colorAnswers;
+	    } elsif (($answerResult->{type}//'') eq 'essay') {
+		$resultString =  $r->maketext("Ungraded");
+		$self->{essayFlag} = 1;
+	    } elsif (defined($answerScore) and $answerScore == 0) {
+		$resultString = $r->maketext("incorrect");
+		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
+	    } else {
+		$resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
+		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
+	    }
+	    
+	    push @row, CGI::td({scope=>"col"},$self->nbsp($studentAnswer)) if $showAttemptAnswers;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($preview)) if $showAttemptPreview;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($correctAnswer)) if $showCorrectAnswers;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($resultString)) if $showAttemptResults;
+	    push @row, CGI::td({scope=>"col"},  $self->nbsp($answerMessage)) if $showMessages;
+	    
+	    push @rows, CGI::Tr(@row);
+	    $numAns++;
 
-		my $pre = $numAns ? CGI::td("&nbsp;") : "";
-
-		$resultsRows{'Entered'} .= $showAttemptAnswers ?
-		    CGI::Tr( $pre . $resultsData{'Entered'} .
-			     CGI::td({-class=>"output"}, $self->nbsp($studentAnswer))) : "";
-		$resultsData{'Entered'} = '';
-		$resultsRows{'Preview'} .= $showAttemptPreview ?
-		    CGI::Tr( $pre . $resultsData{'Preview'} .
-			     CGI::td({-class=>"output"}, $self->nbsp($preview)) ) : "";
-		$resultsData{'Preview'} = '';
-		$resultsRows{'Correct'} .= $showCorrectAnswers ?
-		    CGI::Tr( $pre . $resultsData{'Correct'} .
-			     CGI::td({-class=>"output"}, $self->nbsp($correctAnswer)) ) : "";
-		$resultsData{'Correct'} = '';
-		$resultsRows{'Results'} .= $showAttemptResults ?
-		    CGI::Tr( $pre . $resultsData{'Results'} .
-			     CGI::td({-class=>"output"}, $self->nbsp($resultString)) )  : "";
-		$resultsData{'Results'} = '';
-		$resultsRows{'Messages'} .= $showMessages ?
-		    CGI::Tr( $resultsData{'Messages'} .
-			     CGI::td({-class=>"output"}, $self->nbsp($answerMessage)) ) : "";
-
-		$numAns++;
 	}
 
 	# render equation images
@@ -455,13 +442,10 @@ sub attemptResults {
 	}
 
 	return
-#	    CGI::table({-class=>"attemptResults"}, $resultsRows{'Entered'},
-	    CGI::table({-class=>"gwAttemptResults"}, $resultsRows{'Entered'},
-		       $resultsRows{'Preview'}, $resultsRows{'Correct'},
-		       $resultsRows{'Results'}, $resultsRows{'Messages'}) .
+
+	    CGI::table({-class=>"gwAttemptResults"}, @rows).
+
 	    ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
-#		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-#		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
 }
 
 sub handle_input_colors {
@@ -1051,7 +1035,7 @@ sub pre_header_initialize {
         # [This section lifted from Problem.pm] ##############################
 
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode      = $r->param("displayMode") || 
+	my $displayMode      = $User->displayMode || 
 		$ce->{pg}->{options}->{displayMode};
 	my $redisplay        = $r->param("redisplay");
 	my $submitAnswers    = $r->param("submitAnswers");
@@ -1087,8 +1071,8 @@ sub pre_header_initialize {
 
 	# what does the user want to do?
 	my %want = 
-	    (showOldAnswers     => $r->param("showOldAnswers") || 
-				   $ce->{pg}->{options}->{showOldAnswers},
+	    (showOldAnswers     => $User->showOldAnswers ne '' ?
+	     $User->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers},
 	     showCorrectAnswers => ($r->param("showCorrectAnswers") || 
  	                       	   $ce->{pg}->{options}->{showCorrectAnswers}) &&
                                    ($submitAnswers || $checkAnswers),
@@ -1311,27 +1295,6 @@ sub nav {
 	my $tail = "";
 	
 	return $self->navMacro($args, $tail, @links);
-}
-
-sub options {
-	my ($self) = @_;
-	#warn "doing options in GatewayQuiz";
-	
-	# don't show options if we don't have anything to show
-	return if $self->{invalidSet} or $self->{invalidProblem};
-	return unless $self->{isOpen};
-	
-	my $displayMode = $self->{displayMode};
-	my %can = %{ $self->{can} };
-	
-	my @options_to_show = "displayMode";
-	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
-	push @options_to_show, "showHints" if $can{showHints};
-	push @options_to_show, "showSolutions" if $can{showSolutions};
-	
-	return $self->optionsMacro(
-		options_to_show => \@options_to_show,
-	);
 }
 
 sub body {
@@ -2102,11 +2065,11 @@ sub body {
 			}
 			push( @$pageRow, CGI::td(CGI::b(' ] ')) );
 			unshift( @$probRow, ' &nbsp; ' );
-			$jumpLinks = CGI::table( CGI::Tr(@$pageRow), 
+			$jumpLinks = CGI::table( {role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
 						 CGI::Tr( CGI::td($probRow) ) );
 		} else {
 			unshift( @$probRow, CGI::b('Jump to: ') );
-			$jumpLinks = CGI::table( CGI::Tr( CGI::td($probRow) ) );
+			$jumpLinks = CGI::table({role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr( CGI::td($probRow) ) );
 		}
 	
 		print $jumpLinks,"\n";
@@ -2161,19 +2124,16 @@ sub body {
 				print CGI::start_div({class=>"gwProblem"});
 				my $i1 = $i+1;
 				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
-				my $points = ($pv > 1) ? 
-					" (" . $pv . " points)" : 
-					" (1 point)";
 				print CGI::a({-href=>"#", -id=>"prob$i"},"");
-				print CGI::strong("Problem $problemNumber."), 
-					"$points\n", $recordMessage;
+				print CGI::h3("Problem $problemNumber."), 
+					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
 				       CGI::b("Note: ") : "", 
 				       CGI::i($pg->{result}->{msg}));
 				print CGI::p({class=>"gwPreview"}, 
 					     CGI::a({-href=>"$jsprevlink"}, 
-						    "preview problems"));
+						    "preview answers"));
 
 				print $resultsTable if $resultsTable; 
 
