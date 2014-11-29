@@ -44,7 +44,7 @@
 <!--#output_JS-->
 </head>
 <body>
-
+<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
 <div class="container-fluid">
 <!-- Header -->
 <div id = "masthead" class="row-fluid">
@@ -81,7 +81,7 @@
 	<!-- [gateway] removed nav button to go up -->
 	
 	<!--#if can="title"-->
-	<h1><!--#title--></h1>
+	<h1 id="content"><!--#title--></h1>
 	<!--#endif-->
 	
 	<!--#if can="message"-->

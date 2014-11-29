@@ -29,6 +29,7 @@
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <!-- Minimal bootstrap for newer features -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 <!-- Minimal bootstrap for newer features -->
@@ -76,7 +77,7 @@
 		<!--#path style="text" text=" &#x2192; "-->
 	</div>
 	<div id="content" >
-            <span style="font-size:larger; color:#00F; float:left;  width:60%;   ">
+            <span style="margin-bottom:10px; font-size:larger; color:#00F; float:left;  width:60%;   ">
 			<!--#if can="title"-->
 				<!--#title-->
 			<!--#endif-->

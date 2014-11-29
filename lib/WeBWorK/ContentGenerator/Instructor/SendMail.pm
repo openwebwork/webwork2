@@ -700,7 +700,8 @@ sub print_form {
 	#print actual body of message
 
 	print  "\n", CGI::p( $self->{message}) if defined($self->{message});  
-    print  "\n", CGI::p( CGI::textarea(-name=>'body', -default=>$text, -rows=>$rows, -cols=>$columns, -override=>1));
+	print "\n", CGI::label({'for'=>"email-body"},$r->maketext("Email Body:")),CGI::span({class=>"required-field"},'*');
+	print  "\n", CGI::p( CGI::textarea(-id=>"email-body", -name=>'body', -default=>$text, -rows=>$rows, -cols=>$columns, -override=>1));
 
 	#############################################################################################
 	#	action button table

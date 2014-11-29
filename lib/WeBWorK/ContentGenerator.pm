@@ -694,7 +694,7 @@ sub links {
 	
 	print CGI::start_ul();
 	print CGI::start_li({class => "nav-header"});
-	print $r->maketext("Main Menu");
+	print CGI::h2($r->maketext("Main Menu"));
 	print CGI::end_li();
 	print CGI::start_li(); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
@@ -901,7 +901,7 @@ sub links {
 			
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li({class=>'divider'},"");
+				print CGI::li({class=>'divider', 'aria-hidden'=>'true'},"");
 				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
 	
@@ -1559,116 +1559,14 @@ sub helpMacro {
 	               $label);
 }
 
-=item optionsMacro(options_to_show => \@options_to_show, extra_params => \@extra_params)
+=item sub optionsMacro
 
-Helper macro for displaying the View Options panel.
-
-@options_to_show lists the options to show, from among this list "displayMode",
-"showOldAnswers", "showHints", "showSolutions". If no options are given,
-"displayMode" is assumed.
-
-@extraParams is dereferenced and passed to the hidden_fields() method. Use this
-to preserve state from the content generator calling optionsMacro().
-
-This macro is intended to be called from an implementation of the options()
-method. The simplest way to to this is:
-
- sub options { shift->optionsMacro }
+This function has been depreciated
 
 =cut
 
 sub optionsMacro {
-	my ($self, %options) = @_;
-	my $r = $self->r;
-    my %showMeAnother;
-    my $problemSeed;
-
-    # check if showMeAnother is defined
-    if($self->{showMeAnother}){
-        %showMeAnother = %{ $self->{showMeAnother} };
-        $problemSeed = $self->{problem}->{problem_seed};
-    }
-	
-	my @options_to_show = @{$options{options_to_show}} if exists $options{options_to_show};
-	@options_to_show = "displayMode" unless @options_to_show;  #FIXME -- I don't understant this -- type seems wrong
-	my %options_to_show; @options_to_show{@options_to_show} = (); # make hash for easy lookups
-	my @extra_params = @{$options{extra_params}} if exists $options{extra_params};
-	
-	print CGI::h2($r->maketext("Display Options"));
-	
-	my $result = CGI::start_form("POST", $self->r->uri);
-	my $hiddenFields = $self->hidden_authen_fields;
-	$hiddenFields =~ s/\"hidden_/\"options-hidden_/g;
-	$result .= $hiddenFields;
-	if (@extra_params) {
-	    $hiddenFields = $self->hidden_fields(@extra_params);
-	    $hiddenFields =~ s/\"hidden_/\"options-hidden_/g;
-	    $result .= $hiddenFields;
-	}
-	$result .= CGI::start_div({class=>"viewOptions"});
-	
-	if (exists $options_to_show{displayMode}) {
-		my $curr_displayMode = $self->r->param("displayMode") || $self->r->ce->{pg}->{options}->{displayMode};
-		my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-		my @active_modes = grep { exists $display_modes{$_} } @{$self->r->ce->{pg}->{displayModes}};
-		if (@active_modes > 1) {
-			$result .= $r->maketext("View equations as").":";
-			$result .= CGI::br();
-			$result .= CGI::radio_group(
-				-name => "displayMode",
-				-values => \@active_modes,
-				-default => $curr_displayMode,
-				-linebreak=>'true',
-			);
-			$result .= CGI::br();
-		}
-	}
-	
-	if (exists $options_to_show{showOldAnswers}) {
-		# Note, 0 is a legal value, so we can't use || in setting this
-		my $curr_showOldAnswers = defined($self->r->param("showOldAnswers")) ?
-			$self->r->param("showOldAnswers") : $self->r->ce->{pg}->{options}->{showOldAnswers};
-		$result .= $r->maketext("Show saved answers?");
-		$result .= CGI::br();
-		$result .= CGI::radio_group(
-			-name => "showOldAnswers",
-			-values => [1,0],
-			-default => $curr_showOldAnswers,
-			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
-		);
-		$result .= CGI::br();
-	}
-
-	if (exists $options_to_show{useMathView}) {
-		# Note, 0 is a legal value, so we can't use || in setting this
-		my $curr_useMathView = defined($self->r->param("useMathView")) ?
-		    $self->r->param("useMathView") : $self->r->ce->{pg}->{options}->{useMathView};
-		$result .= $r->maketext("Use Equation Editor?");
-		$result .= CGI::br();
-		$result .= CGI::radio_group(
-			-name => "useMathView",
-			-values => [1,0],
-			-default => $curr_useMathView,
-			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
-		);
-		$result .= CGI::br();
-	}
-
-    # hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen
-    # it needs to send the seed from showMeAnother back to the screen
-    if($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}){
-	  	$result .= CGI::hidden({name => "showMeAnotherCheckAnswers", id=>"showMeAnotherCheckAnswers_id", value => 1});
-        # output the problem seed from ShowMeAnother so that it can be recycled in the refreshed screen
-        $result .= CGI::hidden({name => "problemSeed", value  =>  $problemSeed});
-        # tell showMeAnother that a display change has been made
-        $result .= CGI::hidden({name => "SMAdisplayChange", value  =>  1});
-    }
-
-	$result .= CGI::submit(-name=>"redisplay", -label=>$r->maketext("Apply Options"));
-	$result .= CGI::end_div();
-	$result .= CGI::end_form();
-	
-	return $result;
+    return '';
 }
 
 =item feedbackMacro(%params)
