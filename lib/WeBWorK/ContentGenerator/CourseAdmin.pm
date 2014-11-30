@@ -3191,6 +3191,9 @@ sub upgrade_notification {
     my $ce = $r->ce;
     my $db = $r->db;
 
+    # exit if notifications are disabled
+    return unless $ce->{enableGitUpgradeNotifier};
+
     my $git = $ce->{externalPrograms}->{git};
     my $WeBWorKRemote = $ce->{gitWeBWorKRemoteName};
     my $WeBWorKBranch = $ce->{gitWeBWorKBranchName};
@@ -3200,9 +3203,13 @@ sub upgrade_notification {
     my $LibraryBranch = $ce->{gitLibraryBranchName};
 
     # we can tproceed unless we have git; 
-    return unless $git;
+    if (!(defined($git) && -x $git)) {
+	warn('External Program "git" not found.  Check your site.conf');
+	return;
+    }
 
     my $upgradeMessage = '';
+    my $upgradesAvailable = 0;
     my $output;
     my @lines;
     my $commit;
@@ -3256,11 +3263,17 @@ sub upgrade_notification {
 	    }
 	    
 	    if ($newversion) {
+		$upgradesAvailable = 1;
 		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of WeBWorK available.')));
 	    } else {
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK.')));
+		$upgradesAvailable = 1;
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK for branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
 	    }
-	} 
+	}  else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of WeBWorK is up to date with branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
+	}
+    } else {
+	warn("Couldn't find \$gitWeBWorKRemoteName and \$gitWeBWorKBranchName in localOverrides.conf");
     }
 
     if ($PGRemote && $PGBranch) {
@@ -3311,11 +3324,18 @@ sub upgrade_notification {
 	    }
 	    
 	    if ($newversion) {
+		$upgradesAvailable = 1;
 		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of PG available.')));
 	    } else {
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG.')));
-	    }
+		$upgradesAvailable = 1;
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG for branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
+	    } 		
+	}  else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of PG is up to date with branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
+
 	} 
+    } else {
+	warn("Couldn't find \$gitPGRemoteName and \$gitPGBranchName in localOverrides.conf");
     }
 
     chdir($ce->{problemLibrary}{root}); 
@@ -3341,9 +3361,14 @@ sub upgrade_notification {
 	$output = `$git branch --contains $commit`;
 
 	if ($commit ne '-1' && $output !~ /\s+$LibraryBranch\s*\n/) {    
+	    $upgradesAvailable = 1;
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for the Open Problem Library.')));
+	} else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of the Open Problem Library is up to date.', $WeBWorKBranch, $WeBWorKRemote)));
 	}
-    } 
+    } else {
+	warn("Couldn't find \$gitLibraryRemoteName and \$gitLibraryBranchName in localOverrides.conf");
+    }
 
     # Check to see if the OPL_update script has been run more recently
     # than the last pull of the library. 
@@ -3351,6 +3376,7 @@ sub upgrade_notification {
     my $jsonfile = $ce->{webworkDirs}{htdocs}.'/DATA/'.$ce->{problemLibrary}{tree};
     # If no json file then the OPL script needs to be run
     unless (-e $jsonfile) {
+	$upgradesAvailable = 1;
 	$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is no library tree file for the library, you will need to run OPL-update.')));
     # otherwise we need to check to see if the date on the tree file
     # is after the date on the last commit in the library
@@ -3360,18 +3386,20 @@ sub upgrade_notification {
 	if ($opldate) {
 	    my $lastcommit = `git log -1 --pretty=format:%at`;
 	    if ($lastcommit > $opldate) {
+		$upgradesAvailable = 1;
 		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('The library index is older than the library, you need to run OPL-update.')));
 	    }
 	}
-    }
+    } 
 
     chdir($ce->{webwork_dir});
 
-    if ($upgradeMessage) {
+    if ($upgradesAvailable) {
 	$upgradeMessage = CGI::Tr(CGI::th($r->maketext('The following upgrades are available for your WeBWorK system:'))).$upgradeMessage;
 	return CGI::center(CGI::table({class=>"admin-messagebox"},$upgradeMessage));
     } else {
-	return '';
+	return CGI::center(CGI::div({class=>"ResultsWithoutError"},
+				    $r->maketext('WeBWorK, PG, and the Open Problem Library are up to date!')));
     }
 
 }
