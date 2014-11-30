@@ -3360,7 +3360,7 @@ sub upgrade_notification {
 	    $upgradesAvailable = 1;
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for the Open Problem Library.')));
 	} else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of the Open Problem Library is up to date.', $WeBWorKBranch, $WeBWorKRemote)));
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of the Open Problem Library is up to date.', $LibraryBranch, $LibraryRemote)));
 	}
     } 
 
