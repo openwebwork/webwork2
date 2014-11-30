@@ -3272,9 +3272,7 @@ sub upgrade_notification {
 	}  else {
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of WeBWorK is up to date with branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
 	}
-    } else {
-	warn("Couldn't find \$gitWeBWorKRemoteName and \$gitWeBWorKBranchName in localOverrides.conf");
-    }
+    } 
 
     if ($PGRemote && $PGBranch) {
 	# Check if there is an updated version of pg available
@@ -3334,9 +3332,7 @@ sub upgrade_notification {
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of PG is up to date with branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
 
 	} 
-    } else {
-	warn("Couldn't find \$gitPGRemoteName and \$gitPGBranchName in localOverrides.conf");
-    }
+    } 
 
     chdir($ce->{problemLibrary}{root}); 
     if ($LibraryRemote && $LibraryBranch) {
@@ -3366,9 +3362,7 @@ sub upgrade_notification {
 	} else {
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of the Open Problem Library is up to date.', $WeBWorKBranch, $WeBWorKRemote)));
 	}
-    } else {
-	warn("Couldn't find \$gitLibraryRemoteName and \$gitLibraryBranchName in localOverrides.conf");
-    }
+    } 
 
     # Check to see if the OPL_update script has been run more recently
     # than the last pull of the library. 
