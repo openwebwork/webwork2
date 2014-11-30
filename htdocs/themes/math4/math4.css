@@ -242,6 +242,13 @@ h2.page-title {
 .font-visible   { font-weight: bold; }
 .font-hidden { font-style: italic; } 
 
+.admin-messagebox {
+    background-color:#FFFFCC;
+    width:60%;
+    padding: 10px;
+    text-align:center;
+}
+
 /* Home Page */
 ul.courses-list {
 	list-style-type: none;

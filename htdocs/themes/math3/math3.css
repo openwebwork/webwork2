@@ -177,6 +177,14 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 background-color:#ddd;
 clear: both;
 }
+
+.admin-messagebox {
+    background-color:#FFFFCC;
+    width:60%;
+    padding: 10px;
+    text-align:center;
+}
+
 /* --- Fisheye view (id) ---------------------------------------------------- */
 
 /* The "fisheye" view: a hierarchical view of the website to show the 

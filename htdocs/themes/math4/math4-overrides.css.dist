@@ -293,6 +293,10 @@ span.ResultsWithErrorInResultsTable {
     background-color: #FFFFFF;
 }
 
+.admin-messagebox {
+    background-color: #EDE275;
+}
+
 /* Achievement bar coloring */
 .levelinnerbar {
     background-color: #0157E8;

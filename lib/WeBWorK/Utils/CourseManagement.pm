@@ -112,6 +112,8 @@ sub listArchivedCourses {
 %options may contain:
 
  templatesFrom => $templatesCourseID,
+ courseTitle => $courseTitle
+ courseInstitution => $courseInstitution
 
 Create a new course named $courseID.
 
@@ -264,6 +266,14 @@ sub addCourse {
 			eval { $db->addPermissionLevel($PermissionLevel) }; warn $@ if $@;
 		}
 	}
+
+	if (exists $options{courseTitle}) {
+	    $db->setSettingValue('courseTitle',$options{courseTitle});
+	}
+	if (exists $options{courseInstitution}) {
+	    $db->setSettingValue('courseInstitution',$options{courseInstitution});
+	}
+
 	
 	##### step 4: write course.conf file #####
 	
