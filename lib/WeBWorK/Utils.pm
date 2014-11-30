@@ -106,7 +106,6 @@ our @EXPORT_OK = qw(
         is_jitar_problem_closed
         jitar_problem_adjusted_status
         jitar_problem_finished
-        jitar_order_problems
 );
 
 =head1 FUNCTIONS
@@ -1504,29 +1503,6 @@ sub is_jitar_problem_closed {
 	
 	#in this case the previous problem is hidden
 	return 1
-    }
-    
-}
-
-
-# this will order an array of problems or problem ids so that it is 
-# in the correct jitar order:  1 1.1 1.2 2 3 etc...
-sub jitar_order_problems {
-    my @problems = @_;
-
-    # @problems can either be an array of ids or an array of problem objects
-    # so we need to check which it is and do the appropriate thing. 
-    my @problemIDs = @problems;
-
-    if (ref($problems[0]) =~ /Problem/) {
-	@problemIDs = map {$_->problem_id} @problems;
-    }
-
-    # sort the problems
-    if (ref($problems[0]) =~ /Problem/) {
-	return sort {$a->problem_id <=> $b->problem_id} @problems;
-    } else {
-	return sort @problems;
     }
     
 }

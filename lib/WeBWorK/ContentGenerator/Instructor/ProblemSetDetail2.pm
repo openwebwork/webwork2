@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
+use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT

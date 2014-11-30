@@ -36,7 +36,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
-	ref2string makeTempDirectory path_is_subdir sortByName before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems jitar_problem_finished);
+	ref2string makeTempDirectory path_is_subdir sortByName before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -1055,7 +1055,6 @@ sub siblings {
 	    my $set = $r->db->getGlobalSet($setID);
 	    if ($set && $set->assignment_type eq 'jitar') {
 		$isJitarSet = 1;
-		@problemIDs = jitar_order_problems(@problemIDs);
 	    }
 	}
 	
@@ -1242,11 +1241,8 @@ sub nav {
 	if (!$self->{invalidProblem}) {
 		my @problemIDs = $db->listUserProblems($eUserID, $setID);
 
-		if ($isJitarSet) {
-		    @problemIDs = jitar_order_problems(@problemIDs);
-		} else {
-		    @problemIDs = sort @problemIDs;
-		}
+		@problemIDs = sort @problemIDs;
+		
 
 		if ($isJitarSet) {
 		    my @processedProblemIDs;
@@ -1713,7 +1709,7 @@ sub output_score_summary{
 	# if necessary
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	    my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
-	    @problemIDs = jitar_order_problems(@problemIDs);
+	    @problemIDs = sort @problemIDs;
 
 	    # get some data 
 	    my @problemSeqs;

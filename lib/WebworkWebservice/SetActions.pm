@@ -13,7 +13,7 @@
 package WebworkWebservice::SetActions;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
-use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
+use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime jitar_id_to_seq seq_to_jitar_id);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 
 use strict;
@@ -666,7 +666,7 @@ sub addProblem {
 	# for jitar sets the next problem id is the next top level problem
 	if ($set->assignment_type eq 'jitar') {
 	    my @problemIDs = $db->listGlobalProblems($setName);
-	    @problemIDs = jitar_order_problems(@problemIDs);
+	    @problemIDs = sort @problemIDs;
 	    my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 	    $freeProblemID = seq_to_jitar_id($seq[0]+1);
 	} else {

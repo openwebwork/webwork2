@@ -421,6 +421,7 @@ table.classlist-table .tbody {
 
 .problem-list .nested-problem-6 {
     padding-left: 35px;
+}
 
 .problem_set_table .hardcopy-link {
     font-size:16px;
@@ -946,7 +947,7 @@ table caption{
 	margin-top: 10%;
 	margin-left: 10%;
 	margin-right: 10%;
-}*/
+}
 
 #editor{
 	width: 585px;

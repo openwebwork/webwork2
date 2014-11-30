@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems wwRound between after);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound between after);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -401,11 +401,7 @@ sub body {
 			  $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th(""),
 		);
 		
-		if ($isJitarSet) {
-		    @problemNumbers = jitar_order_problems(@problemNumbers);
-		} else {
-		    @problemNumbers = sort { $a <=> $b } @problemNumbers;
-		}
+	    @problemNumbers = sort { $a <=> $b } @problemNumbers;
 
 		foreach my $problemNumber (@problemNumbers) {
 			my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked

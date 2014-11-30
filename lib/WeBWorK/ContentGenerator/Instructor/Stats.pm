@@ -30,7 +30,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::Utils qw(readDirectory list2hash max sortByName jitar_id_to_seq jitar_order_problems jitar_problem_adjusted_status);
+use WeBWorK::Utils qw(readDirectory list2hash max sortByName jitar_id_to_seq jitar_problem_adjusted_status);
 
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
@@ -364,7 +364,7 @@ sub displaySets {
 			}
 		} elsif ( $setRecord->assignment_type eq 'jitar') {
 		    my @problems = $db->getAllUserProblems($student,$setName); 
-		    @problems = jitar_order_problems(@problems);
+		    @problems = sort {$a->problem_id <=> $b->problem_id} @problems;
 		    push @problemRecords, @problems;
 
 		} else {
@@ -521,7 +521,6 @@ sub displaySets {
 	my %prettyProblemIDs;
 
 	if ($isJitarSet) {
-	    @problemIDs = jitar_order_problems(@problemIDs);
 	    %prettyProblemIDs = map {$_=> join('.',jitar_id_to_seq($_))} 
 	         @problemIDs;
 	} else {

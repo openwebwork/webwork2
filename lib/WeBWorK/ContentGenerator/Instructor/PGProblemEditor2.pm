@@ -31,7 +31,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
+use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq seq_to_jitar_id);
 use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
@@ -1512,7 +1512,7 @@ sub add_problem_handler {
 	    # problems at the end
 	    if ($set->assignment_type eq 'jitar') {
 		my @problemIDs = $db->listGlobalProblems($targetSetName);
-		@problemIDs = jitar_order_problems(@problemIDs);
+		@problemIDs = sort(@problemIDs);
 		my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 		$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
 	    } else {
@@ -1999,7 +1999,7 @@ sub save_as_handler {
 		    # problems at the end
 		    if ($set->assignment_type eq 'jitar') {
 			my @problemIDs = $self->r->db->listGlobalProblems($setName);
-			@problemIDs = jitar_order_problems(@problemIDs);
+			@problemIDs = sort(@problemIDs);
 			my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 			$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
 		    } else {

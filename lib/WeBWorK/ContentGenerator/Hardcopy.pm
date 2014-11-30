@@ -39,7 +39,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq jitar_order_problems is_restricted after/;
+use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after/;
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -988,11 +988,6 @@ sub write_set_tex {
 		@problemIDs = @newOrder;
 	}
 		    
-	# order the problems correctly if its a jitar set
-	if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
-	    @problemIDs = jitar_order_problems(@problemIDs);
-	}
-	
 	# write set header
 	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header); # 0 => pg file specified directly
        
