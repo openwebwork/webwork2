@@ -87,7 +87,7 @@ our @EXPORT_OK = qw(
 	ref2string
 	removeTempDirectory
 	runtime_use
-        sortAchievements
+	sortAchievements
 	sortByName
 	surePathToFile
 	textDateTime
@@ -97,6 +97,7 @@ our @EXPORT_OK = qw(
 	writeCourseLog
 	writeLog
 	writeTimingLogEntry
+	wwRound
         is_restricted
         grade_set
         jitar_id_to_seq
@@ -909,6 +910,15 @@ sub max(@) {
 	return defined $soFar ? $soFar : 0;
 }
 
+sub wwRound(@) {
+# usage wwRound($places,$float)
+# return $float rounded up to number of decimal places given by $places
+	my $places = shift;
+	my $float = shift;
+	my $factor = 10**$places;
+	return int($float*$factor+0.5)/$factor;
+}
+
 sub pretty_print_rh($) {
 	my $rh = shift;
 	foreach my $key (sort keys %{$rh})  {
@@ -1107,10 +1117,14 @@ sub has_aux_files ($) { #  determine whether a question has auxiliary files
 }
 
 sub is_restricted {
-        my ($db, $set, $setName, $studentName) = @_;
-        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+        my ($db, $set, $studentName) = @_;
+	
+	# all sets open after the due date
+	return () if after($set->due_date());
+
+        my $setID = $set->set_id();
 	my @needed;
-	if ( $set and $set->restricted_release ) {
+	if ($set->restricted_release ) {
 	        my @proposed_sets = split(/\s*,\s*/,$set->restricted_release);
 		my $restriction =  $set->restricted_status  ||  0;
 		my @good_sets;

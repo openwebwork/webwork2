@@ -292,7 +292,7 @@ use constant FIELD_PROPERTIES => {
 		labels    => { 'N:' => 'Yes', 'Y:N' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'Y:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
 	},
 	hide_work         => {
-		name      => "Show Student Work on Finished Tests",
+		name      => "Show Problems on Finished Tests",
 		type      => "choose",
 		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
@@ -1027,7 +1027,16 @@ sub initialize {
 			$error = $r->param('submit_changes');
 		}
 
-		if ($reduced_scoring_date && ($reduced_scoring_date > $due_date || $reduced_scoring_date < $open_date)) {
+		my $enable_reduced_scoring = 
+		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
+		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    $r->param("set.$setID.enable_reduced_scoring") : 
+		    $setRecord->enable_reduced_scoring;
+
+		if ($enable_reduced_scoring && 
+		    $reduced_scoring_date 
+		    && ($reduced_scoring_date > $due_date 
+			|| $reduced_scoring_date < $open_date)) {
 			$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
 			$error = $r->param('submit_changes');
 		}
@@ -1680,11 +1689,6 @@ sub checkFile ($) {
 	return $r->maketext("This source file is a directory!") if -d $filePath;
 	return $r->maketext("This source file does not exist!") unless -e $filePath;
 	return $r->maketext("This source file is not a plain file!");
-}
-
-# don't show view options -- we provide display mode controls for headers/problems separately
-sub options {
-    return "";
 }
 
 #Make sure restrictor sets exist

@@ -254,9 +254,9 @@ sub body {
 		# );
 		
 		print CGI::br(),CGI::br();
-		print WeBWorK::CGI_labeled_input(-type=>"text", -id=>"uname", -label_text=>$r->maketext("Username").": ", -input_attr=>{-name=>"user", -value=>"$user"}, -label_attr=>{-id=>"uname_label"});
+		print WeBWorK::CGI_labeled_input(-type=>"text", -id=>"uname", -label_text=>$r->maketext("Username").": ", -input_attr=>{-name=>"user", -value=>"$user",'aria-required'=>'true'}, -label_attr=>{-id=>"uname_label"});
 		print CGI::br();
-		print WeBWorK::CGI_labeled_input(-type=>"password", -id=>"pswd", -label_text=>$r->maketext("Password").": ", -input_attr=>{-name=>"passwd", -value=>"$passwd"}, -label_attr=>{-id=>"pswd_label"});
+		print WeBWorK::CGI_labeled_input(-type=>"password", -id=>"pswd", -label_text=>$r->maketext("Password").": ", -input_attr=>{-name=>"passwd", -value=>"$passwd",'aria-required'=>'true'}, -label_attr=>{-id=>"pswd_label"});
 		print CGI::br();
 		if ($ce -> {session_management_via} ne "session_cookie") {
 			print WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"rememberme", -label_text=>$r->maketext("Remember Me"), -input_attr=>{-name=>"send_cookie", -value=>"on"});

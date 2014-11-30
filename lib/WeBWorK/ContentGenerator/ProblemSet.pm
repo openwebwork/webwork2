@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_order_problems wwRound between after);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -45,15 +45,16 @@ sub initialize {
 	my $setName = $urlpath->arg("setID");
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
-	$self->{displayMode}  = $r->param('displayMode') || $r->ce->{pg}->{options}->{displayMode};
 	
 
 	my $user            = $db->getUser($userName); # checked
 	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
 	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
-	
+
 	die "user $user (real user) not found."  unless $user;
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
+
+	$self->{displayMode}  = $user->displayMode ? $user->displayMode :  $r->ce->{pg}->{options}->{displayMode};
 
 	# FIXME: some day it would be nice to take out this code and consolidate the two checks
 	
@@ -98,7 +99,7 @@ sub initialize {
 	
 	$self->{isOpen} = (time >= $set->open_date && !(
 			       $ce->{options}{enableConditionalRelease} && 
-			       is_restricted($db, $set, $set->set_id, $effectiveUserName)))
+			       is_restricted($db, $set, $effectiveUserName)))
 	    || $authz->hasPermissions($userName, "view_unopened_sets");
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};
@@ -114,16 +115,7 @@ sub nav {
 	my $problemSetsPage = $urlpath->parent;
 	
 	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("navUp"));
-	# CRAP ALERT: this line relies on the hacky options() implementation in ContentGenerator.
-	# we need to find a better way to do this -- long range dependencies like this are dangerous!
-	#my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
-	# here is a hack to get some functionality back, but I don't even think it's that important to
-	# have this, since there are SO MANY PLACES where we lose the displayMode, etc.
-	# (oh boy, do we need a session table in the database!)
-	my $displayMode = $r->param("displayMode") || "";
-	my $showOldAnswers = $r->param("showOldAnswers") || "";
-	my $tail = "&displayMode=$displayMode&showOldAnswers=$showOldAnswers";
-	return $self->navMacro($args, $tail, @links);
+	return $self->navMacro($args, '', @links);
 }
 
 sub title {
@@ -131,9 +123,16 @@ sub title {
 	my $r = $self->r;
 	# using the url arguments won't break if the set/problem are invalid
 	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
+	
+	my $title = $setID;
+	my $set = $r->db->getGlobalSet($setID);
+	if (defined($set) && between($set->open_date, $set->due_date)) {
+	    $title .= ' - '.$r->maketext("Due [_1]", 
+	         $self->formatDateTime($set->due_date,undef,
+				       $r->ce->{studentDateDisplayFormat}));
+	}
 
-	return $setID;
-
+	return $title;
 
 }
 
@@ -141,6 +140,7 @@ sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
@@ -160,9 +160,10 @@ sub siblings {
 				   $gs->assignment_type() !~ /gateway/} @setIDs;
 
 	} else {
-		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
-				            $gs->assignment_type() !~ /gateway/ && 
-				            ( defined($gs->visible()) ? $gs->visible() : 1 )
+		@setIDs    = grep {my $set = $db->getMergedSet($eUserID, $_); 
+				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $set, $eUserID) : ();
+				   $set->assignment_type() !~ /gateway/ && 
+				       ( defined($set->visible()) ? $set->visible() : 1 ) && !@restricted;
 				           }   @setIDs;
 	}
 
@@ -303,8 +304,6 @@ sub info {
 	return "";
 }
 
-sub options { shift->optionsMacro }
-
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -386,21 +385,20 @@ sub body {
 	if (@problemNumbers) {
 		# UPDATE - ghe3
 		# This table now contains a summary, a caption, and scope variables for the columns.
-		print CGI::start_table({-class=>"problem_set_table problem_table"});
-		print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.","data-original-title"=>"Problems", "data-placement"=>"bottom"}, "Problems"));
-
-		my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.  If a problem does count towards its parent grade, then that score is listed in the column to the right.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
-
-		print CGI::Tr({},
-
-			CGI::th($r->maketext("Name")),
-			CGI::th($r->maketext("Attempts")),
-			CGI::th($r->maketext("Remaining")),
-			CGI::th($r->maketext("Worth")),
-			CGI::th($isJitarSet ? $r->maketext("Adjusted Status").$AdjustedStatusPopover :
-				$r->maketext("Status")),
-			      $isJitarSet  ? CGI::th($r->maketext("Credit For Parent")) : CGI::th(""),
-			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th(""),
+	    print CGI::start_table({-class=>"problem_set_table problem_table", -summary=>$r->maketext("This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.")});
+	    print CGI::caption($r->maketext("Problems"));
+	    my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.  If a problem does count towards its parent grade, then that score is listed in the column to the right.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
+	    
+	    print CGI::Tr({},
+			  
+			  CGI::th($r->maketext("Name")),
+			  CGI::th($r->maketext("Attempts")),
+			  CGI::th($r->maketext("Remaining")),
+			  CGI::th($r->maketext("Worth")),
+			  CGI::th($isJitarSet ? $r->maketext("Adjusted Status").$AdjustedStatusPopover :
+				  $r->maketext("Status")),
+			  $isJitarSet  ? CGI::th($r->maketext("Credit For Parent")) : CGI::th(""),
+			  $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th(""),
 		);
 		
 		if ($isJitarSet) {
@@ -533,7 +531,7 @@ sub problemListRow($$$$$) {
 	my $status = '';
 	if (!$isJitarSet || $problemLevel == 0) {
 
-	    $status = eval{ sprintf("%.0f%%", $rawStatus * 100)}; # round to whole number
+	    $status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
 	    $status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
 	    # FIXME  -- this may not cover all cases.
 	    
@@ -542,7 +540,7 @@ sub problemListRow($$$$$) {
 
 	my $statusForParent = "";
 	if ($isJitarSet && $problem->counts_parent_grade && $problemLevel != 0 ) {
-	    $statusForParent =  eval{ sprintf("%.0f%%", jitar_problem_adjusted_status($problem,$db) * 100)};
+	    $statusForParent =  eval{ wwround(0, jitar_problem_adjusted_status($problem,$db) * 100).'%'};
 	}
 
 	my $graderLink = "";

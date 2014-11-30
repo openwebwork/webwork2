@@ -88,11 +88,6 @@ sub title {
 	return "Library Browser v3";
 }
 
-# hide view options panel since it distracts from SetMaker's built-in view options
-sub options {
-	return "";
-}
-
 sub head {
 	my ($self) = @_;
 	my $ce = $self->r->ce;

@@ -1,7 +1,10 @@
 $(function(){
+    // Focus on a  results with error if one is around and focussable. 
+    $('.ResultsWithError').first().focus();
 
     // Turn submit inputs into buttons
     $('input:submit').addClass('btn btn-primary');
+    $('input:submit').mousedown(function () {this.blur(); return false;});
     $('.nav_button').addClass('btn btn-primary');
     $('.classlist').addClass('table table-condensed classlist-table');
 
@@ -16,8 +19,8 @@ $(function(){
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
 
     // replace pencil gifs by something prettier
-    $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <i class='icon-pencil'></i>")); });
-    $('img[src$="question_mark.png"]').replaceWith('<i class="icon-question-sign" style="font-size:16px; margin-right:5px"/>');
+    $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <span class='icon icon-pencil' data-alt='edit'></span>")); });
+    $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
 
     // Turn summaries and help boxes into popovers
     $('a.table-summary').popover().click(function (event) {
@@ -32,7 +35,7 @@ $(function(){
     
     // Changes links in masthead
     $('#loginstatus a').addClass('btn btn-small');
-    $('#loginstatus a').append(' <i class="icon-signout"></i>');
+    $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>');
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
@@ -40,13 +43,20 @@ $(function(){
 
     // Add a button to make the sidebar more dynamic for small screens
     $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
-	    event.preventDefault();
-	    $('#site-navigation').toggleClass('hidden');
-	    $('#toggle-sidebar-icon').toggleClass('icon-chevron-left')
-		.toggleClass('icon-chevron-right');
-	    $('#site-navigation').toggleClass('span2');
-	    $('#content').toggleClass('span10').toggleClass('span11');
-	});
+	event.preventDefault();
+	var toggleIcon = $('#toggle-sidebar-icon');
+	$('#site-navigation').toggleClass('hidden');
+	toggleIcon.toggleClass('icon-chevron-left')
+	    .toggleClass('icon-chevron-right');
+	$('#site-navigation').toggleClass('span2');
+	$('#content').toggleClass('span10').toggleClass('span11');
+	if (toggleIcon.next('.sr-only-glyphicon').html() == 'close sidebar') {
+	    toggleIcon.next('.sr-only-glyphicon').html('open sidebar');
+	} else {
+	    toggleIcon.next('.sr-only-glyphicon').html('close sidebar');
+	}
+	   
+    });
 
     if($(window).width() < 480) {
 	$('#toggle-sidebar').click();
@@ -258,5 +268,38 @@ $(function(){
 	    $('.ui-datepicker-trigger').addClass('btn').parent().addClass('input-append');
 	});
     }
+
+    /* For accessibility we need to change single answer aria labels to 
+       "answer" and not "answer 1" */
+    if ($('.codeshard').length == 1) {
+	$('.codeshard').attr('aria-label','answer');
+    }
+
+    /* Glyphicon accessibility */
+    jQuery('span.icon').each(function() {
+        /*
+	 * The glyphicon needs to be formatted as follows.
+	 * <span class="icon icon-close" data-alt="close"></span>
+	 *
+	 * The script takes the contents of the data-alt attribute and presents it as alternative content for screen reader users.
+	 *
+	 */
+        $(this).attr('aria-hidden', 'true'); // hide the pseudo-element from screen readers
+        var alt = jQuery(this).data('alt') // get the data-alt attribute
+        var textSize = jQuery(this).css('font-size'); // get the font size of the glyphicon
+        // if the data-alt attribute exists, write the contents of the attributwe
+        if (typeof alt !== "undefined") {
+            // if the glyphicon font is loaded, write the contents of the data-alt to off-screen screen reader only text
+            // and size the "hidden" text to be the same size as the glyphicon
+            if ($(this).css('font-family') == 'FontAwesome') {
+                $(this).after('<span style="font-size:'+ textSize +'" class="sr-only-glyphicon">' + alt + '</span>');
+
+            } else { // if the glyphicon font is NOT loaded, write the contents of the data-alt to on-screen text because the font is not displaying correctly
+                $(this).after('<span>' + alt + '</span>');
+                $(this).addClass('sr-only'); // make the failing glyphicon hidden off screen so it will not confuse users
+            }
+        }
+    });
+    
 });    
 
