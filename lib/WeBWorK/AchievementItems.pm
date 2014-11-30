@@ -554,7 +554,8 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} ";
+    $problem_id_script .= "default: max = $openSetCount[0];} "
+	if $#openSetCount >= 0;
     $problem_id_script .= "\$('\#ria_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#ria_problem_id option').slice(0,max).show();";
 
@@ -663,7 +664,8 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} ";
+    $problem_id_script .= "default: max = $openSetCount[0];} "
+	if $#openSetCount >= 0;
     $problem_id_script .= "\$('\#dbp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#dbp_problem_id option').slice(0,max).show();";
 
@@ -774,7 +776,8 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} ";
+    $problem_id_script .= "default: max = $openSetCount[0];} " 
+	if $#openSetCount >= 0;
     $problem_id_script .= "\$('\#hcp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#hcp_problem_id option').slice(0,max).show();";
 
@@ -976,7 +979,8 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} ";
+    $problem_id_script .= "default: max = $openSetCount[0];} "
+	if $#openSetCount >= 0;
     $problem_id_script .= "\$('\#fcp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#fcp_problem_id option').slice(0,max).show();";
 
@@ -1169,7 +1173,8 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} ";
+    $problem_id_script .= "default: max = $openSetCount[0];} "
+	if $#openSetCount >= 0;
     $problem_id_script .= "\$('\#tran_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#tran_problem_id option').slice(0,max).show();";
     $problem_id_script .= "\$('\#tran_problem_id2 option').slice(max,$maxProblems).hide(); ";

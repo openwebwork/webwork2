@@ -99,7 +99,7 @@ sub get_credentials {
 		} else {
 			debug("Couldn't shib header or user_id");
 			my $q = new CGI;
-			my $go_to = $ce->{shibboleth}{login_script}."?target=".$q->url().$r->urlpath->path;
+			my $go_to = $ce->{shibboleth}{login_script}."?target=".$q->url(-path=>1);
 			$self->{redirect} = $go_to;
 			print $q->redirect($go_to);
 			return 0;

@@ -1298,11 +1298,6 @@ sub title {
 	return "Library Browser";
 }
 
-# hide view options panel since it distracts from SetMaker's built-in view options
-sub options {
-	return "";
-}
-
 sub body {
 	my ($self) = @_;
 

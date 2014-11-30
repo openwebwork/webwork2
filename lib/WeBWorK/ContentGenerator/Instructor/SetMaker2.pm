@@ -1610,11 +1610,6 @@ sub title {
 	return "Library Browser v2";
 }
 
-# hide view options panel since it distracts from SetMaker's built-in view options
-sub options {
-	return "";
-}
-
 sub head {
   print '<script src="/webwork2_files/js/legacy/dnd.js"></script>';
   print '<script src="/webwork2_files/js/legacy/problem_grid.js"></script>';

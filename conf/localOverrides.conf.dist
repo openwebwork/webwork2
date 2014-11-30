@@ -49,9 +49,23 @@ $mail{feedbackRecipients}    = [
 	#'prof2@yourserver.yourdomain.edu',
 ];
 
+################################################################################
+# Repository Information
+###############################################################################
+# This is where you put your remote and branch for your WeBWorK, PG and OPL
+# github repositories.  
+# To disable checking for a particular repository, set the remote and branch
+# variables to be empty strings.  
 
 
+$enableGitUpgradeNotifier = 1;
 
+$gitWeBWorKRemoteName = "origin";
+$gitWeBWorKBranchName = "master";
+$gitPGRemoteName = "origin";
+$gitPGBranchName = "master";
+$gitLibraryRemoteName = "origin";
+$gitLibraryBranchName = "master";
 
 ################################################################################
 # Theme

@@ -61,6 +61,10 @@ var tabberOptions = {manualStartup:true};
 	<!--#output_JS-->
 <!--#endif-->
 
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<!--#if exists="math4-overrides.js"-->
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
+<!--#endif-->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 
@@ -69,6 +73,7 @@ var tabberOptions = {manualStartup:true};
 </head>
 
 <body>
+<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
 <!--#endif-->
@@ -78,10 +83,10 @@ var tabberOptions = {manualStartup:true};
 <!-- Header -->
 <div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
-		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="to courses page" />WeBWorK</a>
 	</div>
 	<div class="span4 maa_logo">
-		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="to MAA (Mathematical Association of America) main web site" /></a>
 	</div>
 	<div id="loginstatus" class="offset3 span3">
 		<!--#loginstatus-->
@@ -115,12 +120,12 @@ var tabberOptions = {manualStartup:true};
 	<!-- Breadcrumb -->
 	<div id="breadcrumb-row" class="row-fluid">
 	  <div class="span12">
-	  <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
-	  <i id="toggle-sidebar-icon" class="icon-chevron-left"></i></a>
-
+	    <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
+	      <span id="toggle-sidebar-icon" class="icon icon-chevron-left" data-alt="close sidebar"></span></a>
+	    
 	    <div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
 	      <ul class="breadcrumb">
-		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+		<!--#path style="bootstrap" text="<li><span aria-hidden='true' class='divider'>/</span></li>"-->
 	      </ul>
 	    </div>
 	</div></div>
@@ -134,14 +139,14 @@ var tabberOptions = {manualStartup:true};
 
 	<!--#if can="nav" can="message"--> 
 	<div class="row-fluid">
-	  <div class="problem-nav span3" role="navigation" aria-label="question navigation">
+	  <div class="problem-nav span7" role="navigation" aria-label="problem navigation">
 	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
 	<!--#if can="nav"-->
 		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
 	<!--#endif-->
 	  </div>
 	  
-	  <div class="Message span4 offset5">
+	  <div class="Message span4 offset1">
 	    <!-- Message for the user -->
 	    <!--#if can="message"-->
 	        <!--#message-->
@@ -317,12 +322,6 @@ var tabberOptions = {manualStartup:true};
 <div id="footer" role="contentinfo">
 	<!--#footer-->
 </div>
-
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
-<!--#if exists="math4-overrides.js"-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
-<!--#endif-->
-
 
 </body>
 </html>

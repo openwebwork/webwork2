@@ -206,12 +206,11 @@ sub body {
 
 		# If its apache 2.4 then it has to also mod perl 2.0 or better
 		my $APACHE24 = 0;
-		if (MP2) {
-		    Apache2::ServerUtil::get_server_banner() =~ 
-		      m:^Apache/(\d\.\d+\.\d+):;
+		if (MP2 && Apache2::ServerUtil::get_server_banner() =~ 
+		  m:^Apache/(\d\.\d+\.\d+):) {
 		    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
 		}
-		
+
 		# If its apache 2.4 then the API has changed
 		if ($APACHE24) {
 		    $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
@@ -363,8 +362,8 @@ sub feedbackForm {
 	print CGI::p("Use this form to report to your professor a problem with the WeBWorK system or an error in a problem you are attempting. Along with your message, additional information about the state of the system will be included.");
 	print CGI::p(CGI::i($message)) if $message;
 	print CGI::p(
-		CGI::b("E-mail:"), CGI::br(),
-		CGI::textarea("feedback", "", 20, 80),
+		CGI::label({'for'=>"feedback"},CGI::b("E-mail:").CGI::span({class=>"required-field"},'*')),
+		CGI::textarea({name=>"feedback", id=>"feedback", cols=>"80", rows=>"20"}),
 	);
 	print CGI::submit("sendFeedback", $r->maketext("Send E-mail"));
 	print CGI::end_form();

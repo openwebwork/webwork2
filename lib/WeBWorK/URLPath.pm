@@ -253,7 +253,7 @@ our %pathTypes = (
 		match   => qr|^proctored_quiz_mode/([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => 'proctored_quiz_mode/$setID/',
-		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
+		display => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
 	},
 	proctored_gateway_proctor_login => {
 		name    => 'Proctored Gateway Quiz $setID Proctor Login',
@@ -310,7 +310,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Logout',
 	},
 	options => {
-		name    => 'Password/Email',
+		name    => 'User Settings',
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^options/|,
@@ -380,7 +380,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_user_list => {
-		name    => 'Classlist Editor',
+		name    => 'Old Classlist Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_user_detail/ ],
 		match   => qr|^users/|,
@@ -389,7 +389,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList',
 	},
 	instructor_user_list2 => {
-		name    => 'Classlist Editor2',
+		name    => 'Classlist Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_user_detail/ ],
 		match   => qr|^users2/|,
@@ -419,7 +419,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_set_list => {
-		name    => 'Hmwk Sets Editor',
+		name    => 'Old Hmwk Sets Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail/ ],
 		match   => qr|^sets/|,
@@ -428,7 +428,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList',
 	},
 	instructor_set_list2 => {
-		name    => 'Hmwk Sets Editor2',
+		name    => 'Hmwk Sets Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail/ ],
 		match   => qr|^sets2/|,

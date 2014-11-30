@@ -1509,11 +1509,6 @@ sub title {
 	return $self->r->maketext("Library Browser");
 }
 
-# hide view options panel since it distracts from SetMaker's built-in view options
-sub options {
-	return "";
-}
-
 sub head {
   my ($self) = @_;
   my $ce = $self->r->ce;

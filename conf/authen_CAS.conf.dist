@@ -4,7 +4,7 @@
 # authen_CAS.conf.dist
 # Copy this file to authen_CAS.conf. Then configure it to match your server's CAS configuration.
 # Then to activate add the following line to localOverrides.conf:
-# include("conf/authen_CAS.conf")
+# include("conf/authen_CAS.conf");
 ########################################################################################
 
 # Set CAS as the authentication module to use.

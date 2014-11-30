@@ -36,7 +36,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
-	ref2string makeTempDirectory path_is_subdir sortByName before after between);
+	ref2string makeTempDirectory path_is_subdir sortByName before after between wwRound);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -298,9 +298,10 @@ sub attemptResults {
 		$header .= $showAttemptAnswers ? CGI::th($r->maketext("Entered"))  : "";
 	}	
 	$header .= $showAttemptPreview ? CGI::th($r->maketext("Answer Preview"))  : "";
-	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct"))  : "";
 	$header .= $showAttemptResults ? CGI::th($r->maketext("Result"))   : "";
 	$header .= $showMessages       ? CGI::th($r->maketext("Messages")) : "";
+	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct Answer"))  : "";
+
 	my $fully = '';
 	my @tableRows = ( $header );
 	my $numCorrect = 0;
@@ -352,15 +353,15 @@ sub attemptResults {
 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                    $self->nbsp($preview))       : "";
+		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},CGI::a({href=>"javascript:document.getElementById(\"$name\").focus()"},$self->nbsp($resultString)))  : "";
+
+		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
+		$row .= $showMessages       ? CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)) : "";
 		$row .= $showCorrectAnswers ? CGI::td({onmouseover=> qq!Tip('$correctAnswer',SHADOW, true, 
 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                  $self->nbsp($correctAnswerPreview)) : "";
-		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},$self->nbsp($resultString))  : "";
-		#I'm pretty sure this message shouldn't have the message class
-		#$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
-		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
-		$row .= $showMessages       ? CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)) : "";
+
 		push @tableRows, $row;
 	}
 	
@@ -368,7 +369,7 @@ sub attemptResults {
 	$imgGen->render(refresh => 1);
 	
 #	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
+	my $scorePercent = wwRound(0, $problemResult->{score} * 100).'%';
 #   FIXME  -- I left the old code in in case we have to back out.
 #	my $summary = "On this attempt, you answered $numCorrect out of "
 #		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
@@ -398,13 +399,17 @@ sub attemptResults {
 	} else {
 		$summary = $problemResult->{summary};   # summary has been defined by grader
 	}
-	
+
+	$summary = CGI::div({role=>"alert", class=>"attemptResultsSummary"},
+			  $summary);
+
 	$self->{correct_ids}   = [@correct_ids];
 	$self->{incorrect_ids} = [@incorrect_ids];
 
 	return
-		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : '&nbsp;');
+    CGI::h3($r->maketext("Attempt Results")) .
+    CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) .
+    ($showSummary ? $summary : '&nbsp;');
 }
 
 
@@ -505,7 +510,7 @@ sub pre_header_initialize {
 	    ($setName eq "Undefined_Set" || 
 	     (time >= $set->open_date && !(
 		  $ce->{options}{enableConditionalRelease} && 
-		  is_restricted($db, $set, $set->set_id, $effectiveUserName))));
+		  is_restricted($db, $set, $effectiveUserName))));
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
 
@@ -634,7 +639,7 @@ sub pre_header_initialize {
 	##### form processing #####
 	
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode               = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+	my $displayMode               = $user->displayMode || $ce->{pg}->{options}->{displayMode};
 	my $redisplay                 = $r->param("redisplay");
 	my $submitAnswers             = $r->param("submitAnswers");
 	my $checkAnswers              = $r->param("checkAnswers");
@@ -667,6 +672,7 @@ sub pre_header_initialize {
     #       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
     #       Preview:       has the preview button been clicked while SMA is active?
     #       DisplayChange: has a display change been made while SMA is active?
+    my %SMAoptions = map {$_ => 1} @{$ce->{pg}->{options}->{showMeAnother}};
     my %showMeAnother = (
 	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother} and ($problem->{showMeAnother}>-1)),
             CheckAnswers => ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
@@ -674,10 +680,10 @@ sub pre_header_initialize {
             TriesNeeded => $problem->{showMeAnother},
             MaxReps => $ce->{pg}->{options}->{showMeAnotherMaxReps},
             options => {
-                    checkAnswers  => ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showSolutions => ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showCorrect   => ('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showHints     => ('SMAshowHints' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+		checkAnswers  => exists($SMAoptions{'SMAcheckAnswers'}),
+		showSolutions => exists($SMAoptions{'SMAshowSolutions'}),
+		showCorrect   => exists($SMAoptions{'SMAshowCorrect'}),
+		showHints     => exists($SMAoptions{'SMAshowHints'}),
                   },
             Count => $problem->{showMeAnotherCount},
             Preview => ($previewAnswers and $r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}), 
@@ -726,13 +732,13 @@ sub pre_header_initialize {
 	# Note: ProblemSet and ProblemSets might set showOldAnswers to '', which
 	#       needs to be treated as if it is not set.
 	my %want = (
-		showOldAnswers     => (defined($r->param("showOldAnswers")) and $r->param("showOldAnswers") ne '') ? $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers},
-		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
+		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
+		showCorrectAnswers => $r->param('showCorrectAnswers') || $ce->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
-        useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
+        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		showMeAnother      => $showMeAnother{active},
@@ -864,9 +870,12 @@ sub pre_header_initialize {
 	          $can{showSolutions}      = $showMeAnother{options}->{showSolutions};
 	          $must{showSolutions}     = $showMeAnother{options}->{showSolutions};
 	          $can{checkAnswers}       = $showMeAnother{options}->{checkAnswers};
+		  # rig the nubmer of attempts to show hints if showing hitns
+		  if ($can{showHints}) {
+		      $problem->num_incorrect(1000);
+		  }
             }
       }
-
 	
 	# final values for options
 	my %will;
@@ -1000,28 +1009,6 @@ sub post_header_text {
 	my ($self) = @_;
 	return "" if ( $self->{invalidSet} );
     return $self->{pg}->{post_header_text} if $self->{pg}->{post_header_text};
-}
-
-sub options {
-	my ($self) = @_;
-	#warn "doing options in Problem";
-	
-	# don't show options if we don't have anything to show
-	return "" if $self->{invalidSet} or $self->{invalidProblem};
-	
-	my $displayMode = $self->{displayMode};
-	my %can = %{ $self->{can} };
-	
-	my  @options_to_show = "displayMode";
-	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
-	push @options_to_show, "showHints" if $can{showHints};
-	push @options_to_show, "showSolutions" if $can{showSolutions};
-	push @options_to_show, "useMathView" if $can{useMathView};
-
-	return $self->optionsMacro(
-		options_to_show => \@options_to_show,
-		extra_params => ["editMode", "sourceFilePath"],
-	);
 }
 
 sub siblings {
@@ -1331,7 +1318,7 @@ sub output_checkboxes{
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
 			-id		 => "showCorrectAnswers_id",
-			-label_text => $r->maketext("Show correct answers"),
+			-label_text => $r->maketext("Show correct answer column"),
 			-input_attr => $will{showCorrectAnswers} ?
 			{
 				-name    => "showCorrectAnswers",
@@ -1419,7 +1406,7 @@ sub output_submit_buttons{
 
     # skip buttons if SMA button has been pushed but there is no new problem shown
     if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible})){
-        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
         }
@@ -1487,7 +1474,7 @@ sub output_score_summary{
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
-	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
+	my $lastScore = wwRound(0, $problem_status * 100).'%'; # Round to whole number
 	my $attemptsLeft = $problem->max_attempts - $attempts;
 	
 	my $setClosed = 0;
@@ -1515,7 +1502,7 @@ sub output_score_summary{
 		print CGI::p(join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
-			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",sprintf("%.0f%%", $pg->{result}->{score} * 100)) . CGI::br():'',
+			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
 			$problem->attempted
 				? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
