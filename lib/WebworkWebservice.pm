@@ -181,6 +181,7 @@ if ($UNIT_TESTS_ON) {
 		ce          =>  $ce,
 		db          =>  $db,
 		language_handle => $language_handle,
+		xmlrpc		=>  1,		# Set a flag for Authen modules
 	};	
 	$self = bless $self, $class;
 	# need to bless self before it can be used as an argument for the authentication module
