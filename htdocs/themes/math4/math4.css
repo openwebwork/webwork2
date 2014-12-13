@@ -294,7 +294,8 @@ ul.courses-list a:hover {
     white-space:nowrap;
 }
 
-.label-with-edit-icon .set-label {
+.label-with-edit-icon .set-label,
+.label-with-edit-icon div.tooltip {
     white-space:normal;
 }
 
