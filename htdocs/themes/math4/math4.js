@@ -229,6 +229,20 @@ $(function(){
     if ($('.codeshard').length == 1) {
 	$('.codeshard').attr('aria-label','answer');
     }
+    
+    /* This code adds a screen reader only label to a pg form element that 
+       isn't already wrapped in a label.  The label text is the current 
+       aria-label text */
+    $('.codeshard').each(function () {
+	if ($(this).parent().is('label')) {
+	    $(this).parent().attr('for',$(this).attr('id'));
+	} else {
+	    $(this).before($('<label>',{class : 'sr-only',
+				      for : $(this).attr('id')})
+			 .html($(this).attr('aria-label')));
+	}
+    });
+
 
     /* Glyphicon accessibility */
     jQuery('span.icon').each(function() {
