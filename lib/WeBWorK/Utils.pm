@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.83 2009/07/12 23:48:00 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -30,6 +30,8 @@ use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
+use Encode;
+
 use File::Copy;
 use File::Spec;
 use Time::Zone;
@@ -619,7 +621,7 @@ sub formatDateTime($;$;$;$) {
 	    $dt = DateTime->from_epoch(epoch => $dateTime, time_zone => $display_tz);
 	}
 	#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
-	return $dt->strftime($format_string);
+	return Encode::encode_utf8($dt->strftime($format_string));
 }
 
 

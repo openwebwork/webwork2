@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -74,7 +74,7 @@ use constant SUCCESS => (1 << 2);
 my %problib;	## This is configured in defaults.config
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, 'achievements' => 1,
+	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, '.git' => 1,'achievements' => 1,
 );
 
 sub prepare_activity_entry {
@@ -379,12 +379,12 @@ sub browse_local_panel {
     
 	my $list_of_prob_dirs= get_problem_directories($self->r->ce,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
-		$library_selected = "Found no directories containing problems";
+		$library_selected = $r->maketext("Found no directories containing problems");
 		unshift @{$list_of_prob_dirs}, $library_selected;
 	} else {
 		my $default_value = SELECT_LOCAL_STRING;
 		if (not $library_selected or $library_selected eq $default_value) {
-			unshift @{$list_of_prob_dirs},	$default_value;
+			unshift @{$list_of_prob_dirs},	$r->maketext($default_value);
 			$library_selected = $default_value;
 		}
 	}
@@ -416,9 +416,9 @@ sub browse_mysets_panel {
 	my $default_value = "Select a Homework Set";
 
 	if(scalar(@$list_of_local_sets) == 0) {
-		$list_of_local_sets = [NO_LOCAL_SET_STRING];
+		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
 	} elsif (not $library_selected or $library_selected eq $default_value) { 
-		unshift @{$list_of_local_sets},	 $default_value; 
+		unshift @{$list_of_local_sets},	 $r->maketext($default_value); 
 		$library_selected = $default_value; 
 	} 
 
@@ -486,7 +486,7 @@ sub browse_library_panel1 {
 	my $ce = $r->ce;
 	
 	my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($r->{ce});
-	unshift @chaps, LIB2_DATA->{dbchapter}{all};
+	unshift @chaps, $r->maketext(LIB2_DATA->{dbchapter}{all});
 	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}->{all};
 
 	my @sects=();
@@ -528,14 +528,14 @@ sub browse_library_panel2 {
 	my $ce = $r->ce;
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
-	unshift @subjs, LIB2_DATA->{dbsubject}{all};
+	unshift @subjs, $r->maketext(LIB2_DATA->{dbsubject}{all});
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
-	unshift @chaps, LIB2_DATA->{dbchapter}{all};
+	unshift @chaps, $r->maketext(LIB2_DATA->{dbchapter}{all});
 
 	my @sects=();
 	@sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
-	unshift @sects, LIB2_DATA->{dbsection}{all};
+	unshift @sects, $r->maketext(LIB2_DATA->{dbsection}{all});
 
 	my $subject_selected = $r->param('library_subjects') || LIB2_DATA->{dbsubject}{all};
 	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}{all};
@@ -599,19 +599,19 @@ sub browse_library_panel2adv {
 	if(! grep { $_ eq $r->param('library_subjects') } @subjs) {
 		$r->param('library_subjects', '');
 	}
-	unshift @subjs, LIB2_DATA->{dbsubject}{all};
+	unshift @subjs, $r->maketext(LIB2_DATA->{dbsubject}{all});
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
 	if(! grep { $_ eq $r->param('library_chapters') } @chaps) {
 		$r->param('library_chapters', '');
 	}
-	unshift @chaps, LIB2_DATA->{dbchapter}{all};
+	unshift @chaps, $r->maketext(LIB2_DATA->{dbchapter}{all});
 
 	my @sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
 	if(! grep { $_ eq $r->param('library_sections') } @sects) {
 		$r->param('library_sections', '');
 	}
-	unshift @sects, LIB2_DATA->{dbsection}{all};
+	unshift @sects, $r->maketext(LIB2_DATA->{dbsection}{all});
 
 	my $texts = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
 	my @textarray = map { $_->[0] }  @{$texts};
@@ -622,7 +622,7 @@ sub browse_library_panel2adv {
 	if(! grep { $_ eq $r->param('library_textbook') } @textarray) {
 		$r->param('library_textbook', '');
 	}
-	unshift @textarray, LIB2_DATA->{textbook}{all};
+	unshift @textarray, $r->maketext(LIB2_DATA->{textbook}{all});
 	my $atb = LIB2_DATA->{textbook}{all}; $textlabels{$atb} = LIB2_DATA->{textbook}{all};
 
 	my $textchap_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textchapter');
@@ -630,14 +630,14 @@ sub browse_library_panel2adv {
 	if(! grep { $_ eq $r->param('library_textchapter') } @textchaps) {
 		$r->param('library_textchapter', '');
 	}
-	unshift @textchaps, LIB2_DATA->{textchapter}{all};
+	unshift @textchaps, $r->maketext(LIB2_DATA->{textchapter}{all});
 
 	my $textsec_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textsection');
 	my @textsecs = map { $_->[0] } @{$textsec_ref};
 	if(! grep { $_ eq $r->param('library_textsection') } @textsecs) {
 		$r->param('library_textsection', '');
 	}
-	unshift @textsecs, LIB2_DATA->{textsection}{all};
+	unshift @textsecs, $r->maketext(LIB2_DATA->{textsection}{all});
 
 	my %selected = ();
 	for my $j (qw( dbsection dbchapter dbsubject textbook textchapter textsection )) {
@@ -657,9 +657,9 @@ sub browse_library_panel2adv {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching WeBWorK problems";
+		$count_line = $r->maketext("There are no matching WeBWorK problems");
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problems";
+		$count_line = $r->maketext("There are [_1] matching WeBWorK problems", $count_line);
 	}
 
 	# Formatting level checkboxes by hand
@@ -768,9 +768,9 @@ sub browse_setdef_panel {
 	# be sorted. *barf*
 	my @list_of_set_defs = sort(get_set_defs($ce->{courseDirs}{templates}));
 	if(scalar(@list_of_set_defs) == 0) {
-		@list_of_set_defs = (NO_LOCAL_SET_STRING);
+		@list_of_set_defs = ($r->maketext(NO_LOCAL_SET_STRING));
 	} elsif (not $library_selected or $library_selected eq $default_value) { 
-		unshift @list_of_set_defs, $default_value; 
+		unshift @list_of_set_defs, $r->maketext($default_value); 
 		$library_selected = $default_value; 
 	}
 	my $view_problem_line = view_problems_line('view_setdef_set', $r->maketext('View Problems'), $self->r);
@@ -815,10 +815,10 @@ sub make_top_row {
 	my $these_widths = "width: 24ex";
 
 	if($have_local_sets ==0) {
-		$list_of_local_sets = [NO_LOCAL_SET_STRING];
+		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
 	} elsif (not defined($set_selected) or $set_selected eq ""
 	  or $set_selected eq SELECT_SET_STRING) {
-		unshift @{$list_of_local_sets}, SELECT_SET_STRING;
+		unshift @{$list_of_local_sets}, $r->maketext(SELECT_SET_STRING);
 		$set_selected = SELECT_SET_STRING;
 	}
 	#my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
@@ -896,7 +896,7 @@ sub make_top_row {
 						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)) {
-		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:16ex",
+		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:22ex",
 		                         -value=>$r->maketext("Show all paths"),
 								 -id =>"toggle_paths",
 								 -onClick=>'return togglepaths()');
@@ -1035,7 +1035,7 @@ sub make_data_row {
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
 		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
 		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
-		      -value=>"Add",
+		      -value=>$r->maketext("Add"),
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
@@ -1658,15 +1658,17 @@ sub body {
 	my ($next_button, $prev_button) = ("", "");
 	if ($first_index > 0) {
 		$prev_button = CGI::submit(-name=>"prev_page", -style=>"width:15ex",
-						 -value=>"Previous page");
+						 -value=>$r->maketext("Previous page"));
 	}
 	if ((1+$last_index)<scalar(@pg_files)) {
 		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
-						 -value=>"Next page");
+						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)>0) {
-		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." of ".CGI::span({-id=>'totalshown'}, $total_probs).
-			" shown.", $prev_button, " ", $next_button,
+		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1)).$r->maketext(" of ").CGI::span({-id=>'totalshown'}, $total_probs).
+			$r->maketext(" shown."), $prev_button, " ", $next_button,
+#		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." of ".CGI::span({-id=>'totalshown'}, $total_probs).
+	#		" shown.", $prev_button, " ", $next_button,
 		);
 	}
 	#	 }

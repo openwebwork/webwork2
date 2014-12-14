@@ -437,7 +437,10 @@ sub body {
 		due_date
 		answer_date
 		visible
-		enable_reduced_scoring	
+		enable_reduced_scoring
+		restricted_release
+		restricted_status
+		hide_hint
 	)} = (
 		$r->maketext("Select"),
 		$r->maketext("Edit Problems"),
@@ -450,7 +453,9 @@ sub body {
 		$r->maketext("Due Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
-		$r->maketext("Reduced Credit Enabled") 
+		$r->maketext("Restrict release by set(s)"),
+		$r->maketext("Score required for release"),
+		$r->maketext("Hide Hints from Students") 
 	);
 	
 

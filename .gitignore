@@ -8,12 +8,13 @@ tmp/*
 logs/*
 conf/*.conf
 conf/*.apache2-config
+conf/*.apache2.4-config
 htdocs/site_info.txt
 htdocs/applets/*.swf
 htdocs/DATA/*
 bin/wwapache2ctl
 webwork2.komodoproject
-#courses.dist/*
+courses.dist/*
 node_modules
 node_modules/*
 WeBWorK.sublime-project
