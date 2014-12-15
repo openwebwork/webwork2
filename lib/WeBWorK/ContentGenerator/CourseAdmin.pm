@@ -3341,7 +3341,9 @@ sub upgrade_notification {
 	} 
     } 
 
-    chdir($ce->{problemLibrary}{root}); 
+    die "Couldn't find ".$ce->{problemLibrary}{root}.'.  Are you sure $problemLibrary{root} is set correctly in localOverrides.conf?' unless
+	chdir($ce->{problemLibrary}{root}); 
+    
     if ($LibraryRemote && $LibraryBranch) {
 	# Check if there is an updated version of the OPL available
 	# this is done by using ls-remote to get the commit sha at the 
