@@ -3253,7 +3253,7 @@ sub upgrade_notification {
 		$line =~ /^(\w+)/;
 		$commit = $1;
 		$output = `$git branch --contains $commit`;
-		warn($output);
+	
 		if ($output !~ /$currentBranch(\s+|$)/) {
 		    # There is a version tag which contains a commit that
 		    # isn't in the current branch so there must
@@ -3298,7 +3298,7 @@ sub upgrade_notification {
 	}
 	
 	$output = `$git branch --contains $commit`;
-	warn($output);
+	
 	if ($commit ne '-1' && $output !~ /$currentBranch(\s+|$)/) {    
 	    # There are upgrades, we need to figure out if its a 
 	    # new version or not
