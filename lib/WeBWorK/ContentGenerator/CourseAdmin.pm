@@ -3235,7 +3235,7 @@ sub upgrade_notification {
 	
 	$output = `$git branch --contains $commit`;
 
-	if ($commit ne '-1' && $output !~ /$currentBranch(\s+|$)/) {    
+	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {    
 	    # There are upgrades, we need to figure out if its a 
 	    # new version or not
 	    # This is done by using ls-remote to get the commit sha's
@@ -3254,7 +3254,7 @@ sub upgrade_notification {
 		$commit = $1;
 		$output = `$git branch --contains $commit`;
 	
-		if ($output !~ /$currentBranch(\s+|$)/) {
+		if ($output !~ /\s+$currentBranch(\s+|$)/) {
 		    # There is a version tag which contains a commit that
 		    # isn't in the current branch so there must
 		    # be a new version
@@ -3299,7 +3299,7 @@ sub upgrade_notification {
 	
 	$output = `$git branch --contains $commit`;
 	
-	if ($commit ne '-1' && $output !~ /$currentBranch(\s+|$)/) {    
+	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {    
 	    # There are upgrades, we need to figure out if its a 
 	    # new version or not
 	    # This is done by using ls-remote to get the commit sha's
@@ -3316,7 +3316,7 @@ sub upgrade_notification {
 		$line =~ /^(\w+)/;
 		$commit = $1;
 		$output = `$git branch --contains $commit`;
-		if ($output !~ /$currentBranch(\s+|$)/) {
+		if ($output !~ /\s+$currentBranch(\s+|$)/) {
 		    # There is a version tag which contains a commit that
 		    # isn't in the current branch so there must
 		    # be a new version
@@ -3362,7 +3362,7 @@ sub upgrade_notification {
 	
 	$output = `$git branch --contains $commit`;
 
-	if ($commit ne '-1' && $output !~ /$currentBranch(\s+|$)/) {    
+	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {    
 	    $upgradesAvailable = 1;
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for the Open Problem Library.')));
 	} elsif ($commit eq '-1') {
