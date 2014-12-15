@@ -3218,12 +3218,13 @@ sub upgrade_notification {
     # Check if there is an updated version of webwork available
     # this is done by using ls-remote to get the commit sha at the 
     # head of the remote branch and looking to see if that sha is in
-    # the local copy
+    # the currently selected local branch
 	chdir($ce->{webwork_dir});
+	my $currentBranch = `$git symbolic-ref --short HEAD`;
 	$output = `$git ls-remote $WeBWorKRemote`;
 	@lines = split /\n/, $output;
 	$commit=-1;
-	
+
 	foreach my $line (@lines) {
 	    if ($line =~ /refs\/heads\/$WeBWorKBranch/) {
 		$line =~ /^(\w+)/;
@@ -3235,15 +3236,16 @@ sub upgrade_notification {
 	warn("Couldn't find WeBWorK Branch $WeBWorKBranch in remote $WeBWorKRemote") if $commit eq '-1';
 	
 	$output = `$git branch --contains $commit`;
-	
-	if ($commit ne '-1' && $output !~ /\s+$WeBWorKBranch\s*\n/) {    
+
+	if ($commit ne '-1' && $output !~ /$currentBranch/) {    
 	    # There are upgrades, we need to figure out if its a 
 	    # new version or not
 	    # This is done by using ls-remote to get the commit sha's
 	    # at the heads of the remote tags.  
 	    # Tags of the form WeBWorK-x.y are release tags.  If there is
-	    # an sha there which isn't in the local branch then there must
+	    # an sha there which isn't in the current branch then there must
 	    # be a newer version. 
+
 	    $output = `$git ls-remote --tags $WeBWorKRemote`;
 	    @lines = split /\n/, $output;
 	    my $newversion = 0;
@@ -3253,7 +3255,7 @@ sub upgrade_notification {
 		$line =~ /^(\w+)/;
 		$commit = $1;
 		$output = `$git branch --contains $commit`;
-		if ($output !~ /\s+$WeBWorKBranch\s*\n/) {
+		if ($output !~ /$currentBranch\n/) {
 		    # There is a version tag which contains a commit that
 		    # isn't in the current branch so there must
 		    # be a new version
@@ -3267,10 +3269,10 @@ sub upgrade_notification {
 		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of WeBWorK available.')));
 	    } else {
 		$upgradesAvailable = 1;
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of WeBWorK for branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current branch of WeBWorK from branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
 	    }
 	}  else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of WeBWorK is up to date with branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of WeBWorK is up to date with branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
 	}
     } 
 
@@ -3278,8 +3280,9 @@ sub upgrade_notification {
 	# Check if there is an updated version of pg available
 	# this is done by using ls-remote to get the commit sha at the 
 	# head of the remote branch and looking to see if that sha is in
-	# the local copy
+	# the currently selected local branch 
 	chdir($ce->{pg_dir});
+	my $currentBranch = `$git symbolic-ref --short HEAD`;
 	$output = `$git ls-remote $PGRemote`;
 	@lines = split /\n/, $output;
 	$commit='-1';
@@ -3295,7 +3298,7 @@ sub upgrade_notification {
 	warn("Couldn't find PG Branch $PGBranch in remote $PGRemote") if $commit eq -1;
 	$output = `$git branch --contains $commit`;
 	
-	if ($commit ne '-1' && $output !~ /\s+$PGBranch\s*\n/) {    
+	if ($commit ne '-1' && $output !~ /$currentBranch/) {    
 	    # There are upgrades, we need to figure out if its a 
 	    # new version or not
 	    # This is done by using ls-remote to get the commit sha's
@@ -3312,7 +3315,7 @@ sub upgrade_notification {
 		$line =~ /^(\w+)/;
 		$commit = $1;
 		$output = `$git branch --contains $commit`;
-		if ($output !~ /\s+$PGBranch\s*\n/) {
+		if ($output !~ /$currentBranch/) {
 		    # There is a version tag which contains a commit that
 		    # isn't in the current branch so there must
 		    # be a new version
@@ -3326,10 +3329,10 @@ sub upgrade_notification {
 		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of PG available.')));
 	    } else {
 		$upgradesAvailable = 1;
-		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current version of PG for branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current branch of PG from branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
 	    } 		
 	}  else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of PG is up to date with branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of PG is up to date with branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
 
 	} 
     } 
@@ -3360,7 +3363,7 @@ sub upgrade_notification {
 	    $upgradesAvailable = 1;
 	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for the Open Problem Library.')));
 	} else {
-	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current version of the Open Problem Library is up to date.', $LibraryBranch, $LibraryRemote)));
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of the Open Problem Library is up to date.', $LibraryBranch, $LibraryRemote)));
 	}
     } 
 
