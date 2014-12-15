@@ -300,7 +300,16 @@ sub body {
 			    } elsif (!$renderAnswers) {
 				$answerstring = HTML::Entities::encode_entities($answer);
 			    } elsif ($answerType eq 'Value (Formula)') {
-				$answerstring = '`'.HTML::Entities::encode_entities($answer).'`';
+				# We need to escape some gateway strings which 
+				# might appear here
+				$answerstring = HTML::Entities::encode_entities($answer);
+				if ($answerstring =~ /\[(submit|preview|newPage)\]/) {
+				    if ($answerstring !~ /No answer entered/) {
+					$answerstring =~ s/\[(submit|preview|newPage)\](.*)/\[$1\] `$2`/; 
+				    } 
+				} else {
+				    $answerstring = "`$answer`";
+				}
 				$td->{class} = 'formula';
 			    } elsif ($answerType eq 'essay') {
 				$answerstring = HTML::Entities::encode_entities($answer);
