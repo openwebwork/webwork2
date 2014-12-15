@@ -195,7 +195,7 @@ $pg{displayModes} = [
 ];
 
 # Default display mode. Should be an uncommented item listed above.
-$pg{options}{displayMode}        = "images";
+$pg{options}{displayMode}        = "MathJax";
  
 ################################################################################
 #  Adding to the macro file search path. (Check with entries in defaults.config before overriding)
