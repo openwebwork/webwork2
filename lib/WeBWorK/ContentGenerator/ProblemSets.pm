@@ -560,6 +560,9 @@ sub setListRow {
 				-name=>"selected_sets",
 				-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
 					  });
+		    # make sure interactive is the label for control
+		    $interactive = CGI::label({"for"=>$name . ($gwtype ? ",v" . $set->version_id : '')},$interactive);
+
 		} else {
 		    $control = '';
 		}
