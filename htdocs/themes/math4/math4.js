@@ -233,13 +233,13 @@ $(function(){
     /* This code adds a screen reader only label to a pg form element that 
        isn't already wrapped in a label.  The label text is the current 
        aria-label text */
-    $('.codeshard').each(function () {
+    $('.codeshard').add('.pg-select').each(function () {
 	if ($(this).parent().is('label')) {
 	    $(this).parent().attr('for',$(this).attr('id'));
 	} else {
 	    $(this).before($('<label>',{class : 'sr-only',
-				      for : $(this).attr('id')})
-			 .html($(this).attr('aria-label')));
+					for : $(this).attr('id')})
+			   .html($(this).attr('aria-label')));
 	}
     });
 
