@@ -2,6 +2,11 @@ $(function(){
     // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
+    // Fix bug with skip to main content link in chrome
+    $('#stmc-link').click(function() {
+	$('#content').attr('tabIndex', -1).focus();
+    });
+
     // Turn submit inputs into buttons
     $('input:submit').addClass('btn btn-primary');
     $('input:submit').mousedown(function () {this.blur(); return false;});

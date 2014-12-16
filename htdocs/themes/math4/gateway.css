@@ -85,15 +85,20 @@ div.gwProblem
 	border-radius: 3px;
 }
 .gwProblem h2 {
- display: inline;
- font-size: 16px;
- margin-right: 5px;
+    display: inline;
+    font-size: 16px;
+    margin-right: 5px;
 }
 
-/* Put space between the "Jump to: Problem ..." nav and the first problem */
-table + .gwProblem {
-	margin-top: 1em;
+.gwNavigation {
+    margin-top: 1em;	
+    margin-bottom: 1em;
 }
+
+.gwNavigation th {
+    text-align:right;
+}
+
 
 hr 
 { 

@@ -44,7 +44,7 @@
 <!--#output_JS-->
 </head>
 <body>
-<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
+<a href="#content" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
 <div class="container-fluid">
 <!-- Header -->
 <div id = "masthead" class="row-fluid">

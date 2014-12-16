@@ -2020,7 +2020,7 @@ sub body {
 
 	# set up links between problems and, for multi-page tests, pages
 		my $jumpLinks = '';
-		my $probRow = [ CGI::b("Problem") ];
+		my $probRow = [ ];
 		for my $i ( 0 .. $#pg_results ) {
 	    
 			my $pn = $i + 1;
@@ -2037,9 +2037,8 @@ sub body {
 			}
 		}
 		if ( $numProbPerPage && $numPages > 1 ) {
-			my $pageRow = [ CGI::td([ CGI::b('Jump to: '), 
-						  CGI::b('Page '),
-						  CGI::b(' [ ' ) ]) ];
+			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page: '))),,
+					CGI::td(CGI::b(' [ ' )) ];
 			for my $i ( 1 .. $numPages ) {
 				my $pn = ( $i == $pageNumber ) ? $i : 
 				    CGI::a({-href=>'javascript:' .
@@ -2064,12 +2063,11 @@ sub body {
 					if ( $i != $numPages );
 			}
 			push( @$pageRow, CGI::td(CGI::b(' ] ')) );
-			unshift( @$probRow, ' &nbsp; ' );
-			$jumpLinks = CGI::table( {role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
-						 CGI::Tr( CGI::td($probRow) ) );
+			$jumpLinks = CGI::table( {class=>"gwNavigation
+", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
+						 CGI::Tr( CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow) ) );
 		} else {
-			unshift( @$probRow, CGI::b('Jump to: ') );
-			$jumpLinks = CGI::table({role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr( CGI::td($probRow) ) );
+			$jumpLinks = CGI::table({class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow) ) );
 		}
 	
 		print $jumpLinks,"\n";
@@ -2195,11 +2193,6 @@ sub body {
 					    -checked => $will{showSolutions},
 					    -label   => "Show Solutions",
 					    );
-		}
-
-		if ($can{showCorrectAnswers} or $can{showHints} or 
-		    $can{showSolutions}) {
-			print CGI::br();
 		}
 
 		print CGI::p( CGI::submit( -name=>"previewAnswers", 
