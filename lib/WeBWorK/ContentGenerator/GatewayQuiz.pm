@@ -2027,7 +2027,7 @@ sub body {
 			if ( $i >= $startProb && $i <= $endProb ) {
 				push(@$probRow, CGI::b(" [ ")) if ($i == $startProb);
 				push( @$probRow, " &nbsp;" . 
-				      CGI::a({-href=>".", 
+				      CGI::a({-href=>"#", 
 					      -onclick=>"jumpTo($pn);return false;"},
 					     "$pn") . "&nbsp; " );
 				push(@$probRow, CGI::b(" ] ")) if ($i == $endProb);
@@ -2124,8 +2124,8 @@ sub body {
 				print CGI::start_div({class=>"gwProblem"});
 				my $i1 = $i+1;
 				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
-				print CGI::a({-href=>"#", -id=>"prob$i"},"");
-				print CGI::h3("Problem $problemNumber."), 
+				print CGI::div({-id=>"prob$i"},"");
+				print CGI::h2("Problem $problemNumber."), 
 					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
@@ -2150,7 +2150,7 @@ sub body {
 				# keep the jump to anchors so that jumping to 
 				#    problem number 6 still works, even if 
 				#    we're viewing only problems 5-7, etc.
-				print CGI::a({-href=>"#", -id=>"prob$i"},""), "\n";
+				print CGI::div({-id=>"prob$i"},""), "\n";
 				# and print out hidden fields with the current 
 				#    last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';

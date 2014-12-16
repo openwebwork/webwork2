@@ -226,13 +226,13 @@ sub body {
 	print CGI::caption($r->maketext("Homework Sets"));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
-		    CGI::th({-scope=>"col"}),
+		    CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 		    CGI::th({-scope=>"col"},$nameHeader),
 		    CGI::th({-scope=>"col"},$statusHeader),
 	        );
 	} else {
 	    print CGI::Tr(
-		CGI::th({-scope=>"col"}),
+		CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 		CGI::th({-scope=>"col"},$nameHeader),
 		CGI::th({-scope=>"col"},$r->maketext("Test Score")),
 		CGI::th({-scope=>"col"},$r->maketext("Test Date")),

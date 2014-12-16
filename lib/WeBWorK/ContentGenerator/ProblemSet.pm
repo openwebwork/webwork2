@@ -392,7 +392,7 @@ sub body {
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
 			CGI::th($r->maketext("Status")),
-			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th("")
+			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : ''
 		);
 		
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
@@ -486,14 +486,15 @@ sub problemListRow($$$) {
 	return CGI::Tr({},
 #		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
 #		CGI::td({-nowrap=>1, -align=>"center"},
-		CGI::td($interactive),
-		CGI::td([
-				$attempts,
-				$remaining,
-				$problem->value,
-				$status, 
-			        $graderLink
-			]));
+		       CGI::td($interactive),
+		       CGI::td([
+			   $attempts,
+			   $remaining,
+			   $problem->value,
+			   $status, 
+			       ]),
+		       $graderLink ? CGI::td($graderLink) : ''
+	    );
 }
 
 1;
