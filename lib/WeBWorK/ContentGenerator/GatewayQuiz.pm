@@ -303,6 +303,13 @@ sub can_showScore {
 		$canShowScores );
 }
 
+sub can_useMathView {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
+}
+
 ################################################################################
 # output utilities
 ################################################################################
@@ -1085,6 +1092,7 @@ sub pre_header_initialize {
 	# we also want to check answers if we were checking answers and are
 	#    switching between pages
 	     checkAnswers       => $checkAnswers,
+	     useMathView        => $User->useMathView ne '' ? $User->useMathView : $ce->{pg}->{options}->{useMathView},
 	     );
 
 	# are certain options enforced?
@@ -1096,6 +1104,7 @@ sub pre_header_initialize {
 	     recordAnswers      => ! $authz->hasPermissions($userName, 
 							    "avoid_recording_answers"),
 	     checkAnswers       => 0,
+	     useMathView        => 0,
 	     );
 
 	# does the user have permission to use certain options?
@@ -1112,6 +1121,7 @@ sub pre_header_initialize {
 	     recordAnswersNextTime => $self->can_recordAnswers(@args, $sAns),
 	     checkAnswersNextTime  => $self->can_checkAnswers(@args, $sAns),
 	     showScore          => $self->can_showScore(@args),
+	     useMathView              => $self->can_useMathView(@args)
 	     );
 
 	# final values for options
@@ -2411,12 +2421,27 @@ sub output_JS{
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
 
+		# This is for MathView.  
+	if ($self->{will}->{useMathView}) {
+	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
+		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+		
+		print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+		print CGI::start_script({type=>"text/javascript"});
+		print "mathView_basepath = \"$site_url/images/mathview/\";";
+		print CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	    } else {
+		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
+	    }
+	}
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
 	#This is for page specfific js
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
 	
 	return "";
 }
-
 
 1;
