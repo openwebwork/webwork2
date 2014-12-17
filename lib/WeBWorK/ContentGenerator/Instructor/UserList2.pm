@@ -639,6 +639,8 @@ sub filter_form {
 		$fieldProperties{$field}{access} eq 'hidden';
 	}
 
+	@fields = sort {$prettyFieldNames{$a} cmp $prettyFieldNames{$b}} @fields;
+
 	return join("",
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
