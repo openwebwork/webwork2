@@ -3404,7 +3404,7 @@ sub upgrade_notification {
 	return CGI::center(CGI::table({class=>"admin-messagebox"},$upgradeMessage));
     } else {
 	return CGI::center(CGI::div({class=>"ResultsWithoutError"},
-				    $r->maketext('WeBWorK, PG, and the Open Problem Library are up to date!')));
+				    $r->maketext('Your systems are up to date!')));
     }
 
 }
