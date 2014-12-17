@@ -4267,7 +4267,7 @@ msgid "Create a New Set in This Course:"
 msgstr "Créer un nouveau devoir dans ce cours"
 
 msgid "Name for new set here"
-msgstr "Nom du nouveau cours ici"
+msgstr "Nom du nouveau devoir ici"
 
 msgid "National Problem Library"
 msgstr "Librairie de problèmes nationale"
