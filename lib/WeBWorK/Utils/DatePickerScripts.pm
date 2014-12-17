@@ -24,7 +24,7 @@ sub date_scripts {
 	my $set = shift;
 	my $display_tz ||= $ce->{siteDefaults}{timezone};
 	my $bareName = 'set.'.$set->set_id;
-        $bareName =~ s/\./\\\\\./g;
+        $bareName =~ s/(\.|,)/\\\\$1/g;
 
 	my $date = formatDateTime($set->open_date, $display_tz);
 	$date =~ /\ ([A-Z]+)$/;	
@@ -77,14 +77,18 @@ sub date_scripts {
 EOS
        $reduced_credit_date_update_script = <<EOS;
 	    var reducedDate = reduced_rule.datetimepicker('getDate');
-	    if (dueDate < reducedDate ||
-		answerDate < reducedDate ||
-		openDate > reducedDate) {
-		reducedDate = dueDate;
-		reducedDate.setHours(dueDate.getHours() - $default_hrs );
-		reducedDate.setMinutes(dueDate.getMinutes() - $default_min );
+	    if (openDate > reducedDate) {
+		reducedDate = new Date(openDate);
 		reduced_rule.datetimepicker('setDate',reducedDate);
 	    }
+	    if (dueDate < reducedDate ||
+		answerDate < reducedDate) {
+		dueDate = new Date(reducedDate);
+		dueDate.setHours(reducedDate.getHours() + $default_hrs );
+		dueDate.setMinutes(reducedDate.getMinutes() + $default_min );
+		due_rule.datetimepicker('setDate',dueDate);
+	    }
+	    reduced_rule.addClass('changed');
 EOS
 
 	}
@@ -112,6 +116,8 @@ var update = function() {
 	    due_rule.datetimepicker('setDate',dueDate);
 	}
 
+	$reduced_credit_date_update_script
+
 	if ( answer_rule.val() =='') {
 		answerDate = new Date(dueDate);
         answerDate.setHours(answerDate.getHours()+answerDateOffset);
@@ -126,8 +132,6 @@ var update = function() {
 	open_rule.addClass("changed");
 	due_rule.addClass("changed");
 	answer_rule.addClass("changed");
-
-	$reduced_credit_date_update_script
 
 }
 open_rule.datetimepicker({

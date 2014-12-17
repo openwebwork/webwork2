@@ -309,6 +309,10 @@ table.classlist-table .tbody {
     width: 100%;
 }
 
+.UserDetail-date-table td {
+    padding-left:.5em;
+}
+
 /* Homework Sets */
 .problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
     margin-top: 0px;
@@ -518,6 +522,16 @@ input.incorrect[type="text"] { /* red */
   -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
   box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
     color:inherit; 
+}
+
+input.changed[type="text"] { /* orange */
+  border-color: #ca5000;
+  outline: 0;
+ outline: thin dotted \9;
+  /* IE6-9 */
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+  color: inherit;
 }
 
 .results-popover {

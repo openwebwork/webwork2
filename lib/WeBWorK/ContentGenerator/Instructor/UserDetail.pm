@@ -28,6 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils::DatePickerScripts;
 use WeBWorK::Debug;
 
 use constant DATE_FIELDS => {   open_date    => " Open: ",
@@ -35,7 +36,7 @@ use constant DATE_FIELDS => {   open_date    => " Open: ",
 	                            due_date     => " Due&nbsp;: ",
 	                            answer_date  => " Ans&nbsp;: "
 };
-use constant DATE_FIELDS_ORDER =>[qw(open_date due_date reduced_scoring_date answer_date )];
+use constant DATE_FIELDS_ORDER =>[qw(open_date reduced_scoring_date due_date answer_date )];
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -355,7 +356,7 @@ sub body {
 	# Assigned sets form
 	########################################
 
-	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail'}),"\n";
+	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail', id=>'UserDetail'}),"\n";
 	print $self->hidden_authen_fields();
 	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	
@@ -425,7 +426,7 @@ sub body {
 		                                editForUser   => $editForUserID,
 		});
 
-		my $setName = ( $setVersion ) ? "test $setVersion" : $setID;
+		my $setName = ( $setVersion ) ? "$setID, test $setVersion" : $setID;
 
 		print CGI::Tr(
 			CGI::td({ -align => "center" }, [
@@ -509,12 +510,13 @@ sub checkDates {
 	}
 	return {%dates,error=>1} if $error;    # no point in going on if the dates can't be parsed.
 	
-	my ($open_date, $due_date, $reduced_scoring_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
+	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
 
     unless ($answer_date && $due_date && $open_date) {
     	$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, 
     	 due date |$due_date|, open_date |$open_date|");
 	}
+
 	if ($answer_date < $due_date || $answer_date < $open_date) {		
 		$self->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
 		$error = 1;
@@ -562,7 +564,7 @@ sub DBFieldTable {
 	    $recordID, $fieldsRef, $rh_fieldLabels) = @_;
 	
 	return CGI::div({class => "ResultsWithError"}, "No record exists for $recordType $recordID") unless defined $GlobalRecord;
-	
+
 	# modify record name if we're dealing with versioned sets
 	my $isVersioned = 0;
 	if ( $recordType eq "set" && defined($MergedRecord) &&
@@ -596,6 +598,8 @@ sub DBFieldTable {
 				}) : "",
 				defined $UserRecord ? 
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
+						      -id =>"$recordType.$recordID.${field}_id",
+						      -type=> "text",
 					              -value => $userValue ? $self->formatDateTime($userValue) : "", 
 					              -size => 25})
 					) : "",
@@ -608,8 +612,35 @@ sub DBFieldTable {
 	foreach my $row (@results) {
 		push @table, CGI::Tr(CGI::td({-align => "center"}, $row));
 	}
-	
-	return (CGI::start_table({border => 0}), @table, CGI::end_table());
+
+	# set up date picker scripts.  We have to spoof the set name if its
+	# a versioned set.  
+	my $script = '';
+	if ($ce->{options}->{useDateTimePicker}) {
+	    $MergedRecord->set_id($recordID) if $isVersioned;
+	    print CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $MergedRecord).CGI::end_script();
+	}
+
+	return (CGI::start_table({class => 'UserDetail-date-table', border=> 0}), @table, CGI::end_table(), $script);
+}
+
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
+	return "";
+}
+
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	# print javaScript for dateTimePicker	
+	# jquery ui printed seperately
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+
 }
 
 1;
