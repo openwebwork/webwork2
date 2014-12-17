@@ -1324,7 +1324,10 @@ EOS
 				-labels => { "" => $r->maketext("Enter filenames below") },
 				-default => $actionParams{"action.import.source"}->[0] || "",
 				-size => $actionParams{"action.import.number"}->[0] || "1",
+				-default => $actionParams{"action.import.source"}, 
 				-onchange => $onChange,
+				$actionParams{"action.import.number"} && $actionParams{"action.import.number"}->[0] == 8 ?
+				    ('-multiple', 'multiple') : ''
 			},
 			-label_attr=>{-id=>"import_source_select_label"}
 		),

@@ -148,6 +148,7 @@ $(function(){
     //Homework sets editor config
     $('#problemsetlist').addClass('form-inline set-list-form');
     $('#problemsetlist2').addClass('form-inline set-list-form');
+    $('#edit_form_id').addClass('form-inline set-list-form');
     $('.set-id-tooltip').tooltip({trigger: 'hover'});
     $('.set-list-form input:button').addClass('btn btn-info');
     $('.set-list-form input:reset').addClass('btn btn-info');
