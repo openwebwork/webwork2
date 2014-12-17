@@ -4330,6 +4330,24 @@ msgstr "Tous les livres"
 msgid "View Problems"
 msgstr "Voir les problèmes"
 
+msgid "No sets in this course yet"
+msgstr "Aucun devoir dans ce cours"
+
+msgid "Select a Set from this Course"
+msgstr "Choisir un devoir dans ce cours"
+
+msgid "Select a Problem Collection"
+msgstr "Choisir un répertoire de problèmes"
+
+msgid "Select a Set Definition File"
+msgstr "Choisir un fichier de définition de devoirs"
+
+msgid "Select a Homework Set"
+msgstr "Choisir un devoir"
+
+
+
+
 # /home/francois/ExtractStrings/SendMail.pm
 msgid "Message file: "
 msgstr "Fichier de message : "
