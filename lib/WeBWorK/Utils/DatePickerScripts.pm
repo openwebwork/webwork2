@@ -72,6 +72,7 @@ sub date_scripts {
 	      constrainInput: false, 
 	      onClose: function(dateText, inst) {
 		  update();
+		  reduced_rule.addClass('changed');
 	      },
             });
 EOS
@@ -80,15 +81,16 @@ EOS
 	    if (openDate > reducedDate) {
 		reducedDate = new Date(openDate);
 		reduced_rule.datetimepicker('setDate',reducedDate);
+		reduced_rule.addClass('changed');
 	    }
 	    if (dueDate < reducedDate ||
 		answerDate < reducedDate) {
 		dueDate = new Date(reducedDate);
-		dueDate.setHours(reducedDate.getHours() + $default_hrs );
-		dueDate.setMinutes(reducedDate.getMinutes() + $default_min );
+		dueDate.setHours(reducedDate.getHours());
+		dueDate.setMinutes(reducedDate.getMinutes());
 		due_rule.datetimepicker('setDate',dueDate);
+		due_rule.addClass('changed');
 	    }
-	    reduced_rule.addClass('changed');
 EOS
 
 	}
@@ -108,30 +110,28 @@ var update = function() {
 	var dueDate = due_rule.datetimepicker('getDate');
 	var answerDate = answer_rule.datetimepicker('getDate');
 	if ( due_rule.val() =='') {
-		dueDate = new Date(openDate);
-        dueDate.setDate(dueDate.getDate()+dueDateOffset);
-        due_rule.datetimepicker('setDate',dueDate);
+	    dueDate = new Date(openDate);
+	    dueDate.setDate(dueDate.getDate()+dueDateOffset);
+	    due_rule.datetimepicker('setDate',dueDate);
+	    due_rule.addClass('changed');
 	} else if (openDate > due_rule.datetimepicker('getDate')) {
 	    dueDate = new Date(openDate);
 	    due_rule.datetimepicker('setDate',dueDate);
+	    due_rule.addClass('changed');
 	}
 
 	$reduced_credit_date_update_script
 
 	if ( answer_rule.val() =='') {
 		answerDate = new Date(dueDate);
-        answerDate.setHours(answerDate.getHours()+answerDateOffset);
-        answer_rule.datetimepicker('setDate',answerDate);
-        answer_rule.addClass("changed");
+		answerDate.setHours(answerDate.getHours()+answerDateOffset);
+		answer_rule.datetimepicker('setDate',answerDate);
+		answer_rule.addClass("changed");
 	} else if (dueDate > answer_rule.datetimepicker('getDate')) {
 	    answerDate = new Date(dueDate);
 	    answer_rule.datetimepicker('setDate',answerDate);
-	    
-
+	    answer_rule.addClass('changed');
 	}
-	open_rule.addClass("changed");
-	due_rule.addClass("changed");
-	answer_rule.addClass("changed");
 
 }
 open_rule.datetimepicker({
@@ -143,6 +143,7 @@ open_rule.datetimepicker({
 	separator: ' at ',
 	constrainInput: false, 
     onClose: function(dateText, inst) {
+	open_rule.addClass('changed');
         update();
     },
 
@@ -173,6 +174,7 @@ due_rule.datetimepicker({
     		openDate.setDate(openDate.getDate() -dueDateOffset );
     		open_rule.datetimepicker('setDate',openDate);
     	}
+	due_rule.addClass('changed');
     	update();
 	},
 /*    onSelect: function (selectedDateTime){
@@ -197,6 +199,7 @@ answer_rule.datetimepicker({
     		openDate.setHours(openDate.getHours() - answerDateOffset);
     		open_rule.datetimepicker('setDate',openDate);
     	}
+	answer_rule.addClass('changed');
     	update();
     },
     onSelect: function (selectedDateTime){

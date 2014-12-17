@@ -57,6 +57,9 @@ $mail{feedbackRecipients}    = [
 # To disable checking for a particular repository, set the remote and branch
 # variables to be empty strings.  
 
+# Note:  This process uses git ls-remote which can be very slow on some 
+# systems.  If your course list page in the admin course is very slow
+# consider disabling this option.  
 
 $enableGitUpgradeNotifier = 1;
 
