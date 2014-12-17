@@ -179,22 +179,28 @@ sub body {
 	print CGI::h2($r->maketext("Change Display Options"));
 
 	if ($changeOptions) {
-	    $EUser->displayMode($r->param('displayMode'));
-	    $EUser->showOldAnswers($r->param('showOldAnswers'));
-	    $EUser->useMathView($r->param('useMathView'));
 	    
-	    eval { $db->putUser($EUser) };
-	    if ($@) {
-		print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-			       CGI::p($r->maketext("Couldn't save your display options: [_1]",$@)),
-		    );
-	    } else {
-		print CGI::div({class=>"ResultsWithoutError"},
-			       CGI::p($r->maketext("Your display options have been saved.")),
-		    );
+	    if ($EUser->displayMode() ne $r->param('displayMode') ||
+		$EUser->showOldAnswers() ne $r->param('showOldAnswers') ||
+		$EUser->useMathView() ne $r->param('useMathView')) {
+		
+		$EUser->displayMode($r->param('displayMode'));
+		$EUser->showOldAnswers($r->param('showOldAnswers'));
+		$EUser->useMathView($r->param('useMathView'));
+		
+		eval { $db->putUser($EUser) };
+		if ($@) {
+		    print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
+				   CGI::p($r->maketext("Couldn't save your display options: [_1]",$@)),
+			);
+		} else {
+		    print CGI::div({class=>"ResultsWithoutError"},
+				   CGI::p($r->maketext("Your display options have been saved.")),
+			);
+		}
 	    }
 	}
-
+	
 	my $result = '';
 
 	
