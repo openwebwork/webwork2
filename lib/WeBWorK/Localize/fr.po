@@ -18,7 +18,7 @@ msgstr ""
 #. ($name, $vnum)
 #: ContentGenerator/ProblemSets.pm:416
 msgid "%1 (test %2)"
-msgstr "tr: %1 (test %2)"
+msgstr "%1 (test %2)"
 
 #
 #. ($numAdded, $numSkipped, join(", ", @$skipped)
@@ -37,7 +37,7 @@ msgstr "%1 devoirs exportés, %2 devoirs ignorés. Devoirs ignorés : (%3)"
 #. ($name)
 #: ContentGenerator/ProblemSets.pm:427 ContentGenerator/ProblemSets.pm:441
 msgid "%1 test"
-msgstr "tr: %1 test"
+msgstr "test %1"
 
 #
 #. (scalar @userIDsToExport, $dir, $fileName)
@@ -1625,6 +1625,8 @@ msgstr "échu, réponses disponibles le %1"
 msgid "closed, answers recently available"
 msgstr "échu, réponses disponibles depuis peu"
 
+
+
 #
 #: ContentGenerator/ProblemSets.pm:402
 msgid "completed."
@@ -1804,18 +1806,18 @@ msgstr "aucun utilisateur"
 
 #
 #: ContentGenerator/ProblemSets.pm:430 ContentGenerator/ProblemSets.pm:452
-msgid "now open, due "
+msgid "open, due "
 msgstr "Disponible, date de remise : "
 
 #
 #. ($self->formatDateTime($set->due_date()
 #: ContentGenerator/ProblemSets.pm:408
-msgid "open: complete by %1"
-msgstr "Disponible : date de remise : %1"
+msgid "open, complete by %1"
+msgstr "Disponible, date de remise : %1"
 
 #
 #: ContentGenerator/ProblemSets.pm:405
-msgid "over time: closed."
+msgid "over time, closed."
 msgstr "Le temps est écoulé. Fin."
 
 #
