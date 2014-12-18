@@ -63,14 +63,14 @@ span.resultsWithError, .ResultsWithoutError {
 	border-radius: 3px;
 }
 span.resultsWithError { 
-	background-color: #ffcccc;
+	background-color: #d69191;
 }
 .ResultsWithoutError 
 { 
-	background-color: #66ff99;  
+	background-color: #88ff88;  
 }
-div.gwCorrect { background-color: #66ff99; }
-div.gwIncorrect { background-color: #ff9999; }
+div.gwCorrect { background-color: #88ff88; }
+div.gwIncorrect { background-color: #d69191; }
 div.gwCorrect, div.gwIncorrect {
 	padding: 0.5em;
 	box-shadow: 3px 3px 3px darkgray;

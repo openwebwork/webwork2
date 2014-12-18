@@ -18,7 +18,7 @@
  *  Light Green #88FF88
  *  Dark Red #BF5454
  *  Light Red #D69191
- *  Dark Yellow #BDB45E
+ *  Dark Yellow #7E7634
  *  Light Yellow #EDE275
  */
 
@@ -183,17 +183,17 @@ label.WarningMessage {
 }
 
 span.ResultsAlert { 
-    color: #BDB45E; 
+    color: #7E7634; 
     background-color: inherit; 
 } 
 
 div.ResultsAlert { 
-    color: #BDB45E; 
+    color: #7E7634; 
     background-color: inherit; 
 } 
 
 label.ResultsAlert {
-    color: #BDB45E; 
+    color: #7E7634; 
     background-color: inherit; 
 } 
 
@@ -212,8 +212,8 @@ td.FeedbackMessage {
 
 /* Colors for "green" messages */
 div.ResultsWithoutError { 
-    color: #519951; 
-    background-color: inherit; 
+    color: inherit; 
+    background-color: #88FF88; 
 } 
 
 td.ResultsWithoutError { 
@@ -235,31 +235,35 @@ span.correct {
     background-color: #88FF88; 
 }
 
+div.gwCorrect { background-color: #88FF88; }
+
 /* Colors for "red" messages */
 div.ResultsWithError { 
-    color: #D69191; 
+    color: #BF5454; 
     background-color: inherit; 
 } 
 
 label.ResultsWithError { 
-    color: #D69191; 
+    color: #BF5454; 
     background-color: inherit; 
 }
 
 td.ResultsWithError { 
-    background-color:#BF5454; 
+    background-color:#D69191; 
     color: black;
 }
 
 span.ResultsWithError { 
-    color: #D69191; 
+    color: #BF5454; 
     background-color: inherit; 
 } 
 
 span.incorrect { 
-    color: #D69191; 
+    color: #BF5454; 
     background-color: inherit; 
 }
+
+div.gwIncorrect { background-color: #D69191; }
 
 /* Other formatting for attempt results and the problem page */
 table.attemptResults th {
@@ -271,6 +275,7 @@ span.ResultsWithErrorInResultsTable {
     color: inherit; 
     background-color: inherit; } 
 
+
 /* Comment coloration */
 .answerComments {
     border-color: gray;
@@ -281,6 +286,11 @@ span.ResultsWithErrorInResultsTable {
 .parsehilight { 
     color: inherit; 
     background-color: #EDE275; 
+}
+
+/* gwTimer */
+div#gwTimer {
+	background-color:#EDE275;
 }
 
 /* Misc */
