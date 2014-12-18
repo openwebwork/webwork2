@@ -2,6 +2,9 @@
 <html lang="en-US">
 <head>
 <meta charset='utf-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- This encourages IE to *not* use compatibility view, which breaks math4 -->
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 
 <!--
 ################################################################################
@@ -20,6 +23,7 @@
 ################################################################################
 -->
 
+<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
