@@ -549,10 +549,11 @@ sub SaveAs {
 #
 sub RefreshEdit {
 	my $self = shift; my $data = shift; my $file = shift;
+	my $r = $self->r;
 	my $pwd = shift || $self->{pwd};
 	my $name = "$pwd/$file"; $name =~ s!^\./?!!;
 
-	my %button = (type=>"submit",name=>"action",style=>"width:6em");
+	my %button = (type=>"submit",name=>"action",style=>"width:8em");
 
 	print CGI::p();
 	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});
@@ -561,10 +562,10 @@ sub RefreshEdit {
 		CGI::td(CGI::textarea(-name=>"data",-default=>$data,-override=>1,-rows=>30,-columns=>80,
 				-style=>"width:100%")), ## can't seem to get variable height to work
 		CGI::td({align=>"center", nowrap=>1},
-			CGI::input({%button,value=>"Cancel"}),"&nbsp;",
-			CGI::input({%button,value=>"Revert"}),"&nbsp;",
-			CGI::input({%button,value=>"Save"}),,"&nbsp;",
-			CGI::input({%button,value=>"Save As"}),
+			CGI::input({%button,value=>$r->maketext("Cancel")}),"&nbsp;",
+			CGI::input({%button,value=>$r->maketext("Revert")}),"&nbsp;",
+			CGI::input({%button,value=>$r->maketext("Save")}),,"&nbsp;",
+			CGI::input({%button,value=>$r->maketext("Save As")}),
 			CGI::input({type=>"text",name=>"name",size=>20,style=>"width:50%"}),
 		),
 	]);
@@ -601,7 +602,7 @@ sub Copy {
 		}
 	}
 
-	$self->Confirm($r->maketext("Copy file as:"),$original,"Copy");
+	$self->Confirm($r->maketext("Copy file as:"),$original,$r->maketext("Copy"));
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -626,7 +627,7 @@ sub Rename {
 		}
 	}
 
-	$self->Confirm($r->maketext("Rename file as:"),uniqueName($dir,$original),"Rename");
+	$self->Confirm($r->maketext("Rename file as:"),uniqueName($dir,$original),$r->maketext("Rename"));
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -715,14 +716,14 @@ sub Delete {
 			  CGI::p({style=>"color:red"},$r->maketext("There is no undo for deleting files or directories!")),
 			  CGI::p($r->maketext("Really delete the items listed above?")),
 			  CGI::div({style=>"float:left; padding-left:3ex"},
-			    CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
+			    CGI::input({type=>"submit",name=>"action",value=>$r->maketext("Cancel")})),
 			  CGI::div({style=>"float:right; padding-right:3ex"},
-			    CGI::input({type=>"submit",name=>"action",value=>"Delete"})),
+			    CGI::input({type=>"submit",name=>"action",value=>$r->maketext("Delete")})),
 			),
 		);
 		print CGI::end_table();
 
-		print CGI::hidden({name=>"confirmed",value=>"Delete"});
+		print CGI::hidden({name=>"confirmed",value=>$r->maketext("Delete")});
 		foreach my $file (@files) {print CGI::hidden({name=>"files",value=>$file})}
 		$self->HiddenFlags;
 	}
@@ -807,7 +808,7 @@ sub NewFile {
 		}
 	}
 
-	$self->Confirm($r->maketext("New file name:"),"","New File");
+	$self->Confirm($r->maketext("New file name:"),"",$r->maketext("New File"));
 }
 
 ##################################################
@@ -828,7 +829,7 @@ sub NewFolder {
 		}
 	}
 
-	$self->Confirm($r->maketext("New folder name:"),"","New Folder");
+	$self->Confirm($r->maketext("New folder name:"),"",$r->maketext("New Folder"));
 }
 
 ##################################################
@@ -883,7 +884,7 @@ sub Upload {
 			
 			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
 			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
-			print CGI::hidden({name=>"action",value=>"Upload"});
+			print CGI::hidden({name=>"action",value=>$r->maketext("Upload")});
 			print CGI::hidden({name=>"file",value=>$fileIDhash});
 			return;
 		}
@@ -931,6 +932,7 @@ sub Upload {
 #
 sub Confirm {
 	my $self = shift;
+	my $r = $self->r;
 	my $message = shift; my $value = shift;
 	my $button = shift; my $button2 = shift;
 
@@ -944,7 +946,7 @@ sub Confirm {
 		    CGI::div({style=>"float:right; padding-right:3ex"},
 		      CGI::input({type=>"submit",name=>"formAction",value=>$button})), # this will be the default
 		    CGI::div({style=>"float:left; padding-left:3ex"},
-		    CGI::input({type=>"submit",name=>"formAction",value=>"Cancel"})),
+		    CGI::input({type=>"submit",name=>"formAction",value=>$r->maketext("Cancel")})),
 		    ($button2 ? CGI::input({type=>"submit",name=>"formAction",value=>$button2}): ()),
 		  ),
 		),

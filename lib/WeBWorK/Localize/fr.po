@@ -2201,7 +2201,7 @@ msgstr ""
 
 #
 msgid "Reverting to original file '[_1]'"
-msgstr "Revenir au fichier original '%1'"
+msgstr "Retourner au fichier original '%1'"
 
 #
 msgid "Delete"
@@ -2644,9 +2644,9 @@ msgid "Student Progress"
 msgstr "Progrès des étudiants"
 
 #
-#, fuzzy
+# fuzzy
 msgid "Revert"
-msgstr "Revenir"
+msgstr "Rétablir"
 
 # avant: msgstr "tr: Revert" voir contexte
 #
@@ -3544,8 +3544,7 @@ msgstr "pour les étudiants"
 
 msgid "Deletion destroys all set-related data and is not undoable!"
 msgstr ""
-"La suppression détruit toutes les données liées au devoir et n'est pas "
-"annulable!"
+"La suppression détruit toutes les données liées au devoir et ne peut pas être annulée!"
 
 msgid "Create a new set named:"
 msgstr "Crée un nouveau devoir nommé:"
@@ -4180,12 +4179,10 @@ msgstr ""
 "endommager sérieusement votre cours si vous supprimez la mauvaise chose."
 
 msgid "There is no undo for deleting files or directories!"
-msgstr ""
-"L'annulation n'est pas possible pour la suppression de fichiers ou de "
-"répertoires!"
+msgstr "La suppression de fichiers ou de répertoires ne peut pas être annulée!"
 
 msgid "Really delete the items listed above?"
-msgstr "Vous voulez vraiment supprimer les éléments énumérés ci-dessus?"
+msgstr "Voulez-vous vraiment supprimer les éléments énumérés ci-dessus?"
 
 msgid "Rename file as:"
 msgstr "Renommer le fichier en:"
@@ -4201,6 +4198,9 @@ msgstr "Le fichier %1 existe déjà. Écraser ou renommer en :"
 
 msgid "Copy file as:"
 msgstr "Copier le fichier vers :"
+
+msgid "Cancel"
+msgstr "Annuler"
 
 # /home/francois/ExtractStrings/SetMaker.pm
 msgid "Show all paths"
@@ -4574,7 +4574,7 @@ msgstr "Do not uncheck students, unless you know what you are doing."
 # ContentGenerator/Instructor/UsersAssignedToSet.pm (127)
 #, fuzzy
 msgid "There is NO undo for unassigning students."
-msgstr "There is NO undo for unassigning students."
+msgstr "Retirer des étudiants est une action qui ne peut pas être annulée."
 
 # ContentGenerator/Instructor/UsersAssignedToSet.pm (128)
 # $setID
@@ -4592,7 +4592,7 @@ msgstr ""
 
 # ContentGenerator/Instructor/UsersAssignedToSet.pm (132)
 msgid "Assigned"
-msgstr "Assigné"
+msgstr "Attribué"
 
 msgid "Student Name"
 msgstr "Nom de l'étudiant"
@@ -4604,7 +4604,7 @@ msgstr "Éditer les données pour "
 # ContentGenerator/Instructor/UsersAssignedToSet.pm (216)
 #, fuzzy
 msgid "Unassign from All Users"
-msgstr "Unassign from All Users"
+msgstr "Retirer ce devoir pour TOUS les utilisateurs"
 
 # ContentGenerator/Instructor/SetMaker.pm (1668)
 msgid " of "
