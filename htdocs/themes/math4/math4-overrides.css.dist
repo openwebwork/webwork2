@@ -210,6 +210,10 @@ td.FeedbackMessage {
     background-color:#EDE275;
 } 
 
+div.gwMessage { 
+    background-color: #EDE275;
+}
+
 /* Colors for "green" messages */
 div.ResultsWithoutError { 
     color: inherit; 
@@ -288,8 +292,11 @@ span.ResultsWithErrorInResultsTable {
     background-color: #EDE275; 
 }
 
-/* gwTimer */
+/* gw stuff */
 div#gwTimer {
+	background-color:#EDE275;
+}
+div#gwScoreSummary {
 	background-color:#EDE275;
 }
 

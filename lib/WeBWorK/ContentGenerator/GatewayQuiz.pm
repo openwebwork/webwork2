@@ -35,7 +35,7 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
 	ref2string makeTempDirectory path_is_subdir sortByName before after
-	between wwRound);  # use the ContentGenerator formatDateTime, not the version in Utils
+	between wwRound is_restricted);  # use the ContentGenerator formatDateTime, not the version in Utils
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
@@ -657,6 +657,13 @@ sub pre_header_initialize {
 #    if this fails/failed in authz->checkSet, then $self->{invalidSet} is
 #    set
 		$tmplSet = $db->getMergedSet( $effectiveUserName, $setName );
+		
+		$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || (time >= $tmplSet->open_date && !(
+			  $ce->{options}{enableConditionalRelease} && 
+			  is_restricted($db, $tmplSet, $effectiveUserName)));
+		
+		die("You do not have permission to view unopened sets") unless $self->{isOpen};	
+		
 
 	# now we know that we're in a gateway test, save the assignment test 
 	#    for the processing of proctor keys for graded proctored tests; 
@@ -1931,21 +1938,22 @@ sub body {
 		}
 	} else {
 		if ( ! $checkAnswers && ! $submitAnswers ) {
-			print CGI::start_div({class=>'gwMessage'});
 			if ( $can{showScore} ) {
-				my $scMsg = "Your recorded score on this " .
-					"(test number $versionNumber) is " .
-					wwRound(2,$recordedScore)."/$totPossible";
-				if ( $exceededAllowedTime && 
-				     $recordedScore == 0 ) {
-					$scMsg .= ", because you exceeded " .
-						"the allowed time.";
-				} else {
-					$scMsg .= ".  ";
-				}
-				print CGI::strong($scMsg), CGI::br();
+			    print CGI::start_div({class=>'gwMessage'});
+			    
+			    my $scMsg = "Your recorded score on this " .
+				"(test number $versionNumber) is " .
+				wwRound(2,$recordedScore)."/$totPossible";
+			    if ( $exceededAllowedTime && 
+				 $recordedScore == 0 ) {
+				$scMsg .= ", because you exceeded " .
+				    "the allowed time.";
+			    } else {
+				$scMsg .= ".  ";
+			    }
+			    print CGI::strong($scMsg), CGI::br();
+			    print CGI::end_div();
 			}
-			print CGI::end_div();
 		}
 
 		if ( $set->version_last_attempt_time ) {

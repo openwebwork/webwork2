@@ -8,7 +8,7 @@
 }
 
 div.gwMessage { 
-	background-color: coral;
+	background-color: #ffeeaa;
 	box-shadow: 3px 3px 3px darkgray;
 	margin: 1em 0;
 	padding: 0.5em;
@@ -36,7 +36,7 @@ div#gwTimer {
 } 
 
 div#gwScoreSummary {
-	background-color:#fcfccc;
+	background-color:#ffeeaa;
 	color: black;
 	box-shadow: 3px 3px 0.5em darkgray;
 	font-family:Times serif;
