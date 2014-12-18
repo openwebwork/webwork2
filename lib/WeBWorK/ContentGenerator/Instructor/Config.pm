@@ -162,7 +162,7 @@ sub save_string {
 	my $displayoldval = $self->comparison_value($oldval);
 	return '' if($displayoldval eq $newval);
 
-	if($newval !~ /^\d?\d:\d\d(am|pm|AM|PM)$/) {
+	if($newval !~ /^(01|1|02|2|03|3|04|4|05|5|06|6|07|7|08|8|09|9|10|11|12):[0-5]\d(am|pm|AM|PM)$/) {
 		$self->{Module}->addbadmessage("String '$newval' is not a valid time.  Reverting to the system default value.");
 		return '';
 	}
