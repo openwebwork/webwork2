@@ -617,8 +617,8 @@ sub DBFieldTable {
 	# a versioned set.  
 	my $script = '';
 	if ($ce->{options}->{useDateTimePicker}) {
-	    $MergedRecord->set_id($recordID) if $isVersioned;
-	    print CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $MergedRecord).CGI::end_script();
+	    $GlobalRecord->set_id($recordID) if $isVersioned;
+	    print CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $GlobalRecord).CGI::end_script();
 	}
 
 	return (CGI::start_table({class => 'UserDetail-date-table', border=> 0}), @table, CGI::end_table(), $script);

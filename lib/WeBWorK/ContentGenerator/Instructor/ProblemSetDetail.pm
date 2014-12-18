@@ -173,6 +173,7 @@ use constant FIELD_PROPERTIES => {
 		labels    => {
 				#0 => "None Specified",
 				"" => "None Specified",
+
 		},
 	},
 	restricted_status => {
@@ -384,7 +385,7 @@ use constant FIELD_PROPERTIES => {
 	hide_hint => {
 		name      => "Hide Hints from Students",
 		type      => "choose",
-		override  => "all",
+		override  => "any",
 		choices   => [qw( 0 1 )],
 		labels    => {
 				1 => "Yes",

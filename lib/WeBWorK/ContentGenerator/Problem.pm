@@ -505,6 +505,10 @@ sub pre_header_initialize {
 		
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); 
+	
+	# check that the set is valid;
+	# $self->{invalidSet} is set by ContentGenerator.pm
+	die($self->{invalidSet}) if $self->{invalidSet};
 
 	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || 
 	    ($setName eq "Undefined_Set" || 
