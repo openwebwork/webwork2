@@ -1767,7 +1767,7 @@ sub body {
 				#	$numParts++;
 				#}
 				#$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
-				$pScore = $pg->{result}->{score};
+				$pScore = $pg->{state}->{recorded_score};
 				$probStatus[$i] = $pScore;
 				$numParts = 1;
 ###
@@ -1923,12 +1923,8 @@ sub body {
 				print CGI::start_div({-id=>"gwScoreSummary"}),
 					CGI::strong({},"Score summary for " .
 						    "last submit:");
-				print CGI::start_table({"border"=>0,
-							"cellpadding"=>0,
-							"cellspacing"=>0});
-				print CGI::Tr({},CGI::th({-align=>"left"},
-							 ["Prob","","Status","",
-							  "Result"]));
+				print CGI::start_table();
+				print CGI::Tr({},CGI::th({-align=>"left"},"Prob"), CGI::td(""), CGI::th("Status"), CGI::td(""), CGI::th("Result"));
 				for ( my $i=0; $i<@probStatus; $i++ ) {
 					print CGI::Tr({},
 						CGI::td({},[($i+1),"",int(100*$probStatus[$probOrder[$i]]+0.5) . "%","", $probStatus[$probOrder[$i]] == 1 ? "Correct" : "Incorrect"]));

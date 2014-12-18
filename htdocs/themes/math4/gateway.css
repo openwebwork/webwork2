@@ -55,6 +55,15 @@ div#gwScoreSummary {
 
 }
 
+#gwScoreSummary table {
+    border:0;
+}
+
+#gwScoreSummary table td,
+#gwScoreSummary table th {
+    margin-left:.2em;
+}
+
 span.resultsWithError, .ResultsWithoutError {
 	padding: 0.2em 1em;
 	box-shadow: 2px 2px 3px darkgray;
@@ -85,7 +94,7 @@ div.gwProblem
 	border-radius: 3px;
 }
 .gwProblem h2 {
-    display: inline;
+    display: inline-block;
     font-size: 16px;
     margin-right: 5px;
 }
