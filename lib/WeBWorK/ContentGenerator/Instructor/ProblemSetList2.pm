@@ -1189,7 +1189,8 @@ sub create_handler {
 
 	my $r      = $self->r;
 	my $db     = $r->db;
-	
+	my $ce     = $r->ce;
+
 	my $newSetID = $actionParams->{"action.create.name"}->[0];
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: no set name specified!")) unless $newSetID =~ /\S/;
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Set [_1] exists.  No set created", $newSetID)) if $db->existsGlobalSet($newSetID);
@@ -1197,18 +1198,28 @@ sub create_handler {
 	my $oldSetID = $self->{selectedSetIDs}->[0];
 
 	my $type = $actionParams->{"action.create.type"}->[0];
-	# It's convenient to set the open date one week from now so that it is 
-	# not accidentally available to students.  We set the due and answer date
-	# to be two weeks from now.
+	# It's convenient to set the due date two weeks from now so that it is 
+	# not accidentally available to students.  
 
+	my $dueDate = time+2*ONE_WEEK();
+	my $display_tz = $ce->{siteDefaults}{timezone};
+	my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
+	my $dueTime = $ce->{pg}{timeAssignDue};
 
+	# We replace the due time by the one from the config variable
+	# and try to bring it back to unix time if possible
+	$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
+	
+	$dueDate = $self->parseDateTime($fDueDate, $display_tz);
+	
 	if ($type eq "empty") {
 		$newSetRecord->set_id($newSetID);
 		$newSetRecord->set_header("defaultHeader");
 		$newSetRecord->hardcopy_header("defaultHeader");
-		$newSetRecord->open_date(time + ONE_WEEK());
-		$newSetRecord->due_date(time + 2*ONE_WEEK() );
-		$newSetRecord->answer_date(time + 2*ONE_WEEK() );
+		#Rest of the dates are set according to to course configuration
+		$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
+		$newSetRecord->due_date($dueDate);
+		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
 		$db->addGlobalSet($newSetRecord);
