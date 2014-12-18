@@ -1622,7 +1622,7 @@ sub output_comments{
 
 		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n BEGIN_TEXT\n";
+		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"MathObjects.pl\");\n BEGIN_TEXT\n";
 		    $source .= $comment . "\nEND_TEXT\n ENDDOCUMENT();";
 		    my $pg = WeBWorK::PG->new(
 			$ce,
