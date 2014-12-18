@@ -778,12 +778,10 @@ sub sort_form {
 			-label_text=>$r->maketext("Then by").": ",
 			-input_attr=>{
 				-name => "action.sort.secondary",
-				-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
+				-values => [qw(set_id open_date due_date answer_date visible)],
 				-default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
 				-labels => {
 					set_id		=> $r->maketext("Set Name"),
-					set_header 	=> $r->maketext("Set Header"),
-					hardcopy_header	=> $r->maketext("Hardcopy Header"),
 					open_date	=> $r->maketext("Open Date"),
 					due_date	=> $r->maketext("Due Date"),
 					answer_date	=> $r->maketext("Answer Date"),
@@ -807,8 +805,6 @@ sub sort_handler {
 
 	my %names = (
 		set_id		=> $r->maketext("Set Name"),
-		set_header	=> $r->maketext("Set Header"),
-		hardcopy_header	=> $r->maketext("Hardcopy Header"),
 		open_date	=> $r->maketext("Open Date"),
 		due_date	=> $r->maketext("Due Date"),
 		answer_date	=> $r->maketext("Answer Date"),
@@ -1550,6 +1546,7 @@ sub saveEdit_handler {
 	
 	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
 	foreach my $setID (@visibleSetIDs) {
+	        next unless $setID;
 		my $Set = $db->getGlobalSet($setID); # checked
 		# FIXME: we may not want to die on bad sets, they're not as bad as bad users
 		die "record for visible set $setID not found" unless $Set;
@@ -1560,7 +1557,7 @@ sub saveEdit_handler {
 				if ($field =~ /_date/) {
 					$Set->$field($self->parseDateTime($tableParams->{$param}->[0]));
 				} elsif ($field eq 'enable_reduced_scoring') {
-				    #If we are enableing reduced scoring, make sure the reduced scoring date is set
+				    #If we are enableing reduced scoring, make sure the reduced scoring date is set and in a proper interval
 				    my $value = $tableParams->{$param}->[0];
 				    $Set->enable_reduced_scoring($value);
 				    if (!$Set->reduced_scoring_date) {
@@ -1593,6 +1590,23 @@ sub saveEdit_handler {
 		if ($Set->due_date > $Set->answer_date) {
 			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Answer date must come after due date in set [_1]", $setID));
 		}
+		
+		# check that the reduced scoring date is in the right place
+		# if not do something to try and fix it
+		if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
+		    if ($Set->reduced_scoring_date > $Set->due_date ||
+			$Set->open_date > $Set->reduced_scoring_date) {
+
+			$Set->reduced_scoring_date($Set->due_date -
+						   60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
+
+			# we do a second check here to make sure we didnt go before the open date
+			if ($Set->open_date > $Set->reduced_scoring_date) {
+			    $Set->reduced_scoring_date($Set->open_date);
+			}
+		    }
+		}
+		
 		
 		$db->putGlobalSet($Set);
 	}

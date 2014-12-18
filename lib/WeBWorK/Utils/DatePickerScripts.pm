@@ -83,8 +83,7 @@ EOS
 		reduced_rule.datetimepicker('setDate',reducedDate);
 		reduced_rule.addClass('changed');
 	    }
-	    if (dueDate < reducedDate ||
-		answerDate < reducedDate) {
+	    if (dueDate < reducedDate) {
 		dueDate = new Date(reducedDate);
 		dueDate.setHours(reducedDate.getHours());
 		dueDate.setMinutes(reducedDate.getMinutes());
