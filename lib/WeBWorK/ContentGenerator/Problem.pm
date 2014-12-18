@@ -97,9 +97,12 @@ use WeBWorK::AchievementEvaluator;
 # of dealing with versioning there.
 
 sub can_showOldAnswers {
-	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	
-	return 1;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+
+	return $authz->hasPermissions($User->user_id, "can_show_old_answers");
 }
 
 sub can_showCorrectAnswers {
@@ -229,19 +232,6 @@ sub can_showMeAnother {
     } else {
       # otherwise the set hasn't been opened yet, so we can't use showMeAnother 
       return 0;}
-}
-
-# Reset the default in some cases
-sub set_showOldAnswers_default {
-	my ($self, $ce, $userName, $authz, $set) = @_;
-	# these people always use the system/course default, so don't
-	# override the value of ...->{showOldAnswers}
-	return if $authz->hasPermissions($userName, "can_always_use_show_old_answers_default");
-	# this person should always default to 0
-	$ce->{pg}->{options}->{showOldAnswers} = 0
-		unless ($authz->hasPermissions($userName, "can_show_old_answers_by_default"));
-	# we are after the due date, so default to not showing it
-	$ce->{pg}->{options}->{showOldAnswers} = 0 if $set->{due_date} && after($set->{due_date});
 }
 
 ################################################################################
@@ -517,8 +507,6 @@ sub pre_header_initialize {
 		  is_restricted($db, $set, $effectiveUserName))));
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
-
-	$self->set_showOldAnswers_default($ce, $userName, $authz, $set);
 
 	# Database fix (in case of undefined visiblity state values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field

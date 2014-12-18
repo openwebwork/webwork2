@@ -221,7 +221,7 @@ sub body {
 	    $result .= CGI::br();
 	}
 
-	if ($authz->hasPermissions($userID,"can_show_old_answers_by_default")) {
+	if ($authz->hasPermissions($userID,"can_show_old_answers")) {
 	    my $curr_showOldAnswers = $EUser->showOldAnswers ne '' ? $EUser->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers};
 	    $result .= CGI::start_fieldset();
 	    $result .= CGI::legend($r->maketext("Show saved answers?"));

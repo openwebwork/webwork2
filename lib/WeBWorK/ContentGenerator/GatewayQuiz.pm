@@ -75,6 +75,8 @@ sub can_showOldAnswers {
 	my $authz = $self->r->authz;
 # we'd like to use "! $Set->hide_work()", but that hides students' work 
 # as they're working on the set, which isn't quite right.  so use instead:
+	return 0 unless $authz->hasPermissions($User->user_id,"can_show_old_answers");
+
 	return( before( $Set->due_date() ) || 
 		
 		$authz->hasPermissions($User->user_id,"view_hidden_work") ||
