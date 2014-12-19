@@ -369,11 +369,7 @@ sub setListRow {
 				      courseID => $courseName, setID => $urlname);
 	}
 
-	my $interactiveURL = $self->systemLink($problemSetPage,
-	                                       params=>{  displayMode => $self->{displayMode}, 
-													  showOldAnswers => $self->{will}->{showOldAnswers}
-										   }
-	);
+	my $interactiveURL = $self->systemLink($problemSetPage);
 
   # check to see if this is a template gateway assignment
 	$gwtype = 2 if ( defined( $set->assignment_type() ) && 

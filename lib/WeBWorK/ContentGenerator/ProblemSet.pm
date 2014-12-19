@@ -178,12 +178,7 @@ sub siblings {
 		my $pretty_set_id = $setID;
 		$pretty_set_id =~ s/_/ /g;
 		print CGI::li(
-			     CGI::a({  href=>$self->systemLink($setPage,
-			                params=>{
-								displayMode    => $self->{displayMode}, 
-								showOldAnswers => $self->{will}->{showOldAnswers},
-							},
-					    ),
+			     CGI::a({  href=>$self->systemLink($setPage),
 					    id=>$pretty_set_id,
 			          }, $pretty_set_id)
 	          ) ;
@@ -458,11 +453,7 @@ sub problemListRow($$$) {
 	my $interactiveURL = $self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID
-		),
-		params=>{  displayMode => $self->{displayMode}, 
-			       showOldAnswers => $self->{will}->{showOldAnswers}
-		}
-	);
+	    ));
 	
 	my $interactive = CGI::a({-href=>$interactiveURL}, $r->maketext("Problem [_1]",$problemID));
 	my $attempts = $problem->num_correct + $problem->num_incorrect;

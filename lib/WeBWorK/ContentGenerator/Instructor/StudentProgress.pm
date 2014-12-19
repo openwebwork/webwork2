@@ -340,8 +340,8 @@ sub displaySets {
   # the returning parameter lets us set defaults for versioned sets
 		my $ret = defined($r->param('returning')) ? 
 			$r->param('returning') : 0;
-		$showColumns{'date'} = ($ret && defined($r->param('show_date'))) ? $r->param('show_date') : 1;
-		$showColumns{'testtime'} = ($ret && defined($r->param('show_testtime'))) ? $r->param('show_testtime'):1;
+		$showColumns{'date'} = ($ret && !defined($r->param('show_date'))) ? $r->param('show_date') : 1;
+		$showColumns{'testtime'} = ($ret && !defined($r->param('show_testtime'))) ? $r->param('show_testtime'):1;
 		$showColumns{'index'} = ($ret && defined($r->param('show_index'))) ? $r->param('show_index') : 0;
 		$showColumns{'problems'} = ($ret && defined($r->param('show_problems'))) ? $r->param('show_problems'):0;
 		$showColumns{'section'} = ($ret && defined($r->param('show_section'))) ? $r->param('show_section') : 0;

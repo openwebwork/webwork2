@@ -55,7 +55,7 @@ $(function(){
 	   
     });
 
-    if($(window).width() < 480) {
+    if($(window).width() < 650) {
 	$('#toggle-sidebar').click();
     }
 
