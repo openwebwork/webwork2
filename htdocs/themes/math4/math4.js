@@ -217,6 +217,7 @@ $(function(){
 
     //past answer table
     $('.past-answer-table').addClass("table table-striped");
+    $('#past-answer-form').addClass("form-inline");
 
      //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');

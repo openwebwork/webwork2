@@ -107,15 +107,15 @@ sub body {
 	    
 	    print CGI::p(),CGI::hr();
 	    
-	    print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
+	    print CGI::start_form({-target=>'information',-id=>'past-answer-form'},"POST", $showAnswersURL),
 	    $self->hidden_authen_fields;
 	    print CGI::submit(-name => 'action', -value=>$r->maketext('Past Answers for'))," &nbsp; ",
-	    " &nbsp;".$r->maketext('User:')." &nbsp;",
-	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 ),
-	    " &nbsp;".$r->maketext('Set:')." &nbsp;",
-	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  ), 
-	    " &nbsp;".$r->maketext('Problem:')."&nbsp;",
-	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  ),  
+	    " &nbsp;".CGI::label($r->maketext('User:')." &nbsp;",
+	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 )),
+	    " &nbsp;".CGI::label($r->maketext('Set:')." &nbsp;",
+	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  )), 
+	    " &nbsp;".CGI::label($r->maketext('Problem:')."&nbsp;",
+	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  )),  
 	    " &nbsp; ";
 	    print CGI::end_form();
 	}
