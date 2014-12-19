@@ -1,2 +1,10 @@
-This file is at htdocs/site_info.txt.  Use it to display information for the entire WeBWorK site which will be viewed at login time.
+<img width="200px" style="margin-bottom: 10px;" src="/webwork2_files/images/LogoCouleur.png"></img>
+<hr></hr>
+Bienvenue sur le serveur WeBWorK du collège de Bois-de-Boulogne.
+<p>Pour plus d'informations, pour des questions ou si vous désirez nous faire part de certaines erreurs ou bugs, vous pouvez contacter l'une des deux personnes suivantes :</p>
+<ul>
+<li><a href="mailto:nicolas.beauchemin@bdeb.qc.ca?Subject=WeBWorK BdeB" target="_top">Nicolas Beauchemin</a></li>
+<li><a href="mailto:julie.tremblay@bdeb.qc.ca?Subject=WeBWorK BdeB" target="_top">Julie Tremblay</a></li>
+</ul>
+ 
 
