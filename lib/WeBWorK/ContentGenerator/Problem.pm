@@ -98,8 +98,6 @@ use WeBWorK::AchievementEvaluator;
 
 sub can_showOldAnswers {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
-	
-	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
 
 	return $authz->hasPermissions($User->user_id, "can_show_old_answers");

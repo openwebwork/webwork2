@@ -474,7 +474,13 @@ table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
 table.FormLayout tr.ButtonRow { text-align: left; }
 table.FormLayout tr.ButtonRowCenter { text-align: center; }
-table.FormLayout td { padding-right:10px }
+table.FormLayout td { padding-right:10px; padding-bottom:.5ex; }
+
+table.FormLayout tr.ButtonRow,
+table.FormLayout tr.ButtonRowCenter, 
+table.FormLayout tr.ButtonRowCenter tr {
+    vertical-align: middle;
+}
 
 div.RenderSolo { background-color: #E0E0E0; color: black; }
 div.AuthorComment { background-color: #00E0E0; color: black; }
