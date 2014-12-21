@@ -471,7 +471,9 @@ sub problemListRow($$$) {
 	my $graderLink = "";
 	if ($canScoreProblems && $self->{gradeableProblems}[$problemID]) {
 	    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
-	    $graderLink = CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem");
+	    $graderLink = CGI::td(CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem"));
+	} elsif ($canScoreProblems) {
+	    $graderLink = CGI::td('');
 	}
 
 	return CGI::Tr({},
@@ -484,7 +486,7 @@ sub problemListRow($$$) {
 			   $problem->value,
 			   $status, 
 			       ]),
-		       $graderLink ? CGI::td($graderLink) : ''
+		       $graderLink ? $graderLink : ''
 	    );
 }
 
