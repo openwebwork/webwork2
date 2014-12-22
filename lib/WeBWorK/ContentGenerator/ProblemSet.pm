@@ -178,12 +178,7 @@ sub siblings {
 		my $pretty_set_id = $setID;
 		$pretty_set_id =~ s/_/ /g;
 		print CGI::li(
-			     CGI::a({  href=>$self->systemLink($setPage,
-			                params=>{
-								displayMode    => $self->{displayMode}, 
-								showOldAnswers => $self->{will}->{showOldAnswers},
-							},
-					    ),
+			     CGI::a({  href=>$self->systemLink($setPage),
 					    id=>$pretty_set_id,
 			          }, $pretty_set_id)
 	          ) ;
@@ -392,7 +387,7 @@ sub body {
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
 			CGI::th($r->maketext("Status")),
-			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th("")
+			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : ''
 		);
 		
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
@@ -458,11 +453,7 @@ sub problemListRow($$$) {
 	my $interactiveURL = $self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID
-		),
-		params=>{  displayMode => $self->{displayMode}, 
-			       showOldAnswers => $self->{will}->{showOldAnswers}
-		}
-	);
+	    ));
 	
 	my $interactive = CGI::a({-href=>$interactiveURL}, $r->maketext("Problem [_1]",$problemID));
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
@@ -480,20 +471,23 @@ sub problemListRow($$$) {
 	my $graderLink = "";
 	if ($canScoreProblems && $self->{gradeableProblems}[$problemID]) {
 	    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
-	    $graderLink = CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem");
+	    $graderLink = CGI::td(CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem"));
+	} elsif ($canScoreProblems) {
+	    $graderLink = CGI::td('');
 	}
 
 	return CGI::Tr({},
 #		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
 #		CGI::td({-nowrap=>1, -align=>"center"},
-		CGI::td($interactive),
-		CGI::td([
-				$attempts,
-				$remaining,
-				$problem->value,
-				$status, 
-			        $graderLink
-			]));
+		       CGI::td($interactive),
+		       CGI::td([
+			   $attempts,
+			   $remaining,
+			   $problem->value,
+			   $status, 
+			       ]),
+		       $graderLink ? $graderLink : ''
+	    );
 }
 
 1;

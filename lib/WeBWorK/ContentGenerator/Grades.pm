@@ -295,7 +295,7 @@ sub displayStudentStats {
 		       ( $set->hide_score eq 'Y' || 
 			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
 			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(test_" . $set->version_id . ")")), 
-					     CGI::td({colspan=>4}, CGI::em("Display of scores for this set is not allowed."))) );
+					     CGI::td({colspan=>($max_problems+2)}, CGI::em("Display of scores for this set is not allowed."))) );
 			next;
 		}
 

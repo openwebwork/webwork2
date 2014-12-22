@@ -600,10 +600,23 @@ sub pre_header_initialize {
 				$newSetRecord = $db->{set}->{record}->new();
 				$newSetRecord->set_id($newSetName);
 				$newSetRecord->set_header("defaultHeader");
-				$newSetRecord->hardcopy_header("defaultHeader");
-				$newSetRecord->open_date(time()+60*60*24*7); # in one week
-				$newSetRecord->due_date(time()+60*60*24*7*2); # in two weeks
-				$newSetRecord->answer_date(time()+60*60*24*7*3); # in three weeks
+				$newSetRecord->hardcopy_header("defaultHeader");				# It's convenient to set the due date two weeks from now so that it is 
+				# not accidentally available to students.  
+				
+				my $dueDate = time+2*60*60*24*7;
+				my $display_tz = $ce->{siteDefaults}{timezone};
+				my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
+				my $dueTime = $ce->{pg}{timeAssignDue};
+				
+				# We replace the due time by the one from the config variable
+				# and try to bring it back to unix time if possible
+				$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
+				
+				$dueDate = $self->parseDateTime($fDueDate, $display_tz);
+				$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
+				$newSetRecord->due_date($dueDate);
+				$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});	
+
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");

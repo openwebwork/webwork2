@@ -108,7 +108,7 @@ use constant FIELD_PROPERTIES => {
 	open_date => {
 		name      => "Opens",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -118,7 +118,7 @@ use constant FIELD_PROPERTIES => {
 	due_date => {
 		name      => "Answers Due",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -128,7 +128,7 @@ use constant FIELD_PROPERTIES => {
 	answer_date => {
 		name      => "Answers Available",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -158,7 +158,7 @@ use constant FIELD_PROPERTIES => {
 	reduced_scoring_date => {
 		name      => "Reduced Scoring Date",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -168,11 +168,12 @@ use constant FIELD_PROPERTIES => {
 	restricted_release => {
 		name      => "Restrict release by set(s)",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
 				"" => "None Specified",
+
 		},
 	},
 	restricted_status => {
@@ -384,7 +385,7 @@ use constant FIELD_PROPERTIES => {
 	hide_hint => {
 		name      => "Hide Hints from Students",
 		type      => "choose",
-		override  => "all",
+		override  => "any",
 		choices   => [qw( 0 1 )],
 		labels    => {
 				1 => "Yes",
@@ -620,13 +621,13 @@ sub FieldHTML {
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = "";
 	if ($edit) {
-		$inputType = CGI::font({class=>"visible"}, CGI::input({
+		$inputType = CGI::input({
 		                type => "text",
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
-		}));
+					});
 
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties

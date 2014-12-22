@@ -630,7 +630,17 @@ sub filter_form {
 	my $r = $self->r;
 	
 	my %prettyFieldNames = %{ $self->{prettyFieldNames} };
+	my %fieldProperties = %{ FIELD_PROPERTIES() };
 	
+	my @fields;
+	
+	foreach my $field (keys %fieldProperties) {
+	    push @fields, $field unless
+		$fieldProperties{$field}{access} eq 'hidden';
+	}
+
+	@fields = sort {$prettyFieldNames{$a} cmp $prettyFieldNames{$b}} @fields;
+
 	return join("",
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
@@ -658,7 +668,7 @@ sub filter_form {
 				-label_text=>$r->maketext("What field should filtered users match on?").": ",
 				-input_attr=>{
 					-name => "action.filter.field",
-					-value => [ keys %{ FIELD_PROPERTIES() } ],
+					-value => \@fields,
 					-default => $actionParams{"action.filter.field"}->[0] || "user_id",
 					-labels => \%prettyFieldNames,
 					-onchange => $onChange

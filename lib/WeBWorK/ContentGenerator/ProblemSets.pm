@@ -226,13 +226,13 @@ sub body {
 	print CGI::caption($r->maketext("Homework Sets"));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
-		    CGI::th({-scope=>"col"}),
+		    CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 		    CGI::th({-scope=>"col"},$nameHeader),
 		    CGI::th({-scope=>"col"},$statusHeader),
 	        );
 	} else {
 	    print CGI::Tr(
-		CGI::th({-scope=>"col"}),
+		CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 		CGI::th({-scope=>"col"},$nameHeader),
 		CGI::th({-scope=>"col"},$r->maketext("Test Score")),
 		CGI::th({-scope=>"col"},$r->maketext("Test Date")),
@@ -369,11 +369,7 @@ sub setListRow {
 				      courseID => $courseName, setID => $urlname);
 	}
 
-	my $interactiveURL = $self->systemLink($problemSetPage,
-	                                       params=>{  displayMode => $self->{displayMode}, 
-													  showOldAnswers => $self->{will}->{showOldAnswers}
-										   }
-	);
+	my $interactiveURL = $self->systemLink($problemSetPage);
 
   # check to see if this is a template gateway assignment
 	$gwtype = 2 if ( defined( $set->assignment_type() ) && 
@@ -560,6 +556,9 @@ sub setListRow {
 				-name=>"selected_sets",
 				-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
 					  });
+		    # make sure interactive is the label for control
+		    $interactive = CGI::label({"for"=>$name . ($gwtype ? ",v" . $set->version_id : '')},$interactive);
+
 		} else {
 		    $control = '';
 		}
