@@ -2053,7 +2053,7 @@ sub body {
 			}
 		}
 		if ( $numProbPerPage && $numPages > 1 ) {
-			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page: '))),,
+			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page: '))),
 					CGI::td(CGI::b(' [ ' )) ];
 			for my $i ( 1 .. $numPages ) {
 				my $pn = ( $i == $pageNumber ) ? $i : 
@@ -2079,8 +2079,7 @@ sub body {
 					if ( $i != $numPages );
 			}
 			push( @$pageRow, CGI::td(CGI::b(' ] ')) );
-			$jumpLinks = CGI::table( {class=>"gwNavigation
-", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
+			$jumpLinks = CGI::table( {class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
 						 CGI::Tr( CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow) ) );
 		} else {
 			$jumpLinks = CGI::table({class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow) ) );

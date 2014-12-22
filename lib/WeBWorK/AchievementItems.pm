@@ -453,7 +453,7 @@ sub print_form {
     return join("",
 	CGI::p("Choose the set which you would like to be worth twice as much."),
 	CGI::label("Set Name ",
-	CGI::popup_menu({label=>"Set Name", values=>\@openSets,id=>"dub_set_id", name=>"dub_set_id"})));
+	CGI::popup_menu({values=>\@openSets,id=>"dub_set_id", name=>"dub_set_id"})));
 }
 
 sub use_item {

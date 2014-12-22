@@ -52,9 +52,6 @@ sub date_scripts {
 		$reduced_scoring_date = $set->due_date - $default_reduced_scoring_period;
 	    }
 	    
-	    my $default_hrs = floor($default_reduced_scoring_period/3600);
-	    my $default_min = floor(60*($default_reduced_scoring_period/3600 - $default_hrs));
-
 	    $date = formatDateTime($reduced_scoring_date, $display_tz);
 	    $date =~ /\ ([A-Z]+)$/;	
 	    my $reduced_timezone = $1;        	
@@ -84,11 +81,9 @@ EOS
 		reduced_rule.addClass('changed');
 	    }
 	    if (dueDate < reducedDate) {
-		dueDate = new Date(reducedDate);
-		dueDate.setHours(reducedDate.getHours());
-		dueDate.setMinutes(reducedDate.getMinutes());
-		due_rule.datetimepicker('setDate',dueDate);
-		due_rule.addClass('changed');
+		reducedDate = new Date(dueDate);
+		reduced_rule.datetimepicker('setDate',reducedDate);
+		reduced_rule.addClass('changed');
 	    }
 EOS
 
