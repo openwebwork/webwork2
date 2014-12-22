@@ -2,6 +2,11 @@ $(function(){
     // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
+    // Fix bug with skip to main content link in chrome
+    $('#stmc-link').click(function() {
+	$('#content').attr('tabIndex', -1).focus();
+    });
+
     // Turn submit inputs into buttons
     $('input:submit').addClass('btn btn-primary');
     $('input:submit').mousedown(function () {this.blur(); return false;});
@@ -50,7 +55,7 @@ $(function(){
 	   
     });
 
-    if($(window).width() < 480) {
+    if($(window).width() < 650) {
 	$('#toggle-sidebar').click();
     }
 
@@ -143,6 +148,7 @@ $(function(){
     //Homework sets editor config
     $('#problemsetlist').addClass('form-inline set-list-form');
     $('#problemsetlist2').addClass('form-inline set-list-form');
+    $('#edit_form_id').addClass('form-inline set-list-form');
     $('.set-id-tooltip').tooltip({trigger: 'hover'});
     $('.set-list-form input:button').addClass('btn btn-info');
     $('.set-list-form input:reset').addClass('btn btn-info');
@@ -211,6 +217,7 @@ $(function(){
 
     //past answer table
     $('.past-answer-table').addClass("table table-striped");
+    $('#past-answer-form').addClass("form-inline");
 
      //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');

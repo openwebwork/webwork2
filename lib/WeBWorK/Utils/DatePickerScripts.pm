@@ -24,7 +24,7 @@ sub date_scripts {
 	my $set = shift;
 	my $display_tz ||= $ce->{siteDefaults}{timezone};
 	my $bareName = 'set.'.$set->set_id;
-        $bareName =~ s/\./\\\\\./g;
+        $bareName =~ s/(\.|,)/\\\\$1/g;
 
 	my $date = formatDateTime($set->open_date, $display_tz);
 	$date =~ /\ ([A-Z]+)$/;	
@@ -52,9 +52,6 @@ sub date_scripts {
 		$reduced_scoring_date = $set->due_date - $default_reduced_scoring_period;
 	    }
 	    
-	    my $default_hrs = floor($default_reduced_scoring_period/3600);
-	    my $default_min = floor(60*($default_reduced_scoring_period/3600 - $default_hrs));
-
 	    $date = formatDateTime($reduced_scoring_date, $display_tz);
 	    $date =~ /\ ([A-Z]+)$/;	
 	    my $reduced_timezone = $1;        	
@@ -72,18 +69,21 @@ sub date_scripts {
 	      constrainInput: false, 
 	      onClose: function(dateText, inst) {
 		  update();
+		  reduced_rule.addClass('changed');
 	      },
             });
 EOS
        $reduced_credit_date_update_script = <<EOS;
 	    var reducedDate = reduced_rule.datetimepicker('getDate');
-	    if (dueDate < reducedDate ||
-		answerDate < reducedDate ||
-		openDate > reducedDate) {
-		reducedDate = dueDate;
-		reducedDate.setHours(dueDate.getHours() - $default_hrs );
-		reducedDate.setMinutes(dueDate.getMinutes() - $default_min );
+	    if (openDate > reducedDate) {
+		reducedDate = new Date(openDate);
 		reduced_rule.datetimepicker('setDate',reducedDate);
+		reduced_rule.addClass('changed');
+	    }
+	    if (dueDate < reducedDate) {
+		reducedDate = new Date(dueDate);
+		reduced_rule.datetimepicker('setDate',reducedDate);
+		reduced_rule.addClass('changed');
 	    }
 EOS
 
@@ -104,30 +104,28 @@ var update = function() {
 	var dueDate = due_rule.datetimepicker('getDate');
 	var answerDate = answer_rule.datetimepicker('getDate');
 	if ( due_rule.val() =='') {
-		dueDate = new Date(openDate);
-        dueDate.setDate(dueDate.getDate()+dueDateOffset);
-        due_rule.datetimepicker('setDate',dueDate);
+	    dueDate = new Date(openDate);
+	    dueDate.setDate(dueDate.getDate()+dueDateOffset);
+	    due_rule.datetimepicker('setDate',dueDate);
+	    due_rule.addClass('changed');
 	} else if (openDate > due_rule.datetimepicker('getDate')) {
 	    dueDate = new Date(openDate);
 	    due_rule.datetimepicker('setDate',dueDate);
+	    due_rule.addClass('changed');
 	}
+
+	$reduced_credit_date_update_script
 
 	if ( answer_rule.val() =='') {
 		answerDate = new Date(dueDate);
-        answerDate.setHours(answerDate.getHours()+answerDateOffset);
-        answer_rule.datetimepicker('setDate',answerDate);
-        answer_rule.addClass("changed");
+		answerDate.setHours(answerDate.getHours()+answerDateOffset);
+		answer_rule.datetimepicker('setDate',answerDate);
+		answer_rule.addClass("changed");
 	} else if (dueDate > answer_rule.datetimepicker('getDate')) {
 	    answerDate = new Date(dueDate);
 	    answer_rule.datetimepicker('setDate',answerDate);
-	    
-
+	    answer_rule.addClass('changed');
 	}
-	open_rule.addClass("changed");
-	due_rule.addClass("changed");
-	answer_rule.addClass("changed");
-
-	$reduced_credit_date_update_script
 
 }
 open_rule.datetimepicker({
@@ -139,6 +137,7 @@ open_rule.datetimepicker({
 	separator: ' at ',
 	constrainInput: false, 
     onClose: function(dateText, inst) {
+	open_rule.addClass('changed');
         update();
     },
 
@@ -169,6 +168,7 @@ due_rule.datetimepicker({
     		openDate.setDate(openDate.getDate() -dueDateOffset );
     		open_rule.datetimepicker('setDate',openDate);
     	}
+	due_rule.addClass('changed');
     	update();
 	},
 /*    onSelect: function (selectedDateTime){
@@ -193,6 +193,7 @@ answer_rule.datetimepicker({
     		openDate.setHours(openDate.getHours() - answerDateOffset);
     		open_rule.datetimepicker('setDate',openDate);
     	}
+	answer_rule.addClass('changed');
     	update();
     },
     onSelect: function (selectedDateTime){

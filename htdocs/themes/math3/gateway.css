@@ -53,6 +53,15 @@ div#gwScoreSummary {
 	padding: 3px;
 	position: absolute;
 }
+
+#gwScoreSummary table {
+    border:0;
+}
+
+#gwScoreSummary table td {
+    margin-left:.1em;
+}
+
 html>body #gwScoreSummary {
 	position: fixed; /* IE 7 and other browsers see this */
 }

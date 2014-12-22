@@ -97,9 +97,10 @@ use WeBWorK::AchievementEvaluator;
 # of dealing with versioning there.
 
 sub can_showOldAnswers {
-	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
-	
-	return 1;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+
+	return $authz->hasPermissions($User->user_id, "can_show_old_answers");
 }
 
 sub can_showCorrectAnswers {
@@ -229,19 +230,6 @@ sub can_showMeAnother {
     } else {
       # otherwise the set hasn't been opened yet, so we can't use showMeAnother 
       return 0;}
-}
-
-# Reset the default in some cases
-sub set_showOldAnswers_default {
-	my ($self, $ce, $userName, $authz, $set) = @_;
-	# these people always use the system/course default, so don't
-	# override the value of ...->{showOldAnswers}
-	return if $authz->hasPermissions($userName, "can_always_use_show_old_answers_default");
-	# this person should always default to 0
-	$ce->{pg}->{options}->{showOldAnswers} = 0
-		unless ($authz->hasPermissions($userName, "can_show_old_answers_by_default"));
-	# we are after the due date, so default to not showing it
-	$ce->{pg}->{options}->{showOldAnswers} = 0 if $set->{due_date} && after($set->{due_date});
 }
 
 ################################################################################
@@ -505,6 +493,10 @@ sub pre_header_initialize {
 		
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); 
+	
+	# check that the set is valid;
+	# $self->{invalidSet} is set by ContentGenerator.pm
+	die($self->{invalidSet}) if $self->{invalidSet};
 
 	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || 
 	    ($setName eq "Undefined_Set" || 
@@ -513,8 +505,6 @@ sub pre_header_initialize {
 		  is_restricted($db, $set, $effectiveUserName))));
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
-
-	$self->set_showOldAnswers_default($ce, $userName, $authz, $set);
 
 	# Database fix (in case of undefined visiblity state values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
@@ -639,7 +629,7 @@ sub pre_header_initialize {
 	##### form processing #####
 	
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode               = $user->displayMode || $ce->{pg}->{options}->{displayMode};
+	my $displayMode               = $r->param("displayMode") || $user->displayMode || $ce->{pg}->{options}->{displayMode};
 	my $redisplay                 = $r->param("redisplay");
 	my $submitAnswers             = $r->param("submitAnswers");
 	my $checkAnswers              = $r->param("checkAnswers");
@@ -1035,10 +1025,7 @@ sub siblings {
 	foreach my $problemID (@problemIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID);
-		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
-													params=>{  displayMode => $self->{displayMode}, 
-															   showOldAnswers => $self->{will}->{showOldAnswers}
-															})},  $r->maketext("Problem [_1]",$problemID))
+		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]",$problemID))
 	   );
 	}
 
@@ -1633,7 +1620,7 @@ sub output_comments{
 
 		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n BEGIN_TEXT\n";
+		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"MathObjects.pl\");\n BEGIN_TEXT\n";
 		    $source .= $comment . "\nEND_TEXT\n ENDDOCUMENT();";
 		    my $pg = WeBWorK::PG->new(
 			$ce,
