@@ -1069,7 +1069,6 @@ sub siblings {
 	my @items;
 
 	foreach my $problemID (@problemIDs) {
-<<<<<<< HEAD
 	    if ($isJitarSet && !$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_hidden($db,$eUserID, $setID, $problemID)) {
 		shift(@problemRecords) if $progressBarEnabled;
 		next;
@@ -1123,24 +1122,14 @@ sub siblings {
 		if (!$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_closed($db, $ce, $eUserID, $setID, $problemID)) {
 		    $link = CGI::a( {href=>'#', class=>$class.' disabled-problem'},  $r->maketext("Problem [_1]", join('.',@seq)));
 		} else {
-		    $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage, 
-								   params=>{  displayMode => $self->{displayMode}, 
-									      showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", join('.',@seq)).($progressBarEnabled?$status_symbol:""));
+		    $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]", join('.',@seq)).($progressBarEnabled?$status_symbol:""));
 		    
 		}
 	    } else {
-		$link = CGI::a( {href=>$self->systemLink($problemPage , 
-						 params=>{  displayMode => $self->{displayMode}, 
-							    showOldAnswers => $self->{will}->{showOldAnswers} })},  $r->maketext("Problem [_1]", $problemID).($progressBarEnabled?$status_symbol:""));
+		$link = CGI::a( {href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]", $problemID).($progressBarEnabled?$status_symbol:""));
 	    }
 	    
 	    push @items, CGI::li({($progressBarEnabled && $currentProblemID eq $problemID ? ('class','currentProblem'):())},$link);
-=======
-		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
-			courseID => $courseID, setID => $setID, problemID => $problemID);
-		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]",$problemID))
-	   );
->>>>>>> 912dfcbc3cbf25ec0d1761a3293ea4d6c7cf319b
 	}
 	
 	# output the progress bar

@@ -385,7 +385,6 @@ sub body {
 	    my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.  If a problem does count towards its parent grade, then that score is listed in the column to the right.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
 	    
 	    print CGI::Tr({},
-<<<<<<< HEAD
 			  
 			  CGI::th($r->maketext("Name")),
 			  CGI::th($r->maketext("Attempts")),
@@ -394,16 +393,7 @@ sub body {
 			  CGI::th($isJitarSet ? $r->maketext("Adjusted Status").$AdjustedStatusPopover :
 				  $r->maketext("Status")),
 			  $isJitarSet  ? CGI::th($r->maketext("Credit For Parent")) : CGI::th(""),
-			  $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th(""),
-=======
-			      
-			CGI::th($r->maketext("Name")),
-			CGI::th($r->maketext("Attempts")),
-			CGI::th($r->maketext("Remaining")),
-			CGI::th($r->maketext("Worth")),
-			CGI::th($r->maketext("Status")),
 			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : ''
->>>>>>> 912dfcbc3cbf25ec0d1761a3293ea4d6c7cf319b
 		);
 		
 	    @problemNumbers = sort { $a <=> $b } @problemNumbers;
@@ -487,13 +477,7 @@ sub problemListRow($$$$$) {
 
 	my $interactiveURL = $self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
-			courseID => $courseID, setID => $setID, problemID => $problemID
-<<<<<<< HEAD
-		),
-		params=>{  displayMode => $self->{displayMode}, 
-			       showOldAnswers => $self->{will}->{showOldAnswers}
-		}
-	);
+			courseID => $courseID, setID => $setID, problemID => $problemID ));
 
 	my $linkClasses = '';
 	my $interactive;
@@ -509,9 +493,6 @@ sub problemListRow($$$$$) {
 	    $interactive = CGI::a({-href=>$interactiveURL,-class=>$linkClasses}, $r->maketext("Problem [_1]",$problemNumber));
 	    
 	}
-=======
-	    ));
->>>>>>> 912dfcbc3cbf25ec0d1761a3293ea4d6c7cf319b
 	
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $remaining = (($problem->max_attempts||-1) < 0) #a blank yields 'infinite' because it evaluates as false with out giving warnings about comparing non-numbers
@@ -559,7 +540,6 @@ sub problemListRow($$$$$) {
 	return CGI::Tr({},
 #		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
 #		CGI::td({-nowrap=>1, -align=>"center"},
-<<<<<<< HEAD
 		CGI::td($interactive),
 		CGI::td([
 				$attempts,
@@ -567,19 +547,8 @@ sub problemListRow($$$$$) {
 				$value,
 				$status, 
 		                $statusForParent,
-			        $graderLink
-			]));
-=======
-		       CGI::td($interactive),
-		       CGI::td([
-			   $attempts,
-			   $remaining,
-			   $problem->value,
-			   $status, 
-			       ]),
 		       $graderLink ? $graderLink : ''
-	    );
->>>>>>> 912dfcbc3cbf25ec0d1761a3293ea4d6c7cf319b
+			]));
 }
 
 1;
