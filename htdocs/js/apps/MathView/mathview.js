@@ -173,6 +173,7 @@ function MathViewer(field,button,container,userOptions) {
 				.append($('<li>')
 					.append($('<a>',{href :"#", id : 'close'+viewerIndex})
 						.append($('<span>', {class :"icon icon-remove"}))
+						.append($('<span>', {class :"sr-only-glyphicon"}).html("close"))
 						.click(function () {
 					    me.button.popover('hide');
 					    return false;

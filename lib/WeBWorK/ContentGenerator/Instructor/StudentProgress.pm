@@ -340,8 +340,8 @@ sub displaySets {
   # the returning parameter lets us set defaults for versioned sets
 		my $ret = defined($r->param('returning')) ? 
 			$r->param('returning') : 0;
-		$showColumns{'date'} = ($ret && defined($r->param('show_date'))) ? $r->param('show_date') : 1;
-		$showColumns{'testtime'} = ($ret && defined($r->param('show_testtime'))) ? $r->param('show_testtime'):1;
+		$showColumns{'date'} = ($ret && !defined($r->param('show_date'))) ? $r->param('show_date') : 1;
+		$showColumns{'testtime'} = ($ret && !defined($r->param('show_testtime'))) ? $r->param('show_testtime'):1;
 		$showColumns{'index'} = ($ret && defined($r->param('show_index'))) ? $r->param('show_index') : 0;
 		$showColumns{'problems'} = ($ret && defined($r->param('show_problems'))) ? $r->param('show_problems'):0;
 		$showColumns{'section'} = ($ret && defined($r->param('show_section'))) ? $r->param('show_section') : 0;
@@ -884,9 +884,11 @@ sub displaySets {
     # and to make formatting nice for students who haven't taken any tests
     #    (the total number of columns is two more than this; we want the 
     #    number that missing record information should span)
-	my $numCol = 1 + $showColumns{'date'} + $showColumns{'testtime'} + 
-#		$showColumns{'index'} +
-		$showColumns{'problems'};
+
+	my $numCol = 1;
+	$numCol++ if $showColumns{'date'};
+	$numCol++ if $showColumns{'testtime'};
+	$numCol++ if $showColumns{'problems'};
 
 	foreach my $rec (@augmentedUserRecords) {
 		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});

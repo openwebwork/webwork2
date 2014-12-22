@@ -35,7 +35,7 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
 	ref2string makeTempDirectory path_is_subdir sortByName before after
-	between wwRound);  # use the ContentGenerator formatDateTime, not the version in Utils
+	between wwRound is_restricted);  # use the ContentGenerator formatDateTime, not the version in Utils
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
@@ -75,6 +75,8 @@ sub can_showOldAnswers {
 	my $authz = $self->r->authz;
 # we'd like to use "! $Set->hide_work()", but that hides students' work 
 # as they're working on the set, which isn't quite right.  so use instead:
+	return 0 unless $authz->hasPermissions($User->user_id,"can_show_old_answers");
+
 	return( before( $Set->due_date() ) || 
 		
 		$authz->hasPermissions($User->user_id,"view_hidden_work") ||
@@ -301,6 +303,13 @@ sub can_showScore {
 
 	return( $authz->hasPermissions($User->user_id,"view_hidden_work") ||
 		$canShowScores );
+}
+
+sub can_useMathView {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
 }
 
 ################################################################################
@@ -650,6 +659,13 @@ sub pre_header_initialize {
 #    if this fails/failed in authz->checkSet, then $self->{invalidSet} is
 #    set
 		$tmplSet = $db->getMergedSet( $effectiveUserName, $setName );
+		
+		$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || (time >= $tmplSet->open_date && !(
+			  $ce->{options}{enableConditionalRelease} && 
+			  is_restricted($db, $tmplSet, $effectiveUserName)));
+		
+		die("You do not have permission to view unopened sets") unless $self->{isOpen};	
+		
 
 	# now we know that we're in a gateway test, save the assignment test 
 	#    for the processing of proctor keys for graded proctored tests; 
@@ -1085,6 +1101,7 @@ sub pre_header_initialize {
 	# we also want to check answers if we were checking answers and are
 	#    switching between pages
 	     checkAnswers       => $checkAnswers,
+	     useMathView        => $User->useMathView ne '' ? $User->useMathView : $ce->{pg}->{options}->{useMathView},
 	     );
 
 	# are certain options enforced?
@@ -1096,6 +1113,7 @@ sub pre_header_initialize {
 	     recordAnswers      => ! $authz->hasPermissions($userName, 
 							    "avoid_recording_answers"),
 	     checkAnswers       => 0,
+	     useMathView        => 0,
 	     );
 
 	# does the user have permission to use certain options?
@@ -1112,6 +1130,7 @@ sub pre_header_initialize {
 	     recordAnswersNextTime => $self->can_recordAnswers(@args, $sAns),
 	     checkAnswersNextTime  => $self->can_checkAnswers(@args, $sAns),
 	     showScore          => $self->can_showScore(@args),
+	     useMathView              => $self->can_useMathView(@args)
 	     );
 
 	# final values for options
@@ -1750,7 +1769,7 @@ sub body {
 				#	$numParts++;
 				#}
 				#$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
-				$pScore = $pg->{result}->{score};
+				$pScore = $pg->{state}->{recorded_score};
 				$probStatus[$i] = $pScore;
 				$numParts = 1;
 ###
@@ -1906,12 +1925,8 @@ sub body {
 				print CGI::start_div({-id=>"gwScoreSummary"}),
 					CGI::strong({},"Score summary for " .
 						    "last submit:");
-				print CGI::start_table({"border"=>0,
-							"cellpadding"=>0,
-							"cellspacing"=>0});
-				print CGI::Tr({},CGI::th({-align=>"left"},
-							 ["Prob","","Status","",
-							  "Result"]));
+				print CGI::start_table();
+				print CGI::Tr({},CGI::th({-align=>"left"},"Prob"), CGI::td(""), CGI::th("Status"), CGI::td(""), CGI::th("Result"));
 				for ( my $i=0; $i<@probStatus; $i++ ) {
 					print CGI::Tr({},
 						CGI::td({},[($i+1),"",int(100*$probStatus[$probOrder[$i]]+0.5) . "%","", $probStatus[$probOrder[$i]] == 1 ? "Correct" : "Incorrect"]));
@@ -1921,21 +1936,22 @@ sub body {
 		}
 	} else {
 		if ( ! $checkAnswers && ! $submitAnswers ) {
-			print CGI::start_div({class=>'gwMessage'});
 			if ( $can{showScore} ) {
-				my $scMsg = "Your recorded score on this " .
-					"(test number $versionNumber) is " .
-					wwRound(2,$recordedScore)."/$totPossible";
-				if ( $exceededAllowedTime && 
-				     $recordedScore == 0 ) {
-					$scMsg .= ", because you exceeded " .
-						"the allowed time.";
-				} else {
-					$scMsg .= ".  ";
-				}
-				print CGI::strong($scMsg), CGI::br();
+			    print CGI::start_div({class=>'gwMessage'});
+			    
+			    my $scMsg = "Your recorded score on this " .
+				"(test number $versionNumber) is " .
+				wwRound(2,$recordedScore)."/$totPossible";
+			    if ( $exceededAllowedTime && 
+				 $recordedScore == 0 ) {
+				$scMsg .= ", because you exceeded " .
+				    "the allowed time.";
+			    } else {
+				$scMsg .= ".  ";
+			    }
+			    print CGI::strong($scMsg), CGI::br();
+			    print CGI::end_div();
 			}
-			print CGI::end_div();
 		}
 
 		if ( $set->version_last_attempt_time ) {
@@ -2020,14 +2036,14 @@ sub body {
 
 	# set up links between problems and, for multi-page tests, pages
 		my $jumpLinks = '';
-		my $probRow = [ CGI::b("Problem") ];
+		my $probRow = [ ];
 		for my $i ( 0 .. $#pg_results ) {
 	    
 			my $pn = $i + 1;
 			if ( $i >= $startProb && $i <= $endProb ) {
 				push(@$probRow, CGI::b(" [ ")) if ($i == $startProb);
 				push( @$probRow, " &nbsp;" . 
-				      CGI::a({-href=>".", 
+				      CGI::a({-href=>"#", 
 					      -onclick=>"jumpTo($pn);return false;"},
 					     "$pn") . "&nbsp; " );
 				push(@$probRow, CGI::b(" ] ")) if ($i == $endProb);
@@ -2037,9 +2053,8 @@ sub body {
 			}
 		}
 		if ( $numProbPerPage && $numPages > 1 ) {
-			my $pageRow = [ CGI::td([ CGI::b('Jump to: '), 
-						  CGI::b('Page '),
-						  CGI::b(' [ ' ) ]) ];
+			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page: '))),
+					CGI::td(CGI::b(' [ ' )) ];
 			for my $i ( 1 .. $numPages ) {
 				my $pn = ( $i == $pageNumber ) ? $i : 
 				    CGI::a({-href=>'javascript:' .
@@ -2064,12 +2079,10 @@ sub body {
 					if ( $i != $numPages );
 			}
 			push( @$pageRow, CGI::td(CGI::b(' ] ')) );
-			unshift( @$probRow, ' &nbsp; ' );
-			$jumpLinks = CGI::table( {role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
-						 CGI::Tr( CGI::td($probRow) ) );
+			$jumpLinks = CGI::table( {class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
+						 CGI::Tr( CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow) ) );
 		} else {
-			unshift( @$probRow, CGI::b('Jump to: ') );
-			$jumpLinks = CGI::table({role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr( CGI::td($probRow) ) );
+			$jumpLinks = CGI::table({class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow) ) );
 		}
 	
 		print $jumpLinks,"\n";
@@ -2124,8 +2137,8 @@ sub body {
 				print CGI::start_div({class=>"gwProblem"});
 				my $i1 = $i+1;
 				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
-				print CGI::a({-href=>"#", -id=>"prob$i"},"");
-				print CGI::h3("Problem $problemNumber."), 
+				print CGI::div({-id=>"prob$i"},"");
+				print CGI::h2("Problem $problemNumber."), 
 					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
@@ -2150,7 +2163,7 @@ sub body {
 				# keep the jump to anchors so that jumping to 
 				#    problem number 6 still works, even if 
 				#    we're viewing only problems 5-7, etc.
-				print CGI::a({-href=>"#", -id=>"prob$i"},""), "\n";
+				print CGI::div({-id=>"prob$i"},""), "\n";
 				# and print out hidden fields with the current 
 				#    last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
@@ -2195,11 +2208,6 @@ sub body {
 					    -checked => $will{showSolutions},
 					    -label   => "Show Solutions",
 					    );
-		}
-
-		if ($can{showCorrectAnswers} or $can{showHints} or 
-		    $can{showSolutions}) {
-			print CGI::br();
 		}
 
 		print CGI::p( CGI::submit( -name=>"previewAnswers", 
@@ -2418,12 +2426,27 @@ sub output_JS{
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
 
+		# This is for MathView.  
+	if ($self->{will}->{useMathView}) {
+	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
+		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+		
+		print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+		print CGI::start_script({type=>"text/javascript"});
+		print "mathView_basepath = \"$site_url/images/mathview/\";";
+		print CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	    } else {
+		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
+	    }
+	}
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
 	#This is for page specfific js
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
 	
 	return "";
 }
-
 
 1;
