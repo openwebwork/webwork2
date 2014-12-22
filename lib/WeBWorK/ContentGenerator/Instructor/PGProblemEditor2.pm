@@ -1501,21 +1501,12 @@ sub add_problem_handler {
 		#################################################
 		# Set up redirect Problem.pm
 		#################################################
-		my $problemPage;
-		# we need to know if the set is a gateway set to determine the redirect
-		my $globalSet = $self->r->db->getGlobalSet( $setName );
-
-		if ( defined($globalSet) && $globalSet->assignment_type =~ /gateway/ ) {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz",$r,
-			courseID => $courseName, setID => "Undefined_Set");
-		}  else {
-			$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem",$r,
-									courseID => $courseName, setID => $targetSetName, problemID => $targetProblemNumber
-			);
-		}
-
+				my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",$r,
+			courseID  => $courseName, 
+			setID     => $targetSetName, 
+			problemID => $targetProblemNumber, 
+		);
 		my $relativeSourceFilePath = $self->getRelativeSourceFilePath($sourceFilePath);
-
 		$viewURL = $self->systemLink($problemPage,
 				params => {
 					displayMode        => $displayMode,
@@ -1523,10 +1514,12 @@ sub add_problem_handler {
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
 					sourceFilePath     => $relativeSourceFilePath,
-					status_message     => uri_escape($self->{status_message})
+					status_message     => uri_escape($self->{status_message}),
+					file_type          => 'problem',
 	
 				}
 		);
+
 	} elsif ($targetFileType eq 'set_header')  {
 		#################################################
 		# Update set record
@@ -1550,8 +1543,34 @@ sub add_problem_handler {
 					displayMode        => $displayMode,
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
-					status_message     => uri_escape($self->{status_message})
-				}
+					status_message     => uri_escape($self->{status_message}),
+						}
+		);
+	} elsif ($targetFileType eq 'hardcopy_header')  {
+		#################################################
+		# Update set record
+		#################################################
+		my $setRecord  = $self->r->db->getGlobalSet($targetSetName);
+		$setRecord->hardcopy_header($sourceFilePath);
+		if(  $self->r->db->putGlobalSet($setRecord) ) {
+			$self->addgoodmessage("Added '".$self->shortPath($sourceFilePath)."' to ". $targetSetName. " as new hardcopy header ") ;
+		} else {
+			$self->addbadmessage("Unable to make '".$self->shortPath($sourceFilePath)."' the hardcopy header for $targetSetName");
+		}
+		$self->{file_type} = 'hardcopy_header'; # change file type to set_header if it not already so
+		#################################################
+		# Set up redirect
+		#################################################
+		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",$r,
+			courseID => $courseName, setID => $targetSetName
+		);
+		$viewURL = $self->systemLink($problemPage,
+				params => {
+					displayMode        => $displayMode,
+					editMode           => "savedFile",
+					edit_level         => $edit_level,
+					status_message     => uri_escape($self->{status_message}),
+						}
 		);
 	} else {
 		die "Don't know what to do with target file type $targetFileType";
@@ -1946,7 +1965,7 @@ sub save_as_handler {
 				}
 			}
 		} elsif ($saveMode eq 'add_to_set_as_new_problem') {
-			my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
+			my $targetProblemNumber   =  1+WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
 			my $problemRecord  = $self->addProblemToSet(
 					   setName        => $setName,
 					   sourceFile     => $new_file_name, 
@@ -1988,8 +2007,9 @@ sub save_as_handler {
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
+	    my $targetProblemNumber   =  WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
 	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",$r,
-			courseID => $courseName, setID => $setName, problemID => $problemNumber
+			courseID => $courseName, setID => $setName, problemID => $targetProblemNumber
 		);
 		$new_file_type = $file_type;
 	} else {

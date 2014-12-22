@@ -187,11 +187,11 @@ sub addStudentForm {
 
 		
 		CGI::p("Select sets below to assign them to the newly-created users."),
-		CGI::popup_menu(
+		CGI::scrolling_list(
 			-name     => "assignSets",
 			-values   => [ $db->listGlobalSets ],
 			-size     => 10,
-			-multiple => "multiple",
+			-multiple => "1",
 		),
 		CGI::p(
 			CGI::submit({name=>"addStudents", value=>"Add Students"}),
