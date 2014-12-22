@@ -154,15 +154,15 @@ sub build_library_subject_tree {
 	my %tables = ($libraryVersion eq '2.5')? %OPLtables : %NPLtables;
 
 
-	my $selectClause = "select subj.name, ch.name, sect.name, path.path,pg.filename from $tables{dbsection} AS sect "
-		."JOIN $tables{dbchapter} AS ch ON ch.DBchapter_id = sect.DBchapter_id "
-		."JOIN $tables{dbsubject} AS subj ON subj.DBsubject_id = ch.DBsubject_id "
-		."JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id "
-		."JOIN $tables{path} AS path ON pg.path_id = path.path_id ";
+	my $selectClause = "select subj.name, ch.name, sect.name, path.path,pg.filename from `$tables{dbsection}` AS sect "
+		."JOIN `$tables{dbchapter}` AS ch ON ch.DBchapter_id = sect.DBchapter_id "
+		."JOIN `$tables{dbsubject}` AS subj ON subj.DBsubject_id = ch.DBsubject_id "
+		."JOIN `$tables{pgfile}` AS pg ON sect.DBsection_id = pg.DBsection_id "
+		."JOIN `$tables{path}` AS path ON pg.path_id = path.path_id ";
 
 	my $tree;  # the library subject tree will be stored as arrays of objects. 
 
-	my $results = $dbh->selectall_arrayref("select subj.name from $tables{dbsubject} AS subj");
+	my $results = $dbh->selectall_arrayref("select subj.name from `$tables{dbsubject}` AS subj");
 
 	my @subject_names = map { $_->[0]} @{$results};
 
@@ -178,7 +178,7 @@ sub build_library_subject_tree {
 		$subj =~ s/'/\'/g;
 
 
-		my $results = $dbh->selectall_arrayref("select ch.name from $tables{dbsubject} AS subj JOIN $tables{dbchapter} AS ch "
+		my $results = $dbh->selectall_arrayref("select ch.name from `$tables{dbsubject}` AS subj JOIN `$tables{dbchapter}` AS ch "
 				. " ON subj.DBsubject_id = ch.DBsubject_id WHERE subj.name='$subj';");
 		my @chapter_names = map {$_->[0]} @{$results};
 
@@ -191,9 +191,9 @@ sub build_library_subject_tree {
 			my $ch = $ch_name;
 			$ch =~ s/'/\'/g;
 
-			my $results = $dbh->selectall_arrayref("SELECT sect.name from $tables{dbsubject} AS subj "
-					."JOIN $tables{dbchapter} AS ch ON subj.DBsubject_id = ch.DBsubject_id "
-					."JOIN $tables{dbsection} AS sect ON sect.DBchapter_id = ch.DBchapter_id "
+			my $results = $dbh->selectall_arrayref("SELECT sect.name from `$tables{dbsubject}` AS subj "
+					."JOIN `$tables{dbchapter}` AS ch ON subj.DBsubject_id = ch.DBsubject_id "
+					."JOIN `$tables{dbsection}` AS sect ON sect.DBchapter_id = ch.DBchapter_id "
 					."WHERE subj.name='$subj' AND ch.name='$ch';");
 
 			my @section_names = map { $_->[0]} @{$results};
@@ -297,15 +297,15 @@ sub build_library_textbook_tree {
 	my %tables = ($libraryVersion eq '2.5')? %OPLtables : %NPLtables;
 
 
-	my $selectClause = "SELECT pg.pgfile_id from $tables{path} as path "
-		."LEFT JOIN $tables{pgfile} AS pg ON pg.path_id=path.path_id "
-		."LEFT JOIN $tables{pgfile_problem} AS pgprob ON pgprob.pgfile_id=pg.pgfile_id "
-		."LEFT JOIN $tables{problem} AS prob ON prob.problem_id=pgprob.problem_id "
-		."LEFT JOIN $tables{section} AS sect ON sect.section_id=prob.section_id "
-		."LEFT JOIN $tables{chapter} AS ch ON ch.chapter_id=sect.chapter_id "
-		."LEFT JOIN $tables{textbook} AS text ON text.textbook_id=ch.textbook_id ";
+	my $selectClause = "SELECT pg.pgfile_id from `$tables{path}` as path "
+		."LEFT JOIN `$tables{pgfile}` AS pg ON pg.path_id=path.path_id "
+		."LEFT JOIN `$tables{pgfile_problem}` AS pgprob ON pgprob.pgfile_id=pg.pgfile_id "
+		."LEFT JOIN `$tables{problem}` AS prob ON prob.problem_id=pgprob.problem_id "
+		."LEFT JOIN `$tables{section}` AS sect ON sect.section_id=prob.section_id "
+		."LEFT JOIN `$tables{chapter}` AS ch ON ch.chapter_id=sect.chapter_id "
+		."LEFT JOIN `$tables{textbook}` AS text ON text.textbook_id=ch.textbook_id ";
 
-	my $results = $dbh->selectall_arrayref("select * from $tables{textbook} ORDER BY title;");
+	my $results = $dbh->selectall_arrayref("select * from `$tables{textbook}` ORDER BY title;");
 
 	my @textbooks=map { {textbook_id=>$_->[0],title=>$_->[1],edition=>$_->[2],
 			author=>$_->[3],publisher=>$_->[4],isbn=>$_->[5],pubdate=>$_->[6]}} @{$results};
@@ -321,7 +321,7 @@ sub build_library_textbook_tree {
 		print("\n") if ($i %10==0);
 
 		my $results = $dbh->selectall_arrayref("select ch.chapter_id,ch.name,ch.number "
-			. " from $tables{chapter} AS ch JOIN $tables{textbook} AS text ON ch.textbook_id=text.textbook_id "
+			. " from `$tables{chapter}` AS ch JOIN `$tables{textbook}` AS text ON ch.textbook_id=text.textbook_id "
 			. " WHERE text.textbook_id='" . $textbook->{textbook_id} . "' ORDER BY ch.number;");
 
 		my @chapters=map { {chapter_id=>$_->[0],name=>$_->[1],number=>$_->[2]}} @{$results};
@@ -329,9 +329,9 @@ sub build_library_textbook_tree {
 		for my $chapter (@chapters){
 
 			my $results = $dbh->selectall_arrayref("select sect.section_id,sect.name,sect.number "
-				. "FROM $tables{chapter} AS ch "
-				. "LEFT JOIN $tables{textbook} AS text ON ch.textbook_id=text.textbook_id "
-				. "LEFT JOIN $tables{section} AS sect ON sect.chapter_id = ch.chapter_id "
+				. "FROM `$tables{chapter}` AS ch "
+				. "LEFT JOIN `$tables{textbook}` AS text ON ch.textbook_id=text.textbook_id "
+				. "LEFT JOIN `$tables{section}` AS sect ON sect.chapter_id = ch.chapter_id "
 				. "WHERE text.textbook_id='" .$textbook->{textbook_id}. "' AND "
 				. "ch.chapter_id='".$chapter->{chapter_id}."' ORDER BY sect.number;");
 
