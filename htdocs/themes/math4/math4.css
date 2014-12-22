@@ -360,6 +360,10 @@ table.classlist-table .tbody {
     width: 100%;
 }
 
+.UserDetail-date-table td {
+    padding-left:.5em;
+}
+
 /* Homework Sets */
 .problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
     margin-top: 0px;
@@ -367,6 +371,7 @@ table.classlist-table .tbody {
 
 .problem_set_table td a {
     font-weight:bold;
+    font-size:13px;
 }
 
 .problem_table td {
@@ -538,6 +543,7 @@ textarea {
   font-weight: normal;
   line-height: 18px;
   width: auto;
+  max-width: 95%;
 }
 
 input {
@@ -574,7 +580,13 @@ table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
 table.FormLayout tr.ButtonRow { text-align: left; }
 table.FormLayout tr.ButtonRowCenter { text-align: center; }
-table.FormLayout td { padding-right:10px }
+table.FormLayout td { padding-right:10px; padding-bottom:.5ex; }
+
+table.FormLayout tr.ButtonRow,
+table.FormLayout tr.ButtonRowCenter, 
+table.FormLayout tr.ButtonRowCenter tr {
+    vertical-align: middle;
+}
 
 div.RenderSolo { background-color: #E0E0E0; color: black; }
 div.AuthorComment { background-color: #00E0E0; color: black; }
@@ -623,6 +635,16 @@ input.incorrect[type="text"] { /* red */
   -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
   box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
     color:inherit; 
+}
+
+input.changed[type="text"] { /* orange */
+  border-color: #ca5000;
+  outline: 0;
+ outline: thin dotted \9;
+  /* IE6-9 */
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+  color: inherit;
 }
 
 .results-popover {

@@ -779,12 +779,10 @@ sub sort_form {
 			-label_text=>$r->maketext("Then by").": ",
 			-input_attr=>{
 				-name => "action.sort.secondary",
-				-values => [qw(set_id set_header hardcopy_header open_date due_date answer_date visible)],
+				-values => [qw(set_id open_date due_date answer_date visible)],
 				-default => $actionParams{"action.sort.secondary"}->[0] || "open_date",
 				-labels => {
 					set_id		=> $r->maketext("Set Name"),
-					set_header 	=> $r->maketext("Set Header"),
-					hardcopy_header	=> $r->maketext("Hardcopy Header"),
 					open_date	=> $r->maketext("Open Date"),
 					due_date	=> $r->maketext("Due Date"),
 					answer_date	=> $r->maketext("Answer Date"),
@@ -808,8 +806,6 @@ sub sort_handler {
 
 	my %names = (
 		set_id		=> $r->maketext("Set Name"),
-		set_header	=> $r->maketext("Set Header"),
-		hardcopy_header	=> $r->maketext("Hardcopy Header"),
 		open_date	=> $r->maketext("Open Date"),
 		due_date	=> $r->maketext("Due Date"),
 		answer_date	=> $r->maketext("Answer Date"),
@@ -1194,7 +1190,8 @@ sub create_handler {
 
 	my $r      = $self->r;
 	my $db     = $r->db;
-	
+	my $ce     = $r->ce;
+
 	my $newSetID = $actionParams->{"action.create.name"}->[0];
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: no set name specified!")) unless $newSetID =~ /\S/;
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Set [_1] exists.  No set created", $newSetID)) if $db->existsGlobalSet($newSetID);
@@ -1202,18 +1199,28 @@ sub create_handler {
 	my $oldSetID = $self->{selectedSetIDs}->[0];
 
 	my $type = $actionParams->{"action.create.type"}->[0];
-	# It's convenient to set the open date one week from now so that it is 
-	# not accidentally available to students.  We set the due and answer date
-	# to be two weeks from now.
+	# It's convenient to set the due date two weeks from now so that it is 
+	# not accidentally available to students.  
 
+	my $dueDate = time+2*ONE_WEEK();
+	my $display_tz = $ce->{siteDefaults}{timezone};
+	my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
+	my $dueTime = $ce->{pg}{timeAssignDue};
 
+	# We replace the due time by the one from the config variable
+	# and try to bring it back to unix time if possible
+	$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
+	
+	$dueDate = $self->parseDateTime($fDueDate, $display_tz);
+	
 	if ($type eq "empty") {
 		$newSetRecord->set_id($newSetID);
 		$newSetRecord->set_header("defaultHeader");
 		$newSetRecord->hardcopy_header("defaultHeader");
-		$newSetRecord->open_date(time + ONE_WEEK());
-		$newSetRecord->due_date(time + 2*ONE_WEEK() );
-		$newSetRecord->answer_date(time + 2*ONE_WEEK() );
+		#Rest of the dates are set according to to course configuration
+		$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
+		$newSetRecord->due_date($dueDate);
+		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
 		$db->addGlobalSet($newSetRecord);
@@ -1323,9 +1330,11 @@ EOS
 				-name => "action.import.source",
 				-values => [ "", $self->getDefList() ],
 				-labels => { "" => $r->maketext("Enter filenames below") },
-				-default => $actionParams{"action.import.source"}->[0] || "",
+				-default => defined($actionParams{"action.import.source"}) ? $actionParams{"action.import.source"} : "",
 				-size => $actionParams{"action.import.number"}->[0] || "1",
 				-onchange => $onChange,
+				defined($actionParams{"action.import.number"}->[0]) && $actionParams{"action.import.number"}->[0] == 8 ?
+				    ('-multiple', 'multiple') : ()
 			},
 			-label_attr=>{-id=>"import_source_select_label"}
 		),
@@ -1549,6 +1558,7 @@ sub saveEdit_handler {
 	
 	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
 	foreach my $setID (@visibleSetIDs) {
+	        next unless $setID;
 		my $Set = $db->getGlobalSet($setID); # checked
 		# FIXME: we may not want to die on bad sets, they're not as bad as bad users
 		die "record for visible set $setID not found" unless $Set;
@@ -1559,7 +1569,7 @@ sub saveEdit_handler {
 				if ($field =~ /_date/) {
 					$Set->$field($self->parseDateTime($tableParams->{$param}->[0]));
 				} elsif ($field eq 'enable_reduced_scoring') {
-				    #If we are enableing reduced scoring, make sure the reduced scoring date is set
+				    #If we are enableing reduced scoring, make sure the reduced scoring date is set and in a proper interval
 				    my $value = $tableParams->{$param}->[0];
 				    $Set->enable_reduced_scoring($value);
 				    if (!$Set->reduced_scoring_date) {
@@ -1592,6 +1602,23 @@ sub saveEdit_handler {
 		if ($Set->due_date > $Set->answer_date) {
 			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Answer date must come after due date in set [_1]", $setID));
 		}
+		
+		# check that the reduced scoring date is in the right place
+		# if not do something to try and fix it
+		if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
+		    if ($Set->reduced_scoring_date > $Set->due_date ||
+			$Set->open_date > $Set->reduced_scoring_date) {
+
+			$Set->reduced_scoring_date($Set->due_date -
+						   60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
+
+			# we do a second check here to make sure we didnt go before the open date
+			if ($Set->open_date > $Set->reduced_scoring_date) {
+			    $Set->reduced_scoring_date($Set->open_date);
+			}
+		    }
+		}
+		
 		
 		$db->putGlobalSet($Set);
 	}

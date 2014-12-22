@@ -1798,7 +1798,7 @@ sub archive_course_confirm {
 				CGI::submit(-name=>"decline_archive_course", -value=>"Stop archiving"),
 				"&nbsp;",
 				(@archive_courseIDs)? CGI::submit(-name=>"archive_course", -value=>"Skip archiving this course")."&nbsp;":'',
-				CGI::submit(-name=>"confirm_archive_course", -value=>"archive") ,
+				CGI::submit(-name=>"confirm_archive_course", -value=>"Archive") ,
 			);
 		} elsif( $directories_ok)  {
 			print CGI::p({style=>"text-align: center"},
@@ -2069,9 +2069,9 @@ sub unarchive_course_confirm {
 	print $self->hidden_fields(qw/unarchive_courseID create_newCourseID/);
 	
 	print CGI::p({style=>"text-align: center"},
-		CGI::submit(-name=>"decline_unarchive_course", -value=>"Don't unarchive"),
+		CGI::submit(-name=>"decline_unarchive_course", -value=>"Don't Unarchive"),
 		"&nbsp;",
-		CGI::submit(-name=>"confirm_unarchive_course", -value=>"unarchive"),
+		CGI::submit(-name=>"confirm_unarchive_course", -value=>"Unarchive"),
 	);
 	
 	print CGI::end_form();
@@ -2127,7 +2127,7 @@ sub do_unarchive_course {
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
 		print CGI::hidden("unarchive_courseID",$unarchive_courseID);
-		print CGI::p( CGI::submit("decline_unarchive_course", "unarchive next course")  );
+		print CGI::p( CGI::submit("decline_unarchive_course", "Unarchive Next Course")  );
  		print CGI::end_form();
  
 	}
@@ -3404,7 +3404,7 @@ sub upgrade_notification {
 	return CGI::center(CGI::table({class=>"admin-messagebox"},$upgradeMessage));
     } else {
 	return CGI::center(CGI::div({class=>"ResultsWithoutError"},
-				    $r->maketext('WeBWorK, PG, and the Open Problem Library are up to date!')));
+				    $r->maketext('Your systems are up to date!')));
     }
 
 }
