@@ -2442,6 +2442,7 @@ sub body {
 
 		# now use recursion to print the nested lists
 		print CGI::start_ol({id=>"psd_list", $forUsers ? ('class','disable_renumber') : ()});
+
 		foreach my $id (sort {$a <=> $b} keys %$nestedIDHash) {
 		    print_nested_list($nestedIDHash->{$id});
 		}

@@ -1227,7 +1227,7 @@ sub nav {
 	if (!$self->{invalidProblem}) {
 		my @problemIDs = $db->listUserProblems($eUserID, $setID);
 
-		@problemIDs = sort @problemIDs;
+		@problemIDs = sort { $a <=> $b } @problemIDs;
 		
 
 		if ($isJitarSet) {
@@ -1695,7 +1695,7 @@ sub output_score_summary{
 	# if necessary
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	    my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
-	    @problemIDs = sort @problemIDs;
+	    @problemIDs = sort { $a <=> $b } @problemIDs;
 
 	    # get some data 
 	    my @problemSeqs;

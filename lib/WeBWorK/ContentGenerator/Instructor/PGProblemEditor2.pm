@@ -1512,7 +1512,7 @@ sub add_problem_handler {
 	    # problems at the end
 	    if ($set->assignment_type eq 'jitar') {
 		my @problemIDs = $db->listGlobalProblems($targetSetName);
-		@problemIDs = sort(@problemIDs);
+		@problemIDs = sort { $a <=> $b } @problemIDs;
 		my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 		$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
 	    } else {
@@ -2018,7 +2018,7 @@ sub save_as_handler {
 		    # problems at the end
 		    if ($set->assignment_type eq 'jitar') {
 			my @problemIDs = $self->r->db->listGlobalProblems($setName);
-			@problemIDs = sort(@problemIDs);
+			@problemIDs = sort { $a <=> $b } @problemIDs;
 			my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 			$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
 		    } else {

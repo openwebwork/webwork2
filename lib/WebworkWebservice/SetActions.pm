@@ -666,7 +666,7 @@ sub addProblem {
 	# for jitar sets the next problem id is the next top level problem
 	if ($set->assignment_type eq 'jitar') {
 	    my @problemIDs = $db->listGlobalProblems($setName);
-	    @problemIDs = sort @problemIDs;
+	    @problemIDs = sort { $a <=> $b } @problemIDs;
 	    my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 	    $freeProblemID = seq_to_jitar_id($seq[0]+1);
 	} else {

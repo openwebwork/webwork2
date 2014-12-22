@@ -368,6 +368,7 @@ sub body {
 
 	    foreach my $problemID (@problemNumbers) {
 		my $problem = $db->getGlobalProblem($setName,$problemID);
+
 		if ($problem->flags =~ /essay/)  {
 		    $canScoreProblems = 1;
 		    $gradeableProblems[$problemID] = 1;
