@@ -675,8 +675,7 @@ div.NoFontMessage {
 
 /*Following are mostly alignment fixes for the input elements and their lables on this page.*/
 .edit_form  input,select{
-	margin-top: .25em;
-	margin-bottom: .25em;
+	margin-bottom: .5em;
 }
 
 .edit_form label {
