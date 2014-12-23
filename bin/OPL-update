@@ -180,6 +180,8 @@ if($libraryVersion eq '2.5') {
 	morelt_id int(127) DEFAULT 0 NOT NULL,
 	level int(15),
 	language varchar(15),
+	static TINYINT,
+	MO TINYINT,
 	PRIMARY KEY (pgfile_id)
 '],
 [$tables{keyword}, '
@@ -644,7 +646,7 @@ sub pgfiles {
 			my $path_id = safe_get_id($tables{path}, 'path_id',
 				qq(WHERE path = ?), [$pgpath], 1, "", $pgpath, "", "");
 
-			# pgfile table -- set 2 defaults first
+			# pgfile table -- set 4 defaults first
 
 			## TODO this is where we have to deal with crosslists, and pgfileid
 			##      will be an array of id's
@@ -653,12 +655,14 @@ sub pgfiles {
 			my $level = $tags->{Level} || 0;
 			# Default language is English
 			my $lang = $tags->{Language} || "en";
+			my $mathobj = $tags->{MO} || 0;
+			my $static = $tags->{Static} || 0;
 
 			my @pgfile_ids = ();
 
 			for my $DBsection_id (@DBsection_ids) {
 				my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
-					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? ), [$pgfile, $path_id, $DBsection_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, 0, $level, $lang);
+					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? ), [$pgfile, $path_id, $DBsection_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, 0, $level, $lang, $static, $mathobj);
 				push @pgfile_ids, $pgfile_id;
 			}
 #if (scalar(@pgfile_ids)>1) {
