@@ -2449,7 +2449,7 @@ sub body {
 		print CGI::end_ol();
 
 	    } else {
-		print CGI::start_ol({id=>"psd_list", after($setRecord->open_date) || $forUsers ? ('class','disable_renumber') : () });
+		print CGI::start_ol({id=>"psd_list", $forUsers ? ('class','disable_renumber') : () });
 		for (my $i=0; $i<=$#problemIDList; $i++) {
 		    print CGI::li({class=>"psd_list_row mjs-nestedSortable-no-nesting", id=>"psd_list_".$problemIDList[$i]} , $problemRow[$i]);
 		}
