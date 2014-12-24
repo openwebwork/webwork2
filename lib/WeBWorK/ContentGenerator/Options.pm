@@ -180,9 +180,12 @@ sub body {
 
 	if ($changeOptions) {
 	    
-	    if ($EUser->displayMode() ne $r->param('displayMode') ||
-		$EUser->showOldAnswers() ne $r->param('showOldAnswers') ||
-		$EUser->useMathView() ne $r->param('useMathView')) {
+	    if ((defined($r->param('displayMode')) &&
+			$EUser->displayMode() ne $r->param('displayMode')) ||
+		(defined($r->param('showOldAnswers')) &&
+			$EUser->showOldAnswers() ne $r->param('showOldAnswers')) ||
+		(defined($r->param('useMathView')) && 
+			 $EUser->useMathView() ne $r->param('useMathView'))) {
 		
 		$EUser->displayMode($r->param('displayMode'));
 		$EUser->showOldAnswers($r->param('showOldAnswers'));
