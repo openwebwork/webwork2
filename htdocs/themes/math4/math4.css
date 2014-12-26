@@ -60,7 +60,12 @@ legend {
 }
 .sr-only-focusable:active,
 .sr-only-focusable:focus {
-  position: static;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 1px solid #999;
+  background-color: #FFFFDD;
+  padding: 10px;
   width: auto;
   height: auto;
   margin: 0;
