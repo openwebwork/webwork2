@@ -65,6 +65,14 @@ $(function(){
 	$('#content').removeClass('span10').addClass('span11');
 	$('#toggle-sidebar').addClass('hidden');
     }
+    
+    //Makes tables scrollable on small windows
+    $('table').wrap('<div class="table-container"></div>');
+    $('.table-container').css('overflow-x','scroll');
+    
+    //Prevents overflow of hardcopy button on small screens
+    $('#hardcopy').css('word-wrap','break-word').addClass('span5');
+    $('.scoring_info').css('word-wrap','break-word');
 
     // Makes the fisheye stuff bootstrap nav
     $('#site-navigation ul').addClass('nav nav-list');

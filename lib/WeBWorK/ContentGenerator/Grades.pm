@@ -49,8 +49,9 @@ sub body {
 	
 	$self->displayStudentStats($self->{studentName});
 	
-	print $self->scoring_info();
-	
+	print CGI::start_div({-class=>"scoring_info"});
+	print  $self->scoring_info();
+	print CGI::end_div();
 	return '';
 
 }
@@ -93,6 +94,7 @@ sub scoring_info {
 	my $merge_file         = "report_grades_data.csv";
 	my $delimiter            = ',';
 	my $scoringDirectory    = $ce->{courseDirs}->{scoring};
+	
 	return $r->maketext("There is no additional grade information. The spreadsheet file [_1] cannot be found.", $filePath) unless -e "$scoringDirectory/$merge_file";
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my $text;
