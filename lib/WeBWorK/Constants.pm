@@ -34,7 +34,7 @@ $WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT} unless defined($WeBW
 
 # If true, WeBWorK::Debug will print debugging output.
 #
-$WeBWorK::Debug::Enabled = 1;
+$WeBWorK::Debug::Enabled = 0;
 
 # If non-empty, debugging output will be sent to the file named rather than STDERR.
 #
