@@ -635,7 +635,8 @@ sub body {
 		  if (inWindow) {
 		      target = "WW_View";
 		  } 
-		  else if (document.getElementById('save_as_form_id').checked
+		  else if ((document.getElementById('save_as_form_id') &&
+			   document.getElementById('save_as_form_id').checked)
 		      || (document.getElementById('revert_form_id') && 
 			  document.getElementById('revert_form_id').checked ))
 		  {
@@ -1532,6 +1533,7 @@ sub add_problem_handler {
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
 					sourceFilePath     => $relativeSourceFilePath,
+					file_type          => 'problem',
 					status_message     => uri_escape($self->{status_message})
 	
 				}
@@ -1561,6 +1563,32 @@ sub add_problem_handler {
 					edit_level         => $edit_level,
 					status_message     => uri_escape($self->{status_message})
 				}
+		);
+	} elsif ($targetFileType eq 'hardcopy_header')  {
+		#################################################
+		# Update set record
+		#################################################
+		my $setRecord  = $self->r->db->getGlobalSet($targetSetName);
+		$setRecord->hardcopy_header($sourceFilePath);
+		if(  $self->r->db->putGlobalSet($setRecord) ) {
+			$self->addgoodmessage("Added '".$self->shortPath($sourceFilePath)."' to ". $targetSetName. " as new hardcopy header ") ;
+		} else {
+			$self->addbadmessage("Unable to make '".$self->shortPath($sourceFilePath)."' the hardcopy header for $targetSetName");
+		}
+		$self->{file_type} = 'hardcopy_header'; # change file type to set_header if it not already so
+		#################################################
+		# Set up redirect
+		#################################################
+		my $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",$r,
+			courseID => $courseName, setID => $targetSetName
+		);
+		$viewURL = $self->systemLink($problemPage,
+				params => {
+					displayMode        => $displayMode,
+					editMode           => "savedFile",
+					edit_level         => $edit_level,
+					status_message     => uri_escape($self->{status_message}),
+						}
 		);
 	} else {
 		die "Don't know what to do with target file type $targetFileType";

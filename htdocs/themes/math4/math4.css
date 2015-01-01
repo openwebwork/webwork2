@@ -14,6 +14,18 @@
  */
  
 /* Bootstrap overrides */
+a:focus {
+    outline-style:solid;
+    outline-color:#aaaa00;
+    outline-width:1px;
+}
+
+.btn:focus {
+    outline-style:solid;
+    outline-color:#aaaa00;
+    outline-width:2px;
+}
+
 .row-fluid [class*="span"] {
     min-height:0px;
 }
@@ -22,17 +34,57 @@ input[type="checkbox"] {
     margin-right:.25em;
 }
 
+legend {
+    margin-bottom: 5px;
+    font-size:18px;
+}
+
+.container-fluid {
+	padding: 0.5em;
+}
+
+/* Basic elements */
+.required-field {
+    color:red;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.sr-only-focusable:active,
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+}
+.sr-only-glyphicon {
+ position: absolute;
+ width: 1em;
+ height: 1em;
+ padding: 0;
+ margin: 0;
+ margin-left: -1em;
+ overflow: hidden;
+ clip: rect(0px, 0px, 0px, 0px);
+ border: 0 none;
+}
+
 /* Banner */
 #masthead {
 	background-color: #038;
 	margin: 0;
 	padding: 0;
 	padding: 5px;
-}
-
-/* Bootstrap Overrides */
-.container-fluid {
-	padding: 0.5em;
 }
 
 .webwork_logo {
@@ -52,6 +104,11 @@ input[type="checkbox"] {
 	vertical-align: center;
 }
 
+.webwork_logo a,
+.maa_logo a {
+    display:block;
+}
+
 #masthead a {
 	color: white;
 }
@@ -61,12 +118,15 @@ input[type="checkbox"] {
 }
 
 #loginstatus {
-    	padding-top:1ex;
+    	padding-top:.5ex;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
 	font-weight: normal;
 } 
+#loginstatus a.btn {
+    margin-bottom:.5ex;
+}
 
 #loginstatus a {
 	color: black;
@@ -93,6 +153,12 @@ ul.nav li a:hover {
 	background: #e1e1e1;	
 }
 
+#site-links h2 {
+    margin-top:0;
+    margin-bottom:0;
+    font-size:13px;
+}
+
 #site-navigation .info-box {
 	margin-top: 0.5em;
 }
@@ -116,7 +182,7 @@ ul.nav li a:hover {
     float:left;
     display:inline-block;
     width:90%;
-    width:calc(100% - 35px);
+    width:calc(100% - 40px);
 }
 
 /* Main Content */
@@ -176,6 +242,13 @@ h2.page-title {
 .font-visible   { font-weight: bold; }
 .font-hidden { font-style: italic; } 
 
+.admin-messagebox {
+    background-color:#FFFFCC;
+    width:60%;
+    padding: 10px;
+    text-align:center;
+}
+
 /* Home Page */
 ul.courses-list {
 	list-style-type: none;
@@ -221,7 +294,8 @@ ul.courses-list a:hover {
     white-space:nowrap;
 }
 
-.label-with-edit-icon .set-label {
+.label-with-edit-icon .set-label,
+.label-with-edit-icon div.tooltip {
     white-space:normal;
 }
 
@@ -235,6 +309,10 @@ table.classlist-table .tbody {
     width: 100%;
 }
 
+.UserDetail-date-table td {
+    padding-left:.5em;
+}
+
 /* Homework Sets */
 .problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
     margin-top: 0px;
@@ -242,6 +320,11 @@ table.classlist-table .tbody {
 
 .problem_set_table td a {
     font-weight:bold;
+    font-size:13px;
+}
+
+.problem_set_table .hardcopy-link {
+    font-size:16px;
 }
 
 /* Info Box */
@@ -296,6 +379,18 @@ table.classlist-table .tbody {
     margin-bottom:0px;
 }
 
+/* Gateway Options */
+
+#sp-gateway-form{
+	background-color: #eeeeee;
+	color: black;
+}
+
+#sp-gateway-form label{
+    display: inline-block;
+	padding-right: 15px;    
+}
+
 /* Library Browser */
 .library-browser-table td {
 	padding-top: 0.2em;
@@ -310,7 +405,7 @@ table.classlist-table .tbody {
 	clear: both;
 	display: block;
 	font-size: 0.8em;
-	color: #888;
+	color: #767676;
 	text-align: center;
 	padding: 1em;
 	margin-top: 1em;
@@ -342,6 +437,7 @@ textarea {
   font-weight: normal;
   line-height: 18px;
   width: auto;
+  max-width: 95%;
 }
 
 input {
@@ -378,7 +474,13 @@ table.FormLayout tr { vertical-align: top; }
 table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
 table.FormLayout tr.ButtonRow { text-align: left; }
 table.FormLayout tr.ButtonRowCenter { text-align: center; }
-table.FormLayout td { padding-right:10px }
+table.FormLayout td { padding-right:10px; padding-bottom:.5ex; }
+
+table.FormLayout tr.ButtonRow,
+table.FormLayout tr.ButtonRowCenter, 
+table.FormLayout tr.ButtonRowCenter tr {
+    vertical-align: middle;
+}
 
 div.RenderSolo { background-color: #E0E0E0; color: black; }
 div.AuthorComment { background-color: #00E0E0; color: black; }
@@ -388,24 +490,56 @@ div.AuthorComment { background-color: #00E0E0; color: black; }
 /*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
 
 /* background styles for success and failure messages */
-div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+div.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red */
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
-div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+div.ResultsWithError { color: #bf5454; background-color: inherit; } /* red */
+div.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
 div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px} /* bright gold border and harvest gold background*/
-label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+label.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red */
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
-label.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
-span.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
+label.ResultsWithError { color: #bf5454; background-color: inherit; } /* red*/
+label.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
+span.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red*/
 span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
-span.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
-span.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+span.ResultsWithError { color: #bf5454; background-color: inherit; } /* red*/
+span.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
 span.correct { color: inherit; background-color: #8F8; } /* green */
-span.incorrect { color: #FF9494; background-color: inherit; } /* red */
+span.incorrect { color: #bf5454; background-color: inherit; } /* red */
 span.unattempted { color: inherit; background-color: #88ECFF;}
-input.correct { color:inherit; background-color: #8F8; } /* green */
-input.incorrect { color:inherit; background-color: #FF9494; } /* red */
+input.correct[type="text"]{ /* green */
+    border-color: rgba(81,153,81, 0.8);
+    outline: 0;
+    outline: thin dotted \9;
+    /* IE6-9 */
+    
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81, ,.6);
+    -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
+    
+    color:inherit; 
+}
+
+input.incorrect[type="text"] { /* red */
+  border-color: rgba(191, 84, 84, 0.8);
+  outline: 0;
+  outline: thin dotted \9;
+  /* IE6-9 */
+
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
+  -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
+    color:inherit; 
+}
+
+input.changed[type="text"] { /* orange */
+  border-color: #ca5000;
+  outline: 0;
+ outline: thin dotted \9;
+  /* IE6-9 */
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+  color: inherit;
+}
 
 .results-popover {
     cursor : pointer;
@@ -463,7 +597,7 @@ table.attemptResults th {
 table.attemptResults td.FeedbackMessage { background-color:#EDE275;} /* Harvest Gold */
 table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
 span.ResultsWithErrorInResultsTable { color: inherit; background-color: inherit; } /* used to override the older red on white span */ 
-table.attemptResults td.ResultsWithError { background-color:#FF9494; color: #000000} /* error red */
+table.attemptResults td.ResultsWithError { background-color:#D69191; color: #000000} /* red */
 
 /*styles for the instructor comment box */
 
@@ -489,6 +623,10 @@ table.attemptResults td.ResultsWithError { background-color:#FF9494; color: #000
   border-top-color: rgb(22,22,22);
 }
 
+.problem-content label {
+    font-size: 14px;
+}
+
 /* override above settings in tables used to display ans_array results */
 table.attemptResults td td,
 table.attemptResults td th,
@@ -502,7 +640,7 @@ table.attemptResults td.Message {
    padding: 2px 5px 2px 5px;
    width: auto;
 }
-.attemptResultsSummary { font-style: italic; }
+.attemptResultsSummary { margin-bottom: 10px; }
 .parsehilight { color: inherit; background-color: yellow; }
 
 .problem-main-form input {
@@ -528,7 +666,7 @@ div.NoFontMessage {
 }
 
 /* styles used when editing a temporary file */
-.temporaryFile { font-style: italic; color: #F60; background-color: inherit; }
+.temporaryFile { font-style: italic; color: #ca5000; background-color: inherit; }
 
 /* text colors for Auditing, Current, and Dropped students */
 .Audit { font-style: normal; color: purple; background-color: inherit; }
@@ -604,7 +742,6 @@ div.NoFontMessage {
 /*General styles for table captions*/
 table caption{
 	font-weight: bold;
-	text-decoration: underline;
 }
 
 /*Styling the content that is found in the login page.*/
