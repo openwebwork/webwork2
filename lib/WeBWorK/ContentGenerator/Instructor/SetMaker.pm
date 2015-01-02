@@ -205,7 +205,7 @@ sub getDBextras {
 	my $sourceFileName = shift;
 
 	if($sourceFileName =~ /^Library/) {
-		return WeBWorK::Utils::ListingDB::getDBextras($r, $sourceFileName);
+		return @{WeBWorK::Utils::ListingDB::getDBextras($r, $sourceFileName)};
 	}
 
 	my $filePath = $r->ce->{courseDirs}{templates}."/$sourceFileName";
@@ -1054,6 +1054,7 @@ sub make_data_row {
 
 	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random"></i></span>';
 	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
+	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
 	print $mltstart;
 	# Print the cell
