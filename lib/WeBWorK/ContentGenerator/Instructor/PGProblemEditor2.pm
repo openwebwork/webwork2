@@ -1839,10 +1839,13 @@ sub save_as_form {  # calls the save_as_handler
     # don't addor replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
     
 	my $prettyProbNum = $probNum;
-	my $set = $self->r->db->getGlobalSet($setID);
 
-	$prettyProbNum = join('.',jitar_id_to_seq($probNum)) 
-	    if ($self->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
+	if ($setID) {
+	    my $set = $self->r->db->getGlobalSet($setID);
+	    
+	    $prettyProbNum = join('.',jitar_id_to_seq($probNum)) 
+		if ($self->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
+	}
 
     my $replace_problem_in_set  = ($can_add_problem_to_set)?
 			 # CGI::input({
