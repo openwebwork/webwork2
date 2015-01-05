@@ -694,7 +694,7 @@ sub links {
 	
 	print CGI::start_ul();
 	print CGI::start_li({class => "nav-header"});
-	print $r->maketext("Main Menu");
+	print CGI::h2($r->maketext("Main Menu"));
 	print CGI::end_li();
 	print CGI::start_li(); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
@@ -703,7 +703,9 @@ sub links {
 	if (defined $courseID) {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
-			print &$makelink("${pfx}ProblemSets", text=>$r->maketext("Homework Sets"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+                        my $primaryMenuName = "Homework Sets";
+                        $primaryMenuName = "Course Administration" if ($ce->{courseName} eq 'admin');
+			print &$makelink("${pfx}ProblemSets", text=>$r->maketext($primaryMenuName), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::end_li();
 			if (defined $setID) {
 			    print CGI::start_li();
@@ -760,9 +762,6 @@ sub links {
 					if $ce->{showeditors}->{classlisteditor1};
 				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{classlisteditor2};
-				print CGI::li(&$makelink("${pfx}UserList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor3};
-
 				
 				# Homework Set Editor
 				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
@@ -770,8 +769,6 @@ sub links {
 
 				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{homeworkseteditor2};
-				print CGI::li(&$makelink("${pfx}ProblemSetList3", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{homeworkseteditor3};
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
@@ -792,20 +789,9 @@ sub links {
 					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 						if $ce->{showeditors}->{pgproblemeditor3};;
 	
-					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-						if $ce->{showeditors}->{simplepgeditor};;
 					    print CGI::end_ul();
 					    print CGI::end_li();
-					}
-					if (defined $problemID) {
-					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-							if $ce->{showeditors}->{simplepgeditor};;
-						print CGI::end_ul();
-					    print CGI::end_li();
-					}
-					
+					}					
 					print CGI::end_ul();
 				    print CGI::end_li();
 				}
@@ -915,7 +901,7 @@ sub links {
 			
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
-				print CGI::li({class=>'divider'},"");
+				print CGI::li({class=>'divider', 'aria-hidden'=>'true'},"");
 				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
 	
@@ -1140,13 +1126,25 @@ associated with the current request.
 sub title {
 	my ($self, $args) = @_;
 	my $r = $self->r;
-	
-	#print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
-	#print underscore2nbsp($r->urlpath->name);
-	my $name = $r->urlpath->name;
-	# $name =~ s/_/ /g;
-	print $name;
-	#print "<!-- END " . __PACKAGE__ . "::title -->\n";
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+
+	# If the urlpath name is the courseID, and if the course has
+	# a course title then display that instead. 
+	if (defined($urlpath->arg("courseID")) &&
+	    $urlpath->name eq $urlpath->arg("courseID") &&
+	    $db->settingExists('courseTitle')) {
+	    print $db->getSettingValue('courseTitle');
+	} else {
+	    # just display the urlpath name
+	    #print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
+	    #print underscore2nbsp($r->urlpath->name);
+	    my $name = $urlpath->name;
+	    # $name =~ s/_/ /g;
+	    print $name;
+	    #print "<!-- END " . __PACKAGE__ . "::title -->\n";
+	}
 	
 	return "";
 }
@@ -1217,7 +1215,14 @@ sub url {
 	my $name = $args->{name};
 	
 	if ($type eq "webwork") {
+	    # we have to build this here (and not in say defaults.conf) because
+	    # defaultTheme will chage as late as simple.conf
+	    if ($name eq "theme") {
+		return $ce->{webworkURLs}->{htdocs}.'/themes/'.$ce->{defaultTheme};
+	    } else {
+
 		return $ce->{webworkURLs}->{$name};
+	    }
 	} elsif ($type eq "course") {
 		return $ce->{courseURLs}->{$name};
 	} else {
@@ -1351,6 +1356,20 @@ sub if_warnings {
 	} else {
 		!$arg;
 	}
+}
+
+=item if_exists
+
+Returns true if the specified file exists in the current theme directory
+and false otherwise
+
+=cut
+
+sub if_exists {
+	my ($self, $arg) = @_;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	return -e $ce->{webworkDirs}{themes}.'/'.$ce->{defaultTheme}.'/'.$arg;
 }
 
 =back
@@ -1540,98 +1559,14 @@ sub helpMacro {
 	               $label);
 }
 
-=item optionsMacro(options_to_show => \@options_to_show, extra_params => \@extra_params)
+=item sub optionsMacro
 
-Helper macro for displaying the View Options panel.
-
-@options_to_show lists the options to show, from among this list "displayMode",
-"showOldAnswers", "showHints", "showSolutions". If no options are given,
-"displayMode" is assumed.
-
-@extraParams is dereferenced and passed to the hidden_fields() method. Use this
-to preserve state from the content generator calling optionsMacro().
-
-This macro is intended to be called from an implementation of the options()
-method. The simplest way to to this is:
-
- sub options { shift->optionsMacro }
+This function has been depreciated
 
 =cut
 
 sub optionsMacro {
-	my ($self, %options) = @_;
-	my $r = $self->r;
-	
-	my @options_to_show = @{$options{options_to_show}} if exists $options{options_to_show};
-	@options_to_show = "displayMode" unless @options_to_show;  #FIXME -- I don't understant this -- type seems wrong
-	my %options_to_show; @options_to_show{@options_to_show} = (); # make hash for easy lookups
-	my @extra_params = @{$options{extra_params}} if exists $options{extra_params};
-	
-	print CGI::h2($r->maketext("Display Options"));
-	
-	my $result = CGI::start_form("POST", $self->r->uri);
-	my $hiddenFields = $self->hidden_authen_fields;
-	$hiddenFields =~ s/\"hidden_/\"options-hidden_/g;
-	$result .= $hiddenFields;
-	if (@extra_params) {
-	    $hiddenFields = $self->hidden_fields(@extra_params);
-	    $hiddenFields =~ s/\"hidden_/\"options-hidden_/g;
-	    $result .= $hiddenFields;
-	}
-	$result .= CGI::start_div({class=>"viewOptions"});
-	
-	if (exists $options_to_show{displayMode}) {
-		my $curr_displayMode = $self->r->param("displayMode") || $self->r->ce->{pg}->{options}->{displayMode};
-		my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-		my @active_modes = grep { exists $display_modes{$_} } @{$self->r->ce->{pg}->{displayModes}};
-		if (@active_modes > 1) {
-			$result .= $r->maketext("View equations as").":";
-			$result .= CGI::br();
-			$result .= CGI::radio_group(
-				-name => "displayMode",
-				-values => \@active_modes,
-				-default => $curr_displayMode,
-				-linebreak=>'true',
-			);
-			$result .= CGI::br();
-		}
-	}
-	
-	if (exists $options_to_show{showOldAnswers}) {
-		# Note, 0 is a legal value, so we can't use || in setting this
-		my $curr_showOldAnswers = defined($self->r->param("showOldAnswers")) ?
-			$self->r->param("showOldAnswers") : $self->r->ce->{pg}->{options}->{showOldAnswers};
-		$result .= $r->maketext("Show saved answers?");
-		$result .= CGI::br();
-		$result .= CGI::radio_group(
-			-name => "showOldAnswers",
-			-values => [1,0],
-			-default => $curr_showOldAnswers,
-			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
-		);
-		$result .= CGI::br();
-	}
-
-	if (exists $options_to_show{useMathView}) {
-		# Note, 0 is a legal value, so we can't use || in setting this
-		my $curr_useMathView = defined($self->r->param("useMathView")) ?
-		    $self->r->param("useMathView") : $self->r->ce->{pg}->{options}->{useMathView};
-		$result .= $r->maketext("Use Equation Editor?");
-		$result .= CGI::br();
-		$result .= CGI::radio_group(
-			-name => "useMathView",
-			-values => [1,0],
-			-default => $curr_useMathView,
-			-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
-		);
-		$result .= CGI::br();
-	}
-
-	$result .= CGI::submit(-name=>"redisplay", -label=>$r->maketext("Apply Options"));
-	$result .= CGI::end_div();
-	$result .= CGI::end_form();
-	
-	return $result;
+    return '';
 }
 
 =item feedbackMacro(%params)
@@ -1758,7 +1693,9 @@ sub hidden_fields {
 # 		my @values = $r->param($param);
 # 		$html .= CGI::hidden($param, @values);  #MEG
 # 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
-		my $value  = $r->param($param);
+
+	    my $value  = $r->param($param);
+
 #		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
 

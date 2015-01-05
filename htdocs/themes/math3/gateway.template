@@ -23,16 +23,21 @@
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
 <script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+<!-- Minimal bootstrap for newer features -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap/js/bootstrap.js"></script>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
-<!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/gateway.css"/>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 <script language="javascript" type="text/javascript" 
   src="<!--#url type="webwork" name="htdocs"-->/js/apps/GatewayQuiz/gateway.js"></script>
 </head>
 <body bgcolor="white">
+<!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->

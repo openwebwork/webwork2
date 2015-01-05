@@ -13,7 +13,7 @@ msgstr ""
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_1"
-msgstr "This assignment has a Reduced Credit Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3\% of the original."
+msgstr "This assignment has a Reduced Scoring Period that begins %1 and ends on the due date, %2.  During this period all additional work done counts %3\% of the original."
 
 #
 msgid "_REQUEST_ERROR"
@@ -32,7 +32,7 @@ msgstr "%1 uses an external authentication system.  You've authenticated through
 
 #
 msgid "navProbList"
-msgstr "Up"
+msgstr "Problem List"
 
 #
 msgid "navNext"
@@ -44,11 +44,11 @@ msgstr "1"
 
 #
 msgid "navPrevGrey"
-msgstr "Prev"
+msgstr "Previous"
 
 #
 msgid "navProbListGrey"
-msgstr "Up"
+msgstr "Problem List"
 
 #
 msgid "navNextGrey"
@@ -60,7 +60,7 @@ msgstr "This is the classlist editor page, where you can view and edit the recor
 
 #
 msgid "_REDUCED_CREDIT_MESSAGE_2"
-msgstr "This assignment had a Reduced Credit Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
+msgstr "This assignment had a Reduced Scoring Period that began %1 and ended on the due date, %2.  During that period all additional work done counted %3\% of the original."
 
 #
 msgid "_LOGIN_MESSAGE"
@@ -68,11 +68,11 @@ msgstr "If you check %1 your login information will be remembered by the browser
 
 #
 msgid "navUp"
-msgstr "Up"
+msgstr "Homework Sets"
 
 #
 msgid "navPrev"
-msgstr "Prev"
+msgstr "Previous"
 
 #
 msgid "_GUEST_LOGIN_MESSAGE"
@@ -80,7 +80,7 @@ msgstr "This course supports guest logins. Click %1 to log into this course as a
 
 #
 msgid "_PROBLEM_SET_SUMMARY"
-msgstr "This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."
+msgstr "This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Scoring Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to."
 
 #
 msgid "_USER_TABLE_SUMMARY"

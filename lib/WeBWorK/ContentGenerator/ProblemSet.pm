@@ -31,28 +31,30 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted wwRound between after);
 use WeBWorK::Localize;
 
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	my $authz = $r->authz;
 	
 	my $setName = $urlpath->arg("setID");
 	my $userName = $r->param("user");
 	my $effectiveUserName = $r->param("effectiveUser");
-	$self->{displayMode}  = $r->param('displayMode') || $r->ce->{pg}->{options}->{displayMode};
 	
 
 	my $user            = $db->getUser($userName); # checked
 	my $effectiveUser   = $db->getUser($effectiveUserName); # checked
 	my $set             = $db->getMergedSet($effectiveUserName, $setName); # checked
-	
+
 	die "user $user (real user) not found."  unless $user;
 	die "effective user $effectiveUserName  not found. One 'acts as' the effective user."  unless $effectiveUser;
+
+	$self->{displayMode}  = $user->displayMode ? $user->displayMode :  $r->ce->{pg}->{options}->{displayMode};
 
 	# FIXME: some day it would be nice to take out this code and consolidate the two checks
 	
@@ -95,7 +97,12 @@ sub initialize {
 	
 	##### permissions #####
 	
-	$self->{isOpen} = time >= $set->open_date || $authz->hasPermissions($userName, "view_unopened_sets");
+	$self->{isOpen} = (time >= $set->open_date && !(
+			       $ce->{options}{enableConditionalRelease} && 
+			       is_restricted($db, $set, $effectiveUserName)))
+	    || $authz->hasPermissions($userName, "view_unopened_sets");
+	
+	die("You do not have permission to view unopened sets") unless $self->{isOpen};
 }
 
 sub nav {
@@ -108,16 +115,7 @@ sub nav {
 	my $problemSetsPage = $urlpath->parent;
 	
 	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("navUp"));
-	# CRAP ALERT: this line relies on the hacky options() implementation in ContentGenerator.
-	# we need to find a better way to do this -- long range dependencies like this are dangerous!
-	#my $tail = "&displayMode=".$self->{displayMode}."&showOldAnswers=".$self->{will}->{showOldAnswers};
-	# here is a hack to get some functionality back, but I don't even think it's that important to
-	# have this, since there are SO MANY PLACES where we lose the displayMode, etc.
-	# (oh boy, do we need a session table in the database!)
-	my $displayMode = $r->param("displayMode") || "";
-	my $showOldAnswers = $r->param("showOldAnswers") || "";
-	my $tail = "&displayMode=$displayMode&showOldAnswers=$showOldAnswers";
-	return $self->navMacro($args, $tail, @links);
+	return $self->navMacro($args, '', @links);
 }
 
 sub title {
@@ -125,9 +123,16 @@ sub title {
 	my $r = $self->r;
 	# using the url arguments won't break if the set/problem are invalid
 	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
+	
+	my $title = $setID;
+	my $set = $r->db->getGlobalSet($setID);
+	if (defined($set) && between($set->open_date, $set->due_date)) {
+	    $title .= ' - '.$r->maketext("Due [_1]", 
+	         $self->formatDateTime($set->due_date,undef,
+				       $r->ce->{studentDateDisplayFormat}));
+	}
 
-	return $setID;
-
+	return $title;
 
 }
 
@@ -135,6 +140,7 @@ sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
@@ -154,9 +160,10 @@ sub siblings {
 				   $gs->assignment_type() !~ /gateway/} @setIDs;
 
 	} else {
-		@setIDs    = grep {my $gs = $db->getGlobalSet( $_ ); 
-				            $gs->assignment_type() !~ /gateway/ && 
-				            ( defined($gs->visible()) ? $gs->visible() : 1 )
+		@setIDs    = grep {my $set = $db->getMergedSet($eUserID, $_); 
+				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $set, $eUserID) : ();
+				   $set->assignment_type() !~ /gateway/ && 
+				       ( defined($set->visible()) ? $set->visible() : 1 ) && !@restricted;
 				           }   @setIDs;
 	}
 
@@ -171,12 +178,7 @@ sub siblings {
 		my $pretty_set_id = $setID;
 		$pretty_set_id =~ s/_/ /g;
 		print CGI::li(
-			     CGI::a({  href=>$self->systemLink($setPage,
-			                params=>{
-								displayMode    => $self->{displayMode}, 
-								showOldAnswers => $self->{will}->{showOldAnswers},
-							},
-					    ),
+			     CGI::a({  href=>$self->systemLink($setPage),
 					    id=>$pretty_set_id,
 			          }, $pretty_set_id)
 	          ) ;
@@ -297,8 +299,6 @@ sub info {
 	return "";
 }
 
-sub options { shift->optionsMacro }
-
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -337,14 +337,15 @@ sub body {
 	# print CGI::div({-class=>"problem_set_options"}, CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set")));
 
 
-	my $enable_reduced_scoring = $set->enable_reduced_scoring;
-	my $reducedScoringPeriod = $ce->{pg}->{ansEvalDefaults}->{reducedScoringPeriod};
-	if ($reducedScoringPeriod > 0 and $enable_reduced_scoring) {
+	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+	my $reduced_scoring_date = $set->reduced_scoring_date;
+	if ($reduced_scoring_date and $enable_reduced_scoring
+	    and $reduced_scoring_date != $set->due_date) {
 		my $dueDate = $self->formatDateTime($set->due_date());
-		my $reducedScoringPeriodSec = $reducedScoringPeriod*60;   # $reducedScoringPeriod is in minutes
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
-		my $beginReducedScoringPeriod =  $self->formatDateTime($set->due_date() - $reducedScoringPeriodSec);
+		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
+
 		if (time < $set->due_date()) {
 			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_1",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		} else {
@@ -377,16 +378,16 @@ sub body {
 	if (@problemNumbers) {
 		# UPDATE - ghe3
 		# This table now contains a summary, a caption, and scope variables for the columns.
-		print CGI::start_table({-class=>"problem_set_table"});
-		print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.","data-original-title"=>"Problems", "data-placement"=>"bottom"}, "Problems"));
-		print CGI::Tr({},
-
+	    print CGI::start_table({-class=>"problem_set_table", -summary=>$r->maketext("This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.")});
+	    print CGI::caption($r->maketext("Problems"));
+	    print CGI::Tr({},
+			      
 			CGI::th($r->maketext("Name")),
 			CGI::th($r->maketext("Attempts")),
 			CGI::th($r->maketext("Remaining")),
 			CGI::th($r->maketext("Worth")),
 			CGI::th($r->maketext("Status")),
-			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : CGI::th("")
+			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : ''
 		);
 		
 		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
@@ -452,11 +453,7 @@ sub problemListRow($$$) {
 	my $interactiveURL = $self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID
-		),
-		params=>{  displayMode => $self->{displayMode}, 
-			       showOldAnswers => $self->{will}->{showOldAnswers}
-		}
-	);
+	    ));
 	
 	my $interactive = CGI::a({-href=>$interactiveURL}, $r->maketext("Problem [_1]",$problemID));
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
@@ -465,7 +462,7 @@ sub problemListRow($$$) {
 		: $problem->max_attempts - $attempts;
 	my $rawStatus = $problem->status || 0;
 	my $status;
-	$status = eval{ sprintf("%.0f%%", $rawStatus * 100)}; # round to whole number
+	$status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
 	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
 	                                  # FIXME  -- this may not cover all cases.
 	
@@ -474,20 +471,23 @@ sub problemListRow($$$) {
 	my $graderLink = "";
 	if ($canScoreProblems && $self->{gradeableProblems}[$problemID]) {
 	    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
-	    $graderLink = CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem");
+	    $graderLink = CGI::td(CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem"));
+	} elsif ($canScoreProblems) {
+	    $graderLink = CGI::td('');
 	}
 
 	return CGI::Tr({},
 #		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
 #		CGI::td({-nowrap=>1, -align=>"center"},
-		CGI::td($interactive),
-		CGI::td([
-				$attempts,
-				$remaining,
-				$problem->value,
-				$status, 
-			        $graderLink
-			]));
+		       CGI::td($interactive),
+		       CGI::td([
+			   $attempts,
+			   $remaining,
+			   $problem->value,
+			   $status, 
+			       ]),
+		       $graderLink ? $graderLink : ''
+	    );
 }
 
 1;

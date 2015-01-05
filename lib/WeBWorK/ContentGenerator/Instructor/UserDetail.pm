@@ -28,13 +28,15 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils::DatePickerScripts;
 use WeBWorK::Debug;
 
 use constant DATE_FIELDS => {   open_date    => " Open: ",
-                                   due_date     => " Due&nbsp;: ",
-                                   answer_date  => " Ans&nbsp;: "
+                                reduced_scoring_date => " Reduced&nbsp;: ",
+	                            due_date     => " Due&nbsp;: ",
+	                            answer_date  => " Ans&nbsp;: "
 };
-use constant DATE_FIELDS_ORDER =>[qw(open_date due_date answer_date )];
+use constant DATE_FIELDS_ORDER =>[qw(open_date reduced_scoring_date due_date answer_date )];
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -354,7 +356,7 @@ sub body {
 	# Assigned sets form
 	########################################
 
-	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail'}),"\n";
+	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail', id=>'UserDetail'}),"\n";
 	print $self->hidden_authen_fields();
 	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	
@@ -424,7 +426,7 @@ sub body {
 		                                editForUser   => $editForUserID,
 		});
 
-		my $setName = ( $setVersion ) ? "test $setVersion" : $setID;
+		my $setName = ( $setVersion ) ? "$setID (test $setVersion)" : $setID;
 
 		print CGI::Tr(
 			CGI::td({ -align => "center" }, [
@@ -487,6 +489,7 @@ sub checkDates {
 	my $setRecord    = shift;
 	my $setID        = shift;
 	my $r            = $self->r;
+	my $ce           = $r->ce;
 	my %dates = ();
 	my $error_undefined_override = 0;
 	my $numerical_date=0;
@@ -507,12 +510,13 @@ sub checkDates {
 	}
 	return {%dates,error=>1} if $error;    # no point in going on if the dates can't be parsed.
 	
-	my ($open_date, $due_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
+	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
 
     unless ($answer_date && $due_date && $open_date) {
     	$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, 
     	 due date |$due_date|, open_date |$open_date|");
 	}
+
 	if ($answer_date < $due_date || $answer_date < $open_date) {		
 		$self->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
 		$error = 1;
@@ -522,7 +526,15 @@ sub checkDates {
 		$self->addbadmessage("Answers cannot be due until on or after the open date in set $setID!");
 		$error = 1;
 	}
-	
+
+	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
+	    $setRecord->enable_reduced_scoring &&
+	    ($reduced_scoring_date < $open_date || $reduced_scoring_date > $due_date)) {
+    		$self->addbadmessage("The reduced scoring date should be between the open date and the due date in set $setID!");
+		$error = 1;
+}
+    
+
 	# make sure the dates are not more than 10 years in the future
 	my $curr_time = time;
 	my $seconds_per_year = 31_556_926;
@@ -552,7 +564,7 @@ sub DBFieldTable {
 	    $recordID, $fieldsRef, $rh_fieldLabels) = @_;
 	
 	return CGI::div({class => "ResultsWithError"}, "No record exists for $recordType $recordID") unless defined $GlobalRecord;
-	
+
 	# modify record name if we're dealing with versioned sets
 	my $isVersioned = 0;
 	if ( $recordType eq "set" && defined($MergedRecord) &&
@@ -562,9 +574,15 @@ sub DBFieldTable {
 		$isVersioned = 1;
 	}
 	my $r = $self->r;
+        my $ce = $r->ce;
 	my @fields = @$fieldsRef;
 	my @results;
 	foreach my $field (@fields) {
+                #Skip reduced credit dates for sets which don't have them
+	        next unless ($field ne 'reduced_scoring_date' ||
+			     ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
+			      $GlobalRecord->enable_reduced_scoring));	 
+
 		my $globalValue = $GlobalRecord->$field;
 		my $userValue = defined $UserRecord ? $UserRecord->$field : $globalValue;
 		my $mergedValue  = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
@@ -576,10 +594,12 @@ sub DBFieldTable {
 					name => "$recordType.$recordID.$field.override",
 					label => "",
 					value => $field,
-					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || $isVersioned) ? 1 : 0
+					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || ($isVersioned && $field ne 'reduced_scoring_date')) ? 1 : 0
 				}) : "",
 				defined $UserRecord ? 
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
+						      -id =>"$recordType.$recordID.${field}_id",
+						      -type=> "text",
 					              -value => $userValue ? $self->formatDateTime($userValue) : "", 
 					              -size => 25})
 					) : "",
@@ -592,8 +612,37 @@ sub DBFieldTable {
 	foreach my $row (@results) {
 		push @table, CGI::Tr(CGI::td({-align => "center"}, $row));
 	}
-	
-	return (CGI::start_table({border => 0}), @table, CGI::end_table());
+
+	# set up date picker scripts.  We have to spoof the set name if its
+	# a versioned set.  
+	my $script = '';
+	if ($ce->{options}->{useDateTimePicker}) {
+	    $GlobalRecord->set_id($recordID) if $isVersioned;
+	    print CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $GlobalRecord).CGI::end_script();
+	}
+
+	return (CGI::start_table({class => 'UserDetail-date-table', border=> 0}), @table, CGI::end_table(), $script);
+}
+
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
+	return "";
+}
+
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	# print javaScript for dateTimePicker	
+	# jquery ui printed seperately
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+
+	return "";
+
 }
 
 1;

@@ -179,9 +179,19 @@ sub dispatch($) {
 	
 	debug("The raw params:\n");
 	foreach my $key ($r->param) {
+	    #make it so we dont debug plain text passwords
+	    my $vals;	    
+	    if ($key eq 'passwd'||
+		$key eq 'confirmPassword' ||
+		$key eq 'currPassword' ||
+		$key eq 'newPassword' || 
+		$key =~ /\.new_password/) {
+		$vals = '**********';
+	    } else {
 		my @vals = $r->param($key);
-		my $vals = join(", ", map { "'$_'" } @vals);
-		debug("\t$key => $vals\n");
+		$vals = join(", ", map { "'$_'" } @vals);
+	    }
+	    debug("\t$key => $vals\n");
 	}
 	
 	#mungeParams($r);
@@ -483,7 +493,11 @@ sub CGI_labeled_input
 		return CGI::input($param{-input_attr});
 	}
 	elsif($param{-type} eq "select"){
+	    if (defined $param{-input_attr}{-multiple}) {
+		return CGI::label($param{-label_attr},$param{-label_text}).CGI::scrolling_list($param{-input_attr});
+	    } else {
 		return CGI::label($param{-label_attr},$param{-label_text}).CGI::popup_menu($param{-input_attr});
+	    }
 	}
 	elsif($param{-type} eq "textarea"){
 		return CGI::label($param{-label_attr},$param{-label_text}).CGI::br().CGI::br().CGI::textarea($param{-input_attr});

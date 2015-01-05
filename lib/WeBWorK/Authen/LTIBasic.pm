@@ -160,6 +160,12 @@ sub  request_has_data_for_this_verification_module {
 	#debug("LTIBasic has been called for data verification");
 	my $self = shift;
 	my $r = $self -> {r};
+
+	# See comment in get_credentials()
+	if ($r->{xmlrpc}) {
+		#debug("LTIBasic returning 1 because it is an xmlrpc call");
+		return 1;
+	}
 	if (!(defined $r->param("oauth_consumer_key"))
 			or !(defined $r -> param("oauth_signature"))
 			or !(defined $r -> param("oauth_nonce"))
@@ -173,14 +179,28 @@ sub  request_has_data_for_this_verification_module {
 }
 
 sub get_credentials {
-	my ($self) = @_;
+	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $r -> {ce};
 	
 	#debug("LTIBasic::get_credentials has been called\n");
 	#disable password login
 	$self->{external_auth} = 1;
-	
+
+	# This next part is necessary because some parts of webwork (e.g.,
+	# WebworkWebservice.pm) need to replace the get_credentials() routine,
+	# but only replace the one in the parent class (out of caution,
+	# presumably).  Therefore, we end up here even when authenticating
+	# for WebworkWebservice.pm.  This would cause authentication failures
+	# when authenticating javascript web service requests (e.g., the
+	# Library Browser).
+	# Similar changes are needed in check_user() and verify_normal_user().
+
+	if ($r->{xmlrpc}) {
+		#debug("falling back to superclass get_credentials (xmlrpc call)");
+		return $self->SUPER::get_credentials(@_);
+	}
+
 	# if at least the user ID is available in request parameters
 	if (defined $r->param("user_id")) 
 		{
@@ -249,7 +269,13 @@ sub check_user {
 	my $user_id = $self->{user_id};
 
 	#debug("LTIBasic::check_user has been called for user_id = |$user_id|");
-	
+
+	# See comment in get_credentials()
+	if ($r->{xmlrpc}) {
+		#debug("falling back to superclass check_user (xmlrpc call)");
+		return $self->SUPER::check_user(@_);
+	}
+
 	if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
 		$self->{log_error} = "no user id specified";
 		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE);
@@ -299,6 +325,12 @@ sub verify_normal_user
 
 
 	#debug("LTIBasic::verify_normal_user called for user |$user_id|");
+
+	# See comment in get_credentials()
+	if ($r->{xmlrpc}) {
+		#debug("falling back to superclass verify_normal_user (xmlrpc call)");
+		return $self->SUPER::verify_normal_user(@_);
+	}
 
     # Call check_session in order to destroy any existing session cookies and Key table sessions
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 0);
@@ -418,10 +450,10 @@ sub authenticate
 				= $ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[0]}};
 			if ($nr > 1) {
 				for (my $j =1; $j < $nr; $j++) {
-					if ($LTI_webwork_permissionLevel 
-						< $ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[$j]}}) {
-						$LTI_webwork_permissionLevel 
-							= $ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[$j]}};
+					my $wwRole = $ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[$j]};
+					next unless defined $wwRole;
+					if ($LTI_webwork_permissionLevel < $ce -> {userRoles} -> {$wwRole}) {
+						$LTI_webwork_permissionLevel = $ce -> {userRoles} -> {$wwRole};
 					}	
 				}
 			}		

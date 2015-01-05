@@ -152,8 +152,8 @@ sub addStudentForm {
 				CGI::td({},
 					[ CGI::input({type=>'text', class=>"last-name-input", name=>"last_name_$i"}),
 					  CGI::input({type=>'text', class=>"first-name-input", name=>"first_name_$i"}),
-					  CGI::input({type=>'text', class=>"student-id-input", name=>"student_id_$i",size=>"16"}),
-					  CGI::input({type=>'text', class=>"user-id-input", name=>"new_user_id_$i",size=>"10"}),
+					  CGI::input({type=>'text', class=>"student-id-input", name=>"student_id_$i",size=>"16",'aria-required'=>'true'}),
+					  CGI::input({type=>'text', class=>"user-id-input", name=>"new_user_id_$i",size=>"10",'aria-required'=>'true'}),
 					  CGI::input({type=>'text', class=>"email-input", name=>"email_address_$i"}),
 					  CGI::input({type=>'text', class=>"section-input", name=>"section_$i",size=>"10"}),
 					  CGI::input({type=>'text', class=>"recitation-input", name=>"recitation_$i",size=>"10"}),
@@ -178,7 +178,7 @@ sub addStudentForm {
 		CGI::start_table({border=>'1', cellpadding=>'2'}),
 		CGI::Tr({},
 			CGI::th({},
-				['Last Name', 'First Name', 'Student ID', 'Login Name', 'Email Address', 'Section','Recitation', 'Comment']
+				['Last Name', 'First Name', 'Student ID'.CGI::span({class=>"required-field"},'*'), 'Login Name'.CGI::span({class=>"required-field"},'*'), 'Email Address', 'Section','Recitation', 'Comment']
 			)
 		),
 		@entryLines,
@@ -187,11 +187,11 @@ sub addStudentForm {
 
 		
 		CGI::p("Select sets below to assign them to the newly-created users."),
-		CGI::popup_menu(
+		CGI::scrolling_list(
 			-name     => "assignSets",
 			-values   => [ $db->listGlobalSets ],
 			-size     => 10,
-			-multiple => "multiple",
+			-multiple => "1",
 		),
 		CGI::p(
 			CGI::submit({name=>"addStudents", value=>"Add Students"}),

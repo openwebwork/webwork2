@@ -13,9 +13,13 @@ lib:	 Common files for the web apps.
    |
    |_    views: directory for the views. 
 
-vendor:  This is the directory for all 3rd party javascript files. 
-         If it is a single file, then it should just go in the vendor directory
-         All bundles should go in a directory (i.e. Jquery and plugins.)
-         
-legacy: Files that may still be in use for earlier incarnations, such as LibraryBrowser2 and LibraryBrowser3
-        or some of the other editor files.
+
+All javascript and css libraries are now being handled by bower (https://github.com/bower/bower).  To run bower read the
+instructions on github.  You will only need this if you are adding or changing libraries.  
+
+If a library is needed, add it to bower.json and the desired version.  Then type:
+
+#  bower install
+
+and bower will fetch all of the libraries (and update if you've changed the version #) and store everything in the  "bower_components" directory.  The location of each library in each subdirectory SHOULD stay stable, so you shouldn't need to 
+update template or other files. 

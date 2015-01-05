@@ -68,12 +68,16 @@ sub body {
 	my $authz         = $r->authz;
 	my $root          = $ce->{webworkURLs}->{root};
 	my $courseName    = $urlpath->arg('courseID');  
-	my $setNameRegExp       = $r->param('setID');     # these are passed in the search args in this case
-	my $problemNumberRegExp = $r->param('problemID');
+	my $setNameRegExp       = $r->param('setID') || '*';     # these are passed in the search args in this case
+	my $problemNumberRegExp = $r->param('problemID') || '*'; # blank entries count as *'s 
 	my $user          = $r->param('user');
 	my $key           = $r->param('key');
-	my $studentUserRegExp   = $r->param('studentUser') if ( defined($r->param('studentUser')) );
-	
+	my $studentUserRegExp;
+	if ( defined($r->param('studentUser'))) {
+	    $studentUserRegExp   = $r->param('studentUser') || '*';
+	} else {
+	    $studentUserRegExp = '*';
+	}
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
 
 	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
@@ -103,15 +107,15 @@ sub body {
 	    
 	    print CGI::p(),CGI::hr();
 	    
-	    print CGI::start_form("POST", $showAnswersURL,-target=>'information'),
+	    print CGI::start_form({-target=>'information',-id=>'past-answer-form'},"POST", $showAnswersURL),
 	    $self->hidden_authen_fields;
 	    print CGI::submit(-name => 'action', -value=>$r->maketext('Past Answers for'))," &nbsp; ",
-	    " &nbsp;".$r->maketext('User:')." &nbsp;",
-	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 ),
-	    " &nbsp;".$r->maketext('Set:')." &nbsp;",
-	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  ), 
-	    " &nbsp;".$r->maketext('Problem:')."&nbsp;",
-	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  ),  
+	    " &nbsp;".CGI::label($r->maketext('User:')." &nbsp;",
+	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 )),
+	    " &nbsp;".CGI::label($r->maketext('Set:')." &nbsp;",
+	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  )), 
+	    " &nbsp;".CGI::label($r->maketext('Problem:')."&nbsp;",
+	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  )),  
 	    " &nbsp; ";
 	    print CGI::end_form();
 	}
@@ -178,14 +182,14 @@ sub body {
 	    }
 
 	    next unless @setNames;
-
+	  
 	    foreach my $setName (@setNames) {
 	
 		my @problemNumbers;
 
 		# search for matching problems
 		my @allProblems = $db->listUserProblems($studentUser, $setName);
-
+		next unless @allProblems;
 		foreach my $problem (@allProblems) {
 
 		    foreach my $numberRange (@numberRanges) {
@@ -195,7 +199,7 @@ sub body {
 				push (@problemNumbers, $problem);
 			    }
 			    # in this case the number is a singlton
-			} elsif ($numberRange == $problem) {
+			} elsif ($numberRange eq '*' || $numberRange == $problem) {
 			    push (@problemNumbers, $problem);
 			}
 		    }
@@ -205,7 +209,7 @@ sub body {
 		    unless @problemNumbers;
 		
 		foreach my $problemNumber (@problemNumbers) {
-    
+		    
 		    my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
 		    
 		    print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
@@ -296,7 +300,16 @@ sub body {
 			    } elsif (!$renderAnswers) {
 				$answerstring = HTML::Entities::encode_entities($answer);
 			    } elsif ($answerType eq 'Value (Formula)') {
-				$answerstring = '`'.HTML::Entities::encode_entities($answer).'`';
+				# We need to escape some gateway strings which 
+				# might appear here
+				$answerstring = HTML::Entities::encode_entities($answer);
+				if ($answerstring =~ /\[(submit|preview|newPage)\]/) {
+				    if ($answerstring !~ /No answer entered/) {
+					$answerstring =~ s/\[(submit|preview|newPage)\](.*)/\[$1\] `$2`/; 
+				    } 
+				} else {
+				    $answerstring = "`$answer`";
+				}
 				$td->{class} = 'formula';
 			    } elsif ($answerType eq 'essay') {
 				$answerstring = HTML::Entities::encode_entities($answer);

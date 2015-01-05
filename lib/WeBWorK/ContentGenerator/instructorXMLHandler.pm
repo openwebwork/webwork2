@@ -27,6 +27,7 @@ package WeBWorK::ContentGenerator::instructorXMLHandler;
 use base qw(WeBWorK::ContentGenerator);
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Debug;
+use WeBWorK::Utils qw(readFile);
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
@@ -207,7 +208,7 @@ sub pre_header_initialize {
             student_id     			=> $r->param('student_id') || undef,
             id             			=> $r->param('user_id') || undef,
             email_address  			=> $r->param('email_address') || undef,
-            permission     			=> $r->param('permission') || 0,	# valid values from %userRoles in defaults.config
+            permission     			=> $r->param('permission') // 0,	# valid values from %userRoles in defaults.config
             status         			=> $r->param('status') || undef,#'Enrolled, audit, proctor, drop
             section        			=> $r->param('section') || undef,
             recitation     			=> $r->param('recitation') || undef,
@@ -258,10 +259,10 @@ sub pre_header_initialize {
 		   format_hash_ref($input);
 	}
 	my $source = "";
-	#print $r->param('problemSource');
-	my $problem = $r->param('problemSource');
-	if (defined($problem) and $problem and -r $problem ) {
-    	$source = `cat $problem`;
+	#print $r->param('problemPath');
+	my $problemPath = $r->param('problemPath');
+	if (defined($problemPath) and $problemPath and -r $problemPath ) {
+    	eval { $source = WeBWorK::Utils::readFile($problemPath) };
     	#print "SOURCE\n".$source;
     	$input->{source} = encode_base64($source);
 	}

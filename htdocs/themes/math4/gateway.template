@@ -2,6 +2,9 @@
 <html lang="en-US">
 <head>
 <meta charset='utf-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- This encourages IE to *not* use compatibility view, which breaks math4 -->
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 
 <!--
 ################################################################################
@@ -20,14 +23,26 @@
 ################################################################################
 -->
 
+<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.css"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/gateway.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/gateway.css"/>
+<!--#if exists="math4-coloring.css"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
+<!--#endif-->
+<!--#if exists="math4-overrides.css"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
+<!--#endif-->
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math4/math4.js"></script>	
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<!--#if exists="math4-overrides.js"-->
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
+<!--#endif-->
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
@@ -35,7 +50,7 @@
 <!--#output_JS-->
 </head>
 <body>
-
+<a href="#content" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
 <div class="container-fluid">
 <!-- Header -->
 <div id = "masthead" class="row-fluid">
@@ -72,7 +87,7 @@
 	<!-- [gateway] removed nav button to go up -->
 	
 	<!--#if can="title"-->
-	<h1><!--#title--></h1>
+	<h1 id="content"><!--#title--></h1>
 	<!--#endif-->
 	
 	<!--#if can="message"-->

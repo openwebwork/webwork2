@@ -60,6 +60,37 @@ h6 { font-size: 105%; }
 a:link { color: #00e; background-color: inherit; }
 a:visited { color: #808; background-color: inherit; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.sr-only-focusable:active,
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+}
+.sr-only-glyphicon {
+ position: absolute;
+ width: 1em;
+ height: 1em;
+ padding: 0;
+ margin: 0;
+ margin-left: -1em;
+ overflow: hidden;
+ clip: rect(0px, 0px, 0px, 0px);
+ border: 0 none;
+}
+
 /* --- Miscellaneous classes ---------------------------------------------- */
 
 /* show only to CSS-ignorant browsers */
@@ -177,6 +208,14 @@ h2.compound { float: right; margin: 0; padding: 0 }*/
 background-color:#ddd;
 clear: both;
 }
+
+.admin-messagebox {
+    background-color:#FFFFCC;
+    width:60%;
+    padding: 10px;
+    text-align:center;
+}
+
 /* --- Fisheye view (id) ---------------------------------------------------- */
 
 /* The "fisheye" view: a hierarchical view of the website to show the 
@@ -463,6 +502,7 @@ clear: both;
 #InfoPanel {
     font-size:100%;
 
+
 	float: left; /*was right*/
 	min-width: 0;
 	overflow: auto; /*was hidden*/
@@ -501,6 +541,7 @@ div.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
 div.ResultsAlert { color: #F60; background-color: inherit; } /* orange */
+div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px} /* bright gold border and harvest gold background*/
 label.WarningMessage { background-color: #FF9494; padding: 3px 3px 3px 3px; }
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 label.ResultsWithError { color: #FF9494; background-color: inherit; } /* error red, from http://www.colourlovers.com/color/FF9494/error_red*/
@@ -926,6 +967,7 @@ div.problem_sets_options {
 /*This is the styling specifically for the tables of problems displayed for each problem set page*/
 table.problem_set_table{
 	margin-top: 30px;
+	margin-bottom: 20px;
 	#width: 640px;
 	text-align: left;
 	float: left;
@@ -936,6 +978,13 @@ table.problem_set_table th{
 table.problem_set_table td{
 	padding-right: 30px;
 /*	text-align:center; */
+}
+table.problem_set_table a{
+    font-size:100%;
+}
+table.problem_set_table .icon-download {
+    font-size:1.2em;
+    text-decoration:none;
 }
 div.problem_set_options {
 	clear: both;
@@ -948,9 +997,23 @@ table#grades_table pre{
 
 table#grades_table {
     border:1px solid black;
+    border-collapse: collapse;
 }
 
 table#grades_table th {
     text-align:center;
+    border: 1px solid black;
+}
+
+table#grades_table td {
+    border: 1px solid black;
+    padding: 2px;
+    min-width: 20px;
+    text-align:center;
+}
+
+span.required-field {
+    color:red;
+    margin-left: 0px;
 }
 

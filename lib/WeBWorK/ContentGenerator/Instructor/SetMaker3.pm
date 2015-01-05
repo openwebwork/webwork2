@@ -88,11 +88,6 @@ sub title {
 	return "Library Browser v3";
 }
 
-# hide view options panel since it distracts from SetMaker's built-in view options
-sub options {
-	return "";
-}
-
 sub head {
 	my ($self) = @_;
 	my $ce = $self->r->ce;
@@ -117,7 +112,7 @@ sub head {
 
   print qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/library_browser.css" />!;
 
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+  print qq!<link href="$webwork_htdocs_url/css/jquery-ui-1.8.18.custom.css" rel="stylesheet" type="text/css"/>!;
   #print qq!<script>window.addEventListener("load", setup, false);</script>!;
   return "";
 }

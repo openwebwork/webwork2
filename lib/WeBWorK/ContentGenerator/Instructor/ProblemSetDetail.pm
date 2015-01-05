@@ -39,13 +39,13 @@ use WeBWorK::Utils::DatePickerScripts;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring reduced_scoring_date restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts attempted last_answer num_correct num_incorrect)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother attempted last_answer num_correct num_incorrect)];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
@@ -57,7 +57,7 @@ use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attemp
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
+use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring reduced_scoring_date restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 
@@ -108,7 +108,7 @@ use constant FIELD_PROPERTIES => {
 	open_date => {
 		name      => "Opens",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -118,7 +118,7 @@ use constant FIELD_PROPERTIES => {
 	due_date => {
 		name      => "Answers Due",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -128,7 +128,7 @@ use constant FIELD_PROPERTIES => {
 	answer_date => {
 		name      => "Answers Available",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -146,7 +146,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	enable_reduced_scoring => {
-		name      => "Reduced Credit Enabled",
+		name      => "Reduced Scoring Enabled",
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( 0 1 )],
@@ -155,14 +155,25 @@ use constant FIELD_PROPERTIES => {
 				0 => "No",
 		},
 	},
-	restricted_release => {
-		name      => "Restrict release by set(s)",
+	reduced_scoring_date => {
+		name      => "Reduced Scoring Date",
 		type      => "edit",
-		size      => "30em",
+		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
 				"" => "None Specified",
+		},
+	},
+	restricted_release => {
+		name      => "Restrict release by set(s)",
+		type      => "edit",
+		size      => "30",
+		override  => "any",
+		labels    => {
+				#0 => "None Specified",
+				"" => "None Specified",
+
 		},
 	},
 	restricted_status => {
@@ -282,7 +293,7 @@ use constant FIELD_PROPERTIES => {
 		labels    => { 'N:' => 'Yes', 'Y:N' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'Y:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
 	},
 	hide_work         => {
-		name      => "Show Student Work on Finished Tests",
+		name      => "Show Problems on Finished Tests",
 		type      => "choose",
 		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
@@ -319,6 +330,16 @@ use constant FIELD_PROPERTIES => {
 				"-1" => "unlimited",
 		},
 	},
+        showMeAnother => {
+                name => "Show me another",
+                type => "edit",
+                size => "6",
+		override  => "any",
+                default=>"-1",
+		labels    => {
+				"-1" => "Never",
+		},
+        },
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
@@ -364,7 +385,7 @@ use constant FIELD_PROPERTIES => {
 	hide_hint => {
 		name      => "Hide Hints from Students",
 		type      => "choose",
-		override  => "all",
+		override  => "any",
 		choices   => [qw( 0 1 )],
 		labels    => {
 				1 => "Yes",
@@ -388,6 +409,7 @@ sub FieldTable {
 	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $isGWset) = @_;
 
 	my $r = $self->r;	
+	my $ce = $r->ce;
 	my @editForUser = $r->param('editForUser');
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
@@ -410,6 +432,7 @@ sub FieldTable {
 	# needed for set-level proctor
 	my $procFields = '';
 
+
 	if (defined $problemID) {
 		@fieldOrder = ($isGWset) ? @{ GATEWAY_PROBLEM_FIELD_ORDER() } :
 			@{ PROBLEM_FIELD_ORDER() };
@@ -419,7 +442,8 @@ sub FieldTable {
 		($gwFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
 
-	my $output = CGI::start_table({border => 0, cellpadding => 1});
+
+       	my $output = CGI::start_table({border => 0, cellpadding => 1});
 	if ($forUsers) {
 		$output .= CGI::Tr({},
 		    CGI::th({colspan=>"2"}, "&nbsp;"),
@@ -437,7 +461,22 @@ sub FieldTable {
 		else{
 			%properties = %{ FIELD_PROPERTIES()->{$field} };
 		}
+
+		#Don't show fields if that option isn't enabled.  
+		if (!$ce->{options}{enableConditionalRelease} && 
+		    ($field eq 'restricted_release' || $field eq 'restricted_status')) {
+			$properties{'type'} = 'hidden';
+		    }
 		
+		if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
+		    ($field eq 'reduced_scoring_date' || $field eq 'enable_reduced_scoring')) {
+			$properties{'type'} = 'hidden';
+		} elsif ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
+		    $field eq 'reduced_scoring_date' && !$globalRecord->reduced_scoring_date) {
+		    $globalRecord->reduced_scoring_date($globalRecord->due_date -
+			60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
+		}
+
 		# we don't show the ip restriction option if there are 
 		#    no defined locations, nor the relax_restrict_ip option
 		#    if we're not restricting ip access
@@ -452,6 +491,10 @@ sub FieldTable {
 		#    but aren't editing a set version
 		next if ( $field eq 'problem_seed'  &&
 			  ( $isGWset && $forUsers && ! $setVersion ) );
+
+                # skip the Show Me Another value if SMA is not enabled
+	        next if ( $field eq 'showMeAnother' &&
+                          !$ce->{pg}->{options}->{enableShowMeAnother} );
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
@@ -578,13 +621,13 @@ sub FieldHTML {
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = "";
 	if ($edit) {
-		$inputType = CGI::font({class=>"visible"}, CGI::input({
+		$inputType = CGI::input({
 		                type => "text",
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
-		}));
+					});
 
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
@@ -959,28 +1002,43 @@ sub initialize {
 	# Check date information
 	#####################################################################
 
-	my ($open_date, $due_date, $answer_date);
-	my $error = 0;
+	my ($open_date, $due_date, $answer_date, $reduced_scoring_date);
+	my $error = 0;	
 	if (defined $r->param('submit_changes')) {
-		my @names = ("open_date", "due_date", "answer_date");
-		
-		my %dates = map { $_ => $r->param("set.$setID.$_") } @names;
+		my @names = ("open_date", "due_date", "answer_date", "reduced_scoring_date");
+
+		my %dates = map { $_ => $r->param("set.$setID.$_") || ''} @names;
+
 		%dates = map { 
 			my $unlabel = $undoLabels{$_}->{$dates{$_}}; 
-			$_ => defined $unlabel ? $setRecord->$_ : $self->parseDateTime($dates{$_}) 
+			$_ => (defined($unlabel) || !$dates{$_}) ? $setRecord->$_ : $self->parseDateTime($dates{$_}) 
 		} @names;
 
-		($open_date, $due_date, $answer_date) = map { $dates{$_}||0 } @names;
-        
-        # make sure dates are numeric by using ||0
+		($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_}||0 } @names;
+		
+		# make sure dates are numeric by using ||0
         
 		if ($answer_date < $due_date || $answer_date < $open_date) {		
 			$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the due date!"));
 			$error = $r->param('submit_changes');
 		}
 		
-		if ($due_date < $open_date) {
+		if ($due_date < $open_date ) {
 			$self->addbadmessage($r->maketext("Answers cannot be due until on or after the open date!"));
+			$error = $r->param('submit_changes');
+		}
+
+		my $enable_reduced_scoring = 
+		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
+		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    $r->param("set.$setID.enable_reduced_scoring") : 
+		    $setRecord->enable_reduced_scoring;
+
+		if ($enable_reduced_scoring && 
+		    $reduced_scoring_date 
+		    && ($reduced_scoring_date > $due_date 
+			|| $reduced_scoring_date < $open_date)) {
+			$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
 			$error = $r->param('submit_changes');
 		}
 		
@@ -1046,12 +1104,13 @@ sub initialize {
 
 					    my $param = $r->param("set.$setID.$field");
 					    $param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
+
 					    my $unlabel = $undoLabels{$field}->{$param};
 						$param = $unlabel if defined $unlabel;
 #						$param = $undoLabels{$field}->{$param} || $param;
-						if ($field =~ /_date/) {
+						if ($field =~ /_date/ ) {
 							$param = $self->parseDateTime($param) unless defined $unlabel;
-						}
+						} 					    
 						if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby}) {
 							$param = $param*$properties{$field}->{convertby};
 						}
@@ -1155,11 +1214,11 @@ sub initialize {
 				$param = defined $properties{$field}->{default} ? $properties{$field}->{default} : "" unless defined $param && $param ne "";
 				my $unlabel = $undoLabels{$field}->{$param};
 				$param = $unlabel if defined $unlabel;
-				if ($field =~ /_date/) {
-					$param = $self->parseDateTime($param) unless defined $unlabel;
-				}
+				if ($field =~ /_date/ ) {
+				    $param = $self->parseDateTime($param) unless (defined $unlabel || !$param);
+				} 
 				if ($field =~ /restricted_release/) {
-				  $self->check_sets($db,$param) if $param;
+				    $self->check_sets($db,$param) if $param;
 				}
 				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby} && $param) {
 					$param = $param*$properties{$field}->{convertby};
@@ -1631,11 +1690,6 @@ sub checkFile ($) {
 	return $r->maketext("This source file is a directory!") if -d $filePath;
 	return $r->maketext("This source file does not exist!") unless -e $filePath;
 	return $r->maketext("This source file is not a plain file!");
-}
-
-# don't show view options -- we provide display mode controls for headers/problems separately
-sub options {
-    return "";
 }
 
 #Make sure restrictor sets exist

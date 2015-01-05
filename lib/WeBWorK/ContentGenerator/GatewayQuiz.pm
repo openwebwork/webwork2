@@ -35,7 +35,7 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
 	ref2string makeTempDirectory path_is_subdir sortByName before after
-	between);  # use the ContentGenerator formatDateTime, not the version in Utils
+	between wwRound is_restricted);  # use the ContentGenerator formatDateTime, not the version in Utils
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
@@ -47,6 +47,15 @@ sub templateName {
 	return "gateway";
 }
 
+# small utility to round scores to 5 decimal places
+# use wwRound instead (akp 11/2014)
+#sub tidy_score {
+#	my $s = shift;
+#	$s = sprintf("%.5f", $s);
+#	$s =~ s/0+$// if $s =~ /\./;
+#	$s =~ s/\.$//;
+#	return $s;
+#}
 
 ################################################################################
 # "can" methods
@@ -66,6 +75,8 @@ sub can_showOldAnswers {
 	my $authz = $self->r->authz;
 # we'd like to use "! $Set->hide_work()", but that hides students' work 
 # as they're working on the set, which isn't quite right.  so use instead:
+	return 0 unless $authz->hasPermissions($User->user_id,"can_show_old_answers");
+
 	return( before( $Set->due_date() ) || 
 		
 		$authz->hasPermissions($User->user_id,"view_hidden_work") ||
@@ -294,6 +305,13 @@ sub can_showScore {
 		$canShowScores );
 }
 
+sub can_useMathView {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
+}
+
 ################################################################################
 # output utilities
 ################################################################################
@@ -308,7 +326,8 @@ sub attemptResults {
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
-	
+	my $colorAnswers = $showAttemptResults;
+
 	my $r = $self->{r};
 	my $setName = $r->urlpath->arg("setID");
 	my $ce = $self->{ce};
@@ -321,6 +340,10 @@ sub attemptResults {
 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
 	
 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
+
+	# for color coding the responses.
+	$self->{correct_ids} = [] unless $self->{correct_ids};
+	$self->{incorrect_ids} = [] unless $self->{incorrect_ids};
 
   # present in ver 1.10; why is this checked here?
 	#	return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the homework set that contains it is not yet open."))
@@ -343,97 +366,114 @@ sub attemptResults {
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 
-	my %resultsData = ();
-	$resultsData{'Entered'}  = CGI::td({-class=>"label"}, "Your answer parses as:");
-	$resultsData{'Preview'}  = CGI::td({-class=>"label"}, "Your answer previews as:");
-	$resultsData{'Correct'}  = CGI::td({-class=>"label"}, "The correct answer is:");
-	$resultsData{'Results'}  = CGI::td({-class=>"label"}, "Result:");
-	$resultsData{'Messages'} = CGI::td({-class=>"label"}, "Messages:");
+	my @rows;
+	my @row;
+	
+	push @row, CGI::th({scope=>"col"},$r->maketext('Entered')) if $showAttemptAnswers;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Answer Preview')) if $showAttemptPreview;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Correct')) if $showCorrectAnswers;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Result')) if $showAttemptResults;
+	push @row, CGI::th({scope=>"col"},$r->maketext('Messages')) if $showMessages;
 
-	my %resultsRows = ();
-	foreach ( qw( Entered Preview Correct Results Messages ) ) {
-	    $resultsRows{$_} = "";
-	}
+	push @rows, CGI::Tr(@row);
 
 	my $answerScore = 0;
 	my $numCorrect = 0;
 	my $numAns = 0;
+	my $numBlanks = 0;
+	my $numEssay = 0;
 	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name};
-		my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
-		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen)
-		                    	: "");
-		my $correctAnswer = $answerResult->{correct_ans};
-		$answerScore   = $answerResult->{score};
-		my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-		#FIXME  --Can we be sure that $answerScore is an integer-- could the problem give partial credit?
-		$numCorrect += $answerScore > 0;
-		my $resultString = $answerScore == 1 ? "correct" : "incorrect";
-		
-		# get rid of the goofy prefix on the answer names (supposedly, the format
-		# of the answer names is changeable. this only fixes it for "AnSwEr"
-		#$name =~ s/^AnSwEr//;
-		
-		my $pre = $numAns ? CGI::td("&nbsp;") : "";
 
-		$resultsRows{'Entered'} .= $showAttemptAnswers ? 
-		    CGI::Tr( $pre . $resultsData{'Entered'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($studentAnswer))) : "";
-		$resultsData{'Entered'} = '';
-		$resultsRows{'Preview'} .= $showAttemptPreview ? 
-		    CGI::Tr( $pre . $resultsData{'Preview'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($preview)) ) : "";
-		$resultsData{'Preview'} = '';
-		$resultsRows{'Correct'} .= $showCorrectAnswers ? 
-		    CGI::Tr( $pre . $resultsData{'Correct'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($correctAnswer)) ) : "";
-		$resultsData{'Correct'} = '';
-		$resultsRows{'Results'} .= $showAttemptResults ? 
-		    CGI::Tr( $pre . $resultsData{'Results'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($resultString)) )  : "";
-		$resultsData{'Results'} = '';
-		$resultsRows{'Messages'} .= $showMessages ? 
-		    CGI::Tr( $resultsData{'Messages'} . 
-			     CGI::td({-class=>"output"}, $self->nbsp($answerMessage)) ) : "";
+	    @row = ();
+	    my $answerResult  = $pg->{answers}->{$name};
+	    my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+	    my $preview       = ($showAttemptPreview
+				 ? $self->previewAnswer($answerResult, $imgGen)
+				 : "");
+	    my $correctAnswer = $answerResult->{correct_ans};
+	    $answerScore = $answerResult->{score};
+	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
+	    $numCorrect += $answerScore > 0;
+	    $numEssay += ($answerResult->{type}//'') eq 'essay';
+	    $numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
+	    
+	    my $resultString;
+	    if ($answerScore >= 1) {
+		$resultString = $r->maketext("correct");
+		push @{$self->{correct_ids}}, $name if $colorAnswers;
+	    } elsif (($answerResult->{type}//'') eq 'essay') {
+		$resultString =  $r->maketext("Ungraded");
+		$self->{essayFlag} = 1;
+	    } elsif (defined($answerScore) and $answerScore == 0) {
+		$resultString = $r->maketext("incorrect");
+		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
+	    } else {
+		$resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
+		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
+	    }
+	    
+	    push @row, CGI::td({scope=>"col"},$self->nbsp($studentAnswer)) if $showAttemptAnswers;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($preview)) if $showAttemptPreview;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($correctAnswer)) if $showCorrectAnswers;
+	    push @row, CGI::td({scope=>"col"}, $self->nbsp($resultString)) if $showAttemptResults;
+	    push @row, CGI::td({scope=>"col"},  $self->nbsp($answerMessage)) if $showMessages;
+	    
+	    push @rows, CGI::Tr(@row);
+	    $numAns++;
 
-		$numAns++;
 	}
-	
+
 	# render equation images
 	$imgGen->render(refresh => 1);
-	
-#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
-#   FIXME  -- I left the old code in in case we have to back out.
-#	my $summary = "On this attempt, you answered $numCorrect out of "
-#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 
-	my $summary = ""; 
+	my $summary = "";
 	if (scalar @answerNames == 1) { #Here there is just one answer blank
-			if ($answerScore == 1) { #The student might be totally right
-				$summary .= CGI::div({class=>"gwCorrect"},"This answer is correct.");
-			 } elsif ($answerScore && $answerScore < 1) { #The student might be partially right
-				$summary .= CGI::div({class=>"gwIncorrect"},"Part of this answer is NOT correct.");
-			 } else { #The student might be completely wrong.
-			 	 $summary .= CGI::div({class=>"gwIncorrect"},"This answer is NOT correct.");
-			 }
+		if ($numCorrect == 1) { #The student might be totally right
+			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext("This answer is correct."));
+		} elsif ($self->{essayFlag}) {
+			$summary .= $r->maketext("The answer will be graded later.");
+		} elsif ($answerScore > 0 && $answerScore < 1) { #The student might be partially right
+			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT completely correct."));
+		} else { #The student might be completely wrong.
+		 	 $summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT correct."));
+		}
 	} else {
-			if ($numCorrect == scalar @answerNames) {
-				$summary .= CGI::div({class=>"gwCorrect"},"All of these answers are correct.");
-			 } else {
-			 	 $summary .= CGI::div({class=>"gwIncorrect"},"At least one of these answers is NOT correct.");
-			 }
+		if ($numCorrect + $numEssay == scalar @answerNames) {
+			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext(
+				$numEssay ? "All of the gradeable answers are correct." :
+					    "All of the answers are correct."));
+		} elsif ($numBlanks + $numEssay != scalar(@answerNames)) {
+			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext(
+				$answerScore > 0 && $answerScore < 1 ?
+				      "At least one of these answers is NOT completely correct." :
+				      "At least one of these answers is NOT correct."));
+		}
 	}
-	
+
 	return
-#	    CGI::table({-class=>"attemptResults"}, $resultsRows{'Entered'}, 
-	    CGI::table({-class=>"gwAttemptResults"}, $resultsRows{'Entered'}, 
-		       $resultsRows{'Preview'}, $resultsRows{'Correct'}, 
-		       $resultsRows{'Results'}, $resultsRows{'Messages'}) .
+
+	    CGI::table({-class=>"gwAttemptResults"}, @rows).
+
 	    ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
-#		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-#		. ($showSummary ? CGI::p({class=>'emphasis'},$summary) : "");
+}
+
+sub handle_input_colors {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $site_url = $ce->{webworkURLs}{htdocs};
+
+	return if $self->{previewAnswers};  # don't color previewed answers
+
+	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript"}),
+	        "color_inputs([\n  ",
+		  join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
+	        "\n],[\n  ",
+                  join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
+	        "]\n);",
+	      CGI::end_script();
 }
 
 # *BeginPPM* ###################################################################
@@ -459,19 +499,20 @@ sub previewAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
-	} elsif ($displayMode eq "formattedText") {
-		my $tthCommand = $ce->{externalPrograms}->{tth}
-			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. "\\(".$tex."\\)\n"
-			. "END_OF_INPUT\n";
+	# this display mode is no longer supported
+#	} elsif ($displayMode eq "formattedText") {
+#		my $tthCommand = $ce->{externalPrograms}->{tth}
+#			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
+#			. "\\(".$tex."\\)\n"
+#			. "END_OF_INPUT\n";
 		
 		# call tth
-		my $result = `$tthCommand`;
-		if ($?) {
-			return "<b>[tth failed: $? $@]</b>";
-		} else {
-			return $result;
-		}
+#		my $result = `$tthCommand`;
+#		if ($?) {
+#			return "<b>[tth failed: $? $@]</b>";
+#		} else {
+#			return $result;
+#		}
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
@@ -619,6 +660,13 @@ sub pre_header_initialize {
 #    if this fails/failed in authz->checkSet, then $self->{invalidSet} is
 #    set
 		$tmplSet = $db->getMergedSet( $effectiveUserName, $setName );
+		
+		$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || (time >= $tmplSet->open_date && !(
+			  $ce->{options}{enableConditionalRelease} && 
+			  is_restricted($db, $tmplSet, $effectiveUserName)));
+		
+		die("You do not have permission to view unopened sets") unless $self->{isOpen};	
+		
 
 	# now we know that we're in a gateway test, save the assignment test 
 	#    for the processing of proctor keys for graded proctored tests; 
@@ -1004,7 +1052,7 @@ sub pre_header_initialize {
         # [This section lifted from Problem.pm] ##############################
 
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode      = $r->param("displayMode") || 
+	my $displayMode      = $User->displayMode || 
 		$ce->{pg}->{options}->{displayMode};
 	my $redisplay        = $r->param("redisplay");
 	my $submitAnswers    = $r->param("submitAnswers");
@@ -1040,8 +1088,8 @@ sub pre_header_initialize {
 
 	# what does the user want to do?
 	my %want = 
-	    (showOldAnswers     => $r->param("showOldAnswers") || 
-				   $ce->{pg}->{options}->{showOldAnswers},
+	    (showOldAnswers     => $User->showOldAnswers ne '' ?
+	     $User->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers},
 	     showCorrectAnswers => ($r->param("showCorrectAnswers") || 
  	                       	   $ce->{pg}->{options}->{showCorrectAnswers}) &&
                                    ($submitAnswers || $checkAnswers),
@@ -1054,6 +1102,7 @@ sub pre_header_initialize {
 	# we also want to check answers if we were checking answers and are
 	#    switching between pages
 	     checkAnswers       => $checkAnswers,
+	     useMathView        => $User->useMathView ne '' ? $User->useMathView : $ce->{pg}->{options}->{useMathView},
 	     );
 
 	# are certain options enforced?
@@ -1065,6 +1114,7 @@ sub pre_header_initialize {
 	     recordAnswers      => ! $authz->hasPermissions($userName, 
 							    "avoid_recording_answers"),
 	     checkAnswers       => 0,
+	     useMathView        => 0,
 	     );
 
 	# does the user have permission to use certain options?
@@ -1081,6 +1131,7 @@ sub pre_header_initialize {
 	     recordAnswersNextTime => $self->can_recordAnswers(@args, $sAns),
 	     checkAnswersNextTime  => $self->can_checkAnswers(@args, $sAns),
 	     showScore          => $self->can_showScore(@args),
+	     useMathView              => $self->can_useMathView(@args)
 	     );
 
 	# final values for options
@@ -1235,7 +1286,6 @@ sub head {
         my ($self) = @_;
         my $ce = $self->r->ce;
         my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-
         return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
 }
 
@@ -1265,27 +1315,6 @@ sub nav {
 	my $tail = "";
 	
 	return $self->navMacro($args, $tail, @links);
-}
-
-sub options {
-	my ($self) = @_;
-	#warn "doing options in GatewayQuiz";
-	
-	# don't show options if we don't have anything to show
-	return if $self->{invalidSet} or $self->{invalidProblem};
-	return unless $self->{isOpen};
-	
-	my $displayMode = $self->{displayMode};
-	my %can = %{ $self->{can} };
-	
-	my @options_to_show = "displayMode";
-	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
-	push @options_to_show, "showHints" if $can{showHints};
-	push @options_to_show, "showSolutions" if $can{showSolutions};
-	
-	return $self->optionsMacro(
-		options_to_show => \@options_to_show,
-	);
 }
 
 sub body {
@@ -1496,11 +1525,11 @@ sub body {
 			# next, store the state in the database if that makes 
 			#    sense
 			if ( $submitAnswers && $will{recordAnswers} ) {
-  $problems[$i]->status($pg_results[$i]->{state}->{recorded_score});
+  $problems[$i]->status(wwRound(2,$pg_results[$i]->{state}->{recorded_score}));
   $problems[$i]->attempted(1);
   $problems[$i]->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $problems[$i]->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
-  $pureProblem->status($pg_results[$i]->{state}->{recorded_score});
+  $pureProblem->status(wwRound(2,$pg_results[$i]->{state}->{recorded_score}));
   $pureProblem->attempted(1);
   $pureProblem->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
   $pureProblem->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
@@ -1735,11 +1764,16 @@ sub body {
 			my $pScore = 0;
 			my $numParts = 0;
 			if ( ref( $pg ) ) {  # then we have a pg object
-				foreach (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
-					$pScore += $pg->{answers}->{$_}->{score};
-					$numParts++;
-				}
-				$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
+###
+				#foreach (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
+				#	$pScore += $pg->{answers}->{$_}->{score};
+				#	$numParts++;
+				#}
+				#$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
+				$pScore = $pg->{state}->{recorded_score};
+				$probStatus[$i] = $pScore;
+				$numParts = 1;
+###
 
 			} else {
 				# if we don't have a pg object, use any known 
@@ -1781,6 +1815,7 @@ sub body {
 
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
+	$attemptScore = wwRound(2,$attemptScore);
 	if ( $submitAnswers ) {
 		# the distinction between $can{recordAnswers} and ! $can{} has 
 		#    been dealt with above and recorded in @scoreRecordedMessage
@@ -1828,8 +1863,9 @@ sub body {
 		if ( $set->attempts_per_version > 1 && $attemptNumber > 1 &&
 		     $recordedScore != $attemptScore && $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
+			my $recScore = wwRound(2,$recordedScore);
 			print "The recorded score for this test is ",
-				"$recordedScore/$totPossible.";
+				"$recScore/$totPossible.";
 			print CGI::end_div();
 		}
 
@@ -1840,8 +1876,9 @@ sub body {
 					  "recorded) submission is ",
 					  "$attemptScore/$totPossible."), 
 				CGI::br();
+			my $recScore = wwRound(2,$recordedScore);
 			print "The recorded score for this test is " .
-				"$recordedScore/$totPossible.  ";
+				"$recScore/$totPossible.  ";
 			print CGI::end_div();
 		}
 	}
@@ -1889,12 +1926,8 @@ sub body {
 				print CGI::start_div({-id=>"gwScoreSummary"}),
 					CGI::strong({},"Score summary for " .
 						    "last submit:");
-				print CGI::start_table({"border"=>0,
-							"cellpadding"=>0,
-							"cellspacing"=>0});
-				print CGI::Tr({},CGI::th({-align=>"left"},
-							 ["Prob","","Status","",
-							  "Result"]));
+				print CGI::start_table();
+				print CGI::Tr({},CGI::th({-align=>"left"},"Prob"), CGI::td(""), CGI::th("Status"), CGI::td(""), CGI::th("Result"));
 				for ( my $i=0; $i<@probStatus; $i++ ) {
 					print CGI::Tr({},
 						CGI::td({},[($i+1),"",int(100*$probStatus[$probOrder[$i]]+0.5) . "%","", $probStatus[$probOrder[$i]] == 1 ? "Correct" : "Incorrect"]));
@@ -1904,21 +1937,22 @@ sub body {
 		}
 	} else {
 		if ( ! $checkAnswers && ! $submitAnswers ) {
-			print CGI::start_div({class=>'gwMessage'});
 			if ( $can{showScore} ) {
-				my $scMsg = "Your recorded score on this " .
-					"(test number $versionNumber) is " .
-					"$recordedScore/$totPossible";
-				if ( $exceededAllowedTime && 
-				     $recordedScore == 0 ) {
-					$scMsg .= ", because you exceeded " .
-						"the allowed time.";
-				} else {
-					$scMsg .= ".  ";
-				}
-				print CGI::strong($scMsg), CGI::br();
+			    print CGI::start_div({class=>'gwMessage'});
+			    
+			    my $scMsg = "Your recorded score on this " .
+				"(test number $versionNumber) is " .
+				wwRound(2,$recordedScore)."/$totPossible";
+			    if ( $exceededAllowedTime && 
+				 $recordedScore == 0 ) {
+				$scMsg .= ", because you exceeded " .
+				    "the allowed time.";
+			    } else {
+				$scMsg .= ".  ";
+			    }
+			    print CGI::strong($scMsg), CGI::br();
+			    print CGI::end_div();
 			}
-			print CGI::end_div();
 		}
 
 		if ( $set->version_last_attempt_time ) {
@@ -2003,14 +2037,14 @@ sub body {
 
 	# set up links between problems and, for multi-page tests, pages
 		my $jumpLinks = '';
-		my $probRow = [ CGI::b("Problem") ];
+		my $probRow = [ ];
 		for my $i ( 0 .. $#pg_results ) {
 	    
 			my $pn = $i + 1;
 			if ( $i >= $startProb && $i <= $endProb ) {
 				push(@$probRow, CGI::b(" [ ")) if ($i == $startProb);
 				push( @$probRow, " &nbsp;" . 
-				      CGI::a({-href=>".", 
+				      CGI::a({-href=>"#", 
 					      -onclick=>"jumpTo($pn);return false;"},
 					     "$pn") . "&nbsp; " );
 				push(@$probRow, CGI::b(" ] ")) if ($i == $endProb);
@@ -2020,9 +2054,8 @@ sub body {
 			}
 		}
 		if ( $numProbPerPage && $numPages > 1 ) {
-			my $pageRow = [ CGI::td([ CGI::b('Jump to: '), 
-						  CGI::b('Page '),
-						  CGI::b(' [ ' ) ]) ];
+			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page: '))),
+					CGI::td(CGI::b(' [ ' )) ];
 			for my $i ( 1 .. $numPages ) {
 				my $pn = ( $i == $pageNumber ) ? $i : 
 				    CGI::a({-href=>'javascript:' .
@@ -2047,12 +2080,10 @@ sub body {
 					if ( $i != $numPages );
 			}
 			push( @$pageRow, CGI::td(CGI::b(' ] ')) );
-			unshift( @$probRow, ' &nbsp; ' );
-			$jumpLinks = CGI::table( CGI::Tr(@$pageRow), 
-						 CGI::Tr( CGI::td($probRow) ) );
+			$jumpLinks = CGI::table( {class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(@$pageRow), 
+						 CGI::Tr( CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow) ) );
 		} else {
-			unshift( @$probRow, CGI::b('Jump to: ') );
-			$jumpLinks = CGI::table( CGI::Tr( CGI::td($probRow) ) );
+			$jumpLinks = CGI::table({class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, CGI::Tr(CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow) ) );
 		}
 	
 		print $jumpLinks,"\n";
@@ -2107,19 +2138,16 @@ sub body {
 				print CGI::start_div({class=>"gwProblem"});
 				my $i1 = $i+1;
 				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
-				my $points = ($pv > 1) ? 
-					" (" . $pv . " points)" : 
-					" (1 point)";
-				print CGI::a({-href=>"#", -id=>"prob$i"},"");
-				print CGI::strong("Problem $problemNumber."), 
-					"$points\n", $recordMessage;
+				print CGI::div({-id=>"prob$i"},"");
+				print CGI::h2("Problem $problemNumber."), 
+					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
 				       CGI::b("Note: ") : "", 
 				       CGI::i($pg->{result}->{msg}));
 				print CGI::p({class=>"gwPreview"}, 
 					     CGI::a({-href=>"$jsprevlink"}, 
-						    "preview problems"));
+						    "preview answers"));
 
 				print $resultsTable if $resultsTable; 
 
@@ -2136,7 +2164,7 @@ sub body {
 				# keep the jump to anchors so that jumping to 
 				#    problem number 6 still works, even if 
 				#    we're viewing only problems 5-7, etc.
-				print CGI::a({-href=>"#", -id=>"prob$i"},""), "\n";
+				print CGI::div({-id=>"prob$i"},""), "\n";
 				# and print out hidden fields with the current 
 				#    last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
@@ -2155,6 +2183,9 @@ sub body {
 # 	    print CGI::hidden({-name=>$probid, -value=>$probval}), "\n";
 			}
 		}
+
+		$self->handle_input_colors;
+
 		print CGI::div($jumpLinks, "\n");
 		print "\n",CGI::hr(), "\n";
 
@@ -2178,11 +2209,6 @@ sub body {
 					    -checked => $will{showSolutions},
 					    -label   => "Show Solutions",
 					    );
-		}
-
-		if ($can{showCorrectAnswers} or $can{showHints} or 
-		    $can{showSolutions}) {
-			print CGI::br();
 		}
 
 		print CGI::p( CGI::submit( -name=>"previewAnswers", 
@@ -2401,12 +2427,27 @@ sub output_JS{
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
 
+		# This is for MathView.  
+	if ($self->{will}->{useMathView}) {
+	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
+		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+		
+		print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+		print CGI::start_script({type=>"text/javascript"});
+		print "mathView_basepath = \"$site_url/images/mathview/\";";
+		print CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	    } else {
+		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
+	    }
+	}
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
 	#This is for page specfific js
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
 	
 	return "";
 }
-
 
 1;
