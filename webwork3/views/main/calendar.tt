@@ -88,7 +88,8 @@
 <h4>Calendar Help</h4>
   <ul>
     <li>The calendar shows open dates (green), due dates (red) and answer dates (blue) of homework sets.  Drag any to a new day and you will change that particular date.</li>
-    <li>Click on a homework set will show additional information about the set.</li>
+    <li>If a problem set has a reduced scoring enabled, then a fourth date will be shown (in orange).  </li>
+    <li>Click on the letter to the right of a problem set name (O: open, R: reduced scoring, D: due, A: answer) to show additional information about the set.</li>
     <li>An additional way to change the due date of a homework set, select Options from the navigation bar, then View Problem Sets. Then you can drag the set from the left column to the day on the calendar.  
       The open date and information about reduced credit will be set automatically based on the settings (for example, the reduced credit time is 3 days and the open date is 10 days before the due date.)</li>
    </ul>

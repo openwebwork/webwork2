@@ -73,7 +73,7 @@
   <div class="problem-paginator col-md-8"></div>
   <div class="col-md-3 num-problems"></div>
   <%if(show_undo||false) {%>
-  <div class="pull-right col-md-1">
+  <div class="pull-right">
     <button class="btn btn-default undo-delete-button btn-sm" disabled="disabled"><i class="fa fa-undo"></i></button></div>
   <%}%>
 </div>
