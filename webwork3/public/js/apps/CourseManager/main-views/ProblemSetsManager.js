@@ -325,6 +325,8 @@ var ProblemSetsManager = MainView.extend({
                                 date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
                             self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
                                 date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+                            self.assignmentDates.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
+                                date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}));
                             self.problemSetTable.set({filter_string: self.state.get("filter_string")}).updateTable();
                             delete _set._network;
                             break;    
@@ -456,6 +458,10 @@ var ChangeSetPropertiesView = ModalView.extend({
         this.$(".change-set-props-modal").modal("hide");
     }
 });
+
+/** 
+* Adds a new Problem Set to the course 
+*/
 
 var AddProblemSetView = ModalView.extend({
     initialize: function (options) {
