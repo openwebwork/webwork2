@@ -13,12 +13,12 @@
 /*  These are the "main" colors of the theme.  Use search/replace to override
  *  them.  
  *  Dark Blue #003388
- *  Light Blue #0157E8
+ *  Light Blue #0088CC
  *  Dark Green #519951
  *  Light Green #88FF88
- *  Dark Red #BF5454
- *  Light Red #D69191
- *  Dark Yellow #7E7634
+ *  Dark Red #FF9494
+ *  Light Red #CC7676
+ *  Dark Yellow #BDB45E
  *  Light Yellow #EDE275
  */
 
@@ -33,18 +33,13 @@
  */
 
 /* Color for links and link hover */
-.btn:focus,
-a:focus {
-    outline-color:#aaaa00;
-}
-
 a {
   color: #003388;
 }
 
 a:hover,
 a:focus {
-  color: #0157E8;
+  color: #0088CC;
 }
 
 /* Color for the dark blue buttons */
@@ -67,7 +62,7 @@ a:focus {
 /* Colors for the light blue buttons */
 .btn-info {
   color: #ffffff;
-  background-color: #0157E8;
+  background-color: #0088CC;
   background-image: none;
 }
 .btn-info:hover,
@@ -77,7 +72,7 @@ a:focus {
 .btn-info.disabled,
 .btn-info[disabled] {
   color: #ffffff;
-  background-color: #0157E8;
+  background-color: #0088CC;
 }
 
 /* colors for the masthead */
@@ -183,17 +178,17 @@ label.WarningMessage {
 }
 
 span.ResultsAlert { 
-    color: #7E7634; 
+    color: #BDB45E; 
     background-color: inherit; 
 } 
 
 div.ResultsAlert { 
-    color: #7E7634; 
+    color: #BDB45E; 
     background-color: inherit; 
 } 
 
 label.ResultsAlert {
-    color: #7E7634; 
+    color: #BDB45E; 
     background-color: inherit; 
 } 
 
@@ -210,14 +205,10 @@ td.FeedbackMessage {
     background-color:#EDE275;
 } 
 
-div.gwMessage { 
-    background-color: #EDE275;
-}
-
 /* Colors for "green" messages */
 div.ResultsWithoutError { 
-    color: inherit; 
-    background-color: #88FF88; 
+    color: #519951; 
+    background-color: inherit; 
 } 
 
 td.ResultsWithoutError { 
@@ -230,8 +221,8 @@ label.ResultsWithoutError {
 } 
 
 span.ResultsWithoutError { 
-    color: inherit; 
-    background-color:#88FF88;
+    color: #519951; 
+    background-color: inherit; 
 } 
 
 span.correct { 
@@ -239,35 +230,41 @@ span.correct {
     background-color: #88FF88; 
 }
 
-div.gwCorrect { background-color: #88FF88; }
+input.correct	{ 
+    color:inherit; 
+    background-color: #88FF88; 
+} 
 
 /* Colors for "red" messages */
 div.ResultsWithError { 
-    color: #BF5454; 
+    color: #CC7676; 
     background-color: inherit; 
 } 
 
 label.ResultsWithError { 
-    color: #BF5454; 
+    color: #CC7676; 
     background-color: inherit; 
 }
 
 td.ResultsWithError { 
-    background-color:#D69191; 
+    background-color:#FF9494; 
     color: black;
 }
 
 span.ResultsWithError { 
-    color: #BF5454; 
+    color: #CC7676; 
     background-color: inherit; 
 } 
 
 span.incorrect { 
-    color: #BF5454; 
+    color: #CC7676; 
     background-color: inherit; 
 }
 
-div.gwIncorrect { background-color: #D69191; }
+input.incorrect { 
+    color:inherit; 
+    background-color: #FF9494; 
+} 
 
 /* Other formatting for attempt results and the problem page */
 table.attemptResults th {
@@ -278,7 +275,6 @@ table.attemptResults th {
 span.ResultsWithErrorInResultsTable { 
     color: inherit; 
     background-color: inherit; } 
-
 
 /* Comment coloration */
 .answerComments {
@@ -292,14 +288,6 @@ span.ResultsWithErrorInResultsTable {
     background-color: #EDE275; 
 }
 
-/* gw stuff */
-div#gwTimer {
-	background-color:#EDE275;
-}
-div#gwScoreSummary {
-	background-color:#EDE275;
-}
-
 /* Misc */
 .temporaryFile { 
     color: #FF6600; b
@@ -310,15 +298,11 @@ div#gwScoreSummary {
     background-color: #FFFFFF;
 }
 
-.admin-messagebox {
-    background-color: #EDE275;
-}
-
 /* Achievement bar coloring */
 .levelinnerbar {
-    background-color: #0157E8;
+    background-color: #0088CC;
 }
 
 .cheevoinnerbar {
-    background-color: #0157E8;
+    background-color: #0088CC;
 }

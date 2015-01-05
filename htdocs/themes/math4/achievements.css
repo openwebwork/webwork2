@@ -62,7 +62,7 @@
 }
 
 .locked { 
-    color:#666666;
+    color:grey;
     opacity: 0.5;
 }
 
@@ -72,7 +72,7 @@
 }
 
 .locked h2 {
-    color:#666666;
+    color:grey;
 }
 
 .cheevotextbox {

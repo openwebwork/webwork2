@@ -493,11 +493,7 @@ sub CGI_labeled_input
 		return CGI::input($param{-input_attr});
 	}
 	elsif($param{-type} eq "select"){
-	    if (defined $param{-input_attr}{-multiple}) {
-		return CGI::label($param{-label_attr},$param{-label_text}).CGI::scrolling_list($param{-input_attr});
-	    } else {
 		return CGI::label($param{-label_attr},$param{-label_text}).CGI::popup_menu($param{-input_attr});
-	    }
 	}
 	elsif($param{-type} eq "textarea"){
 		return CGI::label($param{-label_attr},$param{-label_text}).CGI::br().CGI::br().CGI::textarea($param{-input_attr});

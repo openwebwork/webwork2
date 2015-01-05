@@ -8,7 +8,7 @@
 }
 
 div.gwMessage { 
-	background-color: #ffeeaa;
+	background-color: coral;
 	box-shadow: 3px 3px 3px darkgray;
 	margin: 1em 0;
 	padding: 0.5em;
@@ -36,7 +36,7 @@ div#gwTimer {
 } 
 
 div#gwScoreSummary {
-	background-color:#ffeeaa;
+	background-color:#fcfccc;
 	color: black;
 	box-shadow: 3px 3px 0.5em darkgray;
 	font-family:Times serif;
@@ -55,15 +55,6 @@ div#gwScoreSummary {
 
 }
 
-#gwScoreSummary table {
-    border:0;
-}
-
-#gwScoreSummary table td,
-#gwScoreSummary table th {
-    margin-left:.2em;
-}
-
 span.resultsWithError, .ResultsWithoutError {
 	padding: 0.2em 1em;
 	box-shadow: 2px 2px 3px darkgray;
@@ -72,14 +63,14 @@ span.resultsWithError, .ResultsWithoutError {
 	border-radius: 3px;
 }
 span.resultsWithError { 
-	background-color: #d69191;
+	background-color: #ffcccc;
 }
 .ResultsWithoutError 
 { 
-	background-color: #88ff88;  
+	background-color: #66ff99;  
 }
-div.gwCorrect { background-color: #88ff88; }
-div.gwIncorrect { background-color: #d69191; }
+div.gwCorrect { background-color: #66ff99; }
+div.gwIncorrect { background-color: #ff9999; }
 div.gwCorrect, div.gwIncorrect {
 	padding: 0.5em;
 	box-shadow: 3px 3px 3px darkgray;
@@ -93,21 +84,11 @@ div.gwProblem
 	border: 1px solid #ddd;
 	border-radius: 3px;
 }
-.gwProblem h2 {
-    display: inline-block;
-    font-size: 16px;
-    margin-right: 5px;
-}
 
-.gwNavigation {
-    margin-top: 1em;	
-    margin-bottom: 1em;
+/* Put space between the "Jump to: Problem ..." nav and the first problem */
+table + .gwProblem {
+	margin-top: 1em;
 }
-
-.gwNavigation th {
-    text-align:right;
-}
-
 
 hr 
 { 
@@ -129,13 +110,15 @@ p.gwPreview {
 }
 
 table.gwAttemptResults {
-    margin: 5px;
-    border: solid black 1px;
+	border-width: 0px;
 }
-
-table.gwAttemptResults>tbody>tr>th,
-table.gwAttemptResults>tbody>tr>td {
-	padding: 5px;
+table.gwAttemptResults td.label {
+	font-weight: bold;
+	background-color: transparent;
+	color: navy;
+}
+table.gwAttemptResults td.output {
+	padding: 2px;
 	border: solid black 1px;
 	background-color: #eeeeee;
 }

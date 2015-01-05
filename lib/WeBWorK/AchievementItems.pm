@@ -104,8 +104,8 @@ sub print_form {
 
     return join("",
 	CGI::p("Choose the set which you would like to ressurect."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"res_set_id", name=>"res_set_id"})));
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"res_set_id", name=>"res_set_id"}));
 }
 
 sub use_item {
@@ -194,8 +194,8 @@ sub print_form {
 
     return join("",
 	CGI::p("Choose the set whose due date you would like to extend."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"})));
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"}));
 }
 
 sub use_item {
@@ -275,8 +275,8 @@ sub print_form {
 
     return join("",
 	CGI::p("Choose the set whose due date you would like to extend."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"})));
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"}));
 }
 
 sub use_item {
@@ -361,8 +361,8 @@ sub print_form {
 
     return join("",
 	CGI::p("Choose the set which you would like to enable partial credit for."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"red_set_id", name=>"red_set_id"})));
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"red_set_id", name=>"red_set_id"}));
 }
 
 sub use_item {
@@ -452,8 +452,8 @@ sub print_form {
 
     return join("",
 	CGI::p("Choose the set which you would like to be worth twice as much."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"dub_set_id", name=>"dub_set_id"})));
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"dub_set_id", name=>"dub_set_id"}));
 }
 
 sub use_item {
@@ -554,18 +554,17 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
+    $problem_id_script .= "default: max = $openSetCount[0];} ";
     $problem_id_script .= "\$('\#ria_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#ria_problem_id option').slice(0,max).show();";
 
     return join("",
 	CGI::p("Please choose the set name and problem number of the question which should have its incorrect attempt count reset."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"ria_set_id", name=>"ria_set_id",onchange=>$problem_id_script})),
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"ria_set_id", name=>"ria_set_id",onchange=>$problem_id_script}),
 	" ",
-	CGI::label("Problem Number ",
-	CGI::popup_menu({values=>\@problemIDs,name=>"ria_problem_id",id=>"ria_problem_id",attributes=>\%attributes})));
+	"Problem Number ",
+	CGI::popup_menu({values=>\@problemIDs,name=>"ria_problem_id",id=>"ria_problem_id",attributes=>\%attributes}));
 
 }
 
@@ -664,18 +663,17 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
+    $problem_id_script .= "default: max = $openSetCount[0];} ";
     $problem_id_script .= "\$('\#dbp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#dbp_problem_id option').slice(0,max).show();";
 
     return join("",
 	CGI::p("Please choose the set name and problem number of the question which should have its weight doubled."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"dbp_set_id", name=>"dbp_set_id",onchange=>$problem_id_script})),
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"dbp_set_id", name=>"dbp_set_id",onchange=>$problem_id_script}),
 	" ",
-	CGI::label("Problem Number ",
-	CGI::popup_menu({values=>\@problemIDs,name=>"dbp_problem_id",id=>"dbp_problem_id",attributes=>\%attributes})));
+	"Problem Number ",
+	CGI::popup_menu({values=>\@problemIDs,name=>"dbp_problem_id",id=>"dbp_problem_id",attributes=>\%attributes}));
 
 }
 
@@ -776,18 +774,17 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} " 
-	if $#openSetCount >= 0;
+    $problem_id_script .= "default: max = $openSetCount[0];} ";
     $problem_id_script .= "\$('\#hcp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#hcp_problem_id option').slice(0,max).show();";
 
     return join("",
 	CGI::p("Please choose the set name and problem number of the question which should be given half credit."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"hcp_set_id", name=>"hcp_set_id",onchange=>$problem_id_script})),
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"hcp_set_id", name=>"hcp_set_id",onchange=>$problem_id_script}),
 	" ",
-	CGI::label("Problem Number ",
-	CGI::popup_menu({values=>\@problemIDs,name=>"hcp_problem_id",id=>"hcp_problem_id",attributes=>\%attributes})));
+	"Problem Number ",
+	CGI::popup_menu({values=>\@problemIDs,name=>"hcp_problem_id",id=>"hcp_problem_id",attributes=>\%attributes}));
 
 }
 
@@ -874,8 +871,8 @@ sub print_form {
     #print form with sets 
     return join("",
 		CGI::p("Choose the set which you would like to ressurect."),
-		CGI::label("Set Name ",
-		CGI::popup_menu({values=>\@openSets,id=>"hcs_set_id", name=>"hcs_set_id"})));
+		"Set Name ",
+		CGI::popup_menu({values=>\@openSets,id=>"hcs_set_id", name=>"hcs_set_id"}));
 }
 
 sub use_item {
@@ -979,18 +976,17 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
+    $problem_id_script .= "default: max = $openSetCount[0];} ";
     $problem_id_script .= "\$('\#fcp_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#fcp_problem_id option').slice(0,max).show();";
 
     return join("",
 	CGI::p("Please choose the set name and problem number of the question which should be given full credit."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"fcp_set_id", name=>"fcp_set_id",onchange=>$problem_id_script})),
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"fcp_set_id", name=>"fcp_set_id",onchange=>$problem_id_script}),
 	" ",
-	CGI::label("Problem Number ",
-	CGI::popup_menu({values=>\@problemIDs,name=>"fcp_problem_id",id=>"fcp_problem_id",attributes=>\%attributes})));
+	"Problem Number ",
+	CGI::popup_menu({values=>\@problemIDs,name=>"fcp_problem_id",id=>"fcp_problem_id",attributes=>\%attributes}));
 
 }
 
@@ -1073,8 +1069,8 @@ sub print_form {
     #print form with sets 
     return join("",
 		CGI::p("Choose the set which you would like to ressurect."),
-		CGI::label("Set Name ",
-		CGI::popup_menu({values=>\@openSets,id=>"fcs_set_id", name=>"fcs_set_id"})));
+		"Set Name ",
+		CGI::popup_menu({values=>\@openSets,id=>"fcs_set_id", name=>"fcs_set_id"}));
 }
 
 sub use_item {
@@ -1173,8 +1169,7 @@ sub print_form {
     foreach (my $i=0; $i<=$#openSets; $i++) {
 	$problem_id_script .= "case '".$openSets[$i]."': max =".$openSetCount[$i]."; break; "
     }
-    $problem_id_script .= "default: max = $openSetCount[0];} "
-	if $#openSetCount >= 0;
+    $problem_id_script .= "default: max = $openSetCount[0];} ";
     $problem_id_script .= "\$('\#tran_problem_id option').slice(max,$maxProblems).hide(); ";
     $problem_id_script .= "\$('\#tran_problem_id option').slice(0,max).show();";
     $problem_id_script .= "\$('\#tran_problem_id2 option').slice(max,$maxProblems).hide(); ";
@@ -1182,13 +1177,13 @@ sub print_form {
 
     return join("",
 	CGI::p("Please choose the set, the problem you would like to copy, and the problem you would like to copy it to."),
-	CGI::label("Set Name ",
-	CGI::popup_menu({values=>\@openSets,id=>"tran_set_id", name=>"tran_set_id",onchange=>$problem_id_script})),
+	"Set Name ",
+	CGI::popup_menu({values=>\@openSets,id=>"tran_set_id", name=>"tran_set_id",onchange=>$problem_id_script}),
 	" ",
-	CGI::label(" Copy this Problem ",
-	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id",id=>"tran_problem_id",attributes=>\%attributes})),
-	CGI::label(" To this Problem ",
-	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id2",id=>"tran_problem_id2",attributes=>\%attributes}))
+	" Copy this Problem ",
+	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id",id=>"tran_problem_id",attributes=>\%attributes}),
+	" To this Problem ",
+	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id2",id=>"tran_problem_id2",attributes=>\%attributes})
 
 
 );

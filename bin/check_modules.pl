@@ -8,7 +8,6 @@ my @applicationsList = qw(
 	mv
 	mysql
 	tar
-        git
 	gzip
 	latex
 	pdflatex
