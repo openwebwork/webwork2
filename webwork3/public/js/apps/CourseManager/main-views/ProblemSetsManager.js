@@ -16,7 +16,6 @@ var ProblemSetsManager = MainView.extend({
 
         this.state.on({
             "change:filter_string": function () {
-                console.log(self.state.get("filter_string"))
                 self.problemSetTable.set(self.state.pick("filter_string")).updateTable();
                 self.$(".num-users").html(self.problemSetTable.getRowCount() + " of " 
                         + self.problemSets.length + " users shown.");
@@ -467,7 +466,7 @@ var AddProblemSetView = ModalView.extend({
     initialize: function (options) {
         _.bindAll(this,"render","addNewSet","validateName");
         _(this).extend(_(options).pick("settings","problemSets","users"))
-        this.model = new ProblemSet({},options.dateSettings);
+        this.model = new ProblemSet({},util.pluckDateSettings(options.settings));
         this.model.problemSets = options.problemSets; 
 
         _(options).extend({
