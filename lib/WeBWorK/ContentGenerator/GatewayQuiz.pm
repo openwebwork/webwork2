@@ -499,19 +499,20 @@ sub previewAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
-	} elsif ($displayMode eq "formattedText") {
-		my $tthCommand = $ce->{externalPrograms}->{tth}
-			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-			. "\\(".$tex."\\)\n"
-			. "END_OF_INPUT\n";
+	# this display mode is no longer supported
+#	} elsif ($displayMode eq "formattedText") {
+#		my $tthCommand = $ce->{externalPrograms}->{tth}
+#			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
+#			. "\\(".$tex."\\)\n"
+#			. "END_OF_INPUT\n";
 		
 		# call tth
-		my $result = `$tthCommand`;
-		if ($?) {
-			return "<b>[tth failed: $? $@]</b>";
-		} else {
-			return $result;
-		}
+#		my $result = `$tthCommand`;
+#		if ($?) {
+#			return "<b>[tth failed: $? $@]</b>";
+#		} else {
+#			return $result;
+#		}
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {

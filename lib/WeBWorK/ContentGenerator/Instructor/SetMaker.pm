@@ -197,6 +197,25 @@ sub munge_pg_file_path {
 	return($pg_path);
 }
 
+## Problems straight from the OPL database come with MO and static
+## tag information.  This is for other times, like next/prev page.
+
+sub getDBextras {
+	my $r = shift;
+	my $sourceFileName = shift;
+
+	if($sourceFileName =~ /^Library/) {
+		return @{WeBWorK::Utils::ListingDB::getDBextras($r, $sourceFileName)};
+	}
+
+	my $filePath = $r->ce->{courseDirs}{templates}."/$sourceFileName";
+	my $tag_obj = WeBWorK::Utils::Tags->new($filePath);
+	my $isMO = $tag_obj->{MO} || 0;
+	my $isstatic = $tag_obj->{Static} || 0;
+
+	return ($isMO, $isstatic);
+}
+
 ## With MLT, problems come in groups, so we need to find next/prev
 ## problems.  Return index, or -1 if there are no more.
 sub next_prob_group {
@@ -933,6 +952,11 @@ sub make_data_row {
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
 	my $pg = shift;
+	my $isstatic = $sourceFileData->{static};
+	my $isMO = $sourceFileData->{MO};
+	if (not defined $isMO) {
+		($isMO, $isstatic) = getDBextras($r, $sourceFileName);
+	}
 	my $cnt = shift;
 	my $mltnumleft = shift;
 
@@ -1028,7 +1052,9 @@ sub make_data_row {
 
 	my $level =0;
 
-	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
+	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random"></i></span>';
+	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
+	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
 	print $mltstart;
 	# Print the cell
@@ -1041,7 +1067,7 @@ sub make_data_row {
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
 			CGI::span({-style=>"float:right ; text-align: right"}, 
-		        $inSet, $mlt, $rerand,
+				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
 				-title=>"Hide this problem",
@@ -1324,7 +1350,8 @@ sub pre_header_initialize {
 				push @pg_files, $problemRecord->source_file;
 
 			}
-			@pg_files = sortByName(undef,@pg_files);
+			# Don't sort, leave them in the order they appeared in the set
+			#@pg_files = sortByName(undef,@pg_files);
 			@pg_files = map {{'filepath'=> $_, 'morelt'=>0}} @pg_files;
 			$use_previous_problems=0;
 		}
@@ -1528,7 +1555,7 @@ sub head {
   my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-    print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
+    #print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
 
   print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
