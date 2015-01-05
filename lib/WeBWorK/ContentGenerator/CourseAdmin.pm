@@ -437,7 +437,6 @@ sub body {
 	
 	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
 	
-	
 	my @errors = @{$self->{errors}};
 	
 	
@@ -460,6 +459,8 @@ sub body {
 				CGI::p(" The webwork server must be able to write to these directories. Please correct the permssion errors.") ;
 			}
 	
+		print $self->upgrade_notification();
+
 		print CGI::h2($r->maketext("Courses"));
 	
 		print CGI::start_ol();
@@ -819,12 +820,20 @@ sub do_add_course {
 	}
 	
 	push @{$courseOptions{PRINT_FILE_NAMES_FOR}}, map { $_->[0]->user_id } @users;
-	
+
+	# include any optional arguments, including a template course and the 
+	# course title and course institution. 
 	my %optional_arguments;
 	if ($add_templates_course ne "") {
 		$optional_arguments{templatesFrom} = $add_templates_course;
 	}
-	
+	if ($add_courseTitle ne "") {
+		$optional_arguments{courseTitle} = $add_courseTitle;
+	}
+	if ($add_courseInstitution ne "") {
+		$optional_arguments{courseInstitution} = $add_courseInstitution;
+	}
+
 	eval {
 		addCourse(
 			courseID      => $add_courseID,
@@ -1789,7 +1798,7 @@ sub archive_course_confirm {
 				CGI::submit(-name=>"decline_archive_course", -value=>"Stop archiving"),
 				"&nbsp;",
 				(@archive_courseIDs)? CGI::submit(-name=>"archive_course", -value=>"Skip archiving this course")."&nbsp;":'',
-				CGI::submit(-name=>"confirm_archive_course", -value=>"archive") ,
+				CGI::submit(-name=>"confirm_archive_course", -value=>"Archive") ,
 			);
 		} elsif( $directories_ok)  {
 			print CGI::p({style=>"text-align: center"},
@@ -2060,9 +2069,9 @@ sub unarchive_course_confirm {
 	print $self->hidden_fields(qw/unarchive_courseID create_newCourseID/);
 	
 	print CGI::p({style=>"text-align: center"},
-		CGI::submit(-name=>"decline_unarchive_course", -value=>"Don't unarchive"),
+		CGI::submit(-name=>"decline_unarchive_course", -value=>"Don't Unarchive"),
 		"&nbsp;",
-		CGI::submit(-name=>"confirm_unarchive_course", -value=>"unarchive"),
+		CGI::submit(-name=>"confirm_unarchive_course", -value=>"Unarchive"),
 	);
 	
 	print CGI::end_form();
@@ -2118,7 +2127,7 @@ sub do_unarchive_course {
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
 		print CGI::hidden("unarchive_courseID",$unarchive_courseID);
-		print CGI::p( CGI::submit("decline_unarchive_course", "unarchive next course")  );
+		print CGI::p( CGI::submit("decline_unarchive_course", "Unarchive Next Course")  );
  		print CGI::end_form();
  
 	}
@@ -3176,6 +3185,229 @@ Check the ownership and permissions of the course's directory, e.g $coursesDir/$
 }
 
 
+sub upgrade_notification {
+    my $self = shift;
+    my $r = $self->r;
+    my $ce = $r->ce;
+    my $db = $r->db;
+
+    # exit if notifications are disabled
+    return unless $ce->{enableGitUpgradeNotifier};
+
+    my $git = $ce->{externalPrograms}->{git};
+    my $WeBWorKRemote = $ce->{gitWeBWorKRemoteName};
+    my $WeBWorKBranch = $ce->{gitWeBWorKBranchName};
+    my $PGRemote = $ce->{gitPGRemoteName};
+    my $PGBranch = $ce->{gitPGBranchName};
+    my $LibraryRemote = $ce->{gitLibraryRemoteName};
+    my $LibraryBranch = $ce->{gitLibraryBranchName};
+
+    # we can tproceed unless we have git; 
+    if (!(defined($git) && -x $git)) {
+	warn('External Program "git" not found.  Check your site.conf');
+	return;
+    }
+
+    my $upgradeMessage = '';
+    my $upgradesAvailable = 0;
+    my $output;
+    my @lines;
+    my $commit;
+
+    if ($WeBWorKRemote && $WeBWorKBranch) {
+    # Check if there is an updated version of webwork available
+    # this is done by using ls-remote to get the commit sha at the 
+    # head of the remote branch and looking to see if that sha is in
+    # the currently selected local branch
+	chdir($ce->{webwork_dir});
+	my $currentBranch = `$git symbolic-ref --short HEAD`;
+	$output = `$git ls-remote --heads $WeBWorKRemote`;
+	@lines = split /\n/, $output;
+	$commit=-1;
+
+	foreach my $line (@lines) {
+	    if ($line =~ /refs\/heads\/$WeBWorKBranch$/) {
+		$line =~ /^(\w+)/;
+		$commit = $1;
+		last;
+	    }
+	}
+	
+	$output = `$git branch --contains $commit`;
+
+	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {    
+	    # There are upgrades, we need to figure out if its a 
+	    # new version or not
+	    # This is done by using ls-remote to get the commit sha's
+	    # at the heads of the remote tags.  
+	    # Tags of the form WeBWorK-x.y are release tags.  If there is
+	    # an sha there which isn't in the current branch then there must
+	    # be a newer version. 
+
+	    $output = `$git ls-remote --tags $WeBWorKRemote`;
+	    @lines = split /\n/, $output;
+	    my $newversion = 0;
+	    
+	    foreach my $line (@lines) {
+		next unless $line =~ /\/tags\/WeBWorK-/;
+		$line =~ /^(\w+)/;
+		$commit = $1;
+		$output = `$git branch --contains $commit`;
+	
+		if ($output !~ /\s+$currentBranch(\s+|$)/) {
+		    # There is a version tag which contains a commit that
+		    # isn't in the current branch so there must
+		    # be a new version
+		    $newversion = 1;
+		    last;
+		}
+	    }
+	    
+	    if ($newversion) {
+		$upgradesAvailable = 1;
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of WeBWorK available.')));
+	    } else {
+		$upgradesAvailable = 1;
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current branch of WeBWorK from branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
+	    }
+	} elsif ($commit eq '-1') {
+	    $upgradesAvailable = 1;
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext("Couldn't find WeBWorK Branch [_1] in remote [_2]", $WeBWorKBranch, $WeBWorKRemote)));
+	}  else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of WeBWorK is up to date with branch [_1] in remote [_2].', $WeBWorKBranch, $WeBWorKRemote)));
+	}
+    } 
+
+    if ($PGRemote && $PGBranch) {
+	# Check if there is an updated version of pg available
+	# this is done by using ls-remote to get the commit sha at the 
+	# head of the remote branch and looking to see if that sha is in
+	# the currently selected local branch 
+	chdir($ce->{pg_dir});
+	my $currentBranch = `$git symbolic-ref --short HEAD`;
+	$output = `$git ls-remote --heads $PGRemote`;
+	@lines = split /\n/, $output;
+	$commit='-1';
+	
+	foreach my $line (@lines) {
+	    if ($line =~ /refs\/heads\/$PGBranch$/) {
+		$line =~ /^(\w+)\s+/;
+		$commit = $1;
+		last;
+	    }
+	}
+	
+	$output = `$git branch --contains $commit`;
+	
+	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {    
+	    # There are upgrades, we need to figure out if its a 
+	    # new version or not
+	    # This is done by using ls-remote to get the commit sha's
+	    # at the heads of the remote tags.  
+	    # Tags of the form WeBWorK-x.y are release tags.  If there is
+	    # an sha there which isn't in the local branch then there must
+	    # be a newer version. 
+	    $output = `$git ls-remote --tags $PGRemote`;
+	    @lines = split /\n/, $output;
+	    my $newversion = 0;
+	    
+	    foreach my $line (@lines) {
+		next unless $line =~ /\/tags\/PG-/;
+		$line =~ /^(\w+)/;
+		$commit = $1;
+		$output = `$git branch --contains $commit`;
+		if ($output !~ /\s+$currentBranch(\s+|$)/) {
+		    # There is a version tag which contains a commit that
+		    # isn't in the current branch so there must
+		    # be a new version
+		    $newversion = 1;
+		    last;
+		}
+	    }
+	    
+	    if ($newversion) {
+		$upgradesAvailable = 1;
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is a new version of PG available.')));
+	    } else {
+		$upgradesAvailable = 1;
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for your current branch of PG from branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
+	    } 		
+	} elsif ($commit eq '-1') {
+	    $upgradesAvailable = 1;
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext("Couldn't find PG Branch [_1] in remote [_2]", $PGBranch, $PGRemote)));
+	}  else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of PG is up to date with branch [_1] in remote [_2].', $PGBranch, $PGRemote)));
+
+	} 
+    } 
+
+    die "Couldn't find ".$ce->{problemLibrary}{root}.'.  Are you sure $problemLibrary{root} is set correctly in localOverrides.conf?' unless
+	chdir($ce->{problemLibrary}{root}); 
+    
+    if ($LibraryRemote && $LibraryBranch) {
+	# Check if there is an updated version of the OPL available
+	# this is done by using ls-remote to get the commit sha at the 
+	# head of the remote branch and looking to see if that sha is in
+	# the local current branch
+	my $currentBranch = `$git symbolic-ref --short HEAD`;
+	$output = `$git ls-remote --heads $LibraryRemote`;
+	@lines = split /\n/, $output;
+	$commit='-1';
+	
+	foreach my $line (@lines) {
+	    if ($line =~ /refs\/heads\/$LibraryBranch$/) {
+		$line =~ /^(\w+)\s+/;
+		$commit = $1;
+		last;
+	    }
+	}
+	
+	$output = `$git branch --contains $commit`;
+
+	if ($commit ne '-1' && $output !~ /\s+$currentBranch(\s+|$)/) {    
+	    $upgradesAvailable = 1;
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There are upgrades available for the Open Problem Library.')));
+	} elsif ($commit eq '-1') {
+	    $upgradesAvailable = 1;
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext("Couldn't find OPL Branch [_1] in remote [_2]", $LibraryBranch, $LibraryRemote)));
+	} else {
+	    $upgradeMessage .= CGI::Tr(CGI::td($r->maketext('Your current branch of the Open Problem Library is up to date.', $LibraryBranch, $LibraryRemote)));
+	}
+    } 
+
+    # Check to see if the OPL_update script has been run more recently
+    # than the last pull of the library. 
+    # this json file is (re)-created every time OPL-update is run. 
+    my $jsonfile = $ce->{webworkDirs}{htdocs}.'/DATA/'.$ce->{problemLibrary}{tree};
+    # If no json file then the OPL script needs to be run
+    unless (-e $jsonfile) {
+	$upgradesAvailable = 1;
+	$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('There is no library tree file for the library, you will need to run OPL-update.')));
+    # otherwise we need to check to see if the date on the tree file
+    # is after the date on the last commit in the library
+    } else {
+	my $opldate = stat($jsonfile)->[9];
+	# skip this if the system doesnt support mtime
+	if ($opldate) {
+	    my $lastcommit = `git log -1 --pretty=format:%at`;
+	    if ($lastcommit > $opldate) {
+		$upgradesAvailable = 1;
+		$upgradeMessage .= CGI::Tr(CGI::td($r->maketext('The library index is older than the library, you need to run OPL-update.')));
+	    }
+	}
+    } 
+
+    chdir($ce->{webwork_dir});
+
+    if ($upgradesAvailable) {
+	$upgradeMessage = CGI::Tr(CGI::th($r->maketext('The following upgrades are available for your WeBWorK system:'))).$upgradeMessage;
+	return CGI::center(CGI::table({class=>"admin-messagebox"},$upgradeMessage));
+    } else {
+	return CGI::center(CGI::div({class=>"ResultsWithoutError"},
+				    $r->maketext('Your systems are up to date!')));
+    }
+
+}
 
 ################################################################################
 #   registration forms added by Mike Gage 5-5-2008
@@ -3195,8 +3427,7 @@ sub display_registration_form {
 	return 0  if $registeredQ or $register_site or $registration_subDisplay;     #otherwise return registration form
 	return  q! 
 	<center>
-	<table class="messagebox" style="background-color:#FFFFCC;width:60%">
-	<tr><td>
+	<table class="admin-messagebox"><tr><td>
 	!,
 	CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
 	CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using

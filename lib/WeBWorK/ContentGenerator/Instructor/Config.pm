@@ -150,6 +150,26 @@ sub save_string {
 	return('$'. $varname . " = '$newval';\n");
 }
 
+########################### configtime
+########################### just like text, but it validates the time before saving
+package configtime;
+@configtime::ISA = qw(configobject);
+
+sub save_string {
+	my ($self, $oldval, $newvalsource) = @_;
+	my $varname = $self->{var};
+	my $newval = $self->convert_newval_source($newvalsource);
+	my $displayoldval = $self->comparison_value($oldval);
+	return '' if($displayoldval eq $newval);
+
+	if($newval !~ /^(01|1|02|2|03|3|04|4|05|5|06|6|07|7|08|8|09|9|10|11|12):[0-5]\d(am|pm|AM|PM)$/) {
+		$self->{Module}->addbadmessage("String '$newval' is not a valid time.  Reverting to the system default value.");
+		return '';
+	}
+
+	return('$'. $varname . " = '$newval';\n");
+}
+
 ########################### confignumber
 package confignumber;
 @confignumber::ISA = qw(configobject);
@@ -659,7 +679,7 @@ sub body {
 	my @tab_names = map { $_->[0] } @{$ConfigValues};
 	$self->print_navigation_tabs($current_tab, @tab_names);
 
-	print CGI::startform({method=>"post", action=>$r->uri, id=>"config-form", name=>"config-form"});
+	print CGI::start_form({method=>"post", action=>$r->uri, id=>"config-form", name=>"config-form"});
 	print $self->hidden_authen_fields();
 	print CGI::hidden(-name=> 'section_tab', -value=> $current_tab);
 

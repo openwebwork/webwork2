@@ -53,6 +53,15 @@ div#gwScoreSummary {
 	padding: 3px;
 	position: absolute;
 }
+
+#gwScoreSummary table {
+    border:0;
+}
+
+#gwScoreSummary table td {
+    margin-left:.1em;
+}
+
 html>body #gwScoreSummary {
 	position: fixed; /* IE 7 and other browsers see this */
 }
@@ -69,6 +78,14 @@ div.gwProblem {
         padding: 3px;
         border: solid black 1px;
 }
+
+.gwProblem h3 {
+ display: inline;
+ font-size: 16px;
+ margin-right: 5px;
+}
+
+
 div.gwSoln {
 /*      background-color: #e0e0ff; */
         background-color: transparent;
@@ -86,17 +103,15 @@ p.gwPreview {
 }
 
 table.gwAttemptResults {
-        border-width: 0px;
+    margin: 5px;
+    border: solid black 1px;
 }
-table.gwAttemptResults td.label {
-        font-weight: bold;
-        background-color: transparent;
-        color: navy;
-}
-table.gwAttemptResults td.output {
-        padding: 2px;
-        border: solid black 1px;
-        background-color: #eeeeee;
+
+table.gwAttemptResults th,
+table.gwAttemptResults td {
+	padding: 5px;
+	border: solid black 1px;
+	background-color: #eeeeee;
 }
 
 div.gwPrintMe { 

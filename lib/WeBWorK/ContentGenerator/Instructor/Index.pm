@@ -409,8 +409,7 @@ sub body {
 						CGI::td(CGI::submit(-name=>"assign_users", -label=>"Assign")." selected <b>users</b> to selected <b>sets</b>"),
 						CGI::td(CGI::submit(-name=>"act_as_user", -label=>"Act as")." one <b>user</b> (on one <b>set</b>)"),
 						CGI::td(CGI::submit(-name=>"edit_set_for_users", -label=>"Edit"). " one <b>set</b> for  <b>users</b>"),
-						CGI::td({-height=>4}),
-						CGI::td(CGI::submit(-name=>"email_users", -label=>"Email"). " your students"),
+ 						CGI::td(CGI::submit(-name=>"email_users", -label=>"Email"). " your students"),
 						($authz->hasPermissions($user, "manage_course_files")
 							? CGI::td(CGI::submit(-name=>"transfer_files", -label=>"Transfer"). " course files")
 							: ()

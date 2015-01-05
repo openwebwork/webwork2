@@ -189,7 +189,7 @@ sub body {
 		my $levelpercentage = int(100*$globalUserAchievements->achievement_points/$globalUserAchievements->next_level_points);
 		$levelpercentage = $levelpercentage <= 100 ? $levelpercentage : 100;
 
-		print CGI::start_div({class=>'levelouterbar'});
+		print CGI::start_div({class=>'levelouterbar', title=>$r->maketext("[_1]% Complete", $levelpercentage), 'aria-label'=>$r->maketext("[_1]% Complete",$levelpercentage)});
 		print CGI::div({class=>'levelinnerbar', style=>"width:$levelpercentage\%"},'');
 		print CGI::end_div();	
 		print CGI::end_div();
@@ -220,7 +220,7 @@ sub body {
 
 	    # Generate array of problem counts
 	    for (my $i=0; $i<=$#sets; $i++) {		
-		$setProblemCount[$i] = $db->countUserProblems($userID,$sets[$i]->set_id);
+		$setProblemCount[$i] = WeBWorK::Utils::max($db->listUserProblems($userID,$sets[$i]->set_id));
 	    }
 
 	    print CGI::h2("Items");
@@ -239,7 +239,7 @@ sub body {
 		    print CGI::a({href=>"\#modal_".$item->id(), role=>"button", "data-toggle"=>"modal",class=>"btn",id=>"popup_".$item->id()},"Use Item");
 		    print CGI::start_div({id=>"modal_".$item->id(),class=>"modal hide fade"});
 		    print CGI::start_div({class=>'modal-header'});
-		    print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
+		    print CGI::a({href=>"#",class=>"close","data-dismiss"=>"modal", "aria-hidden"=>"true"},CGI::span({class=>"icon icon-remove"}),CGI::div({class=>"sr-only"},$r->maketext("close")));
 		    print CGI::h3($item->name()); 
 		    print CGI::end_div();
 		    print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"itemform_$itemnumber", class=>"achievementitemform"});
@@ -303,7 +303,7 @@ sub body {
 			$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 			}
 	
-			print CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
+			print CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'});
 			print CGI::start_div({class=>'cheevotextbox'});
 			print CGI::h3($achievement->name);
 			print CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
@@ -313,7 +313,7 @@ sub body {
 			$userCounter = 0 unless ($userAchievement->counter);
 			my $percentage = int(100*$userCounter/$achievement->max_counter);
 			$percentage = $percentage <= 100 ? $percentage : 100;
-			print CGI::start_div({class=>'cheevoouterbar'});
+			print CGI::start_div({class=>'cheevoouterbar', title=>$r->maketext("[_1]% Complete", $percentage), 'aria-label'=>$r->maketext("[_1]% Complete",$percentage)});
 			print CGI::div({class=>'cheevoinnerbar', style=>sprintf("width:%i%%;", $percentage)},'');
 			print CGI::end_div();	
 			}	
