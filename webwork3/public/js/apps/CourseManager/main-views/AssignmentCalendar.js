@@ -137,6 +137,9 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 config.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
             });
 
+            if(!model.get("reduced_scoring_date")){
+                return;
+            }
             // hide the reduced credit sets that shouldn't be visible. 
             this.problemSets.chain().each(function(_set) { 
                 config.changeClass({state: _set.get("enable_reduced_scoring"), remove_class: "hidden", 
