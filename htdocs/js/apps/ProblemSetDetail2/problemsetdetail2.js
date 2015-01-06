@@ -213,9 +213,9 @@ function render(id) {
 	source_file = $('#problem_'+id+'_default_source_file').val();
     }
 
-    ro.problemSource = templatedir + '/' + source_file;
+    ro.problemPath = templatedir + '/' + source_file;
 
-    ro.set = ro.problemSource;
+    ro.set = ro.problemPath;
     ro.showHints = 1;
     ro.showSolutions = 1;
     ro.noprepostambles = 1;
