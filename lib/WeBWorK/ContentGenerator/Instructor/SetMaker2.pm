@@ -210,16 +210,24 @@ sub read_set_def {
 	my ($line, $got_to_pgs, $name, @rest) = ("", 0, "");
 	if ( open (SETFILENAME, "$filePath") )    {
 		while($line = <SETFILENAME>) {
-			chomp($line);
-			$line =~ s|(#.*)||; # don't read past comments
-			if($got_to_pgs) {
-				unless ($line =~ /\S/) {next;} # skip blank lines
-				($name,@rest) = split (/\s*,\s*/,$line);
-				$name =~ s/\s*//g;
-				push @pg_files, $name;
-			} else {
-				$got_to_pgs = 1 if ($line =~ /problemList\s*=/);
+		    chomp($line);
+		    $line =~ s|(#.*)||; # don't read past comments
+		    if($got_to_pgs == 1) {
+			unless ($line =~ /\S/) {next;} # skip blank lines
+			($name,@rest) = split (/\s*,\s*/,$line);
+			$name =~ s/\s*//g;
+			push @pg_files, $name;
+		    } elsif ($got_to_pgs == 2) {
+			# skip lines which dont identify source files
+			unless ($line =~ /source_file\s*=\s*(\S+)/) {
+			    next;
 			}
+			# otherwise we got the name from the regexp
+			push @pg_files, $1;
+		    } else {
+			$got_to_pgs = 1 if ($line =~ /problemList\s*=/);
+			$got_to_pgs = 2 if ($line =~ /problemListV2/);
+		    }
 		}
 	} else {
 		$self->addbadmessage("Cannot open $filePath");
