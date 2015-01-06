@@ -99,7 +99,7 @@ use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
 use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
-use constant EXPORT_FIELD_ORDER => [ qw( select set_id filename) ];
+use constant EXPORT_FIELD_ORDER => [ qw( select set_id problems users) ];
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {

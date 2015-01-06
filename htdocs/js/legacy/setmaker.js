@@ -343,8 +343,8 @@ function randomize(filepath, el) {
   var ro = init_webservice('renderProblem');
   var templatedir = $('#hidden_templatedir').val();
   ro.problemSeed = seed;
-  ro.problemSource = templatedir + '/' + filepath;
-  ro.set = ro.problemSource;
+  ro.problemPath = templatedir + '/' + filepath;
+  ro.set = ro.problemPath;
   var showhint = 0;
   if($("input[name='showHints']").is(':checked')) { showhint = 1;}
   var showsoln = 0;

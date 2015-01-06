@@ -1358,7 +1358,8 @@ sub pre_header_initialize {
 				push @pg_files, $problemRecord->source_file;
 
 			}
-			@pg_files = sortByName(undef,@pg_files);
+			# Don't sort, leave them in the order they appeared in the set
+			#@pg_files = sortByName(undef,@pg_files);
 			@pg_files = map {{'filepath'=> $_, 'morelt'=>0}} @pg_files;
 			$use_previous_problems=0;
 		}
