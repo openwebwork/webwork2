@@ -632,8 +632,18 @@ sub filter_form {
 	my $r = $self->r;
 	#return CGI::table({}, CGI::Tr({-valign=>"top"},
 	#	CGI::td({}, 
-	
+
 	my %prettyFieldNames = %{ $self->{prettyFieldNames} };
+	my %fieldProperties = %{ FIELD_PROPERTIES() };	
+
+	my @fields;
+	
+	foreach my $field (keys %fieldProperties) {
+	    push @fields, $field unless
+		$fieldProperties{$field}{access} eq 'hidden';
+	}
+
+	@fields = sort {$prettyFieldNames{$a} cmp $prettyFieldNames{$b}} @fields;
 	
 	return join("", 
 			$r->maketext("Show")." ",
@@ -680,7 +690,7 @@ sub filter_form {
 			" ".$r->maketext("in their")." ",
 			CGI::popup_menu(
 				-name => "action.filter.field",
-				-value => [ keys %{ FIELD_PROPERTIES() } ],
+				-value => \@fields,
 				-default => $actionParams{"action.filter.field"}->[0] || "user_id",
 				-labels => \%prettyFieldNames,
 				-onchange => $onChange,
@@ -1713,8 +1723,10 @@ sub printTableHTML {
 	#my $hrefPrefix = $r->uri . "?" . $self->url_args(@stateParams); # $self->url_authen_args
 	my @tableHeadings;
 	foreach my $field (@realFieldNames) {
-		my $result = $fieldNames{$field};
-		push @tableHeadings, $result;
+	    my %properties = %{ FIELD_PROPERTIES()->{$field} };
+	    next if $properties{access} eq 'hidden';
+	    my $result = $fieldNames{$field};
+	    push @tableHeadings, $result;
 	};
 	
 	# prepend selection checkbox? only if we're NOT editing!
