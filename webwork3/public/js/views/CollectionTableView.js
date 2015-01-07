@@ -6,27 +6,27 @@
  * The following must also be passed into the View:
  *  
  * columnInfo:  An array of {name: _name, key: _key, editable: boolean, classnames: _classnames,
- 		datatype: _datatype, searchable: _searchable, binding: _binding} where 
- 	-  _name will be the header of the column
- 	-  _key is the field name of the model 
- 	-  _editable is a boolean for whether or not the column is editable
- 	-  _classnames will assign the td element in the table those classnames.  It can be either a string or an
- 			array of strings.
- 	-  _datatype will be the type of data for the column.  This is important for sorting.
- 	-  _searchable (a boolean) whether or not the value should be available in search/filter
- 	-  _search_function (function) to be used to set the value of the searchable field instead of the field itself. 
- 	-  _use_contenteditable: boolean  (this uses the contenteditable attribute whenever a column is editable. Set to 
- 	         false if you don't want to use this or true or nothing to use it.)
- 	-  _stickit_options: is an stickit bindings object.  You don't need to define observe because the classname will 
- 	        be passed in.
- 	-  _sortFxn: is a function that returns a value to be sorted on.   
+        datatype: _datatype, searchable: _searchable, binding: _binding} where 
+    -  _name will be the header of the column
+    -  _key is the field name of the model 
+    -  _editable is a boolean for whether or not the column is editable
+    -  _classnames will assign the td element in the table those classnames.  It can be either a string or an
+        array of strings.
+    -  _datatype will be the type of data for the column.  This is important for sorting.
+    -  _searchable (a boolean) whether or not the value should be available in search/filter
+    -  _search_function (function) to be used to set the value of the searchable field instead of the field itself. 
+    -  _use_contenteditable: boolean  (this uses the contenteditable attribute whenever a column is editable. Set to 
+        false if you don't want to use this or true or nothing to use it.)
+    -  _stickit_options: is an stickit bindings object.  You don't need to define observe because the classname will 
+        be passed in.
+    -  _sortFxn: is a function that returns a value to be sorted on.   
 
 Required options:
-	- row_id_field: the field from the collections model that acts like an id.  
+    - row_id_field: the field from the collections model that acts like an id.  
 
 Other options:
-	page_size: the number of rows in a visible table (or -1 for all rows shown.)
-	table_classes: a string consisting of all classes to be set on the table.  
+    page_size: the number of rows in a visible table (or -1 for all rows shown.)
+    table_classes: a string consisting of all classes to be set on the table.  
 
 
 Sorting: 
@@ -35,17 +35,15 @@ Sorting:
    If you want to sort on a different piece of data, you need to specify the key (field) where the data is stored. 
  */
 
-
-define(['backbone', 'underscore','config','stickit'], function(Backbone, _,config){
-
+define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, config) {
 	var CollectionTableView = Backbone.View.extend({
 		tagName: "table",
 		initialize: function (options) {
 			var self = this;
-			_.bindAll(this,"render","sortTable");
+			_.bindAll(this, "render", "sortTable");
 			this.original_collection = this.collection; 
 			this.collection = new Backbone.Collection();
-			_(this).extend(_(options).pick("columnInfo","row_id_field","page_size","table_classes"))
+			_(this).extend(_(options).pick("columnInfo", "row_id_field", "page_size", "table_classes"))
 			this.filteredCollection = new Backbone.Collection();
 			this.filter_string = "";
 			this.selectedRows = [];  // keep track of the rows that are selected. 
@@ -85,8 +83,8 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			this.original_collection.on({
 				change: function(model){
 					var id = model.get(self.row_id_field);
-					//var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
-					//_model.set(model.changed);
+                    console.log("model was changed");
+                    console.log(model);
 					self.addRow(model,{add: false});
 				},
 				add: function(model){
@@ -148,7 +146,10 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				this.collection.add(model);	
 			} else {
 				var _model = this.collection.findWhere(_.object([[this.row_id_field,model.get(this.row_id_field)]]));
-				_model.set(model.attributes,{silent: true});
+                _model.set(model.attributes,{silent: true});
+                var _row = _(this.rowViews).findWhere({rowID: _model.get(this.row_id_field)});
+                _row.refresh();
+                console.log(moment.unix(_model.get("due_date")).format("MM/DD/YYYY"));
 			}
 			this.trigger("table-changed");
 		},
