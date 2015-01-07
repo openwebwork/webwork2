@@ -174,7 +174,16 @@ use constant  FIELD_PROPERTIES => {
 #		type => "number",
 #		size => 2,
 #		access => "readwrite",
-	}
+	},
+	displayMode => {
+	    access => 'hidden',
+	},
+	showOldAnswers => {
+	    access => 'hidden',
+	},
+	useMathView => {
+	    access => 'hidden',
+	},
 };
 sub pre_header_initialize {
 	my $self          = shift;
@@ -1649,6 +1658,7 @@ sub recordEditHTML {
 		my $fieldName = 'user.' . $User->user_id . '.' . $field,
 		my $fieldValue = $User->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
+		next if $properties{access} eq 'hidden';
 		$properties{access} = 'readonly' unless $editMode;
 		$properties{type} = 'email' if ($field eq 'email_address' and !$editMode and !$passwordMode);
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
