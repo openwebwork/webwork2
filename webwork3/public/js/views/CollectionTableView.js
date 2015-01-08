@@ -83,8 +83,6 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
 			this.original_collection.on({
 				change: function(model){
 					var id = model.get(self.row_id_field);
-                    console.log("model was changed");
-                    console.log(model);
 					self.addRow(model,{add: false});
 				},
 				add: function(model){
@@ -143,13 +141,14 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
 				}
 			})
 			if(opts.add){
-				this.collection.add(model);	
+				this.collection.add(model);
 			} else {
 				var _model = this.collection.findWhere(_.object([[this.row_id_field,model.get(this.row_id_field)]]));
                 _model.set(model.attributes,{silent: true});
                 var _row = _(this.rowViews).findWhere({rowID: _model.get(this.row_id_field)});
-                _row.refresh();
-                console.log(moment.unix(_model.get("due_date")).format("MM/DD/YYYY"));
+                if(_row){
+                  _row.refresh();
+                }
 			}
 			this.trigger("table-changed");
 		},

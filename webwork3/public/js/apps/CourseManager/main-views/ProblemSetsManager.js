@@ -44,7 +44,9 @@ var ProblemSetsManager = MainView.extend({
             "selected-row-changed": function(rowIDs){
                 self.state.set({selected_rows: rowIDs});},   
             "table-changed": function(){  // I18N
-                self.$(".num-sets").html(self.problemSetTable.getRowCount() + " of " + self.problemSets.length + " sets shown.");
+                self.$(".num-sets").html(self.problemSetTable.getRowCount() + " of " + self.problemSets.length 
+                                         + " sets shown.");
+                self.update();
             }
         });
         
