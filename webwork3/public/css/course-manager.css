@@ -24,6 +24,10 @@ a#view-header i {margin-left:1ex;}
 
 .show-rows i {margin-right: 5px;}
 
+/* make the login status column narrower */
+
+th.logged-in-status {width: 40px;}
+
 /* the num-users in the left-column */
 
 .num-users { margin-left: 2ex;}
@@ -111,6 +115,7 @@ border-radius: 5px;}
 .users-table-container table th.section {width: 75px;}
 .users-table-container table th.recitation {width: 75px;}
 .users-table-container table th.assigned-sets {width: 75px;}
+.users-table-container table th.email {width: 75px;}
 .users-table-container table td.first-name {
 	white-space: nowrap;
 	overflow: hidden;
@@ -160,6 +165,8 @@ label {font-weight: bold; display: inline; margin-right: 20px;}
 #testButton {margin-left: 25px; margin-right: 25px;}
 #selectalldiv {display: inline; margin-left: 25px; margin-right: 25px;}
 #filterdiv {display: inline;}
+
+.logged-in {font-weight: bold; font-style: italic; color: darkgreen;}
 
 /* All Messages Sidepane */
 

@@ -39,7 +39,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers/;
+use WeBWorK::Utils qw/readFile decodeAnswers is_restricted after/;
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -179,6 +179,8 @@ sub pre_header_initialize {
 		my $perm_viewhidden = $authz->hasPermissions($userID, "view_hidden_work");
 		my $perm_viewfromip = $authz->hasPermissions($userID, "view_ip_restricted_sets");
 		
+		my $perm_viewunopened =  $authz->hasPermissions($userID, "view_unopened_sets");
+
 		if (@setIDs > 1 and not $perm_multiset) {
 			$self->addbadmessage("You are not permitted to generate hardcopy for multiple sets. Please select a single set and try again.");
 			$validation_failed = 1;
@@ -215,6 +217,18 @@ sub pre_header_initialize {
 							$userSet = $db->getMergedSet($uid,$s);
 						}
 						$mergedSets{"$uid!$sid"} = $userSet;
+
+						if ( ! $perm_viewunopened && 						     
+						     ! (time >= $userSet->open_date && !(
+										      $ce->{options}{enableConditionalRelease} && 
+											is_restricted($db, $userSet, $userID)))) {
+						    $validation_failed = 1;
+						    $self->addbadmessage("You are not permitted to generate a hardcopy for an unopened set.");
+						    last;
+
+						}
+
+
 						if ( ! $perm_viewhidden &&
 						     defined( $userSet->hide_work ) &&
 						     ( $userSet->hide_work eq 'Y' ||
@@ -348,6 +362,8 @@ sub display_form {
 	my $perm_texformat = $authz->hasPermissions($userID, "download_hardcopy_format_tex");
 	my $perm_unopened = $authz->hasPermissions($userID, "view_unopened_sets");
 	my $perm_view_hidden = $authz->hasPermissions($userID, "view_hidden_sets");
+	my $perm_view_answers = $authz->hasPermissions($userID, "show_correct_answers_before_answer_date");
+        my $perm_view_solutions = $authz->hasPermissions($userID, "show_solutions_before_answer_date");
 	
 	# get formats
 	my @formats;
@@ -460,6 +476,9 @@ sub display_form {
 	print $self->hidden_authen_fields();
 	print CGI::hidden("in_hc_form", 1);
 	
+	my $canShowCorrectAnswers = 0;
+	my $canShowSolutions = 0;
+
 	if ($perm_multiuser and $perm_multiset) {
 		print CGI::p($r->maketext("Select the homework sets for which to generate hardcopy versions. You may"
 		      ." also select multiple users from the users list. You will receive hardcopy" 
@@ -475,6 +494,10 @@ sub display_form {
 				CGI::td($scrolling_set_list),
 			),
 		);
+		
+		$canShowCorrectAnswers = 1;
+		$canShowSolutions = 1;
+
 	} else { # single user mode
 		#FIXME -- do a better job of getting the set and the user when in the single set mode
 		my $selected_set_id = $r->param("selected_sets");
@@ -484,18 +507,31 @@ sub display_form {
 		print CGI::hidden("selected_sets",   $selected_set_id ),
 		      CGI::hidden( "selected_users", $selected_user_id);
 
+		my $mergedSet = $db->getMergedSet($selected_user_id,
+						  $selected_set_id);
+
 	        # make display for versioned sets a bit nicer
 		$selected_set_id =~ s/,v(\d+)$/ (test $1)/;
 	
 		# FIXME!	
 		print CGI::p($r->maketext("Download hardcopy of set [_1] for [_2]?", $selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name));
+		
+		$canShowCorrectAnswers = $perm_view_answers ||
+		    (defined($mergedSet) && after($mergedSet->answer_date));
+
+		$canShowSolutions = $perm_view_answers ||
+		    (defined($mergedSet) && after($mergedSet->answer_date));
+
 	
 	}
+
+	    
+
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
 				# FIXME!
-				CGI::small($r->maketext("You may choose to show any of the following data. Correct answers and solutions are only available [_1] after the answer date of the homework set.", $phrase_for_privileged_users)),
+				CGI::small($r->maketext("You may choose to show any of the following data. Correct answers, hints, and solutions are only available [_1] after the answer date of the homework set.", $phrase_for_privileged_users)),
 				CGI::br(),
 				CGI::b($r->maketext("Show:")), " ",
 				CGI::checkbox(
@@ -503,21 +539,24 @@ sub display_form {
 					-checked => defined($r->param("printStudentAnswers"))? $r->param("printStudentAnswers") : 1, # checked by default
 					-label   => $r->maketext("Student answers"),
 				),
+				$canShowCorrectAnswers ? 
 				CGI::checkbox(
 					-name    => "showCorrectAnswers",
 					-checked => scalar($r->param("showCorrectAnswers")) || 0,
 					-label   => $r->maketext("Correct answers"),
-				),
+				) : '',
+				$canShowSolutions ? 
 				CGI::checkbox(
 					-name    => "showHints",
 					-checked => scalar($r->param("showHints")) || 0,
 					-label   => $r->maketext("Hints"),
-				),
+				) : '',
+				$canShowSolutions ? 
 				CGI::checkbox(
 					-name    => "showSolutions",
 					-checked => scalar($r->param("showSolutions")) || 0,
 					-label   => $r->maketext("Solutions"),
-				),
+				) : '',
 			),
 		),
 		CGI::Tr({},

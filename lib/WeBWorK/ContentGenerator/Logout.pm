@@ -117,10 +117,12 @@ sub path {
 		my $courseID = $urlpath -> arg("courseID");	
 		if (defined($courseID)) {
 			print $courseID;
-		}
-		else {
+			
+		} else {
 		$self -> SUPER::path($args);
 		}
+	} else {
+	    $self-> SUPER::path($args);
 	}
 	return "";
 }

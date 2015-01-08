@@ -37,14 +37,14 @@ sub getAllUsers {
     foreach my $u (@userInfo)
     {
         my $PermissionLevel = vars->{db}->getPermissionLevel($u->{'user_id'});
-        $u->{'permission'} = $PermissionLevel->{'permission'};
+        $u->{permission} = $PermissionLevel->{permission};
 
-		my $studid= $u->{'student_id'};
-		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
-        $u->{'num_user_sets'} = vars->{db}->listUserSets($studid) . "/" . $numGlobalSets;
-	
-		my $Key = vars->{db}->getKey($u->{'user_id'});
-		$u->{'login_status'} =  ($Key and time <= $Key->timestamp()+vars->{ce}->{sessionKeyTimeout}); # cribbed from check_session
+		my $studid= $u->{student_id};
+		my $key = vars->{db}->getKey($u->{'user_id'});
+
+		$u->{student_id} = "$studid";  # make sure that the student_id is returned as a string. 
+        $u->{num_user_sets} = vars->{db}->listUserSets($studid) . "/" . $numGlobalSets;
+		$u->{logged_in} = ($key and time <= $key->timestamp()+vars->{ce}->{sessionKeyTimeout}) ? JSON::true : JSON::false;
 		
 
 		# convert the user $u to a hash

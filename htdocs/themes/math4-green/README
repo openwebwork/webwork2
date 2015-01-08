@@ -1,0 +1,6 @@
+This is an "alternative" colorization to math4.  If you want to provide 
+multiple themes to your users you should follow this as an example.  
+
+Everything (except the override files) should be a link pointing back to 
+math4.  This will make it so that all your themes will automatically get 
+updates.  All of your changes should be in the override files.  

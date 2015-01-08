@@ -46,10 +46,7 @@ var CourseManager = WebPage.extend({
         // This is the way that general messages are handled in the app
 
         this.eventDispatcher.on({
-            "show-problem-set": this.showProblemSetDetails,
-            "change-view": function () {
-                self.navigationBar.setPaneName(_name);
-            }
+                "show-problem-set": this.showProblemSetDetails
         });
 
 

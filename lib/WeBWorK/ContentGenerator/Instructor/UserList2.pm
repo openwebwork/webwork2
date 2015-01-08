@@ -177,7 +177,16 @@ use constant  FIELD_PROPERTIES => {
 #		type => "number",
 #		size => 2,
 #		access => "readwrite",
-	}
+	},
+	displayMode => {
+	    access => 'hidden',
+	},
+	showOldAnswers => {
+	    access => 'hidden',
+	},
+	useMathView => {
+	    access => 'hidden',
+	},
 };
 sub pre_header_initialize {
 	my $self          = shift;
@@ -374,7 +383,7 @@ sub body {
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
 			print CGI::p(
-			    CGI::div({-style=>"color:green"}, $r->maketext("Result of last action performed: [_1]", CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)))),
+			    CGI::div({class=>"ResultsWithoutError"}, $r->maketext("Result of last action performed: [_1]", CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)))),
 				CGI::hr()
 			);
 		} else {
@@ -621,7 +630,17 @@ sub filter_form {
 	my $r = $self->r;
 	
 	my %prettyFieldNames = %{ $self->{prettyFieldNames} };
+	my %fieldProperties = %{ FIELD_PROPERTIES() };
 	
+	my @fields;
+	
+	foreach my $field (keys %fieldProperties) {
+	    push @fields, $field unless
+		$fieldProperties{$field}{access} eq 'hidden';
+	}
+
+	@fields = sort {$prettyFieldNames{$a} cmp $prettyFieldNames{$b}} @fields;
+
 	return join("",
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
@@ -649,7 +668,7 @@ sub filter_form {
 				-label_text=>$r->maketext("What field should filtered users match on?").": ",
 				-input_attr=>{
 					-name => "action.filter.field",
-					-value => [ keys %{ FIELD_PROPERTIES() } ],
+					-value => \@fields,
 					-default => $actionParams{"action.filter.field"}->[0] || "user_id",
 					-labels => \%prettyFieldNames,
 					-onchange => $onChange
@@ -659,12 +678,13 @@ sub filter_form {
 			WeBWorK::CGI_labeled_input(
 				-type=>"text",
 				-id=>"filter_text",
-				-label_text=>$r->maketext("Filter by what text?").": ",
+				-label_text=>$r->maketext("Filter by what text?").CGI::span({class=>"required-field"},'*').": ",
 				-input_attr=>{
 					-name => "action.filter.user_ids",
 					-value => $actionParams{"action.filter.user_ids"}->[0] || "",,
 					-width => "50",
 					-onchange => $onChange,
+					-'aria-required' => 'true', 
 				}
 			),
 			CGI::br(),
@@ -994,7 +1014,7 @@ sub add_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 
-	return WeBWorK::CGI_labeled_input(-type=>"text", -id=>"add_entry", -label_text=>$r->maketext("Add how many students?").": ", -input_attr=>{name=>'number_of_students', value=>1,size => 3});
+	return WeBWorK::CGI_labeled_input(-type=>"text", -id=>"add_entry", -label_text=>$r->maketext("Add how many students?").CGI::span({class=>"required-field"},'*').": ", -input_attr=>{name=>'number_of_students', value=>1,size => 3,'aria-required'=>'true'});
 }
 
 sub add_handler {
@@ -1132,12 +1152,13 @@ sub export_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"export_filename",
-			-label_text=>$r->maketext("Filename").": ",
+			-label_text=>$r->maketext("Filename").CGI::span({class=>"required-field"},'*').": ",
 			-input_attr=>{
 				-name => "action.export.new",
 				-value => $actionParams{"action.export.new"}->[0] || "",,
 				-width => "50",
 				-onchange => $onChange,
+				-'aria-required' => 'true',
 			}
 		),
 		CGI::tt(".lst"),
@@ -1726,9 +1747,10 @@ sub recordEditHTML {
 
 	# User Fields
 	foreach my $field ($User->NONKEYFIELDS) {
-		my $fieldName = 'user.' . $User->user_id . '.' . $field,
+	        my $fieldName = 'user.' . $User->user_id . '.' . $field,
 		my $fieldValue = $User->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
+	        next if $properties{access} eq 'hidden';
 		$properties{access} = 'readonly' unless $editMode;
 		$properties{type} = 'email' if ($field eq 'email_address' and !$editMode and !$passwordMode);
 		$fieldValue = $self->nbsp($fieldValue) unless $editMode;
@@ -1783,8 +1805,10 @@ sub printTableHTML {
 	#my $hrefPrefix = $r->uri . "?" . $self->url_args(@stateParams); # $self->url_authen_args
 	my @tableHeadings;
 	foreach my $field (@realFieldNames) {
-		my $result = $fieldNames{$field};
-		push @tableHeadings, $result;
+	    my %properties = %{ FIELD_PROPERTIES()->{$field} };
+	    next if $properties{access} eq 'hidden';
+	    my $result = $fieldNames{$field};
+	    push @tableHeadings, $result;
 	};
 	
 	# prepend selection checkbox? only if we're NOT editing!
