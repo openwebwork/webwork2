@@ -39,6 +39,9 @@ sub convertObjectToHash {
     return $s;
 }
 
+
+### I (pstaab) don't think this is necessary.  I think dancer takes care of it through constants true and false
+
 sub convertBooleans {
     my ($obj,$boolean_props) = @_;
 

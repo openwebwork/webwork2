@@ -315,19 +315,16 @@ get '/courses/:course_id/manager' =>  sub {
 	my $cookieValue = cookie "WeBWorKCourseAuthen." . params->{course_id};
 
 
-	debug $cookieValue;
+	
 
 	# case 1) 
 	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);
 
-	debug "case 1";
     # case 2)
 	if(! defined($cookieValue)){
 		$userID = params->{user} if defined(params->{user});
 		$sessKey = params->{key} if defined(params->{key});
 	}
-
-	debug "case 2";
 
 	# check if the cookie user/key pair matches the params user/key pair
 	#
@@ -340,10 +337,6 @@ get '/courses/:course_id/manager' =>  sub {
 			$sessKey = '';
 		}
 	}
-
-	debug "case 3";
-
-	debug session;
 
 
 	## check if the user passed in via the URL is the same as the session user.
@@ -359,10 +352,6 @@ get '/courses/:course_id/manager' =>  sub {
 	} else {
 		session->destroy;
 	}
-
-	debug session;
-
-	debug "case 4";
 
 	
 	# case 1)
@@ -406,7 +395,6 @@ get '/courses/:course_id/manager' =>  sub {
 	if(session && session 'user'){
 		setCookie();	
 	}
-	
 	
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
 		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),

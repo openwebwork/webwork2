@@ -7,14 +7,16 @@ var UserSettingsView = MainView.extend({
 		_(this).bindAll("saveSuccess","saveError");
 		MainView.prototype.initialize.call(this,options);
 		this.model = new UserPasswordModel();
-		//Backbone.Validation.bind(this);
 		this.model.bind('validated:invalid', function(model, errors) {
 		 	self.$(".confirm-password").parent().addClass("has-error");
 		 	self.$(".confirm-password").popover({title: "Error", content: errors.new_password}).popover("show");
 		}).bind('validated:valid',function(model) {
 			self.$(".confirm-password").parent().removeClass("has-error");
 			self.$(".confirm-password").popover("hide");
-		})
+		}).on("change:displayMode change:showOldAnswers",function(model){
+            self.user.set(model.changed);
+        });
+      
 	},
 	render: function (){
 		this.$el.html($("#user-settings-template").html())
@@ -35,6 +37,12 @@ var UserSettingsView = MainView.extend({
 		".new-password": "new_password",
 		".old-password": "old_password",
 		".confirm-password": "confirm_password",
+        ".display-option": {observe: "displayMode", selectOptions: {
+            collection: function () {
+                return this.settings.getSettingValue("pg{displayModes}").slice();  // makes a copy. 
+            }
+        }},
+        ".save-old-answers": "showOldAnswers"
 
 	},
 	submitPassword: function (){
@@ -71,6 +79,11 @@ var UserSettingsView = MainView.extend({
 		if(options.user_id){
 			this.user = this.users.findWhere({user_id: options.user_id});
 			this.model.set(this.user.attributes);
+          
+            this.user.on("change",function(_u){
+              console.log(_u.attributes);
+            });
+
 		}
 	},
 	getDefaultState: function () {
@@ -86,7 +99,9 @@ var UserPasswordModel = Backbone.Model.extend({
 		user_id: "",
 		old_password: "",
 		new_password: "",
-		confirm_password: ""
+		confirm_password: "",
+        displayMode: "",
+        showOldAnswers: true
 	},
 	validation: {
     	new_password: 'validatePassword',

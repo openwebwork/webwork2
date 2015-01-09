@@ -9,11 +9,13 @@ package Routes::User;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::GeneralUtils qw/cryptPassword/;
 use Data::Dumper;
 
-our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;
+our @user_props = qw/first_name last_name student_id user_id email_address permission status 
+                    section recitation comment displayMode showOldAnswers/;
+our @boolean_user_props = qw/showOldAnswers/;
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 
@@ -39,6 +41,8 @@ get '/courses/:course/users' => sub {
 		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
 		
     }
+    
+    debug \@allUsers;
     return convertArrayOfObjectsToHash(\@allUsers);
 };
 
@@ -117,6 +121,9 @@ put '/courses/:course_id/users/:user_id' => sub {
 	for my $key (@user_props) {
         $user->{$key} = params->{$key} if (defined(params->{$key}));
     }
+    
+    debug to_json convertObjectToHash($user);
+    
 	vars->{db}->putUser($user);
 	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing. 
 
@@ -127,7 +134,9 @@ put '/courses/:course_id/users/:user_id' => sub {
 		vars->{db}->putPermissionLevel($permission);
 	}
 
-	my $u =convertObjectToHash($user);
+	my $u =convertObjectToHash($user, \@boolean_user_props);
+    
+    debug to_json($u);
 	$u->{_id} = $u->{user_id}; 
 
 	return $u;

@@ -15,6 +15,11 @@
   <td>Confirm New Password</td><td><input type="password" class="form-control confirm-password"></td>
   <td class="error-cell"></td></tr>
 <tr class="password-row hidden"><td></td><td><button class="btn btn-primary submit-password-button">Submit New Password</button></td><td class="error-cell"></td></tr>
+<tr><td class="header">Display Equations Using</td>
+<td class="col-md-2"><select class="display-option form-control input-medium"></select></td><td class="error-cell"></td></tr>
+<tr><td class="header">Show Saved Answers?</td>
+<td><input type="checkbox" class='save-old-answers'></td><td class="error-cell"></td></tr>
+
 <tr><td class="col-md-6">WeBWorK3 saves your history as you navigate the different views/pages.  You may need to reset this if odd behavior occurs. </td><td><button class="btn btn-default reset-history-button">Reset History</button></td></tr>
 </tbody>
 </table>

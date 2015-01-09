@@ -48,10 +48,14 @@ sub getAllUsers {
 		
 
 		# convert the user $u to a hash
+        
+        ## NOTE:  I think we can call convertObjectToHash here instead. 
 		my $s = {};
 		for my $key (keys %{$u}) {
 			$s->{$key} = $u->{$key}
 		}
+        
+        $s->{showOldAnswers} = $u->{showOldAnswers} ? JSON::true : JSON::false;
 
 		$s->{_id} = $s->{user_id};
 

@@ -14,7 +14,10 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
             section: "",
             recitation: "",
             comment: "",
-            logged_in: false
+            logged_in: false,
+            displayMode: "",
+            showOldAnswers: false,
+            useMathView: false
         },
         validation: { 
             user_id: "checkLogin",
