@@ -10,7 +10,7 @@ var UserSettingsView = MainView.extend({
 		//Backbone.Validation.bind(this);
 		this.model.bind('validated:invalid', function(model, errors) {
 		 	self.$(".confirm-password").parent().addClass("has-error");
-		 	self.$(".confirm-password").popover({content: errors.new_password}).popover("show");
+		 	self.$(".confirm-password").popover({title: "Error", content: errors.new_password}).popover("show");
 		}).bind('validated:valid',function(model) {
 			self.$(".confirm-password").parent().removeClass("has-error");
 			self.$(".confirm-password").popover("hide");
@@ -24,7 +24,7 @@ var UserSettingsView = MainView.extend({
         return this;
 	},
 	events: {
-		"click .change-email-button": function() {this.user.set("email_address",$(".email").val());},
+		"blur .email": function() {this.user.set("email_address",$(".email").val());},
 		"click .reset-history-button": function () { localStorage.removeItem("ww3_cm_state");},
 		"click .change-password-button": function() { this.changePassword(!this.state.get("show_password"));},
 		"click .submit-password-button": "submitPassword"
