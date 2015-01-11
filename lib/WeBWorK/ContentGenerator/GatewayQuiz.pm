@@ -466,7 +466,7 @@ sub handle_input_colors {
 	return if $self->{previewAnswers};  # don't color previewed answers
 
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript"}),
 	        "color_inputs([\n  ",
 		  join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
@@ -2425,7 +2425,7 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 
 		# This is for MathView.  
 	if ($self->{will}->{useMathView}) {
