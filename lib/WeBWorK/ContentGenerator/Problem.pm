@@ -981,10 +981,12 @@ sub head {
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-	print qq{
-		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-	};
+
+	# Keys dont really work well anymore.  So I'm removing this for now GG
+#	print qq{
+#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
+#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
+#	};
         # Javascript and style for knowls
         print qq{
            <script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>

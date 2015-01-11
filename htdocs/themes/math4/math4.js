@@ -1,4 +1,4 @@
-$('#masthead').ready(function () {
+$(function(){
 
     // Changes links in masthead
     $('#loginstatus a').addClass('btn btn-small');
@@ -6,7 +6,7 @@ $('#masthead').ready(function () {
 
 });
 
-$('#site-navigation').ready(function () {
+$(function(){
     // if no fish eye then collapse site-navigation 
     if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
 	$('#site-navigation').removeClass('span2');
@@ -29,7 +29,7 @@ $('#site-navigation').ready(function () {
 
 });
 
-$('#breadcrumb-row').ready(function () {
+$(function(){
     // Add a button to make the sidebar more dynamic for small screens
     $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
 	event.preventDefault();
@@ -47,10 +47,6 @@ $('#breadcrumb-row').ready(function () {
 	   
     });
 
-    if($(window).width() < 650) {
-	$('#toggle-sidebar').click();
-    }
-    
 });
 
 $(function(){
@@ -88,6 +84,11 @@ $(function(){
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
+
+    //Toggles the sidebar if the window is narrow
+    if($(window).width() < 650) {
+	$('#toggle-sidebar').click();
+    }
 
     //Reformats the problem_set_table.  
     $('#problem-sets-form').addClass('form-inline');
