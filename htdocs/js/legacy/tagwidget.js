@@ -57,6 +57,18 @@ function tag_widget(id, path) {
   for (var j=1; j<7; j++) {
     levels.append('<option value="'+j+'">'+j+'</option>');
   }
+  // Only show the status menu if we are looking at something in Pending
+  var shortpath = path.replace(/^.*templates\//,'');
+  if(/^Pending\//.test(shortpath)) {
+  
+    $el.append('<select id="'+id+'stat"></select>');
+    var stat = $('#'+id+'stat');
+    stat.append('<option value="A">Accept</option>');
+    stat.append('<option value="0">Review</option>');
+    stat.append('<option value="R">Reject</option>');
+    stat.append('<option value="F">Further review</option>');
+    stat.append('<option value="N">Needs resource</option>');
+  }
   subj.change(function() {tag_widget_clear_message(id);tag_widget_update('chapters', 'get', id, nodata);});
   chap.change(function() {tag_widget_clear_message(id);tag_widget_update('sections', 'get', id, nodata);});
   sect.change(function() {tag_widget_clear_message(id);});
@@ -95,6 +107,7 @@ tag_widget_savetags = function(id, path) {
   var chap = $('#'+id+'chapters').find(':selected').text();
   var sect = $('#'+id+'sections').find(':selected').text();
   var level = $('#'+id+'level').find(':selected').text();
+  var stat = $('#'+id+'stat').find(':selected').val();
   if(subj == 'All Subjects') { subj = '';};
   if(chap == 'All Chapters') { chap = '';};
   if(sect == 'All Sections') { sect = '';};
@@ -103,6 +116,7 @@ tag_widget_savetags = function(id, path) {
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
   mydefaultRequestObject.library_levels = level;
+  mydefaultRequestObject.library_status = stat;
   mydefaultRequestObject.command = path;
   // console.log(mydefaultRequestObject);
   return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
@@ -119,7 +133,7 @@ tag_widget_clear_message = function(id) {
 
 tag_widget_update = function(who, what, where, values) {
   // where is the start of the id's for the parts
-  var child = { subjects : 'chapters', chapters : 'sections', sections : 'level', level : 'count'};
+  var child = { subjects : 'chapters', chapters : 'sections', sections : 'level', level : 'stat', stat : 'count'};
 
 // console.log({"who": who, "what": what, "where":where, "values": values});
   var all = 'All ' + capFirstLetter(who);
@@ -135,6 +149,7 @@ tag_widget_update = function(who, what, where, values) {
      $('#'+where+'chapters').remove();
      $('#'+where+'sections').remove();
      $('#'+where+'level').remove();
+     $('#'+where+'stat').remove();
      $('#'+where+'Save').remove();
      $('#'+where+'result').text(' Problem file is a pointer to another file');
      return false;
@@ -148,6 +163,7 @@ tag_widget_update = function(who, what, where, values) {
   var chap = $('#'+where+'chapters').find(':selected').text();
   var sect = $('#'+where+'sections').find(':selected').text();
   var level = $('#'+where+'level').find(':selected').text();
+  var stat = $('#'+where+'stat').find(':selected').val();
   if(subj == 'All Subjects') { subj = '';};
   if(chap == 'All Chapters') { chap = '';};
   if(sect == 'All Sections') { sect = '';};
@@ -157,13 +173,17 @@ tag_widget_update = function(who, what, where, values) {
   if(values.DBchapter) { chap = values.DBchapter;}
   if(values.DBsection) { sect = values.DBsection;}
   if(values.Level) { level = values.Level;}
+  if(values.Status) { stat = values.Status;} else { stat = "0" }
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
   var subcommand = "getAllDBsubjects";
   if(who == 'level') {
-    setselectbyid(where+who, ['Level',1,2,3,4,5,6]);
     $('#'+where+who).val(level); 
+    return tag_widget_update('stat','get',where,values);
+  }
+  if(who == 'stat') {
+    $('#'+where+who).val(stat); 
     return true;
   }
   if(what == 'clear') {
