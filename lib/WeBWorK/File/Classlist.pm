@@ -110,7 +110,7 @@ sub write_classlist($@) {
 		my %record = %$record;
 		my @fields = @record{@FIELD_ORDER};
 		
-		warn "Couldn't form CSV line for user $record{user_id}"
+		warn "Couldn't form CSV line for user ".$record{user_id}
 		    unless ($csv->combine(@fields));
 		
 		my $string = $csv->string();
