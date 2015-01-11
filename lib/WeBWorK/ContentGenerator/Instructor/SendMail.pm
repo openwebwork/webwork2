@@ -72,7 +72,7 @@ sub initialize {
 	my $old_default_msg_file   =    'old_default.msg';
 	
 	# Figure out action from submit data
-	my $action; 
+	my $action = ''; 
 	if ($r->param('sendEmail')) {
 	    $action = 'sendEmail';
 	} elsif ($r->param('saveMessage')) {
@@ -211,9 +211,9 @@ sub initialize {
 	# Determine the file name to save message into
 	#################################################################
 	my $output_file      = 'FIXME no output file specified';	
-	if (defined($action) and $action eq 'saveDefault') {
+	if ($action eq 'saveDefault') {
 		$output_file  = $default_msg_file;
-	} elsif ( defined($action) and ($action eq 'saveMessage' or $action eq 'saveAs')) {
+	} elsif ($action eq 'saveMessage' or $action eq 'saveAs') {
 		if (defined($savefilename) and $savefilename ) {
 			$output_file  = $savefilename;
 		} else {
@@ -333,7 +333,7 @@ sub initialize {
 	my $script_action     = '';
 	
 	
-	if(not defined($action) or $action eq 'openMessage'  
+	if(not $action or $action eq 'openMessage'  
 	   or $action eq 'updateSettings'){  
 
 		return '';
