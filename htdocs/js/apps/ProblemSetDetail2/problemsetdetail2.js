@@ -213,6 +213,11 @@ function render(id) {
 	source_file = $('#problem_'+id+'_default_source_file').val();
     }
 
+    if (/^group/.test(source_file)) {
+	$('#psr_render_area_'+id).html( $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text("Problem source is drawn from a grouping set."));
+	return false;
+    }
+
     ro.problemPath = templatedir + '/' + source_file;
 
     ro.set = ro.problemPath;
