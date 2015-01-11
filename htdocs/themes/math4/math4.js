@@ -182,7 +182,7 @@ $(function(){
     //email page
     $('#send-mail-form').addClass('form-inline');
     $('#send-mail-form .btn').addClass('btn-small').removeClass('btn-primary');
-    $('#send-mail-form input[value="Send Email"]').addClass('btn-primary');
+    $('#send-mail-form #sendEmail_id').addClass('btn-primary');
 
     //Score sets
     $('#scoring-form').addClass('form-inline');
