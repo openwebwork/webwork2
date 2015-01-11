@@ -237,6 +237,14 @@ sub can_checkAnswers {
 	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
+	# if we can record answers then we dont need to be able to check them
+	# unless we have that specific permission. 
+	if ($self->can_recordAnswers($User,$PermissionLevel,$EffectiveUser,
+				     $Set,$Problem,$tmplSet,$submitAnswers) 
+	    && !$authz->hasPermissions($User->user_id, "can_check_and_submit_answers")) {
+	    return 0;
+	}
+
 	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
    # get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
