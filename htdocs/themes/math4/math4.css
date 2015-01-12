@@ -443,8 +443,10 @@ input {
 	height: auto;
 }
 
-input[type="text"] {
-    width:95%;
+input[type="text"],
+textarea,
+select {
+    max-width:95%;
 }
 
 .barrier {
