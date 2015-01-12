@@ -1276,9 +1276,6 @@ sub import_form {
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	my $ce = $r->ce;
-	my $date = $self->formatDateTime(time);
-	$date =~ /\ ([A-Z]+)$/;	
-	my $display_tz = $1;        	
 
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
@@ -1297,7 +1294,6 @@ sub import_form {
   buttonText: "<i class='icon-calendar'></i>",
   ampm: true,
   timeFormat: 'hh:mmtt',
-  timeSuffix: ' $display_tz',
   separator: ' at ',
   constrainInput: false, 
  });
@@ -2523,7 +2519,12 @@ sub recordEditHTML {
 		#print $field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
-		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
+		# if its edit mode we dont want to print the time zones
+		if ($editMode) {
+		    $fieldValue = $self->formatDateTime($fieldValue,'','%m/%d/%Y at %I:%M%P') if $field =~ /_date/;
+		} else {
+		    $fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
+		}
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
