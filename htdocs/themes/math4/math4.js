@@ -74,9 +74,6 @@ $(function(){
     $('#site-navigation li').find('br').remove();
 
     // Display options formatting
-    $('.viewOptions label:has(input:radio)').addClass('radio');
-    $('label.radio').nextUntil(':not(br)').remove();
-    $('.viewOptions input:submit').addClass('btn-small');
     $('.facebookbox input:submit').addClass('btn-small');
 
     //Reformats the problem_set_table.  
