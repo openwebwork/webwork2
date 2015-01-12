@@ -313,10 +313,10 @@ sub body {
 	    
 	    
 	    my %dropDown;
-	    #construct the drop down.  Right now it does all numbers from 
-	    # 1 to 100, but this could be changed by config
-	    for (my $i=100; $i>=0; $i--) {
-		    $dropDown{$i}=$i;
+	    my $delta = $ce->{options}{problemGraderScoreDelta};
+	    #construct the drop down.  
+	    for (my $i=int(100/$delta); $i>=0; $i--) {
+		    $dropDown{$i*$delta}=$i*$delta;
 	    }
 
 	    print CGI::Tr({-valign=>"top"}, 
@@ -347,7 +347,7 @@ sub body {
 	    print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 
-#  Text field for gradex
+#  Text field for grade
 #				      CGI::input({type=>"text",
 #						  name=>"$userID.score",
 #						  value=>"$score",
