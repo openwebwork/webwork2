@@ -437,11 +437,14 @@ textarea {
   font-weight: normal;
   line-height: 18px;
   width: auto;
-  max-width: 95%;
 }
 
 input {
 	height: auto;
+}
+
+input[type="text"] {
+    width:95%;
 }
 
 .barrier {
