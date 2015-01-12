@@ -6,9 +6,18 @@ function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
     var answer_rule = $('#' + name + '\\.answer_date_id');
     var dueDateOffset = 7; // 7 days after open date
     var answerDateOffset = 5; //5 hours after due date
+
+    open_rule.change(function() {open_rule.addClass('changed')})
+	.blur(function() {update();});
+    due_rule.change(function() {due_rule.addClass('changed')})
+	.blur(function() {update();});
+    answer_rule.change(function() {answer_rule.addClass('changed')})
+	.blur(update);
     
     if (reduced) {
 	var reduced_rule = $('#' + name + '\\.reduced_scoring_date_id');
+	reduced_rule.change(function() {reduced_rule.addClass('changed')})
+	    .blur(update);
     }
         
     open_rule.datetimepicker({
