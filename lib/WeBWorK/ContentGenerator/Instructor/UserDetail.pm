@@ -438,15 +438,13 @@ sub body {
 
 		my $setName = ( $setVersion ) ? "$setID (test $setVersion)" : $setID;
 
-		my $exists = defined($MergedSetRecord);
-		warn($exists);
 		print CGI::Tr(
 			CGI::td({ -align => "center" }, [
 				($setVersion) ? "" : CGI::checkbox({ type => 'checkbox',
 								name => "set.$fullSetID.assignment",
 								label => '',
 								value => 'assigned',
-								defined($MergedSetRecord) ? ('checked','checked') : () }),
+								checked => (defined $MergedSetRecord)}),
 				defined($MergedSetRecord) ? CGI::b(CGI::a({href=>$url},$setName, ) ) : CGI::b($setID, ),
 				join "\n", $self->DBFieldTable($GlobalSetRecord, $UserSetRecord, $MergedSetRecord, "set", $setID, \@dateFields, $rh_dateFieldLabels),
 			])
