@@ -466,8 +466,9 @@ sub setProblemTags {
 	my $dbchap = $rh->{library_chapters};
 	my $dbsect = $rh->{library_sections};
 	my $level = $rh->{library_levels};
+	my $stat = $rh->{library_status};
 	# result is [success, message] with success = 0 or 1
-	my $result = WeBWorK::Utils::ListingDB::setProblemTags($path, $dbsubj, $dbchap, $dbsect, $level);
+	my $result = WeBWorK::Utils::ListingDB::setProblemTags($path, $dbsubj, $dbchap, $dbsect, $level, $stat);
 	my $out = {};
 	$out->{text} = encode_base64($result->[1]);
 	return($out);
