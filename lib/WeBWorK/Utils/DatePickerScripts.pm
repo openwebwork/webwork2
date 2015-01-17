@@ -39,6 +39,7 @@ sub date_scripts {
 	my $answer_timezone = $1;        	
 
 	my $reduced = 0;
+	my $reduced_timesone;
 
 	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
 	    my $reduced_scoring_date;
@@ -53,7 +54,7 @@ sub date_scripts {
 	    $date = formatDateTime($reduced_scoring_date, $display_tz);
 	    $date =~ /\ ([A-Z]+)$/;	
 	    $reduced = 1;
-	    my $reduced_timezone = $1;        	
+	    $reduced_timezone = $1;        	
 	}
 	
 	my $out =<<EOS;

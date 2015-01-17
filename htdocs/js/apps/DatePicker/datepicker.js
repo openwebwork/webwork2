@@ -12,12 +12,12 @@ function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
     due_rule.change(function() {due_rule.addClass('changed')})
 	.blur(function() {update();});
     answer_rule.change(function() {answer_rule.addClass('changed')})
-	.blur(update);
+	.blur(function() {update();});
     
     if (reduced) {
 	var reduced_rule = $('#' + name + '\\.reduced_scoring_date_id');
 	reduced_rule.change(function() {reduced_rule.addClass('changed')})
-	    .blur(update);
+	    .blur(function() {update();});
     }
         
     open_rule.datetimepicker({
