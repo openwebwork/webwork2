@@ -1561,28 +1561,30 @@ sub output_misc{
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-	#HACK FIXME
-	print q{
-		<script> 
-			var new_keyboard = new Keys([
-			{value: 'sqrt()',
-			 display: '$ \\\\sqrt{} $',
-			 behavior: 
-			 	function(input){
-            		input.selectionStart -= 1;
-            		input.selectionEnd -= 1;
-            		//this.focus();
-        		}
+
+	# Removed with keys script.  
+	# print q{
+	# 	<script> 
+	# 		var new_keyboard = new Keys([
+	# 		{value: 'sqrt()',
+	# 		 display: '$ \\\\sqrt{} $',
+	# 		 behavior: 
+	# 		 	function(input){
+        #     		input.selectionStart -= 1;
+        #     		input.selectionEnd -= 1;
+        #     		//this.focus();
+        # 		}
 			 
-			},
-			'^','=',			
-			'(',')','+','-','*','/',
-			'1','2','3','4','5','6','7','8','9','0',
-			'{','}','_'],
-			{debug:false}  ); 
-			new_keyboard.build();
-		</script>
-	};
+	# 		},
+	# 		'^','=',			
+	# 		'(',')','+','-','*','/',
+	# 		'1','2','3','4','5','6','7','8','9','0',
+	# 		'{','}','_'],
+	# 		{debug:false}  ); 
+	# 		new_keyboard.build();
+	# 	</script>
+	# };
+
 	return "";
 }
 
