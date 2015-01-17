@@ -258,18 +258,29 @@ sub initialize {
 		# Sanity check: body must contain non-white space
 		$self->addbadmessage(CGI::p('You didn\'t enter any message.')) unless ($r->param('body') =~ /\S/);
 		$r_text               =    \$body;
-
+		
 	}
 	
 	my $remote_host;
-	# If its apache 2.4 then it has to also mod perl 2.0 or better
 	my $APACHE24 = 0;
+	# If its apache 2.4 then it has to also mod perl 2.0 or better
 	if (MP2) {
-	    Apache2::ServerUtil::get_server_banner() =~ 
-		       m:^Apache/(\d\.\d+\.\d+):;
-	    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
+	    my $version;
+	    
+	    # check to see if the version is manually defined
+	    if (defined($ce->{server_apache_version}) &&
+		$ce->{server_apache_version}) {
+		$version = $ce->{server_apache_version};
+		# otherwise try and get it from the banner
+	    } elsif (Apache2::ServerUtil::get_server_banner() =~ 
+		   m:^Apache/(\d\.\d+):) {
+		$version = $1;
+	    }
+	    
+	    if ($version) {
+		$APACHE24 = version->parse($version) >= version->parse('2.4');
+	    }
 	}
-
 	# If its apache 2.4 then the API has changed
 	if ($APACHE24) {
 	    $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
