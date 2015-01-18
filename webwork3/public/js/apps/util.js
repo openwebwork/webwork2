@@ -112,6 +112,10 @@ var util = {
         return settings.chain().map(function(_s) { return [_s.get("var"),_s.get("value")]})
             .object().pick("pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"
                                 ,"pg{ansEvalDefaults}{reducedScoringPeriod}").value();
+    },
+    getInverseBindings: function(bindings){
+        return _.object(_(_(bindings).values()).map(function(v) { 
+            return _(v).isObject() ? v.observe : v ;}),_(bindings).keys()) 
     }
 }
 

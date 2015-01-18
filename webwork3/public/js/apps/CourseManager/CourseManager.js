@@ -87,7 +87,7 @@ var CourseManager = WebPage.extend({
         // put all of the dates in the problem sets in a better data structure for calendar rendering.
         this.buildAssignmentDates();
         this.setMainViewList(new MainViewList({settings: this.settings, users: this.users, 
-                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher}));
+                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher, parent: this}));
         
 
         // set up some of the main views with additional information.

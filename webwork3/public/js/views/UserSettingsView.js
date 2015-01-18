@@ -1,21 +1,39 @@
-define(['backbone','underscore','views/MainView'],
-    function(Backbone,_,MainView){
+define(['backbone','underscore','views/MainView','apps/util'],
+    function(Backbone,_,MainView,util){
 var UserSettingsView = MainView.extend({
 	messageTemplate: _.template($("#user-settings-messages-template").html()),
 	initialize: function(options){
 		var self = this;
 		_(this).bindAll("saveSuccess","saveError");
 		MainView.prototype.initialize.call(this,options);
-		this.model = new UserPasswordModel();
-		this.model.bind('validated:invalid', function(model, errors) {
-		 	self.$(".confirm-password").parent().addClass("has-error");
-		 	self.$(".confirm-password").popover({title: "Error", content: errors.new_password}).popover("show");
-		}).bind('validated:valid',function(model) {
-			self.$(".confirm-password").parent().removeClass("has-error");
-			self.$(".confirm-password").popover("hide");
-		}).on("change:displayMode change:showOldAnswers",function(model){
+		this.model = new UserSettings();
+        this.model.on("change:displayMode change:showOldAnswers change:email_address",function(model){
+            console.log(model.changed);
             self.user.set(model.changed);
         });
+        this.invBindings = util.getInverseBindings(this.bindings);
+      
+        Backbone.Validation.bind(this, {
+          valid: function(view, attr) {
+            if(attr==="new_password"){
+              attr = "confirm_password";
+            }
+            self.$(self.invBindings[attr]).parent().removeClass("has-error")
+              .popover("destroy");
+            
+            console.log(attr);
+            
+          },
+          invalid: function(view, attr, error) {
+            if(attr==="new_password"){
+              attr = "confirm_password";
+            }
+            console.log("oops");
+            self.$(self.invBindings[attr]).parent().addClass("has-error")
+              .popover({title: "Error", content: error}).popover("show");
+          }
+        });
+        
       
 	},
 	render: function (){
@@ -26,14 +44,14 @@ var UserSettingsView = MainView.extend({
         return this;
 	},
 	events: {
-		"blur .email": function() {this.user.set("email_address",$(".email").val());},
 		"click .reset-history-button": function () { localStorage.removeItem("ww3_cm_state");},
 		"click .change-password-button": function() { this.changePassword(!this.state.get("show_password"));},
 		"click .submit-password-button": "submitPassword"
 	},
 	bindings: {
 		".user-id": "user_id",
-		".email": {observe: "email_address", updateModel: false},
+		".email": {observe: "email_address", events: ["blur"], setOptions: {validate: true}, onSet: function(s){
+          console.log(s); return s;}},
 		".new-password": "new_password",
 		".old-password": "old_password",
 		".confirm-password": "confirm_password",
@@ -43,7 +61,6 @@ var UserSettingsView = MainView.extend({
             }
         }},
         ".save-old-answers": "showOldAnswers"
-
 	},
 	submitPassword: function (){
 		if(this.model.isValid(true)){
@@ -59,7 +76,7 @@ var UserSettingsView = MainView.extend({
 		} else {
 			this.$(".password-row").addClass("hidden");
 			this.model.set({old_password:"",new_password:"",confirm_password:""});
-			this.$(".confirm-password").popover("hide");
+			this.$(".confirm-password").parent().popover("hide");
 			this.$(".change-password-button").button("reset");
 		}	
 	},
@@ -80,9 +97,9 @@ var UserSettingsView = MainView.extend({
 			this.user = this.users.findWhere({user_id: options.user_id});
 			this.model.set(this.user.attributes);
           
-            this.user.on("change",function(_u){
+           this.user.on("change",function(_u){
               console.log(_u.attributes);
-            });
+          }); 
 
 		}
 	},
@@ -94,16 +111,18 @@ var UserSettingsView = MainView.extend({
     }
 });
 
-var UserPasswordModel = Backbone.Model.extend({
+var UserSettings = Backbone.Model.extend({
 	defaults: {
 		user_id: "",
 		old_password: "",
 		new_password: "",
 		confirm_password: "",
         displayMode: "",
-        showOldAnswers: true
+        showOldAnswers: true,
+        email_address: ""
 	},
 	validation: {
+        email_address: { pattern: "email", required: false},
     	new_password: 'validatePassword',
     	confirm_password: 'validatePassword'
   	},
@@ -111,7 +130,10 @@ var UserPasswordModel = Backbone.Model.extend({
     	if(this.get("new_password") !== this.get('confirm_password')) {
       		return 'The confirmed password is not equal to the new password'; // #I18N
     	}
-  	}
+  	}, 
+    checkPassword: function(value, attr, computedState) {
+          console.log("testing");
+        },
 });
 
 return UserSettingsView;

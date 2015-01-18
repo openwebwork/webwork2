@@ -2,7 +2,7 @@ define(['backbone'],function(Backbone){
 	var MainView = Backbone.View.extend({
 		initialize: function(options){
 			var self = this;
-			_(this).extend(_(options).pick("settings","users","problemSets","eventDispatcher","info"));
+			_(this).extend(_(options).pick("settings","users","problemSets","eventDispatcher","info","parent"));
 			this.state = new Backbone.Model({});
 			this.state.on("change",function(){
 				self.eventDispatcher.trigger("save-state");

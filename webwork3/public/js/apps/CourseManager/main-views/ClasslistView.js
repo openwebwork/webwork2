@@ -41,8 +41,14 @@ var ClasslistView = MainView.extend({
 	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation	  
 	    this.users.each(function(model){
 	    	model.bind('validated:invalid', function(_model, errors) {
-			    console.log("running invalid");
-			    console.log(errors);
+              
+                // if the classlist view isn't the main view, ignore the error.  
+                // pstaab:  perhaps there is a better way of handling the errors on a global basis.
+              
+                if(self.parent.currentView.info.id!=="classlist"){
+                  return;
+                }
+              
 			    var row; 
 			    self.$("td.user-id").each(function(i,v){
 			    	if($(v).text()===_model.get("user_id")){
