@@ -39,7 +39,7 @@ sub date_scripts {
 	my $answer_timezone = $1;        	
 
 	my $reduced = 0;
-	my $reduced_timesone;
+	my $reduced_timezone;
 
 	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
 	    my $reduced_scoring_date;
