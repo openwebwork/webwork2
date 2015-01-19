@@ -161,6 +161,13 @@ sub can_checkAnswers {
 	my $authz = $self->r->authz;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
 	
+	# if we can record answers then we dont need to be able to check them
+	# unless we have that specific permission. 
+	if ($self->can_recordAnswers($User,$EffectiveUser,$Set,$Problem,$submitAnswers) 
+	    && !$authz->hasPermissions($User->user_id, "can_check_and_submit_answers")) {
+	    return 0;
+	}
+	
 	if (before($Set->open_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
@@ -1698,13 +1705,13 @@ sub output_summary{
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);	    
 	    print $results;
 	    
-	} elsif ($checkAnswers) {
-        if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
-            # if the student is checking answers to a new problem, give them a reminder that they are doing so
-            print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
+	} elsif ($will{checkAnswers}) {
+	    if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
+		# if the student is checking answers to a new problem, give them a reminder that they are doing so
+		print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
                                                                      will not be recorded, and you should remember to return to your original 
                                                                      problem once you are done here.")),CGI::br();
-        }
+	    }
 	    # print this if user previewed answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
