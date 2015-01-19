@@ -54,7 +54,8 @@ sub initialize {
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
 	
 	# first check to see if a save form has been submitted
-	return '' unless $r->param('save_button');
+	return '' unless ($r->param('save_button') ||
+			  $r->param('assignAll'));
 	
 	# As it stands we need to check each set to see if it is still assigned 
 	# the forms are not currently set up to simply transmit changes
@@ -66,7 +67,10 @@ sub initialize {
 	
 	my @assignedSets = ();
 	foreach my $setID (@setIDs) {
-		push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
+	    # add sets to the assigned list if the parameter is checked or the
+	    # assign all button is pushed.  (already assigned sets will be
+	    # skipped later) 
+	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment")) || $r->param("assignAll");
 	}
 
 	# note: assignedSets are those sets that are assigned in the submitted form
@@ -338,6 +342,17 @@ sub body {
 	}
 	
 	########################################
+	# Assigned sets form
+	########################################
+
+	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail', id=>'UserDetail'}),"\n";
+	print $self->hidden_authen_fields();
+
+	print CGI::div(
+	    CGI::submit({name=>"assignAll", value => $r->maketext("Assign All Sets to Current User")})), CGI::br();
+
+
+	########################################
 	# Print warning
 	########################################
 	print CGI::div({-class=>'ResultsWithError'},
@@ -352,12 +367,7 @@ sub body {
 		      reassign the set, the student will receive a new version of each problem.
 		      Make sure this is what you want to do before unchecking sets."
 	);
-	########################################
-	# Assigned sets form
-	########################################
 
-	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail', id=>'UserDetail'}),"\n";
-	print $self->hidden_authen_fields();
 	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	
 	print CGI::start_table({ border=> 1,cellpadding=>5}),"\n";
