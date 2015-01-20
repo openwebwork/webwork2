@@ -98,12 +98,13 @@ function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
 	var openDate = open_rule.datetimepicker('getDate');
 	var dueDate = due_rule.datetimepicker('getDate');
 	var answerDate = answer_rule.datetimepicker('getDate');
-	if ( due_rule.val() =='') {
+
+	if ( openDate && due_rule.val() =='') {
 	    dueDate = new Date(openDate);
 	    dueDate.setDate(dueDate.getDate()+dueDateOffset);
 	    due_rule.datetimepicker('setDate',dueDate);
 	    due_rule.addClass('changed');
-	} else if (openDate > due_rule.datetimepicker('getDate')) {
+	} else if (openDate && openDate > due_rule.datetimepicker('getDate')) {
 	    dueDate = new Date(openDate);
 	    due_rule.datetimepicker('setDate',dueDate);
 	    due_rule.addClass('changed');
@@ -111,25 +112,31 @@ function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
 
 	if (reduced) {
 	    var reducedDate = reduced_rule.datetimepicker('getDate');
-	    if (openDate > reducedDate) {
+	    if (openDate && reduced_rule.val() == '') {
+		reducedDate = new Date(openDate);
+		reduced_rule.datetimepicker('setDate',reducedDate);
+		reduced_rule.addClass('changed');
+	    }
+
+	    if (openDate && openDate > reducedDate) {
 		reducedDate = new Date(openDate);
 		reduced_rule.datetimepicker('setDate',reducedDate);
 		reduced_rule.addClass('changed');
 	    }
 	    
-	    if (dueDate < reducedDate) {
+	    if (dueDate && dueDate < reducedDate) {
 		reducedDate = new Date(dueDate);
 		reduced_rule.datetimepicker('setDate',reducedDate);
 		reduced_rule.addClass('changed');
 	    }
 	}
 	
-	if ( answer_rule.val() =='') {
+	if (dueDate && answer_rule.val() =='') {
 	    answerDate = new Date(dueDate);
 	    answerDate.setHours(answerDate.getHours()+answerDateOffset);
 	    answer_rule.datetimepicker('setDate',answerDate);
 	    answer_rule.addClass("changed");
-	} else if (dueDate > answer_rule.datetimepicker('getDate')) {
+	} else if (dueDate && dueDate > answer_rule.datetimepicker('getDate')) {
 	    answerDate = new Date(dueDate);
 	    answer_rule.datetimepicker('setDate',answerDate);
 	    answer_rule.addClass('changed');
