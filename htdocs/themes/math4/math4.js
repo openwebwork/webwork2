@@ -16,6 +16,13 @@ $(function(){
 	}
     });
     
+    // if no fish eye then collapse site-navigation 
+    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
+	$('#site-navigation').removeClass('span2');
+	$('#content').removeClass('span10').addClass('span11');
+	$('#toggle-sidebar').addClass('hidden');
+    }
+    
     // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
