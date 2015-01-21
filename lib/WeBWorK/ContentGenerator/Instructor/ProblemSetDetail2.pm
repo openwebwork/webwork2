@@ -940,14 +940,14 @@ sub handle_problem_numbers {
 	my ($j, $val);
 	my @prob_ids; 
 
-	# check ot see that everything has a number and if anything was renumbered.  
+	# check to see that everything has a number and if anything was renumbered.  
 	foreach $j (keys %newProblemNumbers) {
 		return "" if (not defined $newProblemNumbers{$j});
 		$force = 1 if $newProblemNumbers{$j} != $j; 
 	}
 
 	# we dont do anything unless a problem has been reordered or we were asked to
-	return "" unless $force; 
+	return "" unless $force;
 
 	# get problems and store them in a hash.  
         # We do this all at once because its not always clear 
@@ -1689,9 +1689,13 @@ sub initialize {
 		##################################################################
 
 		my %newProblemNumbers = ();
-		
+		my $consecutive = $r->param('force_renumber') || 0;
+		my $prevNum = 0;
+		my @prevSeq = (0);
+
+
 		for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
-		    
+
 		    if ($setRecord->assignment_type eq 'jitar') {
 			my @idSeq;
 			my $id = $jj;
@@ -1703,10 +1707,32 @@ sub initialize {
 			    $id = $r->param('prob_parent_id_'.$id);
 			    unshift @idSeq, $r->param('prob_num_'.$id);
 			}
-			$newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
+
+			if ($consecutive) {
+			    # we dont really care about the content of idSeq
+			    # in this case, just the length
+			    my $depth = $#idSeq;
+			    
+			    if ($depth <= $#prevSeq) {
+				@prevSeq = @prevSeq[ 0 .. $depth ];
+				$prevSeq[$#prevSeq]++;
+			    } else {
+				$prevSeq[$#prevSeq+1] = 1;
+			    }
+			    
+			    $newProblemNumbers{$jj} = seq_to_jitar_id(@prevSeq);
+			    
+			} else {
+			    $newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
+			}
 			
 		    } else {
-			$newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
+			if ($consecutive) {
+			    $prevNum++;
+			    $newProblemNumbers{$jj} = $prevNum;
+			} else {
+			    $newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
+			} 
 		    }
 		}
 		
@@ -2457,11 +2483,16 @@ sub body {
 	    }
 
 # print final lines
+	    print CGI::checkbox({
+		label=> $r->maketext("Automatically render problems on page load.  "),
+		id=>"auto_render", name=>"auto_render", value=>"1", checked=>$r->param('auto_render') ? 1 : ''});
 	    
+	    print CGI::br();
 	    
-	    print CGI::p($r->maketext("Any time problem numbers are intentionally changed, the problems will always be renumbered consecutively, starting from one.  When deleting problems, gaps will be left in the numbering until you click Renumber Problems.  If you accidentally reorder the problems use the Reset Form button."));
-	    print CGI::p($r->maketext("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.")) if ($setRecord->open_date>time());
-	    
+		print CGI::checkbox({
+				  label=> $r->maketext("Force problems to be numbered consecutively from one."),
+				  name=>"force_renumber", value=>"1"});
+	    print CGI::br();
 	} else {
 	    print CGI::p(CGI::b($r->maketext("This set doesn't contain any problems yet.")));
 	}

@@ -53,6 +53,11 @@ $(function() {
 	});
     });
 
+    
+    if ($('#auto_render').is(':checked')) {
+	$('#psd_render_all').click();
+    }
+
     $('#psd_hide_all').addClass('btn').click(function (event) {
 	event.preventDefault();
 	$('.psr_render_area').html('');
