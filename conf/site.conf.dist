@@ -59,6 +59,13 @@ $server_userID     = 'www-data';
 $server_groupID    = 'wwdata';
 
 
+#  Uncomment out the following line to set your apache version number manually.
+#  WeBWorK will automatically get the apache version directly from the server
+#  banner.  If you remove the version from the server banner you will have to
+#  set it directly here
+
+#$server_apache_version = ''; # e.g. '2.22.1'
+
 ################################################################################
 # Paths to external programs 
 ################################################################################

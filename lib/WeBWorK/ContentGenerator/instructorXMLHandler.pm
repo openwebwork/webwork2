@@ -28,6 +28,7 @@ use base qw(WeBWorK::ContentGenerator);
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile);
+use PGUtil qw(not_null);
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
@@ -196,6 +197,7 @@ sub pre_header_initialize {
 		    library_chapters	    => $r->param("library_chapters") ||undef,
 		    library_sections	    => $r->param("library_sections") ||undef,
 		    library_levels		    => $r->param("library_levels") ||undef,
+		    library_status		    => $r->param("library_status") ||undef,
 		    library_textbook	    => $r->param("library_textbook") ||undef,
 		    library_keywords	    => $r->param("library_keywords") ||undef,
 		    library_textchapter     => $r->param("library_textchapter") ||undef,
@@ -216,7 +218,7 @@ sub pre_header_initialize {
             new_password   			=> $r->param('new_password') || undef,
             userpassword   			=> $r->param('userpassword') || undef,	# defaults to studentid if empty
 	     	set_props	    		=> $r->param('set_props') || undef,
-	     	set_id	    			=> $r->param('set_id') || undef,
+	     	set_id	    			=> not_null($r->param('set_id')) ? $r->param('set_id') : undef,
 	     	due_date	    		=> $r->param('due_date') || undef,
 	     	set_header     		   	=> $r->param('set_header') || undef,
 	        hardcopy_header 	   	=> $r->param('hardcopy_header') || undef,

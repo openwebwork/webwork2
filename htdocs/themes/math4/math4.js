@@ -82,9 +82,6 @@ $(function(){
     $('#site-navigation li').find('br').remove();
 
     // Display options formatting
-    $('.viewOptions label:has(input:radio)').addClass('radio');
-    $('label.radio').nextUntil(':not(br)').remove();
-    $('.viewOptions input:submit').addClass('btn-small');
     $('.facebookbox input:submit').addClass('btn-small');
 
     //Problem page
@@ -194,7 +191,7 @@ $(function(){
     //email page
     $('#send-mail-form').addClass('form-inline');
     $('#send-mail-form .btn').addClass('btn-small').removeClass('btn-primary');
-    $('#send-mail-form input[value="Send Email"]').addClass('btn-primary');
+    $('#send-mail-form #sendEmail_id').addClass('btn-primary');
 
     //Score sets
     $('#scoring-form').addClass('form-inline');
