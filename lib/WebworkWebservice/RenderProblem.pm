@@ -352,6 +352,7 @@ sub renderProblem {
   	    #warn "source is ", $problem_source;
   	    $r_problem_source = \$problem_source;
   	}
+
 	$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
 	if ($UNIT_TESTS_ON){
 			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";

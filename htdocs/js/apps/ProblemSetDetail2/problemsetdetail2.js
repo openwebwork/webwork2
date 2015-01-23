@@ -53,11 +53,6 @@ $(function() {
 	});
     });
 
-    
-    if ($('#auto_render').is(':checked')) {
-	$('#psd_render_all').click();
-    }
-
     $('#psd_hide_all').addClass('btn').click(function (event) {
 	event.preventDefault();
 	$('.psr_render_area').html('');
@@ -235,8 +230,9 @@ function render(id) {
     $.post(basicWebserviceURL, ro, function (data) {
 	var response = data;
 	// Give nicer file not found error
-	if (/No such file or directory at/i.test(response)) {
-	    response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('No Such File or Directory!');
+	if (/No such file or directory at/i.test(response) ||
+	    /Can\'t read file/i.test(response)) {
+ 	    response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('No Such File or Directory!');
 	}
 	if (/"server_response":"","result_data":""/i.test(response)) {
 	    response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('There was an error rendering this problem!');

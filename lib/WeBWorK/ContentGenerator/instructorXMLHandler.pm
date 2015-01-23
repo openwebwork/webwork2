@@ -263,12 +263,13 @@ sub pre_header_initialize {
 	my $source = "";
 	#print $r->param('problemPath');
 	my $problemPath = $r->param('problemPath');
-	if (defined($problemPath) and $problemPath and -r $problemPath ) {
-    	eval { $source = WeBWorK::Utils::readFile($problemPath) };
-    	#print "SOURCE\n".$source;
-    	$input->{source} = encode_base64($source);
-	}
-	
+	if (defined($problemPath) and $problemPath) {
+            $input->{path} = $problemPath;
+	} elsif ($r->param('problemSource')) {
+            $input->{source} = $r->param('problemSource');
+        }
+
+
 	my $std_input = standard_input();
 	$input = {%$std_input, %$input};
 	# Fix the environment display mode and set id
@@ -277,16 +278,6 @@ sub pre_header_initialize {
 	$input->{envir}->{showHints} = $r->param('showHints') if($r->param('showHints'));
 	$input->{envir}->{showSolutions} = $r->param('showSolutions') if($r->param('showSolutions'));
 	
-	## getting an error below (pstaab on 6/10/2013)  I don't this this is used anymore.  
-
-
-	##########################################
-	# FIXME hack to get fileName or filePath   param("set") contains the path
-	# my $problemPath = $input->{set};   # FIXME should rename this ????
-	# $problemPath =~ m|templates/(.*)|;
-	# $problemPath = $1;    # get everything in the path after templates
-	# $input->{envir}->{fileName}= $problemPath;
-	##################################################
 	$input->{courseID} = $r->param('courseID');
 
 	##############################
