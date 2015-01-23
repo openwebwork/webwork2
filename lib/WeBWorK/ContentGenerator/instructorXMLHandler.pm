@@ -269,7 +269,6 @@ sub pre_header_initialize {
             $input->{source} = $r->param('problemSource');
         }
 
-
 	my $std_input = standard_input();
 	$input = {%$std_input, %$input};
 	# Fix the environment display mode and set id
