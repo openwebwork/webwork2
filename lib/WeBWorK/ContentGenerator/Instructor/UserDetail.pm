@@ -506,7 +506,8 @@ sub checkDates {
 	my $error        = 0;
 	foreach my $field (@{DATE_FIELDS_ORDER()}) {  # check that override dates can be parsed and are not blank
 		$dates{$field} = $setRecord->$field;
-		if (defined  $r->param("set.$setID.$field.override") ){
+		if (defined  $r->param("set.$setID.$field.override") && 
+		    $r->param("set.$setID.$field") ne 'None Specified'){
 			eval{ $numerical_date = $self->parseDateTime($r->param("set.$setID.$field"))};
 			unless( $@  ) {
 					$dates{$field}=$numerical_date;
@@ -610,10 +611,10 @@ sub DBFieldTable {
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
 						      -id =>"$recordType.$recordID.${field}_id",
 						      -type=> "text",
-					              -value => $userValue ? $self->formatDateTime($userValue) : "", 
+					              -value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "None Specified", 
 					              -size => 25})
 					) : "",
-				$self->formatDateTime($globalValue),				
+				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),				
 			]
 			
 	}
@@ -648,8 +649,19 @@ sub output_JS{
 	# print javaScript for dateTimePicker	
 	# jquery ui printed seperately
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print "\n\n<!-- add to header ProblemSetDetail.pm -->";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
+
+	print q!<style> 
+	.ui-datepicker{font-size:85%} 
+	.auto-changed{background-color: #ffffcc} 
+	.changed {background-color: #ffffcc}
+        </style>!,"\n";
+	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 
 	return "";
 

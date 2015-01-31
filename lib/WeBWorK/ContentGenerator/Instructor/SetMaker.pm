@@ -1046,7 +1046,7 @@ sub make_data_row {
 		my $sourceFilePath = $templatedir .'/'. $sourceFileName;
 		$sourceFilePath =~ s/'/\\'/g;
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}). CGI::end_script();
+		$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}). CGI::end_script();
 		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
 	}
 
@@ -1685,35 +1685,36 @@ sub output_JS {
   my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-  print qq!<script type="text/javascript" src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
-  print qq!<script type="text/javascript" src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script type="text/javascript" src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
-  print qq!<script type="text/javascript" src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-  print qq!<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
-  print qq!<script type="text/javascript" src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
+  print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
   print "\n";
-  print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/legacy/Base64.js"}), CGI::end_script();
+  print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
   print "\n";
-  print qq{
-           <script type="text/javascript" type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
-  print "\n";
-
-  print "\n";
-  print qq!<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
   print "\n";
   return '';
+
 }
+
+
 
 sub output_CSS {
   my ($self) = @_;
   my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
+    #print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
+
   print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
 
   print qq{
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
-
 
 }
 

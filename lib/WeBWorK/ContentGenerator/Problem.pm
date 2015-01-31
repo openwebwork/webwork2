@@ -988,10 +988,12 @@ sub head {
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-	print qq{
-		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-	};
+
+	# Keys dont really work well anymore.  So I'm removing this for now GG
+#	print qq{
+#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
+#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
+#	};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1561,28 +1563,30 @@ sub output_misc{
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-	#HACK FIXME
-	print q{
-		<script> 
-			var new_keyboard = new Keys([
-			{value: 'sqrt()',
-			 display: '$ \\\\sqrt{} $',
-			 behavior: 
-			 	function(input){
-            		input.selectionStart -= 1;
-            		input.selectionEnd -= 1;
-            		//this.focus();
-        		}
+
+	# Removed with keys script.  
+	# print q{
+	# 	<script> 
+	# 		var new_keyboard = new Keys([
+	# 		{value: 'sqrt()',
+	# 		 display: '$ \\\\sqrt{} $',
+	# 		 behavior: 
+	# 		 	function(input){
+        #     		input.selectionStart -= 1;
+        #     		input.selectionEnd -= 1;
+        #     		//this.focus();
+        # 		}
 			 
-			},
-			'^','=',			
-			'(',')','+','-','*','/',
-			'1','2','3','4','5','6','7','8','9','0',
-			'{','}','_'],
-			{debug:false}  ); 
-			new_keyboard.build();
-		</script>
-	};
+	# 		},
+	# 		'^','=',			
+	# 		'(',')','+','-','*','/',
+	# 		'1','2','3','4','5','6','7','8','9','0',
+	# 		'{','}','_'],
+	# 		{debug:false}  ); 
+	# 		new_keyboard.build();
+	# 	</script>
+	# };
+
 	return "";
 }
 
@@ -1828,7 +1832,7 @@ sub output_tag_info{
 		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
 		$sourceFilePath =~ s/'/\\'/g;
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
@@ -1978,16 +1982,16 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
 	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
 	
 	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 	
 	# This is for MathView.  
 	if ($self->{will}->{useMathView}) {
