@@ -1,34 +1,7 @@
 $(function(){
 
-    // Changes links in masthead
-    $('#loginstatus a').addClass('btn btn-small');
-    $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>');
-
-});
-
-$(function(){
-    // if no fish eye then collapse site-navigation 
-    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
-	$('#site-navigation').removeClass('span2');
-	$('#content').removeClass('span10').addClass('span11');
-	$('#toggle-sidebar').addClass('hidden');
-    }
-
-    // Makes the fisheye stuff bootstrap nav
-    $('#site-navigation ul').addClass('nav nav-list');
-    $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
-    $('#site-navigation a.active').parent().addClass('active');
-    $('#site-navigation strong.active').parent().addClass('active');
-    $('#site-navigation li').find('br').remove();
-
-    // Display options formatting
-    $('.facebookbox input:submit').addClass('btn-small');
-
-});
-
-$(function(){
     // Add a button to make the sidebar more dynamic for small screens
-    $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
+    $('#toggle-sidebar').click(function (event) {
 	event.preventDefault();
 	var toggleIcon = $('#toggle-sidebar-icon');
 	$('#site-navigation').toggleClass('hidden');
@@ -41,12 +14,15 @@ $(function(){
 	} else {
 	    toggleIcon.next('.sr-only-glyphicon').html('close sidebar');
 	}
-	   
     });
-
-});
-
-$(function(){
+    
+    // if no fish eye then collapse site-navigation 
+    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
+	$('#site-navigation').removeClass('span2');
+	$('#content').removeClass('span10').addClass('span11');
+	$('#toggle-sidebar').addClass('hidden');
+    }
+    
     // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
