@@ -341,9 +341,8 @@ function randomize(filepath, el) {
   nomsg();
   var seed = Math.floor((Math.random()*10000));
   var ro = init_webservice('renderProblem');
-  var templatedir = $('#hidden_templatedir').val();
   ro.problemSeed = seed;
-  ro.problemPath = templatedir + '/' + filepath;
+  ro.problemPath = filepath;
   ro.set = ro.problemPath;
   var showhint = 0;
   if($("input[name='showHints']").is(':checked')) { showhint = 1;}

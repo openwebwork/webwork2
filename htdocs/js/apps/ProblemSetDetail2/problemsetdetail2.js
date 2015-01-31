@@ -199,7 +199,7 @@ function init_webservice(command) {
 
 function render(id) {
     var ro = init_webservice('renderProblem');
-    var templatedir = $('#template_dir').val();
+ 
     if ($('#problem\\.'+id+'\\.problem_seed').length > 0) {
 	ro.problemSeed = $('#problem\\.'+id+'\\.problem_seed').val();
     } else {
@@ -218,7 +218,7 @@ function render(id) {
 	return false;
     }
 
-    ro.problemPath = templatedir + '/' + source_file;
+    ro.problemPath = source_file;
 
     ro.set = ro.problemPath;
     ro.showHints = 1;

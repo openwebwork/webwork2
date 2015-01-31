@@ -1663,8 +1663,6 @@ sub body {
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
-                #CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>encode_base64($ce->{courseDirs}->{templates})}),
-                CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>$ce->{courseDirs}->{templates}}),
 			'<div align="center">',
 	CGI::start_table({class=>"library-browser-table"});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 

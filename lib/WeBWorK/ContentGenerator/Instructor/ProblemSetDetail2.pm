@@ -2095,7 +2095,6 @@ sub body {
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"hidden", id=>"hidden_course_id", name=>"courseID", value=>$courseID});
 	print CGI::input({type=>"hidden", id=>"hidden_set_id", name=>"setID", value=>$setID});
-	print CGI::input({type=>"hidden", id=>"template_dir", name=>"template_dir", value=>$ce->{courseDirs}->{templates}});
 	print CGI::input({type=>"submit", id=>"submit_changes_1", name=>"submit_changes", value=>$r->maketext("Save Changes")});
 	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
 
