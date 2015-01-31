@@ -96,8 +96,8 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id problems users) ];
 
 # permissions needed to perform a given action
@@ -152,17 +152,22 @@ use constant  FIELD_PROPERTIES => {
 	},
 	open_date => {
 		type => "text",
-		size => 26,
+		size => 22,
+		access => "readwrite",
+	},
+        reduced_scoring_date => {
+		type => "text",
+		size => 22,
 		access => "readwrite",
 	},
 	due_date => {
 		type => "text",
-		size => 26,
+		size => 22,
 		access => "readwrite",
 	},
 	answer_date => {
 		type => "text",
-		size => 26,
+		size => 22,
 		access => "readwrite",
 	},
 	visible => {
@@ -439,6 +444,7 @@ sub body {
 		set_header
 		hardcopy_header
 		open_date
+                reduced_scoring_date
 		due_date
 		answer_date
 		visible
@@ -451,13 +457,11 @@ sub body {
 		$r->maketext("Edit Set Data"), 
 		$r->maketext("Set Header"), 
 		$r->maketext("Hardcopy Header"), 
-		$r->maketext("Open Date"), 
+		$r->maketext("Open Date"),
+	        $r->maketext("Reduced Scoring Date"),
 		$r->maketext("Due Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
-	    # Reduced Scoring Enabled made the column wider than it needed
-	    # to be...
-	    #   $r->maketext("Reduced Scoring Enabled"), 
 	        $r->maketext("Reduced Scoring"), 
 		$r->maketext("Hide Hints") 
 	);
@@ -939,93 +943,6 @@ sub publish_handler {
 	return $result
 	
 }
-sub enable_reduced_scoring_form {
-	my ($self, $onChange, %actionParams) = @_;
-	my $r = $self->r;
-
-	return join ("",
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"reduced_scoring_filter_select",
-			-label_text=>$r->maketext("Choose which sets to be affected").": ",
-			-input_attr=>{
-				-name => "action.enable_reduced_scoring.scope",
-				-values => [ qw(none all selected) ],
-				-default => $actionParams{"action.enable_reduced_scoring.scope"}->[0] || "selected",
-				-labels => {
-					none => $r->maketext("no sets"),
-					all => $r->maketext("all sets"),
-#					visible => "visible sets",
-					selected => $r->maketext("selected sets"),
-				},
-				-onchange => $onChange,
-			}
-		),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"reduced_scoring_enable_disable_select",
-			-label_text=>$r->maketext("Enable/Disable reduced scoring for selected sets").": ",
-			-input_attr=>{
-				-name => "action.enable_reduced_scoring.value",
-				-values => [ 0, 1 ],
-				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "0",
-				-labels => {
-					0 => $r->maketext("Disable"),
-					1 => $r->maketext("Enable"),
-				},
-				-onchange => $onChange,
-			}
-		),
-	);
-}
-
-sub enable_reduced_scoring_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-
-	my $result = "";
-	
-	my $scope = $actionParams->{"action.enable_reduced_scoring.scope"}->[0];
-	my $value = $actionParams->{"action.enable_reduced_scoring.value"}->[0];
-
-	my $verb = $value ? $r->maketext("enabled") : $r->maketext("disabled");
-	
-	my @setIDs;
-	
-	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
-		@setIDs = ();
-		$result =  CGI::div({class=>"ResultsWithError"}, $r->maketext("No change made to any set"));
-	} elsif ($scope eq "all") {
-		@setIDs = @{ $self->{allSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for all sets", $verb));
-	} elsif ($scope eq "visible") {
-		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for visable sets", $verb));
-	} elsif ($scope eq "selected") {
-		@setIDs = @{ $genericParams->{selected_sets} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for selected sets", $verb));
-	}
-	
-	# can we use UPDATE here, instead of fetch/change/store?
-	my @sets = $db->getGlobalSets(@setIDs);
-	
-	foreach my $set (@sets) {
-	    next unless $set;
-	    $set->enable_reduced_scoring("$value");
-	    if ($value  && !$set->reduced_scoring_date) {
-		$set->reduced_scoring_date($set->due_date -
-					  60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
-	    }
-	    $db->putGlobalSet($set);
-	}
-	
-	return $result
-	
-}
 
 sub score_form {
 	my ($self, $onChange, %actionParams) = @_;
@@ -1276,9 +1193,6 @@ sub import_form {
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	my $ce = $r->ce;
-	my $date = $self->formatDateTime(time);
-	$date =~ /\ ([A-Z]+)$/;	
-	my $display_tz = $1;        	
 
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
@@ -1297,7 +1211,6 @@ sub import_form {
   buttonText: "<i class='icon-calendar'></i>",
   ampm: true,
   timeFormat: 'hh:mmtt',
-  timeSuffix: ' $display_tz',
   separator: ' at ',
   constrainInput: false, 
  });
@@ -1603,21 +1516,18 @@ sub saveEdit_handler {
 		}
 		
 		# check that the reduced scoring date is in the right place
-		# if not do something to try and fix it
-		if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-		    if ($Set->reduced_scoring_date > $Set->due_date ||
-			$Set->open_date > $Set->reduced_scoring_date) {
-
-			$Set->reduced_scoring_date($Set->due_date -
-						   60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
-
-			# we do a second check here to make sure we didnt go before the open date
-			if ($Set->open_date > $Set->reduced_scoring_date) {
-			    $Set->reduced_scoring_date($Set->open_date);
-			}
-		    }
-		}
+		my $enable_reduced_scoring = 
+		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
+		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    $r->param("set.$setID.enable_reduced_scoring") : 
+		    $Set->enable_reduced_scoring;
 		
+		if ($enable_reduced_scoring && 
+		    $Set->reduced_scoring_date
+		    && ($Set->reduced_scoring_date > $Set->due_date 
+			|| $Set->reduced_scoring_date < $Set->open_date)) {
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Reduced scoring date must come between the open date and due date in set [_1]", $setID));
+		}
 		
 		$db->putGlobalSet($Set);
 	}
@@ -2509,7 +2419,7 @@ sub recordEditHTML {
 	
 	# Remove the enable reduced scoring box if that feature isnt enabled
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-	    @fieldsToShow = grep {$_ ne 'enable_reduced_scoring'} @fieldsToShow;
+	    @fieldsToShow = grep {!/enable_reduced_scoring|reduced_scoring_date/} @fieldsToShow;
 	}
 
 	# make a hash out of this so we can test membership easily
@@ -2523,7 +2433,9 @@ sub recordEditHTML {
 		#print $field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
-		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
+		
+		$fieldValue = $self->formatDateTime($fieldValue,'','%m/%d/%Y at %I:%M%P') if $field =~ /_date/;
+		
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
@@ -2576,7 +2488,7 @@ sub printTableHTML {
 	
 	# Remove the enable reduced scoring box if that feature isnt enabled
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-	    @realFieldNames = grep {$_ ne 'enable_reduced_scoring'} @realFieldNames;
+	    @realFieldNames = grep {!/enable_reduced_scoring|reduced_scoring_date/} @realFieldNames;
 	}
 
 	

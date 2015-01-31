@@ -1,5 +1,5 @@
 
-function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
+function WWDatePicker(name,reduced) {
     
     var open_rule = $('#' + name + '\\.open_date_id');
     var due_rule = $('#' + name + '\\.due_date_id');
@@ -25,7 +25,6 @@ function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
 	buttonText: "<i class='icon-calendar'></i>",
 	ampm: true,
 	timeFormat: 'hh:mmtt',
-	timeSuffix: ' '+open_tz,
 	separator: ' at ',
 	constrainInput: false, 
 	onClose: function(dateText, inst) {
@@ -40,7 +39,6 @@ function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
 	buttonText: "<i class='icon-calendar'></i>",
 	ampm: true,
 	timeFormat: 'hh:mmtt',
-	timeSuffix: ' '+due_tz,
 	separator: ' at ',
 	constrainInput: false, 
 	onClose: function(dateText, inst) {
@@ -60,7 +58,6 @@ function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
 	buttonText: "<i class='icon-calendar'></i>",
 	ampm: true,
 	timeFormat: 'hh:mmtt',
-	timeSuffix: ' '+answer_tz,
 	separator: ' at ',
 	constrainInput: false, 
 	onClose: function(dateText, inst) {
@@ -84,7 +81,6 @@ function WWDatePicker(name,open_tz,due_tz,answer_tz,reduced,reduced_tz) {
 	    buttonText: "<i class='icon-calendar'></i>",
 	    ampm: true,
 	    timeFormat: 'hh:mmtt',
-	    timeSuffix: ' '+reduced_tz,
 	    separator: ' at ',
 	    constrainInput: false, 
 	    onClose: function(dateText, inst) {
