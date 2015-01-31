@@ -626,7 +626,7 @@ sub formatDateTime($;$;$;$) {
 	$dateTime = $dateTime ||0;  # do our best to provide default values
 	$display_tz ||= "local";    # do our best to provide default vaules
 	$display_tz = verify_timezone($display_tz);
-	
+
 	$format_string ||= DATE_FORMAT; # If a format is not provided, use the default WeBWorK date format
 	my $dt;
 	if($locale) {
