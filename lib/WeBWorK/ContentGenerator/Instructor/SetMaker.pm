@@ -1716,6 +1716,8 @@ sub output_CSS {
   print qq{
            <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
 
+  return '';
+
 }
 
 sub output_jquery_ui {
