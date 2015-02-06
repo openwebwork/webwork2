@@ -2497,13 +2497,13 @@ sub body {
 
 # print final lines
 	    print CGI::checkbox({
-		label=> $r->maketext("Automatically render problems on page load.  "),
+		label=> $r->maketext("Automatically render problems on page load"),
 		id=>"auto_render", name=>"auto_render", value=>"1", checked=>$r->param('auto_render') ? 1 : ''});
 	    
 	    print CGI::br();
 	    
 		print CGI::checkbox({
-				  label=> $r->maketext("Force problems to be numbered consecutively from one."),
+				  label=> $r->maketext("Force problems to be numbered consecutively from one"),
 				  name=>"force_renumber", value=>"1"});
 	    print CGI::br();
 	} else {
@@ -2511,14 +2511,14 @@ sub body {
 	}
 	# always allow one to add a new problem, unless we're editing a set version
 	if ( ! $editingSetVersion ) {
-	    print 	CGI::checkbox({ label=> $r->maketext("Add"),
+	    print 	CGI::checkbox({ label=> $r->maketext("Add "),
 					name=>"add_blank_problem", value=>"1"}
 		),CGI::input({
 		    name=>"add_n_problems",
 		    size=>2,
 		    type=>'text',
 		    value=>1 },
-			     $r->maketext("blank problem template(s) to end of homework set")
+			     CGI::label($r->maketext("blank problem template(s) to end of homework set"))
 		    );
 	}
 	print CGI::br(),CGI::br(),
