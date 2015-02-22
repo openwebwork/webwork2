@@ -804,7 +804,7 @@ sub popup_set_form {
  		$setLabels{$sr->set_id} = $sr->set_id;
  		push(@setNames, $sr->set_id);  # reorder sets
 	}
- 	return 			CGI::popup_menu(-name=>'selectedSet',
+ 	return 			CGI::scrolling_list(-name=>'selectedSet',
  							   -values=>\@setNames,
  							   -labels=>\%setLabels,
  							   -size  => 10,
