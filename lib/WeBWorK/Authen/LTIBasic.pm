@@ -233,7 +233,6 @@ sub get_credentials {
 		} else {
 			undef($self ->{user_id});
 		}
-		
 
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
 		if (!defined($self->{user_id})
@@ -402,12 +401,24 @@ sub authenticate
 		#debug("$key -> |" . $requestHash -> {$key} . "|");
 	}	
 	my $requestHash = \%request_hash;
+	my $path = $ce->{server_root_url}.$ce->{webwork_url}.$r->urlpath()->path;
+	my $altpath = $path;
+	$altpath =~ s/\/$//;
 
-	my $request;
+	my ($request, $altrequest);
 	eval 
 		{ 
 		$request = Net::OAuth -> request("request token") -> from_hash($requestHash,
-        		request_url => $ce -> {LTIBasicToThisSiteURL},
+#        		request_url => $ce -> {LTIBasicToThisSiteURL},
+			request_url => $path,
+									       
+        		request_method => "POST",                                    
+        		consumer_secret => $ce -> {LTIBasicConsumerSecret},
+        	);
+
+		$altrequest = Net::OAuth -> request("request token") -> from_hash($requestHash,
+			request_url => $altpath,
+									       
         		request_method => "POST",                                    
         		consumer_secret => $ce -> {LTIBasicConsumerSecret},
         	);
@@ -425,7 +436,7 @@ sub authenticate
 		}
 	else
 		{
-		if (! $request -> verify) 
+		if (! $request -> verify && ! $altrequest -> verify) 
 			{
 			#debug("LTIBasic::authenticate request-> verify failed");
 			#debug("<h2> OAuth verification Failed</h2> "; print_keys($r));
@@ -441,6 +452,10 @@ sub authenticate
 			my $userID = $self->{user_id};
 			my $LTIrolesString = $r -> param("roles");
 			my @LTIroles = split /,/, $LTIrolesString;
+
+			#remove the urn string if its present
+			s/^urn:lti:.*:ims\/lis\/// for @LTIroles;
+			
 			my $nr = scalar(@LTIroles);
 			if (! defined($ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[0]}})) {
 				croak("Cannot find a WeBWorK role that corresponds to the LMS role of "
