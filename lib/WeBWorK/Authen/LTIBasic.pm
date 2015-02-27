@@ -236,11 +236,21 @@ sub get_credentials {
 
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
 		if (!defined($self->{user_id})
+		    or (defined($self -> {email})  
+			and $ce -> {get_username_from_email})) {
+		    $self->{user_id} = $self -> {email};
+
+		}
+		
+		if (!defined($self->{user_id})
 			or (defined($self -> {email})  
 				and defined($ce -> {preferred_source_of_username})
 				and $ce -> {preferred_source_of_username} eq "lis_person_contact_email_primary")) {
 			$self->{user_id} = $self -> {email};
+			$self->{user_id} =~ s/@.*$// if
+			    $ce->{strip_address_from_email};
 		}
+		
 		if (!defined($self->{user_id})) {
 			croak "LTIBasic cannot find a username";
 		}
@@ -402,6 +412,9 @@ sub authenticate
 	}	
 	my $requestHash = \%request_hash;
 	my $path = $ce->{server_root_url}.$ce->{webwork_url}.$r->urlpath()->path;
+	$path = $ce->{LTIBasicToThisSiteURL} ? 
+	    $ce->{LTIBasicToThisSiteURL} : $path;
+	
 	my $altpath = $path;
 	$altpath =~ s/\/$//;
 
@@ -409,7 +422,6 @@ sub authenticate
 	eval 
 		{ 
 		$request = Net::OAuth -> request("request token") -> from_hash($requestHash,
-#        		request_url => $ce -> {LTIBasicToThisSiteURL},
 			request_url => $path,
 									       
         		request_method => "POST",                                    

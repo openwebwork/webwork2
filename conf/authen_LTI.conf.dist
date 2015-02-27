@@ -81,18 +81,24 @@ $authen{user_module} = [
 $preferred_source_of_username = "lis_person_sourcedid";
 #$preferred_source_of_username = "lis_person_contact_email_primary";
 
+# Some LMS systems, Blackboard in particular, do not send lis_person_sourcedid
+# if you enable this flag and have $preferred_source_of_username set to
+# lis_person_contact_email_primary, then webwork will strip off the address 
+# portion of the email and just use the username. 
+$strip_address_from_email = 1;
 
 ################################################################################
-# LTI Basic Authentication Parameters to be put into a site's course.conf file
+# LTI Basic Authentication Parameters 
 ################################################################################
 
-#The following paramters should be put into site's course.conf file.
+# This consumer secret is set in the LMS and needs to be included here. 
+$LTIBasicConsumerSecret = "WeBWorKLTIB";
 
-#$LTIBasicToThisSiteURL = "URL to site", e.g.,
-#$LTIBasicToThisSiteURL = "https://localserver/webwork2/DemoCourse";
-#$LTIBasicConsumerSecret = "Consumer Secret - shared with the Course Management Site, e.g.";
-#$LTIBasicConsumerSecret = "webworkLTIB";
-
+# This allows you to override the URL that Oauth will use to validate the 
+# authentication.  This is important if you have some sort of setup (e.g. load
+# distributing) where the path in the LMS does not match the path that ends up 
+# in the webwork page 
+#$LTIBasicToThisSiteURL = "";
 
 ################################################################################
 # LTI Basic Authentication Parameters
@@ -126,19 +132,19 @@ $NonceLifeTime=10; # in seconds
 ## Learning Management System.
 
 %LMSrolesToWeBWorKroles = (
-	"AI/TA" => "ta",
-	"assistant" => "empowered_AI",
-	"instructor" => "professor",
-	"librarian" => "guest",
-	"librarian+" => "empoweredAI",
-	"observer" => "guest",
+    "AI/TA" => "ta",
+    "assistant" => "empowered_AI",
+    "instructor" => "professor",
+    "librarian" => "guest",
+    "librarian+" => "empoweredAI",
+    "observer" => "guest",
     "student" => "student",
-	"visitor" => "guest",
-	"Instructor" => "professor",
+    "visitor" => "guest",
+    "Instructor" => "professor",
     "Student" => "student",
     "Learner" => "student",
-	"Teaching Assistant" => "ta",
-);
+    "Teaching Assistant" => "ta",
+    );
 
 ################################################################################
 # Local routine to analyze the context_id forwarded to LTIBasic
