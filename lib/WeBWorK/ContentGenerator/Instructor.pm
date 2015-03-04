@@ -647,15 +647,43 @@ sub read_dir {  # read a directory
 sub getCSVList {
 	my ($self) = @_;
 	my $ce = $self->{ce};
-	my $dir = $ce->{courseDirs}->{templates};
-	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
+        my $dir = $ce->{courseDirs}->{templates};
+        return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
 }
 
 sub getDefList {
-	my ($self) = @_;
-	my $ce = $self->{ce};
-	my $dir = $ce->{courseDirs}->{templates};
-	return $self->read_dir($dir, qr/.*\.def/);
+    my ($self) = @_;
+    my $ce = $self->{ce};
+    my $topdir = $ce->{courseDirs}->{templates};
+    my @b = $topdir =~ /\//g; #count slashes to gauge depth
+    my $base_depth = @b;
+    my $max_depth = $ce->{options}->{setDefSearchDepth}+$base_depth;
+    my $searchOPL = $ce->{options}->{useOPLdefFiles};
+    my @found_set_defs;
+    # get_set_defs_wanted is a closure over @found_set_defs
+    my $get_set_defs_wanted = sub {
+        return if ($File::Find::dir =~ /$topdir\/Library/) and not $searchOPL;
+        my @d = $File::Find::dir =~ /\//g; #count slashes to gauge depth
+        my $depth = @d;
+        $File::Find::prune = 1 if $depth >= $max_depth;
+        push @found_set_defs, $_ if m|/set[^/]*\.def$|;
+    };
+    find({ wanted => $get_set_defs_wanted, follow_fast=>1, no_chdir=>1}, $topdir);
+    map { $_ =~ s|^$topdir/?|| } @found_set_defs;
+    my @slashes = ();
+    my @caps = ();
+    for (@found_set_defs) {
+        my @s = $_ =~ /\//g;
+        my $slashcount = @s;
+        push @slashes, ( $slashcount );
+        push @caps, uc($_);
+    }
+    return @found_set_defs[ sort {
+        $slashes[$a] <=> $slashes[$b]
+        ||
+        $caps[$a] cmp $caps[$b]
+    } 0..$#found_set_defs
+    ];
 }
 
 sub getScoringFileList {
