@@ -665,6 +665,7 @@ sub getDefList {
         return if ($File::Find::dir =~ /$topdir\/Library/) and not $searchOPL;
         my @d = $File::Find::dir =~ /\//g; #count slashes to gauge depth
         my $depth = @d;
+        $depth-- if $_ eq $topdir;
         $File::Find::prune = 1 if $depth >= $max_depth;
         push @found_set_defs, $_ if m|/set[^/]*\.def$|;
     };
