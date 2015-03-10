@@ -638,12 +638,16 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 		}
 		setTimeout( "ww_applet_list[\""+ appletName + "\"].safe_applet_initialize(" + i +  ")",TIMEOUT);	
 		// warn about loading after failed_attempts_allowed failed attempts or if there is only one attempt left
-        if (i<=1 || i< (ww_applet_list[appletName].maxInitializationAttempts-failed_attempts_allowed)) { alert("Oops, applet is not ready. " +(i-1) +" tries left")};
+	        // GG removed because sometimes applets are in hints and not 
+	        // loaded, even though this is run. 
+                // if (i<=1 || i< (ww_applet_list[appletName].maxInitializationAttempts-failed_attempts_allowed)) { alert("Oops, applet is not ready. " +(i-1) +" tries left")};
      	console.log("Out of safe_applet_initialize for applet " + appletName);
         return "";
 	} else if (applet_loaded==0 && !(i> 0) ) {
 		// it's possible that the isActive() response of the applet is not working properly
-		alert("*We haven't been able to verify that the applet " +appletName + " is loaded.  We'll try to use it anyway but it might not work.\n");
+	       // GG removed because sometimes applets are in hints and not 
+	       // loaded, even though this is run. 
+	       //  alert("*We haven't been able to verify that the applet " +appletName + " is loaded.  We'll try to use it anyway but it might not work.\n");
 		i=1;
 		applet_loaded=1; // FIXME -- give a choice as to whether to continue or not
 		this.isReady=1;
