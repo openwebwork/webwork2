@@ -142,7 +142,7 @@ sub setProblemTags {
 		$tags->settag('DBchapter', $chap, 1);
 		$tags->settag('DBsection', $sect, 1);
 		$tags->settag('Level', $level, 1);
-		$tags->settag('Status', $status, 0) if $status;
+		$tags->settag('Status', $status, 1);
 		eval {
 			$tags->write();
 			1;
