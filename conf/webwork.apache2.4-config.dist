@@ -53,6 +53,7 @@ my $webwork_dir = "/opt/webwork/webwork2";
 
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
+$Webwork::SeedCE{soap_authen_key} = "HSd3PudL";
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
 
 
