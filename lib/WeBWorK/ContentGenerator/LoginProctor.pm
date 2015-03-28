@@ -101,7 +101,8 @@ sub info {
 	}
 	
 	if (defined $result and $result ne "") {
-		return CGI::div({class=>"info-box", id=>"InfoPanel"}, $result);
+#		return CGI::div({class=>"info-box", id=>"InfoPanel"}, $result);
+                return $result;
 	} else {
 		return "";
 	}
@@ -235,7 +236,7 @@ sub body {
 	}
 
 	# start printing the form
-	print CGI::startform({-method=>"POST", -action=>$r->uri});
+	print CGI::start_form({-method=>"POST", -action=>$r->uri});
 	# write out the form data posted to the requested URI
 	my @fields_to_print = 
 	    grep { ! /^(user)|(effectiveUser)|(passwd)|(key)|(force_password_authen)|(proctor_user)|(proctor_key)|(proctor_password)$/ } $r->param();
@@ -261,10 +262,11 @@ sub body {
 				      CGI::strong("$effectiveUserFullName"),
 				      "\n")),"\n";
 		$userNameFields = CGI::td([
+		  CGI::label(
 					"Proctor username:",
 					CGI::input({-type=>"text", 
 						    -name=>"proctor_user", 
-						    -value=>""}),
+						    -value=>""})),
 					]);
 	} else {
 		print CGI::start_div({style=>"background-color:#ddddff;"});
@@ -281,16 +283,17 @@ sub body {
 	print CGI::start_table({class=>"FormLayout"});
 	print CGI::Tr( $userNameFields ) if ( $userNameFields );
 	print CGI::Tr( CGI::td([
+			 CGI::label(
 				"Proctor password:",
 				CGI::input({-type=>"password", 
 					    -name=>"proctor_passwd", 
-					    -value=>""}),
+					    -value=>""})),
 				])
 		       );
 	print CGI::end_table();
 	
 	print CGI::input({-type=>"submit", -value=>"Continue"});
-	print CGI::endform();
+	print CGI::end_form();
 	
 	return "";
 }

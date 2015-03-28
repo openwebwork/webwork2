@@ -36,7 +36,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
-	ref2string makeTempDirectory path_is_subdir sortByName before after between);
+	ref2string makeTempDirectory path_is_subdir sortByName before after between wwRound);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -97,9 +97,10 @@ use WeBWorK::AchievementEvaluator;
 # of dealing with versioning there.
 
 sub can_showOldAnswers {
-	#my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
-	
-	return 1;
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+
+	return $authz->hasPermissions($User->user_id, "can_show_old_answers");
 }
 
 sub can_showCorrectAnswers {
@@ -159,6 +160,13 @@ sub can_checkAnswers {
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
+	
+	# if we can record answers then we dont need to be able to check them
+	# unless we have that specific permission. 
+	if ($self->can_recordAnswers($User,$EffectiveUser,$Set,$Problem,$submitAnswers) 
+	    && !$authz->hasPermissions($User->user_id, "can_check_and_submit_answers")) {
+	    return 0;
+	}
 	
 	if (before($Set->open_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
@@ -231,19 +239,6 @@ sub can_showMeAnother {
       return 0;}
 }
 
-# Reset the default in some cases
-sub set_showOldAnswers_default {
-	my ($self, $ce, $userName, $authz, $set) = @_;
-	# these people always use the system/course default, so don't
-	# override the value of ...->{showOldAnswers}
-	return if $authz->hasPermissions($userName, "can_always_use_show_old_answers_default");
-	# this person should always default to 0
-	$ce->{pg}->{options}->{showOldAnswers} = 0
-		unless ($authz->hasPermissions($userName, "can_show_old_answers_by_default"));
-	# we are after the due date, so default to not showing it
-	$ce->{pg}->{options}->{showOldAnswers} = 0 if $set->{due_date} && after($set->{due_date});
-}
-
 ################################################################################
 # output utilities
 ################################################################################
@@ -298,9 +293,10 @@ sub attemptResults {
 		$header .= $showAttemptAnswers ? CGI::th($r->maketext("Entered"))  : "";
 	}	
 	$header .= $showAttemptPreview ? CGI::th($r->maketext("Answer Preview"))  : "";
-	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct"))  : "";
 	$header .= $showAttemptResults ? CGI::th($r->maketext("Result"))   : "";
 	$header .= $showMessages       ? CGI::th($r->maketext("Messages")) : "";
+	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct Answer"))  : "";
+
 	my $fully = '';
 	my @tableRows = ( $header );
 	my $numCorrect = 0;
@@ -352,15 +348,15 @@ sub attemptResults {
 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                    $self->nbsp($preview))       : "";
+		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},CGI::a({href=>"javascript:document.getElementById(\"$name\").focus()"},$self->nbsp($resultString)))  : "";
+
+		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
+		$row .= $showMessages       ? CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)) : "";
 		$row .= $showCorrectAnswers ? CGI::td({onmouseover=> qq!Tip('$correctAnswer',SHADOW, true, 
 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
 		                  $self->nbsp($correctAnswerPreview)) : "";
-		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},$self->nbsp($resultString))  : "";
-		#I'm pretty sure this message shouldn't have the message class
-		#$row .= $showMessages       ? CGI::td({-class=>"Message"},$self->nbsp($answerMessage)) : "";
-		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
-		$row .= $showMessages       ? CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)) : "";
+
 		push @tableRows, $row;
 	}
 	
@@ -368,7 +364,7 @@ sub attemptResults {
 	$imgGen->render(refresh => 1);
 	
 #	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = sprintf("%.0f%%", $problemResult->{score} * 100);
+	my $scorePercent = wwRound(0, $problemResult->{score} * 100).'%';
 #   FIXME  -- I left the old code in in case we have to back out.
 #	my $summary = "On this attempt, you answered $numCorrect out of "
 #		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
@@ -398,13 +394,17 @@ sub attemptResults {
 	} else {
 		$summary = $problemResult->{summary};   # summary has been defined by grader
 	}
-	
+
+	$summary = CGI::div({role=>"alert", class=>"attemptResultsSummary"},
+			  $summary);
+
 	$self->{correct_ids}   = [@correct_ids];
 	$self->{incorrect_ids} = [@incorrect_ids];
 
 	return
-		CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows))
-		. ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : '&nbsp;');
+    CGI::h3($r->maketext("Attempt Results")) .
+    CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) .
+    ($showSummary ? $summary : '&nbsp;');
 }
 
 
@@ -500,16 +500,18 @@ sub pre_header_initialize {
 		
 	# obtain the merged set for $effectiveUser
 	my $set = $db->getMergedSet($effectiveUserName, $setName); 
+	
+	# check that the set is valid;
+	# $self->{invalidSet} is set by ContentGenerator.pm
+	die($self->{invalidSet}) if $self->{invalidSet};
 
 	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || 
 	    ($setName eq "Undefined_Set" || 
 	     (time >= $set->open_date && !(
 		  $ce->{options}{enableConditionalRelease} && 
-		  is_restricted($db, $set, $set->set_id, $effectiveUserName))));
+		  is_restricted($db, $set, $effectiveUserName))));
 	
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
-
-	$self->set_showOldAnswers_default($ce, $userName, $authz, $set);
 
 	# Database fix (in case of undefined visiblity state values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
@@ -634,7 +636,7 @@ sub pre_header_initialize {
 	##### form processing #####
 	
 	# set options from form fields (see comment at top of file for names)
-	my $displayMode               = $r->param("displayMode") || $ce->{pg}->{options}->{displayMode};
+	my $displayMode               = $r->param("displayMode") || $user->displayMode || $ce->{pg}->{options}->{displayMode};
 	my $redisplay                 = $r->param("redisplay");
 	my $submitAnswers             = $r->param("submitAnswers");
 	my $checkAnswers              = $r->param("checkAnswers");
@@ -667,6 +669,7 @@ sub pre_header_initialize {
     #       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
     #       Preview:       has the preview button been clicked while SMA is active?
     #       DisplayChange: has a display change been made while SMA is active?
+    my %SMAoptions = map {$_ => 1} @{$ce->{pg}->{options}->{showMeAnother}};
     my %showMeAnother = (
 	        active       => ($r->param("showMeAnother") and $ce->{pg}->{options}->{enableShowMeAnother} and ($problem->{showMeAnother}>-1)),
             CheckAnswers => ($r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
@@ -674,10 +677,10 @@ sub pre_header_initialize {
             TriesNeeded => $problem->{showMeAnother},
             MaxReps => $ce->{pg}->{options}->{showMeAnotherMaxReps},
             options => {
-                    checkAnswers  => ('SMAcheckAnswers' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showSolutions => ('SMAshowSolutions' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showCorrect   => ('SMAshowCorrect' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
-                    showHints     => ('SMAshowHints' ~~ @{$ce->{pg}->{options}->{showMeAnother}}),
+		checkAnswers  => exists($SMAoptions{'SMAcheckAnswers'}),
+		showSolutions => exists($SMAoptions{'SMAshowSolutions'}),
+		showCorrect   => exists($SMAoptions{'SMAshowCorrect'}),
+		showHints     => exists($SMAoptions{'SMAshowHints'}),
                   },
             Count => $problem->{showMeAnotherCount},
             Preview => ($previewAnswers and $r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}), 
@@ -726,13 +729,13 @@ sub pre_header_initialize {
 	# Note: ProblemSet and ProblemSets might set showOldAnswers to '', which
 	#       needs to be treated as if it is not set.
 	my %want = (
-		showOldAnswers     => (defined($r->param("showOldAnswers")) and $r->param("showOldAnswers") ne '') ? $r->param("showOldAnswers")  : $ce->{pg}->{options}->{showOldAnswers},
-		showCorrectAnswers => $r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers},
+		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
+		showCorrectAnswers => $r->param('showCorrectAnswers') || $ce->{pg}->{options}->{showCorrectAnswers},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
-        useMathView        => (defined($r->param("useMathView")) and $r->param("useMathView") ne '') ? $r->param("useMathView")  : $ce->{pg}->{options}->{useMathView},
+        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		showMeAnother      => $showMeAnother{active},
@@ -864,9 +867,12 @@ sub pre_header_initialize {
 	          $can{showSolutions}      = $showMeAnother{options}->{showSolutions};
 	          $must{showSolutions}     = $showMeAnother{options}->{showSolutions};
 	          $can{checkAnswers}       = $showMeAnother{options}->{checkAnswers};
+		  # rig the nubmer of attempts to show hints if showing hitns
+		  if ($can{showHints}) {
+		      $problem->num_incorrect(1000);
+		  }
             }
       }
-
 	
 	# final values for options
 	my %will;
@@ -982,10 +988,12 @@ sub head {
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-	print qq{
-		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-	};
+
+	# Keys dont really work well anymore.  So I'm removing this for now GG
+#	print qq{
+#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
+#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
+#	};
         # Javascript and style for knowls
         print qq{
            <script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>
@@ -1000,28 +1008,6 @@ sub post_header_text {
 	my ($self) = @_;
 	return "" if ( $self->{invalidSet} );
     return $self->{pg}->{post_header_text} if $self->{pg}->{post_header_text};
-}
-
-sub options {
-	my ($self) = @_;
-	#warn "doing options in Problem";
-	
-	# don't show options if we don't have anything to show
-	return "" if $self->{invalidSet} or $self->{invalidProblem};
-	
-	my $displayMode = $self->{displayMode};
-	my %can = %{ $self->{can} };
-	
-	my  @options_to_show = "displayMode";
-	push @options_to_show, "showOldAnswers" if $can{showOldAnswers};
-	push @options_to_show, "showHints" if $can{showHints};
-	push @options_to_show, "showSolutions" if $can{showSolutions};
-	push @options_to_show, "useMathView" if $can{useMathView};
-
-	return $self->optionsMacro(
-		options_to_show => \@options_to_show,
-		extra_params => ["editMode", "sourceFilePath"],
-	);
 }
 
 sub siblings {
@@ -1048,10 +1034,7 @@ sub siblings {
 	foreach my $problemID (@problemIDs) {
 		my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
 			courseID => $courseID, setID => $setID, problemID => $problemID);
-		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage, 
-													params=>{  displayMode => $self->{displayMode}, 
-															   showOldAnswers => $self->{will}->{showOldAnswers}
-															})},  $r->maketext("Problem [_1]",$problemID))
+		print CGI::li(CGI::a( {href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]",$problemID))
 	   );
 	}
 
@@ -1331,7 +1314,7 @@ sub output_checkboxes{
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
 			-id		 => "showCorrectAnswers_id",
-			-label_text => $r->maketext("Show correct answers"),
+			-label_text => $r->maketext("Show correct answer column"),
 			-input_attr => $will{showCorrectAnswers} ?
 			{
 				-name    => "showCorrectAnswers",
@@ -1419,7 +1402,7 @@ sub output_submit_buttons{
 
     # skip buttons if SMA button has been pushed but there is no new problem shown
     if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible})){
-        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
         }
@@ -1487,7 +1470,7 @@ sub output_score_summary{
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
-	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
+	my $lastScore = wwRound(0, $problem_status * 100).'%'; # Round to whole number
 	my $attemptsLeft = $problem->max_attempts - $attempts;
 	
 	my $setClosed = 0;
@@ -1515,7 +1498,7 @@ sub output_score_summary{
 		print CGI::p(join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
-			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",sprintf("%.0f%%", $pg->{result}->{score} * 100)) . CGI::br():'',
+			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
 			$problem->attempted
 				? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
@@ -1585,28 +1568,30 @@ sub output_misc{
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-	#HACK FIXME
-	print q{
-		<script> 
-			var new_keyboard = new Keys([
-			{value: 'sqrt()',
-			 display: '$ \\\\sqrt{} $',
-			 behavior: 
-			 	function(input){
-            		input.selectionStart -= 1;
-            		input.selectionEnd -= 1;
-            		//this.focus();
-        		}
+
+	# Removed with keys script.  
+	# print q{
+	# 	<script> 
+	# 		var new_keyboard = new Keys([
+	# 		{value: 'sqrt()',
+	# 		 display: '$ \\\\sqrt{} $',
+	# 		 behavior: 
+	# 		 	function(input){
+        #     		input.selectionStart -= 1;
+        #     		input.selectionEnd -= 1;
+        #     		//this.focus();
+        # 		}
 			 
-			},
-			'^','=',			
-			'(',')','+','-','*','/',
-			'1','2','3','4','5','6','7','8','9','0',
-			'{','}','_'],
-			{debug:false}  ); 
-			new_keyboard.build();
-		</script>
-	};
+	# 		},
+	# 		'^','=',			
+	# 		'(',')','+','-','*','/',
+	# 		'1','2','3','4','5','6','7','8','9','0',
+	# 		'{','}','_'],
+	# 		{debug:false}  ); 
+	# 		new_keyboard.build();
+	# 	</script>
+	# };
+
 	return "";
 }
 
@@ -1646,7 +1631,7 @@ sub output_comments{
 
 		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
 		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\");\n BEGIN_TEXT\n";
+		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"MathObjects.pl\");\n BEGIN_TEXT\n";
 		    $source .= $comment . "\nEND_TEXT\n ENDDOCUMENT();";
 		    my $pg = WeBWorK::PG->new(
 			$ce,
@@ -1724,13 +1709,13 @@ sub output_summary{
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);	    
 	    print $results;
 	    
-	} elsif ($checkAnswers) {
-        if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
-            # if the student is checking answers to a new problem, give them a reminder that they are doing so
-            print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
+	} elsif ($will{checkAnswers}) {
+	    if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
+		# if the student is checking answers to a new problem, give them a reminder that they are doing so
+		print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
                                                                      will not be recorded, and you should remember to return to your original 
                                                                      problem once you are done here.")),CGI::br();
-        }
+	    }
 	    # print this if user previewed answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
@@ -1852,7 +1837,7 @@ sub output_tag_info{
 		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
 		$sourceFilePath =~ s/'/\\'/g;
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
@@ -1918,7 +1903,7 @@ sub output_past_answer_button{
 			CGI::p(
 				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",
-			CGI::endform();
+			CGI::end_form();
 	}
 	
 	return "";
@@ -2002,16 +1987,16 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
 	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
 	
 	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 	
 	# This is for MathView.  
 	if ($self->{will}->{useMathView}) {

@@ -20,6 +20,7 @@ use strict;
 use DBI;
 use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Utils::Tags;
+use File::Basename;
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
@@ -42,7 +43,7 @@ BEGIN
 	&createListing &updateListing &deleteListing &getAllChapters
 	&getAllSections &searchListings &getAllListings &getSectionListings
 	&getAllDBsubjects &getAllDBchapters &getAllDBsections &getDBTextbooks
-	&getDBListings &countDBListings &getTables
+	&getDBListings &countDBListings &getTables &getDBextras
 	);
 	%EXPORT_TAGS		=();
 	@EXPORT_OK		=qw();
@@ -122,7 +123,7 @@ sub getProblemTags {
 	my $path = shift;
 	my $tags = WeBWorK::Utils::Tags->new($path);
 	my %thash = ();
-	for my $j ('DBchapter', 'DBsection', 'DBsubject', 'Level') {
+	for my $j ('DBchapter', 'DBsection', 'DBsubject', 'Level', 'Status') {
 		$thash{$j} = $tags->{$j};
 	}
 	return \%thash;
@@ -135,11 +136,13 @@ sub setProblemTags {
 		my $chap = shift;
 		my $sect = shift;
 		my $level = shift;
+		my $status = shift || 0;
 		my $tags = WeBWorK::Utils::Tags->new($path);
 		$tags->settag('DBsubject', $subj, 1);
 		$tags->settag('DBchapter', $chap, 1);
 		$tags->settag('DBsection', $sect, 1);
 		$tags->settag('Level', $level, 1);
+		$tags->settag('Status', $status, 1);
 		eval {
 			$tags->write();
 			1;
@@ -180,6 +183,37 @@ sub makeKeywordWhere {
 	@kwlist = map { "kw.keyword = \"$_\"" } @kwlist;
 	my $where = join(" OR ", @kwlist);
 	return "AND ( $where )";
+}
+
+=item getDBextras($path)
+Get flags for whether a pg file uses Math Objects, and if it is static
+
+$r is a Apache request object so we can get the right table names
+
+$path is the path to the file
+
+Out put is an array reference: [MO, static]
+
+=cut
+
+sub getDBextras {
+	my $r = shift;
+	my $path = shift;
+	my %tables = getTables($r->ce);
+	my $dbh = getDB($r->ce);
+	my ($mo, $static)=(0,0);
+
+	$path =~ s|^Library/||;
+	my $filename = basename $path;
+	$path = dirname $path;
+	my $query = "SELECT pgfile.MO, pgfile.static FROM `$tables{pgfile}` pgfile, `$tables{path}` p WHERE p.path=\"$path\" AND pgfile.path_id=p.path_id AND pgfile.filename=\"$filename\"";
+	my @res = $dbh->selectrow_array($query);
+	if(@res) {
+		$mo = $res[0];
+		$static = $res[1];
+	}
+
+	return [$mo, $static];
 }
 
 =item getDBTextbooks($r)                                                    
@@ -440,10 +474,10 @@ sub getDBListings {
 	}
 	my @results=();
 	for my $pgid (@pg_ids) {
-		$query = "SELECT path, filename, morelt_id, pgfile_id FROM `$tables{pgfile}` pgf, `$tables{path}` p 
+		$query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p 
           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
 		my $row = $dbh->selectrow_arrayref($query);
-		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3] };
+		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3], 'static' => $row->[4], 'MO' => $row->[5] };
 		
 	}
 	return @results;

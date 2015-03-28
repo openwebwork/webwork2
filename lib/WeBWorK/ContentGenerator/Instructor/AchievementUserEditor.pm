@@ -81,15 +81,17 @@ sub initialize {
 				my $achievement = $db->getAchievement($achievementID);
 
 				my $points = $achievement->points || 0;
+				my $initialpoints = $globalUserAchievement->achievement_points || 0;
 				#add the correct number of points if we 
 				# are saying that the user now earned the
 				# achievement, or remove them otherwise
 				if ($updatedEarned) {
+
 				    $globalUserAchievement->achievement_points(
-					$globalUserAchievement->achievement_points +	$points);
+					$initialpoints +	$points);
 				} else {
 				    $globalUserAchievement->achievement_points(
-					$globalUserAchievement->achievement_points -	$points);
+					$initialpoints -	$points);
 				}
 
 				$db->putGlobalUserAchievement($globalUserAchievement);

@@ -35,6 +35,7 @@ use WeBWorK::Localize;
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
+	my $ce = $r->ce;
 	my $db = $r->db;
 	my $authz = $r->authz;
 	
@@ -76,7 +77,7 @@ sub body {
 						$EPassword->password(cryptPassword($newP));
 						eval { $db->putPassword($EPassword) };
 						if ($@) {
-							print CGI::div({class=>"ResultsWithError"},
+							print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
 								CGI::p($r->maketext("Couldn't change [_1]'s password: [_2]",$e_user_name,$@)),
 							);
 						} else {
@@ -85,26 +86,26 @@ sub body {
 							);
 						}
 					} else {
-						print CGI::div({class=>"ResultsWithError"},
+						print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
 							CGI::p(
 								$r->maketext("The passwords you entered in the [_1] and [_2] fields don't match. Please retype your new password and try again.", CGI::b($r->maketext("[_1]'s New Password",$e_user_name)), CGI::b($r->maketext("Confirm [_1]'s New Password",$e_user_name))) 
 							),
 						);
 					}
 				} else {
-					print CGI::div({class=>"ResultsWithError"},
+					print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
 						CGI::p($r->maketext("[_1]'s new password cannot be blank.",$e_user_name)),
 					);
 				}
 			} else {
-				print CGI::div({class=>"ResultsWithError"},
+				print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
 					CGI::p($r->maketext("The password you entered in the [_1] field does not match your current password. Please retype your current password and try again.", CGI::b($r->maketext("[_1]'s Current Password",$user_name)))
 					),
 				);
 			}
 			
 		} else {
-			print CGI::div({class=>"ResultsWithError"},
+			print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
 				CGI::p($r->maketext("You do not have permission to change your password.")))
 					unless $changeOptions and ($currP or $newP or $confirmP); # avoid double message
 		}
@@ -114,16 +115,16 @@ sub body {
 	if ($authz->hasPermissions($userID, "change_password")) {
 		print CGI::table({class=>"FormLayout"},
 			CGI::Tr({},
-				CGI::td($r->maketext("[_1]'s Current Password",$user_name)),
-				CGI::td(CGI::password_field(-name=>"currPassword")),
+				CGI::td(CGI::label({'for'=>'currPassword'},$r->maketext("[_1]'s Current Password",$user_name))),
+				CGI::td(CGI::password_field(-name=>"currPassword", -id=>"currPassword")),
 			),
 			CGI::Tr({},
-				CGI::td($r->maketext("[_1]'s New Password",$e_user_name)),
-				CGI::td(CGI::password_field(-name=>"newPassword")),
+				CGI::td(CGI::label({'for'=>"newPassword"},$r->maketext("[_1]'s New Password",$e_user_name))),
+				CGI::td(CGI::password_field(-name=>"newPassword", -id=>"newPassword")),
 			),
 			CGI::Tr({},
-				CGI::td($r->maketext("Confirm [_1]'s New Password",$e_user_name)),
-				CGI::td(CGI::password_field(-name=>"confirmPassword")),
+				CGI::td(CGI::label({'for'=>'confirmPassword'},$r->maketext("Confirm [_1]'s New Password",$e_user_name))),
+				CGI::td(CGI::password_field(-name=>"confirmPassword",-id=>"confirmPassword")),
 			),
 		);
 	} else {
@@ -140,7 +141,7 @@ sub body {
 			eval { $db->putUser($EUser) };
 			if ($@) {
 				$EUser->email_address($oldA);
-				print CGI::div({class=>"ResultsWithError"},
+				print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
 					CGI::p($r->maketext("Couldn't change your email address: [_1]",$@)),
 				);
 			} else {
@@ -150,7 +151,7 @@ sub body {
 			}
 			
 		} else {
-			print CGI::div({class=>"ResultsWithError"},
+			print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
 				CGI::p($r->maketext("You do not have permission to change email addresses.")),
 			);
 		}
@@ -159,13 +160,13 @@ sub body {
 	if ($authz->hasPermissions($userID, "change_email_address")) {
 		print CGI::table({class=>"FormLayout"},
 			CGI::Tr({},
-				CGI::td($r->maketext("[_1]'s Current Address",$e_user_name)),
-				CGI::td($EUser->email_address),
+				CGI::td(CGI::label({'for' => 'currAddress'},$r->maketext("[_1]'s Current Address",$e_user_name))),
+				CGI::td(CGI::input({ type=>"text", readonly=>"true", id=>"currAddress", name=>"currAddress", value=>$EUser->email_address})),
 			),
 			CGI::Tr({},
-				CGI::td($r->maketext("[_1]'s New Address",$e_user_name)),
+				CGI::td(CGI::label({'for'=>'newAddress'},$r->maketext("[_1]'s New Address",$e_user_name))),
 #				CGI::td(CGI::textfield(-name=>"newAddress", -text=>$newA)),
-				CGI::td(CGI::textfield(-name=>"newAddress")),
+				CGI::td(CGI::textfield(-name=>"newAddress",-id,=>"newAddress")),
 			),
 		);
 	} else {
@@ -173,8 +174,89 @@ sub body {
 			unless $changeOptions and $newA; # avoid double message
 	}
 	
+
+	
+	print CGI::h2($r->maketext("Change Display Options"));
+
+	if ($changeOptions) {
+	    
+	    if ((defined($r->param('displayMode')) &&
+			$EUser->displayMode() ne $r->param('displayMode')) ||
+		(defined($r->param('showOldAnswers')) &&
+			$EUser->showOldAnswers() ne $r->param('showOldAnswers')) ||
+		(defined($r->param('useMathView')) && 
+			 $EUser->useMathView() ne $r->param('useMathView'))) {
+		
+		$EUser->displayMode($r->param('displayMode'));
+		$EUser->showOldAnswers($r->param('showOldAnswers'));
+		$EUser->useMathView($r->param('useMathView'));
+		
+		eval { $db->putUser($EUser) };
+		if ($@) {
+		    print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
+				   CGI::p($r->maketext("Couldn't save your display options: [_1]",$@)),
+			);
+		} else {
+		    print CGI::div({class=>"ResultsWithoutError"},
+				   CGI::p($r->maketext("Your display options have been saved.")),
+			);
+		}
+	    }
+	}
+	
+	my $result = '';
+
+	
+	my $curr_displayMode = $EUser->displayMode || $ce->{pg}->{options}->{displayMode};
+	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
+	my @active_modes = grep { exists $display_modes{$_} } @{$ce->{pg}->{displayModes}};
+
+	if (@active_modes > 1) {
+	    $result .= CGI::start_fieldset();
+	    $result .= CGI::legend($r->maketext("View equations as").":");
+	    $result .= CGI::radio_group(
+		-name => "displayMode",
+		-values => \@active_modes,
+		-default => $curr_displayMode,
+		-linebreak=>'true',
+		);
+	    $result .= CGI::end_fieldset();
+	    $result .= CGI::br();
+	}
+
+	if ($authz->hasPermissions($userID,"can_show_old_answers")) {
+	    my $curr_showOldAnswers = $EUser->showOldAnswers ne '' ? $EUser->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers};
+	    $result .= CGI::start_fieldset();
+	    $result .= CGI::legend($r->maketext("Show saved answers?"));
+	    $result .= CGI::radio_group(
+		-name => "showOldAnswers",
+		-values => [1,0],
+		-default => $curr_showOldAnswers,
+		-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+		);
+	    $result .= CGI::end_fieldset();
+	    $result .= CGI::br();
+	}
+
+	if ($ce->{pg}{specialPGEnvironmentVars}{MathView}) {
+	    # Note, 0 is a legal value, so we can't use || in setting this
+	    my $curr_useMathView = $EUser->useMathView ne '' ?
+		$EUser->useMathView : $ce->{pg}->{options}->{useMathView};
+	    $result .= CGI::start_fieldset();
+	    $result .= CGI::legend($r->maketext("Use Equation Editor?"));
+	    $result .= CGI::radio_group(
+		-name => "useMathView",
+		-values => [1,0],
+		-default => $curr_useMathView,
+		-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+		);
+	    $result .= CGI::end_fieldset();
+	    $result .= CGI::br();
+	}
+	
+	print CGI::p($result);
 	print CGI::br();
-	print CGI::submit("changeOptions", $r->maketext("Change User Options"));
+	print CGI::submit("changeOptions", $r->maketext("Change User Settings"));
 	print CGI::end_form();
 	
 	return "";

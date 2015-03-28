@@ -18,6 +18,7 @@ function jumpTo(ref) {  // scrolling javascript function
 	$('html, body').animate({
 	    scrollTop: $("#prob"+pn).offset().top
 	}, 500);
+	$("#prob"+pn).attr('tabIndex',-1).focus();
     }
     return false; // prevent link from being followed
 }

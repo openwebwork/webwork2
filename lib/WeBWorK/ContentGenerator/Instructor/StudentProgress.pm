@@ -29,6 +29,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
+use WeBWorK::Utils qw(wwRound);
 #use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::Utils::Grades qw/list_set_versions/;
@@ -339,8 +340,8 @@ sub displaySets {
   # the returning parameter lets us set defaults for versioned sets
 		my $ret = defined($r->param('returning')) ? 
 			$r->param('returning') : 0;
-		$showColumns{'date'} = ($ret && defined($r->param('show_date'))) ? $r->param('show_date') : 1;
-		$showColumns{'testtime'} = ($ret && defined($r->param('show_testtime'))) ? $r->param('show_testtime'):1;
+		$showColumns{'date'} = ($ret && !defined($r->param('show_date'))) ? $r->param('show_date') : 1;
+		$showColumns{'testtime'} = ($ret && !defined($r->param('show_testtime'))) ? $r->param('show_testtime'):1;
 		$showColumns{'index'} = ($ret && defined($r->param('show_index'))) ? $r->param('show_index') : 0;
 		$showColumns{'problems'} = ($ret && defined($r->param('show_problems'))) ? $r->param('show_problems'):0;
 		$showColumns{'section'} = ($ret && defined($r->param('show_section'))) ? $r->param('show_section') : 0;
@@ -757,41 +758,43 @@ sub displaySets {
 # form header here, and make appropriate modifications
         my $verSelectors = '';
 	if ( $setIsVersioned ) {
-		print CGI::start_form({'method' => 'post', 
+	    print CGI::start_div({'id'=>'screen-options-wrap'});
+		print CGI::start_form({'method' => 'post', 'id'=>'sp-gateway-form',
 				       'action' => $self->systemLink($urlpath,authen=>0),'name' => 'StudentProgress'});
 		print $self->hidden_authen_fields();
-
-#	    $verSelectors = CGI::p({'style'=>'background-color:#eeeeee;color:black;'},
-		print CGI::p({'id'=>'sp-gateway-form','style'=>'background-color:#eeeeee;color:black;'},
-			     "Display options: Show ",
-			     CGI::hidden(-name=>'returning', -value=>'1'),
+		   print CGI::start_div();		   
+			print	  CGI::h4("Display options: Show ");	
+			print   CGI::start_div({'class'=>'metabox-prefs'});	   
+			print     CGI::hidden(-name=>'returning', -value=>'1'),
 			     CGI::checkbox(-name=>'show_best_only', -value=>'1', 
 					   -checked=>$showBestOnly, 
-					   -label=>' only best scores; '),
+					   -label=>'only best scores'),
 #			     CGI::checkbox(-name=>'show_index', -value=>'1', 
 #					   -checked=>$showColumns{'index'},
 #					   -label=>' success indicator; '),
 			     CGI::checkbox(-name=>'show_date', -value=>'1', 
 					   -checked=>$showColumns{'date'},
-					   -label=>' test date; '),
+					   -label=>'test date'),
 			     CGI::checkbox(-name=>'show_testtime', -value=>'1', 
 					   -checked=>$showColumns{'testtime'},
-					   -label=>' test time; '),
+					   -label=>'test time'),
 			     CGI::checkbox(-name=>'show_problems', -value=>'1', 
 					   -checked=>$showColumns{'problems'},
-					   -label=>'problems;'), "\n", CGI::br(), "\n",
+					   -label=>'problems'),
 			     CGI::checkbox(-name=>'show_section', -value=>'1', 
 					   -checked=>$showColumns{'section'}, 
-					   -label=>' section #; '),
+					   -label=>'section #'),
 			     CGI::checkbox(-name=>'show_recitation', -value=>'1', 
 					   -checked=>$showColumns{'recit'},
-					   -label=>' recitation #; '),
+					   -label=>'recitation #'),
 			     CGI::checkbox(-name=>'show_login', -value=>'1', 
 					   -checked=>$showColumns{'login'}, 
-					   -label=>'login'), "\n", CGI::br(), "\n",
-			     CGI::submit(-value=>'Update Display'),
-			     );
+					   -label=>'login'), CGI::br();
+			print CGI::end_div();		    
+			print CGI::submit(-value=>'Update Display');	
+		print CGI::end_div();
 		print CGI::end_form();
+	  print CGI::end_div();
 	}
 
 #####################################################################################
@@ -881,9 +884,11 @@ sub displaySets {
     # and to make formatting nice for students who haven't taken any tests
     #    (the total number of columns is two more than this; we want the 
     #    number that missing record information should span)
-	my $numCol = 1 + $showColumns{'date'} + $showColumns{'testtime'} + 
-#		$showColumns{'index'} +
-		$showColumns{'problems'};
+
+	my $numCol = 1;
+	$numCol++ if $showColumns{'date'};
+	$numCol++ if $showColumns{'testtime'};
+	$numCol++ if $showColumns{'problems'};
 
 	foreach my $rec (@augmentedUserRecords) {
 		my $fullName = join("", $rec->{first_name}," ", $rec->{last_name});
@@ -892,7 +897,7 @@ sub displaySets {
 		if ( ! $setIsVersioned ) {
 		    print CGI::Tr({},
 			CGI::td({},CGI::a({-href=>$rec->{act_as_student}},$fullName), CGI::br(), CGI::a({-href=>"mailto:$email"},$email)),
-			CGI::td( sprintf("%0.2f",$rec->{score}) ), # score
+			CGI::td(wwRound(2,$rec->{score}) ), # score
 			CGI::td($rec->{total}), # out of 
 #			CGI::td(sprintf("%0.0f",100*($rec->{index}) )),   # indicator
 			CGI::td($rec->{problemString}), # problems
@@ -922,7 +927,7 @@ sub displaySets {
 		    
 				# build columns to show
 				push(@cols, $nameEntry, 
-				     sprintf("%0.2f",$rec->{score}),
+				     wwRound(2,$rec->{score}),
 				     $rec->{total});
 				push(@cols, $self->nbsp($rec->{date})) 
 				    if ($showColumns{'date'});
@@ -1120,7 +1125,7 @@ sub grade_set {
 			if (!$attempted){
 				$longStatus     = '.';
 			} elsif   ($valid_status) {
-				$longStatus     =  int(100*$status+.5) ;
+				$longStatus     = 100*wwRound(2,$status);
 				$longStatus='C' if ($longStatus==100);
 			} else	{
 				$longStatus 	= 'X';
@@ -1132,7 +1137,7 @@ sub grade_set {
 			my $probValue   =  $problemRecord->value;
 			$probValue      =  1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total          += $probValue;
-			$totalRight     += round_score($status*$probValue) if $valid_status;
+			$totalRight     += $status*$probValue if $valid_status;
 				
 # 				
 # 			# initialize the number of correct answers 
@@ -1158,7 +1163,7 @@ sub grade_set {
 		
 		}  # end of problem record loop
 
-
+		$totalRight = wwRound(2,$totalRight);  # round the final total	
 
 		return($status,  
 			   $longStatus, 
@@ -1181,8 +1186,5 @@ sub threeSpaceFill {
 	else {return "## ";}
 }
 
-sub round_score{
-	return shift;
-}
 
 1;

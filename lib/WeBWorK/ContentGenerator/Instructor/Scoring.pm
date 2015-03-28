@@ -28,7 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile);
+use WeBWorK::Utils qw(readFile wwRound);
 
 our @userInfoColumnHeadings = ("STUDENT ID", "login ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
 our @userInfoFields = ("student_id", "user_id","last_name", "first_name", "section", "recitation");
@@ -526,7 +526,7 @@ sub scoreSet {
 		}
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
             $userStatusTotals{$user} =$userStatusTotals{$user} ||0;
-			$scoringData[7+$user][$totalsColumn] = sprintf("%.1f",$userStatusTotals{$user}) if $scoringItems->{setTotals};
+			$scoringData[7+$user][$totalsColumn] = wwRound(2,$userStatusTotals{$user}) if $scoringItems->{setTotals};
 			$scoringData[7+$user][$totalsColumn+1] = sprintf("%.0f",100*$userSuccessIndex{$user}) if $scoringItems->{successIndex};
 
 		}
@@ -565,8 +565,8 @@ sub sumScores {    # Create a totals column for each student
 			$studentTotal += ($score =~/^\s*[\d\.]+\s*$/)? $score : 0;
 			
 		}
-		$scoringData[$i][0] =sprintf("%.1f",$studentTotal);
-		$scoringData[$i][1] =($totalPoints) ?sprintf("%.1f",100*$studentTotal/$totalPoints) : 0;
+		$scoringData[$i][0] = wwRound(2,$studentTotal);
+		$scoringData[$i][1] = ($totalPoints) ?wwRound(2,100*$studentTotal/$totalPoints) : 0;
     }
     $scoringData[0]      = ['',''];
     $scoringData[1]      = ['summary', '%score'];

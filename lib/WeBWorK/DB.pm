@@ -850,7 +850,8 @@ sub settingExists {
 
 sub getSettingValue {
 	my ($self, $name) = @_;
-	return map { @$_ } $self->{setting}->get_fields_where(['value'], [name_eq=>$name]);
+
+	return (map { @$_ } $self->{setting}->get_fields_where(['value'], [name_eq=>$name]))[0];
 }
 
 # we totally don't care if a setting already exists (and in fact i find that

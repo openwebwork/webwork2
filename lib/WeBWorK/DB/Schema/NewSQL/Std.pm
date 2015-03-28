@@ -815,13 +815,15 @@ our %MYSQL_ERROR_CODES = (
 # another RDBMS.
 sub handle_error {
 	my ($errmsg, $handle, $returned) = @_;
-	
 	if (exists $MYSQL_ERROR_CODES{$handle->err}) {
 		$MYSQL_ERROR_CODES{$handle->err}->throw;
 	} else {
-	    my $error = $errmsg."\n".join("\n",caller(1),caller(2),caller(3));
-	    #$error =~ s|\n|<br/>|;
-		die $error ;
+
+	    if ($errmsg =~ /Unknown column/) {
+		warn("It looks like the database is missing a column.  You may need to upgrade your course tables.  If this is the admin course then you will need to upgrade the admin tables using the upgrade_admin_db.pl script.");
+	    }
+	    
+	    die $errmsg ;
 	}
 }
 
