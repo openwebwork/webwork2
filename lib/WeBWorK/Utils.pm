@@ -928,7 +928,7 @@ sub cryptPassword($) {
 sub dequote($) {
 	local $_ = shift;
 	my ($white, $leader); # common whitespace and common leading string
-	if (/^\s*(?:([^\w\s]+)(\s*).*\n)(?:\s*\1\2?.*\n)+$/) {
+	if (/^\s*(?:([^\w\s]+)(\s*).*\n)(?:\s*$1$2?.*\n)+$/) {    # changed \1\2 to $1$2  MEG
 		($white, $leader) = ($2, quotemeta($1));
 	} else {
 		($white, $leader) = (/^(\s+)/, '');
