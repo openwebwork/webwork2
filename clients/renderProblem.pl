@@ -57,8 +57,10 @@ use MIME::Base64 qw( encode_base64 decode_base64);
  our $UNIT_TESTS_ON             = 0;
 
  # Command line for displaying the temporary file in a browser.
- # use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
-   use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
+ #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
+  use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
+ #use constant DISPLAY_COMMAND => " less ";   # display tempoutputfile with less
+
 
 
 my $use_site;
@@ -77,8 +79,6 @@ my @path_list = ('.ww_credentials', "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww
 # 			courseID        => "the name of the webwork course",
 # 	);
 
-die "You must first create an output file at $ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html with permissions 777 " unless
--w "$ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html";
 
  ############################################################
  # End configure
@@ -87,11 +87,11 @@ die "You must first create an output file at $ENV{WEBWORK_ROOT}/DATA/renderProbl
  # Path to a temporary file for storing the output of renderProblem.pl
  use constant  TEMPOUTPUTFILE   => "$ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html"; 
  
- 
+use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
 
+die "You must first create an output file at ".TEMPOUTPUTFILE()." with permissions 777 " unless
+-w TEMPOUTPUTFILE();
 
-
- 
  ############################################################
  
 # To configure a new target webwork server
@@ -130,7 +130,7 @@ die "You must first create an output file at $ENV{WEBWORK_ROOT}/DATA/renderProbl
 # 6.  The course "daemon_course" must be a course that has been created on the server or an error will
 #     result. A different name can be used but the course must exist on the server.
 
-#A
+
 our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE, %credentials);
 if ($use_site eq 'local') {
 	# the rest can work!!
@@ -201,8 +201,6 @@ die;
 }
 
 
-use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
-
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
 
@@ -257,7 +255,7 @@ our $xmlrpc_client = new WebworkClient (
  };
 
 
-$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
+#$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
 $input->{envir}->{fileName} = $fileName;
 
 #xmlrpcCall('renderProblem');
