@@ -76,6 +76,10 @@ my @path_list = ('.ww_credentials', "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww
 # 			password        => "my password ",
 # 			courseID        => "the name of the webwork course",
 # 	);
+
+die "You must first create an output file at $ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html with permissions 777 " unless
+-w "$ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html";
+
  ############################################################
  # End configure
  ############################################################
