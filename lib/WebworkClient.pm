@@ -172,7 +172,7 @@ sub xmlrpcCall {
 		$self->{output}= $result->result();
 		return $result->result();
 	  } else {
-		print STDERR 'Error message for ', 
+		my $err_string = 'Error message for ', 
 		  join( ', ',
 			  "command:",
 			  $command,
@@ -181,7 +181,8 @@ sub xmlrpcCall {
 			  "\nfaultstring:",
 			  $result->faultstring, "\nEnd error message\n"
 		  );
-		  return undef;
+		  print STDERR $err_string;
+		  return $err_string;
 	  }
 }
 
@@ -465,8 +466,8 @@ sub formatRenderedProblem {
 		$problemText       = "Unable to decode problem text",format_hash_ref($rh_result);
 	}
 	my $rh_answers        = $rh_result->{answers};
-	my $encodedSource     = $self->{encodedSource}||'';
-	my $sourceFilePath    = $self->{sourceFilePath};
+	my $encodedSource     = $self->{encodedSource}//'';
+	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
 	#################################################
 	# regular Perl warning messages generated with warn
@@ -533,17 +534,17 @@ sub formatRenderedProblem {
 	###########################
 	#FIXME -- this can be improved to use substitution trick 
 	# that way only the chosen problemTemplate will be interpolated
-	$self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
+$self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 
 
 <html>
 <head>
 <base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host $XML_URL</title>
+<title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
 </head>
 <body>
 
-<h2> WeBWorK Editor using host $XML_URL</h2>
+<h2> WeBWorK Editor using host: $XML_URL,  format: standard</h2>
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
 			$problemText
@@ -573,15 +574,17 @@ $internal_debug_messages
 
 ENDPROBLEMTEMPLATE
 
-	$self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
+$self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 
 
 <html>
 <head>
 <base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host $XML_URL</title>
+<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple</title>
 </head>
 <body>
+			
+<h2> WeBWorK Editor using host: $XML_URL,  format: simple</h2>
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
 			$problemText
@@ -602,7 +605,26 @@ ENDPROBLEMTEMPLATE
 
 ENDPROBLEMTEMPLATE
 
+$self->{outputformats}->{debug}= 
+qq{
+
+	<html>
+	<head>
+	<base href="$XML_URL">
+	<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: debug</title>
+	</head>
+	<body>
+			
+	<h2> WeBWorK Editor using host: $XML_URL,  format: debug</h2>
+}.  pretty_print($self) . 
+qq{		   
+</body>
+</html>
+};
+
+
 #  choose problem template
+	$self->{outputformat}= $self->{inputs_ref}->{outputformat}//'standard';
     if (defined($self->{outputformats}->{$self->{outputformat}}) ) {
     	return $self->{outputformats}->{$self->{outputformat}};
     } else {
