@@ -172,7 +172,7 @@ sub xmlrpcCall {
 		$self->{output}= $result->result();
 		return $result->result();
 	  } else {
-		my $err_string = 'Error message for ', 
+		my $err_string = 'Error message for '.
 		  join( ', ',
 			  "command:",
 			  $command,
