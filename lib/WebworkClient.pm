@@ -87,7 +87,7 @@ use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      => 'mod_xmlrpc';
 
-our $UNIT_TESTS_ON             = 0;
+our $UNIT_TESTS_ON             = 1;
 
 # error formatting
 sub format_hash_ref {
@@ -519,13 +519,13 @@ sub formatRenderedProblem {
     $answerTemplate = "" unless $answerssubmitted;
     #################################################
 
-	my $test = pretty_print($rh_result);
+
 	$self->{outputformats}={};
-	my $XML_URL      = $self->url;
+	my $XML_URL      	 = $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
-	my $session_key      =  $rh_result->{session_key};
+	my $session_key      =  $rh_result->{session_key}//'';
 	
 	
 	
