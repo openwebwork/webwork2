@@ -41,7 +41,7 @@ use Data::Dumper;
 
 my $courseID = shift @ARGV;
 my $scriptFile   = shift @ARGV;
-print "courseID $courseID and $scriptFile\n";
+
 unless ($courseID and $scriptFile) {
 	die "usage: $0 courseID  scriptFile\n";
 }
@@ -61,7 +61,7 @@ Available objects: $ce (WeBWorK::CourseEnvironment)
 Available modules: Data::Dumper
 
 EOF
-print "scriptFile:  $scriptFile\n--------------------------------\n";
+print "courseID: $courseID and scriptFile:  $scriptFile\n--------------------------------\n";
 do "$scriptFile";
 if ($@) {
 	print "errors ", $@,"\n" ;
