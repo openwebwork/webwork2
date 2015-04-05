@@ -87,7 +87,7 @@ use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      => 'mod_xmlrpc';
 
-our $UNIT_TESTS_ON             = 1;
+our $UNIT_TESTS_ON             = 0;
 
 # error formatting
 sub format_hash_ref {
@@ -101,6 +101,7 @@ sub new {
     my $class = ref $invocant || $invocant;
 	my $self = {
 		output   		=> '',
+		error_string    => '',
 		encodedSource 	=> '',
 		url             => '',
 		password        => '',
@@ -170,19 +171,21 @@ sub xmlrpcCall {
 	  	}
 		#print  pretty_print($result->result()),"\n";  #$result->result()
 		$self->{output}= $result->result();
-		return $result->result();
+		return $result->result();  # would it be better to return the entire $result?
 	  } else {
 		my $err_string = 'Error message for '.
-		  join( ', ',
+		  join( ' ',
 			  "command:",
 			  $command,
-			  "\nfaultcode:",
+			  "\n<br/>faultcode:",
 			  $result->faultcode, 
-			  "\nfaultstring:",
-			  $result->faultstring, "\nEnd error message\n"
+			  "\n<br/>faultstring:",
+			  $result->faultstring, "\n<br/>End error message<br/>\n"
 		  );
 		  print STDERR $err_string;
-		  return $err_string;
+		  $self->{output}= $result;
+		  $self->{error_string}= $err_string;
+		  return $result;
 	  }
 }
 
@@ -463,7 +466,9 @@ sub formatRenderedProblem {
 	if (ref($rh_result) and $rh_result->{text} ) {
 		$problemText       =  $rh_result->{text};
 	} else {
-		$problemText       = "Unable to decode problem text",format_hash_ref($rh_result);
+		$problemText       = "Unable to decode problem text\n".
+		$self->{error_string}."\n".
+		format_hash_ref($rh_result);
 	}
 	my $rh_answers        = $rh_result->{answers};
 	my $encodedSource     = $self->{encodedSource}//'';
