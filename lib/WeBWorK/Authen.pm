@@ -240,10 +240,11 @@ sub verify {
 			}
 
 		}
-
+        warn "LOGIN FAILED: log_error: $log_error; user error: $error";
 		$self->maybe_kill_cookie;
-		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character. 
-			MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
+		if (defined($error) and $error=~/\S/ and $r->can('notes') ) { # if error message has a least one non-space character. 
+			MP2? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
+		      # FIXME this is a hack to accomodate the webworkservice remixes
 		}
 	}
 	
@@ -734,7 +735,15 @@ sub create_session {
 	my $Key = $db->newKey(user_id=>$userID, key=>$newKey, timestamp=>$timestamp);
 	# DBFIXME this should be a REPLACE
 	eval { $db->deleteKey($userID) };
-	$db->addKey($Key);
+	eval {$db->addKey($Key)};
+	my $fail_to_addKey=1 if $@;
+	if ($fail_to_addKey) {
+		warn "Difficulty adding key for userID $userID: $@ ";
+	}
+	if ($fail_to_addKey) {
+		eval {$db->putKey($Key) };
+		warn "Couldn't put key for userid $userID either: $@" if $@;
+	}
 
 	#if ($ce -> {session_management_via} eq "session_cookie"),
 	#    then the subroutine maybe_send_cookie should send a cookie.
