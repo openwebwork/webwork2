@@ -43,7 +43,7 @@ BEGIN {
 ###############################################################################
 
 	$WebworkWebservice::SITE_PASSWORD      = 'xmluser';     # default password
-	$WebworkWebservice::COURSENAME    = 'the-course-should-be-determined-at-run-time';       # default course
+	$WebworkWebservice::COURSENAME         = 'the-course-should-be-determined-at-run-time';       # default course
 	
 	
 
