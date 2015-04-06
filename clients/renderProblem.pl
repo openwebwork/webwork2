@@ -40,7 +40,8 @@ BEGIN {
              WEBWORK_ROOT can be defined in your .cshrc or .bashrc file\n
              It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
                 unless exists $ENV{WEBWORK_ROOT};
-	# Unused variable, but define it to avoid an error message.
+	# Unused variable, but define it twice to avoid an error message.
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
 }
 use lib "$ENV{WEBWORK_ROOT}/lib";
@@ -235,21 +236,21 @@ our $xmlrpc_client = new WebworkClient (
 	url                    => $XML_URL,
 	form_action_url        => $FORM_ACTION_URL,
 	displayMode            => DISPLAYMODE(),
-	site_password          =>  $credentials{site_password},
+	site_password          =>  $XML_PASSWORD//'',
 	courseID               =>  $credentials{courseID},
 	userID                 =>  $credentials{userID},
-	session_key            =>  $credentials{session_key},
+	session_key            =>  $credentials{session_key}//'',
 );
  
  $xmlrpc_client->encodeSource($source);
  
  my $input = { 
-		userID      	=> $credentials{userID}||'',
-		session_key	 	=> $credentials{session_key}||'',
-		courseID   		=> $credentials{courseID}||'',
-		courseName   	=> $credentials{courseID}||'',
-		password     	=> $credentials{password}||'',	
-		site_password   => $credentials{site_password}||'',
+		userID      	=> $credentials{userID}//'',
+		session_key	 	=> $credentials{session_key}//'',
+		courseID   		=> $credentials{courseID}//'',
+		courseName   	=> $credentials{courseID}//'',
+		password     	=> $credentials{password}//'',	
+		site_password   => $XML_PASSWORD//'',
 		envir           => $xmlrpc_client->environment(),
 		                 
  };
