@@ -105,6 +105,7 @@ sub new {
 		encodedSource 	=> '',
 		url             => '',
 		password        => '',
+		site_password   => '',
 		course          => '',
 		displayMode     => '',
 		inputs_ref      => {		 AnSwEr0001 => '',
@@ -183,7 +184,7 @@ sub xmlrpcCall {
 			  $result->faultstring, "\n<br/>End error message<br/>\n"
 		  );
 		  print STDERR $err_string;
-		  $self->{output}= $result;
+		  $self->{output}= $result->result();
 		  $self->{error_string}= $err_string;
 		  return $result;
 	  }
@@ -293,7 +294,7 @@ sub setInputTable_for_listLib {
 sub setInputTable {
 	my $self = shift;
 	my $out = {
-		pw          =>   $self->{password},
+		pw          =>   $self->{site_password},
 		library_name =>  'Library',
 		command      =>  'renderProblem',
 		answer_form_submitted   => 1,
@@ -530,6 +531,7 @@ sub formatRenderedProblem {
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
+	my $password         =  $self->{password};
 	my $session_key      =  $rh_result->{session_key}//'';
 	
 	
@@ -561,6 +563,8 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">
+	       <input type="hidden" name="password" value="$password">
+	       <input type="hidden" name="passwd" value="$password">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <p><input type="submit" name="submit" value="submit answers"></p>
 	     </form>
@@ -601,6 +605,8 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">
+	       <input type="hidden" name="password" value="$password">
+	       <input type="hidden" name="passwd" value="$password">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
 	       <p><input type="submit" name="submit" value="submit answers"></p>
