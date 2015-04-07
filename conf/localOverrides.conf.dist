@@ -61,7 +61,7 @@ $mail{feedbackRecipients}    = [
 # systems.  If your course list page in the admin course is very slow
 # consider disabling this option.  
 
-$enableGitUpgradeNotifier = 1;
+$enableGitUpgradeNotifier = 0;
 
 $gitWeBWorKRemoteName = "origin";
 $gitWeBWorKBranchName = "master";
