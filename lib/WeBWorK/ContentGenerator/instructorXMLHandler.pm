@@ -258,6 +258,9 @@ sub pre_header_initialize {
 		    processAnswers => defined($r->param('processAnswers')) ? $r->param('processAnswers') : 1,
 	};
 
+	$input->{envir}->{probNum} = $r->param("probNum") ||undef;
+
+
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
 		   format_hash_ref($input);

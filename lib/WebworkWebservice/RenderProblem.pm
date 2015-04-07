@@ -253,7 +253,7 @@ sub renderProblem {
 	# determine the set name and the set problem number
 	my $setName       =  (defined($rh->{set_id}) ) ? $rh->{set_id} : 
 	    (defined($rh->{envir}->{setNumber}) ? $rh->{envir}->{setNumber}  : '');
-
+	
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
 	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
 	$problemSeed = $rh->{problemSeed} || $problemSeed;

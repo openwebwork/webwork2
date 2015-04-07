@@ -221,6 +221,7 @@ function render(id) {
     ro.problemPath = source_file;
 
     ro.set = ro.problemPath;
+    ro.probNum = id;
     ro.showHints = 1;
     ro.showSolutions = 1;
     ro.noprepostambles = 1;
