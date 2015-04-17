@@ -894,6 +894,7 @@ span.gray_button{
 #editor .pg_editor_input_div{
 	margin-top: 20px;
 	margin-left: 50px;
+        display: inline-block;
 }
 
 #editor #submit_input_div{
