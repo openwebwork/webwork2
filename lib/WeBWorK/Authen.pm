@@ -240,8 +240,7 @@ sub verify {
 			}
 
 		}
-        warn "LOGIN FAILED: log_error: $log_error; user error: $error";
-		$self->maybe_kill_cookie;
+    	$self->maybe_kill_cookie;
 		if (defined($error) and $error=~/\S/ and $r->can('notes') ) { # if error message has a least one non-space character. 
 			MP2? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
 		      # FIXME this is a hack to accomodate the webworkservice remixes
