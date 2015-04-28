@@ -1047,9 +1047,9 @@ sub path {
 	my $urlpath = $r->urlpath;
 	do {
 	    my $name = $urlpath->name;
-	    # If its a problemid fo ra jitar set (something which requires
+	    # If its a problemid for a jitar set (something which requires
 	    # a fair bit of checking, we need to print out the pretty id
-	    if ($urlpath->module eq 'WeBWorK::ContentGenerator::Problem') {
+	    if (defined($urlpath->module) && $urlpath->module eq 'WeBWorK::ContentGenerator::Problem') {
  		if ($urlpath->parent->name) {
  		    my $set = $r->db->getGlobalSet($urlpath->parent->name);
  		    if ($set && $set->assignment_type eq 'jitar') {
@@ -1728,16 +1728,14 @@ sub hidden_fields {
 	
 	my $html = "";
 	foreach my $param (@fields) {
-# 		my @values = $r->param($param);
-# 		$html .= CGI::hidden($param, @values);  #MEG
-# 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
-
-	    my $value  = $r->param($param);
-
+	    my @values = $r->param($param);
+	    foreach my $value (@values) {
+		next unless $value;
 #		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
-
+	    }
 	}
+
 	return $html;
 }
 
