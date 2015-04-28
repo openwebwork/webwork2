@@ -224,6 +224,7 @@ function render(id) {
     ro.probNum = id;
     ro.showHints = 1;
     ro.showSolutions = 1;
+    ro.permissionLevel = 'professor';
     ro.noprepostambles = 1;
     ro.processAnswers = 0;
     var displayMode = $('#problem_displaymode').val();

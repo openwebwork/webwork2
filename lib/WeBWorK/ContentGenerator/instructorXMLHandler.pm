@@ -278,6 +278,9 @@ sub pre_header_initialize {
 	$input = {%$std_input, %$input};
 	# Fix the environment display mode and set id
 	$input->{envir}->{displayMode} = $input->{displayMode} if($input->{displayMode});
+        # Set the permission level
+        $input->{envir}->{permissionLevel} = $r->{ce}->{userRoles}->{$r->param('permissionLevel')} // 0,	
+
 	# Set environment variables for hints/solutions
 	$input->{envir}->{showHints} = $r->param('showHints') if($r->param('showHints'));
 	$input->{envir}->{showSolutions} = $r->param('showSolutions') if($r->param('showSolutions'));

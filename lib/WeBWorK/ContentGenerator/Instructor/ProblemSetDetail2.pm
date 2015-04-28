@@ -2562,6 +2562,8 @@ sub output_JS {
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
   print "\n";
+	# The Base64.js file, which handles base64 encoding and decoding
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 	print qq{
            <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
            <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
