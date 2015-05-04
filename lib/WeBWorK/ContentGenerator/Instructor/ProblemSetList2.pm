@@ -2208,7 +2208,7 @@ SET:	foreach my $set (keys %filenames) {
 		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
 		my $description = $setRecord->description;
 		if ($description) {
-		    $description =~ s/\n/<n>/g;
+		    $description =~ s/\r?\n/<n>/g;
 		}
 
 		my $assignmentType = $setRecord->assignment_type;
