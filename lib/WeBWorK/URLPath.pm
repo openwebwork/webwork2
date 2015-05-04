@@ -27,6 +27,8 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use WeBWorK::Localize;
+use HTML::Entities;
+
 use Scalar::Util qw(weaken);
 {
 	no warnings "redefine";
@@ -1242,7 +1244,7 @@ sub visitPathTypeNode($$$$) {
 			warn "captured $ncaptured arguments, expected $nexpected." unless $ncaptured == $nexpected;
 			for (my $i = 0; $i < $max; $i++) {
 				my $name = $capture_names[$i];
-				my $value = $capture_values[$i];
+				my $value = HTML::Entities::encode_entities($capture_values[$i]);
 				if ($i > $nexpected) {
 					warn "captured an unexpected argument: $value -- ignoring it.";
 					next;
