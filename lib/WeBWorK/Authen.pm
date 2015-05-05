@@ -627,7 +627,6 @@ sub checkPassword {
 		# check against WW password database
 		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
 		my $dbPassword = $Password->password;
-		my $dbPassword = $Password->password;   
 		# This next line explicitly insures that 
 		# blank or null passwords from the database can never 
 		# succeed in matching an entered password
