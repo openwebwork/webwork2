@@ -580,7 +580,7 @@ sub maybe_send_cookie {
 	
 	# (c) the user asked to have a cookie sent and is not a guest user.
 	my $user_requests_cookie = ($self->{login_type} ne "guest"
-		and $r->param("send_cookie"));
+		and ( $r->param("send_cookie")//0 )); # prevent warning if "send_cookie" param is not defined.
 
 	# (d) session management is done via cookies.
 	my $session_management_via_cookies = 
@@ -626,7 +626,13 @@ sub checkPassword {
 	if (defined $Password) {
 		# check against WW password database
 		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
-		if ($possibleCryptPassword eq $Password->password) {
+		my $dbPassword = $Password->password;
+		# This next line explicitly insures that 
+		# blank or null passwords from the database can never 
+		# succeed in matching an entered password
+		# Use case: Moodle wwassignment stores null passwords and forces the creation 
+		# of a key -- Moodle wwassignment does not use  passwords for authentication, only keys.
+		if (($dbPassword =~/\S/) && $possibleCryptPassword eq $Password->password) {
 			$self->write_log_entry("AUTH WWDB: password accepted");
 			return 1;
 		} else {
