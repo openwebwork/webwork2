@@ -346,7 +346,8 @@ sub get_credentials {
 
 	if (defined $cookieUser and defined $r->param("user") ) {
 		if ($cookieUser ne $r->param("user")) {
-			croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
+			#croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
+			$self->maybe_kill_cookie; # use parameter "user" rather than cookie "user";
 		}
 # I don't understand this next segment.
 # If both key and $cookieKey exist then why not just ignore the cookieKey?
@@ -579,7 +580,7 @@ sub maybe_send_cookie {
 	
 	# (c) the user asked to have a cookie sent and is not a guest user.
 	my $user_requests_cookie = ($self->{login_type} ne "guest"
-		and $r->param("send_cookie"));
+		and ( $r->param("send_cookie")//0 )); # prevent warning if "send_cookie" param is not defined.
 
 	# (d) session management is done via cookies.
 	my $session_management_via_cookies = 
@@ -625,7 +626,13 @@ sub checkPassword {
 	if (defined $Password) {
 		# check against WW password database
 		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
-		if ($possibleCryptPassword eq $Password->password) {
+		my $dbPassword = $Password->password;
+		# This next line explicitly insures that 
+		# blank or null passwords from the database can never 
+		# succeed in matching an entered password
+		# Use case: Moodle wwassignment stores null passwords and forces the creation 
+		# of a key -- Moodle wwassignment does not use  passwords for authentication, only keys.
+		if (($dbPassword =~/\S/) && $possibleCryptPassword eq $Password->password) {
 			$self->write_log_entry("AUTH WWDB: password accepted");
 			return 1;
 		} else {
@@ -747,15 +754,18 @@ sub check_session {
 	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
 	
 	my $timestampValid=0;
-	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
-		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
-	} else {
+# first part of if clause is disabled for now until we figure out long term fix for using cookies
+# safely (see pull request #576)   This means that the database key time is always being used
+# even when in "session_cookie" mode
+#	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
+#		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
+#	} else {
 		$timestampValid = (time <= $Key->timestamp()+$ce->{sessionKeyTimeout});
 		if ($keyMatches and $timestampValid and $updateTimestamp) {
 			$Key->timestamp(time);
 			$db->putKey($Key);
 		}
-	}
+#	}
 	return (1, $keyMatches, $timestampValid);
 }
 
