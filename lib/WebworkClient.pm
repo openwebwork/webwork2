@@ -101,9 +101,11 @@ sub new {
     my $class = ref $invocant || $invocant;
 	my $self = {
 		output   		=> '',
+		error_string    => '',
 		encodedSource 	=> '',
 		url             => '',
 		password        => '',
+		site_password   => '',
 		course          => '',
 		displayMode     => '',
 		inputs_ref      => {		 AnSwEr0001 => '',
@@ -170,18 +172,21 @@ sub xmlrpcCall {
 	  	}
 		#print  pretty_print($result->result()),"\n";  #$result->result()
 		$self->{output}= $result->result();
-		return $result->result();
+		return $result->result();  # would it be better to return the entire $result?
 	  } else {
-		print STDERR 'Error message for ', 
-		  join( ', ',
+		my $err_string = 'Error message for '.
+		  join( ' ',
 			  "command:",
 			  $command,
-			  "\nfaultcode:",
+			  "\n<br/>faultcode:",
 			  $result->faultcode, 
-			  "\nfaultstring:",
-			  $result->faultstring, "\nEnd error message\n"
+			  "\n<br/>faultstring:",
+			  $result->faultstring, "\n<br/>End error message<br/>\n"
 		  );
-		  return undef;
+		  print STDERR $err_string;
+		  $self->{output}= $result->result();
+		  $self->{error_string}= $err_string;
+		  return $result;
 	  }
 }
 
@@ -289,7 +294,7 @@ sub setInputTable_for_listLib {
 sub setInputTable {
 	my $self = shift;
 	my $out = {
-		pw          =>   $self->{password},
+		pw          =>   $self->{site_password},
 		library_name =>  'Library',
 		command      =>  'renderProblem',
 		answer_form_submitted   => 1,
@@ -462,10 +467,13 @@ sub formatRenderedProblem {
 	if (ref($rh_result) and $rh_result->{text} ) {
 		$problemText       =  $rh_result->{text};
 	} else {
-		$problemText       = "Unable to decode problem text",format_hash_ref($rh_result);
+		$problemText       = "Unable to decode problem text\n".
+		$self->{error_string}."\n".
+		format_hash_ref($rh_result);
 	}
 	my $rh_answers        = $rh_result->{answers};
-	my $encodedSource     = $self->{encodedSource}||'encodedSourceIsMissing';
+	my $encodedSource     = $self->{encodedSource}//'';
+	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
 	#################################################
 	# regular Perl warning messages generated with warn
@@ -501,43 +509,62 @@ sub formatRenderedProblem {
     my $internal_debug_messages = $rh_result->{internal_debug_messages} || [];
     $internal_debug_messages = join("<br/>\n", @{ $internal_debug_messages  } );
     
-    my $fileName = $self->{input}->{envir}->{fileName} || "Can't find file name";
+    my $fileName = $self->{input}->{envir}->{fileName} || "";
 	# collect answers
+	#####################################################
+	# determine whether any answers were submitted
+	# and create answer template if they have been
+	my $answerssubmitted =""; 
 	my $answerTemplate    = q{<hr>ANSWERS <table border="3" align="center">};
 	my $problemNumber     = 1;
     foreach my $key (sort  keys %{$rh_answers}) {
+        $answerssubmitted .= $rh_answers->{$key}->{original_student_ans};
     	$answerTemplate  .= $self->formatAnswerRow($rh_answers->{$key}, $problemNumber++);
     }
 	$answerTemplate      .= q{</table> <hr>};
+    $answerTemplate = "" unless $answerssubmitted;
+    #################################################
 
-	my $test = pretty_print($rh_result);
-	my $XML_URL      = $self->url;
+
+	$self->{outputformats}={};
+	my $XML_URL      	 = $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
-	my $session_key      =  $rh_result->{session_key};
-	my $problemTemplate = <<ENDPROBLEMTEMPLATE;
+	my $password         =  $self->{password};
+	my $session_key      =  $rh_result->{session_key}//'';
+	
+	
+	
+	###########################
+	# Define problem templates
+	###########################
+	#FIXME -- this can be improved to use substitution trick 
+	# that way only the chosen problemTemplate will be interpolated
+$self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 
 
 <html>
 <head>
 <base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host $XML_URL</title>
+<title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
 </head>
 <body>
 
-<h2> WeBWorK Editor using host $XML_URL</h2>
+<h2> WeBWorK Editor using host: $XML_URL,  format: standard</h2>
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
 			$problemText
 	       <input type="hidden" name="answersSubmitted" value="1"> 
-	       <input type="hidden" name="problemAddress" value="probSource"> 
+		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
 	       <input type="hidden" name="problemSeed" value="1234"> 
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">
+	       <input type="hidden" name="password" value="$password">
+	       <input type="hidden" name="passwd" value="$password">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <p><input type="submit" name="submit" value="submit answers"></p>
 	     </form>
@@ -556,10 +583,66 @@ $internal_debug_messages
 
 ENDPROBLEMTEMPLATE
 
+$self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 
 
-	$problemTemplate;
+<html>
+<head>
+<base href="$XML_URL">
+<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple</title>
+</head>
+<body>
+			
+<h2> WeBWorK Editor using host: $XML_URL,  format: simple</h2>
+		    $answerTemplate
+		    <form action="$FORM_ACTION_URL" method="post">
+			$problemText
+	       <input type="hidden" name="answersSubmitted" value="1"> 
+	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
+	       <input type="hidden" name="problemSource" value="$encodedSource"> 
+	       <input type="hidden" name="problemSeed" value="1234"> 
+	       <input type="hidden" name="pathToProblemFile" value="$fileName">
+	       <input type="hidden" name=courseName value="$courseID">
+	       <input type="hidden" name=courseID value="$courseID">
+	       <input type="hidden" name="userID" value="$userID">
+	       <input type="hidden" name="password" value="$password">
+	       <input type="hidden" name="passwd" value="$password">
+	       <input type="hidden" name="session_key" value="$session_key">
+	       <input type="hidden" name="outputformat" value="simple">
+	       <p><input type="submit" name="submit" value="submit answers"></p>
+	     </form>
+</body>
+</html>
+
+ENDPROBLEMTEMPLATE
+
+$self->{outputformats}->{debug}= 
+qq{
+
+	<html>
+	<head>
+	<base href="$XML_URL">
+	<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: debug</title>
+	</head>
+	<body>
+			
+	<h2> WeBWorK Editor using host: $XML_URL,  format: debug</h2>
+}.  pretty_print($self) . 
+qq{		   
+</body>
+</html>
+};
+
+
+#  choose problem template
+	$self->{outputformat}= $self->{inputs_ref}->{outputformat}//'standard';
+    if (defined($self->{outputformats}->{$self->{outputformat}}) ) {
+    	return $self->{outputformats}->{$self->{outputformat}};
+    } else {
+    	return $self->{outputformats}->{standard};
+    }
 }
+
 
 
 1;
