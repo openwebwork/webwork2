@@ -72,7 +72,7 @@ my $use_site;
 
 # credentials file location -- search for one of these files 
 my $credential_path;
-my @path_list = ('.ww_credentials', "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials");
+my @path_list = ( "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials',);
 # Place a credential file containing the following information at one of the locations above.
 # 	%credentials = (
 # 			userID          => "my login name for the webwork course",
