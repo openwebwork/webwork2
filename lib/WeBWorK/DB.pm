@@ -2305,27 +2305,36 @@ sub checkKeyfields($;$) {
 			unless defined $value;
 		croak "empty '$keyfield' field"
 			unless $value ne "";
+
+		validateKeyfieldValue($keyfield,$value,$versioned);
 		
-		if ($keyfield eq "problem_id") {
-			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [0-9])"
-				unless $value =~ m/^[0-9]*$/;
-		} elsif ($versioned and $keyfield eq "set_id") {
-			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
-				unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
-		# } elsif ($versioned and $keyfield eq "user_id") { 
-		} elsif ($keyfield eq "user_id") { 
-			check_user_id($value); #  (valid characters are [-a-zA-Z0-9_.,]) see above.
-		} elsif ($keyfield eq "ip_mask") {
-			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-fA-F0-9_.:/])"
-				unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
-			    
-		} else {
-			croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.])"
-				unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
-		}
 	}
 }
 
+
+sub validateKeyfieldValue {
+
+    my ($keyfield,$value,$versioned) = @_;
+
+    if ($keyfield eq "problem_id" || $keyfield eq 'problemID') {
+	croak "invalid characters in '$keyfield' field: '$value' (valid characters are [0-9])"
+	    unless $value =~ m/^[0-9]*$/;
+    } elsif ($versioned and $keyfield eq "set_id" || $keyfield eq 'setID') {
+	croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.,])"
+	    unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
+	# } elsif ($versioned and $keyfield eq "user_id") { 
+    } elsif ($keyfield eq "user_id" || $keyfield eq 'userID') { 
+	check_user_id($value); #  (valid characters are [-a-zA-Z0-9_.,]) see above.
+    } elsif ($keyfield eq "ip_mask") {
+	croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-fA-F0-9_.:/])"
+	    unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
+	
+    } else {
+	croak "invalid characters in '$keyfield' field: '$value' (valid characters are [-a-zA-Z0-9_.])"
+	    unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
+    }
+    
+}
 
 # checkArgs spec syntax:
 # 
