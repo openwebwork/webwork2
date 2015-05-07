@@ -240,7 +240,7 @@ sub verify {
 			}
 
 		}
-        warn "LOGIN FAILED: log_error: $log_error; user error: $error";
+        #warn "LOGIN FAILED: log_error: $log_error; user error: $error";
 		$self->maybe_kill_cookie;
 		if (defined($error) and $error=~/\S/ and $r->can('notes') ) { # if error message has a least one non-space character. 
 			MP2? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
