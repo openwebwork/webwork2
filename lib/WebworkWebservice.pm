@@ -43,7 +43,7 @@ BEGIN {
 ###############################################################################
 
 	$WebworkWebservice::SITE_PASSWORD      = 'xmluser';     # default password
-	$WebworkWebservice::COURSENAME    = 'the-course-should-be-determined-at-run-time';       # default course
+	$WebworkWebservice::COURSENAME         = 'the-course-should-be-determined-at-run-time';       # default course
 	
 	
 
@@ -227,7 +227,7 @@ if ($UNIT_TESTS_ON) {
 				->faultcode('404')
 				->faultstring('Course not found.')
 		}
-		die "Unknown exception when trying to verify authentication.";
+		die "Unknown exception when trying to verify authentication. $@";
 	};
 	
 	$self->{authenOK}  = $authenOK;

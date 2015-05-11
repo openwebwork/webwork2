@@ -350,15 +350,15 @@ $problemDefaults{showMeAnother} = -1;
 # Session Management
 ################################################################################
 
-## For session management using session_cookies, uncomment the following line,
-## which will override the setting  $session_management_via = "key"
-## in defaults.config.
-## 
 ## For a discussion of session_management_via session_cookies or the
 ## Key database, see the   Session Managment section
 ## of defaults.config.dist
 
-#$session_management_via = "session_cookie";
+## For session management using the key databasse table, uncomment the following line,
+## which will override the setting  $session_management_via = "session_cookie"
+## set in defaults.config.
+
+#  $session_management_via = "key";
 
 ################################################################################
 # Achievement Facebook Integration
