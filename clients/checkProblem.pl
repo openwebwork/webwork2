@@ -267,10 +267,11 @@ if (@ARGV) {
 	}
     $xmlrpc_client->encodeSource($source);
     
-    
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
 	        $output = $xmlrpc_client->{output};
-		if (defined($output->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
+	    if (not defined $output) {  #FIXME make sure this is the right error message if site is unavailable
+	    	$return_string = "Could not connect to rendering site";
+	    } elsif (defined($output->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
 			$return_string = "0\t $filePath has errors\n";
 		} elsif (defined($output->{errors}) and $output->{errors} ){
 			$return_string = "0\t $filePath has syntax errors\n";
@@ -281,9 +282,9 @@ if (@ARGV) {
 				$return_string .= (pop @debug_messages ) ||'' ; #avoid error if array was empty
 				if (@debug_messages) {
 					$return_string .= join(" ", @debug_messages);
-		} else {
-					$return_string = "";
-		}
+				} else {
+							$return_string = "";
+				}
 			}
 			if (defined($output->{flags}->{WARNING_messages}) ) {
 				my @warning_messages = @{$output->{flags}->{WARNING_messages}};
@@ -291,10 +292,10 @@ if (@ARGV) {
 					$@=undef;
 				if (@warning_messages) {
 					$return_string .= join(" ", @warning_messages);
-	} else {
+				} else {
 					$return_string = "";
 				}
-	}
+			}
 			$return_string = "0\t ".$return_string."\n" if $return_string;   # add a 0 if there was an warning or debug message.
 		}
 		unless ($return_string) {
