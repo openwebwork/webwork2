@@ -1997,8 +1997,6 @@ sub output_JS{
 	if ($self->{will}->{useMathView}) {
 	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
 		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
-		
-		print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();
@@ -2032,6 +2030,11 @@ sub output_CSS {
         # Javascript and style for knowls
         print qq{
            <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+
+	#style for mathview
+	if ($self->{will}->{useMathView}) {
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	}
 	
 	return "";
 }
