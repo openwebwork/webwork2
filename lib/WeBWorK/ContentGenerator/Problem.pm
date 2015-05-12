@@ -1016,11 +1016,6 @@ sub head {
 #		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
 #		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
 #	};
-        # Javascript and style for knowls
-        print qq{
-           <script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -2281,8 +2276,6 @@ sub output_JS{
 	if ($self->{will}->{useMathView}) {
 	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
 		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
-		
-		print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();
@@ -2293,9 +2286,35 @@ sub output_JS{
 	    }
 	}
 	
+	# This is for knowls
+        # Javascript and style for knowls
+        print qq{
+           <script type="textx/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
+           <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
+
+
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
 
+	return "";
+}
+
+sub output_CSS {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+        # Javascript and style for knowls
+        print qq{
+           <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+
+	#style for mathview
+	if ($self->{will}->{useMathView}) {
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	}
+	
 	return "";
 }
 

@@ -628,7 +628,7 @@ sub getTableParams {
 	
 	my %tableParams;
 	foreach my $param ($r->param) {
-		next unless $param =~ m/^(?:set)\./;
+		next unless $param =~ m/^(?:.*set)\./;
 		$tableParams{$param} = [ $r->param($param) ];
 	}
 	return %tableParams;
@@ -1758,7 +1758,7 @@ sub readSetDef {
 
 	my $setName = '';
 
-	if ($fileName =~ m|^set([.\w-]+)\.def$|) {
+	if ($fileName =~ m|^.*set([.\w-]+)\.def$|) {
 		$setName = $1;
 	} else {
 		$self->addbadmessage( 
