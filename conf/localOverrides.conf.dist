@@ -277,7 +277,7 @@ $problemDefaults{showMeAnother} = -1;
 # 	homeworkseteditor1 => 1,
  	homeworkseteditor2 => 1,
 
-        problemsetdetail1 => 1,
+#       problemsetdetail1 => 1,
         problemsetdetail2 => 1,
 
 # 	librarybrowsernojs    => 1,
