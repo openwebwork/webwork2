@@ -126,7 +126,9 @@ var ClasslistView = MainView.extend({
     	_user.save();
     },
     changeUser: function(_user){
-    	if(_(_user.changingAttributes).has("user_added") || _.keys(_user.changed)[0]==="action"){
+       
+    	if(( _user.changingAttributes && _(_user.changingAttributes).has("user_added")) 
+                  || _.keys(_user.changed)[0]==="action"){
     		return;
     	}
     	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
@@ -290,7 +292,6 @@ var ClasslistView = MainView.extend({
 	},
 	deleteUsers: function(){
 		var userIDs = this.userTable.getVisibleSelectedRows();
-        console.log(userIDs);
 		if(userIDs.length === 0){
 			alert("You haven't selected any users to delete.");
 			return;
