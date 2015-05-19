@@ -41,12 +41,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 e.stopPropagation();
             });
 
-            // show/hide the desired date types
-            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-                this.$(".assign-reduced-scoring").removeClass("hidden");
-            } else {
-                this.$(".assign-reduced-scoring").addClass("hidden");
-            }
 
             MainView.prototype.render.apply(this);
 
@@ -141,6 +135,13 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 return;
             }
             // hide the reduced credit sets that shouldn't be visible. 
+                        // show/hide the desired date types
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                this.$(".assign-reduced-scoring").removeClass("hidden");
+            } else {
+                this.$(".assign-reduced-scoring").addClass("hidden");
+                return;
+            }
             this.problemSets.chain().each(function(_set) { 
                 config.changeClass({state: _set.get("enable_reduced_scoring"), remove_class: "hidden", 
                     els: self.$(".assign-reduced-scoring[data-setname='"+_set.get("set_id")+"']")});
