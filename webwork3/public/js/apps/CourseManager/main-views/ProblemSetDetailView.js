@@ -152,6 +152,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.tabState.on("change:show_time",function (val){
                 self.showTime(self.tabState.get("show_time"));
                 self.stickit();
+                // gets rid of the line break for showing the time in this view. 
+                $('span.time-span').children('br').attr("hidden",true)    
+                
             });
         },
         render: function(){
@@ -161,6 +164,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.showTime(this.tabState.get("show_time"));
                 this.$(".show-time-toggle").prop("checked",this.tabState.get("show_time"));
                 this.stickit();
+                // gets rid of the line break for showing the time in this view. 
+                $('span.time-span').children('br').attr("hidden",true)    
+                
             }
             return this;
         },
@@ -222,7 +228,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
                     .removeClass("edit-datetime-showtime").addClass("edit-datetime");
             }
-            
         },
         getDefaultState: function () { return {set_id: "", show_time: false};}
 
