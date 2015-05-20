@@ -44,9 +44,13 @@ use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 #use WeBWorK::Utils::RestrictedMailer;
 use WeBWorK::Utils::DelayedMailer;
 
-use mod_perl;
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+BEGIN{
+ 	unless (exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2) {
+		require "mod_perl.pm";  # used only for mod_perl1  should we continue to support this?
+	}
 
+	use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+}
 # Problem processing will time out after this number of seconds.
 use constant TIMEOUT => $WeBWorK::PG::Local::TIMEOUT || 10;
 
