@@ -371,4 +371,15 @@ $problemDefaults{showMeAnother} = -1;
 #$allowFacebooking = 1;
 #$facebookAppId = your_app_id_here;
 
+################################################################################
+# Searching for set.def files to import 
+################################################################################
+## Uncomment below so that when the homework sets editor searches for set def
+## files, it searches beyond templates; it can search deeper subfolders of 
+## templates, and optionally also descend into Library
+
+#$options{setDefSearchDepth}=4;
+#$options{useOPLdefFiles}=1;
+
+
 1; #final line of the file to reassure perl that it was read properly.
