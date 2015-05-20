@@ -27,6 +27,8 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use WeBWorK::Localize;
+use WeBWorK::DB qw(validateKeyfieldValue);
+
 use Scalar::Util qw(weaken);
 {
 	no warnings "redefine";
@@ -42,6 +44,8 @@ use Scalar::Util qw(weaken);
 =head1 VIRTUAL HEIRARCHY
 
 PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
+
+Note:  Only database keyfield values can be used as path parameters.  
 
  root                                /
  
@@ -1243,6 +1247,10 @@ sub visitPathTypeNode($$$$) {
 			for (my $i = 0; $i < $max; $i++) {
 				my $name = $capture_names[$i];
 				my $value = $capture_values[$i];
+
+				# check to see if the url path parameter is a valid keyfield for the DB.
+				WeBWorK::DB::validateKeyfieldValue($name,$value,1);
+
 				if ($i > $nexpected) {
 					warn "captured an unexpected argument: $value -- ignoring it.";
 					next;
