@@ -6,7 +6,13 @@ var LiveGraphics3D = function (container, options) {
 	.css('width',options.width+'px')
 	.css('height',options.height+'px')
 	.css('border','none')
+	.css('overflow','hidden')
 	.attr('swfpath','/webwork2_files/js/vendor/x3dom/x3dom.swf');
+
+    // disable mousewheel on container because its used for zoom
+    $(container).bind('mousewheel',function(event) {
+	event.preventDefault();
+    });
 
     var scene = $("<scene/>").appendTo(x3d);
 	
