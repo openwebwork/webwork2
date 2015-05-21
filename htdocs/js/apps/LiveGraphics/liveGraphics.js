@@ -5,7 +5,8 @@ var LiveGraphics3D = function (container, options) {
     var x3d = $("<x3d/>").appendTo(container)
 	.css('width',options.width+'px')
 	.css('height',options.height+'px')
-	.css('border','none');
+	.css('border','none')
+	.attr('swfpath','/webwork2_files/js/vendor/x3dom/x3dom.swf');
 
     var scene = $("<scene/>").appendTo(x3d);
 	
@@ -562,6 +563,10 @@ var LiveGraphics3D = function (container, options) {
     // This section of code is run whenever the object is created
     // run intialize with the mathematica string, possibly getting the string
     // form an ajax call if necessary
+
+
+    
+
     
     if (options.input) {
 	initialize(options.input);
