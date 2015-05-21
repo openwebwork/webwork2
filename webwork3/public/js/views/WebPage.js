@@ -30,13 +30,12 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     postInitialize: function () {
         var self = this;
         // load the previous state of the app or set it to the first main_view
-        this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
 
-        if(this.appState && typeof(this.appState)!=="undefined" && 
-                this.appState.states && typeof(this.appState.states)!=="undefined" && 
-                typeof(this.appState.index)!=="undefined"){
+        try {
+            this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
             this.updateViewAndSidebar({save_state: false});
-        } else {
+        } catch(err) {
+            console.log(err);
             this.appState = {index: void 0, states: []};
             this.changeView(this.mainViewList.views[0].info.id,{});
             var _sidebarID = this.mainViewList.getDefaultSidebar(this.currentView.info.id);
@@ -50,7 +49,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         var menuItemTemplate = _.template($("#main-menu-item-template").html());
         var ul = $(".manager-menu");
         _(this.mainViewList.views).each(function(_view){
-            ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id}));
+            ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id,icon: _view.info.icon}));
         });
 
         // this ensures that the rerender call on resizing the window only occurs once every 500 ms.  
@@ -85,6 +84,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         // I don't think we're using this anymore. 
         //this.$el.prepend(this.messagePane.render().el);
         this.navigationBar = new NavigationBar({el: $(".navbar-fixed-top")}).render();
+        this.loginPane.setElement($(".login-container"));
     },
     closeLogin: function () {
         this.loginPane.close();
@@ -159,6 +159,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         _(this.currentView.sidebarEvents).chain().keys().each(function(event){
             self.currentView.listenTo(self.currentSidebar,event,self.currentView.sidebarEvents[event]);
         });
+
+        this.currentSidebar.mainView = this.currentView;
+
 
 
         // set up the possible options and render the sidebar
@@ -300,21 +303,23 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
 var LoginView = ModalView.extend({
     initialize: function (options) {
         _.bindAll(this,"login");
-        var tempOptions = _.extend(options || {} , {template: $("#login-template").html(), 
-                        templateOptions: {message: options.messageTemplate({type: "relogin"})},
-                        buttons: {text: "Login", click: this.login}});
-        this.constructor.__super__.initialize.apply(this,[tempOptions]);
+
+        _(options).extend({
+            modal_header: "Login to Course",
+            modal_body: _.template($("#login-template").html(),{message: options.messageTemplate({type: "relogin"})}),
+            modal_action_button_text: "Login"
+        })
+
+        ModalView.prototype.initialize.apply(this,[options]);
     },
-    render: function () {
-        this.constructor.__super__.render.apply(this); 
-        return this;
-    },
+    events: {"click .action-button": "login"},
     login: function (options) {
         var loginData = {user: this.$(".login-name").val(), password: this.$(".login-password").val()};
         $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/login",
                 data: loginData,
                 type: "POST",
                 success: this.loginOptions.success});
+        this.close();
     }
 
 });

@@ -10,6 +10,9 @@
 <script type="text/template" id="edit-date-time-template">
 <input class='wwdate' size='12' value='<%=date%>'><span class='open-time-editor'><i class='fa fa-clock-o'></i></span>
 </script>
+<script type="text/template" id="edit-date-time2-template">
+<input class='wwdate' size='12' value='<%=date%>'><span class='time-span'><br>&nbsp;at&nbsp;</span><span style="inline-block" class="wwtime" contenteditable="true"></span>
+</script>
 
 <!-- Some general templates that are used throughout the WW3 interface -->
 
@@ -27,17 +30,27 @@
 
 
 <script type="text/template" id="modal-template">
-<div class="modal hide fade">
-<div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <%= header %>
+<div class="modal fade change-set-props-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="myModalLabel"><%=header%></h4>
+      </div>
+      <div class="modal-body">
+      <%=body%>
+      </div>
+      <div class="modal-footer">
+        <%if(buttons){
+          print(buttons)
+        } else {%>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary action-button"><%=action_button_text%></button>
+        <%}%>
+      </div>
+    </div>
   </div>
-  <div class="modal-body">
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-    <button class="btn btn-primary"><%= saveButton %></button>
-  </div>
+</div>
 </div>
 
 </script>
@@ -45,7 +58,11 @@
 <!-- template for building the main menu and option pane menu -->
 
 <script type="text/template" id="main-menu-item-template">
-<li><a href="#" onclick="return false;" class="link" data-id="<%=id%>"><%=name%></a></li>
+<li><a href="#" onclick="return false;" class="link" data-id="<%=id%>">
+<%if(typeof(icon)!=="undefined"){%>
+<i class="<%=icon%>"></i>
+<%}%>
+<%=name%></a></li>
 </script>
 
 
@@ -56,7 +73,7 @@
   <div class="problem-paginator col-md-8"></div>
   <div class="col-md-3 num-problems"></div>
   <%if(show_undo||false) {%>
-  <div class="pull-right col-md-1">
+  <div class="pull-right">
     <button class="btn btn-default undo-delete-button btn-sm" disabled="disabled"><i class="fa fa-undo"></i></button></div>
   <%}%>
 </div>
@@ -72,7 +89,7 @@
 <script type="text/template" id="problem-template">
 <div class="loading btn-sm">Problem Loading...<i class="fa fa-spinner fa-spin"></i></div>
 <div class="handle row">
-  <%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-arrows-v"></i></a></div><%}%>
+  <%if(reorderable){%><div class="col-md-1 pull-right"><a class="reorder-handle btn btn-sm btn-default" href="#"><i class="fa fa-arrows-v"></i></a></div><%}%>
   <%if(draggable){%>
     <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
   <%}%>
@@ -113,8 +130,9 @@
   </div>
   <div class="problem-tags">
   <table class="table table-condensed table-bordered"><tbody>
-<tr class="hidden path-row"><td>Problem Path:</td><td colspan="3"><%if(source_file){ print(source_file);} %></td>
-<td>Seed:</td><td><%if(problem_seed){ print(problem_seed);} %></td></tr>
+<tr class="hidden path-row"><td>Problem Path:</td><td colspan="3" class="problem-path">
+<%if(source_file){ print(source_file);} %></td>
+<td>Seed:</td><td class="seed"><%if(problem_seed){ print(problem_seed);} %></td></tr>
 <tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
 <tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
 <td>Level:</td><td class="level-tag"></td></tr>
@@ -156,7 +174,9 @@
     loading_data: function(){ return "The page is now loading...";},
     openDate_after_dueDate: function(){return "The open date must come before the due date";},
     dueDate_after_answerDate: function(){return "The due date must come before the answer date.";},
-
+    set_name_error: function(){ return "A name must only contain letters, numbers, _ and .";},
+    set_name_already_exists: function(opts) {return "The set with name " + opts.set_id + " has already been used in this course.";},
+    time_error: function () { return "The time must be in 12-hour format, like 12:34pm"}
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
   

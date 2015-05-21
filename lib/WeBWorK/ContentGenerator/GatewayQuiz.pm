@@ -237,6 +237,14 @@ sub can_checkAnswers {
 	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
+	# if we can record answers then we dont need to be able to check them
+	# unless we have that specific permission. 
+	if ($self->can_recordAnswers($User,$PermissionLevel,$EffectiveUser,
+				     $Set,$Problem,$tmplSet,$submitAnswers) 
+	    && !$authz->hasPermissions($User->user_id, "can_check_and_submit_answers")) {
+	    return 0;
+	}
+
 	my $timeNow = ( defined($self->{timeNow}) ) ? $self->{timeNow} : time();
    # get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
@@ -466,7 +474,7 @@ sub handle_input_colors {
 	return if $self->{previewAnswers};  # don't color previewed answers
 
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript"}),
 	        "color_inputs([\n  ",
 		  join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
@@ -1757,7 +1765,7 @@ sub body {
 	#    problems when checking answers
 	my $attemptScore = 0;
 
-	if ( $submitAnswers || $checkAnswers ) {
+	if ( $will{submitAnswers} || $will{checkAnswers} ) {
 		my $i=0;
 		foreach my $pg ( @pg_results ) {
 			my $pValue = $problems[$i]->value() ? $problems[$i]->value() : 1;
@@ -1816,7 +1824,7 @@ sub body {
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
 	$attemptScore = wwRound(2,$attemptScore);
-	if ( $submitAnswers ) {
+	if ( $will{submitAnswers} ) {
 		# the distinction between $can{recordAnswers} and ! $can{} has 
 		#    been dealt with above and recorded in @scoreRecordedMessage
 		my $divClass = 'ResultsWithoutError';
@@ -1869,7 +1877,7 @@ sub body {
 			print CGI::end_div();
 		}
 
-	} elsif ( $checkAnswers ) {
+	} elsif ( $will{checkAnswers} ) {
 		if ( $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
 			print CGI::strong("Your score on this (checked, not ",
@@ -2117,7 +2125,7 @@ sub body {
 								  $pg->{flags}->{showPartialCorrectAnswers} && $canShowProblemScores,
 								  $canShowProblemScores, 1);
 					
-				} elsif ( $checkAnswers ) {
+				} elsif ( $will{checkAnswers} ) {
 					$recordMessage = CGI::span({class=>"resultsWithError"},
 								   "ANSWERS ONLY CHECKED -- ", 
 								   "ANSWERS NOT RECORDED");
@@ -2425,7 +2433,7 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 
 		# This is for MathView.  
 	if ($self->{will}->{useMathView}) {

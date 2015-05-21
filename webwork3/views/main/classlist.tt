@@ -15,38 +15,38 @@
     
     <div class="col-md-5 btn-group btn-sm">
     <div class="btn-group">
-      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
         Action on Selected
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu">
-        <li><a href="#" class="email-selected">Email Selected Students</a></li>
-        <li><a href="#" class="password-selected">Change the Password of Selected Student</a></li>
-        <li><a href="#" class="delete-selected">Delete Selected Students</a></li>
+        <li><a href="#" onclick="return false" class="email-selected">Email Selected Students</a></li>
+        <li><a href="#" onclick="return false" class="password-selected">Change the Password of Selected Student</a></li>
+        <li><a href="#" onclick="return false" class="delete-selected">Delete Selected Students</a></li>
       </ul>
     </div>
       <div class="btn-group">
-        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
           Import/Export Users
           <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
-          <li><a href="#" class="add-students-file-option">Add Students from a File</a></li>
-          <li><a href="#" class="add-students-man-option">Add Students Manually</a></li>
-          <li><a href="#" class="export-students-option">Export Students to a File</a></li>
+          <li><a href="#" onclick="return false" class="add-students-file-option">Add Students from a File</a></li>
+          <li><a href="#" onclick="return false" class="add-students-man-option">Add Students Manually</a></li>
+          <li><a href="#" onclick="return false" class="export-students-option">Export Students to a File</a></li>
 
         </ul>
         </div>
         <div class="btn-group">
-      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
         Show Rows
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu">
-        <li><a href="#" class="show-rows" data-num="10"><i class="fa fa-check"></i>Show 10 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="25"><i class="fa fa-check not-visible"></i>Show 25 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="50"><i class="fa fa-check not-visible"></i>Show 50 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="-1"><i class="fa fa-check not-visible"></i>Show All rows</a></li>
+        <li><a href="#" onclick="return false" class="show-rows" data-num="10"><i class="fa fa-check"></i>Show 10 rows</a></li>
+        <li><a href="#" onclick="return false" class="show-rows" data-num="25"><i class="fa fa-check not-visible"></i>Show 25 rows</a></li>
+        <li><a href="#" onclick="return false" class="show-rows" data-num="50"><i class="fa fa-check not-visible"></i>Show 50 rows</a></li>
+        <li><a href="#" onclick="return false" class="show-rows" data-num="-1"><i class="fa fa-check not-visible"></i>Show All rows</a></li>
 
       </ul>
     </div>
@@ -54,7 +54,7 @@
         
 </div>
 <div class="users-table-container table-responsive"></div>
-
+<div class="modal-container"></div>
 </script>
 
 <script type="text/template" id="classlist-table-template">
@@ -64,13 +64,13 @@
 
 <script type="text/template" id="add_student_file_dialog_content">
 
-<div id="impFromFileInstructions" class="container">
-  <div class="error-pane alert alert-danger">
+<div>
+  <div class="error-pane alert alert-danger hidden">
     <button class="btn btn-danger btn-xs close-button"><i class="fa fa-times"></i></button>
     <div class="error-pane-text"></div>
   </div>
-  <div class="help-pane alert alert-info">
-    <button class="btn btn-info btn-xs close-button"><i class="fa fa-times"></i>
+  <div class="help-pane alert alert-info hidden">
+    <button class="btn btn-info btn-xs close-button" style="float: right"><i class="fa fa-times"></i>
     </button>
     <div class="help-pane-text">
     <p>To import students from a file, there are a few simple steps:</p>
@@ -95,12 +95,6 @@
     <div class="col-md-4">
       <label for="files">Select file:</label><input class="btn" type="file" id="files" name="files" />
     </div>
-    <div class="col-md-4 btn-group btn-sm">
-      <button class="reload-file btn btn-default disabled">Reload File</button>
-      <button class="btn btn-default disabled" id="importStudFromFileButton">Import Students</button>
-      <button class="cancel-button btn btn-default">Cancel</button>
-      <button class="import-help-button btn btn-default">Help</button>
-    </div>
     <div class="col-md-4">
         <div class="checkbox">
             <label>Use First Row for Headers<input type="checkbox" id="useFirst"></input></label>
@@ -111,30 +105,91 @@
   <div id="studentTable"></div></p>
 </script>
 
+<script type="text/template" id="imported-from-file-table">
+<table>
+  <thead><td><input  id='selectAllASW' type='checkbox'></input></td>
+    <%for (var k = 0; k < array[0].length; k++){
+      print("<td><select class='colHeader form-control input-sm' id='col" + k + "'>");
+      for (var i=0; i< headers.length; i++){
+        print("<option>" + headers[i] + "</option>")
+      }
+      print("</select></td>");
+    }%>
+  </thead>
+
+  <tbody><tr><td colspan=<%print(array[0].length+1)%> style='padding: 0px;'>
+  <div class='inner'>
+    <table id='inner-table'>
+      <tbody>
+      <% for (var i in array){
+            if(array[i].length===1){
+                break;
+            }
+            print("<tr id='row" + i + "'><td><input  id='cbrow" + i + "' type='checkbox' class='selRow'></input></td>");
+            for (var j in array[i]){
+                print("<td class='column" + j + "'>" + array[i][j] + "</td>");
+            }
+            print("</tr>");
+        } %>
+      </tbody>
+    </table>
+  </div>
+</table>
+</script>
+
+<script type="text/template" id="import-file-buttons">
+  <button class="import-help-button btn btn-default">Help</button>
+  <button class="reload-file btn btn-default disabled">Reload File</button>
+  <button class="cancel-button btn btn-default">Cancel</button>
+  <button class="btn btn-default disabled import-students-button">Import Students</button>
+</script>
+
 <script type="text/template" id="export-to-file-template">
 <p>Click on the classlist link below will save the classlist file to your computer. </p>
 <p>
 <a href="<%=url%>" download="<%=filename%>">Save the classlist file</a>
 </script>
-<script type="text/template" id="add_student_man_dialog_content">
-    <div id='error-pane-add-man'></div>
-        <p>Add students below in the designated boxes.  If you leave the password field blank then the student will be given their <em>student id</em>
-            as the initial password. </p>
-            <div id='man_student_list'><%= content %></div>
-            <div id="manDialogTableFooter">
-            <button id="import_stud_button">Import Students</button>
-            <button id="add_more_button">Add Another Blank Line</button>
-            </div>
-</script>
+
 <script type="text/template" id="manual-import-template">
-    <table id='man_student_table' class="table table-bordered"><thead><tr><td>Delete</td>
-    <td>Login Name</td><td>First Name</td><td>Last Name</td><td>Email</td><td>Student Id</td><td>Status</td>
-    <td>Section</td><td>Recitation</td>
-    <td>Comment</td><td>Permission Level</td><td>Password</td></tr></thead><tbody></tbody></table>
-    <button class="btn btn-default" id="import-stud-button">Import Students</button>
-    <button class="btn btn-default" id="add-more-button">Add Another Row</button>
-    <button class="btn btn-default" id="cancel-import">Cancel Import</button>
+    <table class="table table-bordered user-table">
+    <thead>
+    <th>Login Name</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Student Id</th></tr>
+    </thead><tbody>
+    <tr>
+      <td><input class="form-control user-id"></td>
+      <td><input class="form-control first-name"></td>
+      <td><input class="form-control last-name"></td>
+      <td><input class="form-control email"></td>
+      <td><input class="form-control student-id"></td>
+    </tr>
+    <tr>
+      <td class='header'>Status</td class='header'>
+      <td class='header'>Section</td class='header'>
+      <td class='header'>Recitation</td class='header'>
+      <td class='header'>Comment</td class='header'>
+      <td class='header'>Permission Level</td class='header'><td class='header'>Password</td class='header'>
+    </tr>
+    <tr>
+      <td><input class="form-control status"></td>
+      <td><input class="form-control section"></td>
+      <td><input class="form-control recitation"></td>
+      <td><input class="form-control comment"></td>
+      <td><select class="form-control permission"></select></td>
+      <td><input class="form-control password"></td>
+  </tr>
+
+    </tbody></table>
+    <div class="message-pane alert"></div>
 </script>
+<script type="text/template" id="manual-import-buttons">
+    <button class="btn btn-default add-more-button">Save Student and Add Another</button>
+    <button class="btn btn-default cancel-import-button" data-dismiss="modal">Cancel Import</button>
+    <button class="btn btn-primary action-button">Save Student and Close</button>
+</script>
+<script type="text/template" id="close-button-template">
+<button class="btn btn-primary cancel-import-button" data-dismiss="modal">Close</button>
+</script>
+
 <script type="text/template" id="passwordDialogText">
     Change the password of the users below:
     <table id="userPassTable">
@@ -143,7 +198,6 @@
     <tbody> 
 </tbody>
 </table>
-    
 </script>
 
 <script type="text/template" id="emailStudentTemplate">
@@ -151,22 +205,6 @@
     <span id="emailStudentList"></span><br/>
     <textarea id="emailText" cols="40" rows="10"></textarea>
     
-</script>
-
-
-<script type="text/template" id="user-row-template">
-    <td><button class="btn btn-default btn-sm delete-button"><i class="fa fa-trash-o"></i></button</td>
-    <td><input class="user-id"></td>
-    <td><input class="first-name"></td>
-    <td><input class="last-name"></td>
-    <td><input class="email"></td>
-    <td><input class="student-id"></td>
-    <td><input class="status"></td>
-    <td><input class="section"></td>
-    <td><input class="recitation"></td>
-    <td><input class="comment"></td>
-    <td><select class="permission span2"></select></td>
-    <td><input class="password"></td>
 </script>
 
 <script type="text/template" id="change-password-row-template">
@@ -184,7 +222,10 @@ var messages = {
     user_added_details: function(opt){ return "A user with login name " + opt.username + " was added to the course.";},
     user_removed: function(opt){ return "User " + opt.username + " was removed.";},
     user_removed_details: function(opt){ return "The user with login name " + opt.username + " was removed from the course.";},
-    csv_file_needed: function() { return "You must upload a csv or lst (classlist) file."}
+    csv_file_needed: function() { return "You must upload a csv or lst (classlist) file."},
+    man_user_added: function(opt){ return "The users with login names " + opt.users.join(", ") + " will be added "
+    "to the course when you close this dialog."},
+    user_already_exists: function (opt) { return "The user with login name " + opt.user_id + " is already enrolled in the course."}
 };
 print(messages[type](typeof(opts)=="undefined"?{}:opts));
 %>

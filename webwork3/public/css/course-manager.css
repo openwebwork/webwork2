@@ -30,7 +30,7 @@ th.logged-in-status {width: 40px;}
 
 /* the num-users in the left-column */
 
-.num-users { margin-left: 2ex;}
+.num-users { margin-left: 2ex; padding: 7px;}
 
 .set-not-visible {font-style: italic;}
 .set-visible {font-weight: bold;}
@@ -93,7 +93,7 @@ border-radius: 5px;}
 .filename {font-style: italic; font-weight:  bold;}
 .problem-seed {margin-right: 2ex;}
 
-.num-problems {padding: 15px;}
+.num-problems {padding: 8px;}
 
 /* class for reordering problem sets */
 
@@ -125,7 +125,7 @@ textarea#emailText {width: 95%;}
 
 table#sTable {border: 1px solid black; border-collapse: collapse; margin:0 auto;}
 table#sTable thead td:nth-child(1) {border: 1px solid black; width:17px;}
-table#sTable thead td {border: 1px solid black; 175px;}
+table#sTable thead td {border: 1px solid black; 125px;}
 div#studentTable {width: 100%; overflow-x: auto;}
 	    
 table#inner-table {border: none; padding: 0px; margin: 0px; border-collapse: collapse;}
@@ -134,27 +134,9 @@ table#inner-table td {border: 1px solid black; word-break:break-all;}
 	   
 div.inner {overflow-y: auto;  height: 400px;}
 
-table#sTable select {width: 150px;}
+table#sTable select {width: 125px;}
 
 .error {background-color: pink;}
-
-#impFromFileInstructions {position: relative;}
-#impFromFileInstructions .error-pane{
-	display: none;
-	width: 100%;
-	padding: 10px;
-}
-
-#impFromFileInstructions .error-pane button {float: right;}
-
-#impFromFileInstructions .help-pane { 
-	display: none;
-	width: 100%;
-	padding: 10px;}
-
-#impFromFileInstructions .help-pane button {float: right;} 
-
-
 
 #users_table td, table.testgrid th { padding: 5px; border: 1px solid #E0E0E0; }
 #users_table th { background: #E5E5E5; text-align: left; font-size: 90%; padding: 5px;}

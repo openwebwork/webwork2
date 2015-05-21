@@ -479,6 +479,7 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     checkPermissions(10,session->{user});
 
+
     # check to make sure that the user is assigned to the course
     send_error("The user " . params->{user_id} . " is not enrolled in the course " . param("course_id"),404)
             unless vars->{db}->getUser(params->{user_id});
@@ -501,7 +502,9 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     }
     vars->{db}->putUserSet($userSet);
 
-    return convertObjectToHash(vars->{db}->getMergedSet(params->{user_id},params->{set_id}),\@boolean_set_props);
+    my $mergedSet = vars->{db}->getMergedSet(params->{user_id},params->{set_id});
+
+    return convertObjectToHash($mergedSet,\@boolean_set_props);
 };
 
 

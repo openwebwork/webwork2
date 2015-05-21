@@ -41,12 +41,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 e.stopPropagation();
             });
 
-            // show/hide the desired date types
-            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-                this.$(".assign-reduced-scoring").removeClass("hidden");
-            } else {
-                this.$(".assign-reduced-scoring").addClass("hidden");
-            }
 
             MainView.prototype.render.apply(this);
 
@@ -137,14 +131,21 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 config.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
             });
 
+            if(!model.get("reduced_scoring_date")){
+                return;
+            }
             // hide the reduced credit sets that shouldn't be visible. 
+                        // show/hide the desired date types
+            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
+                this.$(".assign-reduced-scoring").removeClass("hidden");
+            } else {
+                this.$(".assign-reduced-scoring").addClass("hidden");
+                return;
+            }
             this.problemSets.chain().each(function(_set) { 
-                if(!_set.get("enable_reduced_scoring")){
-                    self.$(".assign-reduced-scoring span:contains("+_set.get("set_id")+")").closest(".assign")
-                        .addClass("hidden");
-                }
+                config.changeClass({state: _set.get("enable_reduced_scoring"), remove_class: "hidden", 
+                    els: self.$(".assign-reduced-scoring[data-setname='"+_set.get("set_id")+"']")});
             });
-
         },
         setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
             var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});
@@ -170,7 +171,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         render: function(){
             this.$el.html(this.template);
             this.$el.addClass("assign-"+this.model.get("assign_type"));
-            this.$el.data("setname",this.model.get("set_id"));
+            this.$el.attr("data-setname",this.model.get("set_id"));
             this.stickit();
             return this;
         },

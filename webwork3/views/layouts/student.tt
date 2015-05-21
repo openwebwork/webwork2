@@ -17,16 +17,16 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#">[% pagename %]</a>
+      <a class="navbar-brand" href="#" onclick="return false">[% pagename %]</a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="#" data-link="progress">Progress</a></li>
-        <li><a href="#" data-link="calendar">Calendar</a></li>
+        <li class="active"><a href="#" onclick="return false" data-link="progress">Progress</a></li>
+        <li><a href="#" onclick="return false" data-link="calendar">Calendar</a></li>
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Problem Sets <b class="caret"></b></a>
+          <a href="#" onclick="return false" class="dropdown-toggle" data-toggle="dropdown">Problem Sets <b class="caret"></b></a>
           <ul class="dropdown-menu problem-set-dropdown">
           </ul>
         </li>

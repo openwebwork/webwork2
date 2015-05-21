@@ -47,9 +47,19 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
             if(typeof(this.libraryTree.get("tree"))==="undefined" || _(model).keys().length===0){
                 return;
             }
+
+            // When the library subject/chapter/section is changed, reset all lower ones
+            var i, level;
+            if(model.changed && _(model.changed).keys() && typeof(_(model.changed).keys()[0]) !== "undefined")
+                level = parseInt(_(model.changed).keys()[0].split("level")[1])
+            else
+                level = _(model.attributes).chain().values().compact().value().length;
+            for(i=level+1;i<4;i++){
+                model.set("level"+i,"",{silent: true});
+            }
+
             var keys = _(model.attributes).chain().values().compact().value();
-            var last = keys[keys.length-1];
-            var level = keys.length;
+            level = keys.length;
             var i;
 
 
