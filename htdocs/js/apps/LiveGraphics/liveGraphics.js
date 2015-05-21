@@ -13,11 +13,13 @@ var LiveGraphics3D = function (container, options) {
     var defaults = {
 	width : 200,
 	height : 200,
-	numTicks : 10,
+	showAxes : false,
+        numTicks : 10,
 	tickSize : .1,
 	tickFontSize : .05,
-	axisKey : ['X','Y','Z']
+	axisKey : ['R','Q','P'],
     };
+
     var options = $.extend({}, defaults, options);
     
     var coordMins;
@@ -25,7 +27,10 @@ var LiveGraphics3D = function (container, options) {
     
     var surfacecoords = [];
     var surfaceindex = [];
-    
+    var lonePoints = [];
+    var loneLabels = [];
+
+
     // This is the color map for shading surfaces based on elevation
     var colormap = [
 	[0.00000,   0.00000,   0.50000],
@@ -116,55 +121,156 @@ var LiveGraphics3D = function (container, options) {
 	scene.append($('<background/>').attr('skycolor','1 1 1'));
 	
 	// draw components of scene
+	if (options.showAxes) {
+	    drawAxes();
+	}
 
-	drawAxes();
 	drawSurface();
+	
+	drawLonePoints();
+	drawLoneLabels();
+
     };
     
     var parseLive3DData = function(text) {
 	
-	// Find the polygon commands.  This defines the mesh data
-	var polystrings = text.match(/Polygon\[\s*\{([^\]]+)\}\]/g);
-	if (!polystrings) {
-	    $(container).html('Error parsing graph data');
-	    return;
+	// this parses axes commands.  
+	if (text.match(/Axes\s*->\s*True/)) {
+	    options.showAxes = true;
 	}
+
+	var labels = text.match(/AxesLabel\s*->\s*\{\s*(\w+),\s*(\w+),\s*(\w+)\s*\}/);
+
+	if (labels) {
+	    options.axisKey = [labels[1],labels[2],labels[3]];
+	}
+
 	
-	polystrings.forEach(function(polystring) {
-	    var pointstrings = polystring.match(/\{\s*-?\d*\.?\d*\s*,\s*-?\d*\.?\d*\s*,\s*-?\d*\.?\d*\s*\}/g);
-	    var poly = [];
-	    
-	    // for each polygont extract all the points
-	    pointstrings.forEach(function(pointstring) {
-		var strpoint = pointstring.match(/\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
-		var point = [parseFloat(strpoint[1]),parseFloat(strpoint[2]),parseFloat(strpoint[3])];
-		
-		// find the index of the point in surfacecoords.  If 
-		// the point is not in surfacecoords, add it
-		for (i=0; i<surfacecoords.length; i++) {
-		    if (surfacecoords[i][0] == point[0] &&
-			surfacecoords[i][1] == point[1] &&
-			surfacecoords[i][2] == point[2]) {
-			surfaceindex.push(i);
-			poly.push(i);
-			return;
-		    }
+	// the mathematica code comes in blocks encolsed by {}
+	// this code makes an array of those blocks.  The largest of them will
+	// be the polygon block which defines the surface.  
+	var bracketcount = -1;
+	var blocks = [];
+	var block = '';
+
+	for (var i=0; i < text.length; i++) {
+
+	    if (text.charAt(i) === '{') {
+		bracketcount++;
+	    }
+
+	    if (bracketcount > 0) {
+		block += text.charAt(i);
+	    }
+
+	    if (text.charAt(i) == '}') {
+		bracketcount--;
+		if (bracketcount == 0) {
+		    blocks.push(block);
+		    block = '';
+		}
+
+	    }
+	}
+
+	blocks.forEach(function(block) {
+	    if (block.match(/Polygon/)) {
+
+		// Find the polygon commands.  This defines the mesh data
+		var polystrings = block.match(/Polygon\[\s*\{([^\]]+)\}\]/g);
+		if (!polystrings) {
+		    $(container).html('Error parsing graph data');
+		    return;
+		}
+
+		polystrings.forEach(function(polystring) {
+		    var pointstrings = polystring.match(/\{\s*-?\d*\.?\d*\s*,\s*-?\d*\.?\d*\s*,\s*-?\d*\.?\d*\s*\}/g);
+		    var poly = [];
+		    
+		    // for each polygont extract all the points
+		    pointstrings.forEach(function(pointstring) {
+			var strpoint = pointstring.match(/\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
+			var point = [parseFloat(strpoint[1]),parseFloat(strpoint[2]),parseFloat(strpoint[3])];
+			
+			// find the index of the point in surfacecoords.  If 
+			// the point is not in surfacecoords, add it
+			for (var i=0; i<surfacecoords.length; i++) {
+			    if (surfacecoords[i][0] == point[0] &&
+				surfacecoords[i][1] == point[1] &&
+				surfacecoords[i][2] == point[2]) {
+				surfaceindex.push(i);
+				poly.push(i);
+				return;
+			    }
+			}
+			
+			surfaceindex.push(surfacecoords.length);
+			poly.push(surfacecoords.length);
+			surfacecoords.push(point);
+		    });
+		    
+		    surfaceindex.push(-1);
+		    
+		    // add the exact same polygon with a reversed normal.
+		    // this causes the surface to render on both sides. 
+		    surfaceindex.push(poly[0]);
+		    surfaceindex.push(poly[2]);
+		    surfaceindex.push(poly[1]);
+		    surfaceindex.push(poly[3]);
+		    surfaceindex.push(-1);
+		    
+		});
+	    } else if (block.match(/Point/)) {
+		// now find any individual points that need to be plotted
+		var str = block.match(/Point\[\s*\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
+		var point = {};
+
+		if (!str) {
+		    console.log('Coudnt parse point');
+		    return;
+		}
+		    
+		point.coords = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
+
+		str = block.match(/PointSize\[\s*(\d*\.?\d*)\s*\]/);
+
+		if (str) {
+		    point.radius = parseFloat(str[1]);
 		}
 		
-		surfaceindex.push(surfacecoords.length);
-		poly.push(surfacecoords.length);
-		surfacecoords.push(point);
-	    });
+		str = block.match(/RGBColor\[\s*(\d*\.?\d*)\s*,\s*(\d*\.?\d*)\s*,\s*(\d*\.?\d*)\s*\]/);
+		
+		if (str) {
+		    point.rgb = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
+		}
+		
+		lonePoints.push(point);
+		
+	    } else if (block.match(/Text/)) {
+		// now find any individual labels that need to be plotted
+		var str = block.match(/\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
+		var label = {};
+	
+		if (!str) {
+		    console.log('Couldnt Parse Label');
+		    return;
+		}
+		
+		label.coords = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
+		str = block.match(/StyleForm\[\s*(\w+),\s*FontSize\s*->\s*(\d+)\s*\]/);
 
-	    surfaceindex.push(-1);
+		if (!str) {
+		    console.log('Couldnt Parse Label');
+		    return;
+		}
 
-	    // add the exact same polygon with a reversed normal.
-	    // this causes the surface to render on both sides. 
-	    surfaceindex.push(poly[0]);
-	    surfaceindex.push(poly[2]);
-	    surfaceindex.push(poly[1]);
-	    surfaceindex.push(poly[3]);
-	    surfaceindex.push(-1);
+		label.text = str[1];
+		label.fontSize = str[2];
+
+		loneLabels.push(label);
+		
+	    }
+		
 	    
 	});
     };
@@ -177,7 +283,7 @@ var LiveGraphics3D = function (container, options) {
 	var max = [0,0,0];
 	
 	surfacecoords.forEach(function(point) {
-	    for (i=0; i< 3; i++) {
+	    for (var i=0; i< 3; i++) {
 		if (point[i] < min[i]) {
 		    min[i] = point[i];
 		} else if (point[i]>max[i]) {
@@ -189,7 +295,7 @@ var LiveGraphics3D = function (container, options) {
 	coordMins = min;
 	coordMaxs = max;
 	
-	for (i=0; i< 3; i++) {
+	for (var i=0; i< 3; i++) {
 	    if (Math.abs(min[i]) > scale) {
 		scale = Math.abs(min[i]);
 	    }
@@ -201,11 +307,11 @@ var LiveGraphics3D = function (container, options) {
 	windowScale = scale;
     };
     
-    function drawSurface() {
-	coordstr = '';
-	indexstr = '';
-	colorstr = '';
-	colorindstr = '';
+    var drawSurface = function() {
+	var coordstr = '';
+	var indexstr = '';
+	var colorstr = '';
+	var colorindstr = '';
 	
 	// build a string with all the surface coodinates
 	surfacecoords.forEach(function(point) {
@@ -264,7 +370,7 @@ var LiveGraphics3D = function (container, options) {
 	indexedfaceset.appendTo(shape);
     }	
 
-    function drawAxes() {
+    var drawAxes = function() {
 
 	// build x axis and add the ticks. 
 	// all of this is done in two dimensions and then rotated and shifted 
@@ -327,7 +433,7 @@ var LiveGraphics3D = function (container, options) {
     var makeAxisTicks = function (I) {
 	var shapes = [];
 
-	for(i=0; i<options.numTicks-1; i++) {
+	for(var i=0; i<options.numTicks-1; i++) {
 	    // coordinate of tick and label
 	    var coord = (coordMaxs[I]-coordMins[I])/options.numTicks*(i+1)+coordMins[I];
 
@@ -342,7 +448,7 @@ var LiveGraphics3D = function (container, options) {
 			.attr('size', options.tickSize+' '
 			      +options.tickSize+' '+
 			      options.tickSize));
-	
+
 	    shapes.push(tick.parent());
 
 	    // labels have two decimal places and always point towards view
@@ -365,6 +471,7 @@ var LiveGraphics3D = function (container, options) {
 				     .attr('justify', 'MIDDLE')));
 	    
 	    shapes.push(ticklabel.parent().parent());
+
 	}
 	
 	// axis label goes on the end of the axis. 
@@ -391,6 +498,67 @@ var LiveGraphics3D = function (container, options) {
 	return shapes;
     }
 	    
+    var drawLonePoints = function () {
+	
+	lonePoints.forEach(function (point) {
+	    
+	    var color = 'black';
+	    if (point.rgb) {
+		color=point.rgb;
+	    }
+	    
+	    // lone points are drawn as spheres so they have mass
+	    var sphere = $("<shape/>").append($($("<appearance/>")
+						.append($("<material/>")
+							.attr("diffuseColor",color))));
+	    sphere.appendTo($("<transform/>")
+			  .attr('translation',point.coords));
+
+	    sphere.append($("<sphere/>")
+			.attr('radius',point.radius));
+
+	    sphere.parent().appendTo(scene);
+	    
+	});
+	
+    }
+
+    var drawLoneLabels = function () {
+	
+	loneLabels.forEach(function (label) {
+	    
+	    // the text is a billboard that automatically faces the user
+	    var text = $("<shape/>").append($($("<appearance/>")
+					      .append($("<material/>")
+						      .attr("diffuseColor",'black'))));
+	    
+	    text.appendTo($("<billboard/>")
+			  .attr("axisOfRotation", "0 0 0")
+			  .appendTo($("<transform/>")
+				    .attr('translation',label.coords)));
+	    
+	    var size = '.5';
+	    if (label.size) {
+		//mathematica label sizes are fontsizes, where 
+		//the units for x3dom are local coord sizes
+		size = label.size/windowScale;
+	    }
+	    
+	    text.append($("<text/>")
+			.attr('string',label.text)
+			.attr('solid','true')
+			.append($("<fontstyle/>")
+				.attr('size',size)
+				.attr('family', 'sans')
+				.attr('style', 'bold')
+				.attr('justify', 'MIDDLE')));
+	    
+	    text.parent().parent().appendTo(scene);
+	    
+	});
+	
+    }
+
     // This section of code is run whenever the object is created
     // run intialize with the mathematica string, possibly getting the string
     // form an ajax call if necessary
