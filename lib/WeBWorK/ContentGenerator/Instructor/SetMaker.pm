@@ -1219,7 +1219,7 @@ sub pre_header_initialize {
 			$self->{error} = 1;
 			$self->addbadmessage('You need to select a "Target Set" before you can edit it.');
 		} else {
-			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
+			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail2',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
 			my $url = $self->systemLink($page);
 			$self->reply_with_redirect($url);
 		}
