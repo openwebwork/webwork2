@@ -134,14 +134,9 @@ var ClasslistView = MainView.extend({
     	_user.save();
     },
     changeUser: function(_user){
-<<<<<<< HEAD
+
     	if((_user.changingAttributes && _(_user.changingAttributes).has("user_added")) 
               || _.keys(_user.changed)[0]==="action"){
-=======
-       
-    	if(( _user.changingAttributes && _(_user.changingAttributes).has("user_added")) 
-                  || _.keys(_user.changed)[0]==="action"){
->>>>>>> ww3-feature/problem-sets-manager
     		return;
     	}
     	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
