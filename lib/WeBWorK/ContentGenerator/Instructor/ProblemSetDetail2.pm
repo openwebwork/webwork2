@@ -424,7 +424,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => 6,
 		override  => "any",
-                default => "always open",
+                default => "0",
 		labels    => {
 				"-1" => "max att.",
 		},
