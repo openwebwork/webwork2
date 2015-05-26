@@ -259,7 +259,7 @@ var LiveGraphics3D = function (container, options) {
 					       .attr('rotation',rotation)
 					       .appendTo(linegroup));
 	    var color = [0,0,0];
-	    var radius = .0038;
+	    var radius = .005;
 
 	    // line[2] contains the block index
 	    if (line[2] in colors) {
@@ -267,7 +267,7 @@ var LiveGraphics3D = function (container, options) {
 	    }
 	    
 	    if (line[2] in lineThickness) {
-		radius = lineThickness[line[2]];
+		radius = Math.max(lineThickness[line[2]],.005);
 	    }
 
 	    $("<appearance/>").appendTo(shape)
@@ -333,6 +333,8 @@ var LiveGraphics3D = function (container, options) {
 	if (surfaceBlockIndex in colors) {
 	    flatcolor = true;
 	    color = colors[surfaceBlockIndex];
+	    console.log(colors);
+	    console.log(surfaceBlockIndex);
 	}
 
 	// Add surface to scene as an indexedfaceset
@@ -617,9 +619,14 @@ var LiveGraphics3D = function (container, options) {
 		// Otherwise its a list of commands that we need to 
 		// process individually
 		var commands = splitMathematicaBlocks(block);
-
+		console.log(commands);
 		commands.forEach(function(command) {
-		    if (command.match(/Polygon/)) {
+		    if (command.match(/^\s*\{/)) {
+			// This is a block inside of a block.
+			// so recurse
+			var subblocks = recurseMathematicaBlocks(block);
+			parseMathematicaBlocks(subblocks);
+		    } else if (command.match(/Polygon/)) {
 			if (!surfaceBlockIndex) {
 			    surfaceBlockIndex = blockIndex;
 			}
