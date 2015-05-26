@@ -29,7 +29,7 @@ use warnings;
 #use CGI;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(sortByName ); 
-use HTML::Entities;
+use PGcore;
 
 sub initialize {
 	my $self       = shift;
@@ -298,11 +298,11 @@ sub body {
 			    if ($answer eq '') {		    
 				$answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
 			    } elsif (!$renderAnswers) {
-				$answerstring = HTML::Entities::encode_entities($answer);
+				$answerstring = PGcore::encode_pg_and_html($answer);
 			    } elsif ($answerType eq 'Value (Formula)') {
 				# We need to escape some gateway strings which 
 				# might appear here
-				$answerstring = HTML::Entities::encode_entities($answer);
+				$answerstring = PGcore::encode_pg_and_html($answer);
 				if ($answerstring =~ /\[(submit|preview|newPage)\]/) {
 				    if ($answerstring !~ /No answer entered/) {
 					$answerstring =~ s/\[(submit|preview|newPage)\](.*)/\[$1\] `$2`/; 
@@ -312,17 +312,17 @@ sub body {
 				}
 				$td->{class} = 'formula';
 			    } elsif ($answerType eq 'essay') {
-				$answerstring = HTML::Entities::encode_entities($answer);
+				$answerstring = PGcore::encode_pg_and_html($answer);
 				$td->{class} = 'essay';
 			    } else {
-				$answerstring = HTML::Entities::encode_entities($answer);
+				$answerstring = PGcore::encode_pg_and_html($answer);
 			    }
 			    
 			    push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
 			}
 			
 			if ($pastAnswer->comment_string) {
-			    push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".HTML::Entities::encode_entities($pastAnswer->comment_string)));
+			    push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".PGcore::encode_pg_and_html($pastAnswer->comment_string)));
 			}
 			
 			print CGI::Tr($rowOptions,@row);
@@ -382,8 +382,8 @@ sub output_JS {
 
     my $site_url = $ce->{webworkURLs}->{htdocs};
     
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
 
     return "";
 }

@@ -121,11 +121,12 @@ sub nav {
 sub title {
 	my ($self) = @_;
 	my $r = $self->r;
+	my $eUserID = $r->param("effectiveUser");
 	# using the url arguments won't break if the set/problem are invalid
 	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
 	
 	my $title = $setID;
-	my $set = $r->db->getGlobalSet($setID);
+	my $set = $r->db->getMergedSet($eUserID, $setID);
 	if (defined($set) && between($set->open_date, $set->due_date)) {
 	    $title .= ' - '.$r->maketext("Due [_1]", 
 	         $self->formatDateTime($set->due_date,undef,

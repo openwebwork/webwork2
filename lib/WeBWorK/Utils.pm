@@ -157,6 +157,7 @@ sub runtime_use($;@) {
 # Windows uses CRLF, Mac uses CR, UNIX uses LF. (CR is ASCII 15, LF if ASCII 12)
 sub force_eoln($) {
 	my ($string) = @_;
+	$string = $string//'';
 	$string =~ s/\015\012?/\012/g;
 	return $string;
 }
@@ -165,7 +166,7 @@ sub readFile($) {
 	my $fileName = shift;
 	local $/ = undef; # slurp the whole thing into one string
 	open my $dh, "<", $fileName
-		or die "failed to read file $fileName: $!";
+		or croak "failed to read file $fileName: $!";
 	my $result = <$dh>;
 	close $dh;
 	return force_eoln($result);
@@ -614,7 +615,7 @@ sub formatDateTime($;$;$;$) {
 	$dateTime = $dateTime ||0;  # do our best to provide default values
 	$display_tz ||= "local";    # do our best to provide default vaules
 	$display_tz = verify_timezone($display_tz);
-	
+
 	$format_string ||= DATE_FORMAT; # If a format is not provided, use the default WeBWorK date format
 	my $dt;
 	if($locale) {

@@ -1,4 +1,28 @@
 $(function(){
+
+    // Add a button to make the sidebar more dynamic for small screens
+    $('#toggle-sidebar').click(function (event) {
+	event.preventDefault();
+	var toggleIcon = $('#toggle-sidebar-icon');
+	$('#site-navigation').toggleClass('hidden');
+	toggleIcon.toggleClass('icon-chevron-left')
+	    .toggleClass('icon-chevron-right');
+	$('#site-navigation').toggleClass('span2');
+	$('#content').toggleClass('span10').toggleClass('span11');
+	if (toggleIcon.next('.sr-only-glyphicon').html() == 'close sidebar') {
+	    toggleIcon.next('.sr-only-glyphicon').html('open sidebar');
+	} else {
+	    toggleIcon.next('.sr-only-glyphicon').html('close sidebar');
+	}
+    });
+    
+    // if no fish eye then collapse site-navigation 
+    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
+	$('#site-navigation').removeClass('span2');
+	$('#content').removeClass('span10').addClass('span11');
+	$('#toggle-sidebar').addClass('hidden');
+    }
+    
     // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
@@ -28,56 +52,16 @@ $(function(){
     $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
 
     // Sets login form input to bigger size
-    $('#login_form input').addClass('input-large');
-    
-    // Changes links in masthead
-    $('#loginstatus a').addClass('btn btn-small');
-    $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>');
+    $('#login_form input').addClass('input-large');    
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
 
-    // Add a button to make the sidebar more dynamic for small screens
-    $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
-	event.preventDefault();
-	var toggleIcon = $('#toggle-sidebar-icon');
-	$('#site-navigation').toggleClass('hidden');
-	toggleIcon.toggleClass('icon-chevron-left')
-	    .toggleClass('icon-chevron-right');
-	$('#site-navigation').toggleClass('span2');
-	$('#content').toggleClass('span10').toggleClass('span11');
-	if (toggleIcon.next('.sr-only-glyphicon').html() == 'close sidebar') {
-	    toggleIcon.next('.sr-only-glyphicon').html('open sidebar');
-	} else {
-	    toggleIcon.next('.sr-only-glyphicon').html('close sidebar');
-	}
-	   
-    });
-
+    //Toggles the sidebar if the window is narrow
     if($(window).width() < 650) {
 	$('#toggle-sidebar').click();
     }
-
-    // if no fish eye then collapse site-navigation 
-    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
-	$('#site-navigation').removeClass('span2');
-	$('#content').removeClass('span10').addClass('span11');
-	$('#toggle-sidebar').addClass('hidden');
-    }
-
-    // Makes the fisheye stuff bootstrap nav
-    $('#site-navigation ul').addClass('nav nav-list');
-    $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
-    $('#site-navigation a.active').parent().addClass('active');
-    $('#site-navigation strong.active').parent().addClass('active');
-    $('#site-navigation li').find('br').remove();
-
-    // Display options formatting
-    $('.viewOptions label:has(input:radio)').addClass('radio');
-    $('label.radio').nextUntil(':not(br)').remove();
-    $('.viewOptions input:submit').addClass('btn-small');
-    $('.facebookbox input:submit').addClass('btn-small');
 
     //Reformats the problem_set_table.  
     $('#problem-sets-form').addClass('form-inline');
@@ -169,7 +153,6 @@ $(function(){
     $('#editor').addClass('form-inline span9');
     $('#editor a').addClass('btn btn-small btn-info');
     $('#editor div').each(function () { $(this).html($(this).html().replace(/\|/g,"")); });
-    $('#editor label[class="radio"]').after('<br/>');
 
     //Achievement Editor
     $('#achievement-list').addClass('form-inline user-list-form');
@@ -182,7 +165,7 @@ $(function(){
     //email page
     $('#send-mail-form').addClass('form-inline');
     $('#send-mail-form .btn').addClass('btn-small').removeClass('btn-primary');
-    $('#send-mail-form input[value="Send Email"]').addClass('btn-primary');
+    $('#send-mail-form #sendEmail_id').addClass('btn-primary');
 
     //Score sets
     $('#scoring-form').addClass('form-inline');
