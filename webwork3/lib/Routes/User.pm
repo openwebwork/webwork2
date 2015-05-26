@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Routes::Authentication qw/checkPermissions/;
 use WeBWorK::GeneralUtils qw/cryptPassword/;
 use Data::Dumper;
 
@@ -26,7 +27,7 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 get '/courses/:course/users' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
     my @allUsers = vars->{db}->getUsers(vars->{db}->listUsers);
     my %permissionsHash =  reverse %{vars->{ce}->{userRoles}};
@@ -53,7 +54,7 @@ get '/courses/:course/users' => sub {
 
 post '/courses/:course_id/users/:user_id' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
 	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
 	my $user = vars->{db}->getUser(param('user_id'));
@@ -150,7 +151,7 @@ put '/courses/:course_id/users/:user_id' => sub {
 
 del '/courses/:course_id/users/:user_id' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 	
 	# check to see if the user exists
 
@@ -178,7 +179,7 @@ del '/courses/:course_id/users/:user_id' => sub {
 ####
 
 get '/courses/:course_id/users/loginstatus' => sub {
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
 	my @users = vars->{db}->listUsers();
 	my @status = map {
@@ -201,7 +202,7 @@ get '/courses/:course_id/users/loginstatus' => sub {
 
 get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
 	debug 'in /courses/sets/users/problems';
 
@@ -237,7 +238,7 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
 
 get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
   	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 
@@ -246,7 +247,8 @@ get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => su
 
 put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
+    
 
 	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 

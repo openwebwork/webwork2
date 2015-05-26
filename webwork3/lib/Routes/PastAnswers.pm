@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Routes::Authentication qw/checkPermissions/;
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
@@ -20,7 +21,7 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 get '/courses/:course_id/pastanswers/database' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
 	my $answerLog = vars->{ce}->{webworkDirs}{courses} ."/" . params->{course_id} . "/logs/answer_log";
 
@@ -64,7 +65,7 @@ get '/courses/:course_id/pastanswers/database' => sub {
 
 get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
 	my @answerIDs = vars->{db}->listProblemPastAnswers(params->{course_id},params->{user_id},
 									params->{set_id},params->{problem_id});

@@ -166,11 +166,11 @@ sub setCookie {
 
 		my $hostname = vars->{ce}->{server_root_url};
 		$hostname =~ s/https?:\/\///;
-
+        
 		if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
-			cookie "WeBWorKCourseAuthen." . params->{course_id} => $cookieValue, domain=>$hostname;
+			cookie "WeBWorKCourseAuthen." . session->{course} => $cookieValue, domain=>$hostname;
 		} else {
-			cookie "WeBWorKCourseAuthen." . params->{course_id} => $cookieValue;
+			cookie "WeBWorKCourseAuthen." . session->{course} => $cookieValue;
 		}
 
 
