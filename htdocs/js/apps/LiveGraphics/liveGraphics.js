@@ -10,7 +10,7 @@ var LiveGraphics3D = function (container, options) {
 	.attr('swfpath','/webwork2_files/js/vendor/x3dom/x3dom.swf');
 
     // disable mousewheel on container because its used for zoom
-    $(container).bind('mousewheel',function(event) {
+    $(x3d).bind('DOMMouseScroll mousewheel',function(event) {
 	event.preventDefault();
     });
 
@@ -21,22 +21,35 @@ var LiveGraphics3D = function (container, options) {
 	width : 200,
 	height : 200,
 	showAxes : false,
-        numTicks : 10,
+        numTicks : 4,
 	tickSize : .1,
-	tickFontSize : .05,
-	axisKey : ['R','Q','P'],
+	tickFontSize : .15,
+	axisKey : ['X','Y','Z'],
+	drawMesh : true,
     };
 
     var options = $.extend({}, defaults, options);
-    
+
+    //global variables
+    //arrays of colors and thicknesses drawn from input
+    var colors = {};
+    var lineThickness = {};
+
+    //scale elements capturing scale of plotted data
+    var windowScale;
     var coordMins;
     var coordMaxs;
-    
-    var surfacecoords = [];
-    var surfaceindex = [];
+
+    //block indexes are used to associate objects to colors and thicknesses
+    var blockIndex = 0;
+    var surfaceBlockIndex = 0;
+
+    //data from input
+    var surfaceCoords = [];
+    var surfaceIndex = [];
+    var lineCoords = [];
     var lonePoints = [];
     var loneLabels = [];
-
 
     // This is the color map for shading surfaces based on elevation
     var colormap = [
@@ -122,7 +135,7 @@ var LiveGraphics3D = function (container, options) {
 		     attr('rotation',[1,0,0,Math.PI/2])
 		     .append($("<viewpoint/>")
 			     .attr( "fieldofview", .9)
-			     .attr( "position", [2.5*windowScale,0,0] )
+			     .attr( "position", [3*windowScale,0,0] )
 			     .attr( "orientation", [0,1,0,Math.PI/2])));
 	
 	scene.append($('<background/>').attr('skycolor','1 1 1'));
@@ -133,153 +146,35 @@ var LiveGraphics3D = function (container, options) {
 	}
 
 	drawSurface();
-	
+	drawLines();
 	drawLonePoints();
 	drawLoneLabels();
 
     };
     
     var parseLive3DData = function(text) {
-	
+	// Set up variables
+	$.each(options.vars, function (name, data) {
+	    eval(name+'='+data);
+	});
+
 	// this parses axes commands.  
 	if (text.match(/Axes\s*->\s*True/)) {
 	    options.showAxes = true;
 	}
 
+	// get some initial global configuration 
 	var labels = text.match(/AxesLabel\s*->\s*\{\s*(\w+),\s*(\w+),\s*(\w+)\s*\}/);
 
 	if (labels) {
 	    options.axisKey = [labels[1],labels[2],labels[3]];
 	}
 
-	
-	// the mathematica code comes in blocks encolsed by {}
-	// this code makes an array of those blocks.  The largest of them will
-	// be the polygon block which defines the surface.  
-	var bracketcount = -1;
-	var blocks = [];
-	var block = '';
+	// split the input into blocks and parse
+	var blocks = recurseMathematicaBlocks(text);
 
-	for (var i=0; i < text.length; i++) {
+	parseMathematicaBlocks(blocks);
 
-	    if (text.charAt(i) === '{') {
-		bracketcount++;
-	    }
-
-	    if (bracketcount > 0) {
-		block += text.charAt(i);
-	    }
-
-	    if (text.charAt(i) == '}') {
-		bracketcount--;
-		if (bracketcount == 0) {
-		    blocks.push(block);
-		    block = '';
-		}
-
-	    }
-	}
-
-	blocks.forEach(function(block) {
-	    if (block.match(/Polygon/)) {
-
-		// Find the polygon commands.  This defines the mesh data
-		var polystrings = block.match(/Polygon\[\s*\{([^\]]+)\}\]/g);
-		if (!polystrings) {
-		    $(container).html('Error parsing graph data');
-		    return;
-		}
-
-		polystrings.forEach(function(polystring) {
-		    var pointstrings = polystring.match(/\{\s*-?\d*\.?\d*\s*,\s*-?\d*\.?\d*\s*,\s*-?\d*\.?\d*\s*\}/g);
-		    var poly = [];
-		    
-		    // for each polygont extract all the points
-		    pointstrings.forEach(function(pointstring) {
-			var strpoint = pointstring.match(/\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
-			var point = [parseFloat(strpoint[1]),parseFloat(strpoint[2]),parseFloat(strpoint[3])];
-			
-			// find the index of the point in surfacecoords.  If 
-			// the point is not in surfacecoords, add it
-			for (var i=0; i<surfacecoords.length; i++) {
-			    if (surfacecoords[i][0] == point[0] &&
-				surfacecoords[i][1] == point[1] &&
-				surfacecoords[i][2] == point[2]) {
-				surfaceindex.push(i);
-				poly.push(i);
-				return;
-			    }
-			}
-			
-			surfaceindex.push(surfacecoords.length);
-			poly.push(surfacecoords.length);
-			surfacecoords.push(point);
-		    });
-		    
-		    surfaceindex.push(-1);
-		    
-		    // add the exact same polygon with a reversed normal.
-		    // this causes the surface to render on both sides. 
-		    surfaceindex.push(poly[0]);
-		    surfaceindex.push(poly[2]);
-		    surfaceindex.push(poly[1]);
-		    surfaceindex.push(poly[3]);
-		    surfaceindex.push(-1);
-		    
-		});
-	    } else if (block.match(/Point/)) {
-		// now find any individual points that need to be plotted
-		var str = block.match(/Point\[\s*\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
-		var point = {};
-
-		if (!str) {
-		    console.log('Coudnt parse point');
-		    return;
-		}
-		    
-		point.coords = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
-
-		str = block.match(/PointSize\[\s*(\d*\.?\d*)\s*\]/);
-
-		if (str) {
-		    point.radius = parseFloat(str[1]);
-		}
-		
-		str = block.match(/RGBColor\[\s*(\d*\.?\d*)\s*,\s*(\d*\.?\d*)\s*,\s*(\d*\.?\d*)\s*\]/);
-		
-		if (str) {
-		    point.rgb = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
-		}
-		
-		lonePoints.push(point);
-		
-	    } else if (block.match(/Text/)) {
-		// now find any individual labels that need to be plotted
-		var str = block.match(/\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
-		var label = {};
-	
-		if (!str) {
-		    console.log('Couldnt Parse Label');
-		    return;
-		}
-		
-		label.coords = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
-		str = block.match(/StyleForm\[\s*(\w+),\s*FontSize\s*->\s*(\d+)\s*\]/);
-
-		if (!str) {
-		    console.log('Couldnt Parse Label');
-		    return;
-		}
-
-		label.text = str[1];
-		label.fontSize = str[2];
-
-		loneLabels.push(label);
-		
-	    }
-		
-	    
-	});
     };
     
     // find max and min of all mesh coordinate points and
@@ -289,7 +184,7 @@ var LiveGraphics3D = function (container, options) {
 	var min = [0,0,0];
 	var max = [0,0,0];
 	
-	surfacecoords.forEach(function(point) {
+	surfaceCoords.forEach(function(point) {
 	    for (var i=0; i< 3; i++) {
 		if (point[i] < min[i]) {
 		    min[i] = point[i];
@@ -299,6 +194,17 @@ var LiveGraphics3D = function (container, options) {
 	    }
 	});
 	
+	lineCoords.forEach(function(line) {
+	    for (var i=0; i<2; i++) {
+		for (var j=0; j<3; j++) {
+		    if (line[i][j] < min[j]) {
+			min[j] = line[i][j];
+		    } else if (line[i][j]>max[j]) {
+			max[j] = line[i][j];
+		    }   
+		}
+	    }
+	});
 	coordMins = min;
 	coordMaxs = max;
 	
@@ -314,30 +220,95 @@ var LiveGraphics3D = function (container, options) {
 	windowScale = scale;
     };
     
+    var drawLines = function() {
+	if (lineCoords.length==0) {
+	    return;
+	}
+
+	// Add surface to scene as an indexedfaceset
+	
+	var linegroup = $('<group/>');
+
+	lineCoords.forEach(function(line){
+
+	    // lines are cylinders that start centered at the origin 
+	    // along the y axis.  We have to translate and rotate them
+	    // into place
+	    var length = Math.sqrt(Math.pow((line[0][0]-line[1][0]),2)+
+				   Math.pow((line[0][1]-line[1][1]),2)+
+				   Math.pow((line[0][2]-line[1][2]),2));
+	    var rotation = [];
+
+	    if (length == 0) {
+		return;
+	    }
+	    
+	    rotation[0] = (line[1][2]-line[0][2]);
+	    rotation[1] = 0;
+	    rotation[2] = (line[0][0]-line[1][0]);
+	    rotation[3] = Math.acos((line[1][1]-line[0][1])/length);
+
+	    var trans = [0,0,0];
+	    
+	    for (var i=0; i < 3; i++) {
+		trans[i] = (line[1][i] + line[0][i])/2;
+	    }
+
+	    var shape = $("<shape/>").appendTo($("<transform/>")
+					       .attr('translation',trans)
+					       .attr('rotation',rotation)
+					       .appendTo(linegroup));
+	    var color = [0,0,0];
+	    var radius = .0038;
+
+	    // line[2] contains the block index
+	    if (line[2] in colors) {
+		color = colors[line[2]];
+	    }
+	    
+	    if (line[2] in lineThickness) {
+		radius = lineThickness[line[2]];
+	    }
+
+	    $("<appearance/>").appendTo(shape)
+		.append($("<material/>")
+			.attr('diffusecolor',color));
+	    
+	    shape.append($("<Cylinder/>")
+			 .attr("height", length)
+			 .attr("radius", radius*2));
+	});
+	
+	scene.append(linegroup);
+    }
+    
     var drawSurface = function() {
 	var coordstr = '';
 	var indexstr = '';
 	var colorstr = '';
 	var colorindstr = '';
-	
+
+	if (surfaceCoords.length == 0) {
+	    return;
+	}
+
 	// build a string with all the surface coodinates
-	surfacecoords.forEach(function(point) {
+	surfaceCoords.forEach(function(point) {
 	    coordstr += point[0]+' '+point[1]+' '+point[2]+' ';
 	});
-	
 	
 	// build a string with all the surface indexes
 	// at the same time build a string with color data
 	// and the associated color indexes
-	surfaceindex.forEach(function(index) {
+	surfaceIndex.forEach(function(index) {
 	    indexstr += index+' ';
 	    
 	    if (index == -1) {
 		colorindstr += '-1 ';
 		return;
 	    }
-	    
-	    var cindex = parseInt((surfacecoords[index][2]-coordMins[2])/(coordMaxs[2]-coordMins[2])*colormap.length);
+
+	    var cindex = parseInt((surfaceCoords[index][2]-coordMins[2])/(coordMaxs[2]-coordMins[2])*colormap.length);
 	    
 	    if (cindex == colormap.length) {
 		cindex--;
@@ -348,33 +319,71 @@ var LiveGraphics3D = function (container, options) {
 	});
 	
 	colormap.forEach(function(color) {
+	    for (var i=0; i<3; i++) {
+		color[i] += .2;
+		color[i] = Math.min(color[i],1);
+	    }
+	    
 	    colorstr += color[0]+' '+color[1]+' '+color[2]+' ';
 	});
 	
+	var flatcolor = false;
+	var color = [];
+
+	if (surfaceBlockIndex in colors) {
+	    flatcolor = true;
+	    color = colors[surfaceBlockIndex];
+	}
+
 	// Add surface to scene as an indexedfaceset
 	var shape = $("<shape/>").appendTo(scene);
 	
 	var appearance = $("<appearance/>").appendTo(shape);
 	
 	appearance .append($("<material/>")
-			   .attr("shininess","0.145"));
+			   .attr("ambientIntensity",'0')
+			   .attr('convex','false')
+			   .attr('creaseangle',Math.PI)
+			   .attr('diffusecolor',color)
+			   .attr("shininess",".015"));
 	
 	var indexedfaceset = $("<indexedfaceset/>")
 	    .attr('coordindex',indexstr)
-	    .attr('creaseAngle','3.14')
-	    .attr('solid','false')
-	    .attr('colorindex',colorindstr);
+	    .attr('solid','false');
 	
 	indexedfaceset.append($("<coordinate/>")
 			      .attr('point',coordstr));
-	
-	indexedfaceset.append($("<color/>")
-			      .attr('color',colorstr));
+
+	if (!flatcolor) {
+	    indexedfaceset.attr('colorindex',colorindstr);
+	    indexedfaceset.append($("<color/>")
+				  .attr('color',colorstr));
+	}
 
 	// append the indexed face set to the shape after its assembled.  
 	// otherwise sometimes x3d tries to access the various data before 
 	// its ready
 	indexedfaceset.appendTo(shape);
+
+	if (options.drawMesh) {
+
+	    shape = $("<shape/>").appendTo(scene);
+	
+	    appearance = $("<appearance/>").appendTo(shape);
+	    
+	    appearance .append($("<material/>")
+			       .attr('diffusecolor',[0,0,0]));
+	    
+	    var indexedlineset = $("<indexedlineset/>")
+		.attr('coordindex',indexstr)
+		.attr('solid','true');
+	    
+	    indexedlineset.append($("<coordinate/>")
+				  .attr('point',coordstr));
+	    
+	    indexedlineset.appendTo(shape);
+	}
+
     }	
 
     var drawAxes = function() {
@@ -472,8 +481,8 @@ var LiveGraphics3D = function (container, options) {
 			     .attr('string',coord.toFixed(2))
 			     .attr('solid','true')
 			     .append($("<fontstyle/>")
-				     .attr('size',options.tickFontSize*(coordMaxs[I]-coordMins[I]))
-				     .attr('family', 'sans')
+				     .attr('size',options.tickFontSize*windowScale)
+				     .attr('family', 'sans-serif')
 				     .attr('style', 'bold')
 				     .attr('justify', 'MIDDLE')));
 	    
@@ -495,8 +504,8 @@ var LiveGraphics3D = function (container, options) {
 			 .attr('string',options.axisKey[I])
 			 .attr('solid','true')
 			 .append($("<fontstyle/>")
-				 .attr('size',options.tickFontSize*(coordMaxs[I]-coordMins[I]))
-				 .attr('family', 'sans')
+				 .attr('size',options.tickFontSize*windowScale)
+				 .attr('family', 'sans-serif')
 				 .attr('style', 'bold')
 				 .attr('justify', 'MIDDLE')));
 	
@@ -522,7 +531,7 @@ var LiveGraphics3D = function (container, options) {
 			  .attr('translation',point.coords));
 
 	    sphere.append($("<sphere/>")
-			.attr('radius',point.radius));
+			.attr('radius',point.radius*2.25));
 
 	    sphere.parent().appendTo(scene);
 	    
@@ -548,7 +557,7 @@ var LiveGraphics3D = function (container, options) {
 	    if (label.size) {
 		//mathematica label sizes are fontsizes, where 
 		//the units for x3dom are local coord sizes
-		size = label.size/windowScale;
+		size = label.size/(1.5*windowScale);
 	    }
 	    
 	    text.append($("<text/>")
@@ -556,8 +565,7 @@ var LiveGraphics3D = function (container, options) {
 			.attr('solid','true')
 			.append($("<fontstyle/>")
 				.attr('size',size)
-				.attr('family', 'sans')
-				.attr('style', 'bold')
+				.attr('family', 'sans-serif')
 				.attr('justify', 'MIDDLE')));
 	    
 	    text.parent().parent().appendTo(scene);
@@ -566,16 +574,246 @@ var LiveGraphics3D = function (container, options) {
 	
     }
 
+    var parseMathematicaBlocks = function (blocks) {
+
+	blocks.forEach(function(block) {
+	    blockIndex++;
+	    
+	    if (block.match(/^\s*\{/)) {
+		// This is a block inside of a block.
+		// so recurse
+		var subblocks = recurseMathematicaBlocks(block);
+		parseMathematicaBlocks(subblocks);
+
+	    } else if (block.match(/Point/)) {
+		// now find any individual points that need to be plotted
+		// points are defined by short blocks so we dont split into
+		// individual commands
+		var str = block.match(/Point\[\s*\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
+		var point = {};
+		
+		if (!str) {
+		    console.log('Couldnt parse point');
+		    return;
+		}
+		
+		point.coords = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
+		
+		str = block.match(/PointSize\[\s*(\d*\.?\d*)\s*\]/);
+		
+		if (str) {
+		    point.radius = parseFloat(str[1]);
+		}
+		
+		str = block.match(/RGBColor\[\s*(\d*\.?\d*)\s*,\s*(\d*\.?\d*)\s*,\s*(\d*\.?\d*)\s*\]/);
+		
+		if (str) {
+		    point.rgb = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
+		}
+		
+		lonePoints.push(point);
+		
+	    } else {
+		// Otherwise its a list of commands that we need to 
+		// process individually
+		var commands = splitMathematicaBlocks(block);
+
+		commands.forEach(function(command) {
+		    if (command.match(/Polygon/)) {
+			if (!surfaceBlockIndex) {
+			    surfaceBlockIndex = blockIndex;
+			}
+
+			var polystring = command.replace(/Polygon\[([^\]]*)\]/,"$1");
+			var pointstrings = recurseMathematicaBlocks(polystring,-1);
+			// for each polygon extract all the points
+			pointstrings.forEach(function(pointstring) {
+			    pointstring = pointstring.replace(/\{([^\{]*)\}/,"$1");
+			    
+			    var splitstring = pointstring.split(',');
+			    var point = [];
+			    
+			    for (var i=0; i < 3; i++) {
+				point[i] = parseFloat(eval(splitstring[i]));
+			    }
+			    
+			    // find the index of the point in surfaceCoords.  If 
+			    // the point is not in surfaceCoords, add it
+			    for (var i=0; i<surfaceCoords.length; i++) {
+				if (surfaceCoords[i][0] == point[0] &&
+				    surfaceCoords[i][1] == point[1] &&
+				    surfaceCoords[i][2] == point[2]) {
+				    surfaceIndex.push(i);
+				    
+				    return;
+				}
+			    }
+			    
+			    surfaceIndex.push(surfaceCoords.length);
+			    surfaceCoords.push(point);
+			    
+			});
+			
+			surfaceIndex.push(-1);
+		       
+		    } else if (command.match(/Line/)) {
+			//Add a line to the line array
+			
+			var str = command.replace(/Line\[([^\]]*)\],/,"$1");
+			
+			var pointstrings = recurseMathematicaBlocks(str,-1);
+			
+			var line = [];
+			
+			for (var i=0; i<2; i++) {
+			    pointstrings[i] = pointstrings[i].replace(/\{([^\{]*)\}/,"$1");
+			    var splitstring = pointstrings[i].split(',');
+			    var point = [];
+			    
+			    for (var j=0; j<3; j++) {
+				point[j] = parseFloat(eval(splitstring[j]));
+			    }
+			    
+			    if (point) {
+				line.push(point);
+			    } else {
+				console.log('Error Parsing Line');
+				return;
+			    }
+			}
+
+			line.push(blockIndex);
+
+			lineCoords.push(line);
+
+		    } else if (command.match(/RGBColor/)) {
+			var str = command.match(/RGBColor\[\s*(\d*\.?\d*)\s*,\s*(\d*\.?\d*)\s*,\s*(\d*\.?\d*)\s*\]/);
+
+			colors[blockIndex] = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
+
+		    } else if (command.match(/Thickness/)) {
+			var str = command.match(/Thickness\[\s*(\d*\.?\d*)\s*\]/);
+
+			lineThickness[blockIndex] = parseFloat(str[1]);
+			
+		    } else if (command.match(/Text/)) {
+			// now find any individual labels that need to be plotted
+			var str = command.match(/\{\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*,\s*(-?\d*\.?\d*)\s*\}/);
+			var label = {};
+			
+			if (!str) {
+			    console.log('Couldnt Parse Label');
+			    return;
+			}
+			
+			label.coords = [parseFloat(str[1]),parseFloat(str[2]),parseFloat(str[3])];
+			str = command.match(/StyleForm\[\s*(\w+),\s*FontSize\s*->\s*(\d+)\s*\]/);
+			
+			if (!str) {
+			    console.log('Couldnt Parse Label');
+			    return;
+			}
+			
+			label.text = str[1];
+			label.fontSize = str[2];
+			
+			loneLabels.push(label);
+			
+		    }
+		});
+			   	
+	    }
+	});
+    }
+    
+    var splitMathematicaBlocks = function (text) {
+	// This splits a list of mathematica commands on the commas
+	
+	var bracketcount = 0;
+	var blocks = [];
+	var block = '';
+	
+	for (var i=0; i < text.length; i++) {
+
+	    block += text.charAt(i);
+	    
+	    if (text.charAt(i) === '[') {
+		bracketcount++;
+	    }
+
+	    if (text.charAt(i) == ']') {
+		bracketcount--;
+		if (bracketcount == 0) {
+		    i++;
+		    blocks.push(block);
+		    block = '';
+		}
+
+	    }
+	}
+
+	return blocks;
+    }
+
+
+
+    var recurseMathematicaBlocks = function (text,initialcount) {
+	// the mathematica code comes in blocks encolsed by {}
+	// this code makes an array of those blocks.  The largest of them will
+	// be the polygon block which defines the surface.  
+	var bracketcount = 0;
+	var blocks = [];
+	var block = '';
+	
+	if (initialcount) {
+	    bracketcount = initialcount;
+	}
+
+	for (var i=0; i < text.length; i++) {
+
+	    if (text.charAt(i) === '{') {
+		bracketcount++;
+	    }
+
+	    if (bracketcount > 0) {
+		block += text.charAt(i);
+	    }
+
+	    if (text.charAt(i) == '}') {
+		bracketcount--;
+		if (bracketcount == 0) {
+		    blocks.push(block.substring(1,block.length-1));
+		    block = '';
+		}
+
+	    }
+	}
+
+	return blocks;
+    }
+
+
     // This section of code is run whenever the object is created
     // run intialize with the mathematica string, possibly getting the string
     // form an ajax call if necessary
-
-
-    
-
     
     if (options.input) {
 	initialize(options.input);
+    } else if (options.archive) {
+	// If an archive file is provided then that is the file we get
+	// the file name is then the file we want inside the archive. 
+	JSZipUtils.getBinaryContent(options.archive, function (error, data) {
+	    if (error) {
+		console.log(error);
+		$(container).html('Failed to get input archive');
+	    }
+	    
+	    var zip = new JSZip(data);
+	  
+	    initialize(zip.file(options.file).asBinary());
+	});
+
+	    
     } else if (options.file) {
 	
 	$.ajax({
@@ -589,9 +827,7 @@ var LiveGraphics3D = function (container, options) {
 		console.log(error);
 		$(container).html('Failed to get input file');
 	    }});
-    } else if (options.archive) {
-	// not supported yet. 
-	$(container).html('Archive input not supported');
+
     } else {
 	$(container).html('No input data provided');
     }
