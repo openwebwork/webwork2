@@ -70,7 +70,7 @@ sub initialize {
 	    # add sets to the assigned list if the parameter is checked or the
 	    # assign all button is pushed.  (already assigned sets will be
 	    # skipped later) 
-	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment")) || $r->param("assignAll");
+	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
 
 	# note: assignedSets are those sets that are assigned in the submitted form
@@ -349,7 +349,9 @@ sub body {
 	print $self->hidden_authen_fields();
 
 	print CGI::div(
-	    CGI::submit({name=>"assignAll", value => $r->maketext("Assign All Sets to Current User")})), CGI::br();
+	    CGI::submit({name=>"assignAll", value => $r->maketext("Assign All Sets to Current User"),
+			 onClick => "\$('input[name*=\"assignment\"]').attr('checked',1);"
+			})), , CGI::br();
 
 
 	########################################

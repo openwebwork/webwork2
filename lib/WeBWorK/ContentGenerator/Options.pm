@@ -218,7 +218,6 @@ sub body {
 		-name => "displayMode",
 		-values => \@active_modes,
 		-default => $curr_displayMode,
-		-linebreak=>'true',
 		);
 	    $result .= CGI::end_fieldset();
 	    $result .= CGI::br();
