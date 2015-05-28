@@ -1,3 +1,3 @@
 #!/bin/sh
 
-perl -I /opt/webwork/webwork2/lib -I /opt/webwork/pg/lib /opt/webwork/webwork2/webwork3/bin/app.pl
+perl -I $WEBWORK_ROOT/lib -I $WEBWORK_ROOT/../pg/lib $WEBWORK_ROOT/webwork3/bin/app.pl
