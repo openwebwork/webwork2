@@ -450,6 +450,12 @@ var AssignUsersView = Backbone.View.extend({
                 els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")})
             this.userSetTable.refreshTable();
             this.stickit();
+            // color the changed dates blue
+            _([".open-date",".due-date",".reduced-scoring-date",".answer-date"]).each(function(date){
+                var val = $("#customize-problem-set-controls " + date + " .wwdate").val()
+                $(date +" .wwdate").filter(function(i,v) {return $(v).val()!=val;}).css("color","blue");
+            });
+
         },
         tableSetup: function () {
             var self = this;
