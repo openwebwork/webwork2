@@ -140,6 +140,13 @@ var ProblemSet = Backbone.Model.extend({
             }
         }
     },
+    // this checks if the problem set is open.  Using current time to determine this.
+    isOpen: function(){
+        var openDate = moment.unix(this.get("open_date"))
+            , dueDate = moment.unix(this.get("due_date"))
+            , now = moment();
+        return now.isBefore(dueDate) && now.isAfter(openDate);
+    },
     // this adjusts all of the dates to make sure that they don't trigger an error. 
     adjustDates: function (){
         var self = this;

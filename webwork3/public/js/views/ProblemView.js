@@ -91,8 +91,18 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
 
                 this.showPath(this.state.get("show_path"));
                 this.stickit();
-                this.model.trigger("rendered",this);
-                this.state.set("rendered",true);                
+                
+                 
+                // send rendered signal after MathJax 
+                if(MathJax){
+                    MathJax.Hub.Register.MessageHook("End Math", function (message) { 
+                        self.model.trigger("rendered",this);
+                        self.state.set("rendered",true);
+                    })
+                } else {
+                    this.model.trigger("rendered",this);
+                    this.state.set("rendered",true);
+                }
             } else {
                 this.state.set("rendered",false);
                 this.$el.html($("#problem-loading-template").html());

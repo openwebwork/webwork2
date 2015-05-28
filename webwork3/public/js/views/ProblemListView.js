@@ -82,6 +82,20 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                                                 placeholder: "sortable-placeholder",axis: "y",
                                                 stop: this.reorder});
             }
+            // check if all of the problems are rendered.  When they are, trigger an event
+            //
+            // I think this needs work.  It appears that MathJax fires lots of "Math End" signals, although why not just one. 
+            // 
+            // this may also be part of the many calls to render throughout the app. 
+            //
+            
+            _(this.problemViews).each(function(pv){
+              pv.model.on("rendered", function () {
+                  if(_(self.problemViews).chain().map(function(pv){return pv.state.get("rendered");}).every().value()){
+                    self.trigger("rendered");   
+                  }
+              });
+            })
             this.showPath(this.show_path);
             this.showTags(this.show_tags);
             this.updatePaginator();

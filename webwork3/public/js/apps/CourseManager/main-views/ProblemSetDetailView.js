@@ -244,8 +244,15 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             });
         },
         render: function (){
+            var self = this;
             this.problemSetView.setElement(this.$el);
             this.problemSetView.render();
+            // disable the ability to drag problems when the set is open. 
+            
+            this.problemSetView.on("rendered",function(){
+                config.changeClass({els: $(".reorder-handle"), state: self.problemSetView.problemSet.isOpen(),
+                                add_class:"disabled",remove_class:""})  
+            });
         },
         setProblemSet: function(_set){
             var self = this;
