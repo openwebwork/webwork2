@@ -1,8 +1,8 @@
+<html>
+<!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.48 2009/10/01 21:28:46 gage Exp $
-# 
+# Copyright © 2000-2014 The WeBWorK Project, http://openwebwork.sf.net/
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
@@ -13,33 +13,19 @@
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
 ################################################################################
+-->
+<head>
+<title>Uses Math Objects</title>
+</head>
 
-package WeBWorK::Utils::DatePickerScripts;
-use base qw(Exporter);
-use WeBWorK::Utils qw(formatDateTime);
-use POSIX;
-
-sub date_scripts {
-        my $ce = shift;
-	my $set = shift;
-	my $bareName = 'set.'.$set->set_id;
-        $bareName =~ s/(\.|,)/\\\\$1/g;
-
-	my $reduced = 0;
-
-	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-	    $reduced = 1;
-	}
-	
-	my $out =<<EOS;
-	addOnLoadEvent(function () {
-	    new WWDatePicker('$bareName',$reduced);
-	});
-EOS
-
-	return $out;
-}
+<body><br>
+<p>
+Some WeBWorK problems are programmed using what are called <i>Math Objects</i>.
+These problems are preferred by some people because they
+provide a more consistent collection of messages to faulty student
+answers, particularly for answers which are way off base.
+</p>
 
 
-
-1;
+</body>
+</html>

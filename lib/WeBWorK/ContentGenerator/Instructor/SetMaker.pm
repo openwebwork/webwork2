@@ -197,6 +197,25 @@ sub munge_pg_file_path {
 	return($pg_path);
 }
 
+## Problems straight from the OPL database come with MO and static
+## tag information.  This is for other times, like next/prev page.
+
+sub getDBextras {
+	my $r = shift;
+	my $sourceFileName = shift;
+
+	if($sourceFileName =~ /^Library/) {
+		return @{WeBWorK::Utils::ListingDB::getDBextras($r, $sourceFileName)};
+	}
+
+	my $filePath = $r->ce->{courseDirs}{templates}."/$sourceFileName";
+	my $tag_obj = WeBWorK::Utils::Tags->new($filePath);
+	my $isMO = $tag_obj->{MO} || 0;
+	my $isstatic = $tag_obj->{Static} || 0;
+
+	return ($isMO, $isstatic);
+}
+
 ## With MLT, problems come in groups, so we need to find next/prev
 ## problems.  Return index, or -1 if there are no more.
 sub next_prob_group {
@@ -933,6 +952,11 @@ sub make_data_row {
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
 	my $pg = shift;
+	my $isstatic = $sourceFileData->{static};
+	my $isMO = $sourceFileData->{MO};
+	if (not defined $isMO) {
+		($isMO, $isstatic) = getDBextras($r, $sourceFileName);
+	}
 	my $cnt = shift;
 	my $mltnumleft = shift;
 
@@ -1022,13 +1046,15 @@ sub make_data_row {
 		my $sourceFilePath = $templatedir .'/'. $sourceFileName;
 		$sourceFilePath =~ s/'/\\'/g;
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}). CGI::end_script();
+		$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}). CGI::end_script();
 		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
 	}
 
 	my $level =0;
 
-	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
+	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random"></i></span>';
+	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
+	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
 	print $mltstart;
 	# Print the cell
@@ -1041,7 +1067,7 @@ sub make_data_row {
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
 			CGI::span({-style=>"float:right ; text-align: right"}, 
-		        $inSet, $mlt, $rerand,
+				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
 				-title=>"Hide this problem",
@@ -1524,37 +1550,6 @@ sub title {
 	return $self->r->maketext("Library Browser");
 }
 
-sub head {
-  my ($self) = @_;
-  my $ce = $self->r->ce;
-  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-
-    print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
-
-  print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
-  print "\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/legacy/Base64.js"}), CGI::end_script();
-  print "\n";
-	print qq{
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
-  print "\n";
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
-  print "\n";
-  print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
-  print "\n";
-  return '';
-}
-
-
 sub body {
 	my ($self) = @_;
 
@@ -1684,6 +1679,54 @@ sub body {
 
 	return "";	
 }
+
+sub output_JS {
+  my ($self) = @_;
+  my $ce = $self->r->ce;
+  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+
+  print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
+  print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
+  print "\n";
+  print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
+  print "\n";
+  print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
+  print "\n";
+  return '';
+
+}
+
+
+
+sub output_CSS {
+  my ($self) = @_;
+  my $ce = $self->r->ce;
+  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+
+    #print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
+
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+
+  print qq{
+           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+
+  return '';
+
+}
+
+sub output_jquery_ui {
+
+    return '';
+
+}
+
+
 
 =head1 AUTHOR
 
