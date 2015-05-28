@@ -6,7 +6,14 @@ define(['backbone'], function(Backbone){
 			return this;
 		},
 		events: {
-			"click .manager-menu a.link": function(evt){this.trigger("change-view",$(evt.target).data("id"))},
+			"click .manager-menu a.link": function(evt){
+                // if the icon is clicked on, then need to select the parent.
+                var id= $(evt.target).data("id");
+                if(typeof(id)==="undefined"){
+                    id = $(evt.target).parent().data("id");
+                }
+                this.trigger("change-view",id)
+            },
 			"click .main-help-button": function(evt){
 				this.trigger("show-help")},
 			"click .logout-link": function(evt){ this.trigger("logout")},
