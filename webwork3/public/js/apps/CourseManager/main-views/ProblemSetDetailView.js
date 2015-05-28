@@ -370,7 +370,7 @@ var AssignUsersView = Backbone.View.extend({
                         "selected-row-changed": function(rowIDs){
                             self.tabState.set({selected_rows: rowIDs});
                             }, 
-                        "table-sorted": function (){
+                        "table-sorted table-changed": function (){
                             self.update();
                             }
                         })
