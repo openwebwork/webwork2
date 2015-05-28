@@ -39,7 +39,7 @@ define(['backbone'],function(Backbone){
 		// the follow can be overridden if the state is not stored in a Backbone Model called this.state.
         setState: function (_state) {
             if(_state){
-                this.state.set(_state,{silent: true});
+                this.state.set(_state);
             }
             return this;
         },

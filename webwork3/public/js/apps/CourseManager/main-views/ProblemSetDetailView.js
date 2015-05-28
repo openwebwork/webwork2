@@ -35,8 +35,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             TabbedMainView.prototype.initialize.call(this,options);
             this.state.on("change:set_id", function() {
                 self.changeProblemSet(self.state.get("set_id"));
-            })
-
+            });
         },
         bindings: {
             ".problem-set-name": {observe: "set_id", selectOptions: {
@@ -49,9 +48,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         render: function(){
             TabbedMainView.prototype.render.call(this);            
             this.stickit(this.state,this.bindings);
-            if(this.state.get("set_id")){
-                this.changeProblemSet(this.state.get("set_id"));
-            }
         },
         getHelpTemplate: function () {
             switch(this.state.get("tab_name")){
