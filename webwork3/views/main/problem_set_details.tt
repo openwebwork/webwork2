@@ -84,6 +84,27 @@
 
 
 <script type="text/template" id="customize-assignment-template">
+
+<div class="border-around-table">
+<h5>Problem Set Date Properties</h5>
+<table class="table table-striped" id="customize-problem-set-controls">
+<tr>
+  <td class="header">Open Date</td>
+  <td class="header reduced-scoring-header">Reduced Scoring Date</td>
+  <td class="header">Due Date</td>
+  <td class="header">Answer Date</td>
+  <td></td></tr>
+<tr>
+  <td class="edit-datetime open-date"></td>
+  <td class="edit-datetime reduced-scoring-date"></td>
+  <td class="edit-datetime due-date"></td>
+  <td class="edit-datetime answer-date"></td>
+<td> <button class="btn btn-default save-changes">Save Changes</button></td>
+</tr>
+</table>
+</div>
+<div id="student-override-container">
+<div class="scrollable">
 <div class="form-inline" role="form">
   <div class="input-group">
     <label class="sr-only" for="ca-search-box">Filter</label>
@@ -111,21 +132,8 @@
 </div>
 <table class="users-table">
 </table>
-<table class="table table-striped" id="customize-problem-set-controls">
-<tr>
-  <td class="header">Open Date</td>
-  <td class="header reduced-scoring-header">Reduced Scoring Date</td>
-  <td class="header">Due Date</td>
-  <td class="header">Answer Date</td>
-  <td></td></tr>
-<tr>
-  <td class="edit-datetime open-date"></td>
-  <td class="edit-datetime reduced-scoring-date"></td>
-  <td class="edit-datetime due-date"></td>
-  <td class="edit-datetime answer-date"></td>
-<td> <button class="btn btn-default save-changes">Save Changes</button></td>
-</tr>
-</table>
+</div>
+</div>
 </script>
 
 <script type="text/template" id="loading-usersets-template">

@@ -451,6 +451,11 @@ var AssignUsersView = Backbone.View.extend({
                 var val = $("#customize-problem-set-controls " + date + " .wwdate").val()
                 $(date +" .wwdate").filter(function(i,v) {return $(v).val()!=val;}).css("color","blue");
             });
+            var h = $(window).height()-($(".navbar-fixed-top").outerHeight(true) + $(".header-set-name").outerHeight(true)+
+                                       $("#customize-problem-set-controls").parent().outerHeight()+
+                                       $("#footer").outerHeight());
+            console.log(h);
+            $("#student-override-container").height(h);
 
         },
         tableSetup: function () {

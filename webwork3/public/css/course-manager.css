@@ -101,6 +101,19 @@ border-radius: 5px;}
 	border: 1px dashed black; background: lightgray;
 }
 
+/* Problem Set Deatils styles */
+
+.border-around-table {
+    border: 1px lightgray solid;
+    border-radius: 4px;
+    padding: 4px;
+    margin-bottom: 10px;
+}
+
+#customize-problem-set-controls {
+    margin-bottom: 4px   
+}
+
 /* Classlist Manager styles */
 
 #man_student_table {border: 1px solid black; border-collapse: collapse; width: 95%; }
