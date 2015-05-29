@@ -181,6 +181,7 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <tr><td class="header">Problem Set Visible to Users</td><td><input type='checkbox' class='prob-set-visible'></td></tr>
 <tr><td class="header">Reduced Scoring Enabled</td><td><input type='checkbox' class='reduced-scoring'></select></td></tr>
 <tr><td class="header">Hide Hints from Users</td><td><input type='checkbox' class='hide-hint'></td></tr>
+<tr><td class="header">Number of Problems in Set</td><td class="num-problems"></td></tr>
 <tr><td class="header">Users Assigned</td><td class="users-assigned"></td>
 <td><button class="assign-all-users btn btn-default">Assign to All Users</td></tr>
 </tbody>

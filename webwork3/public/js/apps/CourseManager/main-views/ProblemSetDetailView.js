@@ -201,6 +201,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             ".reduced-scoring": "enable_reduced_scoring",
             ".reduced-scoring-date": "reduced_scoring_date",
             ".hide-hint": "hide_hint",
+            ".num-problems": { observe: "problems", onGet:function(value,options) {
+                return value.length;  
+            }},
             ".users-assigned": {
                 observe: "assigned_users",
                 onGet: function(value, options){ return value.length + "/" +this.users.size();}
