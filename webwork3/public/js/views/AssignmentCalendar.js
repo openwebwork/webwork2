@@ -4,8 +4,8 @@
   */
 
 
-define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView','config'], 
-    function(Backbone, _, moment,MainView, CalendarView,config) {
+define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView','config','apps/util'], 
+    function(Backbone, _, moment,MainView, CalendarView,config,util) {
 	
     var AssignmentCalendar = CalendarView.extend({
         template: this.$("#calendar-date-bar").html(),
@@ -20,11 +20,29 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             var self = this;
             CalendarView.prototype.initialize.call(this,options);
     		_.bindAll(this,"render","renderDay","update","showHideAssigns");
+  
+            this.assignmentDates = util.buildAssignmentDates(this.problemSets);
+            this.problemSets.on({sync: this.render,
+                "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
+                    _set.adjustDates();
+                    self.assignmentDates.chain().filter(function(assign) { 
+                            return assign.get("problemSet").get("set_id")===_set.get("set_id");})
+                        .each(function(assign){
+                            assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type").replace("-","_")+"_date"))
+                                .format("YYYY-MM-DD"));
+                    });
+                },
+                remove: function(_set){
+                  // update the assignmentDates to delete the proper assignments
 
-            this.problemSets.on({sync: this.render});
+                    self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
+                        return assign.get("problemSet").get("set_id")===_set.get("set_id");}));  
+                }
+            });
+                                
             this.state.on("change:reduced_scoring_date change:answer_date change:due_date change:open_date",
                     this.showHideAssigns);
-        this.state.on("change",this.render);
+            this.state.on("change",this.render);
             return this;
     	},
     	render: function (){

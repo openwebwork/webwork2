@@ -2,7 +2,7 @@
 	"main_views": [
 	{
 		"name": "Calendar",
-		"path": "main-views/AssignmentCalendar",
+		"path": "views/AssignmentCalendar",
 		"icon": "fa fa-calendar fa-lg",
 		"default_sidebar": "problemSets",
 		"other_sidebars": ["problemSets", "userlist"],

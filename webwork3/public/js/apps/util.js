@@ -4,7 +4,7 @@
  * 
  */
              
-define(['underscore','config'], function(_,config){
+define(['underscore','config','models/AssignmentDateList','models/AssignmentDate'], function(_,config,AssignmentDateList,AssignmentDate){
 var util = {             
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
@@ -99,6 +99,23 @@ var util = {
         var values = _(obj).chain().pick(fields).values().map(function(d) {return d?parseInt(d):d;}).value();
         _.extend(obj,_.object(fields,values));
         return obj;
+    },
+    // This travels through all of the assignments and determines the days that assignment dates fall
+    buildAssignmentDates: function (problemSets) {
+        var assignmentDateList = new AssignmentDateList();
+        problemSets.each(function(_set){
+            assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
+                    date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+            assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
+                    date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+            assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
+                    date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+            if(parseInt(_set.get("reduced_scoring_date"))>0) {
+                assignmentDateList.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
+                    date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
+            }
+        });
+        return assignmentDateList;
     }
 }
 

@@ -83,17 +83,14 @@ var CourseManager = WebPage.extend({
     startManager: function () {
         var self = this;
         this.navigationBar.setLoginName(this.session.user);
-        
-        // put all of the dates in the problem sets in a better data structure for calendar rendering.
-        this.buildAssignmentDates();
-        this.setMainViewList(new MainViewList({settings: this.settings, users: this.users, 
+         
+        this.setMainViewList(new MainViewList({settings: this.settings, users: this.users,
                 problemSets: this.problemSets, eventDispatcher: this.eventDispatcher}));
         
 
         // set up some of the main views with additional information.
         
-        this.mainViewList.getView("calendar")
-            .set({assignmentDates: this.assignmentDateList, viewType: "instructor", calendarType: "month"})
+        this.mainViewList.getView("calendar").set({viewType: "instructor", calendarType: "month"})
             .on("calendar-change",self.updateCalendar);
 
         this.mainViewList.getView("problemSetsManager").set({assignmentDates: this.assignmentDateList});
@@ -172,23 +169,6 @@ var CourseManager = WebPage.extend({
             }
         });
 
-    },
-    // This travels through all of the assignments and determines the days that assignment dates fall
-    buildAssignmentDates: function () {
-        var self = this;
-        this.assignmentDateList = new AssignmentDateList();
-        this.problemSets.each(function(_set){
-            self.assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
-                    date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
-            self.assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
-                    date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
-            self.assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
-                    date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-            if(parseInt(_set.get("reduced_scoring_date"))>0) {
-                self.assignmentDateList.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
-                    date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
-            }
-        });
     }
 
 });

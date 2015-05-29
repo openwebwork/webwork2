@@ -12,9 +12,8 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         className: "calendar",
         initialize: function (options){
             MainView.prototype.initialize.call(this,options);
-            //this.constructor.__super__.constructor.__super__.initialize.apply(this, options);
-            _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');  // include all functions that need the this object
-    	    
+            _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');  
+            
             if (! this.date){
                 this.date = moment();  // today!
             }
